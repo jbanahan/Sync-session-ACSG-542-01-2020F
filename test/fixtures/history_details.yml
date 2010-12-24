@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  history_id: 1
+  key: key1
+  value: val1
+
+two:
+  history_id: 1
+  key: key2
+  value: val2

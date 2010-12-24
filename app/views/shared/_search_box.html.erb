@@ -1,0 +1,22 @@
+<div id='search_box'>
+  <form method="get"> 
+  <select id='srch_fields' size='1' name='f'>
+    <% opts = [] 
+      @s_params.each do |k,f|
+        opts << [f[:label],k]
+      end 
+     %>
+    <%= options_for_select opts, @selected_search%>
+  </select>
+  <select id='srch_cond' size='1' name='c'>
+  </select> 
+  <input id='srch_val' type='text' name='s' value="<%=params[:s]%>" />
+  <input id='srch_submit' type='submit' value='Search' style='padding:2px 4px;' />
+  </form> 
+</div>
+<script type="text/javascript">
+$(document).ready( function() {
+  $("#srch_cond").val('<%=@s_con%>');
+  toggleSearchValue();
+});
+</script>

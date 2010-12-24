@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-GB">
+<head>
+  <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
+  <title>OpenChain</title>
+  <%= stylesheet_link_tag :all %>
+  <%= javascript_include_tag "jquery-1.4.4.min.js", "jquery-rails.js", "jquery-ui-1.8.7.custom.min.js", "application.js", "jquery.validate.js", "visualize.jQuery.js" %>
+  <%= csrf_meta_tag %>
+  <script>
+  <% if current_user %>
+  $(function() {
+    $( "#btn_home" )
+      .button()
+      .click(function() {
+        window.location = '/';
+      });
+    <% if current_user.view_orders?%>
+    $( "#btn_orders" )
+      .button()
+      .click(function() {
+        window.location = '<%=orders_path%>';
+      })<% if current_user.add_orders? %>
+      .next()
+        .button( {
+          text: false,
+          icons: {
+            primary: "ui-icon-plus"
+          }
+        })
+        .click(function() {
+          window.location = '<%=new_order_path%>';
+        })
+        .parent()
+          .buttonset()<%end%>;
+    <%end%>
+    $( "#btn_shipments" )
+      .button()
+      .click(function() {
+        window.location = '<%=shipments_path%>';
+      })
+      .next()
+        .button( {
+          text: false,
+          icons: {
+            primary: "ui-icon-plus"
+          }
+        })
+        .click(function() {
+          window.location = '<%=new_shipment_path%>';
+        })
+        .parent()
+          .buttonset();
+     <%if current_user.view_products?%>
+    $( "#btn_products" )
+      .button()
+      .click(function() {
+        window.location = '<%=products_path%>';
+      })<%if current_user.add_products?%>
+      .next()
+        .button( {
+          text: false,
+          icons: {
+            primary: "ui-icon-plus"
+          }
+        })
+        .click(function() {
+          window.location = '<%=new_product_path%>';
+        })
+        .parent()
+          .buttonset()<%end%><%end%>;
+      
+  $( "#btn_sales" )
+      .button()
+      .click(function() {
+        window.alert('Not implemented yet');
+      })
+      .next()
+        .button( {
+          text: false,
+          icons: {
+            primary: "ui-icon-plus"
+          }
+        })
+        .click(function() {
+          window.alert('Not implemented yet');
+        })
+        .parent()
+          .buttonset();
+  $( "#btn_deliveries" )
+      .button()
+      .click(function() {
+        window.alert('Not implemented yet');
+      })
+      .next()
+        .button( {
+          text: false,
+          icons: {
+            primary: "ui-icon-plus"
+          }
+        })
+        .click(function() {
+          window.alert('Not implemented yet');
+        })
+        .parent()
+          .buttonset();
+  });
+  <% end %>
+  <%= yield :javascript%>
+  </script>
+<head>
+<body>
+<div id="header">
+  <span id="corner_title"><%=link_to master_company.name, root_path %></span>
+  <% if current_user %>
+    <div id="corner_links">
+        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user) %> 
+        <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
+        <% if current_user.company.master %><%= link_to 'Settings', settings_path %><%else%><%= link_to current_user.company.name, company_path(current_user.company)%><%end%> | 
+        <%= link_to 'Logout', logout_path %>
+    </div>
+    <div id="linkbar">
+      <button id='btn_home'>Home</button>
+      <%if current_user.view_orders?%><button id='btn_orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
+      <button id='btn_shipments'>Shipments</button><button id='btn_new_shipment'>New Shipment</button>
+      <%if current_user.view_products?%><button id='btn_products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
+      <button id='btn_sales'>Sales</button><button id='btn_new_sale'>New Sale</button>
+      <button id='btn_deliveries'>Deliveries</button><button id='btn_new_delivery'>New Delivery</button>      
+    </div>
+  <% end %>
+  <% if has_messages %>
+    <div id='notice' class='notices col1 ui-corner-all' style='display:none;'>
+    <% [:errors,:notices].each do |type|
+          ary = flash[type].nil? ? [] : flash[type]
+          ary.each do |m| %>
+      <div class='<%=type%>_message'><%=m%></div>
+    <%    end
+       end 
+    %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,24 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  id: 1
+  reference: Shipment One
+  eta: 2010-09-13
+  etd: 2010-09-13
+  ata: 2010-09-13
+  atd: 2010-09-13
+  ship_from_id: 1
+  ship_to_id: 1
+  carrier_id: 4
+  vendor_id: 2
+
+two:
+  id: 2
+  eta: 2010-09-13
+  etd: 2010-09-13
+  ata: 2010-09-13
+  atd: 2010-09-13
+  ship_from_id: 1
+  ship_to_id: 1
+  carrier_id: 5
+  vendor_id: 3

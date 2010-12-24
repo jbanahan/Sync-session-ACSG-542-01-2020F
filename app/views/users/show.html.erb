@@ -1,0 +1,66 @@
+<% content_for :javascript do %>
+  $(function() {
+    $( "#btn_edit" )
+      .button()
+      .click(function() {
+        window.location = '<%=edit_company_user_path(@user.company,@user)%>';
+      });
+    $( "#btn_<%=@user.active? ? 'disable' : 'enable'%>" )
+      .button()
+      .click(function() {
+        window.location = '<%=@user.active? ? disable_company_user_path(@user.company,@user) : enable_company_user_path(@user.company,@user) %>';
+      });
+    $( "#btn_messages" ).button().click(function() {
+      window.location = '<%=messages_path%>'
+    });
+  })
+<% end %>
+<% content_for :action_bar do %>
+  <%if @user.can_edit?(current_user) && !@user.company.locked?%>
+  <button id='btn_edit'>Edit</button>
+  <br/>
+  <% if @user.id == current_user.id %>
+    <% if @user.active? %>
+      <button id='btn_disable'>Disable</button>
+    <% else %>
+      <button id='btn_enable'>Enable</button>
+    <% end%>
+  <% end %>
+  <% else %>
+    <button id='btn_messages'>Messages</button>
+  <% end %>
+<% end %>
+<h1>
+  <%=@user.full_name%>
+  <% if @user.disabled %>
+  <span style='color:red;'> [disabled]</span>
+  <% end %>
+</h1>
+<br />
+<p>
+  <b>Username:</b>
+  <%= @user.username %>
+</p>
+
+<p>
+  <b>Email:</b>
+  <%= @user.email %>
+</p>
+<p>
+  <b>First Name:</b>
+  <%= @user.first_name %>
+</p>
+<p>
+  <b>Last Name:</b>
+  <%= @user.last_name %>
+</p>
+
+<p>
+  <b>Time Zone:</b>
+  <%= @user.time_zone %>
+</p>
+
+<p>
+  <b>Email Format:</b>
+  <%= @user.email_format%>
+</p>

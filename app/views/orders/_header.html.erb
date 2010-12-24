@@ -1,0 +1,31 @@
+<p>
+  <b>Order Number:</b>
+  <%= @order.order_number %>
+</p>
+
+<p>
+  <b>Ship To:</b>
+  <%=  render :partial => 'addresses/display', :locals => { :ad => @order.ship_to, :address_id => 'ship_to_ad' } %>
+<p>
+  <b>Order Date:</b>
+  <%= @order.order_date %>
+</p>
+
+<p>
+  <b>Buyer:</b>
+  <%= @order.buyer %>
+</p>
+
+<p>
+  <b>Season:</b>
+  <%= @order.season %>
+</p>
+
+<p>
+  <b>Division:</b>
+  <%= @order.division.nil? ? '' : @order.division.name %>
+</p>
+<p>
+  <b>Vendor:</b>
+  <%= @order.vendor.nil? ? '' : @order.vendor.name %> <% if @order.vendor.locked?%><span class='exception_value'>[LOCKED]</span><%end%>
+</p>

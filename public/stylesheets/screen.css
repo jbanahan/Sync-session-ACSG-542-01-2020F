@@ -1,0 +1,251 @@
+/* General styles */
+body {
+    margin: 0;
+    padding: 0;
+    border: 0;			/* This removes the border around the viewport in old versions of IE */
+    width:100%;
+    min-width: 600px;		/* Minimum width of layout - remove line if not required */
+    /* The min-width property does not work in old versions of Internet Explorer */
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    background: #44aa77;
+}
+.error, .exception_value {
+    color: red;
+}
+.unread {
+    color: #061544;
+    font-weight:bolder;
+}
+.read {
+    color: #575757;
+    font-weight:lighter;
+}
+.detail_table {
+    font-size: 70%;
+}
+.detail_table {
+    width: 95%;
+}
+.detail_table td {
+    vertical-align: top;
+}
+.detail_table thead, .date_grid td:hover {
+    background-color: #000066;
+    color: #FFFFFF;
+}
+.detail_table thead a {
+  color: white;
+  text-decoration: none;
+} 
+.detail_table th:hover {
+  background-color: #cF070A;
+}
+.detail_table a {
+    color: #000066;
+}
+.hover:hover {
+    background-color: #cF070A;
+    color: #FFFFFF;
+}
+.hover:hover a {
+  color:#FFFFFF;
+}
+.date_grid .first_col, .date_grid .first_row {
+    font-weight:bold;
+}
+.date_grid .first_col {
+    text-align: right;
+}
+.date_grid .first_row {
+    text-align: center;
+}
+.date_grid td {
+    padding: 4px;
+}
+.date_grid th {
+    font-weight: normal;
+}
+.date_grid .top_corner {
+    background-color: #FFFFFF;
+}
+.content_head {
+    width: 100%;
+    text-align:center;
+    font-size: 120%;
+}
+.submit {
+    background-color: #000066;
+    cursor: pointer;
+}
+input, textarea, select {
+    background: #FFFFFF;
+    border: 1px solid #000066;
+}
+a {
+    color: #000066;
+}
+.hover a:hover {
+    color: #fff;
+    text-decoration: none;
+}
+h1, h2, h3 {
+    margin: .8em 0 .2em 0;
+    padding: 0;
+}
+p {
+    margin: .4em 0 .8em 0;
+    padding: 0;
+}
+img {
+    margin: 10px 0 5px;
+}
+/* Header styles */
+#title {
+    text-decoration: none;
+    color: #000066;
+}
+#header {
+    clear: both;
+    float: left;
+    width: 100%;
+    padding-top: 5px;
+}
+#linkbar {
+    width: 100%;
+    /*position: relative;*/
+    text-align: center;
+    padding-bottom: 2px;
+    margin-top: 10px;
+}
+#corner_links {
+    float: right;
+    margin-right: 1em;
+    font-size: 80%;
+}
+#corner_links, #corner_links a, #corner_links a:visited, #corner_title a, #corner_title a:visited{
+    color:#FFFFFF;
+}
+#corner_links a:hover, #corner_title a:hover {
+  color:#CF070A;
+}
+#corner_title {
+    margin-left: 1%;
+    color: #FFFFFF;
+    font-weight: 900;
+    font-size: 125%;
+}
+#corner_title a {
+  text-decoration: none;
+}
+.notices {
+    width:97%;
+    margin-left:1%;
+    margin-top: 1em;
+}
+.errors_message {
+    color: red;
+    font-weight: bold;
+}
+/* column container */
+.colmask {
+    position: relative;	/* This fixes the IE7 overflow hidden bug */
+    padding-top: 10px;
+    clear: both;
+    float: left;
+    width: 100%;			/* width of whole page */
+    overflow:hidden;		/* This chops off any overhanging divs */
+}
+/* common column settings */
+.colright, .colmid, .colleft {
+    float: left;
+    width: 100%;
+    position: relative;
+}
+
+.col1, .col2 {
+    float: left;
+    position: relative;
+    padding: 1em 0 1em 0;
+    overflow: hidden;
+    font-size: 80%
+}
+.col1 {
+    background: #FFFFFF;
+    padding-left: 1em;
+    border-style: ridge;
+    border-color: #cF070A;
+    border-width: 2px;
+}
+.col2 {
+    padding-left: 1em;
+}
+/* 2 Column (right menu) settings */
+.rightmenu {
+}
+.rightmenu .colleft {
+    right:15%;      /* right column width */
+}
+.rightmenu .col1 {
+    width:81%;      /* left column content width (left column width minus left and right padding) */
+    left: 16%;     /* (right column width) plus (left column left padding) */
+}
+.rightmenu .col2 {
+    width:14%;      /* right column content width (right column width minus left and right padding) */
+    left:17%;     /* (right column width) plus (left column left and right padding) plus (right column left padding) */
+}
+.col2 button, .col2 input {
+    width: 90%;
+}
+/* Footer styles */
+#footer {
+    clear: both;
+    float: left;
+    width: 100%;
+}
+#footer p {
+    padding: 10px;
+    margin: 0;
+}
+/* Drag Lists */
+.drag_lists td {
+    vertical-align: top;
+}
+
+  
+.drag_lists li {
+    margin: 0 5px 5px 5px;
+    padding: 5px;
+    cursor: move;
+}
+.drag_lists ul {
+    list-style-type: none;
+    margin: 0;
+    float: left;
+    margin-right: 10px;
+    border: 1px solid #000066;
+    padding:5px;
+    width: 145px;
+}
+.drag_lists th {
+    background-color: #000066;
+}
+.drag_lists_inactive_col li {
+    border: 1px solid #666666;
+}
+.drag_lists_active_col li {
+    border: 1px solid #000066;
+}
+/* will_paginate */
+.pagination {
+  margin: 5px;
+}
+.pagination em {
+  font-style: normal;
+  color: #575757;
+}
+.pagination a {
+  text-decoration: none;
+}
+.pagination .disabled {
+  display: none;
+}

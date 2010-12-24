@@ -1,0 +1,24 @@
+<table style='width:100%;'>
+  <tr>
+    <td style='width: 50%; vertical-align: top;'>
+      <h2>Late Shipments</h2>
+      <% if @late_shipments.length == 0 %>
+      No late shipments.
+      <% else %> 
+      <table class='detail_table'>
+        <thead>
+          <tr><th>Reference</th><th>ETA</th></tr>
+        </thead>
+        <tbody>
+      <% @late_shipments.each do |shipment| %>
+      <tr class='hover'><td><%= link_to (shipment.reference.blank? ? '[empty]' : shipment.reference), shipment_path(shipment)%></td><td><%=shipment.eta.to_s %></td></tr>
+      <% end %>
+        </tbody>
+      </table>
+      <% end %>
+    </td>
+    <td style=' vertical-align: top;'>
+      <h2>Late Orders</h2>
+    </td>
+  </tr>
+</table>

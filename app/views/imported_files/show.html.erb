@@ -1,0 +1,36 @@
+<% content_for :javascript do %>
+  $(function() {
+    $("#btn_process")
+      .button()
+      .click(function() {
+        window.location = '<%=process_file_imported_file_path(@imported_file)%>';
+      });
+  });
+  $(document).ready(function() {
+    $('#process_alert').fadeIn('slow').delay(2000).fadeOut();
+  });
+<% end %>
+<% content_for :action_bar do %>
+  <button id='btn_process'>Process</button>
+<% end %>
+<div id='process_alert' style='display:none; text-align:right; color:green; float:right'>
+<h3>You must click process to finish importing the file &gt;&gt;</h3>
+</div>
+<p>
+  <b>Name:</b><%= link_to @imported_file.filename, download_imported_file_path(@imported_file) %>
+</p>
+
+<h2>Preview</h2>
+<div>
+  <b>The first row of this file will perform the following actions.<br/>  
+    Please double check that it looks right before clicking process.<br />
+    <span style='color:red;'>There is no undo for this action.</span></b>
+</div>
+<div>
+  <ul>
+   <% @imported_file.preview.each do |m| %>
+    <li><%=m%></li>
+   <% end %>
+  </ul>
+</div>
+

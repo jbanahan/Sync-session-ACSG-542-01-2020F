@@ -1,0 +1,10 @@
+<div id='<%= address_id %>'>
+<% unless ad.nil? %>
+<b><%= ad.name %></b><br />
+<% unless ad.line_1.blank? %><%= ad.line_1 %><br /><% end %>
+<% unless ad.line_2.blank? %><%= ad.line_2 %><br /><% end %>
+<% unless ad.line_3.blank? %><%= ad.line_3 %><br /><% end %>
+<%= ad.city %>, <%= ad.state %> <%= ad.postal_code %><br />
+<%= ad.country.nil? ? '' : ad.country.iso_code %>
+<% end %>
+</div>

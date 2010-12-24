@@ -1,0 +1,38 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#mod_division").dialog({autoOpen:false, title:'<%= edit_div.nil? ? "Add" : "Edit" %> Division'});
+  $("#division_submit").button();
+  $("#btn_add_division").button().click(function() {
+    $("#mod_division").dialog('open');
+  });
+});
+<% if !edit_div.nil? %>
+$(document).ready( function() {
+  $("#mod_division").dialog('open');
+});
+<% end %>
+<% end %>
+
+<% if @company.master %>
+<h2>Divisions</h2>
+<ul>
+  <% @company.divisions.each do |div| %>
+  <li>
+  	<% if @company.can_edit?(current_user) %><%= link_to div.name, edit_company_division_path(@company,div) %><%else%><%=div.name%><%end%>
+   	<% unless div.has_children? %> - <%= link_to 'Delete', company_division_path(@company,div), :confirm => 'Are you sure?', :method => :delete %><%end%>
+  </li>
+  <% end %>
+</ul>
+<% if edit_div.nil?%><button id='btn_add_division'>Add</button><%end%>
+<div id='mod_division' style='display:none;'>
+<%= form_for(edit_div.nil? ? [@company, @company.divisions.build] : [@company, edit_div]) do |f| %>
+	<div class="field">
+		<%= f.label :name %><br />
+		<%= f.text_field :name %>
+	</div>
+	<div class="actions">
+		<%= f.submit %>
+	</div>
+<% end %>
+</div>
+<% end %>

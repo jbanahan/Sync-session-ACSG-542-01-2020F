@@ -1,0 +1,15 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  id: 1
+  filename: MyString
+  size: 1
+  content_type: text/csv
+  import_config_id: 1
+
+two:
+  id: 2
+  filename: MyString
+  size: 1
+  content_type: text/csv
+  import_config_id: 2

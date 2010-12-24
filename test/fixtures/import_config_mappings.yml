@@ -1,0 +1,25 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+config_1_order_number:
+  id: 1
+  model_field_uid: order-order_number-Header - Order Number
+  column: 1
+  import_config_id: 1
+
+config_1_buyer:
+  id: 2
+  model_field_uid: order-buyer-Header - Buyer
+  column: 2
+  import_config_id: 1
+
+config_2_order_number:
+  id: 3
+  model_field_uid: order-order_number-Header - Order Number
+  column: 1
+  import_config_id: 2
+  
+config_2_product_uid:
+  id: 4
+  model_field_uid: order-product_unique_identifier-Line - Product Unique Identifier
+  column: 2
+  import_config_id: 2

@@ -1,0 +1,42 @@
+<%=
+map = @ic.import_config_mappings.order("column ASC")
+headers = []
+has_detail = false
+map.each {|m| 
+  has_detail = true if m.find_model_field.detail?
+  headers << m.find_model_field.label if @ic.ignore_first_row
+}
+opts = {:row_sep => "\r\n"}
+if headers.length > 0 
+  opts[:headers] = headers 
+  opts[:write_headers] = true 
+end
+x = FasterCSV.generate(opts) do |csv|
+  srch_result.each do |o|
+    if has_detail
+      dets = detail_lambda.call(o)
+      if dets.size > 0
+        dets.each do |d|
+          r = []
+          map.each {|m|
+            mf = m.find_model_field 
+            r << mf.process_export(mf.detail? ? d : o).to_s 
+          }
+          csv << r
+        end
+      else
+        r = []
+        map.each {|m|
+          mf = m.find_model_field 
+          r << mf.process_export(mf.detail? ? nil : o).to_s 
+        }
+        csv << r
+      end  
+    else
+      r = []
+      map.each {|m| r << m.find_model_field.process_export(o).to_s }
+      csv << r
+    end
+  end
+end
+raw x%>

@@ -1,0 +1,30 @@
+<% content_for :javascript do %>
+  <% if current_user.company.master %>
+  $(function() {
+    $( "#btn_new" )
+      .button()
+      .click(function() {
+        window.location = '<%=new_company_path%>';
+      });
+  });
+  <% end %>
+<% end %>
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'c_name'%></th>
+    <th><%=sortable_search_heading 'c_bool'%></th>
+    <th><%=sortable_search_heading 'v_bool'%></th>
+  </thead>
+
+<% @companies.each do |company| %>
+  <tr class='hover'>
+    <td><%= link_to company.name, company %><%=company.locked? ? raw(" - <span class='exception_value'>[LOCKED]</span>") : ''%></td>
+    <td><%= company.carrier? ? "Yes" : "No" %></td>
+    <td><%= company.vendor? ? "Yes" : "No" %></td>
+  </tr>
+<% end %>
+</table>
+<% if current_user.company.master %>
+<button id="btn_new">New</button>
+<% end %>

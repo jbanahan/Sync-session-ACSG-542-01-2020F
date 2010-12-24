@@ -1,0 +1,73 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#mod_address").dialog({autoOpen:false,
+    title:'<%= edit_add.nil? ? "Add" : "Edit" %> Address'});
+  $( "#address_submit" ).button();
+  $("#btn_add_address").button().click(function() {
+    $("#mod_address").dialog('open');
+  });
+});
+<% if !edit_add.nil? %>
+$(document).ready( function() {
+  $("#mod_address").dialog('open');
+});
+<% end %>
+<% end %>
+<% if @company.addresses.length > 0 %>
+<h2>Addresses</h2>
+<table class='detail_table'>
+	<thead>
+		<th>Name</th><th>City</th><th>Country</th><th>Shipment Address</th><th></th>
+	</thead>
+	<% @company.addresses.each do |ad| %>
+	<tr><td><%if @company.locked?%><%=ad.name%><%else%><%= link_to ad.name, edit_company_address_path(@company, ad) %><%end%></td><td><%= ad.city %></td><td><%= ad.country.nil? ? " " : ad.country.name %></td>
+		<td><%= ad.shipping ? 'Yes' : 'No' %></td>
+	<td>
+	<% unless @company.locked?%><%= link_to 'Delete', company_address_path(@company, ad) , :confirm => 'Are you sure?', :method => :delete %><%end%>
+	</td>
+	</tr>
+	<% end %>
+</table>
+<% end %>
+<% unless @company.locked? %>
+<% if edit_add.nil?%><button id='btn_add_address'>Add</button><%end%>
+<div id='mod_address' style="display:none;">
+<%= form_for(edit_add.nil? ? @company.addresses.build : edit_add) do |f| %>
+
+  <%= f.hidden_field :company_id %>
+  <div class="field">
+    <%= f.label :name %><br />
+    <%= f.text_field :name %>
+  </div>
+  <div class="field">
+    Address<br />
+    <%= f.text_field :line_1 %><br/>
+    <%= f.text_field :line_2 %><br/>
+    <%= f.text_field :line_3 %><br/>
+  </div>
+  <div class="field">
+    <%= f.label :city %><br />
+    <%= f.text_field :city %>
+  </div>
+  <div class="field">
+    <%= f.label :state %><br />
+    <%= f.text_field :state %>
+  </div>
+  <div class="field">
+    <%= f.label :postal_code %><br />
+    <%= f.text_field :postal_code %>
+  </div>
+	<div class="field">
+		<%= f.label :country %><br />
+		<%= f.collection_select :country_id, @countries, :id, :name, options ={:prompt => "-Select a country"} %> 
+	</div>
+	<div class="field">
+		<%= f.label :shipping %><br />
+		<%= f.check_box :shipping %>
+	</div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>
+</div>
+<% end %>

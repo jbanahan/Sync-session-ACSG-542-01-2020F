@@ -1,0 +1,74 @@
+<% content_for :javascript do %>
+  function makeAccordion(obj){
+    obj.accordion({
+      collapsible: true,
+      active: false,
+      change: function(e, ui) {
+        id = $(ui.newContent).attr("id");
+        unRead = $("#mhead_"+id).hasClass("unread")
+        if(unRead) {
+          toggleMessageRead(id, function(x) {
+            $("#mhead_"+x).removeClass("unread");
+            $("#mhead_"+x).addClass("read");
+            $("#btn_unread_"+x).show()
+          });
+        }
+      }
+    });
+  }
+  $(function() {
+    makeAccordion($( "#accordion" ))
+    $(".btn_unread").each(function() {
+      id = $(this).attr("id").substring(11,$(this).attr("id").length);
+      $(this).button().click(function() { toggleMessageRead(id,function(x) {
+            $("#mhead_"+x).removeClass("read");
+            $("#mhead_"+x).addClass("unread");
+            $("#btn_unread_"+x).hide()
+          });});
+    });
+    $("#btn_read_all")
+      .button()
+      .click(function() {
+        $.get('<%=read_all_messages_path%>');
+        $('.unread').each(function() {
+          $(this).removeClass("unread");
+          $(this).addClass("read");
+          $("#message_count").html('');
+        });
+      });
+    $(".btn_delete").each(function() {
+      id = $(this).attr("id").substring(11,$(this).attr("id").length);
+      $(this).button().click(function() {
+        if ( confirm("Are you sure you want to delete this message?") )
+            $.ajax({
+                url: '/messages/'+id,
+                type: 'post',
+                dataType: 'script',
+                data: { '_method': 'delete' },
+            });            
+            $("#"+id).effect('fade');
+            $("#mhead_h3_"+id).effect('fade', function() {
+              $("#"+id).remove();
+              $("#mhead_h3_"+id).remove();
+            });
+            
+      });
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+<button id='btn_read_all'>Mark All Read</button>
+<% end %>
+<div id="accordion" style='width:98%;'>
+<% @messages.each do |message| %>
+  <h3 id='mhead_h3_<%=message.id%>'><a href='#'><span id='mhead_<%=message.id%>' class='<%=message.read ? 'read' : 'unread'%>' ><%=(message.subject.empty? ? '[No Subject]' : message.subject)%> - <%= message.created_at%></span></a></h3>
+  <div id='<%=message.id%>'>
+    <p><%= raw message.body%></p>
+    <p>
+      <button class='btn_unread' id='btn_unread_<%=message.id%>'>Mark Unread</button>&nbsp;
+      <button class='btn_delete' id='btn_delete_<%=message.id%>'>Delete</button>
+    </p>
+  </div>
+<% end %>
+</div>

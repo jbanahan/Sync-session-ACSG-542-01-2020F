@@ -1,0 +1,68 @@
+<script type='text/javascript'>
+  <% unless @import_config.id.nil? %>
+  $(function() {
+    $( "#unmapped, #mapped" ).sortable({
+      connectWith: ".sort_group"
+    }).disableSelection();
+    $("#import_config_submit").button();
+    $(".edit_import_config").submit(function() {
+      $('.edit_import_config').remove('.hidden_mf');
+      var i = 1;
+      $("#mapped").children("li").each(function() {
+        var uid = $(this).attr('id')
+        var uidName = 'import_config[import_config_mappings_attributes]['+i+'][model_field_uid]';
+        var colName = 'import_config[import_config_mappings_attributes]['+i+'][column]';
+        addHiddenFormField($('.edit_import_config'),uidName,uid,uidName,'hidden_mf');
+        addHiddenFormField($('.edit_import_config'),colName,i,colName,'hidden_mf');
+        i++;
+      });
+    });
+  });
+  <%end%>
+</script>
+
+<%= form_for(@import_config) do |f| %>
+  <div class="field">
+    <%= f.label :name %><br />
+    <%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label :model_type %><br />
+    <%= f.select :model_type, hash_flip(ImportConfig::MODEL_TYPES) %>
+  </div>
+  <div class="field">
+    <%= f.label :ignore_first_row %><br />
+    <%= f.check_box :ignore_first_row %>
+  </div>
+  <% @import_config.file_type = 'csv' %>
+  <%= f.hidden_field :file_type %>
+  <% unless @import_config.id.nil? %> 
+  <div id='mapping_container' class='drag_lists'>
+    <h3>File Columns</h3>
+    <div style='font-size:70%'>(drag fields to move &amp; sort)</div>
+    <table>
+      <thead><th>Available</th><th>Mapped</th></thead>
+      <tr>
+        <td>
+          <ul id='unmapped' class='sort_group drag_lists_inactive_col'>
+            <%@unmapped_fields.each do |m|%>
+              <li id='<%=m.uid%>' class='hover'><%=m.label%></li>
+            <% end %>
+          </ul>
+        </td>
+        <td>
+          <ul id='mapped' class='sort_group drag_lists_active_col'>
+            <%@mapped_fields.each do |m|%>
+              <li id='<%=m.uid%>' class='hover'><%=m.label%></li>
+            <% end %>
+          </ul>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <% end %>
+  
+  <div class="actions">
+    <%= f.submit 'Save' %>
+  </div>
+<% end %>  

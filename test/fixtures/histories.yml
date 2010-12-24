@@ -1,0 +1,20 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  id: 1
+  order_id: 1
+  shipment_id: 1
+  product_id: 1
+  company_id: 1
+  user_id: 1
+  history_type: test
+
+two:
+  id: 2
+  order_id: 2
+  shipment_id: 1
+  product_id: 1
+  company_id: 1
+  user_id: 1
+  history_type: test
+  walked: 2010-10-24 10:59:17

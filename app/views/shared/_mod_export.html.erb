@@ -1,0 +1,14 @@
+<button id='btn_export_file'>Download</button>
+<div id='mod_export' style='display:none;'>
+  File Format: 
+  <form action='<%=url_for(:format => :csv) %>' method='get' id='frm_exp_file'>
+    <% params.each do |k,v| %>
+    <input type='hidden' name='<%=k%>' value='<%=v%>' />
+    <% end %>
+    <select name='ic'>
+      <% ImportConfig.where(:model_type => model_type).each do |c| %>
+      <option value="<%=c.id%>"><%=c.name%></option>
+      <% end %>
+    </select>
+  </form>
+</div>

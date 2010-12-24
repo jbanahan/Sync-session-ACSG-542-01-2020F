@@ -1,0 +1,36 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+master:
+  id: 1
+  name: Master Company
+  carrier: false
+  vendor: false
+  master: true
+
+vendor:
+  id: 2
+  name: Vendor Name
+  carrier: false
+  vendor: true
+  master: false
+
+vendor2:
+  id: 3
+  name: Vendor Two
+  carrier: false
+  vendor: true
+  master: false
+
+carrier4:
+  id: 4
+  name: Carrier Four
+  carrier: true
+  vendor: false
+  master: false
+  
+carrier5:
+  id: 5
+  name: Carrier Five
+  carrier: true
+  vendor: false
+  master: false

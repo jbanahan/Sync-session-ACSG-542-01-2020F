@@ -1,0 +1,44 @@
+<script>
+  $(function() {
+    $( "#user_submit" )
+      .button()
+  });
+</script>
+<%= form_for([@company, @user]) do |f| %>
+  <%= f.hidden_field :company_id %>
+  <div class="field">
+    <%= f.label :username %><br />
+    <%= f.text_field :username %>
+  </div>
+  <div class="field">
+    <%= f.label :email %><br />
+    <%= f.text_field :email %>
+  </div>
+  <div class="field">
+    <%= f.label :first_name %><br />
+    <%= f.text_field :first_name %>
+  </div>
+  <div class="field">
+    <%= f.label :last_name %><br />
+    <%= f.text_field :last_name %>
+  </div>
+  <div class="field">
+    <%= f.label :password %><br />
+    <%= f.password_field :password %>
+  </div>
+  <div class="field">
+    <%= f.label :password_confirmation %><br />
+    <%= f.password_field :password_confirmation %>
+  </div>
+  <div class="field">
+    <%= f.label :time_zone %><br />
+    <%= f.time_zone_select :time_zone, ActiveSupport::TimeZone.us_zones %>
+  </div>
+  <div class="field">
+    <%= f.label :email_format %><br />
+    <%= f.select :email_format, ["html","text"]%>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

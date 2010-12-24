@@ -1,0 +1,23 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+masteruser:
+  id: 1
+  company_id: 1
+  username: masteruser
+  email: MyString@bademail.com
+
+vendoruser:
+  id: 2
+  company_id: 2
+
+vendor2user:
+  id: 3
+  company_id: 3
+
+carrier4user:
+  id: 4
+  company_id: 4
+  
+carrier5user:
+  id: 5
+  company_id: 5

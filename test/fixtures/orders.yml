@@ -1,0 +1,24 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  id: 1
+  order_number: Order One
+  order_date: 2010-09-08
+  buyer: buyer_string
+  season: season_string
+  division_id: 1
+  vendor_id: 2
+
+no_details:
+  id: 2
+  order_number: MyString
+  order_date: 2010-09-08
+  buyer: MyString
+  season: MyString
+  division: d
+  vendor_id: 2
+  
+three:
+  id: 3
+  order_number: Order Three
+  vendor_id: 1

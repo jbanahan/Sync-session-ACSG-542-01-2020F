@@ -1,0 +1,121 @@
+<% content_for :javascript do %>
+  $(function() {
+  <% if @product.can_edit?(current_user)%>
+    $( "#btn_edit" )
+      .button()
+      .click(function() {
+        window.location = '<%=edit_product_path(@product)%>';
+      });
+    $("#mod_inventory").dialog({autoOpen:false,title:"Adjust Inventory",
+      buttons:{"Adjust":function() {$("#frm_inv").submit();}}});
+    $( "#btn_adj_inventory").button().click(function() {
+      $("#mod_inventory").dialog('open');
+    });
+  <% end %>
+    $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
+      buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
+    $("#btn_subscriptions")
+      .button()
+      .click(function() {
+        $("#mod_subscriptions").dialog('open');
+      });
+    $("#btn_order_jump")
+      .button()
+      .click(function() {
+        window.location = '<%=raw url_for(:action => :index, :controller => :orders, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq' )%>';
+      });
+    $("#btn_shipment_jump")
+      .button()
+      .click(function() {
+        window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq' )%>';
+      });
+    $( "#item_change_subscription_submit").button();
+    $("#tbl_state").visualize({width: 350, height:250}).appendTo('#chart_holder').trigger('visualizeRefresh');
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+<% if @product.can_edit?(current_user) && !@product.locked?%>
+  <button id='btn_edit'>Edit</button>
+  <button id='btn_adj_inventory'>Adjust Inventory</button>
+<%end%>
+<button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:product_id => @product.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
+<button id='btn_order_jump'>Orders</button>
+<button id='btn_shipment_jump'>Shipments</button>
+<% end %>
+
+<p>
+  <b>Unique identifier:</b>
+  <%= @product.unique_identifier %>
+</p>
+
+<p>
+  <b>Part number:</b>
+  <%= @product.part_number %>
+</p>
+
+<p>
+  <b>Name:</b>
+  <%= @product.name %>
+</p>
+
+<p>
+  <b>Description:</b>
+  <%= @product.description %>
+</p>
+
+<p>
+  <b>Vendor:</b>
+  <%= @product.vendor.name %> <%if(@product.vendor.locked?)%><span class='exception_value'>[LOCKED]</span><%end%>
+</p>
+<p>
+	<b>Division:</b>
+	<%= @product.division.name %>
+</p>
+<div style='width=95%' id='chart_holder'>
+<table class='detail_table' id='tbl_state'>
+  <caption>Product Status</caption>
+  <thead>
+    <th>Not Shipped</th>
+    <th>Not Departed</th>
+    <th>In Transit</th>
+    <th>Arrived</th>
+    <th>Inventory</th>
+  </thead>
+  <tbody>
+    <tr>
+    <% state_hash = @product.state_hash current_user %>
+      <td><%=state_hash[:not_shipped]%></td>
+      <td><%=state_hash[:not_departed]%></td>
+      <td><%=state_hash[:in_transit]%></td>
+      <td><%=state_hash[:arrived]%></td>
+      <td><%=state_hash[:inventory]%></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div id='mod_subscriptions' style='display:none;'>
+  <% 
+  change_subs = ItemChangeSubscription.where({:product_id => @product.id, :user_id => current_user.id})
+  if change_subs.length == 0
+   @ics = @product.item_change_subscriptions.build
+   @ics.user = current_user 
+  else
+   @ics = change_subs[0]
+  end 
+ %>
+ <%= form_for @ics, :html=>{:id=>'frm_sub'} do |ics| %>
+    <%= ics.hidden_field :user_id %>
+    <%= ics.hidden_field :product_id %>
+    <%= ics.check_box :app_message %> Message<br />
+    <%= ics.check_box :email %> Email<br />
+ <% end %>
+</div>
+<div id='mod_inventory' style='display:none;'>
+  <%form_tag('/adjust_inventory', :method=>"post", :id => "frm_inv") do %>
+    <input type="hidden" name="product_id" value="<%=@product.id%>" />
+  Current: <%=state_hash[:inventory]%><br />
+  New: <input type="text" name="quantity" /><br />
+  <%end%>
+</div>

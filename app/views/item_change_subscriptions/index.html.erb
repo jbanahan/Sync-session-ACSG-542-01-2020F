@@ -1,0 +1,15 @@
+<table class='detail_table'>
+  <thead><tr><th>Order</th><th>Shipment</th><th>Product</th><th>Application Message</th><th>Email</th></tr></thead>
+  <tbody>  
+<% @item_change_subscriptions.each do |ics| %>
+    <tr class='hover'>
+      <td><%=ics.order.nil? ? '' : (link_to ics.order.order_number, ics.order) %></td>
+      <td><%=ics.shipment.nil? ? '' : (link_to (ics.shipment.reference.blank? ? '[empty]' : ics.shipment.reference), ics.shipment) %></td>
+      <td><%=ics.product.nil? ? '' : (link_to ics.product.unique_identifier, ics.product) %></td>
+      <td><%=ics.app_message? ? 'On' : 'Off' %></td>
+      <td><%=ics.email? ? 'On' : 'Off' %></td>
+    </tr>
+<% end %>
+  </tbody>
+
+</table>

@@ -1,0 +1,38 @@
+<% content_for :javascript do %>
+  $(function() {
+    $( "#btn_new" )
+      .button()
+      .click(function() {
+        window.location = '<%=new_company_user_path(@company)%>';
+      });
+  });
+<% end %>
+
+<h1><%=@company.name%> Users</h1>
+
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th>Full Name</th>
+      <th>Username</th>
+      <th>Email</th>
+      <th>Last Login</th>
+    </tr>
+  </thead>
+
+<tbody>
+<% @users.each do |user| %>
+  <tr class='hover'>
+    <td><%= link_to user.full_name, company_user_path(user.company_id,user.id) %><%unless user.active? %> <span class='exception_value'>[Disabled]</span><%end%></td>
+    <td><%= user.username %></td>
+    <td><%= user.email %></td>
+    <td><%= user.last_login_at %></td>
+  </tr>
+<% end %>
+</tbody>
+</table>
+<br />
+<% unless @company.locked? %>
+<button id='btn_new'>New</button>
+<% end %>
+

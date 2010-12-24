@@ -1,0 +1,42 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#btn_save").button().click(function() {
+    $("#frm_prod").submit();
+  });
+  $("#btn_cancel").button().click(function() {
+    window.location = '<%=url_for @product%>';
+  });
+});
+<% end %>
+
+<% content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<%= form_for @product, :html=>{:id=>'frm_prod'} do |f| %>
+  <div class="field">
+    <%= f.label :unique_identifier %><br />
+    <%= f.text_field :unique_identifier %>
+  </div>
+  <div class="field">
+    <%= f.label :part_number %><br />
+    <%= f.text_field :part_number %>
+  </div>
+  <div class="field">
+    <%= f.label :name %><br />
+    <%= f.text_field :name %>
+  </div>
+  <div class="field">
+    <%= f.label :description %><br />
+    <%= f.text_field :description %>
+  </div>
+	<div class="field">
+		<%= f.label :vendor %><br />
+		<%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %>
+	</div>
+	<div class="field">
+		<%= f.label :division %><br />
+		<%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => "-Select a division"} %>
+	</div>
+<% end %>

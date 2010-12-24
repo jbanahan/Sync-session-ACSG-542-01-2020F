@@ -1,0 +1,50 @@
+<% content_for :javascript do %>
+  $(function() {
+    setDatePickers([$("#order_order_date")]);
+    setupShippingAddress($('#order_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@order.ship_to_id.nil? ? '' : ",#{@order.ship_to_id}"%>);
+    $("#btn_save").button().click(function() {
+      $("#frm_ord").submit();
+    });
+    $("#btn_cancel").button().click(function() {
+      window.location = '<%=url_for @order%>';
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<%= form_for @order, :html=>{:id=>'frm_ord'} do |f| %>
+
+  <div class="field">
+    <%= f.label :order_number %><br />
+    <%= f.text_field :order_number %>
+  </div>
+  <div class="field">
+    <%= f.label :ship_to %><br />
+    <%= f.select(:ship_to_id, [['...Loading...','']])%> 
+    <div id='ship_to_ad'></div>
+  </div>
+  <div class="field">
+    <%= f.label :order_date %><br />
+    <%= f.text_field :order_date %>
+  </div>
+  <div class="field">
+    <%= f.label :buyer %><br />
+    <%= f.text_field :buyer %>
+  </div>
+  <div class="field">
+    <%= f.label :season %><br />
+    <%= f.text_field :season %>
+  </div>
+	<div class="field">
+		<%= f.label :division %><br />
+		<%= f.collection_select :division_id, @divisions, :id, :name, options ={:prompt => "-Select a division"} %> 
+	</div>
+	<div class="field">
+		<%= f.label :vendor %><br />
+		<%= f.collection_select :vendor_id, @vendors, :id, :name, options ={:prompt => "-Select a vendor"} %>
+	</div>
+<% end %>

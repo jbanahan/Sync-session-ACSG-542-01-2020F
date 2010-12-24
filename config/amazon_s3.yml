@@ -1,0 +1,14 @@
+development:
+  bucket_name: openchain-dev
+  access_key_id: AKIAIUPRO3LIBYFYTDKQ
+  secret_access_key: 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 
+
+test:
+  bucket_name: openchain-test
+  access_key_id: AKIAIUPRO3LIBYFYTDKQ
+  secret_access_key: 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 
+
+production:
+  bucket_name: openchain-prod
+  access_key_id: AKIAIUPRO3LIBYFYTDKQ
+  secret_access_key: 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 

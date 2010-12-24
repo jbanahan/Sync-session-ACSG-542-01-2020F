@@ -1,0 +1,19 @@
+<%= form_for shipment, :url => {:action=>'add_sets'}, :html=>{:id=>'frm_pack'} do |sf| %>
+<table class='detail_table'>
+  <thead><tr><th>Line</th><th>Product</th><th>Quantity</th></tr></thead>
+  <%= sf.hidden_field :id %>
+  <% shipment.piece_sets.each_with_index do |piece_set, index| %>
+    <% if piece_set.id.nil? %>
+      <%= fields_for "shipment[piece_set_attributes][#{index}]", piece_set do |ps_form| %>
+      <%=ps_form.hidden_field :product_id %>
+      <%=ps_form.hidden_field :order_line_id %>
+      <tr class='hover'>
+        <td><%=piece_set.order_line_id.nil? ? '' : piece_set.order_line.line_number%></td>
+        <td><%=piece_set.product.name%></td>
+        <td><%=ps_form.text_field :quantity, :size=>6%></td>
+      </tr>
+      <% end %>
+    <% end %>
+  <% end %>
+</table>
+<% end %>

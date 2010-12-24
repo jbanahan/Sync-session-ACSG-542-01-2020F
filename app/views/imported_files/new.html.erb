@@ -1,0 +1,5 @@
+<%= form_for @imported_file, :html => { :multipart => true } do |f| %>
+  <%= f.file_field :uploaded_data %>
+  <%= f.collection_select :import_config_id, @import_configs, :id, :name, options={:prompt => "-Select a configuration"}%>
+  <%= f.submit %>
+<% end %>

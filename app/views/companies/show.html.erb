@@ -1,0 +1,84 @@
+<% content_for :javascript do %>
+$(function() {
+  $('#mod_lock').dialog({
+      autoOpen:false,
+      buttons: {"Yes":function() {$("#frm_lock").submit();},"No":function() {$(this).dialog('close');}},
+      title: 'Are you sure?'
+    });
+  $('#mod_unlock').dialog({
+      autoOpen:false,
+      buttons: {"Yes":function() {$("#frm_unlock").submit();},"No":function() {$(this).dialog('close');}},
+      title: 'Are you sure?'
+    });
+  <%if current_user.company.master %>
+  $( "#btn_edit" )
+    .button()
+    .click(function() {
+      window.location = '<%=edit_company_path(@company)%>';
+    });
+  
+  $("#btn_users")
+    .button()
+    .click(function() {
+      window.location = '<%=company_users_path(@company)%>';
+    });
+  $("#btn_lock")
+    .button()
+    .click(function() {
+      $("#mod_lock").dialog('open');
+    });
+  $("#btn_lock_submit")
+    .button();
+  $("#btn_unlock").button().click(function(){$("#mod_unlock").dialog('open');});
+  <% end %>
+});
+<% end %>
+
+<% content_for :action_bar do %>
+  <% if current_user.company.master %>
+    <% unless @company.locked?%><button id='btn_edit'>Edit</button><br /><%end%>
+    <button id='btn_users'>Users</button>
+    <% if !@company.master && !@company.locked%>
+      <button id='btn_lock'>Lock</button>
+    <% elsif @company.locked %>
+      <button id='btn_unlock'>Unlock</button>
+    <%end%>
+  <%end%>
+<% end %>
+
+<p>
+  <b>Name:</b>
+  <%= @company.name %> <% if @company.locked %><span style='color:red;font-size:115%'>[Locked]</span><% end %>
+</p>
+
+<p>
+  <b>Carrier:</b>
+  <%= @company.carrier? %>
+</p>
+
+<p>
+  <b>Vendor:</b>
+  <%= @company.vendor? %>
+</p>
+
+<p>
+  <b>System ID:</b> <%= @company.id %> (used for uploads)
+</p>
+
+<%= render :partial => 'companies/address', :locals => { :edit_add => @address } %>
+
+<%= render :partial => 'companies/division', :locals => { :edit_div => @division } %>
+
+<div id='mod_lock' style='display:none; text-align:center;'>
+  <% form_for @company, :html => {:id=>'frm_lock'} do |f| %>
+    <h3>Are you sure you want to lock this company?</h3><br />
+    <em>If you lock, then you cannot edit or create any Orders, Shipments, Sales, Products or Deliveries associated with this company.</em><br />
+    <%= f.hidden_field :locked, {:value => '1'}%>
+  <% end %>
+</div>
+<div id='mod_unlock' style='display:none; text-align:center;'>
+  <% form_for @company, :html => {:id=>'frm_unlock'}  do |f| %>
+    <h3>Are you sure you want to unlock this company?</h3><br />
+    <%= f.hidden_field :locked, {:value => '0'}%>
+  <% end %>
+</div>

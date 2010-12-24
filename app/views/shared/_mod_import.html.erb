@@ -1,0 +1,9 @@
+<button id='btn_import_file'>Upload</button>
+<div id='mod_import' style='display:none;'>
+  <%= form_for ImportedFile.new, :html => { :multipart => true, :id => 'frm_imp_file' } do |f| %>
+    <div>
+    <%= f.file_field :uploaded_data, :style => 'border:none;'%><br />
+    <%= f.collection_select :import_config_id, ImportConfig.where(:model_type => model_type), :id, :name, {:style => 'margin-left: 5px;'}%>
+    </div>
+  <% end %>
+</div>

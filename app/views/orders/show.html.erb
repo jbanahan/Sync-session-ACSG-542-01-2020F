@@ -1,0 +1,128 @@
+<% content_for :javascript do %>
+  $(function() {
+    <% if current_user.company.master %>
+    $( "#btn_edit" )
+      .button()
+      .click(function() {
+        window.location = '<%=edit_order_path(@order)%>';
+      });
+    <% end %>
+    <% if @order.related_shipments.length == 0  && current_user.company.master %>
+    $("#btn_delete")
+      .button();
+    <% end
+      if current_user.company.master 
+     %>
+    $("#order_line_submit")
+      .button();
+    <% end %>
+    $("#mod_subscriptions").dialog({autoOpen:false,title:'Subscriptions',
+        buttons:{"Subscribe":function() {$("#frm_sub").submit();}}
+      });
+    $("#btn_subscriptions")
+      .button()
+      .click(function() {
+        $("#mod_subscriptions").dialog('open');
+      });
+    $("#btn_line_cancel").button().click(function() {
+      window.location = '<%=order_path(@order)%>';
+    });
+    $("#order_line_submit").button();
+    $("#btn_shipment_jump").button().click(function() {
+      window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @order.order_number, :f => 'o_num', :con => 'eq' )%>';
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <% if current_user.company.master && !@order.locked? %>
+  <button id='btn_edit'>Edit</button>
+  <% end %>
+  <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? %>
+    <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+  <% end %>
+  <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
+  <% if @order.related_shipments.length > 0 %>
+  <button id='btn_shipment_jump'>Shipments</button>
+  <% end %>
+<% end %>
+
+<%= render 'orders/header' %>
+<br />
+<% form_line = @order_line.nil? ? @order.order_lines.build : @order_line %>
+<%= form_for([@order, form_line]) do |f| %>
+	
+<table class="detail_table">
+	<thead>
+	  <th>Line</th>
+		<th>Product</th>
+		<th>Ordered</th>
+		<th>Shipped</th>
+		<th>Received</th>
+		<th>Unit of Measure</th>
+		<th>Price / Unit</th>
+		<th>Total Price</th>
+		<th>Expected Ship</th>
+		<th>Expected Delivery</th>
+		<th>Ship No Later</th>
+		<th></th>
+	</thead>
+	
+		<% @order.order_lines.each do |line| 	
+			if !line.id.nil? && !@order_line.nil? && line.id == @order_line.id %>
+<%= render :partial => 'orders/line', :locals => { :f => f, :form_line => form_line } %>
+	
+	<% elsif !line.id.nil? %>
+
+	<tr class='hover'>
+	  <% line.set_line_number if line.line_number.nil? %>
+	  <td><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
+	  <td><%= link_to line.product.name, product_path(line.product) %></td>
+  	<td><%= line.ordered_qty %></td>
+  	<td><%=line.shipped_qty%></td>
+  	<td><%=line.received_qty%></td>
+  	<td><%= line.unit_of_measure %></td>
+  	<td><%= line.price_per_unit %></td>
+  	<td><%= line.price_per_unit.nil? || line.ordered_qty.nil? ? '' : line.price_per_unit * line.ordered_qty %></td>
+  	<td <%= !line.expected_ship_date.nil? && line.shipped_qty==0 && line.expected_ship_date < Time.now.to_date ? "class='exception_value'" : ""%>><%= line.expected_ship_date %></td>
+  	<td <%= !line.expected_delivery_date.nil? && line.received_qty==0 && line.expected_delivery_date < Time.now.to_date ? "class='exception_value'" : ""%>><%= line.expected_delivery_date %></td>
+  	<td><%= line.ship_no_later_date %></td>
+  	<td>
+  	  <% if @order.can_edit?(current_user) && !@order.locked?%>
+  		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
+  		<% end %> 
+  	</td>
+	</tr>
+	<%
+		end
+		end 
+		if form_line.id.nil? && @order.can_edit?(current_user) && !@order.locked?
+	%>
+<%= render :partial => 'orders/line', :locals => { :f => f, :form_line => form_line } %>
+
+	<%
+		end
+	%>
+	
+</table>
+<% 
+end 
+%>
+
+<div id='mod_subscriptions' style='display:none;'>
+  <% 
+  change_subs = ItemChangeSubscription.where({:order_id => @order.id, :user_id => current_user.id})
+  if change_subs.length == 0
+   @ics = @order.item_change_subscriptions.build
+   @ics.user = current_user 
+  else
+   @ics = change_subs[0]
+  end 
+ %>
+ <%= form_for @ics, :html => {:id=>'frm_sub'} do |ics| %>
+    <%= ics.hidden_field :user_id %>
+    <%= ics.hidden_field :order_id %>
+    <%= ics.check_box :app_message %> Message<br />
+    <%= ics.check_box :email %> Email<br />
+ <% end %>
+</div>

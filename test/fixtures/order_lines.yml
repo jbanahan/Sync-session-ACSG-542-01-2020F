@@ -1,0 +1,28 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  id: 1
+  product_id: 1
+  ordered_qty: 14
+  price_per_unit: 9.99
+  expected_ship_date: 2010-09-09
+  expected_delivery_date: 2010-09-09
+  order_id: 1
+  line_number: 1
+
+two:
+  id: 2
+  product_id: 2
+  ordered_qty: 9.99
+  price_per_unit: 9.99
+  expected_ship_date: 2010-09-09
+  expected_delivery_date: 2010-09-09
+  order_id: 1
+  line_number: 2
+
+three:
+  id: 3
+  product_id: 2
+  ordered_qty: 5
+  order_id: 1
+  line_number: 3
