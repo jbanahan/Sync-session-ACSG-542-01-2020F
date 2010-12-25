@@ -17,17 +17,17 @@
 <% end %>
 <% content_for :action_bar do %>
   <%if @user.can_edit?(current_user) && !@user.company.locked?%>
-  <button id='btn_edit'>Edit</button>
-  <br/>
-  <% if @user.id == current_user.id %>
-    <% if @user.active? %>
-      <button id='btn_disable'>Disable</button>
+    <button id='btn_edit'>Edit</button>
+    <br/>
+    <% if @user.id != current_user.id %>
+      <% if @user.active? %>
+        <button id='btn_disable'>Disable</button>
+      <% else %>
+        <button id='btn_enable'>Enable</button>
+      <% end%>
     <% else %>
-      <button id='btn_enable'>Enable</button>
-    <% end%>
-  <% end %>
-  <% else %>
-    <button id='btn_messages'>Messages</button>
+      <button id='btn_messages'>Messages</button>
+    <% end %>
   <% end %>
 <% end %>
 <h1>
