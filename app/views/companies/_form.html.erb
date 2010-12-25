@@ -1,24 +1,16 @@
 <%content_for :javascript do %>
 $(function() {
-$('#<%=@company.id.nil? ? "new_company" : "edit_company"+@company.id.to_s%>')
-  .validate();
-$('#company_submit').button();
+  $('#<%=@company.id.nil? ? "new_company" : "edit_company"+@company.id.to_s%>')
+    .validate();
+  $('#btn_save').button().click(function() {$("#frm_cmp").submit();});
 });
 <% end %>
 
-<%= form_for(@company) do |f| %>
-  <% if @company.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(@company.errors.count, "error") %> prohibited this company from being saved:</h2>
+<%content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<% end %>
 
-      <ul>
-      <% @company.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
-      <% end %>
-      </ul>
-    </div>
-  <% end %>
-
+<%= form_for @company, :html=>{:id=>'frm_cmp'} do |f| %>
   <div class="field">
     <%= f.label :name %><br />
     <%= f.text_field :name, :class => "required" %>
@@ -30,8 +22,5 @@ $('#company_submit').button();
   <div class="field">
     <%= f.label :vendor %><br />
     <%= f.check_box :vendor %>
-  </div>
-  <div class="actions">
-    <%= f.submit %>
   </div>
 <% end %>
