@@ -6,22 +6,24 @@ class HistoryWalker
   end
   
   def register(history_type,listener)
-    if @registered_listeners[history_type].nil?
-      @registered_listeners[history_type] = []
+    ht = history_type.to_sym
+    if @registered_listeners[ht].nil?
+      @registered_listeners[ht] = []
     end
-    @registered_listeners[history_type] << listener
+    @registered_listeners[ht] << listener
   end
   
   def registered(history_type)
-    if @registered_listeners[history_type].nil?
-      @registered_listeners[history_type] = []
+    ht = history_type.to_sym
+    if @registered_listeners[ht].nil?
+      @registered_listeners[ht] = []
     end
-    return @registered_listeners[history_type]
+    return @registered_listeners[ht]
   end
   
   def walk
     History.where(:walked => nil).each do |h|
-      registered(h.history_type.intern).each do |listener|
+      registered(h.history_type.to_sym).each do |listener|
         listener.consume h
       end
       h.walked = Time.now

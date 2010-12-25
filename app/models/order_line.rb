@@ -21,10 +21,7 @@ class OrderLine < ActiveRecord::Base
 	end
 	
 	def make_unpacked_piece_set
-	  set_qty = self.ordered_qty 
-	  self.piece_sets.each do |p|
-	    set_qty = set_qty - p.quantity
-	  end
+	  set_qty = self.ordered_qty - self.piece_sets.sum("quantity") 
     ps = self.piece_sets.build
     ps.product_id = self.product_id
 	  ps.quantity = set_qty < 0 ? 0 : set_qty

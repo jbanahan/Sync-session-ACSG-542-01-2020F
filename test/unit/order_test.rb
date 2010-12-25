@@ -27,16 +27,22 @@ class OrderTest < ActiveSupport::TestCase
   end
   
   test "make unpacked piece sets for full order" do
-    ord = Order.find(1)
+    ord = Order.find(1).clone
+    ord.save!
+    Order.find(1).order_lines.each do |ln|
+      c = ln.clone
+      c.order_id = ord.id
+      c.save!
+    end
     sets = ord.make_unpacked_piece_sets #to fill order
     sets.each do |s|
       s.shipment_id = 1
       s.save!
     end
     sets = ord.make_unpacked_piece_sets
-    assert sets.length == 3
+    assert sets.length == 3, "Set count should have been 3, was #{sets.length}."
     sets.each do |s|
-      assert s.quantity == 0
+      assert s.quantity == 0, "Quantity should have been 0, was #{s.quantity}."
     end
   end
   
@@ -148,6 +154,6 @@ class OrderTest < ActiveSupport::TestCase
     vendor.locked = true
     vendor.save!
     o = Order.find(1)
-    assert o.locked
+    assert o.locked?, "Order should be locked since vendor was locked."
   end
 end
