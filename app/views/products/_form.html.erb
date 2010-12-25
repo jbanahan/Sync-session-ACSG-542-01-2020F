@@ -31,6 +31,10 @@ $(function() {
     <%= f.label :description %><br />
     <%= f.text_field :description %>
   </div>
+  <div class="field">
+    <%= f.label :unit_of_measure %><br />
+    <%= f.text_field :unit_of_measure %>
+  </div>
 	<div class="field">
 		<%= f.label :vendor %><br />
 		<%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %>

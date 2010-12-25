@@ -5,7 +5,6 @@
 	<td><%= f.text_field :ordered_qty, "size" => 5 %></td> 
   <td><%=form_line.shipped_qty%></td>
   <td><%=form_line.received_qty%></td>
-	<td><%= f.text_field :unit_of_measure, "size" => 5 %></td>
 	<td><%= f.text_field :price_per_unit, "size" => 5 %></td>
 	<td><%= form_line.price_per_unit.nil? || form_line.ordered_qty.nil? ? '' : form_line.price_per_unit * form_line.ordered_qty %></td>
 	<td><%= f.text_field :expected_ship_date, "size" => 7 %></td>

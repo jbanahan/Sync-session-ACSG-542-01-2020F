@@ -19,7 +19,7 @@
     <td><%= product.description %></td>
     <td><%= product.vendor.name %></td>
 		<td><%= product.division.name %></td>
-		<td><%= product.current_inventory_qty%></td>
+		<td><%= product.current_inventory_qty%> <%=product.unit_of_measure%></td>
   </tr>
 <% end %>
 </table>

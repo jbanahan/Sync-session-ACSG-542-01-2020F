@@ -40,7 +40,6 @@ class ImportConfig < ActiveRecord::Base
         }
       }],
     [7,:order,:ordered_qty,"Line - Order Quantity",{:detail => true}],
-    [8,:order,:unit_of_measure,"Line - Unit of Measure",{:detail => true}],
     [9,:order,:price_per_unit,"Line - Price / Unit",{:detail => true}],
     [10,:order,:expected_ship_date,"Line - Expected Ship Date",{:detail => true}],
     [11,:order,:expected_delivery_date,"Line - Expected Delivery Date",{:detail => true}],
