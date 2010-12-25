@@ -23,7 +23,9 @@ class User < ActiveRecord::Base
   end
   
   def full_name
-    return (self.first_name.nil? ? '' : self.first_name + " ") + (self.last_name.nil? ? '' : self.last_name)
+    n = (self.first_name.nil? ? '' : self.first_name + " ") + (self.last_name.nil? ? '' : self.last_name)
+    n = self.username if n.strip.length==0
+    return n
   end
   
   def can_view?(user)

@@ -20,4 +20,14 @@ class UserTest < ActiveSupport::TestCase
     assert !User.find(1).can_edit?(u), "Non-master can edit other."
   end
 
+  test "full_name" do
+    u = User.new(:first_name => "First", :last_name => "Last", :username=>"uname")
+    assert u.full_name == "First Last", "full_name should have been \"First Last\" was \"#{u.full_name}\""
+    u.first_name = nil
+    u.last_name = nil
+    assert u.full_name == "uname", "full_name should have substituted username when first & last were nil"
+    u.first_name = ''
+    assert u.full_name == "uname", "full_name should have substituted username when length of first+last was 0"
+  end
+
 end
