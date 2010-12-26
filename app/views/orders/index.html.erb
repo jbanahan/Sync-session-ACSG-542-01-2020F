@@ -21,12 +21,12 @@
     </td>
     <td>
       <% order.unique_products.each do |p|%>
-        <%=p.instance_variable_get(:@ordered_qty)%><br />
+        <%="#{p.instance_variable_get(:@ordered_qty)} #{p.unit_of_measure}"%><br />
       <% end %>
     </td>
     <td>
       <% order.unique_products.each do |p|%>
-        <%=p.instance_variable_get(:@shipped_qty)%><br />
+        <%="#{p.instance_variable_get(:@shipped_qty)} #{p.unit_of_measure}"%><br />
       <% end %>
     </td>
   </tr>

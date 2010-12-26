@@ -67,7 +67,6 @@ class ImportedFileTest < ActiveSupport::TestCase
       :vendor_id => 2,
       :product_unique_identifier => "prod_1",
       :ordered_qty => 55,
-      :unit_of_measure => "UOM",
       :price_per_unit => 27.2,
       :expected_ship_date => Time.utc(2008,7,4),
       :expected_delivery_date => Time.utc(2008,9,14),
@@ -92,7 +91,6 @@ class ImportedFileTest < ActiveSupport::TestCase
     fd = found.order_lines.first
     assert fd.product.unique_identifier == vh[:product_unique_identifier], "product uid failed"
     assert fd.ordered_qty == vh[:ordered_qty], "ordered qty failed"
-    assert fd.unit_of_measure == vh[:unit_of_measure], "uom failed"
     assert fd.price_per_unit == vh[:price_per_unit], "ppu failed"
     assert fd.expected_ship_date.yday == vh[:expected_ship_date].yday, "exp ship date failed"
     assert fd.expected_delivery_date.yday == vh[:expected_delivery_date].yday, "exp delivery date failed"

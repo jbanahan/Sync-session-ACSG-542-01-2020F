@@ -134,7 +134,7 @@
     <td><%= link_to ps.product.name, ps.product %></td>
     <td><%= ps.order_line.nil? ? '[n/a]' : raw("#{link_to(ps.order_line.order.order_number, order_path(ps.order_line.order))} - #{ps.order_line.line_number}")%></td>
     <% undo_rec_link = "<a href='#' class='undo_receive' id='ur_#{ps.id}'>x</a>" %>
-    <td><%= raw(ps.quantity.to_s + (!ps.inventory_in_id.nil? ? " (received #{undo_rec_link})" : "") + (!ps.adjustment_type.nil? ? " (#{ps.adjustment_type})" : "")) %></td>
+    <td><%= raw("#{ps.quantity} #{ps.product.unit_of_measure}" + (!ps.inventory_in_id.nil? ? " (received #{undo_rec_link})" : "") + (!ps.adjustment_type.nil? ? " (#{ps.adjustment_type})" : "")) %></td>
     <td>
        <%= link_to 'Remove', piece_set_path(ps,:from => "s") , :confirm => 'Are you sure?', :method => :delete  %> |
        <%= link_to 'Edit', edit_piece_set_path(ps,:from => "s") %>
