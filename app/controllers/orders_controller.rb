@@ -77,6 +77,7 @@ class OrdersController < ApplicationController
     def create
       o = Order.new(params[:order])
       action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
+        @order = o
         respond_to do |format|
           if @order.save
               History.create_order_changed(@order,current_user,order_url(@order))
