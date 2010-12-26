@@ -3,3 +3,4 @@ Gemfile.lock
 tmp/*
 db/*.sqlite3
 .project
+.bundle/*
