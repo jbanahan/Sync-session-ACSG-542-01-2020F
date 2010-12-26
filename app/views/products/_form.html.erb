@@ -1,12 +1,24 @@
 <% content_for :javascript do %>
 $(function() {
   $("#btn_save").button().click(function() {
-    $("#frm_prod").submit();
+    checkUOMChange();
   });
   $("#btn_cancel").button().click(function() {
     window.location = '<%=url_for @product%>';
   });
 });
+function checkUOMChange() {
+  ou = $("#original_uom").val();
+  if(ou.length==0 || ou==$("#txt_uom")) {
+    return $("#frm_prod").submit();
+  } else {
+    $('<div></div>')
+    .html("<p>Are you sure you want to change the unit of measure?</p><p>This will change the unit of measure for <em>all</em> existing orders, shipments, inventory, etc.</p><p>If you have a new unit of measure for upcoming orders, click <a href='/products/new'>here</a> to create a new product.")
+    .dialog({title:'Are you sure?',
+      buttons:{"Yes":function() {$("#frm_prod").submit();},"No":function() {$(this).dialog('close');}}}
+    );
+  }
+}
 <% end %>
 
 <% content_for :action_bar do %>
@@ -33,7 +45,8 @@ $(function() {
   </div>
   <div class="field">
     <%= f.label :unit_of_measure %><br />
-    <%= f.text_field :unit_of_measure %>
+    <%= f.text_field :unit_of_measure, :id=>'txt_uom' %>
+    <input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' />
   </div>
 	<div class="field">
 		<%= f.label :vendor %><br />
