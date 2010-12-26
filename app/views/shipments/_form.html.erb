@@ -1,7 +1,7 @@
 <% content_for :javascript do %>
 	$(function() {
 	 setupShippingAddress('Master Company',$('#shipment_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@shipment.ship_to_id.nil? ? '' : ",#{@shipment.ship_to_id}"%>);
-	 setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad')<%=@shipment.vendor.nil? ? '': @shipment.vendor.id%><%=@shipment.ship_from_id.nil? ? '' : ",#{@shipment.ship_from_id}"%>);
+	 setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),<%=@shipment.vendor.nil? ? "'not set'": @shipment.vendor.id%><%=@shipment.ship_from_id.nil? ? '' : ",#{@shipment.ship_from_id}"%>);
    setDatePickers([$("#shipment_eta"),$("#shipment_etd"),$("#shipment_ata"),$("#shipment_atd")]);
    getAddress($('#ship_from_ad'),$("#shipment_ship_from_id").val());
    $("#shipment_vendor_id").change(function() {
