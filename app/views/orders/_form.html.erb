@@ -1,7 +1,7 @@
 <% content_for :javascript do %>
   $(function() {
     setDatePickers([$("#order_order_date")]);
-    setupShippingAddress($('#order_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@order.ship_to_id.nil? ? '' : ",#{@order.ship_to_id}"%>);
+    setupShippingAddress('Master Company',$('#order_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@order.ship_to_id.nil? ? '' : ",#{@order.ship_to_id}"%>);
     $("#btn_save").button().click(function() {
       $("#frm_ord").submit();
     });
