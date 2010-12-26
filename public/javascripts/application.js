@@ -138,31 +138,37 @@ function setDatePickers(arrayOfFields) {
 }
 
 //address setup
-function setupShippingAddress(select,display,companyId,selected_val) {
+function setupShippingAddress(companyType,select,display,companyId,selected_val) {
    select.live("change",function(){
      getAddress(display,select.val());
    });
-   getShippingAddressList(select,companyId,selected_val);
+   getShippingAddressList(select,companyId,selected_val,companyType);
 }
-function getShippingAddressList(select,companyId,selected_val) {
-  $.getJSON('/companies/'+companyId+'/shipping_address_list.json', function(data) {
-      t_val = ''
-      if(data.length==0) {
-        t_val = 'No addresses exist for this company'
-      } else {
-        t_val = 'Select an address' 
-      }
-      select.html('').append($("<option></option>").
-          attr("value",'').
-          text(t_val));
-      for (i=0; i<data.length; i++) {
-          select.
-          append($("<option></option>").
-          attr("value",data[i].address.id).
-          text(data[i].address.name)).change(); 
-      }
-      select.val(selected_val).change();
-    });
+function getShippingAddressList(select,companyId,selected_val,companyType) {
+  if(isNaN(companyId)) {
+     select.html('').append($("<option></option>").
+            attr("value",'').
+            text("Select a "+companyType));
+  } else {
+    $.getJSON('/companies/'+companyId+'/shipping_address_list.json', function(data) {
+        t_val = ''
+        if(data.length==0) {
+          t_val = 'No addresses exist for this company'
+        } else {
+          t_val = 'Select an address' 
+        }
+        select.html('').append($("<option></option>").
+            attr("value",'').
+            text(t_val));
+        for (i=0; i<data.length; i++) {
+            select.
+            append($("<option></option>").
+            attr("value",data[i].address.id).
+            text(data[i].address.name)).change(); 
+        }
+        select.val(selected_val).change();
+      });
+    }
 }
 /* OPTIONS: 
     includeName: true 
