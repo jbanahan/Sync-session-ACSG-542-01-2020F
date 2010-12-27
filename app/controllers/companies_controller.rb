@@ -4,7 +4,8 @@ class CompaniesController < ApplicationController
   SEARCH_PARAMS = {
     'c_name' => {:field => 'name', :label=> 'Name'},
     'v_bool' => {:field => 'vendor', :label => 'Is A Vendor'},
-    'c_bool' => {:field => 'carrier', :label => 'Is A Carrier'},
+    'car_bool' => {:field => 'carrier', :label => 'Is A Carrier'},
+    'cus_bool' => {:field => 'customer', :label => 'Is A Customer'},
     'l_bool' => {:field => 'locked', :label => 'Is Locked'}
   }
   def index

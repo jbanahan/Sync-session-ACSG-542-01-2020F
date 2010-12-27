@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  id: 1
+  order_number: MyString
+  order_date: 2010-12-26
+  customer_id: 1
+  customer_order_number: MyString
+  payment_terms: MyString
+  ship_terms: MyString
+  comments: MyText

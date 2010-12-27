@@ -56,4 +56,24 @@ class User < ActiveRecord::Base
   def edit_products?
     return self.company.master?
   end
+  
+  def view_sales_orders?
+    return self.company.master? || self.company.customer?
+  end
+  def add_sales_orders?
+    return self.company.master?
+  end
+  def edit_sales_orders?
+    return self.company.master?
+  end
+  
+  def view_shipments?
+    return self.company.master? || self.company.vendor? || self.company.carrier?
+  end
+  def add_shipments?
+    return self.company.master? || self.company.vendor? || self.company.carrier?
+  end
+  def edit_shipments?
+    return self.company.master? || self.company.vendor? || self.company.carrier?
+  end
 end

@@ -1,5 +1,6 @@
 OpenChain::Application.routes.draw do
 
+
 	match "/index.html" => "dashboard#show_main"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
@@ -41,6 +42,10 @@ OpenChain::Application.routes.draw do
   resources :orders do
 		resources :order_lines
 	end
+	
+  resources :sales_orders do
+    resources :sales_order_lines
+  end
 
   resources :countries
 

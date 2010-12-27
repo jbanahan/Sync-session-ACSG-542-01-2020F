@@ -21,3 +21,11 @@ carrier4user:
 carrier5user:
   id: 5
   company_id: 5
+
+customer6user:
+  id: 6
+  company_id: 6
+
+customer7user:
+  id: 7
+  company_id: 7

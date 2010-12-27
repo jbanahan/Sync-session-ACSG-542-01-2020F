@@ -1,4 +1,6 @@
 class OrderLine < ActiveRecord::Base
+  include LinesSupport
+  
   belongs_to :product
   belongs_to :order
 	
@@ -8,17 +10,11 @@ class OrderLine < ActiveRecord::Base
 	validates :product, :presence => true
 	validates_uniqueness_of :line_number, :scope => :order_id
 	
-	def locked? 
-	  (!self.order.nil? && self.order.locked?) ||
-	  (!self.product.nil? && self.product.locked?)
-	end
-	
-	def set_line_number
-	  if self.line_number.nil? || self.line_number < 1
-      max = OrderLine.maximum(:line_number, :conditions => ['order_id = ?', self.order_id])
-      self.line_number = (max.nil? || max < 1) ? 1 : (max + 1)
-    end
-	end
+  def locked? 
+    (!parent_obj.nil? && parent_obj.locked?) ||
+    (!self.product.nil? && self.product.locked?)
+  end
+
 	
 	def make_unpacked_piece_set
 	  set_qty = self.ordered_qty - self.piece_sets.sum("quantity") 
@@ -48,6 +44,15 @@ class OrderLine < ActiveRecord::Base
     found = OrderLine.where({:order_id => self.order_id, :line_number => self.line_number})
     raise "Found multiple order lines with the same order id #{self.order_id} & line number #{self.line_number}" if found.size > 1
     return found.empty? ? nil : found.first
+  end
+
+  private
+  def parent_obj #supporting method for LinesSupport
+    self.order
+  end
+  
+  def parent_id_where #supporting method for LinesSupport
+    return :order_id => self.order.id
   end
 	
 end

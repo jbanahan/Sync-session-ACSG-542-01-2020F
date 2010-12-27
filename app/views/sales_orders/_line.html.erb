@@ -1,0 +1,21 @@
+<% content_for :javascript do %>
+$(function() {
+  setDatePickers([$("#fld_exp_shp"),$("#fld_exp_del"),$("#fld_shp_no_ltr")]);
+  $("#btn_line_submit").button();
+  $("#btn_line_cancel").button();
+});
+<% end %>      
+  <tr>
+  <td><%= f.text_field :line_number, "size" => 2 %></td>
+  <td><%= f.collection_select :product_id, Product.all, :id, :name, options ={:prompt => "Select a product"}%></td>
+  <td><%= f.text_field :ordered_qty, "size" => 5 %></td> 
+  <td></td><!-- shipped qty -->
+  <td></td><!-- delivered qty -->
+  <td><%=form_line.product.nil? ? '' : form_line.product.unit_of_measure%></td>
+  <td><%= f.text_field :price_per_unit, "size" => 5 %></td>
+  <td><%= form_line.price_per_unit.nil? || form_line.ordered_qty.nil? ? '' : form_line.price_per_unit * form_line.ordered_qty %></td>
+  <td><%= f.text_field :expected_ship_date, "size" => 7, "id" => "fld_exp_shp" %></td>
+  <td><%= f.text_field :expected_delivery_date, "size" => 7, "id" => "fld_exp_del" %></td>
+  <td><%= f.text_field :ship_no_later_date, "size" => 7, "id" => "fld_shp_no_ltr" %></td>
+  <td><%= f.submit (form_line.id.nil? ? 'Add' : 'Save', :id =>"btn_line_submit") %><%unless form_line.id.nil? %><button id='btn_line_cancel'>Cancel</button><%end%></td>
+  </tr>

@@ -6,6 +6,7 @@ master:
   carrier: false
   vendor: false
   master: true
+  customer: false
 
 vendor:
   id: 2
@@ -13,6 +14,7 @@ vendor:
   carrier: false
   vendor: true
   master: false
+  customer: false
 
 vendor2:
   id: 3
@@ -20,6 +22,7 @@ vendor2:
   carrier: false
   vendor: true
   master: false
+  customer: false
 
 carrier4:
   id: 4
@@ -27,6 +30,7 @@ carrier4:
   carrier: true
   vendor: false
   master: false
+  customer: false
   
 carrier5:
   id: 5
@@ -34,3 +38,20 @@ carrier5:
   carrier: true
   vendor: false
   master: false
+  customer: false
+
+customer6:
+  id: 6
+  name: Customer Six
+  customer: true
+  vendor: false
+  master: false
+  carrier: false
+  
+customer7:
+  id: 7
+  name: Customer Seven
+  customer: true
+  vendor: false
+  master: false
+  carrier: false

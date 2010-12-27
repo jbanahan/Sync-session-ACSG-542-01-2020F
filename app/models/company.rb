@@ -7,6 +7,7 @@ class Company < ActiveRecord::Base
 	has_many	:vendor_products, :class_name => "Product", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many  :vendor_shipments, :class_name => "Shipment", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many  :carrier_shipments, :class_name => "Shipment", :foreign_key => "carrier_id", :dependent => :destroy
+	has_many  :customer_sales_orders, :class_name => "SalesOrder", :foreign_key => "customer_id", :dependent => :destroy
 	has_many  :users
 	has_many	:orders, :through => :divisions, :dependent => :destroy
 	has_many	:products, :through => :divisions, :dependent => :destroy

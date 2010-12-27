@@ -33,11 +33,12 @@
         .parent()
           .buttonset()<%end%>;
     <%end%>
+    <% if current_user.view_shipments?%>
     $( "#btn_shipments" )
       .button()
       .click(function() {
         window.location = '<%=shipments_path%>';
-      })
+      })<%if current_user.add_shipments?%>
       .next()
         .button( {
           text: false,
@@ -49,7 +50,7 @@
           window.location = '<%=new_shipment_path%>';
         })
         .parent()
-          .buttonset();
+          .buttonset()<%end%>;<%end%>
      <%if current_user.view_products?%>
     $( "#btn_products" )
       .button()
@@ -67,13 +68,13 @@
           window.location = '<%=new_product_path%>';
         })
         .parent()
-          .buttonset()<%end%><%end%>;
-      
+          .buttonset()<%end%>;<%end%>
+      <%if current_user.view_sales_orders?%>
   $( "#btn_sales" )
       .button()
       .click(function() {
-        window.alert('Not implemented yet');
-      })
+        window.location = '<%=sales_orders_path%>';
+      })<%if current_user.add_sales_orders?%>
       .next()
         .button( {
           text: false,
@@ -82,10 +83,11 @@
           }
         })
         .click(function() {
-          window.alert('Not implemented yet');
+          window.location = '<%=new_sales_order_path%>';
         })
         .parent()
-          .buttonset();
+          .buttonset()<%end%>;
+      <% end %>
   $( "#btn_deliveries" )
       .button()
       .click(function() {
@@ -121,9 +123,9 @@
     <div id="linkbar">
       <button id='btn_home'>Home</button>
       <%if current_user.view_orders?%><button id='btn_orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
-      <button id='btn_shipments'>Shipments</button><button id='btn_new_shipment'>New Shipment</button>
+      <%if current_user.view_shipments?%><button id='btn_shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
       <%if current_user.view_products?%><button id='btn_products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
-      <button id='btn_sales'>Sales</button><button id='btn_new_sale'>New Sale</button>
+      <%if current_user.view_sales_orders?%><button id='btn_sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
       <button id='btn_deliveries'>Deliveries</button><button id='btn_new_delivery'>New Delivery</button>      
     </div>
   <% end %>

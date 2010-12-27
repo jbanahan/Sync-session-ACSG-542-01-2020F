@@ -72,6 +72,10 @@ body {
     width: 100%;
     text-align:center;
     font-size: 120%;
+    margin-bottom: 1em;
+}
+.content_head_label {
+  font-size: 90%;
 }
 .submit {
     background-color: #000066;

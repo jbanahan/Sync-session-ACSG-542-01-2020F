@@ -1,0 +1,31 @@
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'o_num'%></th>
+    <th><%=sortable_search_heading 'c_name'%></th>
+    <th><%=sortable_search_heading 'c_ord'%></th>
+    <th><%=sortable_search_heading 'o_date'%></th>
+    <th>Product</th>
+    <th>Ordered Qty</th>
+  </thead>
+
+<% @sales_orders.each do |order| %>
+  <tr class='hover'>
+    <td><%= link_to order.order_number, order %></td>
+    <td><%= order.customer.name %></td>
+    <td><%= order.customer_order_number%></td>
+    <td><%= order.order_date %></td>
+    <td>
+      <% order.unique_products.each do |p|%>
+        <%=p.name%><br />
+      <% end %>
+    </td>
+    <td>
+      <% order.unique_products.each do |p|%>
+        <%="#{p.instance_variable_get(:@ordered_qty)} #{p.unit_of_measure}"%><br />
+      <% end %>
+    </td>
+  </tr>
+<% end %>
+</table>
+<%= will_paginate @sales_orders %>  

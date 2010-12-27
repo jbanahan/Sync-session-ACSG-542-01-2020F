@@ -10,7 +10,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20101225221632) do
+ActiveRecord::Schema.define(:version => 20101227020942) do
 
   create_table "addresses", :force => true do |t|
     t.string   "name"
@@ -35,6 +35,7 @@ ActiveRecord::Schema.define(:version => 20101225221632) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.boolean  "locked"
+    t.boolean  "customer"
   end
 
   create_table "countries", :force => true do |t|
@@ -62,6 +63,8 @@ ActiveRecord::Schema.define(:version => 20101225221632) do
     t.datetime "created_at"
     t.datetime "updated_at"
     t.string   "history_type"
+    t.integer  "sales_order_id"
+    t.integer  "sales_order_line_id"
   end
 
   create_table "history_details", :force => true do |t|
@@ -118,6 +121,7 @@ ActiveRecord::Schema.define(:version => 20101225221632) do
     t.boolean  "email"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.integer  "sales_order_id"
   end
 
   create_table "locations", :force => true do |t|
@@ -191,6 +195,33 @@ ActiveRecord::Schema.define(:version => 20101225221632) do
     t.datetime "updated_at"
     t.integer  "division_id"
     t.string   "unit_of_measure"
+  end
+
+  create_table "sales_order_lines", :force => true do |t|
+    t.integer  "product_id"
+    t.decimal  "ordered_qty"
+    t.decimal  "price_per_unit"
+    t.date     "expected_ship_date"
+    t.date     "expected_delivery_date"
+    t.date     "ship_no_later_date"
+    t.integer  "sales_order_id"
+    t.integer  "line_number"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "sales_orders", :force => true do |t|
+    t.string   "order_number"
+    t.date     "order_date"
+    t.integer  "customer_id"
+    t.string   "customer_order_number"
+    t.string   "payment_terms"
+    t.string   "ship_terms"
+    t.text     "comments"
+    t.integer  "division_id"
+    t.integer  "ship_to_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
   end
 
   create_table "shipments", :force => true do |t|

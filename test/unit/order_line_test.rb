@@ -77,4 +77,15 @@ class OrderLineTest < ActiveSupport::TestCase
     base.line_number = -1
     assert base.find_same.nil?, "should not have found matching line with line_number = -1"
   end
+  
+  test "locked" do
+    base = OrderLine.first
+    assert !base.locked?, "Should not be locked at begining."
+    base.order.vendor.locked = true
+    assert base.locked?, "Should be locked because order vendor is locked."
+    base.order.vendor.locked = false
+    assert !base.locked?, "Should not be locked after unlocking vendor."
+    base.product.vendor.locked = true
+    assert base.locked?, "Should be locked because product vendor is locked."
+  end
 end

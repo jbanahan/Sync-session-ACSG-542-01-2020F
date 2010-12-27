@@ -5,6 +5,7 @@ class History < ActiveRecord::Base
   belongs_to  :user
   belongs_to  :company
   belongs_to  :order_line
+  belongs_to  :sales_order
   
   has_many    :history_details
   

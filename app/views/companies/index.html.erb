@@ -13,7 +13,8 @@
 <table class="detail_table">
   <thead>
     <th><%=sortable_search_heading 'c_name'%></th>
-    <th><%=sortable_search_heading 'c_bool'%></th>
+    <th><%=sortable_search_heading 'car_bool'%></th>
+    <th><%=sortable_search_heading 'cus_bool'%></th>
     <th><%=sortable_search_heading 'v_bool'%></th>
   </thead>
 
@@ -21,6 +22,7 @@
   <tr class='hover'>
     <td><%= link_to company.name, company %><%=company.locked? ? raw(" - <span class='exception_value'>[LOCKED]</span>") : ''%></td>
     <td><%= company.carrier? ? "Yes" : "No" %></td>
+    <td><%= company.customer? ? "Yes" : "No" %></td>
     <td><%= company.vendor? ? "Yes" : "No" %></td>
   </tr>
 <% end %>

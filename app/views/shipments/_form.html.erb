@@ -5,15 +5,7 @@
    setDatePickers([$("#shipment_eta"),$("#shipment_etd"),$("#shipment_ata"),$("#shipment_atd")]);
    getAddress($('#ship_from_ad'),$("#shipment_ship_from_id").val());
    $("#shipment_vendor_id").change(function() {
-      new_id = $(this).val();
-      if(isNaN(new_id)) {
-        $("#shipment_ship_from_id").html('').
-          append($("<option></option>").
-          attr("value",'').
-          text("Select a vendor first")); 
-      } else {
-        getShippingAddressList($('#shipment_ship_from_id'),new_id);
-      }
+      setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),$(this).val());
     });
     $("#btn_save").button().click(function() {
       $("#frm_shp").submit();
@@ -30,11 +22,11 @@
 <% end %>
 
 <%= form_for @shipment, :html => {:id=>'frm_shp'} do |f| %>
-<div class='content_head' style='margin-bottom: 1em;'>
-  <span style="font-size:90%;">Reference:</span>
+<div class='content_head'>
+  <span class='content_head_label'>Reference:</span>
   <b><%= f.text_field :reference %></b>
   <br />
-  <span style="font-size:90%;">Vendor:</span>
+  <span class='content_head_label'>Vendor:</span>
   <% if @shipment.piece_sets.size > 0 %>
     <%= f.hidden_field :vendor_id %><%= @shipment.vendor.name %>
   <% elsif current_user.company.vendor? 
