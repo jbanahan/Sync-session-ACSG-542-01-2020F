@@ -9,11 +9,6 @@
   <script>
   <% if current_user %>
   $(function() {
-    $( "#btn_home" )
-      .button()
-      .click(function() {
-        window.location = '/';
-      });
     <% if current_user.view_orders?%>
     $( "#btn_orders" )
       .button()
@@ -112,7 +107,7 @@
 <head>
 <body>
 <div id="header">
-  <span id="corner_title"><%=link_to master_company.name, root_path %></span>
+  <span id="corner_title"><%=link_to image_tag('logo.png'), root_path %></span>
   <% if current_user %>
     <div id="corner_links">
         <%= link_to current_user.full_name, company_user_path(current_user.company, current_user) %> 
@@ -121,7 +116,7 @@
         <%= link_to 'Logout', logout_path %>
     </div>
     <div id="linkbar">
-      <button id='btn_home'>Home</button>
+      <!--<button id='btn_home'>Home</button>-->
       <%if current_user.view_orders?%><button id='btn_orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
       <%if current_user.view_shipments?%><button id='btn_shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
       <%if current_user.view_products?%><button id='btn_products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
