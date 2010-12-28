@@ -49,10 +49,6 @@ class Company < ActiveRecord::Base
 	  Company.where(:master => true).first
 	end
 	
-	def customer?
-	  
-	end
-	
 	private 
 	def master_lock
 	  errors.add(:base, "Master company cannot be locked.") if self.master && self.locked
