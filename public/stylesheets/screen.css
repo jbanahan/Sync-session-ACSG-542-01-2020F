@@ -7,7 +7,9 @@ body {
     min-width: 600px;		/* Minimum width of layout - remove line if not required */
     /* The min-width property does not work in old versions of Internet Explorer */
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    background: #C8C3E6;
+    background-color: #9fb0c8;
+    background-image: url('/images/background.jpg');
+    background-repeat: repeat-x;
 }
 .error, .exception_value {
     color: red;
