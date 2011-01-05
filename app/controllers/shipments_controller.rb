@@ -112,7 +112,7 @@ class ShipmentsController < ApplicationController
   # GET /shipments/1.xml
   def show
     s = Shipment.find(params[:id])
-    action_secure(s.can_view?(current_user),p,{:lock_check=>false,:verb => "view",:module_name=>"shipment"}) {
+    action_secure(s.can_view?(current_user),s,{:lock_check=>false,:verb => "view",:module_name=>"shipment"}) {
       @shipment = s
       respond_to do |format|
         format.html # show.html.erb

@@ -83,11 +83,12 @@
         .parent()
           .buttonset()<%end%>;
       <% end %>
+      <% if current_user.view_deliveries?%>
   $( "#btn_deliveries" )
       .button()
       .click(function() {
-        window.alert('Not implemented yet');
-      })
+        window.location = '<%=deliveries_path%>';
+      })<%if current_user.add_deliveries?%>
       .next()
         .button( {
           text: false,
@@ -96,10 +97,11 @@
           }
         })
         .click(function() {
-          window.alert('Not implemented yet');
+          window.location = '<%=new_delivery_path%>';
         })
         .parent()
-          .buttonset();
+          .buttonset()<%end%>;
+       <% end %>
   });
   <% end %>
   <%= yield :javascript%>
@@ -121,7 +123,7 @@
       <%if current_user.view_shipments?%><button id='btn_shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
       <%if current_user.view_products?%><button id='btn_products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
       <%if current_user.view_sales_orders?%><button id='btn_sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
-      <button id='btn_deliveries'>Deliveries</button><button id='btn_new_delivery'>New Delivery</button>      
+      <%if current_user.view_deliveries?%><button id='btn_deliveries'>Deliveries</button><%if current_user.add_deliveries?%><button id='btn_new_delivery'>New Delivery</button><%end%><%end%>      
     </div>
   <% end %>
   <% if has_messages %>

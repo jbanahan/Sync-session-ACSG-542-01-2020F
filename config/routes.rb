@@ -5,6 +5,7 @@ OpenChain::Application.routes.draw do
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
   match "/shipments/:id/undo_receive" => "shipments#undo_receive"
+  match "/deliveries/:id/add_sets" => "deliveries#add_sets"
   match "/login" => "user_sessions#new", :as => :login
   match "/logout" => "user_sessions#destroy", :as => :logout
   match "/settings" => "settings#index", :as => :settings
@@ -35,6 +36,10 @@ OpenChain::Application.routes.draw do
 
   resources :shipments do
 		get 'unpacked_order_lines', :on => :member
+	end
+	
+	resources :deliveries do
+	  get 'unpacked_order_lines', :on => :member
 	end
 
   resources :products

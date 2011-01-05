@@ -1,4 +1,6 @@
 class SalesOrder < ActiveRecord::Base
+  include OrderSupport
+  
   belongs_to :customer, :class_name => "Company"
   belongs_to :division
   belongs_to :ship_to, :class_name => "Address"
@@ -33,5 +35,11 @@ class SalesOrder < ActiveRecord::Base
       end
     end
     return p_hash.values
+  end
+  
+  private
+  #needed for OrderSupport mixin
+  def get_lines
+    self.sales_order_lines
   end  
 end

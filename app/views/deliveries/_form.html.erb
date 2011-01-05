@@ -1,0 +1,77 @@
+<% content_for :javascript do %>
+$(function() {
+   setupShippingAddress('Master Company',$('#delivery_ship_from_id'),$('#ship_from_ad'),<%=Company.find_master.id%><%=@delivery.ship_from_id.nil? ? '' : ",#{@delivery.ship_from_id}"%>);
+   setupShippingAddress('Customer',$('#delivery_ship_to_id'),$('#ship_to_ad'),<%=@delivery.customer.nil? ? "'not set'": @delivery.customer.id%><%=@delivery.ship_to_id.nil? ? '' : ",#{@delivery.ship_to_id}"%>);
+   getAddress($('#ship_to_ad'),$("#delivery_ship_to_id").val());
+   $("#delivery_customer_id").change(function() {
+      setupShippingAddress('Customer',$('#delivery_ship_to_id'),$('#ship_to_ad'),$(this).val());
+    });
+    $("#btn_save").button().click(function() {
+      $("#frm_shp").submit();
+    });
+    $("#btn_cancel").button().click(function() {
+      window.location = '<%=url_for @delivery%>';
+    });
+});
+<% end %>
+
+<% content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<%= form_for(@delivery, :html => {:id=>'frm_shp'} ) do |f| %>
+<div class='content_head'>
+  <span class='content_head_label'>Reference:</span>
+  <b><%= f.text_field :reference %></b>
+  <br />
+  <span class='content_head_label'>Customer:</span>
+  <% if @delivery.piece_sets.size > 0 %>
+    <%= f.hidden_field :customer_id %><%= @delivery.customer.name %>
+  <% elsif current_user.company.customer? 
+      @delivery.customer = current_user.company %>
+      <%= f.hidden_field :customer_id %><%= @delivery.customer.name %>
+  <% else %>
+    <%= f.collection_select :customer_id, Company.find_customers.not_locked, :id, :name, options ={:prompt => "-Select a customer"} %>
+  <% end %>  
+</div>
+<table class='detail_table'>
+  <thead><th>Ship From</th><th>Ship To</th></thead>
+  <tbody><tr>
+    <td style='width:50%'>
+      <%= f.select(:ship_from_id, [['...Loading...','']])%> 
+      <div id='ship_from_ad'></div>
+    </td>
+    <td style='width:50%' class='hover'>
+      <%= f.select(:ship_to_id, [['...Loading...','']])%> 
+      <div id='ship_to_ad'></div>
+    </td>
+  </tr></tbody>
+</table>
+<br />
+<table class='detail_table' >
+  <thead>
+    <tr><th>Attributes</th><th>Dates</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style='width:50%'>
+        <b>Bill of Lading: </b><%=f.text_field :bill_of_lading %>
+        <br />
+        <b>Carrier: </b>
+        <% if current_user.company.carrier? 
+            @delivery.carrier = current_user.company %>
+        <%= f.hidden_field :carrier_id %><%= @delivery.carrier.name %>
+        <% else %>
+        <%= f.collection_select :carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "-Select a carrier"} %>
+        <% end %>
+        <br />
+        <b>Mode: </b>
+        <%= f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
+      </td>
+      <td>
+      </td>
+    </tr>
+    </tbody>
+</table>
+<% end %>

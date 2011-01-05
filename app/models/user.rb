@@ -76,4 +76,14 @@ class User < ActiveRecord::Base
   def edit_shipments?
     return self.company.master? || self.company.vendor? || self.company.carrier?
   end
+  
+  def view_deliveries?
+    return self.company.master? || self.company.customer? || self.company.carrier?
+  end
+  def add_deliveries?
+    return self.company.master? || self.company.carrier?
+  end
+  def edit_deliveries?
+    return self.company.master? || self.company.carrier?
+  end
 end

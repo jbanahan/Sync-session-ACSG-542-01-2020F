@@ -17,6 +17,7 @@ class PieceSetsController < ApplicationController
   def edit
     @ps_to_edit = PieceSet.find(params[:id])
     @shipment = @ps_to_edit.shipment
+    @delivery = @ps_to_edit.delivery
     render do_route(@ps_to_edit, :render)
     #render 'shipments/show'
   end
@@ -42,7 +43,15 @@ class PieceSetsController < ApplicationController
   FROM_ROUTES = {
     :s => {
       :redirect => lambda {|help,ps| help.shipment_path(ps.shipment)},
-      :render => lambda {|help,ps| 'shipments/show'}
+      :render => lambda {|help,ps|
+        'shipments/show'
+      }
+    },
+    :d => {
+      :redirect => lambda {|help,ps| help.delivery_path(ps.delivery)},
+      :render => lambda {|help,ps|
+        'deliveries/show'
+      }
     }
   }
   

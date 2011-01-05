@@ -1,4 +1,6 @@
 class Order < ActiveRecord::Base
+  include OrderSupport
+  
   belongs_to :division
 	belongs_to :vendor,  :class_name => "Company"
 	belongs_to :ship_to, :class_name => "Address"
@@ -8,14 +10,6 @@ class Order < ActiveRecord::Base
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number'
 	has_many   :histories, :dependent => :destroy
 	has_many   :item_change_subscriptions
-
-	def make_unpacked_piece_sets
-	  r = Array.new
-	  self.order_lines.each do |line|
-	    r << line.make_unpacked_piece_set
-	  end
-	  return r
-	end
 	
 	def related_shipments
 	  r = Set.new
@@ -98,5 +92,11 @@ class Order < ActiveRecord::Base
       end
     end
     return p_hash.values
+  end
+  
+  private
+  #needed for OrderSupport mixin
+  def get_lines
+    return self.order_lines
   end
 end

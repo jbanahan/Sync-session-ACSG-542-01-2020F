@@ -7,7 +7,9 @@ class Company < ActiveRecord::Base
 	has_many	:vendor_products, :class_name => "Product", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many  :vendor_shipments, :class_name => "Shipment", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many  :carrier_shipments, :class_name => "Shipment", :foreign_key => "carrier_id", :dependent => :destroy
+	has_many  :carrier_deliveries, :class_name => "Delivery", :foreign_key => "carrier_id", :dependent => :destroy
 	has_many  :customer_sales_orders, :class_name => "SalesOrder", :foreign_key => "customer_id", :dependent => :destroy
+	has_many  :customer_deliveries, :class_name => "Delivery", :foreign_key => "customer_id", :dependent => :destroy
 	has_many  :users
 	has_many	:orders, :through => :divisions, :dependent => :destroy
 	has_many	:products, :through => :divisions, :dependent => :destroy
@@ -19,6 +21,10 @@ class Company < ActiveRecord::Base
 	
 	def self.find_vendors
 	  return Company.where(["vendor = ?",true])
+	end
+	
+	def self.find_customers
+	  return Company.where(["customer = ?",true])
 	end
 	
 	def self.find_can_view(user)

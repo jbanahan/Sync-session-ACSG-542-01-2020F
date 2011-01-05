@@ -28,3 +28,9 @@ four:
   product_id: 2
   quantity: 2
 
+delivery:
+  id: 5
+  sales_order_line_id: 2
+  delivery_id: 1
+  quantity: 10
+  product_id: 2

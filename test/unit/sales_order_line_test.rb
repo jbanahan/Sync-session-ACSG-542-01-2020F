@@ -22,4 +22,14 @@ class SalesOrderLineTest < ActiveSupport::TestCase
     assert to_test.line_number > base.line_number, "New line number should be set."
     assert to_test.save, "Should save because line_number is now unique within order"
   end
+  
+  test "make unpacked piece set" do
+    line = SalesOrderLine.find(2)
+    #yml should have an existing piece_set w/ qty 10 & line w/ qty 14
+    set = line.make_unpacked_piece_set
+    assert set.quantity == 4, "quantity check"
+    assert set.sales_order_line_id == 2, "order line check"
+    assert set.delivery.nil?, "delivery should be nil"
+    assert set.product_id == 2, "product should be 1"
+  end
 end

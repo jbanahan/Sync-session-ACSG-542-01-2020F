@@ -59,7 +59,7 @@ class UserTest < ActiveSupport::TestCase
     assert u.edit_shipments?, "Vendor user should be able to edit shipments."
     assert u.add_shipments?, "Vendor user should be able to add shipments."
     u = User.find(4)
-    assert u.company.carrier?, "Setup wrong, user 4 should be part of a vendor company."
+    assert u.company.carrier?, "Setup wrong, user 4 should be part of a carrier company."
     assert u.view_shipments?, "Carrier user should be able to view shipments."
     assert u.edit_shipments?, "Carrier user should be able to edit shipments."
     assert u.add_shipments?, "Carrier user should be able to add shipments."
@@ -68,5 +68,27 @@ class UserTest < ActiveSupport::TestCase
     assert !(u.view_shipments? ||
              u.edit_shipments? ||
              u.add_shipments?), "Non-vendor, non-carrier & non-master should NOT be able to create/edit/view shipments."
+  end
+  
+  test "delivery permissions" do
+    u = User.find(1)
+    assert u.company.master?, "Setup wrong, user one should be part of master company."
+    assert u.view_deliveries?, "Master user should be able to view deliveries."
+    assert u.edit_deliveries?, "Master user should be able to edit deliveries."
+    assert u.add_deliveries?, "Master user should be able to add deliveries."
+    u = User.find(6)
+    assert u.company.customer?, "Setup wrong, user six should be part of a customer company."
+    assert u.view_deliveries?, "Customer user should be able to view deliveries."
+    assert !(u.edit_deliveries? || u.add_deliveries?), "Customer should NOT be able to edit or create deliveries."
+    u = User.find(4)
+    assert u.company.carrier?, "Setup wrong, user 4 should be part of carrier company."
+    assert u.view_deliveries?, "Carrier user should be able to view deliveries."
+    assert u.edit_deliveries?, "Carrier user should be able to edit deliveries."
+    assert u.add_deliveries?, "Carrier user should be able to add deliveries."
+    u = User.find(2)
+    assert !(u.company.master? || u.company.customer? || u.company.carrier?), "Setup wrong, user two should not be part of a master, carrier, or customer company."
+    assert !(u.view_deliveries? ||
+             u.edit_deliveries? ||
+             u.add_deliveries?), "Non-customer, non-carrier, & non-master should NOT be able to create/edit/view deliveries."
   end
 end

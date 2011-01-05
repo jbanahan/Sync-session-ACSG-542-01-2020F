@@ -4,7 +4,7 @@ class SalesOrderLine < ActiveRecord::Base
   belongs_to :product
   belongs_to :sales_order
   
-  #has_many  :piece_sets, :dependent => :destroy
+  has_many  :piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
   
   validates :product, :presence => true

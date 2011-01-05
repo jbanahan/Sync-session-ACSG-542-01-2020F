@@ -1,0 +1,132 @@
+<% content_for :javascript do %>
+  $(function() {
+    $( "#btn_edit" )
+      .button()
+      .click(function() {
+        window.location = '<%=edit_delivery_path(@delivery)%>';
+      });
+    $("#add_order_box").dialog({autoOpen:false,title:"Add Items",
+      buttons:{"Add":function() {$("#frm_pack").submit();}}
+    });
+    $("#mod_pick_order").dialog({autoOpen:false,title:"Select Order",
+      buttons:{"Add":function() {
+        $("#add_ord_content").hide();
+        $("#pick_order_loading").show();
+        $.get('<%=unpacked_order_lines_delivery_path(@delivery)%>/?sales_order_id='+$('#sales_order_id').val(), function(data){
+        $("#add_ord_content").show();
+        $("#pick_order_loading").hide();
+          $("#add_order_box").html(data);
+          $("#mod_pick_order").dialog('close');
+          $("#add_order_box").dialog('open');
+        });
+      }}
+    });
+    $("#btn_add_ord").button().click(function() {
+      $("#mod_pick_order").dialog('open');
+    }); 
+    $("#btn_save_piece_set").button();
+    $( "#item_change_subscription_submit").button();
+    $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
+      buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
+    $("#btn_subscriptions")
+      .button()
+      .click(function() {
+        $("#mod_subscriptions").dialog('open');
+    });
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+  <button id='btn_edit'>Edit</button>
+  <% if @delivery.can_edit?(current_user) %><button id='btn_add_ord'>Add Sales Order</button><%end%> 
+<% end %>
+
+<div class='content_head'>
+  <span style="font-size:90%">Reference:</span>
+  <b><%= @delivery.reference %></b>
+  <br />
+  <span style="font-size:90%">Customer:</span>
+  <b><%= @delivery.customer.name %></b>
+  <br />&nbsp;
+</div>
+<table class='detail_table'>
+  <thead><th>Ship From</th><th>Ship To</th></thead>
+  <tbody><tr>
+    <td style='width:50%' class='hover'>
+      <%=  render :partial => 'addresses/display', :locals => { :ad => @delivery.ship_from, :address_id => 'ship_from_ad' } %>
+    </td>
+    <td style='width:50%' class='hover'>
+      <%=  render :partial => 'addresses/display', :locals => { :ad => @delivery.ship_to, :address_id => 'ship_to_ad' } %>      
+    </td>
+  </tr></tbody>
+</table>
+<br />
+<table class='detail_table' >
+  <thead>
+    <tr><th>Attributes</th><th>Dates</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style='width:50%'>
+        <b>Bill of Lading:</b> <%=@delivery.bill_of_lading %>
+        <br />
+        <b>Carrier:</b>
+        <%= @delivery.carrier_id.nil? ? '' : @delivery.carrier.name %>
+        <br />
+        <b>Mode:</b>
+        <%=@delivery.mode %>
+      </td>
+      <td>
+        
+      </td>
+    </tr>
+    </tbody>
+</table>
+
+
+
+<% ps_edit = @ps_to_edit.nil? ? @delivery.piece_sets.build : @ps_to_edit %>
+<%= form_for(ps_edit) do |f| %>
+<table class="detail_table" style='margin-top: 4em'>
+  <thead>
+    <th>Product</th>
+    <th>Order - Line</th>
+    <th>Quantity</th>
+    <th></th>
+  </thead>
+  <tbody>
+  <% @delivery.piece_sets.joins(:sales_order_line => :sales_order).order("sales_orders.order_number, sales_order_lines.line_number").each do |ps| %>
+  <% if !ps_edit.id.nil? && ps_edit.id == ps.id %>
+  <tr>
+    <td>
+      <%=f.hidden_field :id%>
+      <%=f.hidden_field :delivery_id %>
+      <input type='hidden' name='from' value='d' />
+      <%= ps.product.nil? ? '' : ps.product.name %></td>
+    <td><%= ps.sales_order_line.nil? ? '[n/a]' : "#{ps.sales_order_line.sales_order.order_number} - #{ps.sales_order_line.line_number}" %></td>
+    <td><%= f.text_field :quantity %></td>
+    <td><%= f.submit 'Save', :id => 'btn_save_piece_set' %></td>
+  </tr>
+  <% elsif !ps.id.nil? %>
+  <tr class='hover'>
+    <td><%= link_to ps.product.name, ps.product %></td>
+    <td><%= ps.sales_order_line.nil? ? '[n/a]' : raw("#{link_to(ps.sales_order_line.sales_order.order_number, sales_order_path(ps.sales_order_line.sales_order))} - #{ps.sales_order_line.line_number}")%></td>
+    <td><%= "#{ps.quantity} #{ps.product.unit_of_measure}" %></td>
+    <td>
+       <%= link_to 'Remove', piece_set_path(ps,:from => "d") , :confirm => 'Are you sure?', :method => :delete  %> |
+       <%= link_to 'Edit', edit_piece_set_path(ps,:from => "d") %>
+       
+    </td>
+  </tr>
+  <% end %>
+  <% end %>
+  </tbody>
+</table>
+<% end %>
+<div id='mod_pick_order' style='display:none;'>
+  <p id='add_ord_content'>
+    Add Order: <%= select_tag "sales_order_id", options_from_collection_for_select(SalesOrder.where("customer_id = ? ",@delivery.customer), "id", "order_number") %>
+  </p>
+  <div id='pick_order_loading' style='display:none;'><img src='/images/ajax-loader.gif' alt='Loading' /></div>
+</div>
+<div id='add_order_box'></div>

@@ -6,6 +6,7 @@ class History < ActiveRecord::Base
   belongs_to  :company
   belongs_to  :order_line
   belongs_to  :sales_order
+  belongs_to  :delivery
   
   has_many    :history_details
   
@@ -27,6 +28,9 @@ class History < ActiveRecord::Base
   end
   def self.create_product_changed(product, current_user, link_back)
     create_object_changed(:product,product,"Product",product.unique_identifier,current_user,link_back)
+  end
+  def self.create_delivery_changed(delivery, current_user, link_back)
+    create_object_changed(:delivery,delivery,"Delivery",delivery.reference,current_user,link_back)
   end
   
   private

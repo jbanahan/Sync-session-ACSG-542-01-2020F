@@ -1,0 +1,8 @@
+one:
+  id: 1
+  carrier_id: 5
+  reference: MyString
+  bill_of_lading: MyString
+  mode: MyString
+  customer_id: 6
+
