@@ -1,5 +1,7 @@
 class Delivery < ActiveRecord::Base
   
+	include CustomFieldSupport
+	
   belongs_to  :carrier, :class_name => "Company"
   belongs_to  :customer,  :class_name => "Company"
   belongs_to  :ship_from, :class_name => "Address"

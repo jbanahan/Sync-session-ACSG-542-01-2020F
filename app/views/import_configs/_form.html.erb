@@ -1,6 +1,6 @@
-<script type='text/javascript'>
-  <% unless @import_config.id.nil? %>
+<% content_for :javascript do %>
   $(function() {
+  <% unless @import_config.id.nil? %>
     $( "#unmapped, #mapped" ).sortable({
       connectWith: ".sort_group"
     }).disableSelection();
@@ -17,9 +17,14 @@
         i++;
       });
     });
-  });
   <%end%>
-</script>
+  $("#btn_back").button().click(function() {window.location = '<%=import_configs_path%>';});
+  });
+<% end %>
+
+<% content_for :action_bar do %>
+<button id='btn_back'>Back To Search</button>
+<% end %>
 
 <%= form_for(@import_config) do |f| %>
   <div class="field">

@@ -2,6 +2,10 @@ class AddressesController < ApplicationController
   include ActiveSupport
   before_filter :require_user
 	
+	def root_class
+		Address
+	end
+	
 	def create
 		@address = Address.new(params[:address])
 		@company = @address.company

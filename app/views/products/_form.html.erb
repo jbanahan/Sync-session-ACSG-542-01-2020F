@@ -9,7 +9,7 @@ $(function() {
 });
 function checkUOMChange() {
   ou = $("#original_uom").val();
-  if(ou.length==0 || ou==$("#txt_uom")) {
+  if(ou.length==0 || ou==$("#txt_uom").val()) {
     return $("#frm_prod").submit();
   } else {
     $('<div></div>')
@@ -56,4 +56,5 @@ function checkUOMChange() {
 		<%= f.label :division %><br />
 		<%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => "-Select a division"} %>
 	</div>
+	 <%=show_custom_fields @product, {:form=>true}%>
 <% end %>

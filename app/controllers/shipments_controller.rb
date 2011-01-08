@@ -1,5 +1,9 @@
 class ShipmentsController < ApplicationController
   
+	def root_class
+	  Shipment
+	end
+	
   def undo_receive
     shipment = Shipment.find(params[:id])
     action_secure(current_user.company.master,shipment,{:verb => "edit",:module_name=>"shipment"}) {
@@ -157,7 +161,9 @@ class ShipmentsController < ApplicationController
       @shipment = s
       respond_to do |format|
         if @shipment.save
-          add_flash :notices, "Shipment was created successfully."
+					if update_custom_fields @shipment
+						add_flash :notices, "Shipment was created successfully."
+					end
           History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
           format.html { redirect_to(@shipment) }
           format.xml  { render :xml => @shipment, :status => :created, :location => @shipment }
@@ -180,8 +186,10 @@ class ShipmentsController < ApplicationController
       respond_to do |format|
         @shipment = s
         if @shipment.update_attributes(params[:shipment])
-          History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
-          add_flash :notices, "Shipment was updated successfully."
+					if update_custom_fields @shipment
+						add_flash :notices, "Shipment was updated successfully."
+					end
+					History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
           format.html { redirect_to(@shipment) }
           format.xml  { head :ok }
         else

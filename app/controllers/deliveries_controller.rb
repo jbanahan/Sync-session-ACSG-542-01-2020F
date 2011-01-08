@@ -1,5 +1,9 @@
 class DeliveriesController < ApplicationController
   
+	def root_class
+		Delivery
+	end
+	
   def add_sets
     delivery = Delivery.find(params[:id])
     action_secure(delivery.can_edit?(current_user),delivery,{:verb => "add items to",:module_name=>"delivery"}) {
@@ -107,7 +111,9 @@ class DeliveriesController < ApplicationController
 
       respond_to do |format|
         if @delivery.save
-          add_flash :notices, "Delivery was created successfully."
+					if update_custom_fields @delivery
+						add_flash :notices, "Delivery was created successfully."
+					end
           History.create_delivery_changed(@delivery, current_user, delivery_url(@delivery))
           format.html { redirect_to(@delivery) }
           format.xml  { render :xml => @delivery, :status => :created, :location => @delivery }
@@ -128,6 +134,9 @@ class DeliveriesController < ApplicationController
       @delivery = d
       respond_to do |format|
         if @delivery.update_attributes(params[:delivery])
+					if update_custom_fields @delivery
+						add_flash :notices, "Delivery was updated successfully."
+					end
           History.create_delivery_changed(@delivery, current_user, delivery_url(@delivery))
           format.html { redirect_to(@delivery) }
           format.xml  { head :ok }

@@ -156,4 +156,11 @@ class OrderTest < ActiveSupport::TestCase
     o = Order.find(1)
     assert o.locked?, "Order should be locked since vendor was locked."
   end
+  
+  test "custom_field_definitions" do
+    o = Order.new
+    cf = CustomDefinition.create!(:label=>"x", :data_type=>"string", :module_type=>"Order")
+    assert o.custom_definitions.include?(cf), "Didn't find definition." 
+  end
+  
 end

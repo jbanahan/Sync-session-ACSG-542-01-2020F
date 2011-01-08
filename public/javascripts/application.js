@@ -4,10 +4,8 @@ $( function() {
     $(".btn_cancel_mod").button().click( function() {
         $.modal.close();
     });
-    $("#order_line_expected_ship_date").datepicker({dateFormat: 'yy-mm-dd'});
-    $("#order_line_expected_delivery_date").datepicker({dateFormat: 'yy-mm-dd'});
-    $("#order_line_ship_no_later_date").datepicker({dateFormat: 'yy-mm-dd'});
-
+    $(".isdate").datepicker({dateFormat: 'yy-mm-dd'});
+    
     //Make the shared/search_box partial work
     $("#srch_fields").change( function() {
         setSearchFields($("#srch_fields"),$("#srch_val"),$("#srch_cond"));
@@ -129,12 +127,6 @@ function addHiddenFormField(parentForm,name,value,id,style_class) {
 }
 function loading(wrapper) {
   wrapper.html("<img src='/images/ajax-loader.gif' alt='loading'/>");
-}
-
-function setDatePickers(arrayOfFields) {
-  for(i=0;i<arrayOfFields.length;i++) {
-    arrayOfFields[i].datepicker({dateFormat: 'yy-mm-dd'});
-  }
 }
 
 //address setup

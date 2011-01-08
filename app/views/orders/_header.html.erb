@@ -29,3 +29,4 @@
   <b>Vendor:</b>
   <%= @order.vendor.nil? ? '' : @order.vendor.name %> <% if @order.vendor.locked?%><span class='exception_value'>[LOCKED]</span><%end%>
 </p>
+<%=show_custom_fields @order%>

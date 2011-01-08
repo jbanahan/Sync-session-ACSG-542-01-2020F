@@ -1,6 +1,5 @@
 <% content_for :javascript do %>
   $(function() {
-    setDatePickers([$("#order_order_date")]);
     setupShippingAddress('Master Company',$('#order_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@order.ship_to_id.nil? ? '' : ",#{@order.ship_to_id}"%>);
     $("#btn_save").button().click(function() {
       $("#frm_ord").submit();
@@ -29,7 +28,7 @@
   </div>
   <div class="field">
     <%= f.label :order_date %><br />
-    <%= f.text_field :order_date %>
+    <%= f.text_field :order_date, "class" => "isdate" %>
   </div>
   <div class="field">
     <%= f.label :buyer %><br />
@@ -47,4 +46,5 @@
 		<%= f.label :vendor %><br />
 		<%= f.collection_select :vendor_id, @vendors, :id, :name, options ={:prompt => "-Select a vendor"} %>
 	</div>
+	<%=show_custom_fields @order, {:form => true}%>
 <% end %>

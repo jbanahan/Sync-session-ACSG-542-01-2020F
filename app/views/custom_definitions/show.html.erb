@@ -1,0 +1,35 @@
+<% content_for :javascript do %>
+$(function() {
+ $("button").button();
+ $("#btn_edit").click(function() {window.location='<%=edit_custom_definition_path @custom_definition%>';});
+ $("#back_to_search").click(function() {window.location='<%=custom_definitions_path %>';});
+ $("#btn_delete").button();
+});
+<% end %>
+
+<% content_for :action_bar do %>
+<% if @custom_definition.can_edit?(current_user)%><button id='btn_edit'>Edit</button><%end%>
+<%= button_to('Delete', custom_definition_path(@custom_definition),:method => :delete, :confirm => "Are you sure?  Deleting this field will delete all data.  There is no undo.", :id => "btn_delete") %>
+<button id='back_to_search'>Back To Search</button>
+<% end %>
+
+<p>
+  <b>Label:</b>
+  <%= @custom_definition.label %>
+</p>
+
+<p>
+  <b>Module:</b>
+  <%= @custom_definition.module_type %>
+</p>
+
+<p>
+  <b>Data Type:</b>
+  <%= @custom_definition.data_type.capitalize %>
+</p>
+
+<p>
+  <b>Rank:</b>
+  <%= @custom_definition.rank %>
+</p>
+

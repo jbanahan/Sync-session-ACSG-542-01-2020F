@@ -68,6 +68,7 @@ $(function() {
         <br />
         <b>Mode: </b>
         <%= f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
+				<%=show_custom_fields @delivery, {:form => true}%>
       </td>
       <td>
       </td>

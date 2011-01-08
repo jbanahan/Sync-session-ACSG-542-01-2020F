@@ -24,8 +24,30 @@ class ApplicationController < ActionController::Base
         include ActionView::Helpers::UrlHelper
     end
 
-    #subclassed controller must implement secure method that returns searchable object
-    def build_search(field_list,default_search,default_sort,default_sort_order='a')
+    def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
+        cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
+        pass = true
+        cpp.each do |k,v|
+          definition_id = k.to_s
+          cd = CustomDefinition.find(definition_id)
+          cv = customizable_parent.get_custom_value cd
+          cv.value = v
+          cv.save
+          pass = false unless cv.errors.empty?
+          errors_to_flash cv
+        end
+        pass
+    end
+    
+    #subclassed controller must implement secure method that returns searchable object 
+		#and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
+    def build_search(base_field_list,default_search,default_sort,default_sort_order='a')
+				field_list = base_field_list
+				begin
+					field_list = self.root_class.new.respond_to?("custom_definitions") ? base_field_list.merge(custom_field_parameters(root_class.new)) : base_field_list
+				rescue NoMethodError 
+					#this is ok, you just won't get your custom fields
+				end
         @s_params = field_list
         @selected_search = params[:f]
         @s_search = field_list[params[:f]]
@@ -36,7 +58,12 @@ class ApplicationController < ActionController::Base
         @s_con = params[:c].nil? ? 'eq' : params[:c]
         sval = params[:s]
         sval = true if ['is_null','is_not_null','is_true','is_false'].include? @s_con
-        @search = secure.search((@s_search[:field]+'_'+@s_con) => sval)
+				if @s_search[:custom]
+				  d = CustomDefinition.find(@s_search[:field])
+				  @search = secure.joins(:custom_values).where("custom_values.custom_definition_id = ?",d.id).search("custom_values_#{d.data_column}_#{@s_con}" => sval)
+				else
+					@search = secure.search((@s_search[:field]+'_'+@s_con) => sval)
+				end
         @s_sort = field_list[params[:sf]]
         @s_sort = field_list[default_sort] if @s_sort.nil?
         @s_order = default_sort_order
@@ -44,6 +71,14 @@ class ApplicationController < ActionController::Base
         @search.meta_sort = @s_sort[:field]+(@s_order=='d' ? '.desc' : '.asc')
         return @search
     end
+		
+		def custom_field_parameters(customizable)
+			r = {}
+			customizable.custom_definitions.each do |d|
+				r["cf_#{d.id}#{d.date? ? "_date" : "_"}"] = {:field => "#{d.id}", :label=> d.label, :custom => true}
+			end
+			r
+		end
     
     def render_csv(filename = 'download.csv')
       if request.env['HTTP_USER_AGENT'] =~ /msie/i

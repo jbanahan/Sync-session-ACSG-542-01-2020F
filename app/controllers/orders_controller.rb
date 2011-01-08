@@ -1,4 +1,9 @@
 class OrdersController < ApplicationController
+		
+		def root_class
+			Order
+		end
+
     # GET /orders
     # GET /orders.xml
     SEARCH_PARAMS = {
@@ -81,7 +86,9 @@ class OrdersController < ApplicationController
         respond_to do |format|
           if @order.save
               History.create_order_changed(@order,current_user,order_url(@order))
-              add_flash :notices, "Order was created successfully."
+							if update_custom_fields @order
+                  add_flash :notices, "Order was created successfully."
+                end
               format.html { redirect_to(@order) }
               format.xml  { render :xml => @order, :status => :created, :location => @order }
           else
@@ -104,7 +111,9 @@ class OrdersController < ApplicationController
         respond_to do |format|
             if @order.update_attributes(params[:order])
                 History.create_order_changed(@order,current_user,order_url(@order))
-                add_flash :notices, "Order was updated successfully."
+                if update_custom_fields @order
+                  add_flash :notices, "Order was updated successfully."
+                end
                 format.html { redirect_to(@order) }
                 format.xml  { head :ok }
             else

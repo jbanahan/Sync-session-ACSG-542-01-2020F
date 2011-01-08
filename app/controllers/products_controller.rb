@@ -1,4 +1,7 @@
 class ProductsController < ApplicationController
+	def root_class 
+		Product
+	end
     # GET /products
     # GET /products.xml
     SEARCH_PARAMS = {
@@ -77,7 +80,9 @@ class ProductsController < ApplicationController
         @product = p
         respond_to do |format|
             if @product.save
-                add_flash :notices, "Product created successfully."
+								if update_custom_fields @product
+									add_flash :notices, "Product created successfully."
+								end
                 History.create_product_changed(@product, current_user, product_url(@product))
                 format.html { redirect_to(@product)}
                 format.xml  { render :xml => @product, :status => :created, :location => @product }
@@ -100,7 +105,9 @@ class ProductsController < ApplicationController
           @product = p
             respond_to do |format|
                 if @product.update_attributes(params[:product])
-                    add_flash :notices, "Product updated successfully."
+										if update_custom_fields @product
+											add_flash :notices, "Product updated successfully."
+										end
                     History.create_product_changed(@product, current_user, product_url(@product))
                     format.html { redirect_to(@product) }
                     format.xml  { head :ok }

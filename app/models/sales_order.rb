@@ -1,5 +1,6 @@
 class SalesOrder < ActiveRecord::Base
   include OrderSupport
+	include CustomFieldSupport
   
   belongs_to :customer, :class_name => "Company"
   belongs_to :division

@@ -9,6 +9,8 @@ class ImportConfig < ActiveRecord::Base
   accepts_nested_attributes_for :import_config_mappings, :reject_if => lambda { |a| a[:model_field_uid].blank? }
 
 
+
+
   MODEL_TYPES = {:order => "Order", :product => "Product"}
   
   MODEL_FIELDS = Hash.new
@@ -48,9 +50,21 @@ class ImportConfig < ActiveRecord::Base
     mf = ModelField.new(m[0],m[1],m[2],m[3],m[4].nil? ? {} : m[4])
     MODEL_FIELDS[:order][mf.uid.intern] = mf 
   end
+  
+  def self.add_custom_fields(model_hash,base_class,label_prefix)
+    max = 0
+    model_hash.values.each {|mf| max = mf.sort_rank if mf.sort_rank > max}
+    base_class.new.custom_definitions.each_with_index do |d,index|
+      class_symbol = base_class.to_s.downcase
+      mf = ModelField.new(max+index,class_symbol,"custom_#{d.id}".intern,"#{label_prefix}#{d.label}",{:custom_id=>d.id})
+      model_hash[mf.uid.intern] = mf
+    end
+  end
+	ImportConfig.add_custom_fields(MODEL_FIELDS[:order],Order,"Header - ")
+  ImportConfig.add_custom_fields(MODEL_FIELDS[:product],Product,"")
     
-  def self.sorted_model_fields(model)
-    return MODEL_FIELDS[model].values.sort {|a,b| (a.sort_rank == b.sort_rank) ? a.uid <=> b.uid : a.sort_rank <=> b.sort_rank}
+  def self.sorted_model_hash(model)
+    return MODEL_FIELDS[model].sort {|a,b| (a[1].sort_rank == b[1].sort_rank) ? a[1].uid <=> b[1].uid : a[1].sort_rank <=> b[1].sort_rank}
   end
   
   def new_base_object
@@ -82,6 +96,7 @@ class ImportConfig < ActiveRecord::Base
     return f
   end
   
+
 end
 
 class ImportConfigValidator

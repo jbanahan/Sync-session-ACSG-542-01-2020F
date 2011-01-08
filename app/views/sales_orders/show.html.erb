@@ -59,7 +59,7 @@ $(function() {
   <b>Comments:</b>
   <%= @sales_order.comments %>
 </p>
-
+ <%=show_custom_fields @sales_order%>
 <div>
 <% form_line = @sales_order_line.nil? ? @sales_order.sales_order_lines.build : @sales_order_line %>
 <%= form_for([@sales_order, form_line]) do |f| %>
