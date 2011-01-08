@@ -1,0 +1,30 @@
+<% content_for :javascript do %>
+$(function() {
+  $("button").button();
+	$("#btn_save").click(function() {$("#frm_c").submit();});
+	$("#btn_cancel").click(function() { window.location = '<%=@custom_definition.id.nil? ? custom_definitions_path : custom_definition_path(@custom_definition)%>';});
+});
+<% end %>
+<% content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+	<button id='btn_cancel'>Cancel</button>
+<% end %>
+<%= form_for(@custom_definition, :html=>{:id=>'frm_c'}) do |f| %>
+  <div class="field">
+    <%= f.label :label %><br />
+    <%= f.text_field :label %>
+  </div>
+  <div class="field">
+    <%= f.label :module_type, 'Module' %><br />
+    <%= f.select :module_type, [["Delivery","Delivery"],["Order","Order"],["Product","Product"],["Sale","SalesOrder"],["Shipment","Shipment"]] %>
+  </div>
+  <div class="field">
+    <%= f.label :data_type, 'Data Type' %><br />
+    <%= f.select :data_type, [["Date","date"],["Decimal","decimal"],["Integer","integer"],["Text","string"]]%>
+  </div>
+  <div class="field">
+    <%= f.label :rank, 'Sort Rank' %><br />
+    <%= f.text_field :rank %>
+  </div>
+
+<% end %>

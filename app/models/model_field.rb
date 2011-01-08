@@ -6,6 +6,7 @@ class ModelField
   attr_accessor :detail
   attr_accessor :import_lambda
   attr_accessor :export_lambda
+	attr_accessor :custom_id
   
   def initialize(rank,model, field, label, options={})
     @sort_rank = rank
@@ -18,8 +19,13 @@ class ModelField
       return "#{@label} set to #{data}"
     } : options[:import_lambda]
     @export_lambda = options[:export_lambda].nil? ? lambda {|obj|
-      obj.send("#{@field}")
+      if self.custom?
+        obj.get_custom_value(CustomDefinition.find(@custom_id)).value
+      else
+        obj.send("#{@field}")
+      end
     } : options[:export_lambda]
+		@custom_id = options[:custom_id]
   end
   
   #code to process when importing a field
@@ -38,4 +44,8 @@ class ModelField
   def uid
     return "#{@model}-#{@field}-#{@label}"
   end
+	
+	def custom?
+		return !@custom_id.nil?
+	end
 end

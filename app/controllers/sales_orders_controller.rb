@@ -1,13 +1,16 @@
 class SalesOrdersController < ApplicationController
+  def root_class
+	  SalesOrder
+	end
   # GET /sales_orders
   # GET /sales_orders.xml
   SEARCH_PARAMS = {
         'o_num' => {:field => 'order_number', :label=> 'Sales Order Number'},
-        #'p_name' => {:field => 'order_lines_product_name', :label => 'Product Name'},
+        'p_name' => {:field => 'sales_order_lines_product_name', :label => 'Product Name'},
         'c_name' => {:field => 'customer_name', :label => 'Customer Name'},
         'c_ord' => {:field => 'customer_order_number', :label => 'Customer Order Number'},
         'o_date' => {:field => 'order_date', :label => 'Order Date'},
-        #'p_id'   => {:field => 'order_lines_product_unique_identifier',:label => 'Product ID'}
+        'p_id'   => {:field => 'sales_order_lines_product_unique_identifier',:label => 'Product ID'}
     }
   def index
     s = build_search(SEARCH_PARAMS,'o_num','o_date','d')
@@ -61,7 +64,9 @@ class SalesOrdersController < ApplicationController
       @sales_order = o
       respond_to do |format|
         if @sales_order.save
-          add_flash :notices, "Sales order successfully saved."
+					if update_custom_fields @sales_order
+						add_flash :notices, "Sale successfully saved."
+					end
           format.html { redirect_to(@sales_order) }
           format.xml  { render :xml => @sales_order, :status => :created, :location => @sales_order }
         else
@@ -82,7 +87,7 @@ class SalesOrdersController < ApplicationController
       @sales_order = o
       respond_to do |format|
         if @sales_order.update_attributes(params[:sales_order])
-          add_flash :notices, "Sales order successfully updated."
+          add_flash :notices, "Sale successfully updated."
           format.html { redirect_to(@sales_order) }
           format.xml  { head :ok }
         else

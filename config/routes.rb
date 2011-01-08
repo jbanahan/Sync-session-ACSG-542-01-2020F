@@ -1,6 +1,8 @@
 OpenChain::Application.routes.draw do
 
 
+  resources :custom_definitions
+
 	match "/index.html" => "dashboard#show_main"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"

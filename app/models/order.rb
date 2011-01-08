@@ -1,5 +1,6 @@
 class Order < ActiveRecord::Base
   include OrderSupport
+  include CustomFieldSupport
   
   belongs_to :division
 	belongs_to :vendor,  :class_name => "Company"
@@ -10,6 +11,7 @@ class Order < ActiveRecord::Base
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number'
 	has_many   :histories, :dependent => :destroy
 	has_many   :item_change_subscriptions
+	
 	
 	def related_shipments
 	  r = Set.new
@@ -38,7 +40,7 @@ class Order < ActiveRecord::Base
   end
   
   def locked?
-    self.vendor.locked?
+    !self.vendor.nil? && self.vendor.locked?
   end
   
   #only merges this object, not related objects (like details). 

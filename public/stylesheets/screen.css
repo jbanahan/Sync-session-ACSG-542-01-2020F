@@ -11,6 +11,10 @@ body {
     background-image: url('/images/background.jpg');
     background-repeat: repeat-x;
 }
+img {
+  border-style: none;
+}
+
 .error, .exception_value {
     color: red;
 }

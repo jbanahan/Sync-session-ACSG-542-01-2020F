@@ -82,19 +82,32 @@ class CSVImportProcessor
     o = ic.new_base_object
     d = ic.new_detail_object
     can_blank = []
+		custom_fields = []
     ic.import_config_mappings.order("column ASC").each do |m|
       m_field = m.find_model_field
       can_blank << m_field.field.to_s
       to_send = m_field.detail? ? d : o
       data = row[m.column-1]
-      if m_field.detail? 
-        has_detail = true
-        detail_data_exists = true if data.length > 0
-      end
-      messages << m_field.process_import(to_send,row[m.column-1])
+			if m_field.custom?
+				custom_fields << {:field => m_field, :data => data}
+			else
+				if m_field.detail? 
+					has_detail = true
+					detail_data_exists = true if data.length > 0
+				end
+				messages << m_field.process_import(to_send,row[m.column-1])
+			end
     end
     o = merge_or_create(o,save,{:can_blank => can_blank})
     d = merge_or_create(d,save,{:can_blank => can_blank, :parent => o}) if has_detail && detail_data_exists
+		custom_fields.each do |h|
+			obj = h[:field].detail? ? d : o
+			cd = CustomDefinition.find(h[:field].custom_id)
+			cv = obj.get_custom_value(cd)
+			cv.value = h[:data]
+			messages << "#{cd.label} set to #{cv.value}"
+			cv.save if save
+		end
     return messages
   end 
   

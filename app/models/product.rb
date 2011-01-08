@@ -1,4 +1,7 @@
 class Product < ActiveRecord::Base
+	
+	include CustomFieldSupport
+
 	belongs_to :vendor, :class_name => "Company"
 	belongs_to :division
 	validates  :vendor, :presence => true

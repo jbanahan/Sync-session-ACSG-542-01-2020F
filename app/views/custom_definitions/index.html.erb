@@ -1,0 +1,28 @@
+<% content_for :javascript do %>
+$(function() {
+	$("#btn_new").button().click(function() {
+	  window.location = '<%=new_custom_definition_path%>';
+	});
+});
+<% end %>
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'label'%></th>
+    <th><%=sortable_search_heading 'm_type'%></th>
+		<th><%=sortable_search_heading 'd_type'%></th>
+    <th><%=sortable_search_heading 's_rank'%></th>
+  </thead>
+
+<% @custom_definitions.each do |cd| %>
+  <tr class='hover'>
+    <td><%= link_to cd.label, cd %></td>
+    <td><%= cd.module_type %></td>
+		<td><%= cd.data_type %></td>
+    <td><%= cd.rank %></td>
+  </tr>
+<% end %>
+</table>
+<%= will_paginate @custom_definitions %>  
+<br />
+<button id='btn_new'>New</button>

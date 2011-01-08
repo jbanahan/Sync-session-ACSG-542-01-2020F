@@ -23,24 +23,14 @@ class ImportConfigsController < ApplicationController
   # GET /import_configs/1/edit
   def edit
     @import_config = ImportConfig.find(params[:id])
-    #inefficent - probably doesn't matter in the long run
     @mapped_fields = []
     @unmapped_fields = []
-    ImportConfig.sorted_model_fields(@import_config.model_type.intern).each do |mf|
-      found = false
-      unless found
-        @import_config.import_config_mappings.each do |mapped|
-          if mf.uid == mapped.model_field_uid
-            found = true
-          end
-        end
-      end
-      if found
-        @mapped_fields << mf
-      else
-        @unmapped_fields << mf
-      end
-    end
+		mappings = @import_config.import_config_mappings
+		all_fields = ImportConfig::MODEL_FIELDS[@import_config.model_type.intern]
+		mappings.each do |m|
+		  @mapped_fields << all_fields.delete(m.model_field_uid.intern)
+		end
+		@unmapped_fields = all_fields.values.sort {|a,b| (a.sort_rank == b.sort_rank) ? a.uid <=> b.uid : a.sort_rank <=> b.sort_rank}
   end
 
   # POST /import_configs

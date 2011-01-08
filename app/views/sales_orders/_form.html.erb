@@ -1,6 +1,5 @@
 <%content_for :javascript do %>
 $(function() {
-  setDatePickers([$("#sales_order_order_date")]);
   setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),<%=@sales_order.customer.nil? ? "'not set'": @sales_order.customer.id%><%=@sales_order.ship_to_id.nil? ? '' : ",#{@sales_order.ship_to_id}"%>);
   $("#sales_order_customer_id").change(function() {
     setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),$(this).val());
@@ -37,11 +36,12 @@ $(function() {
         <table class='detail_table'>
           <thead><tr><th>Attributes</th></tr></thead>
           <tbody><tr><td>
-            <b>Order Date: </b><%= f.text_field :order_date %><br />
+            <b>Order Date: </b><%= f.text_field :order_date, "class" => "isdate" %><br />
             <b>Customer Order Number: </b><%= f.text_field :customer_order_number %><br />
             <b>Division: </b><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => (Division.all.size>1 ? "Select a division" : nil)} %><br />
             <b>Payment Terms: </b><%= f.text_field :payment_terms %><br />
             <b>Ship Terms: </b><%= f.text_field :ship_terms %>
+						 <%=show_custom_fields @sales_order, {:form => true}%>
           </td></tr></tbody>  
         </table>
       </td>
