@@ -30,14 +30,6 @@
     <%= f.label :order_date %><br />
     <%= f.text_field :order_date, "class" => "isdate" %>
   </div>
-  <div class="field">
-    <%= f.label :buyer %><br />
-    <%= f.text_field :buyer %>
-  </div>
-  <div class="field">
-    <%= f.label :season %><br />
-    <%= f.text_field :season %>
-  </div>
 	<div class="field">
 		<%= f.label :division %><br />
 		<%= f.collection_select :division_id, @divisions, :id, :name, options ={:prompt => "-Select a division"} %> 

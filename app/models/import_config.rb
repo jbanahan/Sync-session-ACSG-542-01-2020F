@@ -29,8 +29,6 @@ class ImportConfig < ActiveRecord::Base
   [
     [1,:order,:order_number,"Header - Order Number"],
     [2,:order,:order_date,"Header - Order Date"],
-    [3,:order,:buyer,"Header - Buyer"],
-    [4,:order,:season,"Header - Season"],
     [5,:order,:vendor_id,"Header - Vendor ID"],
     [6,:order,:product_unique_identifier,"Line - Product Unique Identifier",{:detail => true, 
       :import_lambda => lambda {|detail,data| 
