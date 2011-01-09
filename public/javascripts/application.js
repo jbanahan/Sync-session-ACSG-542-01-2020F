@@ -57,7 +57,7 @@ function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 function feedbackDialog() {
-  content = "<div id='mod_feedback' style='display:none;'><textarea id='ta_feedback_msg' name='message' style='width: 95%;'/><br /><input type='checkbox' id='chk_fdbk_rsp' /> Please respond to this message.</div>";
+  content = "<div id='mod_feedback' style='display:none;'><textarea rows='10' id='ta_feedback_msg' name='message' /><br /><input type='checkbox' id='chk_fdbk_rsp' /> I would like a response to this message.</div>";
   send_data = {
     message: $("#ta_feedback_msg").val(),
     respond: (($('#chk_fdbk_rsp:checked').val() == undefined) ? "No" : "Yes"),
@@ -65,7 +65,7 @@ function feedbackDialog() {
   };
   send_data.source_page = $("form").serializeArray();
   $("body").append(content);
-  $("#mod_feedback").dialog({title: "Thank You",
+  $("#mod_feedback").dialog({title: "Send Feedback",
     buttons:{
       "Submit":function(){
         $.post('/feedback', send_data);

@@ -260,3 +260,9 @@ img {
 .pagination .disabled {
   display: none;
 }
+
+/* feedback box */
+#mod_feedback textarea {
+  font-size: 90%;
+  width: 95%;
+}
