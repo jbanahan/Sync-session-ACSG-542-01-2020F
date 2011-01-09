@@ -115,7 +115,8 @@
     <div id="corner_links">
         <%= link_to current_user.full_name, company_user_path(current_user.company, current_user) %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
-        <% if current_user.company.master %><%= link_to 'Settings', settings_path %><%else%><%= link_to current_user.company.name, company_path(current_user.company)%><%end%> | 
+        <% if current_user.company.master %><%= link_to 'Settings', settings_path %><%else%><%= link_to current_user.company.name, company_path(current_user.company)%><%end%> |
+        <a href='javascript:false;' id='lnk_feedback'>Feedback</a> | 
         <%= link_to 'Logout', logout_path %>
     </div>
     <div id="linkbar">

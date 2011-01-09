@@ -12,6 +12,7 @@ OpenChain::Application.routes.draw do
   match "/logout" => "user_sessions#destroy", :as => :logout
   match "/settings" => "settings#index", :as => :settings
   match "/adjust_inventory" => "products#adjust_inventory"
+  match "/feedback" => "feedback#send_feedback"
 
   resources :import_configs
   resources :imported_files, :only => [:new, :create, :show] do

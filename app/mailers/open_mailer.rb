@@ -21,4 +21,14 @@ class OpenMailer < ActionMailer::Base
       end
     end
   end
+  
+  def send_feedback(current_user,params,request)
+    @user = current_user
+    @params = params
+    @request = request
+    mail(:to => 'chainio-feedback@aspect9.com',
+          :subject => "[Chain.io User Feedback] from #{current_user.full_name} @ #{current_user.company.name}")
+          
+    
+  end
 end

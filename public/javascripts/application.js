@@ -43,6 +43,7 @@ $( function() {
     .click( function() {
         $("#mod_export").dialog('open');
     });
+    $("#lnk_feedback").click(function() {feedbackDialog();});
 });
 $(document).ready( function() {
     $(':checkbox').css('border-style','none');
@@ -54,6 +55,30 @@ $(document).ready( function() {
 });
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+function feedbackDialog() {
+  content = "<div id='mod_feedback' style='display:none;'><textarea id='ta_feedback_msg' name='message' style='width: 95%;'/><br /><input type='checkbox' id='chk_fdbk_rsp' /> Please respond to this message.</div>";
+  send_data = {
+    message: $("#ta_feedback_msg").val(),
+    respond: (($('#chk_fdbk_rsp:checked').val() == undefined) ? "No" : "Yes"),
+    location: window.location.href
+  };
+  send_data.source_page = $("form").serializeArray();
+  $("body").append(content);
+  $("#mod_feedback").dialog({title: "Thank You",
+    buttons:{
+      "Submit":function(){
+        $.post('/feedback', send_data);
+        $(this).dialog('close');   
+        $("body").append("<div id='mod_thanks'>Thank you for your feedback.</div>");
+        $("#mod_thanks").dialog({title: "Thank You",
+          buttons:{"Close":function() {$(this).dialog('close');}}}); 
+      },
+      "Cancel":function() {
+        $(this).dialog('close');
+      } 
+    }
+    });
 }
 
 function toggleSearchValue() {
