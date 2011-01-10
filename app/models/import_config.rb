@@ -41,9 +41,6 @@ class ImportConfig < ActiveRecord::Base
       }],
     [7,:order,:ordered_qty,"Line - Order Quantity",{:detail => true}],
     [9,:order,:price_per_unit,"Line - Price / Unit",{:detail => true}],
-    [10,:order,:expected_ship_date,"Line - Expected Ship Date",{:detail => true}],
-    [11,:order,:expected_delivery_date,"Line - Expected Delivery Date",{:detail => true}],
-    [12,:order,:ship_no_later_date,"Line - Ship No Later Date",{:detail => true}]
   ].each do |m|
     mf = ModelField.new(m[0],m[1],m[2],m[3],m[4].nil? ? {} : m[4])
     MODEL_FIELDS[:order][mf.uid.intern] = mf 

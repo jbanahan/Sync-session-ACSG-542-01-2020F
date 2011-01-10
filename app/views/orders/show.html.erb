@@ -62,9 +62,6 @@
 		<th>Unit of Measure</th>
 		<th>Price / Unit</th>
 		<th>Total Price</th>
-		<th>Expected Ship</th>
-		<th>Expected Delivery</th>
-		<th>Ship No Later</th>
 		<th></th>
 	</thead>
 	
@@ -84,9 +81,6 @@
   	<td><%= line.product.unit_of_measure %></td>
   	<td><%= line.price_per_unit %></td>
   	<td><%= line.price_per_unit.nil? || line.ordered_qty.nil? ? '' : line.price_per_unit * line.ordered_qty %></td>
-  	<td <%= !line.expected_ship_date.nil? && line.shipped_qty==0 && line.expected_ship_date < Time.now.to_date ? "class='exception_value'" : ""%>><%= line.expected_ship_date %></td>
-  	<td <%= !line.expected_delivery_date.nil? && line.received_qty==0 && line.expected_delivery_date < Time.now.to_date ? "class='exception_value'" : ""%>><%= line.expected_delivery_date %></td>
-  	<td><%= line.ship_no_later_date %></td>
   	<td>
   	  <% if @order.can_edit?(current_user) && !@order.locked?%>
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>

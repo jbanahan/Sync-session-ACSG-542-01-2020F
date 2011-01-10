@@ -8,8 +8,5 @@
   <td><%=form_line.product.nil? ? '' : form_line.product.unit_of_measure%></td>
 	<td><%= f.text_field :price_per_unit, "size" => 5 %></td>
 	<td><%= form_line.price_per_unit.nil? || form_line.ordered_qty.nil? ? '' : form_line.price_per_unit * form_line.ordered_qty %></td>
-	<td><%= f.text_field :expected_ship_date, "size" => 7, "class" => "isdate" %></td>
-	<td><%= f.text_field :expected_delivery_date, "size" => 7, "class" => "isdate" %></td>
-	<td><%= f.text_field :ship_no_later_date, "size" => 7, "class" => "isdate" %></td>
 	<td><%= f.submit (form_line.id.nil? ? 'Add' : 'Save') %><%unless form_line.id.nil? %><button id='btn_line_cancel'>Cancel</button><%end%></td>
 	</tr>
