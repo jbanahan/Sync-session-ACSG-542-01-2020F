@@ -8,7 +8,6 @@ class SalesOrdersController < ApplicationController
         'o_num' => {:field => 'order_number', :label=> 'Sales Order Number'},
         'p_name' => {:field => 'sales_order_lines_product_name', :label => 'Product Name'},
         'c_name' => {:field => 'customer_name', :label => 'Customer Name'},
-        'c_ord' => {:field => 'customer_order_number', :label => 'Customer Order Number'},
         'o_date' => {:field => 'order_date', :label => 'Order Date'},
         'p_id'   => {:field => 'sales_order_lines_product_unique_identifier',:label => 'Product ID'}
     }

@@ -37,11 +37,8 @@ $(function() {
           <thead><tr><th>Attributes</th></tr></thead>
           <tbody><tr><td>
             <b>Order Date: </b><%= f.text_field :order_date, "class" => "isdate" %><br />
-            <b>Customer Order Number: </b><%= f.text_field :customer_order_number %><br />
             <b>Division: </b><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => (Division.all.size>1 ? "Select a division" : nil)} %><br />
-            <b>Payment Terms: </b><%= f.text_field :payment_terms %><br />
-            <b>Ship Terms: </b><%= f.text_field :ship_terms %>
-						 <%=show_custom_fields @sales_order, {:form => true}%>
+      			<%=show_custom_fields @sales_order, {:form => true}%>
           </td></tr></tbody>  
         </table>
       </td>
