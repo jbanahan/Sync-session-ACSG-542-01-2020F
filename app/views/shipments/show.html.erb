@@ -80,28 +80,17 @@
 <br />
 <table class='detail_table' >
   <thead>
-    <tr><th>Attributes</th><th>Dates</th></tr>
+    <tr><th>Attributes</th></tr>
   </thead>
   <tbody>
     <tr>
       <td style='width:50%'>
-        <b>Bill of Lading:</b> <%=@shipment.bill_of_lading %>
-        <br />
         <b>Carrier:</b>
         <%= @shipment.carrier_id.nil? ? '' : @shipment.carrier.name %>
         <br />
         <b>Mode:</b>
         <%=@shipment.mode %>
 				<%=show_custom_fields @shipment%>
-      </td>
-      <td>
-        <table class='date_grid'>
-          <tbody>
-            <tr class='first_row'><td class='top_corner'></td><td>Estimate</td><td>Actual</td></tr>
-            <tr><td class="first_col">Departure</td><td<%= @shipment.departure_exception? ? " class=\'exception_value\'" : ""%>><%=@shipment.etd%><td><%=@shipment.atd%></td></tr>
-            <tr><td class="first_col">Arrival</td><td<%= @shipment.arrival_exception? ? " class=\'exception_value\'" : ""%>><%=@shipment.eta%><td><%=@shipment.ata%></td></tr>
-          </tbody>
-        </table>
       </td>
     </tr>
     </tbody>

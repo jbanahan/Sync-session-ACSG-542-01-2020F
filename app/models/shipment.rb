@@ -12,15 +12,6 @@ class Shipment < ActiveRecord::Base
   has_many   :item_change_subscriptions
 
   validates   :vendor, :presence => true
-  validate    :ata_after_atd
-	
-	def departure_exception?
-	  return !self.etd.nil?  && self.atd.nil? && (self.etd < Date.today)
-	end
-	
-	def arrival_exception?
-	  return !self.eta.nil? && self.ata.nil? && (self.eta < Date.today)
-	end
 	
 	def self.modes 
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
@@ -40,10 +31,4 @@ class Shipment < ActiveRecord::Base
 	  (!self.carrier.nil? && self.carrier.locked?)
 	end
 	
-	private
-	def ata_after_atd
-	  unless ata.nil? || atd.nil?
-	    errors.add(:ata,"ATA must be on or after Atd.") if ata < atd
-	  end
-	end
 end

@@ -94,17 +94,12 @@ class ShipmentsController < ApplicationController
   # GET /shipments.xml
   SEARCH_PARAMS = {
     'ref' => {:field => 'reference', :label => 'Reference'},
-    'bol' => {:field => 'bill_of_lading', :label => 'BOL'},
     'mode' => {:field => 'mode', :label => 'Mode'},
-    'etd_date' => {:field => 'etd', :label => 'Est. Departure'},
-    'atd_date' => {:field => 'atd', :label => 'Act. Departure'},
-    'eta_date' => {:field => 'eta', :label => 'Est. Arrival'},
-    'ata_date' => {:field => 'ata', :label => 'Act. Arrival'},
     'p_id' => {:field => 'piece_sets_product_unique_identifier', :label => 'Product ID'},
     'o_num' => {:field => 'order_lines_order_order_number', :label => 'Order Number'}
   }
   def index
-    @shipments = build_search(SEARCH_PARAMS,'ref','eta_date').all.paginate(:page => params[:page])
+    @shipments = build_search(SEARCH_PARAMS,'ref','ref').all.paginate(:page => params[:page])
 
     respond_to do |format|
       format.html { render :layout => 'one_col' }

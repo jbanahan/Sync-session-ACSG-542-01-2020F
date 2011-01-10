@@ -51,13 +51,11 @@
 <br />
 <table class='detail_table' >
   <thead>
-    <tr><th>Attributes</th><th>Dates</th></tr>
+    <tr><th>Attributes</th></tr>
   </thead>
   <tbody>
     <tr>
       <td style='width:50%'>
-        <b>Bill of Lading: </b><%=f.text_field :bill_of_lading %>
-        <br />
         <b>Carrier: </b>
         <% if current_user.company.carrier? 
             @shipment.carrier = current_user.company %>
@@ -69,15 +67,6 @@
         <b>Mode: </b>
         <%= f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
 				<%=show_custom_fields @shipment, {:form => true}%>
-      </td>
-      <td>
-        <table class='date_grid'>
-          <tbody>
-            <tr class='first_row'><td class='top_corner'></td><td>Estimate</td><td>Actual</td></tr>
-            <tr><td class="first_col">Departure</td><td<%= @shipment.departure_exception? ? " class=\'exception_value\'" : ""%>><%= f.text_field :etd, "size" => 7, "class" => "isdate"%><td><%=f.text_field :atd, "size" => 7, "class" => "isdate" %></td></tr>
-            <tr><td class="first_col">Arrival</td><td<%= @shipment.arrival_exception? ? " class=\'exception_value\'" : ""%>><%= f.text_field :eta, "size" => 7, "class" => "isdate" %><td><%= f.text_field :ata, "size" => 7, "class" => "isdate" %></td></tr>
-          </tbody>
-        </table>
       </td>
     </tr>
     </tbody>

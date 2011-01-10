@@ -26,23 +26,6 @@ class Product < ActiveRecord::Base
 	  return user.edit_products?
 	end
   
-  #get the quantities of this product in various states (key = state, value= quantity)
-  def state_hash(user)
-    return {} unless can_view?(user)
-    r = {}
-    arrived_qty = PieceSet.joins(:shipment).where("shipments.ata is not null AND piece_sets.product_id = ? AND inventory_in_id is NULL",self.id).sum("quantity")
-    r[:arrived] = arrived_qty
-    in_transit_qty = PieceSet.joins(:shipment).where("shipments.atd is not null AND shipments.ata is null AND piece_sets.product_id =? AND inventory_in_id is NULL",self.id).sum("quantity")
-    r[:in_transit] = in_transit_qty
-    not_departed_qty = PieceSet.joins(:shipment).where("shipments.atd is null AND piece_sets.product_id = ? AND inventory_in_id is NULL",self.id).sum("quantity")
-    r[:not_departed] = not_departed_qty
-    shipped_qty = PieceSet.joins(:shipment).where("piece_sets.product_id = ? AND shipment_id is not null AND inventory_in_id is NULL",self.id).sum("quantity")
-    ordered_qty = OrderLine.where(:product_id => self.id).sum("ordered_qty")
-    r[:inventory] = current_inventory_qty
-    ordered_inv_received = PieceSet.where("inventory_in_id is not null AND piece_sets.product_id = ? AND order_line_id is not null",self.id).sum("quantity")
-    r[:not_shipped] = ordered_qty - shipped_qty - ordered_inv_received
-    return r
-  end
   
   def current_inventory_qty
     inv_in = inventory_received

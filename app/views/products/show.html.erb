@@ -30,7 +30,6 @@
         window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq' )%>';
       });
     $( "#item_change_subscription_submit").button();
-    $("#tbl_state").visualize({width: 350, height:250}).appendTo('#chart_holder').trigger('visualizeRefresh');
   });
 <% end %>
 
@@ -78,28 +77,10 @@
 	<%= @product.division.name %>
 </p>
  <%=show_custom_fields @product%>
-<div style='width=95%' id='chart_holder'>
-<table class='detail_table' id='tbl_state'>
-  <caption>Product Status</caption>
-  <thead>
-    <th>Not Shipped</th>
-    <th>Not Departed</th>
-    <th>In Transit</th>
-    <th>Arrived</th>
-    <th>Inventory</th>
-  </thead>
-  <tbody>
-    <tr>
-    <% state_hash = @product.state_hash current_user %>
-      <td><%=state_hash[:not_shipped]%></td>
-      <td><%=state_hash[:not_departed]%></td>
-      <td><%=state_hash[:in_transit]%></td>
-      <td><%=state_hash[:arrived]%></td>
-      <td><%=state_hash[:inventory]%></td>
-    </tr>
-  </tbody>
-</table>
-</div>
+<p>
+  <b>Inventory Quantity:</b>
+  <%=@product.current_inventory_qty%>
+</p>
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 
@@ -121,7 +102,7 @@
 <div id='mod_inventory' style='display:none;'>
   <%form_tag('/adjust_inventory', :method=>"post", :id => "frm_inv") do %>
     <input type="hidden" name="product_id" value="<%=@product.id%>" />
-  Current: <%=state_hash[:inventory]%><br />
+  Current: <%=@product.current_inventory_qty%><br />
   New: <input type="text" name="quantity" /><br />
   <%end%>
 </div>

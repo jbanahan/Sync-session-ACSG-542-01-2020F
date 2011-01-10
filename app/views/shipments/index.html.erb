@@ -3,23 +3,13 @@
   <thead>
     <tr>
   		<th><%=sortable_search_heading 'ref'%></th>
-  		<th><%=sortable_search_heading 'bol'%></th>
   		<th><%=sortable_search_heading 'mode'%></th>
-      <th><%=sortable_search_heading 'etd_date'%></th>
-      <th><%=sortable_search_heading 'atd_date'%></th>
-      <th><%=sortable_search_heading 'eta_date'%></th>
-      <th><%=sortable_search_heading 'ata_date'%></th>
     </tr>
   </thead>
 <% @shipments.each do |shipment| %>
   <tr class='hover'>
 		<td><%= link_to (shipment.reference.blank? ? '[empty]' : shipment.reference), shipment	%></td>
-		<td><%= shipment.bill_of_lading %></td>
 		<td><%= shipment.mode %></td>
-    <td<%= shipment.departure_exception? ? " class=\'exception_value\'" : ""%>><%= shipment.etd %></td>
-    <td><%= shipment.atd %></td>
-    <td<%= shipment.arrival_exception? ? " class=\'exception_value\'" : ""%>><%= shipment.eta %></td>
-    <td><%= shipment.ata %></td>
   </tr>
 <% end %>
 </table>
