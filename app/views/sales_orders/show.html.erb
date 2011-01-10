@@ -54,14 +54,9 @@ $(function() {
     <th>Line</th>
     <th>Product</th>
     <th>Ordered</th>
-    <th>Shipped</th>
-    <th>Delivered</th>
     <th>Unit of Measure</th>
     <th>Price / Unit</th>
     <th>Total Price</th>
-    <th>Expected Ship</th>
-    <th>Expected Delivery</th>
-    <th>Ship No Later</th>
     <th></th>
   </thead>
 
@@ -74,14 +69,9 @@ $(function() {
           <td><%= @sales_order.can_edit?(current_user) && !@sales_order.locked? ? (link_to line.line_number, edit_sales_order_sales_order_line_path(@sales_order,line)) : line.line_number %></td>
           <td><%= link_to line.product.name, product_path(line.product) %></td>
           <td><%= line.ordered_qty %></td>
-          <td><!--shipped qty--></td>
-          <td><!-- delivered qty--></td>
           <td><%= line.product.unit_of_measure %></td>
           <td><%= line.price_per_unit %></td>
           <td><%= line.price_per_unit.nil? || line.ordered_qty.nil? ? '' : line.price_per_unit * line.ordered_qty %></td>
-          <td <%= line.expected_ship_date %></td>
-          <td <%= line.expected_delivery_date %></td>
-          <td><%= line.ship_no_later_date %></td>
           <td>
             <% if @sales_order.can_edit?(current_user) && !@sales_order.locked?%>
               <%= link_to 'Delete', sales_order_sales_order_line_path(@sales_order,line) , :confirm => 'Are you sure?', :method => :delete %>
