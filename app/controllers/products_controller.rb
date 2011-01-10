@@ -7,7 +7,6 @@ class ProductsController < ApplicationController
     SEARCH_PARAMS = {
         'uid' => {:field => 'unique_identifier', :label => 'Unique ID'},
         'p_name' => {:field => 'name', :label => 'Name'},
-        'p_num' => {:field => 'part_number', :label => 'Part Number'},
         'desc' => {:field => 'description', :label => 'Description'},
         'v_name' => {:field => 'vendor_name', :label => 'Vendor'},
         'div' => {:field => 'division_name', :label => 'Division'}

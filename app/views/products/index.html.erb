@@ -4,7 +4,6 @@
   <tr>
     <th><%=sortable_search_heading 'p_name'%></th>
     <th><%=sortable_search_heading 'uid'%></th>
-    <th><%=sortable_search_heading 'p_num'%></th>
     <th><%=sortable_search_heading 'desc'%></th>
     <th><%=sortable_search_heading 'v_name'%></th>
 		<th><%=sortable_search_heading 'div'%></th>
@@ -15,7 +14,6 @@
   <tr class='hover'>
     <td><%= link_to product.name, product %></td>
     <td><%= product.unique_identifier %></td>
-    <td><%= product.part_number %></td>
     <td><%= product.description %></td>
     <td><%= product.vendor.name %></td>
 		<td><%= product.division.name %></td>

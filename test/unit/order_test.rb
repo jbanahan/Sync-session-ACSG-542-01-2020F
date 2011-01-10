@@ -117,15 +117,11 @@ class OrderTest < ActiveSupport::TestCase
   test "shallow merge into" do
     base_attribs = {:order_number => "base_ord_num",
         :order_date => Date.new(2010,11,1),
-        :buyer => "base_buyer",
-        :season => "base_season",
         :division_id => 1,
         :vendor_id => 2}
     base = Order.new(base_attribs)
     newer_attribs = {:order_number => "new_ord_num",
       :order_date => Date.new(2011,3,2),
-      :buyer => "new_buyer",
-      :season => "new_season",
       :division_id => 3,
       :vendor_id => 4}
     newer = Order.new(newer_attribs)
@@ -135,8 +131,6 @@ class OrderTest < ActiveSupport::TestCase
     newer.created_at = DateTime.new(2007,5,2)
     target_attribs = {'order_number' => base.order_number,
       'order_date' => newer.order_date,
-      'buyer' => newer.buyer,
-      'season' => newer.season,
       'division_id' => newer.division_id,
       'vendor_id' => newer.vendor_id,
       'updated_at' => base.updated_at,

@@ -38,7 +38,6 @@ class ProductTest < ActiveSupport::TestCase
   test "shallow merge into" do
     base_attribs = {
       :unique_identifier => "ui",
-      :part_number => "bpart",
       :name => "bname",
       :description => "bdesc",
       :vendor_id => 2,
@@ -47,7 +46,6 @@ class ProductTest < ActiveSupport::TestCase
     base = Product.new(base_attribs)
     newer_attribs = {
       :unique_identifier => "to be ignored",
-      :part_number => "npart",
       :name => "nname",
       :description => "ndesc",
       :vendor_id => 3,
@@ -59,7 +57,6 @@ class ProductTest < ActiveSupport::TestCase
     newer.updated_at = DateTime.new(2012,3,9)
     newer.created_at = DateTime.new(2007,5,2)
     target_attribs = {'unique_identifier' => base.unique_identifier,
-      'part_number' => newer.part_number,
       'name' => newer.name,
       'description' => newer.description,
       'division_id' => newer.division_id,
@@ -74,60 +71,5 @@ class ProductTest < ActiveSupport::TestCase
     }
   end
   
-  test "state hash" do
-    #base quantities for results 
-    in_transit = 6
-    not_departed = 5
-    not_shipped = 4
-    arrived = 3
-    inventory = 9
-    inventory_out = 4
-    total_pieces = not_departed+in_transit+not_shipped+arrived+inventory#+inventory_out
-    #setup
-    ship_in_transit = Shipment.new(:vendor_id => 2, :reference => 'in transit', :atd => 7.days.ago )
-    ship_in_transit.save!
-    ship_not_departed = Shipment.new(:vendor_id => 2, :reference => 'not departed')
-    ship_not_departed.save!
-    ship_arrived = Shipment.new(:vendor_id=>2,:reference=>'arrived',:atd => 10.days.ago,:ata=> 2.days.ago)
-    ship_arrived.save!
-    inventory_in = InventoryIn.create()
-    p = Product.new(:unique_identifier => 'statehash',:vendor_id => 2,:division_id => 1)
-    p.save!
-    ord = Order.new(:order_number => 'ordnum-sh',:vendor_id => 2,:division_id => 1)
-    ord.save!
-    o_line = ord.order_lines.create(:ordered_qty => total_pieces,:product_id=>p.id,:line_number=>1)
-    o_line.piece_sets.create(
-      :order_line_id => o_line.id,
-      :product_id => p.id,
-      :shipment_id => ship_not_departed.id,
-      :quantity => not_departed
-    )
-    o_line.piece_sets.create(
-      :order_line_id => o_line.id,
-      :product_id => p.id,
-      :shipment_id => ship_in_transit.id,
-      :quantity => in_transit
-    )
-    o_line.piece_sets.create(
-      :order_line_id => o_line.id,
-      :product_id => p.id,
-      :shipment_id => ship_arrived.id,
-      :quantity => arrived
-    )
-    o_line.piece_sets.create(
-      :order_line_id => o_line.id,
-      :product_id => p.id,
-      :inventory_in_id => inventory_in.id,
-      :quantity => inventory
-    )
-    io = InventoryOut.create!()
-    PieceSet.create!(:product_id => p.id, :inventory_out => io, :quantity => inventory_out)
-    results = p.state_hash(User.find(1))    
-    assert results[:arrived]==arrived, "Arrived should have been #{arrived}, was #{results[:arrived]}"
-    assert results[:in_transit]==in_transit, "In Tranist should have been #{in_transit}, was #{results[:in_transit]}"
-    assert results[:not_departed]==not_departed, "Not Departed should have been #{not_departed}, was #{results[:not_departed]}"
-    assert results[:not_shipped]==not_shipped, "Not Shipped should have been #{not_shipped}, was #{results[:not_shipped]}"
-    assert results[:inventory]==inventory-inventory_out, "Inventory should have been #{inventory-inventory_out}, was #{results[:inventory]}"
-    assert results.size == 5, "Results should have been hash of 5, was #{results.size}"
-  end
+  
 end

@@ -6,9 +6,9 @@ config_1_order_number:
   column: 1
   import_config_id: 1
 
-config_1_buyer:
+config_1_order_date:
   id: 2
-  model_field_uid: order-buyer-Header - Buyer
+  model_field_uid: order-order_date-Header - Order Date
   column: 2
   import_config_id: 1
 

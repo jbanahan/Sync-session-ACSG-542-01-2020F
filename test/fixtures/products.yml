@@ -3,7 +3,6 @@
 one:
   id: 1
   unique_identifier: prod_1
-  part_number: MyString
   name: MyString
   description: MyString
   vendor_id: 2
@@ -11,7 +10,6 @@ one:
 two:
   id: 2
   unique_identifier: prod_2
-  part_number: MyString
   name: MyString
   description: MyString
   vendor_id: 3

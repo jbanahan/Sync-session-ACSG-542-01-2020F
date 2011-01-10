@@ -5,8 +5,6 @@ one:
   product_id: 1
   ordered_qty: 14
   price_per_unit: 9.99
-  expected_ship_date: 2010-09-09
-  expected_delivery_date: 2010-09-09
   order_id: 1
   line_number: 1
 
@@ -15,8 +13,6 @@ two:
   product_id: 2
   ordered_qty: 9.99
   price_per_unit: 9.99
-  expected_ship_date: 2010-09-09
-  expected_delivery_date: 2010-09-09
   order_id: 1
   line_number: 2
 

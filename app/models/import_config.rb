@@ -17,7 +17,6 @@ class ImportConfig < ActiveRecord::Base
   MODEL_FIELDS[:product] = Hash.new
   [
     [1,:product,:unique_identifier,"Unique Identifier"],
-    [2,:product,:part_number,"Part Number"],
     [3,:product,:name,"Name"],
     [4,:product,:description,"Description"],
     [5,:product,:vendor_id,"Vendor ID"]
