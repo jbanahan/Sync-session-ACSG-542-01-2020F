@@ -55,7 +55,6 @@ class DeliveriesController < ApplicationController
   # GET /deliveries.xml
   SEARCH_PARAMS = {
     'ref' => {:field => 'reference', :label => 'Reference'},
-    'bol' => {:field => 'bill_of_lading', :label => 'BOL'},
     'mode' => {:field => 'mode', :label => 'Mode'},
     'cust' => {:field => 'customer_name', :label => 'Customer'}
   }

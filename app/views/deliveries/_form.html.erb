@@ -56,8 +56,6 @@ $(function() {
   <tbody>
     <tr>
       <td style='width:50%'>
-        <b>Bill of Lading: </b><%=f.text_field :bill_of_lading %>
-        <br />
         <b>Carrier: </b>
         <% if current_user.company.carrier? 
             @delivery.carrier = current_user.company %>

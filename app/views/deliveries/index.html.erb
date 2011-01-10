@@ -4,7 +4,6 @@
     <tr>
       <th><%=sortable_search_heading 'ref'%></th>
       <th><%=sortable_search_heading 'cust'%></th>
-      <th><%=sortable_search_heading 'bol'%></th>
       <th><%=sortable_search_heading 'mode'%></th>
     </tr>
   </thead>
@@ -12,7 +11,6 @@
   <tr class='hover'>
     <td><%= link_to (delivery.reference.blank? ? '[empty]' : delivery.reference), delivery%></td>
     <td><%= delivery.customer.nil? ? '' : delivery.customer.name %></td>
-    <td><%= delivery.bill_of_lading %></td>
     <td><%= delivery.mode %></td>
   </tr>
 <% end %>
