@@ -27,14 +27,16 @@ class ApplicationController < ActionController::Base
     def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
         cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
         pass = true
-        cpp.each do |k,v|
-          definition_id = k.to_s
-          cd = CustomDefinition.find(definition_id)
-          cv = customizable_parent.get_custom_value cd
-          cv.value = v
-          cv.save
-          pass = false unless cv.errors.empty?
-          errors_to_flash cv
+        unless cpp.nil?
+          cpp.each do |k,v|
+            definition_id = k.to_s
+            cd = CustomDefinition.find(definition_id)
+            cv = customizable_parent.get_custom_value cd
+            cv.value = v
+            cv.save
+            pass = false unless cv.errors.empty?
+            errors_to_flash cv
+          end
         end
         pass
     end

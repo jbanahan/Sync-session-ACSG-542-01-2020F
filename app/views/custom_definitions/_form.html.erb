@@ -16,7 +16,7 @@ $(function() {
   </div>
   <div class="field">
     <%= f.label :module_type, 'Module' %><br />
-    <%= f.select :module_type, [["Delivery","Delivery"],["Order","Order"],["Product","Product"],["Sale","SalesOrder"],["Shipment","Shipment"]] %>
+    <%= f.select :module_type, [["Delivery","Delivery"],["Order - Header","Order"],["Order - Line","OrderLine"],["Product","Product"],["Sale","SalesOrder"],["Shipment","Shipment"]] %>
   </div>
   <div class="field">
     <%= f.label :data_type, 'Data Type' %><br />

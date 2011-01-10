@@ -38,23 +38,25 @@ class ImportConfig < ActiveRecord::Base
         detail.product.unique_identifier
         }
       }],
-    [7,:order,:ordered_qty,"Line - Order Quantity",{:detail => true}],
-    [9,:order,:price_per_unit,"Line - Price / Unit",{:detail => true}],
+    [7,:order,:line_number,"Line - Line Number",{:detail => true}],
+    [8,:order,:ordered_qty,"Line - Order Quantity",{:detail => true}],
+    [9,:order,:price_per_unit,"Line - Price / Unit",{:detail => true}]
   ].each do |m|
     mf = ModelField.new(m[0],m[1],m[2],m[3],m[4].nil? ? {} : m[4])
     MODEL_FIELDS[:order][mf.uid.intern] = mf 
   end
   
-  def self.add_custom_fields(model_hash,base_class,label_prefix)
+  def self.add_custom_fields(model_hash,base_class,label_prefix,parameters={})
     max = 0
-    model_hash.values.each {|mf| max = mf.sort_rank if mf.sort_rank > max}
+    model_hash.values.each {|mf| max = mf.sort_rank + 1 if mf.sort_rank > max}
     base_class.new.custom_definitions.each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
-      mf = ModelField.new(max+index,class_symbol,"custom_#{d.id}".intern,"#{label_prefix}#{d.label}",{:custom_id=>d.id})
+      mf = ModelField.new(max+index,class_symbol,"custom_#{d.id}".intern,"#{label_prefix}#{d.label}",parameters.merge({:custom_id=>d.id}))
       model_hash[mf.uid.intern] = mf
     end
   end
 	ImportConfig.add_custom_fields(MODEL_FIELDS[:order],Order,"Header - ")
+	ImportConfig.add_custom_fields(MODEL_FIELDS[:order],OrderLine,"Line - ",{:detail => true})
   ImportConfig.add_custom_fields(MODEL_FIELDS[:product],Product,"")
     
   def self.sorted_model_hash(model)

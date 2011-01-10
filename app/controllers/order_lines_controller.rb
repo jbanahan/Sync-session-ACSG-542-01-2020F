@@ -3,16 +3,13 @@ class OrderLinesController < ApplicationController
 	def create
 		o = Order.find(params[:order_id])
 		action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>"order"}) {
-  		@order = o
-  		@order_line = @order.order_lines.build(params[:order_line])
-      @order_line.set_line_number
-      @products = Product.where(["vendor_id = ?",@order.vendor])
-  		unless @order_line.save
-  		  errors_to_flash @order_line, :now => true
-  		  render 'orders/show'
-  		else
-  		  redirect_to order_path(@order)
-  		end		  
+  		order_line = o.order_lines.build(params[:order_line])
+      order_line.set_line_number
+  		if order_line.save 
+  		  update_custom_fields order_line, params[:orderline_cf]
+  		end
+		  errors_to_flash order_line
+		  redirect_to order_path(o)
 		}
 	end
 	
@@ -48,6 +45,7 @@ class OrderLinesController < ApplicationController
             @order_line.set_line_number
             @order_line.save
           end
+          update_custom_fields @order_line, params[:orderline_cf]
           add_flash :notices, "Line updated sucessfully."
           format.html { redirect_to(@order) }
           format.xml  { head :ok }

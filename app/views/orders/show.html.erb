@@ -10,12 +10,15 @@
     <% if @order.related_shipments.length == 0  && current_user.company.master %>
     $("#btn_delete")
       .button();
-    <% end
-      if current_user.company.master 
-     %>
-    $("#order_line_submit")
-      .button();
     <% end %>
+    $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
+      width:'auto',
+      buttons:{"Save":function() {$("#frm_edit_line").submit();},
+               "Cancel":function() {window.location = '<%=order_path(@order)%>';}}  
+    });
+    $("#btn_add_line").button().click(function() {
+      $("#mod_edit_line").dialog('open');
+    });
     $("#mod_subscriptions").dialog({autoOpen:false,title:'Subscriptions',
         buttons:{"Subscribe":function() {$("#frm_sub").submit();}}
       });
@@ -31,6 +34,9 @@
     $("#btn_shipment_jump").button().click(function() {
       window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @order.order_number, :f => 'o_num', :con => 'eq' )%>';
     });
+    <% if @order.can_edit?(current_user) && !@order_line.nil? %>
+      $("#mod_edit_line").dialog('open');
+    <% end %>
   });
 <% end %>
 
@@ -49,8 +55,7 @@
 
 <%= render 'orders/header' %>
 <br />
-<% form_line = @order_line.nil? ? @order.order_lines.build : @order_line %>
-<%= form_for([@order, form_line]) do |f| %>
+
 	
 <table class="detail_table">
 	<thead>
@@ -65,16 +70,11 @@
 		<th></th>
 	</thead>
 	
-		<% @order.order_lines.each do |line| 	
-			if !line.id.nil? && !@order_line.nil? && line.id == @order_line.id %>
-<%= render :partial => 'orders/line', :locals => { :f => f, :form_line => form_line } %>
-	
-	<% elsif !line.id.nil? %>
+		<% @order.order_lines.each do |line| %>
 
 	<tr class='hover'>
-	  <% line.set_line_number if line.line_number.nil? %>
 	  <td><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
-	  <td><%= link_to line.product.name, product_path(line.product) %></td>
+	  <td><b><%= link_to line.product.name, product_path(line.product) %></b></td>
   	<td><%= line.ordered_qty %></td>
   	<td><%=line.shipped_qty%></td>
   	<td><%=line.received_qty%></td>
@@ -84,24 +84,37 @@
   	<td>
   	  <% if @order.can_edit?(current_user) && !@order.locked?%>
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
+  		  &nbsp;|&nbsp;
+  		  <a id='lnk_det_s_<%=line.id%>' href="javascript:$('#det_<%=line.id%>').fadeIn('slow');$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
+  		  <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
   		<% end %> 
   	</td>
 	</tr>
-	<%
-		end
-		end 
-		if form_line.id.nil? && @order.can_edit?(current_user) && !@order.locked?
-	%>
-<%= render :partial => 'orders/line', :locals => { :f => f, :form_line => form_line } %>
-
-	<%
-		end
-	%>
-	
+	<tr style='display:none;' id='det_<%=line.id%>'>
+	  <td></td><td colspan='8' ><%= show_custom_fields line %></td>
+	</tr>
+<%end %> 
 </table>
-<% 
-end 
-%>
+<% if @order_line.nil? && @order.can_edit?(current_user)%>
+<button id='btn_add_line'>Add</button>
+<% end %>
+<% form_line = @order_line.nil? ? @order.order_lines.build : @order_line %>
+<div id='mod_edit_line' style='display:none;'>
+  <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
+  <table>
+    <% form_line.set_line_number if form_line.line_number.nil? %>
+    <tr><td><b>Line Number: </b></td><td><%= f.text_field :line_number, "size" => 2 %></td></tr>
+    <tr><td><b>Product: </b></td><td><%= f.collection_select :product_id, @products, :id, :name, options ={:prompt => "-Select a product"}%></td></tr>
+    <tr><td><b>Ordered Quantity: </b></td><td><%= f.text_field :ordered_qty, "size" => 5 %></td></tr>
+    <tr><td><b>Shipped Quantity: </b></td><td><%=form_line.shipped_qty%></td></tr>
+    <tr><td><b>Received Quantity: </b></td><td><%=form_line.received_qty%></td></tr>
+    <tr><td><b>Unit of Measure: </b></td><td><%=form_line.product.nil? ? '' : form_line.product.unit_of_measure%></td></tr>
+    <tr><td><b>Price / Unit: </b></td><td><%= f.text_field :price_per_unit, "size" => 5 %></td></tr>
+    <tr><td><b>Total Price: </b></td><td><%= form_line.price_per_unit.nil? || form_line.ordered_qty.nil? ? '' : form_line.price_per_unit * form_line.ordered_qty %></td></tr>
+    <%= show_custom_fields form_line, {:form => true, :table=>true}%>
+  </table>
+  <% end %>
+</div>
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 

@@ -9,7 +9,7 @@ class DashboardController < ApplicationController
 	
 	private
 	def get_late_shipments
-	  return Shipment.where("ata is null and eta < ?",Time.new)
+	  return []
 	end
 	
 end

@@ -1,5 +1,6 @@
 class OrderLine < ActiveRecord::Base
   include LinesSupport
+  include CustomFieldSupport
   
   belongs_to :product
   belongs_to :order
