@@ -25,32 +25,16 @@ function checkUOMChange() {
 <button id='btn_save'>Save</button>
 <button id='btn_cancel'>Cancel</button>
 <% end %>
-
 <%= form_for @product, :html=>{:id=>'frm_prod'} do |f| %>
-  <div class="field">
-    <%= f.label :unique_identifier %><br />
-    <%= f.text_field :unique_identifier %>
-  </div>
-  <div class="field">
-    <%= f.label :name %><br />
-    <%= f.text_field :name %>
-  </div>
-  <div class="field">
-    <%= f.label :description %><br />
-    <%= f.text_field :description %>
-  </div>
-  <div class="field">
-    <%= f.label :unit_of_measure %><br />
-    <%= f.text_field :unit_of_measure, :id=>'txt_uom' %>
-    <input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' />
-  </div>
-	<div class="field">
-		<%= f.label :vendor %><br />
-		<%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %>
-	</div>
-	<div class="field">
-		<%= f.label :division %><br />
-		<%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => "-Select a division"} %>
-	</div>
-	 <%=show_custom_fields @product, {:form=>true}%>
+<table>
+<tr><td class='label_cell'><%= f.label :unique_identifier, "Unique ID" %>:</td><td><%= f.text_field :unique_identifier %></td></tr>
+<tr><td class='label_cell'><%= f.label :name %>:</td><td><%= f.text_field :name %></td></tr>
+<tr><td class='label_cell'><%= f.label :description %>:</td><td><%= f.text_field :description %></td></tr>
+<tr><td class='label_cell'><%= f.label :unit_of_measure %>:</td><td><%= f.text_field :unit_of_measure, :id=>'txt_uom' %><input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' /></td></tr>
+<tr><td class='label_cell'><%= f.label :vendor %>:</td><td><%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %></td></tr>
+<tr><td class='label_cell'><%= f.label :division %>:</td><td><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => "-Select a division"} %></td></tr>
+<%=show_custom_fields @product, {:form=>true, :table=>true}%>
+</table>	
 <% end %>
+</td>
+</table>

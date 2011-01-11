@@ -43,39 +43,34 @@
 <button id='btn_shipment_jump'>Shipments</button>
 <% end %>
 
-<p>
-  <b>Unique identifier:</b>
-  <%= @product.unique_identifier %>
-</p>
-
-<p>
-  <b>Name:</b>
-  <%= @product.name %>
-</p>
-
-<p>
-  <b>Description:</b>
-  <%= @product.description %>
-</p>
-
-<p>
-  <b>Unit of Measure:</b>
-  <%= @product.unit_of_measure %>
-</p>
-
-<p>
-  <b>Vendor:</b>
-  <%= @product.vendor.name %> <%if(@product.vendor.locked?)%><span class='exception_value'>[LOCKED]</span><%end%>
-</p>
-<p>
-	<b>Division:</b>
-	<%= @product.division.name %>
-</p>
- <%=show_custom_fields @product%>
-<p>
-  <b>Inventory Quantity:</b>
-  <%=@product.current_inventory_qty%>
-</p>
+<table>
+<tr><td>
+<!-- fields -->
+	<table>
+<tr class='hover'><td class='label_cell'>Unique identifier:</td><td><%= @product.unique_identifier %></td></tr>
+<tr class='hover'><td class='label_cell'>Name:</td><td><%= @product.name %></td></tr>
+<tr class='hover'><td class='label_cell'>Description:</td><td><%= @product.description %></td></tr>
+<tr class='hover'><td class='label_cell'>Unit of Measure:</td><td><%= @product.unit_of_measure %></td></tr>
+<tr class='hover'><td class='label_cell'>Vendor:</td><td><%= @product.vendor.name %> <%if(@product.vendor.locked?)%><span class='exception_value'>[LOCKED]</span><%end%></td></tr>
+<tr class='hover'><td class='label_cell'>Division:</td><td><%= @product.division.name %></td></tr>
+<tr class='hover'><td class='label_cell'>Inventory Quantity:</td><td><%=@product.current_inventory_qty%></td></tr>
+<%=show_custom_fields @product, {:table=>true}%>
+	</table>
+</td><td>
+<!-- image -->
+<% 
+	cd = CustomDefinition.where(:label => "PDM Number").first
+	unless cd.nil?
+		cv = @product.get_custom_value cd
+		if ["K096SC03","K104SC75"].include?(cv.value)
+%>
+<a href='/images/polo/<%=cv.value%>.jpg' target='_blank'><%=image_tag("polo/#{cv.value}.jpg", "width" => "200px")%></a>
+<%
+		end
+	end
+%>
+</td></tr>
+</table>
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 

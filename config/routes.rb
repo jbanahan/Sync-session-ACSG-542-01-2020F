@@ -13,6 +13,7 @@ OpenChain::Application.routes.draw do
   match "/settings" => "settings#index", :as => :settings
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
+  match "/classifier" => "classifier#demo"
 
   resources :import_configs
   resources :imported_files, :only => [:new, :create, :show] do
@@ -70,14 +71,5 @@ OpenChain::Application.routes.draw do
 		end
 		get :shipping_address_list, :on => :member
   end
-
-  # You can have the root of your site routed with "root"
-  # just remember to delete public/index.html.
    root :to => "dashboard#show_main"
-
-  # See how all your routes lay out with "rake routes"
-
-  # This is a legacy wild controller route that's not recommended for RESTful applications.
-  # Note: This route will make all actions in every controller accessible via GET requests.
-  # match ':controller(/:action(/:id(.:format)))'
 end

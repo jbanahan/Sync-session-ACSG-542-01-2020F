@@ -266,3 +266,8 @@ img {
   font-size: 90%;
   width: 95%;
 }
+
+/* Edit tables */
+.label_cell {
+	font-weight: bold;
+}

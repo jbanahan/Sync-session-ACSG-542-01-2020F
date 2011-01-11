@@ -1,0 +1,136 @@
+<% content_for :javascript do%>
+$(function() {
+  $("#sel_ptype").change(function() {
+    val = $(this).val();
+    if(val=="apparel") {
+      $("#div_footwear").hide();
+      $("#div_home").hide();  
+      $("#div_apparel").fadeIn('slow');
+    } else if (val=="home") {
+      $("#div_apparel").hide();
+      $("#div_footwear").hide();
+      $("#div_home").fadeIn('slow');
+    } else if (val=="footwear") {
+      $("#div_home").hide();
+      $("#div_apparel").hide();
+      $("#div_footwear").fadeIn('slow');
+    } else {
+      $("#div_home").hide();
+      $("#div_apparel").hide();
+      $("#div_footwear").hide();
+    }
+  });  
+  $("#chk_buttons").change(function() {
+    val = $(this).val();
+    if(val=="on") {
+      $("#div_button_type").fadeIn('slow');
+    } else {
+      $("#div_button_type").fadeOut('slow');
+    }
+  });
+  $("#submit_for_class").button();
+  $("#btn_complete").button();
+  $("#hts1").change(function() {
+    if($(this).val().length>0) {
+      $("#btn_complete").fadeIn();
+    }
+  });
+  setRequiredHooks();
+});
+function setRequiredHooks() {
+  var funct = function() {enableSubmitButton();}
+  $(".required").keyup(funct).change(funct);
+  $("#sel_btn_type").change(funct);
+  $("#chk_buttons").change(funct);
+}
+function enableSubmitButton() {
+  var pass = true;
+  var spv = $("#sel_ptype").val();
+  pass = checkRequired(pass, $("#header_fields .required"));
+  if(spv=="") {
+    pass = false;
+  } else if (spv=="apparel") {
+    pass = checkRequired(pass, $("#div_apparel .required"));
+    $('#chk_buttons:checked').each( function() {
+      pass = checkRequired(pass, $("#div_button_type .required"));
+    });
+  }
+  
+  if(pass) {
+    $("#submit_for_class").fadeIn('slow').click(function() {
+      $(this).hide();
+      $("#div_hts").fadeIn('slow');
+    });
+  } else {
+    $("#submit_for_class").fadeOut('slow');
+    $("#div_hts").fadeOut('slow');
+  } 
+}
+function checkRequired(previous_pass, toCheck) {
+  var pass = previous_pass;
+  toCheck.each(function(index, item){
+    if(pass && $(item).val().length==0) {
+      pass = false;
+    }
+  });
+  return pass;
+}
+<% end %>
+<% content_for :action_bar do %>
+  <button id='submit_for_class' style='display:none;'>Submit For Classification</button>
+  <button id='btn_complete' style='display:none;'>Complete Classification</button>
+<% end %>
+<style type="text/css">
+  #demo_content .big_field {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .required {
+    border-width: 2px;
+  }
+</style>
+<div id='demo_content'>
+  <div id='header_fields' class='big_field'>
+    Style*:<input type='text' class='required' /><br />
+    Season:<input type='text' /><br />
+    Short Description*:<input type='text' class='required'/>
+  </div>
+<br />
+<hr />
+  Product Type: 
+    <select id='sel_ptype' class='required'>
+      <option value=''>Select One</option>
+      <option value='apparel'>Apparel</option>
+      <option value='home'>Home</option>
+      <option value='footwear'>Footwear</option>
+    </select>
+    
+  <div id='div_apparel' class='question_block' style='display:none;'>
+    Fabric Content: <input type='text' class='required'/><br />
+    Stitch Count: <input type='text' class='required'/><br />
+    Has Buttons: <input type='checkbox' id='chk_buttons' />&nbsp;
+    
+  </div>
+  <div id='div_button_type' class='question_block' style='display:none;'>
+    Button Type:
+    <select id='sel_btn_type' class='required'>
+      <option value=''>Select One</option>
+      <option value='plastic'>Plastic</option>
+      <option value='shell'>Shell</option>
+      <option value='wood'>Wood</option>
+    </select>
+  </div>
+  
+  <div id='div_home' class='question_block' style='display:none;'>
+    Home Question 1
+  </div>
+  
+  <div id='div_footwear' class='question_block' style='display:none;'>
+    Footwear Question 1
+  </div>
+  
+
+  <div id='div_hts' style='display:none;'>
+    HTS 1: <input type='text' id='hts1'/> HTS 2: <input type='text' /> HTS 3: <input type='text' /> <a href='#'>add row</a><br />
+  </div>
+</div>

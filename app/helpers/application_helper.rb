@@ -5,7 +5,7 @@ module ApplicationHelper
 	  customizable.custom_definitions.order("rank ASC, label ASC").each {|d|
 			name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
   		if opts[:table]
-        x << "<tr><td><b>".html_safe+d.label+":</b></td><td>".html_safe
+        x << "<tr class='hover'><td class='label_cell'>".html_safe+d.label+":</td><td>".html_safe
         if opts[:form]
           x << text_field_tag(name, customizable.get_custom_value(d).value, :class=>"#{d.date? ? "isdate" : ""}")
         else
