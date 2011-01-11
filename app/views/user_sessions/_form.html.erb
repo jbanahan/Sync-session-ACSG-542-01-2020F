@@ -2,10 +2,10 @@
   $(function() {
     $( "#user_session_submit" )
       .button();
-    $(document).ready(function(){
-      $("#user_session_username").focus();
-    });
   });
+	$(document).ready(function(){
+		$("#user_session_username").focus();
+	});
 </script>
 <%= form_for(@user_session) do |f| %>
   <div class="field">
