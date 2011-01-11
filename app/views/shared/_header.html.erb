@@ -130,6 +130,7 @@
   <% end %>
   <% if has_messages %>
     <div id='notice' class='notices col1 ui-corner-all' style='display:none;'>
+			<div id='notice_hide'><a href="javascript:$('#notice').fadeOut();false;">Hide</a></div>
     <% [:errors,:notices].each do |type|
           ary = flash[type].nil? ? [] : flash[type]
           ary.each do |m| %>
