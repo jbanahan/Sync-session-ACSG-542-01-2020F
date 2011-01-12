@@ -1,17 +1,17 @@
 <table style='width:100%;'>
   <tr>
     <td style='width: 50%; vertical-align: top;'>
-      <h2>Late Shipments</h2>
-      <% if @late_shipments.length == 0 %>
-      No late shipments.
+      <h2>Needs Classification</h2>
+      <% if @products_without_hts.length == 0 %>
+      No products missing HTS
       <% else %> 
       <table class='detail_table'>
         <thead>
-          <tr><th>Reference</th><th>ETA</th></tr>
+          <tr><th>Name</th></tr>
         </thead>
         <tbody>
-      <% @late_shipments.each do |shipment| %>
-      <tr class='hover'><td><%= link_to (shipment.reference.blank? ? '[empty]' : shipment.reference), shipment_path(shipment)%></td><td><%=shipment.eta.to_s %></td></tr>
+      <% @products_without_hts.each do |p| %>
+      <tr class='hover'><td><%= link_to p.name, product_path(p)%></td></tr>
       <% end %>
         </tbody>
       </table>

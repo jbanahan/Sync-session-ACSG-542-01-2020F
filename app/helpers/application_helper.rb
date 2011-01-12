@@ -24,4 +24,8 @@ module ApplicationHelper
 	  }
     return opts[:table] ? x.html_safe : content_tag(:div, x.html_safe, :class=>'custom_field_box')	  
   end
+  
+  def make_tariff_record_row(f)
+    
+  end
 end

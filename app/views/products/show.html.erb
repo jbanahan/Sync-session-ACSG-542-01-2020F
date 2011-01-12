@@ -72,6 +72,28 @@
 </td></tr>
 </table>
 
+<% @product.classifications.each do |c| %>
+<h2>Classification: <%=c.country.name%></h2>
+Binding Ruling: <%=c.binding_ruling_number%>
+Compliant Description: <%=c.compliant_description%>
+<table class='detail_table'>
+  <thead>
+    <th>HTS 1</th>
+    <th>HTS 2</th>
+    <th>HTS 3</th>    
+  </thead>
+  <tbody>
+    <% c.tariff_records.each do |t| %>
+    <tr>
+      <td><%=t.hts_1%></td>
+      <td><%=t.hts_2%></td>
+      <td><%=t.hts_3%></td>
+    </tr>
+    <% end %>
+  </tbody>
+</table>
+<% end %>
+
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:product_id => @product.id, :user_id => current_user.id})
