@@ -13,7 +13,6 @@ OpenChain::Application.routes.draw do
   match "/settings" => "settings#index", :as => :settings
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
-  match "/classifier" => "classifier#demo"
 
   resources :import_configs
   resources :imported_files, :only => [:new, :create, :show] do
