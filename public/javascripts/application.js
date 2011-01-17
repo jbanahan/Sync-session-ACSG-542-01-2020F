@@ -1,7 +1,8 @@
 // Place your application-specific JavaScript functions and classes here
 // This file is automatically included by javascript_include_tag :defaults
 $( function() {
-    $(".btn_cancel_mod").button().click( function() {
+ 
+    $(".btn_cancel_mod").click( function() {
         $.modal.close();
     });
     $(".isdate").datepicker({dateFormat: 'yy-mm-dd'});
@@ -13,8 +14,6 @@ $( function() {
     $("#srch_cond").change( function() {
         toggleSearchValue();
     });
-    $("#srch_submit").button();
-    $("#btn_srch_bkmrk").button();
 
     //Make the import buttons from the shared/mod_import partial work
     $("#mod_import").dialog({autoOpen:false,title:"Upload File",
@@ -24,12 +23,9 @@ $( function() {
       }}
     });
     $( "#btn_import_file" )
-    .button()
     .click( function() {
         $("#mod_import").dialog('open');
     });
-    $("#imported_file_submit")
-    .button();
 
     //Make the export buttons from the shared/mod_export partial work
     $("#mod_export").dialog({autoOpen:false,title:"Download File",
@@ -39,15 +35,16 @@ $( function() {
       }}
     });
     $("#btn_export_file")
-    .button()
     .click( function() {
         $("#mod_export").dialog('open');
     });
     $("#lnk_feedback").click(function() {feedbackDialog();});
+    $("button").button();
 });
 $(document).ready( function() {
     $(':checkbox').css('border-style','none');
     $('#notice').fadeIn();
+    $('.focus_first').focus();
 
     //make the shared/search_box partial work
     setSearchFields($("#srch_fields"),$("#srch_val"),$("#srch_cond"));

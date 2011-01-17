@@ -11,6 +11,7 @@ class Product < ActiveRecord::Base
 	
   has_many   :classifications, :dependent => :destroy
 	has_many 	 :order_lines, :dependent => :destroy
+	has_many   :sales_order_lines, :dependent => :destroy
 	has_many	 :piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
   has_many   :item_change_subscriptions
@@ -69,7 +70,19 @@ class Product < ActiveRecord::Base
     end
     self.attributes= updated_attribs
   end
-
+  
+  def has_orders?
+    self.order_lines.length > 0
+  end
+  def has_shipments?
+    PieceSet.where("product_id = ? AND shipment_id is not null", self.id).length > 0
+  end
+  def has_deliveries?
+    PieceSet.where("product_id = ? AND delivery_id is not null", self.id).length > 0
+  end
+  def has_sales_orders?
+    self.sales_order_lines.length > 0
+  end
   private  
   def inventory_received
     PieceSet.where("inventory_in_id is not null AND piece_sets.product_id = ?",self.id).sum("quantity")

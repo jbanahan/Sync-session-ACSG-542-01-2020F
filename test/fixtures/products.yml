@@ -13,3 +13,8 @@ two:
   name: MyString
   description: MyString
   vendor_id: 3
+
+no_piece_sets_or_orders:
+  id: 3
+  unique_identifier: prod 3
+  vendor_id: 2

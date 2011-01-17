@@ -10,14 +10,13 @@
   </select>
   <select id='srch_cond' size='1' name='c'>
   </select> 
-  <input id='srch_val' type='text' name='s' value="<%=params[:s]%>" />
+  <input id='srch_val' type='text' name='s' value="<%=params[:s]%>"  class="focus_first"/>
   <input id='srch_submit' type='submit' value='Search' style='padding:2px 4px;' />
   </form> 
 </div>
-<script type="text/javascript">
+<%content_for :javascript do %>
 $(document).ready( function() {
   $("#srch_cond").val('<%=@s_con%>');
   toggleSearchValue();
-	$("#srch_val").focus();
 });
-</script>
+<%end%>

@@ -84,9 +84,11 @@
   	<td>
   	  <% if @order.can_edit?(current_user) && !@order.locked?%>
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
+  		  <% if line.custom_definitions.length > 0%>
   		  &nbsp;|&nbsp;
   		  <a id='lnk_det_s_<%=line.id%>' href="javascript:$('#det_<%=line.id%>').fadeIn('slow');$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
   		  <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
+  		  <% end %>
   		<% end %> 
   	</td>
 	</tr>

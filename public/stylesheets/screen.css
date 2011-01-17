@@ -275,3 +275,13 @@ img {
 .label_cell {
 	font-weight: bold;
 }
+
+
+/* SCREEN SPECIFIC */
+.classification_box {
+  margin-bottom: 2em;
+}
+.classification_remove_box {
+  text-align: right;
+}
+

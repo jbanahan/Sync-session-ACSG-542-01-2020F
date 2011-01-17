@@ -1,11 +1,18 @@
 <% content_for :javascript do %>
 $(function() {
-  $("#btn_save").button().click(function() {
+  $("#btn_save").click(function() {
     checkUOMChange();
   });
-  $("#btn_cancel").button().click(function() {
+  $("#btn_cancel").click(function() {
     window.location = '<%=url_for @product%>';
   });
+  $("#cf_add").click(function() {
+    add_cf_row();
+  });
+  addRemoveHook();
+});
+function addRemoveHook() {
+  
   $(".tf_remove").click(function(ev) {
     destroy_nested('tf',$(this));
     ev.preventDefault();
@@ -14,7 +21,7 @@ $(function() {
     destroy_nested('cf',$(this));
     ev.preventDefault();
   });
-});
+}
 function checkUOMChange() {
   ou = $("#original_uom").val();
   if(ou.length==0 || ou==$("#txt_uom").val()) {
@@ -38,8 +45,25 @@ function add_tf_row(link,parent_index) {
     content = content +"<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" size=\"30\" type=\"text\" /></td>"; 
   }
   content = content + "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
-  link.parents('.tr_body').append(content);
+  link.parents('.add_row').before(content);
+  addRemoveHook();
 }
+function add_cf_row() {
+m = new Date().getTime();
+c = "<div class='classification_box cf_row' style='border: 2px solid red;'><table><tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_country'>Country</label>: </td><td><select id='product_classifications_attributes_"+m+"_country_id' name='product[classifications_attributes]["+m+"][country_id]'><option value=''>Select a country</option>";
+<% Country.all.each do |c| %>
+c = c + "<option value='<%=c.id%>'><%=c.name%></option>";
+<% end %>
+c = c + "</select></td></tr>";
+c = c + "<tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_binding_ruling_number'>Binding Ruling Number</label>: </td><td><input id='product_classifications_attributes_"+m+"_binding_ruling_number' name='product[classifications_attributes]["+m+"][binding_ruling_number]' size='30' type='text' value='' /></td></tr>";
+c = c + "<tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_compliant_description'>Compliant Description</label>: </td><td><textarea cols='40' id='product_classifications_attributes_"+m+"_compliant_description' name='product[classifications_attributes]["+m+"][compliant_description]' rows='4' style='width:98%;'></textarea></td></tr>";
+c = c + "<tr><td></td><td><table class='detail_table'><thead><th>HTS 1</th><th>HTS 2</th><th>HTS 3</th><th>Delete</th></thead><tbody class='tr_body'>";
+c = c + "<tr class='add_row'><td colspan='2'><a id='add_tr_"+m+"' href='#'>Add</a></td></tr></tbody></table>";
+c = c + "</table></div>";
+  $("#frm_prod").append(c);
+  $("#add_tr_"+m).click(function(ev) {add_tf_row($(this),m); ev.preventDefault();})
+}
+
 <% end %>
 
 <% content_for :action_bar do %>
@@ -53,22 +77,19 @@ function add_tf_row(link,parent_index) {
 <tr class='hover'><td class='label_cell'><%= f.label :name %>:</td><td><%= f.text_field :name %></td></tr>
 <tr class='hover'><td class='label_cell'><%= f.label :description %>:</td><td><%= f.text_field :description %></td></tr>
 <tr class='hover'><td class='label_cell'><%= f.label :unit_of_measure %>:</td><td><%= f.text_field :unit_of_measure, :id=>'txt_uom' %><input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' /></td></tr>
-<tr class='hover'><td class='label_cell'><%= f.label :vendor %>:</td><td><%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %></td></tr>
-<tr class='hover'><td class='label_cell'><%= f.label :division %>:</td><td><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => "-Select a division"} %></td></tr>
+<tr class='hover'><td class='label_cell'><%= f.label :vendor %>:</td><td><%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "Select a vendor"} %></td></tr>
+<tr class='hover'><td class='label_cell'><%= f.label :division %>:</td><td><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => "Select a division"} %></td></tr>
 <%=show_custom_fields @product, {:form=>true, :table=>true}%>
 </table>	
 <hr />
 <div id='classifications'>
-<% @product.classifications.build %>
 <% classification_count = 0 %>
-<% @product.classifications.each {|c| c.tariff_records.build } %>
 <% f.fields_for :classifications do |cf| %>
   <div class='classification_box cf_row'>
     <table>
-      <tr class='hover'><td class='label_cell'><%=cf.label :compliant_description, "Country"%>:</td><td><%= cf.collection_select :country_id, Country.all, :id, :name, options ={:prompt => "-Select a country"} %></td></tr>
-      <tr class='hover'><td class='label_cell'><%=cf.label :binding_ruling_number, "Binding Ruling Number"%>:</td><td><%=cf.text_field :binding_ruling_number %></td></tr>
-      <tr class='hover'><td class='label_cell'><%=cf.label :compliant_description, "Compliant Description"%>:</td><td style='text-align:center;'><%=cf.text_area :compliant_description, "rows" => "4", "style" => "width:98%;"%></td></tr>
-      <tr class='hover'><td colspan='2'><%=cf.hidden_field :_destroy, "class" => "cf_destroy"%><a href='#' class='cf_remove'>Remove</a></td></tr>
+      <%= field_row cf.label(:country, "Country"), cf.collection_select(:country_id, Country.all, :id, :name, options ={:prompt => "Select a country"}) %>
+      <%= field_row cf.label(:binding_ruling_number, "Binding Ruling Number"), cf.text_field(:binding_ruling_number)%>
+      <%= field_row cf.label(:compliant_description, "Compliant Description"), cf.text_area(:compliant_description, "rows" => "4", "style" => "width:98%;")%>
       <tr><td></td><td>
         <table class='detail_table'>
         <thead>
@@ -81,14 +102,15 @@ function add_tf_row(link,parent_index) {
           <% cf.fields_for :tariff_records do |tf| %>
             <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
           <% end %>
-          <tr><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
+          <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
         </tbody>
       </table>
       </td></tr>
+      <tr><td colspan='2'><div class='classification_remove_box'><%=cf.hidden_field :_destroy, "class" => "cf_destroy"%><button class='cf_remove'>Remove Classification</button></div></td></tr>
     </table>
-    <br />
   </div>
   <% classification_count += 1 %>
 <% end %>
 </div>
 <% end %>
+<button id='cf_add'>Add Classification</button>

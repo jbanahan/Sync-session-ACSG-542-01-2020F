@@ -29,7 +29,7 @@ class ProductTest < ActiveSupport::TestCase
     assert Product.find_can_view(u) == Product.all, "Master didn't find all."
     u = User.find(2)
     found = Product.find_can_view(u)
-    assert found.length==1 && found[0].id == 1, "Vendor didn't find product 1."
+    assert found.length>0 && found.include?(Product.find(1)), "Vendor didn't find product 1."
     u = User.find(4)
     found = Product.find_can_view(u)
     assert found.length==0
@@ -71,5 +71,23 @@ class ProductTest < ActiveSupport::TestCase
     }
   end
   
+  test "has orders?" do
+    assert Product.find(1).has_orders?, "Should find orders."
+    assert !Product.find(3).has_orders?, "Should not find orders."
+  end
   
+  test "has shipments" do
+    assert Product.find(1).has_shipments?, "Should find shipments"
+    assert !Product.find(3).has_shipments?, "Should not find shipments"
+  end
+  
+  test "has deliveries" do 
+    assert Product.find(2).has_deliveries?, "Should find deliveries"
+    assert !Product.find(3).has_deliveries?, "Should not find deliveries"
+  end
+  
+  test "has sales orders" do
+    assert Product.find(2).has_sales_orders?, "Should find sales orders"
+    assert !Product.find(3).has_sales_orders?, "Should not find sales orders"
+  end
 end

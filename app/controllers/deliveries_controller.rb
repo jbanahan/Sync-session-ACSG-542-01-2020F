@@ -56,7 +56,8 @@ class DeliveriesController < ApplicationController
   SEARCH_PARAMS = {
     'ref' => {:field => 'reference', :label => 'Reference'},
     'mode' => {:field => 'mode', :label => 'Mode'},
-    'cust' => {:field => 'customer_name', :label => 'Customer'}
+    'cust' => {:field => 'customer_name', :label => 'Customer'},
+    'p_id' => {:field => 'piece_sets_product_unique_identifier', :label => 'Product ID'}
   }
   def index
     @deliveries = build_search(SEARCH_PARAMS,'ref','ref').all.paginate(:page => params[:page])
