@@ -12,7 +12,7 @@ class CustomDefinitionsController < ApplicationController
 
     respond_to do |format|
       format.html {
-				@custom_definitions = s.all.paginate(:per_page => 20, :page => params[:page])
+				@custom_definitions = s.paginate(:per_page => 20, :page => params[:page])
         render :layout => 'one_col'
 			} 
       format.xml  { render :xml => @custom_definitions }

@@ -17,7 +17,7 @@ class ProductsController < ApplicationController
 
         respond_to do |format|
             format.html {
-                @products = s.all.paginate(:per_page => 20, :page => params[:page])
+                @products = s.paginate(:per_page => 20, :page => params[:page])
                 render :layout => 'one_col'
             }
             format.xml  { render :xml => (@products=s.all) }

@@ -99,7 +99,7 @@ class ShipmentsController < ApplicationController
     'o_num' => {:field => 'order_lines_order_order_number', :label => 'Order Number'}
   }
   def index
-    @shipments = build_search(SEARCH_PARAMS,'ref','ref').all.paginate(:page => params[:page])
+    @shipments = build_search(SEARCH_PARAMS,'ref','ref').paginate(:page => params[:page])
 
     respond_to do |format|
       format.html { render :layout => 'one_col' }

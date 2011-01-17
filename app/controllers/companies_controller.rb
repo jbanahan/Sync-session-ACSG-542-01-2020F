@@ -12,7 +12,7 @@ class CompaniesController < ApplicationController
     s = build_search(SEARCH_PARAMS,'c_name','c_name')
     respond_to do |format|
         format.html {
-            @companies = s.all.paginate(:per_page => 20, :page => params[:page])
+            @companies = s.paginate(:per_page => 20, :page => params[:page])
             render :layout => 'one_col'
         }
         format.xml  { render :xml => (@orders=s.all) }

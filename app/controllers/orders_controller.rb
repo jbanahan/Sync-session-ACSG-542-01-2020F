@@ -19,7 +19,7 @@ class OrdersController < ApplicationController
 
         respond_to do |format|
             format.html {
-                @orders = s.all.paginate(:per_page => 20, :page => params[:page])
+                @orders = s.paginate(:per_page => 20, :page => params[:page])
                 render :layout => 'one_col'
             }
             format.xml  { render :xml => (@orders=s.all) }

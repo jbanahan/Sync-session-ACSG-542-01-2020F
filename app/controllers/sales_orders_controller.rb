@@ -15,7 +15,7 @@ class SalesOrdersController < ApplicationController
     s = build_search(SEARCH_PARAMS,'o_num','o_date','d')
     respond_to do |format|
       format.html {
-          @sales_orders = s.all.paginate(:per_page => 20, :page => params[:page])
+          @sales_orders = s.paginate(:per_page => 20, :page => params[:page])
           render :layout => 'one_col'
       }
     end
