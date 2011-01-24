@@ -16,15 +16,7 @@ class OrderLine < ActiveRecord::Base
     (!self.product.nil? && self.product.locked?)
   end
 
-	
-	def make_unpacked_piece_set
-	  set_qty = self.ordered_qty - self.piece_sets.sum("quantity") 
-    ps = self.piece_sets.build
-    ps.product_id = self.product_id
-	  ps.quantity = set_qty < 0 ? 0 : set_qty
-	  return ps
-	end
-	
+
 	def related_shipments
 	  rVal = Set.new
 	  self.piece_sets.each do |p|
@@ -34,7 +26,7 @@ class OrderLine < ActiveRecord::Base
 	end
 	
 	def shipped_qty
-	  self.piece_sets.sum("quantity")
+	  self.piece_sets.where("piece_sets.shipment_id is not null").sum("quantity")
 	end
 	
 	def received_qty
@@ -45,6 +37,22 @@ class OrderLine < ActiveRecord::Base
     found = OrderLine.where({:order_id => self.order_id, :line_number => self.line_number})
     raise "Found multiple order lines with the same order id #{self.order_id} & line number #{self.line_number}" if found.size > 1
     return found.empty? ? nil : found.first
+  end
+  
+  def shallow_merge_into(other_line,options={})
+    dont_copy = ['id','created_at','updated_at','line_number']
+    can_blank = options[:can_blank].nil? ? [] : options[:can_blank]
+    updated_attribs = {} 
+    self.attributes.each_key do |k|
+      unless dont_copy.include?(k)
+        if other_line.attribute_present?(k)
+          updated_attribs[k] = other_line.attributes[k]
+        elsif can_blank.include?(k)
+          updated_attribs[k] = nil
+        end
+      end
+    end
+    self.attributes= updated_attribs
   end
 
   private

@@ -91,4 +91,9 @@ class UserTest < ActiveSupport::TestCase
              u.edit_deliveries? ||
              u.add_deliveries?), "Non-customer, non-carrier, & non-master should NOT be able to create/edit/view deliveries."
   end
+  
+  test "milestone_plan permissions" do
+    assert User.find(1).edit_milestone_plans?, "Master should be able to edit milestone plans."
+    assert !User.find(2).edit_milestone_plans?, "Non-master should not be able to edit milestone plans."
+  end
 end

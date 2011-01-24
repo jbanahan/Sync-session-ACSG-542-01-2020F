@@ -18,27 +18,22 @@
       });
     });
   <%end%>
-  $("#btn_back").button().click(function() {window.location = '<%=import_configs_path%>';});
+  $("#btn_cancel").click(function() {window.location = '<%=import_configs_path%>';});
+  $("#btn_save").click(function() {$("#frm_m").submit();});
   });
 <% end %>
 
 <% content_for :action_bar do %>
-<button id='btn_back'>Back To Search</button>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
 <% end %>
 
-<%= form_for(@import_config) do |f| %>
-  <div class="field">
-    <%= f.label :name %><br />
-    <%= f.text_field :name %>
-  </div>
-  <div class="field">
-    <%= f.label :model_type %><br />
-    <%= f.select :model_type, hash_flip(ImportConfig::MODEL_TYPES) %>
-  </div>
-  <div class="field">
-    <%= f.label :ignore_first_row %><br />
-    <%= f.check_box :ignore_first_row %>
-  </div>
+<%= form_for(@import_config, :html=>{:id=>"frm_m"}) do |f| %>
+<table>
+  <%= field_row f.label(:name), f.text_field(:name) %>
+  <%= field_row f.label(:model_type, "Module"), (@import_config.id.nil? ? f.select(:model_type, CoreModule.to_a_label_class, "id"=>"sel_mt") : CoreModule.find_by_class_name(@import_config.model_type).label) %> 
+  <%= field_row f.label(:ignore_first_row), f.check_box(:ignore_first_row) %>
+</table>
   <% @import_config.file_type = 'csv' %>
   <%= f.hidden_field :file_type %>
   <% unless @import_config.id.nil? %> 
@@ -66,8 +61,4 @@
     </table>
   </div>
   <% end %>
-  
-  <div class="actions">
-    <%= f.submit 'Save' %>
-  </div>
 <% end %>  

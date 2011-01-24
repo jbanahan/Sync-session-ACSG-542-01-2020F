@@ -1,13 +1,8 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-one:
-  customizable_id: 1
-  customizable_type: MyString
-  string_value: MyString
-  decimal_value: 9.99
-  integer_value: 1
-  date_value: 2011-01-05
+ApprovedValue:
+  customizable_id: 4
+  customizable_type: Product
   custom_definition_id: 1
+  boolean_value: true
 
 two:
   customizable_id: 1

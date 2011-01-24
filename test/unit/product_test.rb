@@ -39,7 +39,6 @@ class ProductTest < ActiveSupport::TestCase
     base_attribs = {
       :unique_identifier => "ui",
       :name => "bname",
-      :description => "bdesc",
       :vendor_id => 2,
       :division_id => 1
     }
@@ -47,7 +46,6 @@ class ProductTest < ActiveSupport::TestCase
     newer_attribs = {
       :unique_identifier => "to be ignored",
       :name => "nname",
-      :description => "ndesc",
       :vendor_id => 3,
       :division_id => 2
     }
@@ -58,7 +56,6 @@ class ProductTest < ActiveSupport::TestCase
     newer.created_at = DateTime.new(2007,5,2)
     target_attribs = {'unique_identifier' => base.unique_identifier,
       'name' => newer.name,
-      'description' => newer.description,
       'division_id' => newer.division_id,
       'vendor_id' => base.vendor_id,
       'updated_at' => base.updated_at,
@@ -90,4 +87,15 @@ class ProductTest < ActiveSupport::TestCase
     assert Product.find(2).has_sales_orders?, "Should find sales orders"
     assert !Product.find(3).has_sales_orders?, "Should not find sales orders"
   end
+  
+  test "set status" do
+    sr = status_rules(:ProductIsApproved)
+    a = products(:ApprovedStatusNotSet)
+    a.status_rule_id = nil
+    a.set_status
+    assert a.status_rule_id == sr.id, "Status rule id should be #{sr.id}, was #{a.status_rule_id}"
+    assert a.status_name == sr.name, "Status name should be #{sr.name}, was #{a.status_name}"
+  end
+
+  
 end

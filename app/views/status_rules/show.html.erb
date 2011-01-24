@@ -1,0 +1,28 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_edit").click(function() {window.location = '<%=edit_status_rule_path(@status_rule)%>';});
+  $("#btn_search").click(function() {window.location = '<%=status_rules_path%>';});
+});
+<%end%>
+<%content_for :action_bar do %>
+  <button id='btn_edit'>Edit</button>
+  <button id='btn_search'>Back To Search</button>
+<%end%>
+<table>
+  <%=field_row "Module", CoreModule.find_by_class_name(@status_rule.module_type).label%>
+  <%=field_row "Name", @status_rule.name%>
+  <%=field_row "Description", @status_rule.description%>
+  <%=field_row "Test Rank", @status_rule.test_rank%>
+</table>
+
+<h2>Criteria</h2>
+<table class='detail_table'>
+  <thead><tr><th>Field</th><th>Condition</th><th>Value</th></tr></thead>
+  <tbody>
+    <%@status_rule.search_criterions.each do |sc| %>
+    <tr class='hover'>
+      <td><%=ModelField.find_by_module_type_and_field_name(sc.module_type.to_sym, sc.field_name.to_sym).label%></td><td><%=sc.condition.nil? ? "" : CriterionOperator.find_by_key(sc.condition).label%></td><td><%=sc.value%></td>
+    </tr>
+    <%end%>
+  </tbody>
+</table>

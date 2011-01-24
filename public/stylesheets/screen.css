@@ -275,6 +275,14 @@ img {
 .label_cell {
 	font-weight: bold;
 }
+.field_row select {
+  width: 15em;
+}
+.field_row textarea {
+  width: 14.7em;
+}
+
+
 
 
 /* SCREEN SPECIFIC */

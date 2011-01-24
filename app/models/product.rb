@@ -1,9 +1,14 @@
 class Product < ActiveRecord::Base
 	
 	include CustomFieldSupport
+	include StatusableSupport
+
+  CORE_MODULE = CoreModule::PRODUCT
+
 
 	belongs_to :vendor, :class_name => "Company"
 	belongs_to :division
+	belongs_to :status_rule
 	validates  :vendor, :presence => true
 	validates	 :division, :presence => true
 	validates	 :unique_identifier, :presence => true
@@ -83,6 +88,7 @@ class Product < ActiveRecord::Base
   def has_sales_orders?
     self.sales_order_lines.length > 0
   end
+  
   private  
   def inventory_received
     PieceSet.where("inventory_in_id is not null AND piece_sets.product_id = ?",self.id).sum("quantity")

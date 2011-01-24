@@ -1,0 +1,53 @@
+<% content_for :javascript do %>
+$(function(){
+  $("#btn_save").click(function() {$("#frm_sr").submit();});
+  $("#btn_cancel").click(function() {window.location = '<%=url_for @status_rule%>';});
+  
+  $("#sel_mod_type").change(function() {loadFieldNames();});
+});
+$(document).ready(function() {loadFieldNames();});
+function loadFieldNames() {
+  $(".fld_nm").each(function() {
+    $(this).val('');
+    $(this).html("<option value=''>Loading...</option>");
+  });
+  var mod_type = $("#sel_mod_type").val();
+  
+  $.getJSON('<%=url_for :controller=>"model_fields", :action=>"find_by_module_type", :format=>"json"%>?include_basic=true&module_type='+mod_type, function(data) {
+    $(".sc_mod_type").val(mod_type)
+    var options = "<option value=''>Select a field</option>";
+    for(i=0;i<data.length;i++) {
+      options = options + "<option value='"+data[i].field_name+"'>"+data[i].label+"</option>"
+    }
+    $(".fld_nm").each(function() {
+      $(this).html(options)
+    });
+  });
+}
+<% end %>
+<% content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<% end %>
+<%= form_for(@status_rule, :html=>{:id=>'frm_sr'} ) do |f| %>
+<table>
+  <%=field_row "Module", f.text_field(:module_type, :id=>"sel_mod_type")%>
+  <%=field_row "Name", f.text_field(:name)%>
+  <%=field_row "Description", f.text_field(:description)%>
+  <%=field_row "Test Rank", f.text_field(:test_rank)%>
+</table>
+
+<h2>Critera</h2>
+<%@status_rule.search_criterions.build%>
+  <%f.fields_for :search_criterions do |sc| %>
+    <tr class='hover'><td>
+      <td>
+        <%=sc.hidden_field :module_type, "class" => "sc_mod_type" %>
+        <%=sc.select :field_name, ["Loading...",""], {}, {"class"=>"fld_nm"}%>
+      </td>
+      <td><%=sc.select :condition, CriterionOperator::OPERATORS.collect {|o| [o.label,o.key]}%></td>
+      <td><%=sc.text_field :value%></td>
+      <td><%=sc.hidden_field :_destroy, "class" => "sc_destroy"%><a href='#' class='sc_remove'>Remove</a></td>
+    </tr>
+  <%end%>
+<% end %>

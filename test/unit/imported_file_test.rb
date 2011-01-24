@@ -24,18 +24,18 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
     r = ImportedFile.find(1).preview({:attachment_data => attachment})
     assert r.length == 2, "Should have returned two results, returned #{r.length}"
-    assert r.include? "#{ImportConfig.find_model_field(:order,:order_number).label} set to #{base_order.order_number}"
-    assert r.include? "#{ImportConfig.find_model_field(:order,:order_date).label} set to #{new_order_date}"
+    assert r.include? "#{CoreModule::ORDER.find_model_field(:order_number).label} set to #{base_order.order_number}"
+    assert r.include? "#{CoreModule::ORDER.find_model_field(:order_date).label} set to #{new_order_date}"
   end
 
   test "cannot change vendor via upload" do
     base_order = Order.find(1)
     new_vendor = base_order.vendor_id + 1
     attachment = "Order Number,Vendor\n#{base_order.order_number},#{new_vendor}"
-    ic = ImportConfig.new(:model_type => "order", :file_type => "csv", :ignore_first_row => true, :name => "test")
+    ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => true, :name => "test")
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => ImportConfig.find_model_field(:order,:order_number).uid, :column => 1)
-    ic.import_config_mappings.create(:model_field_uid => ImportConfig.find_model_field(:order,:vendor_id).uid, :column => 2)
+    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:order_number).uid, :column => 1)
+    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:vendor_id).uid, :column => 2)
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
     f.save!
     assert !f.process({:attachment_data => attachment}), "Process passed and should have failed."
@@ -43,17 +43,17 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
   
   test "record with empty details only creates header" do
-    ic = ImportConfig.new(:model_type => "order", :file_type => "csv", :ignore_first_row => false, :name => "test")
+    ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => false, :name => "test")
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => ImportConfig.find_model_field(:order,:order_number).uid, :column => 1)
-    ic.import_config_mappings.create(:model_field_uid => ImportConfig.find_model_field(:order,:vendor_id).uid, :column => 2)
-    ic.import_config_mappings.create(:model_field_uid => ImportConfig.find_model_field(:order,:product_unique_identifier).uid, :column => 3)
-    ic.import_config_mappings.create(:model_field_uid => ImportConfig.find_model_field(:order,:ordered_qty).uid, :column => 4)
+    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:order_number).uid, :column => 1)
+    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:vendor_id).uid, :column => 2)
+    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER_LINE.find_model_field(:product_unique_identifier).uid, :column => 3)
+    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER_LINE.find_model_field(:ordered_qty).uid, :column => 4)
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
     f.save!
     order_number = "r_e_d_o_c_h"
     attachment = "#{order_number},2,\"\",\"\""
-    assert f.process({:attachment_data => attachment}), "Should have processed."
+    assert f.process({:attachment_data => attachment}), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Order.where(:order_number => order_number).first
     assert found.id > 0, "Should have found order that was saved."
     assert found.order_lines.size == 0, "Should not have saved a detail."
@@ -67,12 +67,13 @@ class ImportedFileTest < ActiveSupport::TestCase
       :ordered_qty => 55,
       :price_per_unit => 27.2,
       }
-    ic = ImportConfig.new(:model_type => "order", :file_type => "csv", :ignore_first_row => false, :name => "test")
+    ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => false, :name => "test")
     ic.save!
     attachment_vals = []
     vh.each_with_index do |k,i|
-      mf = ImportConfig.find_model_field(:order,k[0])
-      ic.import_config_mappings.create(:model_field_uid => mf.uid, :column => i+1)
+      mf = CoreModule::ORDER.find_model_field(k[0])
+      mf = CoreModule::ORDER_LINE.find_model_field(k[0]) if mf.nil?
+      ic.import_config_mappings.create!(:model_field_uid => mf.uid, :column => i+1)
       attachment_vals << k[1]
     end
     attachment = attachment_vals.to_csv
@@ -91,14 +92,13 @@ class ImportedFileTest < ActiveSupport::TestCase
     vh = {
       :unique_identifier => Time.new.to_s,
       :name => "nm",
-      :description => "desc",
       :vendor_id => 2
     }
-    ic = ImportConfig.new(:model_type => "product", :file_type => "csv", :ignore_first_row => false, :name => "test")
+    ic = ImportConfig.new(:model_type => "Product", :file_type => "csv", :ignore_first_row => false, :name => "test")
     ic.save!
     attachment_vals = []
     vh.each_with_index do |k,i|
-      mf = ImportConfig.find_model_field(:product,k[0])
+      mf = CoreModule::PRODUCT.find_model_field k[0]
       ic.import_config_mappings.create(:model_field_uid => mf.uid, :column => i+1)
       attachment_vals << k[1]
     end
@@ -107,7 +107,6 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:unique_identifier]).first
     assert found.name == vh[:name], "name failed"
-    assert found.description == vh[:description], "description failed"
     assert found.vendor_id == vh[:vendor_id], "vendor id failed"
   end
 end

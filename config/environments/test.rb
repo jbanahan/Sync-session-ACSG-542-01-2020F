@@ -32,4 +32,7 @@ OpenChain::Application.configure do
 
   # Print deprecation notices to the stderr
   config.active_support.deprecation = :stderr
+  
+  #logger for showing sql
+  #ActiveRecord::Base.logger = Logger.new(STDOUT)
 end

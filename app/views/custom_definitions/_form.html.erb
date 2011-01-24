@@ -16,11 +16,11 @@ $(function() {
   </div>
   <div class="field">
     <%= f.label :module_type, 'Module' %><br />
-    <%= f.select :module_type, [["Delivery","Delivery"],["Order - Header","Order"],["Order - Line","OrderLine"],["Product","Product"],["Sale","SalesOrder"],["Shipment","Shipment"]] %>
+    <%= f.select :module_type, [["Delivery","Delivery"],["Order - Header","Order"],["Order - Line","OrderLine"],["Product - Header","Product"],["Product - Classification","Classification"],["Sale","SalesOrder"],["Shipment","Shipment"]] %>
   </div>
   <div class="field">
     <%= f.label :data_type, 'Data Type' %><br />
-    <%= f.select :data_type, [["Date","date"],["Decimal","decimal"],["Integer","integer"],["Text","string"]]%>
+    <%= f.select :data_type, [[CustomDefinition::DATA_TYPE_LABELS[:date],"date"],[CustomDefinition::DATA_TYPE_LABELS[:decimal],"decimal"],[CustomDefinition::DATA_TYPE_LABELS[:integer],"integer"],[CustomDefinition::DATA_TYPE_LABELS[:string],"string"],[CustomDefinition::DATA_TYPE_LABELS[:text],"text"],[CustomDefinition::DATA_TYPE_LABELS[:boolean],"boolean"]]%>
   </div>
   <div class="field">
     <%= f.label :rank, 'Sort Rank' %><br />

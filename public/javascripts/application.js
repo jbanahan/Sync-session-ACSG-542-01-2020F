@@ -42,6 +42,7 @@ $( function() {
     $("button").button();
 });
 $(document).ready( function() {
+    handleCustomFieldCheckboxes();
     $(':checkbox').css('border-style','none');
     $('#notice').fadeIn();
     $('.focus_first').focus();
@@ -223,4 +224,15 @@ function makeLine(base,include_break) {
   else {
     return '';
   }
+}
+function destroy_nested(prefix, link) {
+  link.prev('.'+prefix+'_destroy').attr('value','true');
+  link.parents('.'+prefix+'_row').fadeOut();
+}
+function handleCustomFieldCheckboxes() {
+  $(".cv_chkbx").each(function() {
+    $(this).change(function() {
+      $("#hdn_"+$(this).attr("id").substring(4)).val($(this).is(':checked') ? "true" : "false");
+    });
+  });
 }

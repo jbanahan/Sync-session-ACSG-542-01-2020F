@@ -2,24 +2,24 @@
 
 config_1_order_number:
   id: 1
-  model_field_uid: order-order_number-Header - Order Number
+  model_field_uid: Order-order_number
   column: 1
   import_config_id: 1
 
 config_1_order_date:
   id: 2
-  model_field_uid: order-order_date-Header - Order Date
+  model_field_uid: Order-order_date
   column: 2
   import_config_id: 1
 
 config_2_order_number:
   id: 3
-  model_field_uid: order-order_number-Header - Order Number
+  model_field_uid: Order-order_number
   column: 1
   import_config_id: 2
   
 config_2_product_uid:
   id: 4
-  model_field_uid: order-product_unique_identifier-Line - Product Unique Identifier
+  model_field_uid: OrderLine-product_unique_identifier
   column: 2
   import_config_id: 2

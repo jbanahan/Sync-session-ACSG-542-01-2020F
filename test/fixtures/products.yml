@@ -1,20 +1,22 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
 one:
   id: 1
   unique_identifier: prod_1
   name: MyString
-  description: MyString
   vendor_id: 2
 
 two:
   id: 2
   unique_identifier: prod_2
   name: MyString
-  description: MyString
   vendor_id: 3
 
 no_piece_sets_or_orders:
   id: 3
-  unique_identifier: prod 3
+  unique_identifier: prod_3
+  vendor_id: 2
+  
+ApprovedStatusNotSet:
+  id: 4
+  unique_identifier: prod_4
+  division_id: 1
   vendor_id: 2

@@ -1,0 +1,26 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#btn_new").button().click(function() {
+    window.location = '<%=new_status_rule_path%>';
+  });
+});
+<% end %>
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'name'%></th>
+    <th><%=sortable_search_heading 'm_type'%></th>
+    <th><%=sortable_search_heading 't_rank'%></th>
+  </thead>
+
+<% @status_rules.each do |sr| %>
+  <tr class='hover'>
+    <td><%= link_to sr.name, sr %></td>
+    <td><%= CoreModule.find_by_class_name(sr.module_type).label %></td>
+    <td><%= sr.test_rank %></td>
+  </tr>
+<% end %>
+</table>
+<%= will_paginate @status_rules %>  
+<br />
+<button id='btn_new'>New</button>

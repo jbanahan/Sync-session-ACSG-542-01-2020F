@@ -35,6 +35,6 @@
 <%= will_paginate @orders %>  
 <br />
 <% if current_user.edit_orders? %>
-<%= render :partial => 'shared/mod_import', :locals => { :model_type => "order" }%>
+<%= render :partial => 'shared/mod_import', :locals => { :model_type => CoreModule::ORDER.class_name }%>
 <% end %>
-<%= render :partial => 'shared/mod_export', :locals => { :model_type => "order" }%>
+<%= render :partial => 'shared/mod_export', :locals => { :model_type => CoreModule::ORDER.class_name }%>

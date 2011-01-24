@@ -1,13 +1,6 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-one:
-  label: MyString
-  data_type: MyString
+ProductApproval:
+  id: 1
+  label: Approved
+  data_type: boolean
   rank: 1
-  module_type: MyString
-
-two:
-  label: MyString
-  data_type: MyString
-  rank: 1
-  module_type: MyString
+  module_type: Product

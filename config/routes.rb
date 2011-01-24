@@ -1,7 +1,9 @@
 OpenChain::Application.routes.draw do
 
 
-  resources :custom_definitions
+
+
+  resources :status_rules
 
 	match "/index.html" => "dashboard#show_main"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
@@ -13,6 +15,7 @@ OpenChain::Application.routes.draw do
   match "/settings" => "settings#index", :as => :settings
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
+  match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
 
   resources :import_configs
   resources :imported_files, :only => [:new, :create, :show] do
@@ -21,7 +24,8 @@ OpenChain::Application.routes.draw do
       get 'process_file'
     end
   end 
-
+  resources :custom_definitions
+  
   resources :messages, :only => [:index, :destroy] do
     member do
       get 'read'
@@ -70,5 +74,10 @@ OpenChain::Application.routes.draw do
 		end
 		get :shipping_address_list, :on => :member
   end
+  
+  resources :milestone_plans do
+    get 'test_criteria', :on => :member
+  end
+  
    root :to => "dashboard#show_main"
 end

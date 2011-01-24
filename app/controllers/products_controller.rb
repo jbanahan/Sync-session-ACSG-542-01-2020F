@@ -7,7 +7,6 @@ class ProductsController < ApplicationController
     SEARCH_PARAMS = {
         'uid' => {:field => 'unique_identifier', :label => 'Unique ID'},
         'p_name' => {:field => 'name', :label => 'Name'},
-        'desc' => {:field => 'description', :label => 'Description'},
         'v_name' => {:field => 'vendor_name', :label => 'Vendor'},
         'div' => {:field => 'division_name', :label => 'Division'}
     }
@@ -80,6 +79,8 @@ class ProductsController < ApplicationController
         respond_to do |format|
             if @product.save
 								if update_custom_fields @product
+								  save_classification_custom_fields(@product,params[:product])
+								  update_status @product
 									add_flash :notices, "Product created successfully."
 								end
                 History.create_product_changed(@product, current_user, product_url(@product))
@@ -105,6 +106,8 @@ class ProductsController < ApplicationController
             respond_to do |format|
                 if @product.update_attributes(params[:product])
 										if update_custom_fields @product
+										  save_classification_custom_fields(@product,params[:product])
+										  update_status @product
 											add_flash :notices, "Product updated successfully."
 										end
                     History.create_product_changed(@product, current_user, product_url(@product))
@@ -186,5 +189,15 @@ class ProductsController < ApplicationController
             return Order.where("1=0")
         end
         r.select("DISTINCT 'orders'.*").includes(:vendor).includes(:order_lines => [:product, :piece_sets])
+    end
+    
+    def save_classification_custom_fields(product,product_params)
+      product.classifications.each do |classification|
+        product_params[:classifications_attributes].each do |k,v|
+          if v[:country_id] == classification.country_id.to_s
+            update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
+          end  
+        end    
+      end  
     end
 end

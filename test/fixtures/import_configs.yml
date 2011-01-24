@@ -3,13 +3,13 @@
 one:
   id: 1
   name: MyString
-  model_type: order
+  model_type: Order
   ignore_first_row: true
   file_type: csv
 
 two:
   id: 2
   name: MyString
-  model_type: order
+  model_type: Order
   ignore_first_row: false
   file_type: csv

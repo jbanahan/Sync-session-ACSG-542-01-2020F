@@ -1,0 +1,13 @@
+ProductIsApproved:
+  id: 1
+  module_type: Product
+  name: Approved
+  description: The product is approved to ship
+  test_rank: 1
+
+ProductFallback:
+  id: 2
+  module_type: Product
+  name: "New"
+  description: The product has not passed any other status checks
+  test_rank: 2

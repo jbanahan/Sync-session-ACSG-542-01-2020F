@@ -31,4 +31,12 @@ class Shipment < ActiveRecord::Base
 	  (!self.carrier.nil? && self.carrier.locked?)
 	end
 	
+	def update_unshipped_quantities
+	  self.piece_sets.each do |p|
+	    unless p.order_line.nil?
+	      p.order_line.make_unshipped_remainder_piece_set.save
+	    end
+	  end
+	end
+	
 end

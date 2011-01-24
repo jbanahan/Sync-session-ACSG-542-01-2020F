@@ -1,14 +1,11 @@
 require 'test_helper'
 
 class ImportConfigTest < ActiveSupport::TestCase
-  test "find model field" do 
-    found = ImportConfig.find_model_field(:order,:order_number)
-    assert found.field == :order_number, "Should have found order_number"
-  end
+  
   test "order number validation" do
     ic = ImportConfig.new(:name=>'test')
-    ic.model_type = ImportConfig::MODEL_TYPES[:order]
-    ic.import_config_mappings.build({:model_field_uid => ImportConfig.find_model_field(:order,:order_date).uid,
+    ic.model_type = CoreModule::ORDER.class_name
+    ic.import_config_mappings.build({:model_field_uid => CoreModule::ORDER.find_model_field(:order_date).uid,
         :column => 1})
     assert !ic.save, "should fail to save on validations"
     found_order_number = false
@@ -20,16 +17,16 @@ class ImportConfigTest < ActiveSupport::TestCase
   
   test "order is valid without any mappings" do
     ic = ImportConfig.new(:name=>'test',:file_type=>'csv')
-    ic.model_type = ImportConfig::MODEL_TYPES[:order]
+    ic.model_type = CoreModule::ORDER.class_name
     assert ic.valid?, "Didn't validate"
   end
   
   test "good order save with mappings" do
     ic = ImportConfig.new(:name=>'test',:file_type=>'csv')
-    ic.model_type = ImportConfig::MODEL_TYPES[:order]
+    ic.model_type = CoreModule::ORDER.class_name
     ic.file_type = 'text/csv'
     col = 1
-    ImportConfig::MODEL_FIELDS[:order].values.each do |mf|
+    ModelField::MODEL_FIELDS[CoreModule::ORDER.class_name.intern].values.each do |mf|
       ic.import_config_mappings.build({:model_field_uid => mf.uid, :column => col})
       col += 1
     end
@@ -38,12 +35,12 @@ class ImportConfigTest < ActiveSupport::TestCase
   
   test "order mappings with details must have product" do
     ic = ImportConfig.new(:name=>'test',:file_type=>'csv')
-    ic.model_type = ImportConfig::MODEL_TYPES[:order]
-    ic.import_config_mappings.build({:model_field_uid => ImportConfig.find_model_field(:order,:order_number).uid,
+    ic.model_type = CoreModule::ORDER.class_name
+    ic.import_config_mappings.build({:model_field_uid => CoreModule::ORDER.find_model_field(:order_number).uid,
         :column => 1})
     
     #having the detail field "ordered_qty" should trigger the validation for the product_id    
-    ic.import_config_mappings.build({:model_field_uid => ImportConfig.find_model_field(:order,:ordered_qty).uid,
+    ic.import_config_mappings.build({:model_field_uid => CoreModule::ORDER_LINE.find_model_field(:ordered_qty).uid,
         :column => 2})
     assert !ic.valid?, "should fail to save on validations"
     found_error = false

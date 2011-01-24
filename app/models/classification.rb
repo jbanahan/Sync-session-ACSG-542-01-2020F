@@ -1,4 +1,6 @@
 class Classification < ActiveRecord::Base
+  include CustomFieldSupport
+  
   belongs_to :product
   belongs_to :country
   

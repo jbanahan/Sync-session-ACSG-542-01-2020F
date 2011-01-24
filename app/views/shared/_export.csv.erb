@@ -1,9 +1,10 @@
 <%=
 map = @ic.import_config_mappings.order("column ASC")
+core_module = CoreModule.find_by_class_name(@ic.model_type)
 headers = []
 has_detail = false
 map.each {|m| 
-  has_detail = true if m.find_model_field.detail?
+  has_detail = true if m.find_model_field.core_module!=core_module
   headers << m.find_model_field.label if @ic.ignore_first_row
 }
 opts = {:row_sep => "\r\n"}
@@ -20,7 +21,8 @@ x = FasterCSV.generate(opts) do |csv|
           r = []
           map.each {|m|
             mf = m.find_model_field 
-            r << mf.process_export(mf.detail? ? d : o).to_s 
+            is_detail = m.find_model_field.core_module!=core_module
+            r << mf.process_export(is_detail ? d : o).to_s 
           }
           csv << r
         end
@@ -28,7 +30,8 @@ x = FasterCSV.generate(opts) do |csv|
         r = []
         map.each {|m|
           mf = m.find_model_field 
-          r << mf.process_export(mf.detail? ? nil : o).to_s 
+          is_detail = m.find_model_field.core_module!=core_module
+          r << mf.process_export(is_detail ? nil : o).to_s 
         }
         csv << r
       end  

@@ -86,4 +86,12 @@ class User < ActiveRecord::Base
   def edit_deliveries?
     return self.company.master? || self.company.carrier?
   end
+  
+  def edit_milestone_plans?
+    return self.company.master?
+  end
+  
+  def edit_status_rules?
+    return self.company.master?
+  end
 end

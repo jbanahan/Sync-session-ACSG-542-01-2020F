@@ -11,14 +11,14 @@ class ImportedFile < ActiveRecord::Base
   def process(options={})
     processor = options[:processor].nil? ? find_processor : options[:processor]
     a_data = options[:attachment_data].nil? ? self.attachment_data : options[:attachment_data]
-    processor.process a_data, self
+    processor.new(self,a_data).process
     return self.errors.size == 0
   end
   
   def preview(options={})
     processor = options[:processor].nil? ? OrderCSVImportProcessor : options[:processor]
     a_data = options[:attachment_data].nil? ? self.attachment_data : options[:attachment_data]
-    processor.preview a_data, self
+    processor.new(self,a_data).preview
   end
   
   
@@ -41,67 +41,73 @@ class ImportedFile < ActiveRecord::Base
   private
   def find_processor   
     p = {
-    :order => {:csv => OrderCSVImportProcessor},
-    :product => {:csv => ProductCSVImportProcessor}
+    :Order => {:csv => OrderCSVImportProcessor},
+    :Product => {:csv => ProductCSVImportProcessor}
     }
     p[self.import_config.model_type.intern][self.import_config.file_type.intern]
   end
 end
 
 class CSVImportProcessor
-  def self.process(data, imp_file)
-    ic = imp_file.import_config
+  
+  def initialize(import_file, data)
+    @import_file = import_file
+    @import_config = import_file.import_config
+    @core_module = CoreModule.find_by_class_name(@import_config.model_type)
+    @data = data
+  end
+  
+  def process
     processed_row = false
     begin
-      r = ic.ignore_first_row ? 1 : 0
-      FasterCSV.parse(data,{:skip_blanks=>true,:headers => ic.ignore_first_row}) do |row|
+      r = @import_config.ignore_first_row ? 1 : 0
+      FasterCSV.parse(@data,{:skip_blanks=>true,:headers => @import_config.ignore_first_row}) do |row|
         begin
-          do_row row, ic, true
+          do_row row, true
         rescue => e
-          imp_file.errors[:base] << "Row #{r+1}: #{e.message}"
+          @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
         end
         r += 1
       end
     rescue => e
-      imp_file.errors[:base] << "Row #{r+1}: #{e.message}"
+      @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
     end 
   end
   
-  def self.preview(data, imp_file)
-    ic = imp_file.import_config
-    FasterCSV.parse(data,{:headers => ic.ignore_first_row}) do |row|
-      return do_row row, ic, false
+  def preview
+    FasterCSV.parse(@data,{:headers => @import_config.ignore_first_row}) do |row|
+      return do_row row, false
     end
   end
   
   private
-  def self.do_row(row, ic, save)
+  def do_row(row, save)
     messages = []
-    has_detail = false #only save detail records if there are detail fields
-    detail_data_exists = false
-    o = ic.new_base_object
-    d = ic.new_detail_object
+    o = @core_module.new_object
+    detail_hash = {}
+    detail_data_exists = {}
     can_blank = []
 		custom_fields = []
-    ic.import_config_mappings.order("column ASC").each do |m|
-      m_field = m.find_model_field
-      can_blank << m_field.field.to_s
-      to_send = m_field.detail? ? d : o
+    @import_config.import_config_mappings.order("column ASC").each do |m|
+      mf = m.find_model_field
+      can_blank << mf.field_name.to_s
+      to_send = object_to_send(detail_hash, o, mf)
       data = row[m.column-1]
-			if m_field.custom?
-				custom_fields << {:field => m_field, :data => data}
+			if mf.custom?
+				custom_fields << {:field => mf, :data => data}
 			else
-				if m_field.detail? 
-					has_detail = true
-					detail_data_exists = true if data.length > 0
-				end
-				messages << m_field.process_import(to_send,row[m.column-1])
+				detail_data_exists[mf.core_module] = true if data.length > 0 && detail_field?(mf)
+				messages << mf.process_import(to_send,row[m.column-1])
 			end
     end
     o = merge_or_create(o,save,{:can_blank => can_blank})
-    d = merge_or_create(d,save,{:can_blank => can_blank, :parent => o}) if has_detail && detail_data_exists
+    detail_hash.each {|core_module,d|
+      unless detail_data_exists[core_module].nil? 
+        d = merge_or_create(d,save,{:can_blank => can_blank, :parent => o})
+      end
+    }
 		custom_fields.each do |h|
-			obj = h[:field].detail? ? d : o
+			obj = object_to_send(detail_hash,o,h[:field])
 			cd = CustomDefinition.find(h[:field].custom_id)
 			cv = obj.get_custom_value(cd)
 			cv.value = h[:data]
@@ -111,7 +117,18 @@ class CSVImportProcessor
     return messages
   end 
   
-  def self.merge_or_create(base,save,options={})
+  def detail_field?(m_field)
+    m_field.core_module!=@core_module
+  end
+  
+  def object_to_send(d_hash,o,m_field)
+    return o if !detail_field?(m_field)
+    mcm = m_field.core_module
+    d_hash[mcm] =  mcm.new_object if d_hash[mcm].nil?
+    return d_hash[mcm]
+  end
+  
+  def merge_or_create(base,save,options={})
     set_detail_parent base, options[:parent] unless options[:parent].nil?
     dest = base.find_same
     if dest.nil?
@@ -125,27 +142,27 @@ class CSVImportProcessor
     return dest
   end
   
-  def self.before_save(dest)
+  def before_save(dest)
     #do nothing
   end
-  def self.set_detail_parent(detail,parent)
+  def set_detail_parent(detail,parent)
     #default is no child objects so nothing to do here
   end
   
-  def self.before_merge(shell,database_object)
+  def before_merge(shell,database_object)
     #default is no validations so nothing to do here
   end
 end
 
 class ProductCSVImportProcessor < CSVImportProcessor
-  def self.before_save(obj)
+  def before_save(obj)
     #default to first division in database
     if obj.division_id.nil? 
       obj.division_id = Division.first.id
     end
   end
   
-  def self.before_merge(shell,database_object)
+  def before_merge(shell,database_object)
     if !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
         raise "An product's vendor cannot be changed via a file upload."
     end
@@ -153,12 +170,12 @@ class ProductCSVImportProcessor < CSVImportProcessor
 end
 
 class OrderCSVImportProcessor < CSVImportProcessor
-  def self.set_detail_parent(detail,parent)
+  def set_detail_parent(detail,parent)
     detail.order = parent
   end
   
-  def self.before_merge(shell,database_object)
-    if !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
+  def before_merge(shell,database_object)
+    if shell.class == Order && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
         raise "An order's vendor cannot be changed via a file upload."
     end
   end

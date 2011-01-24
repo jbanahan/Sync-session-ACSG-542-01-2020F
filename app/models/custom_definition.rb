@@ -5,7 +5,9 @@ class CustomDefinition < ActiveRecord::Base
   
   has_many   :custom_values, :dependent => :destroy
   #this removes the column from any mapping if you drop a custom field
-  has_many   :import_config_mappings, :dependent => :destroy 
+  has_many   :import_config_mappings, :dependent => :destroy
+  
+  after_save :reset_model_field_constants 
   
   def date?
     (!self.data_type.nil?) && self.data_type=="date"
@@ -25,5 +27,19 @@ class CustomDefinition < ActiveRecord::Base
   
   def locked?
     false
+  end
+  
+  DATA_TYPE_LABELS = {
+    :text => "Text - Long", 
+    :string => "Text",
+    :date => "Date",
+    :boolean => "Checkbox",
+    :decimal => "Decimal",
+    :integer => "Integer"
+  }
+  
+  private
+  def reset_model_field_constants
+    ModelField.reset_custom_fields
   end
 end

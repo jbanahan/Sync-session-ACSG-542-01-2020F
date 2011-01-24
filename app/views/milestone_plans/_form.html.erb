@@ -1,0 +1,79 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#btn_save").click(function() {$("#frm_plan").submit();});
+  $("#btn_cancel").click(function() {window.location = '<%=url_for @plan%>';})
+  $(".sc_remove").click(function(ev) {
+    destroy_nested('sc',$(this));
+    ev.preventDefault();
+  });
+  $(".sc_mt").change(function() {
+    loadFieldNames($(this));
+  });
+});
+$(document).ready(function(){
+  $(".sc_mt").each(function() {loadFieldNames($(this),true);})
+  //fix for bug in rails 3.0.3, remove after rails 3.1: https://rails.lighthouseapp.com/projects/8994/tickets/6256-patch-select-helpers-with-boolean-attributes
+  <%unless @plan.inbound%>
+  $("#milestone_plan_inbound").val("false");
+  <% end %>
+});
+function loadFieldNames(model_field, set_original_value) {
+  var id = model_field.attr("id").substring(6);
+  var f = $("#sc_fn_"+id);
+  var td = $("#sc_td_"+id);
+  var orig = set_original_value;
+  var o_val = '';
+  if(orig==true) {
+    o_val = $("#sc_ov_"+id).val(); 
+  }
+  
+  f.val('');
+  f.hide();
+  td.append("<span id='loading_hld'>Loading...</span>");
+  $.getJSON('<%=url_for :controller=>"model_fields", :action=>"find_by_module_type", :format=>"json"%>?include_basic=true&module_type='+model_field.val(), function(data) {
+    var options = "<option value=''>Select a field</option>";
+    for(i=0;i<data.length;i++) {
+      options = options + "<option value='"+data[i].field_name+"'>"+data[i].label+"</option>"
+    }
+    f.html(options);
+    f.val(o_val);
+    $("#loading_hld").remove();
+    f.show();
+  });
+}
+function addCriterion() {
+  
+}
+<% end %>
+
+<% content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<% end %>
+
+<%= form_for @plan, :html => {:id=>'frm_plan'} do |f| %>
+<table>
+  <%=field_row f.label(:name), f.text_field(:name) %>
+  <%=field_row f.label(:test_rank), f.number_field(:test_rank)%>
+  <%=field_row f.label(:inbound), f.select(:inbound, {"Inbound" => true, "Outbound" => false})%>
+</table>
+<h2>Critera</h2>
+<table class='detail_table'>
+  <thead><tr><th>Module</th><th>Field</th><th>Condition</th><th>Value</th></tr></thead>
+  <tbody>
+<%@plan.search_criterions.build%>
+<%f.fields_for :search_criterions do |sc| %>
+  <tr class='hover sc_row'><td>
+    <%=sc.select :module_type, CoreModule.to_a_label_class, {}, {"class" => "sc_mt", "id"=>"sc_mt_#{sc.object.id}"}%></td>
+    <td id='<%="sc_td_#{sc.object.id}"%>'>
+      <%=sc.hidden_field :field_name, "id"=>"sc_ov_#{sc.object.id}", "name"=>"ignore_me"%>
+      <%=sc.select :field_name, ["Loading",""], {}, {"id"=>"sc_fn_#{sc.object.id}"}%>
+    </td>
+    <td><%=sc.select :condition, CriterionOperator::OPERATORS.collect {|o| [o.label,o.key]}%></td>
+    <td><%=sc.text_field :value%></td>
+    <td><%=sc.hidden_field :_destroy, "class" => "sc_destroy"%><a href='#' class='sc_remove'>Remove</a></td>
+  </tr>
+<%end%>
+  </tbody>
+</table>
+<% end %>

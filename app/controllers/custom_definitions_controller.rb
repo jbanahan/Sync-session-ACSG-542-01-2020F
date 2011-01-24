@@ -8,7 +8,7 @@ class CustomDefinitionsController < ApplicationController
 			's_rank' => {:field => 'rank', :label => 'Sort Rank'}
 	}
   def index
-		s =  build_search(SEARCH_PARAMS,'label','label','a')
+		s =  build_search(SEARCH_PARAMS,'label','m_type','a')
 
     respond_to do |format|
       format.html {
@@ -62,7 +62,7 @@ class CustomDefinitionsController < ApplicationController
 			respond_to do |format|
 				if @custom_definition.save
 					add_flash :notices, "Custom field was created successfully."
-					format.html { redirect_to(@custom_definition, :notice => 'Custom definition was successfully created.') }
+					format.html { redirect_to custom_definitions_path }
 					format.xml  { render :xml => @custom_definition, :status => :created, :location => @custom_definition }
 				else
 					errors_to_flash @custom_definition
@@ -82,7 +82,7 @@ class CustomDefinitionsController < ApplicationController
 			respond_to do |format|
 				if @custom_definition.update_attributes(params[:custom_definition])
 					add_flash :notices, "Custom field was updated successfully."
-					format.html { redirect_to(@custom_definition, :notice => 'Custom definition was successfully updated.') }
+					format.html { redirect_to custom_definitions_path }
 					format.xml  { head :ok }
 				else
 					errors_to_flash @custom_definition
@@ -106,6 +106,8 @@ class CustomDefinitionsController < ApplicationController
 			end
 		}
   end
+  
+  
 	
 	private    
     def secure

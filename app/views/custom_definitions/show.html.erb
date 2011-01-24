@@ -25,7 +25,7 @@ $(function() {
 
 <p>
   <b>Data Type:</b>
-  <%= @custom_definition.data_type.capitalize %>
+  <%= CustomDefinition::DATA_TYPE_LABELS[@custom_definition.data_type.intern] %>
 </p>
 
 <p>

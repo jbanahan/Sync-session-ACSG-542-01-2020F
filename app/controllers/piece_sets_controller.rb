@@ -3,13 +3,16 @@ class PieceSetsController < ApplicationController
 	def create
 		ps = PieceSet.new(params[:piece_set])
 		ps.save
+		update_unshipped(ps)
     errors_to_flash ps
 		redirect_to do_route(ps)
 	end
 
   def destroy
     ps = PieceSet.find(params[:id])
+    o_lines = [ps.order_line, ps.sales_order_line]
     ps.destroy
+    o_lines.each {|o| o.make_unshipped_remainder_piece_set.save unless o.nil?}
     errors_to_flash ps
     redirect_to do_route(ps)
   end
@@ -24,10 +27,10 @@ class PieceSetsController < ApplicationController
   
   def update
     ps = PieceSet.find(params[:id])
-    @shipment = ps.shipment
 
     respond_to do |format|
       if ps.update_attributes(params[:piece_set])
+        update_unshipped ps
         errors_to_flash ps
         format.html { redirect_to do_route(ps) }
         format.xml  { head :ok }
@@ -59,5 +62,10 @@ class PieceSetsController < ApplicationController
     from_loc = params[:from]
     from_loc = "s" if from_loc.nil?
     FROM_ROUTES[from_loc.intern][type].call(self,ps)
+  end
+  
+  def update_unshipped(piece_set)
+    piece_set.order_line.make_unshipped_remainder_piece_set.save unless piece_set.order_line.nil?
+    piece_set.sales_order_line.make_unshipped_remainder_piece_set.save unless piece_set.sales_order_line.nil?
   end
 end

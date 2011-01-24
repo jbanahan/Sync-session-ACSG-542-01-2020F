@@ -18,7 +18,7 @@ $(function() {
   <tr class='hover'>
     <td><%= link_to cd.label, cd %></td>
     <td><%= cd.module_type %></td>
-		<td><%= cd.data_type %></td>
+		<td><%= CustomDefinition::DATA_TYPE_LABELS[cd.data_type.intern]%></td>
     <td><%= cd.rank %></td>
   </tr>
 <% end %>

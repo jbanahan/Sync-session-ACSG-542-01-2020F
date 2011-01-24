@@ -2,10 +2,6 @@
 
 one:
   country_id: 1
-  binding_ruling_number: MyString
-  compliant_description: MyText
 
 two:
-  country_id: 1
-  binding_ruling_number: MyString
-  compliant_description: MyText
+  country_id: 2

@@ -38,6 +38,7 @@ class ShipmentsController < ApplicationController
           errors_to_flash ps unless ps.save
         end
       end
+      shipment.update_unshipped_quantities
       redirect_to shipment_path(shipment)
     }
   end
@@ -63,6 +64,7 @@ class ShipmentsController < ApplicationController
         end 
       end
       shipment.save
+      shipment.update_unshipped_quantities
       errors_to_flash shipment  
       redirect_to shipment_path(shipment)
     }
@@ -159,6 +161,7 @@ class ShipmentsController < ApplicationController
 					if update_custom_fields @shipment
 						add_flash :notices, "Shipment was created successfully."
 					end
+					@shipment.update_unshipped_quantities
           History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
           format.html { redirect_to(@shipment) }
           format.xml  { render :xml => @shipment, :status => :created, :location => @shipment }
@@ -184,6 +187,7 @@ class ShipmentsController < ApplicationController
 					if update_custom_fields @shipment
 						add_flash :notices, "Shipment was updated successfully."
 					end
+					@shipment.update_unshipped_quantities
 					History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
           format.html { redirect_to(@shipment) }
           format.xml  { head :ok }
@@ -204,7 +208,14 @@ class ShipmentsController < ApplicationController
     s = Shipment.find(params[:id])
     action_secure(s.can_edit?(current_user),s,{:verb => "delete",:module_name=>"shipment"}) {
       @shipment = s
+      related_order_lines = {}
+      @shipment.piece_sets.each do |p|
+        unless p.order_line.nil?
+          related_order_lines[p.order_line.id] = p.order_line
+        end
+      end
       @shipment.destroy
+      related_order_lines.each {|o| o.make_unshipped_remainder_piece_set.save }
       errors_to_flash @shipment
       respond_to do |format|
         format.html { redirect_to(shipments_url) }

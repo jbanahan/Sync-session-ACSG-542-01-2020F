@@ -7,6 +7,7 @@ class OrderLinesController < ApplicationController
       order_line.set_line_number
   		if order_line.save 
   		  update_custom_fields order_line, params[:orderline_cf]
+  		  order_line.make_unshipped_remainder_piece_set.save
   		end
 		  errors_to_flash order_line
 		  redirect_to order_path(o)
@@ -46,6 +47,7 @@ class OrderLinesController < ApplicationController
             @order_line.save
           end
           update_custom_fields @order_line, params[:orderline_cf]
+          @order_line.make_unshipped_remainder_piece_set.save
           add_flash :notices, "Line updated sucessfully."
           format.html { redirect_to(@order) }
           format.xml  { head :ok }

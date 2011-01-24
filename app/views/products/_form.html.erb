@@ -34,10 +34,7 @@ function checkUOMChange() {
     );
   }
 }
-function destroy_nested(prefix, link) {
-  link.prev('.'+prefix+'_destroy').attr('value','true');
-  link.parents('.'+prefix+'_row').fadeOut();
-}
+
 function add_tf_row(link,parent_index) {
   my_index = new Date().getTime();
   content = "<tr class=\"hover tf_row\">"
@@ -50,13 +47,11 @@ function add_tf_row(link,parent_index) {
 }
 function add_cf_row() {
 m = new Date().getTime();
-c = "<div class='classification_box cf_row' style='border: 2px solid red;'><table><tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_country'>Country</label>: </td><td><select id='product_classifications_attributes_"+m+"_country_id' name='product[classifications_attributes]["+m+"][country_id]'><option value=''>Select a country</option>";
+c = "<div class='classification_box cf_row'><table><tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_country'>Country</label>: </td><td><select id='product_classifications_attributes_"+m+"_country_id' name='product[classifications_attributes]["+m+"][country_id]'><option value=''>Select a country</option>";
 <% Country.all.each do |c| %>
 c = c + "<option value='<%=c.id%>'><%=c.name%></option>";
 <% end %>
 c = c + "</select></td></tr>";
-c = c + "<tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_binding_ruling_number'>Binding Ruling Number</label>: </td><td><input id='product_classifications_attributes_"+m+"_binding_ruling_number' name='product[classifications_attributes]["+m+"][binding_ruling_number]' size='30' type='text' value='' /></td></tr>";
-c = c + "<tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_compliant_description'>Compliant Description</label>: </td><td><textarea cols='40' id='product_classifications_attributes_"+m+"_compliant_description' name='product[classifications_attributes]["+m+"][compliant_description]' rows='4' style='width:98%;'></textarea></td></tr>";
 c = c + "<tr><td></td><td><table class='detail_table'><thead><th>HTS 1</th><th>HTS 2</th><th>HTS 3</th><th>Delete</th></thead><tbody class='tr_body'>";
 c = c + "<tr class='add_row'><td colspan='2'><a id='add_tr_"+m+"' href='#'>Add</a></td></tr></tbody></table>";
 c = c + "</table></div>";
@@ -72,14 +67,14 @@ c = c + "</table></div>";
 <% end %>
 
 <%= form_for @product, :html=>{:id=>'frm_prod'} do |f| %>
+<input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' />
 <table>
-<tr class='hover'><td class='label_cell'><%= f.label :unique_identifier, "Unique ID" %>:</td><td><%= f.text_field :unique_identifier %></td></tr>
-<tr class='hover'><td class='label_cell'><%= f.label :name %>:</td><td><%= f.text_field :name %></td></tr>
-<tr class='hover'><td class='label_cell'><%= f.label :description %>:</td><td><%= f.text_field :description %></td></tr>
-<tr class='hover'><td class='label_cell'><%= f.label :unit_of_measure %>:</td><td><%= f.text_field :unit_of_measure, :id=>'txt_uom' %><input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' /></td></tr>
-<tr class='hover'><td class='label_cell'><%= f.label :vendor %>:</td><td><%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "Select a vendor"} %></td></tr>
-<tr class='hover'><td class='label_cell'><%= f.label :division %>:</td><td><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => "Select a division"} %></td></tr>
-<%=show_custom_fields @product, {:form=>true, :table=>true}%>
+  <%=field_row "Unique Identifier", f.text_field(:unique_identifier) %>
+  <%=field_row "Name", f.text_field(:name) %>
+  <%=field_row "Unit of Measure", f.text_field(:unit_of_measure, :id=>'txt_uom') %>
+  <%=field_row "Vendor", f.collection_select(:vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "Select a vendor"}) %>
+  <%=field_row "Division", f.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}) %>
+  <%=show_custom_fields @product, {:form=>true, :table=>true}%>
 </table>	
 <hr />
 <div id='classifications'>
@@ -88,8 +83,7 @@ c = c + "</table></div>";
   <div class='classification_box cf_row'>
     <table>
       <%= field_row cf.label(:country, "Country"), cf.collection_select(:country_id, Country.all, :id, :name, options ={:prompt => "Select a country"}) %>
-      <%= field_row cf.label(:binding_ruling_number, "Binding Ruling Number"), cf.text_field(:binding_ruling_number)%>
-      <%= field_row cf.label(:compliant_description, "Compliant Description"), cf.text_area(:compliant_description, "rows" => "4", "style" => "width:98%;")%>
+      <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>
       <tr><td></td><td>
         <table class='detail_table'>
         <thead>

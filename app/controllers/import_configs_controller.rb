@@ -26,7 +26,7 @@ class ImportConfigsController < ApplicationController
     @mapped_fields = []
     @unmapped_fields = []
 		mappings = @import_config.import_config_mappings
-		all_fields = ImportConfig::MODEL_FIELDS[@import_config.model_type.intern]
+		all_fields = CoreModule.find_by_class_name(@import_config.model_type).model_fields_including_children 
 		mappings.each do |m|
 		  @mapped_fields << all_fields.delete(m.model_field_uid.intern)
 		end

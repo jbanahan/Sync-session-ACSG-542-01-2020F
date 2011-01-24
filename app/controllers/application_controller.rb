@@ -41,6 +41,12 @@ class ApplicationController < ActionController::Base
         pass
     end
     
+    def update_status(statusable)
+      current_status = statusable.status_rule_id
+      statusable.set_status
+      statusable.save if current_status!=statusable.status_rule_id
+    end
+    
     #subclassed controller must implement secure method that returns searchable object 
 		#and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
     def build_search(base_field_list,default_search,default_sort,default_sort_order='a')
