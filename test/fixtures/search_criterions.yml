@@ -1,7 +1,6 @@
 ProductIsApprovedCriterion:
   id: 1
-  module_type: Product
-  field_name: "*cf_1"
+  model_field_uid: "*cf_1"
   condition: eq
   value: "true"
   status_rule_id: 1

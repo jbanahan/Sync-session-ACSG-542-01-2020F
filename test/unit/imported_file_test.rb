@@ -24,8 +24,8 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
     r = ImportedFile.find(1).preview({:attachment_data => attachment})
     assert r.length == 2, "Should have returned two results, returned #{r.length}"
-    assert r.include? "#{CoreModule::ORDER.find_model_field(:order_number).label} set to #{base_order.order_number}"
-    assert r.include? "#{CoreModule::ORDER.find_model_field(:order_date).label} set to #{new_order_date}"
+    assert r.include? "#{ModelField.find_by_uid(:ord_ord_num).label} set to #{base_order.order_number}"
+    assert r.include? "#{ModelField.find_by_uid(:ord_ord_date).label} set to #{new_order_date}"
   end
 
   test "cannot change vendor via upload" do
@@ -34,8 +34,8 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment = "Order Number,Vendor\n#{base_order.order_number},#{new_vendor}"
     ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => true, :name => "test")
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:order_number).uid, :column => 1)
-    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:vendor_id).uid, :column => 2)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column => 1)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column => 2)
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
     f.save!
     assert !f.process({:attachment_data => attachment}), "Process passed and should have failed."
@@ -45,10 +45,10 @@ class ImportedFileTest < ActiveSupport::TestCase
   test "record with empty details only creates header" do
     ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => false, :name => "test")
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:order_number).uid, :column => 1)
-    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER.find_model_field(:vendor_id).uid, :column => 2)
-    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER_LINE.find_model_field(:product_unique_identifier).uid, :column => 3)
-    ic.import_config_mappings.create(:model_field_uid => CoreModule::ORDER_LINE.find_model_field(:ordered_qty).uid, :column => 4)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column => 1)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column => 2)
+    ic.import_config_mappings.create(:model_field_uid => "ordln_puid", :column => 3)
+    ic.import_config_mappings.create(:model_field_uid => "ordln_ordered_qty", :column => 4)
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
     f.save!
     order_number = "r_e_d_o_c_h"
@@ -63,18 +63,16 @@ class ImportedFileTest < ActiveSupport::TestCase
     vh = {:order_number => "ord_all_ord_fields",
       :order_date => Time.utc(2008,5,5),
       :vendor_id => 2,
-      :product_unique_identifier => "prod_1",
+      :puid => "prod_1",
       :ordered_qty => 55,
       :price_per_unit => 27.2,
       }
     ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => false, :name => "test")
     ic.save!
-    attachment_vals = []
-    vh.each_with_index do |k,i|
-      mf = CoreModule::ORDER.find_model_field(k[0])
-      mf = CoreModule::ORDER_LINE.find_model_field(k[0]) if mf.nil?
+    attachment_vals = [vh[:order_number],vh[:order_date],vh[:vendor_id],vh[:puid],vh[:ordered_qty],vh[:price_per_unit]]
+    [:ord_ord_num,:ord_ord_date,:ord_ven_id,:ordln_puid,:ordln_ordered_qty,:ordln_ppu].each_with_index do |u,i|
+      mf = ModelField.find_by_uid u
       ic.import_config_mappings.create!(:model_field_uid => mf.uid, :column => i+1)
-      attachment_vals << k[1]
     end
     attachment = attachment_vals.to_csv
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
@@ -83,7 +81,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert found.order_date.yday == vh[:order_date].yday, "Order date failed"
     assert found.vendor_id == vh[:vendor_id], "vendor id failed"
     fd = found.order_lines.first
-    assert fd.product.unique_identifier == vh[:product_unique_identifier], "product uid failed"
+    assert fd.product.unique_identifier == vh[:puid], "product uid failed"
     assert fd.ordered_qty == vh[:ordered_qty], "ordered qty failed"
     assert fd.price_per_unit == vh[:price_per_unit], "ppu failed"
   end
@@ -92,15 +90,16 @@ class ImportedFileTest < ActiveSupport::TestCase
     vh = {
       :unique_identifier => Time.new.to_s,
       :name => "nm",
-      :vendor_id => 2
+      :vendor_id => Company.where(:vendor=>true).first.id,
+      :div_id => Division.first.id,
+      :vendor_name => Company.where(:vendor=>true).first.name
     }
     ic = ImportConfig.new(:model_type => "Product", :file_type => "csv", :ignore_first_row => false, :name => "test")
     ic.save!
-    attachment_vals = []
-    vh.each_with_index do |k,i|
-      mf = CoreModule::PRODUCT.find_model_field k[0]
+    attachment_vals = [vh[:unique_identifier],vh[:div_id],vh[:name],vh[:vendor_id],vh[:vendor_name]]
+    [:prod_uid,:prod_div_id,:prod_name,:prod_ven_id,:prod_ven_name].each_with_index do |u,i|
+      mf = ModelField.find_by_uid u
       ic.import_config_mappings.create(:model_field_uid => mf.uid, :column => i+1)
-      attachment_vals << k[1]
     end
     attachment = attachment_vals.to_csv
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
@@ -108,5 +107,6 @@ class ImportedFileTest < ActiveSupport::TestCase
     found = Product.where(:unique_identifier => vh[:unique_identifier]).first
     assert found.name == vh[:name], "name failed"
     assert found.vendor_id == vh[:vendor_id], "vendor id failed"
+    assert found.division_id == vh[:div_id], "division id failed"
   end
 end

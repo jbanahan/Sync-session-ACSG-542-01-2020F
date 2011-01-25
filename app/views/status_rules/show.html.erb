@@ -21,7 +21,7 @@ $(function() {
   <tbody>
     <%@status_rule.search_criterions.each do |sc| %>
     <tr class='hover'>
-      <td><%=ModelField.find_by_module_type_and_field_name(sc.module_type.to_sym, sc.field_name.to_sym).label%></td><td><%=sc.condition.nil? ? "" : CriterionOperator.find_by_key(sc.condition).label%></td><td><%=sc.value%></td>
+      <td><%=sc.model_field.label%></td><td><%=sc.condition.nil? ? "" : CriterionOperator.find_by_key(sc.condition).label%></td><td><%=sc.value%></td>
     </tr>
     <%end%>
   </tbody>

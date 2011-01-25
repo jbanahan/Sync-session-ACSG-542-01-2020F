@@ -18,7 +18,7 @@ module StatusableSupport
     rules.each do |r|
       qry = self.class.where("#{self.class::CORE_MODULE.table_name}.id = ?",self.id)    
       r.search_criterions.each do |c|
-        qry = c.add_where(qry)
+        qry = c.apply(qry)
       end
       return r if qry.count==1
     end

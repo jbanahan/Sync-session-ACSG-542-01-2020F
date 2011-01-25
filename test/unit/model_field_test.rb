@@ -3,7 +3,7 @@ require 'test_helper'
 class ModelFieldTest < ActiveSupport::TestCase
   
   test "test find by uid" do
-    uid = "Product-name"
+    uid = "prod_name"
     mf = ModelField.find_by_uid uid
     assert mf.field_name == :name, "Should have found model field with name \"name\""
     assert mf.label == "Name", "Label should have been Name, was \"#{mf.label}\"."

@@ -46,13 +46,6 @@ class CoreModule
     end
     r
   end
-  
-  def find_model_field(field_name)
-    model_fields.values.each do |mf|
-      return mf if mf.field_name == field_name
-    end
-    return nil
-  end
     
   ORDER_LINE = new("OrderLine","Order Line") 
   ORDER = new("Order","Order",

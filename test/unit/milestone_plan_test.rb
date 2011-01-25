@@ -33,7 +33,7 @@ class MilestonePlanTest < ActiveSupport::TestCase
     line = o.order_lines.create!(:product => Product.first, :ordered_qty => 100)
     line.make_unshipped_remainder_piece_set.save!
     mp = MilestonePlan.create!(:name=>"find-matching-simple-mp",:test_rank=>1000,:inbound=>true)
-    mp.search_criterions.create!(:module_type=>"Order",:field_name=>"order_number",:condition=>"eq",:value=>ord_num)
+    mp.search_criterions.create!(:model_field_uid => ModelField.find_by_uid("ord_ord_num").uid,:condition=>"eq",:value=>ord_num)
     matching = mp.find_matching_piece_sets
     assert matching.length == 1, "Should have found 1 piece set, found #{matching.length}"
     assert matching.first.order_line.order.id == o.id, "Should have found order #{o.id}, found #{matching.first.id}"
@@ -49,7 +49,7 @@ class MilestonePlanTest < ActiveSupport::TestCase
     cv.save!
     ps = line.make_unshipped_remainder_piece_set.save!
     mp = MilestonePlan.create!(:name=>"find-mps-cv", :test_rank=>1000,:inbound=>true)
-    mp.search_criterions.create(:module_type=>"OrderLine",:field_name=>SearchCriterion.make_field_name(cd),:condition=>"eq",:value=>test_val)
+    mp.search_criterions.create(:model_field_uid => SearchCriterion.make_field_name(cd),:condition=>"eq",:value=>test_val)
     matching = mp.find_matching_piece_sets
     assert matching.length == 1, "Should have found 1 piece set, found #{matching.length}"
     assert matching.first.order_line.order.id = o.id, "Should have found order #{o.id}, found #{matching.first.id}"
@@ -62,7 +62,7 @@ class MilestonePlanTest < ActiveSupport::TestCase
     ps = line.make_unshipped_remainder_piece_set
     ps.save!
     mp = MilestonePlan.create!(:name=>"find-matching-simple-mp",:test_rank=>1000,:inbound=>true)
-    mp.search_criterions.create!(:module_type=>"Order",:field_name=>"order_number",:condition=>"eq",:value=>ord_num)
+    mp.search_criterions.create!(:model_field_uid => ModelField.find_by_uid("ord_ord_num").uid,:condition=>"eq",:value=>ord_num)
     assert mp.matches?(ps), "Should have matched the piece set created in this test"
     assert !mp.matches?(PieceSet.find(1)), "Should not have matched another piece set"
   end

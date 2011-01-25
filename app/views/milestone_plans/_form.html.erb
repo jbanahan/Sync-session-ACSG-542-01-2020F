@@ -33,7 +33,7 @@ function loadFieldNames(model_field, set_original_value) {
   $.getJSON('<%=url_for :controller=>"model_fields", :action=>"find_by_module_type", :format=>"json"%>?include_basic=true&module_type='+model_field.val(), function(data) {
     var options = "<option value=''>Select a field</option>";
     for(i=0;i<data.length;i++) {
-      options = options + "<option value='"+data[i].field_name+"'>"+data[i].label+"</option>"
+      options = options + "<option value='"+data[i].uid+"'>"+data[i].label+"</option>"
     }
     f.html(options);
     f.val(o_val);
@@ -64,10 +64,10 @@ function addCriterion() {
 <%@plan.search_criterions.build%>
 <%f.fields_for :search_criterions do |sc| %>
   <tr class='hover sc_row'><td>
-    <%=sc.select :module_type, CoreModule.to_a_label_class, {}, {"class" => "sc_mt", "id"=>"sc_mt_#{sc.object.id}"}%></td>
+    <%=select_tag "sc_mt_#{sc.object.id}" , options_for_select(CoreModule.to_a_label_class), {"class" => "sc_mt"}%></td>
     <td id='<%="sc_td_#{sc.object.id}"%>'>
-      <%=sc.hidden_field :field_name, "id"=>"sc_ov_#{sc.object.id}", "name"=>"ignore_me"%>
-      <%=sc.select :field_name, ["Loading",""], {}, {"id"=>"sc_fn_#{sc.object.id}"}%>
+      <%=sc.hidden_field :model_field_uid, "id"=>"sc_ov_#{sc.object.id}", "name"=>"ignore_me"%>
+      <%=sc.select :model_field_uid, ["Loading",""], {}, {"id"=>"sc_fn_#{sc.object.id}"}%>
     </td>
     <td><%=sc.select :condition, CriterionOperator::OPERATORS.collect {|o| [o.label,o.key]}%></td>
     <td><%=sc.text_field :value%></td>

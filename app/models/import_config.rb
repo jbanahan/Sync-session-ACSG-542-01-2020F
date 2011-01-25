@@ -18,12 +18,12 @@ class ImportConfig < ActiveRecord::Base
   end
   
   #@todo reimplement with proper active record where instead of loop
-  def has_model_field_mapped(core_module,field)
-    f = false
+  def has_model_field_mapped(field_uid)
+    r = false
     self.import_config_mappings.each do |m|
-      f = f || m.model_field_uid == core_module.find_model_field(field).uid
+      r = true if m.model_field_uid.to_s == field_uid.to_s
     end
-    return f
+    return r
   end
   
 
@@ -31,8 +31,8 @@ end
 
 class ImportConfigValidator
   
-  def field_check(import_config,core_module,field,message)
-    import_config.errors[:base] << message unless import_config.has_model_field_mapped core_module, field
+  def field_check(import_config,field_uid,message)
+    import_config.errors[:base] << message unless import_config.has_model_field_mapped field_uid
   end
 end
 
@@ -60,11 +60,11 @@ class OrderImportConfigValidator < ImportConfigValidator
   private
   
   def has_product_id
-    field_check @ic, CoreModule::ORDER_LINE, :product_unique_identifier, "All order mappings that have line level values must have the Product Unique Identifier."
+    field_check @ic, :ordln_puid, "All order mappings that have line level values must have the Product Unique Identifier."
   end
   
   def has_order_number_mapping
-    field_check @ic, CoreModule::ORDER, :order_number, "All order mappings must contain the Order Number field."    
+    field_check @ic, :ord_ord_num, "All order mappings must contain the Order Number field."    
   end
   
   def detail_check
