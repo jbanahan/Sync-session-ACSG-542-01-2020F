@@ -20,12 +20,14 @@
   <%end%>
   $("#btn_cancel").click(function() {window.location = '<%=import_configs_path%>';});
   $("#btn_save").click(function() {$("#frm_m").submit();});
+  $("#btn_delete").button(); //DON'T DELETE THIS ONE
   });
 <% end %>
 
 <% content_for :action_bar do %>
 <button id='btn_save'>Save</button>
 <button id='btn_cancel'>Cancel</button>
+<%= button_to('Delete', import_config_path(@import_config),:method => :delete, :confirm => "Are you sure?  There is no undo.", :id => "btn_delete") %>
 <% end %>
 
 <%= form_for(@import_config, :html=>{:id=>"frm_m"}) do |f| %>

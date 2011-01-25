@@ -6,6 +6,7 @@
     <th><%=sortable_search_heading 'uid'%></th>
     <th><%=sortable_search_heading 'v_name'%></th>
 		<th><%=sortable_search_heading 'div'%></th>
+		<th><%=sortable_search_heading 'status'%></th>
 		<th>Inventory Quantity</th>
   </tr>
 </thead>
@@ -15,6 +16,7 @@
     <td><%= product.unique_identifier %></td>
     <td><%= product.vendor.name %></td>
 		<td><%= product.division.name %></td>
+		<td><%= product.status_rule.nil? ? "" : product.status_rule.name %></td>
 		<td><%= product.current_inventory_qty%> <%=product.unit_of_measure%></td>
   </tr>
 <% end %>

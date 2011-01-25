@@ -60,11 +60,24 @@ class ModelField
       MODEL_FIELDS[module_type][mf.uid.intern] = mf
     end
   end 
+  
   add_fields CoreModule::PRODUCT, [
     [1,:unique_identifier,"Unique Identifier"],
     [2,:division_id,"Division ID"],
     [3,:name,"Name"],
-    [5,:vendor_id,"Vendor ID"]
+    [5,:vendor_id,"Vendor ID"],
+    [6,:vendor_name,"Vendor Name", {
+      :import_lambda => lambda {|detail,data|
+        vendor = Company.where(:name => data).where(:vendor => true).first
+        detail.vendor = vendor
+        unless vendor.nil?
+          return "Line #{detail.line_number} - Vendor set to #{vendor.name}"
+        else
+          return "Line #{detail.line_number} - Vendor not found with name \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|detail| detail.vendor.name}
+    }]
   ]
     
   add_fields CoreModule::ORDER, [

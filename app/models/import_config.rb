@@ -39,8 +39,8 @@ end
 class ProductImportConfigValidator < ImportConfigValidator
   def validate(c)
     if c.import_config_mappings.size > 0
-      field_check c, CoreModule::PRODUCT, :unique_identifier, "All product mappings must contain the Unique Identifier field."
-      field_check c, CoreModule::PRODUCT, :vendor_id, "All product mappings must contain the Vendor ID field."
+      #field_check c, CoreModule::PRODUCT, :unique_identifier, "All product mappings must contain the Unique Identifier field."
+      #field_check c, CoreModule::PRODUCT, :vendor_id, "All product mappings must contain the Vendor ID field."
     end
   end
 end

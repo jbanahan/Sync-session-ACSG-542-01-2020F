@@ -18,6 +18,43 @@
       <% end %>
     </td>
     <td style=' vertical-align: top;'>
+      <h2>Needs Approval</h2>
+      <% if @products_not_approved.length == 0%>
+      All products approved.
+      <% else %>
+      <table class='detail_table'>
+        <thead><tr><th>Name</th><th>Last Updated</th></tr></thead>
+        <tbody>
+          <%@products_not_approved.each do |p|%>
+          <tr class='hover'><td><%= link_to p.name, product_path(p)%></td><td><%=p.updated_at%></td></tr>
+          <%end%>
+        </tbody>
+      </table>
+      <% end %>
+    </td>
+  </tr>
+  <tr>
+    <td style='vertical-align: top;'>
+      <h2>Shipments Not Received</h2>
+      <% if @piece_sets_not_received.length==0%>
+      All shipments received.
+      <% else %>
+      <table class='detail_table'>
+        <thead><tr><th>Shipment Ref</th><th>Order Number</th><th>Product</th><th>Quantity</th></tr></thead>
+        <tbody>
+          <% @piece_sets_not_received.each do |p| %>
+          <tr class='hover'>
+            <td><%=link_to p.shipment.reference, shipment_path(p.shipment)%></td>
+            <td><%=link_to p.order_line.order.order_number, order_path(p.order_line.order)%></td>
+            <td><%=link_to p.product.name, product_path(p.product)%></td>
+            <td><%=link_to p.quantity%></td>
+          </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <% end %>
+    </td>
+    <td style='vertical-align: top;'>
       <h2>Orders Not Shipped</h2>
       <% if @order_lines_not_on_shipments.length==0%>
       All orders are on shipments.
@@ -34,28 +71,6 @@
             <td><%=o.ordered_qty%></td>
           </tr>
           <%end%>
-        </tbody>
-      </table>
-      <% end %>
-    </td>
-  </tr>
-  <tr>
-    <td style='vertical-align: top;'>
-      <h2>Shipments Not Received</h2>
-      <% if @piece_sets_not_received.length==0%>
-      All shipments received.
-      <% else %>
-      <table class='detail_table'>
-        <thead><tr><td>Shipment Ref</td><td>Order Number</td><td>Product</td><td>Quantity</td></tr></thead>
-        <tbody>
-          <% @piece_sets_not_received.each do |p| %>
-          <tr class='hover'>
-            <td><%=link_to p.shipment.reference, shipment_path(p.shipment)%></td>
-            <td><%=link_to p.order_line.order.order_number, order_path(p.order_line.order)%></td>
-            <td><%=link_to p.product.name, product_path(p.product)%></td>
-            <td><%=link_to p.quantity%></td>
-          </tr>
-          <% end %>
         </tbody>
       </table>
       <% end %>

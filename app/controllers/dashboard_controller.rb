@@ -6,10 +6,16 @@ class DashboardController < ApplicationController
 	  @products_without_hts = products_without_hts
 	  @order_lines_not_on_shipments = order_lines_not_on_shipments
 	  @piece_sets_not_received = piece_sets_not_received
+	  @products_not_approved = products_not_approved
     render :layout => 'one_col'
 	end
 	
 	private
+	def products_not_approved
+	  Product.
+	   joins("LEFT OUTER JOIN status_rules on status_rules.id = products.status_rule_id").
+	   where("NOT status_rules.name = 'Approved'").all
+	end
 	def products_without_hts
 	  Product.
 	   joins("LEFT OUTER JOIN classifications on classifications.product_id = products.id").

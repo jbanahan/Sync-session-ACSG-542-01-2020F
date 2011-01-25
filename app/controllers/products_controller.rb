@@ -8,7 +8,8 @@ class ProductsController < ApplicationController
         'uid' => {:field => 'unique_identifier', :label => 'Unique ID'},
         'p_name' => {:field => 'name', :label => 'Name'},
         'v_name' => {:field => 'vendor_name', :label => 'Vendor'},
-        'div' => {:field => 'division_name', :label => 'Division'}
+        'div' => {:field => 'division_name', :label => 'Division'},
+        'status' => {:field => 'status_rule_name', :label => 'Status'}
     }
 
     def index
