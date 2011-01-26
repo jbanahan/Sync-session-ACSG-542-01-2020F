@@ -1,0 +1,15 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  search_setup_id: 1
+  rank: 1
+  model_field_uid: MyString
+  custom_definition_id: 1
+  descending: false
+
+two:
+  search_setup_id: 1
+  rank: 1
+  model_field_uid: MyString
+  custom_definition_id: 1
+  descending: false

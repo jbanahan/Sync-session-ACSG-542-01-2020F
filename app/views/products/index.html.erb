@@ -1,29 +1,102 @@
-<%= render :partial => 'shared/search_box' %>
+<%content_for :javascript do%>
+$(function() {
+  $("#sel_searches").change(function() {
+    $("#main_search_cont").html("<h1>Loading Search Results</h1>");
+    window.location.search="?sid="+$(this).val();
+  });
+  var all_model_fields;
+  $("#search_setup").tabs();
+  $.getJSON('<%=url_for :controller=>"model_fields", :action=>"find_by_module_type", :format=>"json"%>?include_basic=true&module_type=<%=@current_search.module_type%>', function(data) {
+    all_model_fields = data;
+    make_columns(all_model_fields)
+  });
+});
+function make_columns(amf) {
+  $.getJSON('<%=url_for @current_search%>.json', function(data) {
+    var used_columns = [];
+    var unused_columns = amf.slice(0);
+    scs = data.search_setup.search_columns;
+    for(i=0;i<scs.length;i++) {
+      var uid = scs[i].model_field_uid;
+      var new_unused = []
+      for(j=0;j<unused_columns.length;j++) {
+        if(unused_columns[j].uid==uid) {
+          used_columns.push(unused_columns[j]);
+        } else {
+          new_unused.push(unused_columns[j]);
+        }
+      }
+      unused_columns = new_unused;
+    }
+    h = "<table><thead class='detail_table'><tr><th>Available</th><th>Used</th></tr></thead><tbody><tr><td><select multiple='true' size='10'>";
+    for(i=0;i<unused_columns.length;i++) {
+      h = h + "<option value='"+unused_columns[i].uid+"'>"+unused_columns[i].label+"</option>";
+    }
+    h = h + "</select></td><td><select multiple='true' size='10'>";
+    for(i=0;i<used_columns.length;i++) {
+      h = h + "<option value='"+used_columns[i].uid+"'>"+used_columns[i].label+"</option>";
+    }
+    h = h + "</select></td></tr></tbody></table>";
+    $("#col_cont").html(h);
+  });
+}
+<%end%>
+
+
+<div id='main_search_cont'>
+
+<div id='search_setup'>
+<%=form_for(@current_search, :html=>{:id=>"frm_current_search"}) do |f| %>
+<ul>
+    <li><a href="#setup_cont">Setup</a></li>
+    <li><a href="#params_cont">Parameters</a></li>
+    <li><a href="#sorts_cont">Sorts</a></li>
+    <li><a href="#col_cont" id='tab_col_cont'>Columns</a></li>
+</ul>
+<div id='setup_cont'>
+  Current Search: <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%><br />
+  <button>Save</button>&nbsp;<button>Save As New</button>
+</div>
+<div id='params_cont'>
+  <ul>
+    <%@current_search.search_criterions.each do |c|%>
+    <li><%=model_field_label(c.model_field_uid)%> <%=c.condition.nil? ? "" : CriterionOperator.find_by_key(c.condition).label%> <%=c.value%></li>
+    <%end%>
+  </ul>
+</div>
+<div id='sorts_cont'>
+  <ul>
+    <%@current_search.sort_criterions.order("rank ASC").each do |c|%>
+    <li><%=model_field_label(c.model_field_uid)%> <%=c.descending? ? "(Z > A)" : "(A > Z)"%></li>
+    <%end%>
+  </ul>
+</div>
+<div id='col_cont'>
+        
+</div>
+<% end %>
+</div>  
+
+<h2>Results</h2>
 <table class='detail_table'>
-  <thead>
-  <tr>
-    <th><%=sortable_search_heading 'p_name'%></th>
-    <th><%=sortable_search_heading 'uid'%></th>
-    <th><%=sortable_search_heading 'v_name'%></th>
-		<th><%=sortable_search_heading 'div'%></th>
-		<th><%=sortable_search_heading 'status'%></th>
-		<th>Inventory Quantity</th>
-  </tr>
-</thead>
-<% @products.each do |product| %>
-  <tr class='hover'>
-    <td><%= link_to product.name, product %></td>
-    <td><%= product.unique_identifier %></td>
-    <td><%= product.vendor.name %></td>
-		<td><%= product.division.name %></td>
-		<td><%= product.status_rule.nil? ? "" : product.status_rule.name %></td>
-		<td><%= product.current_inventory_qty%> <%=product.unit_of_measure%></td>
-  </tr>
-<% end %>
+  <thead><tr>
+    <%@current_search.search_columns.order("rank ASC").each do |c|%>
+    <th><%=model_field_label(c.model_field_uid)%></th>
+    <% end %>
+    <th>&nbsp;</th>
+  </tr></thead>
+  <tbody>
+    <%@results.each do |r| %>
+    <tr class='hover'>
+      <%@current_search.search_columns.order("rank ASC").each do |c|%>
+      <td><%=ModelField.find_by_uid(c.model_field_uid).process_export r%></td>
+      <%end%>
+      <td><%=link_to 'Go', r%>
+    </tr>
+    <%end%>
+  </tbody>
 </table>
-<%= will_paginate @products %>  
-<br />
-<% if current_user.edit_products?%>
-<%= render :partial => 'shared/mod_import', :locals => { :model_type => CoreModule::PRODUCT.class_name }%>
-<% end %>
-<%= render :partial => 'shared/mod_export', :locals => { :model_type => CoreModule::PRODUCT.class_name }%>
+<ul>
+</ul>
+<%= will_paginate @results %>
+</div>  

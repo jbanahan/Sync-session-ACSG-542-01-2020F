@@ -2,38 +2,12 @@ class ProductsController < ApplicationController
 	def root_class 
 		Product
 	end
-    # GET /products
-    # GET /products.xml
-    SEARCH_PARAMS = {
-        'uid' => {:field => 'unique_identifier', :label => 'Unique ID'},
-        'p_name' => {:field => 'name', :label => 'Name'},
-        'v_name' => {:field => 'vendor_name', :label => 'Vendor'},
-        'div' => {:field => 'division_name', :label => 'Division'},
-        'status' => {:field => 'status_rule_name', :label => 'Status'}
-    }
 
     def index
-        s = build_search(SEARCH_PARAMS,'p_name','p_name')
-
-        respond_to do |format|
-            format.html {
-                @products = s.paginate(:per_page => 20, :page => params[:page])
-                render :layout => 'one_col'
-            }
-            format.xml  { render :xml => (@products=s.all) }
-            format.csv {
-              import_config_id = params[:ic]
-              i_config = nil
-              unless import_config_id.nil? || (i_config = ImportConfig.find(import_config_id)).nil?
-                  @ic = i_config
-                  @products = s.all
-                  @detail_lambda = lambda {|h| nil}
-                  render_csv('products.csv')
-              else
-                  error_redirect "The file format you specified could not be found."
-              end
-            }
-        end
+      @saved_searches = SearchSetup.for_user(current_user)
+      @current_search = params[:sid].nil? ? SearchSetup.for_user(current_user).order("last_accessed DESC").first : SearchSetup.for_user(current_user).where(:id=>params[:sid]).first
+      @current_search.touch(true)
+      @results = @current_search.search.paginate(:per_page => 20, :page => params[:page])
     end
 
     # GET /products/1

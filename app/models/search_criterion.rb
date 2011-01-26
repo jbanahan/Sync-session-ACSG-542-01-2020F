@@ -1,6 +1,9 @@
 class SearchCriterion < ActiveRecord::Base
+  include HoldsCustomDefinition
+  
   belongs_to :milestone_plan
   belongs_to :status_rule  
+  belongs_to :search_setup
   
   validates  :model_field_uid, :presence => true
   validates  :condition, :presence => true

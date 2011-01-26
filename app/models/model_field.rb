@@ -76,6 +76,7 @@ class ModelField
     [1,:prod_uid,:unique_identifier,"Unique Identifier"],
     [2,:prod_div_id,:division_id,"Division ID"],
     [3,:prod_name,:name,"Name"],
+    [4,:prod_uom,:unit_of_measure,"Unit of Measure"],
     [5,:prod_ven_id,:vendor_id,"Vendor ID"],
     [6,:prod_ven_name, :name,"Vendor Name", {
       :import_lambda => lambda {|detail,data|
@@ -108,7 +109,9 @@ class ModelField
       },
       :export_lambda => lambda {|detail|
         detail.product.unique_identifier
-      }
+      },
+      :join_statement => "LEFT OUTER JOIN products AS ordln_puid ON ordln_puid.id = order_lines.product_id",
+      :join_alias => "ordln_puid"
     }],
     [3,:ordln_ordered_qty,:ordered_qty,"Line - Order Quantity"],
     [4,:ordln_ppu,:price_per_unit,"Line - Price / Unit"]

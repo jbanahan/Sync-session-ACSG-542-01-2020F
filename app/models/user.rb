@@ -4,7 +4,8 @@ class User < ActiveRecord::Base
   belongs_to :company
   
   has_many   :histories, :dependent => :destroy
-  has_many   :item_change_subscriptions
+  has_many   :item_change_subscriptions, :dependent => :destroy
+  has_many   :search_setups, :dependent => :destroy
   has_many   :messages
   
   validates  :company, :presence => true

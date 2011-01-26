@@ -31,4 +31,12 @@ module ApplicationHelper
   def field_row(label, field) 
     content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field), :class=>'hover field_row')
   end
+  
+  def model_field_label(model_field_uid) 
+    r = ""
+    return "" if model_field_uid.nil?
+    mf = ModelField.find_by_uid(model_field_uid)
+    return "" if mf.nil?
+    return mf.label
+  end
 end

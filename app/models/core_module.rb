@@ -79,16 +79,6 @@ class CoreModule
     r = []
     to_proc.each {|c| r << [c.label,c.class_name]}
     r
-=begin    r = []
-    CORE_MODULES.each do |m|
-      if block_given?
-        r << [m.label,m.class_name] if yield m
-      else
-      	r << [m.label,m.class_name]
-      end
-    end
-    r
-=end
   end
   
   private

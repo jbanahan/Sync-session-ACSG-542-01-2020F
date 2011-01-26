@@ -79,5 +79,7 @@ OpenChain::Application.routes.draw do
     get 'test_criteria', :on => :member
   end
   
-   root :to => "dashboard#show_main"
+  resources :search_setups
+  
+  root :to => "dashboard#show_main"
 end
