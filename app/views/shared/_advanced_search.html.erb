@@ -1,0 +1,309 @@
+<%content_for :javascript do%>
+$(function() {
+  $("#sel_searches").change(function() {
+    $("#main_search_cont").html("<h1>Loading Search Results</h1>");
+    window.location.search="?sid="+$(this).val();
+  });
+  var all_model_fields;
+  $("#search_setup").tabs();
+  $.getJSON('<%=url_for :controller=>"model_fields", :action=>"find_by_module_type", :format=>"json"%>?include_basic=true&module_type=<%=@current_search.module_type%>', function(data) {
+    all_model_fields = data;
+    $.getJSON('<%=url_for @current_search%>.json', function(jr) {
+      make_columns(all_model_fields,$("#unused_columns"),$("#used_columns"),'search_columns',jr);
+      make_columns(all_model_fields,$("#unused_sorts"),$("#used_sorts"),'sort_criterions',jr);
+    });
+  });
+  
+  $("#use_sort,#remove_sort").click(function(event) {
+    var id = $(event.target).attr("id");
+    var selectFrom = id == "use_sort" ? "#unused_sorts" : "#used_sorts";
+    var moveTo = id == "use_sort" ? "#used_sorts" : "#unused_sorts";
+    var selectedItems = $(selectFrom + " :selected").toArray();
+    if(id=="use_sort") {
+      $(selectFrom + " :selected").each(function() {
+        $(this).html($(this).html()+" [A > Z]");
+        $(this).attr('ord','a');
+      });
+    } else {
+      $(selectFrom + " :selected").each(function() {
+        $(this).html($(this).html().substring(0,$(this).html().length-11));
+      });
+    }
+    $(moveTo).append(selectedItems);
+    selectedItems.remove;
+  });
+  $("#used_sorts_up").click(function(ev) {
+    ev.preventDefault();
+    move_list_item('up',$("#used_sorts"));
+  });
+  $("#used_sorts_down").click(function(ev) {
+    ev.preventDefault();
+    move_list_item('down',$("#used_sorts"));
+  });
+  $("#used_sorts_reverse").click(function(ev) {
+    ev.preventDefault();
+    $("#used_sorts :selected").each(function() {
+      var ord = $(this).attr('ord');
+      $(this).attr('ord',ord=='a' ? 'd' : 'a');
+      var label = ord=='a' ? " [Z > A]" : " [A > Z]"
+      label = $(this).html().substring(0,$(this).html().length-11) + label;
+      $(this).html(label);
+    });
+  });
+  
+  $("#use_column,#remove_column").click(function(event) {
+    var id = $(event.target).attr("id");
+    var selectFrom = id == "use_column" ? "#unused_columns" : "#used_columns";
+    var moveTo = id == "use_column" ? "#used_columns" : "#unused_columns";
+    var selectedItems = $(selectFrom + " :selected").toArray();
+    $(moveTo).append(selectedItems);
+    selectedItems.remove;
+  });
+  $("#used_columns_up").click(function(ev) {
+    ev.preventDefault();
+    move_list_item('up',$("#used_columns"));
+  });
+  $("#used_columns_down").click(function(ev) {
+    ev.preventDefault();
+    move_list_item('down',$("#used_columns"));
+  });
+  
+  $("#show_srch_setup").click(function(ev) {
+    ev.preventDefault();
+    $("#search_setup_outer").show("blind", { direction: "vertical" }, 500)
+    $(this).hide();
+    $("#hide_srch_setup").show();
+  });
+  $("#hide_srch_setup").click(function(ev) {
+    ev.preventDefault();
+    $("#search_setup_outer").hide("blind", { direction: "vertical" }, 500)
+    $(this).hide();
+    $("#show_srch_setup").show();
+  });
+  $(".sp_remove").click(function(ev) {
+    ev.preventDefault();
+    destroy_nested('sp',$(this));
+  });
+  $("#sp_add").click(function(ev) {
+    ev.preventDefault();
+    addParameter();
+  });
+  $("#btn_setup_save").click(function() {
+    submitForm();
+  });
+  $("#mod_new_name").dialog({autoOpen:false,title:"Save As New",
+      buttons:{"Save":function() {
+        window.location = '<%=url_for @current_search%>/copy?new_name='+escape($("#txt_new_name").val());
+      },"Cancel":function() {$("#mod_new_name").dialog('close');}
+      }
+    });
+  $("#btn_setup_copy").click(function() {
+    $("#txt_new_name").val("Copy of "+$("#current_name").val());
+    $("#mod_new_name").dialog('open');
+  });
+  $("#btn_setup_delete").click(function() {
+    $("#real_delete_button").parents("form.button_to").submit();
+  });
+});
+function addParameter() {
+  var m = new Date().getTime();
+  var h = "<tr><td><select id='search_setup_search_criterions_attributes_"+m+"_model_field_uid' name='search_setup[search_criterions_attributes]["+m+"][model_field_uid]'>";
+    <%@core_module.model_fields_including_children.values.each do |mf| %>
+    h = h + "<option value='<%=mf.uid%>'><%=mf.label%></option>";
+    <%end%>
+    h = h + "</select></td>";
+    h = h + "<td><select id='search_setup_search_criterions_attributes_"+m+"_condition' name='search_setup[search_criterions_attributes]["+m+"][condition]'>";
+    <%CriterionOperator::OPERATORS.each do |o|%>
+    h = h + "<option value='<%=o.key%>'><%=o.label%></option>";
+    <%end%>  
+    h = h + "</select></td><td><input id='search_setup_search_criterions_attributes_"+m+"_value' name='search_setup[search_criterions_attributes]["+m+"][value]' size='30' type='text' /></td>";
+    h = h + "<td><input class='sp_destroy' id='search_setup_search_criterions_attributes_"+m+"__destroy' name='search_setup[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'>Remove</a></td></tr>";
+  $("#sp_table").append(h);   
+}
+function submitForm() {
+  var col_uids = []
+  $("#used_columns option").each(function () {
+    col_uids.push($(this).attr("value"));
+  });
+  var f = $("#frm_current_search");
+  var i;
+  for(i=0;i<col_uids.length;i++) {
+    var h = "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][rank]' value='"+i+"' />";
+    h = h + "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][model_field_uid]' value='"+col_uids[i]+"' />";
+    f.append(h);
+  }
+  var srt_uids = []
+  $("#used_sorts option").each(function() {
+    srt_uids.push([$(this).attr("value"),$(this).attr("ord")])
+  });
+  for(i=0;i<srt_uids.length;i++) {
+    var h = "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][rank]' value='"+i+"' />";
+    h = h + "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][model_field_uid]' value='"+srt_uids[i][0]+"' />";
+    h = h + "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][descending]' value='"+(srt_uids[i][1]=="a" ? "false" : "true")+"' />";
+    f.append(h);
+  }
+  f.submit();
+}
+function move_list_item(direction,list) {
+  var selectedItems = $("#"+list.attr("id")+" :selected");
+  if(direction=='down') {
+    $($("#"+list.attr("id")+" :selected").get().reverse()).each(function() {
+      $(this).next("option").after($(this)); 
+    });
+  } else {
+    $("#"+list.attr("id")+" :selected").each(function() {
+      $(this).prev("option").before($(this));
+    });
+  }
+}
+function make_columns(amf,available_obj,used_obj,list_type,list) {
+  var used_columns = [];
+  var unused_columns = amf.slice(0);
+  var scs;
+  if(list_type=='search_columns') {
+    scs = list.search_setup.search_columns;
+  } else {
+    scs = list.search_setup.sort_criterions;
+  }
+  for(i=0;i<scs.length;i++) {
+    var uid = scs[i].model_field_uid;
+    var new_unused = []
+    for(j=0;j<unused_columns.length;j++) {
+      if(unused_columns[j].uid==uid) {
+        if(list_type=='sort_criterions') {
+          unused_columns[j].descending = scs[i].descending
+        }
+        used_columns.push(unused_columns[j]);
+      } else {
+        new_unused.push(unused_columns[j]);
+      }
+    }
+    unused_columns = new_unused;
+  }
+  h = "";
+  for(i=0;i<unused_columns.length;i++) {
+    h = h + "<option value='"+unused_columns[i].uid+"'>"+unused_columns[i].label+"</option>";
+  }
+  available_obj.html(h);
+  h = "";
+  for(i=0;i<used_columns.length;i++) {
+    var label = used_columns[i].label
+    var ord = '';
+    if(list_type=='sort_criterions') {
+      label = label + (used_columns[i].descending ? " [Z > A]" : " [A > Z]");
+      ord = "ord='"+(used_columns[i].descending ? "d" : "a")+"'"
+    }
+    h = h + "<option value='"+used_columns[i].uid+"' "+ord+">"+label+"</option>";
+  }
+  used_obj.html(h);
+}
+<%end%>
+
+
+<div id='main_search_cont'>
+<%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>&nbsp;<a href='#' id='show_srch_setup'>Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Setup</a><br />
+<div id='search_setup_outer' style='display:none;'>
+  <div id='search_setup'>
+    <%=form_for(@current_search, :html=>{:id=>"frm_current_search"}) do |f| %>
+    <ul>
+        <li><a href="#setup_cont">Setup</a></li>
+        <li><a href="#params_cont">Parameters</a></li>
+        <li><a href="#sorts_cont">Sorts</a></li>
+        <li><a href="#col_cont" id='tab_col_cont'>Columns</a></li>
+    </ul>
+    <div id='setup_cont'>
+      Name: <%=f.text_field :name, "id"=>"current_name" %>
+      <%=f.hidden_field :module_type %>
+    </div>
+    <div id='params_cont'>
+      <ul>
+        <table id='sp_table'>
+        <%=f.fields_for :search_criterions do |sc| %>
+        <tr class='sp_row'>
+          <td><%=sc.collection_select :model_field_uid, @core_module.model_fields_including_children.values, :uid, :label %></td>
+          <td><%=sc.collection_select :condition, CriterionOperator::OPERATORS, :key, :label %></td>
+          <td><%=sc.text_field :value %></td>
+          <td><%=sc.hidden_field :_destroy, "class" => "sp_destroy"%><a href='#' class='sp_remove'>Remove</a></td>
+        </tr>
+        <%end%>
+        </table>
+        <a href='#' id='sp_add'>Add</a>
+      </ul>
+    </div>
+    <div id='sorts_cont'>
+      <table class='detail_table' style='width:0px;'>
+        <thead><tr><th>Available</th><th>Selected</th></thead>
+        <tbody>
+        <tr>
+          <td><select id='unused_sorts' size='10' multiple='true'><option value=''>Loading...</option></select></td>
+          <td><select id='used_sorts' size='10' multiple='true'><option value=''>Loading...</option></select></td>
+          <td style='vertical-align:middle;'><a href='#' id='used_sorts_up'>Up</a><br /><a href='#' id='used_sorts_down'>Down</a><br/><a href='#' id='used_sorts_reverse'>Sort Order</a></td>
+        </tr>
+        <tr>
+          <td><a href='#' id='use_sort'>Add</a></td>
+          <td><a href='#' id='remove_sort'>Remove</a></td>  
+        </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id='col_cont'>
+      <table class='detail_table' style='width:0px;'>
+        <thead><tr><th>Available</th><th>Selected</th></thead>
+        <tbody>
+          <tr>
+            <td><select id='unused_columns' size='10' multiple='true'><option value=''>Loading...</option></select></td>
+            <td><select id='used_columns' size='10' multiple='true'><option value=''>Loading...</option></select></td>
+            <td><a href='#' id='used_columns_up'>Up</a><br /><a href='#' id='used_columns_down'>Down</a></td>
+          </tr>
+          <tr>
+            <td><a href='#' id='use_column'>Add</a></td>
+            <td><a href='#' id='remove_column'>Remove</a></td>  
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <% end %>
+  </div>  
+  <div style='text-align:right;'>
+    <button id='btn_setup_save'>Save</button>&nbsp;
+    <button id='btn_setup_copy'>Copy</button>&nbsp;
+    <button id='btn_setup_delete'>Delete</button>
+  </div>
+  <div id='mod_new_name' style='display:none;'>Enter a name for your new search:<br /><input id='txt_new_name' /></div>
+  <div style='display:none'> <!--hide the real button-->
+    <%= button_to "Delete", @current_search, :method => :delete, :id=>"real_delete_button" %>
+  </div>
+</div>
+
+<h2>Results</h2>
+<table class='detail_table'>
+  <thead><tr>
+    <%@current_search.search_columns.order("rank ASC").each do |c|%>
+    <th><%=model_field_label(c.model_field_uid)%></th>
+    <% end %>
+    <th>&nbsp;</th>
+  </tr></thead>
+  <tbody>
+    <%@results.each do |r| %>
+    <tr class='hover'>
+      <%@current_search.search_columns.order("rank ASC").each do |c|%>
+      <td>
+        <% mf = ModelField.find_by_uid(c.model_field_uid) %>
+        <% if mf.core_module==@core_module %>
+            <%=mf.process_export r%>
+        <% else %>
+        <%   @core_module.children(mf.core_module,r).each do |child| %>
+            <%=mf.process_export child%><br />
+        <% end %> 
+        <% end %>
+      </td>
+      <%end%>
+      <td><%=link_to 'Go', r%>
+    </tr>
+    <%end%>
+  </tbody>
+</table>
+<ul>
+</ul>
+<%= will_paginate @results %>
+</div>  

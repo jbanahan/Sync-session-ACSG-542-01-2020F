@@ -4,38 +4,8 @@ class OrdersController < ApplicationController
 			Order
 		end
 
-    # GET /orders
-    # GET /orders.xml
-    SEARCH_PARAMS = {
-        'o_num' => {:field => 'order_number', :label=> 'Order Number'},
-        'p_name' => {:field => 'order_lines_product_name', :label => 'Product Name'},
-        'v_name' => {:field => 'vendor_name', :label => 'Vendor Name'},
-        'o_date' => {:field => 'order_date', :label => 'Order Date'},
-        'p_id'   => {:field => 'order_lines_product_unique_identifier',:label => 'Product ID'}
-    }
-
     def index
-        s = build_search(SEARCH_PARAMS,'o_num','o_date','d')
-
-        respond_to do |format|
-            format.html {
-                @orders = s.paginate(:per_page => 20, :page => params[:page])
-                render :layout => 'one_col'
-            }
-            format.xml  { render :xml => (@orders=s.all) }
-            format.csv {
-              import_config_id = params[:ic]
-              i_config = nil
-              unless import_config_id.nil? || (i_config = ImportConfig.find(import_config_id)).nil?
-                  @ic = i_config
-                  @orders = s.all
-                  @detail_lambda = lambda {|h| h.order_lines}
-                  render_csv('orders.csv')
-              else
-                  error_redirect "The file format you specified could not be found."
-              end
-            }
-        end
+      advanced_search CoreModule::ORDER
     end
 
     # GET /orders/1
@@ -141,16 +111,14 @@ class OrdersController < ApplicationController
     end
 
     private    
-    def secure
-        r = Order.where("1=0")
-        if current_user.company.master
-        r = Order
-        elsif current_user.company.vendor
-            r = current_user.company.vendor_orders
-        else
-            add_flash :errors, "You do not have permission to search for orders."
-            return Order.where("1=0")
-        end
-        r.select("DISTINCT 'orders'.*").includes(:vendor).includes(:order_lines => [:product, :piece_sets])
+    def secure(base)
+      if current_user.company.master
+        return base
+      elsif current_user.company.vendor
+        return base.where(:vendor_id => current_user.company)
+      else
+        add_flash :errors, "You do not have permission to search for orders."
+        return base.where("1=0")
+      end
     end
 end

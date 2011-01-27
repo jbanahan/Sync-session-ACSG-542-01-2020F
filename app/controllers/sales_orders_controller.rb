@@ -2,23 +2,9 @@ class SalesOrdersController < ApplicationController
   def root_class
 	  SalesOrder
 	end
-  # GET /sales_orders
-  # GET /sales_orders.xml
-  SEARCH_PARAMS = {
-        'o_num' => {:field => 'order_number', :label=> 'Sales Order Number'},
-        'p_name' => {:field => 'sales_order_lines_product_name', :label => 'Product Name'},
-        'c_name' => {:field => 'customer_name', :label => 'Customer Name'},
-        'o_date' => {:field => 'order_date', :label => 'Order Date'},
-        'p_id'   => {:field => 'sales_order_lines_product_unique_identifier',:label => 'Product ID'}
-    }
+  
   def index
-    s = build_search(SEARCH_PARAMS,'o_num','o_date','d')
-    respond_to do |format|
-      format.html {
-          @sales_orders = s.paginate(:per_page => 20, :page => params[:page])
-          render :layout => 'one_col'
-      }
-    end
+    advanced_search CoreModule::SALE
   end
 
   # GET /sales_orders/1
@@ -114,16 +100,14 @@ class SalesOrdersController < ApplicationController
   end
   
   private    
-    def secure
-        r = SalesOrder.where("1=0")
-        if current_user.company.master
-          r = SalesOrder
-        elsif current_user.company.customer?
-            r = current_user.company.customer_sales_orders
-        else
-            add_flash :errors, "You do not have permission to search for sales."
-            return SalesOrder.where("1=0")
-        end
-        r.select("DISTINCT 'sales_orders'.*").includes(:customer)
+  def secure(base)
+    if current_user.company.master
+      return base
+    elsif current_user.company.customer?
+      return base.where(:customer_id => current_user.company)
+    else
+      add_flash :errors, "You do not have permission to search for sales."
+      return base.where("1=0")
     end
+  end
 end

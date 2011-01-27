@@ -14,7 +14,6 @@ body {
 img {
   border-style: none;
 }
-
 .error, .exception_value {
     color: red;
 }
@@ -26,10 +25,11 @@ img {
     color: #575757;
     font-weight:lighter;
 }
-.detail_table {
-    font-size: 70%;
+#search_setup_outer {
+  width: 95%;
 }
 .detail_table {
+    font-size: 70%;
     width: 95%;
 }
 .detail_table td {

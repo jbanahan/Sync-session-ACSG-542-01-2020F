@@ -24,6 +24,20 @@ class ApplicationController < ActionController::Base
         include ActionView::Helpers::UrlHelper
     end
 
+  def advanced_search(core_module)
+    @core_module = core_module
+    @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
+    if SearchSetup.for_module(@core_module).for_user(current_user).length==0
+      @current_search = @core_module.make_default_search current_user
+    end
+    @current_search = params[:sid].nil? ? SearchSetup.for_module(@core_module).for_user(current_user).order("last_accessed DESC").first : SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first
+    @current_search.touch(true)
+    @results = secure(@current_search.search).paginate(:per_page => 20, :page => params[:page])
+    respond_to do |format| 
+      format.html { render :layout => 'one_col'}
+    end
+  end
+  
     def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
         cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
         pass = true

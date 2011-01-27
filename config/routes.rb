@@ -16,6 +16,7 @@ OpenChain::Application.routes.draw do
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
+  match "/search_setups/:id/copy" => "search_setups#copy"
 
   resources :import_configs
   resources :imported_files, :only => [:new, :create, :show] do

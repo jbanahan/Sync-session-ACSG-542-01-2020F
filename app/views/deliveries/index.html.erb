@@ -1,18 +1,1 @@
-<%= render :partial => 'shared/search_box' %>
-<table class='detail_table'>
-  <thead>
-    <tr>
-      <th><%=sortable_search_heading 'ref'%></th>
-      <th><%=sortable_search_heading 'cust'%></th>
-      <th><%=sortable_search_heading 'mode'%></th>
-    </tr>
-  </thead>
-<% @deliveries.each do |delivery| %>
-  <tr class='hover'>
-    <td><%= link_to (delivery.reference.blank? ? '[empty]' : delivery.reference), delivery%></td>
-    <td><%= delivery.customer.nil? ? '' : delivery.customer.name %></td>
-    <td><%= delivery.mode %></td>
-  </tr>
-<% end %>
-</table>
-<%= will_paginate @deliveries %>  
+<%= render :partial => 'shared/advanced_search' %>

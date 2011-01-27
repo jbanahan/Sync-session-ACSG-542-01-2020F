@@ -2,12 +2,20 @@ class CoreModule
   attr_reader :class_name, :label, :table_name,
       :new_object_lambda, 
       :children, #array of child CoreModules used for :has_many (not for :belongs_to)
-      :statusable, :file_formatable
+      :child_lambdas, #hash of lambdas to access child CoreModule data 
+      :child_joins, #hash of join statements to link up child CoreModule to parent
+      :statusable, :file_formatable, :make_default_search_lambda
   
   def initialize(class_name,label,opts={})
     o = {:statusable=>false, :file_format=>false, 
         :new_object => lambda {Kernel.const_get(class_name).new},
-        :children => []
+        :children => [], :make_default_search => lambda {|user|
+          ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>class_name,:simple=>false,:last_accessed=>Time.now)
+          model_fields.keys.each_with_index do |uid,i|
+            ss.search_columns.create(:rank=>i,:model_field_uid=>uid) if i < 3
+          end
+          ss
+        }
       }.
       merge(opts)
     @class_name = class_name
@@ -17,8 +25,16 @@ class CoreModule
     @file_formatable = o[:file_formatable]
     @new_object_lambda = o[:new_object]
     @children = o[:children]
+    @child_lambdas = o[:child_lambdas]
+    @child_joins = o[:child_joins]
+    @make_default_search_lambda = o[:make_default_search]
+    
   end
   
+  
+  def make_default_search(user)
+    @make_default_search_lambda.call(user)
+  end
   #can have status set on the module 
   def statusable?
     @statusable
@@ -46,11 +62,17 @@ class CoreModule
     end
     r
   end
+  
+  def children(child_core_module,base_object)
+    @child_lambdas[child_core_module].call(base_object)
+  end
     
   ORDER_LINE = new("OrderLine","Order Line") 
   ORDER = new("Order","Order",
     {:file_formatable=>true,
-      :children => [ORDER_LINE]
+      :children => [ORDER_LINE],
+      :child_lambdas => {ORDER_LINE => lambda {|parent| parent.order_lines}},
+      :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"}
     })
   SHIPMENT = new("Shipment","Shipment")
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true})

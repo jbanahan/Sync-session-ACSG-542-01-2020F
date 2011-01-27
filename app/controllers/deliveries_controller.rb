@@ -51,21 +51,9 @@ class DeliveriesController < ApplicationController
     end
   end
 
-  # GET /deliveries
-  # GET /deliveries.xml
-  SEARCH_PARAMS = {
-    'ref' => {:field => 'reference', :label => 'Reference'},
-    'mode' => {:field => 'mode', :label => 'Mode'},
-    'cust' => {:field => 'customer_name', :label => 'Customer'},
-    'p_id' => {:field => 'piece_sets_product_unique_identifier', :label => 'Product ID'}
-  }
+  
   def index
-    @deliveries = build_search(SEARCH_PARAMS,'ref','ref').paginate(:page => params[:page])
-
-    respond_to do |format|
-      format.html # index.html.erb
-      format.xml  { render :xml => @deliveries }
-    end
+    advanced_search CoreModule::DELIVERY
   end
 
   # GET /deliveries/1
@@ -164,19 +152,17 @@ class DeliveriesController < ApplicationController
     }
   end
   
-    private    
-    def secure
-        r = Delivery.where("1=0")
-        if current_user.company.master
-          r = Delivery
-        elsif current_user.company.carrier
-          r = current_user.company.carrier_deliveries
-        elsif current_user.company.customer
-          r = current_user.company.customer_deliveries
-        else
-          add_flash :errors, "You do not have permission to search for orders."
-          return Order.where("1=0")
-        end
-        r.select("DISTINCT 'deliveries'.*")
+  private    
+  def secure(base)
+    if current_user.company.master
+      return base
+    elsif current_user.company.carrier
+      return base.where(:carrier_id => current_user.company)
+    elsif current_user.company.customer
+      return base.where(:customer_id => current_user.company)
+    else
+      add_flash :errors, "You do not have permission to search for orders."
+      return base.where("1=0")
     end
+  end
 end

@@ -92,21 +92,9 @@ class ShipmentsController < ApplicationController
   end
   
   
-  # GET /shipments
-  # GET /shipments.xml
-  SEARCH_PARAMS = {
-    'ref' => {:field => 'reference', :label => 'Reference'},
-    'mode' => {:field => 'mode', :label => 'Mode'},
-    'p_id' => {:field => 'piece_sets_product_unique_identifier', :label => 'Product ID'},
-    'o_num' => {:field => 'order_lines_order_order_number', :label => 'Order Number'}
-  }
+  
   def index
-    @shipments = build_search(SEARCH_PARAMS,'ref','ref').paginate(:page => params[:page])
-
-    respond_to do |format|
-      format.html { render :layout => 'one_col' }
-      format.xml  { render :xml => @shipments }
-    end
+    advanced_search CoreModule::SHIPMENT
   end
 
   # GET /shipments/1
@@ -225,16 +213,18 @@ class ShipmentsController < ApplicationController
   end
   
   private 
-  def secure
-    r = Shipment.where("1=0")
+  def secure(base)
+    
     if current_user.company.master
-      r = Shipment
+      return base
     elsif current_user.company.vendor 
-      r = current_user.company.vendor_shipments
+      return base.where(:vendor_id => current_user.company)
     elsif current_user.company.carrier
-      r = current_user.company.carrier_shipments
+      return base.where(:carrier_id => current_user.company)
+    else
+      add_flash :errors, "You do not have permission to search for shipments."
+      return base.where("1=0")
     end
-    return r.select("DISTINCT 'shipments'.*")
   end
   
 end

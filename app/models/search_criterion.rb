@@ -24,9 +24,14 @@ class SearchCriterion < ActiveRecord::Base
   
   private  
   def add_join(p)
-    r = p
-    r = p.joins(model_field.join_statement) unless model_field.join_statement.nil?
-    r
+    p = p.where("1=1") if p.class.to_s == "Class"
+    mf_cm = model_field.core_module
+    unless(mf_cm.class_name==p.klass.to_s)
+      child_join = CoreModule.find_by_class_name(p.klass.to_s).child_joins[mf_cm]
+      p = p.joins(child_join) unless child_join.nil?
+    end
+    p = p.joins(model_field.join_statement) unless model_field.join_statement.nil?
+    p
   end
   
   def add_where(p)

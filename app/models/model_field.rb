@@ -91,6 +91,34 @@ class ModelField
       :export_lambda => lambda {|detail| detail.vendor.name},
       :join_statement => "LEFT OUTER JOIN companies AS prod_vend_comp on prod_vend_comp.id = products.vendor_id",
       :join_alias => "prod_vend_comp"
+    }],
+    [7,:prod_status_name, :name, "Status", {
+      :import_lambda => lambda {|detail,data|
+        status = StatusRule.where(:name => data).where(:module_type => CoreModule::PRODUCT.class_name)
+        detail.status_rule = status
+        unless status.nil?
+          return "Status set to #{status.name}"
+        else
+          return "Status not found with name \"#{data}\""
+        end 
+      },
+      :export_lambda => lambda {|detail| detail.status_rule.nil? ? "" : detail.status_rule.name },
+      :join_statement => "LEFT OUTER JOIN status_rules AS prod_status_name ON  prod_status_name.id = products.status_rule_id",
+      :join_alias => "prod_status_name"
+    }],
+    [9,:prod_div_name, :name, "Division Name", {
+      :import_lambda => lambda {|obj,data|
+        div = Division.where(:name=>data)
+        obj.division = div unless div.nil?
+        unless div.nil?
+          return "Division set to #{div.name}"
+        else
+          return "Division with name \"#{data}\" not found"
+        end
+      },
+      :export_lambda => lambda {|obj| obj.division.nil? ? "" : obj.division.name },
+      :join_statment => "LEFT OUTER JOIN divisions AS prod_div_name ON prod_div_name.id = products.division_id",
+      :join_alias => "prod_div_name"
     }]
   ]
     
@@ -102,7 +130,7 @@ class ModelField
   
   add_fields CoreModule::ORDER_LINE, [
     [1,:ordln_line_number,:line_number,"Line - Line Number"],
-    [2,:ordln_puid,:product_unique_identifier,"Line - Product Unique Identifier",{
+    [2,:ordln_puid,:unique_identifier,"Line - Product Unique Identifier",{
       :import_lambda => lambda {|detail,data|
         detail.product = Product.where(:unique_identifier => data).first
         return "Line #{detail.line_number} - Product set to #{data}"

@@ -1,16 +1,1 @@
-<%= render :partial => 'shared/search_box' %>
-<table class='detail_table'>
-  <thead>
-    <tr>
-  		<th><%=sortable_search_heading 'ref'%></th>
-  		<th><%=sortable_search_heading 'mode'%></th>
-    </tr>
-  </thead>
-<% @shipments.each do |shipment| %>
-  <tr class='hover'>
-		<td><%= link_to (shipment.reference.blank? ? '[empty]' : shipment.reference), shipment	%></td>
-		<td><%= shipment.mode %></td>
-  </tr>
-<% end %>
-</table>
-<%= will_paginate @shipments %>  
+<%= render :partial => 'shared/advanced_search' %>

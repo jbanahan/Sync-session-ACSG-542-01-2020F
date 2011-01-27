@@ -4,10 +4,7 @@ class ProductsController < ApplicationController
 	end
 
     def index
-      @saved_searches = SearchSetup.for_user(current_user)
-      @current_search = params[:sid].nil? ? SearchSetup.for_user(current_user).order("last_accessed DESC").first : SearchSetup.for_user(current_user).where(:id=>params[:sid]).first
-      @current_search.touch(true)
-      @results = @current_search.search.paginate(:per_page => 20, :page => params[:page])
+      advanced_search CoreModule::PRODUCT
     end
 
     # GET /products/1
@@ -152,18 +149,17 @@ class ProductsController < ApplicationController
     end
 
     private
-
-    def secure
-        r = Product.where("1=0")
-        if current_user.company.master
-        r = Product
-        elsif current_user.company.vendor
-            r = current_user.company.vendor_products
-        else
-            add_flash :errors, "You do not have permission to search for orders."
-            return Order.where("1=0")
-        end
-        r.select("DISTINCT 'orders'.*").includes(:vendor).includes(:order_lines => [:product, :piece_sets])
+    def secure(base_search)
+      r = base_search.where("1=0")
+      if current_user.company.master
+        r = base_search
+      elsif current_user.company.vendor
+        r = base_search.where(:vendor_id => current_user.company)
+      else
+        add_flash :errors, "You do not have permission to search for orders."
+        r = base_search.where("1=0")
+      end
+      r
     end
     
     def save_classification_custom_fields(product,product_params)
