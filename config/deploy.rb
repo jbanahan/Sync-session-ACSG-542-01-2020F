@@ -8,6 +8,7 @@ default_run_options[:pty] = true # Must be set for the password prompt from git 
 ssh_options[:forward_agent] = true
 set :branch, "master"
 set :scm_verbose, true
+set :deploy_via, :remote_cache
 
 set :deploy_to, "/var/www/apps/#{application}"
 
