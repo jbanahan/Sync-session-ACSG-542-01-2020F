@@ -6,6 +6,8 @@ set :scm, :git # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perf
 set :scm_username, user
 default_run_options[:pty] = true # Must be set for the password prompt from git to work
 ssh_options[:forward_agent] = true
+set :branch, "master"
+set :scm_verbose, true
 
 set :deploy_to, "/var/www/apps/#{application}"
 
