@@ -1,14 +1,17 @@
 set :application, "demo.chain.io"
-set :user, "deployer"
-set :repository,  "git@github.com:bglick/OpenChain.git"
+set :user, "ubuntu"
+set :repository, "."
+#set :repository,  "git@github.com:bglick/OpenChain.git"
 
 set :scm, :git # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 set :scm_username, user
 default_run_options[:pty] = true # Must be set for the password prompt from git to work
 ssh_options[:forward_agent] = true
+ssh_options[:keys] = [File.join(ENV["HOME"], ".ssh", "id_rsa")]
 set :branch, "master"
 set :scm_verbose, true
-set :deploy_via, :remote_cache
+set :deploy_via, :copy
+# set :deploy_via, :remote_cache
 
 set :deploy_to, "/var/www/apps/#{application}"
 
