@@ -1,9 +1,11 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-one:
-  name: MyString
-  iso_code: MyString
-
-two:
-  name: MyString
-  iso_code: MyString
+us:
+  id: 1
+  name: UNITED STATES
+  iso_code: US
+  import_location: true
+  
+china:
+  id: 2
+  name: CHINA
+  iso_code: CN
+  import_location: true

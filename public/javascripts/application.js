@@ -40,6 +40,26 @@ $( function() {
     });
     $("#lnk_feedback").click(function() {feedbackDialog();});
     $("button").button();
+    
+    $(".classification_expand").click(function(ev) {
+      ev.preventDefault();
+      $(this).hide();
+      $(this).next("a.classification_shrink").show();
+      $(this).nextAll("div.classification_detail_box").show("blind", { direction: "vertical" }, 500);
+    })
+    $(".classification_shrink").click(function(ev) {
+      ev.preventDefault();
+      $(this).hide();
+      $(this).prev("a.classification_expand").show();
+      $(this).nextAll("div.classification_detail_box").hide("blind", {direction: "vertical"}, 500);
+    });
+    $(".hts_field").change(function() {
+      if(validateHTS($(this).val())) {
+        $(this).removeClass("bad_data");
+      } else {
+        $(this).addClass("bad_data");
+      }
+    });
 });
 $(document).ready( function() {
     handleCustomFieldCheckboxes();
@@ -236,3 +256,12 @@ function handleCustomFieldCheckboxes() {
     });
   });
 }
+/* right now just validating length */
+function validateHTS(inputStr) {
+  base = stripNonNumeric(inputStr);
+  return base.length>5  
+}
+function stripNonNumeric(inputStr) {
+    return inputStr.replace(/[^0-9]/g, ''); 
+}
+

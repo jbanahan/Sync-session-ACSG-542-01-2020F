@@ -1,7 +1,25 @@
-<tr class="hover tf_row">
-    <td><%= f.text_field :hts_1%></td>
-    <td><%= f.text_field :hts_2%></td>
-    <td><%= f.text_field :hts_3%></td>
+<tr class="tf_row">
+    <td><%= f.text_field :hts_1, :class=>"hts_field"%>
+      <%unless f.object.hts_1_matches.nil? %>
+        <%f.object.hts_1_matches.each do |ot|%>
+        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.full_description%>
+        <%end%>
+      <%end%>
+    </td>
+    <td><%= f.text_field :hts_2, :class=>"hts_field"%>
+      <%unless f.object.hts_2_matches.nil? %>
+        <%f.object.hts_2_matches.each do |ot|%>
+        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.full_description%>
+        <%end%>
+      <%end%>
+    </td>
+    <td><%= f.text_field :hts_3, :class=>"hts_field"%>
+      <%unless f.object.hts_3_matches.nil? %>
+        <%f.object.hts_3_matches.each do |ot|%>
+        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.full_description%>
+        <%end%>
+      <%end%>
+    </td>
     <td><%= f.hidden_field :_destroy, "class" => "tf_destroy"%>
     <a href="#" class="tf_remove">Remove</a>
     </td>

@@ -11,6 +11,7 @@
     $( "#btn_adj_inventory").button().click(function() {
       $("#mod_inventory").dialog('open');
     });
+    $("#btn_classify").click(function() {window.location='<%=classify_product_path%>';});
   <% end %>
     $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
       buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
@@ -40,6 +41,7 @@
 <% content_for :action_bar do %>
 <% if @product.can_edit?(current_user) && !@product.locked?%>
   <button id='btn_edit'>Edit</button>
+  <button id='btn_classify'>Classify</button>
   <button id='btn_adj_inventory'>Adjust Inventory</button>
 <%end%>
 <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:product_id => @product.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
@@ -80,7 +82,7 @@
 </table>
 
 <% @product.classifications.each do |c| %>
-<h2>Classification: <%=c.country.name%></h2>
+<h2>Classification: <%=c.country.name.titleize%></h2>
 <table>
 <%=show_custom_fields c, {:table=>true} %>
 </table>

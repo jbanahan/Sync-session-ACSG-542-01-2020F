@@ -147,6 +147,29 @@ class ProductsController < ApplicationController
           redirect_to product_path(p)
       }
     end
+    
+    def classify
+      p = Product.find(params[:id])
+      action_secure(p.can_edit?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
+        @product = p
+        Country.import_locations.each do |c|
+          p.classifications.build(:country => c) if p.classifications.where(:country_id=>c).empty?
+        end
+      }
+    end
+    
+    def auto_classify
+      p = Product.find(params[:id])
+      action_secure(p.can_edit?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
+        @product = p
+        @product.update_attributes(params[:product])
+        save_classification_custom_fields(@product,params[:product])
+        update_status @product
+        base_country = Country.find(params[:base_country_id])
+        @product.auto_classify(base_country)
+        render 'classify'
+      }
+    end
 
     private
     def secure(base_search)
@@ -163,11 +186,13 @@ class ProductsController < ApplicationController
     end
     
     def save_classification_custom_fields(product,product_params)
-      product.classifications.each do |classification|
-        product_params[:classifications_attributes].each do |k,v|
-          if v[:country_id] == classification.country_id.to_s
-            update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
-          end  
+      unless product_params[:classifications_attributes].nil?
+        product.classifications.each do |classification|
+          product_params[:classifications_attributes].each do |k,v|
+            if v[:country_id] == classification.country_id.to_s
+              update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
+            end  
+          end
         end    
       end  
     end
