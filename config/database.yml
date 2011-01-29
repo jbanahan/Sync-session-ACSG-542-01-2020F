@@ -6,8 +6,9 @@ development:
   reconnect: false
   database: openchain_development
   pool: 5
-  username: appuser
-  password: apppass
+  username: root
+  password: dresher
+  host: aspectinstance.cznbgfbl22bb.us-east-1.rds.amazonaws.com
   socket: /tmp/mysql.sock
 
 # Warning: The database defined as "test" will be erased and
@@ -19,8 +20,9 @@ test:
   reconnect: false
   database: openchain_test
   pool: 5
-  username: appuser
-  password: apppass
+  username: root
+  password: dresher
+  host: aspectinstance.cznbgfbl22bb.us-east-1.rds.amazonaws.com
   socket: /tmp/mysql.sock
 
 production:
@@ -29,6 +31,7 @@ production:
   reconnect: false
   database: openchain_production
   pool: 5
-  username: appuser
-  password: apppass
+  username: root
+  password: dresher
+  host: aspectinstance.cznbgfbl22bb.us-east-1.rds.amazonaws.com
   socket: /tmp/mysql.sock
