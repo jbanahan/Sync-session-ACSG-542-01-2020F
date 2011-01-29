@@ -1,5 +1,4 @@
 log/*
-Gemfile.lock
 tmp/*
 db/*.sqlite3
 db/schema.rb
