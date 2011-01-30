@@ -16,12 +16,12 @@ set :deploy_via, :copy
 set :deploy_to, "/var/www/apps/#{application}"
 
 # Sloppy use of AWS endpoints
-set :ec2_domain, "ec2-50-16-234-181.compute-1.amazonaws.com"
-set :rds_endpoint, "mydbinstance.cfmnpvwryyto.us-east-1.rds.amazonaws.com"
+set :ec2_endpoint, "ec2-50-16-234-181.compute-1.amazonaws.com"
+set :rds_endpoint, "aspectinstance.cznbgfbl22bb.us-east-1.rds.amazonaws.com"
 
-role :web, ec2_domain                          # Your HTTP server, Apache/etc
-role :app, ec2_domain                          # This may be the same as your `Web` server
-#role :db,  rds_endpoint, :primary => true # This is where Rails migrations will run
+role :web, ec2_endpoint                          # Your HTTP server, Apache/etc
+role :app, ec2_endpoint                          # This may be the same as your `Web` server
+role :db,  rds_endpoint, :primary => true # This is where Rails migrations will run
 #role :db,  rds_endpoint
 
 # If you are using Passenger mod_rails uncomment this:
