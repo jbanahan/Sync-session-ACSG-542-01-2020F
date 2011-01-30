@@ -20,7 +20,7 @@ class DashboardController < ApplicationController
 	  Product.
 	   joins("LEFT OUTER JOIN classifications on classifications.product_id = products.id").
 	   joins("LEFT OUTER JOIN tariff_records on tariff_records.classification_id = classifications.id").
-	   where("tariff_records.id is null").all
+	   where("tariff_records.id is null AND classifications.country_id = (SELECT countries.ID from countries where countries.iso_code = 'US')").all
 	end
 	
 	def order_lines_not_on_shipments

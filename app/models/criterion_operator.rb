@@ -13,7 +13,9 @@ class CriterionOperator
     new("lt"," < ?","Less Than"),
     new("co"," LIKE ?","Contains"),
     new("sw"," LIKE ?","Starts With"),
-    new("ew"," LIKE ?","Ends With")
+    new("ew"," LIKE ?","Ends With"),
+    new("null"," IS NULL","Is Empty"),
+    new("notnull"," IS NOT NULL","Is Not Empty")
   ]
   
   def self.find_by_key(key)

@@ -70,9 +70,19 @@ class SearchCriterion < ActiveRecord::Base
     return model_field.data_type==:boolean
   end
   
+  def integer_field?
+    return model_field.data_type==:integer
+  end
+  
+  def decimal_field?
+    return model_field.data_type==:decimal
+  end
+  
   #value formatted properly for the appropriate condition in the SQL
   def where_value
     return ["t","true","yes","y"].include? self.value.downcase if boolean_field?
+    
+    return self.value.to_i if integer_field?
     
     if self.condition=="co"
       return "%#{self.value}%"

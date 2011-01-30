@@ -28,7 +28,7 @@ class ModelField
     @custom_id = o[:custom_id]
     @join_statement = o[:join_statement]
     @join_alias = o[:join_alias]
-    @data_type = determine_data_type
+    @data_type = o[:data_type].nil? ? determine_data_type : o[:data_type]
   end
   
   #table alias to use in where clause
@@ -117,8 +117,22 @@ class ModelField
         end
       },
       :export_lambda => lambda {|obj| obj.division.nil? ? "" : obj.division.name },
-      :join_statment => "LEFT OUTER JOIN divisions AS prod_div_name ON prod_div_name.id = products.division_id",
+      :join_statement => "LEFT OUTER JOIN divisions AS prod_div_name ON prod_div_name.id = products.division_id",
       :join_alias => "prod_div_name"
+    }],
+    [10,:prod_class_count, :class_count, "Complete Classification Count", {
+      :import_lambda => lambda {|obj,data|
+        return "Complete Classification Count was ignored. (read only)"},
+      :export_lambda => lambda {|obj| 
+        r = 0
+        obj.classifications.each {|c| 
+          r += 1 if c.tariff_records.length > 0
+        }
+        r
+      },
+      :join_statement => "LEFT OUTER JOIN (SELECT COUNT(id) as class_count, product_id FROM classifications WHERE classifications.id IN (select classification_id from tariff_records) group by product_id) as prod_class_count ON prod_class_count.product_id = products.id",
+      :join_alias => "prod_class_count",
+      :data_type => :integer
     }]
   ]
     

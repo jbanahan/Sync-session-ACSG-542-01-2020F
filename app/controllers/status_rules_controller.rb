@@ -56,6 +56,7 @@ class StatusRulesController < ApplicationController
         format.html { redirect_to(@status_rule, :notice => 'Status rule was successfully created.') }
         format.xml  { render :xml => @status_rule, :status => :created, :location => @status_rule }
       else
+        errors_to_flash @status_rule
         format.html { render :action => "new" }
         format.xml  { render :xml => @status_rule.errors, :status => :unprocessable_entity }
       end
@@ -72,6 +73,7 @@ class StatusRulesController < ApplicationController
         format.html { redirect_to(@status_rule, :notice => 'Status rule was successfully updated.') }
         format.xml  { head :ok }
       else
+        errors_to_flash @status_rule
         format.html { render :action => "edit" }
         format.xml  { render :xml => @status_rule.errors, :status => :unprocessable_entity }
       end
