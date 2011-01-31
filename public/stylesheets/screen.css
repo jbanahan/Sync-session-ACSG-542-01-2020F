@@ -17,6 +17,9 @@ img {
 .error, .exception_value {
     color: red;
 }
+.bad_data {
+  background-color: #F2BDBD;
+}
 .unread {
     color: #061544;
     font-weight:bolder;
@@ -292,4 +295,12 @@ img {
 .classification_remove_box {
   text-align: right;
 }
-
+.classification_detail_box {
+  display: none; /* slide out box */
+}
+.classification_expand {
+  
+}
+.classification_shrink {
+  display: none; /* toggled with .classification_expand */
+}

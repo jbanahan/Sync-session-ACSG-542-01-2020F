@@ -1,0 +1,140 @@
+<%content_for :javascript do%>
+$(function() {
+  $("#btn_save").click(function() {
+    $("#frm_p").attr("action",'<%=product_path%>').submit();
+  });
+  $("#btn_cancel").click(function() {window.location='<%=product_path(@product)%>';});
+  $("#btn_auto_classify").click(function() {autoClassify();});
+  addRemoveHook();
+  $(".hts_option").click(function(ev) {
+    ev.preventDefault();
+    $(this).prevAll("input.hts_field").val($(this).html());
+  });
+});
+function countriesWithHTS() {
+  var c_count = 0;
+  $(".country_title").each(function() {
+    var hts_tbl = $(this).nextAll(".hts_table");
+    var found = false;
+    hts_tbl.find(".hts_field").each(function() {
+      if($(this).val().length>5) {
+        found = true;
+      }
+    });
+    if(found) { 
+      c_count++; 
+      $("#sel_pick_country").append("<option value='"+$(this).attr("cid")+"'>"+$(this).html()+"</option>");
+    }
+  });
+  return c_count;
+}
+function autoClassify() {
+  var c_count = countriesWithHTS();
+  switch(c_count) {
+    case 0: 
+      window.alert("Please enter HTS info for at least one country before auto-classifying."); 
+      return;
+    case 1:
+      completeAutoClassify($("#sel_pick_country").children("option:first").val());
+      break;
+    default:
+      $("#mod_pick_country").dialog({title:"Select Country",
+        buttons:{"OK":function() {completeAutoClassify($("#sel_pick_country").val());}}});
+  }
+}
+function completeAutoClassify(country_id) {
+  $("#frm_p").append("<input type='hidden' name='base_country_id' value='"+country_id+"' />");
+  $("#frm_p").attr("action",'<%=auto_classify_product_path(@product)%>').submit();
+}
+function addRemoveHook() {
+  
+  $(".tf_remove").click(function(ev) {
+    destroy_nested('tf',$(this));
+    ev.preventDefault();
+  });
+}
+function add_tf_row(link,parent_index) {
+  my_index = new Date().getTime();
+  content = "<tr class=\"tf_row\">"
+  for(i=1; i<4; i++) {
+    content = content +"<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" size=\"30\" type=\"text\" class='hts_field' /></td>"; 
+  }
+  content = content + "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
+  link.parents('.add_row').before(content);
+  addRemoveHook();
+}
+<%end%>
+<%content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_auto_classify'>Auto Classify</button>
+<button id='btn_cancel'>Button</button>
+<% end %>
+
+<% form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
+<table>
+<tr><td>
+<!-- fields -->
+  <table>
+    <%=field_row "Status", @product.status_name %>
+    <%=field_row "Unique Identifier", @product.unique_identifier%>
+    <%=field_row "Name",@product.name%>
+    <%=field_row "Unit of Measure", @product.unit_of_measure%>
+    <%=field_row "Vendor", @product.vendor.name%>
+    <%=field_row "Division", @product.division.name%>
+    <%=field_row "Inventory Quantity", @product.current_inventory_qty %>
+    <%=show_custom_fields @product, {:table=>true}%>
+  </table>
+</td><td>
+<!-- image -->
+<% 
+  cd = CustomDefinition.where(:label => "PDM Number").first
+  unless cd.nil?
+    cv = @product.get_custom_value cd
+    if ["K096SC03","K104SC75"].include?(cv.value)
+%>
+<a href='/images/polo/<%=cv.value%>.jpg' target='_blank'><%=image_tag("polo/#{cv.value}.jpg", "width" => "200px")%></a>
+<%
+    end
+  end
+%>
+</td></tr>
+</table>
+
+<hr />
+
+<div id='classifications'>
+<h2>Classifications</h2>
+<% classification_count = 0 %>
+<% f.fields_for :classifications do |cf| %>
+  <div class='classification_box cf_row'>
+      <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
+      <%=cf.hidden_field :country_id%>
+      <a href='#' class='classification_expand'>Expand</a><a href='#' class='classification_shrink'>Shrink</a>    
+      <div class='classification_detail_box'>
+        <table>
+        <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>
+        </table>
+      </div>
+      <table class='detail_table hts_table'>
+      <thead>
+        <th>HTS 1</th>
+        <th>HTS 2</th>
+        <th>HTS 3</th>
+        <th>Delete</th>    
+      </thead>
+      <tbody class='tr_body'>
+        <% cf.fields_for :tariff_records do |tf| %>
+          <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
+        <% end %>
+        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <% classification_count += 1 %>
+<% end %>
+</div>
+<% end %>
+<div id="mod_pick_country" style="display:none">
+  Multiple countries classifications, which one do you want to use to auto-classify?<br />
+  <select id='sel_pick_country'></select>
+</div>

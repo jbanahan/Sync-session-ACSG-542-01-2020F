@@ -50,7 +50,11 @@ OpenChain::Application.routes.draw do
 	  get 'unpacked_order_lines', :on => :member
 	end
 
-  resources :products
+  resources :products do
+    get 'classify', :on=>:member
+    post :auto_classify, :on=>:member
+    put  :auto_classify, :on=>:member
+  end
 
   resources :orders do
 		resources :order_lines

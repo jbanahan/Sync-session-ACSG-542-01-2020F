@@ -1,25 +1,17 @@
-<%= form_for(@country) do |f| %>
-  <% if @country.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= pluralize(@country.errors.count, "error") %> prohibited this country from being saved:</h2>
-
-      <ul>
-      <% @country.errors.full_messages.each do |msg| %>
-        <li><%= msg %></li>
-      <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <div class="field">
-    <%= f.label :name %><br />
-    <%= f.text_field :name %>
-  </div>
-  <div class="field">
-    <%= f.label :iso_code %><br />
-    <%= f.text_field :iso_code %>
-  </div>
-  <div class="actions">
-    <%= f.submit %>
-  </div>
-<% end %>
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_save").click(function() {$("#frm_c").submit();});
+  $("#btn_cancel").click(function() {window.location = '<%=countries_path%>';})
+});
+<%end%>
+<%content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<%end%>
+<%=form_for(@country, :html=>{:id=>'frm_c'}) do |f|%>
+<table>
+<%=field_row "Name", @country.name %>
+<%=field_row "ISO Code", @country.iso_code%>
+<%=field_row "Used For Imports", f.check_box(:import_location)%>
+</table>
+<%end%>

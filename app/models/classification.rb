@@ -10,5 +10,5 @@ class Classification < ActiveRecord::Base
    
   accepts_nested_attributes_for :tariff_records, :allow_destroy => true, 
     :reject_if => lambda { |a| a[:hts_1].blank? }
-  
+    
 end

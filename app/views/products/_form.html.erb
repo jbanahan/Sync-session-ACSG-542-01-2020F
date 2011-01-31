@@ -6,22 +6,7 @@ $(function() {
   $("#btn_cancel").click(function() {
     window.location = '<%=url_for @product%>';
   });
-  $("#cf_add").click(function() {
-    add_cf_row();
-  });
-  addRemoveHook();
 });
-function addRemoveHook() {
-  
-  $(".tf_remove").click(function(ev) {
-    destroy_nested('tf',$(this));
-    ev.preventDefault();
-  });
-  $(".cf_remove").click(function(ev) {
-    destroy_nested('cf',$(this));
-    ev.preventDefault();
-  });
-}
 function checkUOMChange() {
   ou = $("#original_uom").val();
   if(ou.length==0 || ou==$("#txt_uom").val()) {
@@ -34,31 +19,6 @@ function checkUOMChange() {
     );
   }
 }
-
-function add_tf_row(link,parent_index) {
-  my_index = new Date().getTime();
-  content = "<tr class=\"hover tf_row\">"
-  for(i=1; i<4; i++) {
-    content = content +"<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" size=\"30\" type=\"text\" /></td>"; 
-  }
-  content = content + "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
-  link.parents('.add_row').before(content);
-  addRemoveHook();
-}
-function add_cf_row() {
-m = new Date().getTime();
-c = "<div class='classification_box cf_row'><table><tr class='hover'><td class='label_cell'><label for='product_classifications_attributes_"+m+"_country'>Country</label>: </td><td><select id='product_classifications_attributes_"+m+"_country_id' name='product[classifications_attributes]["+m+"][country_id]'><option value=''>Select a country</option>";
-<% Country.all.each do |c| %>
-c = c + "<option value='<%=c.id%>'><%=c.name%></option>";
-<% end %>
-c = c + "</select></td></tr>";
-c = c + "<tr><td></td><td><table class='detail_table'><thead><th>HTS 1</th><th>HTS 2</th><th>HTS 3</th><th>Delete</th></thead><tbody class='tr_body'>";
-c = c + "<tr class='add_row'><td colspan='2'><a id='add_tr_"+m+"' href='#'>Add</a></td></tr></tbody></table>";
-c = c + "</table></div>";
-  $("#frm_prod").append(c);
-  $("#add_tr_"+m).click(function(ev) {add_tf_row($(this),m); ev.preventDefault();})
-}
-
 <% end %>
 
 <% content_for :action_bar do %>
@@ -76,35 +36,4 @@ c = c + "</table></div>";
   <%=field_row "Division", f.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}) %>
   <%=show_custom_fields @product, {:form=>true, :table=>true}%>
 </table>	
-<hr />
-<div id='classifications'>
-<% classification_count = 0 %>
-<% f.fields_for :classifications do |cf| %>
-  <div class='classification_box cf_row'>
-    <table>
-      <%= field_row cf.label(:country, "Country"), cf.collection_select(:country_id, Country.all, :id, :name, options ={:prompt => "Select a country"}) %>
-      <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>
-      <tr><td></td><td>
-        <table class='detail_table'>
-        <thead>
-          <th>HTS 1</th>
-          <th>HTS 2</th>
-          <th>HTS 3</th>
-          <th>Delete</th>    
-        </thead>
-        <tbody class='tr_body'>
-          <% cf.fields_for :tariff_records do |tf| %>
-            <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
-          <% end %>
-          <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
-        </tbody>
-      </table>
-      </td></tr>
-      <tr><td colspan='2'><div class='classification_remove_box'><%=cf.hidden_field :_destroy, "class" => "cf_destroy"%><button class='cf_remove'>Remove Classification</button></div></td></tr>
-    </table>
-  </div>
-  <% classification_count += 1 %>
 <% end %>
-</div>
-<% end %>
-<button id='cf_add'>Add Classification</button>

@@ -27,8 +27,11 @@ class SearchCriterion < ActiveRecord::Base
     p = p.where("1=1") if p.class.to_s == "Class"
     mf_cm = model_field.core_module
     unless(mf_cm.class_name==p.klass.to_s)
-      child_join = CoreModule.find_by_class_name(p.klass.to_s).child_joins[mf_cm]
-      p = p.joins(child_join) unless child_join.nil?
+      cm = CoreModule.find_by_class_name(p.klass.to_s)
+      unless cm.nil?
+        child_join = cm.child_joins[mf_cm]
+        p = p.joins(child_join) unless child_join.nil?
+      end
     end
     p = p.joins(model_field.join_statement) unless model_field.join_statement.nil?
     p
