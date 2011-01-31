@@ -55,7 +55,7 @@ class ModelField
   
   def determine_data_type
     if @custom_id.nil?
-      return Kernel.const_get(@model).columns_hash[@field_name.to_s].type
+      return Kernel.const_get(@model).columns_hash[@field_name.to_s].klass
     else
       return CustomDefinition.find(@custom_id).data_type.intern
     end
