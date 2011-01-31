@@ -28,7 +28,7 @@ class ModelField
     @custom_id = o[:custom_id]
     @join_statement = o[:join_statement]
     @join_alias = o[:join_alias]
-    @data_type = o[:data_type].nil? ? determine_data_type : o[:data_type]
+    @data_type = o[:data_type]#.nil? ? determine_data_type : o[:data_type]
   end
   
   #table alias to use in where clause
@@ -73,10 +73,10 @@ class ModelField
   end 
   
   add_fields CoreModule::PRODUCT, [
-    [1,:prod_uid,:unique_identifier,"Unique Identifier"],
-    [2,:prod_div_id,:division_id,"Division ID"],
-    [3,:prod_name,:name,"Name"],
-    [4,:prod_uom,:unit_of_measure,"Unit of Measure"],
+    [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
+    [2,:prod_div_id,:division_id,"Division ID",{:data_type=>:integer}],
+    [3,:prod_name,:name,"Name",{:data_type=>:string}],
+    [4,:prod_uom,:unit_of_measure,"Unit of Measure",{:data_type=>:string}],
     [5,:prod_ven_id,:vendor_id,"Vendor ID"],
     [6,:prod_ven_name, :name,"Vendor Name", {
       :import_lambda => lambda {|detail,data|
@@ -90,7 +90,8 @@ class ModelField
       },
       :export_lambda => lambda {|detail| detail.vendor.name},
       :join_statement => "LEFT OUTER JOIN companies AS prod_vend_comp on prod_vend_comp.id = products.vendor_id",
-      :join_alias => "prod_vend_comp"
+      :join_alias => "prod_vend_comp",
+      :data_type=>:string
     }],
     [7,:prod_status_name, :name, "Status", {
       :import_lambda => lambda {|detail,data|
@@ -104,7 +105,8 @@ class ModelField
       },
       :export_lambda => lambda {|detail| detail.status_rule.nil? ? "" : detail.status_rule.name },
       :join_statement => "LEFT OUTER JOIN status_rules AS prod_status_name ON  prod_status_name.id = products.status_rule_id",
-      :join_alias => "prod_status_name"
+      :join_alias => "prod_status_name",
+      :data_type=>:string
     }],
     [9,:prod_div_name, :name, "Division Name", {
       :import_lambda => lambda {|obj,data|
@@ -118,7 +120,8 @@ class ModelField
       },
       :export_lambda => lambda {|obj| obj.division.nil? ? "" : obj.division.name },
       :join_statement => "LEFT OUTER JOIN divisions AS prod_div_name ON prod_div_name.id = products.division_id",
-      :join_alias => "prod_div_name"
+      :join_alias => "prod_div_name",
+      :data_type=>:string
     }],
     [10,:prod_class_count, :class_count, "Complete Classification Count", {
       :import_lambda => lambda {|obj,data|
@@ -137,13 +140,13 @@ class ModelField
   ]
     
   add_fields CoreModule::ORDER, [
-    [1,:ord_ord_num,:order_number,"Header - Order Number"],
-    [2,:ord_ord_date,:order_date,"Header - Order Date"],
-    [5,:ord_ven_id,:vendor_id,"Header - Vendor ID"]
+    [1,:ord_ord_num,:order_number,"Header - Order Number",{:data_type=>:string}],
+    [2,:ord_ord_date,:order_date,"Header - Order Date",{:data_type=>:date}],
+    [5,:ord_ven_id,:vendor_id,"Header - Vendor ID",{:data_type=>:integer}]
   ]
   
   add_fields CoreModule::ORDER_LINE, [
-    [1,:ordln_line_number,:line_number,"Line - Line Number"],
+    [1,:ordln_line_number,:line_number,"Line - Line Number",{:data_type=>:integer}],
     [2,:ordln_puid,:unique_identifier,"Line - Product Unique Identifier",{
       :import_lambda => lambda {|detail,data|
         detail.product = Product.where(:unique_identifier => data).first
@@ -153,36 +156,36 @@ class ModelField
         detail.product.unique_identifier
       },
       :join_statement => "LEFT OUTER JOIN products AS ordln_puid ON ordln_puid.id = order_lines.product_id",
-      :join_alias => "ordln_puid"
+      :join_alias => "ordln_puid",:data_type=>:string
     }],
-    [3,:ordln_ordered_qty,:ordered_qty,"Line - Order Quantity"],
-    [4,:ordln_ppu,:price_per_unit,"Line - Price / Unit"]
+    [3,:ordln_ordered_qty,:ordered_qty,"Line - Order Quantity",{:data_type=>:decimal}],
+    [4,:ordln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type=>:decimal}]
   ]
   add_fields CoreModule::SHIPMENT, [
-    [1,:shp_ref,:reference,"Reference Number"],
-    [2,:shp_mode,:mode,"Mode"],
-    [3,:shp_ven_id,:vendor_id,"Vendor ID"],
-    [4,:shp_car_id,:carrier_id,"Carrier ID"],
-    [5,:shp_sf_id,:ship_from_id,"Ship From ID"],
-    [6,:shp_st_id,:ship_to_id,"Ship To ID"]
+    [1,:shp_ref,:reference,"Reference Number",{:data_type=>:string}],
+    [2,:shp_mode,:mode,"Mode",{:data_type=>:string}],
+    [3,:shp_ven_id,:vendor_id,"Vendor ID",{:data_type=>:integer}],
+    [4,:shp_car_id,:carrier_id,"Carrier ID",{:data_type=>:integer}],
+    [5,:shp_sf_id,:ship_from_id,"Ship From ID",{:data_type=>:integer}],
+    [6,:shp_st_id,:ship_to_id,"Ship To ID",{:data_type=>:integer}]
   ]
   
   add_fields CoreModule::SALE, [
-    [1,:sale_order_number,:order_number,"Header - Order Number"],
-    [2,:sale_order_date,:order_date,"Header - Order Date"],
-    [3,:sale_cust_id,:customer_id,"Header - Customer ID"],
-    [4,:sale_comm,:comments,"Header - Comments"],
-    [5,:sale_div_id,:division_id,"Header - Division ID"],
-    [6,:sale_st_id,:ship_to_id,"Header - Ship To ID"]
+    [1,:sale_order_number,:order_number,"Header - Order Number",{:data_type=>:string}],
+    [2,:sale_order_date,:order_date,"Header - Order Date",{:data_type=>:date}],
+    [3,:sale_cust_id,:customer_id,"Header - Customer ID",{:data_type=>:integer}],
+    [4,:sale_comm,:comments,"Header - Comments",{:data_type=>:string}],
+    [5,:sale_div_id,:division_id,"Header - Division ID",{:data_type=>:integer}],
+    [6,:sale_st_id,:ship_to_id,"Header - Ship To ID",{:data_type=>:integer}]
   ]
   
   add_fields CoreModule::DELIVERY, [
-    [1,:del_ref,:reference,"Reference"],
-    [2,:del_mode,:mode,"Mode"],
-    [3,:del_sf_id,:ship_from_id,"Ship From ID"],
-    [4,:del_st_id,:ship_to_id,"Ship To ID"],
-    [5,:del_car_id,:carrier_id,"Carrier ID"],
-    [6,:del_cust_id,:customer_id,"Customer ID"]
+    [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
+    [2,:del_mode,:mode,"Mode",{:data_type=>:string}],
+    [3,:del_sf_id,:ship_from_id,"Ship From ID",{:data_type=>:integer}],
+    [4,:del_st_id,:ship_to_id,"Ship To ID",{:data_type=>:integer}],
+    [5,:del_car_id,:carrier_id,"Carrier ID",{:data_type=>:integer}],
+    [6,:del_cust_id,:customer_id,"Customer ID",{:data_type=>:integer}]
   ]
 
   def self.add_custom_fields(core_module,base_class,label_prefix,parameters={})
