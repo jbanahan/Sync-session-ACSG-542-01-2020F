@@ -1,7 +1,10 @@
 // Place your application-specific JavaScript functions and classes here
 // This file is automatically included by javascript_include_tag :defaults
 $( function() {
- 
+    $("#lnk_hide_notice").click(function(ev) {
+      ev.preventDefault();
+      $('#notice').fadeOut();
+    });
     $(".btn_cancel_mod").click( function() {
         $.modal.close();
     });
