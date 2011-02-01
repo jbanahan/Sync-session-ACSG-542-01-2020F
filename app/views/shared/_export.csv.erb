@@ -12,7 +12,7 @@ if headers.length > 0
   opts[:headers] = headers 
   opts[:write_headers] = true 
 end
-x = FasterCSV.generate(opts) do |csv|
+x = CSV.generate(opts) do |csv|
   srch_result.each do |o|
     if has_detail
       dets = detail_lambda.call(o)

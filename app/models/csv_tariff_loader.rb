@@ -6,7 +6,7 @@ class CsvTariffLoader
   end
   
   def process
-    FasterCSV.foreach(@file_path, {:headers=>true}) do |row|
+    CSV.foreach(@file_path, {:headers=>true}) do |row|
       OfficialTariff.create!(:country => @country,
         :hts_code => row[0].strip,
         :full_description => row[1].strip,

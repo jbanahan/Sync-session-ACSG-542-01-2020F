@@ -61,7 +61,7 @@ class CSVImportProcessor
     processed_row = false
     begin
       r = @import_config.ignore_first_row ? 1 : 0
-      FasterCSV.parse(@data,{:skip_blanks=>true,:headers => @import_config.ignore_first_row}) do |row|
+      CSV.parse(@data,{:skip_blanks=>true,:headers => @import_config.ignore_first_row}) do |row|
         begin
           do_row row, true
         rescue => e
@@ -75,7 +75,7 @@ class CSVImportProcessor
   end
   
   def preview
-    FasterCSV.parse(@data,{:headers => @import_config.ignore_first_row}) do |row|
+    CSV.parse(@data,{:headers => @import_config.ignore_first_row}) do |row|
       return do_row row, false
     end
   end

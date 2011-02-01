@@ -28,7 +28,7 @@ class ModelField
     @custom_id = o[:custom_id]
     @join_statement = o[:join_statement]
     @join_alias = o[:join_alias]
-    @data_type = o[:data_type]#.nil? ? determine_data_type : o[:data_type]
+    @data_type = o[:data_type].nil? ? determine_data_type : o[:data_type]
   end
   
   #table alias to use in where clause
@@ -55,9 +55,9 @@ class ModelField
   
   def determine_data_type
     if @custom_id.nil?
-      return Kernel.const_get(@model).columns_hash[@field_name.to_s].klass
+      return Kernel.const_get(@model).columns_hash[@field_name.to_s].klass.to_s.downcase.to_sym
     else
-      return CustomDefinition.find(@custom_id).data_type.intern
+      return CustomDefinition.find(@custom_id).data_type.downcase.to_sym
     end
   end
   
@@ -140,7 +140,7 @@ class ModelField
   ]
     
   add_fields CoreModule::ORDER, [
-    [1,:ord_ord_num,:order_number,"Header - Order Number",{:data_type=>:string}],
+    [1,:ord_ord_num,:order_number,"Header - Order Number"],
     [2,:ord_ord_date,:order_date,"Header - Order Date",{:data_type=>:date}],
     [5,:ord_ven_id,:vendor_id,"Header - Vendor ID",{:data_type=>:integer}]
   ]
@@ -231,9 +231,9 @@ class ModelField
     h.nil? ? [] : h.values.to_a
   end
   
-  def self.find_by_module_type_and_field_name(type_symbol,name_symbol)
+  def self.find_by_module_type_and_uid(type_symbol,uid_symbol)
     find_by_module_type(type_symbol).each { |mf|
-      return mf if mf.field_name == name_symbol
+      return mf if mf.uid == uid_symbol
     }
     return nil
   end

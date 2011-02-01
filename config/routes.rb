@@ -1,7 +1,8 @@
 OpenChain::Application.routes.draw do
 
 
-
+  #get rid of this one eventually
+  resources :official_tariffs
 
   resources :status_rules
 
