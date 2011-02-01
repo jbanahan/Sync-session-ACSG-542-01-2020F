@@ -1,5 +1,6 @@
 <%content_for :javascript do%>
 $(function() {
+  $("#btn_download").click(function() {window.location.pathname = window.location.pathname + '.csv'})
   $("#sel_searches").change(function() {
     $("#main_search_cont").html("<h1>Loading Search Results</h1>");
     window.location.search="?sid="+$(this).val();
@@ -307,3 +308,4 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
 </ul>
 <%= will_paginate @results %>
 </div>  
+<button id='btn_download'>Download</button>

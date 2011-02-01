@@ -35,6 +35,7 @@ class ApplicationController < ActionController::Base
     @results = secure(@current_search.search).paginate(:per_page => 20, :page => params[:page])
     respond_to do |format| 
       format.html { render :layout => 'one_col'}
+      format.csv {render_csv("#{core_module.label}.csv")}
     end
   end
   
