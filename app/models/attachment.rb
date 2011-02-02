@@ -11,7 +11,7 @@ class Attachment < ActiveRecord::Base
   validates :attachable, :presence => true
   
   def web_preview?
-    return self.attached_content_type.start_with?("image")
+    return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image")
   end
   
   private
