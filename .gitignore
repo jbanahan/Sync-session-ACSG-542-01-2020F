@@ -5,3 +5,4 @@ db/schema.rb
 .project
 .bundle/*
 2.2
+*.swp
