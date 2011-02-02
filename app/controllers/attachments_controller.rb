@@ -14,4 +14,17 @@ class AttachmentsController < ApplicationController
     
     redirect_to attachable
   end
+  
+  def destroy
+    att = Attachment.find(params[:id])
+    attachable = att.attachable
+    if attachable.can_edit?(current_user)
+      att.destroy
+      errors_to_flash att
+    else
+      add_flash :errors, "You do not have permission to delete this attachment."
+    end
+    
+    redirect_to attachable
+  end
 end
