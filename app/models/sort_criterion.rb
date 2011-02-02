@@ -11,16 +11,17 @@ class SortCriterion < ActiveRecord::Base
     if mf.custom?
       r_val = apply_custom mf, p
     else
-      r_val = p.where("1=1") if p.class.to_s == "Class"
+      k = (p.class == Class) ? p.where("1=1").klass : p.klass
       mf_cm = mf.core_module
-      unless(mf_cm.class_name==r_val.klass.to_s)
-        cm = CoreModule.find_by_class_name(r_val.klass.to_s)
+      unless(mf_cm.class_name==k.to_s)
+        cm = CoreModule.find_by_class_name(k.to_s)
         unless cm.nil?
           child_join = cm.child_joins[mf_cm]
           r_val = r_val.joins(child_join) unless child_join.nil?
         end
       end
       r_val = r_val.joins(mf.join_statement) unless mf.join_statement.nil?
+      r_val = r_val.order("#{mf.join_alias.nil? ? "" : mf.join_alias+"."}#{mf.field_name} #{self.descending? ? "DESC": "ASC"}")
     end
     r_val
   end
