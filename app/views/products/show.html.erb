@@ -35,6 +35,7 @@
       .click(function() {
         window.location = '<%=raw url_for(:action => :index, :controller => :deliveries, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq')%>';
       })
+    $("#sub_attach").button();
   });
 <% end %>
 
@@ -52,7 +53,7 @@
 <% if current_user.view_deliveries? && @product.has_deliveries? %><button id='btn_delivery_jump'>Deliveries</button><%end%>
 <% end %>
 
-<table>
+<table width="97%">
 <tr><td>
 <!-- fields -->
 	<table>
@@ -65,19 +66,36 @@
 	  <%=field_row "Inventory Quantity", @product.current_inventory_qty %>
     <%=show_custom_fields @product, {:table=>true}%>
 	</table>
-</td><td>
+</td><td style='vertical-align:top;'>
 <!-- image -->
-<% 
-	cd = CustomDefinition.where(:label => "PDM Number").first
-	unless cd.nil?
-		cv = @product.get_custom_value cd
-		if ["K096SC03","K104SC75"].include?(cv.value)
-%>
-<a href='/images/polo/<%=cv.value%>.jpg' target='_blank'><%=image_tag("polo/#{cv.value}.jpg", "width" => "200px")%></a>
-<%
-		end
-	end
-%>
+<div class='attachments_container'>
+  <table class='detail_table'>
+    <thead><tr><th>File Name</th><th>Preview</th><th>Delete</th></tr></thead>
+    <tbody>
+        <% @product.attachments.each do |att|%>
+          <tr class='hover'>
+            <td><%=link_to att.attached_file_name, att.attached.url%></td>
+            <td>
+              <% if att.web_preview? %>
+                <a href='<%=att.attached.url%>' target='oc_img_view'><img src="<%=att.attached.url%>" title="<%=att.attached_file_name%>" width="150px" style="border:1px solid black;" /></a>
+              <%end%>
+             </td>
+             <td><%=link_to("Delete", att, :method => :delete, :confirm => "Are you sure?")%></td>
+          </tr>
+        <%end%>
+    </tbody>
+  </table>
+  <div id='mod_attach'>
+    Attach File:<br />
+    <% att = @product.attachments.build %>
+    <%=form_for att, :html=>{:multipart=>true} do |f|%>
+    <%=f.hidden_field :attachable_id %>
+    <%=f.hidden_field :attachable_type %>
+    <%=f.file_field :attached %><br />
+    <%=f.submit "Attach", "id"=>"sub_attach"%>
+    <% end %>
+  </div>
+</div>
 </td></tr>
 </table>
 
@@ -128,3 +146,4 @@
   New: <input type="text" name="quantity" /><br />
   <%end%>
 </div>
+

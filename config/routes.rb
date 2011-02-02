@@ -5,6 +5,7 @@ OpenChain::Application.routes.draw do
   resources :official_tariffs
 
   resources :status_rules
+  resources :attachments
 
 	match "/index.html" => "dashboard#show_main"
   match "/shipments/:id/add_sets" => "shipments#add_sets"

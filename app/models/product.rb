@@ -18,6 +18,7 @@ class Product < ActiveRecord::Base
   has_many   :sales_order_lines, :dependent => :destroy
   has_many	 :piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
+  has_many   :attachments, :as => :attachable
   has_many   :item_change_subscriptions
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true,

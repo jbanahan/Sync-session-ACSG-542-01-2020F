@@ -285,7 +285,10 @@ img {
   width: 14.7em;
 }
 
-
+.attachments_container {
+  padding: 5px
+  text-align: right;
+}
 
 
 /* SCREEN SPECIFIC */
