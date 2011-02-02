@@ -9,6 +9,6 @@ class Classification < ActiveRecord::Base
   has_many :tariff_records, :dependent => :destroy 
    
   accepts_nested_attributes_for :tariff_records, :allow_destroy => true, 
-    :reject_if => lambda { |a| a[:hts_1].blank? }
+    :reject_if => lambda { |a| a[:hts_1].blank? && (a[:_destroy].blank? || a[:_destroy]=="false")}
     
 end

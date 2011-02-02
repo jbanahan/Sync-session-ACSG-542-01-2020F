@@ -10,6 +10,21 @@ $(function() {
     ev.preventDefault();
     $(this).prevAll("input.hts_field").val($(this).html());
   });
+  $("#frm_p").submit(function() {
+    $(".tf_row").each(function() {
+      var has_data = false;
+      $(this).find(".hts_field").each(function() {
+        if(!has_data) {
+          has_data = $(this).val().length>0;
+        }
+      });
+      if(!has_data) {
+        $(this).find(".tf_remove").each(function() {
+          destroy_nested('tf',$(this));
+        });
+      }
+    });
+  });
 });
 function countriesWithHTS() {
   var c_count = 0;
