@@ -74,10 +74,10 @@
     <tbody>
         <% @product.attachments.each do |att|%>
           <tr class='hover'>
-            <td><%=link_to att.attached_file_name, att.attached.url%></td>
+            <td><%=link_to att.attached_file_name, download_attachment_path(att), :target=>"_blank"%></td>
             <td>
               <% if att.web_preview? %>
-                <a href='<%=att.attached.url%>' target='oc_img_view'><img src="<%=att.attached.url%>" title="<%=att.attached_file_name%>" width="150px" style="border:1px solid black;" /></a>
+                <a href='<%=download_attachment_path(att)%>' target='_blank'><img src="<%=download_attachment_path(att)%>" title="<%=att.attached_file_name%>" width="150px" style="border:1px solid black;" /></a>
               <%end%>
              </td>
              <td><%=link_to("Delete", att, :method => :delete, :confirm => "Are you sure?")%></td>
