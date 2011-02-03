@@ -148,7 +148,16 @@ class ApplicationController < ActionController::Base
       yield
     end
   end
-
+  
+  # secure the given block to Company Admin's only (as opposed to System Admins)
+  #TODO set this to actually look at an admin field in the user (once it's created)
+  def admin_secure(err_msg = "Only administrators can do this.")
+    if current_user.company.master
+      yield
+    else
+      error_redirect err_msg
+    end
+  end
     
     private
     def sortable_search_heading(f_short)

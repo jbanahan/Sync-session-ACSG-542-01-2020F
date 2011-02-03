@@ -1,6 +1,8 @@
 OpenChain::Application.routes.draw do
 
 
+  resources :attachment_types
+
   #get rid of this one eventually
   resources :official_tariffs
 

@@ -1,0 +1,15 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Name:</b>
+  <%= @attachment_type.name %>
+</p>
+
+<p>
+  <b>Module type:</b>
+  <%= @attachment_type.module_type %>
+</p>
+
+
+<%= link_to 'Edit', edit_attachment_type_path(@attachment_type) %> |
+<%= link_to 'Back', attachment_types_path %>
