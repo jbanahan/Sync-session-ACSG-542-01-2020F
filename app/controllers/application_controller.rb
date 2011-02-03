@@ -13,6 +13,7 @@ class ApplicationController < ActionController::Base
     helper_method :hash_flip
     helper_method :merge_params
     helper_method :sortable_search_heading
+    helper_method :master_setup
     
     def help
         Helper.instance
@@ -23,6 +24,10 @@ class ApplicationController < ActionController::Base
         include ActionView::Helpers::TextHelper
         include ActionView::Helpers::UrlHelper
     end
+
+  def master_setup
+    MasterSetup.first
+  end
 
   def advanced_search(core_module)
     @core_module = core_module
