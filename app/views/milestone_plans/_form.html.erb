@@ -69,7 +69,7 @@ function addCriterion() {
       <%=sc.hidden_field :model_field_uid, "id"=>"sc_ov_#{sc.object.id}", "name"=>"ignore_me"%>
       <%=sc.select :model_field_uid, ["Loading",""], {}, {"id"=>"sc_fn_#{sc.object.id}"}%>
     </td>
-    <td><%=sc.select :condition, CriterionOperator::OPERATORS.collect {|o| [o.label,o.key]}%></td>
+    <td><%=sc.select :operator, CriterionOperator::OPERATORS.collect {|o| [o.label,o.key]}%></td>
     <td><%=sc.text_field :value%></td>
     <td><%=sc.hidden_field :_destroy, "class" => "sc_destroy"%><a href='#' class='sc_remove'>Remove</a></td>
   </tr>

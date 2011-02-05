@@ -1,11 +1,14 @@
 class ImportedFile < ActiveRecord::Base
   
-  has_attachment :max_size => 10.megabyte,
-                 :storage => :s3,
-                 :s3_access => :private
+  has_attached_file :attached,
+    :storage => :s3,
+    :s3_credentials => "#{Rails.root}/config/s3.yml",
+    :s3_permissions => :private,
+    :path => "#{MasterSetup.first.uuid}/imported_file/:id/:filename",
+    :bucket => 'chain-io'
+  before_post_process :no_post
   
-  validates_as_attachment
-  
+
   belongs_to :import_config
     
   def process(options={})
@@ -25,7 +28,7 @@ class ImportedFile < ActiveRecord::Base
   def attachment_data
     retries = 0
     begin
-      uri = URI.parse(self.authenticated_s3_url(:expires_in => 2.minutes, :use_ssl => true))
+      uri = URI.parse(AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], {:expires_in => 10.minutes, :use_ssl => true})
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
@@ -88,16 +91,16 @@ class CSVImportProcessor
     detail_data_exists = {}
     can_blank = []
 		custom_fields = []
-    @import_config.import_config_mappings.order("column ASC").each do |m|
+    @import_config.import_config_mappings.order("column_rank ASC").each do |m|
       mf = m.find_model_field
       can_blank << mf.field_name.to_s
       to_send = object_to_send(detail_hash, o, mf)
-      data = row[m.column-1]
+      data = row[m.column_rank-1]
 			if mf.custom?
 				custom_fields << {:field => mf, :data => data}
 			else
 				detail_data_exists[mf.core_module] = true if data.length > 0 && detail_field?(mf)
-				messages << mf.process_import(to_send,row[m.column-1])
+				messages << mf.process_import(to_send,row[m.column_rank-1])
 			end
     end
     o = merge_or_create(o,save,{:can_blank => can_blank})

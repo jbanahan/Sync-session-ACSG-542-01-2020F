@@ -6,7 +6,7 @@ class ImportConfigTest < ActiveSupport::TestCase
     ic = ImportConfig.new(:name=>'test')
     ic.model_type = CoreModule::ORDER.class_name
     ic.import_config_mappings.build({:model_field_uid => ModelField.find_by_uid("ord_ord_date").uid,
-        :column => 1})
+        :column_rank => 1})
     assert !ic.save, "should fail to save on validations"
     found_order_number = false
     ic.errors[:base].each do |m|
@@ -27,7 +27,7 @@ class ImportConfigTest < ActiveSupport::TestCase
     ic.file_type = 'text/csv'
     col = 1
     ModelField::MODEL_FIELDS[CoreModule::ORDER.class_name.to_sym].values.each do |mf|
-      ic.import_config_mappings.build({:model_field_uid => mf.uid, :column => col})
+      ic.import_config_mappings.build({:model_field_uid => mf.uid, :column_rank => col})
       col += 1
     end
     assert ic.save, "Did not save properly: #{ic.errors.full_messages.to_s}"
@@ -37,11 +37,11 @@ class ImportConfigTest < ActiveSupport::TestCase
     ic = ImportConfig.new(:name=>'test',:file_type=>'csv')
     ic.model_type = CoreModule::ORDER.class_name
     ic.import_config_mappings.build({:model_field_uid => ModelField.find_by_uid("ord_ord_num").uid,
-        :column => 1})
+        :column_rank => 1})
     
     #having the detail field "ordered_qty" should trigger the validation for the product_id    
     ic.import_config_mappings.build({:model_field_uid => ModelField.find_by_uid("ordln_ordered_qty").uid,
-        :column => 2})
+        :column_rank => 2})
     assert !ic.valid?, "should fail to save on validations"
     found_error = false
     assert ic.errors[:base].include?("All order mappings that have line level values must have the Product Unique Identifier."),

@@ -156,7 +156,7 @@ class ApplicationController < ActionController::Base
 
     def update_message_count
         if !current_user.nil?
-            @message_count = Message.count(:conditions => ["user_id = #{current_user.id} AND read = ?",false])
+            @message_count = Message.count(:conditions => ["user_id = #{current_user.id} AND viewed = ?",false])
         end
     end
 

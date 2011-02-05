@@ -15,7 +15,7 @@ class History < ActiveRecord::Base
   def details_hash
     r = Hash.new
     self.history_details.each do |d|
-      r[d.key.intern] = d.value
+      r[d.source_key.intern] = d.value
     end
     return r
   end
@@ -41,7 +41,7 @@ class History < ActiveRecord::Base
   def self.create_item_changed_details(h,type,identifier,link)
     d_hash = Hash["type" => type, "identifier" => identifier, "link" => link]
     d_hash.each do |k,v|
-      d = h.history_details.build(:key => k, :value => v)
+      d = h.history_details.build(:source_key => k, :value => v)
       d.save
     end
   end

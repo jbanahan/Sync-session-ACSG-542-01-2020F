@@ -12,7 +12,7 @@ class SearchSetup < ActiveRecord::Base
   accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
     :reject_if => lambda { |a| 
       r_val = false
-      [:model_field_uid,:condition,:value].each { |f|
+      [:model_field_uid,:operator,:value].each { |f|
         r_val = true if a[f].blank?
       } 
       r_val
@@ -51,7 +51,7 @@ class SearchSetup < ActiveRecord::Base
     ss = SearchSetup.new(:name => new_name, :module_type => self.module_type, :user => self.user, :simple => self.simple)
     ss.save if save_obj
     self.search_criterions.each do |sc|
-      new_sc = ss.search_criterions.build(:condition => sc.condition, :value => sc.value, :milestone_plan_id => sc.milestone_plan_id, 
+      new_sc = ss.search_criterions.build(:operator => sc.operator, :value => sc.value, :milestone_plan_id => sc.milestone_plan_id, 
         :status_rule_id => sc.status_rule_id, :model_field_uid => sc.model_field_uid, :search_setup_id => sc.search_setup_id,
         :custom_definition_id => sc.custom_definition_id
       )

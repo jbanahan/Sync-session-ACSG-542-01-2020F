@@ -57,7 +57,7 @@ $(function() {
   <thead><tr><th>Module</th><th>Field</th><th>Condition</th><th>Value</th></tr></thead>
   <tbody>
 <%@plan.search_criterions.each do |c|%>
-  <tr class='hover'><td><%=c.model_field.core_module.label%></td><td><%=c.model_field.label%></td><td><%=c.condition.nil? ? "" : CriterionOperator.find_by_key(c.condition).label%></td><td><%=c.value%></td></tr>
+  <tr class='hover'><td><%=c.model_field.core_module.label%></td><td><%=c.model_field.label%></td><td><%=c.operator.nil? ? "" : CriterionOperator.find_by_key(c.operator).label%></td><td><%=c.value%></td></tr>
 <%end%>
   </tbody>
 </table>
