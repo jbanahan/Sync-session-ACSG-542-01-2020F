@@ -70,10 +70,11 @@
 <!-- image -->
 <div class='attachments_container'>
   <table class='detail_table'>
-    <thead><tr><th>File Name</th><th>Preview</th><th>Delete</th></tr></thead>
+    <thead><tr><th>Type</th><th>Name</th><th>Preview</th><th>Delete</th></tr></thead>
     <tbody>
         <% @product.attachments.each do |att|%>
           <tr class='hover'>
+            <td><%=att.attachment_type%></td>
             <td><%=link_to att.attached_file_name, download_attachment_path(att), :target=>"_blank"%></td>
             <td>
               <% if att.web_preview? %>
@@ -91,6 +92,7 @@
     <%=form_for att, :html=>{:multipart=>true} do |f|%>
     <%=f.hidden_field :attachable_id %>
     <%=f.hidden_field :attachable_type %>
+    <%=f.collection_select :attachment_type, AttachmentType.all, :name, :name %>
     <%=f.file_field :attached %><br />
     <%=f.submit "Attach", :id=>"sub_attach"%>
     <% end %>

@@ -1,25 +1,22 @@
-<h1>Listing attachment_types</h1>
-
-<table>
-  <tr>
-    <th>Name</th>
-    <th>Module type</th>
-    <th></th>
-    <th></th>
-    <th></th>
-  </tr>
-
-<% @attachment_types.each do |attachment_type| %>
-  <tr>
-    <td><%= attachment_type.name %></td>
-    <td><%= attachment_type.module_type %></td>
-    <td><%= link_to 'Show', attachment_type %></td>
-    <td><%= link_to 'Edit', edit_attachment_type_path(attachment_type) %></td>
-    <td><%= link_to 'Destroy', attachment_type, :confirm => 'Are you sure?', :method => :delete %></td>
-  </tr>
-<% end %>
-</table>
-
-<br />
-
-<%= link_to 'New Attachment type', new_attachment_type_path %>
+<%content_for :javascript do %>
+$(function() {
+  $("#attachment_type_submit").button();
+});
+<%end%>
+<%=form_for AttachmentType.new do |f| %>
+  <table class='detail_table'>
+    <thead><tr><th>Attachment Type</th><th></th></tr></thead>
+    <tbody>
+      <%@attachment_types.each do |a|%>
+      <tr class='hover'>
+        <td><%=a.name%></td>
+        <td><%=link_to 'Delete', a, :confirm => "Are you sure you want to delete this attachment type?", :method => :delete%></td>
+      </tr>
+      <%end%>
+      <tr class='hover'>
+        <td><%=f.text_field :name%></td>
+        <td><%=f.submit 'Add' %></td>
+      </tr>
+    </tbody>
+  </table>
+<%end%>
