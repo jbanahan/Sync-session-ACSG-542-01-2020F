@@ -71,6 +71,7 @@
 </td></tr>
 </table>
 
+<%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
 <% @product.classifications.each do |c| %>
 <h2>Classification: <%=c.country.name.titleize%></h2>
 <table>

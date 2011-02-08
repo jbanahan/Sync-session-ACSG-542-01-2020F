@@ -290,6 +290,36 @@ img {
   text-align: right;
 }
 
+/* Comments boxes */
+
+.comment_input {
+  width: 97%;
+}
+.comment_table {
+  width: 97%;
+}
+.comment_header a {
+  text-decoration: none;
+  font-weight: bold;
+  color: #000;
+}
+.comment_body {
+  display: none;
+}
+.comment_body pre {
+  margin: 0 0 0 .5em;
+  background: none;
+  border-left: 1px dotted #d7d7d7;
+}
+.comment_controls {
+  text-align: right;
+}
+.comment_header_date{
+  text-align: right;
+}
+.comment_edit {
+  display: none;
+}
 
 /* SCREEN SPECIFIC */
 .classification_box {

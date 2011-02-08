@@ -1,0 +1,48 @@
+<div id='comments_container'>
+  <h2>Comments <span style='font-weight: normal; font-size: 90%;'>(<a href='#' class='comment_exp_all'>open all</a><a href='#' class='comment_cls_all' style='display:none;'>close all</a>)</span></h2>
+  <% unless commentable.comments.empty? %>
+  <table class='comment_table'>
+    <tbody>
+      <%commentable.comments.each do |c| %>
+      <tr class='comment_view comment_header hover'>
+        <td><a href='#' class='comment_lnk'><%=c.subject%></a></td>
+        <td><a href='#' class='comment_lnk'><%=c.user.full_name%></a></td>
+        <td class='comment_header_date'><a href='#' class='comment_lnk'><%=c.created_at%></a></td>
+      </tr>
+      <tr class='comment_view comment_body'>
+        <td colspan="3">
+          <pre><%=c.body%></pre>
+          <div class='comment_controls'>
+            <%if c.user_id == current_user.id%>
+              <a href='#' class='comment_edit_link'>Edit</a>
+            <% end %>
+            <%if c.user_id == current_user.id && current_user.admin? %>
+              &nbsp;|&nbsp;
+            <% end %>
+            <%if c.user_id == current_user.id || current_user.admin? %>
+              <%=link_to 'Delete', c, :prompt=>'Are you sure you want to delete this comment?', :method => :delete %>
+            <% end %>
+          </div>
+        </td>
+      </tr>
+      <tr class='comment_edit'><td colspan="3">
+        <%=form_for c do |f| %>
+          <%=f.hidden_field :commentable_id %>
+          <%=f.hidden_field :commentable_type %>
+          <%=f.text_field :subject, :class=>'comment_input' %><br />
+          <%=f.text_area :body, :rows => '5', :class=>'comment_input' %><br />
+          <%=f.submit 'Update', :class=>'comment_sub' %>
+        <%end%>
+      </td></tr>
+      <%end%>
+    </tbody>
+  </table>
+  <% end %>
+  <%=form_for commentable.comments.build do |f| %>
+    <%=f.hidden_field :commentable_id %>
+    <%=f.hidden_field :commentable_type %>
+    <%=f.text_field :subject, :class=>'comment_input' %><br />
+    <%=f.text_area :body, :rows => '5', :class=>'comment_input' %><br />
+    <%=f.submit 'Add', :class=>'comment_sub'%>
+  <%end%>
+</div>

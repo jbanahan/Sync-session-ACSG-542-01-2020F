@@ -63,6 +63,35 @@ $( function() {
         $(this).addClass("bad_data");
       }
     });
+    $(".comment_sub").button();
+    $(".comment_lnk").click(function(ev) {
+      ev.preventDefault();
+      var bodyRow = $(this).parents(".comment_header").next();
+      if(bodyRow.is(':visible')) {
+        bodyRow.hide();
+      } else {
+        bodyRow.show();
+      }
+    });
+    $(".comment_exp_all").click(function(ev) {
+      ev.preventDefault();
+      $(".comment_body").show();
+      $(this).siblings(".comment_cls_all").show();
+      $(this).hide();
+    });
+    $(".comment_cls_all").click(function(ev) {
+      ev.preventDefault();
+      $(".comment_body").hide();
+      $(this).siblings(".comment_exp_all").show();
+      $(this).hide();
+    });
+    $(".comment_edit_link").click(function(ev) {
+      ev.preventDefault();
+      var myRow = $(this).parents(".comment_body");
+      myRow.hide();
+      myRow.prev().hide();
+      myRow.next().show();
+    });
 });
 $(document).ready( function() {
     handleCustomFieldCheckboxes();

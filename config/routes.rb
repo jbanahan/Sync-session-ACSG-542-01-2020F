@@ -10,6 +10,7 @@ OpenChain::Application.routes.draw do
   resources :attachments do
     get 'download', :on => :member
   end
+  resources :comments
 
 	match "/index.html" => "dashboard#show_main"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
