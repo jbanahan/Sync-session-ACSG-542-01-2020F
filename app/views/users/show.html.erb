@@ -36,31 +36,15 @@
   <span style='color:red;'> [disabled]</span>
   <% end %>
 </h1>
-<br />
-<p>
-  <b>Username:</b>
-  <%= @user.username %>
-</p>
-
-<p>
-  <b>Email:</b>
-  <%= @user.email %>
-</p>
-<p>
-  <b>First Name:</b>
-  <%= @user.first_name %>
-</p>
-<p>
-  <b>Last Name:</b>
-  <%= @user.last_name %>
-</p>
-
-<p>
-  <b>Time Zone:</b>
-  <%= @user.time_zone %>
-</p>
-
-<p>
-  <b>Email Format:</b>
-  <%= @user.email_format%>
-</p>
+<table>
+<%=field_row "Username", @user.username %>
+<%=field_row "Email", @user.email %>
+<%=field_row "First Name", @user.first_name %>
+<%=field_row "Last Name", @user.last_name %>
+<%=field_row "Time Zone", @user.time_zone %>
+<%=field_row "Email Format", @user.email_format %>
+<%=field_row "Administrator", @user.admin?%>
+<% if current_user.sys_admin? %>
+  <%=field_row "Sys Admin", @user.sys_admin? %>
+<% end %>
+</table>

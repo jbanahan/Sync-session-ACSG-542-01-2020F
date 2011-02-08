@@ -38,6 +38,18 @@
     <%= f.label :email_format %><br />
     <%= f.select :email_format, ["html","text"]%>
   </div>
+  <% if current_user.admin? %>
+  <div class="field">
+    <label for="admin">Administrator</label><br />
+    <input type='checkbox' name='is_admin' id='admin' value='true' <%=@user.admin ? "checked='true'" : ""%>/>
+  </div>
+    <% if current_user.sys_admin? %>
+    <div class="field">
+      <label for="sys_admin">Sys Administrator</label><br />
+      <input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' <%=@user.sys_admin ? "checked='true'" : ""%> />
+    </div>
+    <%end%>
+  <% end %>
   <div class="actions">
     <%= f.submit %>
   </div>

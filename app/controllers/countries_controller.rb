@@ -1,7 +1,7 @@
 class CountriesController < ApplicationController
   # GET /countries
   # GET /countries.xml
-  def index		
+  def index
     respond_to do |format|
       format.html # index.html.erb
       format.xml  { render :xml => @countries }
@@ -11,7 +11,9 @@ class CountriesController < ApplicationController
 
   # GET /countries/1/edit
   def edit
-    @country = Country.find(params[:id])
+    admin_secure("Only administrators can edit countries.") {
+      @country = Country.find(params[:id])
+    }
   end
 
   def show
@@ -22,31 +24,20 @@ class CountriesController < ApplicationController
   # PUT /countries/1
   # PUT /countries/1.xml
   def update
-    @country = Country.find(params[:id])
+    admin_secure("Only administrators can edit countries.") {
+      @country = Country.find(params[:id])
 
-    respond_to do |format|
-      if @country.update_attributes(params[:country])
-        add_flash :notices, "#{@country.name} was successfully updated."
-        format.html { redirect_to(countries_path) }
-        format.xml  { head :ok }
-      else
-        errors_to_flash @country, :now => true
-        format.html { render :action => "edit" }
-        format.xml  { render :xml => @country.errors, :status => :unprocessable_entity }
+      respond_to do |format|
+        if @country.update_attributes(params[:country])
+          add_flash :notices, "#{@country.name} was successfully updated."
+          format.html { redirect_to(countries_path) }
+          format.xml  { head :ok }
+        else
+          errors_to_flash @country, :now => true
+          format.html { render :action => "edit" }
+          format.xml  { render :xml => @country.errors, :status => :unprocessable_entity }
+        end
       end
-    end
-  end
-
-  # DELETE /countries/1
-  # DELETE /countries/1.xml
-  def destroy
-    @country = Country.find(params[:id])
-    @country.destroy
-
-    respond_to do |format|
-      errors_to_flash @country
-      format.html { redirect_to(countries_url) }
-      format.xml  { head :ok }
-    end
+    }
   end
 end

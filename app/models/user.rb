@@ -1,6 +1,8 @@
 class User < ActiveRecord::Base
   acts_as_authentic
   
+  attr_accessible :username, :email, :password, :password_confirmation, :time_zone, :email_format
+  
   belongs_to :company
   
   has_many   :histories, :dependent => :destroy
@@ -41,11 +43,11 @@ class User < ActiveRecord::Base
   end
   
   def can_view?(user)
-    return user.company.master || self==user
+    return user.admin? || self==user
   end
   
   def can_edit?(user)
-    return user.company.master || self==user
+    return user.admin? || self==user
   end
   
   #permissions
@@ -100,10 +102,10 @@ class User < ActiveRecord::Base
   end
   
   def edit_milestone_plans?
-    return self.company.master?
+    return self.admin?
   end
   
   def edit_status_rules?
-    return self.company.master?
+    return self.admin?
   end
 end

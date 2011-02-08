@@ -10,7 +10,7 @@ $(function() {
       buttons: {"Yes":function() {$("#frm_unlock").submit();},"No":function() {$(this).dialog('close');}},
       title: 'Are you sure?'
     });
-  <%if current_user.company.master %>
+  <%if current_user.admin? %>
   $( "#btn_edit" )
     .button()
     .click(function() {
@@ -35,7 +35,7 @@ $(function() {
 <% end %>
 
 <% content_for :action_bar do %>
-  <% if current_user.company.master %>
+  <% if current_user.admin? %>
     <% unless @company.locked?%><button id='btn_edit'>Edit</button><br /><%end%>
     <button id='btn_users'>Users</button>
     <% if !@company.master && !@company.locked%>
@@ -46,32 +46,22 @@ $(function() {
   <%end%>
 <% end %>
 
-<p>
-  <b>Name:</b>
-  <%= @company.name %> <% if @company.locked %><span style='color:red;font-size:115%'>[Locked]</span><% end %>
-</p>
-
-<p>
-  <b>Carrier:</b>
-  <%= @company.carrier? %>
-</p>
-
-<p>
-  <b>Vendor:</b>
-  <%= @company.vendor? %>
-</p>
-<p>
-  <b>Customer:</b>
-  <%= @company.customer? %>
-</p>
-<p>
-  <b>System ID:</b> <%= @company.id %> (used for uploads)
-</p>
+<%if @company.locked %>
+  <span style='color:red;font-size:115%'>Locked</span>
+<%end%>
+<table>
+<%=field_row "Name", @company.name%>
+<%=field_row "Carrier", bool_txt(@company.carrier?) %>
+<%=field_row "Vendor", bool_txt(@company.vendor?) %>
+<%=field_row "Customer", bool_txt(@company.customer?) %>
+<%=field_row "System ID Number", @company.id %>
+</table>
 
 <%= render :partial => 'companies/address', :locals => { :edit_add => @address } %>
 
 <%= render :partial => 'companies/division', :locals => { :edit_div => @division } %>
 
+<%if current_user.admin? %>
 <div id='mod_lock' style='display:none; text-align:center;'>
   <% form_for @company, :html => {:id=>'frm_lock'} do |f| %>
     <h3>Are you sure you want to lock this company?</h3><br />
@@ -85,3 +75,4 @@ $(function() {
     <%= f.hidden_field :locked, {:value => '0'}%>
   <% end %>
 </div>
+<%end%>

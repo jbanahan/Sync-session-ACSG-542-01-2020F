@@ -36,7 +36,7 @@ class Company < ActiveRecord::Base
 	end
 	
 	def can_edit?(user)
-	  return user.company.master
+	  return user.admin?
 	end
 	
 	def can_view?(user)
