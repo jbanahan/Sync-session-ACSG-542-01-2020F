@@ -35,7 +35,6 @@
       .click(function() {
         window.location = '<%=raw url_for(:action => :index, :controller => :deliveries, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq')%>';
       })
-    $("#sub_attach").button();
   });
 <% end %>
 
@@ -67,47 +66,8 @@
     <%=show_custom_fields @product, {:table=>true}%>
 	</table>
 </td><td style='vertical-align:top;'>
-<!-- image -->
-<div class='attachments_container'>
-  <table class='detail_table'>
-    <thead>
-      <tr><th>Type</th><th>Name</th><th>Preview</th>
-        <%if @product.can_edit?(current_user)%>
-          <th>Delete</th>
-        <%end%>
-      </tr></thead>
-
-    <tbody>
-        <% @product.attachments.each do |att|%>
-          <tr class='hover'>
-            <td><%=att.attachment_type%></td>
-            <td><%=link_to att.attached_file_name, download_attachment_path(att), :target=>"_blank"%></td>
-            <td>
-              <% if att.web_preview? %>
-                <a href='<%=download_attachment_path(att)%>' target='_blank'><img src="<%=download_attachment_path(att)%>" title="<%=att.attached_file_name%>" width="150px" style="border:1px solid black;" /></a>
-              <%end%>
-             </td>
-             <%if @product.can_edit?(current_user)%>
-               <td><%=link_to("Delete", att, :method => :delete, :confirm => "Are you sure?")%></td>
-             <%end%>
-          </tr>
-        <%end%>
-    </tbody>
-  </table>
-  <%if @product.can_edit?(current_user) %>
-      <div id='mod_attach'>
-      Attach File:<br />
-      <% att = @product.attachments.build %>
-      <%=form_for att, :html=>{:multipart=>true} do |f|%>
-      <%=f.hidden_field :attachable_id %>
-      <%=f.hidden_field :attachable_type %>
-      <%=f.collection_select :attachment_type, AttachmentType.all, :name, :name %>
-      <%=f.file_field :attached %><br />
-      <%=f.submit "Attach", :id=>"sub_attach"%>
-      <% end %>
-    </div>
-  <%end%>
-</div>
+<!-- attachments -->
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
 </td></tr>
 </table>
 
