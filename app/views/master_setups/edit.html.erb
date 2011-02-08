@@ -1,0 +1,20 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_save").click(function() {
+    $("#frm_ms").submit();
+  });
+  $("#btn_cancel").click(function() {
+    window.location = '<%=settings_path%>';
+  });
+});
+<%end%>
+<%content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<%end%>
+<%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
+<table>
+  <%=field_row "System UUID", @ms.uuid%>
+  <%=field_row "System Code", f.text_field(:system_code) %>
+</table>
+<%end%>

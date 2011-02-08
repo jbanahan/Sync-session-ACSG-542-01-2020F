@@ -1,6 +1,7 @@
 OpenChain::Application.routes.draw do
 
 
+  resources :master_setups
   resources :attachment_types
 
   #get rid of this one eventually

@@ -150,7 +150,6 @@ class ApplicationController < ActionController::Base
   end
   
   # secure the given block to Company Admin's only (as opposed to System Admins)
-  #TODO set this to actually look at an admin field in the user (once it's created)
   def admin_secure(err_msg = "Only administrators can do this.")
     if current_user.admin?
       yield
@@ -158,7 +157,15 @@ class ApplicationController < ActionController::Base
       error_redirect err_msg
     end
   end
-    
+  
+  def sys_admin_secure(err_msg = "Only system admins can do this.")
+    if current_user.sys_admin?
+      yield
+    else
+      error_redirect err_msg
+    end
+  end
+  
     private
     def sortable_search_heading(f_short)
       help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 

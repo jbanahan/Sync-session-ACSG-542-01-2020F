@@ -12,4 +12,7 @@
 <p>Setup the items that show in the attachment type drop down lists.</p>
 <h2><%= link_to 'Status Rules', status_rules_path %></h2>
 <p>Setup the rules that determine what status a particular item has.</p>
-
+<%if current_user.sys_admin? %>
+<h2><%= link_to 'Master Setup', master_setups_path %></h2>
+<p>The master system settings (for system administrators who know what they're doing!)
+<%end%>
