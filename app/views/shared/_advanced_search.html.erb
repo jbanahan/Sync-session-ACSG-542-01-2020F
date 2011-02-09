@@ -166,6 +166,15 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
   } else {
     scs = list.search_setup.sort_criterions;
   }
+  scs.sort(function(a,b) {
+    var i = a.rank-b.rank;
+    if(i!=0) { return i;}
+    if(a.model_field_uid<b.model_field_uid) {
+      return -1;
+    } else {
+      return 1;
+    }
+  });
   for(i=0;i<scs.length;i++) {
     var uid = scs[i].model_field_uid;
     var new_unused = []
