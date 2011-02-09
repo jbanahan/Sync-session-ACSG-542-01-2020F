@@ -2,6 +2,7 @@ log/*
 tmp/*
 db/*.sqlite3
 db/schema.rb
+config/database.yml
 .project
 .bundle/*
 2.2

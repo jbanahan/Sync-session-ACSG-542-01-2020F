@@ -2,10 +2,10 @@
 
 one:
   history_id: 1
-  key: key1
+  source_key: key1
   value: val1
 
 two:
   history_id: 1
-  key: key2
+  source_key: key2
   value: val2

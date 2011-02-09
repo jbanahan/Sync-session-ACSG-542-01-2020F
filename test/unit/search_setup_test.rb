@@ -34,7 +34,7 @@ class SearchSetupTest < ActiveSupport::TestCase
   
   test "deep copy" do
     base = SearchSetup.create!(:name => "deep copy test", :user => User.find(1), :module_type=>"Product")
-    search_crit = base.search_criterions.create!(:condition => "eq", :value=>"10", :model_field_uid=>"prod_name")
+    search_crit = base.search_criterions.create!(:operator => "eq", :value=>"10", :model_field_uid=>"prod_name")
     sort_crit = base.sort_criterions.create!(:rank=>5,:model_field_uid=>"prod_ven",:descending=>true)
     search_col = base.search_columns.create!(:rank=>0,:model_field_uid=>"prod_ven_name")
     base.deep_copy("new name",true)
@@ -45,7 +45,7 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert copy.search_criterions.length==base.search_criterions.length, "Search criterions length were different"
     copy_search = copy.search_criterions.first
     assert copy_search.id != search_crit.id, "Search criterion ids were the same."
-    assert copy_search.condition == search_crit.condition, "Search criterion conditions were different"
+    assert copy_search.operator == search_crit.operator, "Search criterion operators were different"
     assert copy_search.value == search_crit.value, "Search criterion values were different"
     assert copy_search.model_field_uid == search_crit.model_field_uid, "Search criterion model_field_uids were different"
     assert copy.sort_criterions.length==base.sort_criterions.length, "Sort criterions length were different"

@@ -5,7 +5,7 @@ one:
   subject: MyString
   body: MyString
   folder: MyString
-  read: false
+  viewed: false
   link_name: MyString
   link_path: MyString
 
@@ -14,6 +14,6 @@ two:
   subject: MyString
   body: MyString
   folder: MyString
-  read: false
+  viewed: false
   link_name: MyString
   link_path: MyString

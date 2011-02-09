@@ -1,6 +1,6 @@
 ProductIsApprovedCriterion:
   id: 1
   model_field_uid: "*cf_1"
-  condition: eq
+  operator: eq
   value: "true"
   status_rule_id: 1

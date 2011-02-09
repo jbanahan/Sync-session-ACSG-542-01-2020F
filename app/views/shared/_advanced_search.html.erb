@@ -113,7 +113,7 @@ function addParameter() {
     h = h + "<option value='<%=mf.uid%>'><%=mf.label%></option>";
     <%end%>
     h = h + "</select></td>";
-    h = h + "<td><select id='search_setup_search_criterions_attributes_"+m+"_condition' name='search_setup[search_criterions_attributes]["+m+"][condition]'>";
+    h = h + "<td><select id='search_setup_search_criterions_attributes_"+m+"_operator' name='search_setup[search_criterions_attributes]["+m+"][operator]'>";
     <%CriterionOperator::OPERATORS.each do |o|%>
     h = h + "<option value='<%=o.key%>'><%=o.label%></option>";
     <%end%>  
@@ -222,7 +222,7 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
         <%=f.fields_for :search_criterions do |sc| %>
         <tr class='sp_row'>
           <td><%=sc.collection_select :model_field_uid, @core_module.model_fields_including_children.values, :uid, :label %></td>
-          <td><%=sc.collection_select :condition, CriterionOperator::OPERATORS, :key, :label %></td>
+          <td><%=sc.collection_select :operator, CriterionOperator::OPERATORS, :key, :label %></td>
           <td><%=sc.text_field :value %></td>
           <td><%=sc.hidden_field :_destroy, "class" => "sp_destroy"%><a href='#' class='sp_remove'>Remove</a></td>
         </tr>

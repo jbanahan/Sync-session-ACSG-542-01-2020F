@@ -6,7 +6,7 @@ class SearchCriterion < ActiveRecord::Base
   belongs_to :search_setup
   
   validates  :model_field_uid, :presence => true
-  validates  :condition, :presence => true
+  validates  :operator, :presence => true
   validates  :value, :presence => true
   
   def apply(p)
@@ -53,7 +53,7 @@ class SearchCriterion < ActiveRecord::Base
           bool_val = where_value ? "custom_values.boolean_value = ?" : "(custom_values.boolean_value is null OR custom_values.boolean_value = ?)"
           "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{bool_val})"
         else
-          "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND custom_values.#{cd.data_column} #{CriterionOperator.find_by_key(self.condition).query_string})"
+          "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND custom_values.#{cd.data_column} #{CriterionOperator.find_by_key(self.operator).query_string})"
         end
       else
         "1=0"
@@ -64,7 +64,7 @@ class SearchCriterion < ActiveRecord::Base
           "#{table_name}.#{model_field.field_name} = ?" :
           "(#{table_name}.#{model_field.field_name} = ? OR #{table_name}.#{model_field.field_name} is null)"
       else
-        "#{table_name}.#{model_field.field_name} #{CriterionOperator.find_by_key(self.condition).query_string}"
+        "#{table_name}.#{model_field.field_name} #{CriterionOperator.find_by_key(self.operator).query_string}"
       end
     end
   end
@@ -87,11 +87,11 @@ class SearchCriterion < ActiveRecord::Base
     
     return self.value.to_i if integer_field?
     
-    if self.condition=="co"
+    if self.operator=="co"
       return "%#{self.value}%"
-    elsif self.condition=="sw"
+    elsif self.operator=="sw"
       return "#{self.value}%"
-    elsif self.condition=="ew"
+    elsif self.operator=="ew"
       return "%#{self.value}"
     else
       return self.value
