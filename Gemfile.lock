@@ -36,8 +36,10 @@ GEM
       mime-types
       xml-simple
     builder (2.1.2)
+    daemons (1.0.10)
     erubis (2.6.6)
       abstract (>= 1.0.0)
+    gem_plugin (0.2.3)
     i18n (0.5.0)
     mail (2.2.12)
       activesupport (>= 2.3.6)
@@ -50,6 +52,9 @@ GEM
       activesupport (~> 3.0.2)
       arel (~> 2.0.2)
     mime-types (1.16)
+    mongrel (1.2.0.pre2)
+      daemons (~> 1.0.10)
+      gem_plugin (~> 0.2.3)
     mysql2 (0.2.6)
     mysql2 (0.2.6-x86-mingw32)
     paperclip (2.3.8)
@@ -93,6 +98,7 @@ DEPENDENCIES
   authlogic
   aws-s3
   meta_search
+  mongrel (= 1.2.0.pre2)
   mysql2
   paperclip (= 2.3.8)
   rails (= 3.0.3)
