@@ -3,21 +3,27 @@ require 'test_helper'
 class UserTest < ActiveSupport::TestCase
   # Replace this with your real tests.
   test "can_view?" do
-    u = User.find(1)
-    assert User.find(1).can_view?(u), "Master user can't view self."
-    assert User.find(2).can_view?(u), "Master user can't view other."
-    u = User.find(2)
-    assert User.find(2).can_view?(u), "Non-master can't view self."
-    assert !User.find(1).can_view?(u), "Non-master can view other."
+    u = users(:masteruser)
+    assert u.can_view?(u), "Master user can't view self."
+    assert !users(:vendoruser).can_view?(u), "Master user can view other."
+    u = users(:vendoruser)
+    assert u.can_view?(u), "Non-master can't view self."
+    assert !users(:masteruser).can_view?(u), "Non-master can view other."
+    u = users(:adminuser)
+    assert u.can_view?(u), "Admin user can't view self."
+    assert users(:vendoruser).can_view?(u), "Admin user can't view other."
   end
 
   test "can_edit?" do
-    u = User.find(1)
-    assert User.find(1).can_edit?(u), "Master user can't edit self."
-    assert User.find(2).can_edit?(u), "Master user can't edit other."
-    u = User.find(2)
-    assert User.find(2).can_edit?(u), "Non-master can't edit self."
-    assert !User.find(1).can_edit?(u), "Non-master can edit other."
+    u = users(:adminuser)
+    assert u.can_edit?(u), "Admin user can't edit self."
+    assert users(:vendoruser).can_edit?(u), "Admin user can't edit other."
+    u = users(:masteruser)
+    assert users(:masteruser).can_edit?(u), "Master user can't edit self."
+    assert !users(:vendoruser).can_edit?(u), "Master user can edit other."
+    u = users(:vendoruser)
+    assert users(:vendoruser).can_edit?(u), "Non-master can't edit self."
+    assert !users(:masteruser).can_edit?(u), "Non-master can edit other."
   end
 
   test "full_name" do
@@ -31,7 +37,7 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "sales order permissions" do
-    u = User.find(1)
+    u = users(:masteruser)
     assert u.company.master?, "Setup wrong, user one should be part of master company."
     assert u.view_sales_orders?, "Master user should be able to view sales orders."
     assert u.edit_sales_orders?, "Master user should be able to edit sales orders."
@@ -40,7 +46,7 @@ class UserTest < ActiveSupport::TestCase
     assert u.company.customer?, "Setup wrong, user six should be part of a customer company."
     assert u.view_sales_orders?, "Customer user should be able to view sales orders."
     assert !(u.edit_sales_orders? || u.add_sales_orders?), "Customer should NOT be able to edit or create sales orders."
-    u = User.find(2)
+    u = users(:vendoruser)
     assert !(u.company.master? || u.company.customer?), "Setup wrong, user two should not be part of a master or customer company."
     assert !(u.view_sales_orders? ||
              u.edit_sales_orders? ||
@@ -48,12 +54,12 @@ class UserTest < ActiveSupport::TestCase
   end
   
   test "shipment permissions" do
-    u = User.find(1)
+    u = users(:masteruser)
     assert u.company.master?, "Setup wrong, user one should be part of master company."
     assert u.view_shipments?, "Master user should be able to view shipments."
     assert u.edit_shipments?, "Master user should be able to edit shipments."
     assert u.add_shipments?, "Master user should be able to create shipments."
-    u = User.find(2)
+    u = users(:vendoruser)
     assert u.company.vendor?, "Setup wrong, user 2 should be part of a vendor company."
     assert u.view_shipments?, "Vendor user should be able to view shipments."
     assert u.edit_shipments?, "Vendor user should be able to edit shipments."
@@ -71,7 +77,7 @@ class UserTest < ActiveSupport::TestCase
   end
   
   test "delivery permissions" do
-    u = User.find(1)
+    u = users(:masteruser)
     assert u.company.master?, "Setup wrong, user one should be part of master company."
     assert u.view_deliveries?, "Master user should be able to view deliveries."
     assert u.edit_deliveries?, "Master user should be able to edit deliveries."
@@ -85,7 +91,7 @@ class UserTest < ActiveSupport::TestCase
     assert u.view_deliveries?, "Carrier user should be able to view deliveries."
     assert u.edit_deliveries?, "Carrier user should be able to edit deliveries."
     assert u.add_deliveries?, "Carrier user should be able to add deliveries."
-    u = User.find(2)
+    u = users(:vendoruser)
     assert !(u.company.master? || u.company.customer? || u.company.carrier?), "Setup wrong, user two should not be part of a master, carrier, or customer company."
     assert !(u.view_deliveries? ||
              u.edit_deliveries? ||
@@ -93,7 +99,8 @@ class UserTest < ActiveSupport::TestCase
   end
   
   test "milestone_plan permissions" do
-    assert User.find(1).edit_milestone_plans?, "Master should be able to edit milestone plans."
-    assert !User.find(2).edit_milestone_plans?, "Non-master should not be able to edit milestone plans."
+    assert users(:adminuser).edit_milestone_plans?, "Admin user should be able to edit milestone plans."
+    assert !users(:masteruser).edit_milestone_plans?, "Master should not be able to edit milestone plans."
+    assert !users(:vendoruser).edit_milestone_plans?, "Non-master should not be able to edit milestone plans."
   end
 end

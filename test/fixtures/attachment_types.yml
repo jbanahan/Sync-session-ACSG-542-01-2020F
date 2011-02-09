@@ -2,8 +2,6 @@
 
 one:
   name: MyString
-  module_type: MyString
 
 two:
   name: MyString
-  module_type: MyString

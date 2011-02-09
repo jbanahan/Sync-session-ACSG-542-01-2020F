@@ -20,7 +20,7 @@ class ModelField
     @uid = uid
     @core_module = core_module
     @sort_rank = rank
-    @model = core_module.class_name.intern
+    @model = core_module.class_name.intern unless core_module.nil?
     @field_name = field
     @label = label
     @import_lambda = o[:import_lambda]
@@ -219,6 +219,11 @@ class ModelField
   reset_custom_fields
 
   def self.find_by_uid(uid)
+    return ModelField.new(10000,:_blank,nil,nil,"[blank]",{
+      :import_lambda => lambda {|o,d| "Field ignored"},
+      :export_lambda => lambda {|o| },
+      :data_type => :string
+    }) if uid.to_sym == :_blank
     MODEL_FIELDS.values.each do |h|
       u = uid.to_sym
       return h[u] unless h[u].nil?

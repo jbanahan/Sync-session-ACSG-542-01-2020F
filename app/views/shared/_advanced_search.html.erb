@@ -51,8 +51,12 @@ $(function() {
       $(this).html(label);
     });
   });
-  
+ 
+  $("#add_blank").click(function(ev) {
+    $("#used_columns").append("<option value='_blank'>[Blank]</option>");
+  });
   $("#use_column,#remove_column").click(function(event) {
+    event.preventDefault();
     var id = $(event.target).attr("id");
     var selectFrom = id == "use_column" ? "#unused_columns" : "#used_columns";
     var moveTo = id == "use_column" ? "#used_columns" : "#unused_columns";
@@ -178,17 +182,24 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
   for(i=0;i<scs.length;i++) {
     var uid = scs[i].model_field_uid;
     var new_unused = []
-    for(j=0;j<unused_columns.length;j++) {
-      if(unused_columns[j].uid==uid) {
-        if(list_type=='sort_criterions') {
-          unused_columns[j].descending = scs[i].descending
+    if(uid=="_blank") {
+      var blank_obj = new Object;
+      blank_obj.uid = "_blank";
+      blank_obj.label = "[Blank]";
+      used_columns.push(blank_obj);
+    } else {
+      for(j=0;j<unused_columns.length;j++) {
+        if(unused_columns[j].uid==uid) {
+          if(list_type=='sort_criterions') {
+            unused_columns[j].descending = scs[i].descending
+          }
+          used_columns.push(unused_columns[j]);
+        } else {
+          new_unused.push(unused_columns[j]);
         }
-        used_columns.push(unused_columns[j]);
-      } else {
-        new_unused.push(unused_columns[j]);
       }
+      unused_columns = new_unused;
     }
-    unused_columns = new_unused;
   }
   h = "";
   for(i=0;i<unused_columns.length;i++) {
@@ -266,7 +277,7 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
             <td><a href='#' id='used_columns_up'>Up</a><br /><a href='#' id='used_columns_down'>Down</a></td>
           </tr>
           <tr>
-            <td><a href='#' id='use_column'>Add</a></td>
+            <td><a href='#' id='use_column'>Add</a>, <a href='#' id='add_blank' title='Click here to add an empty column to your layout.'>Add Blank</a></td>
             <td><a href='#' id='remove_column'>Remove</a></td>  
           </tr>
         </tbody>
@@ -299,7 +310,7 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
       <%@current_search.search_columns.order("rank ASC").each do |c|%>
       <td>
         <% mf = ModelField.find_by_uid(c.model_field_uid) %>
-        <% if mf.core_module==@core_module %>
+        <% if mf.uid==:_blank || mf.core_module==@core_module %>
             <%=mf.process_export r%>
         <% else %>
         <%   @core_module.children(mf.core_module,r).each do |child| %>
