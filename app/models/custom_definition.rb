@@ -8,6 +8,7 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :import_config_mappings, :dependent => :destroy
   has_many   :sort_criterions, :dependent => :destroy
   has_many   :search_criterions, :dependent => :destroy
+  has_many   :search_columns, :dependent => :destroy
   
   after_save :reset_model_field_constants 
   
