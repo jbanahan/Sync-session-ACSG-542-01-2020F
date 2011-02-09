@@ -62,7 +62,7 @@
 <% end %>
 <div id="accordion" style='width:98%;'>
 <% @messages.each do |message| %>
-  <h3 id='mhead_h3_<%=message.id%>'><a href='#'><span id='mhead_<%=message.id%>' class='<%=message.read ? 'read' : 'unread'%>' ><%=(message.subject.empty? ? '[No Subject]' : message.subject)%> - <%= message.created_at%></span></a></h3>
+  <h3 id='mhead_h3_<%=message.id%>'><a href='#'><span id='mhead_<%=message.id%>' class='<%=message.viewed ? 'read' : 'unread'%>' ><%=(message.subject.empty? ? '[No Subject]' : message.subject)%> - <%= message.created_at%></span></a></h3>
   <div id='<%=message.id%>'>
     <p><%= raw message.body%></p>
     <p>

@@ -1,5 +1,5 @@
 <%=
-map = @ic.import_config_mappings.order("column ASC")
+map = @ic.import_config_mappings.order("column_rank ASC")
 core_module = CoreModule.find_by_class_name(@ic.model_type)
 headers = []
 has_detail = false

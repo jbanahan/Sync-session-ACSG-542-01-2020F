@@ -10,7 +10,7 @@ class ProductsController < ApplicationController
     # GET /products/1
     # GET /products/1.xml
     def show
-      p = Product.find(params[:id])
+      p = Product.find(params[:id], :include => [:custom_values,{:classifications => [:custom_values, :tariff_records]}])
       action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
         @product = p
         respond_to do |format|

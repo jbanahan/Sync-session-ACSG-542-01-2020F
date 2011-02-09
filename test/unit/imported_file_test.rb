@@ -34,8 +34,8 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment = "Order Number,Vendor\n#{base_order.order_number},#{new_vendor}"
     ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => true, :name => "test")
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column => 1)
-    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column => 2)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column_rank => 1)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column_rank => 2)
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
     f.save!
     assert !f.process({:attachment_data => attachment}), "Process passed and should have failed."
@@ -45,10 +45,10 @@ class ImportedFileTest < ActiveSupport::TestCase
   test "record with empty details only creates header" do
     ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => false, :name => "test")
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column => 1)
-    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column => 2)
-    ic.import_config_mappings.create(:model_field_uid => "ordln_puid", :column => 3)
-    ic.import_config_mappings.create(:model_field_uid => "ordln_ordered_qty", :column => 4)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column_rank => 1)
+    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column_rank => 2)
+    ic.import_config_mappings.create(:model_field_uid => "ordln_puid", :column_rank => 3)
+    ic.import_config_mappings.create(:model_field_uid => "ordln_ordered_qty", :column_rank => 4)
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
     f.save!
     order_number = "r_e_d_o_c_h"
@@ -72,7 +72,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment_vals = [vh[:order_number],vh[:order_date],vh[:vendor_id],vh[:puid],vh[:ordered_qty],vh[:price_per_unit]]
     [:ord_ord_num,:ord_ord_date,:ord_ven_id,:ordln_puid,:ordln_ordered_qty,:ordln_ppu].each_with_index do |u,i|
       mf = ModelField.find_by_uid u
-      ic.import_config_mappings.create!(:model_field_uid => mf.uid, :column => i+1)
+      ic.import_config_mappings.create!(:model_field_uid => mf.uid, :column_rank => i+1)
     end
     attachment = attachment_vals.to_csv
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
@@ -83,7 +83,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     fd = found.order_lines.first
     assert fd.product.unique_identifier == vh[:puid], "product uid failed"
     assert fd.ordered_qty == vh[:ordered_qty], "ordered qty failed"
-    assert fd.price_per_unit == vh[:price_per_unit], "ppu failed"
+    assert fd.price_per_unit == vh[:price_per_unit], "Price per unit failed.  Was #{fd.price_per_unit}, should be #{vh[:price_per_unit]}"
   end
   
   test "all product fields" do
@@ -99,7 +99,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment_vals = [vh[:unique_identifier],vh[:div_id],vh[:name],vh[:vendor_id],vh[:vendor_name]]
     [:prod_uid,:prod_div_id,:prod_name,:prod_ven_id,:prod_ven_name].each_with_index do |u,i|
       mf = ModelField.find_by_uid u
-      ic.import_config_mappings.create(:model_field_uid => mf.uid, :column => i+1)
+      ic.import_config_mappings.create(:model_field_uid => mf.uid, :column_rank => i+1)
     end
     attachment = attachment_vals.to_csv
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)

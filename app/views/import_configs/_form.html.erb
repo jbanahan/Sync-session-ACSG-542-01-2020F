@@ -11,7 +11,7 @@
       $("#mapped").children("li").each(function() {
         var uid = $(this).attr('id')
         var uidName = 'import_config[import_config_mappings_attributes]['+i+'][model_field_uid]';
-        var colName = 'import_config[import_config_mappings_attributes]['+i+'][column]';
+        var colName = 'import_config[import_config_mappings_attributes]['+i+'][column_rank]';
         addHiddenFormField($('.edit_import_config'),uidName,uid,uidName,'hidden_mf');
         addHiddenFormField($('.edit_import_config'),colName,i,colName,'hidden_mf');
         i++;

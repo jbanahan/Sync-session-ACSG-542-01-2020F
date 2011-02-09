@@ -16,7 +16,7 @@ function addRow() {
   d = d + "<input id='status_rule_search_criterions_attributes_"+m+"_model_field_uid' name='status_rule[search_criterions_attributes]["+m+"][model_field_uid]' type='hidden' />"; 
   d = d + "<select class='fld_nm' id='status_rule_search_criterions_attributes_"+m+"_model_field_uid' name='ignore_me'><option value='Loading...'>Loading...</option>"; 
   d = d + "<option value=''></option></select></td>"; 
-  d = d + "<td><select id='status_rule_search_criterions_attributes_"+m+"_condition' name='status_rule[search_criterions_attributes]["+m+"][condition]'>"; 
+  d = d + "<td><select id='status_rule_search_criterions_attributes_"+m+"_operator' name='status_rule[search_criterions_attributes]["+m+"][operator]'>"; 
 <%CriterionOperator::OPERATORS.each do |o|%>
   d = d + "<option value='<%=o.key%>'><%=o.label%></option>";
 <%end%>

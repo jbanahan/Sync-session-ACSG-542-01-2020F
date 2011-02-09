@@ -113,7 +113,7 @@ class MessagesController < ApplicationController
   def read
     @message = Message.find(params[:id])
     if @message.user == current_user
-      @message.read = !@message.read
+      @message.viewed = !@message.viewed
       if !@message.save
         errors_to_flash @message
       end 
@@ -125,7 +125,7 @@ class MessagesController < ApplicationController
   end
   
   def read_all
-    current_user.messages.update_all :read => true
+    current_user.messages.update_all :viewed => true
     render :text => "yes"
   end
 end
