@@ -1,7 +1,10 @@
 class User < ActiveRecord::Base
   acts_as_authentic
   
-  attr_accessible :username, :email, :password, :password_confirmation, :time_zone, :email_format, :company_id
+  attr_accessible :username, :email, :password, 
+    :password_confirmation, :time_zone, 
+    :email_format, :company_id,
+    :first_name, :last_name
   
   belongs_to :company
   
