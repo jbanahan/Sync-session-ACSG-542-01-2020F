@@ -12,13 +12,15 @@ class Delivery < ActiveRecord::Base
   has_many   :sales_order_lines, :through => :piece_sets
   
   def can_edit?(user)
+    user.edit_deliveries? && (
     user.company.master? || 
-    (!self.carrier.nil? && self.carrier==user.company) 
+    (!self.carrier.nil? && self.carrier==user.company) )
   end
   def can_view?(user)
+    user.view_deliveries? && (
     user.company.master? || 
     (!self.carrier.nil? && self.carrier==user.company) ||
-    (!self.customer.nil? && self.customer==user.company)
+    (!self.customer.nil? && self.customer==user.company) )
   end
   def locked? 
     (!self.carrier.nil? && self.carrier.locked?) ||

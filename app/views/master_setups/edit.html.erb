@@ -17,5 +17,10 @@ $(function() {
   <%=field_row "System UUID", @ms.uuid%>
   <%=field_row "System Code", f.text_field(:system_code) %>
   <%=field_row "Logo Image", f.text_field(:logo_image) %>
+  <%=field_row "Order Enabled",f.check_box(:order_enabled) %>
+  <%=field_row "Shipment Enabled", f.check_box(:shipment_enabled)%>
+  <%=field_row "Sale Enabled", f.check_box(:sales_order_enabled) %>
+  <%=field_row "Delivery Enabled", f.check_box(:delivery_enabled) %>
+  <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
 </table>
 <%end%>

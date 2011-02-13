@@ -13,10 +13,10 @@ class SalesOrder < ActiveRecord::Base
   validates :customer, :presence => true
 
   def can_view?(user)
-    user.company.master || (!self.customer.nil? && user.company.customer && user.company==self.customer)
+    user.view_sales_orders? && (user.company.master || (!self.customer.nil? && user.company.customer && user.company==self.customer))
   end
   def can_edit?(user)
-    user.company.master 
+    user.edit_sales_orders? && user.company.master 
   end
   def locked?
     !self.customer.nil? && self.customer.locked?

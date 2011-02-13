@@ -97,10 +97,45 @@ class UserTest < ActiveSupport::TestCase
              u.edit_deliveries? ||
              u.add_deliveries?), "Non-customer, non-carrier, & non-master should NOT be able to create/edit/view deliveries."
   end
+
+  test "classification permissions" do
+    u = users(:masteruser)
+    assert u.view_classifications?, "Master user should be able to view classifications."
+    assert u.edit_classifications?, "Master user should be able to edit classifications."
+    assert u.add_classifications?,  "Master user should be able to add classifications."
+    u = users(:customer6user)
+    assert !(u.view_classifications? || u.edit_classifications? || u.add_classifications?), "Customer should not be able to view, edit, add classifications."
+    u = users(:vendoruser)
+    assert u.view_classifications?, "Vendor should be able to view classifications."
+    assert !(u.edit_classifications? || u.add_classifications?), "Vendor should not be able to edit or add classifications."
+    u = users(:carrier4user)
+    assert u.view_classifications?, "Carrier should be able to view classifications."
+    assert !(u.edit_classifications? || u.add_classifications?), "Carrier should not be able to edit or add classifications."
+  end
   
   test "milestone_plan permissions" do
     assert users(:adminuser).edit_milestone_plans?, "Admin user should be able to edit milestone plans."
     assert !users(:masteruser).edit_milestone_plans?, "Master should not be able to edit milestone plans."
     assert !users(:vendoruser).edit_milestone_plans?, "Non-master should not be able to edit milestone plans."
+  end
+
+  test "everything locked when MasterSetup disabled" do 
+    m = MasterSetup.first
+    m.order_enabled = false
+    m.save!
+    a_u = users(:adminuser)
+    assert !a_u.view_orders? && !a_u.edit_orders? && !a_u.add_orders?, "Shouldn't be able to work with orders if they're not enabled."
+    m.shipment_enabled = false
+    m.save!
+    assert !a_u.view_shipments? && !a_u.edit_shipments? && !a_u.add_shipments?, "Shouldn't be able to work with shipments if they're not enabled."
+    m.sales_order_enabled = false
+    m.save!
+    assert !a_u.view_sales_orders? && !a_u.edit_sales_orders? && !a_u.add_sales_orders?, "Shouldn't be able to work with sales orders if they're not enabled."
+    m.delivery_enabled = false
+    m.save!
+    assert !a_u.view_deliveries? && !a_u.edit_deliveries? && !a_u.add_deliveries?, "Shouldn't be able to work with deliveries if they're not enabled."
+    m.classification_enabled = false
+    m.save!
+    assert !a_u.view_classifications? && !a_u.edit_classifications? && !a_u.add_classifications?, "Shouldn't be able to work with classifications if they're not enabled."
   end
 end

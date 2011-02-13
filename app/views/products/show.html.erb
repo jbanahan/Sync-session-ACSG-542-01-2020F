@@ -41,7 +41,7 @@
 <% content_for :action_bar do %>
 <% if @product.can_edit?(current_user) && !@product.locked?%>
   <button id='btn_edit'>Edit</button>
-  <button id='btn_classify'>Classify</button>
+  <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
   <button id='btn_adj_inventory'>Adjust Inventory</button>
 <%end%>
 <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:product_id => @product.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
@@ -72,29 +72,30 @@
 </table>
 
 <%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
-<% @product.classifications.each do |c| %>
-<h2>Classification: <%=c.country.name.titleize%></h2>
-<table>
-<%=show_custom_fields c, {:table=>true} %>
-</table>
-<table class='detail_table'>
-  <thead>
-    <th>HTS 1</th>
-    <th>HTS 2</th>
-    <th>HTS 3</th>    
-  </thead>
-  <tbody>
-    <% c.tariff_records.each do |t| %>
-    <tr>
-      <td><%=t.hts_1%></td>
-      <td><%=t.hts_2%></td>
-      <td><%=t.hts_3%></td>
-    </tr>
-    <% end %>
-  </tbody>
-</table>
+<% if current_user.view_classifications? %>
+  <% @product.classifications.each do |c| %>
+  <h2>Classification: <%=c.country.name.titleize%></h2>
+  <table>
+  <%=show_custom_fields c, {:table=>true} %>
+  </table>
+  <table class='detail_table'>
+    <thead>
+      <th>HTS 1</th>
+      <th>HTS 2</th>
+      <th>HTS 3</th>    
+    </thead>
+    <tbody>
+      <% c.tariff_records.each do |t| %>
+      <tr>
+        <td><%=t.hts_1%></td>
+        <td><%=t.hts_2%></td>
+        <td><%=t.hts_3%></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <% end %>
 <% end %>
-
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:product_id => @product.id, :user_id => current_user.id})

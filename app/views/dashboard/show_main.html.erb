@@ -33,6 +33,7 @@
       <% end %>
     </td>
   </tr>
+  <% if current_user.view_shipments? && current_user.view_orders? %>
   <tr>
     <td style='vertical-align: top;'>
       <h2>Shipments Not Received</h2>
@@ -76,4 +77,5 @@
       <% end %>
     </td>
   </tr>
+  <%end%>
 </table>

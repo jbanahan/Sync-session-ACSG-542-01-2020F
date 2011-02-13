@@ -18,7 +18,7 @@ class Shipment < ActiveRecord::Base
 	end
 	
 	def can_view?(user)
-	  return user.company.master? || (user.company.vendor? && user.company == self.vendor) || (user.company.carrier? && user.company == self.carrier)
+	  return user.view_shipments? && (user.company.master? || (user.company.vendor? && user.company == self.vendor) || (user.company.carrier? && user.company == self.carrier))
 	end
 	
 	def can_edit?(user)

@@ -55,13 +55,13 @@ class User < ActiveRecord::Base
   
   #permissions
   def view_orders?
-    return self.company.master? || self.company.vendor?
+    return master_setup.order_enabled && (self.company.master? || self.company.vendor?)
   end
   def add_orders?
-    return self.company.master?
+    return master_setup.order_enabled && (self.company.master?)
   end
   def edit_orders?
-    return self.company.master?
+    return master_setup.order_enabled && (self.company.master?)
   end
   
   def view_products?
@@ -75,33 +75,43 @@ class User < ActiveRecord::Base
   end
   
   def view_sales_orders?
-    return self.company.master? || self.company.customer?
+    return master_setup.sales_order_enabled && (self.company.master? || self.company.customer?)
   end
   def add_sales_orders?
-    return self.company.master?
+    return master_setup.sales_order_enabled && (self.company.master?)
   end
   def edit_sales_orders?
-    return self.company.master?
+    return master_setup.sales_order_enabled && (self.company.master?)
   end
   
   def view_shipments?
-    return self.company.master? || self.company.vendor? || self.company.carrier?
+    return master_setup.shipment_enabled && (self.company.master? || self.company.vendor? || self.company.carrier?)
   end
   def add_shipments?
-    return self.company.master? || self.company.vendor? || self.company.carrier?
+    return master_setup.shipment_enabled && (self.company.master? || self.company.vendor? || self.company.carrier?)
   end
   def edit_shipments?
-    return self.company.master? || self.company.vendor? || self.company.carrier?
+    return master_setup.shipment_enabled && (self.company.master? || self.company.vendor? || self.company.carrier?)
   end
   
   def view_deliveries?
-    return self.company.master? || self.company.customer? || self.company.carrier?
+    return master_setup.delivery_enabled && (self.company.master? || self.company.customer? || self.company.carrier?)
   end
   def add_deliveries?
-    return self.company.master? || self.company.carrier?
+    return master_setup.delivery_enabled && (self.company.master? || self.company.carrier?)
   end
   def edit_deliveries?
-    return self.company.master? || self.company.carrier?
+    return master_setup.delivery_enabled && (self.company.master? || self.company.carrier?)
+  end
+
+  def view_classifications?
+    return master_setup.classification_enabled && (self.company.master? || self.company.vendor? || self.company.carrier?)
+  end
+  def add_classifications?
+    return view_classifications? && self.company.master?
+  end
+  def edit_classifications?
+    return add_classifications?
   end
   
   def edit_milestone_plans?
@@ -110,5 +120,10 @@ class User < ActiveRecord::Base
   
   def edit_status_rules?
     return self.admin?
+  end
+
+  private
+  def master_setup
+    MasterSetup.first
   end
 end
