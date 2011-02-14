@@ -1,5 +1,5 @@
 class OpenMailer < ActionMailer::Base
-  default :from => "test@brian-glick.com"
+  default :from => "test@aspect9.com"
 
   # Subject can be set in your I18n file at config/locales/en.yml
   # with the following lookup:
@@ -28,7 +28,12 @@ class OpenMailer < ActionMailer::Base
     @request = request
     mail(:to => 'chainio-feedback@aspect9.com',
           :subject => "[Chain.io User Feedback] from #{current_user.full_name} @ #{current_user.company.name}")
-          
-    
+  end
+
+  def send_password_reset(user)
+    @user = user
+    mail(:to => user.email, :subject => "Chain.io Password Reset") do |format| 
+      format.text
+    end
   end
 end

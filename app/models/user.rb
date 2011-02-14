@@ -23,6 +23,12 @@ class User < ActiveRecord::Base
       return nil
     end
   end
+
+  #send password reset email to user
+  def deliver_password_reset_instructions!
+    reset_perishable_token!
+    OpenMailer.send_password_reset(self).deliver
+  end
   
   # is an administrator within the application (as opposed to a sys_admin who is an Aspect 9 employee with master control)
   # If you are a sys_admin, you are automatically an admin (as long as this method is called instead of looking directly at the db value)

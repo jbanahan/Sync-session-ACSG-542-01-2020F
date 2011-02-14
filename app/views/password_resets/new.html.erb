@@ -1,0 +1,14 @@
+<% content_for :javascript do %>
+  $(function() {
+    $("#pwd_reset_submit").button();
+  });
+<% end %>
+Fill out the form below and instructions to reset your password will be emailed to you:<br />
+<br />
+
+<%=form_tag password_resets_path do %>
+  <table>
+    <%=field_row "Email", text_field_tag("email")%>
+  </table>
+  <%= submit_tag "Reset my password", :id=>'pwd_reset_submit' %>
+<% end %>
