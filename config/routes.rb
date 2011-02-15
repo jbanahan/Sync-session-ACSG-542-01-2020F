@@ -84,6 +84,9 @@ OpenChain::Application.routes.draw do
 		resources :users do
 		  get :disable, :on => :member
 		  get :enable, :on => :member
+      resources :debug_records, :only => [:index, :show] do
+        get :destroy_all, :on => :collection
+      end
 		end
 		get :shipping_address_list, :on => :member
   end

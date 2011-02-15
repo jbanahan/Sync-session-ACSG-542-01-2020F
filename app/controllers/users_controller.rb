@@ -54,6 +54,7 @@ class UsersController < ApplicationController
       admin_secure("Only administrators can create users.") {
         @user = User.new(params[:user])
         set_admin_params(@user,params)
+        set_debug_expiration(@user)
         @company = @user.company
         respond_to do |format|
             if @user.save
@@ -77,6 +78,7 @@ class UsersController < ApplicationController
       action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false,:verb=>"edit",:module_name=>"user"}) {
         @company = @user.company
         set_admin_params(@user,params)
+        set_debug_expiration(@user)
         respond_to do |format|
             if @user.update_attributes(params[:user])
                 format.html { redirect_to(company_user_path(@company,@user), :notice => 'Account was successfully updated.') }
@@ -99,6 +101,11 @@ class UsersController < ApplicationController
     end
     
   private
+  def set_debug_expiration(u)
+    if current_user.sys_admin? && !params[:debug_expiration_hours].blank?
+      u.debug_expires = params[:debug_expiration_hours].to_i.hours.from_now
+    end
+  end
   def set_admin_params(u,p)
     u.admin = current_user.admin? && !p[:is_admin].nil? && p[:is_admin]=="true"
     u.sys_admin = current_user.sys_admin? && !p[:is_sys_admin].nil? && p[:is_sys_admin]=="true"
