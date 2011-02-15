@@ -13,6 +13,9 @@
     $( "#btn_messages" ).button().click(function() {
       window.location = '<%=messages_path%>'
     });
+    $("#btn_debug_records").click(function() {
+      window.location = '<%=company_user_debug_records_path @user.company, @user%>';
+    });
   })
 <% end %>
 <% content_for :action_bar do %>
@@ -28,6 +31,9 @@
     <% else %>
       <button id='btn_messages'>Messages</button>
     <% end %>
+  <% end %>
+  <% if current_user.sys_admin? && !@user.debug_records.blank? %>
+    <button id='btn_debug_records'>Debug Records</button>
   <% end %>
 <% end %>
 <h1>
@@ -46,5 +52,8 @@
 <%=field_row "Administrator", @user.admin?%>
 <% if current_user.sys_admin? %>
   <%=field_row "Sys Admin", @user.sys_admin? %>
+  <% if @user.debug_active? %>
+    <%=field_row "Debug Expires", @user.debug_expires %>
+  <% end %>
 <% end %>
 </table>

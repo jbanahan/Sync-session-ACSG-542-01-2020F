@@ -6,50 +6,26 @@
 </script>
 <%= form_for([@company, @user]) do |f| %>
   <%= f.hidden_field :company_id %>
-  <div class="field">
-    <%= f.label :username %><br />
-    <%= f.text_field :username %>
-  </div>
-  <div class="field">
-    <%= f.label :email %><br />
-    <%= f.text_field :email %>
-  </div>
-  <div class="field">
-    <%= f.label :first_name %><br />
-    <%= f.text_field :first_name %>
-  </div>
-  <div class="field">
-    <%= f.label :last_name %><br />
-    <%= f.text_field :last_name %>
-  </div>
-  <div class="field">
-    <%= f.label :password %><br />
-    <%= f.password_field :password %>
-  </div>
-  <div class="field">
-    <%= f.label :password_confirmation %><br />
-    <%= f.password_field :password_confirmation %>
-  </div>
-  <div class="field">
-    <%= f.label :time_zone %><br />
-    <%= f.time_zone_select :time_zone, ActiveSupport::TimeZone.us_zones %>
-  </div>
-  <div class="field">
-    <%= f.label :email_format %><br />
-    <%= f.select :email_format, ["html","text"]%>
-  </div>
+  <table>
+  <%=field_row "Username", f.text_field(:username) %>
+  <%=field_row "Email", f.text_field(:email) %>
+  <%=field_row "First Name", f.text_field(:first_name)%>
+  <%=field_row "Last Name", f.text_field(:last_name)%>
+  <%=field_row "Password", f.password_field(:password) %>
+  <%=field_row "Confirm Pasword", f.password_field(:password_confirmation) %>
+  <%=field_row "Time Zone", f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones) %>
+  <%=field_row "Email Format", f.select(:email_format,["html","text"])%>
   <% if current_user.admin? %>
-  <div class="field">
-    <label for="admin">Administrator</label><br />
-    <input type='checkbox' name='is_admin' id='admin' value='true' <%=@user.admin ? "checked='true'" : ""%>/>
-  </div>
+    <%=field_row "Administrator", raw("<input type='checkbox' name='is_admin' id='admin' value='true' #{@user.admin ? "checked='true'" : ""}/>")%>
     <% if current_user.sys_admin? %>
-    <div class="field">
-      <label for="sys_admin">Sys Administrator</label><br />
-      <input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' <%=@user.sys_admin ? "checked='true'" : ""%> />
-    </div>
-    <%end%>
-  <% end %>
+      <%=field_row "Sys Administrator", raw("<input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' #{@user.sys_admin ? "checked='true'" : ""} />  (Aspect 9 Employees Only)")%>
+      <% if @user.debug_active? %>
+        <%=field_row "Debug Will Expire", @user.debug_expires %>
+      <% end %>
+      <%=field_row "Set Debug Expiration", select_tag(:debug_expiration_hours,options_for_select([["Don't Change",""],["Now","0"],["1 hour","1"],["4 hours","4"],["8 hours","8"],["24 hours","24"]])) %>
+    <% end %>
+ <% end %>
+  </table>
   <div class="actions">
     <%= f.submit %>
   </div>

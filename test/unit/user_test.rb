@@ -138,4 +138,14 @@ class UserTest < ActiveSupport::TestCase
     m.save!
     assert !a_u.view_classifications? && !a_u.edit_classifications? && !a_u.add_classifications?, "Shouldn't be able to work with classifications if they're not enabled."
   end
+  
+  test "debug_active?" do 
+    u = User.first
+    u.debug_expires = Time.now - 1.hour
+    assert !u.debug_active?, "Debug shouldn't be active if it expired an hour ago."
+    u.debug_expires = nil
+    assert !u.debug_active?, "Debug shouldn't be active if it is nil"
+    u.debug_expires = Time.now + 1.hour
+    assert u.debug_active?, "Debug should be active it if expires an hour from now."
+  end
 end

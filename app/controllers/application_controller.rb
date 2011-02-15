@@ -1,8 +1,11 @@
 class ApplicationController < ActionController::Base
+    require 'yaml'
+
     protect_from_forgery
     before_filter :require_user
     before_filter :update_message_count
     before_filter :set_user_time_zone
+    before_filter :log_request
 
     helper_method :current_user
     helper_method :master_company
@@ -14,7 +17,14 @@ class ApplicationController < ActionController::Base
     helper_method :merge_params
     helper_method :sortable_search_heading
     helper_method :master_setup
-    
+   
+    def log_request
+      if current_user && current_user.debug_active?
+        DebugRecord.create(:user_id => current_user.id, :request_method => request.method,
+            :request_path => request.fullpath, :request_params => params.to_yaml)
+      end
+    end
+
     def help
         Helper.instance
     end

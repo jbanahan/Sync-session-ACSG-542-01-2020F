@@ -11,7 +11,8 @@ class User < ActiveRecord::Base
   has_many   :histories, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy
   has_many   :search_setups, :dependent => :destroy
-  has_many   :messages
+  has_many   :messages, :dependent => :destroy
+  has_many   :debug_records, :dependent => :destroy
   
   validates  :company, :presence => true
   
@@ -24,6 +25,9 @@ class User < ActiveRecord::Base
     end
   end
 
+  def debug_active?
+    !self.debug_expires.blank? && self.debug_expires>Time.now
+  end
   #send password reset email to user
   def deliver_password_reset_instructions!
     reset_perishable_token!

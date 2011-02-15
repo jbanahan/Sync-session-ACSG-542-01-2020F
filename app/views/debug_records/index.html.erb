@@ -1,0 +1,28 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#btn_destroy_all").click(function() {
+    if(window.confirm("Are you sure you want to delete all debug records?")) {
+      window.location = '<%=destroy_all_company_user_debug_records_path @user.company, @user%>';
+    }
+  }); 
+});
+<% end %>
+<style>
+.params {margin-left: 2em;}
+.debug_record {margin-bottom: 2em;}
+</style>
+<% content_for :action_bar do %>
+<button id='btn_destroy_all'>Delete All</button>
+<% end %>
+<h1>User: <%=@user.full_name%> (<%=@user.company.name%>)</h1>
+<% @debug_records.each do |d| %>
+<div class='debug_record'>
+Created At: <b><%=d.created_at%></b><br />
+Method: <b><%=d.request_method%></b><br />
+Path: <b><%=d.request_path%></b><br />
+Params:<br />
+<pre class='params'>
+<%=d.request_params%>
+</pre>
+</div>
+<% end %>
