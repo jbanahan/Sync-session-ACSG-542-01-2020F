@@ -15,6 +15,7 @@ $(function() {
 <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
 <table>
   <%=field_row "System UUID", @ms.uuid%>
+  <%=field_row "Version", @ms.version %>
   <%=field_row "System Code", f.text_field(:system_code) %>
   <%=field_row "Logo Image", f.text_field(:logo_image) %>
   <%=field_row "Order Enabled",f.check_box(:order_enabled) %>
