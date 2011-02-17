@@ -1,12 +1,11 @@
 require 'test_helper'
 
 class OpenMailerTest < ActionMailer::TestCase
-  test "send_change" do
-    mail = OpenMailer.send_change
-    assert_equal "Send change", mail.subject
-    assert_equal ["to@example.org"], mail.to
-    assert_equal ["from@example.com"], mail.from
-    assert_match "Hi", mail.body.encoded
+
+  test "send_new_system_init" do
+    mail = OpenMailer.send_new_system_init("pass")
+    assert_equal ["admin@aspect9.com"]
+    assert_match "Admin Pwd: pass", mail.encoded
   end
 
 end

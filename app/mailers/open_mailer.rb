@@ -36,4 +36,11 @@ class OpenMailer < ActionMailer::Base
       format.text
     end
   end
+
+  def send_new_system_init(password)
+    @pwd = password
+    mail(:to => "admin@aspect9.com", :subject => "New System Initialization") do |format|
+      format.text
+    end
+  end
 end
