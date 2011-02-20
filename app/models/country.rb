@@ -77,6 +77,7 @@ class Country < ActiveRecord::Base
       if c.nil?
         c = Country.new
         c.iso_code = c_array[1]
+      end
       unless c.name == c_array[0]
         c.name = c_array[0] 
         c.save
