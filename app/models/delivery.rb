@@ -11,7 +11,8 @@ class Delivery < ActiveRecord::Base
   has_many   :histories, :dependent => :destroy
   has_many   :sales_order_lines, :through => :piece_sets
   has_many   :comments, :as => :commentable
-  
+  has_many   :attachments, :as => :attachable
+
   def can_edit?(user)
     user.edit_deliveries? && (
     user.company.master? || 

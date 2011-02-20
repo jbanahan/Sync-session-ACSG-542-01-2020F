@@ -53,10 +53,22 @@
   <% end %>
 <% end %>
 
-<%= render 'orders/header' %>
+<!-- fields -->
+<table class='detail_table'>
+  <thead><tr><th>Order Information</th></tr></thead>
+  <tbody><tr><td>
+  <table>
+  <%=field_row "Order Number", @order.order_number  %>
+  <%=field_row "Ship To", render(:partial=>'addresses/display',:locals=>{ :ad => @order.ship_to, :address_id => 'ship_to_ad' } ) %>
+  <%=field_row "Order Date", @order.order_date %>
+  <%=field_row "Division", (@order.division.blank? ? "" : @order.division.name) %>
+  <%=field_row "Vendor", (@order.vendor.blank? ? "" : @order.vendor.name) %>
+  <%=show_custom_fields @order, {:table=>true}%>
+  </table>
+  </td></tr>
+  </tbody>
+</table>
 <br />
-
-	
 <table class="detail_table">
 	<thead>
 	  <th>Line</th>
@@ -101,6 +113,7 @@
 <button id='btn_add_line'>Add</button>
 <% end %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
 <% form_line = @order_line.nil? ? @order.order_lines.build : @order_line %>
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>

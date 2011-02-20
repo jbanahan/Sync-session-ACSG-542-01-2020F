@@ -11,6 +11,7 @@ class Shipment < ActiveRecord::Base
   has_many   :order_lines, :through => :piece_sets
   has_many   :comments, :as => :commentable
   has_many   :item_change_subscriptions
+  has_many   :attachments, :as => :attachable
 
   validates   :vendor, :presence => true
 	

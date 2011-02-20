@@ -12,7 +12,7 @@ class Order < ActiveRecord::Base
 	has_many   :histories, :dependent => :destroy
 	has_many   :item_change_subscriptions
   has_many   :comments, :as => :commentable
-	
+  has_many   :attachments, :as => :attachable 	
 	
 	def related_shipments
 	  r = Set.new

@@ -1,5 +1,17 @@
-<div id='comments_container'>
-  <h2>Comments <span style='font-weight: normal; font-size: 90%;'>(<a href='#' class='comment_exp_all'>open all</a><a href='#' class='comment_cls_all' style='display:none;'>close all</a>)</span></h2>
+<%=content_for :javascript do %>
+$(function() {
+  $("#mod_comments_add").dialog({autoOpen:false,title:'Add Comment',
+      width:'auto',
+      buttons:{"Save":function() {$("#frm_comment_add").submit();},
+               "Cancel":function() {$("#mod_comments_add").dialog('close');}}  
+    });
+  $("#btn_comment_add").click(function() {
+    $("#mod_comments_add").dialog('open');
+  });
+});
+<% end %>
+<div id='comments_container section_insert'>
+  <h2 class='section_insert_heading'>Comments <span style='font-weight: normal; font-size: 50%;'>(<a href='#' class='comment_exp_all'>open all</a><a href='#' class='comment_cls_all' style='display:none;'>close all</a>)</span></h2>
   <% unless commentable.comments.empty? %>
   <table class='comment_table'>
     <tbody>
@@ -38,11 +50,13 @@
     </tbody>
   </table>
   <% end %>
-  <%=form_for commentable.comments.build do |f| %>
+  <button id='btn_comment_add'>Add</button>
+</div>
+<div id='mod_comments_add' style='display:none;'>
+  <%=form_for(commentable.comments.build, :html=>{:id=>'frm_comment_add'}) do |f| %>
     <%=f.hidden_field :commentable_id %>
     <%=f.hidden_field :commentable_type %>
     <%=f.text_field :subject, :class=>'comment_input' %><br />
     <%=f.text_area :body, :rows => '5', :class=>'comment_input' %><br />
-    <%=f.submit 'Add', :class=>'comment_sub'%>
   <%end%>
 </div>

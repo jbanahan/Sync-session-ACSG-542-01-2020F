@@ -59,10 +59,10 @@
 <% end %>
 
 <div class='content_head'>
-	<span style="font-size:90%">Reference:</span>
+	<span class='content_head_label'>Reference:</span>
 	<b><%= @shipment.reference %></b>
 	<br />
-	<span style="font-size:90%">Vendor:</span>
+	<span class='content_head_label'>Vendor:</span>
   <b><%= @shipment.vendor.name %></b>
   <br />&nbsp;
 </div>
@@ -137,6 +137,7 @@
 </table>
 <% end %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @shipment} %>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @shipment}%>
 <div id='mod_pick_order' style='display:none;'>
   <p id='add_ord_content'>
     Add Order: <%= select_tag "order_id", options_from_collection_for_select(Order.find_by_vendor(@shipment.vendor), "id", "order_number") %>

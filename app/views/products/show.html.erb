@@ -52,7 +52,9 @@
 <% if current_user.view_deliveries? && @product.has_deliveries? %><button id='btn_delivery_jump'>Deliveries</button><%end%>
 <% end %>
 
-<table width="97%">
+<table class='detail_table'>
+<thead><tr><th>Product Information</th></tr></thead>
+<tbody>
 <tr><td>
 <!-- fields -->
 	<table>
@@ -65,16 +67,15 @@
 	  <%=field_row "Inventory Quantity", @product.current_inventory_qty %>
     <%=show_custom_fields @product, {:table=>true}%>
 	</table>
-</td><td style='vertical-align:top;'>
-<!-- attachments -->
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
 </td></tr>
+</tbody>
 </table>
 
-<%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
 <% if current_user.view_classifications? %>
+<div class='attachments_container section_insert'>
+  <h2 class='section_insert_heading'>Classifications</h2>
   <% @product.classifications.each do |c| %>
-  <h2>Classification: <%=c.country.name.titleize%></h2>
+  <h2><%=c.country.name.titleize%></h2>
   <table>
   <%=show_custom_fields c, {:table=>true} %>
   </table>
@@ -95,7 +96,12 @@
     </tbody>
   </table>
   <% end %>
+</div>
 <% end %>
+
+<%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
+
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:product_id => @product.id, :user_id => current_user.id})

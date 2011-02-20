@@ -31,8 +31,15 @@ img {
 #search_setup_outer {
   width: 95%;
 }
+.section_insert {
+  margin-top: 1em;
+}
+.section_insert_heading {
+  font-size: 2em; 
+}
 .detail_table {
-    width: 95%;
+  font-size: 90%;
+  width: 95%;
 }
 .detail_table td {
     vertical-align: top;
@@ -40,6 +47,7 @@ img {
 .detail_table thead, .date_grid td:hover {
     background-color: #151515;
     color: #FFFFFF;
+    text-align: left;
 }
 .detail_table thead a {
   color: white;

@@ -10,6 +10,7 @@ class SalesOrder < ActiveRecord::Base
   has_many    :item_change_subscriptions
   has_many    :sales_order_lines, :dependent => :destroy
   has_many   :comments, :as => :commentable
+  has_many   :attachments, :as => :attachable
 
   validates :customer, :presence => true
 
