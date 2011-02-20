@@ -10,7 +10,10 @@ if (["companies","users"] - ActiveRecord::Base.connection.tables).length == 0
   u = User.where(:company_id=>c).where(:username=>"chainio_admin").first
   if u.nil?
     pass = ActiveSupport::SecureRandom.base64(6)
-    u = c.users.create(:username=>"chainio_admin",:password=>pass,:password_confirmation=>pass,:email=>"chainio@aspect9.com",:admin=>true,:sys_admin=>true)
+    u = c.users.build(:username=>"chainio_admin",:password=>pass,:password_confirmation=>pass,:email=>"chainio@aspect9.com")
+    u.sys_admin = true
+    u.admin = true
+    u.save
     OpenMailer.send_new_system_init(pass).deliver
   end
 end
