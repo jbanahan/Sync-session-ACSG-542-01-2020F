@@ -74,7 +74,9 @@ class Country < ActiveRecord::Base
     all_countries.each do |c_array|
       raise "Country array should have been 2 elements, was #{c_array.length}.  #{c_array.length>0 ? "First element: "+c_array[0] : ""}" unless c_array.length == 2
       c = Country.where(:iso_code => c_array[1]).first
-      c = Country.new(:iso_code => c_array[1]) if c.nil?
+      if c.nil?
+        c = Country.new
+        c.iso_code = c_array[1]
       unless c.name == c_array[0]
         c.name = c_array[0] 
         c.save
