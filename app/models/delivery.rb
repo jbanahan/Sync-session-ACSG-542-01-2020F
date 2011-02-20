@@ -10,6 +10,7 @@ class Delivery < ActiveRecord::Base
   has_many   :piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
   has_many   :sales_order_lines, :through => :piece_sets
+  has_many   :comments, :as => :commentable
   
   def can_edit?(user)
     user.edit_deliveries? && (

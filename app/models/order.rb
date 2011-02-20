@@ -11,6 +11,7 @@ class Order < ActiveRecord::Base
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number'
 	has_many   :histories, :dependent => :destroy
 	has_many   :item_change_subscriptions
+  has_many   :comments, :as => :commentable
 	
 	
 	def related_shipments

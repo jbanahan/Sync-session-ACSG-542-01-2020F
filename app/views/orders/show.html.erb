@@ -100,6 +100,7 @@
 <% if @order_line.nil? && @order.can_edit?(current_user)%>
 <button id='btn_add_line'>Add</button>
 <% end %>
+<%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
 <% form_line = @order_line.nil? ? @order.order_lines.build : @order_line %>
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>

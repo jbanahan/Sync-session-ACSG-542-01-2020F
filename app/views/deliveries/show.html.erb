@@ -123,6 +123,7 @@
   </tbody>
 </table>
 <% end %>
+<%=render :partial => 'shared/comments', :locals => {:commentable => @delivery} %>
 <div id='mod_pick_order' style='display:none;'>
   <p id='add_ord_content'>
     Add Order: <%= select_tag "sales_order_id", options_from_collection_for_select(SalesOrder.where("customer_id = ? ",@delivery.customer), "id", "order_number") %>

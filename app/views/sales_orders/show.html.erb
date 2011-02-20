@@ -40,11 +40,7 @@ $(function() {
   <%= @sales_order.customer.name %>
 </p>
 
-<p>
-  <b>Comments:</b>
-  <%= @sales_order.comments %>
-</p>
- <%=show_custom_fields @sales_order%>
+<%=show_custom_fields @sales_order%>
 <div>
 <% form_line = @sales_order_line.nil? ? @sales_order.sales_order_lines.build : @sales_order_line %>
 <%= form_for([@sales_order, form_line]) do |f| %>
@@ -86,7 +82,7 @@ $(function() {
 </table>
 <% end %>
 </div>
-
+<%=render :partial => 'shared/comments', :locals => {:commentable => @sales_order} %>
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:sales_order_id => @sales_order.id, :user_id => current_user.id})
