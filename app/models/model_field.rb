@@ -72,13 +72,77 @@ class ModelField
     end
   end 
   
-  add_fields CoreModule::PRODUCT, [
-    [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
-    [2,:prod_div_id,:division_id,"Division ID",{:data_type=>:integer}],
-    [3,:prod_name,:name,"Name",{:data_type=>:string}],
-    [4,:prod_uom,:unit_of_measure,"Unit of Measure",{:data_type=>:string}],
-    [5,:prod_ven_id,:vendor_id,"Vendor ID"],
-    [6,:prod_ven_name, :name,"Vendor Name", {
+  def self.make_division_arrays(rank_start,uid_prefix,label_prefix,table_name)
+    r = [
+      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"#{label_prefix}Division ID"]
+    ]
+    n = [rank_start+1,"#{uid_prefix}_div_name".to_sym, :name,"#{label_prefix}Division Name",{
+      :import_lambda => lambda {|obj,data|
+        d = Division.where(:name => data).first
+        obj.division = d
+        unless d.nil?
+          return "Division set to #{d.name}"
+        else
+          return "Division not found with name \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|obj| obj.division.nil? ? "" : obj.division.name},
+      :join_statement => "LEFT OUTER JOIN divisions AS #{table_name}_div on #{table_name}_div = #{table_name}.division_id",
+      :join_alias => "#{table_name}_div",
+      :data_type => :string
+    }]
+    r << n
+    r
+  end
+  def self.make_carrier_arrays(rank_start,uid_prefix,label_prefix,table_name)
+    r = [
+      [rank_start,"#{uid_prefix}_car_id".to_sym,:carrier_id,"#{label_prefix}Carrier ID"]
+    ]
+    n = [rank_start+1,"#{uid_prefix}_car_name".to_sym, :name,"#{label_prefix}Carrier Name",{
+      :import_lambda => lambda {|obj,data|
+        carrier = Company.where(:name => data).where(:carrier => true).first
+        obj.carrier = carrier
+        unless carrier.nil?
+          return "Carrier set to #{carrier.name}"
+        else
+          return "Carrier not found with name \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|obj| obj.carrier.nil? ? "" : obj.carrier.name},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp = #{table_name}.carrier_id",
+      :join_alias => "#{table_name}_car_comp",
+      :data_type => :string
+    }]
+    r << n
+    r
+  end
+  def self.make_customer_arrays(rank_start,uid_prefix,label_prefix,table_name) 
+    r = [
+      [rank_start,"#{uid_prefix}_cust_id".to_sym,:customer_id,"#{label_prefix}Customer ID"]
+    ]
+    n = [rank_start+1,"#{uid_prefix}_cust_name".to_sym, :name,"#{label_prefix}Customer Name", {
+      :import_lambda => lambda {|detail,data|
+        c = Company.where(:name => data).where(:customer => true).first
+        detail.customer = c
+        unless c.nil?
+          return "Customer set to #{c.name}"
+        else
+          return "Customer not found with name \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|detail| detail.customer.nil? ? "" : detail.customer.name},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_cust_comp on #{table_name}_cust_comp.id = #{table_name}.customer_id",
+      :join_alias => "#{table_name}_cust_comp",
+      :data_type=>:string
+    }]
+    r << n
+    r
+  end
+  def self.make_vendor_arrays(rank_start,uid_prefix,label_prefix,table_name) 
+    r = [
+      [rank_start,"#{uid_prefix}_ven_id".to_sym,:vendor_id,"#{label_prefix}Vendor ID"]
+    ]
+    n = [rank_start+1,"#{uid_prefix}_ven_name".to_sym, :name,"#{label_prefix}Vendor Name", {
       :import_lambda => lambda {|detail,data|
         vendor = Company.where(:name => data).where(:vendor => true).first
         detail.vendor = vendor
@@ -88,11 +152,64 @@ class ModelField
           return "Vendor not found with name \"#{data}\""
         end
       },
-      :export_lambda => lambda {|detail| detail.vendor.name},
-      :join_statement => "LEFT OUTER JOIN companies AS prod_vend_comp on prod_vend_comp.id = products.vendor_id",
-      :join_alias => "prod_vend_comp",
+      :export_lambda => lambda {|detail| detail.vendor.nil? ? "" : detail.vendor.name},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_vend_comp on #{table_name}_vend_comp.id = #{table_name}.vendor_id",
+      :join_alias => "#{table_name}_vend_comp",
       :data_type=>:string
-    }],
+    }]
+    r << n
+    r
+  end
+
+  #Don't use this.  Use make_ship_from_arrays or make_ship_to_arrays
+  def self.make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,ft)
+    raise "Invalid shipping from/to indicator provided: #{ft}" unless ["from","to"].include?(ft)
+    ftc = ft.titleize
+    r = [
+      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"#{label_prefix}Ship #{ftc} ID"]
+    ]
+    n = [rank_start+1,"#{uid_prefix}_ship_#{ft}_name".to_sym,:name,"#{label_prefix}Ship #{ftc} Name", {
+      :import_lambda => lambda {|obj,data|
+        a = Address.where(:name=>data).where(:shipping => true).first
+        if ft=="to"
+          obj.ship_to = a
+        elsif ft=="from"
+          obj.ship_from = a
+        end
+        unless a.nil?
+          return "Ship #{ftc} set to #{a.name}"
+        else
+          return "Ship #{ftc} not found with name \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|obj| 
+        if ft=="to"
+          return obj.ship_to.nil? ? "" : obj.ship_to.name
+        elsif ft=="from"
+          return obj.ship_from.nil? ? "" : obj.ship_from.name
+        end
+      },
+      :join_statement => "LEFT OUTER JOIN addresses AS #{table_name}_ship_#{ft} on #{table_name}_ship_#{ft}.id = #{table_name}.ship_#{ft}_id",
+      :join_alias => "#{table_name}_ship_#{ft}",
+      :data_type=>:string
+    }]
+    r << n
+    r
+  end
+  
+  def self.make_ship_to_arrays(rank_start,uid_prefix,label_prefix,table_name)
+    make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,"to")
+  end
+  def self.make_ship_from_arrays(rank_start,uid_prefix,label_prefix,table_name)
+    make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,"from")
+  end
+
+  add_fields CoreModule::PRODUCT, [
+    [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
+    #2 is available to use
+    [3,:prod_name,:name,"Name",{:data_type=>:string}],
+    [4,:prod_uom,:unit_of_measure,"Unit of Measure",{:data_type=>:string}],
+    #5 and 6 are now created with the make_vendor_arrays method below, Don't use them.
     [7,:prod_status_name, :name, "Status", {
       :import_lambda => lambda {|detail,data|
         status = StatusRule.where(:name => data).where(:module_type => CoreModule::PRODUCT.class_name)
@@ -108,21 +225,7 @@ class ModelField
       :join_alias => "prod_status_name",
       :data_type=>:string
     }],
-    [9,:prod_div_name, :name, "Division Name", {
-      :import_lambda => lambda {|obj,data|
-        div = Division.where(:name=>data)
-        obj.division = div unless div.nil?
-        unless div.nil?
-          return "Division set to #{div.name}"
-        else
-          return "Division with name \"#{data}\" not found"
-        end
-      },
-      :export_lambda => lambda {|obj| obj.division.nil? ? "" : obj.division.name },
-      :join_statement => "LEFT OUTER JOIN divisions AS prod_div_name ON prod_div_name.id = products.division_id",
-      :join_alias => "prod_div_name",
-      :data_type=>:string
-    }],
+    #9 is available to use
     [10,:prod_class_count, :class_count, "Complete Classification Count", {
       :import_lambda => lambda {|obj,data|
         return "Complete Classification Count was ignored. (read only)"},
@@ -138,13 +241,16 @@ class ModelField
       :data_type => :integer
     }]
   ]
-    
+  add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","","products")
+  add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","","products")
+
   add_fields CoreModule::ORDER, [
     [1,:ord_ord_num,:order_number,"Header - Order Number"],
     [2,:ord_ord_date,:order_date,"Header - Order Date",{:data_type=>:date}],
-    [5,:ord_ven_id,:vendor_id,"Header - Vendor ID",{:data_type=>:integer}]
   ]
-  
+  add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","Header - ","orders")
+  add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","Header - ","orders")
+
   add_fields CoreModule::ORDER_LINE, [
     [1,:ordln_line_number,:line_number,"Line - Line Number",{:data_type=>:integer}],
     [2,:ordln_puid,:unique_identifier,"Line - Product Unique Identifier",{
@@ -161,32 +267,33 @@ class ModelField
     [3,:ordln_ordered_qty,:ordered_qty,"Line - Order Quantity",{:data_type=>:decimal}],
     [4,:ordln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type=>:decimal}]
   ]
+
   add_fields CoreModule::SHIPMENT, [
     [1,:shp_ref,:reference,"Reference Number",{:data_type=>:string}],
     [2,:shp_mode,:mode,"Mode",{:data_type=>:string}],
-    [3,:shp_ven_id,:vendor_id,"Vendor ID",{:data_type=>:integer}],
-    [4,:shp_car_id,:carrier_id,"Carrier ID",{:data_type=>:integer}],
-    [5,:shp_sf_id,:ship_from_id,"Ship From ID",{:data_type=>:integer}],
-    [6,:shp_st_id,:ship_to_id,"Ship To ID",{:data_type=>:integer}]
   ]
-  
+  add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","","shipments")
+  add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","","shipments")
+  add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","","shipments")
+  add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","","shipments")
+
   add_fields CoreModule::SALE, [
     [1,:sale_order_number,:order_number,"Header - Order Number",{:data_type=>:string}],
     [2,:sale_order_date,:order_date,"Header - Order Date",{:data_type=>:date}],
-    [3,:sale_cust_id,:customer_id,"Header - Customer ID",{:data_type=>:integer}],
-    [4,:sale_comm,:comments,"Header - Comments",{:data_type=>:string}],
     [5,:sale_div_id,:division_id,"Header - Division ID",{:data_type=>:integer}],
-    [6,:sale_st_id,:ship_to_id,"Header - Ship To ID",{:data_type=>:integer}]
   ]
+  add_fields CoreModule::SALE, make_customer_arrays(100,"sale","Header - ","sales_orders")
+  add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","Header - ","sales_orders")
   
   add_fields CoreModule::DELIVERY, [
     [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
     [2,:del_mode,:mode,"Mode",{:data_type=>:string}],
-    [3,:del_sf_id,:ship_from_id,"Ship From ID",{:data_type=>:integer}],
-    [4,:del_st_id,:ship_to_id,"Ship To ID",{:data_type=>:integer}],
-    [5,:del_car_id,:carrier_id,"Carrier ID",{:data_type=>:integer}],
-    [6,:del_cust_id,:customer_id,"Customer ID",{:data_type=>:integer}]
   ]
+  add_fields CoreModule::DELIVERY, make_ship_from_arrays(100,"del","","deliveries")
+  add_fields CoreModule::DELIVERY, make_ship_to_arrays(200,"del","","deliveries")
+  add_fields CoreModule::DELIVERY, make_carrier_arrays(300,"del","","deliveries")
+  add_fields CoreModule::DELIVERY, make_customer_arrays(400,"del","","deliveries")
+  
 
   def self.add_custom_fields(core_module,base_class,label_prefix,parameters={})
     max = 0
