@@ -197,7 +197,7 @@ class ProductsController < ApplicationController
         product.classifications.each do |classification|
           product_params[:classifications_attributes].each do |k,v|
             if v[:country_id] == classification.country_id.to_s
-              update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
+              update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf] unless params[:classification_custom].nil?
             end  
           end
         end    
