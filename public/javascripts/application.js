@@ -260,7 +260,7 @@ function getAddress(wrapper,address_id,options) {
         h = h + data.address.city+',';
       }
       h = h + makeLine(data.address.state,false) + ' ' + makeLine(data.address.postal_code,false)
-          + '</br>' + makeLine(data.address.country.name,false);
+          + '</br>' + makeLine(data.address.country==null ? "" : data.address.country.name,false);
       wrapper.html(h);
     });
   }
