@@ -280,10 +280,10 @@ class ModelField
   add_fields CoreModule::SALE, [
     [1,:sale_order_number,:order_number,"Header - Order Number",{:data_type=>:string}],
     [2,:sale_order_date,:order_date,"Header - Order Date",{:data_type=>:date}],
-    [5,:sale_div_id,:division_id,"Header - Division ID",{:data_type=>:integer}],
   ]
   add_fields CoreModule::SALE, make_customer_arrays(100,"sale","Header - ","sales_orders")
   add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","Header - ","sales_orders")
+  add_fields CoreModule::SALE, make_division_arrays(300,"sale","Heade - ","sales_orders")
   
   add_fields CoreModule::DELIVERY, [
     [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
