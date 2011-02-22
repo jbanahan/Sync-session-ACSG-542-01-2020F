@@ -38,8 +38,8 @@ $(function() {
       <%=f.hidden_field :attachable_id %>
       <%=f.hidden_field :attachable_type %>
       <%=f.collection_select :attachment_type, AttachmentType.all, :name, :name %>
-      <%=f.file_field :attached %><br />
-      <%=f.submit "Attach", :id=>"sub_attach"%>
+      <%=f.file_field :attached %>
+      <%=f.submit "Attach", :id=>"sub_attach", :class=>"attach_button"%>
       <% end %>
     </div>
   <%end%>

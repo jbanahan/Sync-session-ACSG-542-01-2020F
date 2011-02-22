@@ -92,6 +92,7 @@ $( function() {
       myRow.prev().hide();
       myRow.next().show();
     });
+    attachmentButton();
 });
 $(document).ready( function() {
     handleCustomFieldCheckboxes();
@@ -103,6 +104,27 @@ $(document).ready( function() {
     setSearchFields($("#srch_fields"),$("#srch_val"),$("#srch_cond"));
 
 });
+function attachmentButton() {
+  $(".attach_button").button();
+  $(".attach_button").each(function() {
+    var fileInput = $(this).prevAll(":file");
+    var aButton = $(this);
+    if(fileInput.length!=1) {
+      //either many file objects or none, either way we can't automate behavior
+      return;
+    }
+    if(fileInput.val().length==0) {
+      $(this).hide();
+    }
+    fileInput.change(function() {
+      if(fileInput.val().length==0) {
+        aButton.fadeOut('slow');
+      } else {
+        aButton.fadeIn('slow');
+      }
+    });
+  });
+}
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
