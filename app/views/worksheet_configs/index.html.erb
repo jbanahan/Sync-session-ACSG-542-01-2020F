@@ -1,0 +1,12 @@
+<table class='detail_table'>
+  <thead><tr><th>Name</th><th>Module</th><th>&nbsp;</th></tr></thead>
+  <tbody>
+    <% @worksheet_configs.each do |w| %>
+      <tr class='hover'>
+        <td><%=w.name%></td>
+        <td><%=CoreModule.find_by_class_name(w.module_type).label %></td>
+        <td><%=link_to "Go", edit_worksheet_config_path(w) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

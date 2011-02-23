@@ -1,0 +1,84 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#fm_wc").submit(function() {
+    prep_rows();
+  });
+  $("#btn_save").click(function() {
+    if(prep_rows()) {
+      $("#frm_wc").submit();
+    }
+  });
+  $(".in_xl_row").change(function() {
+    var testVal = $(this).val().replace(/[ ]/ig, "");
+    if(testVal.length>0 && isNaN(testVal)) {
+      $(this).addClass("bad_data");
+    } else {
+      $(this).removeClass("bad_data");
+      $(this).prev(".hd_xl_row").val(parseInt(testVal)-1);
+    }
+  });
+  $("#btn_cancel").click(function() {window.location = '<%=worksheet_configs_path%>';})
+  $(".button_to").children().children("input:submit").button();
+  $(".m_remove").click(function(ev) {
+    destroy_nested('m',$(this));
+    ev.preventDefault();
+  });
+  $("#add_row").click(function(evt) {
+    evt.preventDefault();
+    var r = $(".m_row").first().clone(true);
+    var m = new Date().getTime();
+    r.attr("style",""); //in case it is hidden because all rows were removed
+    r.children().children(".hd_xl_row").val("").attr("name","worksheet_config[worksheet_config_mappings_attributes]["+m+"][row]").siblings(".in_xl_row").val("");
+    r.children().children(".sel_mf").val("").attr("name","worksheet_config[worksheet_config_mappings_attributes]["+m+"][model_field_uid]");
+    r.children().children(".sel_col").val("").attr("name","worksheet_config[worksheet_config_mappings_attributes]["+m+"][column]");
+    r.children().children(".m_destroy").val("").attr("name","worksheet_config[worksheet_config_mappings_attributes]["+m+"][_destroy]");
+    $("#m_body").append(r);
+  });
+});
+function prep_rows() {
+  if($(".in_xl_row.bad_data").length>0) {
+    window.alert("All row values must be numbers.");
+    return false;
+  }
+  return true;
+}
+<% end %>
+<%content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <% unless @wc.id.nil? %>
+    <%=button_to "Delete", @wc, :method => :delete %>
+  <% end %>
+  <button id='btn_cancel'>Cancel</button>
+<%end%>
+<%=form_for @wc, :html=>{:id=>"frm_wc"} do |f| %>
+<table>
+  <%=field_row "Name", f.text_field(:name) %>
+  <%=field_row "Module", @wc.module_type.nil? ? f.select(:module_type, CoreModule.to_a_label_class {|c| c.worksheetable?},{},:id=>"sel_mod_type") : CoreModule.find_by_class_name(@wc.module_type).label%>
+</table>
+
+<table class='detail_table'>
+  <thead><tr><th>Field</th><th>Column</th><th>Row</th><th>&nbsp;</th></tr></thead>
+  <tbody id='m_body'>
+    <% if f.object.module_type.nil? %>
+      <tr><td colspan='4'>Set a Name and Module then click Save to continue.</td>
+    <% else %>
+<% @wc.worksheet_config_mappings.build if @wc.worksheet_config_mappings.length == 0 %>
+   <%=f.fields_for :worksheet_config_mappings do |m| %>
+   <% model_fields = ModelField.sort_by_label(CoreModule.find_by_class_name(@wc.module_type).model_fields_including_children.values) %>
+    <tr class='hover m_row'>
+      <td><%=m.collection_select :model_field_uid, model_fields, :uid, :label, {},{:class=>"sel_mf"}%></td>
+<%
+xls_cols = [["A",0]]
+letter = "A"
+(1..51).each {|n| xls_cols << [letter = letter.succ,n]}
+%>
+      <td><%=m.select :column, xls_cols, {}, {:class=>'sel_col'}%></td>
+      <td><%=m.hidden_field :row, :class=>'hd_xl_row'%><input type='text' class='in_xl_row' value='<%=m.object.row.nil? ? "" : m.object.row+1%>'></td>
+      <td><%=m.hidden_field :_destroy, "class" => "m_destroy"%><a href='#' class='m_remove'>Remove</a></td>
+      </tr>
+   <%end%>
+   <%end%>
+  </tbody>
+</table>
+<a href='#' id='add_row'>Add Row</a>
+<%end%>

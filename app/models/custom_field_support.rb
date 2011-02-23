@@ -11,4 +11,8 @@ module CustomFieldSupport
     cv = self.custom_values.where(:custom_definition_id => custom_definition).first
     cv.nil? ? self.custom_values.build(:custom_definition => custom_definition) : cv
   end
+
+  def get_custom_value_by_id(id)
+    get_custom_value(CustomDefinition.find(id))
+  end
 end

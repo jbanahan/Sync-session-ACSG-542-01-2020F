@@ -1,0 +1,15 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  row: 1
+  column: 1
+  model_field_uid: MyString
+  custom_definition_id: 1
+  worksheet_config_id: 1
+
+two:
+  row: 1
+  column: 1
+  model_field_uid: MyString
+  custom_definition_id: 1
+  worksheet_config_id: 1

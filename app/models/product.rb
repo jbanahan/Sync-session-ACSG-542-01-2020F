@@ -22,6 +22,8 @@ class Product < ActiveRecord::Base
   has_many   :comments, :as => :commentable
   has_many   :item_change_subscriptions
 
+  before_validation :default_division
+
   accepts_nested_attributes_for :classifications, :allow_destroy => true,
     :reject_if => lambda { |a| a[:country_id].blank?}
   def locked?
@@ -34,6 +36,10 @@ class Product < ActiveRecord::Base
 
   def can_edit?(user)
     return user.edit_products?
+  end
+
+  def can_create?(user)
+    return user.create_products?
   end
 
   def current_inventory_qty
@@ -105,6 +111,10 @@ class Product < ActiveRecord::Base
   end
 
   private
+
+  def default_division
+    self.division = Division.first if self.division.nil? && self.division_id.nil?
+  end
 
   def load_tariff_record(base_country,base_classification,to_classify)
     if to_classify.tariff_records.empty? #if the classification already has records, leave it alone
