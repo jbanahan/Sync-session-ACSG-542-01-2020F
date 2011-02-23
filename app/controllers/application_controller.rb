@@ -21,7 +21,7 @@ class ApplicationController < ActionController::Base
     def log_request
       if current_user && current_user.debug_active?
         DebugRecord.create(:user_id => current_user.id, :request_method => request.method,
-            :request_path => request.fullpath, :request_params => params.to_yaml)
+            :request_path => request.fullpath, :request_params => sanitize_params_for_log(params).to_yaml)
       end
     end
 
@@ -266,4 +266,10 @@ class ApplicationController < ActionController::Base
         src.each {|k,v| dest[v] = k}
         return dest
     end
+
+  def sanitize_params_for_log(p)
+    r = {}
+    p.each {|k,v| r[k]=v if v.is_a?(String)}
+    r
+  end
 end

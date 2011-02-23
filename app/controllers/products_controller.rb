@@ -1,4 +1,5 @@
 class ProductsController < ApplicationController
+  include Worksheetable
   before_filter :secure_classifications
 
 	def root_class 
@@ -173,7 +174,7 @@ class ProductsController < ApplicationController
       }
     end
 
-
+    
     private
     def secure_classifications
       params[:product][:classifications_attributes] = nil unless params[:product].nil? || current_user.edit_classifications?

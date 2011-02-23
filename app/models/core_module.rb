@@ -4,10 +4,12 @@ class CoreModule
       :children, #array of child CoreModules used for :has_many (not for :belongs_to)
       :child_lambdas, #hash of lambdas to access child CoreModule data 
       :child_joins, #hash of join statements to link up child CoreModule to parent
-      :statusable, :file_formatable, :make_default_search_lambda
+      :statusable, #works with status rules
+      :worksheetable, #works with worksheet uploads
+      :file_formatable, :make_default_search_lambda
   
   def initialize(class_name,label,opts={})
-    o = {:statusable=>false, :file_format=>false, 
+    o = {:worksheetable => false, :statusable=>false, :file_format=>false, 
         :new_object => lambda {Kernel.const_get(class_name).new},
         :children => [], :make_default_search => lambda {|user|
           ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>class_name,:simple=>false,:last_accessed=>Time.now)
@@ -22,6 +24,7 @@ class CoreModule
     @label = label
     @table_name = class_name.underscore.pluralize
     @statusable = o[:statusable]
+    @worksheetable = o[:worksheetable]
     @file_formatable = o[:file_formatable]
     @new_object_lambda = o[:new_object]
     @children = o[:children]
@@ -38,6 +41,10 @@ class CoreModule
   #can have status set on the module 
   def statusable?
     @statusable
+  end
+  #can have worksheets uploaded
+  def worksheetable?
+    @worksheetable
   end
   #can be used as the base for an import/export file format
   def file_formatable?
@@ -75,7 +82,7 @@ class CoreModule
       :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"}
     })
   SHIPMENT = new("Shipment","Shipment")
-  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true})
+  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true})
   SALE = new("SalesOrder","Sale")
   DELIVERY = new("Delivery","Delivery")
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE]

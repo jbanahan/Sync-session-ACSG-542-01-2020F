@@ -83,6 +83,9 @@ class User < ActiveRecord::Base
   def edit_products?
     return self.company.master?
   end
+  def create_products?
+    return self.company.master?
+  end
   
   def view_sales_orders?
     return master_setup.sales_order_enabled && (self.company.master? || self.company.customer?)

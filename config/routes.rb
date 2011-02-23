@@ -34,6 +34,8 @@ OpenChain::Application.routes.draw do
     end
   end 
   resources :custom_definitions
+
+  resources :worksheet_configs
   
   resources :messages, :only => [:index, :destroy] do
     member do
@@ -62,6 +64,8 @@ OpenChain::Application.routes.draw do
     get 'classify', :on=>:member
     post :auto_classify, :on=>:member
     put  :auto_classify, :on=>:member
+    post :import_new_worksheet, :on=>:new
+    put :import_worksheet, :on=>:member
   end
 
   resources :orders do
