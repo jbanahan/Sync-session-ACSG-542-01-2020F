@@ -6,6 +6,11 @@ masteruser:
   username: masteruser
   email: MyString@bademail.com
 
+adminuser:
+  id: 8
+  company_id: 1
+  admin: true
+
 vendoruser:
   id: 2
   company_id: 2

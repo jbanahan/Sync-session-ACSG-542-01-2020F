@@ -1,8 +1,11 @@
 class ApplicationController < ActionController::Base
+    require 'yaml'
+
     protect_from_forgery
     before_filter :require_user
     before_filter :update_message_count
     before_filter :set_user_time_zone
+    before_filter :log_request
 
     helper_method :current_user
     helper_method :master_company
@@ -14,7 +17,14 @@ class ApplicationController < ActionController::Base
     helper_method :merge_params
     helper_method :sortable_search_heading
     helper_method :master_setup
-    
+   
+    def log_request
+      if current_user && current_user.debug_active?
+        DebugRecord.create(:user_id => current_user.id, :request_method => request.method,
+            :request_path => request.fullpath, :request_params => sanitize_params_for_log(params).to_yaml)
+      end
+    end
+
     def help
         Helper.instance
     end
@@ -148,8 +158,24 @@ class ApplicationController < ActionController::Base
       yield
     end
   end
-
-    
+  
+  # secure the given block to Company Admin's only (as opposed to System Admins)
+  def admin_secure(err_msg = "Only administrators can do this.")
+    if current_user.admin?
+      yield
+    else
+      error_redirect err_msg
+    end
+  end
+  
+  def sys_admin_secure(err_msg = "Only system admins can do this.")
+    if current_user.sys_admin?
+      yield
+    else
+      error_redirect err_msg
+    end
+  end
+  
     private
     def sortable_search_heading(f_short)
       help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
@@ -240,4 +266,10 @@ class ApplicationController < ActionController::Base
         src.each {|k,v| dest[v] = k}
         return dest
     end
+
+  def sanitize_params_for_log(p)
+    r = {}
+    p.each {|k,v| r[k]=v if v.is_a?(String)}
+    r
+  end
 end

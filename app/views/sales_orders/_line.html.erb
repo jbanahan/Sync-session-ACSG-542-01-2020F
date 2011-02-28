@@ -11,5 +11,5 @@ $(function() {
   <td><%=form_line.product.nil? ? '' : form_line.product.unit_of_measure%></td>
   <td><%= f.text_field :price_per_unit, "size" => 5 %></td>
   <td><%= form_line.price_per_unit.nil? || form_line.ordered_qty.nil? ? '' : form_line.price_per_unit * form_line.ordered_qty %></td>
-  <td><%= f.submit (form_line.id.nil? ? 'Add' : 'Save', :id =>"btn_line_submit") %><%unless form_line.id.nil? %><button id='btn_line_cancel'>Cancel</button><%end%></td>
+  <td><%= f.submit((form_line.id.nil? ? 'Add' : 'Save'), :id =>"btn_line_submit") %><%unless form_line.id.nil? %><button id='btn_line_cancel'>Cancel</button><%end%></td>
   </tr>

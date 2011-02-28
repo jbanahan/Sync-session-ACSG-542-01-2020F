@@ -1,5 +1,8 @@
 OpenChain::Application.routes.draw do
 
+  resources :password_resets, :only => [:new, :edit, :create, :update]
+  resources :master_setups
+  resources :attachment_types
 
   #get rid of this one eventually
   resources :official_tariffs
@@ -8,6 +11,7 @@ OpenChain::Application.routes.draw do
   resources :attachments do
     get 'download', :on => :member
   end
+  resources :comments
 
 	match "/index.html" => "dashboard#show_main"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
@@ -30,6 +34,8 @@ OpenChain::Application.routes.draw do
     end
   end 
   resources :custom_definitions
+
+  resources :worksheet_configs
   
   resources :messages, :only => [:index, :destroy] do
     member do
@@ -58,6 +64,8 @@ OpenChain::Application.routes.draw do
     get 'classify', :on=>:member
     post :auto_classify, :on=>:member
     put  :auto_classify, :on=>:member
+    post :import_new_worksheet, :on=>:new
+    put :import_worksheet, :on=>:member
   end
 
   resources :orders do
@@ -80,6 +88,9 @@ OpenChain::Application.routes.draw do
 		resources :users do
 		  get :disable, :on => :member
 		  get :enable, :on => :member
+      resources :debug_records, :only => [:index, :show] do
+        get :destroy_all, :on => :collection
+      end
 		end
 		get :shipping_address_list, :on => :member
   end

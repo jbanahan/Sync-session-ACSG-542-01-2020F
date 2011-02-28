@@ -1,0 +1,13 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  user_id: 
+  request_method: MyString
+  request_params: MyText
+  request_path: MyString
+
+two:
+  user_id: 
+  request_method: MyString
+  request_params: MyText
+  request_path: MyString

@@ -33,6 +33,16 @@ class AddressesController < ApplicationController
       redirect_to company_path(@company)
     }
 	end
+
+  def show
+    @countries = Country.all
+    a = Address.find(params[:id])
+    @company = a.company
+    action_secure(@company.can_view?(current_user),@company,{:verb=>"view",:module_name=>"address",:lock_check=>false}) {
+      @address = a
+      render 'companies/show'
+    }
+  end
 	
 	def edit
 		@countries = Country.all

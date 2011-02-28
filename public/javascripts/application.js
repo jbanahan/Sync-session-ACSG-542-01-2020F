@@ -63,6 +63,36 @@ $( function() {
         $(this).addClass("bad_data");
       }
     });
+    $(".comment_sub").button();
+    $(".comment_lnk").click(function(ev) {
+      ev.preventDefault();
+      var bodyRow = $(this).parents(".comment_header").next();
+      if(bodyRow.is(':visible')) {
+        bodyRow.hide();
+      } else {
+        bodyRow.show();
+      }
+    });
+    $(".comment_exp_all").click(function(ev) {
+      ev.preventDefault();
+      $(".comment_body").show();
+      $(this).siblings(".comment_cls_all").show();
+      $(this).hide();
+    });
+    $(".comment_cls_all").click(function(ev) {
+      ev.preventDefault();
+      $(".comment_body").hide();
+      $(this).siblings(".comment_exp_all").show();
+      $(this).hide();
+    });
+    $(".comment_edit_link").click(function(ev) {
+      ev.preventDefault();
+      var myRow = $(this).parents(".comment_body");
+      myRow.hide();
+      myRow.prev().hide();
+      myRow.next().show();
+    });
+    attachmentButton();
 });
 $(document).ready( function() {
     handleCustomFieldCheckboxes();
@@ -74,6 +104,27 @@ $(document).ready( function() {
     setSearchFields($("#srch_fields"),$("#srch_val"),$("#srch_cond"));
 
 });
+function attachmentButton() {
+  $(".attach_button").button();
+  $(".attach_button").each(function() {
+    var fileInput = $(this).prevAll(":file");
+    var aButton = $(this);
+    if(fileInput.length!=1) {
+      //either many file objects or none, either way we can't automate behavior
+      return;
+    }
+    if(fileInput.val().length==0) {
+      $(this).hide();
+    }
+    fileInput.change(function() {
+      if(fileInput.val().length==0) {
+        aButton.fadeOut('slow');
+      } else {
+        aButton.fadeIn('slow');
+      }
+    });
+  });
+}
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
@@ -231,7 +282,7 @@ function getAddress(wrapper,address_id,options) {
         h = h + data.address.city+',';
       }
       h = h + makeLine(data.address.state,false) + ' ' + makeLine(data.address.postal_code,false)
-          + '</br>' + makeLine(data.address.country.name,false);
+          + '</br>' + makeLine(data.address.country==null ? "" : data.address.country.name,false);
       wrapper.html(h);
     });
   }

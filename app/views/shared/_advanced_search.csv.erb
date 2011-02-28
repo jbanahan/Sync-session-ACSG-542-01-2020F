@@ -11,7 +11,7 @@ x = CSV.generate(opts) do |csv|
     to_append = []
     @current_search.search_columns.order("rank ASC").each do |c|
       mf = ModelField.find_by_uid(c.model_field_uid)
-      if mf.core_module==@core_module
+      if mf.uid==:_blank || mf.core_module==@core_module
         to_append << mf.process_export(r)
       else
         joined = ""

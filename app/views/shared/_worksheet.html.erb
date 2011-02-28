@@ -1,0 +1,26 @@
+<% worksheet_configs = WorksheetConfig.where(:module_type => CoreModule.find_by_class_name(base_obj.class.to_s).class_name).all %>
+<% if worksheet_configs.length > 0 %>
+
+<%content_for :javascript do %>
+$(function() {
+  $("#mod_import_worksheet").dialog({autoOpen:false,title:'Import Worksheet',buttons:{
+    "Import":function() {$("#frm_import_worksheet").submit();},"Cancel":function() {$("#mod_import_worksheet").dialog('close');}
+  }});
+  $("#btn_import_worksheet").click(function() {$("#mod_import_worksheet").dialog('open');});
+});
+<%end%>
+
+<%content_for :action_bar do %>
+  <button id='btn_import_worksheet'>Import Worksheet</button>
+<% end %>
+
+<div id='mod_import_worksheet'>
+  <%=form_for base_obj, :url => {:action=>(base_obj.id.nil? ? 'import_new_worksheet' : 'import_worksheet')}, :html => {:id=>'frm_import_worksheet', :multipart=>true} do |f| %>
+    <table>
+    <%=field_row "Setup", select_tag("worksheet_config_id", options_from_collection_for_select(worksheet_configs, "id", "name")) %>
+    <%=field_row "File", file_field_tag("worksheet") %>
+    </table>
+  <% end %>
+</div>
+
+<% end %>

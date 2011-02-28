@@ -1,0 +1,27 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_save").click(function() {
+    $("#frm_ms").submit();
+  });
+  $("#btn_cancel").click(function() {
+    window.location = '<%=settings_path%>';
+  });
+});
+<%end%>
+<%content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<%end%>
+<%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
+<table>
+  <%=field_row "System UUID", @ms.uuid%>
+  <%=field_row "Version", @ms.version %>
+  <%=field_row "System Code", f.text_field(:system_code) %>
+  <%=field_row "Logo Image", f.text_field(:logo_image) %>
+  <%=field_row "Order Enabled",f.check_box(:order_enabled) %>
+  <%=field_row "Shipment Enabled", f.check_box(:shipment_enabled)%>
+  <%=field_row "Sale Enabled", f.check_box(:sales_order_enabled) %>
+  <%=field_row "Delivery Enabled", f.check_box(:delivery_enabled) %>
+  <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
+</table>
+<%end%>

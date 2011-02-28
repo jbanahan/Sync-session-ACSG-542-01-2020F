@@ -11,7 +11,8 @@ class Order < ActiveRecord::Base
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number'
 	has_many   :histories, :dependent => :destroy
 	has_many   :item_change_subscriptions
-	
+  has_many   :comments, :as => :commentable
+  has_many   :attachments, :as => :attachable 	
 	
 	def related_shipments
 	  r = Set.new
@@ -22,7 +23,7 @@ class Order < ActiveRecord::Base
 	end
 	
 	def can_view?(user)
-	  return user.company.master || (user.company.vendor && user.company_id == self.vendor_id)
+	  return user.view_orders? && (user.company.master || (user.company.vendor && user.company_id == self.vendor_id))
 	end
 	
 	def can_edit?(user)

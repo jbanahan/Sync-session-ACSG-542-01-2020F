@@ -35,14 +35,13 @@
       .click(function() {
         window.location = '<%=raw url_for(:action => :index, :controller => :deliveries, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq')%>';
       })
-    $("#sub_attach").button();
   });
 <% end %>
 
 <% content_for :action_bar do %>
 <% if @product.can_edit?(current_user) && !@product.locked?%>
   <button id='btn_edit'>Edit</button>
-  <button id='btn_classify'>Classify</button>
+  <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
   <button id='btn_adj_inventory'>Adjust Inventory</button>
 <%end%>
 <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:product_id => @product.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
@@ -53,7 +52,9 @@
 <% if current_user.view_deliveries? && @product.has_deliveries? %><button id='btn_delivery_jump'>Deliveries</button><%end%>
 <% end %>
 
-<table width="97%">
+<table class='detail_table'>
+<thead><tr><th>Product Information</th></tr></thead>
+<tbody>
 <tr><td>
 <!-- fields -->
 	<table>
@@ -66,61 +67,40 @@
 	  <%=field_row "Inventory Quantity", @product.current_inventory_qty %>
     <%=show_custom_fields @product, {:table=>true}%>
 	</table>
-</td><td style='vertical-align:top;'>
-<!-- image -->
-<div class='attachments_container'>
-  <table class='detail_table'>
-    <thead><tr><th>File Name</th><th>Preview</th><th>Delete</th></tr></thead>
-    <tbody>
-        <% @product.attachments.each do |att|%>
-          <tr class='hover'>
-            <td><%=link_to att.attached_file_name, download_attachment_path(att), :target=>"_blank"%></td>
-            <td>
-              <% if att.web_preview? %>
-                <a href='<%=download_attachment_path(att)%>' target='_blank'><img src="<%=download_attachment_path(att)%>" title="<%=att.attached_file_name%>" width="150px" style="border:1px solid black;" /></a>
-              <%end%>
-             </td>
-             <td><%=link_to("Delete", att, :method => :delete, :confirm => "Are you sure?")%></td>
-          </tr>
-        <%end%>
-    </tbody>
-  </table>
-  <div id='mod_attach'>
-    Attach File:<br />
-    <% att = @product.attachments.build %>
-    <%=form_for att, :html=>{:multipart=>true} do |f|%>
-    <%=f.hidden_field :attachable_id %>
-    <%=f.hidden_field :attachable_type %>
-    <%=f.file_field :attached %><br />
-    <%=f.submit "Attach", :id=>"sub_attach"%>
-    <% end %>
-  </div>
-</div>
 </td></tr>
+</tbody>
 </table>
 
-<% @product.classifications.each do |c| %>
-<h2>Classification: <%=c.country.name.titleize%></h2>
-<table>
-<%=show_custom_fields c, {:table=>true} %>
-</table>
-<table class='detail_table'>
-  <thead>
-    <th>HTS 1</th>
-    <th>HTS 2</th>
-    <th>HTS 3</th>    
-  </thead>
-  <tbody>
-    <% c.tariff_records.each do |t| %>
-    <tr>
-      <td><%=t.hts_1%></td>
-      <td><%=t.hts_2%></td>
-      <td><%=t.hts_3%></td>
-    </tr>
-    <% end %>
-  </tbody>
-</table>
+<% if current_user.view_classifications? %>
+<div class='attachments_container section_insert'>
+  <h2 class='section_insert_heading'>Classifications</h2>
+  <% @product.classifications.each do |c| %>
+  <h2><%=c.country.name.titleize%></h2>
+  <table>
+  <%=show_custom_fields c, {:table=>true} %>
+  </table>
+  <table class='detail_table'>
+    <thead>
+      <th>HTS 1</th>
+      <th>HTS 2</th>
+      <th>HTS 3</th>    
+    </thead>
+    <tbody>
+      <% c.tariff_records.each do |t| %>
+      <tr>
+        <td><%=t.hts_1%></td>
+        <td><%=t.hts_2%></td>
+        <td><%=t.hts_3%></td>
+      </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <% end %>
+</div>
 <% end %>
+
+<%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 

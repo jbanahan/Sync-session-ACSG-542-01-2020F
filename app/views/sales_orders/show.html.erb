@@ -25,26 +25,18 @@ $(function() {
 
 <%end%>
 
-<p>
-  <b>Sales Order Number:</b>
-  <%= @sales_order.order_number %>
-</p>
+<table class='detail_table'>
+<thead><tr><th>Sale Information</th></tr></thead>
+<tbody><tr><td>
+  <table>
+    <%=field_row "Sales Order Number", @sales_order.order_number %>
+    <%=field_row "Order Date", @sales_order.order_date %>
+    <%=field_row "Customer", @sales_order.customer.name %>
+    <%=show_custom_fields @sales_order, {:table=>true} %>
+  </table>
+</td></tr></tbody>
+</table>
 
-<p>
-  <b>Order Date:</b>
-  <%= @sales_order.order_date %>
-</p>
-
-<p>
-  <b>Customer:</b>
-  <%= @sales_order.customer.name %>
-</p>
-
-<p>
-  <b>Comments:</b>
-  <%= @sales_order.comments %>
-</p>
- <%=show_custom_fields @sales_order%>
 <div>
 <% form_line = @sales_order_line.nil? ? @sales_order.sales_order_lines.build : @sales_order_line %>
 <%= form_for([@sales_order, form_line]) do |f| %>
@@ -86,7 +78,8 @@ $(function() {
 </table>
 <% end %>
 </div>
-
+<%=render :partial => 'shared/comments', :locals => {:commentable => @sales_order} %>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @sales_order} %>
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:sales_order_id => @sales_order.id, :user_id => current_user.id})

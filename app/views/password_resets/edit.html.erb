@@ -1,0 +1,14 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#sbm_update_pass").button();
+});
+<% end %>
+<h1>Change My Password</h1>
+
+<%=form_for @user, :url => password_reset_path, :method => :put do |f| %>
+  <table>
+    <%=field_row "Password", f.password_field(:password) %>
+    <%=field_row "Confirm Password", f.password_field(:password_confirmation) %>
+  </table>
+  <%= f.submit "Update Password", :id=>"sbm_update_pass" %>
+<% end %>

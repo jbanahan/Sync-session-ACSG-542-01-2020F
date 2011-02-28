@@ -1,4 +1,7 @@
 class ProductsController < ApplicationController
+  include Worksheetable
+  before_filter :secure_classifications
+
 	def root_class 
 		Product
 	end
@@ -75,22 +78,22 @@ class ProductsController < ApplicationController
         p = Product.find(params[:id])
         action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
           @product = p
-            respond_to do |format|
-                if @product.update_attributes(params[:product])
-										if update_custom_fields @product
-										  save_classification_custom_fields(@product,params[:product])
-										  update_status @product
-											add_flash :notices, "Product updated successfully."
-										end
-                    History.create_product_changed(@product, current_user, product_url(@product))
-                    format.html { redirect_to(@product) }
-                    format.xml  { head :ok }
-                else
-                    errors_to_flash @product
-                    format.html { render :action => "edit" }
-                    format.xml  { render :xml => @product.errors, :status => :unprocessable_entity }
-                end
-            end
+          respond_to do |format|
+              if @product.update_attributes(params[:product])
+                  if update_custom_fields @product
+                    save_classification_custom_fields(@product,params[:product])
+                    update_status @product
+                    add_flash :notices, "Product updated successfully."
+                  end
+                  History.create_product_changed(@product, current_user, product_url(@product))
+                  format.html { redirect_to(@product) }
+                  format.xml  { head :ok }
+              else
+                  errors_to_flash @product
+                  format.html { render :action => "edit" }
+                  format.xml  { render :xml => @product.errors, :status => :unprocessable_entity }
+              end
+          end
         }
     end
 
@@ -150,7 +153,7 @@ class ProductsController < ApplicationController
     
     def classify
       p = Product.find(params[:id])
-      action_secure(p.can_edit?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
+      action_secure(p.can_edit?(current_user) && current_user.edit_classifications?,p,{:verb => "classify for",:module_name=>"product"}) {
         @product = p
         Country.import_locations.each do |c|
           p.classifications.build(:country => c) if p.classifications.where(:country_id=>c).empty?
@@ -160,7 +163,7 @@ class ProductsController < ApplicationController
     
     def auto_classify
       p = Product.find(params[:id])
-      action_secure(p.can_edit?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
+      action_secure(p.can_edit?(current_user) && current_user.edit_classifications?,p,{:verb => "classify for",:module_name=>"product"}) {
         @product = p
         @product.update_attributes(params[:product])
         save_classification_custom_fields(@product,params[:product])
@@ -171,7 +174,12 @@ class ProductsController < ApplicationController
       }
     end
 
+    
     private
+    def secure_classifications
+      params[:product][:classifications_attributes] = nil unless params[:product].nil? || current_user.edit_classifications?
+    end
+
     def secure(base_search)
       r = base_search.where("1=0")
       if current_user.company.master
@@ -190,10 +198,11 @@ class ProductsController < ApplicationController
         product.classifications.each do |classification|
           product_params[:classifications_attributes].each do |k,v|
             if v[:country_id] == classification.country_id.to_s
-              update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
+              update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf] unless params[:classification_custom].nil?
             end  
           end
         end    
       end  
     end
+
 end

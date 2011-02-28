@@ -9,14 +9,16 @@ class SalesOrder < ActiveRecord::Base
   has_many    :histories, :dependent => :destroy
   has_many    :item_change_subscriptions
   has_many    :sales_order_lines, :dependent => :destroy
-  
+  has_many   :comments, :as => :commentable
+  has_many   :attachments, :as => :attachable
+
   validates :customer, :presence => true
 
   def can_view?(user)
-    user.company.master || (!self.customer.nil? && user.company.customer && user.company==self.customer)
+    user.view_sales_orders? && (user.company.master || (!self.customer.nil? && user.company.customer && user.company==self.customer))
   end
   def can_edit?(user)
-    user.company.master 
+    user.edit_sales_orders? && user.company.master 
   end
   def locked?
     !self.customer.nil? && self.customer.locked?

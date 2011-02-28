@@ -19,11 +19,11 @@ $(document).ready( function() {
   <% @company.divisions.each do |div| %>
   <li>
   	<% if @company.can_edit?(current_user) %><%= link_to div.name, edit_company_division_path(@company,div) %><%else%><%=div.name%><%end%>
-   	<% unless div.has_children? %> - <%= link_to 'Delete', company_division_path(@company,div), :confirm => 'Are you sure?', :method => :delete %><%end%>
+   	<% if @company.can_edit?(current_user) && !div.has_children? %> - <%= link_to 'Delete', company_division_path(@company,div), :confirm => 'Are you sure?', :method => :delete %><%end%>
   </li>
   <% end %>
 </ul>
-<% if edit_div.nil?%><button id='btn_add_division'>Add</button><%end%>
+<% if edit_div.nil? && @company.can_edit?(current_user)%><button id='btn_add_division'>Add</button><%end%>
 <div id='mod_division' style='display:none;'>
 <%= form_for(edit_div.nil? ? [@company, @company.divisions.build] : [@company, edit_div]) do |f| %>
 	<div class="field">

@@ -1,0 +1,46 @@
+<% content_for :javascript do %>
+$(function() {
+  $("#sub_attach").button();
+});    
+<% end %>
+<div class='attachments_container section_insert'>
+  <h2 class='section_insert_heading'>Attachments</h2> 
+  <table class='detail_table'>
+   <!-- <thead>
+      <tr><th>Type</th><th>Name</th><th>Preview</th>
+        <%if attachable.can_edit?(current_user)%>
+          <th>Delete</th>
+        <%end%>
+      </tr></thead>-->
+
+    <tbody>
+        <% attachable.attachments.each do |att|%>
+          <tr class='hover'>
+            <td><%=att.attachment_type%></td>
+            <td><%=link_to att.attached_file_name, download_attachment_path(att), :target=>"_blank"%></td>
+            <td>
+              <% if att.web_preview? %>
+                <a href='<%=download_attachment_path(att)%>' target='_blank'><img src="<%=download_attachment_path(att)%>" title="<%=att.attached_file_name%>" width="75px" style="border:1px solid black;" /></a>
+              <%end%>
+             </td>
+             <%if attachable.can_edit?(current_user)%>
+               <td><%=link_to("Delete", att, :method => :delete, :confirm => "Are you sure?")%></td>
+             <%end%>
+          </tr>
+        <%end%>
+    </tbody>
+  </table>
+  <%if attachable.can_edit?(current_user) %>
+      <div id='mod_attach'>
+      Attach File:<br />
+      <% att = attachable.attachments.build %>
+      <%=form_for att, :html=>{:multipart=>true} do |f|%>
+      <%=f.hidden_field :attachable_id %>
+      <%=f.hidden_field :attachable_type %>
+      <%=f.collection_select :attachment_type, AttachmentType.all, :name, :name %>
+      <%=f.file_field :attached %>
+      <%=f.submit "Attach", :id=>"sub_attach", :class=>"attach_button"%>
+      <% end %>
+    </div>
+  <%end%>
+</div>

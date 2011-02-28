@@ -20,17 +20,26 @@ $(document).ready( function() {
 		<th>Name</th><th>City</th><th>Country</th><th>Shipment Address</th><th></th>
 	</thead>
 	<% @company.addresses.each do |ad| %>
-	<tr><td><%if @company.locked?%><%=ad.name%><%else%><%= link_to ad.name, edit_company_address_path(@company, ad) %><%end%></td><td><%= ad.city %></td><td><%= ad.country.nil? ? " " : ad.country.name %></td>
-		<td><%= ad.shipping ? 'Yes' : 'No' %></td>
+	<tr><td>
+          <%if @company.can_edit?(current_user)%>
+            <%= link_to ad.name, edit_company_address_path(@company, ad) %>
+          <%else%>
+            <%= link_to ad.name, company_address_path(@company,ad) %>
+          <%end%></td>
+        <td><%= ad.city %></td><td><%= ad.country.nil? ? " " : ad.country.name %></td>
+	<td><%= ad.shipping ? 'Yes' : 'No' %></td>
+        <% if current_user.admin? %>
 	<td>
 	<% unless @company.locked?%><%= link_to 'Delete', company_address_path(@company, ad) , :confirm => 'Are you sure?', :method => :delete %><%end%>
 	</td>
+        <% end %>
 	</tr>
 	<% end %>
 </table>
 <% end %>
 <% unless @company.locked? %>
-<% if edit_add.nil?%><button id='btn_add_address'>Add Address</button><%end%>
+<% if edit_add.nil? && @current_user.admin?%><button id='btn_add_address'>Add Address</button><%end%>
+<% if @current_user.admin? %>
 <div id='mod_address' style="display:none;">
 <%= form_for(edit_add.nil? ? @company.addresses.build : edit_add) do |f| %>
 
@@ -70,4 +79,20 @@ $(document).ready( function() {
   </div>
 <% end %>
 </div>
+<%elsif !edit_add.nil?%>
+<div id='mod_address' style="display:none;">
+  <table>
+    <%=field_row "Name", edit_add.name %>
+    <%=field_row "Address", "" %>
+    <%=field_row "", edit_add.line_1 %>
+    <%=field_row "", edit_add.line_2 %>
+    <%=field_row "", edit_add.line_3 %>
+    <%=field_row "City", edit_add.city %>
+    <%=field_row "State", edit_add.state %>
+    <%=field_row "Postal Code", edit_add.postal_code %>
+    <%=field_row "Country", edit_add.country.name %>
+    <%=field_row "Shipping", bool_txt(edit_add.shipping) %>
+  </table>
+</div>
+<%end%>
 <% end %>

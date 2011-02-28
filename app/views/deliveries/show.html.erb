@@ -63,11 +63,11 @@
 <br />
 <table class='detail_table' >
   <thead>
-    <tr><th>Attributes</th><th>Dates</th></tr>
+    <tr><th>Attributes</th></tr>
   </thead>
   <tbody>
     <tr>
-      <td style='width:50%'>
+      <td>
         <b>Carrier:</b>
         <%= @delivery.carrier_id.nil? ? '' : @delivery.carrier.name %>
         <br />
@@ -75,9 +75,6 @@
         <%=@delivery.mode %>
 				
 	<%=show_custom_fields @delivery%>
-      </td>
-      <td>
-        
       </td>
     </tr>
     </tbody>
@@ -123,6 +120,8 @@
   </tbody>
 </table>
 <% end %>
+<%=render :partial => 'shared/comments', :locals => {:commentable => @delivery} %>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @delivery} %>
 <div id='mod_pick_order' style='display:none;'>
   <p id='add_ord_content'>
     Add Order: <%= select_tag "sales_order_id", options_from_collection_for_select(SalesOrder.where("customer_id = ? ",@delivery.customer), "id", "order_number") %>
