@@ -40,5 +40,10 @@ module OpenChain
 
     # Configure sensitive parameters which will be filtered from the log file.
     config.filter_parameters += [:password]
+
+    config.middleware.use ExceptionNotifier,
+      :email_prefix => "[chain.io Exception] ",
+      :sender_address => %{"Exception Notifier" <bug@chain.io>},
+      :exception_recipients => %w{bug@aspect9.com}
   end
 end
