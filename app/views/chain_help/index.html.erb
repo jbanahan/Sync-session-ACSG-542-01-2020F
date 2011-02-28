@@ -1,0 +1,13 @@
+<h1>Help</h1>
+
+<%if current_user.admin?%>
+<h2>For Users</h2>
+<%end%>
+<ul>
+<li><%=help_link "How do I change my password?", "password" %></li>
+<li><%=help_link "How do I create a new Order, Shipment, Product, Sale, or Delivery?", "new_item" %></li>
+</ul>
+
+<%if current_user.admin?  && false%>
+<h2>For Administrators</h2>
+<%end%>

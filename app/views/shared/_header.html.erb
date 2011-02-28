@@ -111,13 +111,21 @@
 <head>
 <body>
 <div id="header">
-  <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
+  <span id="corner_title">
+    <% unless no_buttons %>
+      <%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %>
+    <% else %>
+      <%=image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50") %>
+    <% end %>
+  </span>
   <% if current_user %>
+    <% unless no_buttons %>
     <div id="corner_links">
         <%= link_to current_user.full_name, company_user_path(current_user.company, current_user) %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
-        <% if current_user.admin? %><%= link_to 'Settings', settings_path %><%else%><%= link_to current_user.company.name, company_path(current_user.company)%><%end%> |
+        <% if current_user.admin? %><%= link_to 'Settings', settings_path %> |<%end%>
         <a href='javascript:false;' id='lnk_feedback'>Feedback</a> | 
+        <%= help_link "Help" %> |
         <%= link_to 'Logout', logout_path %>
     </div>
     <div id="linkbar">
@@ -128,7 +136,9 @@
       <%if current_user.view_sales_orders?%><button id='btn_sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
       <%if current_user.view_deliveries?%><button id='btn_deliveries'>Deliveries</button><%if current_user.add_deliveries?%><button id='btn_new_delivery'>New Delivery</button><%end%><%end%>      
     </div>
+    <% end %>
   <% end %>
+  <% unless no_buttons %>
   <% if has_messages %>
     <div id='notice' class='notices col1 ui-corner-all' style='display:none;'>
 			<div id='notice_hide'><a href="#" id="lnk_hide_notice">Hide</a></div>
@@ -140,5 +150,6 @@
        end 
     %>
     </div>
+  <% end %>
   <% end %>
 </div>

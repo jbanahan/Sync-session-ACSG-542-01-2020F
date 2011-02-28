@@ -25,6 +25,7 @@ OpenChain::Application.routes.draw do
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/search_setups/:id/copy" => "search_setups#copy"
+  match "/help" => "chain_help#index"
 
   resources :import_configs
   resources :imported_files, :only => [:new, :create, :show] do

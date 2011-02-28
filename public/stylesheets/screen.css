@@ -344,3 +344,11 @@ img {
 .classification_shrink {
   display: none; /* toggled with .classification_expand */
 }
+.help_title {
+  display: block;
+  font-size: 200%;
+  font-weight: bold;
+}
+.help_pic {
+  border: 1px solid black;
+}

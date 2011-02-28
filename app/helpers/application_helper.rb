@@ -1,4 +1,10 @@
 module ApplicationHelper
+  def help_link(text,page_name=nil)
+    "<a href='/help#{page_name.blank? ? "" : "?page="+page_name}' target='chainio_help'>#{text}</a>".html_safe
+  end
+  def help_image(file_name)
+    image_tag("help/#{file_name}",:class=>'help_pic')
+  end
   def bool_txt(bool) 
     bool ? "Yes" : "No"
   end
