@@ -19,6 +19,11 @@ class ApplicationController < ActionController::Base
     helper_method :master_setup
    
     def log_request
+      #prep for exception notification
+      request.env["exception_notifier.exception_data"] = {
+        :user => current_user
+      } if current_user
+      #user level application "debug" logging
       if current_user && current_user.debug_active?
         DebugRecord.create(:user_id => current_user.id, :request_method => request.method,
             :request_path => request.fullpath, :request_params => sanitize_params_for_log(params).to_yaml)
