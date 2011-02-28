@@ -43,4 +43,13 @@ class OpenMailer < ActionMailer::Base
       format.text
     end
   end
+
+  def send_comment(current_user,to_address,comment,link=nil)
+    @user = current_user
+    @comment = comment
+    @link = link 
+    mail(:to => to_address, :subject => "[chain.io] #{comment.subject}") do |format|
+      format.text
+    end
+  end
 end

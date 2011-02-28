@@ -1,0 +1,10 @@
+The following comment has been sent to you through the chain.io system by <%=@user.full_name%>:
+
+Subject: <%=@comment.subject%>
+Comment Created: <%=@comment.created_at%>
+
+<%=@comment.body%>
+
+<%unless @link.nil? %>
+You can view this item at <%=@link%>
+<% end %>
