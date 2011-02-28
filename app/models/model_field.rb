@@ -87,7 +87,7 @@ class ModelField
         end
       },
       :export_lambda => lambda {|obj| obj.division.nil? ? "" : obj.division.name},
-      :join_statement => "LEFT OUTER JOIN divisions AS #{table_name}_div on #{table_name}_div = #{table_name}.division_id",
+      :join_statement => "LEFT OUTER JOIN divisions AS #{table_name}_div on #{table_name}_div.id = #{table_name}.division_id",
       :join_alias => "#{table_name}_div",
       :data_type => :string
     }]
@@ -109,7 +109,7 @@ class ModelField
         end
       },
       :export_lambda => lambda {|obj| obj.carrier.nil? ? "" : obj.carrier.name},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp = #{table_name}.carrier_id",
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp.id = #{table_name}.carrier_id",
       :join_alias => "#{table_name}_car_comp",
       :data_type => :string
     }]
