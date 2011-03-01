@@ -107,8 +107,16 @@ $(function() {
     $("#mod_new_name").dialog('open');
   });
   $("#btn_setup_delete").click(function() {
-    $("#real_delete_button").parents("form.button_to").submit();
+    $("#mod_delete").dialog('open');
   });
+  $("#mod_delete").dialog({autoOpen:false,width:"auto",buttons:{
+      "Yes":function() {
+        $("#real_delete_button").parents("form.button_to").submit();
+      },
+      "No":function() {
+        $("#mod_delete").dialog('close');
+      }
+  }});
 });
 function addParameter() {
   var m = new Date().getTime();
@@ -291,9 +299,10 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
     <button id='btn_setup_delete'>Delete</button>
   </div>
   <div id='mod_new_name' style='display:none;'>Enter a name for your new search:<br /><input id='txt_new_name' /></div>
-  <div style='display:none'> <!--hide the real button-->
+  <div style='display:none'> <!--hide the real button, because we want to keep everything on the same row-->
     <%= button_to "Delete", @current_search, :method => :delete, :id=>"real_delete_button" %>
   </div>
+  <div id='mod_delete' style='display:none;'>Are you sure you want to delete this search?</div>
 </div>
 
 <h2>Results</h2>
