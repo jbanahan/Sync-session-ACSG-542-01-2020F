@@ -109,7 +109,7 @@ class ModelField
         end
       },
       :export_lambda => lambda {|obj| obj.carrier.nil? ? "" : obj.carrier.name},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp = #{table_name}.carrier_id",
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp.id = #{table_name}.carrier_id",
       :join_alias => "#{table_name}_car_comp",
       :data_type => :string
     }]

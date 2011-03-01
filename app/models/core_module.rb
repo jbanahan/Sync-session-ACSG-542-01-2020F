@@ -79,12 +79,20 @@ class CoreModule
     {:file_formatable=>true,
       :children => [ORDER_LINE],
       :child_lambdas => {ORDER_LINE => lambda {|parent| parent.order_lines}},
-      :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"}
+      :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"},
+      :make_default_search => lambda {|user| 
+        uids = [:ord_ord_num,:ord_ord_date,:ord_ven_name,:ordln_puid,:ordln_ordered_qty]
+        SearchSetup.create_with_columns(uids,user)
+      }
     })
-  SHIPMENT = new("Shipment","Shipment")
-  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true})
-  SALE = new("SalesOrder","Sale")
-  DELIVERY = new("Delivery","Delivery")
+  SHIPMENT = new("Shipment","Shipment",
+    {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],user)}})
+  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
+    :make_default_search => lambda {|user| SearchSetup.create_with_columns([:prod_uid,:prod_name,:prod_ven_name],user)}})
+  SALE = new("SalesOrder","Sale",
+    {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:sale_order_number,:sale_order_date,:sale_cust_name],user)}})
+  DELIVERY = new("Delivery","Delivery",
+    {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:del_ref,:del_mode,:del_car_name,:del_cust_name],user)}})
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE]
   
   def self.find_by_class_name(c)
