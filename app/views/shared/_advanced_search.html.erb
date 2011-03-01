@@ -222,7 +222,7 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
 
 
 <div id='main_search_cont'>
-<%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>&nbsp;<a href='#' id='show_srch_setup'>Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Setup</a><br />
+Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>&nbsp;<a href='#' id='show_srch_setup'>Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Setup</a><br />
 <div id='search_setup_outer' style='display:none;'>
   <div id='search_setup'>
     <%=form_for(@current_search, :html=>{:id=>"frm_current_search"}) do |f| %>
@@ -287,7 +287,7 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
   </div>  
   <div style='text-align:right;'>
     <button id='btn_setup_save'>Save</button>&nbsp;
-    <button id='btn_setup_copy'>Copy</button>&nbsp;
+    <button id='btn_setup_copy'>Copy / New</button>&nbsp;
     <button id='btn_setup_delete'>Delete</button>
   </div>
   <div id='mod_new_name' style='display:none;'>Enter a name for your new search:<br /><input id='txt_new_name' /></div>
