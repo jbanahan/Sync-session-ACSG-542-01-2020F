@@ -122,20 +122,20 @@
   <% if current_user %>
     <% unless no_buttons %>
     <div id="corner_links">
-        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user) %> 
+        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
-        <% if current_user.admin? %><%= link_to 'Settings', settings_path %> |<%end%>
-        <a href='javascript:false;' id='lnk_feedback'>Feedback</a> | 
+        <% if current_user.admin? %><%= link_to 'Settings', settings_path, {:title=>"Administrator System Settings",:class=>"tiplink"} %> |<%end%>
+        <a href='#' id='lnk_feedback' class='tiplink' title='Send feedback to the programmers.' >Feedback</a> | 
         <%= help_link "Help" %> |
         <%= link_to 'Logout', logout_path %>
     </div>
     <div id="linkbar">
       <!--<button id='btn_home'>Home</button>-->
-      <%if current_user.view_orders?%><button id='btn_orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
-      <%if current_user.view_shipments?%><button id='btn_shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
-      <%if current_user.view_products?%><button id='btn_products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
-      <%if current_user.view_sales_orders?%><button id='btn_sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
-      <%if current_user.view_deliveries?%><button id='btn_deliveries'>Deliveries</button><%if current_user.add_deliveries?%><button id='btn_new_delivery'>New Delivery</button><%end%><%end%>      
+      <%if current_user.view_orders?%><button id='btn_orders' title='Search for orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
+      <%if current_user.view_shipments?%><button id='btn_shipments' title='Search for shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
+      <%if current_user.view_products?%><button id='btn_products' title='Search for products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
+      <%if current_user.view_sales_orders?%><button id='btn_sales' title='Search for sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
+      <%if current_user.view_deliveries?%><button id='btn_deliveries' title='Search for deliveries'>Deliveries</button><%if current_user.add_deliveries?%><button id='btn_new_delivery'>New Delivery</button><%end%><%end%>      
     </div>
     <% end %>
   <% end %>

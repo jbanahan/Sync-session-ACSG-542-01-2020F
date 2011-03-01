@@ -10,7 +10,7 @@ $( function() {
     });
     //.isdate must be before the tooltip call
     $(".isdate").datepicker({dateFormat: 'yy-mm-dd'});
-    $(":input[title]").tooltip({
+    $(".fieldtip").tooltip({
       // place tooltip on the right edge
       position: "center right",
       // a little tweaking of the position
@@ -20,6 +20,7 @@ $( function() {
       // custom opacity setting
       opacity: 0.9         
     });
+    $(".tiplink").tooltip({position:"bottom center", effect: "fade", opacity: 0.9, offset: [8,0]});
     
     //Make the shared/search_box partial work
     $("#srch_fields").change( function() {
