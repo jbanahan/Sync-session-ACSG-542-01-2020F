@@ -23,6 +23,14 @@ $(function() {
   <% if @sales_order.can_edit?(current_user) && !@sales_order_line.nil? %>
     $("#mod_edit_line").dialog('open');
   <% end %>
+  $("#edit_line_product").change(function() {
+    if($(this).val().length>0) {
+      $("#edit_line_uom").html("<span style='font-size:80%;'>...loading...</span>");
+      getProductUOM($(this).val(),function(uom) {
+        $("#edit_line_uom").html(uom);
+      });
+    }
+  });
   <% if current_user.company.master && !@sales_order.locked? %>$("#btn_delete").button();<%end%>
 });
 <%end%>
@@ -88,9 +96,9 @@ $(function() {
   <%= form_for([@sales_order, form_line], :html=>{:id=>"frm_edit_line"}) do |f| %>
     <table>
       <%=field_row "Line Number", f.text_field(:line_number,"size"=>"2") %>
-      <%=field_row "Product", f.collection_select(:product_id, Product.all, :id, :name, options={:prompt=>"Select a product"})%>
+      <%=field_row "Product", f.collection_select(:product_id, Product.all, :id, :name, options={:prompt=>"Select a product"},{:id=>"edit_line_product"})%>
       <%=field_row "Ordered Quantity", f.text_field(:ordered_qty,"size"=>"5") %>
-      <%=field_row "Unit of Measure", f.object.product.nil? ? "" : f.object.product.unit_of_measure %>
+      <%=field_row "Unit of Measure", content_tag(:span,(f.object.product.nil? ? "" : f.object.product.unit_of_measure),:id=>"edit_line_uom") %>
       <%=field_row "Price / Unit", f.text_field(:price_per_unit, "size"=>"5") %>
     </table>
   <% end %>

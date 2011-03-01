@@ -34,6 +34,14 @@
     $("#btn_shipment_jump").button().click(function() {
       window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @order.order_number, :f => 'o_num', :con => 'eq' )%>';
     });
+    $("#edit_line_product").change(function() {
+      if($(this).val().length>0) {
+        $("#edit_line_uom").html("<span style='font-size:80%;'>...loading...</span>");
+        getProductUOM($(this).val(),function(uom) {
+          $("#edit_line_uom").html(uom);
+        });
+      }
+    });
     <% if @order.can_edit?(current_user) && !@order_line.nil? %>
       $("#mod_edit_line").dialog('open');
     <% end %>
@@ -119,14 +127,11 @@
   <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
   <table>
     <% form_line.set_line_number if form_line.line_number.nil? %>
-    <tr><td><b>Line Number: </b></td><td><%= f.text_field :line_number, "size" => 2 %></td></tr>
-    <tr><td><b>Product: </b></td><td><%= f.collection_select :product_id, @products, :id, :name, options ={:prompt => "-Select a product"}%></td></tr>
-    <tr><td><b>Ordered Quantity: </b></td><td><%= f.text_field :ordered_qty, "size" => 5 %></td></tr>
-    <tr><td><b>Shipped Quantity: </b></td><td><%=form_line.shipped_qty%></td></tr>
-    <tr><td><b>Received Quantity: </b></td><td><%=form_line.received_qty%></td></tr>
-    <tr><td><b>Unit of Measure: </b></td><td><%=form_line.product.nil? ? '' : form_line.product.unit_of_measure%></td></tr>
-    <tr><td><b>Price / Unit: </b></td><td><%= f.text_field :price_per_unit, "size" => 5 %></td></tr>
-    <tr><td><b>Total Price: </b></td><td><%= form_line.price_per_unit.nil? || form_line.ordered_qty.nil? ? '' : form_line.price_per_unit * form_line.ordered_qty %></td></tr>
+    <%=field_row "Line Number", f.text_field(:line_number, "size" => 2) %>
+    <%=field_row "Product", f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
+    <%=field_row "Ordered Quantity", f.text_field(:ordered_qty, "size" => 5) %>
+    <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
+    <%=field_row "Price / Unit", f.text_field(:price_per_unit, "size" => 5) %>
     <%= show_custom_fields form_line, {:form => true, :table=>true}%>
   </table>
   <% end %>

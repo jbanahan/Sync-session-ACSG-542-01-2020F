@@ -310,6 +310,18 @@ function handleCustomFieldCheckboxes() {
     });
   });
 }
+/* Get's the product's UOM via Ajax and passes it to the callback function */
+function getProductUOM(id, callback) {
+  getProductJSON(id, function(data) {
+      if(data.product!=undefined) {
+        callback(data.product.unit_of_measure);
+      }
+  });
+}
+/* Get's the product's JSON reprsentation and passes it to the callback function */
+function getProductJSON(id, callback) {
+  $.getJSON("/products/"+id+".json",callback);
+} 
 /* right now just validating length */
 function validateHTS(inputStr) {
   base = stripNonNumeric(inputStr);
