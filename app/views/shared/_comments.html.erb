@@ -45,7 +45,7 @@ function sendComment() {
           <div class='comment_controls'>
             <a href='#' class='send_comment_link' comment_id="<%=c.id%>">Email</a>
             <%if c.user_id == current_user.id%>
-              | <a href='#' class='comment_edit_link'>Edit</a>
+              &nbsp;|&nbsp; <a href='#' class='comment_edit_link'>Edit</a>
             <% end %>
             <%if c.user_id == current_user.id && current_user.admin? %>
               &nbsp;|&nbsp;
