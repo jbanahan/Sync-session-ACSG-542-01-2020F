@@ -82,7 +82,17 @@ class CoreModule
       :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"}
     })
   SHIPMENT = new("Shipment","Shipment")
-  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true})
+  TARIFF = new("TariffRecord","Tariff")
+  CLASSIFICATION = new("Classification","Classification",{
+      :children => [TARIFF],
+      :child_lambdas => {TARIFF => lambda {|p| p.tariff_records}},
+      :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"}
+  })
+  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
+      :children => [CLASSIFICATION],
+      :child_lambdas => {CLASSIFICATION => lambda {|p| p.classifications}},
+      :child_joins => {CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id"}
+  })
   SALE = new("SalesOrder","Sale")
   DELIVERY = new("Delivery","Delivery")
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE]
