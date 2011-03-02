@@ -320,7 +320,7 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
           end %>
         <% else %>
         <% 
-          @core_module.children(mf.core_module,r).each do |child| 
+          @core_module.child_objects(mf.core_module,r).each do |child| 
         %>
             <%=mf.process_export child%><br />
         <% end %> 
