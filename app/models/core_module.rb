@@ -70,8 +70,13 @@ class CoreModule
     r
   end
   
-  def children(child_core_module,base_object)
+  def child_objects(child_core_module,base_object)
     @child_lambdas[child_core_module].call(base_object)
+  end
+
+  #how many steps away is the given module from this one in the parent child tree
+  def module_level(core_module)
+    CoreModule.recursive_module_level(0,self,core_module)      
   end
     
   ORDER_LINE = new("OrderLine","Order Line") 
@@ -125,5 +130,19 @@ class CoreModule
     r = []
     CORE_MODULES.each {|c| r << c if yield c}
     r
+  end
+
+  def self.recursive_module_level(start_level,current_module,target_module)
+    if current_module == target_module 
+      return start_level + 0
+    elsif current_module.children.include? target_module
+      return start_level + 1
+    else
+      r_val = nil
+      current_module.children.each do |cm|
+        r_val = recursive_module_level(start_level+1,cm,target_module) if r_val.nil?
+      end
+      return r_val
+    end
   end
 end
