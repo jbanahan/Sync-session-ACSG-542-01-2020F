@@ -43,6 +43,6 @@ class CoreModuleTest < ActiveSupport::TestCase
     assert product.module_level(CoreModule::PRODUCT)==0, "Same level should equal 0, was #{product.module_level(CoreModule::PRODUCT)}"
     assert product.module_level(CoreModule::CLASSIFICATION)==1, "Classification should be 1, was #{product.module_level(CoreModule::CLASSIFICATION)}"
     assert product.module_level(CoreModule::TARIFF)==2, "Tariff should be 2, was #{product.module_level(CoreModule::TARIFF)}"
-    assert product.module_level(CoreModule::ORDER).nil? "Order should be nil because it's not in the child tree."
+    assert product.module_level(CoreModule::ORDER).nil?, "Order should be nil because it's not in the child tree."
   end
 end

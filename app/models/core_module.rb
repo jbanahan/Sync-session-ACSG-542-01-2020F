@@ -6,7 +6,9 @@ class CoreModule
       :child_joins, #hash of join statements to link up child CoreModule to parent
       :statusable, #works with status rules
       :worksheetable, #works with worksheet uploads
-      :file_formatable, :make_default_search_lambda
+      :file_formatable, #can be used for file formats
+      :make_default_search_lambda #make the search setup that a user will see before they customize
+  attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
   def initialize(class_name,label,opts={})
     o = {:worksheetable => false, :statusable=>false, :file_format=>false, 
@@ -31,9 +33,13 @@ class CoreModule
     @child_lambdas = o[:child_lambdas]
     @child_joins = o[:child_joins]
     @make_default_search_lambda = o[:make_default_search]
-    
   end
   
+  def default_module_chain
+    return @default_module_chain unless @default_module_chain.nil?
+    @default_module_chain = ModuleChain.new
+    @default_module_chain.add self
+  end
   
   def make_default_search(user)
     @make_default_search_lambda.call(user)
@@ -101,6 +107,15 @@ class CoreModule
   SALE = new("SalesOrder","Sale")
   DELIVERY = new("Delivery","Delivery")
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE]
+
+  def self.set_default_module_chain(core_module, core_module_array)
+    mc = ModuleChain.new
+    mc.add_array core_module_array
+    core_module.default_module_chain = mc
+  end
+
+  set_default_module_chain ORDER, [ORDER,ORDER_LINE]
+  set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   
   def self.find_by_class_name(c)
     CORE_MODULES.each do|m|
