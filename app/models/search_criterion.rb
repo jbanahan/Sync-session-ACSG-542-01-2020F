@@ -22,6 +22,11 @@ class SearchCriterion < ActiveRecord::Base
     ModelField.find_by_uid(self.model_field_uid)
   end
   
+  #does the given value pass the criterion test
+  def passes?(value_to_test)
+    return value_to_test=="US"
+  end
+
   private  
   def add_join(p)
     p = p.where("1=1") if p.class.to_s == "Class"
@@ -98,5 +103,4 @@ class SearchCriterion < ActiveRecord::Base
     end
   end
 
-  
 end

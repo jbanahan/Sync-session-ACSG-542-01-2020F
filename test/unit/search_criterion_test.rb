@@ -11,4 +11,8 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert result.length == 1, "Should have returned one record."
     assert result.first.id == p.id
   end
+  
+  test "passes?" do
+    assert false, "Implement method"
+  end
 end

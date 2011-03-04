@@ -8,7 +8,7 @@ class GridMakerTest < ActiveSupport::TestCase
     mc = ModuleChain.new
     mc.add CoreModule::PRODUCT
 
-    gm = GridMaker.new(products,field_list,mc)
+    gm = GridMaker.new(products,field_list,[],mc)
     rc = RowCollector.new
 
     gm.go {|row,obj| rc.add row, obj}
@@ -38,7 +38,7 @@ class GridMakerTest < ActiveSupport::TestCase
     mc.add CoreModule::CLASSIFICATION
     mc.add CoreModule::TARIFF
 
-    gm = GridMaker.new([p1,p2],field_list,mc)
+    gm = GridMaker.new([p1,p2],field_list,[],mc)
     rc = RowCollector.new
     
     gm.go {|row,obj| rc.add row, obj}
@@ -54,6 +54,22 @@ class GridMakerTest < ActiveSupport::TestCase
     ]
     assert expected_result==rc.rows, "Rows was \"#{rc.rows.to_s}\", should have been \"#{expected_result.to_s}\""
     assert rc.objs = [p1,p1,p2], "Objects were \"#{rc.objs.to_s}\", should have been \"#{[p1,p1,p2]}\""
+  end
+
+  test "filtered rows" do
+    p = Product.create!(:vendor_id => companies(:vendor).id, :unique_identifier=>"filtered rows")
+    c_good = p.classifications.create!(:country_id => countries(:us).id)
+    c_bad = p.classifications.create!(:country_id => countries(:china).id)
+
+    cols = [SearchColumn.new(:model_field_uid=>"class_cntry_name")]
+
+    crits = [SearchCriterion.new(:model_field_uid=>"class_cntry_iso",:operator => "eq",:value=>"US")]
+    
+    rc = RowCollector.new
+    GridMaker.new([p],cols,crits,CoreModule::PRODUCT.default_module_chain).go {|r,o| rc.add r, o}
+
+    assert rc.rows.length == 1, "Should have returned 1 row, returned #{rc.rows.length}"
+    assert rc.rows[0][0] == countries(:us).name, "Should have returned \"#{countries(:us).name}\", returned \"#{rc.rows[0][0]}\""
   end
 
   class RowCollector

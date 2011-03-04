@@ -230,7 +230,7 @@ class ModelField
           return "Country not found with ISO Code \"#{data}\""
         end    
       },
-      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.name},
+      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.iso_code},
       :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.country_id",
       :join_alias => "#{table_name}_country",
       :data_type=>:string  
