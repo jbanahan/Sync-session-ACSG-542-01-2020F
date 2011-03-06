@@ -25,7 +25,7 @@ class CommentsController < ApplicationController
     cmt = Comment.find(params[:id])
     commentable = cmt.commentable
     action_secure(current_user.id==cmt.user_id, cmt, {:lock_check => false, :verb => "edit", :module_name => "comment"}) {
-      add_flash :notices, "Commentu updated successfully." if cmt.update_attributes(params[:comment])
+      add_flash :notices, "Comment updated successfully." if cmt.update_attributes(params[:comment])
       errors_to_flash cmt
     }
     redirect_to commentable
