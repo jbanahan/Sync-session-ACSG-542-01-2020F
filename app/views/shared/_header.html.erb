@@ -114,7 +114,7 @@
   <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
   <% if current_user %>
     <div id="corner_links">
-        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user) %> 
+        <%= link_to current_user.full_name, edit_company_user_path(current_user.company, current_user) %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
         <% if current_user.admin? %><%= link_to 'Settings', settings_path %><%else%><%= link_to current_user.company.name, company_path(current_user.company)%><%end%> |
         <a href='javascript:false;' id='lnk_feedback'>Feedback</a> | 

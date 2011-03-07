@@ -18,12 +18,7 @@ class UsersController < ApplicationController
     # GET /users/1.xml
     def show
       @user = User.find(params[:id])
-      action_secure(@user.can_view?(current_user),@user,{:lock_check=>false,:verb=>"view",:module_name=>"user"}) {
-        respond_to do |format|
-            format.html # show.html.erb
-            format.xml  { render :xml => @user }
-        end
-      }
+      redirect_to edit_company_user_path @user
     end
 
     # GET /users/new
@@ -44,7 +39,6 @@ class UsersController < ApplicationController
       @user = User.find(params[:id])
       action_secure(@user.can_edit?(current_user),@user,{:lock_check=>false,:module_name=>"user",:verb=>"edit"}) {
         @company = @user.company
-        render :layout => 'one_col'
       }
     end
 
@@ -59,7 +53,7 @@ class UsersController < ApplicationController
         respond_to do |format|
             if @user.save
                 add_flash :notices, "User created successfully."
-                format.html { redirect_to(company_user_path(@company,@user)) }
+                format.html { redirect_to(company_users_path(@company)) }
                 format.xml  { render :xml => @user, :status => :created, :location => @user }
             else
                 errors_to_flash @user, :now => true
@@ -81,7 +75,10 @@ class UsersController < ApplicationController
         set_debug_expiration(@user)
         respond_to do |format|
             if @user.update_attributes(params[:user])
-                format.html { redirect_to(company_user_path(@company,@user), :notice => 'Account was successfully updated.') }
+                add_flash :notices, "Account updated successfully."
+                format.html {
+                  redirect_to current_user.admin? ? company_users_path(@company) : "/"
+                }
                 format.xml  { head :ok }
             else
                 errors_to_flash @user
