@@ -6,6 +6,7 @@ class SearchSetup < ActiveRecord::Base
   has_many :search_criterions, :dependent => :destroy
   has_many :sort_criterions, :dependent => :destroy
   has_many :search_columns, :dependent => :destroy
+  has_many :search_schedules, :dependent => :destroy
   
   belongs_to :user
   

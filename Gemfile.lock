@@ -57,6 +57,7 @@ GEM
       activesupport (~> 3.0.2)
       arel (~> 2.0.2)
     mime-types (1.16)
+    mocha (0.9.12)
     mongrel (1.2.0.pre2)
       daemons (~> 1.0.10)
       gem_plugin (~> 0.2.3)
@@ -119,6 +120,7 @@ DEPENDENCIES
   aws-s3
   exception_notification_rails3
   meta_search
+  mocha (= 0.9.12)
   mongrel (= 1.2.0.pre2)
   mysql2
   paperclip (= 2.3.8)
