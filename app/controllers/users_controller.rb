@@ -1,4 +1,5 @@
 class UsersController < ApplicationController
+  skip_before_filter :check_tos, :only => [:show_tos, :accept_tos]
     # GET /users
     # GET /users.xml
     def index
@@ -96,6 +97,18 @@ class UsersController < ApplicationController
     def enable
       toggle_enabled
     end
+
+    #Terms of service click through handling
+    def accept_tos
+      current_user.tos_accept = Time.now
+      current_user.save
+      redirect_to "/"
+    end
+    
+    def show_tos
+
+    end
+
     
   private
   def set_debug_expiration(u)

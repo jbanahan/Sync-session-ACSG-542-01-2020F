@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
 
     protect_from_forgery
     before_filter :require_user
+    before_filter :check_tos
     before_filter :update_message_count
     before_filter :set_user_time_zone
     before_filter :log_request
@@ -237,16 +238,27 @@ class ApplicationController < ActionController::Base
     end
 
     def require_user
-        unless current_user
-            store_location
-            add_flash :errors, "You must be logged in to access this page"
-            redirect_to login_path
+      unless current_user
+        store_location
+        add_flash :errors, "You must be logged in to access this page"
+        redirect_to login_path
         return false
-        end
+      end
     end
 
+    def check_tos
+      if current_user && 
+        (current_user.tos_accept.nil? || 
+        current_user.tos_accept < TERMS[:privacy] ||
+        current_user.tos_accept < TERMS[:terms])
+        redirect_to "/show_tos"
+        return false
+      end
+    end
+
+
     def store_location
-        session[:return_to] = request.request_uri
+      session[:return_to] = request.request_uri
     end
 
     def redirect_back_or_default(default)
