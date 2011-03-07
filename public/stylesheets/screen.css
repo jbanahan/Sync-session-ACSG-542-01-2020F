@@ -284,6 +284,8 @@ img {
 /* Edit tables */
 .label_cell {
 	font-weight: bold;
+  width: 15em;
+  padding-bottom: 5px;
 }
 .field_row select {
   width: 15em;

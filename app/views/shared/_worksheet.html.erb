@@ -3,8 +3,14 @@
 
 <%content_for :javascript do %>
 $(function() {
-  $("#mod_import_worksheet").dialog({autoOpen:false,title:'Import Worksheet',buttons:{
-    "Import":function() {$("#frm_import_worksheet").submit();},"Cancel":function() {$("#mod_import_worksheet").dialog('close');}
+  $("#mod_import_worksheet").dialog({autoOpen:false,width:'auto',title:'Import Worksheet',buttons:{
+    "Import":function() {
+      if($("#worksheet").val().match(/xls$/)) {
+        $("#frm_import_worksheet").submit();
+      } else {
+        window.alert("This file is not a .xls file.  Please select an .xls file.");
+      }
+    },"Cancel":function() {$("#mod_import_worksheet").dialog('close');}
   }});
   $("#btn_import_worksheet").click(function() {$("#mod_import_worksheet").dialog('open');});
 });

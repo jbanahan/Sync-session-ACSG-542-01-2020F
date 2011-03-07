@@ -1,6 +1,8 @@
 // Place your application-specific JavaScript functions and classes here
 // This file is automatically included by javascript_include_tag :defaults
 $( function() {
+    
+
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();
@@ -103,6 +105,8 @@ $(document).ready( function() {
     //make the shared/search_box partial work
     setSearchFields($("#srch_fields"),$("#srch_val"),$("#srch_cond"));
 
+    //Hide subscriptions buttons until feature is better implemented (ticket 87)
+    $("#btn_subscriptions").hide();
 });
 function attachmentButton() {
   $(".attach_button").button();
