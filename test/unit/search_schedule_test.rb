@@ -1,31 +1,22 @@
 require 'test_helper'
-require 'mocha'
 
 class SearchScheduleTest < ActiveSupport::TestCase
 
-  test "next_run_time - " do 
-    u = User.new(:username=>"nrt",:password=>"abc123",:password_confirmation=>"abc123",
-        :email=>"unittest@aspect9.com",:company_id=>companies(:vendor).id)
-    u.time_zone = 'Eastern Time (US & Canada)'
+  test "cron_string" do
+    u = User.new(:username=>"cronstr",:password=>"abc123",:password_confirmation=>"abc123",
+        :company_id=>companies(:vendor).id,:email=>"unittest@aspect9.com")
+    u.time_zone = "Hawaii" #important to the test
     u.save!
-    search_setup = u.search_setups.create!(:module_type=>"Product",:name=>"nrt")
-    schedule = search_setup.search_schedules.new(:run_saturday=>true,:run_hour=>22,:last_start_time=>Time.new(2011,2,25))
-  
-    Time.expects(:now).at_least_once.returns(Time.new(2011,3,6,4,0,0,0)) #March 6 4am UTC, March 5 11pm EST
+    search = u.search_setups.create!(:name=>"cronstr",:module_type=>"Product")
+    schedule = search.search_schedules.create!(:run_monday=>true,:run_wednesday=>true,:run_hour=>3)
 
-    assert schedule.next_run_time == Time.new(2011,3,6,4,0,0,0), "Should have next run time of March 6, 4am UTC, had #{schedule.next_run_time}"
+    expected = "* 3 * * 1,3 Hawaii"
+    assert schedule.cron_string == expected, "Expected cron_string to be '#{expected}', was '#{schedule.cron_string}'"
 
-  end
-  test "needs_run? - currently running" do
-    assert false, "implement test"
-  end
-
-  test "needs_run? - not running / past next_run_time" do
-    assert false, "implement test"
-  end
-
-  test "needs_run? - not running / before next_run_time" do
-    assert false, "implement test"
+    schedule.run_monday = false
+    schedule.run_wednesday = false
+    #cron string should be nil if no days are set
+    assert schedule.cron_string.nil?, "Expected cron_string to be nil if no days are set."
   end
 
   test "is_running? - never finished" do 

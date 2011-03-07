@@ -1,19 +1,12 @@
 class SearchSchedule < ActiveRecord::Base
   belongs_to :search_setup
+
+  def cron_string
+    return nil unless any_days_scheduled?
+    tz = search_setup.user.time_zone
+    "* #{run_hour} * * #{make_days_of_week} #{tz}"
+  end
   
-  def needs_run?
-
-  end
-
-  def next_run_time
-    nrt = nil
-    (0...6).each do |day|
-      test_result = next_run_time_test day
-      nrt = test_result if nrt.nil? || test_result < nrt
-    end
-    nrt
-  end
-
   def is_running?
     if self.last_start_time.nil?
       return false
@@ -27,20 +20,26 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   private
+  def any_days_scheduled?
+    self.run_sunday || 
+    self.run_monday ||
+    self.run_tuesday ||
+    self.run_wednesday ||
+    self.run_thursday || 
+    self.run_friday ||
+    self.run_saturday
+  end
+  def make_days_of_week
+    d = []
+    d << "0" if self.run_sunday
+    d << "1" if self.run_monday
+    d << "2" if self.run_tuesday
+    d << "3" if self.run_wednesday
+    d << "4" if self.run_thursday
+    d << "5" if self.run_friday
+    d << "6" if self.run_saturday
 
-  def next_run_time_test target_day
-    user_tz = self.search_setup.user.time_zone
-    user_tz = 'Eastern Time (US & Canada)' if user_tz.nil?
-    local_now = Time.now.in_time_zone user_tz
-    last_target_day = last_day_of_week(target_day).days.ago
-    last_target_time = Time.new(last_target_day.year,last_target_day.month,last_target_day.day,self.run_hour)
-    Time.now if last_target_time.utc < last_run_time
-    
+    return CSV.generate_line(d,{:row_sep=>""})
   end
-  def self.last_day_of_week(target_day)
-    today = Time.now.wday
-    diff = today - target_day
-    diff = diff + 7 if diff < 0
-    diff
-  end
+
 end
