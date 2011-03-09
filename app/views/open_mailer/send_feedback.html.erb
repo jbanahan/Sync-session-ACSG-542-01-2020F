@@ -17,9 +17,11 @@
     <tr><td>Request Host</td><td><%=@request.host%></td></tr>
     <tr><td>IP Address</td><td><%=@request.remote_ip%></td></tr>
     <tr><td>Source Location</td><td><%=@params[:location]%></td></tr>
+    <% unless @params[:source_page]="" %>
     <%=@params[:source_page].each do |k,v| %>
-    <tr><td>Source Param: <%=k%></td><td><%=v%></td></tr>
-    <% end %>
+      <tr><td>Source Param: <%=k%></td><td><%=v%></td></tr>
+      <% end %>
+    <%end%>
   </table>
   </body>
 </html>

@@ -43,7 +43,10 @@ $( function() {
     .click( function() {
         $("#mod_export").dialog('open');
     });
-    $("#lnk_feedback").click(function() {feedbackDialog();});
+    $("#lnk_feedback").click(function(ev) {
+        ev.preventDefault();
+        feedbackDialog();
+    });
     $("button").button();
     
     $(".classification_expand").click(function(ev) {
@@ -134,16 +137,19 @@ function endsWith(str, suffix) {
 }
 function feedbackDialog() {
   content = "<div id='mod_feedback' style='display:none;'><textarea rows='10' id='ta_feedback_msg' name='message' /><br /><input type='checkbox' id='chk_fdbk_rsp' /> I would like a response to this message.</div>";
-  send_data = {
-    message: $("#ta_feedback_msg").val(),
-    respond: (($('#chk_fdbk_rsp:checked').val() == undefined) ? "No" : "Yes"),
-    location: window.location.href
-  };
-  send_data.source_page = $("form").serializeArray();
+  var source_form_data = "";
   $("body").append(content);
   $("#mod_feedback").dialog({title: "Send Feedback",
     buttons:{
       "Submit":function(){
+        send_data = {
+          message: $("#ta_feedback_msg").val(),
+          respond: (($('#chk_fdbk_rsp:checked').val() == undefined) ? "No" : "Yes"),
+          location: window.location.href
+        };
+        if($("form")) {
+          send_data.source_page = $("form").serializeArray();
+        }
         $.post('/feedback', send_data);
         $(this).dialog('close');   
         $("body").append("<div id='mod_thanks'>Thank you for your feedback.</div>");
