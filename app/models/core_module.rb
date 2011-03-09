@@ -39,6 +39,7 @@ class CoreModule
     return @default_module_chain unless @default_module_chain.nil?
     @default_module_chain = ModuleChain.new
     @default_module_chain.add self
+    @default_module_chain
   end
   
   def make_default_search(user)
