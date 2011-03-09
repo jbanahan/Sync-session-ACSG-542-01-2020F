@@ -1,4 +1,10 @@
 module ApplicationHelper
+  def help_link(text,page_name=nil)
+    "<a href='/help#{page_name.blank? ? "" : "?page="+page_name}' target='chainio_help'>#{text}</a>".html_safe
+  end
+  def help_image(file_name)
+    image_tag("help/#{file_name}",:class=>'help_pic')
+  end
   def bool_txt(bool) 
     bool ? "Yes" : "No"
   end
@@ -13,20 +19,20 @@ module ApplicationHelper
   		  field = ''
   		  if d.data_type=='boolean'
   		    if opts[:form]
-  		      field = hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:class=>"cv_chkbx", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
+  		      field = hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:title=>"#{d.tool_tip}",:class=>"cv_chkbx fieldtip", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
   		    else
   		      field = c_val ? "Yes" : "No"
   		    end
   		  elsif d.data_type=='text'
-  		    field = opts[:form] ? text_area_tag(name, c_val, {:rows=>5, :cols=>24}) : "#{c_val}"
+  		    field = opts[:form] ? text_area_tag(name, c_val, {:title=>"#{d.tool_tip}", :class=>'fieldtip',:rows=>5, :cols=>24}) : "#{c_val}"
   		  else
-          field = opts[:form] ? text_field_tag(name, c_val, {:class=>"#{d.date? ? "isdate" : ""}", :size=>"30"}) : "#{c_val}"
+          field = opts[:form] ? text_field_tag(name, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} fieldtip", :size=>"30"}) : "#{c_val}"
   		  end
         x << field_row(d.label,field)          
   		else
 				z = "<b>".html_safe+d.label+": </b>".html_safe
 				if opts[:form]
-				  z << text_field_tag(name, c_val, :class=>"#{d.date? ? "isdate" : ""}")
+				  z << text_field_tag(name, c_val, :title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} fieldtip")
 				else
 				  z << "#{c_val}"
 				end

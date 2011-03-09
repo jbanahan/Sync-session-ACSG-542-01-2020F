@@ -6,7 +6,7 @@ class SalesOrderLinesController < ApplicationController
       @sales_order_line = @sales_order.sales_order_lines.build(params[:sales_order_line])
       @sales_order_line.set_line_number
       unless @sales_order_line.save
-        make_unshipped_remainder_piece_set.save
+        @sales_order_line.make_unshipped_remainder_piece_set.save
         errors_to_flash @sales_order_line, :now => true
         render 'sales_orders/show'
       else
@@ -46,7 +46,7 @@ class SalesOrderLinesController < ApplicationController
             @sales_order_line.set_line_number
             @sales_order_line.save
           end
-          make_unshipped_remainder_piece_set.save
+          @sales_order_line.make_unshipped_remainder_piece_set.save
           add_flash :notices, "Line updated sucessfully."
           format.html { redirect_to(@sales_order) }
           format.xml  { head :ok }

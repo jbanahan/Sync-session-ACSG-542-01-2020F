@@ -10,7 +10,19 @@ $( function() {
     $(".btn_cancel_mod").click( function() {
         $.modal.close();
     });
+    //.isdate must be before the tooltip call
     $(".isdate").datepicker({dateFormat: 'yy-mm-dd'});
+    $(".fieldtip").tooltip({
+      // place tooltip on the right edge
+      position: "center right",
+      // a little tweaking of the position
+      offset: [-2, 10],
+      // use the built-in fadeIn/fadeOut effect
+      effect: "fade",
+      // custom opacity setting
+      opacity: 0.9         
+    });
+    $(".tiplink").tooltip({position:"bottom center", effect: "fade", opacity: 0.9, offset: [8,0]});
     
     //Make the shared/search_box partial work
     $("#srch_fields").change( function() {
@@ -317,6 +329,18 @@ function handleCustomFieldCheckboxes() {
     });
   });
 }
+/* Get's the product's UOM via Ajax and passes it to the callback function */
+function getProductUOM(id, callback) {
+  getProductJSON(id, function(data) {
+      if(data.product!=undefined) {
+        callback(data.product.unit_of_measure);
+      }
+  });
+}
+/* Get's the product's JSON reprsentation and passes it to the callback function */
+function getProductJSON(id, callback) {
+  $.getJSON("/products/"+id+".json",callback);
+} 
 /* right now just validating length */
 function validateHTS(inputStr) {
   base = stripNonNumeric(inputStr);

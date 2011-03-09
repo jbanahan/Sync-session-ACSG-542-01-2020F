@@ -13,6 +13,24 @@ $(function() {
     .click(function() {
       $("#mod_subscriptions").dialog('open');
     });
+  $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',width:'auto',
+    buttons:{"Save":function() {$("#frm_edit_line").submit();},
+             "Cancel":function() {window.location = '<%=sales_order_path(@sales_order)%>';}}
+  });
+  $("#btn_add_line").button().click(function() {
+    $("#mod_edit_line").dialog('open');
+  });  
+  <% if @sales_order.can_edit?(current_user) && !@sales_order_line.nil? %>
+    $("#mod_edit_line").dialog('open');
+  <% end %>
+  $("#edit_line_product").change(function() {
+    if($(this).val().length>0) {
+      $("#edit_line_uom").html("<span style='font-size:80%;'>...loading...</span>");
+      getProductUOM($(this).val(),function(uom) {
+        $("#edit_line_uom").html(uom);
+      });
+    }
+  });
   <% if current_user.company.master && !@sales_order.locked? %>$("#btn_delete").button();<%end%>
 });
 <%end%>
@@ -38,8 +56,6 @@ $(function() {
 </table>
 
 <div>
-<% form_line = @sales_order_line.nil? ? @sales_order.sales_order_lines.build : @sales_order_line %>
-<%= form_for([@sales_order, form_line]) do |f| %>
       
 <table class="detail_table">
   <thead>
@@ -53,9 +69,6 @@ $(function() {
   </thead>
 
   <% @sales_order.sales_order_lines.each do |line| %>
-    <% if !line.id.nil? && !@sales_order_line.nil? && line.id==@sales_order_line.id %>
-      <%= render :partial => 'sales_orders/line', :locals => { :f => f, :form_line => form_line } %>
-    <% elsif !line.id.nil? %>
         <tr class='hover'>
           <% line.set_line_number if line.line_number.nil? %>
           <td><%= @sales_order.can_edit?(current_user) && !@sales_order.locked? ? (link_to line.line_number, edit_sales_order_sales_order_line_path(@sales_order,line)) : line.line_number %></td>
@@ -70,16 +83,26 @@ $(function() {
             <% end %> 
           </td>
         </tr>
-    <% end %>
-  <% end %>
-  <%if form_line.id.nil? && @sales_order.can_edit?(current_user) && !@sales_order.locked?  %>
-    <%= render :partial => 'sales_orders/line', :locals => { :f => f, :form_line => form_line } %>
   <% end %>
 </table>
-<% end %>
 </div>
+<% if @sales_order_line.nil? && @sales_order.can_edit?(current_user) %>
+<button id='btn_add_line'>Add</button>
+<% end %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @sales_order} %>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @sales_order} %>
+<% form_line = @sales_order_line.nil? ? @sales_order.sales_order_lines.build : @sales_order_line %>
+<div id='mod_edit_line' style='display:none;'>
+  <%= form_for([@sales_order, form_line], :html=>{:id=>"frm_edit_line"}) do |f| %>
+    <table>
+      <%=field_row "Line Number", f.text_field(:line_number,"size"=>"2") %>
+      <%=field_row "Product", f.collection_select(:product_id, Product.all, :id, :name, options={:prompt=>"Select a product"},{:id=>"edit_line_product"})%>
+      <%=field_row "Ordered Quantity", f.text_field(:ordered_qty,"size"=>"5") %>
+      <%=field_row "Unit of Measure", content_tag(:span,(f.object.product.nil? ? "" : f.object.product.unit_of_measure),:id=>"edit_line_uom") %>
+      <%=field_row "Price / Unit", f.text_field(:price_per_unit, "size"=>"5") %>
+    </table>
+  <% end %>
+</div>
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:sales_order_id => @sales_order.id, :user_id => current_user.id})

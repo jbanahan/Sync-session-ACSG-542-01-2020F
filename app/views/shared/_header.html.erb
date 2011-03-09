@@ -1,3 +1,4 @@
+<% no_buttons = false if local_assigns[:no_buttons].nil? %> 
 <!-- System UUID: <%=MasterSetup.first.uuid%> -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-GB">
@@ -6,7 +7,7 @@
   <title>chain.io</title>
   <link rel="shortcut icon" href="/favicon.ico" />
   <%= stylesheet_link_tag :all %>
-  <%= javascript_include_tag "jquery-1.4.4.min.js", "jquery-rails.js", "jquery-ui-1.8.7.custom.min.js", "application.js", "jquery.validate.js", "visualize.jQuery.js" %>
+  <%= javascript_include_tag "jquery-1.4.4.min.js", "jquery-rails.js", "jquery-ui-1.8.7.custom.min.js", "application.js", "jquery.validate.js", "visualize.jQuery.js", "jquery.tools.min.js" %>
   <%= csrf_meta_tag %>
   <script>
   <% if current_user %>
@@ -107,28 +108,49 @@
   });
   <% end %>
   <%= yield :javascript%>
+  //Google Analytics
+   var _gaq = _gaq || [];
+   _gaq.push(['_setAccount', 'UA-21693406-2']);
+   _gaq.push(['_setDomainName', '.chain.io']);
+   _gaq.push(['_trackPageview']);
+
+   (function() {
+     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+   })();
   </script>
 <head>
 <body>
 <div id="header">
-  <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
+  <span id="corner_title">
+    <% unless no_buttons %>
+      <%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %>
+    <% else %>
+      <%=image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50") %>
+    <% end %>
+  </span>
   <% if current_user %>
+    <% unless no_buttons %>
     <div id="corner_links">
-        <%= link_to current_user.full_name, edit_company_user_path(current_user.company, current_user) %> 
+        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
-        <% if current_user.admin? %><%= link_to 'Settings', settings_path %><%else%><%= link_to current_user.company.name, company_path(current_user.company)%><%end%> |
-        <a href='#' id='lnk_feedback'>Feedback</a> | 
+        <% if current_user.admin? %><%= link_to 'Settings', settings_path, {:title=>"Administrator System Settings",:class=>"tiplink"} %> |<%end%>
+        <a href='#' id='lnk_feedback' class='tiplink' title='Send feedback to the programmers.' >Feedback</a> | 
+        <%= help_link "Help" %> |
         <%= link_to 'Logout', logout_path %>
     </div>
     <div id="linkbar">
       <!--<button id='btn_home'>Home</button>-->
-      <%if current_user.view_orders?%><button id='btn_orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
-      <%if current_user.view_shipments?%><button id='btn_shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
-      <%if current_user.view_products?%><button id='btn_products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
-      <%if current_user.view_sales_orders?%><button id='btn_sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
-      <%if current_user.view_deliveries?%><button id='btn_deliveries'>Deliveries</button><%if current_user.add_deliveries?%><button id='btn_new_delivery'>New Delivery</button><%end%><%end%>      
+      <%if current_user.view_orders?%><button id='btn_orders' title='Search for orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
+      <%if current_user.view_shipments?%><button id='btn_shipments' title='Search for shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
+      <%if current_user.view_products?%><button id='btn_products' title='Search for products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
+      <%if current_user.view_sales_orders?%><button id='btn_sales' title='Search for sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
+      <%if current_user.view_deliveries?%><button id='btn_deliveries' title='Search for deliveries'>Deliveries</button><%if current_user.add_deliveries?%><button id='btn_new_delivery'>New Delivery</button><%end%><%end%>      
     </div>
+    <% end %>
   <% end %>
+  <% unless no_buttons %>
   <% if has_messages %>
     <div id='notice' class='notices col1 ui-corner-all' style='display:none;'>
 			<div id='notice_hide'><a href="#" id="lnk_hide_notice">Hide</a></div>
@@ -140,5 +162,6 @@
        end 
     %>
     </div>
+  <% end %>
   <% end %>
 </div>

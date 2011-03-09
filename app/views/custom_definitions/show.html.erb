@@ -13,23 +13,10 @@ $(function() {
 <button id='back_to_search'>Back To Search</button>
 <% end %>
 
-<p>
-  <b>Label:</b>
-  <%= @custom_definition.label %>
-</p>
-
-<p>
-  <b>Module:</b>
-  <%= @custom_definition.module_type %>
-</p>
-
-<p>
-  <b>Data Type:</b>
-  <%= CustomDefinition::DATA_TYPE_LABELS[@custom_definition.data_type.intern] %>
-</p>
-
-<p>
-  <b>Rank:</b>
-  <%= @custom_definition.rank %>
-</p>
-
+<table>
+<%=field_row "Label", @custom_definition.label %>
+<%=field_row "Module", @custom_definition.module_type %>
+<%=field_row "Data Type", CustomDefinition::DATA_TYPE_LABELS[@custom_definition.data_type.intern] %>
+<%=field_row "Tip", @custom_definition.tool_tip %>
+<%=field_row "Sort Rank", @custom_definition.rank %>
+</table>

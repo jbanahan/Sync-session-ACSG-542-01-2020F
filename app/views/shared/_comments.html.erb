@@ -8,7 +8,25 @@ $(function() {
   $("#btn_comment_add").click(function() {
     $("#mod_comments_add").dialog('open');
   });
+  $("#mod_comment_send").dialog({autoOpen:false,title:'Email Comment',
+    width:'auto',
+    buttons:{"Send":function() {sendComment(); $("#mod_comment_send").dialog('close'); },
+             "Cancel":function() {$("#mod_comment_send").dialog('close');}
+    }});
+  $(".send_comment_link").click(function(ev) {
+    ev.preventDefault();
+    $("#send_comment_id").val($(this).attr("comment_id"));
+    $("#mod_comment_send").dialog('open');
+  });
 });
+function sendComment() {
+  var to_val = $("#send_comment_to").val();
+  if(to_val.length==0) {
+    window.alert("You must enter an email address in the \"To\" field.");
+  } else {
+    jQuery.post("/comments/"+$("#send_comment_id").val()+"/send_email", {to:to_val});
+  }
+}
 <% end %>
 <div id='comments_container section_insert'>
   <h2 class='section_insert_heading'>Comments <span style='font-weight: normal; font-size: 50%;'>(<a href='#' class='comment_exp_all'>open all</a><a href='#' class='comment_cls_all' style='display:none;'>close all</a>)</span></h2>
@@ -25,8 +43,9 @@ $(function() {
         <td colspan="3">
           <pre><%=c.body%></pre>
           <div class='comment_controls'>
+            <a href='#' class='send_comment_link' comment_id="<%=c.id%>">Email</a>
             <%if c.user_id == current_user.id%>
-              <a href='#' class='comment_edit_link'>Edit</a>
+              &nbsp;|&nbsp; <a href='#' class='comment_edit_link'>Edit</a>
             <% end %>
             <%if c.user_id == current_user.id && current_user.admin? %>
               &nbsp;|&nbsp;
@@ -59,4 +78,9 @@ $(function() {
     <%=f.text_field :subject, :class=>'comment_input' %><br />
     <%=f.text_area :body, :rows => '5', :class=>'comment_input' %><br />
   <%end%>
+</div>
+<div id='mod_comment_send' style='display:none;'>
+    <input type='hidden' id='send_comment_id' value='' /> 
+    To: <input type='text' name='to' id='send_comment_to' /><br />
+    <p>Separate addresses with commas (a@b.com, d@b.com)</p>
 </div>

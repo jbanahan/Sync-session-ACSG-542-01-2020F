@@ -1,6 +1,6 @@
 <% content_for :javascript do %>
 $(function() {
-  $("#mod_address").dialog({autoOpen:false,
+  $("#mod_address").dialog({autoOpen:false,width:'auto',
     title:'<%= edit_add.nil? ? "Add" : "Edit" %> Address'});
   $( "#address_submit" ).button();
   $("#btn_add_address").button().click(function() {

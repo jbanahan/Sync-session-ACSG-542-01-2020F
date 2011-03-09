@@ -21,6 +21,9 @@ class CommentsController < ApplicationController
     }
     redirect_to commentable
   end
+  def show 
+    redirect_to Comment.find(params[:id]).commentable
+  end
   def update
     cmt = Comment.find(params[:id])
     commentable = cmt.commentable
@@ -29,5 +32,12 @@ class CommentsController < ApplicationController
       errors_to_flash cmt
     }
     redirect_to commentable
+  end
+  def send_email
+    cmt = Comment.find(params[:id])
+    action_secure(cmt.commentable.can_view?(current_user),cmt.commentable, {:lock_check => false, :verb => "work with", :module_name => "item"}) {
+      OpenMailer.send_comment(current_user,params[:to],cmt,comment_url(cmt)).deliver
+    }
+    render :text=>"OK"
   end
 end

@@ -41,6 +41,16 @@ class SearchSetup < ActiveRecord::Base
     self.last_accessed = Time.now
     self.save if save_obj 
   end
+
+  # Returns a new, saved search setup with the columns passed from the given array
+  def self.create_with_columns(model_field_uids,user,name="Default")
+    ss = SearchSetup.create(:name=>name,:user => user,:module_type=>ModelField.find_by_uid(model_field_uids[0]).core_module.class_name,
+        :simple=>false,:last_accessed=>Time.now)
+    model_field_uids.each_with_index do |uid,i|
+      ss.search_columns.create(:rank=>i,:model_field_uid=>uid)
+    end
+    ss
+  end
   
   # Returns a copy of the SearchSetup with matching columns, search & sort criterions 
   # all built.

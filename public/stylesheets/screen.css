@@ -260,6 +260,22 @@ img {
 .drag_lists_active_col li {
     border: 1px solid #707070;
 }
+/* jquery toolkit (flowplayer.org) */
+/* simple css-based tooltip */
+.tooltip {
+  background-color:#000;
+  border:1px solid #fff;
+  padding:10px 15px;
+  width:200px;
+  display:none;
+  color:#fff;
+  text-align:left;
+  font-size:12px;
+
+  /* outline radius for mozilla/firefox only */
+  -moz-box-shadow:0 0 10px #000;
+  -webkit-box-shadow:0 0 10px #000;
+}
 /* will_paginate */
 .pagination {
   margin: 5px;
@@ -345,4 +361,12 @@ img {
 }
 .classification_shrink {
   display: none; /* toggled with .classification_expand */
+}
+.help_title {
+  display: block;
+  font-size: 200%;
+  font-weight: bold;
+}
+.help_pic {
+  border: 1px solid black;
 }
