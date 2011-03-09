@@ -16,7 +16,7 @@ class TariffRecord < ActiveRecord::Base
 
   private
   def clean_hts(str)
-    str.gsub(/[^0-9]/,'')
+    str.gsub(/[^0-9]/,'') unless str.nil?
   end
   
 end

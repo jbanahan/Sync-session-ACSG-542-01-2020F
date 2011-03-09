@@ -6,7 +6,9 @@ class CoreModule
       :child_joins, #hash of join statements to link up child CoreModule to parent
       :statusable, #works with status rules
       :worksheetable, #works with worksheet uploads
-      :file_formatable, :make_default_search_lambda
+      :file_formatable, #can be used for file formats
+      :make_default_search_lambda #make the search setup that a user will see before they customize
+  attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
   def initialize(class_name,label,opts={})
     o = {:worksheetable => false, :statusable=>false, :file_format=>false, 
@@ -31,9 +33,13 @@ class CoreModule
     @child_lambdas = o[:child_lambdas]
     @child_joins = o[:child_joins]
     @make_default_search_lambda = o[:make_default_search]
-    
   end
   
+  def default_module_chain
+    return @default_module_chain unless @default_module_chain.nil?
+    @default_module_chain = ModuleChain.new
+    @default_module_chain.add self
+  end
   
   def make_default_search(user)
     @make_default_search_lambda.call(user)
@@ -70,8 +76,13 @@ class CoreModule
     r
   end
   
-  def children(child_core_module,base_object)
+  def child_objects(child_core_module,base_object)
     @child_lambdas[child_core_module].call(base_object)
+  end
+
+  #how many steps away is the given module from this one in the parent child tree
+  def module_level(core_module)
+    CoreModule.recursive_module_level(0,self,core_module)      
   end
     
   ORDER_LINE = new("OrderLine","Order Line") 
@@ -87,13 +98,32 @@ class CoreModule
     })
   SHIPMENT = new("Shipment","Shipment",
     {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],user)}})
-  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
-    :make_default_search => lambda {|user| SearchSetup.create_with_columns([:prod_uid,:prod_name,:prod_ven_name],user)}})
   SALE = new("SalesOrder","Sale",
     {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:sale_order_number,:sale_order_date,:sale_cust_name],user)}})
   DELIVERY = new("Delivery","Delivery",
     {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:del_ref,:del_mode,:del_car_name,:del_cust_name],user)}})
+  TARIFF = new("TariffRecord","Tariff")
+  CLASSIFICATION = new("Classification","Classification",{
+      :children => [TARIFF],
+      :child_lambdas => {TARIFF => lambda {|p| p.tariff_records}},
+      :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"}
+  })
+  PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
+      :children => [CLASSIFICATION],
+      :child_lambdas => {CLASSIFICATION => lambda {|p| p.classifications}},
+      :child_joins => {CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id"},
+      :make_default_search => lambda {|user| SearchSetup.create_with_columns([:prod_uid,:prod_name,:prod_ven_name],user)}
+  })
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE]
+
+  def self.set_default_module_chain(core_module, core_module_array)
+    mc = ModuleChain.new
+    mc.add_array core_module_array
+    core_module.default_module_chain = mc
+  end
+
+  set_default_module_chain ORDER, [ORDER,ORDER_LINE]
+  set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   
   def self.find_by_class_name(c)
     CORE_MODULES.each do|m|
@@ -123,5 +153,19 @@ class CoreModule
     r = []
     CORE_MODULES.each {|c| r << c if yield c}
     r
+  end
+
+  def self.recursive_module_level(start_level,current_module,target_module)
+    if current_module == target_module 
+      return start_level + 0
+    elsif current_module.children.include? target_module
+      return start_level + 1
+    else
+      r_val = nil
+      current_module.children.each do |cm|
+        r_val = recursive_module_level(start_level+1,cm,target_module) if r_val.nil?
+      end
+      return r_val
+    end
   end
 end

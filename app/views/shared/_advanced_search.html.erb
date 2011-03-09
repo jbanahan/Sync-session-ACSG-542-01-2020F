@@ -314,24 +314,15 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
     <th>&nbsp;</th>
   </tr></thead>
   <tbody>
-    <%@results.each do |r| %>
-    <tr class='hover'>
-      <%@current_search.search_columns.order("rank ASC").each do |c|%>
-      <td>
-        <% mf = ModelField.find_by_uid(c.model_field_uid) %>
-        <% if mf.uid==:_blank || mf.core_module==@core_module %>
-            <%=mf.process_export r%>
-        <% else %>
-        <%   @core_module.children(mf.core_module,r).each do |child| %>
-            <%=mf.process_export child%><br />
-        <% end %> 
+    <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@core_module.default_module_chain).go do |row,obj| %>
+      <tr class='hover'>
+        <% row.each do |r| %>
+        <td><%=r%></td>
         <% end %>
-      </td>
-      <%end%>
-      <td><%=link_to 'Go', r%>
-    </tr>
-    <%end%>
-  </tbody>
+        <td><%=link_to 'Go', obj %></td>
+      </tr>
+    <% end %>
+   </tbody>
 </table>
 <ul>
 </ul>

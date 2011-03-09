@@ -1,0 +1,31 @@
+<%content_for :javascript do %>
+$(function () {
+  $("#btn_accept").click(function() {window.location='/accept_tos';});
+  $("#bnt_decline").click(function() {window.loction='/logout';});
+});
+<%end%>
+<%content_for :action_bar do %>
+<button id='btn_accept'>Accept</button>
+<button id='btn_decline'>Decline</button>
+<%end%>
+<h1>Welcome to <b>chain<span style='color:#1eb816;'>.</span>io</b></h1>
+
+<p>In order to use the system, you'll need to review and accept our Terms of Use &amp; Privacy Policy.</p>
+<p>To continue, please review the documents linked below then click the Accept
+button on this page.</p>
+
+<p>If you've seen this page before, you're probably back here because we've updated one of the documents.  
+Please check the dates next to each document to see which ones have been updated since the last time you accepted them.</p>
+
+<p>If you have any questions, please email us at <a href='mailto:legal@aspect9.com'>legal@aspect9.com</a>.</p>
+
+<p>
+Thanks,<br>
+The <b>chain<span style='color:#1eb816;'>.</span>io</b> Team
+</p>
+<p>
+<b><a href='privacy_policy.pdf' target='_new'>Privacy Policy</a></b> - Last Updated: <%=TERMS[:privacy]%><br/>
+<b><a href='tos.pdf' target='_new'>Terms of Service</a></b> - Last Updated: <%=TERMS[:terms]%>
+</p>
+
+<p>You last accepted these agreements on: <%=current_user.tos_accept.nil? ? "Never" : current_user.tos_accept%></p>

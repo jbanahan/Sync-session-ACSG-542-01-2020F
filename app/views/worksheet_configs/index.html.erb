@@ -1,3 +1,8 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_new").click(function() {window.location = '<%=new_worksheet_config_path%>';});
+});
+<%end%>
 <table class='detail_table'>
   <thead><tr><th>Name</th><th>Module</th><th>&nbsp;</th></tr></thead>
   <tbody>
@@ -10,3 +15,4 @@
     <% end %>
   </tbody>
 </table>
+<button id='btn_new'>New</button>

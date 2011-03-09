@@ -203,6 +203,42 @@ class ModelField
   def self.make_ship_from_arrays(rank_start,uid_prefix,label_prefix,table_name)
     make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,"from")
   end
+  def self.make_country_arrays(rank_start,uid_prefix,label_prefix,table_name)
+    r = []
+    r << [rank_start,"#{uid_prefix}_cntry_name".to_sym, :name,"#{label_prefix}Country Name", {
+      :import_lambda => lambda {|detail,data|
+        c = Country.where(:name => data).first
+        detail.country = c
+        unless c.nil?
+          return "Country set to #{c.name}"
+        else
+          return "Country not found with name \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.name},
+      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.country_id",
+      :join_alias => "#{table_name}_country",
+      :data_type=>:string
+    }]
+    r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "#{label_prefix}Country ISO Code",{
+      :import_lambda => lambda {|detail,data|
+        c = Country.where(:iso_code => data).first
+        detail.country = c
+        unless c.nil?
+          return "Country set to #{c.name}"
+        else
+          return "Country not found with ISO Code \"#{data}\""
+        end    
+      },
+      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.name},
+      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.country_id",
+      :join_alias => "#{table_name}_country",
+      :data_type=>:string  
+    }]
+
+    r
+
+  end
 
   add_fields CoreModule::PRODUCT, [
     [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
@@ -243,6 +279,14 @@ class ModelField
   ]
   add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","","products")
   add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","","products")
+  
+  add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","Classification - ","classifications")
+
+  add_fields CoreModule::TARIFF, [
+    [1,:hts_hts_1,:hts_1,"Tariff - HTS 1"],
+    [2,:hts_hts_2,:hts_2,"Tariff - HTS 2"],
+    [3,:hts_hts_3,:hts_3,"Tariff - HTS 3"]
+  ]
 
   add_fields CoreModule::ORDER, [
     [1,:ord_ord_num,:order_number,"Header - Order Number"],
@@ -318,6 +362,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::ORDER,Order,"Header - ")
     ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::PRODUCT,Product,"")
+    ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification,"Classificaiton - ")
     ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment,"")
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder,"Header - ")
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery,"")

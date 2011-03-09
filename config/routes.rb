@@ -28,6 +28,8 @@ OpenChain::Application.routes.draw do
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/search_setups/:id/copy" => "search_setups#copy"
   match "/help" => "chain_help#index"
+  match "/accept_tos" => "users#accept_tos"
+  match "/show_tos" => "users#show_tos"
 
   resources :import_configs
   resources :imported_files, :only => [:new, :create, :show] do
