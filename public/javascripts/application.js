@@ -147,9 +147,6 @@ function feedbackDialog() {
           respond: (($('#chk_fdbk_rsp:checked').val() == undefined) ? "No" : "Yes"),
           location: window.location.href
         };
-        if($("form")) {
-          send_data.source_page = $("form").serializeArray();
-        }
         $.post('/feedback', send_data);
         $(this).dialog('close');   
         $("body").append("<div id='mod_thanks'>Thank you for your feedback.</div>");
