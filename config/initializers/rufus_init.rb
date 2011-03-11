@@ -5,9 +5,14 @@ def execute_scheduler
  scheduler = Rufus::Scheduler.start_new  
  logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
 
-  #Test job
-  scheduler.every("1m") do  
-    logger.info "Log"
+  #Rebuild index to capture any saved schedules
+  scheduler.every("10m") do
+    if Rails.env == "production"
+      logger.info "#{Time.now}: Rebuilding search schedule jobs "
+      SearchSchedule.reset_schedule scheduler, logger
+    else
+      logger.info "Skipping scheduled job rebuild: Not production"
+    end
   end
 end
 

@@ -52,16 +52,21 @@ class ApplicationController < ActionController::Base
       @current_search = @core_module.make_default_search current_user
     end
     @current_search = params[:sid].nil? ? SearchSetup.for_module(@core_module).for_user(current_user).order("last_accessed DESC").first : SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first
-    @current_search.touch(true)
-    @results = secure(@current_search.search)
-    respond_to do |format| 
-      format.html {
-        @results = @results.paginate(:per_page => 20, :page => params[:page]) 
-        render :layout => 'one_col'
-      }
-      format.csv {
-        @results = @results.where("1=1")
-        render_csv("#{core_module.label}.csv")}
+    if @current_search.user != current_user
+      error_redirect "You cannot run a search that is assigned to a different user."
+    else
+      @current_search.touch(true)
+      @results = @current_search.search
+      respond_to do |format| 
+        format.html {
+          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+          render :layout => 'one_col'
+        }
+        format.csv {
+          @results = @results.where("1=1")
+          render_csv("#{core_module.label}.csv")
+        }
+      end
     end
   end
   

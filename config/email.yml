@@ -4,6 +4,7 @@ development:
   :authentication: plain
   :user_name: ac55256
   :password: xypbavh3ymznef
+  :enable_starttls_auto: false
 production:
   :address: domU-12-31-39-04-F2-54.compute-1.internal # Private DNS to util1 EC2 instance
   :port: 25

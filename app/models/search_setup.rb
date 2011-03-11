@@ -17,11 +17,16 @@ class SearchSetup < ActiveRecord::Base
         r_val = true if a[f].blank?
       } 
       r_val
-  }
+    }
   accepts_nested_attributes_for :sort_criterions, :allow_destroy => true, 
     :reject_if => lambda { |a| a[:model_field_uid].blank? }
   accepts_nested_attributes_for :search_columns, :allow_destroy => true,
     :reject_if => lambda { |a| a[:model_field_uid].blank? }
+  accepts_nested_attributes_for :search_schedules, :allow_destroy => true,
+    :reject_if => lambda { |a| a[:email_addresses].blank? && 
+      a[:ftp_server].blank? && 
+      a[:_destroy].blank?
+    }
     
   scope :for_user, lambda {|u| where(:user_id => u)} 
   scope :for_module, lambda {|m| where(:module_type => m.class_name)}
@@ -34,7 +39,7 @@ class SearchSetup < ActiveRecord::Base
     self.sort_criterions.order("rank ASC").each do |sort|
       base = sort.apply(base)
     end
-    base
+    base.search_secure self.user, base
   end
   
   def touch(save_obj=false)

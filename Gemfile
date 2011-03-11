@@ -14,3 +14,4 @@ gem 'spreadsheet', '0.6.5.2'
 gem 'exception_notification_rails3', :require => 'exception_notifier'
 gem 'ruby-debug19'
 gem 'rufus-scheduler', '2.0.8'
+gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/

@@ -117,6 +117,23 @@ $(function() {
         $("#mod_delete").dialog('close');
       }
   }});
+  $("#mod_schedule").dialog({autoOpen:false,width:'auto',title:"Search Schedule",
+    buttons:{Update:function() {
+      var id = $("#sd_id").val();
+      if(id.length>0) {
+        var c = $('.sch_id[value="'+id+'"]').parents('.sch_data_cont');
+        removeSchedule(c)
+      }
+      writeScheduleContainer($("#sched_list"),readScheduleInterface());
+      $("#mod_schedule").dialog('close');
+    }}
+  });
+  $("#add_schedule").click(function(ev) {
+    ev.preventDefault();
+    writeScheduleInterface(newSchedule());
+    $("#mod_schedule").dialog('open');
+  });
+  applyScheduleHooks();
 });
 function addParameter() {
   var m = new Date().getTime();
@@ -133,99 +150,6 @@ function addParameter() {
     h = h + "<td><input class='sp_destroy' id='search_setup_search_criterions_attributes_"+m+"__destroy' name='search_setup[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'>Remove</a></td></tr>";
   $("#sp_table").append(h);   
 }
-function submitForm() {
-  var col_uids = []
-  $("#used_columns option").each(function () {
-    col_uids.push($(this).attr("value"));
-  });
-  var f = $("#frm_current_search");
-  var i;
-  for(i=0;i<col_uids.length;i++) {
-    var h = "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][rank]' value='"+i+"' />";
-    h = h + "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][model_field_uid]' value='"+col_uids[i]+"' />";
-    f.append(h);
-  }
-  var srt_uids = []
-  $("#used_sorts option").each(function() {
-    srt_uids.push([$(this).attr("value"),$(this).attr("ord")])
-  });
-  for(i=0;i<srt_uids.length;i++) {
-    var h = "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][rank]' value='"+i+"' />";
-    h = h + "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][model_field_uid]' value='"+srt_uids[i][0]+"' />";
-    h = h + "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][descending]' value='"+(srt_uids[i][1]=="a" ? "false" : "true")+"' />";
-    f.append(h);
-  }
-  f.submit();
-}
-function move_list_item(direction,list) {
-  var selectedItems = $("#"+list.attr("id")+" :selected");
-  if(direction=='down') {
-    $($("#"+list.attr("id")+" :selected").get().reverse()).each(function() {
-      $(this).next("option").after($(this)); 
-    });
-  } else {
-    $("#"+list.attr("id")+" :selected").each(function() {
-      $(this).prev("option").before($(this));
-    });
-  }
-}
-function make_columns(amf,available_obj,used_obj,list_type,list) {
-  var used_columns = [];
-  var unused_columns = amf.slice(0);
-  var scs;
-  if(list_type=='search_columns') {
-    scs = list.search_setup.search_columns;
-  } else {
-    scs = list.search_setup.sort_criterions;
-  }
-  scs.sort(function(a,b) {
-    var i = a.rank-b.rank;
-    if(i!=0) { return i;}
-    if(a.model_field_uid<b.model_field_uid) {
-      return -1;
-    } else {
-      return 1;
-    }
-  });
-  for(i=0;i<scs.length;i++) {
-    var uid = scs[i].model_field_uid;
-    var new_unused = []
-    if(uid=="_blank") {
-      var blank_obj = new Object;
-      blank_obj.uid = "_blank";
-      blank_obj.label = "[Blank]";
-      used_columns.push(blank_obj);
-    } else {
-      for(j=0;j<unused_columns.length;j++) {
-        if(unused_columns[j].uid==uid) {
-          if(list_type=='sort_criterions') {
-            unused_columns[j].descending = scs[i].descending
-          }
-          used_columns.push(unused_columns[j]);
-        } else {
-          new_unused.push(unused_columns[j]);
-        }
-      }
-      unused_columns = new_unused;
-    }
-  }
-  h = "";
-  for(i=0;i<unused_columns.length;i++) {
-    h = h + "<option value='"+unused_columns[i].uid+"'>"+unused_columns[i].label+"</option>";
-  }
-  available_obj.html(h);
-  h = "";
-  for(i=0;i<used_columns.length;i++) {
-    var label = used_columns[i].label
-    var ord = '';
-    if(list_type=='sort_criterions') {
-      label = label + (used_columns[i].descending ? " [Z > A]" : " [A > Z]");
-      ord = "ord='"+(used_columns[i].descending ? "d" : "a")+"'"
-    }
-    h = h + "<option value='"+used_columns[i].uid+"' "+ord+">"+label+"</option>";
-  }
-  used_obj.html(h);
-}
 <%end%>
 
 
@@ -239,6 +163,7 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
         <li><a href="#params_cont">Parameters</a></li>
         <li><a href="#sorts_cont">Sorts</a></li>
         <li><a href="#col_cont" id='tab_col_cont'>Columns</a></li>
+        <li><a href="#sched_cont">Schedules</a></li>
     </ul>
     <div id='setup_cont'>
       Name: <%=f.text_field :name, "id"=>"current_name" %>
@@ -291,6 +216,38 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
         </tbody>
       </table>
     </div>
+    <div id='sched_cont'>
+      <ul id='sched_list'>
+    <%@current_search.search_schedules.each do |ss| %>
+      <%ssa = "search_setup[search_schedules_attributes][#{ss.id}]"%>
+      <li class='sch_data_cont'>
+        <input class='sch_id' name='<%=ssa%>[id]' type='hidden' value='<%=ss.id%>'/>
+        <input class='sch_mon' name='<%=ssa%>[run_monday]' type='hidden' value='<%=ss.run_monday%>'/>
+        <input class='sch_tue' name='<%=ssa%>[run_tuesday]' type='hidden' value='<%=ss.run_tuesday%>'/>
+        <input class='sch_wed' name='<%=ssa%>[run_wednesday]' type='hidden' value='<%=ss.run_wednesday%>'/>
+        <input class='sch_thu' name='<%=ssa%>[run_thursday]' type='hidden' value='<%=ss.run_thursday%>'/>
+        <input class='sch_fri' name='<%=ssa%>[run_friday]' type='hidden' value='<%=ss.run_friday%>'/>
+        <input class='sch_sat' name='<%=ssa%>[run_saturday]' type='hidden' value='<%=ss.run_saturday%>'/>
+        <input class='sch_sun' name='<%=ssa%>[run_sunday]' type='hidden' value='<%=ss.run_sunday%>'/>
+        <input class='sch_hr' name='<%=ssa%>[run_hour]' type='hidden' value='<%=ss.run_hour%>'/>
+        <input class='sch_email' name='<%=ssa%>[email_addresses]' type='hidden' value='<%=ss.email_addresses%>'/>
+        <input class='sch_destroy' name='<%=ssa%>[_destroy]' type='hidden' value='' />
+        <%=comma_list {|list| 
+          list << "Monday" if ss.run_monday
+          list << "Tuesday" if ss.run_tuesday
+          list << "Wednesday" if ss.run_wednesday
+          list << "Thursday" if ss.run_thursday
+          list << "Friday" if ss.run_friday
+          list << "Saturday" if ss.run_saturday
+          list << "Sunday" if ss.run_sunday
+        }
+        %>
+        at <%=ss.run_hour%>:00 to <%=ss.email_addresses%> - <a href='#' class='sched_edit'>Edit</a> | <a href='#' class='sched_remove'>Remove</a>
+      </li>
+    <%end%>
+      </ul>
+      <a href='#' id='add_schedule'>Add Schedule</a>
+    </div>
     <% end %>
   </div>  
   <div style='text-align:right;'>
@@ -303,6 +260,25 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
     <%= button_to "Delete", @current_search, :method => :delete, :id=>"real_delete_button" %>
   </div>
   <div id='mod_delete' style='display:none;'>Are you sure you want to delete this search?</div>
+  <div id='mod_schedule' style='display:none;'>
+    <input type='hidden' id='sd_id' value='' />
+    <table>
+<% 
+hrs_opts = {"midnight"=>"0"}
+(1..23).each {|n| hrs_opts["#{n}:00"]=n}
+%>
+      <%=field_row "Email Addresses",
+        text_field_tag("eml","",{:id=>"sd_email"})+"<br /><span style='font-size:75%;'>Separate with commas.</span>".html_safe%>
+      <%=field_row "Hour of Day (Your Timezone)", select_tag("hr",options_for_select(hrs_opts),{:id=>"sd_hr"}) %>
+      <%=field_row "Monday", check_box_tag("mon","1",false,{:id=>"sd_mon"}) %>
+      <%=field_row "Tuesday", check_box_tag("tue","1",false,{:id=>"sd_tue"}) %>
+      <%=field_row "Wednesday", check_box_tag("wed","1",false,{:id=>"sd_wed"}) %>
+      <%=field_row "Thursday", check_box_tag("thu","1",false,{:id=>"sd_thu"}) %>
+      <%=field_row "Friday", check_box_tag("fri","1",false,{:id=>"sd_fri"}) %>
+      <%=field_row "Saturday", check_box_tag("sat","1",false,{:id=>"sd_sat"}) %>
+      <%=field_row "Sunday", check_box_tag("wed","1",false,{:id=>"sd_sun"}) %>
+    </table>
+  </div>
 </div>
 
 <h2>Results</h2>

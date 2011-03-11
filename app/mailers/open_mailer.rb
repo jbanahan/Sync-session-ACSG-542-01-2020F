@@ -27,12 +27,12 @@ class OpenMailer < ActionMailer::Base
     @params = params
     @request = request
     mail(:to => 'chainio-feedback@aspect9.com',
-          :subject => "[Chain.io User Feedback] from #{current_user.full_name} @ #{current_user.company.name}")
+          :subject => "[chain.io User Feedback] from #{current_user.full_name} @ #{current_user.company.name}")
   end
 
   def send_password_reset(user)
     @user = user
-    mail(:to => user.email, :subject => "Chain.io Password Reset") do |format| 
+    mail(:to => user.email, :subject => "[chain.io] Password Reset") do |format| 
       format.text
     end
   end
@@ -50,6 +50,37 @@ class OpenMailer < ActionMailer::Base
     @link = link 
     mail(:to => to_address, :subject => "[chain.io] #{comment.subject}") do |format|
       format.text
+    end
+  end
+
+  def send_search_result(to,search_name,file_path)
+    attachments["#{sanitize_filename search_name}.csv"] = File.read file_path
+    mail(:to => to, :subject => "[chain.io] #{search_name} Result") do |format|
+      format.text
+    end
+  end
+
+  def send_search_fail(to,search_name,error_message,ftp_server,ftp_username,ftp_subfolder)
+    @search_name = search_name
+    @error_message = error_message
+    @ftp_server = ftp_server
+    @ftp_username = ftp_username
+    @ftp_subfolder = ftp_subfolder
+
+    mail(:to=>to, :bcc=>"support@chain.io", :subject => "[chain.io] Search Transmission Failure") do |format|
+      format.text
+    end
+  end
+
+  private
+  def sanitize_filename(filename)
+    filename.strip.tap do |name|
+      # NOTE: File.basename doesn't work right with Windows paths on Unix
+      # get only the filename, not the whole path
+      name.sub! /\A.*(\\|\/)/, ''
+      # Finally, replace all non alphanumeric, underscore
+      # or periods with underscore
+      name.gsub! /[^\w\.\-]/, '_'
     end
   end
 end

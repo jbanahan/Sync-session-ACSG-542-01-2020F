@@ -1,10 +1,55 @@
 class SearchSchedule < ActiveRecord::Base
+  RUFUS_TAG = "search_schedule"  
+
   belongs_to :search_setup
 
-  def cron_string
-    return nil unless any_days_scheduled?
-    tz = search_setup.user.time_zone
-    "* #{run_hour} * * #{make_days_of_week} #{tz}"
+  #reload all SearchSchedules within the given scheduler
+  def self.reset_schedule scheduler, log=nil
+    begin
+    log.info "#{Time.now}: Resetting Scheduled Jobs" if log
+    #unschedule all jobs
+    jobs = scheduler.find_by_tag(RUFUS_TAG) 
+    log.info "#{Time.now}: #{jobs.length} jobs to be removed." if log
+    jobs.each {|job| 
+      log.info "#{Time.now}: Removing job #{job.job_id}" if log
+      scheduler.unschedule job.job_id
+    }
+    #schedule all
+    SearchSchedule.all.each {|ss| ss.schedule scheduler, log}
+    rescue Exception => e
+      if log
+        log.error e.message
+      else
+        raise e
+      end
+    end
+  end
+
+  def run log=nil
+    log.info "#{Time.now}: Search schedule #{self.id} starting." if log
+    srch_setup = self.search_setup
+    cm = CoreModule.find_by_class_name srch_setup.module_type
+    t = Tempfile.open("scheduled_search_run")
+    t.write CsvMaker.new.make(srch_setup,cm,srch_setup.search)
+    t.close
+    send_email srch_setup.name, t, log
+    send_ftp srch_setup.name, t, log
+    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+  end
+
+  def schedule(scheduler, log=nil)
+    begin
+      cs = cron_string
+      log.info "#{Time.now}: Attempting to schedule job for Schedule #{self.id}, with cron \"#{cs}" if log
+      scheduler.cron cs, {:tags=> RUFUS_TAG} { SearchSchedule.find(self.id).run log } if any_days_scheduled? && self.run_hour
+      log.info "#{Time.now}: Scheduled job for Schedule #{self.id}, with cron \"#{cs}\"" if log
+    rescue StandardException => e
+      if log
+        log.error e
+      else
+        raise e
+      end
+    end
   end
   
   def is_running?
@@ -20,6 +65,45 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   private
+  def send_email name, temp_file, log=nil
+    if !self.email_addresses.nil? && self.email_addresses.include?("@")
+      log.info "#{Time.now}: Attempting to send email to #{self.email_addresses}" if log
+      OpenMailer.send_search_result(self.email_addresses, name, temp_file.path).deliver!
+      log.info "#{Time.now}: Sent email"
+    end
+  end
+
+  def send_ftp name, temp_file, log=nil
+    unless [self.ftp_server.blank?,
+      self.ftp_username.blank?,
+      self.ftp_password.blank?,
+    ].include? true
+      log.info "#{Time.now}: Attempting to send FTP to #{self.ftp_server}" if log
+      opts = {:remote_file_name => sanitize_filename("#{name}.csv")}
+      opts[:folder] = self.ftp_subfolder unless self.ftp_subfolder.blank?
+      begin
+        FtpSender.send_file self.ftp_server, self.ftp_username, self.ftp_password, temp_file.path, opts
+      rescue IOError => e
+        #do email & internal message here
+        log.error e.message if log
+        user = self.search_setup.user
+        OpenMailer.send_search_fail(user.email,self.search_setup.name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver
+        user.messages.create(:subject=>"Search Transmission Failure",:body=>"Search Name: #{self.search_setup.name}\r"+
+          "Server Name: #{self.ftp_server}\r"+
+          "Account: #{self.ftp_username}\r"+
+          "Subfolder: #{self.ftp_subfolder}\r"+
+          "Error Message: #{e.message}")
+      end
+      "#{Time.now}: FTP complete"
+    end
+  end
+  
+  def cron_string
+    return nil unless any_days_scheduled?
+    tz = search_setup.user.time_zone.nil? ? "America/New_York" : ActiveSupport::TimeZone::MAPPING[search_setup.user.time_zone]
+    "34 #{run_hour} * * #{make_days_of_week} #{tz}"
+  end
+
   def any_days_scheduled?
     self.run_sunday || 
     self.run_monday ||
@@ -40,6 +124,16 @@ class SearchSchedule < ActiveRecord::Base
     d << "6" if self.run_saturday
 
     return CSV.generate_line(d,{:row_sep=>""})
+  end
+  def sanitize_filename(filename)
+    filename.strip.tap do |name|
+      # NOTE: File.basename doesn't work right with Windows paths on Unix
+      # get only the filename, not the whole path
+      name.sub! /\A.*(\\|\/)/, ''
+      # Finally, replace all non alphanumeric, underscore
+      # or periods with underscore
+      name.gsub! /[^\w\.\-]/, '_'
+    end
   end
 
 end

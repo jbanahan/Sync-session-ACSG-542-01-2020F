@@ -97,6 +97,16 @@ class Order < ActiveRecord::Base
     return p_hash.values
   end
   
+  def self.search_secure user, base_object
+    if user.company.master
+      return base_object.where("1=1")
+    elsif user.company.vendor
+      return base_object.where(:vendor_id => user.company)
+    else
+      return base_object.where("1=0")
+    end
+  end
+
   private
   #needed for OrderSupport mixin
   def get_lines

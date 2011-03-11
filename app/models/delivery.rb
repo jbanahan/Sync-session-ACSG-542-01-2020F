@@ -28,4 +28,16 @@ class Delivery < ActiveRecord::Base
     (!self.carrier.nil? && self.carrier.locked?) ||
     (!self.customer.nil? && self.customer.locked?)
   end
+
+	def self.search_secure user, base_object
+    if user.company.master
+      return base_object.where("1=1")
+    elsif user.company.carrier
+      return base_object.where(:carrier_id => user.company)
+    elsif user.company.customer
+      return base_object.where(:customer_id => user.company)
+    else
+      return base_object.where("1=0")
+    end
+  end
 end
