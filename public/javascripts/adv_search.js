@@ -15,6 +15,7 @@ function applyScheduleHooks() {
 }
 function newSchedule() {
   var rv = new Object();
+  rv.key = "";
   rv.email = "";
   rv.hour = "0";
   rv.mon = false;
@@ -24,11 +25,15 @@ function newSchedule() {
   rv.fri = false;
   rv.sat = false;
   rv.sun = false;
+  rv.ftpsvr = "";
+  rv.ftpusr = "";
+  rv.ftppass = "";
+  rv.ftpfldr = "";
   rv.id = "";
   return rv;
 }
-function findScheduleContainerById(id) {
-  return $('.sch_id[value="'+id+'"]').parents('.sch_data_cont');
+function findScheduleContainerByKey(k) {
+  return $('.sch_key[value="'+k+'"]').parents('.sch_data_cont');
 }
 function removeSchedule(container) {
   container.children(".sch_destroy").val("true");
@@ -36,6 +41,7 @@ function removeSchedule(container) {
 }
 function readScheduleContainer(c) {
   var rv = new Object();
+  rv.key = c.children(".sch_key").val();
   rv.email = c.children(".sch_email").val();
   rv.hour = c.children(".sch_hr").val();
   rv.mon = getDay(c,"mon");
@@ -45,38 +51,59 @@ function readScheduleContainer(c) {
   rv.fri = getDay(c,"fri");
   rv.sat = getDay(c,"sat");
   rv.sun = getDay(c,"sun");
+  rv.ftpsvr = c.children(".sch_ftpsvr").val();
+  rv.ftpusr = c.children(".sch_ftpusr").val();
+  rv.ftppass = c.children(".sch_ftppass").val();
+  rv.ftpfldr = c.children(".sch_ftpfldr").val();
   rv.id = c.children(".sch_id").val();
   return rv;
 }
 function writeScheduleContainer(container,rv) {
-  var id = new Date().getTime();
-  var ssa = "search_setup[search_schedules_attributes]["+id+"]";
-  var r = "<li class='sch_data_cont'>";
-  r += rv.mon ? "Monday, " : "";
-  r += rv.tue ? "Tuesday, " : "";
-  r += rv.wed ? "Wednesday, " : "";
-  r += rv.thu ? "Thursday, " : "";
-  r += rv.fri ? "Friday, " : "";
-  r += rv.sat ? "Saturday, " : "";
-  r += rv.sun ? "Sunday, " : "";
-  if(r.length > 26) {
-    //trim trailing comma
-    r = r.substr(0,r.length-2);
+  if((rv.mon || rv.tue || rv.wed || rv.thu || rv.fri || rv.sat || rv.sun) && 
+      rv.email || rv.ftpsvr) {
+    var id = new Date().getTime();
+    var ssa = "search_setup[search_schedules_attributes]["+id+"]";
+    var r = "<li class='sch_data_cont'>";
+    r += rv.mon ? "Monday, " : "";
+    r += rv.tue ? "Tuesday, " : "";
+    r += rv.wed ? "Wednesday, " : "";
+    r += rv.thu ? "Thursday, " : "";
+    r += rv.fri ? "Friday, " : "";
+    r += rv.sat ? "Saturday, " : "";
+    r += rv.sun ? "Sunday, " : "";
+    if(r.length > 26) {
+      //trim trailing comma
+      r = r.substr(0,r.length-2);
+    }
+    var ftp_lbl = (rv.ftpsvr && rv.ftpsvr.length > 0) ? "FTP: "+rv.ftpsvr : "";
+    r += " at "+rv.hour+":00 to "+rv.email+" "+ftp_lbl+" - <a href='#' class='sched_edit'>Edit</a> | <a href='#' class='sched_remove'>Remove</a>";
+    r += "<input class='sch_mon' name='"+ssa+"[run_monday]' type='hidden' value='"+rv.mon+"'/>";
+    r += "<input class='sch_tue' name='"+ssa+"[run_tuesday]' type='hidden' value='"+rv.tue+"'/>";
+    r += "<input class='sch_wed' name='"+ssa+"[run_wednesday]' type='hidden' value='"+rv.wed+"'/>";
+    r += "<input class='sch_thu' name='"+ssa+"[run_thursday]' type='hidden' value='"+rv.thu+"'/>";
+    r += "<input class='sch_fri' name='"+ssa+"[run_friday]' type='hidden' value='"+rv.fri+"'/>";
+    r += "<input class='sch_sat' name='"+ssa+"[run_saturday]' type='hidden' value='"+rv.sat+"'/>";
+    r += "<input class='sch_sun' name='"+ssa+"[run_sunday]' type='hidden' value='"+rv.sun+"'/>";
+    r += "<input class='sch_hr' name='"+ssa+"[run_hour]' type='hidden' value='"+rv.hour+"'/>";
+    r += "<input class='sch_email' name='"+ssa+"[email_addresses]' type='hidden' value='"+rv.email+"'/>";
+    if(rv.ftpsvr) {
+      r += "<input class='sch_ftpsvr' name='"+ssa+"[ftp_server]' type='hidden' value='"+rv.ftpsvr+"'/>";
+    }
+    if(rv.ftpusr) {
+      r += "<input class='sch_ftpusr' name='"+ssa+"[ftp_username]' type='hidden' value='"+rv.ftpusr+"'/>";
+    }
+    if(rv.ftppass) {
+      r += "<input class='sch_ftppass' name='"+ssa+"[ftp_password]' type='hidden' value='"+rv.ftppass+"'/>";
+    }
+    if(rv.ftpfldr) {
+      r += "<input class='sch_ftpfldr' name='"+ssa+"[ftp_subfolder]' type='hidden' value='"+rv.ftpfldr+"'/>";
+    }
+    r += "<input class='sch_destroy' name='"+ssa+"[_destroy]' type='hidden' value='' />";
+    r += "<input class='sch_key' type='hidden' name='ignore_key' value='"+id+"' />";
+    r += "</li>";
+    container.append(r); 
+    applyScheduleHooks();
   }
-  r += " at "+rv.hour+":00 to "+rv.email+" - <a href='#' class='sched_edit'>Edit</a> | <a href='#' class='sched_remove'>Remove</a>";
-  r += "<input class='sch_mon' name='"+ssa+"[run_monday]' type='hidden' value='"+rv.mon+"'/>";
-  r += "<input class='sch_tue' name='"+ssa+"[run_tuesday]' type='hidden' value='"+rv.tue+"'/>";
-  r += "<input class='sch_wed' name='"+ssa+"[run_wednesday]' type='hidden' value='"+rv.wed+"'/>";
-  r += "<input class='sch_thu' name='"+ssa+"[run_thursday]' type='hidden' value='"+rv.thu+"'/>";
-  r += "<input class='sch_fri' name='"+ssa+"[run_friday]' type='hidden' value='"+rv.fri+"'/>";
-  r += "<input class='sch_sat' name='"+ssa+"[run_saturday]' type='hidden' value='"+rv.sat+"'/>";
-  r += "<input class='sch_sun' name='"+ssa+"[run_sunday]' type='hidden' value='"+rv.sun+"'/>";
-  r += "<input class='sch_hr' name='"+ssa+"[run_hour]' type='hidden' value='"+rv.hour+"'/>";
-  r += "<input class='sch_email' name='"+ssa+"[email_addresses]' type='hidden' value='"+rv.email+"'/>";
-  r += "<input class='sch_destroy' name='"+ssa+"[_destroy]' type='hidden' value='' />";
-  r += "</li>";
-  container.append(r); 
-  applyScheduleHooks();
 }
 function readScheduleInterface() {
   var rv = new Object();
@@ -89,10 +116,16 @@ function readScheduleInterface() {
   rv.fri = $("#sd_fri:checked").length>0;
   rv.sat = $("#sd_sat:checked").length>0;
   rv.sun = $("#sd_sun:checked").length>0;
+  rv.ftpsvr = $("#sd_ftpsvr").val();
+  rv.ftpusr = $("#sd_ftpusr").val();
+  rv.ftppass = $("#sd_ftppass").val();
+  rv.ftpfldr = $("#sd_ftpfldr").val();
   rv.id = $("#sd_id").val();
+  rv.key = $("#sd_key").val();
   return rv; 
 }
 function writeScheduleInterface(s) {
+  $("#sd_key").val(s.key);
   $("#sd_id").val(s.id);
   $("#sd_email").val(s.email);
   $("#sd_hr").val(s.hour);
@@ -103,6 +136,10 @@ function writeScheduleInterface(s) {
   $("#sd_fri").attr('checked',s.fri);
   $("#sd_sat").attr('checked',s.sat);
   $("#sd_sun").attr('checked',s.sun);
+  $("#sd_ftpsvr").val(s.ftpsvr);
+  $("#sd_ftpusr").val(s.ftpusr);
+  $("#sd_ftppass").val(s.ftppass);
+  $("#sd_ftpfldr").val(s.ftpfldr);
 }
 function submitForm() {
   var coluids = []

@@ -22,6 +22,14 @@ $( function() {
       // custom opacity setting
       opacity: 0.9         
     });
+    $(".dialogtip").tooltip({
+      position: "center left",
+      effect: "fade",
+      opacity: 0.9,
+      onBeforeShow: function(event, position){
+        this.getTip().css({'z-index':'9999'});
+       }
+    });
     $(".tiplink").tooltip({position:"bottom center", effect: "fade", opacity: 0.9, offset: [8,0]});
     
     //Make the shared/search_box partial work
@@ -122,6 +130,11 @@ $(document).ready( function() {
 
     //Hide subscriptions buttons until feature is better implemented (ticket 87)
     $("#btn_subscriptions").hide();
+    
+    //when closing a dialog, make sure to take focus from all inputs
+    $("div.ui-dialog").live( "dialogbeforeclose", function(event, ui) {
+      $(this).find(":input").blur();
+    });
 });
 function attachmentButton() {
   $(".attach_button").button();
