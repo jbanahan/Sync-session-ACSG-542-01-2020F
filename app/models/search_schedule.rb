@@ -69,7 +69,7 @@ class SearchSchedule < ActiveRecord::Base
     if !self.email_addresses.nil? && self.email_addresses.include?("@")
       log.info "#{Time.now}: Attempting to send email to #{self.email_addresses}" if log
       OpenMailer.send_search_result(self.email_addresses, name, temp_file.path).deliver!
-      log.info "#{Time.now}: Sent email"
+      log.info "#{Time.now}: Sent email" if log
     end
   end
 
