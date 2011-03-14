@@ -101,7 +101,7 @@ class SearchSchedule < ActiveRecord::Base
   def cron_string
     return nil unless any_days_scheduled?
     tz = search_setup.user.time_zone.nil? ? "America/New_York" : ActiveSupport::TimeZone::MAPPING[search_setup.user.time_zone]
-    "34 #{run_hour} * * #{make_days_of_week} #{tz}"
+    "0 #{run_hour} * * #{make_days_of_week} #{tz}"
   end
 
   def any_days_scheduled?
