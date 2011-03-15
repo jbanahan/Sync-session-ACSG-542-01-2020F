@@ -1,0 +1,421 @@
+<html>
+  <head>
+    <title>app/models/piece_set.rb</title>
+    
+    <link href="../../report.css?0.018865539245476404" media="screen" rel="stylesheet" type="text/css" />
+    <script src='../../jquery.js?0.5383781560720868'></script>
+    <script>
+      $(function() {
+
+        $('#toggle_test_file').click(function(e) {
+          e.preventDefault();
+          if ($('#main_file').hasClass('side_by_side')) {
+            $('#main_file').removeClass('side_by_side');
+          } else {
+            $('#main_file').addClass('side_by_side');
+          }
+        
+          $('#test_file').toggle();
+        });
+
+        $('#test_file').hide();
+        
+        function cleanString(str) {
+          return $.trim(str.replace(/<[^(<|>)]+>/gi, ''));
+        }
+        
+        $('.line_number').hover(function() {
+          $(this).attr('title', 'Line: ' + cleanString($(this).html()));
+        });
+        
+        $('.hit_number').hover(function() {
+          $(this).attr('title', 'Execution Count: ' + cleanString($(this).html()));
+        });
+        
+        $('.code_line').hover(function() {
+          $(this).attr('title', cleanString($(this).html()));
+        });
+        
+      });
+    </script>
+  </head>
+  <body>
+    <h1><a href="../../index.html">Coverage Report</a></h1>
+    
+    <table cellpadding='0' cellspacing='1'>
+      <tr class='header'>
+        <th>File</th>
+        <th>Lines</th>
+        <th>Lines Of Code</th>
+        <th>Tested %</th>
+      </tr>
+      <tr valign='top'>
+        <td>
+          app/models/piece_set.rb
+          
+        </td>
+        <td>41</td>
+        <td>22</td>
+        <td>100.0%</td>
+      </tr>
+    </table>
+
+    <div>&nbsp;</div>
+    
+    <table cellpadding='0' cellspacing='1'>
+      <tr>
+        <th>Legend</th>
+      </tr>
+      <tr>
+        <td class='hit'>This line was executed.</td>
+      </tr>
+      <tr>
+        <td class='miss'>This line was not executed!</td>
+      </tr>
+      <tr>
+        <td class='never'>This line doesn't matter.</td>
+      </tr>
+    </table>
+    
+    <div>&nbsp;</div>
+
+    <div id='content'>
+      <div id='main_file'>
+        <table id='main'>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>1</td>
+              <td class='code_line'>
+                <pre>class PieceSet < ActiveRecord::Base</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>2</td>
+              <td class='code_line'>
+                <pre>    belongs_to :order_line</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>3</td>
+              <td class='code_line'>
+                <pre>    belongs_to :shipment</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>4</td>
+              <td class='code_line'>
+                <pre>    belongs_to :product</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>5</td>
+              <td class='code_line'>
+                <pre>    belongs_to :inventory_in</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>6</td>
+              <td class='code_line'>
+                <pre>    belongs_to :inventory_out</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>7</td>
+              <td class='code_line'>
+                <pre>    belongs_to :delivery</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>8</td>
+              <td class='code_line'>
+                <pre>    belongs_to :sales_order_line</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>9</td>
+              <td class='code_line'>
+                <pre></pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>10</td>
+              <td class='code_line'>
+                <pre>    validates :product,	:presence => true</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>11</td>
+              <td class='code_line'>
+                <pre>    validates :quantity, :presence => true</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>12</td>
+              <td class='code_line'>
+                <pre>    validates_numericality_of :quantity, :greater_than => 0</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>13</td>
+              <td class='code_line'>
+                <pre>    validate :validate_unique_keys</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>14</td>
+              <td class='code_line'>
+                <pre>    </pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>15</td>
+              <td class='code_line'>
+                <pre>    def find_same</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>16</td>
+              <td class='code_line'>
+                <pre>      PieceSet.where(</pre>
+              </td>
+              <td class='hit_number'>250</td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>17</td>
+              <td class='code_line'>
+                <pre>        :product_id => self.product_id, </pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>18</td>
+              <td class='code_line'>
+                <pre>        :order_line_id => self.order_line_id,</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>19</td>
+              <td class='code_line'>
+                <pre>        :shipment_id => self.shipment_id,</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>20</td>
+              <td class='code_line'>
+                <pre>        :inventory_in_id => self.inventory_in_id,</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>21</td>
+              <td class='code_line'>
+                <pre>        :inventory_out_id => self.inventory_out_id,</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>22</td>
+              <td class='code_line'>
+                <pre>        :adjustment_type => self.adjustment_type,</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>23</td>
+              <td class='code_line'>
+                <pre>        :delivery_id => self.delivery_id,</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>24</td>
+              <td class='code_line'>
+                <pre>        :sales_order_line_id => self.sales_order_line_id</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>25</td>
+              <td class='code_line'>
+                <pre>      ).first      </pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>26</td>
+              <td class='code_line'>
+                <pre>    end</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>27</td>
+              <td class='code_line'>
+                <pre>    </pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>28</td>
+              <td class='code_line'>
+                <pre>    def locked?</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>29</td>
+              <td class='code_line'>
+                <pre>      (!self.product.nil? && self.product.locked?) ||</pre>
+              </td>
+              <td class='hit_number'>15</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>30</td>
+              <td class='code_line'>
+                <pre>      (!self.shipment.nil? && self.shipment.locked?)</pre>
+              </td>
+              <td class='hit_number'>25</td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>31</td>
+              <td class='code_line'>
+                <pre>    end</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>32</td>
+              <td class='code_line'>
+                <pre>    </pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>33</td>
+              <td class='code_line'>
+                <pre>    private </pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>34</td>
+              <td class='code_line'>
+                <pre>    def validate_unique_keys</pre>
+              </td>
+              <td class='hit_number'>6</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>35</td>
+              <td class='code_line'>
+                <pre>      same = find_same</pre>
+              </td>
+              <td class='hit_number'>125</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>36</td>
+              <td class='code_line'>
+                <pre>      unless find_same.nil? || same.id == self.id</pre>
+              </td>
+              <td class='hit_number'>125</td>
+            </tr>
+          
+            <tr class="hit" data-hits='#{cov}'"">
+              <td class='line_number'>37</td>
+              <td class='code_line'>
+                <pre>        self.errors[:base] << "PieceSet with these keys already exists. (Product: #{self.product_id}, OrderLine: #{self.order_line_id}, Shipment: #{self.shipment_id}, Inventory In: #{self.inventory_in_id}, SalesOrderLine: #{self.sales_order_line_id}, Delivery: #{self.delivery_id}, Inventory Out: #{self.inventory_out_id}, Adjustment: #{self.adjustment_type})"</pre>
+              </td>
+              <td class='hit_number'>35</td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>38</td>
+              <td class='code_line'>
+                <pre>      end</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>39</td>
+              <td class='code_line'>
+                <pre>    end</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>40</td>
+              <td class='code_line'>
+                <pre>    </pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+            <tr class="never" "">
+              <td class='line_number'>41</td>
+              <td class='code_line'>
+                <pre>end</pre>
+              </td>
+              <td class='hit_number'></td>
+            </tr>
+          
+        </table>
+      </div>
+      
+    </div>
+    
+    <p>Generated on: 2011-03-15 12:47:28 -0700</p>
+  </body>
+</html>
