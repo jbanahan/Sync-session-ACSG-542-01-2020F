@@ -5,11 +5,12 @@ one:
   filename: MyString
   size: 1
   content_type: text/csv
-  import_config_id: 1
+  search_setup: imported_file_setup
+  ignore_first_row: true
 
 two:
   id: 2
   filename: MyString
   size: 1
   content_type: text/csv
-  import_config_id: 2
+  search_setup: ifs_ord_prod 

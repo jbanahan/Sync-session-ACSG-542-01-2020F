@@ -8,6 +8,9 @@ class OrderLine < ActiveRecord::Base
 	has_many	:piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
 	
+  before_validation :set_line_number 
+  before_validation :set_ordered_quantity
+
 	validates :product, :presence => true
 	validates_uniqueness_of :line_number, :scope => :order_id
 	

@@ -139,7 +139,7 @@ $(document).ready( function() {
 function attachmentButton() {
   $(".attach_button").button();
   $(".attach_button").each(function() {
-    var fileInput = $(this).prevAll(":file");
+    var fileInput = $("body").find(":file");
     var aButton = $(this);
     if(fileInput.length!=1) {
       //either many file objects or none, either way we can't automate behavior

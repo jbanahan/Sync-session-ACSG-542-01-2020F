@@ -7,6 +7,7 @@ class SearchSetup < ActiveRecord::Base
   has_many :sort_criterions, :dependent => :destroy
   has_many :search_columns, :dependent => :destroy
   has_many :search_schedules, :dependent => :destroy
+  has_many :imported_files, :dependent => :destroy
   
   belongs_to :user
   
@@ -30,6 +31,10 @@ class SearchSetup < ActiveRecord::Base
     
   scope :for_user, lambda {|u| where(:user_id => u)} 
   scope :for_module, lambda {|m| where(:module_type => m.class_name)}
+
+  def sorted_columns
+    self.search_columns.order("rank ASC")
+  end
   
   def search
     base = Kernel.const_get(self.module_type)
@@ -87,5 +92,62 @@ class SearchSetup < ActiveRecord::Base
       new_sc.save if save_obj
     end
     ss
+  end
+
+  #does this search have the appropriate columns set to be used as a file upload?
+  #acceptes an optional array that will have any user facing messages appended to it
+  def uploadable? messages=[]
+    #refactor later to use setup within CoreModule to figure this out instead of hard codes
+    start_messages_count = messages.size
+    cm = CoreModule.find_by_class_name self.module_type
+    messages << "Search's core module not set." if cm.nil?
+
+    not_supported = {CoreModule::SHIPMENT=>"Shipments", CoreModule::DELIVERY=>"Deliveries", CoreModule::SALE=>"Sales"}
+    messages << "Uploads are not supported for #{not_supported[cm]} at this time." if not_supported.include? cm
+
+    if cm==CoreModule::PRODUCT
+      messages << "You do not have permission to edit Products." unless self.user.edit_products?
+      messages << "Unique Identifier field is required to upload Products." unless has_column "prod_uid"
+      messages << "Vendor Name or Vendor ID is required to upload Products." unless has_one_of ["prod_ven_name","prod_ven_id"]
+
+      if contains_module CoreModule::CLASSIFICATION
+        messages << "To include Classification fields, you must also include the Classification Country Name or ISO code." unless has_classification_country_column
+      end
+      if contains_module CoreModule::TARIFF
+        messages << "To include Tariff fields, you must also include the Classification Country Name or ISO code." unless has_classification_country_column
+        messages << "To include Tariff fields, you must also include the Tariff Row." unless has_column "hts_line_number"
+      end
+    end
+
+    if cm==CoreModule::ORDER
+      messages << "You do not have permission to edit Orders." unless self.user.edit_orders?
+      messages << "Order Number field is required to upload Orders." unless has_column "ord_ord_num"
+      messages << "Vendor Name or Vendor ID is required to upload Orders." unless has_one_of ["ord_ven_name","ord_ven_id"]
+
+      if contains_module CoreModule::ORDER_LINE
+        messages << "Line - Line Number is required to upload Order Lines." unless has_column "ordln_line_number"
+        messages << "Line - Product Unique Identifier is required to upload Order Lines." unless has_column "ordln_puid"
+      end
+    end
+
+    return messages.size == start_messages_count
+  end
+
+  private 
+  def has_column(model_field_uid)
+    !self.search_columns.where(:model_field_uid=>model_field_uid).empty?
+  end
+  def has_one_of columns
+    columns.each {|c| return true if has_column c}
+    return false
+  end
+  def has_classification_country_column
+    has_one_of ["class_cntry_name","class_cntry_iso"]
+  end
+  def contains_module(m)
+    self.search_columns.each {|c| 
+      return true if  ModelField.find_by_uid(c.model_field_uid).core_module == m
+    }
+    false
   end
 end

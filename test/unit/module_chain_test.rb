@@ -1,6 +1,33 @@
 require 'test_helper'
 
 class ModuleChainTest < ActiveSupport::TestCase
+
+  test "parent" do
+    m = ModuleChain.new
+    m.add_array [CoreModule::ORDER,CoreModule::PRODUCT,CoreModule::DELIVERY]
+    assert m.parent(CoreModule::DELIVERY)==CoreModule::PRODUCT
+    assert m.parent(CoreModule::PRODUCT)==CoreModule::ORDER
+    assert m.parent(CoreModule::ORDER).nil? #return nil for first object
+    assert m.parent(CoreModule::SHIPMENT).nil? #return nil for object not in list
+  end
+  
+  test "to_a" do
+    #confirm it is a clone of the internal array
+    m = ModuleChain.new
+    m.add CoreModule::PRODUCT
+    m.add CoreModule::ORDER
+
+    r = m.to_a
+    assert r[0]==CoreModule::PRODUCT
+    assert r[1]==CoreModule::ORDER
+    assert r.length==2
+    r.slice! 0
+    assert r.length==1
+
+    assert m.to_a.length==2
+
+  end
+
   test "add, get child modules" do
     m = ModuleChain.new
 

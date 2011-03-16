@@ -1,5 +1,3 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
 one:
   search_setup_id: 1
   rank: 1
@@ -11,3 +9,23 @@ two:
   rank: 1
   model_field_uid: MyString
   custom_definition_id: 1
+
+imp_1:
+  search_setup: imported_file_setup
+  rank: 0
+  model_field_uid: ord_ord_num
+
+imp_2:
+  search_setup: imported_file_setup
+  rank: 1
+  model_field_uid: ord_ord_date
+
+imp_prod_1:
+  search_setup: ifs_ord_prod
+  rank: 0
+  model_field_uid: ord_ord_num
+
+imp_prod_2:
+  search_setup: ifs_ord_prod
+  rank: 1
+  model_field_uid: ordln_puid

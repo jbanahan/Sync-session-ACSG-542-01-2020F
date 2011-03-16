@@ -230,7 +230,7 @@ class ModelField
           return "Country not found with ISO Code \"#{data}\""
         end    
       },
-      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.name},
+      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.iso_code},
       :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.country_id",
       :join_alias => "#{table_name}_country",
       :data_type=>:string  
@@ -285,7 +285,8 @@ class ModelField
   add_fields CoreModule::TARIFF, [
     [1,:hts_hts_1,:hts_1,"Tariff - HTS 1"],
     [2,:hts_hts_2,:hts_2,"Tariff - HTS 2"],
-    [3,:hts_hts_3,:hts_3,"Tariff - HTS 3"]
+    [3,:hts_hts_3,:hts_3,"Tariff - HTS 3"],
+    [4,:hts_line_number,:line_number,"Tariff - Row"]
   ]
 
   add_fields CoreModule::ORDER, [

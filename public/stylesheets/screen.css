@@ -362,6 +362,9 @@ img {
 .classification_shrink {
   display: none; /* toggled with .classification_expand */
 }
+.hts_field {
+  width: 8em;
+}
 .help_title {
   display: block;
   font-size: 200%;

@@ -31,13 +31,6 @@ OpenChain::Application.routes.draw do
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
 
-  resources :import_configs
-  resources :imported_files, :only => [:new, :create, :show] do
-    member do 
-      get 'download'
-      get 'process_file'
-    end
-  end 
   resources :custom_definitions
 
   resources :worksheet_configs
@@ -104,7 +97,14 @@ OpenChain::Application.routes.draw do
     get 'test_criteria', :on => :member
   end
   
-  resources :search_setups
+  resources :search_setups do
+    resources :imported_files, :only => [:new, :create, :show] do
+      member do 
+        get 'download'
+        get 'process_file'
+      end
+    end 
+  end
   
   root :to => "dashboard#show_main"
 end

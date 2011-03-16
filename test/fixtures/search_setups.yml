@@ -13,3 +13,15 @@ two:
   module_type: MyString
   simple: false
   last_accessed: 2011-01-25 15:19:39
+
+imported_file_setup:
+  name: Imported File Product Search
+  user: masteruser
+  module_type: Order
+  simple: false
+
+ifs_ord_prod:
+  name: imported file search w/ ord and prod
+  user: masteruser
+  module_type: Order
+  simple: false

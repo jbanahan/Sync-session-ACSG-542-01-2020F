@@ -6,7 +6,11 @@ module LinesSupport
       self.line_number = (max.nil? || max < 1) ? 1 : (max + 1)
     end
   end 
-  
+ 
+  def set_ordered_quantity
+    self.ordered_qty = 0 if self.ordered_qty.nil?
+  end
+
   def make_unpacked_piece_set
     set_qty = self.ordered_qty - self.piece_sets.where("shipment_id is not null OR delivery_id is not null").sum("quantity") 
     ps = self.piece_sets.build

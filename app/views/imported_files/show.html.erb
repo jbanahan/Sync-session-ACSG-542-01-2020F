@@ -3,7 +3,7 @@
     $("#btn_process")
       .button()
       .click(function() {
-        window.location = '<%=process_file_imported_file_path(@imported_file)%>';
+        window.location = '<%=process_file_search_setup_imported_file_path(@search_setup,@imported_file)%>';
       });
   });
   $(document).ready(function() {
@@ -17,7 +17,7 @@
 <h3>You must click process to finish importing the file &gt;&gt;</h3>
 </div>
 <p>
-  <b>Name:</b><%= link_to @imported_file.filename, download_imported_file_path(@imported_file) %>
+  <b>Name:</b><%= link_to @imported_file.filename, download_search_setup_imported_file_path(@search_setup,@imported_file) %>
 </p>
 
 <h2>Preview</h2>

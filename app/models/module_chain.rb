@@ -13,6 +13,10 @@ class ModuleChain
     mods.each {|m| add m}
   end
 
+  def to_a
+    @list.nil? ? [] : @list.clone
+  end
+
   def child_modules(cm)
     idx = @list.index cm
     return [] if idx.nil? || idx==(@list.length-1)
@@ -20,5 +24,9 @@ class ModuleChain
   end
   def first
     @list.first
+  end
+  def parent cm
+    idx = @list.index cm
+    (idx==0 || idx.nil?) ? nil : @list[idx-1]
   end
 end

@@ -2,6 +2,7 @@ class Product < ActiveRecord::Base
 
   include CustomFieldSupport
   include StatusableSupport
+  include ShallowMerger
 
   CORE_MODULE = CoreModule::PRODUCT
 
@@ -29,6 +30,9 @@ class Product < ActiveRecord::Base
   def locked?
     !self.vendor.nil? && self.vendor.locked?
   end
+
+  ['id','created_at','updated_at','unique_identifier','vendor_id'].each {|f| DONT_SHALLOW_MERGE << f}
+
 
   def can_view?(user)
     return user.company.master || (user.company.vendor && user.company == self.vendor)
@@ -62,22 +66,6 @@ class Product < ActiveRecord::Base
     else
     return []
     end
-  end
-
-  def shallow_merge_into(other_obj,options={})
-    dont_copy = ['id','created_at','updated_at','unique_identifier','vendor_id']
-    can_blank = options[:can_blank].nil? ? [] : options[:can_blank]
-    updated_attribs = {}
-    self.attributes.each_key do |k|
-      unless dont_copy.include?(k)
-        if other_obj.attribute_present?(k)
-        updated_attribs[k] = other_obj.attributes[k]
-        elsif can_blank.include?(k)
-        updated_attribs[k] = nil
-        end
-      end
-    end
-    self.attributes= updated_attribs
   end
 
   def has_orders?

@@ -1,5 +1,13 @@
-<%= form_for @imported_file, :html => { :multipart => true } do |f| %>
-  <%= f.file_field :uploaded_data %>
-  <%= f.collection_select :import_config_id, @import_configs, :id, :name, options={:prompt => "-Select a configuration"}%>
-  <%= f.submit %>
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_process").click(function() {$("#frm_fi").submit();})
+});
+<%end%>
+<%content_for :action_bar do %>
+<button id='btn_process' class='attach_button'>Process</button>
+<%end%>
+<h2>Upload File for <em><%=@search_setup.name%></em></h2>
+<%= form_for [@search_setup,@imported_file], :html => { :multipart => true, :id=>"frm_fi" } do |f| %>
+  <%= f.file_field :attached, :id=>"attch" %><br />
+  <%= f.check_box :ignore_first_row, :checked=>true%> First Row Is Headings
 <% end %>

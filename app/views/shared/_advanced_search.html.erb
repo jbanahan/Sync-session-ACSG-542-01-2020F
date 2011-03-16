@@ -1,6 +1,14 @@
 <%content_for :javascript do%>
 $(function() {
+  $("#lnk_no_upload").click(function(ev) {
+    ev.preventDefault();
+    $("#mod_no_upload").dialog('open');
+  });
+  $("#mod_no_upload").dialog({autoOpen:false,title:"Upload Eligibility",
+    width:400,
+    buttons:{"OK":function() {$("#mod_no_upload").dialog('close');}}});
   $("#btn_download").click(function() {window.location.pathname = window.location.pathname + '.csv'})
+  $("#btn_upload").click(function() {window.location = '<%=new_search_setup_imported_file_path @current_search%>';});
   $("#sel_searches").change(function() {
     $("#main_search_cont").html("<h1>Loading Search Results</h1>");
     window.location.search="?sid="+$(this).val();
@@ -313,3 +321,19 @@ hrs_opts = {"midnight"=>"0"}
 <%= will_paginate @results %>
 </div>  
 <button id='btn_download'>Download</button>
+<%msgs = [] %>
+<% if @current_search.uploadable? msgs %>
+&nbsp;
+<button id='btn_upload'>Upload</button>
+<% else %>
+<a href='#' id='lnk_no_upload'>Upload?</a>
+<div style='display:none;' id='mod_no_upload'>
+<p>Some searches cannot be used as upload because the computer will not have enough information to process the data.</p>
+<p>Here's why this upload can't be used:</p>
+<ul>
+<%msgs.each do |m| %>
+<li><%=m%>
+<%end%>
+</ul>
+</div>
+<% end %>
