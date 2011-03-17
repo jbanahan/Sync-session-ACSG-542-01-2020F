@@ -33,7 +33,12 @@ class SearchSetup < ActiveRecord::Base
     self.sort_criterions.order("rank ASC").each do |sort|
       base = sort.apply(base)
     end
-    base
+    base.group("id")
+  end
+
+
+  def module_chain
+    CoreModule.find_by_class_name(self.module_type).default_module_chain
   end
   
   def touch(save_obj=false)

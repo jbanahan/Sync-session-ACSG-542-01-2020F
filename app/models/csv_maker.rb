@@ -5,7 +5,7 @@ class CsvMaker
   attr_accessor :opts
   attr_accessor :all_modules
 
-  def make(current_search, core_module, results)
+  def make(current_search, results)
     self.opts = {:write_headers=>true,:row_sep => "\r\n"}
     headers = []
     self.all_modules = []
@@ -18,7 +18,7 @@ class CsvMaker
     opts[:headers] = headers 
 
     x = CSV.generate(self.opts) do |csv|
-      gm = GridMaker.new(results,self.columns,core_module.default_module_chain)
+      gm = GridMaker.new(results,self.columns,current_search.module_chain)
       gm.go {|row,obj| csv << row}
     end
   end
