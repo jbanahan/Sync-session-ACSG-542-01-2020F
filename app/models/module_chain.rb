@@ -25,8 +25,13 @@ class ModuleChain
   def first
     @list.first
   end
+
   def parent cm
     idx = @list.index cm
     (idx==0 || idx.nil?) ? nil : @list[idx-1]
+  end 
+  def child cm
+    idx = @list.index cm
+    (idx+1>=@list.length || idx.nil?) ? nil : @list[idx+1]
   end
 end

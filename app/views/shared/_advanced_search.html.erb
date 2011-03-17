@@ -306,7 +306,7 @@ hrs_opts = {"midnight"=>"0"}
     <th>&nbsp;</th>
   </tr></thead>
   <tbody>
-    <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@core_module.default_module_chain).go do |row,obj| %>
+    <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.module_chain).go do |row,obj| %>
       <tr class='hover'>
         <% row.each do |r| %>
         <td><%=r%></td>
