@@ -1,7 +1,8 @@
 class SalesOrder < ActiveRecord::Base
   include OrderSupport
 	include CustomFieldSupport
-  
+  include ShallowMerger
+
   belongs_to :customer, :class_name => "Company"
   belongs_to :division
   belongs_to :ship_to, :class_name => "Address"
@@ -13,6 +14,14 @@ class SalesOrder < ActiveRecord::Base
   has_many   :attachments, :as => :attachable
 
   validates :customer, :presence => true
+
+  dont_shallow_merge :SalesOrder, ['id','created_at','updated_at','order_number']
+
+  def find_same
+    found = SalesOrder.where(:order_number => self.order_number)
+    raise "Found multiple sales with the same order number #{self.order_number}" if found.size > 1
+    return found.empty? ? nil : found.first
+  end
 
   def can_view?(user)
     user.view_sales_orders? && (user.company.master || (!self.customer.nil? && user.company.customer && user.company==self.customer))
@@ -40,6 +49,16 @@ class SalesOrder < ActiveRecord::Base
     return p_hash.values
   end
   
+	def self.search_secure user, base_object
+    if user.company.master
+      return base_object.where("1=1")
+    elsif user.company.customer?
+      return base_object.where(:customer_id => user.company)
+    else
+      return base_object.where("1=0")
+    end
+  end
+
   private
   #needed for OrderSupport mixin
   def get_lines

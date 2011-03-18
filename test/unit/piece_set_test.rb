@@ -63,7 +63,7 @@ class PieceSetTest < ActiveSupport::TestCase
     prod.vendor = Company.find(2) #not locked
     prod.save!
     assert !ps.locked?, "Should not have been locked with company 2 as vendor."
-    shp = Shipment.create!(:carrier => c_locked, :vendor => Company.find(2))
+    shp = Shipment.create!(:carrier => c_locked, :vendor => Company.find(2), :reference=>"reflockedps")
     ps.shipment = shp
     assert shp.locked?, "Shipment should be locked." #double checking setup
     assert ps.locked?, "Should have been locked when associated to locked shipment."

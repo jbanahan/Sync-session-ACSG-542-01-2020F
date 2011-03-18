@@ -180,19 +180,6 @@ class ProductsController < ApplicationController
     def secure_classifications
       params[:product][:classifications_attributes] = nil unless params[:product].nil? || current_user.edit_classifications?
     end
-
-    def secure(base_search)
-      r = base_search.where("1=0")
-      if current_user.company.master
-        r = base_search
-      elsif current_user.company.vendor
-        r = base_search.where(:vendor_id => current_user.company)
-      else
-        add_flash :errors, "You do not have permission to search for orders."
-        r = base_search.where("1=0")
-      end
-      r
-    end
     
     def save_classification_custom_fields(product,product_params)
       unless product_params[:classifications_attributes].nil?

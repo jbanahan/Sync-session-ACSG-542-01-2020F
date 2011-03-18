@@ -24,7 +24,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
     r = ImportedFile.find(1).preview({:attachment_data => attachment})
     assert r.length == 2, "Should have returned two results, returned #{r.length}"
-    assert r.include? "#{ModelField.find_by_uid(:ord_ord_num).label} set to #{base_order.order_number}"
+    assert r.include?("#{ModelField.find_by_uid(:ord_ord_num).label} set to #{base_order.order_number}"), "Messages didn't include order number.  All messages #{r.to_s}"
     assert r.include? "#{ModelField.find_by_uid(:ord_ord_date).label} set to #{new_order_date}"
   end
 
@@ -32,24 +32,24 @@ class ImportedFileTest < ActiveSupport::TestCase
     base_order = Order.find(1)
     new_vendor = base_order.vendor_id + 1
     attachment = "Order Number,Vendor\n#{base_order.order_number},#{new_vendor}"
-    ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => true, :name => "test")
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column_rank => 1)
-    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column_rank => 2)
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
+    ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
+    ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
+    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row => true)
     f.save!
     assert !f.process({:attachment_data => attachment}), "Process passed and should have failed."
     assert f.errors[:base].include?("Row 2: An order's vendor cannot be changed via a file upload."), "Did not find vendor error message."
   end
   
   test "record with empty details only creates header" do
-    ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => false, :name => "test")
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
     ic.save!
-    ic.import_config_mappings.create(:model_field_uid => "ord_ord_num", :column_rank => 1)
-    ic.import_config_mappings.create(:model_field_uid => "ord_ven_id", :column_rank => 2)
-    ic.import_config_mappings.create(:model_field_uid => "ordln_puid", :column_rank => 3)
-    ic.import_config_mappings.create(:model_field_uid => "ordln_ordered_qty", :column_rank => 4)
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
+    ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
+    ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
+    ic.search_columns.create(:model_field_uid => "ordln_puid", :rank => 2)
+    ic.search_columns.create(:model_field_uid => "ordln_ordered_qty", :rank => 3)
+    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row => false)
     f.save!
     order_number = "r_e_d_o_c_h"
     attachment = "#{order_number},2,\"\",\"\""
@@ -67,15 +67,15 @@ class ImportedFileTest < ActiveSupport::TestCase
       :ordered_qty => 55,
       :price_per_unit => 27.2,
       }
-    ic = ImportConfig.new(:model_type => "Order", :file_type => "csv", :ignore_first_row => false, :name => "test")
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
     ic.save!
     attachment_vals = [vh[:order_number],vh[:order_date],vh[:vendor_id],vh[:puid],vh[:ordered_qty],vh[:price_per_unit]]
     [:ord_ord_num,:ord_ord_date,:ord_ven_id,:ordln_puid,:ordln_ordered_qty,:ordln_ppu].each_with_index do |u,i|
       mf = ModelField.find_by_uid u
-      ic.import_config_mappings.create!(:model_field_uid => mf.uid, :column_rank => i+1)
+      ic.search_columns.create!(:model_field_uid => mf.uid, :rank => i)
     end
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
+    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row=>false)
     assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Order.where(:order_number => vh[:order_number]).first
     assert found.order_date.yday == vh[:order_date].yday, "Order date failed"
@@ -94,19 +94,64 @@ class ImportedFileTest < ActiveSupport::TestCase
       :div_id => Division.first.id,
       :vendor_name => Company.where(:vendor=>true).first.name
     }
-    ic = ImportConfig.new(:model_type => "Product", :file_type => "csv", :ignore_first_row => false, :name => "test")
-    ic.save!
+    ss = SearchSetup.new(:module_type => "Product", :name => "test", :user_id => users(:masteruser))
+    ss.save!
     attachment_vals = [vh[:unique_identifier],vh[:div_id],vh[:name],vh[:vendor_id],vh[:vendor_name]]
     [:prod_uid,:prod_div_id,:prod_name,:prod_ven_id,:prod_ven_name].each_with_index do |u,i|
       mf = ModelField.find_by_uid u
-      ic.import_config_mappings.create(:model_field_uid => mf.uid, :column_rank => i+1)
+      ss.search_columns.create(:model_field_uid => mf.uid, :rank => i)
     end
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :import_config_id => ic.id)
+    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ss.id, :ignore_first_row=>false)
     assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:unique_identifier]).first
     assert found.name == vh[:name], "name failed"
     assert found.vendor_id == vh[:vendor_id], "vendor id failed"
     assert found.division_id == vh[:div_id], "division id failed"
+  end
+
+  test "product with classification and tariffs" do
+    vh = {
+      :prod_uid=>"pwc_test",
+      :prod_ven_id=>companies(:vendor).id,
+      :class_cntry_iso => "US",
+      :hts_line_number => "",
+      :hts_hts_1 => "9900778811"
+    }
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"test", :user_id=> users(:masteruser).id)
+    attach_array = []
+    [:prod_uid,:prod_ven_id,:class_cntry_iso,:hts_line_number,:hts_hts_1].each_with_index do |uid,i|
+      attach_array << vh[uid]
+      ss.search_columns.create!(:model_field_uid => uid,:rank=>i)
+    end
+    f = ss.imported_files.new(:filename=>'fname',:size=>1,:content_type => 'text/csv',:ignore_first_row=>false)
+    assert f.process(:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
+    found = Product.where(:unique_identifier => vh[:prod_uid]).first
+    assert found.vendor_id == vh[:prod_ven_id], "vendor id failed"
+    classifications = found.classifications
+    assert classifications.size==1, "Should have found 1 classification, found #{found.classifications.size}"
+    assert classifications.first.country.iso_code=="US", "Classification should be for US, was #{found.classifications.first.country.iso_code}"
+
+    tariffs = classifications.first.tariff_records
+    assert tariffs.size==1, "Should have found 1 tariff, found #{tariffs.size}"
+    assert tariffs.first.line_number==1, "Should have auto-set line number to 1, was #{tariffs.first.line_number}"
+    assert tariffs.first.hts_1==vh[:hts_hts_1], "Should have set hts-1 to #{vh[:hts_hts_1]}, was #{tariffs.first.hts_1}"
+
+    #change HTS number and reprocess
+    vh[:hts_hts_1] = "1234567890"
+    vh[:hts_line_number] = tariffs.first.line_number
+    attach_array.pop 2
+    attach_array << vh[:hts_line_number]
+    attach_array << vh[:hts_hts_1]
+    assert f.process(:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
+    p2 = Product.where(:unique_identifier => vh[:prod_uid]).first
+    assert p2 == found, "Should have found same object in database."
+    assert p2.classifications.size==1, "Should still have 1 element."
+    assert p2.classifications.first==classifications.first, "Should have found same classification"
+    c2 = p2.classifications.first
+    assert c2.tariff_records.size==1, "Should still have 1 element."
+    t2 = c2.tariff_records.first
+    assert t2 == tariffs.first, "Should have found same tariff record"
+    assert t2.hts_1 == vh[:hts_hts_1], "HTS should have been #{vh[:hts_hts_1]}, was #{t2.hts_1}"
   end
 end

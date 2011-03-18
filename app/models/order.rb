@@ -1,7 +1,8 @@
 class Order < ActiveRecord::Base
   include OrderSupport
   include CustomFieldSupport
-  
+  include ShallowMerger
+
   belongs_to :division
 	belongs_to :vendor,  :class_name => "Company"
 	belongs_to :ship_to, :class_name => "Address"
@@ -44,23 +45,7 @@ class Order < ActiveRecord::Base
     !self.vendor.nil? && self.vendor.locked?
   end
   
-  #only merges this object, not related objects (like details). 
-  #The other_object overwrites everything except id. 
-  def shallow_merge_into(other_order,options={})
-    dont_copy = ['id','created_at','updated_at','order_number']
-    can_blank = options[:can_blank].nil? ? [] : options[:can_blank]
-    updated_attribs = {} 
-    self.attributes.each_key do |k|
-      unless dont_copy.include?(k)
-        if other_order.attribute_present?(k)
-          updated_attribs[k] = other_order.attributes[k]
-        elsif can_blank.include?(k)
-          updated_attribs[k] = nil
-        end
-      end
-    end
-    self.attributes= updated_attribs
-  end
+  dont_shallow_merge :Order, ['id','created_at','updated_at','order_number']
   
   def shipped_qty
     q = 0
@@ -97,6 +82,16 @@ class Order < ActiveRecord::Base
     return p_hash.values
   end
   
+  def self.search_secure user, base_object
+    if user.company.master
+      return base_object.where("1=1")
+    elsif user.company.vendor
+      return base_object.where(:vendor_id => user.company)
+    else
+      return base_object.where("1=0")
+    end
+  end
+
   private
   #needed for OrderSupport mixin
   def get_lines

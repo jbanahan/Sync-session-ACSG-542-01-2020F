@@ -1,6 +1,8 @@
 // Place your application-specific JavaScript functions and classes here
 // This file is automatically included by javascript_include_tag :defaults
 $( function() {
+    
+
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();
@@ -19,6 +21,14 @@ $( function() {
       effect: "fade",
       // custom opacity setting
       opacity: 0.9         
+    });
+    $(".dialogtip").tooltip({
+      position: "center left",
+      effect: "fade",
+      opacity: 0.9,
+      onBeforeShow: function(event, position){
+        this.getTip().css({'z-index':'9999'});
+       }
     });
     $(".tiplink").tooltip({position:"bottom center", effect: "fade", opacity: 0.9, offset: [8,0]});
     
@@ -53,7 +63,10 @@ $( function() {
     .click( function() {
         $("#mod_export").dialog('open');
     });
-    $("#lnk_feedback").click(function() {feedbackDialog();});
+    $("#lnk_feedback").click(function(ev) {
+        ev.preventDefault();
+        feedbackDialog();
+    });
     $("button").button();
     
     $(".classification_expand").click(function(ev) {
@@ -115,11 +128,18 @@ $(document).ready( function() {
     //make the shared/search_box partial work
     setSearchFields($("#srch_fields"),$("#srch_val"),$("#srch_cond"));
 
+    //Hide subscriptions buttons until feature is better implemented (ticket 87)
+    $("#btn_subscriptions").hide();
+    
+    //when closing a dialog, make sure to take focus from all inputs
+    $("div.ui-dialog").live( "dialogbeforeclose", function(event, ui) {
+      $(this).find(":input").blur();
+    });
 });
 function attachmentButton() {
   $(".attach_button").button();
   $(".attach_button").each(function() {
-    var fileInput = $(this).prevAll(":file");
+    var fileInput = $("body").find(":file");
     var aButton = $(this);
     if(fileInput.length!=1) {
       //either many file objects or none, either way we can't automate behavior
@@ -142,16 +162,16 @@ function endsWith(str, suffix) {
 }
 function feedbackDialog() {
   content = "<div id='mod_feedback' style='display:none;'><textarea rows='10' id='ta_feedback_msg' name='message' /><br /><input type='checkbox' id='chk_fdbk_rsp' /> I would like a response to this message.</div>";
-  send_data = {
-    message: $("#ta_feedback_msg").val(),
-    respond: (($('#chk_fdbk_rsp:checked').val() == undefined) ? "No" : "Yes"),
-    location: window.location.href
-  };
-  send_data.source_page = $("form").serializeArray();
+  var source_form_data = "";
   $("body").append(content);
   $("#mod_feedback").dialog({title: "Send Feedback",
     buttons:{
       "Submit":function(){
+        send_data = {
+          message: $("#ta_feedback_msg").val(),
+          respond: (($('#chk_fdbk_rsp:checked').val() == undefined) ? "No" : "Yes"),
+          location: window.location.href
+        };
         $.post('/feedback', send_data);
         $(this).dialog('close');   
         $("body").append("<div id='mod_thanks'>Thank you for your feedback.</div>");

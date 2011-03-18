@@ -1,18 +1,26 @@
-<script>
+<% content_for :javascript do %>
   $(function() {
-    $( "#user_submit" )
-      .button()
+    $("#btn_save").click(function() {$("#frm_user").submit();});
+<%
+cancel_redirect = "/"
+cancel_redirect = company_users_path(@company) if current_user.admin?
+%>
+    $("#btn_cancel").click(function() {window.location = '<%=cancel_redirect%>'});
   });
-</script>
-<%= form_for([@company, @user]) do |f| %>
+<%end%>
+<%content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<%end%>
+<%= form_for([@company, @user], :html=>{:id=>'frm_user'}) do |f| %>
   <%= f.hidden_field :company_id %>
   <table>
   <%=field_row "Username", f.text_field(:username) %>
   <%=field_row "Email", f.text_field(:email) %>
   <%=field_row "First Name", f.text_field(:first_name)%>
   <%=field_row "Last Name", f.text_field(:last_name)%>
-  <%=field_row "Password", f.password_field(:password) %>
-  <%=field_row "Confirm Pasword", f.password_field(:password_confirmation) %>
+  <%=field_row "Password", f.password_field(:password, :title=>"Enter your new password into both password fields. If you don't need to change your password, you can leave this blank.") %>
+  <%=field_row "Confirm Pasword", f.password_field(:password_confirmation, :title=>"Enter your new password into both password fields. If you don't need to change your password, you can leave this blank.") %>
   <%=field_row "Time Zone", f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones) %>
   <%=field_row "Email Format", f.select(:email_format,["html","text"])%>
   <% if current_user.admin? %>
@@ -26,7 +34,15 @@
     <% end %>
  <% end %>
   </table>
-  <div class="actions">
-    <%= f.submit %>
-  </div>
+<% end %>
+<br />
+<br />
+<% if current_user==@user %>
+<b>Terms of Service</b>
+<p>
+<b><a href='/privacy_policy.pdf' target='_new'>Privacy Policy</a></b> - Last Updated: <%=TERMS[:privacy]%><br/>
+<b><a href='/tos.pdf' target='_new'>Terms of Service</a></b> - Last Updated: <%=TERMS[:terms]%>
+</p>
+
+<p>You last accepted these agreements on: <%=current_user.tos_accept.nil? ? "Never" : current_user.tos_accept%></p>
 <% end %>

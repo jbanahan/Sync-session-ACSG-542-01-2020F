@@ -53,4 +53,11 @@ module ApplicationHelper
     return "" if mf.nil?
     return mf.label
   end
+
+  #takes the values added to the array passed into the block and creates a comma separated list
+  def comma_list &block
+    base = []
+    yield base
+    CSV.generate_line base, {:row_sep=>"",:col_sep=>", "} 
+  end
 end

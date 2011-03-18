@@ -17,9 +17,6 @@
     <tr><td>Request Host</td><td><%=@request.host%></td></tr>
     <tr><td>IP Address</td><td><%=@request.remote_ip%></td></tr>
     <tr><td>Source Location</td><td><%=@params[:location]%></td></tr>
-    <%=@params[:source_page].each do |k,v| %>
-    <tr><td>Source Param: <%=k%></td><td><%=v%></td></tr>
-    <% end %>
   </table>
   </body>
 </html>

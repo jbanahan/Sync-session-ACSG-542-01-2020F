@@ -1,12 +1,13 @@
 development:
-  :address: smtp.comcast.net
-  :port: 587
+  :address: mail.authsmtp.com
+  :port: 23 # 23, 26, 2525 or 25
   :authentication: plain
-  :user_name: bglick231
-  :password: soldpack
+  :user_name: ac55256
+  :password: xypbavh3ymznef
+  :enable_starttls_auto: false
 production:
-  :address: smtp.comcast.net
-  :port: 587
-  :authentication: plain
-  :user_name: bglick231
-  :password: soldpack
+  :address: domU-12-31-39-04-F2-54.compute-1.internal # Private DNS to util1 EC2 instance
+  :port: 25
+#  :authentication: plain
+#  :user_name: bglick231
+#  :password: soldpack

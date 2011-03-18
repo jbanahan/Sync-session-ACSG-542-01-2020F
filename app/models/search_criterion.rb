@@ -9,7 +9,22 @@ class SearchCriterion < ActiveRecord::Base
   validates  :operator, :presence => true
   validates  :value, :presence => true
   
-  def apply(p)
+  def apply(p, module_chain = nil)
+    p = p.where("1=1") if p.class.to_s == "Class"
+    if module_chain.nil?
+      if self.search_setup.nil?
+        cm = CoreModule.find_by_class_name(p.klass.to_s)
+        if cm.nil?
+          @module_chain = nil
+        else
+          @module_chain = cm.default_module_chain
+        end
+      else
+        @module_chain = self.search_setup.module_chain
+      end
+    else
+      @module_chain = module_chain
+    end
     add_where(add_join(p))
   end
     
@@ -24,17 +39,27 @@ class SearchCriterion < ActiveRecord::Base
   
   private  
   def add_join(p)
-    p = p.where("1=1") if p.class.to_s == "Class"
+    
     mf_cm = model_field.core_module
-    unless(mf_cm.class_name==p.klass.to_s)
-      cm = CoreModule.find_by_class_name(p.klass.to_s)
-      unless cm.nil?
-        child_join = cm.child_joins[mf_cm]
-        p = p.joins(child_join) unless child_join.nil?
-      end
-    end
+    p = add_parent_joins p, @module_chain, mf_cm unless @module_chain.nil?
     p = p.joins(model_field.join_statement) unless model_field.join_statement.nil?
     p
+  end
+
+  def add_parent_joins(p,module_chain,target_module)
+    add_parent_joins_recursive p, module_chain, target_module, module_chain.first
+  end
+  def add_parent_joins_recursive(p, module_chain, target_module, current_module) 
+    new_p = p
+    child_module = module_chain.child current_module
+    unless child_module.nil?
+      child_join = current_module.child_joins[child_module]
+      new_p = p.joins(child_join) unless child_join.nil?
+      unless child_module==target_module
+        new_p = add_parent_joins_recursive new_p, module_chain, target_module, child_module
+      end
+    end
+    new_p
   end
   
   def add_where(p)

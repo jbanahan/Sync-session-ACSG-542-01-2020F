@@ -211,20 +211,4 @@ class ShipmentsController < ApplicationController
        end
     }
   end
-  
-  private 
-  def secure(base)
-    
-    if current_user.company.master
-      return base
-    elsif current_user.company.vendor 
-      return base.where(:vendor_id => current_user.company)
-    elsif current_user.company.carrier
-      return base.where(:carrier_id => current_user.company)
-    else
-      add_flash :errors, "You do not have permission to search for shipments."
-      return base.where("1=0")
-    end
-  end
-  
 end

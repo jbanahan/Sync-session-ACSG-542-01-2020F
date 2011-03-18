@@ -4,8 +4,6 @@ class CustomDefinition < ActiveRecord::Base
   validates  :module_type, :presence => true
   
   has_many   :custom_values, :dependent => :destroy
-  #this removes the column from any mapping if you drop a custom field
-  has_many   :import_config_mappings, :dependent => :destroy
   has_many   :sort_criterions, :dependent => :destroy
   has_many   :search_criterions, :dependent => :destroy
   has_many   :search_columns, :dependent => :destroy

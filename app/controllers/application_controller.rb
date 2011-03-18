@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
 
     protect_from_forgery
     before_filter :require_user
+    before_filter :check_tos
     before_filter :update_message_count
     before_filter :set_user_time_zone
     before_filter :log_request
@@ -51,16 +52,21 @@ class ApplicationController < ActionController::Base
       @current_search = @core_module.make_default_search current_user
     end
     @current_search = params[:sid].nil? ? SearchSetup.for_module(@core_module).for_user(current_user).order("last_accessed DESC").first : SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first
-    @current_search.touch(true)
-    @results = secure(@current_search.search)
-    respond_to do |format| 
-      format.html {
-        @results = @results.paginate(:per_page => 20, :page => params[:page]) 
-        render :layout => 'one_col'
-      }
-      format.csv {
-        @results = @results.where("1=1")
-        render_csv("#{core_module.label}.csv")}
+    if @current_search.user != current_user
+      error_redirect "You cannot run a search that is assigned to a different user."
+    else
+      @current_search.touch(true)
+      @results = @current_search.search
+      respond_to do |format| 
+        format.html {
+          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+          render :layout => 'one_col'
+        }
+        format.csv {
+          @results = @results.where("1=1")
+          render_csv("#{core_module.label}.csv")
+        }
+      end
     end
   end
   
@@ -140,7 +146,7 @@ class ApplicationController < ActionController::Base
         headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
       end
     
-      render :layout => false
+      render :text => CsvMaker.new.make(@current_search,@results) 
     end
 
     def error_redirect(message)
@@ -237,16 +243,27 @@ class ApplicationController < ActionController::Base
     end
 
     def require_user
-        unless current_user
-            store_location
-            add_flash :errors, "You must be logged in to access this page"
-            redirect_to login_path
+      unless current_user
+        store_location
+        add_flash :errors, "You must be logged in to access this page"
+        redirect_to login_path
         return false
-        end
+      end
     end
 
+    def check_tos
+      if current_user && 
+        (current_user.tos_accept.nil? || 
+        current_user.tos_accept < TERMS[:privacy] ||
+        current_user.tos_accept < TERMS[:terms])
+        redirect_to "/show_tos"
+        return false
+      end
+    end
+
+
     def store_location
-        session[:return_to] = request.request_uri
+      session[:return_to] = request.request_uri
     end
 
     def redirect_back_or_default(default)

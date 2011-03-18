@@ -10,4 +10,10 @@ class TariffRecordTest < ActiveSupport::TestCase
     assert c.hts_2=="4711232323", "HTS2 was #{c.hts_2}, should have been '4711232323'"
     assert c.hts_3=="", "HTS3 was #{c.hts_3}, should have been ''"
   end
+
+  test "line_number" do
+    c = Classification.create!(:product_id => Product.first,:country_id=>Country.last)
+    t = c.tariff_records.create!
+    assert t.line_number == 1, "Line number should be 1, was #{t.line_number}"
+  end
 end

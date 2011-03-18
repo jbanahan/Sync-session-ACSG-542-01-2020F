@@ -1,4 +1,5 @@
 <tr class="tf_row">
+    <td><%= f.text_field :line_number, :size=>"3"%></td>
     <td><%= f.text_field :hts_1, :class=>"hts_field"%>
       <%unless f.object.hts_1_matches.nil? %>
         <%f.object.hts_1_matches.each do |ot|%>

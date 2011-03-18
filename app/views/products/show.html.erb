@@ -81,6 +81,7 @@
   </table>
   <table class='detail_table'>
     <thead>
+      <th>Row</td>
       <th>HTS 1</th>
       <th>HTS 2</th>
       <th>HTS 3</th>    
@@ -88,6 +89,7 @@
     <tbody>
       <% c.tariff_records.each do |t| %>
       <tr>
+        <td><%=t.line_number%></td>
         <td><%=t.hts_1%></td>
         <td><%=t.hts_2%></td>
         <td><%=t.hts_3%></td>

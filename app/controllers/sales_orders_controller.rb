@@ -98,16 +98,4 @@ class SalesOrdersController < ApplicationController
       end
     }
   end
-  
-  private    
-  def secure(base)
-    if current_user.company.master
-      return base
-    elsif current_user.company.customer?
-      return base.where(:customer_id => current_user.company)
-    else
-      add_flash :errors, "You do not have permission to search for sales."
-      return base.where("1=0")
-    end
-  end
 end
