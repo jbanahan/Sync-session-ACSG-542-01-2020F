@@ -15,7 +15,7 @@ class Classification < ActiveRecord::Base
     :reject_if => lambda { |a| a[:hts_1].blank? && (a[:_destroy].blank? || a[:_destroy]=="false")}
 
 
-  ['id','created_at','updated_at','country_id','product_id'].each {|f|  DONT_SHALLOW_MERGE << f}
+  dont_shallow_merge :Classification, ['id','created_at','updated_at','country_id','product_id']
     
   def find_same
     r = Classification.where(:product_id=>self.product_id).where(:country_id=>self.country_id)

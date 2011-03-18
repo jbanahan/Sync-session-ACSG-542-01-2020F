@@ -1,5 +1,9 @@
 class SalesOrderLine < ActiveRecord::Base
   include LinesSupport
+  include CustomFieldSupport
+  include ShallowMerger
+
+  dont_shallow_merge :SalesOrderLine, ['id','created_at','updated_at','line_number']
   
   belongs_to :product
   belongs_to :sales_order
@@ -13,6 +17,11 @@ class SalesOrderLine < ActiveRecord::Base
   validates :product, :presence => true
   validates_uniqueness_of :line_number, :scope => :sales_order_id
   
+  def find_same
+    found = SalesOrderLine.where({:sales_order_id => self.sales_order_id, :line_number => self.line_number})
+    raise "Found multiple sale lines with the same order id #{self.sales_order_id} & line number #{self.line_number}" if found.size > 1
+    return found.empty? ? nil : found.first
+  end
   def locked?
     return (!parent_obj.nil? && parent_obj.locked?)
   end

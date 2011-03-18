@@ -12,16 +12,14 @@ class ImportedFile < ActiveRecord::Base
   belongs_to :search_setup
     
   def process(options={})
-    processor = options[:processor].nil? ? find_processor : options[:processor]
     a_data = options[:attachment_data].nil? ? self.attachment_data : options[:attachment_data]
-    processor.new(self,a_data).process
+    FileImportProcessor.process self, a_data
     return self.errors.size == 0
   end
   
   def preview(options={})
-    processor = options[:processor].nil? ? FileImportProcessor::OrderCSVImportProcessor : options[:processor]
     a_data = options[:attachment_data].nil? ? self.attachment_data : options[:attachment_data]
-    processor.new(self,a_data).preview
+    FileImportProcessor.preview self, a_data
   end
   
   
@@ -42,13 +40,6 @@ class ImportedFile < ActiveRecord::Base
   end
   
   private
-  def find_processor   
-    p = {
-    :Order => {:csv => FileImportProcessor::OrderCSVImportProcessor},
-    :Product => {:csv => FileImportProcessor::ProductCSVImportProcessor}
-    }
-    p[self.search_setup.module_type.intern][:csv]
-  end
   def no_post
     false
   end

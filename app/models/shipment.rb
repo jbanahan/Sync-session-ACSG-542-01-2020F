@@ -1,5 +1,6 @@
 class Shipment < ActiveRecord::Base
 	include CustomFieldSupport
+  include ShallowMerger
 	
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"
@@ -13,8 +14,17 @@ class Shipment < ActiveRecord::Base
   has_many   :item_change_subscriptions
   has_many   :attachments, :as => :attachable
 
-  validates   :vendor, :presence => true
-	
+  validates  :vendor, :presence => true
+	validates  :reference, :presence => true
+  validates_uniqueness_of :reference, {:scope => :vendor_id}
+
+  dont_shallow_merge :Shipment, ['id','created_at','updated_at','vendor_id','reference']
+  def find_same
+    f = Shipment.where(:reference=>self.reference).where(:vendor_id=>self.vendor_id)
+    raise "Multiple shipments wtih reference \"#{self.reference} and vendor ID #{self.vendor_id} exist." if f.size > 1
+    return f.empty? ? nil : f.first
+  end
+
 	def self.modes 
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
 	end

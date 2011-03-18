@@ -31,7 +31,7 @@ class Product < ActiveRecord::Base
     !self.vendor.nil? && self.vendor.locked?
   end
 
-  ['id','created_at','updated_at','unique_identifier','vendor_id'].each {|f| DONT_SHALLOW_MERGE << f}
+  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
 
 
   def can_view?(user)

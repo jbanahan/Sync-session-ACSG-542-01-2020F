@@ -17,7 +17,7 @@
 <h3>You must click process to finish importing the file &gt;&gt;</h3>
 </div>
 <p>
-  <b>Name:</b><%= link_to @imported_file.filename, download_search_setup_imported_file_path(@search_setup,@imported_file) %>
+  <b>Name:</b>&nbsp;<%= link_to @imported_file.attached_file_name, download_search_setup_imported_file_path(@search_setup,@imported_file) %>
 </p>
 
 <h2>Preview</h2>
@@ -33,4 +33,3 @@
    <% end %>
   </ul>
 </div>
-

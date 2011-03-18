@@ -2,21 +2,73 @@ require 'test_helper'
 
 class SearchSetupTest < ActiveSupport::TestCase
 
-  test "uploadable - Shipment, Delivery, Sales Order = False" do
-    s = SearchSetup.new(:module_type=>CoreModule::SHIPMENT.class_name)
+  test "uploadable - Delivery" do
+    s = SearchSetup.create!(:module_type=>CoreModule::DELIVERY.class_name, :name=>"uploadable - delivery",:user_id => users(:vendoruser).id)
     m = []
-    assert !s.uploadable?(m), "Shipment uploadable should have returned false."
-    assert m.length==1 && m[0] == "Uploads are not supported for Shipments at this time.", "Shipment message missing."
-    s.module_type = CoreModule::DELIVERY.class_name
-    m = []
-    assert !s.uploadable?(m), "delivery uploadable should have returned false."
-    assert m.length==1 && m[0] == "Uploads are not supported for Deliveries at this time.", "delivery message missing."
-    s.module_type = CoreModule::SALE.class_name
-    m = []
-    assert !s.uploadable?(m), "Sales Order uploadable should have returned false."
-    assert m.length==1 && m[0] == "Uploads are not supported for Sales at this time.", "Sales Order message missing."
+    assert !s.uploadable?(m), "Should not upload w/o required fields or as vendor. Messages: #{m}"
+    assert m.length==3, "Messages length should have been 3, was #{m.length}"
+    assert m.include?("You do not have permission to edit Deliveries."), "Permission missing. Messages: #{m}"
+    assert m.include?("Reference field is required to upload Deliveries."), "Reference missing. Messages: #{m}"
+    assert m.include?("Customer Name or Customer ID is required to upload Deliveries."), "Customer missing. Messages: #{m}"
+
+    s.search_columns.create!(:model_field_uid=>"del_ref", :rank=>0)
+    s.search_columns.create!(:model_field_uid=>"del_cust_id",:rank=>1)
+    s.user = users(:masteruser)
+    s.save!
+
+    assert s.uploadable?(m), "Should upload, didn't. Messages: #{m}"
   end
 
+  test "uploadable - Sale" do
+    s = SearchSetup.create!(:module_type=>CoreModule::SALE.class_name, :name=>"uploadable -sale",:user_id => users(:vendoruser).id)
+    m = []
+    assert !s.uploadable?(m), "Should not upload w/o required fields or as vendor. Messages: #{m}"
+    assert m.length==3, "Messages length should have been 3, was #{m.length}"
+    assert m.include?("You do not have permission to edit Sales."), "Permission missing. Messages: #{m}"
+    assert m.include?("Order Number field is required to upload Sales."), "Order number missing. Messages: #{m}"
+    assert m.include?("Customer Name or Customer ID is required to upload Sales."), "Customer missing. Messages: #{m}"
+    
+    s.search_columns.create!(:model_field_uid => "sale_order_number", :rank=>0)
+    s.search_columns.create!(:model_field_uid => "sale_cust_name", :rank=>1)
+    s.user = users(:masteruser) 
+    s.save!
+
+    m = []
+    assert s.uploadable?(m), "Should upload, didn't. Messages: #{m}"
+
+    s.search_columns.create!(:model_field_uid => "soln_ppu", :rank=>2)
+
+    m = []
+    assert !s.uploadable?(m), "Should not upload, did. Messages: #{m}"
+    assert m.length == 2, "Messages length should have been 2, was #{m.length}"
+    assert m.include?("Line - Line Number is required to upload Sale Lines."), "Line number required missing. Messages: #{m}"
+    assert m.include?("Line - Product Unique Identifier is required to upload Sale Lines."), "PUID required missing. Messages: #{m}"
+
+    s.search_columns.create!(:model_field_uid => "soln_puid", :rank=>3)
+    s.search_columns.create!(:model_field_uid => "soln_line_number", :rank=>4)
+
+    m = []
+    assert s.uploadable?(m), "Should upload, didn't: Messages #{m}"
+  end
+
+  test "uploadable - Shipment" do 
+    s = SearchSetup.create!(:module_type=>CoreModule::SHIPMENT.class_name, :name=>"uploadable - shipment",:user_id => users(:customer6user).id)
+    m = []
+    assert !s.uploadable?(m), "Should not upload w/o required fields or as customer. Messages: #{m}"
+    assert m.length==3, "Messages length should have been 3, was #{m.length}"
+    assert m.include?("You do not have permission to edit Shipments."), "Permission missing. Messages: #{m}"
+    assert m.include?("Reference Number field is required to upload Shipments."), "Reference missing. Messages: #{m}"
+    assert m.include?("Vendor Name or Vendor ID is required to upload Shipments."), "Vendor required missing. Messages: #{m}"
+
+    s.search_columns.create!(:model_field_uid=>"shp_ref",:rank=>0)
+    s.search_columns.create!(:model_field_uid=>"shp_ven_name",:rank=>1)
+    s.user = users(:masteruser)
+    s.save!
+
+    m = []
+    assert s.uploadable?(m), "Should upload, didn't. Messages: #{m}"
+
+  end
   test "uploadable - Order" do
     s = SearchSetup.create!(:module_type=>CoreModule::ORDER.class_name, :name=>"uploadable - order",:user_id => users(:vendoruser).id)
 

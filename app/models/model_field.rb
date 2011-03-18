@@ -329,6 +329,23 @@ class ModelField
   add_fields CoreModule::SALE, make_customer_arrays(100,"sale","Header - ","sales_orders")
   add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","Header - ","sales_orders")
   add_fields CoreModule::SALE, make_division_arrays(300,"sale","Heade - ","sales_orders")
+
+  add_fields CoreModule::SALE_LINE, [
+    [1,:soln_line_number,:line_number,"Line - Line Number", {:data_type=>:integer}],
+    [2,:soln_puid,:unique_identifier,"Line - Product Unique Identifier", {
+      :import_lambda => lambda {|detail,data|
+        detail.product = Product.where(:unique_identifier => data).first
+        return "Line #{detail.line_number} - Product set to #{data}"
+      },
+      :export_lambda => lambda {|detail|
+        detail.product.unique_identifier
+      },
+      :join_statement => "LEFT OUTER JOIN products AS soln_puid ON soln_puid.id = sales_order_lines.product_id",
+      :join_alias => "soln_puid",:data_type=>:string
+    }],
+    [3,:soln_ordered_qty,:ordered_qty,"Line - Order Quantity",{:data_type=>:decimal}],
+    [4,:soln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type => :decimal}]
+  ]
   
   add_fields CoreModule::DELIVERY, [
     [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
@@ -366,6 +383,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification,"Classificaiton - ")
     ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment,"")
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder,"Header - ")
+    ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery,"")
   end
   
