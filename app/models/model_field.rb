@@ -362,7 +362,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::ORDER,Order,"Header - ")
     ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::PRODUCT,Product,"")
-    ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification,"Classificaiton - ")
+    ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification,"Classification - ")
     ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment,"")
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder,"Header - ")
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery,"")
