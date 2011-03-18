@@ -68,12 +68,19 @@ class FileImportProcessor
         data_map[mod].each do |uid,data|
           mf = ModelField.find_by_uid uid
           if mf.custom?
-            custom_fields[uid] = data
+            custom_fields[mf] = data
           else
             messages << mf.process_import(obj, data)
           end
         end
         obj = merge_or_create obj, save
+        custom_fields.each do |mf,data|
+          cd = CustomDefinition.find mf.custom_id
+          cv = obj.get_custom_value cd
+          cv.value = data
+          messages << "#{cd.label} set to #{cv.value}"
+          cv.save if save
+        end
         object_map[mod] = obj
       end
     end
