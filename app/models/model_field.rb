@@ -248,13 +248,7 @@ class ModelField
     #5 and 6 are now created with the make_vendor_arrays method below, Don't use them.
     [7,:prod_status_name, :name, "Status", {
       :import_lambda => lambda {|detail,data|
-        status = StatusRule.where(:name => data).where(:module_type => CoreModule::PRODUCT.class_name)
-        detail.status_rule = status
-        unless status.nil?
-          return "Status set to #{status.name}"
-        else
-          return "Status not found with name \"#{data}\""
-        end 
+        return "Statuses are ignored. They are automatically calculated."
       },
       :export_lambda => lambda {|detail| detail.status_rule.nil? ? "" : detail.status_rule.name },
       :join_statement => "LEFT OUTER JOIN status_rules AS prod_status_name ON  prod_status_name.id = products.status_rule_id",
