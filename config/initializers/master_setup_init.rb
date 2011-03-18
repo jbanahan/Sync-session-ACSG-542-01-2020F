@@ -14,6 +14,6 @@ if (["companies","users"] - ActiveRecord::Base.connection.tables).length == 0
     u.sys_admin = true
     u.admin = true
     u.save
-    OpenMailer.send_new_system_init(pass).deliver
+    OpenMailer.send_new_system_init(pass).deliver if Rails.env=="production"
   end
 end
