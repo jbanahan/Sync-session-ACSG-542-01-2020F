@@ -96,31 +96,30 @@
     </tbody>
 </table>
 
-
-
-<% ps_edit = @ps_to_edit.nil? ? @shipment.piece_sets.build : @ps_to_edit %>
-<%= form_for(ps_edit) do |f| %>
 <table class="detail_table" style='margin-top: 4em'>
 	<thead>
-		<th>Product</th>
 		<th>Order - Line</th>
-		<th>Quantity</th>
+		<th>Product</th>
+		<th>Shipped Quantity</th>
+    <th>Received Quantity</th>
 		<th></th>
 	</thead>
   <tbody>
+  <% @shipment.order_lines.group("order_lines.id").includes(:order, :product).each do |order_line| %>
+    <tr class='hover'>
+      <td><%=link_to order_line.order.order_number, order_line.order%> - <%=order_line.line_number%></td>
+      <td><%=link_to order_line.product.name, order_line.product%></td>
+      <td><%=@shipment.piece_sets.where(:order_line_id=>order_line.id, :adjustment_type=>nil).sum("quantity")%></td>
+      <td><%=@shipment.piece_sets.where(:order_line_id=>order_line.id).where("inventory_in_id is not null").sum("quantity") %></td>
+    </tr>
+  <% end %>
+  </tbody>
+</table>
+Bad One:
+<table>
+  <tbody>
 	<% @shipment.piece_sets.joins(:order_line => :order).order("orders.order_number, order_lines.line_number").each do |ps| %>
-	<% if !ps_edit.id.nil? && ps_edit.id == ps.id %>
-  <tr>
-    <td><%=f.hidden_field :id%>
-      <%=f.hidden_field :shipment_id %>
-      <input type='hidden' name='from' value='s' />
-      <%= ps.product.nil? ? '' : ps.product.name %></td>
-    <td><%= ps.order_line.nil? ? '[n/a]' : "#{ps.order_line.order.order_number} - #{ps.order_line.line_number}" %></td>
-    <td><%= f.text_field :quantity %></td>
-    <td><%= f.submit 'Save', :id => 'btn_save_piece_set' %></td>
-  </tr>
-	<% elsif !ps.id.nil? %>
-	<tr class='hover'>
+		<tr class='hover'>
     <td><%= link_to ps.product.name, ps.product %></td>
     <td><%= ps.order_line.nil? ? '[n/a]' : raw("#{link_to(ps.order_line.order.order_number, order_path(ps.order_line.order))} - #{ps.order_line.line_number}")%></td>
     <% undo_rec_link = "<a href='#' class='undo_receive' id='ur_#{ps.id}'>x</a>" %>
@@ -131,11 +130,10 @@
        
     </td>
   </tr>
-	<% end %>
   <% end %>
 	</tbody>
 </table>
-<% end %>
+
 <%=render :partial => 'shared/comments', :locals => {:commentable => @shipment} %>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @shipment}%>
 <div id='mod_pick_order' style='display:none;'>

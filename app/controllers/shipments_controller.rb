@@ -20,7 +20,7 @@ class ShipmentsController < ApplicationController
       inv_in = InventoryIn.new
       params[:shipment][:piece_set_attributes].each do |k, ps_params|
         unless (Float(ps_params[:quantity]).nil? rescue true) || ps_params[:quantity].to_f == 0
-          qty = ps_params[:quantity].to_f
+          qty = ps_params[:quantity].to_f #how much did the user tell us to receive
           ps = PieceSet.find(ps_params[:id])
           inv_in.save if inv_in.id.nil?
           ps.inventory_in = inv_in
