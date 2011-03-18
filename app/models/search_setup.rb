@@ -111,7 +111,7 @@ class SearchSetup < ActiveRecord::Base
     if cm==CoreModule::DELIVERY
       messages << "You do not have permission to edit Deliveries." unless self.user.edit_deliveries?
       messages << "Reference field is required to upload Deliveries." unless has_column "del_ref"
-      messages << "Customer Name or Customer ID is required to upload Deliveries" unless has_one_of ["del_cust_name","del_cust_id"]
+      messages << "Customer Name or Customer ID is required to upload Deliveries." unless has_one_of ["del_cust_name","del_cust_id"]
     end
     if cm==CoreModule::SALE
       messages << "You do not have permission to edit Sales." unless self.user.edit_sales_orders?

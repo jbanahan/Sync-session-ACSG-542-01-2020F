@@ -30,7 +30,7 @@ class SearchSchedule < ActiveRecord::Base
     srch_setup = self.search_setup
     cm = CoreModule.find_by_class_name srch_setup.module_type
     t = Tempfile.open("scheduled_search_run")
-    t.write CsvMaker.new.make(srch_setup,cm,srch_setup.search)
+    t.write CsvMaker.new.make(srch_setup,srch_setup.search)
     t.close
     send_email srch_setup.name, t, log
     send_ftp srch_setup.name, t, log
