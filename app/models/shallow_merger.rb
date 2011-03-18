@@ -1,9 +1,18 @@
 module ShallowMerger
 
-  DONT_SHALLOW_MERGE = []
+  DONT_SHALLOW_MERGE = {}
+  def self.included(base)
+      base.extend(ClassMethods)
+  end
+  
+  module ClassMethods
+    def dont_shallow_merge base_class, field_array
+      DONT_SHALLOW_MERGE[base_class] = field_array
+    end
+  end
 
   def shallow_merge_into(other_obj,options={})
-    dsm = DONT_SHALLOW_MERGE
+    dsm = DONT_SHALLOW_MERGE[self.class.to_s.to_sym]
     dont_copy = dsm.nil? ? [] : dsm    
     can_blank = options[:can_blank].nil? ? [] : options[:can_blank]
 

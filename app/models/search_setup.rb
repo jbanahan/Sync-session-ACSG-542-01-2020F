@@ -102,9 +102,26 @@ class SearchSetup < ActiveRecord::Base
     cm = CoreModule.find_by_class_name self.module_type
     messages << "Search's core module not set." if cm.nil?
 
-    not_supported = {CoreModule::SHIPMENT=>"Shipments", CoreModule::DELIVERY=>"Deliveries", CoreModule::SALE=>"Sales"}
-    messages << "Uploads are not supported for #{not_supported[cm]} at this time." if not_supported.include? cm
-
+    if cm==CoreModule::DELIVERY
+      messages << "You do not have permission to edit Deliveries." unless self.user.edit_deliveries?
+      messages << "Reference field is required to upload Deliveries." unless has_column "del_ref"
+      messages << "Customer Name or Customer ID is required to upload Deliveries" unless has_one_of ["del_cust_name","del_cust_id"]
+    end
+    if cm==CoreModule::SALE
+      messages << "You do not have permission to edit Sales." unless self.user.edit_sales_orders?
+      messages << "Order Number field is required to upload Sales." unless has_column "sale_order_number"
+      messages << "Customer Name or Customer ID is required to upload Sales." unless has_one_of ["sale_cust_name","sale_cust_id"]
+      
+      if contains_module CoreModule::SALE_LINE
+        messages << "Line - Line Number is required to upload Sale Lines." unless has_column "soln_line_number"
+        messages << "Line - Product Unique Identifier is required to upload Sale Lines." unless has_column "soln_puid"
+      end
+    end
+    if cm==CoreModule::SHIPMENT
+      messages << "You do not have permission to edit Shipments." unless self.user.edit_shipments?
+      messages << "Reference Number field is required to upload Shipments." unless has_column "shp_ref"
+      messages << "Vendor Name or Vendor ID is required to upload Shipments." unless has_one_of ["shp_ven_name","shp_ven_id"]
+    end
     if cm==CoreModule::PRODUCT
       messages << "You do not have permission to edit Products." unless self.user.edit_products?
       messages << "Unique Identifier field is required to upload Products." unless has_column "prod_uid"

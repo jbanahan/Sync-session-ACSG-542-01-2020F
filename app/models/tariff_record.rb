@@ -9,7 +9,7 @@ class TariffRecord < ActiveRecord::Base
 
   before_validation :auto_set_line_number
 
-  ['id','created_at','updated_at','line_number','classification_id'].each {|f|  DONT_SHALLOW_MERGE << f}
+  dont_shallow_merge :TariffRecord, ['id','created_at','updated_at','line_number','classification_id']
   
   def hts_1=(str)
     write_attribute(:hts_1, clean_hts(str))

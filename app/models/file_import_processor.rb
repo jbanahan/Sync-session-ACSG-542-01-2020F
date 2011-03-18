@@ -1,4 +1,12 @@
 class FileImportProcessor 
+#YOU DON'T NEED TO CALL ANY INSTANCE METHDOS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
+  def self.process(import_file, data)
+    find_processor(import_file, data).process_file
+  end
+  def self.preview(import_file, data)
+    find_processor(import_file, data).preview_file
+  end
+
   def initialize(import_file, data)
     @import_file = import_file
     @search_setup = import_file.search_setup
@@ -7,7 +15,8 @@ class FileImportProcessor
     @data = data
   end
   
-  def process
+  
+  def process_file
     processed_row = false
     begin
       r = @import_file.ignore_first_row ? 1 : 0
@@ -24,13 +33,21 @@ class FileImportProcessor
     end 
   end
   
-  def preview
+  def preview_file
     CSV.parse(@data,{:headers => @import_file.ignore_first_row}) do |row|
       return do_row row, false
     end
   end
-  
-  private
+  def self.find_processor import_file, data  
+    p = {
+    :Order => {:csv => OrderCSVImportProcessor},
+    :Product => {:csv => ProductCSVImportProcessor},
+    :SalesOrder => {:csv => SaleCSVImportProcessor}
+    }
+    h = p[import_file.search_setup.module_type.intern]
+    r = h.nil? ? CSVImportProcessor : h[:csv]
+    r.new(import_file, data)
+  end
   def do_row row, save
     messages = []
     data_map = {}
@@ -77,58 +94,8 @@ class FileImportProcessor
     end
     return false
   end
-=begin
-  def do_row(row, save)
-    messages = []
-    o = @core_module.new_object
-    detail_hash = {}
-    detail_data_exists = {}
-    can_blank = []
-		custom_fields = []
-    @search_setup.sorted_columns.each do |m|
-      mf = m.find_model_field
-      can_blank << mf.field_name.to_s
-      to_send = object_to_send(detail_hash, o, mf)
-      data = row[m.rank]
-      if data
-        if mf.custom?
-          custom_fields << {:field => mf, :data => data}
-        else
-          detail_data_exists[mf.core_module] = true if data.length > 0 && detail_field?(mf)
-          messages << mf.process_import(to_send,row[m.rank])
-        end
-      end
-    end
-    o = merge_or_create(o,save,{:can_blank => can_blank})
-    detail_hash.each {|core_module,d|
-      unless detail_data_exists[core_module].nil? 
-        d = merge_or_create(d,save,{:can_blank => can_blank, :parent => o})
-      end
-    }
-		custom_fields.each do |h|
-			obj = object_to_send(detail_hash,o,h[:field])
-			cd = CustomDefinition.find(h[:field].custom_id)
-			cv = obj.get_custom_value(cd)
-			cv.value = h[:data]
-			messages << "#{cd.label} set to #{cv.value}"
-			cv.save if save
-		end
-    return messages
-  end 
-=end  
-  def detail_field?(m_field)
-    m_field.core_module!=@core_module
-  end
-  
-  def object_to_send(d_hash,o,m_field)
-    return o if !detail_field?(m_field)
-    mcm = m_field.core_module
-    d_hash[mcm] =  mcm.new_object if d_hash[mcm].nil?
-    return d_hash[mcm]
-  end
   
   def merge_or_create(base,save,options={})
-#set_detail_parent base, options[:parent] unless options[:parent].nil?
     dest = base.find_same
     if dest.nil?
       dest = base
@@ -144,9 +111,6 @@ class FileImportProcessor
   def before_save(dest)
     #do nothing
   end
-#def set_detail_parent(detail,parent)
-    #default is no child objects so nothing to do here
-#end
   
   def before_merge(shell,database_object)
     #default is no validations so nothing to do here
@@ -173,13 +137,18 @@ class FileImportProcessor
   end
 
   class OrderCSVImportProcessor < CSVImportProcessor
-#def set_detail_parent(detail,parent)
-#     detail.order = parent
-#   end
     
     def before_merge(shell,database_object)
       if shell.class == Order && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
           raise "An order's vendor cannot be changed via a file upload."
+      end
+    end
+  end
+
+  class SaleCSVImportProcessor < CSVImportProcessor
+    def before_merge(shell,database_object)
+      if shell.class == SalesOrder && !shell.customer_id.nil? && shell.customer_id!=database_object.customer_id
+        raise "A sale's customer cannot be changed via a file upload."
       end
     end
   end
