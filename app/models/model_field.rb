@@ -235,9 +235,50 @@ class ModelField
       :join_alias => "#{table_name}_country",
       :data_type=>:string  
     }]
-
     r
-
+  end
+  def self.make_product_arrays(rank_start,uid_prefix,label_prefix,table_name)
+    r = []
+    r << [rank_start,"#{uid_prefix}_puid".to_sym, :unique_identifier,"#{label_prefix}Product Unique ID", {
+      :import_lambda => lambda {|detail,data|
+        p = Product.where(:unique_identifier=>data).first
+        return "Product not found with unique identifier #{data}" if p.nil?
+        detail.product = p
+        return "Product set to #{data}"
+      },
+      :export_lambda => lambda {|detail|
+        if detail.product
+          return detail.product.unique_identifier
+        else
+          return nil
+        end
+      },
+      :join_statement => "LEFT OUTER JOIN products AS #{uid_prefix}_puid ON #{uid_prefix}_puid.id = #{table_name}.product_id",
+      :join_alias => "#{uid_prefix}_puid",:data_type=>:string
+    }]
+    r << [rank_start+1,"#{uid_prefix}_pname".to_sym, :name,"#{label_prefix}Product Name",{
+      :import_lambda => lambda {|detail,data|
+        prods = Product.where(:name=>data)
+        if prods.size>1
+          return "Multiple products found with name #{data}, field ignored."
+        elsif prods.size==0
+          return "Product not found with name #{data}"
+        else
+          detail.product = prods.first
+          return "Product set to #{data}"
+        end
+      },
+      :export_lambda => lambda {|detail|
+        if detail.product
+          return detail.product.name
+        else
+          return nil
+        end
+      },
+      :join_statement => "LEFT OUTER JOIN products AS #{uid_prefix}_pname ON #{uid_prefix}_pname.id = #{table_name}.product_id",
+      :join_alias => "#{uid_prefix}_pname",:data_type=>:string
+    }]
+    r
   end
 
   add_fields CoreModule::PRODUCT, [
@@ -292,29 +333,26 @@ class ModelField
 
   add_fields CoreModule::ORDER_LINE, [
     [1,:ordln_line_number,:line_number,"Line - Line Number",{:data_type=>:integer}],
-    [2,:ordln_puid,:unique_identifier,"Line - Product Unique Identifier",{
-      :import_lambda => lambda {|detail,data|
-        detail.product = Product.where(:unique_identifier => data).first
-        return "Line #{detail.line_number} - Product set to #{data}"
-      },
-      :export_lambda => lambda {|detail|
-        detail.product.unique_identifier
-      },
-      :join_statement => "LEFT OUTER JOIN products AS ordln_puid ON ordln_puid.id = order_lines.product_id",
-      :join_alias => "ordln_puid",:data_type=>:string
-    }],
-    [3,:ordln_ordered_qty,:ordered_qty,"Line - Order Quantity",{:data_type=>:decimal}],
+    [3,:ordln_ordered_qty,:quantity,"Line - Order Quantity",{:data_type=>:decimal}],
     [4,:ordln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type=>:decimal}]
   ]
+  add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","Line - ","order_lines")
 
   add_fields CoreModule::SHIPMENT, [
     [1,:shp_ref,:reference,"Reference Number",{:data_type=>:string}],
     [2,:shp_mode,:mode,"Mode",{:data_type=>:string}],
   ]
-  add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","","shipments")
-  add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","","shipments")
-  add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","","shipments")
-  add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","","shipments")
+  add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","Header - ","shipments")
+  add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","Header - ","shipments")
+  add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","Header - ","shipments")
+  add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","Header - ","shipments")
+  
+  add_fields CoreModule::SHIPMENT_LINE, [
+    [1,:shpln_line_number,:line_number,"Line - Line Number",{:data_type=>:integer}],
+    [2,:shpln_shipped_qty,:quantity,"Line - Ship Quantity",{:data_type=>:decimal}]
+  ]
+  add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","Line - ","shipment_lines")
+
 
   add_fields CoreModule::SALE, [
     [1,:sale_order_number,:order_number,"Header - Order Number",{:data_type=>:string}],
@@ -337,7 +375,7 @@ class ModelField
       :join_statement => "LEFT OUTER JOIN products AS soln_puid ON soln_puid.id = sales_order_lines.product_id",
       :join_alias => "soln_puid",:data_type=>:string
     }],
-    [3,:soln_ordered_qty,:ordered_qty,"Line - Order Quantity",{:data_type=>:decimal}],
+    [3,:soln_ordered_qty,:quantity,"Line - Order Quantity",{:data_type=>:decimal}],
     [4,:soln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type => :decimal}]
   ]
   
@@ -375,7 +413,8 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::PRODUCT,Product,"")
     ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification,"Classification - ")
-    ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment,"")
+    ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment,"Header - ")
+    ModelField.add_custom_fields(CoreModule::SHIPMENT_LINE,ShipmentLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder,"Header - ")
     ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery,"")

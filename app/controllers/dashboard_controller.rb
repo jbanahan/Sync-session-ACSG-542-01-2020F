@@ -26,12 +26,11 @@ class DashboardController < ApplicationController
 	def order_lines_not_on_shipments
 	  OrderLine.
 	   joins("LEFT OUTER JOIN piece_sets on order_lines.id = piece_sets.order_line_id").
-	   joins("LEFT OUTER JOIN shipments on piece_sets.shipment_id = shipments.id").
-	   where("shipments.id is null").all
+	   where("piece_sets.shipment_line_id is null").all
 	end
 	
 	def piece_sets_not_received
-	  PieceSet.where("shipment_id is not null and inventory_in_id is null").all
+	  PieceSet.where("shipment_line_id is not null and inventory_in_id is null").all
 	end
 	
 end

@@ -97,8 +97,12 @@ class CoreModule
         SearchSetup.create_with_columns(uids,user)
       }
     })
+  SHIPMENT_LINE = new("ShipmentLine", "Shipment Line")
   SHIPMENT = new("Shipment","Shipment",
-    {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],user)}})
+    {:children=>[SHIPMENT_LINE],
+    :child_lambdas => {SHIPMENT_LINE => lambda {|p| p.shipment_lines}},
+    :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id"},
+    :make_default_search => lambda {|user| SearchSetup.create_with_columns([:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],user)}})
   SALE_LINE = new("SalesOrderLine","Sale Line")
   SALE = new("SalesOrder","Sale",
     {:children => [SALE_LINE],
@@ -129,6 +133,7 @@ class CoreModule
   end
 
   set_default_module_chain ORDER, [ORDER,ORDER_LINE]
+  set_default_module_chain SHIPMENT, [SHIPMENT,SHIPMENT_LINE]
   set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   set_default_module_chain SALE, [SALE,SALE_LINE]
   

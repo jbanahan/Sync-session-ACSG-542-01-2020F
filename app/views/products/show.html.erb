@@ -6,11 +6,6 @@
       .click(function() {
         window.location = '<%=edit_product_path(@product)%>';
       });
-    $("#mod_inventory").dialog({autoOpen:false,title:"Adjust Inventory",
-      buttons:{"Adjust":function() {$("#frm_inv").submit();}}});
-    $( "#btn_adj_inventory").button().click(function() {
-      $("#mod_inventory").dialog('open');
-    });
     $("#btn_classify").click(function() {window.location='<%=classify_product_path%>';});
   <% end %>
     $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
@@ -42,14 +37,14 @@
 <% if @product.can_edit?(current_user) && !@product.locked?%>
   <button id='btn_edit'>Edit</button>
   <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
-  <button id='btn_adj_inventory'>Adjust Inventory</button>
 <%end%>
 <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:product_id => @product.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
-
+<!-- fix these later
 <% if current_user.view_orders? && @product.has_orders? %><button id='btn_order_jump'>Orders</button><%end%>
 <% if current_user.view_shipments? && @product.has_shipments? %><button id='btn_shipment_jump'>Shipments</button><%end%>
 <% if current_user.view_sales_orders? && @product.has_sales_orders?%><button id='btn_sales_order_jump'>Sales</button><%end%>
 <% if current_user.view_deliveries? && @product.has_deliveries? %><button id='btn_delivery_jump'>Deliveries</button><%end%>
+-->
 <% end %>
 
 <table class='detail_table'>
@@ -64,7 +59,6 @@
 	  <%=field_row "Unit of Measure", @product.unit_of_measure%>
 	  <%=field_row "Vendor", @product.vendor.name%>
 	  <%=field_row "Division", @product.division.name%>
-	  <%=field_row "Inventory Quantity", @product.current_inventory_qty %>
     <%=show_custom_fields @product, {:table=>true}%>
 	</table>
 </td></tr>
@@ -120,12 +114,5 @@
     <%= ics.check_box :app_message %> Message<br />
     <%= ics.check_box :email %> Email<br />
  <% end %>
-</div>
-<div id='mod_inventory' style='display:none;'>
-  <%form_tag('/adjust_inventory', :method=>"post", :id => "frm_inv") do %>
-    <input type="hidden" name="product_id" value="<%=@product.id%>" />
-  Current: <%=@product.current_inventory_qty%><br />
-  New: <input type="text" name="quantity" /><br />
-  <%end%>
 </div>
 

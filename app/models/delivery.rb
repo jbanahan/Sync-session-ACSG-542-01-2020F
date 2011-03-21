@@ -8,11 +8,11 @@ class Delivery < ActiveRecord::Base
   belongs_to  :ship_from, :class_name => "Address"
   belongs_to  :ship_to, :class_name => "Address"
   
-  has_many   :piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
   has_many   :sales_order_lines, :through => :piece_sets
   has_many   :comments, :as => :commentable
   has_many   :attachments, :as => :attachable
+  has_many   :delivery_lines, :dependent => :destroy
 
   validates :customer, :presence => true
   validates :reference, :presence => true

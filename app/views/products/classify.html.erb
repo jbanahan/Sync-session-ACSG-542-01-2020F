@@ -88,37 +88,6 @@ function add_tf_row(link,parent_index) {
 <% end %>
 
 <% form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
-<table>
-<tr><td>
-<!-- fields -->
-  <table>
-    <%=field_row "Status", @product.status_name %>
-    <%=field_row "Unique Identifier", @product.unique_identifier%>
-    <%=field_row "Name",@product.name%>
-    <%=field_row "Unit of Measure", @product.unit_of_measure%>
-    <%=field_row "Vendor", @product.vendor.name%>
-    <%=field_row "Division", @product.division.name%>
-    <%=field_row "Inventory Quantity", @product.current_inventory_qty %>
-    <%=show_custom_fields @product, {:table=>true}%>
-  </table>
-</td><td>
-<!-- image -->
-<% 
-  cd = CustomDefinition.where(:label => "PDM Number").first
-  unless cd.nil?
-    cv = @product.get_custom_value cd
-    if ["K096SC03","K104SC75"].include?(cv.value)
-%>
-<a href='/images/polo/<%=cv.value%>.jpg' target='_blank'><%=image_tag("polo/#{cv.value}.jpg", "width" => "200px")%></a>
-<%
-    end
-  end
-%>
-</td></tr>
-</table>
-
-<hr />
-
 <div id='classifications'>
 <h2>Classifications</h2>
 <% classification_count = 0 %>
@@ -151,8 +120,39 @@ function add_tf_row(link,parent_index) {
   <% classification_count += 1 %>
 <% end %>
 </div>
+<br />
+<table>
+<tr><td>
+<!-- fields -->
+  <table>
+    <%=field_row "Status", @product.status_name %>
+    <%=field_row "Unique Identifier", @product.unique_identifier%>
+    <%=field_row "Name",@product.name%>
+    <%=field_row "Unit of Measure", @product.unit_of_measure%>
+    <%=field_row "Vendor", @product.vendor.name%>
+    <%=field_row "Division", @product.division.name%>
+    <%=show_custom_fields @product, {:table=>true}%>
+  </table>
+</td><td>
+<!-- image -->
+<% 
+  cd = CustomDefinition.where(:label => "PDM Number").first
+  unless cd.nil?
+    cv = @product.get_custom_value cd
+    if ["K096SC03","K104SC75"].include?(cv.value)
+%>
+<a href='/images/polo/<%=cv.value%>.jpg' target='_blank'><%=image_tag("polo/#{cv.value}.jpg", "width" => "200px")%></a>
+<%
+    end
+  end
+%>
+</td></tr>
+</table>
+
+<hr />
+
 <% end %>
 <div id="mod_pick_country" style="display:none">
-  Multiple countries classifications, which one do you want to use to auto-classify?<br />
+  Multiple countries have existing classifications, which one do you want to use to auto-classify?<br />
   <select id='sel_pick_country'></select>
 </div>

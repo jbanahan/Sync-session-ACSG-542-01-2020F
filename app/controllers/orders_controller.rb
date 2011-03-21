@@ -8,6 +8,16 @@ class OrdersController < ApplicationController
       advanced_search CoreModule::ORDER
     end
 
+    def all_open
+      if current_user.view_orders?
+        respond_to do |format|
+          format.json { render :json => Order.search_secure(current_user,Order).to_json(:only =>[:id,:order_number]) }
+        end
+      else
+        error_redirect "You do not have permission to view orders."
+      end
+    end
+
     # GET /orders/1
     # GET /orders/1.xml
     def show
@@ -18,6 +28,9 @@ class OrdersController < ApplicationController
           respond_to do |format|
               format.html # show.html.erb
               format.xml  { render :xml => @order }
+              format.json { render :json => @order.to_json(:only=>[:id,:order_number], :include=>{
+                :order_lines => {:only=>[:line_number,:quantity,:id], :include=>{:product=>{:only=>[:id,:name]}}}  
+              })}
           end
         }
     end

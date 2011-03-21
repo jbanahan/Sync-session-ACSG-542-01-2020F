@@ -34,15 +34,7 @@
     $("#btn_shipment_jump").button().click(function() {
       window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @order.order_number, :f => 'o_num', :con => 'eq' )%>';
     });
-    $("#edit_line_product").change(function() {
-      if($(this).val().length>0) {
-        $("#edit_line_uom").html("<span style='font-size:80%;'>...loading...</span>");
-        getProductUOM($(this).val(),function(uom) {
-          $("#edit_line_uom").html(uom);
-        });
-      }
-    });
-    <% if @order.can_edit?(current_user) && !@order_line.nil? %>
+    <% if @order.can_edit?(current_user) && !@line.nil? %>
       $("#mod_edit_line").dialog('open');
     <% end %>
   });
@@ -95,12 +87,12 @@
 	<tr class='hover'>
 	  <td><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
 	  <td><b><%= link_to line.product.name, product_path(line.product) %></b></td>
-  	<td><%= line.ordered_qty %></td>
+  	<td><%= line.quantity %></td>
   	<td><%=line.shipped_qty%></td>
   	<td><%=line.received_qty%></td>
   	<td><%= line.product.unit_of_measure %></td>
   	<td><%= line.price_per_unit %></td>
-  	<td><%= line.price_per_unit.nil? || line.ordered_qty.nil? ? '' : line.price_per_unit * line.ordered_qty %></td>
+  	<td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
   	<td>
   	  <% if @order.can_edit?(current_user) && !@order.locked?%>
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
@@ -117,19 +109,19 @@
 	</tr>
 <%end %> 
 </table>
-<% if @order_line.nil? && @order.can_edit?(current_user)%>
+<% if @line.nil? && @order.can_edit?(current_user)%>
 <button id='btn_add_line'>Add</button>
 <% end %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
-<% form_line = @order_line.nil? ? @order.order_lines.build : @order_line %>
+<% form_line = @line.nil? ? @order.order_lines.build : @line %>
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
   <table>
-    <% form_line.set_line_number if form_line.line_number.nil? %>
+    <% form_line.default_line_number%>
     <%=field_row "Line Number", f.text_field(:line_number, "size" => 2) %>
     <%=field_row "Product", f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
-    <%=field_row "Ordered Quantity", f.text_field(:ordered_qty, "size" => 5) %>
+    <%=field_row "Ordered Quantity", f.text_field(:quantity, "size" => 5) %>
     <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
     <%=field_row "Price / Unit", f.text_field(:price_per_unit, "size" => 5) %>
     <%= show_custom_fields form_line, {:form => true, :table=>true}%>

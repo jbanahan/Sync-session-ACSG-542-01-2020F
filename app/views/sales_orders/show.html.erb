@@ -73,10 +73,10 @@ $(function() {
           <% line.set_line_number if line.line_number.nil? %>
           <td><%= @sales_order.can_edit?(current_user) && !@sales_order.locked? ? (link_to line.line_number, edit_sales_order_sales_order_line_path(@sales_order,line)) : line.line_number %></td>
           <td><%= link_to line.product.name, product_path(line.product) %></td>
-          <td><%= line.ordered_qty %></td>
+          <td><%= line.quantity %></td>
           <td><%= line.product.unit_of_measure %></td>
           <td><%= line.price_per_unit %></td>
-          <td><%= line.price_per_unit.nil? || line.ordered_qty.nil? ? '' : line.price_per_unit * line.ordered_qty %></td>
+          <td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
           <td>
             <% if @sales_order.can_edit?(current_user) && !@sales_order.locked?%>
               <%= link_to 'Delete', sales_order_sales_order_line_path(@sales_order,line) , :confirm => 'Are you sure?', :method => :delete %>
@@ -97,7 +97,7 @@ $(function() {
     <table>
       <%=field_row "Line Number", f.text_field(:line_number,"size"=>"2") %>
       <%=field_row "Product", f.collection_select(:product_id, Product.all, :id, :name, options={:prompt=>"Select a product"},{:id=>"edit_line_product"})%>
-      <%=field_row "Ordered Quantity", f.text_field(:ordered_qty,"size"=>"5") %>
+      <%=field_row "Ordered Quantity", f.text_field(:quantity,"size"=>"5") %>
       <%=field_row "Unit of Measure", content_tag(:span,(f.object.product.nil? ? "" : f.object.product.unit_of_measure),:id=>"edit_line_uom") %>
       <%=field_row "Price / Unit", f.text_field(:price_per_unit, "size"=>"5") %>
     </table>

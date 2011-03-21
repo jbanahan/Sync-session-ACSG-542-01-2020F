@@ -114,43 +114,6 @@ class ProductsController < ApplicationController
       }
     end
 
-    def adjust_inventory
-      passed = true
-      p = Product.find(params[:product_id])
-      action_secure(p.can_edit?(current_user),p,{:verb => "adjust inventory for",:module_name=>"product"}) {
-        unless (Float(params[:quantity]).nil? rescue true)
-          current_inventory = p.current_inventory_qty
-          new_inventory = params[:quantity].to_f
-          diff = new_inventory - current_inventory
-          ps = nil
-          if diff>0
-            i_in = InventoryIn.create()
-            if i_in.errors.empty?
-              ps = PieceSet.create(:product => p, :quantity => diff, :inventory_in => i_in)
-            else
-              errors_to_flash i_in
-              passed = false
-            end
-          elsif diff<0
-            i_out = InventoryOut.create()
-            if i_out.errors.empty?
-              ps = PieceSet.create(:product => p, :quantity => diff.abs, :inventory_out => i_out)
-            else
-              errors_to_flash i_out
-              passed = false
-            end
-          end
-          if ps.errors.empty?
-            add_flash :notices, "Inventory adjusted successfully."
-          else
-            errors_to_flash ps
-          end
-        else
-          add_flash :errors, "New inventory quantity supplied was not a valid number (#{params[:quantity]})"
-        end
-          redirect_to product_path(p)
-      }
-    end
     
     def classify
       p = Product.find(params[:id])

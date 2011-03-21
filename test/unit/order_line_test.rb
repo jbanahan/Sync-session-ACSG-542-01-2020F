@@ -3,68 +3,46 @@ require 'test_helper'
 class OrderLineTest < ActiveSupport::TestCase
 
   test "set_line_number - no existing line number" do
-    line = OrderLine.new
-    line.order_id = 999
-    line.set_line_number
+    
+    line = Order.create(:order_number=>"lnum",:vendor=>companies(:vendor)).order_lines.build(:quantity=>5,:product=>companies(:vendor).vendor_products.first)
+    line.save!
     assert line.line_number == 1, "Line number should have been set to 1, was #{line.line_number}"
   end
   
   test "set_line_number - manually set number" do
-    o = Order.find(1)
-    line = o.order_lines.build
+    line = Order.create(:order_number=>"lnum",:vendor=>companies(:vendor)).order_lines.build(:quantity=>5,:product=>companies(:vendor).vendor_products.first)
     line.line_number = 1000
-    line.set_line_number
+    line.save!
     assert line.line_number == 1000, "Line number should have stayed 1000, was #{line.line_number}"
   end
   
   test "set_line_number - generate next number" do
-    o = Order.find(1)
-    current_max = 0
-    o.order_lines.each do |n|
-      current_max = n.line_number if n.line_number > current_max
-    end
-    line = o.order_lines.build
-    line.set_line_number
-    assert line.line_number == current_max+1, "Line number should have been set to #{current_max+1}, was #{line.line_number}"
+    line = Order.create(:order_number=>"lnum",:vendor=>companies(:vendor)).order_lines.build(:quantity=>5,:product=>companies(:vendor).vendor_products.first)
+    line.line_number = 1000
+    line.save!
+    line2 = line.order.order_lines.create!(:quantity=>5,:product=>line.product)
+    assert line2.line_number == 1001, "Line number should have been set to 1001, was #{line.line_number}"
   end
 
-  test "make unpacked piece set" do
-    line = OrderLine.find(1)
-    #yml should have an existing piece_set w/ qty 10 & line w/ qty 14
-    set = line.make_unpacked_piece_set
-    assert set.quantity == 4, "quantity check"
-    assert set.order_line_id == 1, "order line check"
-    assert set.shipment_id.nil?, "shipment should be nil"
-    assert set.product_id == 1, "product should be 1"
-    assert !set.unshipped_remainder, "should not be unshipped remainder"
-  end
-  
-  test "make unpacked piece set - empty" do
-    line = OrderLine.find(1)
-    line.ordered_qty = 5 #less than existing piece set
-    set = line.make_unpacked_piece_set
-    assert set.quantity == 0, "quantity check"
-    assert set.order_line_id == 1, "order line check"
-    assert set.shipment_id.nil?, "shipment should be nil"
-    assert set.product_id == 1, "product should be 1"
-    assert !set.unshipped_remainder, "should not be unshipped remainder"
-  end
-  
   test "related shipments" do
+    ord = Order.create!(:order_number=>"related_shipments",:vendor => companies(:vendor))
+    oline = ord.order_lines.create!(:product=>ord.vendor.vendor_products.first,:quantity=>100)
+    ps = oline.piece_sets.create!(:quantity=>5)
+    shp = Shipment.create!(:reference=>"related_shipments",:vendor_id => ord.vendor_id)
+    sline = shp.shipment_lines.create!(:product=>oline.product)
+    ps.shipment_line = sline
+    ps.save!
+    ps2 = oline.piece_sets.create!(:quantity=>3)
+    shp2 = Shipment.create!(:reference=>"related_shipments2",:vendor_id=>ord.vendor_id)
+    sline2 = shp2.shipment_lines.create!(:product=>oline.product)
+    ps2.shipment_line = sline2
+    ps2.save!
     line = OrderLine.find(3)
-    r = line.related_shipments
-    assert r.length ==2, "should be two related shipments"
-    found_1 = false
-    found_2 = false
-    r.each do |s|
-      if s.id == 1
-        found_1 = true
-      elsif s.id == 2
-        found_2 = true
-      end
+    r = oline.related_shipments.to_a
+    assert r.length ==2, "should be two related shipments, there are "+r.length.to_s
+    [shp,shp2].each do |s|
+      assert r.include?(shp), "Did not find shipment with reference #{shp.reference}, #{r.to_s}"
     end
-    assert found_1, "did not find shipment 1"
-    assert found_2, "did not find shipment 2"
   end
   
   test "find same" do
@@ -87,30 +65,6 @@ class OrderLineTest < ActiveSupport::TestCase
     assert base.locked?, "Should be locked because order vendor is locked."
     base.order.vendor.locked = false
     assert !base.locked?, "Should not be locked after unlocking vendor."
-    base.product.vendor.locked = true
-    assert base.locked?, "Should be locked because product vendor is locked."
   end
   
-  test "make unshippped remainder" do
-    line = OrderLine.find(1)
-    #yml should have an existing piece_set w/ qty 10 & line w/ qty 14
-    set = line.make_unshipped_remainder_piece_set
-    assert set.quantity == 4, "quantity check"
-    assert set.order_line_id == 1, "order line check"
-    assert set.shipment_id.nil?, "shipment should be nil"
-    assert set.product_id == 1, "product should be 1"
-    assert set.unshipped_remainder?, "should be set as an unshipped remainder"
-  end
-  
-  test "make unshipped remainder with existing" do
-    line = OrderLine.find(1)
-    #yml should have an existing piece_set w/ qty 10 & line w/ qty 14
-    set = line.make_unshipped_remainder_piece_set
-    set.quantity = 2
-    set.save!
-    updated = line.make_unshipped_remainder_piece_set
-    assert updated.id == set.id, "Should use existing set"
-    assert updated.quantity == 4, "Should reset quantity to 4, was #{updated.quantity}"
-    assert updated.unshipped_remainder?, "should be set as an unshipped remainder"
-  end
 end

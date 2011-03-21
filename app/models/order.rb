@@ -59,29 +59,11 @@ class Order < ActiveRecord::Base
     #optimize with a single query
     q = 0
     self.order_lines.each do |line|
-      q = q + line.ordered_qty
+      q = q + line.quantity
     end
     return q
   end
-  
-  #gets a list of unique products on the order
-  def unique_products
-    p_hash = {}
-    self.order_lines.each do |line|
-      prod = line.product
-      if p_hash[prod.id].nil?
-        prod.instance_variable_set(:@ordered_qty, line.ordered_qty)
-        prod.instance_variable_set(:@shipped_qty, line.shipped_qty)
-        p_hash[prod.id] = prod
-      else
-        pe = p_hash[prod.id]
-        pe.instance_variable_set(:@ordered_qty, pe.instance_variable_get(:@ordered_qty)+line.ordered_qty)
-        pe.instance_variable_set(:@shipped_qty, pe.instance_variable_get(:@shipped_qty)+line.shipped_qty)
-      end
-    end
-    return p_hash.values
-  end
-  
+ 
   def self.search_secure user, base_object
     if user.company.master
       return base_object.where("1=1")

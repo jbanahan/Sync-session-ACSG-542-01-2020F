@@ -5,26 +5,6 @@
       .click(function() {
         window.location = '<%=edit_shipment_path(@shipment)%>';
       });
-    $("#add_order_box").dialog({autoOpen:false,title:"Add Items",
-      buttons:{"Add":function() {$("#frm_pack").submit();}}
-    });
-    $("#mod_pick_order").dialog({autoOpen:false,title:"Select Order",
-      buttons:{"Add":function() {
-        $("#add_ord_content").hide();
-        $("#pick_order_loading").show();
-        $.get('<%=unpacked_order_lines_shipment_path(@shipment)%>/?order_id='+$('#order_id').val(), function(data){
-        $("#add_ord_content").show();
-        $("#pick_order_loading").hide();
-          $("#add_order_box").html(data);
-          $("#mod_pick_order").dialog('close');
-          $("#add_order_box").dialog('open');
-        });
-      }}
-    });
-    $("#btn_add_ord").button().click(function() {
-      $("#mod_pick_order").dialog('open');
-    }); 
-    $("#btn_save_piece_set").button();
     $( "#item_change_subscription_submit").button();
     $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
       buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
@@ -33,29 +13,73 @@
       .click(function() {
         $("#mod_subscriptions").dialog('open');
     });
-    $("#mod_receive_box").dialog({autoOpen:false,title:"Receive Inventory",
-      buttons:{"Receive":function() {$("#frm_rec").submit();}}
+    $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
+      width:'auto',
+      buttons:{"Save":function() {$("#frm_edit_line").submit();},
+               "Cancel":function() {window.location = '<%=shipment_path(@shipment)%>';}}  
+    });
+    $("#btn_add_line").button().click(function() {
+      $("#mod_edit_line").dialog('open');
+    });
+
+    <% if @shipment.can_edit?(current_user) && !@line.nil? %>
+      $("#mod_edit_line").dialog('open');
+    <% end %>
+    $("#mod_pack_order").dialog({autoOpen:false,title:'Pack Order',width:'auto',
+      buttons:{"Add":function() {$("#frm_pack_order").submit();},
+      "Cancel":function() {$("#mod_pack_order").dialog('close');}}
+    });
+    $("#mod_open_orders").dialog({autoOpen:false,title:'Select Order',width:'auto',
+        buttons:{"OK":function() {
+          var id = $("#sel_open_orders").val();
+          if(id) {
+            $("#mod_open_orders").dialog('close');
+            openPackOrder(id);
+          } else {
+            window.alert("Select an order first.")
+          }
+        },
+        "Cancel":function() {$("#mod_open_orders").dialog('close');}}});
+    $("#btn_add_order").click(function() {
+      $("#mod_open_orders").dialog('open');
+      getOpenOrders(function(data) {
+        var i;
+        if(data.length==0) {
+          $("#sel_open_orders").html("<option>No Orders Available</option>");
+        } else {
+          var opt = "";
+          for(i=0;i<data.length;i++) {
+            var o = data[i].order;
+            opt += "<option value='"+o.id+"'>"+o.order_number+"</option>";
+          }
+          $("#sel_open_orders").html(opt);
+        }
       });
-    $("#btn_receive")
-      .button()
-      .click(function() {
-        $("#mod_receive_box").dialog('open');
-      });
-    $(".undo_receive").click(function() {
-      id = $(this).attr('id').substring(3)
-      $("#und_ps_id").attr('value',id);
-      $("#frm_und").submit();
     });
   });
+function openPackOrder(id) {
+  $("#div_pack_order_content").html("Loading...");
+  $("#mod_pack_order").dialog('open');
+  getOrder(id,function(data) {
+    var h = "";
+    var order = data.order
+    h += "<div>Pack Order: "+order.order_number+"</div><table class='detail_table'><thead><tr><th>Order Row</th><th>Product</th><th>Ordered</th><th>Shipped</th></tr></thead><tbody>";
+    var i;
+    for(i=0;i<order.order_lines.length;i++) {
+      var line = order.order_lines[i];
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' /></td></tr>";
+    }
+    h += "</tbody></table>";
+    $("#div_pack_order_content").html(h);
+  });
+}
 <% end %>
 
 <% content_for :action_bar do %>
-  <button id='btn_edit'>Edit</button>
-  <% if @shipment.can_edit?(current_user) %><button id='btn_add_ord'>Add Order</button><%end%> 
+  <% if @shipment.can_edit?(current_user) %>
+    <button id='btn_edit'>Edit</button>
+  <%end%> 
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:shipment_id => @shipment.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
-  <% if current_user.company.master && !@shipment.piece_sets.empty?%>
-  <button id='btn_receive'>Receive</button>
-  <% end %>
 <% end %>
 
 <div class='content_head'>
@@ -93,57 +117,69 @@
 				<%=show_custom_fields @shipment%>
       </td>
     </tr>
-    </tbody>
-</table>
-
-<table class="detail_table" style='margin-top: 4em'>
-	<thead>
-		<th>Order - Line</th>
-		<th>Product</th>
-		<th>Shipped Quantity</th>
-    <th>Received Quantity</th>
-		<th></th>
-	</thead>
-  <tbody>
-  <% @shipment.order_lines.group("order_lines.id").includes(:order, :product).each do |order_line| %>
-    <tr class='hover'>
-      <td><%=link_to order_line.order.order_number, order_line.order%> - <%=order_line.line_number%></td>
-      <td><%=link_to order_line.product.name, order_line.product%></td>
-      <td><%=@shipment.piece_sets.where(:order_line_id=>order_line.id, :adjustment_type=>nil).sum("quantity")%></td>
-      <td><%=@shipment.piece_sets.where(:order_line_id=>order_line.id).where("inventory_in_id is not null").sum("quantity") %></td>
-    </tr>
-  <% end %>
   </tbody>
 </table>
-Bad One:
-<table>
-  <tbody>
-	<% @shipment.piece_sets.joins(:order_line => :order).order("orders.order_number, order_lines.line_number").each do |ps| %>
-		<tr class='hover'>
-    <td><%= link_to ps.product.name, ps.product %></td>
-    <td><%= ps.order_line.nil? ? '[n/a]' : raw("#{link_to(ps.order_line.order.order_number, order_path(ps.order_line.order))} - #{ps.order_line.line_number}")%></td>
-    <% undo_rec_link = "<a href='#' class='undo_receive' id='ur_#{ps.id}'>x</a>" %>
-    <td><%= raw("#{ps.quantity} #{ps.product.unit_of_measure}" + (!ps.inventory_in_id.nil? ? " (received #{undo_rec_link})" : "") + (!ps.adjustment_type.nil? ? " (#{ps.adjustment_type})" : "")) %></td>
-    <td>
-       <%= link_to 'Remove', piece_set_path(ps,:from => "s") , :confirm => 'Are you sure?', :method => :delete  %> |
-       <%= link_to 'Edit', edit_piece_set_path(ps,:from => "s") %>
-       
-    </td>
-  </tr>
-  <% end %>
-	</tbody>
-</table>
 
+<table class='detail_table'>
+  <thead>
+    <tr><th>Row</th><th>Product</th><th>Ship Quantity</th><th>Order Number - Line</th><th></th>
+  </thead>
+  <tbody>
+    <%@shipment.shipment_lines.each do |line|%>
+    <tr class='hover'>
+      <td><%= @shipment.can_edit?(current_user) & !@shipment.locked? ? (link_to line.line_number, edit_shipment_shipment_line_path(@shipment,line)) : line.line_number %></td>
+      <td><%=link_to line.product.name.nil? ? line.product.unique_identifier : line.product.name, line.product%></td>
+      <td><%=line.quantity%></td>
+      <td>
+        <%line.order_lines.each do |o|%>
+          <%=link_to o.order.order_number, o.order%> - <%=o.line_number%>
+        <%end%>
+      </td>
+      <td><a href='#'>Details</a>
+        <%if @shipment.can_edit?(current_user)%>
+        &nbsp;|&nbsp;<%=link_to "Delete", shipment_shipment_line_path(@shipment,line), :confirm=>'Are you sure you want to delete this line?', :method=>:delete %>
+        <%end%>
+      </td>
+    </tr>
+    <tr class='shp_line_detail' style='display:none;'>
+      <td colspan='5'>
+      <%=show_custom_fields line%>
+      </td>
+    </tr>
+    <%end%>
+  </tbody>
+</table>
+<% if @line.nil? && @shipment.can_edit?(current_user)%>
+<button id='btn_add_line'>Add Product</button>
+<button id='btn_add_order'>Add Order</button>
+<% end %>
+<% form_line = @line.nil? ? @shipment.shipment_lines.build : @line %>
+<div id='mod_edit_line' style='display:none;'>
+  <%= form_for([@shipment, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
+  <table>
+    <% form_line.default_line_number%>
+    <%=field_row "Line Number", f.text_field(:line_number, "size" => 2) %>
+    <%=field_row "Product", f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
+    <%=field_row "Ship Quantity", f.text_field(:quantity, "size" => 5) %>
+    <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
+    <% form_line.order_lines.each do |oline| %>
+    <%=field_row "Order / Line", content_tag(:span,"#{oline.order.order_number} - #{oline.line_number}")+hidden_field_tag(:order_line_id,oline.id) %>
+    <% end %>
+    <%= show_custom_fields form_line, {:form => true, :table=>true}%>
+  </table>
+  <% end %>
+</div>
+<div id='mod_open_orders' style='display:none;'>
+<div>Select an Order:</div>
+<select id='sel_open_orders'><option>Loading...</option></select>
+</div>
+<div id='mod_pack_order' style='display:none;'>
+<%=form_tag(create_multiple_shipment_shipment_lines_path(@shipment), :method=>"post", :id=>"frm_pack_order") do |f|%>
+  <div id='div_pack_order_content'></div>
+<%end%>
+</div>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @shipment} %>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @shipment}%>
-<div id='mod_pick_order' style='display:none;'>
-  <p id='add_ord_content'>
-    Add Order: <%= select_tag "order_id", options_from_collection_for_select(Order.find_by_vendor(@shipment.vendor), "id", "order_number") %>
-  </p>
-  <div id='pick_order_loading' style='display:none;'><img src='/images/ajax-loader.gif' alt='Loading' /></div>
-</div>
-<div id='add_order_box'></div>
-
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:shipment_id => @shipment.id, :user_id => current_user.id})
@@ -161,30 +197,4 @@ Bad One:
     <%= ics.check_box :email %> Email<br />
  <% end %>
 </div>
-<div id='mod_receive_box' style='display:none'>
-  <%= form_for @shipment, :url => "/shipments/#{@shipment.id}/receive_inventory", :html=>{:id=>'frm_rec'} do |sf| %>
-    <table class='detail_table'>
-      <thead><tr><th>Order - Line</th><th>Product</th><th>Quantity</th></tr></thead>
-      <%= sf.hidden_field :id %>
-      <% @shipment.piece_sets.each_with_index do |piece_set, index| %>
-        <% if !piece_set.id.nil? && piece_set.inventory_in_id.nil? %>
-          <%= fields_for "shipment[piece_set_attributes][#{index}]", piece_set do |ps_form| %>
-            <%=ps_form.hidden_field :id %>
-            <tr class='hover'>
-              <td><%=piece_set.order_line_id.nil? ? '' : piece_set.order_line.order.order_number%> - <%=piece_set.order_line_id.nil? ? '' : piece_set.order_line.line_number%></td>
-              <td><%=piece_set.product.name%></td>
-              <td><%=ps_form.text_field :quantity, :size=>6%></td>
-            </tr>
-          <% end %>
-        <% end %>
-      <% end %>
-    </table>
-    <% end %>
-</div>
 
-<div style='display:none'>
-<%=form_for @shipment, :url => "/shipments/#{@shipment.id}/undo_receive", :html => {:id=>'frm_und'} do |psf| %>  
-    <input type='hidden' name='ps_id' id='und_ps_id'/>
-    <input type='submit' />
-<% end %>
-</div>

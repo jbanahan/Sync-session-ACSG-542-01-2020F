@@ -69,23 +69,35 @@ class ProductTest < ActiveSupport::TestCase
   end
   
   test "has orders?" do
-    assert Product.find(1).has_orders?, "Should find orders."
-    assert !Product.find(3).has_orders?, "Should not find orders."
+    p = Product.create!(:unique_identifier=>"phas",:vendor=>companies(:vendor))
+    assert !p.has_orders?, "Should not find orders."
+    Order.create!(:order_number=>"phas",:vendor=>p.vendor).order_lines.create!(:product=>p)
+    p.reload
+    assert p.has_orders?, "Should find orders."
   end
   
   test "has shipments" do
-    assert Product.find(1).has_shipments?, "Should find shipments"
-    assert !Product.find(3).has_shipments?, "Should not find shipments"
+    p = Product.create!(:unique_identifier=>"phas",:vendor=>companies(:vendor))
+    assert !p.has_shipments?, "Should not find shipments."
+    Shipment.create!(:reference=>"phas",:vendor=>p.vendor).shipment_lines.create!(:product=>p)
+    p.reload
+    assert p.has_shipments?, "Should find shipments."
   end
   
   test "has deliveries" do 
-    assert Product.find(2).has_deliveries?, "Should find deliveries"
-    assert !Product.find(3).has_deliveries?, "Should not find deliveries"
+    p = Product.create!(:unique_identifier=>"phas",:vendor=>companies(:vendor))
+    assert !p.has_deliveries?, "Should not find deliveries."
+    Delivery.create!(:reference=>"phas",:customer=>companies(:customer)).delivery_lines.create!(:product=>p)
+    p.reload
+    assert p.has_deliveries?, "Should find deliveries."
   end
   
   test "has sales orders" do
-    assert Product.find(2).has_sales_orders?, "Should find sales orders"
-    assert !Product.find(3).has_sales_orders?, "Should not find sales orders"
+    p = Product.create!(:unique_identifier=>"phas",:vendor=>companies(:vendor))
+    assert !p.has_sales_orders?, "Should not find sales orders"
+    SalesOrder.create!(:order_number=>"phas",:customer=>companies(:customer)).sales_order_lines.create!(:product=>p)
+    p.reload
+    assert p.has_sales_orders?, "Should find sales orders"
   end
   
   test "set status" do

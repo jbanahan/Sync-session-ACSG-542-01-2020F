@@ -82,7 +82,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert found.vendor_id == vh[:vendor_id], "vendor id failed"
     fd = found.order_lines.first
     assert fd.product.unique_identifier == vh[:puid], "product uid failed"
-    assert fd.ordered_qty == vh[:ordered_qty], "ordered qty failed"
+    assert fd.quantity == vh[:ordered_qty], "ordered qty failed"
     assert fd.price_per_unit == vh[:price_per_unit], "Price per unit failed.  Was #{fd.price_per_unit}, should be #{vh[:price_per_unit]}"
   end
   

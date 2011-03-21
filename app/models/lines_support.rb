@@ -1,35 +1,31 @@
 module LinesSupport
-  def set_line_number
+#need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
+  def self.included(base)
+    base.instance_eval("belongs_to :product")
+    base.instance_eval("has_many :piece_sets, :dependent => :destroy")
+    base.instance_eval("has_many :order_lines, :through => :piece_sets")
+    base.instance_eval("has_many :sales_order_lines, :through => :piece_sets")
+    base.instance_eval("has_many :shipment_lines, :through => :piece_sets")
+    base.instance_eval("has_many :delivery_lines, :through => :piece_sets")
+    base.instance_eval("before_validation :default_line_number")
+    base.instance_eval("before_validation :default_quantity")
+    base.instance_eval("validates :product, :presence => true")
+
+  end
+
+  def default_line_number
     if self.line_number.nil? || self.line_number < 1
       max = nil
       max = self.class.where(parent_id_where).maximum(:line_number) unless parent_obj.nil?
       self.line_number = (max.nil? || max < 1) ? 1 : (max + 1)
     end
   end 
- 
-  def set_ordered_quantity
-    self.ordered_qty = 0 if self.ordered_qty.nil?
+
+  def default_quantity
+    self.quantity = 0 if self.quantity.nil?
   end
 
-  def make_unpacked_piece_set
-    set_qty = self.ordered_qty - self.piece_sets.where("shipment_id is not null OR delivery_id is not null").sum("quantity") 
-    ps = self.piece_sets.build
-    ps.product_id = self.product_id
-    ps.quantity = set_qty < 0 ? 0 : set_qty
-    ps.unshipped_remainder = false
-    return ps
-  end
-  
-  def make_unshipped_remainder_piece_set
-    ps = make_unpacked_piece_set
-    existing_ps = self.piece_sets.where(:unshipped_remainder => true)
-    if existing_ps.length==0
-      ps.unshipped_remainder = true
-      return ps
-    else
-      p = existing_ps.first
-      p.quantity = ps.quantity
-      return p
-    end
+  def locked?
+    !parent_obj.nil? && parent_obj.locked?
   end
 end

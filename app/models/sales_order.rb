@@ -34,20 +34,6 @@ class SalesOrder < ActiveRecord::Base
   end
 
   #gets a list of unique products on the order
-  def unique_products
-    p_hash = {}
-    self.sales_order_lines.each do |line|
-      prod = line.product
-      if p_hash[prod.id].nil?
-        prod.instance_variable_set(:@ordered_qty, line.ordered_qty)
-        p_hash[prod.id] = prod
-      else
-        pe = p_hash[prod.id]
-        pe.instance_variable_set(:@ordered_qty, pe.instance_variable_get(:@ordered_qty)+line.ordered_qty)
-      end
-    end
-    return p_hash.values
-  end
   
 	def self.search_secure user, base_object
     if user.company.master

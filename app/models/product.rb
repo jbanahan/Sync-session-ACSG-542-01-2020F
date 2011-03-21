@@ -17,6 +17,8 @@ class Product < ActiveRecord::Base
   has_many   :classifications, :dependent => :destroy
   has_many   :order_lines, :dependent => :destroy
   has_many   :sales_order_lines, :dependent => :destroy
+  has_many   :shipment_lines, :dependent => :destroy
+  has_many   :delivery_lines, :dependent => :destroy
   has_many   :piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
   has_many   :attachments, :as => :attachable
@@ -46,12 +48,6 @@ class Product < ActiveRecord::Base
     return user.create_products?
   end
 
-  def current_inventory_qty
-    inv_in = inventory_received
-    inv_out = PieceSet.where("inventory_out_id is not null AND piece_sets.product_id = ?",self.id).sum("quantity")
-    inv_in - inv_out
-  end
-
   def find_same
     found = Product.where({:unique_identifier => self.unique_identifier})
     raise "Found multiple orders with the same unique identifier #{self.unique_identifier}" if found.size > 1
@@ -69,19 +65,19 @@ class Product < ActiveRecord::Base
   end
 
   def has_orders?
-    self.order_lines.length > 0
+    !self.order_lines.empty?
   end
 
   def has_shipments?
-    PieceSet.where("product_id = ? AND shipment_id is not null", self.id).length > 0
+    !self.shipment_lines.empty?
   end
 
   def has_deliveries?
-    PieceSet.where("product_id = ? AND delivery_id is not null", self.id).length > 0
+    !self.delivery_lines.empty?
   end
 
   def has_sales_orders?
-    self.sales_order_lines.length > 0
+    !self.sales_order_lines.empty? 
   end
 
   #Classify for other countries based on the classifications that already exist for the base_country provided.

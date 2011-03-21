@@ -31,4 +31,14 @@ class ModelFieldTest < ActiveSupport::TestCase
     assert mf.data_type==:integer, "Should find integer for column with data_type set in hash, found #{mf.data_type}"
   end
   
+  test "order line product_uid import/export lambdas" do
+    oline = Order.new(:order_number=>"olpuim",:vendor=>companies(:vendor)).order_lines.build(:line_number=>1)
+    mf = ModelField.find_by_uid :ordln_puid
+    p = companies(:vendor).vendor_products.first
+    mf.process_import oline, p.unique_identifier
+    oline.save!
+    assert oline.errors.empty?, "Order line should not have had any errors. Errors: #{oline.errors.full_messages}"
+    exp = mf.process_export(oline)
+    assert exp==p.unique_identifier, "Export failed. Expected #{p.unique_identifier}, found: #{exp}"
+  end
 end

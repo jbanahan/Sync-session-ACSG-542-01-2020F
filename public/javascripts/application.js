@@ -118,6 +118,15 @@ $( function() {
       myRow.next().show();
     });
     attachmentButton();
+
+    $("#edit_line_product").change(function() {
+      if($(this).val().length>0) {
+        $("#edit_line_uom").html("<span style='font-size:80%;'>...loading...</span>");
+        getProductUOM($(this).val(),function(uom) {
+          $("#edit_line_uom").html(uom);
+        });
+      }
+    });
 });
 $(document).ready( function() {
     handleCustomFieldCheckboxes();
@@ -341,6 +350,14 @@ function handleCustomFieldCheckboxes() {
       $("#hdn_"+$(this).attr("id").substring(4)).val($(this).is(':checked') ? "true" : "false");
     });
   });
+}
+/* Get all open orders available to user and pass to callback function */
+function getOpenOrders(callback) {
+  $.getJSON("/orders/all_open.json",callback);
+}
+/* Get an order with lines & associated products and pass to callback function */
+function getOrder(id, callback) {
+  $.getJSON("/orders/"+id+".json",callback);
 }
 /* Get's the product's UOM via Ajax and passes it to the callback function */
 function getProductUOM(id, callback) {

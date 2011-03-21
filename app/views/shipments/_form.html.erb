@@ -26,7 +26,7 @@
   <b><%= f.text_field :reference %></b>
   <br />
   <span class='content_head_label'>Vendor:</span>
-  <% if @shipment.piece_sets.size > 0 %>
+  <% if @shipment.shipment_lines.size > 0 %>
     <%= f.hidden_field :vendor_id %><%= @shipment.vendor.name %>
   <% elsif current_user.company.vendor? 
       @shipment.vendor = current_user.company %>

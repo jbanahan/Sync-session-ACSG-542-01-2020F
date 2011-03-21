@@ -3,34 +3,26 @@ class OrderLine < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger
   
-  belongs_to :product
   belongs_to :order
-	
-	has_many	:piece_sets, :dependent => :destroy
-  has_many   :histories, :dependent => :destroy
-	
-  before_validation :set_line_number 
-  before_validation :set_ordered_quantity
 
-	validates :product, :presence => true
-	validates_uniqueness_of :line_number, :scope => :order_id
+  has_many   :histories, :dependent => :destroy
+  has_many  :shipment_lines, :through => :piece_sets
 	
-  def locked? 
-    (!parent_obj.nil? && parent_obj.locked?) ||
-    (!self.product.nil? && self.product.locked?)
-  end
+  validates_uniqueness_of :line_number, :scope => :order_id	
 
 
 	def related_shipments
 	  rVal = Set.new
 	  self.piece_sets.each do |p|
-	    rVal << p.shipment
+	    rVal << p.shipment_line.shipment unless p.shipment_line.nil?
 	  end
 	  return rVal
 	end
 	
 	def shipped_qty
-	  self.piece_sets.where("piece_sets.shipment_id is not null").sum("quantity")
+    q = 0
+	  self.piece_sets.each {|p| q += p.quantity unless p.shipment_line.nil?}
+    q
 	end
 	
 	def received_qty
@@ -53,5 +45,5 @@ class OrderLine < ActiveRecord::Base
   def parent_id_where #supporting method for LinesSupport
     return :order_id => self.order.id
   end
-	
+
 end
