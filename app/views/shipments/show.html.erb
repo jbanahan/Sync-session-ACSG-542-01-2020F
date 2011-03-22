@@ -21,6 +21,14 @@
     $("#btn_add_line").button().click(function() {
       $("#mod_edit_line").dialog('open');
     });
+    $(".lnk_detail").click(function(ev) {
+      ev.preventDefault();
+      $(this).parents("tr.shp_line").next().toggle();
+    });
+    $("#lnk_all_details").click(function(ev) {
+      ev.preventDefault();
+      $(".shp_line_detail").show();
+    });
 
     <% if @shipment.can_edit?(current_user) && !@line.nil? %>
       $("#mod_edit_line").dialog('open');
@@ -122,11 +130,11 @@ function openPackOrder(id) {
 
 <table class='detail_table'>
   <thead>
-    <tr><th>Row</th><th>Product</th><th>Ship Quantity</th><th>Order Number - Line</th><th></th>
+    <tr><th>Row</th><th>Product</th><th>Ship Quantity</th><th>Order Number - Line</th><th><a href='#' id='lnk_all_details'>All Details</a></th>
   </thead>
   <tbody>
-    <%@shipment.shipment_lines.each do |line|%>
-    <tr class='hover'>
+    <%@shipment.shipment_lines.order("line_number ASC").each do |line|%>
+    <tr class='hover shp_line'>
       <td><%= @shipment.can_edit?(current_user) & !@shipment.locked? ? (link_to line.line_number, edit_shipment_shipment_line_path(@shipment,line)) : line.line_number %></td>
       <td><%=link_to line.product.name.nil? ? line.product.unique_identifier : line.product.name, line.product%></td>
       <td><%=line.quantity%></td>
@@ -135,14 +143,18 @@ function openPackOrder(id) {
           <%=link_to o.order.order_number, o.order%> - <%=o.line_number%>
         <%end%>
       </td>
-      <td><a href='#'>Details</a>
+      <td>
+        <%if has_custom_fields(line) %><a href='#' class='lnk_detail'>Details</a><%end%>
+        <%if has_custom_fields(line) && @shipment.can_edit?(current_user)%>
+        &nbsp;|&nbsp;
+        <%end%>
         <%if @shipment.can_edit?(current_user)%>
-        &nbsp;|&nbsp;<%=link_to "Delete", shipment_shipment_line_path(@shipment,line), :confirm=>'Are you sure you want to delete this line?', :method=>:delete %>
+        <%=link_to "Delete", shipment_shipment_line_path(@shipment,line), :confirm=>'Are you sure you want to delete this line?', :method=>:delete %>
         <%end%>
       </td>
     </tr>
     <tr class='shp_line_detail' style='display:none;'>
-      <td colspan='5'>
+      <td colspan='5' style="padding-left:1em;">
       <%=show_custom_fields line%>
       </td>
     </tr>

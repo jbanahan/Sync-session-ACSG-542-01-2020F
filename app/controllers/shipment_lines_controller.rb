@@ -24,7 +24,21 @@ class ShipmentLinesController < LinesController
     }
   end
 
-
+#BELOW HERE ARE CALLBACKS
+  def after_update sline
+    if params[:order_line_id]
+      oline = OrderLine.find(params[:order_line_id])
+      if oline.can_edit? current_user
+        ps = PieceSet.where(:order_line_id=>oline,:shipment_line_id=>sline).first
+        if ps.nil?
+          ps = PieceSet.create(:order_line_id=>oline,:shipment_line_id=>sline,:quantity=>sline.quantity)
+        else
+          ps.quantity = sline.quantity
+          ps.save
+        end
+      end
+    end
+  end
 #BELOW HERE ARE HELPSERS FOR LinesController
   def find_parent
     Shipment.find(params[:shipment_id])

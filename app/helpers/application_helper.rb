@@ -8,6 +8,9 @@ module ApplicationHelper
   def bool_txt(bool) 
     bool ? "Yes" : "No"
   end
+  def has_custom_fields(customizable)
+    !customizable.custom_definitions.empty?
+  end
   def show_custom_fields(customizable, opts={})
 		opts = {:form=>false, :table=>false}.merge(opts)
 	  x = ""

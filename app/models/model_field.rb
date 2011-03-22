@@ -332,7 +332,7 @@ class ModelField
   add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","Header - ","orders")
 
   add_fields CoreModule::ORDER_LINE, [
-    [1,:ordln_line_number,:line_number,"Line - Line Number",{:data_type=>:integer}],
+    [1,:ordln_line_number,:line_number,"Line - Row",{:data_type=>:integer}],
     [3,:ordln_ordered_qty,:quantity,"Line - Order Quantity",{:data_type=>:decimal}],
     [4,:ordln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type=>:decimal}]
   ]
@@ -348,7 +348,7 @@ class ModelField
   add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","Header - ","shipments")
   
   add_fields CoreModule::SHIPMENT_LINE, [
-    [1,:shpln_line_number,:line_number,"Line - Line Number",{:data_type=>:integer}],
+    [1,:shpln_line_number,:line_number,"Line - Row",{:data_type=>:integer}],
     [2,:shpln_shipped_qty,:quantity,"Line - Ship Quantity",{:data_type=>:decimal}]
   ]
   add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","Line - ","shipment_lines")
@@ -363,21 +363,11 @@ class ModelField
   add_fields CoreModule::SALE, make_division_arrays(300,"sale","Heade - ","sales_orders")
 
   add_fields CoreModule::SALE_LINE, [
-    [1,:soln_line_number,:line_number,"Line - Line Number", {:data_type=>:integer}],
-    [2,:soln_puid,:unique_identifier,"Line - Product Unique Identifier", {
-      :import_lambda => lambda {|detail,data|
-        detail.product = Product.where(:unique_identifier => data).first
-        return "Line #{detail.line_number} - Product set to #{data}"
-      },
-      :export_lambda => lambda {|detail|
-        detail.product.unique_identifier
-      },
-      :join_statement => "LEFT OUTER JOIN products AS soln_puid ON soln_puid.id = sales_order_lines.product_id",
-      :join_alias => "soln_puid",:data_type=>:string
-    }],
+    [1,:soln_line_number,:line_number,"Line - Row", {:data_type=>:integer}],
     [3,:soln_ordered_qty,:quantity,"Line - Order Quantity",{:data_type=>:decimal}],
     [4,:soln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type => :decimal}]
   ]
+  add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","Line - ","sale_order_lines")
   
   add_fields CoreModule::DELIVERY, [
     [1,:del_ref,:reference,"Reference",{:data_type=>:string}],

@@ -12,7 +12,7 @@ $(function() {
 <%= form_for(@custom_definition, :html=>{:id=>'frm_c'}) do |f| %>
   <table>
     <%=field_row "Label", f.text_field(:label, :title=>"The name of the field.") %>
-    <%=field_row "Module", f.select(:module_type, [["Delivery","Delivery"],["Order - Header","Order"],["Order - Line","OrderLine"],["Product - Header","Product"],["Product - Classification","Classification"],["Sale","SalesOrder"],["Shipment","Shipment"]],{}, :title=>"The screen you want the field to be on.") %>
+    <%=field_row "Module", f.select(:module_type, [["Order - Header","Order"],["Order - Line","OrderLine"],["Shipment - Header","Shipment"],["Shipment - Line","ShipmentLine"],["Sale","SalesOrder"],["Delivery","Delivery"],["Product - Header","Product"],["Product - Classification","Classification"]],{}, :title=>"The screen you want the field to be on.") %>
     <%=field_row "Data Type", f.select(:data_type, [[CustomDefinition::DATA_TYPE_LABELS[:date],"date"],[CustomDefinition::DATA_TYPE_LABELS[:decimal],"decimal"],[CustomDefinition::DATA_TYPE_LABELS[:integer],"integer"],[CustomDefinition::DATA_TYPE_LABELS[:string],"string"],[CustomDefinition::DATA_TYPE_LABELS[:text],"text"],[CustomDefinition::DATA_TYPE_LABELS[:boolean],"boolean"]], {},:title=>"The type of information you enter into the field.")%>
     <%=field_row "Tip", f.text_field(:tool_tip, :title=>"A note (like this) to help user's understand what to type into the field.") %>
     <%=field_row "Sort Rank", f.text_field(:rank, :title=>"An optional number to tell the system where to put the field on the screen.  Lower numbers appear first.") %>

@@ -44,7 +44,7 @@ class SearchSetup < ActiveRecord::Base
     self.sort_criterions.order("rank ASC").each do |sort|
       base = sort.apply(base)
     end
-    base.group("id")
+    base = base.group("id") #prevents duplicate rows in search results
     base.search_secure self.user, base
   end
 
@@ -119,14 +119,18 @@ class SearchSetup < ActiveRecord::Base
       messages << "Customer Name or Customer ID is required to upload Sales." unless has_one_of ["sale_cust_name","sale_cust_id"]
       
       if contains_module CoreModule::SALE_LINE
-        messages << "Line - Line Number is required to upload Sale Lines." unless has_column "soln_line_number"
-        messages << "Line - Product Unique Identifier is required to upload Sale Lines." unless has_column "soln_puid"
+        messages << "Line - Row is required to upload Sale Lines." unless has_column "soln_line_number"
+        messages << "Line - Product Unique Identifier or Name is required to upload Sale Lines." unless has_one_of ["soln_puid","soln_pname"]
       end
     end
     if cm==CoreModule::SHIPMENT
       messages << "You do not have permission to edit Shipments." unless self.user.edit_shipments?
       messages << "Reference Number field is required to upload Shipments." unless has_column "shp_ref"
       messages << "Vendor Name or Vendor ID is required to upload Shipments." unless has_one_of ["shp_ven_name","shp_ven_id"]
+      if contains_module CoreModule::SHIPMENT_LINE
+        messages << "Line - Row is required to upload Shipment Lines." unless has_column "shpln_line_number"
+        messages << "Line - Product Unique Identifier or Name is required to upload Shipment Lines." unless has_one_of ["shpln_puid","shpln_pname"]
+      end
     end
     if cm==CoreModule::PRODUCT
       messages << "You do not have permission to edit Products." unless self.user.edit_products?
@@ -148,8 +152,8 @@ class SearchSetup < ActiveRecord::Base
       messages << "Vendor Name or Vendor ID is required to upload Orders." unless has_one_of ["ord_ven_name","ord_ven_id"]
 
       if contains_module CoreModule::ORDER_LINE
-        messages << "Line - Line Number is required to upload Order Lines." unless has_column "ordln_line_number"
-        messages << "Line - Product Unique Identifier is required to upload Order Lines." unless has_column "ordln_puid"
+        messages << "Line - Row is required to upload Order Lines." unless has_column "ordln_line_number"
+        messages << "Line - Product Unique Identifier or Name is required to upload Order Lines." unless has_one_of ["ordln_puid","ordln_pname"]
       end
     end
 

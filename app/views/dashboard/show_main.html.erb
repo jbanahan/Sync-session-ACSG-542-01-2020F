@@ -33,49 +33,4 @@
       <% end %>
     </td>
   </tr>
-  <% if current_user.view_shipments? && current_user.view_orders? %>
-  <tr>
-    <td style='vertical-align: top;'>
-      <h2>Shipments Not Received</h2>
-      <% if @piece_sets_not_received.length==0%>
-      All shipments received.
-      <% else %>
-      <table class='detail_table'>
-        <thead><tr><th>Shipment Ref</th><th>Order Number</th><th>Product</th><th>Quantity</th></tr></thead>
-        <tbody>
-          <% @piece_sets_not_received.each do |p| %>
-          <tr class='hover'>
-            <td><%=link_to p.shipment.reference, shipment_path(p.shipment)%></td>
-            <td><%=link_to p.order_line.order.order_number, order_path(p.order_line.order)%></td>
-            <td><%=link_to p.product.name, product_path(p.product)%></td>
-            <td><%=link_to p.quantity%></td>
-          </tr>
-          <% end %>
-        </tbody>
-      </table>
-      <% end %>
-    </td>
-    <td style='vertical-align: top;'>
-      <h2>Orders Not Shipped</h2>
-      <% if @order_lines_not_on_shipments.length==0%>
-      All orders are on shipments.
-      <% else %>
-      <table class='detail_table'>
-        <thead>
-          <tr><th>Order Number</th><th>Product</th><th>Quantity</th></tr>
-        </thead>
-        <tbody>
-          <%@order_lines_not_on_shipments.each do |o| %>
-          <tr class='hover'>
-            <td><%=link_to o.order.order_number, order_path(o.order)%></td>
-            <td><%=link_to o.product.name, product_path(o.product)%></td>
-            <td><%=o.ordered_qty%></td>
-          </tr>
-          <%end%>
-        </tbody>
-      </table>
-      <% end %>
-    </td>
-  </tr>
-  <%end%>
 </table>

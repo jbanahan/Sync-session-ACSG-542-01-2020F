@@ -41,8 +41,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     m = []
     assert !s.uploadable?(m), "Should not upload, did. Messages: #{m}"
     assert m.length == 2, "Messages length should have been 2, was #{m.length}"
-    assert m.include?("Line - Line Number is required to upload Sale Lines."), "Line number required missing. Messages: #{m}"
-    assert m.include?("Line - Product Unique Identifier is required to upload Sale Lines."), "PUID required missing. Messages: #{m}"
+    assert m.include?("Line - Row is required to upload Sale Lines."), "Line number required missing. Messages: #{m}"
+    assert m.include?("Line - Product Unique Identifier or Name is required to upload Sale Lines."), "PUID required missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid => "soln_puid", :rank=>3)
     s.search_columns.create!(:model_field_uid => "soln_line_number", :rank=>4)
@@ -68,6 +68,18 @@ class SearchSetupTest < ActiveSupport::TestCase
     m = []
     assert s.uploadable?(m), "Should upload, didn't. Messages: #{m}"
 
+    s.search_columns.create!(:model_field_uid=>"shpln_shipped_qty",:rank=>2)
+    m = []
+    assert !s.uploadable?(m), "Should not upload without required line fields. Messages: #{m}"
+    assert m.length == 2, "Messages length should have been 2, was #{m.length}"
+    assert m.include?("Line - Row is required to upload Shipment Lines."), "Row missing. Messages: #{m}"
+    assert m.include?("Line - Product Unique Identifier or Name is required to upload Shipment Lines."), "Product missing. Messages: #{m}"
+
+    s.search_columns.create!(:model_field_uid=>"shpln_puid",:rank=>3)
+    s.search_columns.create!(:model_field_uid=>"shpln_line_number",:rank=>4)
+
+    m = []
+    assert s.uploadable?(m), "Should upload, didn't. Messages: #{m}"
   end
   test "uploadable - Order" do
     s = SearchSetup.create!(:module_type=>CoreModule::ORDER.class_name, :name=>"uploadable - order",:user_id => users(:vendoruser).id)
@@ -92,8 +104,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     m = []
     assert !s.uploadable?(m), "Shouldn't upload without required Order Line fields. Messages: #{m}"
     assert m.length==2, "Messages length should have been 2, was #{m.length}"
-    assert m.include?("Line - Line Number is required to upload Order Lines."), "Line number required missing. Messages: #{m}"
-    assert m.include?("Line - Product Unique Identifier is required to upload Order Lines."), "PUID required missing. Messages: #{m}"
+    assert m.include?("Line - Row is required to upload Order Lines."), "Line number required missing. Messages: #{m}"
+    assert m.include?("Line - Product Unique Identifier or Name is required to upload Order Lines."), "PUID required missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"ordln_line_number",:rank=>3)
     s.search_columns.create!(:model_field_uid=>"ordln_puid",:rank=>4)

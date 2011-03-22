@@ -28,4 +28,12 @@ module LinesSupport
   def locked?
     !parent_obj.nil? && parent_obj.locked?
   end
+
+  def can_edit? user
+    parent_obj.can_edit? user
+  end
+
+  def can_view? user
+    parent_obj.can_view? user
+  end
 end

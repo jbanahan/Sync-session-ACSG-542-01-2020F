@@ -16,6 +16,11 @@ class ShipmentLine < ActiveRecord::Base
     s
   end
 
+  def find_same
+    r = ShipmentLine.where(:shipment_id=>self.shipment_id,:line_number=>self.line_number)
+    raise "Multiple shipment lines found for shipment #{self.shipment_id} and line #{self.line_number}" if r.size > 1
+    r.empty? ? nil : r.first
+  end
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment
