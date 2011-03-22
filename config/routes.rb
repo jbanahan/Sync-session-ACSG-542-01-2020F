@@ -97,10 +97,6 @@ OpenChain::Application.routes.draw do
 		get :shipping_address_list, :on => :member
   end
   
-  resources :milestone_plans do
-    get 'test_criteria', :on => :member
-  end
-  
   resources :search_setups do
     resources :imported_files, :only => [:new, :create, :show] do
       member do 

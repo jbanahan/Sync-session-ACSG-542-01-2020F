@@ -1,9 +1,0 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-one:
-  name: Plan One
-  test_rank: 1
-
-two:
-  name: Plan Two
-  test_rank: 2
