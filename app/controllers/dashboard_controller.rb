@@ -5,7 +5,6 @@ class DashboardController < ApplicationController
 	def show_main
 	  @products_without_hts = products_without_hts
 	  @order_lines_not_on_shipments = order_lines_not_on_shipments
-	  @piece_sets_not_received = piece_sets_not_received
 	  @products_not_approved = products_not_approved
     render :layout => 'one_col'
 	end
@@ -29,8 +28,5 @@ class DashboardController < ApplicationController
 	   where("piece_sets.shipment_line_id is null").all
 	end
 	
-	def piece_sets_not_received
-	  PieceSet.where("shipment_line_id is not null and inventory_in_id is null").all
-	end
 	
 end

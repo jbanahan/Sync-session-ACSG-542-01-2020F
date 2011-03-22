@@ -26,7 +26,7 @@ $(function() {
   <b><%= f.text_field :reference %></b>
   <br />
   <span class='content_head_label'>Customer:</span>
-  <% if @delivery.piece_sets.size > 0 %>
+  <% if @delivery.delivery_lines.size > 0 %>
     <%= f.hidden_field :customer_id %><%= @delivery.customer.name %>
   <% elsif current_user.company.customer? 
       @delivery.customer = current_user.company %>

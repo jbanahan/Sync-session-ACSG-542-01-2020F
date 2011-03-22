@@ -31,9 +31,6 @@
       window.location = '<%=order_path(@order)%>';
     });
     $("#order_line_submit").button();
-    $("#btn_shipment_jump").button().click(function() {
-      window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @order.order_number, :f => 'o_num', :con => 'eq' )%>';
-    });
     <% if @order.can_edit?(current_user) && !@line.nil? %>
       $("#mod_edit_line").dialog('open');
     <% end %>
@@ -47,10 +44,10 @@
   <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? %>
     <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
   <% end %>
-  <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
-  <% if @order.related_shipments.length > 0 %>
-  <button id='btn_shipment_jump'>Shipments</button>
+  <% if @line.nil? && @order.can_edit?(current_user)%>
+    <button id='btn_add_line'>Add Product</button>
   <% end %>
+  <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
 
 <!-- fields -->
@@ -109,9 +106,6 @@
 	</tr>
 <%end %> 
 </table>
-<% if @line.nil? && @order.can_edit?(current_user)%>
-<button id='btn_add_line'>Add</button>
-<% end %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
 <% form_line = @line.nil? ? @order.order_lines.build : @line %>

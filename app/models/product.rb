@@ -151,7 +151,4 @@ class Product < ActiveRecord::Base
     end
   end
 
-  def inventory_received
-    PieceSet.where("inventory_in_id is not null AND piece_sets.product_id = ?",self.id).sum("quantity")
-  end
 end

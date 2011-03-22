@@ -51,14 +51,15 @@ OpenChain::Application.routes.draw do
 	resources :piece_sets
 
   resources :shipments do
-		get :unpacked_order_lines, :on => :member
     resources :shipment_lines do
       post :create_multiple, :on => :collection
     end
 	end
 	
 	resources :deliveries do
-	  get 'unpacked_order_lines', :on => :member
+    resources :delivery_lines do
+      post :create_multiple, :on => :collection
+    end
 	end
 
   resources :products do
@@ -75,6 +76,7 @@ OpenChain::Application.routes.draw do
 	end
 	
   resources :sales_orders do
+    get 'all_open', :on=>:collection
     resources :sales_order_lines
   end
 

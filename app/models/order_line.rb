@@ -21,13 +21,14 @@ class OrderLine < ActiveRecord::Base
 	
 	def shipped_qty
     q = 0
-	  self.piece_sets.each {|p| q += p.quantity unless p.shipment_line.nil?}
+	  self.piece_sets.each {|p| q += p.quantity unless p.shipment_line_id.nil?}
     q
 	end
 	
 	def received_qty
-	  self.piece_sets.where("inventory_in_id is not null").sum("quantity")
-	end
+	  0
+  end
+
 	
 	def find_same
     found = OrderLine.where({:order_id => self.order_id, :line_number => self.line_number})

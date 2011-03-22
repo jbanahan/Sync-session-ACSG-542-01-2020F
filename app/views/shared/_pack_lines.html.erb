@@ -1,0 +1,46 @@
+<%content_for :javascript do %>
+var all_details_open = false;
+$(function() {
+  setupPackScreen(<%=is_sales_order ? "true" : "false"%>,<%=(parent.can_edit?(current_user) && line) ? "true" : "false"%>,'<%=shipment_path(parent)%>');
+});
+<%end%>
+
+  <%if(line.nil? && parent.can_edit?(current_user))%>
+<%content_for :action_bar do %>
+    <button id='btn_add_order'>Add <%=is_sales_order ? "Sale" : "Order"%></button>
+    <button id='btn_add_line'>Add Product</button>
+<%end%>
+  <% end %>
+
+<% form_line = line.nil? ? (is_sales_order ? parent.delivery_lines.build : parent.shipment_lines.build) : line %>
+<div id='mod_edit_line' style='display:none;'>
+  <%= form_for([parent, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
+  <table>
+    <% form_line.default_line_number%>
+    <%=field_row "Line Number", f.text_field(:line_number, "size" => 2) %>
+    <%=field_row "Product", f.collection_select(:product_id, products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
+    <%=field_row "Ship Quantity", f.text_field(:quantity, "size" => 5) %>
+    <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
+    <% if is_sales_order %>
+      <% form_line.sales_order_lines.each do |soline|%>
+        <%=field_row "Sale / Line", content_tag(:span,"#{soline.sales_order.order_number} - #{soline.line_number}")+hidden_field_tag(:linked_sales_order_line_id,soline.id)%>
+      <% end %>
+    <% else %>
+      <% form_line.order_lines.each do |oline| %>
+        <%=field_row "Order / Line", content_tag(:span,"#{oline.order.order_number} - #{oline.line_number}")+hidden_field_tag(:linked_order_line_id,oline.id) %>
+      <% end %>
+    <% end %>
+    <%= show_custom_fields form_line, {:form => true, :table=>true}%>
+  </table>
+  <% end %>
+</div>
+<div id='mod_open_orders' style='display:none;'>
+  <div>Select <%=is_sales_order ? "a Sale" : "an Order"%>:</div>
+  <select id='sel_open_orders'><option>Loading...</option></select>
+</div>
+<div id='mod_pack_order' style='display:none;'>
+  <%=form_tag((is_sales_order ? create_multiple_delivery_delivery_lines_path(parent) : create_multiple_shipment_shipment_lines_path(parent)), :method=>"post", :id=>"frm_pack_order") do |f|%>
+    <div id='div_pack_order_content'></div>
+  <%end%>
+</div>
+

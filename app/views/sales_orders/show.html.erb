@@ -20,7 +20,7 @@ $(function() {
   $("#btn_add_line").button().click(function() {
     $("#mod_edit_line").dialog('open');
   });  
-  <% if @sales_order.can_edit?(current_user) && !@sales_order_line.nil? %>
+  <% if @sales_order.can_edit?(current_user) && !@line.nil? %>
     $("#mod_edit_line").dialog('open');
   <% end %>
   $("#edit_line_product").change(function() {
@@ -35,12 +35,14 @@ $(function() {
 });
 <%end%>
 <%content_for :action_bar do%>
-<%if @sales_order.can_edit?(current_user)%><button id='btn_edit'>Edit</button><%end%>
-<% if current_user.company.master && !@sales_order.locked? %>
-    <%= button_to('Delete', sales_order_path(@sales_order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
-<% end %>
-<button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:sales_order_id => @sales_order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
-
+  <%if @sales_order.can_edit?(current_user)%><button id='btn_edit'>Edit</button><%end%>
+  <% if current_user.company.master && !@sales_order.locked? %>
+      <%= button_to('Delete', sales_order_path(@sales_order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+  <% end %>
+  <% if @line.nil? && @sales_order.can_edit?(current_user) %>
+    <button id='btn_add_line'>Add Product</button>
+  <% end %>
+  <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:sales_order_id => @sales_order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <%end%>
 
 <table class='detail_table'>
@@ -62,6 +64,7 @@ $(function() {
     <th>Line</th>
     <th>Product</th>
     <th>Ordered</th>
+    <th>On Delivery</th>
     <th>Unit of Measure</th>
     <th>Price / Unit</th>
     <th>Total Price</th>
@@ -74,6 +77,7 @@ $(function() {
           <td><%= @sales_order.can_edit?(current_user) && !@sales_order.locked? ? (link_to line.line_number, edit_sales_order_sales_order_line_path(@sales_order,line)) : line.line_number %></td>
           <td><%= link_to line.product.name, product_path(line.product) %></td>
           <td><%= line.quantity %></td>
+          <td><%= line.delivery_qty%></td>
           <td><%= line.product.unit_of_measure %></td>
           <td><%= line.price_per_unit %></td>
           <td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
@@ -86,12 +90,10 @@ $(function() {
   <% end %>
 </table>
 </div>
-<% if @sales_order_line.nil? && @sales_order.can_edit?(current_user) %>
-<button id='btn_add_line'>Add</button>
-<% end %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @sales_order} %>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @sales_order} %>
-<% form_line = @sales_order_line.nil? ? @sales_order.sales_order_lines.build : @sales_order_line %>
+<% form_line = @line.nil? ? @sales_order.sales_order_lines.build : @line %>
+<% form_line.default_line_number %>
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([@sales_order, form_line], :html=>{:id=>"frm_edit_line"}) do |f| %>
     <table>

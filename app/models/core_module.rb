@@ -110,8 +110,12 @@ class CoreModule
       :child_joins => {SALE_LINE => "LEFT OUTER JOIN sales_order_lines ON sales_orders.id = sales_order_lines.sales_order_id"},
       :make_default_search => lambda {|user| SearchSetup.create_with_columns([:sale_order_number,:sale_order_date,:sale_cust_name],user)}
     })
+  DELIVERY_LINE = new("DeliveryLine","Delivery Line")
   DELIVERY = new("Delivery","Delivery",
-    {:make_default_search => lambda {|user| SearchSetup.create_with_columns([:del_ref,:del_mode,:del_car_name,:del_cust_name],user)}})
+    {:children=>[DELIVERY_LINE],
+    :child_lambdas => {DELIVERY_LINE => lambda {|p| p.delivery_lines}},
+    :child_joins => {DELIVERY_LINE => "LEFT OUTER JOIN delivery_lines on deliveries.id = delivery_lines.delivery_id"},
+    :make_default_search => lambda {|user| SearchSetup.create_with_columns([:del_ref,:del_mode,:del_car_name,:del_cust_name],user)}})
   TARIFF = new("TariffRecord","Tariff")
   CLASSIFICATION = new("Classification","Classification",{
       :children => [TARIFF],
@@ -136,6 +140,7 @@ class CoreModule
   set_default_module_chain SHIPMENT, [SHIPMENT,SHIPMENT_LINE]
   set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   set_default_module_chain SALE, [SALE,SALE_LINE]
+  set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
   
   def self.find_by_class_name(c)
     CORE_MODULES.each do|m|

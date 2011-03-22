@@ -4,52 +4,6 @@ class DeliveriesController < ApplicationController
 		Delivery
 	end
 	
-  def add_sets
-    delivery = Delivery.find(params[:id])
-    action_secure(delivery.can_edit?(current_user),delivery,{:verb => "add items to",:module_name=>"delivery"}) {
-      x = params[:delivery][:piece_set_attributes]
-      q = x.keys
-      q.each do |k|
-        ps_params = x[k]
-        unless (Float(ps_params[:quantity]).nil? rescue true) || ps_params[:quantity].to_f == 0
-          p = PieceSet.new(ps_params)
-          p.delivery_id = delivery.id
-          same = p.find_same
-          if !same.nil?
-            same.quantity += ps_params[:quantity].to_f
-            same.save
-            errors_to_flash same 
-          else
-            delivery.piece_sets.build(ps_params)
-          end
-        end 
-      end
-      delivery.save
-      errors_to_flash delivery
-      redirect_to delivery_path(delivery)
-    }
-  end
-  
-  def unpacked_order_lines
-    delivery = Delivery.find(params[:id])
-    if delivery.can_edit? current_user
-      ord = SalesOrder.find(params[:sales_order_id])
-      if ord.can_view? current_user
-        piece_sets = ord.make_unpacked_piece_sets
-        piece_sets.each do |p|
-          sps = delivery.piece_sets.build
-          p.attributes.each do |attrib, val|
-            sps[attrib] = p[attrib] unless attrib==:id || attrib==:delivery_id
-          end
-        end
-        render :partial => 'unpacked_order_lines', :locals => { :delivery => delivery }
-      else
-        render :text => "<span class='errors_message'>You do not have permission to work with sales order #{order.order_number}.</span>"
-      end
-    else
-      render :text => "<span class='errors_message'>You do not have permission to edit delivery #{delivery.reference}.</span>"
-    end
-  end
 
   
   def index
@@ -62,6 +16,7 @@ class DeliveriesController < ApplicationController
     d = Delivery.find(params[:id])
     action_secure(d.can_view?(current_user),d,{:lock_check=>false,:verb => "view",:module_name=>"delivery"}) {
       @delivery = d
+      @products = Product.all
       respond_to do |format|
         format.html # show.html.erb
         format.xml  { render :xml => @delivery }

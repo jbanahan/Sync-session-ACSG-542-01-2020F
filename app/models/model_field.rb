@@ -377,7 +377,12 @@ class ModelField
   add_fields CoreModule::DELIVERY, make_ship_to_arrays(200,"del","","deliveries")
   add_fields CoreModule::DELIVERY, make_carrier_arrays(300,"del","","deliveries")
   add_fields CoreModule::DELIVERY, make_customer_arrays(400,"del","","deliveries")
-  
+
+  add_fields CoreModule::DELIVERY_LINE, [
+    [1,:delln_line_number,:line_number,"Line - Row",{:data_type=>:integer}],
+    [2,:delln_delivery_qty,:quantity,"Line - Delivery Qauntity",{:data_type=>:decimal}]
+  ]
+  add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","Line - ","delivery_lines")
 
   def self.add_custom_fields(core_module,base_class,label_prefix,parameters={})
     max = 0

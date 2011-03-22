@@ -1,5 +1,6 @@
 class DeliveryLine < ActiveRecord::Base
   include LinesSupport
+  include CustomFieldSupport
   include ShallowMerger
   belongs_to :delivery
 

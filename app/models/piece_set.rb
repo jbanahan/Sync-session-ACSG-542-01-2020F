@@ -1,8 +1,6 @@
 class PieceSet < ActiveRecord::Base
 #PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
     belongs_to :order_line
-    belongs_to :inventory_in
-    belongs_to :inventory_out
     belongs_to :sales_order_line
     belongs_to :shipment_line
     belongs_to :delivery_line

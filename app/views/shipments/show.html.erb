@@ -1,92 +1,19 @@
 <% content_for :javascript do %>
-  var all_details_open = false;
-  $(function() {
-    $( "#btn_edit" )
-      .button()
-      .click(function() {
-        window.location = '<%=edit_shipment_path(@shipment)%>';
-      });
-    $( "#item_change_subscription_submit").button();
-    $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
-      buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
-    $("#btn_subscriptions")
-      .button()
-      .click(function() {
-        $("#mod_subscriptions").dialog('open');
+$(function() {
+  $( "#btn_edit" )
+    .button()
+    .click(function() {
+      window.location = '<%=edit_shipment_path(@shipment)%>';
     });
-    $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
-      width:'auto',
-      buttons:{"Save":function() {$("#frm_edit_line").submit();},
-               "Cancel":function() {window.location = '<%=shipment_path(@shipment)%>';}}  
-    });
-    $("#btn_add_line").button().click(function() {
-      $("#mod_edit_line").dialog('open');
-    });
-    $(".lnk_detail").click(function(ev) {
-      ev.preventDefault();
-      $(this).parents("tr.shp_line").next().toggle();
-    });
-    $("#lnk_all_details").click(function(ev) {
-      ev.preventDefault();
-      if(all_details_open) {
-        $(".shp_line_detail").hide();
-      } else {
-        $(".shp_line_detail").show();
-      }
-      all_details_open = !all_details_open;
-    });
-
-    <% if @shipment.can_edit?(current_user) && !@line.nil? %>
-      $("#mod_edit_line").dialog('open');
-    <% end %>
-    $("#mod_pack_order").dialog({autoOpen:false,title:'Pack Order',width:'auto',
-      buttons:{"Add":function() {$("#frm_pack_order").submit();},
-      "Cancel":function() {$("#mod_pack_order").dialog('close');}}
-    });
-    $("#mod_open_orders").dialog({autoOpen:false,title:'Select Order',width:'auto',
-        buttons:{"OK":function() {
-          var id = $("#sel_open_orders").val();
-          if(id) {
-            $("#mod_open_orders").dialog('close');
-            openPackOrder(id);
-          } else {
-            window.alert("Select an order first.")
-          }
-        },
-        "Cancel":function() {$("#mod_open_orders").dialog('close');}}});
-    $("#btn_add_order").click(function() {
-      $("#mod_open_orders").dialog('open');
-      getOpenOrders(function(data) {
-        var i;
-        if(data.length==0) {
-          $("#sel_open_orders").html("<option>No Orders Available</option>");
-        } else {
-          var opt = "";
-          for(i=0;i<data.length;i++) {
-            var o = data[i].order;
-            opt += "<option value='"+o.id+"'>"+o.order_number+"</option>";
-          }
-          $("#sel_open_orders").html(opt);
-        }
-      });
-    });
+  $( "#item_change_subscription_submit").button();
+  $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
+    buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
+  $("#btn_subscriptions")
+    .button()
+    .click(function() {
+      $("#mod_subscriptions").dialog('open');
   });
-function openPackOrder(id) {
-  $("#div_pack_order_content").html("Loading...");
-  $("#mod_pack_order").dialog('open');
-  getOrder(id,function(data) {
-    var h = "";
-    var order = data.order
-    h += "<div>Pack Order: "+order.order_number+"</div><table class='detail_table'><thead><tr><th>Order Row</th><th>Product</th><th>Ordered</th><th>Shipped</th></tr></thead><tbody>";
-    var i;
-    for(i=0;i<order.order_lines.length;i++) {
-      var line = order.order_lines[i];
-      h+="<tr><td><input type='hidden' name='[lines]["+i+"][order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' /></td></tr>";
-    }
-    h += "</tbody></table>";
-    $("#div_pack_order_content").html(h);
-  });
-}
+});
 <% end %>
 
 <% content_for :action_bar do %>
@@ -146,7 +73,7 @@ function openPackOrder(id) {
       <td><%=line.quantity%></td>
       <td>
         <%line.order_lines.each do |o|%>
-          <%=link_to o.order.order_number, o.order%> - <%=o.line_number%>
+          <%=link_to o.order.order_number, o.order%> - <%=o.line_number%><br />
         <%end%>
       </td>
       <td>
@@ -167,35 +94,7 @@ function openPackOrder(id) {
     <%end%>
   </tbody>
 </table>
-<% if @line.nil? && @shipment.can_edit?(current_user)%>
-<button id='btn_add_line'>Add Product</button>
-<button id='btn_add_order'>Add Order</button>
-<% end %>
-<% form_line = @line.nil? ? @shipment.shipment_lines.build : @line %>
-<div id='mod_edit_line' style='display:none;'>
-  <%= form_for([@shipment, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
-  <table>
-    <% form_line.default_line_number%>
-    <%=field_row "Line Number", f.text_field(:line_number, "size" => 2) %>
-    <%=field_row "Product", f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
-    <%=field_row "Ship Quantity", f.text_field(:quantity, "size" => 5) %>
-    <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
-    <% form_line.order_lines.each do |oline| %>
-    <%=field_row "Order / Line", content_tag(:span,"#{oline.order.order_number} - #{oline.line_number}")+hidden_field_tag(:order_line_id,oline.id) %>
-    <% end %>
-    <%= show_custom_fields form_line, {:form => true, :table=>true}%>
-  </table>
-  <% end %>
-</div>
-<div id='mod_open_orders' style='display:none;'>
-<div>Select an Order:</div>
-<select id='sel_open_orders'><option>Loading...</option></select>
-</div>
-<div id='mod_pack_order' style='display:none;'>
-<%=form_tag(create_multiple_shipment_shipment_lines_path(@shipment), :method=>"post", :id=>"frm_pack_order") do |f|%>
-  <div id='div_pack_order_content'></div>
-<%end%>
-</div>
+<%=render :partial => 'shared/pack_lines', :locals=>{:parent=>@shipment, :line=>@line, :products=>@products, :is_sales_order=>false} %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @shipment} %>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @shipment}%>
 <div id='mod_subscriptions' style='display:none;'>
