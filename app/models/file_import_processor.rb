@@ -56,7 +56,7 @@ class FileImportProcessor
     end
     @search_setup.sorted_columns.each do |col|
       mf = col.find_model_field
-      data_map[mf.core_module][mf.uid]=row[col.rank]
+      data_map[mf.core_module][mf.uid]=row[col.rank] unless mf.uid==:_blank
     end
     object_map = {}
     @module_chain.to_a.each do |mod|

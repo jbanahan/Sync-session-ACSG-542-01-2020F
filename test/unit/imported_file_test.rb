@@ -1,7 +1,6 @@
 require 'test_helper'
 
 class ImportedFileTest < ActiveSupport::TestCase
-  # Replace this with your real tests.
   test "process" do
     base_order = Order.find(1)
     new_order_date = "2001-01-03"
@@ -86,7 +85,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert fd.price_per_unit == vh[:price_per_unit], "Price per unit failed.  Was #{fd.price_per_unit}, should be #{vh[:price_per_unit]}"
   end
   
-  test "all product fields" do
+  test "all product fields (including a blank)" do
     vh = {
       :unique_identifier => Time.new.to_s,
       :name => "nm",
@@ -99,8 +98,9 @@ class ImportedFileTest < ActiveSupport::TestCase
     attachment_vals = [vh[:unique_identifier],vh[:div_id],vh[:name],vh[:vendor_id],vh[:vendor_name]]
     [:prod_uid,:prod_div_id,:prod_name,:prod_ven_id,:prod_ven_name].each_with_index do |u,i|
       mf = ModelField.find_by_uid u
-      ss.search_columns.create(:model_field_uid => mf.uid, :rank => i)
+      ss.search_columns.create!(:model_field_uid => mf.uid, :rank => i)
     end
+    ss.search_columns.create!(:model_field_uid => "_blank", :rank=>1000) #testing a blank column
     attachment = attachment_vals.to_csv
     f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ss.id, :ignore_first_row=>false)
     assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
