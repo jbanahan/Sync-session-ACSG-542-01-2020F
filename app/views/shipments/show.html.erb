@@ -1,4 +1,5 @@
 <% content_for :javascript do %>
+  var all_details_open = false;
   $(function() {
     $( "#btn_edit" )
       .button()
@@ -27,7 +28,12 @@
     });
     $("#lnk_all_details").click(function(ev) {
       ev.preventDefault();
-      $(".shp_line_detail").show();
+      if(all_details_open) {
+        $(".shp_line_detail").hide();
+      } else {
+        $(".shp_line_detail").show();
+      }
+      all_details_open = !all_details_open;
     });
 
     <% if @shipment.can_edit?(current_user) && !@line.nil? %>
