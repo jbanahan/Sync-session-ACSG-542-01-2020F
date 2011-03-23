@@ -2,6 +2,21 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
   
+  test "public" do 
+    mf = ModelField.find_by_uid "shp_ref"
+    assert !mf.public?
+    assert !mf.public_searchable?
+    pf = PublicField.create!(:model_field_uid=>"shp_ref",:searchable=>false)
+    mf = ModelField.find_by_uid "shp_ref"
+    assert mf.public?
+    assert !mf.public_searchable?
+    pf.searchable = true
+    pf.save!
+    mf = ModelField.find_by_uid "shp_ref"
+    assert mf.public?
+    assert mf.public_searchable?
+  end
+
   test "test find by uid" do
     uid = "prod_name"
     mf = ModelField.find_by_uid uid

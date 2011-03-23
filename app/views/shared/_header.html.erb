@@ -1,4 +1,8 @@
-<% no_buttons = false if local_assigns[:no_buttons].nil? %> 
+<% 
+  no_buttons = false
+  no_buttons = true if @no_buttons
+  no_buttons = true if !local_assigns[:not_buttons].nil?
+%>
 <!-- System UUID: <%=MasterSetup.first.uuid%> -->
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-GB">
@@ -124,11 +128,7 @@
 <body>
 <div id="header">
   <span id="corner_title">
-    <% unless no_buttons %>
       <%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %>
-    <% else %>
-      <%=image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50") %>
-    <% end %>
   </span>
   <% if current_user %>
     <% unless no_buttons %>

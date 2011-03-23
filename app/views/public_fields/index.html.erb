@@ -1,0 +1,24 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_save").click(function() {$("#frm_pf").submit();});
+  $("#btn_cancel").click(function() {window.location = '<%=settings_path%>';});
+});
+<%end%>
+
+<%content_for :action_bar do %>
+<button id='btn_save'>Save</button>
+<button id='btn_cancel'>Cancel</button>
+<%end%>
+
+<table>
+  <thead>
+    <tr><th>Label</th><th>Public</th><th>Searchable</th></tr>
+  </thead>
+  <tbody>
+<%=form_tag "/public_fields/save", :method=>"post", :id=>"frm_pf" do%>
+  <%@model_fields.each_with_index do |m,i|%>
+    <tr><td><%=m.label%></td><td><%=check_box_tag "public_fields[#{i}][model_field_uid]", m.uid, m.public? %></td><td><%=check_box_tag "public_fields[#{i}][searchable]", "1", m.public_searchable?%></td></tr>
+  <%end%>
+<%end%>
+  </tbody>
+</table>

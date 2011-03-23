@@ -15,6 +15,7 @@ OpenChain::Application.routes.draw do
     post 'send_email', :on => :member
   end
 
+  match "/tracker" => "public_shipments#index"
 	match "/index.html" => "dashboard#show_main"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
@@ -30,6 +31,8 @@ OpenChain::Application.routes.draw do
   match "/help" => "chain_help#index"
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
+  match "/public_fields" => "public_fields#index"
+  match "/public_fields/save" => "public_fields#save", :via => :post
 
   resources :custom_definitions
 

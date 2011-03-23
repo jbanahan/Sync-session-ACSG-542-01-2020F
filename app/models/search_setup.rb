@@ -37,15 +37,12 @@ class SearchSetup < ActiveRecord::Base
   end
   
   def search
-    base = Kernel.const_get(self.module_type)
-    self.search_criterions.each do |sc|
-      base = sc.apply(base)
-    end
-    self.sort_criterions.order("rank ASC").each do |sort|
-      base = sort.apply(base)
-    end
-    base = base.group("id") #prevents duplicate rows in search results
-    base.search_secure self.user, base
+    private_search true
+  end
+
+  #executes the search without securing it against user permissions
+  def public_search
+    private_search false
   end
 
 
@@ -176,5 +173,17 @@ class SearchSetup < ActiveRecord::Base
       return true if  ModelField.find_by_uid(c.model_field_uid).core_module == m
     }
     false
+  end
+  def private_search(secure=true)
+    base = Kernel.const_get(self.module_type)
+    self.search_criterions.each do |sc|
+      base = sc.apply(base)
+    end
+    self.sort_criterions.order("rank ASC").each do |sort|
+      base = sort.apply(base)
+    end
+    base = base.group("id") #prevents duplicate rows in search results
+    base.search_secure self.user, base if secure
+    base
   end
 end

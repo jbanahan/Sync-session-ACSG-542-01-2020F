@@ -1,0 +1,15 @@
+<%=render :partial=>'shared/tracker' %>
+<h1>Shipment Results</h1>
+<% @result.each_with_index do |r,i| %>
+  <%if @result.size>1%><h2>Result 1</h2><%end%>
+  <table>
+  <%CoreModule::SHIPMENT.model_fields.each do |k,mf|%>
+    <%if mf.public?%>
+      <%=field_row mf.label, mf.process_export(r)%>
+    <%end%>
+  <%end%>
+  </table>
+<% end %>
+<% if @result.empty?%>
+<h2>No results were found.</h2>
+<%end%>

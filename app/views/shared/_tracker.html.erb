@@ -1,0 +1,10 @@
+<%=form_tag "/tracker", :method=>"get" do%>
+<select name='f'>
+<%CoreModule::SHIPMENT.model_fields.each do |k,mf|%>
+  <% if mf.public_searchable?%>
+    <option value='<%=mf.uid%>' <%=@field && @field==mf.uid ? "selected='true'" : ""%>><%=mf.label%></option>
+  <% end%>
+<%end%>
+</select>
+<%=text_field_tag :v, @value%>&nbsp;<%=submit_tag "Search"%>
+<%end%>
