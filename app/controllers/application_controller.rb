@@ -245,7 +245,7 @@ class ApplicationController < ActionController::Base
     def require_user
       unless current_user
         store_location
-        add_flash :errors, "You must be logged in to access this page. #{PublicField.blank? ? "" : "Public shipment tracking is available below."}"
+        add_flash :errors, "You must be logged in to access this page. #{PublicField.first.nil? ? "" : "Public shipment tracking is available below."}"
         redirect_to login_path
         return false
       end
