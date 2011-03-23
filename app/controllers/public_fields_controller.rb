@@ -7,6 +7,7 @@ class PublicFieldsController < ApplicationController
       field_hash.each do |k,v|
         pf = PublicField.create(v) if v[:model_field_uid]
       end
+      add_flash :notices, "Your changes have been saved."
       redirect_to '/public_fields'
     }
   end
