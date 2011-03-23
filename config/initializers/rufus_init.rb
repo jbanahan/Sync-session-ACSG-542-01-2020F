@@ -19,6 +19,11 @@ end
 
 # Create the main logger and set some useful variables.
 main_logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
+
+if !File.directory?(Rails.root.to_s + "/tmp/pids")
+  Dir.mkdir(Rails.root.to_s + "/tmp/pids")
+end
+  
 pid_file = (Rails.root.to_s + "/tmp/pids/scheduler").to_s
 File.delete(pid_file) if FileTest.exists?(pid_file)
 
