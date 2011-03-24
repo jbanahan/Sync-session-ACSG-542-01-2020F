@@ -51,10 +51,11 @@ $(function() {
 <%end%>
 <table>
 <%=field_row "Name", @company.name%>
+<%=field_row "System Code", @company.system_code %>
 <%=field_row "Carrier", bool_txt(@company.carrier?) %>
 <%=field_row "Vendor", bool_txt(@company.vendor?) %>
 <%=field_row "Customer", bool_txt(@company.customer?) %>
-<%=field_row "System ID Number", @company.id %>
+<%=field_row "Internal System ID Number", @company.id %>
 </table>
 
 <%= render :partial => 'companies/address', :locals => { :edit_add => @address } %>

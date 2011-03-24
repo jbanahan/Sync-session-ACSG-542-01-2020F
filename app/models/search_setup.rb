@@ -109,12 +109,12 @@ class SearchSetup < ActiveRecord::Base
     if cm==CoreModule::DELIVERY
       messages << "You do not have permission to edit Deliveries." unless self.user.edit_deliveries?
       messages << "Reference field is required to upload Deliveries." unless has_column "del_ref"
-      messages << "Customer Name or Customer ID is required to upload Deliveries." unless has_one_of ["del_cust_name","del_cust_id"]
+      messages << "Customer Name, ID, or System Code is required to upload Deliveries." unless has_company "del", "cust"
     end
     if cm==CoreModule::SALE
       messages << "You do not have permission to edit Sales." unless self.user.edit_sales_orders?
       messages << "Order Number field is required to upload Sales." unless has_column "sale_order_number"
-      messages << "Customer Name or Customer ID is required to upload Sales." unless has_one_of ["sale_cust_name","sale_cust_id"]
+      messages << "Customer Name, ID, or System Code is required to upload Sales." unless has_company "sale", "cust"
       
       if contains_module CoreModule::SALE_LINE
         messages << "Line - Row is required to upload Sale Lines." unless has_column "soln_line_number"
@@ -124,7 +124,7 @@ class SearchSetup < ActiveRecord::Base
     if cm==CoreModule::SHIPMENT
       messages << "You do not have permission to edit Shipments." unless self.user.edit_shipments?
       messages << "Reference Number field is required to upload Shipments." unless has_column "shp_ref"
-      messages << "Vendor Name or Vendor ID is required to upload Shipments." unless has_one_of ["shp_ven_name","shp_ven_id"]
+      messages << "Vendor Name, ID, or System Code is required to upload Shipments." unless has_company "shp", "ven"
       if contains_module CoreModule::SHIPMENT_LINE
         messages << "Line - Row is required to upload Shipment Lines." unless has_column "shpln_line_number"
         messages << "Line - Product Unique Identifier or Name is required to upload Shipment Lines." unless has_one_of ["shpln_puid","shpln_pname"]
@@ -133,7 +133,7 @@ class SearchSetup < ActiveRecord::Base
     if cm==CoreModule::PRODUCT
       messages << "You do not have permission to edit Products." unless self.user.edit_products?
       messages << "Unique Identifier field is required to upload Products." unless has_column "prod_uid"
-      messages << "Vendor Name or Vendor ID is required to upload Products." unless has_one_of ["prod_ven_name","prod_ven_id"]
+      messages << "Vendor Name, ID, or System Code is required to upload Products." unless has_company "prod","ven"
 
       if contains_module CoreModule::CLASSIFICATION
         messages << "To include Classification fields, you must also include the Classification Country Name or ISO code." unless has_classification_country_column
@@ -147,7 +147,7 @@ class SearchSetup < ActiveRecord::Base
     if cm==CoreModule::ORDER
       messages << "You do not have permission to edit Orders." unless self.user.edit_orders?
       messages << "Order Number field is required to upload Orders." unless has_column "ord_ord_num"
-      messages << "Vendor Name or Vendor ID is required to upload Orders." unless has_one_of ["ord_ven_name","ord_ven_id"]
+      messages << "Vendor Name, ID, or System Code is required to upload Orders." unless has_company "ord","ven"
 
       if contains_module CoreModule::ORDER_LINE
         messages << "Line - Row is required to upload Order Lines." unless has_column "ordln_line_number"
@@ -159,6 +159,9 @@ class SearchSetup < ActiveRecord::Base
   end
 
   private 
+  def has_company(model_prefix,type_prefix)
+    has_one_of ["#{model_prefix}_#{type_prefix}_name","#{model_prefix}_#{type_prefix}_id","#{model_prefix}_#{type_prefix}_syscode"]
+  end
   def has_column(model_field_uid)
     !self.search_columns.where(:model_field_uid=>model_field_uid).empty?
   end

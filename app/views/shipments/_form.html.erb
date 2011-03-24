@@ -56,17 +56,16 @@
   <tbody>
     <tr>
       <td style='width:50%'>
-        <b>Carrier: </b>
+      <table>
         <% if current_user.company.carrier? 
             @shipment.carrier = current_user.company %>
-        <%= f.hidden_field :carrier_id %><%= @shipment.carrier.name %>
+        <%=field_row "Carrier", f.hidden_field(:carrier_id)+@shipment.carrier.name %>
         <% else %>
-        <%= f.collection_select :carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "-Select a carrier"} %>
+        <%=field_row "Carrier", f.collection_select(:carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "Select a carrier"}) %>
         <% end %>
-        <br />
-        <b>Mode: </b>
-        <%= f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
-				<%=show_custom_fields @shipment, {:form => true}%>
+        <%= field_row "Mode", f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
+				<%=show_custom_fields @shipment, {:table=>true,:form => true}%>
+      </table>
       </td>
     </tr>
     </tbody>
