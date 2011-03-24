@@ -1,6 +1,7 @@
 class Company < ActiveRecord::Base
 	validates	:name,	:presence => true
 	validate  :master_lock
+  validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
 	has_many	:addresses, :dependent => :destroy
 	has_many	:divisions, :dependent => :destroy
 	has_many	:vendor_orders, :class_name => "Order", :foreign_key => "vendor_id", :dependent => :destroy

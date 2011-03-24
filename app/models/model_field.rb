@@ -108,14 +108,16 @@ class ModelField
     r = [
       [rank_start,"#{uid_prefix}_car_id".to_sym,:carrier_id,"#{label_prefix}Carrier ID"]
     ]
-    n = [rank_start+1,"#{uid_prefix}_car_name".to_sym, :name,"#{label_prefix}Carrier Name",{
+    r << [rank_start+1,"#{uid_prefix}_car_name".to_sym, :name,"#{label_prefix}Carrier Name",{
       :import_lambda => lambda {|obj,data|
         carrier = Company.where(:name => data).where(:carrier => true).first
-        obj.carrier = carrier
         unless carrier.nil?
+          obj.carrier = carrier
           return "Carrier set to #{carrier.name}"
         else
-          return "Carrier not found with name \"#{data}\""
+          carrier = Company.create(:name=>data,:carrier=>true)
+          obj.carrier = carrier
+          return "Carrier auto-created with name \"#{data}\""
         end
       },
       :export_lambda => lambda {|obj| obj.carrier.nil? ? "" : obj.carrier.name},
@@ -123,21 +125,37 @@ class ModelField
       :join_alias => "#{table_name}_car_comp",
       :data_type => :string
     }]
-    r << n
+    r << [rank_start+2,"#{uid_prefix}_car_syscode".to_sym,:system_code,"#{label_prefix}Carrier System Code", {
+      :import_lambda => lambda {|obj,data|
+        carrier = Company.where(:system_code=>data,:carrier=>true).first
+        obj.carrier = carrier
+        unless carrier.nil?
+          return "Carrier set to #{carrier.name}"
+        else
+          return "Carrier not found with code \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|o| o.carrier.nil? ? "" : o.carrier.system_code},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp.id = #{table_name}.carrier_id",
+      :join_alias => "#{table_name}_car_comp",
+      :data_type=>:string
+    }]
     r
   end
   def self.make_customer_arrays(rank_start,uid_prefix,label_prefix,table_name) 
     r = [
       [rank_start,"#{uid_prefix}_cust_id".to_sym,:customer_id,"#{label_prefix}Customer ID"]
     ]
-    n = [rank_start+1,"#{uid_prefix}_cust_name".to_sym, :name,"#{label_prefix}Customer Name", {
+    r << [rank_start+1,"#{uid_prefix}_cust_name".to_sym, :name,"#{label_prefix}Customer Name", {
       :import_lambda => lambda {|detail,data|
         c = Company.where(:name => data).where(:customer => true).first
-        detail.customer = c
         unless c.nil?
+          detail.customer = c
           return "Customer set to #{c.name}"
         else
-          return "Customer not found with name \"#{data}\""
+          customer = Company.create(:name=>data,:customer=>true)
+          detail.customer = customer
+          return "Customer auto-created with name \"#{data}\""
         end
       },
       :export_lambda => lambda {|detail| detail.customer.nil? ? "" : detail.customer.name},
@@ -145,21 +163,37 @@ class ModelField
       :join_alias => "#{table_name}_cust_comp",
       :data_type=>:string
     }]
-    r << n
+    r << [rank_start+2,"#{uid_prefix}_cust_syscode".to_sym,:system_code,"#{label_prefix}Customer System Code", {
+      :import_lambda => lambda {|o,data|
+        customer = Company.where(:system_code=>data,:customer=>true).first
+        o.customer = customer
+        unless customer.nil?
+          return "Customer set to #{customer.name}"
+        else
+          return "Customer not found with code \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|o| o.customer.nil? ? "" : o.customer.system_code},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_cust_comp on #{table_name}_cust_comp.id = #{table_name}.customer_id",
+      :join_alias => "#{table_name}_car_comp",
+      :data_type=>:string
+    }]
     r
   end
   def self.make_vendor_arrays(rank_start,uid_prefix,label_prefix,table_name) 
     r = [
       [rank_start,"#{uid_prefix}_ven_id".to_sym,:vendor_id,"#{label_prefix}Vendor ID"]
     ]
-    n = [rank_start+1,"#{uid_prefix}_ven_name".to_sym, :name,"#{label_prefix}Vendor Name", {
+    r << [rank_start+1,"#{uid_prefix}_ven_name".to_sym, :name,"#{label_prefix}Vendor Name", {
       :import_lambda => lambda {|detail,data|
         vendor = Company.where(:name => data).where(:vendor => true).first
-        detail.vendor = vendor
         unless vendor.nil?
+          detail.vendor = vendor
           return "Vendor set to #{vendor.name}"
         else
-          return "Vendor not found with name \"#{data}\""
+          vendor = Company.create(:name=>data,:vendor=>true)
+          detail.vendor = vendor
+          return "Vendor auto-created with name \"#{data}\""
         end
       },
       :export_lambda => lambda {|detail| detail.vendor.nil? ? "" : detail.vendor.name},
@@ -167,7 +201,21 @@ class ModelField
       :join_alias => "#{table_name}_vend_comp",
       :data_type=>:string
     }]
-    r << n
+    r << [rank_start+2,"#{uid_prefix}_ven_syscode".to_sym,:system_code,"#{label_prefix}Vendor System Code", {
+      :import_lambda => lambda {|o,data|
+        vendor = Company.where(:system_code=>data,:vendor=>true).first
+        unless vendor.nil?
+          o.vendor = vendor
+          return "Vendor set to #{vendor.name}"
+        else
+          return "Vendor not found with code \"#{data}\""
+        end
+      },
+      :export_lambda => lambda {|o| o.vendor.nil? ? "" : o.vendor.system_code},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_ven_comp on #{table_name}_ven_comp.id = #{table_name}.vendor_id",
+      :join_alias => "#{table_name}_ven_comp",
+      :data_type => :string
+    }]
     r
   end
 
