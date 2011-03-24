@@ -13,6 +13,7 @@ class User < ActiveRecord::Base
   has_many   :search_setups, :dependent => :destroy
   has_many   :messages, :dependent => :destroy
   has_many   :debug_records, :dependent => :destroy
+  has_many   :dashboard_widgets, :dependent => :destroy
   
   validates  :company, :presence => true
   

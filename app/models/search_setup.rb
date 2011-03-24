@@ -8,7 +8,8 @@ class SearchSetup < ActiveRecord::Base
   has_many :search_columns, :dependent => :destroy
   has_many :search_schedules, :dependent => :destroy
   has_many :imported_files, :dependent => :destroy
-  
+  has_many :dashboard_widgets, :dependent => :destroy
+
   belongs_to :user
   
   accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 

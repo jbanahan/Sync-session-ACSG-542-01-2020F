@@ -1,6 +1,7 @@
 OpenChain::Application.routes.draw do
 
   resources :password_resets, :only => [:new, :edit, :create, :update]
+  resources :dashboard_widgets
   resources :master_setups
   resources :attachment_types
 

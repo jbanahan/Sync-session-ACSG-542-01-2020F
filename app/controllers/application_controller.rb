@@ -45,6 +45,16 @@ class ApplicationController < ActionController::Base
     MasterSetup.first
   end
 
+  class SearchResult
+    attr_accessor :records
+    attr_accessor :columns
+    attr_accessor :name
+  end
+  class ResultRecord
+    attr_accessor :data
+    attr_accessor :url
+  end
+
   def advanced_search(core_module)
     @core_module = core_module
     @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
@@ -55,16 +65,39 @@ class ApplicationController < ActionController::Base
     if @current_search.user != current_user
       error_redirect "You cannot run a search that is assigned to a different user."
     else
-      @current_search.touch(true)
       @results = @current_search.search
       respond_to do |format| 
         format.html {
+          @current_search.touch(true)
           @results = @results.paginate(:per_page => 20, :page => params[:page]) 
           render :layout => 'one_col'
         }
         format.csv {
           @results = @results.where("1=1")
           render_csv("#{core_module.label}.csv")
+        }
+        format.json {
+          @results = @results.paginate(:per_page => 20, :page => params[:page])
+          rval = []
+          cols = @current_search.search_columns.order("rank ASC")
+          GridMaker.new(@results,cols,@current_search.module_chain).go do |row,obj| 
+            row_data = []
+            row.each do |c|
+              row_data << c.to_s
+            end
+            rr = ResultRecord.new
+            rr.data=row_data
+            rr.url=url_for obj
+            rval << rr
+          end
+          sr = SearchResult.new
+          sr.columns = []
+          cols.each {|col|
+            sr.columns << model_field_label(col.model_field_uid) 
+          }
+          sr.records = rval
+          sr.name = @current_search.name
+          render :json => sr
         }
       end
     end
@@ -293,5 +326,12 @@ class ApplicationController < ActionController::Base
     r = {}
     p.each {|k,v| r[k]=v if v.is_a?(String)}
     r
+  end
+def model_field_label(model_field_uid) 
+    r = ""
+    return "" if model_field_uid.nil?
+    mf = ModelField.find_by_uid(model_field_uid)
+    return "" if mf.nil?
+    return mf.label
   end
 end
