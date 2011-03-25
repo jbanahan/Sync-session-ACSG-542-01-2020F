@@ -344,7 +344,7 @@ class ModelField
     m_type = core_module.class_name.intern
     model_hash = MODEL_FIELDS[m_type]
     model_hash.values.each {|mf| max = mf.sort_rank + 1 if mf.sort_rank > max}
-    base_class.new.custom_definitions.each_with_index do |d,index|
+    base_class.new.custom_definitions.order("rank ASC").each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
       mf = ModelField.new(max+index,fld,core_module,fld,"#{label_prefix}#{d.label}",parameters.merge({:custom_id=>d.id}))
