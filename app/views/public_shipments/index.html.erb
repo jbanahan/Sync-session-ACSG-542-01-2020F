@@ -1,7 +1,7 @@
 <%=render :partial=>'shared/tracker' %>
 <h1>Shipment Results</h1>
 <% @result.each_with_index do |r,i| %>
-  <%if @result.size>1%><h2>Result 1</h2><%end%>
+  <%if @result.size>1%><h2>Result <%=i+1%></h2><%end%>
   <table>
   <%CoreModule::SHIPMENT.model_fields.each do |k,mf|%>
     <%if mf.public?%>
@@ -9,6 +9,7 @@
     <%end%>
   <%end%>
   </table>
+  <hr />
 <% end %>
 <% if @result.empty?%>
 <h2>No results were found.</h2>
