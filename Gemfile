@@ -13,3 +13,4 @@ gem 'uuidtools', '2.1.0'
 gem 'spreadsheet', '0.6.5.2'
 gem 'exception_notification_rails3', :require => 'exception_notifier'
 gem 'ruby-debug19'
+gem 'cover_me', '>= 1.0.0.rc6', :group => :test

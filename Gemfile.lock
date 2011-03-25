@@ -38,11 +38,17 @@ GEM
       xml-simple
     builder (2.1.2)
     columnize (0.3.2)
+    configatron (2.7.2)
+      yamler (>= 0.1.0)
+    cover_me (1.0.0.rc6)
+      configatron
+      hashie
     daemons (1.0.10)
     erubis (2.6.6)
       abstract (>= 1.0.0)
     exception_notification_rails3 (1.2.0)
     gem_plugin (0.2.3)
+    hashie (1.0.0)
     i18n (0.5.0)
     linecache19 (0.5.11)
       ruby_core_source (>= 0.1.4)
@@ -109,6 +115,7 @@ GEM
     uuidtools (2.1.0)
     will_paginate (3.0.pre2)
     xml-simple (1.0.12)
+    yamler (0.1.0)
 
 PLATFORMS
   ruby
@@ -117,6 +124,7 @@ PLATFORMS
 DEPENDENCIES
   authlogic
   aws-s3
+  cover_me (>= 1.0.0.rc6)
   exception_notification_rails3
   meta_search
   mongrel (= 1.2.0.pre2)
