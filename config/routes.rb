@@ -22,7 +22,7 @@ OpenChain::Application.routes.draw do
   end
 
   match "/tracker" => "public_shipments#index"
-	match "/index.html" => "dashboard_widgets/index"
+	match "/index.html" => "dashboard_widgets#index"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
   match "/shipments/:id/undo_receive" => "shipments#undo_receive"
