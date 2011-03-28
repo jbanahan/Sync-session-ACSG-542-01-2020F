@@ -4,6 +4,7 @@
     $("#btn_forgot_pass").click(function(ev) {ev.preventDefault(); window.location = '<%=new_password_reset_path%>';});
   });
 </script>
+<div id='login'>
 <%= form_for(@user_session) do |f| %>
   <table>
     <%=field_row f.label(:username), f.text_field(:username,"class"=>"focus_first")%>
@@ -15,3 +16,10 @@
   </div>
 <% end %>
 <%=link_to "Forgot your password?", new_password_reset_path %>
+</div>
+<% if PublicField.where("1=1").size>0%>
+<div id='shp_track' style='margin:1em 10px 0 0;border-top: 1px solid #d7d7d7;'>
+<h2>Shipment Tracking</h2>
+<%=render :partial=>'shared/tracker' %>
+</div>
+<%end%>

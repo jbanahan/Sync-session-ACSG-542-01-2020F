@@ -11,20 +11,11 @@ $(function() {
 <% end %>
 
 <%= form_for @company, :html=>{:id=>'frm_cmp'} do |f| %>
-  <div class="field">
-    <%= f.label :name %><br />
-    <%= f.text_field :name, :class => "required" %>
-  </div>
-  <div class="field">
-    <%= f.label :carrier %><br />
-    <%= f.check_box :carrier %>
-  </div>
-  <div class="field">
-    <%= f.label :vendor %><br />
-    <%= f.check_box :vendor %>
-  </div>
-  <div class="field">
-    <%= f.label :customer %><br />
-    <%= f.check_box :customer %>
-  </div>
+<table>
+<%=field_row "Name", f.text_field(:name,:class=>"required")%>
+<%=field_row "System Code", f.text_field(:system_code,{:title=>"Code used to integrate with another system.",:class=>"fieldtip"}) %>
+<%=field_row "Carrier", f.check_box(:carrier) %>
+<%=field_row "Vendor", f.check_box(:vendor) %>
+<%=field_row "Customer", f.check_box(:customer) %>
+</table>
 <% end %>

@@ -1,6 +1,12 @@
 OpenChain::Application.routes.draw do
 
   resources :password_resets, :only => [:new, :edit, :create, :update]
+  resources :dashboard_widgets, :only => [:index] do
+    collection do
+      get 'edit'
+      post 'save'
+    end
+  end
   resources :master_setups
   resources :attachment_types
 
@@ -15,7 +21,8 @@ OpenChain::Application.routes.draw do
     post 'send_email', :on => :member
   end
 
-	match "/index.html" => "dashboard#show_main"
+  match "/tracker" => "public_shipments#index"
+	match "/index.html" => "dashboard_widgets#index"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
   match "/shipments/:id/undo_receive" => "shipments#undo_receive"
@@ -30,6 +37,8 @@ OpenChain::Application.routes.draw do
   match "/help" => "chain_help#index"
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
+  match "/public_fields" => "public_fields#index"
+  match "/public_fields/save" => "public_fields#save", :via => :post
 
   resources :custom_definitions
 
@@ -108,5 +117,5 @@ OpenChain::Application.routes.draw do
     end 
   end
   
-  root :to => "dashboard#show_main"
+  root :to => "dashboard_widgets#index"
 end

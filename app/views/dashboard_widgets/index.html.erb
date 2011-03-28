@@ -1,0 +1,46 @@
+<% content_for :javascript do %>
+$(function () {
+<% @widgets.each do |w|%>
+  $.ajax({
+    url:'<%="#{url_for(Kernel.const_get(w.search_setup.module_type))}.json?sid=#{w.search_setup_id}"%>',
+    dataType:'json',
+    cache:false,
+    error: function() {
+      $("#widget_content_<%=w.id%>").html("<span class='error'>We're sorry. An error has occured while loading this widget. They system administrators have been notified.</span>");
+    },
+    success: function(data) {
+      var h = '<table class="detail_table"><thead><tr>';
+      var i;
+      for(i=0;i<data.columns.length;i++) {
+        h += '<th>'+data.columns[i]+'</th>';
+      }
+      h+='<th></th></tr></thead><tbody>';
+      for(i=0;i<data.records.length;i++) {
+        h += '<tr class="hover">';
+        var j;
+        for(j=0;j<data.records[i].data.length;j++) {
+          h += '<td>'+data.records[i].data[j]+'</td>';
+        }
+        h += '<td><a href="'+data.records[i].url+'">Go</a></td></tr>';
+      }
+      h+= '</table>';
+      $("#widget_content_<%=w.id%>").hide().html(h).fadeIn();
+    }
+  }
+  );
+<% end %>
+});
+<% end %>
+<h1>Welcome!</h1>
+<p>This is your <em>personal</em> dashboard.  Click <%=link_to "here", edit_dashboard_widgets_path%> to setup your search widgets.</p>
+<% @widgets.each do |w| %>
+
+<div class='widget_box'>
+  <h2><%=CoreModule.find_by_class_name(w.search_setup.module_type).label%> - <%=w.search_setup.name%></h2>
+  <div id='widget_content_<%=w.id%>'>
+  Loading...<br />
+  <%=image_tag "ajax-loader.gif" %>
+  </div>
+<%=link_to "Full Search", "#{url_for(Kernel.const_get(w.search_setup.module_type))}.json?sid=#{w.search_setup_id}"%><br />
+</div>
+<%end%>
