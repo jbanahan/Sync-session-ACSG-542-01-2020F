@@ -15,6 +15,12 @@ def execute_scheduler
       logger.info "Skipping scheduled job rebuild: Not production"
     end
   end
+  scheduler.every("3m") do
+    m = MasterSetup.first
+    if m && m.system_code == 'www-vfitrack-net'
+      FtpWalker.new.go
+    end
+  end
 end
 
 # Create the main logger and set some useful variables.
