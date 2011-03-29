@@ -3,21 +3,33 @@
     <td><%= f.text_field :hts_1, :class=>"hts_field"%>
       <%unless f.object.hts_1_matches.nil? %>
         <%f.object.hts_1_matches.each do |ot|%>
-        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.full_description%>
+        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.chapter%>
+        <br /><%=ot.heading%>
+        <br/><%=ot.sub_heading%>
+        <br /><%=ot.remaining_description%>
+        <br />
         <%end%>
       <%end%>
     </td>
     <td><%= f.text_field :hts_2, :class=>"hts_field"%>
       <%unless f.object.hts_2_matches.nil? %>
         <%f.object.hts_2_matches.each do |ot|%>
-        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.full_description%>
+        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.chapter%>
+        <br /><%=ot.heading%>
+        <br/><%=ot.sub_heading%>
+        <br /><%=ot.remaining_description%>
+        <br />
         <%end%>
       <%end%>
     </td>
     <td><%= f.text_field :hts_3, :class=>"hts_field"%>
       <%unless f.object.hts_3_matches.nil? %>
         <%f.object.hts_3_matches.each do |ot|%>
-        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.full_description%>
+        <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.chapter%>
+        <br /><%=ot.heading%>
+        <br/><%=ot.sub_heading%>
+        <br /><%=ot.remaining_description%>
+        <br />
         <%end%>
       <%end%>
     </td>
