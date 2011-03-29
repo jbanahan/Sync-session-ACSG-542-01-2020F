@@ -1,0 +1,12 @@
+development:
+  server: testftp.chain.io
+  user: testftp
+  password: testftp999
+test:
+  server: testftp.chain.io
+  user: testftp
+  password: testftp999
+production:
+  server: ftp.chain.io
+  user: chainroot
+  password: czft9918#

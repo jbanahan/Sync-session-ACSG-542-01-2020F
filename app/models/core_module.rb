@@ -142,9 +142,13 @@ class CoreModule
   set_default_module_chain SALE, [SALE,SALE_LINE]
   set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
   
-  def self.find_by_class_name(c)
+  def self.find_by_class_name(c,case_insensitive=false)
     CORE_MODULES.each do|m|
-    	return m if m.class_name == c
+      if case_insensitive
+        return m if m.class_name.downcase == c.downcase
+      else
+        return m if m.class_name == c
+      end
     end
     return nil
   end
