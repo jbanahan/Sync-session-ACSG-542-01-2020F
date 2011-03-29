@@ -20,6 +20,10 @@ end
 # Create the main logger and set some useful variables.
 main_logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
 
+if !File.directory?(Rails.root.to_s + "/tmp")
+  Dir.mkdir(Rails.root.to_s + "/tmp")
+end
+
 if !File.directory?(Rails.root.to_s + "/tmp/pids")
   Dir.mkdir(Rails.root.to_s + "/tmp/pids")
 end
