@@ -127,7 +127,7 @@ img {
 #header {
     clear: both;
     float: left;
-    width: 100%;
+    width: 99%;
 }
 #linkbar {
     width: 100%;
@@ -378,4 +378,7 @@ img {
 }
 .lbl_hts_popup {
   font-weight: bold;
+}
+#main_search_cont {
+  overflow-x: scroll;
 }
