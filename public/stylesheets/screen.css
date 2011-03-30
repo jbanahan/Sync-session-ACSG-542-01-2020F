@@ -380,5 +380,5 @@ img {
   font-weight: bold;
 }
 #main_search_cont {
-  overflow-x: scroll;
+  overflow-x: auto;
 }
