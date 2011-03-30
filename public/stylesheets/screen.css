@@ -373,3 +373,9 @@ img {
 .help_pic {
   border: 1px solid black;
 }
+.tbl_hts_popup {
+  font-size: 14px;
+}
+.lbl_hts_popup {
+  font-weight: bold;
+}

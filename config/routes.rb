@@ -10,8 +10,9 @@ OpenChain::Application.routes.draw do
   resources :master_setups
   resources :attachment_types
 
-  #get rid of this one eventually
-  resources :official_tariffs
+  resources :official_tariffs do
+    get 'find', :on => :collection
+  end
 
   resources :status_rules
   resources :attachments do
