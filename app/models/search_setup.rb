@@ -186,7 +186,7 @@ class SearchSetup < ActiveRecord::Base
     self.sort_criterions.order("rank ASC").each do |sort|
       base = sort.apply(base)
     end
-    base = base.group("id") #prevents duplicate rows in search results
+    base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
     base.search_secure self.user, base if secure
     base
   end
