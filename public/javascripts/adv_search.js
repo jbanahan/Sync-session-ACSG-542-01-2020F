@@ -30,6 +30,7 @@ function newSchedule() {
   rv.ftppass = "";
   rv.ftpfldr = "";
   rv.id = "";
+  rv.frmt = "csv";
   return rv;
 }
 function findScheduleContainerByKey(k) {
@@ -56,6 +57,7 @@ function readScheduleContainer(c) {
   rv.ftppass = c.children(".sch_ftppass").val();
   rv.ftpfldr = c.children(".sch_ftpfldr").val();
   rv.id = c.children(".sch_id").val();
+  rv.frmt = c.children(".sch_frmt").val();
   return rv;
 }
 function writeScheduleContainer(container,rv) {
@@ -86,6 +88,7 @@ function writeScheduleContainer(container,rv) {
     r += "<input class='sch_sun' name='"+ssa+"[run_sunday]' type='hidden' value='"+rv.sun+"'/>";
     r += "<input class='sch_hr' name='"+ssa+"[run_hour]' type='hidden' value='"+rv.hour+"'/>";
     r += "<input class='sch_email' name='"+ssa+"[email_addresses]' type='hidden' value='"+rv.email+"'/>";
+    r += "<input class='sch_frmt' name='"+ssa+"[download_format]' type='hidden' value='"+rv.frmt+"'/>";
     if(rv.ftpsvr) {
       r += "<input class='sch_ftpsvr' name='"+ssa+"[ftp_server]' type='hidden' value='"+rv.ftpsvr+"'/>";
     }
@@ -122,6 +125,7 @@ function readScheduleInterface() {
   rv.ftpfldr = $("#sd_ftpfldr").val();
   rv.id = $("#sd_id").val();
   rv.key = $("#sd_key").val();
+  rv.frmt = $("#sd_frmt").val();
   return rv; 
 }
 function writeScheduleInterface(s) {
@@ -140,6 +144,7 @@ function writeScheduleInterface(s) {
   $("#sd_ftpusr").val(s.ftpusr);
   $("#sd_ftppass").val(s.ftppass);
   $("#sd_ftpfldr").val(s.ftpfldr);
+  $("#sd_frmt").val(s.frmt);
 }
 function submitForm() {
   var coluids = []

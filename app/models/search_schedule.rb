@@ -29,11 +29,11 @@ class SearchSchedule < ActiveRecord::Base
     log.info "#{Time.now}: Search schedule #{self.id} starting." if log
     srch_setup = self.search_setup
     cm = CoreModule.find_by_class_name srch_setup.module_type
-    t = Tempfile.open("scheduled_search_run")
-    t.write CsvMaker.new.make(srch_setup,srch_setup.search)
-    t.close
-    send_email srch_setup.name, t, log
-    send_ftp srch_setup.name, t, log
+    extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
+    attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
+    t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
+    send_email srch_setup.name, t, attachment_name, log
+    send_ftp srch_setup.name, t, attachment_name, log
     log.info "#{Time.now}: Search schedule #{self.id} complete." if log
   end
 
@@ -65,21 +65,35 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   private
-  def send_email name, temp_file, log=nil
+
+  def write_csv srch_setup
+    t = Tempfile.open("scheduled_search_run")
+    t.write CsvMaker.new.make(srch_setup,srch_setup.search)
+    t.close
+    t 
+  end
+
+  def write_xls srch_setup
+    t = Tempfile.new("scheduled_search_run")
+    XlsMaker.new.make(srch_setup,srch_setup.search).write t
+    t
+  end
+
+  def send_email name, temp_file,attachment_name, log=nil
     if !self.email_addresses.nil? && self.email_addresses.include?("@")
       log.info "#{Time.now}: Attempting to send email to #{self.email_addresses}" if log
-      OpenMailer.send_search_result(self.email_addresses, name, temp_file.path).deliver!
+      OpenMailer.send_search_result(self.email_addresses, name,attachment_name, temp_file.path).deliver!
       log.info "#{Time.now}: Sent email" if log
     end
   end
 
-  def send_ftp name, temp_file, log=nil
+  def send_ftp name, temp_file, attachment_name, log=nil
     unless [self.ftp_server.blank?,
       self.ftp_username.blank?,
       self.ftp_password.blank?,
     ].include? true
       log.info "#{Time.now}: Attempting to send FTP to #{self.ftp_server}" if log
-      opts = {:remote_file_name => sanitize_filename("#{name}.csv")}
+      opts = {:remote_file_name => attachment_name}
       opts[:folder] = self.ftp_subfolder unless self.ftp_subfolder.blank?
       begin
         FtpSender.send_file self.ftp_server, self.ftp_username, self.ftp_password, temp_file.path, opts

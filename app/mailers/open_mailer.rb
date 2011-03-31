@@ -53,7 +53,7 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
-  def send_search_result(to,search_name,file_path)
+  def send_search_result(to,search_name,attachment_name,file_path)
     attachments["#{sanitize_filename search_name}.csv"] = File.read file_path
     mail(:to => to, :subject => "[chain.io] #{search_name} Result") do |format|
       format.text
