@@ -8,3 +8,4 @@ config/database.yml
 2.2
 *.swp
 coverage.data
+coverage/*
