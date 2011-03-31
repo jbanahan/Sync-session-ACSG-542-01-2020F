@@ -7,4 +7,5 @@ config/database.yml
 .bundle/*
 2.2
 *.swp
+coverage/*
 coverage.data
