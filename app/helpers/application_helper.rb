@@ -63,4 +63,16 @@ module ApplicationHelper
     yield base
     CSV.generate_line base, {:row_sep=>"",:col_sep=>", "} 
   end
+
+  def show_tariff hts_number, country_id, with_popup_link=true
+    if with_popup_link
+      link_to hts_number, "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
+    else
+      return hts_number
+    end
+  end
+
+  def tariff_more_info hts_number, country_id
+    link_to "info", "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
+  end
 end

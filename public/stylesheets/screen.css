@@ -127,7 +127,7 @@ img {
 #header {
     clear: both;
     float: left;
-    width: 100%;
+    width: 99%;
 }
 #linkbar {
     width: 100%;
@@ -372,4 +372,13 @@ img {
 }
 .help_pic {
   border: 1px solid black;
+}
+.tbl_hts_popup {
+  font-size: 14px;
+}
+.lbl_hts_popup {
+  font-weight: bold;
+}
+#main_search_cont {
+  overflow-x: auto;
 }

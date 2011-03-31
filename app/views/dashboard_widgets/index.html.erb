@@ -41,6 +41,6 @@ $(function () {
   Loading...<br />
   <%=image_tag "ajax-loader.gif" %>
   </div>
-<%=link_to "Full Search", "#{url_for(Kernel.const_get(w.search_setup.module_type))}.json?sid=#{w.search_setup_id}"%><br />
+<%=link_to "Full Search", "#{url_for(Kernel.const_get(w.search_setup.module_type))}?sid=#{w.search_setup_id}"%><br />
 </div>
 <%end%>

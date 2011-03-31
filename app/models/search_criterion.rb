@@ -86,10 +86,10 @@ class SearchCriterion < ActiveRecord::Base
     else
       if boolean_field?
         bool_val = where_value ? 
-          "#{table_name}.#{model_field.field_name} = ?" :
-          "(#{table_name}.#{model_field.field_name} = ? OR #{table_name}.#{model_field.field_name} is null)"
+          "#{model_field.qualified_field_name} = ?" :
+          "(#{model_field.qualified_field_name} = ? OR #{model_field.qualified_field_name} is null)"
       else
-        "#{table_name}.#{model_field.field_name} #{CriterionOperator.find_by_key(self.operator).query_string}"
+        "#{model_field.qualified_field_name} #{CriterionOperator.find_by_key(self.operator).query_string}"
       end
     end
   end

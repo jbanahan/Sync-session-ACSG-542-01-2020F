@@ -2,7 +2,7 @@ class ModelField
   attr_reader :model, :field_name, :label, :sort_rank, 
               :import_lambda, :export_lambda, 
               :custom_id, :data_type, :core_module, 
-              :join_statement, :join_alias, :uid, 
+              :join_statement, :join_alias, :qualified_field_name, :uid, 
               :public, :public_searchable
   
   def initialize(rank,uid,core_module, field, label, options={})
@@ -33,8 +33,14 @@ class ModelField
     pf = PublicField.where(:model_field_uid => @uid)
     @public = !pf.empty?
     @public_searchable = @public && pf.first.searchable
+    @qualified_field_name = o[:qualified_field_name]
   end
   
+
+  def qualified_field_name
+    @qualified_field_name.nil? ? "#{self.join_alias}.#{@field_name}" : @qualified_field_name
+  end
+
   #table alias to use in where clause
   def join_alias
     if @join_alias.nil?
@@ -398,6 +404,7 @@ class ModelField
         },
         :join_statement => "LEFT OUTER JOIN (SELECT COUNT(id) as class_count, product_id FROM classifications WHERE classifications.id IN (select classification_id from tariff_records) group by product_id) as prod_class_count ON prod_class_count.product_id = products.id",
         :join_alias => "prod_class_count",
+        :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
         :data_type => :integer
       }]
     ]

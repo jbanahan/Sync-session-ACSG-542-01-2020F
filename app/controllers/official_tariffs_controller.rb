@@ -20,11 +20,17 @@ class OfficialTariffsController < ApplicationController
     render 'index'
   end
   
+  def find
+    hts = params[:hts]
+    cid = params[:cid]
+    ot = OfficialTariff.where(:hts_code=>hts,:country_id=>cid).first
+    render :json => ot.to_json(:include =>{:country => {:only => :name}})
+  end
   
   private
   def brian_only
     unless current_user.username=="bglick"
-      error_redirect "You do not have permission"
+      error_redirect "You do not have permission to view this page."
       return false
     end
     return true

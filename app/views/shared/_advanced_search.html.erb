@@ -7,7 +7,7 @@ $(function() {
   $("#mod_no_upload").dialog({autoOpen:false,title:"Upload Eligibility",
     width:400,
     buttons:{"OK":function() {$("#mod_no_upload").dialog('close');}}});
-  $("#btn_download").click(function() {window.location.pathname = window.location.pathname + '.csv'})
+  $("#btn_download").click(function() {window.location.pathname = window.location.pathname + '<%=@current_search.download_format.blank? ? ".csv" : ".#{@current_search.download_format}"%>'})
   $("#btn_upload").click(function() {window.location = '<%=new_search_setup_imported_file_path @current_search%>';});
   $("#sel_searches").change(function() {
     $("#main_search_cont").html("<h1>Loading Search Results</h1>");
@@ -174,7 +174,8 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
         <li><a href="#sched_cont">Schedules</a></li>
     </ul>
     <div id='setup_cont'>
-      Name: <%=f.text_field :name, "id"=>"current_name" %>
+      Name: <%=f.text_field :name, "id"=>"current_name" %><br />
+      Download Format: <%=f.select :download_format, ["xls","csv"] %>
       <%=f.hidden_field :module_type %>
     </div>
     <div id='params_cont'>
@@ -240,6 +241,7 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
         <input class='sch_sun' name='<%=ssa%>[run_sunday]' type='hidden' value='<%=ss.run_sunday%>'/>
         <input class='sch_hr' name='<%=ssa%>[run_hour]' type='hidden' value='<%=ss.run_hour%>'/>
         <input class='sch_email' name='<%=ssa%>[email_addresses]' type='hidden' value='<%=ss.email_addresses%>'/>
+        <input class='sch_frmt' name='<%=ssa%>[download_format]' type='hidden' value='<%=ss.download_format%>'/>
         <input class='sch_destroy' name='<%=ssa%>[_destroy]' type='hidden' value='' />
         <%=comma_list {|list| 
           list << "Monday" if ss.run_monday
@@ -285,6 +287,7 @@ hrs_opts = {"midnight"=>"0"}
         <%=field_row "FTP Password", password_field_tag("ftppass","",{:id=>"sd_ftppass",:class=>"dialogtip",:title=>"Note: FTP passwords are stored unencrypted in the database. Aspect 9 employees are able to view these passwords."}) %>
         <%=field_row "FTP Subfolder", text_field_tag("ftpfldr","",{:id=>"sd_ftpfldr",:class=>"dialogtip",:title=>"Subfolder on FTP server (optional)"}) %>
       <% end %>
+      <%=field_row "File Format", select_tag("frmt",options_for_select(["csv","xls"]),{:id=>"sd_frmt"}) %>
       <%=field_row "Hour of Day (Your Timezone)", select_tag("hr",options_for_select(hrs_opts),{:id=>"sd_hr"}) %>
       <%=field_row "Monday", check_box_tag("mon","1",false,{:id=>"sd_mon"}) %>
       <%=field_row "Tuesday", check_box_tag("tue","1",false,{:id=>"sd_tue"}) %>
