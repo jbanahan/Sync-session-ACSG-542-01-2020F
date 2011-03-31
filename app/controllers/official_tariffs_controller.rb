@@ -1,5 +1,5 @@
 class OfficialTariffsController < ApplicationController
-  before_filter :brian_only
+  before_filter :brian_only, :except=>:find
   def index
     @official_tariffs = OfficialTariff.all
   end
