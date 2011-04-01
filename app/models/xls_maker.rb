@@ -11,7 +11,7 @@ class XlsMaker
       sheet.row(0).push(mf.nil? ? "" : mf.label)
     end
     i = 1
-    GridMaker.new(results,cols,current_search.module_chain).go do |row,obj|
+    GridMaker.new(results,cols,current_search.search_criterions,current_search.module_chain).go do |row,obj|
       col = 0
       row.each {|cell| 
         sheet.row(i).push(cell)
