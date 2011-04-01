@@ -77,8 +77,11 @@ function sendComment() {
   <%=form_for(commentable.comments.build, :html=>{:id=>'frm_comment_add'}) do |f| %>
     <%=f.hidden_field :commentable_id %>
     <%=f.hidden_field :commentable_type %>
-    <%=f.text_field :subject, :class=>'comment_input' %><br />
-    <%=f.text_area :body, :rows => '5', :class=>'comment_input' %><br />
+    <table>
+    <%=field_row "Subject", f.text_field(:subject, :class=>'comment_input') %>
+    <%=field_row "Message", f.text_area(:body, :rows => '5', :class=>'comment_input') %>
+    <%=field_row "Email To", text_field_tag(:email_to,nil, :class=>'comment_input') %>
+    </table>
   <%end%>
 </div>
 <div id='mod_comment_send' style='display:none;'>
