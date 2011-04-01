@@ -37,6 +37,77 @@ class SearchCriterion < ActiveRecord::Base
     ModelField.find_by_uid(self.model_field_uid)
   end
   
+  #does the given value pass the criterion test
+  def passes?(value_to_test)
+    mf = model_field
+    d = mf.data_type
+    
+    operators = {:eq => "eq", :co => "co", :sw => "sw", :ew => "ew", :null => "null", 
+      :notnull => "notnull", :gt => "gt", :lt => "lt"}
+    
+    if d == :string
+      if self.operator == operators[:eq]
+        return value_to_test == self.value
+      elsif self.operator == operators[:co]
+        return value_to_test.include?(self.value)
+      elsif self.operator == operators[:sw]
+        return value_to_test.start_with?(self.value)
+      elsif self.operator == operators[:ew]
+        return value_to_test.end_with?(self.value)
+      elsif self.operator == operators[:null]
+        return value_to_test.nil?(self.value)
+      elsif self.operator == operators[:notnull]
+        return !value_to_test.nil?(self.value)
+      end
+    elsif d == :text
+      if self.operator == operators[:eq]
+        return value_to_test == self.value
+      elsif self.operator == operators[:co]
+        return value_to_test.include?(self.value)
+      elsif self.operator == operators[:sw]
+        return value_to_test.start_with?(self.value)
+      elsif self.operator == operators[:ew]
+        return value_to_test.end_with?(self.value)
+      elsif self.operator == operators[:null]
+        return value_to_test.nil?(self.value)
+      elsif self.operator == operators[:notnull]
+        return !value_to_test.nil?(self.value)
+      end
+    elsif d == :date
+      if self.operator == operators[:eq]
+        return value_to_test == self.value
+      elsif self.operator == operators[:null]
+        return value_to_test.nil?(self.value)
+      elsif self.operator == operators[:notnull]
+        return !value_to_test.nil?(self.value)
+      end
+    elsif d == :boolean
+      if self.operator == operators[:eq]
+        return value_to_test == self.value
+      elsif self.operator == operators[:null]
+        return value_to_test.nil?(self.value)
+      elsif self.operator == operators[:notnull]
+        return !value_to_test.nil?(self.value)
+      end  
+    elsif d == :decimal
+      if self.operator == operators[:eq]
+        return value_to_test == self.value
+      elsif self.operator == operators[:gt]
+        return value_to_test > self.value
+      elsif self.operator == operators[:lt]
+        return value_to_test < self.value
+      end
+    elsif d == :integer
+      if self.operator == operators[:eq]
+        return value_to_test == self.value
+      elsif self.operator == operators[:gt]
+        return value_to_test > self.value
+      elsif self.operator == operators[:lt]
+        return value_to_test < self.value
+      end
+    end
+  end
+
   private  
   def add_join(p)
     
@@ -123,5 +194,4 @@ class SearchCriterion < ActiveRecord::Base
     end
   end
 
-  
 end

@@ -38,7 +38,7 @@ GEM
       xml-simple
     builder (2.1.2)
     columnize (0.3.2)
-    configatron (2.7.0)
+    configatron (2.7.2)
       yamler (>= 0.1.0)
     cover_me (1.0.0.rc6)
       configatron
