@@ -86,4 +86,28 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert sc.passes?(9)
     assert !sc.passes?(6)
   end
+  
+  test "passes? :integer all operator permutations" do
+    sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("ordln_line_number").uid, 
+      :operator => "eq", :value=>15)
+    
+      assert sc.passes?(15)
+      assert !sc.passes?(6)
+
+      sc.operator="gt"
+      assert sc.passes?(7)
+      assert !sc.passes?(100)
+
+      sc.operator="lt"
+      assert sc.passes?(30)
+      assert !sc.passes?(6)
+
+      sc.operator="sw"
+      assert sc.passes?(1)
+      assert !sc.passes?(5)
+
+      sc.operator="ew"
+      assert sc.passes?(5)
+      assert !sc.passes?(1)
+  end
 end
