@@ -45,7 +45,7 @@ class SearchCriterionTest < ActiveSupport::TestCase
   
   test "passes? :text all operator permutations" do
     cd =CustomDefinition.create!(:module_type=>"Product", :data_type=>"text", :label=>"blah")
-    sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("*cf_#{cd.id}").uid, :operator => "co", 
+    sc = SearchCriterion.create!(:model_field_uid=>"*cf_#{cd.id}", :operator => "co", 
       :value=>"johnpclaus")
     
     assert sc.passes?("pc")
@@ -62,6 +62,14 @@ class SearchCriterionTest < ActiveSupport::TestCase
     sc.operator="eq"
     assert sc.passes?("johnpclaus")
     assert !sc.passes?("clausjohnp")
+  end
+
+  test "passes? :boolean all operator permutations" do
+    cd = CustomDefinition.create!(:module_type=>"Product", :data_type=>"boolean", :label=>"boolean sc test")
+    sc = SearchCriterion.create!(:model_field_uid=>"*cf_#{cd.id}",:operator=>"eq",:value=>"t")
+
+    assert sc.passes?(true)
+    assert !sc.passes?(false)
   end
   
   test "passes? :decimal all operator permutations" do
