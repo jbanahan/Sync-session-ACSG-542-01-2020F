@@ -72,19 +72,7 @@ class SearchCriterion < ActiveRecord::Base
         self_val = ["t","true","yes","y"].include?(self.value.downcase)
         return value_to_test == self_val
       end  
-    elsif d == :decimal
-      if self.operator == operators[:eq]
-        return self.value == value_to_test
-      elsif self.operator == operators[:gt]
-        return self.value > value_to_test
-      elsif self.operator == operators[:lt]
-        return self.value < value_to_test
-      elsif self.operator == operators[:sw]
-        return self.value.to_s.start_with?(value_to_test.to_s)
-      elsif self.operator == operators[:ew]
-        return self.value.to_s.end_with?(value_to_test.to_s)
-      end
-    elsif d == :integer
+    elsif [:decimal, :integer].include? d
       if self.operator == operators[:eq]
         return self.value == value_to_test
       elsif self.operator == operators[:gt]
@@ -99,9 +87,8 @@ class SearchCriterion < ActiveRecord::Base
     end
   end
 
-  private  
+  private
   def add_join(p)
-      
     mf_cm = model_field.core_module
     p = add_parent_joins p, @module_chain, mf_cm unless @module_chain.nil?
     p = p.joins(model_field.join_statement) unless model_field.join_statement.nil?
@@ -111,6 +98,7 @@ class SearchCriterion < ActiveRecord::Base
   def add_parent_joins(p,module_chain,target_module)
     add_parent_joins_recursive p, module_chain, target_module, module_chain.first
   end
+  
   def add_parent_joins_recursive(p, module_chain, target_module, current_module) 
     new_p = p
     child_module = module_chain.child current_module
@@ -127,8 +115,6 @@ class SearchCriterion < ActiveRecord::Base
   def add_where(p)
     p.where(where_clause,where_value)
   end
-  
-  
 
   def where_clause
     table_name = model_field.join_alias
@@ -167,7 +153,7 @@ class SearchCriterion < ActiveRecord::Base
   def decimal_field?
     return model_field.data_type==:decimal
   end
-  
+
   #value formatted properly for the appropriate condition in the SQL
   def where_value
     return ["t","true","yes","y"].include? self.value.downcase if boolean_field?
