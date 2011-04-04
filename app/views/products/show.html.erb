@@ -57,8 +57,8 @@
 	  <%=field_row "Unique Identifier", @product.unique_identifier%>
 	  <%=field_row "Name",@product.name%>
 	  <%=field_row "Unit of Measure", @product.unit_of_measure%>
-	  <%=field_row "Vendor", @product.vendor.name%>
-	  <%=field_row "Division", @product.division.name%>
+	  <%=field_row "Vendor", @product.vendor.nil? ? "" : @product.vendor.name%>
+	  <%=field_row "Division", @product.division.nil? ? "" : @product.division.name%>
     <%=show_custom_fields @product, {:table=>true}%>
 	</table>
 </td></tr>

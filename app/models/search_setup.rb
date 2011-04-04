@@ -133,7 +133,6 @@ class SearchSetup < ActiveRecord::Base
     if cm==CoreModule::PRODUCT
       messages << "You do not have permission to edit Products." unless self.user.edit_products?
       messages << "Unique Identifier field is required to upload Products." unless has_column "prod_uid"
-      messages << "Vendor Name, ID, or System Code is required to upload Products." unless has_company "prod","ven"
 
       if contains_module CoreModule::CLASSIFICATION
         messages << "To include Classification fields, you must also include the Classification Country Name or ISO code." unless has_classification_country_column

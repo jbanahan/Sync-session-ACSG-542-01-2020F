@@ -9,8 +9,6 @@ class Product < ActiveRecord::Base
   belongs_to :vendor, :class_name => "Company"
   belongs_to :division
   belongs_to :status_rule
-  validates  :vendor, :presence => true
-  validates	 :division, :presence => true
   validates	 :unique_identifier, :presence => true
   validates_uniqueness_of :unique_identifier
 
@@ -24,8 +22,6 @@ class Product < ActiveRecord::Base
   has_many   :attachments, :as => :attachable
   has_many   :comments, :as => :commentable
   has_many   :item_change_subscriptions
-
-  before_validation :default_division
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true,
     :reject_if => lambda { |a| a[:country_id].blank?}

@@ -119,13 +119,11 @@ class SearchSetupTest < ActiveSupport::TestCase
     
     m = []
     assert !s.uploadable?(m), "Should not upload without required fields or as vendor. Messages: #{m}"
-    assert m.length==3, "Messages length should have been 3, was #{m.length}"
+    assert m.length==2, "Messages length should have been 2, was #{m.length}"
     assert m.include?("You do not have permission to edit Products."), "Permission missing. Messages: #{m}"
     assert m.include?("Unique Identifier field is required to upload Products."), "UID required missing. Messages: #{m}"
-    assert m.include?("Vendor Name, ID, or System Code is required to upload Products."), "Vendor requireed missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
-    s.search_columns.create!(:model_field_uid=>"prod_ven_name",:rank=>1)
     s.user=users(:masteruser)
     s.save!
 
@@ -150,7 +148,7 @@ class SearchSetupTest < ActiveSupport::TestCase
 
     cd = CustomDefinition.create!(:label=>"test classification field",:data_type=>"string",:module_type=>"Classification")
     s.search_columns.create!(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
-    assert s.search_columns.size==3, "Confirming setup, search columns size should be 3, was #{s.search_columns.size}"
+    assert s.search_columns.size==2, "Confirming setup, search columns size should be 2, was #{s.search_columns.size}"
     m = []
     assert !s.uploadable?(m), "Should not upload with classification and no country."
     assert m.include?("To include Classification fields, you must also include the Classification Country Name or ISO code."), "Missing Classification Country msg. Messages: #{m}"
