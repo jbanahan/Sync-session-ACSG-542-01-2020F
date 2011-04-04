@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class SearchCriterionTest < ActiveSupport::TestCase
+  
   test "with join" do
     v = Company.create!(:name=>"VVVVVV", :vendor=>true)
     uid = "puid12345 with join"
@@ -19,5 +20,66 @@ class SearchCriterionTest < ActiveSupport::TestCase
     result = sc.apply(Product)
     assert result.length == 1, "Should have returned one record, returned #{result.length}"
     assert result.first == p, "Should have returned product created in this test."
+  end
+
+  test "passes? :string all operator permutations" do
+    sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("prod_uid").uid, :operator => "co", 
+      :value=>"johnpclaus")
+
+    assert sc.passes?("pc")
+    assert !sc.passes?("cp")
+    
+    sc.operator="sw"
+    assert sc.passes?("john")
+    assert !sc.passes?("claus")
+    
+    sc.operator="ew"
+    assert sc.passes?("claus")
+    assert !sc.passes?("john")
+    
+    sc.operator="eq"
+    assert sc.passes?("johnpclaus")
+    assert !sc.passes?("clausjohnp")
+  end
+  
+  test "passes? :text all operator permutations" do
+    cd =CustomDefinition.create!(:module_type=>"Product", :data_type=>"text", :label=>"blah")
+    sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("*cf_#{cd.id}").uid, :operator => "co", 
+      :value=>"johnpclaus")
+    
+    assert sc.passes?("pc")
+    assert !sc.passes?("cp")
+    
+    sc.operator="sw"
+    assert sc.passes?("john")
+    assert !sc.passes?("claus")
+    
+    sc.operator="ew"
+    assert sc.passes?("claus")
+    assert !sc.passes?("john")
+    
+    sc.operator="eq"
+    assert sc.passes?("johnpclaus")
+    assert !sc.passes?("clausjohnp")
+  end
+  
+  test "passes? :decimal all operator permutations" do
+    sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("ordln_ordered_qty").uid, 
+      :operator => "eq", :value=>6.9)
+
+    assert sc.passes?(6.9)
+    assert !sc.passes?(9.6)
+    
+    sc.operator="gt"
+    assert sc.passes?(9.0)
+    assert !sc.passes?(3.2)
+    
+    sc.operator="lt"
+    assert sc.passes?(3.2)
+    assert !sc.passes?(9.0)
+    
+    sc.operator="sw"
+    
+    sc.operator="ew"
   end
 end

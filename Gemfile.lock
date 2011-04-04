@@ -70,7 +70,6 @@ GEM
     mongrel (1.2.0.pre2-x86-mingw32)
       gem_plugin (~> 0.2.3)
     mysql2 (0.2.6)
-    mysql2 (0.2.6-x86-mingw32)
     paperclip (2.3.8)
       activerecord
       activesupport

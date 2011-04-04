@@ -45,64 +45,57 @@ class SearchCriterion < ActiveRecord::Base
     operators = {:eq => "eq", :co => "co", :sw => "sw", :ew => "ew", :null => "null", 
       :notnull => "notnull", :gt => "gt", :lt => "lt"}
     
-    if d == :string
+    return value_to_test.nil? if self.operator == operators[:null]
+    return !value_to_test.nil? if self.operator == operators[:notnull]
+    
+    if [:string, :text].include? d
       if self.operator == operators[:eq]
-        return value_to_test == self.value
+        return self.value == value_to_test
       elsif self.operator == operators[:co]
-        return value_to_test.include?(self.value)
+        return self.value.include?(value_to_test)
       elsif self.operator == operators[:sw]
-        return value_to_test.start_with?(self.value)
+        return self.value.start_with?(value_to_test)
       elsif self.operator == operators[:ew]
-        return value_to_test.end_with?(self.value)
-      elsif self.operator == operators[:null]
-        return value_to_test.nil?(self.value)
-      elsif self.operator == operators[:notnull]
-        return !value_to_test.nil?(self.value)
-      end
-    elsif d == :text
-      if self.operator == operators[:eq]
-        return value_to_test == self.value
-      elsif self.operator == operators[:co]
-        return value_to_test.include?(self.value)
-      elsif self.operator == operators[:sw]
-        return value_to_test.start_with?(self.value)
-      elsif self.operator == operators[:ew]
-        return value_to_test.end_with?(self.value)
-      elsif self.operator == operators[:null]
-        return value_to_test.nil?(self.value)
-      elsif self.operator == operators[:notnull]
-        return !value_to_test.nil?(self.value)
+        return self.value.end_with?(value_to_test)
       end
     elsif d == :date
+      self.value = Date.parse self.value
       if self.operator == operators[:eq]
         return value_to_test == self.value
-      elsif self.operator == operators[:null]
-        return value_to_test.nil?(self.value)
-      elsif self.operator == operators[:notnull]
-        return !value_to_test.nil?(self.value)
+      elsif self.operator == operators[:gt]
+        return value_to_test < self_val
+      elsif self.operator == operators[:lt]
+        return value_to_test > self_val
       end
     elsif d == :boolean
       if self.operator == operators[:eq]
-        return value_to_test == self.value
-      elsif self.operator == operators[:null]
-        return value_to_test.nil?(self.value)
-      elsif self.operator == operators[:notnull]
-        return !value_to_test.nil?(self.value)
+        self_val = ["t","true","yes","y"].include?(self.value.downcase)
+        return value_to_test == self_val
       end  
     elsif d == :decimal
+      #self_val = self.value.gsub(/[^0-9]/,'').to_f
       if self.operator == operators[:eq]
         return value_to_test == self.value
       elsif self.operator == operators[:gt]
         return value_to_test > self.value
       elsif self.operator == operators[:lt]
         return value_to_test < self.value
+      elsif self.operator == operators[:sw]
+        return value_to_test < self.value
+      elsif self.operator == operators[:ew]
+        return value_to_test < self.value
       end
     elsif d == :integer
+      #self_val = self.value.gsub(/[^0-9]/,'').to_i
       if self.operator == operators[:eq]
         return value_to_test == self.value
       elsif self.operator == operators[:gt]
         return value_to_test > self.value
       elsif self.operator == operators[:lt]
+        return value_to_test < self.value
+      elsif self.operator == operators[:sw]
+        return value_to_test < self.value
+      elsif self.operator == operators[:ew]
         return value_to_test < self.value
       end
     end
@@ -110,7 +103,7 @@ class SearchCriterion < ActiveRecord::Base
 
   private  
   def add_join(p)
-    
+      
     mf_cm = model_field.core_module
     p = add_parent_joins p, @module_chain, mf_cm unless @module_chain.nil?
     p = p.joins(model_field.join_statement) unless model_field.join_statement.nil?
