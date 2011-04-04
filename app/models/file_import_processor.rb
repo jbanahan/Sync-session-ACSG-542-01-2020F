@@ -84,6 +84,12 @@ class FileImportProcessor
         object_map[mod] = obj
       end
     end
+    object_map.values.each do |obj|
+      if obj.class.include?(StatusableSupport)
+        obj.set_status
+        obj.save
+      end
+    end
     messages
   end
 

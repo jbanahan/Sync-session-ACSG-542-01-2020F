@@ -154,4 +154,20 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert t2 == tariffs.first, "Should have found same tariff record"
     assert t2.hts_1 == vh[:hts_hts_1], "HTS should have been #{vh[:hts_hts_1]}, was #{t2.hts_1}"
   end
+
+  test "change product status" do
+    p = Product.create!(:unique_identifier=>"CPS",:vendor_id=>companies(:vendor))
+    p.set_status
+    p.save!
+    assert p.status_rule==status_rules(:ProductFallback)
+
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"cpstest",:user_id=>users(:masteruser))
+    ["prod_uid","*cf_1"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
+    f = ss.imported_files.new(:filename=>'fn.csv',:size=>1,:content_type=>'text/csv',:ignore_first_row=>false)
+    assert f.process(:attachment_data=>"#{p.unique_identifier},true")
+
+    p = Product.find p.id
+    assert p.status_rule==status_rules(:ProductIsApproved), "Status rule should have been #{status_rules(:ProductIsApproved).id}, was #{p.status_rule_id}"
+  end
+
 end
