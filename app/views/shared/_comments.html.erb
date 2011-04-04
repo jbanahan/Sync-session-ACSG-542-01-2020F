@@ -80,7 +80,7 @@ function sendComment() {
     <table>
     <%=field_row "Subject", f.text_field(:subject, :class=>'comment_input') %>
     <%=field_row "Message", f.text_area(:body, :rows => '5', :class=>'comment_input') %>
-    <%=field_row "Email To", text_field_tag(:email_to,nil, :class=>'comment_input') %>
+    <%=field_row "Email To", text_field_tag(:to,nil, :class=>'comment_input') %>
     </table>
   <%end%>
 </div>
