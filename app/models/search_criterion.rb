@@ -73,17 +73,16 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test == self_val
       end  
     elsif d == :decimal
-      #self_val = self.value.gsub(/[^0-9]/,'').to_f
       if self.operator == operators[:eq]
-        return value_to_test == self.value
+        return self.value == value_to_test
       elsif self.operator == operators[:gt]
-        return value_to_test > self.value
+        return self.value > value_to_test
       elsif self.operator == operators[:lt]
-        return value_to_test < self.value
+        return self.value < value_to_test
       elsif self.operator == operators[:sw]
-        return value_to_test < self.value
+        return self.value.to_s.start_with?(value_to_test.to_s)
       elsif self.operator == operators[:ew]
-        return value_to_test < self.value
+        return self.value.to_s.end_with?(value_to_test.to_s)
       end
     elsif d == :integer
       #self_val = self.value.gsub(/[^0-9]/,'').to_i

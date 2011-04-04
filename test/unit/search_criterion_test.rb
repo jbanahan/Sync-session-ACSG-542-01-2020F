@@ -71,15 +71,19 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert !sc.passes?(9.6)
     
     sc.operator="gt"
-    assert sc.passes?(9.0)
-    assert !sc.passes?(3.2)
-    
-    sc.operator="lt"
     assert sc.passes?(3.2)
     assert !sc.passes?(9.0)
     
+    sc.operator="lt"
+    assert sc.passes?(9.0)
+    assert !sc.passes?(3.2)
+    
     sc.operator="sw"
+    assert sc.passes?(6)
+    assert !sc.passes?(9)
     
     sc.operator="ew"
+    assert sc.passes?(9)
+    assert !sc.passes?(6)
   end
 end
