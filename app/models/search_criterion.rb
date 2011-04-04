@@ -59,13 +59,13 @@ class SearchCriterion < ActiveRecord::Base
         return self.value.end_with?(value_to_test)
       end
     elsif d == :date
-      self.value = Date.parse self.value
+      self.value = Date.parse self.value.to_s
       if self.operator == operators[:eq]
-        return value_to_test == self.value
+        return self.value == value_to_test
       elsif self.operator == operators[:gt]
-        return value_to_test < self_val
+        return self.value > value_to_test
       elsif self.operator == operators[:lt]
-        return value_to_test > self_val
+        return self.value < value_to_test
       end
     elsif d == :boolean
       if self.operator == operators[:eq]

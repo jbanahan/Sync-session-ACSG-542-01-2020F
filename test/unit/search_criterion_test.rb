@@ -12,6 +12,7 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert result.length == 1, "Should have returned one record."
     assert result.first.id == p.id
   end
+
   test "tariff join" do
     p = Product.create!(:unique_identifier=>"tj",:vendor_id=>companies(:vendor).id, :division=>Division.first)
     c = p.classifications.create!(:country_id => Country.first)
@@ -109,5 +110,22 @@ class SearchCriterionTest < ActiveSupport::TestCase
       sc.operator="ew"
       assert sc.passes?(5)
       assert !sc.passes?(1)
+  end
+  
+  test "passes? :date all operator permutations" do
+    d = Date.new
+    sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("sale_order_date").uid, 
+      :operator => "eq", :value=>d)
+    
+      assert sc.passes?(d)
+      assert !sc.passes?(d + 6)
+      
+      sc.operator = "gt"
+      assert sc.passes?(d - 10)
+      assert !sc.passes?(d + 6)
+      
+      sc.operator = "lt"
+      assert sc.passes?(d + 10)
+      assert !sc.passes?(d - 6)
   end
 end
