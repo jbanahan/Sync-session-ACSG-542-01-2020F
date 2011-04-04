@@ -373,6 +373,13 @@ img {
 .help_pic {
   border: 1px solid black;
 }
+#help_links_list {
+  list-style: none;
+}
+#help_links_list li {
+  font-size: 125%;
+  margin-bottom: .5em;
+}
 .tbl_hts_popup {
   font-size: 14px;
 }
