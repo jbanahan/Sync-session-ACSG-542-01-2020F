@@ -94,6 +94,14 @@ class SearchCriterionTest < ActiveSupport::TestCase
     sc.operator="ew"
     assert sc.passes?(9)
     assert !sc.passes?(6)
+    
+    sc.operator="null"
+    assert sc.passes?(sc.value=nil)
+    assert !sc.passes?(sc.value=6.9)
+    
+    sc.operator="notnull"
+    assert sc.passes?(sc.value=6.9)
+    assert !sc.passes?(sc.value=nil)
   end
   
   test "passes? :integer all operator permutations" do
@@ -118,6 +126,14 @@ class SearchCriterionTest < ActiveSupport::TestCase
       sc.operator="ew"
       assert sc.passes?(5)
       assert !sc.passes?(1)
+
+      sc.operator="null"
+      assert sc.passes?(sc.value=nil)
+      assert !sc.passes?(sc.value=15)
+
+      sc.operator="notnull"
+      assert sc.passes?(sc.value=15)
+      assert !sc.passes?(sc.value=nil)
   end
   
   test "passes? :date all operator permutations" do
