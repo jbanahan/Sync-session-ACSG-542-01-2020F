@@ -32,6 +32,20 @@ class SearchSetupsController < ApplicationController
       redirect_to Kernel.const_get(base.module_type)
     end
   end
+  def give
+    base = SearchSetup.for_user(current_user).find(params[:id])
+    if base.nil?
+      error_redirect "Search with ID #{params[:id]} not found."
+    else
+      other_user = User.find(params[:other_user_id])
+      if current_user.company.master? || other_user.company_id==current_user.company_id || other_user.company.master?
+        base.give_to other_user
+        redirect_to Kernel.const_get(base.module_type)
+      else
+        error_redirect "You do not have permission to give this search to user with ID #{params[:other_user_id]}."
+      end
+    end
+  end
   def destroy
     base = SearchSetup.for_user(current_user).find(params[:id])
     name = base.name

@@ -2,6 +2,32 @@ require 'test_helper'
 
 class SearchSetupTest < ActiveSupport::TestCase
 
+  test "give_to" do
+    source_user = users(:vendoruser)
+    dest_user = users(:masteruser)
+
+    base = SearchSetup.create!(:module_type=>CoreModule::DELIVERY.class_name, :name=>"Test Give to",:user_id=>source_user.id)
+    base_col = base.search_columns.create!(:model_field_uid=>"del_ref",:rank=>0)
+    base_crit = base.search_criterions.create!(:model_field_uid=>"del_ref",:operator=>"eq",:value=>"X")
+    base_sort = base.sort_criterions.create!(:model_field_uid=>"del_ref",:rank=>0)
+    base.search_schedules.create!
+
+    base.give_to dest_user
+    found = SearchSetup.where(:name=>base.name+" (From #{source_user.full_name})")
+    assert found.size==1, "Expected 1, found #{found.size}"
+    dest = found.first
+
+    assert dest.id!=base.id
+    assert dest.user_id = dest_user.id
+    assert dest.module_type==base.module_type
+    assert dest.search_columns.size==1
+    assert dest.search_columns.first.model_field_uid=="del_ref"
+    assert dest.search_criterions.size==1
+    assert dest.search_criterions.first.model_field_uid=="del_ref"
+    assert dest.sort_criterions.size==1
+    assert dest.sort_criterions.first.model_field_uid=="del_ref"
+    assert dest.search_schedules.blank?
+  end
   test "uploadable - Delivery" do
     s = SearchSetup.create!(:module_type=>CoreModule::DELIVERY.class_name, :name=>"uploadable - delivery",:user_id => users(:vendoruser).id)
     m = []

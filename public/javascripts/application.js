@@ -551,3 +551,20 @@ function htsDataRow(label,data) {
     return "";
   }
 }
+
+function loadUserList(destinationSelect,selectedId) {
+  $.getJSON('/users.json',function(data) {
+    var i;
+    var h = "";
+    for(i=0;i<data.length;i++) {
+      var company = data[i].company;
+      var j;
+      for(j=0;j<company.users.length;j++) {
+        var u = company.users[j];
+        var selected = (u.id==selectedId ? "selected=\'true\' " : "");
+        h += "<option value='"+u.id+"' "+selected+">"+company.name+" - "+u.first_name+" "+u.last_name+"</option>";
+      }
+    }
+    destinationSelect.html(h);
+  });
+}

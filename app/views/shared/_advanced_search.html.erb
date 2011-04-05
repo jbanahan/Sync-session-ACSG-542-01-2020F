@@ -105,11 +105,11 @@ $(function() {
     submitForm();
   });
   $("#mod_new_name").dialog({autoOpen:false,title:"Save As New",
-      buttons:{"Save":function() {
-        window.location = '<%=url_for @current_search%>/copy?new_name='+escape($("#txt_new_name").val());
-      },"Cancel":function() {$("#mod_new_name").dialog('close');}
-      }
-    });
+    buttons:{"Save":function() {
+      window.location = '<%=url_for @current_search%>/copy?new_name='+escape($("#txt_new_name").val());
+    },"Cancel":function() {$("#mod_new_name").dialog('close');}
+    }
+  });
   $("#btn_setup_copy").click(function() {
     $("#txt_new_name").val("Copy of "+$("#current_name").val());
     $("#mod_new_name").dialog('open');
@@ -142,6 +142,21 @@ $(function() {
     $("#mod_schedule").dialog('open');
   });
   applyScheduleHooks();
+  $("#mod_give_to").dialog({autoOpen:false,width:'auto',title:"Give Copy",
+      buttons:{Give:function() {
+        var val = $("#give_user_list").val();
+        if(isNaN(val)) {
+          window.alert("You must select a user to give the report to.");
+        } else {
+          window.location = '<%=url_for @current_search%>/give?other_user_id='+val;
+        }
+      },Cancel:function() {$("#mod_give_to").dialog('close');}
+      }
+  });
+  $("#btn_give_to").click(function(evt) {  
+    loadUserList($("#give_user_list"),"");
+    $("#mod_give_to").dialog('open');
+  });
 });
 function addParameter() {
   var m = new Date().getTime();
@@ -159,7 +174,6 @@ function addParameter() {
   $("#sp_table").append(h);   
 }
 <%end%>
-
 
 <div id='main_search_cont'>
 Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>&nbsp;<a href='#' id='show_srch_setup'>Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Setup</a><br />
@@ -262,13 +276,17 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
     <% end %>
   </div>  
   <div style='text-align:right;'>
-    <button id='btn_setup_save'>Save</button>&nbsp;
-    <button id='btn_setup_copy'>Copy / New</button>&nbsp;
-    <button id='btn_setup_delete'>Delete</button>
+    <button id='btn_setup_save' title='Save Search'>Save</button>&nbsp;
+    <button id='btn_give_to' title='Give a copy of this search to another user'>Give</button>
+    <button id='btn_setup_copy' title='Make a new copy of this search for yourself'>Copy / New</button>&nbsp;
+    <button id='btn_setup_delete' title='Delete this search'>Delete</button>
   </div>
   <div id='mod_new_name' style='display:none;'>Enter a name for your new search:<br /><input id='txt_new_name' /></div>
   <div style='display:none'> <!--hide the real button, because we want to keep everything on the same row-->
     <%= button_to "Delete", @current_search, :method => :delete, :id=>"real_delete_button" %>
+  </div>
+  <div id='mod_give_to' style='display:none;'>Pick a user to give a copy of the report to:<br />
+    <select id='give_user_list'><option value=''>Loading...</option></select>
   </div>
   <div id='mod_delete' style='display:none;'>Are you sure you want to delete this search?</div>
   <div id='mod_schedule' style='display:none;'>

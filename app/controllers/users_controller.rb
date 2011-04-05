@@ -3,16 +3,26 @@ class UsersController < ApplicationController
     # GET /users
     # GET /users.xml
     def index
-        if current_user.admin?
-            @users = User.where(["company_id = ?",params[:company_id]])
-            @company = Company.find(params[:company_id])
-            respond_to do |format|
-                format.html { render :layout => 'one_col'}# index.html.erb
-                format.xml  { render :xml => @users }
-            end
-        else
-            error_redirect "You do not have permission to view this user list."
-        end
+      respond_to do |format|
+        format.html {
+          if current_user.admin?
+              @users = User.where(["company_id = ?",params[:company_id]])
+              @company = Company.find(params[:company_id])
+              render :layout => 'one_col' # index.html.erb
+          else
+              error_redirect "You do not have permission to view this user list."
+          end
+        }
+        format.json {
+          companies = []
+          if current_user.company.master?
+            companies = Company.all
+          else
+            companies = [current_user.company,Company.where(:master=>true).first]
+          end
+          render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name]}})
+        }
+      end
     end
 
     # GET /users/1

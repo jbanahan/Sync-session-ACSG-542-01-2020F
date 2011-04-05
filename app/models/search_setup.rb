@@ -66,6 +66,13 @@ class SearchSetup < ActiveRecord::Base
     ss
   end
   
+  # Makes a deep copy of the search and assigns it to the given user
+  def give_to other_user
+    ss = deep_copy self.name+" (From #{self.user.full_name})", true
+    ss.user = other_user
+    ss.save
+  end
+
   # Returns a copy of the SearchSetup with matching columns, search & sort criterions 
   # all built.
   #
