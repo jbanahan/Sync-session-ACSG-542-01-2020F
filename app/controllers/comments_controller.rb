@@ -7,7 +7,9 @@ class CommentsController < ApplicationController
         add_flash :errors, "You do not have permission to add comments to this item."
       end
       cmt.user = current_user
-      cmt.save
+      if cmt.save
+        email cmt
+      end
       errors_to_flash cmt 
     end  
     redirect_to commentable
@@ -28,7 +30,10 @@ class CommentsController < ApplicationController
     cmt = Comment.find(params[:id])
     commentable = cmt.commentable
     action_secure(current_user.id==cmt.user_id, cmt, {:lock_check => false, :verb => "edit", :module_name => "comment"}) {
-      add_flash :notices, "Comment updated successfully." if cmt.update_attributes(params[:comment])
+      if cmt.update_attributes(params[:comment]) 
+        add_flash :notices, "Comment updated successfully."
+        email cmt
+      end
       errors_to_flash cmt
     }
     redirect_to commentable
@@ -36,8 +41,17 @@ class CommentsController < ApplicationController
   def send_email
     cmt = Comment.find(params[:id])
     action_secure(cmt.commentable.can_view?(current_user),cmt.commentable, {:lock_check => false, :verb => "work with", :module_name => "item"}) {
-      OpenMailer.send_comment(current_user,params[:to],cmt,comment_url(cmt)).deliver
+      email cmt
     }
     render :text=>"OK"
   end
+
+private
+  def email cmt
+    to = params[:to]
+    unless to.blank?
+      OpenMailer.send_comment(current_user,to,cmt,comment_url(cmt)).deliver
+    end
+  end
+
 end

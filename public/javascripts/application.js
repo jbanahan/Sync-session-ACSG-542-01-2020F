@@ -532,6 +532,11 @@ function tariffPopUp(htsNumber,country_id) {
         h += htsDataRow("GPT:",o.general_preferential_tariff_rate);
         h += htsDataRow("Erga Omnes:",o.erga_omnes_rate);
         h += htsDataRow("Column 2:",o.column_2_rate);
+        if(o.official_quota!=undefined) {
+          h += htsDataRow("Quota Category",o.official_quota.category);
+          h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor);
+          h += htsDataRow("SME UOM",o.official_quota.unit_of_measure);
+        }
         h += "</tbody></table>";
       }
       c.html(h);
