@@ -24,7 +24,7 @@ class OfficialTariffsController < ApplicationController
     hts = params[:hts]
     cid = params[:cid]
     ot = OfficialTariff.where(:hts_code=>hts,:country_id=>cid).first
-    render :json => ot.to_json(:include =>{:country => {:only => :name}})
+    render :json => ot.to_json(:include =>{:country => {:only => :name},:official_quota=>{:only=>[:category,:unit_of_measure,:square_meter_equivalent_factor]}})
   end
   
   private
