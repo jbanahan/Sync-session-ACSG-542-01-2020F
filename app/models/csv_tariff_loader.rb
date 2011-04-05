@@ -44,6 +44,8 @@ class CsvTariffLoader
       puts "Processed line #{i} for country: #{@country.name}" if i>50 && i%50==0
       i += 1
     end
+    puts "Re-linking tariffs for #{@country.name}"
+    OfficialQuota.relink_country @country 
   end
 
   def self.process_folder folder_path
