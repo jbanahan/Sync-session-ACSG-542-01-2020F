@@ -260,6 +260,47 @@ class ModelField
     r << n
     r
   end
+
+  def self.make_hts_arrays(rank_start,uid_prefix,label_prefix) 
+    id_counter = rank_start
+    r = []
+    (1..3).each do |i|
+      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"#{label_prefix}HTS #{i}"]
+      id_counter += 1
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate,"#{label_prefix}HTS #{i} - General Rate",{
+        :import_lambda => lambda {|obj,data| return "General Duty Rate cannot be set by import, ignored."},
+        :export_lambda => lambda {|t|
+          ot = case i
+            when 1 then t.hts_1_official_tariff
+            when 2 then t.hts_2_official_tariff
+            when 3 then t.hts_3_official_tariff
+          end
+          ot.nil? ? "" : ot.general_rate 
+        },
+        :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+        :join_alias => "OT_#{i}",
+        :data_type=>:string
+      }]
+      id_counter += 1
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_qc".to_sym,:category,"#{label_prefix}HTS #{i} - Quota Category",{
+        :import_lambda => lambda {|obj,data| return "Quota Category cannot be set by import, ignored."},
+        :export_lambda => lambda {|t|
+          ot = case i
+            when 1 then t.hts_1_official_tariff
+            when 2 then t.hts_2_official_tariff
+            when 3 then t.hts_3_official_tariff
+          end
+          return "" if ot.nil?
+          q = ot.official_quota
+          q.nil? ? "" : q.category
+        },
+        :join_statement => "LEFT OUTER JOIN official_quotas AS OQ_#{i} on OQ_#{i}.hts_code = tariff_records.hts_#{i} AND OQ_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+        :join_alias => "OQ_#{i}",
+        :data_type=>:string
+      }]
+    end
+    r
+  end
   
   def self.make_ship_to_arrays(rank_start,uid_prefix,label_prefix,table_name)
     make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,"to")
@@ -414,12 +455,14 @@ class ModelField
     add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","Classification - ","classifications")
 
     add_fields CoreModule::TARIFF, [
+=begin
       [1,:hts_hts_1,:hts_1,"Tariff - HTS 1"],
       [2,:hts_hts_2,:hts_2,"Tariff - HTS 2"],
       [3,:hts_hts_3,:hts_3,"Tariff - HTS 3"],
+=end
       [4,:hts_line_number,:line_number,"Tariff - Row"]
     ]
-
+    add_fields CoreModule::TARIFF, make_hts_arrays(100,"hts","Tariff - ")
     add_fields CoreModule::ORDER, [
       [1,:ord_ord_num,:order_number,"Header - Order Number"],
       [2,:ord_ord_date,:order_date,"Header - Order Date",{:data_type=>:date}],

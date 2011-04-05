@@ -16,4 +16,20 @@ class TariffRecordTest < ActiveSupport::TestCase
     t = c.tariff_records.create!
     assert t.line_number == 1, "Line number should be 1, was #{t.line_number}"
   end
+
+  test "hts_#_official_tariff" do
+    cntry = Country.first
+    ot1 = OfficialTariff.create!(:full_description=>"FD",:country_id=>cntry,:hts_code=>"991199")
+    ot2 = OfficialTariff.create!(:full_description=>"FD2",:country_id=>cntry,:hts_code=>"444111")
+    ot3 = OfficialTariff.create!(:full_description=>"FD3",:country_id=>cntry,:hts_code=>"44885566")
+    c = Classification.create!(:country_id=>cntry,:product_id=>Product.first)
+    t = c.tariff_records.build(:hts_1=>ot1.hts_code,:hts_2=>ot2.hts_code,:hts_3=>ot3.hts_code)
+    assert ot1==t.hts_1_official_tariff, "Expected official tariff #{ot1.id}, got #{t.hts_1_official_tariff.id}"
+    assert ot2==t.hts_2_official_tariff
+    assert ot3==t.hts_3_official_tariff
+    t.hts_1 = ot1.hts_code+"111"
+    t.hts_2 = nil
+    assert t.hts_1_official_tariff.nil?
+    assert t.hts_2_official_tariff.nil?
+  end
 end

@@ -22,6 +22,18 @@ class TariffRecord < ActiveRecord::Base
   def hts_3=(str)
     write_attribute(:hts_3, clean_hts(str))
   end
+
+  def hts_1_official_tariff
+    find_official_tariff self.hts_1  
+  end
+
+  def hts_2_official_tariff
+    find_official_tariff self.hts_2
+  end
+
+  def hts_3_official_tariff
+    find_official_tariff self.hts_3
+  end
   
   def auto_set_line_number 
     #WARNING: this is used by a migration so it can't go away or be renamed without 
@@ -43,7 +55,7 @@ class TariffRecord < ActiveRecord::Base
   def clean_hts(str)
     str.gsub(/[^0-9]/,'') unless str.nil?
   end
-  
-
- 
+  def find_official_tariff hts_number
+    OfficialTariff.where(:country_id=>self.classification.country,:hts_code=>hts_number).first unless self.classification.nil? || hts_number.blank?
+  end
 end
