@@ -50,22 +50,22 @@ class SearchCriterion < ActiveRecord::Base
     
     if [:string, :text].include? d
       if self.operator == operators[:eq]
-        return self.value == value_to_test
+        return value_to_test.downcase == self.value.downcase
       elsif self.operator == operators[:co]
-        return self.value.include?(value_to_test)
+        return value_to_test.downcase.include?(self.value.downcase)
       elsif self.operator == operators[:sw]
-        return self.value.start_with?(value_to_test)
+        return value_to_test.downcase.start_with?(self.value.downcase)
       elsif self.operator == operators[:ew]
-        return self.value.end_with?(value_to_test)
+        return value_to_test.downcase.end_with?(self.value.downcase)
       end
     elsif d == :date
       self_val = Date.parse self.value.to_s
       if self.operator == operators[:eq]
-        return self_val == value_to_test
+        return value_to_test == self_val
       elsif self.operator == operators[:gt]
-        return self_val > value_to_test
+        return value_to_test > self_val
       elsif self.operator == operators[:lt]
-        return self_val < value_to_test
+        return value_to_test < self_val
       end
     elsif d == :boolean
       if self.operator == operators[:eq]
@@ -74,15 +74,15 @@ class SearchCriterion < ActiveRecord::Base
       end  
     elsif [:decimal, :integer].include? d
       if self.operator == operators[:eq]
-        return self.value == value_to_test
+        return value_to_test == self.value
       elsif self.operator == operators[:gt]
-        return self.value > value_to_test
+        return value_to_test > self.value
       elsif self.operator == operators[:lt]
-        return self.value < value_to_test
+        return value_to_test < self.value
       elsif self.operator == operators[:sw]
-        return self.value.to_s.start_with?(value_to_test.to_s)
+        return value_to_test.to_s.start_with?(self.value.to_s)
       elsif self.operator == operators[:ew]
-        return self.value.to_s.end_with?(value_to_test.to_s)
+        return value_to_test.to_s.end_with?(self.value.to_s)
       end
     end
   end

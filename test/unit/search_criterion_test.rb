@@ -25,43 +25,43 @@ class SearchCriterionTest < ActiveSupport::TestCase
 
   test "passes? :string all operator permutations" do
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("prod_uid").uid, :operator => "co", 
-      :value=>"johnpclaus")
+      :value=>"cde")
 
-    assert sc.passes?("pc")
+    assert sc.passes?("abcdef")
     assert !sc.passes?("cp")
     
     sc.operator="sw"
-    assert sc.passes?("john")
-    assert !sc.passes?("claus")
+    assert sc.passes?("cdef")
+    assert !sc.passes?("de")
     
     sc.operator="ew"
-    assert sc.passes?("claus")
-    assert !sc.passes?("john")
+    assert sc.passes?("abcde")
+    assert !sc.passes?("cd")
     
     sc.operator="eq"
-    assert sc.passes?("johnpclaus")
-    assert !sc.passes?("clausjohnp")
+    assert sc.passes?("cde")
+    assert !sc.passes?("edc")
   end
   
   test "passes? :text all operator permutations" do
     cd =CustomDefinition.create!(:module_type=>"Product", :data_type=>"text", :label=>"blah")
     sc = SearchCriterion.create!(:model_field_uid=>"*cf_#{cd.id}", :operator => "co", 
-      :value=>"johnpclaus")
+      :value=>"cde")
     
-    assert sc.passes?("pc")
-    assert !sc.passes?("cp")
-    
-    sc.operator="sw"
-    assert sc.passes?("john")
-    assert !sc.passes?("claus")
-    
-    sc.operator="ew"
-    assert sc.passes?("claus")
-    assert !sc.passes?("john")
-    
-    sc.operator="eq"
-    assert sc.passes?("johnpclaus")
-    assert !sc.passes?("clausjohnp")
+      assert sc.passes?("abcdef")
+      assert !sc.passes?("cp")
+
+      sc.operator="sw"
+      assert sc.passes?("cdef")
+      assert !sc.passes?("de")
+
+      sc.operator="ew"
+      assert sc.passes?("abcde")
+      assert !sc.passes?("cd")
+
+      sc.operator="eq"
+      assert sc.passes?("cde")
+      assert !sc.passes?("edc")
   end
 
   test "passes? :boolean all operator permutations" do
@@ -80,19 +80,19 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert !sc.passes?(9.6)
     
     sc.operator="gt"
-    assert sc.passes?(3.2)
-    assert !sc.passes?(9.0)
-    
-    sc.operator="lt"
     assert sc.passes?(9.0)
     assert !sc.passes?(3.2)
     
+    sc.operator="lt"
+    assert sc.passes?(5.0)
+    assert !sc.passes?(8.0)
+    
     sc.operator="sw"
-    assert sc.passes?(6)
+    assert sc.passes?(6.903)
     assert !sc.passes?(9)
     
     sc.operator="ew"
-    assert sc.passes?(9)
+    assert sc.passes?(16.9)
     assert !sc.passes?(6)
     
     sc.operator="null"
@@ -112,19 +112,19 @@ class SearchCriterionTest < ActiveSupport::TestCase
       assert !sc.passes?(6)
 
       sc.operator="gt"
-      assert sc.passes?(7)
-      assert !sc.passes?(100)
+      assert sc.passes?(17)
+      assert !sc.passes?(9)
 
       sc.operator="lt"
-      assert sc.passes?(30)
-      assert !sc.passes?(6)
+      assert sc.passes?(10)
+      assert !sc.passes?(20)
 
       sc.operator="sw"
-      assert sc.passes?(1)
+      assert sc.passes?(150)
       assert !sc.passes?(5)
 
       sc.operator="ew"
-      assert sc.passes?(5)
+      assert sc.passes?(515)
       assert !sc.passes?(1)
 
       sc.operator="null"
@@ -145,11 +145,11 @@ class SearchCriterionTest < ActiveSupport::TestCase
       assert !sc.passes?(d + 6)
       
       sc.operator = "gt"
-      assert sc.passes?(d - 10)
-      assert !sc.passes?(d + 6)
-      
-      sc.operator = "lt"
       assert sc.passes?(d + 10)
       assert !sc.passes?(d - 6)
+      
+      sc.operator = "lt"
+      assert sc.passes?(d - 10)
+      assert !sc.passes?(d + 6)
   end
 end
