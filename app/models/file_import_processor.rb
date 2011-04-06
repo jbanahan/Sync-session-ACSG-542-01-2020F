@@ -20,7 +20,7 @@ class FileImportProcessor
     processed_row = false
     begin
       r = @import_file.ignore_first_row ? 1 : 0
-      CSV.parse(@data,{:skip_blanks=>true,:headers => @import_file.ignore_first_row}) do |row|
+      get_rows do |row|
         begin
           do_row row, true
         rescue => e
@@ -34,7 +34,7 @@ class FileImportProcessor
   end
   
   def preview_file
-    CSV.parse(@data,{:headers => @import_file.ignore_first_row}) do |row|
+    get_rows do |row|
       return do_row row, false
     end
   end
@@ -45,7 +45,13 @@ class FileImportProcessor
     :SalesOrder => {:csv => SaleCSVImportProcessor}
     }
     h = p[import_file.search_setup.module_type.intern]
-    r = h.nil? ? CSVImportProcessor : h[:csv]
+    file_type = import_file.attached_file_name.downcase.ends_with?("xls") ? :xls : :csv
+    r = nil
+    if h.nil? || file_type==:xls
+      r = file_type==:xls ? SpreadsheetImportProcessor : CSVImportProcesssor
+    else
+      r = h[file_type]
+    end
     r.new(import_file, data)
   end
   def do_row row, save
@@ -131,7 +137,21 @@ class FileImportProcessor
 
   class CSVImportProcessor < FileImportProcessor
 
+    def get_rows &block
+      CSV.parse(@data,{:skip_blanks=>true,:headers => @import_file.ignore_first_row}) do |row|
+        yield row
+      end
+    end
+  end
 
+  class SpreadsheetImportProcessor < FileImportProcessor
+    def get_rows &block
+      b = Spreadsheet.open(@data)
+      s = b.sheet 0
+      s.each (@import_file.ignore_first_row ? 1 : 0) do |row|
+        yield row
+      end
+    end
   end
     
   class ProductCSVImportProcessor < CSVImportProcessor

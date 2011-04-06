@@ -1,5 +1,7 @@
 class ImportedFile < ActiveRecord::Base
   
+  require 'open-uri'
+
   has_attached_file :attached,
     :storage => :s3,
     :s3_credentials => "#{Rails.root}/config/s3.yml",
@@ -23,6 +25,11 @@ class ImportedFile < ActiveRecord::Base
   end
   
   
+  def attachment_as_file
+    uri = URI.parse(AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], {:expires_in => 10.minutes, :use_ssl => true})
+    open(uri.to_s)
+  end
+
   def attachment_data
     retries = 0
     begin
