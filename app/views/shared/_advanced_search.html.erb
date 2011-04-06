@@ -10,8 +10,9 @@ $(function() {
   $("#btn_download").click(function() {window.location.pathname = window.location.pathname + '<%=@current_search.download_format.blank? ? ".csv" : ".#{@current_search.download_format}"%>'})
   $("#btn_upload").click(function() {window.location = '<%=new_search_setup_imported_file_path @current_search%>';});
   $("#sel_searches").change(function() {
+    var myId = $(this).val();
     $("#main_search_cont").html("<h1>Loading Search Results</h1>");
-    window.location.search="?sid="+$(this).val();
+    window.location.search="?sid="+myId;
   });
   var all_model_fields;
   $("#search_setup").tabs();
