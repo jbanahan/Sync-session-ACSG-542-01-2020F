@@ -1,11 +1,11 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <% 
   no_buttons = false
   no_buttons = true if @no_buttons
   no_buttons = true if !local_assigns[:not_buttons].nil?
 %>
 <!-- System UUID: <%=MasterSetup.first.uuid%> -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-GB">
 <head>
   <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
   <title>chain.io</title>
@@ -127,9 +127,8 @@
 <head>
 <body>
 <div id="header">
-  <span id="corner_title">
-      <%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %>
-  </span>
+  <div id="top_box">
+  <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
   <% if current_user %>
     <% unless no_buttons %>
     <div id="corner_links">
@@ -140,6 +139,9 @@
         <%= help_link "Help" %> |
         <%= link_to 'Logout', logout_path %>
     </div>
+  <% end %>
+  </div>
+  <% if current_user %>
     <div id="linkbar">
       <%if current_user.view_products?%><button id='btn_products' title='Search for products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
       <%if current_user.view_orders?%><button id='btn_orders' title='Search for orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>

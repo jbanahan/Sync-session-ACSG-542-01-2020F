@@ -137,6 +137,10 @@ img {
     padding-bottom: 2px;
     margin-top: 10px;
 }
+#top_box {
+  width: 98%;
+  vertical-align: top;
+}
 #corner_links {
     padding-top: 5px;
     float: right;

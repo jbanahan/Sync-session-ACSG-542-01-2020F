@@ -311,7 +311,7 @@ function getShippingAddressList(select,companyId,selected_val,companyType) {
 */
 function getAddress(wrapper,address_id,options) {
   defaultOptions = {
-    includeName: true,
+    includeName: true
   }
   
   if (typeof options == 'object') {
