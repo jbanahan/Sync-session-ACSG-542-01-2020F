@@ -1,5 +1,6 @@
 class SearchCriterion < ActiveRecord::Base
   include HoldsCustomDefinition
+  include JoinSupport
   
   belongs_to :milestone_plan
   belongs_to :status_rule  
@@ -12,16 +13,7 @@ class SearchCriterion < ActiveRecord::Base
   def apply(p, module_chain = nil)
     p = p.where("1=1") if p.class.to_s == "Class"
     if module_chain.nil?
-      if self.search_setup.nil?
-        cm = CoreModule.find_by_class_name(p.klass.to_s)
-        if cm.nil?
-          @module_chain = nil
-        else
-          @module_chain = cm.default_module_chain
-        end
-      else
-        @module_chain = self.search_setup.module_chain
-      end
+      set_module_chain p
     else
       @module_chain = module_chain
     end
@@ -33,13 +25,9 @@ class SearchCriterion < ActiveRecord::Base
     "*cf_#{custom_definition.id}"
   end
 
-  def model_field
-    ModelField.find_by_uid(self.model_field_uid)
-  end
-  
   #does the given value pass the criterion test
   def passes?(value_to_test)
-    mf = model_field
+    mf = find_model_field
     d = mf.data_type
     
     operators = {:eq => "eq", :co => "co", :sw => "sw", :ew => "ew", :null => "null", 
@@ -88,70 +76,44 @@ class SearchCriterion < ActiveRecord::Base
   end
 
   private
-  def add_join(p)
-    mf_cm = model_field.core_module
-    p = add_parent_joins p, @module_chain, mf_cm unless @module_chain.nil?
-    p = p.joins(model_field.join_statement) unless model_field.join_statement.nil?
-    p
-  end
-
-  def add_parent_joins(p,module_chain,target_module)
-    add_parent_joins_recursive p, module_chain, target_module, module_chain.first
-  end
-  
-  def add_parent_joins_recursive(p, module_chain, target_module, current_module) 
-    new_p = p
-    child_module = module_chain.child current_module
-    unless child_module.nil?
-      child_join = current_module.child_joins[child_module]
-      new_p = p.joins(child_join) unless child_join.nil?
-      unless child_module==target_module
-        new_p = add_parent_joins_recursive new_p, module_chain, target_module, child_module
-      end
-    end
-    new_p
-  end
   
   def add_where(p)
     p.where(where_clause,where_value)
   end
 
   def where_clause
-    table_name = model_field.join_alias
-    if model_field.field_name.to_s.starts_with? "*cf_"
-      c_def_id = model_field.field_name.to_s[4,model_field.field_name.to_s.length-1]
-      if c_def_id.to_i.to_s == c_def_id
-        cd = CustomDefinition.find(c_def_id)
-        if boolean_field?
-          bool_val = where_value ? "custom_values.boolean_value = ?" : "(custom_values.boolean_value is null OR custom_values.boolean_value = ?)"
-          "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{bool_val})"
-        else
-          "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND custom_values.#{cd.data_column} #{CriterionOperator.find_by_key(self.operator).query_string})"
-        end
+    mf = find_model_field
+    table_name = mf.join_alias
+    if custom_field? 
+      c_def_id = mf.custom_id
+      cd = CustomDefinition.find(c_def_id)
+      if boolean_field?
+        bool_val = where_value ? "custom_values.boolean_value = ?" : "(custom_values.boolean_value is null OR custom_values.boolean_value = ?)"
+        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{bool_val})"
       else
-        "1=0"
+        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND custom_values.#{cd.data_column} #{CriterionOperator.find_by_key(self.operator).query_string})"
       end
     else
       if boolean_field?
         bool_val = where_value ? 
-          "#{model_field.qualified_field_name} = ?" :
-          "(#{model_field.qualified_field_name} = ? OR #{model_field.qualified_field_name} is null)"
+          "#{mf.qualified_field_name} = ?" :
+          "(#{mf.qualified_field_name} = ? OR #{mf.qualified_field_name} is null)"
       else
-        "#{model_field.qualified_field_name} #{CriterionOperator.find_by_key(self.operator).query_string}"
+        "#{mf.qualified_field_name} #{CriterionOperator.find_by_key(self.operator).query_string}"
       end
     end
   end
   
   def boolean_field?
-    return model_field.data_type==:boolean
+    return find_model_field.data_type==:boolean
   end
   
   def integer_field?
-    return model_field.data_type==:integer
+    return find_model_field.data_type==:integer
   end
   
   def decimal_field?
-    return model_field.data_type==:decimal
+    return find_model_field.data_type==:decimal
   end
 
   #value formatted properly for the appropriate condition in the SQL
