@@ -14,23 +14,30 @@ class ImportedFile < ActiveRecord::Base
   belongs_to :search_setup
     
   def process(options={})
-    a_data = options[:attachment_data].nil? ? self.attachment_data : options[:attachment_data]
-    FileImportProcessor.process self, a_data
+    @a_data = options[:attachment_data] if !options[:attachment_data].nil?
+    FileImportProcessor.process self
     return self.errors.size == 0
   end
   
   def preview(options={})
-    a_data = options[:attachment_data].nil? ? self.attachment_data : options[:attachment_data]
-    FileImportProcessor.preview self, a_data
+    @a_data = options[:attachment_data] if !options[:attachment_data].nil?
+    FileImportProcessor.preview self
   end
   
   
-  def attachment_as_file
-    uri = URI.parse(AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], {:expires_in => 10.minutes, :use_ssl => true})
-    open(uri.to_s)
+  def attachment_as_workbook
+    #http://www.webmantras.com/blog/?p=554
+    u = AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], {:expires_in => 10.minutes, :use_ssl => true}
+    book = nil
+    puts "URI!!!!!!!!!!!!!!: #{u}"
+    open u do |f|
+      book = Spreadsheet.open f
+    end
+    book
   end
 
   def attachment_data
+    return @a_data unless @a_data.nil?
     retries = 0
     begin
       uri = URI.parse(AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], {:expires_in => 10.minutes, :use_ssl => true})
