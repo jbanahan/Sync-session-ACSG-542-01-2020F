@@ -8,7 +8,6 @@ class SearchCriterion < ActiveRecord::Base
   
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true
-  validates  :value, :presence => true
   
   def apply(p, module_chain = nil)
     p = p.where("1=1") if p.class.to_s == "Class"
