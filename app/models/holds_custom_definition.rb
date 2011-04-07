@@ -14,6 +14,10 @@ module HoldsCustomDefinition
     ModelField.find_by_uid self[:model_field_uid]
   end
   
+  def custom_field?
+    find_model_field.custom?
+  end
+
   private
 
   def set_custom_definition_id

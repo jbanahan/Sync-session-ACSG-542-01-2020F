@@ -56,9 +56,10 @@ class GridMaker
 
   def test_row(row_objects)
     @criteria.each do |c|
-      mf = c.model_field
+      mf = c.find_model_field
       obj = row_objects[mf.core_module]
       val = mf.process_export(obj)
+      return true if obj.nil? && c.operator=="null"
       return false if obj.nil? || !c.passes?(val) 
     end
     true

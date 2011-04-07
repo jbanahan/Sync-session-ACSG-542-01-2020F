@@ -15,7 +15,7 @@ class SearchSetup < ActiveRecord::Base
   accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
     :reject_if => lambda { |a| 
       r_val = false
-      [:model_field_uid,:operator,:value].each { |f|
+      [:model_field_uid,:operator].each { |f|
         r_val = true if a[f].blank?
       } 
       r_val

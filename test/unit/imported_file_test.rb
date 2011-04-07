@@ -35,7 +35,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ic.save!
     ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row => true)
+    f = ImportedFile.new(:attached_file_name => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row => true)
     f.save!
     assert !f.process({:attachment_data => attachment}), "Process passed and should have failed."
     assert f.errors[:base].include?("Row 2: An order's vendor cannot be changed via a file upload."), "Did not find vendor error message."
@@ -48,7 +48,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
     ic.search_columns.create(:model_field_uid => "ordln_puid", :rank => 2)
     ic.search_columns.create(:model_field_uid => "ordln_ordered_qty", :rank => 3)
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row => false)
+    f = ImportedFile.new(:attached_file_name => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row => false)
     f.save!
     order_number = "r_e_d_o_c_h"
     attachment = "#{order_number},2,\"\",\"\""
@@ -74,7 +74,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       ic.search_columns.create!(:model_field_uid => mf.uid, :rank => i)
     end
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row=>false)
+    f = ImportedFile.new(:attached_file_name => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ic.id, :ignore_first_row=>false)
     assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Order.where(:order_number => vh[:order_number]).first
     assert found.order_date.yday == vh[:order_date].yday, "Order date failed"
@@ -102,7 +102,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     end
     ss.search_columns.create!(:model_field_uid => "_blank", :rank=>1000) #testing a blank column
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:filename => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ss.id, :ignore_first_row=>false)
+    f = ImportedFile.new(:attached_file_name => 'fname', :size => 1, :content_type => 'text/csv', :search_setup_id => ss.id, :ignore_first_row=>false)
     assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:unique_identifier]).first
     assert found.name == vh[:name], "name failed"
@@ -124,7 +124,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       attach_array << vh[uid]
       ss.search_columns.create!(:model_field_uid => uid,:rank=>i)
     end
-    f = ss.imported_files.new(:filename=>'fname',:size=>1,:content_type => 'text/csv',:ignore_first_row=>false)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:size=>1,:content_type => 'text/csv',:ignore_first_row=>false)
     assert f.process(:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:prod_uid]).first
     assert found.vendor_id == vh[:prod_ven_id], "vendor id failed"
@@ -163,7 +163,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"cpstest",:user_id=>users(:masteruser))
     ["prod_uid","*cf_1"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
-    f = ss.imported_files.new(:filename=>'fn.csv',:size=>1,:content_type=>'text/csv',:ignore_first_row=>false)
+    f = ss.imported_files.new(:attached_file_name=>'fn.csv',:size=>1,:content_type=>'text/csv',:ignore_first_row=>false)
     assert f.process(:attachment_data=>"#{p.unique_identifier},true")
 
     p = Product.find p.id
