@@ -17,7 +17,6 @@ class Product < ActiveRecord::Base
   has_many   :sales_order_lines, :dependent => :destroy
   has_many   :shipment_lines, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
-  has_many   :piece_sets, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
   has_many   :attachments, :as => :attachable
   has_many   :comments, :as => :commentable
