@@ -189,7 +189,7 @@ function feedbackDialog() {
         };
         $.post('/feedback', send_data);
         $(this).dialog('close');   
-        $("body").append("<div id='mod_thanks'>Thank you for your feedback.</div>");
+        $("body").append("<div id='mod_thanks' style='display:none;'>Thank you for your feedback.</div>");
         $("#mod_thanks").dialog({title: "Thank You",
           buttons:{"Close":function() {$(this).dialog('close');}}}); 
       },

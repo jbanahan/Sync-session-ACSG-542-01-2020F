@@ -27,7 +27,9 @@ class OpenMailer < ActionMailer::Base
     @params = params
     @request = request
     mail(:to => 'chainio-feedback@aspect9.com',
-          :subject => "[chain.io User Feedback] from #{current_user.full_name} @ #{current_user.company.name}")
+         :subject => "[chain.io User Feedback] #{current_user.full_name} - #{current_user.company.name} - #{Time.now}",
+         :reply_to => current_user.email
+        )
   end
 
   def send_password_reset(user)
