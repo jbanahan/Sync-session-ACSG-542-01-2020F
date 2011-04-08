@@ -95,7 +95,7 @@ function add_tf_row(link,parent_index) {
   <div class='classification_box cf_row'>
       <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
       <%=cf.hidden_field :country_id%>
-      <a href='#' class='classification_expand'>Expand</a><a href='#' class='classification_shrink'>Shrink</a>    
+      <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
       <div class='classification_detail_box'>
         <table>
         <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>

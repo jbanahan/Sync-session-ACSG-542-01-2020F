@@ -69,29 +69,34 @@
 <div class='attachments_container section_insert'>
   <h2 class='section_insert_heading'>Classifications</h2>
   <% @product.classifications.each do |c| %>
-  <h2><%=c.country.name.titleize%></h2>
-  <table>
-  <%=show_custom_fields c, {:table=>true} %>
-  </table>
-  <table class='detail_table'>
-    <thead>
-      <th>Row</td>
-      <th>HTS 1</th>
-      <th>HTS 2</th>
-      <th>HTS 3</th>    
-    </thead>
-    <tbody>
-      <% c.tariff_records.each do |t| %>
-      <tr>
-        <td><%=t.line_number%></td>
-        <td><%=show_tariff t.hts_1,c.country_id%></td>
-        <td><%=show_tariff t.hts_2,c.country_id%></td>
-        <td><%=show_tariff t.hts_3,c.country_id%></td>
-      </tr>
-      <% end %>
-    </tbody>
-  </table>
-  <% end %>
+  <div> <!--isolate each classification-->
+    <h2><%=c.country.name.titleize%></h2>
+    <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
+    <div class='classification_detail_box'>
+      <table>
+      <%=show_custom_fields c, {:table=>true} %>
+      </table>
+    </div>
+    <table class='detail_table'>
+      <thead>
+        <th>Row</td>
+        <th>HTS 1</th>
+        <th>HTS 2</th>
+        <th>HTS 3</th>    
+      </thead>
+      <tbody>
+        <% c.tariff_records.each do |t| %>
+        <tr>
+          <td><%=t.line_number%></td>
+          <td><%=show_tariff t.hts_1,c.country_id%></td>
+          <td><%=show_tariff t.hts_2,c.country_id%></td>
+          <td><%=show_tariff t.hts_3,c.country_id%></td>
+        </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+    <% end %>
 </div>
 <% end %>
 
