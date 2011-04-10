@@ -55,11 +55,11 @@
   <thead><tr><th>Order Information</th></tr></thead>
   <tbody><tr><td>
   <table>
-  <%=field_row "Order Number", @order.order_number  %>
-  <%=field_row "Ship To", render(:partial=>'addresses/display',:locals=>{ :ad => @order.ship_to, :address_id => 'ship_to_ad' } ) %>
-  <%=field_row "Order Date", @order.order_date %>
-  <%=field_row "Division", (@order.division.blank? ? "" : @order.division.name) %>
-  <%=field_row "Vendor", (@order.vendor.blank? ? "" : @order.vendor.name) %>
+  <%=field_row field_label(:ord_ord_num), @order.order_number  %>
+  <%=field_row field_label(:ord_ship_to_name), render(:partial=>'addresses/display',:locals=>{ :ad => @order.ship_to, :address_id => 'ship_to_ad' } ) %>
+  <%=field_row field_label(:ord_ord_date), @order.order_date %>
+  <%=field_row field_label(:ord_div_name), (@order.division.blank? ? "" : @order.division.name) %>
+  <%=field_row field_label(:ord_ven_name), (@order.vendor.blank? ? "" : @order.vendor.name) %>
   <%=show_custom_fields @order, {:table=>true}%>
   </table>
   </td></tr>
@@ -68,13 +68,13 @@
 <br />
 <table class="detail_table">
 	<thead>
-	  <th>Line</th>
-		<th>Product</th>
-		<th>Ordered</th>
+	  <th><%=field_label :ordln_line_number%></th>
+		<th><%=field_label :prod_name%></th>
+		<th><%=field_label :ordln_ordered_qty%></th>
 		<th>Shipped</th>
 		<th>Received</th>
-		<th>Unit of Measure</th>
-		<th>Price / Unit</th>
+		<th><%=field_label :prod_uom%></th>
+		<th><%=field_label :ordln_ppu%></th>
 		<th>Total Price</th>
 		<th></th>
 	</thead>
@@ -113,11 +113,11 @@
   <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
   <table>
     <% form_line.default_line_number%>
-    <%=field_row "Line Number", f.text_field(:line_number, "size" => 2) %>
-    <%=field_row "Product", f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
-    <%=field_row "Ordered Quantity", f.text_field(:quantity, "size" => 5) %>
-    <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
-    <%=field_row "Price / Unit", f.text_field(:price_per_unit, "size" => 5) %>
+    <%=field_row field_label(:ordln_line_number), f.text_field(:line_number, "size" => 2) %>
+    <%=field_row field_label(:prod_name), f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
+    <%=field_row field_label(:ordln_ordered_qty), f.text_field(:quantity, "size" => 5) %>
+    <%=field_row field_label(:prod_uom), content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
+    <%=field_row field_label(:ordln_ppu), f.text_field(:price_per_unit, "size" => 5) %>
     <%= show_custom_fields form_line, {:form => true, :table=>true}%>
   </table>
   <% end %>

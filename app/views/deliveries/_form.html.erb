@@ -22,10 +22,10 @@ $(function() {
 
 <%= form_for(@delivery, :html => {:id=>'frm_shp'} ) do |f| %>
 <div class='content_head'>
-  <span class='content_head_label'>Reference:</span>
+  <span class='content_head_label'><%=field_label :del_ref%>:</span>
   <b><%= f.text_field :reference %></b>
   <br />
-  <span class='content_head_label'>Customer:</span>
+  <span class='content_head_label'><%=field_label :del_cust_name%>:</span>
   <% if @delivery.delivery_lines.size > 0 %>
     <%= f.hidden_field :customer_id %><%= @delivery.customer.name %>
   <% elsif current_user.company.customer? 
@@ -36,7 +36,7 @@ $(function() {
   <% end %>  
 </div>
 <table class='detail_table'>
-  <thead><th>Ship From</th><th>Ship To</th></thead>
+  <thead><th><%=field_label :del_ship_from_name%></th><th><%=field_label :del_ship_to_name%></th></thead>
   <tbody><tr>
     <td style='width:50%'>
       <%= f.select(:ship_from_id, [['...Loading...','']])%> 
@@ -56,7 +56,7 @@ $(function() {
   <tbody>
     <tr>
       <td style='width:50%'>
-        <b>Carrier: </b>
+        <b><%=field_label :del_car_name%>: </b>
         <% if current_user.company.carrier? 
             @delivery.carrier = current_user.company %>
         <%= f.hidden_field :carrier_id %><%= @delivery.carrier.name %>
@@ -64,7 +64,7 @@ $(function() {
         <%= f.collection_select :carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "-Select a carrier"} %>
         <% end %>
         <br />
-        <b>Mode: </b>
+        <b><%=field_label :del_mode%>: </b>
         <%= f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
 				<%=show_custom_fields @delivery, {:form => true}%>
       </td>

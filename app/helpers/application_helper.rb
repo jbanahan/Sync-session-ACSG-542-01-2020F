@@ -1,4 +1,9 @@
 module ApplicationHelper
+  def field_label model_field_uid
+    mf = ModelField.find_by_uid model_field_uid
+    return "Unknown Field" if mf.nil?
+    mf.label
+  end
   def help_link(text,page_name=nil)
     "<a href='/help#{page_name.blank? ? "" : "?page="+page_name}' target='chainio_help'>#{text}</a>".html_safe
   end

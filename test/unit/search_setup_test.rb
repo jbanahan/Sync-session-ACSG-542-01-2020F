@@ -28,14 +28,30 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert dest.sort_criterions.first.model_field_uid=="del_ref"
     assert dest.search_schedules.blank?
   end
+
+  def labels_string fields
+    r = ""
+    fields.each_with_index do |f,i|
+      r << "or " if i==fields.size-1
+      r << ModelField.find_by_uid(f).label
+      r << ", " if i<(fields.size-1)
+    end
+    r
+  end
+
+  def label f
+    ModelField.find_by_uid(f).label
+  end
+
   test "uploadable - Delivery" do
     s = SearchSetup.create!(:module_type=>CoreModule::DELIVERY.class_name, :name=>"uploadable - delivery",:user_id => users(:vendoruser).id)
     m = []
     assert !s.uploadable?(m), "Should not upload w/o required fields or as vendor. Messages: #{m}"
     assert m.length==3, "Messages length should have been 3, was #{m.length}"
     assert m.include?("You do not have permission to edit Deliveries."), "Permission missing. Messages: #{m}"
-    assert m.include?("Reference field is required to upload Deliveries."), "Reference missing. Messages: #{m}"
-    assert m.include?("Customer Name, ID, or System Code is required to upload Deliveries."), "Customer missing. Messages: #{m}"
+    assert m.include?("#{label "del_ref"} field is required to upload Deliveries."), "Reference missing. Messages: #{m}"
+    exp = "#{labels_string ["del_cust_name","del_cust_id","del_cust_syscode"]} is required to upload Deliveries."
+    assert m.include?(exp), "Customer missing, expected: #{exp}. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"del_ref", :rank=>0)
     s.search_columns.create!(:model_field_uid=>"del_cust_id",:rank=>1)
@@ -51,8 +67,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert !s.uploadable?(m), "Should not upload w/o required fields or as vendor. Messages: #{m}"
     assert m.length==3, "Messages length should have been 3, was #{m.length}"
     assert m.include?("You do not have permission to edit Sales."), "Permission missing. Messages: #{m}"
-    assert m.include?("Order Number field is required to upload Sales."), "Order number missing. Messages: #{m}"
-    assert m.include?("Customer Name, ID, or System Code is required to upload Sales."), "Customer missing. Messages: #{m}"
+    assert m.include?("#{label "sale_order_number"} field is required to upload Sales."), "Order number missing. Messages: #{m}"
+    assert m.include?("#{labels_string ["sale_cust_name","sale_cust_id","sale_cust_syscode"]} is required to upload Sales."), "Customer missing. Messages: #{m}"
     
     s.search_columns.create!(:model_field_uid => "sale_order_number", :rank=>0)
     s.search_columns.create!(:model_field_uid => "sale_cust_name", :rank=>1)
@@ -67,8 +83,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     m = []
     assert !s.uploadable?(m), "Should not upload, did. Messages: #{m}"
     assert m.length == 2, "Messages length should have been 2, was #{m.length}"
-    assert m.include?("Line - Row is required to upload Sale Lines."), "Line number required missing. Messages: #{m}"
-    assert m.include?("Line - Product Unique Identifier or Name is required to upload Sale Lines."), "PUID required missing. Messages: #{m}"
+    assert m.include?("#{label "soln_line_number"} is required to upload Sale Lines."), "Line number required missing. Messages: #{m}"
+    assert m.include?("#{labels_string ["soln_puid","soln_pname"]} is required to upload Sale Lines."), "PUID required missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid => "soln_puid", :rank=>3)
     s.search_columns.create!(:model_field_uid => "soln_line_number", :rank=>4)
@@ -83,8 +99,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert !s.uploadable?(m), "Should not upload w/o required fields or as customer. Messages: #{m}"
     assert m.length==3, "Messages length should have been 3, was #{m.length}"
     assert m.include?("You do not have permission to edit Shipments."), "Permission missing. Messages: #{m}"
-    assert m.include?("Reference Number field is required to upload Shipments."), "Reference missing. Messages: #{m}"
-    assert m.include?("Vendor Name, ID, or System Code is required to upload Shipments."), "Vendor required missing. Messages: #{m}"
+    assert m.include?("#{label "shp_ref"} field is required to upload Shipments."), "Reference missing. Messages: #{m}"
+    assert m.include?("#{labels_string ["shp_ven_name","shp_ven_id","shp_ven_syscode"]} is required to upload Shipments."), "Vendor required missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"shp_ref",:rank=>0)
     s.search_columns.create!(:model_field_uid=>"shp_ven_name",:rank=>1)
@@ -98,8 +114,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     m = []
     assert !s.uploadable?(m), "Should not upload without required line fields. Messages: #{m}"
     assert m.length == 2, "Messages length should have been 2, was #{m.length}"
-    assert m.include?("Line - Row is required to upload Shipment Lines."), "Row missing. Messages: #{m}"
-    assert m.include?("Line - Product Unique Identifier or Name is required to upload Shipment Lines."), "Product missing. Messages: #{m}"
+    assert m.include?("#{label "shpln_line_number"} is required to upload Shipment Lines."), "Row missing. Messages: #{m}"
+    assert m.include?("#{labels_string ["shpln_puid","shpln_pname"]} is required to upload Shipment Lines."), "Product missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"shpln_puid",:rank=>3)
     s.search_columns.create!(:model_field_uid=>"shpln_line_number",:rank=>4)
@@ -114,8 +130,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert !s.uploadable?(m), "Should not upload without required fields or as vendor. Messages: #{m}"
     assert m.length==3, "Messages length should have been 3, was #{m.length}"
     assert m.include?("You do not have permission to edit Orders."), "Permission missing. Messages: #{m}"
-    assert m.include?("Order Number field is required to upload Orders."), "Order Number required missing. Messages: #{m}"
-    assert m.include?("Vendor Name, ID, or System Code is required to upload Orders."), "Vendor required missing. Messages: #{m}"
+    assert m.include?("#{label "ord_ord_num"} field is required to upload Orders."), "Order Number required missing. Messages: #{m}"
+    assert m.include?("#{labels_string ["ord_ven_name","ord_ven_id","ord_ven_syscode"]} is required to upload Orders."), "Vendor required missing. Messages: #{m}"
 
     s.user = users(:masteruser)
     s.save!
@@ -130,8 +146,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     m = []
     assert !s.uploadable?(m), "Shouldn't upload without required Order Line fields. Messages: #{m}"
     assert m.length==2, "Messages length should have been 2, was #{m.length}"
-    assert m.include?("Line - Row is required to upload Order Lines."), "Line number required missing. Messages: #{m}"
-    assert m.include?("Line - Product Unique Identifier or Name is required to upload Order Lines."), "PUID required missing. Messages: #{m}"
+    assert m.include?("#{label "ordln_line_number"} is required to upload Order Lines."), "Line number required missing. Messages: #{m}"
+    assert m.include?("#{labels_string ["ordln_puid","ordln_pname"]} is required to upload Order Lines."), "PUID required missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"ordln_line_number",:rank=>3)
     s.search_columns.create!(:model_field_uid=>"ordln_puid",:rank=>4)
@@ -147,7 +163,7 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert !s.uploadable?(m), "Should not upload without required fields or as vendor. Messages: #{m}"
     assert m.length==2, "Messages length should have been 2, was #{m.length}"
     assert m.include?("You do not have permission to edit Products."), "Permission missing. Messages: #{m}"
-    assert m.include?("Unique Identifier field is required to upload Products."), "UID required missing. Messages: #{m}"
+    assert m.include?("#{label "prod_uid"} field is required to upload Products."), "UID required missing. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
     s.user=users(:masteruser)
@@ -160,8 +176,8 @@ class SearchSetupTest < ActiveSupport::TestCase
     
     m = []
     assert !s.uploadable?(m), "shouldn't upload with HTS and no row or classification. Messages: #{m}"
-    assert m.include?("To include Tariff fields, you must also include the Classification Country Name or ISO code."), "Classification required missing. Messages: #{m}"
-    assert m.include?("To include Tariff fields, you must also include the Tariff Row."), "Tariff Row required missing. Messages: #{m}"
+    assert m.include?("To include Tariff fields, you must also include #{labels_string ["class_cntry_name","class_cntry_iso"]}."), "Classification required missing. Messages: #{m}"
+    assert m.include?("To include Tariff fields, you must also include #{label "hts_line_number"}."), "Tariff Row required missing. Messages: #{m}"
     
     ccn = s.search_columns.create!(:model_field_uid=>"class_cntry_name",:rank=>3)
     hn = s.search_columns.create!(:model_field_uid=>"hts_line_number",:rank=>4)
@@ -177,7 +193,7 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert s.search_columns.size==2, "Confirming setup, search columns size should be 2, was #{s.search_columns.size}"
     m = []
     assert !s.uploadable?(m), "Should not upload with classification and no country."
-    assert m.include?("To include Classification fields, you must also include the Classification Country Name or ISO code."), "Missing Classification Country msg. Messages: #{m}"
+    assert m.include?("To include Classification fields, you must also include #{labels_string ["class_cntry_name","class_cntry_iso"]}."), "Missing Classification Country msg. Messages: #{m}"
 
     s.search_columns.create!(:model_field_uid=>"class_cntry_iso",:rank=>4)
     m = []

@@ -24,15 +24,15 @@ $(function() {
 <% end %>
 
 <div class='content_head'>
-	<span class='content_head_label'>Reference:</span>
+	<span class='content_head_label'><%=field_label(:shp_ref)%>:</span>
 	<b><%= @shipment.reference %></b>
 	<br />
-	<span class='content_head_label'>Vendor:</span>
+	<span class='content_head_label'><%=field_label(:shp_ven_name)%>:</span>
   <b><%= @shipment.vendor.name %></b>
   <br />&nbsp;
 </div>
 <table class='detail_table'>
-  <thead><th>Ship From</th><th>Ship To</th></thead>
+  <thead><th><%=field_label(:shp_ship_from_name)%></th><th><%=field_label(:shp_ship_to_name)%></th></thead>
   <tbody><tr>
     <td style='width:50%' class='hover'>
       <%=  render :partial => 'addresses/display', :locals => { :ad => @shipment.ship_from, :address_id => 'ship_from_ad' } %>
@@ -50,10 +50,10 @@ $(function() {
   <tbody>
     <tr>
       <td style='width:50%'>
-        <b>Carrier:</b>
+        <b><%=field_label(:shp_car_name)%>:</b>
         <%= @shipment.carrier_id.nil? ? '' : @shipment.carrier.name %>
         <br />
-        <b>Mode:</b>
+        <b><%=field_label(:shp_mode)%>:</b>
         <%=@shipment.mode %>
 				<%=show_custom_fields @shipment%>
       </td>
@@ -63,7 +63,11 @@ $(function() {
 
 <table class='detail_table'>
   <thead>
-    <tr><th>Row</th><th>Product</th><th>Ship Quantity</th><th>Order Number - Line</th><th><a href='#' id='lnk_all_details'>All Details</a></th>
+    <tr><th><%=field_label(:shpln_line_number)%></th>
+    <th><%=field_label(:prod_name)%></th>
+    <th><%=field_label(:shpln_shipped_qty)%></th>
+    <th><%=field_label(:ordln_line_number)%></th>
+    <th><a href='#' id='lnk_all_details'>All Details</a></th>
   </thead>
   <tbody>
     <%@shipment.shipment_lines.order("line_number ASC").each do |line|%>

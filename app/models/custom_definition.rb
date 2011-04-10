@@ -9,6 +9,7 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :search_columns, :dependent => :destroy
   
   after_save :reset_model_field_constants 
+  after_save :reset_field_label
   
   def date?
     (!self.data_type.nil?) && self.data_type=="date"
@@ -42,5 +43,9 @@ class CustomDefinition < ActiveRecord::Base
   private
   def reset_model_field_constants
     ModelField.reset_custom_fields
+  end
+
+  def reset_field_label
+    FieldLabel.set_label "*cf_#{self.id}", self.label
   end
 end

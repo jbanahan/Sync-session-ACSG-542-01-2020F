@@ -29,11 +29,11 @@ function checkUOMChange() {
 <%= form_for @product, :html=>{:id=>'frm_prod'} do |f| %>
 <input type='hidden' name='original_uom' id='original_uom' value='<%=@product.unit_of_measure%>' />
 <table>
-  <%=field_row "Unique Identifier", f.text_field(:unique_identifier) %>
-  <%=field_row "Name", f.text_field(:name) %>
-  <%=field_row "Unit of Measure", f.text_field(:unit_of_measure, :id=>'txt_uom') %>
-  <%=field_row "Vendor", f.collection_select(:vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "Select a vendor"}) %>
-  <%=field_row "Division", f.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}) %>
+  <%=field_row field_label(:prod_uid), f.text_field(:unique_identifier) %>
+  <%=field_row field_label(:prod_name), f.text_field(:name) %>
+  <%=field_row field_label(:prod_uom), f.text_field(:unit_of_measure, :id=>'txt_uom') %>
+  <%=field_row field_label(:prod_ven_name), f.collection_select(:vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "Select a vendor"}) %>
+  <%=field_row field_label(:prod_div_name), f.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}) %>
   <%=show_custom_fields @product, {:form=>true, :table=>true}%>
 </table>	
 <% end %>

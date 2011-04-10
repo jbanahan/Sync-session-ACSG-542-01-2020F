@@ -115,49 +115,49 @@ class SearchSetup < ActiveRecord::Base
 
     if cm==CoreModule::DELIVERY
       messages << "You do not have permission to edit Deliveries." unless self.user.edit_deliveries?
-      messages << "Reference field is required to upload Deliveries." unless has_column "del_ref"
-      messages << "Customer Name, ID, or System Code is required to upload Deliveries." unless has_company "del", "cust"
+      messages << "#{label "del_ref"} field is required to upload Deliveries." unless has_column "del_ref"
+      messages << "#{combined_company_fields "del", "cust"} is required to upload Deliveries." unless has_company "del", "cust"
     end
     if cm==CoreModule::SALE
       messages << "You do not have permission to edit Sales." unless self.user.edit_sales_orders?
-      messages << "Order Number field is required to upload Sales." unless has_column "sale_order_number"
-      messages << "Customer Name, ID, or System Code is required to upload Sales." unless has_company "sale", "cust"
+      messages << "#{label "sale_order_number"} field is required to upload Sales." unless has_column "sale_order_number"
+      messages << "#{combined_company_fields "sale", "cust"} is required to upload Sales." unless has_company "sale", "cust"
       
       if contains_module CoreModule::SALE_LINE
-        messages << "Line - Row is required to upload Sale Lines." unless has_column "soln_line_number"
-        messages << "Line - Product Unique Identifier or Name is required to upload Sale Lines." unless has_one_of ["soln_puid","soln_pname"]
+        messages << "#{label "soln_line_number"} is required to upload Sale Lines." unless has_column "soln_line_number"
+        messages << "#{combine_field_names ["soln_puid","soln_pname"]} is required to upload Sale Lines." unless has_one_of ["soln_puid","soln_pname"]
       end
     end
     if cm==CoreModule::SHIPMENT
       messages << "You do not have permission to edit Shipments." unless self.user.edit_shipments?
-      messages << "Reference Number field is required to upload Shipments." unless has_column "shp_ref"
-      messages << "Vendor Name, ID, or System Code is required to upload Shipments." unless has_company "shp", "ven"
+      messages << "#{label "shp_ref"} field is required to upload Shipments." unless has_column "shp_ref"
+      messages << "#{combined_company_fields "shp", "ven"} is required to upload Shipments." unless has_company "shp", "ven"
       if contains_module CoreModule::SHIPMENT_LINE
-        messages << "Line - Row is required to upload Shipment Lines." unless has_column "shpln_line_number"
-        messages << "Line - Product Unique Identifier or Name is required to upload Shipment Lines." unless has_one_of ["shpln_puid","shpln_pname"]
+        messages << "#{label "shpln_line_number"} is required to upload Shipment Lines." unless has_column "shpln_line_number"
+        messages << "#{combine_field_names ["shpln_puid","shpln_pname"]} is required to upload Shipment Lines." unless has_one_of ["shpln_puid","shpln_pname"]
       end
     end
     if cm==CoreModule::PRODUCT
       messages << "You do not have permission to edit Products." unless self.user.edit_products?
-      messages << "Unique Identifier field is required to upload Products." unless has_column "prod_uid"
+      messages << "#{label "prod_uid"} field is required to upload Products." unless has_column "prod_uid"
 
       if contains_module CoreModule::CLASSIFICATION
-        messages << "To include Classification fields, you must also include the Classification Country Name or ISO code." unless has_classification_country_column
+        messages << "To include Classification fields, you must also include #{combine_field_names ["class_cntry_name","class_cntry_iso"]}." unless has_classification_country_column
       end
       if contains_module CoreModule::TARIFF
-        messages << "To include Tariff fields, you must also include the Classification Country Name or ISO code." unless has_classification_country_column
-        messages << "To include Tariff fields, you must also include the Tariff Row." unless has_column "hts_line_number"
+        messages << "To include Tariff fields, you must also include #{combine_field_names ["class_cntry_name","class_cntry_iso"]}." unless has_classification_country_column
+        messages << "To include Tariff fields, you must also include #{label "hts_line_number"}." unless has_column "hts_line_number"
       end
     end
 
     if cm==CoreModule::ORDER
       messages << "You do not have permission to edit Orders." unless self.user.edit_orders?
-      messages << "Order Number field is required to upload Orders." unless has_column "ord_ord_num"
-      messages << "Vendor Name, ID, or System Code is required to upload Orders." unless has_company "ord","ven"
+      messages << "#{label "ord_ord_num"} field is required to upload Orders." unless has_column "ord_ord_num"
+      messages << "#{combined_company_fields "ord","ven"} is required to upload Orders." unless has_company "ord","ven"
 
       if contains_module CoreModule::ORDER_LINE
-        messages << "Line - Row is required to upload Order Lines." unless has_column "ordln_line_number"
-        messages << "Line - Product Unique Identifier or Name is required to upload Order Lines." unless has_one_of ["ordln_puid","ordln_pname"]
+        messages << "#{label "ordln_line_number"} is required to upload Order Lines." unless has_column "ordln_line_number"
+        messages << "#{combine_field_names ["ordln_puid","ordln_pname"]} is required to upload Order Lines." unless has_one_of ["ordln_puid","ordln_pname"]
       end
     end
 
@@ -195,5 +195,21 @@ class SearchSetup < ActiveRecord::Base
     base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
     base.search_secure self.user, base if secure
     base
+  end
+  def label model_field_uid
+    ModelField.find_by_uid(model_field_uid).label
+  end
+  def combine_field_names model_field_uids
+    r = ""
+    model_field_uids.each_with_index do |f,i|
+      r << "or " if i==model_field_uids.size-1
+      r << label(f)
+      r << ", " if i<(model_field_uids.size-1)
+    end
+    r
+  end
+  def combined_company_fields module_prefix, company_type
+    p = "#{module_prefix}_#{company_type}"
+    combine_field_names ["#{p}_name","#{p}_id","#{p}_syscode"]
   end
 end
