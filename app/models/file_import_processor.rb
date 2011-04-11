@@ -169,10 +169,6 @@ class FileImportProcessor
 
   class ProductRulesProcessor < RulesProcessor
     def before_save(obj)
-      #default to first division in database
-      if obj.class==Product && obj.division_id.nil? 
-        obj.division_id = Division.first.id
-      end
     end
     
     def before_merge(shell,database_object)
