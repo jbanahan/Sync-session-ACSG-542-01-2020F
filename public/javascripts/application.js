@@ -127,6 +127,12 @@ $( function() {
         });
       }
     });
+    $(".lnk_tariff_popup").live("click", function(evt) {
+      evt.preventDefault();
+      var hts = $(this).attr('hts');
+      var c_id = $(this).attr('country');
+      tariffPopUp(hts,c_id);
+    });
 });
 $(document).ready( function() {
     handleCustomFieldCheckboxes();
@@ -183,7 +189,7 @@ function feedbackDialog() {
         };
         $.post('/feedback', send_data);
         $(this).dialog('close');   
-        $("body").append("<div id='mod_thanks'>Thank you for your feedback.</div>");
+        $("body").append("<div id='mod_thanks' style='display:none;'>Thank you for your feedback.</div>");
         $("#mod_thanks").dialog({title: "Thank You",
           buttons:{"Close":function() {$(this).dialog('close');}}}); 
       },
@@ -305,7 +311,7 @@ function getShippingAddressList(select,companyId,selected_val,companyType) {
 */
 function getAddress(wrapper,address_id,options) {
   defaultOptions = {
-    includeName: true,
+    includeName: true
   }
   
   if (typeof options == 'object') {
@@ -448,7 +454,7 @@ function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
     }
     if(isSalesOrder) {
       getOpenSalesOrders(openFunction);
-    } else {
+      } else {
       getOpenOrders(openFunction);
     }
   });
@@ -483,5 +489,82 @@ function openPackOrder(id) {
     }
     h += "</tbody></table>";
     $("#div_pack_order_content").html(h);
+  });
+}
+function tariffPopUp(htsNumber,country_id) {
+  var mod = $("#mod_tariff_popup");
+  if(mod.length==0) {
+    $("body").append("<div id='mod_tariff_popup'><div id='tariff_popup_content'></div></div>");
+    mod = $("#mod_tariff_popup");
+    mod.dialog({autoOpen:false,title:'Tariff Information',width:'400',height:'500',
+      buttons:{"Close":function() {$("#mod_tariff_popup").dialog('close');}}
+    });
+  }
+  var c = $("#tariff_popup_content");
+  c.html("Loading tariff information...");
+  mod.dialog('open');
+  $.ajax({
+    url:'/official_tariffs/find?hts='+htsNumber+'&cid='+country_id,
+    dataType:'json',
+    error: function(req,msg,obj) {
+      c.html("We're sorry, an error occurred while trying to load this information.");
+
+    },
+    success: function(data) {
+      var h = '';
+      if(data==null) {
+        h = "No data was found for tariff "+htsNumber;
+      } else {
+        var o = data.official_tariff
+        h = "<table class='tbl_hts_popup'><tbody>";
+        h += htsDataRow("Country:",o.country.name);
+        h += htsDataRow("Tariff #:",o.hts_code);
+        h += htsDataRow("General Rate:",o.general_rate)
+        h += htsDataRow("Chapter:",o.chapter);
+        h += htsDataRow("Heading:",o.heading);
+        h += htsDataRow("Sub-Heading:",o.sub_heading);
+        h += htsDataRow("Text:",o.remaining_description);
+        h += htsDataRow("Special Rates:",o.special_rates);
+        h += htsDataRow("Add Valorem:",o.add_valorem_rate);
+        h += htsDataRow("Per Unit:",o.per_unit_rate);
+        h += htsDataRow("UOM:",o.unit_of_measure);
+        h += htsDataRow("MFN:",o.most_favored_nation_rate);
+        h += htsDataRow("GPT:",o.general_preferential_tariff_rate);
+        h += htsDataRow("Erga Omnes:",o.erga_omnes_rate);
+        h += htsDataRow("Column 2:",o.column_2_rate);
+        if(o.official_quota!=undefined) {
+          h += htsDataRow("Quota Category",o.official_quota.category);
+          h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor);
+          h += htsDataRow("SME UOM",o.official_quota.unit_of_measure);
+        }
+        h += "</tbody></table>";
+      }
+      c.html(h);
+    }
+  });
+}
+
+function htsDataRow(label,data) {
+  if(data!=undefined && jQuery.trim(data).length>0) {
+    return "<tr class='hover'><td class='lbl_hts_popup'>"+label+"</td><td>"+data+"</td></tr>";
+  } else {
+    return "";
+  }
+}
+
+function loadUserList(destinationSelect,selectedId) {
+  $.getJSON('/users.json',function(data) {
+    var i;
+    var h = "";
+    for(i=0;i<data.length;i++) {
+      var company = data[i].company;
+      var j;
+      for(j=0;j<company.users.length;j++) {
+        var u = company.users[j];
+        var selected = (u.id==selectedId ? "selected=\'true\' " : "");
+        h += "<option value='"+u.id+"' "+selected+">"+company.name+" - "+u.first_name+" "+u.last_name+"</option>";
+      }
+    }
+    destinationSelect.html(h);
   });
 }

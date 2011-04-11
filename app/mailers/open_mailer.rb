@@ -27,7 +27,9 @@ class OpenMailer < ActionMailer::Base
     @params = params
     @request = request
     mail(:to => 'chainio-feedback@aspect9.com',
-          :subject => "[chain.io User Feedback] from #{current_user.full_name} @ #{current_user.company.name}")
+         :subject => "[chain.io User Feedback] #{current_user.full_name} - #{current_user.company.name} - #{Time.now}",
+         :reply_to => current_user.email
+        )
   end
 
   def send_password_reset(user)
@@ -53,8 +55,8 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
-  def send_search_result(to,search_name,file_path)
-    attachments["#{sanitize_filename search_name}.csv"] = File.read file_path
+  def send_search_result(to,search_name,attachment_name,file_path)
+    attachments[attachment_name] = File.read file_path
     mail(:to => to, :subject => "[chain.io] #{search_name} Result") do |format|
       format.text
     end

@@ -20,14 +20,14 @@ $(function() {
 <%= form_for(@sales_order, :html=>{:id=>'frm_so'}) do |f| %>
 
   <div class='content_head'>
-    <p><span class='content_head_label'>Sales Order Number: </span><%= f.text_field :order_number %></p>
-    <p><span class='content_head_label'>Customer: </span><%= f.collection_select :customer_id, Company.where(:customer => true).not_locked, :id, :name, options ={:prompt => "Select a customer"} %></p>
+    <p><span class='content_head_label'><%=field_label :sale_order_number%>: </span><%= f.text_field :order_number %></p>
+    <p><span class='content_head_label'><%=field_label :sale_cust_name%>: </span><%= f.collection_select :customer_id, Company.where(:customer => true).not_locked, :id, :name, options ={:prompt => "Select a customer"} %></p>
   </div>
   <table style='width:100%;'><!--table based layout... good enough for now-->
     <tr>
       <td style='vertical-align:top;'>
         <table class='detail_table'>
-          <thead><tr><th>Ship To</th></tr></thead>
+          <thead><tr><th><%=field_label :sale_ship_to_name%></th></tr></thead>
           <tbody><tr><td>
             <%= f.select(:ship_to_id, [['...Loading...','']])%> 
             <div id='ship_to_ad'></div>
@@ -36,8 +36,8 @@ $(function() {
         <table class='detail_table'>
           <thead><tr><th>Attributes</th></tr></thead>
           <tbody><tr><td>
-            <b>Order Date: </b><%= f.text_field :order_date, "class" => "isdate" %><br />
-            <b>Division: </b><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => (Division.all.size>1 ? "Select a division" : nil)} %><br />
+            <b><%=field_label :sale_order_date%>: </b><%= f.text_field :order_date, "class" => "isdate" %><br />
+            <b><%=field_label :sale_div_name%>: </b><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => (Division.all.size>1 ? "Select a division" : nil)} %><br />
       			<%=show_custom_fields @sales_order, {:form => true}%>
           </td></tr></tbody>  
         </table>

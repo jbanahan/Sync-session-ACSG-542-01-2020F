@@ -1,6 +1,7 @@
 class OfficialTariff < ActiveRecord::Base
   belongs_to :country
-  
+  has_one :official_quota
+
   validates :country, :presence => true
   validates :hts_code, :presence => true
   validates :full_description, :presence => true

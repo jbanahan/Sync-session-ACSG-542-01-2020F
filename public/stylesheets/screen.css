@@ -127,7 +127,7 @@ img {
 #header {
     clear: both;
     float: left;
-    width: 100%;
+    width: 99%;
 }
 #linkbar {
     width: 100%;
@@ -136,6 +136,10 @@ img {
     padding-left: 10px;
     padding-bottom: 2px;
     margin-top: 10px;
+}
+#top_box {
+  width: 98%;
+  vertical-align: top;
 }
 #corner_links {
     padding-top: 5px;
@@ -372,4 +376,20 @@ img {
 }
 .help_pic {
   border: 1px solid black;
+}
+#help_links_list {
+  list-style: none;
+}
+#help_links_list li {
+  font-size: 125%;
+  margin-bottom: .5em;
+}
+.tbl_hts_popup {
+  font-size: 14px;
+}
+.lbl_hts_popup {
+  font-weight: bold;
+}
+#main_search_cont {
+  overflow-x: auto;
 }

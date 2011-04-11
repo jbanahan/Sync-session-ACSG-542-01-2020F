@@ -22,10 +22,10 @@
 
 <%= form_for @shipment, :html => {:id=>'frm_shp'} do |f| %>
 <div class='content_head'>
-  <span class='content_head_label'>Reference:</span>
+  <span class='content_head_label'><%=field_label :shp_ref%>:</span>
   <b><%= f.text_field :reference %></b>
   <br />
-  <span class='content_head_label'>Vendor:</span>
+  <span class='content_head_label'><%=field_label :shp_ven_name%>:</span>
   <% if @shipment.shipment_lines.size > 0 %>
     <%= f.hidden_field :vendor_id %><%= @shipment.vendor.name %>
   <% elsif current_user.company.vendor? 
@@ -36,7 +36,7 @@
   <% end %>  
 </div>
 <table class='detail_table'>
-  <thead><th>Ship From</th><th>Ship To</th></thead>
+  <thead><th><%=field_label :shp_ship_from_name%></th><th><%=field_label :shp_ship_to_name%></th></thead>
   <tbody><tr>
     <td style='width:50%'>
       <%= f.select(:ship_from_id, [['...Loading...','']])%> 
@@ -59,11 +59,11 @@
       <table>
         <% if current_user.company.carrier? 
             @shipment.carrier = current_user.company %>
-        <%=field_row "Carrier", f.hidden_field(:carrier_id)+@shipment.carrier.name %>
+        <%=field_row field_label(:shp_car_name), f.hidden_field(:carrier_id)+@shipment.carrier.name %>
         <% else %>
-        <%=field_row "Carrier", f.collection_select(:carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "Select a carrier"}) %>
+        <%=field_row field_label(:shp_car_name), f.collection_select(:carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "Select a carrier"}) %>
         <% end %>
-        <%= field_row "Mode", f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
+        <%= field_row field_label(:shp_mode), f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
 				<%=show_custom_fields @shipment, {:table=>true,:form => true}%>
       </table>
       </td>

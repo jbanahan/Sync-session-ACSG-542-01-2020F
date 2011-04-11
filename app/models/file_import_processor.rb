@@ -1,10 +1,10 @@
 class FileImportProcessor 
 #YOU DON'T NEED TO CALL ANY INSTANCE METHDOS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
-  def self.process(import_file, data)
-    find_processor(import_file, data).process_file
+  def self.process(import_file)
+    find_processor(import_file).process_file
   end
-  def self.preview(import_file, data)
-    find_processor(import_file, data).preview_file
+  def self.preview(import_file)
+    find_processor(import_file).preview_file
   end
 
   def initialize(import_file, data)
@@ -20,7 +20,7 @@ class FileImportProcessor
     processed_row = false
     begin
       r = @import_file.ignore_first_row ? 1 : 0
-      CSV.parse(@data,{:skip_blanks=>true,:headers => @import_file.ignore_first_row}) do |row|
+      get_rows do |row|
         begin
           do_row row, true
         rescue => e
@@ -34,19 +34,16 @@ class FileImportProcessor
   end
   
   def preview_file
-    CSV.parse(@data,{:headers => @import_file.ignore_first_row}) do |row|
+    get_rows do |row|
       return do_row row, false
     end
   end
-  def self.find_processor import_file, data  
-    p = {
-    :Order => {:csv => OrderCSVImportProcessor},
-    :Product => {:csv => ProductCSVImportProcessor},
-    :SalesOrder => {:csv => SaleCSVImportProcessor}
-    }
-    h = p[import_file.search_setup.module_type.intern]
-    r = h.nil? ? CSVImportProcessor : h[:csv]
-    r.new(import_file, data)
+  def self.find_processor import_file  
+    if import_file.attached_file_name.downcase.ends_with?("xls") 
+      return SpreadsheetImportProcessor.new(import_file,import_file.attachment_as_workbook)
+    else
+      return CSVImportProcessor.new(import_file,import_file.attachment_data)
+    end
   end
   def do_row row, save
     messages = []
@@ -84,6 +81,12 @@ class FileImportProcessor
         object_map[mod] = obj
       end
     end
+    object_map.values.each do |obj|
+      if obj.class.include?(StatusableSupport)
+        obj.set_status
+        obj.save
+      end
+    end
     messages
   end
 
@@ -116,24 +119,56 @@ class FileImportProcessor
   end
   
   def before_save(dest)
-    #do nothing
+    get_rules_processor.before_save dest
   end
   
   def before_merge(shell,database_object)
-    #default is no validations so nothing to do here
+    get_rules_processor.before_merge shell, database_object
+  end
+
+  def get_rules_processor
+    if @rules_processor.nil?
+      p = {
+      :Order => OrderRulesProcessor,
+      :Product => ProductRulesProcessor,
+      :SalesOrder => SaleRulesProcessor
+      }
+      h = p[@import_file.search_setup.module_type.intern]
+      @rules_processor = h.nil? ? RulesProcessor.new : h.new
+    end
+    @rules_processor
   end
 
   class CSVImportProcessor < FileImportProcessor
 
+    def get_rows &block
+      CSV.parse(@data,{:skip_blanks=>true,:headers => @import_file.ignore_first_row}) do |row|
+        yield row
+      end
+    end
+  end
 
+  class SpreadsheetImportProcessor < FileImportProcessor
+    def get_rows &block
+      @data
+      s = @data.worksheet 0
+      s.each (@import_file.ignore_first_row ? 1 : 0) do |row|
+        yield row
+      end
+    end
   end
     
-  class ProductCSVImportProcessor < CSVImportProcessor
+  class RulesProcessor
+    def before_save obj
+      #stub
+    end
+    def before_merge obj, database_object
+      #stub
+    end
+  end
+
+  class ProductRulesProcessor < RulesProcessor
     def before_save(obj)
-      #default to first division in database
-      if obj.class==Product && obj.division_id.nil? 
-        obj.division_id = Division.first.id
-      end
     end
     
     def before_merge(shell,database_object)
@@ -143,7 +178,7 @@ class FileImportProcessor
     end
   end
 
-  class OrderCSVImportProcessor < CSVImportProcessor
+  class OrderRulesProcessor < RulesProcessor
     
     def before_merge(shell,database_object)
       if shell.class == Order && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
@@ -152,7 +187,7 @@ class FileImportProcessor
     end
   end
 
-  class SaleCSVImportProcessor < CSVImportProcessor
+  class SaleRulesProcessor < CSVImportProcessor
     def before_merge(shell,database_object)
       if shell.class == SalesOrder && !shell.customer_id.nil? && shell.customer_id!=database_object.customer_id
         raise "A sale's customer cannot be changed via a file upload."

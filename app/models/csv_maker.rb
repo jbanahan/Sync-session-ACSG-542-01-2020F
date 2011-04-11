@@ -18,7 +18,7 @@ class CsvMaker
     opts[:headers] = headers 
 
     x = CSV.generate(self.opts) do |csv|
-      gm = GridMaker.new(results,self.columns,current_search.module_chain)
+      gm = GridMaker.new(results,self.columns,current_search.search_criterions,current_search.module_chain)
       gm.go {|row,obj| csv << row}
     end
   end

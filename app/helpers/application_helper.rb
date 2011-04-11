@@ -1,4 +1,9 @@
 module ApplicationHelper
+  def field_label model_field_uid
+    mf = ModelField.find_by_uid model_field_uid
+    return "Unknown Field" if mf.nil?
+    mf.label
+  end
   def help_link(text,page_name=nil)
     "<a href='/help#{page_name.blank? ? "" : "?page="+page_name}' target='chainio_help'>#{text}</a>".html_safe
   end
@@ -62,5 +67,17 @@ module ApplicationHelper
     base = []
     yield base
     CSV.generate_line base, {:row_sep=>"",:col_sep=>", "} 
+  end
+
+  def show_tariff hts_number, country_id, with_popup_link=true
+    if with_popup_link
+      link_to hts_number, "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
+    else
+      return hts_number
+    end
+  end
+
+  def tariff_more_info hts_number, country_id
+    link_to "info", "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
   end
 end

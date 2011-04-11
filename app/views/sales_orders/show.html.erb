@@ -49,9 +49,9 @@ $(function() {
 <thead><tr><th>Sale Information</th></tr></thead>
 <tbody><tr><td>
   <table>
-    <%=field_row "Sales Order Number", @sales_order.order_number %>
-    <%=field_row "Order Date", @sales_order.order_date %>
-    <%=field_row "Customer", @sales_order.customer.name %>
+    <%=field_row field_label(:sale_order_number), @sales_order.order_number %>
+    <%=field_row field_label(:sale_order_date), @sales_order.order_date %>
+    <%=field_row field_label(:sale_cust_name), @sales_order.customer.name %>
     <%=show_custom_fields @sales_order, {:table=>true} %>
   </table>
 </td></tr></tbody>
@@ -61,12 +61,12 @@ $(function() {
       
 <table class="detail_table">
   <thead>
-    <th>Line</th>
-    <th>Product</th>
-    <th>Ordered</th>
-    <th>On Delivery</th>
-    <th>Unit of Measure</th>
-    <th>Price / Unit</th>
+    <th><%=field_label :soln_line_number%></th>
+    <th><%=field_label :prod_name%></th>
+    <th><%=field_label :soln_ordered_qty%></th>
+    <th>Qty On Delivery</th>
+    <th><%=field_label :prod_uom%></th>
+    <th><%=field_label :soln_ppu%></th>
     <th>Total Price</th>
     <th></th>
   </thead>
@@ -97,11 +97,11 @@ $(function() {
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([@sales_order, form_line], :html=>{:id=>"frm_edit_line"}) do |f| %>
     <table>
-      <%=field_row "Line Number", f.text_field(:line_number,"size"=>"2") %>
-      <%=field_row "Product", f.collection_select(:product_id, Product.all, :id, :name, options={:prompt=>"Select a product"},{:id=>"edit_line_product"})%>
-      <%=field_row "Ordered Quantity", f.text_field(:quantity,"size"=>"5") %>
-      <%=field_row "Unit of Measure", content_tag(:span,(f.object.product.nil? ? "" : f.object.product.unit_of_measure),:id=>"edit_line_uom") %>
-      <%=field_row "Price / Unit", f.text_field(:price_per_unit, "size"=>"5") %>
+      <%=field_row field_label(:soln_line_number), f.text_field(:line_number,"size"=>"2") %>
+      <%=field_row field_label(:prod_name), f.collection_select(:product_id, Product.all, :id, :name, options={:prompt=>"Select a product"},{:id=>"edit_line_product"})%>
+      <%=field_row field_label(:soln_ordered_qty), f.text_field(:quantity,"size"=>"5") %>
+      <%=field_row field_label(:prod_uom), content_tag(:span,(f.object.product.nil? ? "" : f.object.product.unit_of_measure),:id=>"edit_line_uom") %>
+      <%=field_row field_label(:soln_ppu), f.text_field(:price_per_unit, "size"=>"5") %>
     </table>
   <% end %>
 </div>

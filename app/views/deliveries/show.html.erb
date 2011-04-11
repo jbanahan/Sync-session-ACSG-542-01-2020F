@@ -23,15 +23,15 @@
 <% end %>
 
 <div class='content_head'>
-  <span style="font-size:90%">Reference:</span>
+  <span style="font-size:90%"><%=field_label :del_ref%>:</span>
   <b><%= @delivery.reference %></b>
   <br />
-  <span style="font-size:90%">Customer:</span>
+  <span style="font-size:90%"><%=field_label :del_cust_name%>:</span>
   <b><%= @delivery.customer.name %></b>
   <br />&nbsp;
 </div>
 <table class='detail_table'>
-  <thead><th>Ship From</th><th>Ship To</th></thead>
+  <thead><th><%=field_label :del_ship_to_name%></th><th><%=field_label :del_ship_from_name%></th></thead>
   <tbody><tr>
     <td style='width:50%' class='hover'>
       <%=  render :partial => 'addresses/display', :locals => { :ad => @delivery.ship_from, :address_id => 'ship_from_ad' } %>
@@ -49,10 +49,10 @@
   <tbody>
     <tr>
       <td>
-        <b>Carrier:</b>
+        <b><%=field_label :del_car_name%>:</b>
         <%= @delivery.carrier_id.nil? ? '' : @delivery.carrier.name %>
         <br />
-        <b>Mode:</b>
+        <b><%=field_label :del_mode%>:</b>
         <%=@delivery.mode %>
 				
 	<%=show_custom_fields @delivery%>
@@ -64,7 +64,11 @@
 
 <table class='detail_table'>
   <thead>
-    <tr><th>Row</th><th>Product</th><th>Delivery Quantity</th><th>Sale Number - Line</th><th><a href='#' id='lnk_all_details'>All Details</a></th>
+    <tr><th><%=field_label :delln_line_number%></th>
+    <th><%=field_label :prod_name%></th>
+    <th><%=field_label :delln_delivery_qty%></th>
+    <th><%=field_label :soln_line_number%></th>
+    <th><a href='#' id='lnk_all_details'>All Details</a></th>
   </thead>
   <tbody>
     <%@delivery.delivery_lines.order("line_number ASC").each do |line|%>
@@ -100,7 +104,7 @@
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @delivery} %>
 <div id='mod_pick_order' style='display:none;'>
   <p id='add_ord_content'>
-    Add Order: <%= select_tag "sales_order_id", options_from_collection_for_select(SalesOrder.where("customer_id = ? ",@delivery.customer), "id", "order_number") %>
+    Add Sale: <%= select_tag "sales_order_id", options_from_collection_for_select(SalesOrder.where("customer_id = ? ",@delivery.customer), "id", "order_number") %>
   </p>
   <div id='pick_order_loading' style='display:none;'><img src='/images/ajax-loader.gif' alt='Loading' /></div>
 </div>

@@ -7,11 +7,12 @@ $(function() {
   $("#mod_no_upload").dialog({autoOpen:false,title:"Upload Eligibility",
     width:400,
     buttons:{"OK":function() {$("#mod_no_upload").dialog('close');}}});
-  $("#btn_download").click(function() {window.location.pathname = window.location.pathname + '.csv'})
+  $("#btn_download").click(function() {window.location.pathname = window.location.pathname + '<%=@current_search.download_format.blank? ? ".csv" : ".#{@current_search.download_format}"%>'})
   $("#btn_upload").click(function() {window.location = '<%=new_search_setup_imported_file_path @current_search%>';});
   $("#sel_searches").change(function() {
+    var myId = $(this).val();
     $("#main_search_cont").html("<h1>Loading Search Results</h1>");
-    window.location.search="?sid="+$(this).val();
+    window.location.search="?sid="+myId;
   });
   var all_model_fields;
   $("#search_setup").tabs();
@@ -105,11 +106,11 @@ $(function() {
     submitForm();
   });
   $("#mod_new_name").dialog({autoOpen:false,title:"Save As New",
-      buttons:{"Save":function() {
-        window.location = '<%=url_for @current_search%>/copy?new_name='+escape($("#txt_new_name").val());
-      },"Cancel":function() {$("#mod_new_name").dialog('close');}
-      }
-    });
+    buttons:{"Save":function() {
+      window.location = '<%=url_for @current_search%>/copy?new_name='+escape($("#txt_new_name").val());
+    },"Cancel":function() {$("#mod_new_name").dialog('close');}
+    }
+  });
   $("#btn_setup_copy").click(function() {
     $("#txt_new_name").val("Copy of "+$("#current_name").val());
     $("#mod_new_name").dialog('open');
@@ -142,6 +143,21 @@ $(function() {
     $("#mod_schedule").dialog('open');
   });
   applyScheduleHooks();
+  $("#mod_give_to").dialog({autoOpen:false,width:'auto',title:"Give Copy",
+      buttons:{Give:function() {
+        var val = $("#give_user_list").val();
+        if(isNaN(val)) {
+          window.alert("You must select a user to give the report to.");
+        } else {
+          window.location = '<%=url_for @current_search%>/give?other_user_id='+val;
+        }
+      },Cancel:function() {$("#mod_give_to").dialog('close');}
+      }
+  });
+  $("#btn_give_to").click(function(evt) {  
+    loadUserList($("#give_user_list"),"");
+    $("#mod_give_to").dialog('open');
+  });
 });
 function addParameter() {
   var m = new Date().getTime();
@@ -160,7 +176,6 @@ function addParameter() {
 }
 <%end%>
 
-
 <div id='main_search_cont'>
 Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>&nbsp;<a href='#' id='show_srch_setup'>Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Setup</a><br />
 <div id='search_setup_outer' style='display:none;'>
@@ -174,7 +189,8 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
         <li><a href="#sched_cont">Schedules</a></li>
     </ul>
     <div id='setup_cont'>
-      Name: <%=f.text_field :name, "id"=>"current_name" %>
+      Name: <%=f.text_field :name, "id"=>"current_name" %><br />
+      Download Format: <%=f.select :download_format, ["xls","csv"] %>
       <%=f.hidden_field :module_type %>
     </div>
     <div id='params_cont'>
@@ -240,6 +256,7 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
         <input class='sch_sun' name='<%=ssa%>[run_sunday]' type='hidden' value='<%=ss.run_sunday%>'/>
         <input class='sch_hr' name='<%=ssa%>[run_hour]' type='hidden' value='<%=ss.run_hour%>'/>
         <input class='sch_email' name='<%=ssa%>[email_addresses]' type='hidden' value='<%=ss.email_addresses%>'/>
+        <input class='sch_frmt' name='<%=ssa%>[download_format]' type='hidden' value='<%=ss.download_format%>'/>
         <input class='sch_destroy' name='<%=ssa%>[_destroy]' type='hidden' value='' />
         <%=comma_list {|list| 
           list << "Monday" if ss.run_monday
@@ -260,13 +277,17 @@ Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(
     <% end %>
   </div>  
   <div style='text-align:right;'>
-    <button id='btn_setup_save'>Save</button>&nbsp;
-    <button id='btn_setup_copy'>Copy / New</button>&nbsp;
-    <button id='btn_setup_delete'>Delete</button>
+    <button id='btn_setup_save' title='Save Search'>Save</button>&nbsp;
+    <button id='btn_give_to' title='Give a copy of this search to another user'>Give</button>
+    <button id='btn_setup_copy' title='Make a new copy of this search for yourself'>Copy / New</button>&nbsp;
+    <button id='btn_setup_delete' title='Delete this search'>Delete</button>
   </div>
   <div id='mod_new_name' style='display:none;'>Enter a name for your new search:<br /><input id='txt_new_name' /></div>
   <div style='display:none'> <!--hide the real button, because we want to keep everything on the same row-->
     <%= button_to "Delete", @current_search, :method => :delete, :id=>"real_delete_button" %>
+  </div>
+  <div id='mod_give_to' style='display:none;'>Pick a user to give a copy of the report to:<br />
+    <select id='give_user_list'><option value=''>Loading...</option></select>
   </div>
   <div id='mod_delete' style='display:none;'>Are you sure you want to delete this search?</div>
   <div id='mod_schedule' style='display:none;'>
@@ -285,6 +306,7 @@ hrs_opts = {"midnight"=>"0"}
         <%=field_row "FTP Password", password_field_tag("ftppass","",{:id=>"sd_ftppass",:class=>"dialogtip",:title=>"Note: FTP passwords are stored unencrypted in the database. Aspect 9 employees are able to view these passwords."}) %>
         <%=field_row "FTP Subfolder", text_field_tag("ftpfldr","",{:id=>"sd_ftpfldr",:class=>"dialogtip",:title=>"Subfolder on FTP server (optional)"}) %>
       <% end %>
+      <%=field_row "File Format", select_tag("frmt",options_for_select(["csv","xls"]),{:id=>"sd_frmt"}) %>
       <%=field_row "Hour of Day (Your Timezone)", select_tag("hr",options_for_select(hrs_opts),{:id=>"sd_hr"}) %>
       <%=field_row "Monday", check_box_tag("mon","1",false,{:id=>"sd_mon"}) %>
       <%=field_row "Tuesday", check_box_tag("tue","1",false,{:id=>"sd_tue"}) %>
@@ -306,7 +328,7 @@ hrs_opts = {"midnight"=>"0"}
     <th>&nbsp;</th>
   </tr></thead>
   <tbody>
-    <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.module_chain).go do |row,obj| %>
+    <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain).go do |row,obj| %>
       <tr class='hover'>
         <% row.each do |r| %>
         <td><%=r%></td>

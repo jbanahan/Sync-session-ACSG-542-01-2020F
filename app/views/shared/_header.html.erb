@@ -1,16 +1,17 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <% 
   no_buttons = false
   no_buttons = true if @no_buttons
   no_buttons = true if !local_assigns[:not_buttons].nil?
 %>
 <!-- System UUID: <%=MasterSetup.first.uuid%> -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-GB">
 <head>
   <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
   <title>chain.io</title>
   <link rel="shortcut icon" href="/favicon.ico" />
-  <%= stylesheet_link_tag :all %>
+  <%= stylesheet_link_tag :all, :media=>"all" %>
+  <link rel="stylesheet" type="text/css" href="print_css/print.css" media="print" />
   <%= javascript_include_tag "jquery-1.4.4.min.js", "jquery-rails.js", "jquery-ui-1.8.7.custom.min.js", "application.js", "jquery.validate.js", "visualize.jQuery.js", "jquery.tools.min.js", "adv_search.js" %>
   <%= csrf_meta_tag %>
   <script>
@@ -124,12 +125,13 @@
      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
    })();
   </script>
-<head>
+</head>
 <body>
 <div id="header">
-  <span id="corner_title">
-      <%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %>
-  </span>
+  <div id="top_box">
+<% if !current_user || no_buttons %>
+  <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
+<% end %>
   <% if current_user %>
     <% unless no_buttons %>
     <div id="corner_links">
@@ -140,6 +142,10 @@
         <%= help_link "Help" %> |
         <%= link_to 'Logout', logout_path %>
     </div>
+  <% end %>
+  <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
+  </div>
+  <% if current_user %>
     <div id="linkbar">
       <%if current_user.view_products?%><button id='btn_products' title='Search for products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
       <%if current_user.view_orders?%><button id='btn_orders' title='Search for orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>

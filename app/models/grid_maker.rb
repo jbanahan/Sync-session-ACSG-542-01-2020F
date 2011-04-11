@@ -5,11 +5,13 @@ class GridMaker
   @fields
   @chain
   @used_modules
+  @criteria
 
-  def initialize(base_objects,model_field_list,module_chain)
+  def initialize(base_objects,model_field_list,search_criterion_list,module_chain)
     @objs = base_objects
     @fields = model_field_list
     @chain = module_chain
+    @criteria = search_criterion_list
     load_used_modules
   end
 
@@ -34,6 +36,7 @@ class GridMaker
   end
 
   def make_row(row_objects,&block)
+    return nil unless test_row(row_objects) #test against criteria before rendering row
     r = []
     @fields.each do |f|
       if f.model_field_uid=="_blank"
@@ -49,6 +52,17 @@ class GridMaker
       end
     end
     yield r, row_objects[@chain.first]
+  end
+
+  def test_row(row_objects)
+    @criteria.each do |c|
+      mf = c.find_model_field
+      obj = row_objects[mf.core_module]
+      val = mf.process_export(obj)
+      return true if obj.nil? && c.operator=="null"
+      return false if obj.nil? || !c.passes?(val) 
+    end
+    true
   end
 
   def load_used_modules

@@ -18,11 +18,11 @@
 <%= form_for @order, :html=>{:id=>'frm_ord'} do |f| %>
 
   <table>
-    <%=field_row f.label(:order_number), f.text_field(:order_number, "class" => "focus_first") %>
-    <%=field_row f.label(:vendor), f.collection_select(:vendor_id, @vendors, :id, :name, options ={:prompt => "Select a vendor"}) %>
-    <%=field_row f.label(:ship_to), f.select(:ship_to_id, [['...Loading...','']])+"<div id='ship_to_ad'></div>".html_safe %>
-    <%=field_row f.label(:order_date), f.text_field(:order_date, "class" => "isdate") %>
-    <%=field_row f.label(:division), f.collection_select(:division_id, @divisions, :id, :name, options ={:prompt => "Select a division"})%>    
+    <%=field_row field_label(:ord_ord_num), f.text_field(:order_number, "class" => "focus_first") %>
+    <%=field_row field_label(:ord_ven_name), f.collection_select(:vendor_id, @vendors, :id, :name, options ={:prompt => "Select a vendor"}) %>
+    <%=field_row field_label(:ord_ship_to_name), f.select(:ship_to_id, [['...Loading...','']])+"<div id='ship_to_ad'></div>".html_safe %>
+    <%=field_row field_label(:ord_ord_date), f.text_field(:order_date, "class" => "isdate") %>
+    <%=field_row field_label(:ord_div_name), f.collection_select(:division_id, @divisions, :id, :name, options ={:prompt => "Select a division"})%>    
   	<%=show_custom_fields @order, {:form => true, :table=>true}%>
   </table>
 <% end %>

@@ -6,17 +6,20 @@
   </head>
   <body>
   <h1>Feedback from <%=@user.full_name%> @ <%=@user.company.name%></h1>
+  <%if @params[:respond]=="Yes"%>
+    <h2 style="color:red">Requires Response</h2>
+  <%end%>
   <table>
-    <tr><th>Message From User</th></tr>
-    <tr><td><pre><%=@params[:message]%></pre></td></tr>
+    <tr><th style="text-align:left">Message From User</th></tr>
+    <tr><td><pre style="font-size:150%;"><%=@params[:message]%></pre></td></tr>
   </table>
   <table style='border:1px solid #707070'>
     <tr><th>Property</th><th>Value</th></tr>
-    <tr><td>Requires Response</td><td><%=@params[:respond]%></td></tr>
-    <tr><td>User Email:</td><td><%=@user.email%></td></tr>
+    <tr><td>User Email</td><td><%=@user.email%></td></tr>
     <tr><td>Request Host</td><td><%=@request.host%></td></tr>
     <tr><td>IP Address</td><td><%=@request.remote_ip%></td></tr>
     <tr><td>Source Location</td><td><%=@params[:location]%></td></tr>
+    <tr><td>Generated</td><td><%=Time.now%></td></tr>
   </table>
   </body>
 </html>

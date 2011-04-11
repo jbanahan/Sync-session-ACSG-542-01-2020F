@@ -62,7 +62,7 @@ class CustomDefinitionsController < ApplicationController
 			respond_to do |format|
 				if @custom_definition.save
 					add_flash :notices, "Custom field was created successfully."
-					format.html { redirect_to custom_definitions_path }
+					format.html { redirect_to (!params[:and_new].nil? && params[:and_new]=="Y") ? new_custom_definition_path : custom_definitions_path }
 					format.xml  { render :xml => @custom_definition, :status => :created, :location => @custom_definition }
 				else
 					errors_to_flash @custom_definition

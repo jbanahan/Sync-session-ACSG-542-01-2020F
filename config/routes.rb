@@ -1,5 +1,8 @@
 OpenChain::Application.routes.draw do
 
+  resources :field_labels, :only=>[:index] do
+    post 'save', :on=>:collection
+  end
   resources :password_resets, :only => [:new, :edit, :create, :update]
   resources :dashboard_widgets, :only => [:index] do
     collection do
@@ -10,8 +13,9 @@ OpenChain::Application.routes.draw do
   resources :master_setups
   resources :attachment_types
 
-  #get rid of this one eventually
-  resources :official_tariffs
+  resources :official_tariffs do
+    get 'find', :on => :collection
+  end
 
   resources :status_rules
   resources :attachments do
@@ -33,7 +37,6 @@ OpenChain::Application.routes.draw do
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
-  match "/search_setups/:id/copy" => "search_setups#copy"
   match "/help" => "chain_help#index"
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
@@ -95,6 +98,8 @@ OpenChain::Application.routes.draw do
 		get 'render_partial', :on => :member
 	end
 
+  resources :users, :only => [:index]
+
   resources :companies do
 		resources :addresses
 		resources :divisions
@@ -109,6 +114,10 @@ OpenChain::Application.routes.draw do
   end
   
   resources :search_setups do
+    member do
+      get 'copy'
+      get 'give'
+    end
     resources :imported_files, :only => [:new, :create, :show] do
       member do 
         get 'download'

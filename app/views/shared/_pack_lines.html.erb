@@ -1,7 +1,7 @@
 <%content_for :javascript do %>
 var all_details_open = false;
 $(function() {
-  setupPackScreen(<%=is_sales_order ? "true" : "false"%>,<%=(parent.can_edit?(current_user) && line) ? "true" : "false"%>,'<%=shipment_path(parent)%>');
+  setupPackScreen(<%=is_sales_order ? "true" : "false"%>,<%=(parent.can_edit?(current_user) && line) ? "true" : "false"%>,'<%=is_sales_order ? delivery_path(parent) : shipment_path(parent)%>');
 });
 <%end%>
 

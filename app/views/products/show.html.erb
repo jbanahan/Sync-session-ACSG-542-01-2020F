@@ -53,12 +53,12 @@
 <tr><td>
 <!-- fields -->
 	<table>
-	  <%=field_row "Status", @product.status_name %>
-	  <%=field_row "Unique Identifier", @product.unique_identifier%>
-	  <%=field_row "Name",@product.name%>
-	  <%=field_row "Unit of Measure", @product.unit_of_measure%>
-	  <%=field_row "Vendor", @product.vendor.name%>
-	  <%=field_row "Division", @product.division.name%>
+	  <%=field_row field_label(:prod_status_name),@product.status_name %>
+	  <%=field_row field_label(:prod_uid), @product.unique_identifier%>
+	  <%=field_row field_label(:prod_name),@product.name%>
+	  <%=field_row field_label(:prod_uom), @product.unit_of_measure%>
+	  <%=field_row field_label(:prod_ven_name), @product.vendor.nil? ? "" : @product.vendor.name%>
+	  <%=field_row field_label(:prod_div_name), @product.division.nil? ? "" : @product.division.name%>
     <%=show_custom_fields @product, {:table=>true}%>
 	</table>
 </td></tr>
@@ -69,29 +69,34 @@
 <div class='attachments_container section_insert'>
   <h2 class='section_insert_heading'>Classifications</h2>
   <% @product.classifications.each do |c| %>
-  <h2><%=c.country.name.titleize%></h2>
-  <table>
-  <%=show_custom_fields c, {:table=>true} %>
-  </table>
-  <table class='detail_table'>
-    <thead>
-      <th>Row</td>
-      <th>HTS 1</th>
-      <th>HTS 2</th>
-      <th>HTS 3</th>    
-    </thead>
-    <tbody>
-      <% c.tariff_records.each do |t| %>
-      <tr>
-        <td><%=t.line_number%></td>
-        <td><%=t.hts_1%></td>
-        <td><%=t.hts_2%></td>
-        <td><%=t.hts_3%></td>
-      </tr>
-      <% end %>
-    </tbody>
-  </table>
-  <% end %>
+  <div> <!--isolate each classification-->
+    <h2><%=c.country.name.titleize%></h2>
+    <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
+    <div class='classification_detail_box'>
+      <table>
+      <%=show_custom_fields c, {:table=>true} %>
+      </table>
+    </div>
+    <table class='detail_table'>
+      <thead>
+        <th><%=field_label :hts_line_number%></th>
+        <th><%=field_label :hts_hts_1%></th>
+        <th><%=field_label :hts_hts_2%></th>
+        <th><%=field_label :hts_hts_3%></th>    
+      </thead>
+      <tbody>
+        <% c.tariff_records.each do |t| %>
+        <tr>
+          <td><%=t.line_number%></td>
+          <td><%=show_tariff t.hts_1,c.country_id%></td>
+          <td><%=show_tariff t.hts_2,c.country_id%></td>
+          <td><%=show_tariff t.hts_3,c.country_id%></td>
+        </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+    <% end %>
 </div>
 <% end %>
 

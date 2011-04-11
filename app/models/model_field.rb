@@ -1,14 +1,14 @@
 class ModelField
-  attr_reader :model, :field_name, :label, :sort_rank, 
+  attr_reader :model, :field_name, :label_prefix, :sort_rank, 
               :import_lambda, :export_lambda, 
               :custom_id, :data_type, :core_module, 
-              :join_statement, :join_alias, :uid, 
+              :join_statement, :join_alias, :qualified_field_name, :uid, 
               :public, :public_searchable
   
-  def initialize(rank,uid,core_module, field, label, options={})
+  def initialize(rank,uid,core_module, field, options={})
     o = {:import_lambda =>  lambda {|obj,data|
            obj.send("#{@field_name}=".intern,data)
-           return "#{@label} set to #{data}"
+           return "#{FieldLabel.label_text uid} set to #{data}"
           },
           :export_lambda => lambda {|obj|
             if self.custom?
@@ -23,7 +23,6 @@ class ModelField
     @sort_rank = rank
     @model = core_module.class_name.intern unless core_module.nil?
     @field_name = field
-    @label = label
     @import_lambda = o[:import_lambda]
     @export_lambda = o[:export_lambda]
     @custom_id = o[:custom_id]
@@ -33,8 +32,19 @@ class ModelField
     pf = PublicField.where(:model_field_uid => @uid)
     @public = !pf.empty?
     @public_searchable = @public && pf.first.searchable
+    @qualified_field_name = o[:qualified_field_name]
+    @label_override = o[:label_override]
   end
   
+  def label
+    return @label_override unless @label_override.nil?
+    FieldLabel.label_text @uid
+  end
+
+  def qualified_field_name
+    @qualified_field_name.nil? ? "#{self.join_alias}.#{@field_name}" : @qualified_field_name
+  end
+
   #table alias to use in where clause
   def join_alias
     if @join_alias.nil?
@@ -77,7 +87,8 @@ class ModelField
     module_type = core_module.class_name.to_sym
     MODEL_FIELDS[module_type] = Hash.new if MODEL_FIELDS[module_type].nil?
     descriptor_array.each do |m|
-      mf = ModelField.new(m[0],m[1],core_module,m[2],m[3],m[4].nil? ? {} : m[4])
+      FieldLabel.set_default_value m[1], m[3]
+      mf = ModelField.new(m[0],m[1],core_module,m[2],m[4].nil? ? {} : m[4])
       MODEL_FIELDS[module_type][mf.uid.to_sym] = mf
     end
   end 
@@ -254,6 +265,47 @@ class ModelField
     r << n
     r
   end
+
+  def self.make_hts_arrays(rank_start,uid_prefix) 
+    id_counter = rank_start
+    r = []
+    (1..3).each do |i|
+      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS #{i}"]
+      id_counter += 1
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate,"HTS #{i} - General Rate",{
+        :import_lambda => lambda {|obj,data| return "General Duty Rate cannot be set by import, ignored."},
+        :export_lambda => lambda {|t|
+          ot = case i
+            when 1 then t.hts_1_official_tariff
+            when 2 then t.hts_2_official_tariff
+            when 3 then t.hts_3_official_tariff
+          end
+          ot.nil? ? "" : ot.general_rate 
+        },
+        :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+        :join_alias => "OT_#{i}",
+        :data_type=>:string
+      }]
+      id_counter += 1
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_qc".to_sym,:category,"HTS #{i} - Quota Category",{
+        :import_lambda => lambda {|obj,data| return "Quota Category cannot be set by import, ignored."},
+        :export_lambda => lambda {|t|
+          ot = case i
+            when 1 then t.hts_1_official_tariff
+            when 2 then t.hts_2_official_tariff
+            when 3 then t.hts_3_official_tariff
+          end
+          return "" if ot.nil?
+          q = ot.official_quota
+          q.nil? ? "" : q.category
+        },
+        :join_statement => "LEFT OUTER JOIN official_quotas AS OQ_#{i} on OQ_#{i}.hts_code = tariff_records.hts_#{i} AND OQ_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+        :join_alias => "OQ_#{i}",
+        :data_type=>:string
+      }]
+    end
+    r
+  end
   
   def self.make_ship_to_arrays(rank_start,uid_prefix,label_prefix,table_name)
     make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,"to")
@@ -347,7 +399,7 @@ class ModelField
     base_class.new.custom_definitions.order("rank ASC").each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,"#{label_prefix}#{d.label}",parameters.merge({:custom_id=>d.id}))
+      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id}))
       model_hash[mf.uid.to_sym] = mf
     end
   end
@@ -398,6 +450,7 @@ class ModelField
         },
         :join_statement => "LEFT OUTER JOIN (SELECT COUNT(id) as class_count, product_id FROM classifications WHERE classifications.id IN (select classification_id from tariff_records) group by product_id) as prod_class_count ON prod_class_count.product_id = products.id",
         :join_alias => "prod_class_count",
+        :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
         :data_type => :integer
       }]
     ]
@@ -407,56 +460,54 @@ class ModelField
     add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","Classification - ","classifications")
 
     add_fields CoreModule::TARIFF, [
-      [1,:hts_hts_1,:hts_1,"Tariff - HTS 1"],
-      [2,:hts_hts_2,:hts_2,"Tariff - HTS 2"],
-      [3,:hts_hts_3,:hts_3,"Tariff - HTS 3"],
-      [4,:hts_line_number,:line_number,"Tariff - Row"]
+      [4,:hts_line_number,:line_number,"HTS Row"]
     ]
-
+    add_fields CoreModule::TARIFF, make_hts_arrays(100,"hts")
     add_fields CoreModule::ORDER, [
-      [1,:ord_ord_num,:order_number,"Header - Order Number"],
-      [2,:ord_ord_date,:order_date,"Header - Order Date",{:data_type=>:date}],
+      [1,:ord_ord_num,:order_number,"Order Number"],
+      [2,:ord_ord_date,:order_date,"Order Date",{:data_type=>:date}],
     ]
-    add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","Header - ","orders")
-    add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","Header - ","orders")
+    add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","","orders")
+    add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","","orders")
+    add_fields CoreModule::ORDER, make_division_arrays(300,"ord","","orders")
 
     add_fields CoreModule::ORDER_LINE, [
-      [1,:ordln_line_number,:line_number,"Line - Row",{:data_type=>:integer}],
-      [3,:ordln_ordered_qty,:quantity,"Line - Order Quantity",{:data_type=>:decimal}],
-      [4,:ordln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type=>:decimal}]
+      [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
+      [3,:ordln_ordered_qty,:quantity,"Order Quantity",{:data_type=>:decimal}],
+      [4,:ordln_ppu,:price_per_unit,"Price / Unit",{:data_type=>:decimal}]
     ]
-    add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","Line - ","order_lines")
+    add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","","order_lines")
 
     add_fields CoreModule::SHIPMENT, [
       [1,:shp_ref,:reference,"Reference Number",{:data_type=>:string}],
       [2,:shp_mode,:mode,"Mode",{:data_type=>:string}],
     ]
-    add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","Header - ","shipments")
-    add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","Header - ","shipments")
-    add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","Header - ","shipments")
-    add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","Header - ","shipments")
+    add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","","shipments")
+    add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","","shipments")
+    add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","","shipments")
+    add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","","shipments")
     
     add_fields CoreModule::SHIPMENT_LINE, [
-      [1,:shpln_line_number,:line_number,"Line - Row",{:data_type=>:integer}],
-      [2,:shpln_shipped_qty,:quantity,"Line - Ship Quantity",{:data_type=>:decimal}]
+      [1,:shpln_line_number,:line_number,"Shipment - Row",{:data_type=>:integer}],
+      [2,:shpln_shipped_qty,:quantity,"Shipment Row Quantity",{:data_type=>:decimal}]
     ]
-    add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","Line - ","shipment_lines")
+    add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","","shipment_lines")
 
 
     add_fields CoreModule::SALE, [
-      [1,:sale_order_number,:order_number,"Header - Order Number",{:data_type=>:string}],
-      [2,:sale_order_date,:order_date,"Header - Order Date",{:data_type=>:date}],
+      [1,:sale_order_number,:order_number,"Sale Number",{:data_type=>:string}],
+      [2,:sale_order_date,:order_date,"Sale Date",{:data_type=>:date}],
     ]
-    add_fields CoreModule::SALE, make_customer_arrays(100,"sale","Header - ","sales_orders")
-    add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","Header - ","sales_orders")
-    add_fields CoreModule::SALE, make_division_arrays(300,"sale","Heade - ","sales_orders")
+    add_fields CoreModule::SALE, make_customer_arrays(100,"sale","","sales_orders")
+    add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","","sales_orders")
+    add_fields CoreModule::SALE, make_division_arrays(300,"sale","","sales_orders")
 
     add_fields CoreModule::SALE_LINE, [
-      [1,:soln_line_number,:line_number,"Line - Row", {:data_type=>:integer}],
-      [3,:soln_ordered_qty,:quantity,"Line - Order Quantity",{:data_type=>:decimal}],
-      [4,:soln_ppu,:price_per_unit,"Line - Price / Unit",{:data_type => :decimal}]
+      [1,:soln_line_number,:line_number,"Sale Row", {:data_type=>:integer}],
+      [3,:soln_ordered_qty,:quantity,"Sale Quantity",{:data_type=>:decimal}],
+      [4,:soln_ppu,:price_per_unit,"Price / Unit",{:data_type => :decimal}]
     ]
-    add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","Line - ","sale_order_lines")
+    add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","","sale_order_lines")
     
     add_fields CoreModule::DELIVERY, [
       [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
@@ -468,8 +519,8 @@ class ModelField
     add_fields CoreModule::DELIVERY, make_customer_arrays(400,"del","","deliveries")
 
     add_fields CoreModule::DELIVERY_LINE, [
-      [1,:delln_line_number,:line_number,"Line - Row",{:data_type=>:integer}],
-      [2,:delln_delivery_qty,:quantity,"Line - Delivery Qauntity",{:data_type=>:decimal}]
+      [1,:delln_line_number,:line_number,"Delivery Row",{:data_type=>:integer}],
+      [2,:delln_delivery_qty,:quantity,"Delivery Row Qauntity",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","Line - ","delivery_lines")
     reset_custom_fields
@@ -478,7 +529,8 @@ class ModelField
   reload
 
   def self.find_by_uid(uid)
-    return ModelField.new(10000,:_blank,nil,nil,"[blank]",{
+    return ModelField.new(10000,:_blank,nil,nil,{
+      :label_override => "[blank]",
       :import_lambda => lambda {|o,d| "Field ignored"},
       :export_lambda => lambda {|o| },
       :data_type => :string

@@ -13,6 +13,8 @@ adminuser:
 
 vendoruser:
   id: 2
+  first_name: Joe
+  last_name: VendLast
   company_id: 2
 
 vendor2user:

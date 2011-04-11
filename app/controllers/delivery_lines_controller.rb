@@ -41,7 +41,7 @@ class DeliveryLinesController < LinesController
   def update_symbol
     :delivery_line
   end
-  def udpate_custom_field_symbol
+  def update_custom_field_symbol
     :deliveryline_cf
   end
 end

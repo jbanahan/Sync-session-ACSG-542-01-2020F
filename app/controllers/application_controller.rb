@@ -80,7 +80,7 @@ class ApplicationController < ActionController::Base
           @results = @results.paginate(:per_page => 20, :page => params[:page])
           rval = []
           cols = @current_search.search_columns.order("rank ASC")
-          GridMaker.new(@results,cols,@current_search.module_chain).go do |row,obj| 
+          GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
             row_data = []
             row.each do |c|
               row_data << c.to_s
@@ -98,6 +98,12 @@ class ApplicationController < ActionController::Base
           sr.records = rval
           sr.name = @current_search.name
           render :json => sr
+        }
+        format.xls {
+          book = XlsMaker.new.make(@current_search,@results.where("1=1")) 
+          spreadsheet = StringIO.new 
+          book.write spreadsheet 
+          send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
         }
       end
     end

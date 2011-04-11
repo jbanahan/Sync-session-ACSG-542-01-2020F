@@ -1,0 +1,42 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_save").click(function() {$("#frm_lbls").submit();});
+  $("#btn_cancel").click(function() {window.location = '<%=settings_path%>';});
+  $("#sel_module_type").change(function() {window.location='<%=field_labels_path%>?module_type='+$(this).val();});
+});
+<%end%>
+<%content_for :action_bar do %>
+  <% if @model_fields %>
+    <button id='btn_save'>Save</button>
+  <% end %>
+  <button id='btn_cancel'>Cancel</button>
+<%end%>
+<h2>Hard Coded Field Label Setup</h2>
+
+<div>
+Choose the module you'd like to change:<br />
+<select id="sel_module_type">
+<option>Select A Module</option>
+<%=options_for_select [["Order - Header","Order"],["Order - Line","OrderLine"],["Shipment - Header","Shipment"],["Shipment - Line","ShipmentLine"],["Sale","SalesOrder"],["Sale - Line","SalesOrderLine"],["Delivery","Delivery"],["Delivery - Line","DeliveryLine"],["Product - Header","Product"],["Product - Classification","Classification"],["Product - Tariff","TariffRecord"]], @selected_module%>
+</select>
+</div>
+
+<% if @model_fields %>
+  <%=form_tag save_field_labels_path, :method=>"post", :id=>"frm_lbls" do %>
+    <table class='detail_table'>
+      <thead><tr><th>Hard Coded Value</th><th>Your Value</th></tr></thead>
+      <tbody>
+        <%@model_fields.each_with_index do |mf,i| %>
+          <% if !mf.custom? %>
+            <tr class='hover'>
+              <td><%=FieldLabel.default_value mf.uid%></td>
+              <td>
+                <input type='hidden' name='field_label[<%=i%>][uid]' value='<%=mf.uid%>'/>
+                <input type='text' name='field_label[<%=i%>][label]' value='<%=FieldLabel.label_text mf.uid%>' />
+              </td>
+          <% end %>
+        <%end%>
+      </tbody>
+    </table>
+  <%end%>
+<% end %>

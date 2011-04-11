@@ -133,4 +133,9 @@ class ModelFieldTest < ActiveSupport::TestCase
     assert msg=="Customer set to #{c.name}"
     assert s.customer==c
   end
+
+  test "blank field label" do
+    assert ModelField.find_by_uid("_blank").label=="[blank]"
+  end
+
 end

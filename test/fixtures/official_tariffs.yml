@@ -5,15 +5,11 @@ one:
   hts_code: MyString
   full_description: MyText
   special_rates: MyString
-  unit_of_quantity: MyString
   general_rate: MyString
-  rate_2: MyString
 
 two:
   country_id: 1
   hts_code: MyString
   full_description: MyText
   special_rates: MyString
-  unit_of_quantity: MyString
   general_rate: MyString
-  rate_2: MyString
