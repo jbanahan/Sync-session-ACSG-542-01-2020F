@@ -162,7 +162,7 @@ class FileImportProcessor
     def before_save obj
       #stub
     end
-    def before_merge obj
+    def before_merge obj, database_object
       #stub
     end
   end
