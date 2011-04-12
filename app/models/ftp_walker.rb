@@ -5,7 +5,9 @@ class FtpWalker
 
   def go
   #this will need a lot more config to be multi-user, multi-file, but just getting Vandegrift going right now
-    ftp_settings = YAML::load(File.open("#{Rails.root}/config/ftp.yml"))[Rails.env]
+    file_path = "#{Rails.root}/config/ftp.yml"
+    return nil unless File.file? file_path
+    ftp_settings = YAML::load(File.open(file_path))[Rails.env]
     log = Logger.new(Rails.root.to_s+"/log/ftp.log")
     @downloaded = {}
     begin
@@ -15,6 +17,7 @@ class FtpWalker
           f.login ftp_settings['user'], ftp_settings['password'] 
           sys_code = MasterSetup.first.system_code
           f.chdir sys_code #go to home directory for local system
+          return unless response_good? f
           user_directories = subdirectories f
           user_directories.each do |ud|
             user = User.where(:username=>ud).first

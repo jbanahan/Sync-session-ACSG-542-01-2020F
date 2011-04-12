@@ -27,6 +27,7 @@ class FtpWalkerTest < ActiveSupport::TestCase
     ftp.expects(:passive=).with(true).in_sequence(script)
     ftp.expects(:login).with(expected_ftp_settings['user'],expected_ftp_settings['password']).in_sequence(script)
     ftp.expects(:chdir).with(sys_code).in_sequence(script)
+    ftp.expects(:last_response_code).returns('250').in_sequence(script)
 
     #check user directories
     check_subdirectories(ftp,{dirs[0][:user]=>true,dirs[1][:user]=>true,"folder_not_user"=>true,"badfilename.txt"=>false},script)

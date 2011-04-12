@@ -17,9 +17,7 @@ def execute_scheduler
   end
   scheduler.every("3m") do
     m = MasterSetup.first
-    if m && m.system_code == 'www-vfitrack-net'
-      FtpWalker.new.go
-    end
+    FtpWalker.new.go if m && !m.system_code.nil?
   end
 end
 
