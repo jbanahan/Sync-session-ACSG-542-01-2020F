@@ -2,10 +2,12 @@ development:
   server: testftp.chain.io
   user: testftp
   password: testftp999
+  port: 10021
 test:
   server: testftp.chain.io
   user: testftp
   password: testftp999
+  port: 10021
 production:
   server: ftp.chain.io
   user: chainroot

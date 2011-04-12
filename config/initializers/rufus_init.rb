@@ -1,6 +1,14 @@
 #CODE COPIED FROM: https://github.com/jmettraux/rufus-scheduler/issues/10/
 require 'rufus/scheduler'
 
+def error_wrapper job_name, &block
+  begin
+    yield
+  rescue
+    OpenMailer.send_generic_exception $!, ["Scheduled Job: #{job_name}"]
+  end
+end
+
 def execute_scheduler
   # Create your scheduler here
   scheduler = Rufus::Scheduler.start_new  
@@ -8,16 +16,22 @@ def execute_scheduler
 
   #Rebuild index to capture any saved schedules
   scheduler.every("10m") do
-    if Rails.env == "production"
-      logger.info "#{Time.now}: Rebuilding search schedule jobs "
-      SearchSchedule.reset_schedule scheduler, logger
-    else
-      logger.info "Skipping scheduled job rebuild: Not production"
+    error_wrapper "Search Schedule" do
+      if Rails.env == "production"
+        logger.info "#{Time.now}: Rebuilding search schedule jobs "
+        SearchSchedule.reset_schedule scheduler, logger
+      else
+        logger.info "Skipping scheduled job rebuild: Not production"
+      end
     end
   end
   scheduler.every("3m") do
-    m = MasterSetup.first
-    FtpWalker.new.go if m && !m.system_code.nil?
+    error_wrapper "FTP Sweeper" do
+      logger.info "#{Time.now}: Sweeping FTP folder."
+      m = MasterSetup.first
+      FtpWalker.new.go if m && !m.system_code.nil?
+      logger.info "#{Time.now}: FTP Sweep Complete"
+    end
   end
 end
 

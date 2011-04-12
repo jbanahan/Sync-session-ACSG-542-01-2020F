@@ -62,6 +62,7 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
+#ERROR EMAILS
   def send_search_fail(to,search_name,error_message,ftp_server,ftp_username,ftp_subfolder)
     @search_name = search_name
     @error_message = error_message
@@ -78,6 +79,14 @@ class OpenMailer < ActionMailer::Base
     @imported_file = imported_file
     @source = source
     mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - Imported File Error") do |format|
+      format.text
+    end
+  end
+
+  def send_generic_exception e, additional_messages=[]
+    @exception = e
+    @additional_messages = additional_messages
+    mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - #{e.message}") do |format|
       format.text
     end
   end
