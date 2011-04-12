@@ -205,7 +205,7 @@ class SearchSetup < ActiveRecord::Base
       base.search_secure self.user, base if secure
     rescue Exception => e
       logger.error $!, $!.backtrace
-      OpenMailer.search_error_email(self.user).deliver
+      OpenMailer.send_custom_search_error(self.user, e.message).deliver
     end
 
     base
