@@ -35,11 +35,15 @@ class FtpWalkerTest < ActiveSupport::TestCase
       ftp.login settings['user'], settings['password']
       ftp.chdir "/#{ms.system_code}/#{u.username}/to_chain/shipment/#{s.name}"
       ftp.puttextfile tmp
+
+      FtpWalker.new.go
+
+      file_list = ftp.nlst
+      assert file_list.length==0, "File list should have been empty, was #{file_list.to_s}"
     ensure
       ftp.close
     end
 
-    FtpWalker.new.go
 
     r = Shipment.where(:reference=>expected_shp_ref)
     assert r.size==1

@@ -91,13 +91,14 @@ class FtpWalker
     ["#{Rails.root}/tmp","#{Rails.root}/tmp/ftpdown"].each {|p| Dir.mkdir(p) unless File.directory?(p)}
     file_list.each do |f|
       ftp.getbinaryfile f, "#{Rails.root}/tmp/ftpdown/#{f}"
+      ftp.delete f
       @downloaded[File.new("#{Rails.root}/tmp/ftpdown/#{f}")] = search_setup
     end
   end
 
   def run_imports
     @downloaded.each do |file,search_setup|
-      imp = search_setup.imported_files.build(:filename=>@downloaded,:size=>file.size,:ignore_first_row=>false)
+      imp = search_setup.imported_files.build(:ignore_first_row=>false)
       imp.attached = file
       imp.save
       imp.process
