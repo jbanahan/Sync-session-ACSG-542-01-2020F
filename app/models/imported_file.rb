@@ -14,14 +14,27 @@ class ImportedFile < ActiveRecord::Base
   belongs_to :search_setup
     
   def process(options={})
-    @a_data = options[:attachment_data] if !options[:attachment_data].nil?
-    FileImportProcessor.process self
+    begin
+      @a_data = options[:attachment_data] if !options[:attachment_data].nil?
+      FileImportProcessor.process self
+    rescue => e 
+      self.errors[:base] << "There was an error processing the file: #{e.message}"
+    end
+    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors
     return self.errors.size == 0
   end
   
   def preview(options={})
-    @a_data = options[:attachment_data] if !options[:attachment_data].nil?
-    FileImportProcessor.preview self
+    begin
+      @a_data = options[:attachment_data] if !options[:attachment_data].nil?
+      msgs = FileImportProcessor.preview self
+      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors
+      msgs
+    rescue => e
+      self.errors[:base] << e.message
+      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver
+      return ["There was an error reading the file: #{e.message}"]
+    end
   end
   
   

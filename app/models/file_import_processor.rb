@@ -34,8 +34,13 @@ class FileImportProcessor
   end
   
   def preview_file
-    get_rows do |row|
-      return do_row row, false
+    begin
+      get_rows do |row|
+        return do_row row, false
+      end
+    rescue => e
+      @import_file.errors[:base] << e.message
+      return "There was an error reading the file: #{e.message}"
     end
   end
   def self.find_processor import_file  

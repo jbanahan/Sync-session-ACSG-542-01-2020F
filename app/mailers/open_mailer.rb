@@ -74,6 +74,14 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
+  def send_imported_file_process_fail imported_file, source="Not Specified" #source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
+    @imported_file = imported_file
+    @source = source
+    mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - Imported File Error") do |format|
+      format.text
+    end
+  end
+
   private
   def sanitize_filename(filename)
     filename.strip.tap do |name|

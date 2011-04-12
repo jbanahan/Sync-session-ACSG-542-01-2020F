@@ -1,0 +1,13 @@
+Imported File Failed:
+
+Time: <%=Time.now%>
+System UID: <%=MasterSetup.first.uuid%>
+System Code: <%=MasterSetup.first.system_code%>
+Source: <%=@source.respond_to?('full_name') ? @source.full_name : @source.to_s%>
+
+Imported File ID: <%=@imported_file.id%>
+File Name: <%=@imported_file.attached_file_name%>
+Errors:
+<%@imported_file.errors.full_messages.each do |m|%>
+<%="\t#{m}"%>
+<%end%>
