@@ -20,7 +20,7 @@ class ImportedFile < ActiveRecord::Base
     rescue => e 
       self.errors[:base] << "There was an error processing the file: #{e.message}"
     end
-    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors
+    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
     return self.errors.size == 0
   end
   
@@ -28,7 +28,7 @@ class ImportedFile < ActiveRecord::Base
     begin
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
       msgs = FileImportProcessor.preview self
-      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors
+      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
       msgs
     rescue => e
       self.errors[:base] << e.message
