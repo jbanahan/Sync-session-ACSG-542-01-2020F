@@ -44,8 +44,8 @@ class ImportedFilesController < ApplicationController
       redirect_to request.referrer
     else
       send_data @imported_file.attachment_data, 
-          :filename => @imported_file.filename,
-          :type => @imported_file.content_type,
+          :filename => @imported_file.attached_file_name,
+          :type => @imported_file.attached_content_type,
           :disposition => 'attachment'  
     end
   end
