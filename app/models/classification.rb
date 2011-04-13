@@ -8,6 +8,8 @@ class Classification < ActiveRecord::Base
   validates :country_id, :uniqueness => {:scope => :product_id}
   validates :product, :presence => true
   validates :country_id, :presence => true
+
+  scope :sort_classification_rank, joins(:country).order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
   
   has_many :tariff_records, :dependent => :destroy 
    

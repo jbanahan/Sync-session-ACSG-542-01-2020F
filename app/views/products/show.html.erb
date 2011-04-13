@@ -68,7 +68,7 @@
 <% if current_user.view_classifications? %>
 <div class='attachments_container section_insert'>
   <h2 class='section_insert_heading'>Classifications</h2>
-  <% @product.classifications.each do |c| %>
+  <% @product.classifications.sort_classification_rank.each do |c| %>
   <div> <!--isolate each classification-->
     <h2><%=c.country.name.titleize%></h2>
     <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    

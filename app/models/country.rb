@@ -1,10 +1,9 @@
 class Country < ActiveRecord::Base
   
-  attr_accessible :import_location
-  
-  default_scope :order => 'name ASC'
+  attr_accessible :import_location, :classification_rank
   
   scope :import_locations, where(:import_location=>true)
+  scope :sort_name, order("name ASC") 
   
 	has_many :addresses
 	has_many :official_tariffs

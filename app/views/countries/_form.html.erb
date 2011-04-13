@@ -13,5 +13,6 @@ $(function() {
 <%=field_row "Name", @country.name %>
 <%=field_row "ISO Code", @country.iso_code%>
 <%=field_row "Used For Imports", f.check_box(:import_location)%>
+<%=field_row "Classification Screen Sort Rank", f.text_field(:classification_rank)%>
 </table>
 <%end%>
