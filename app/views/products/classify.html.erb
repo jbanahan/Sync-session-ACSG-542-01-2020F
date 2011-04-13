@@ -105,7 +105,7 @@ function add_tf_row(link,parent_index) {
 <a name='classifications'></a>
 <h2>Classifications</h2>
 <% classification_count = 0 %>
-<% f.fields_for :classifications, f.object.classifications.sort_classification_rank.all do |cf| %>
+<% f.fields_for :classifications do |cf| %>
   <div class='classification_box cf_row'>
       <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
       <%=cf.hidden_field :country_id%>

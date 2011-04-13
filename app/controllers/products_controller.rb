@@ -119,7 +119,7 @@ class ProductsController < ApplicationController
       p = Product.find(params[:id])
       action_secure(p.can_edit?(current_user) && current_user.edit_classifications?,p,{:verb => "classify for",:module_name=>"product"}) {
         @product = p
-        Country.import_locations.each do |c|
+        Country.import_locations.sort_classification_rank.each do |c|
           p.classifications.build(:country => c) if p.classifications.where(:country_id=>c).empty?
         end
       }

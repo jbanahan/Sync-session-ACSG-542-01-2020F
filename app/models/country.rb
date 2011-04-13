@@ -8,6 +8,8 @@ class Country < ActiveRecord::Base
 	has_many :addresses
 	has_many :official_tariffs
 	
+  scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
+
 	validates_uniqueness_of :iso_code
 	
 	def self.load_default_countries
