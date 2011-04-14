@@ -2,17 +2,11 @@
 
 one:
   id: 1
-  filename: MyString
-  size: 1
-  content_type: text/csv
   search_setup: imported_file_setup
   ignore_first_row: true
   attached_file_name: test.csv
 
 two:
   id: 2
-  filename: MyString
-  size: 1
-  content_type: text/csv
   search_setup: ifs_ord_prod 
   attached_file_name: test.csv
