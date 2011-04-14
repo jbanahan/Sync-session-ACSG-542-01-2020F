@@ -193,21 +193,16 @@ class SearchSetup < ActiveRecord::Base
   def private_search(secure=true)
     base = Kernel.const_get(self.module_type)
     
-    begin
-      self.search_criterions.each do |sc|
-        base = sc.apply(base)
-      end
-      self.sort_criterions.order("rank ASC").each do |sort|
-        base = sort.apply(base)
-      end
-    
-      base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
-      base.search_secure self.user, base if secure
-    rescue Exception => e
-      logger.error $!, $!.backtrace
-      OpenMailer.send_custom_search_error(self.user, e.message).deliver
+    self.search_criterions.each do |sc|
+      base = sc.apply(base)
     end
 
+    self.sort_criterions.order("rank ASC").each do |sort|
+      base = sort.apply(base)
+    end
+    
+    base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
+    base.search_secure self.user, base if secure
     base
   end
   
