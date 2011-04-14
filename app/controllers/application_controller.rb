@@ -65,54 +65,58 @@ class ApplicationController < ActionController::Base
     if @current_search.user != current_user
       error_redirect "You cannot run a search that is assigned to a different user."
     else
-      begin
-        @results = @current_search.search
-        respond_to do |format| 
-          format.html {
-            @current_search.touch(true)
-            @results = @results.paginate(:per_page => 20, :page => params[:page]) 
-            render :layout => 'one_col'
-          }
-          format.csv {
-            @results = @results.where("1=1")
-            render_csv("#{core_module.label}.csv")
-          }
-          format.json {
-            @results = @results.paginate(:per_page => 20, :page => params[:page])
-            rval = []
-            cols = @current_search.search_columns.order("rank ASC")
-            GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
-              row_data = []
-              row.each do |c|
-                row_data << c.to_s
-              end
-              rr = ResultRecord.new
-              rr.data=row_data
-              rr.url=url_for obj
-              rval << rr
-            end
-            sr = SearchResult.new
-            sr.columns = []
-            cols.each {|col|
-              sr.columns << model_field_label(col.model_field_uid) 
-            }
-            sr.records = rval
-            sr.name = @current_search.name
-            render :json => sr
-          }
-          format.xls {
-            book = XlsMaker.new.make(@current_search,@results.where("1=1")) 
-            spreadsheet = StringIO.new 
-            book.write spreadsheet 
-            send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
-          }
-        end
-      rescue Exception => e
-        logger.error $!, $!.backtrace
-        OpenMailer.send_custom_search_error(self.user, e.message).deliver
-        @current_search = @core_module.make_default_search current_user
-      end
+      render_search_results
     end    
+  end
+  
+  def render_search_results
+    begin
+      @results = @current_search.search
+      respond_to do |format| 
+        format.html {
+          @current_search.touch(true)
+          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+          render :layout => 'one_col'
+        }
+        format.csv {
+          @results = @results.where("1=1")
+          render_csv("#{core_module.label}.csv")
+        }
+        format.json {
+          @results = @results.paginate(:per_page => 20, :page => params[:page])
+          rval = []
+          cols = @current_search.search_columns.order("rank ASC")
+          GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
+            row_data = []
+            row.each do |c|
+              row_data << c.to_s
+            end
+            rr = ResultRecord.new
+            rr.data=row_data
+            rr.url=url_for obj
+            rval << rr
+          end
+          sr = SearchResult.new
+          sr.columns = []
+          cols.each {|col|
+            sr.columns << model_field_label(col.model_field_uid) 
+          }
+          sr.records = rval
+          sr.name = @current_search.name
+          render :json => sr
+        }
+        format.xls {
+          book = XlsMaker.new.make(@current_search,@results.where("1=1")) 
+          spreadsheet = StringIO.new 
+          book.write spreadsheet 
+          send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
+        }
+      end
+    rescue Exception => e
+      logger.error $!, $!.backtrace
+      OpenMailer.send_custom_search_error(self.user, e.message).deliver
+      @current_search = @core_module.make_default_search current_user
+    end
   end
   
     def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
