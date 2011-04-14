@@ -60,12 +60,13 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test == self_val
       end  
     elsif [:decimal, :integer].include? d
+      self_val = number_value d, self.value
       if self.operator == operators[:eq]
-        return value_to_test == self.value
+        return value_to_test == self_val
       elsif self.operator == operators[:gt]
-        return value_to_test > self.value
+        return value_to_test > self_val
       elsif self.operator == operators[:lt]
-        return value_to_test < self.value
+        return value_to_test < self_val
       elsif self.operator == operators[:sw]
         return value_to_test.to_s.start_with?(self.value.to_s)
       elsif self.operator == operators[:ew]
@@ -75,6 +76,15 @@ class SearchCriterion < ActiveRecord::Base
   end
 
   private
+
+  def number_value data_type, value
+    sval = (value.blank? || !is_a_number(value) ) ? "0" : value
+    data_type==:integer ? sval.to_i : sval.to_f
+  end
+
+  def is_a_number val
+    begin Float(val) ; true end rescue false
+  end
   
   def add_where(p)
     p.where(where_clause,where_value)

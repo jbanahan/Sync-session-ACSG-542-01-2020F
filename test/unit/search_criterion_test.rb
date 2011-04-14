@@ -27,6 +27,9 @@ class SearchCriterionTest < ActiveSupport::TestCase
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("prod_uid").uid, :operator => "co", 
       :value=>"cde")
 
+    #reload to make sure we have the data types that will really come out of the database
+    sc = SearchCriterion.find(sc.id)
+
     assert sc.passes?("abcdef")
     assert !sc.passes?("cp")
     
@@ -47,6 +50,9 @@ class SearchCriterionTest < ActiveSupport::TestCase
     cd =CustomDefinition.create!(:module_type=>"Product", :data_type=>"text", :label=>"blah")
     sc = SearchCriterion.create!(:model_field_uid=>"*cf_#{cd.id}", :operator => "co", 
       :value=>"cde")
+
+    #reload to make sure we have the data types that will really come out of the database
+    sc = SearchCriterion.find(sc.id)
     
       assert sc.passes?("abcdef")
       assert !sc.passes?("cp")
@@ -68,6 +74,9 @@ class SearchCriterionTest < ActiveSupport::TestCase
     cd = CustomDefinition.create!(:module_type=>"Product", :data_type=>"boolean", :label=>"boolean sc test")
     sc = SearchCriterion.create!(:model_field_uid=>"*cf_#{cd.id}",:operator=>"eq",:value=>"t")
 
+    #reload to make sure we have the data types that will really come out of the database
+    sc = SearchCriterion.find(sc.id)
+
     assert sc.passes?(true)
     assert !sc.passes?(false)
   end
@@ -75,6 +84,9 @@ class SearchCriterionTest < ActiveSupport::TestCase
   test "passes? :decimal all operator permutations" do
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("ordln_ordered_qty").uid, 
       :operator => "eq", :value=>6.9)
+
+    #reload to make sure we have the data types that will really come out of the database
+    sc = SearchCriterion.find(sc.id)
 
     assert sc.passes?(6.9)
     assert !sc.passes?(9.6)
@@ -107,6 +119,9 @@ class SearchCriterionTest < ActiveSupport::TestCase
   test "passes? :integer all operator permutations" do
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("ordln_line_number").uid, 
       :operator => "eq", :value=>15)
+
+    #reload to make sure we have the data types that will really come out of the database
+    sc = SearchCriterion.find(sc.id)
     
       assert sc.passes?(15)
       assert !sc.passes?(6)
@@ -141,6 +156,10 @@ class SearchCriterionTest < ActiveSupport::TestCase
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("sale_order_date").uid, 
       :operator => "eq", :value=>d)
     
+    #reload to make sure we have the data types that will really come out of the database
+    sc = SearchCriterion.find(sc.id)
+
+
       assert sc.passes?(d)
       assert !sc.passes?(d + 6)
       
