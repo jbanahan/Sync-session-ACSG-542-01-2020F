@@ -40,7 +40,7 @@ class FileImportProcessor
       end
     rescue => e
       @import_file.errors[:base] << e.message
-      return "There was an error reading the file: #{e.message}"
+      return ["There was an error reading the file: #{e.message}"]
     end
   end
   def self.find_processor import_file  

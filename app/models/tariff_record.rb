@@ -53,7 +53,7 @@ class TariffRecord < ActiveRecord::Base
 
   private
   def clean_hts(str)
-    str.gsub(/[^0-9]/,'') unless str.nil?
+    str.to_s.gsub(/[^0-9]/,'') unless str.nil?
   end
   def find_official_tariff hts_number
     OfficialTariff.where(:country_id=>self.classification.country,:hts_code=>hts_number).first unless self.classification.nil? || hts_number.blank?
