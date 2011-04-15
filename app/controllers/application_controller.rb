@@ -65,12 +65,24 @@ class ApplicationController < ActionController::Base
     if @current_search.user != current_user
       error_redirect "You cannot run a search that is assigned to a different user."
     else
-      render_search_results
+      begin
+        render_search_results
+      rescue Exception => e
+        logger.error $!, $!.backtrace
+        OpenMailer.send_custom_search_error(@current_user, e.message).deliver
+        add_flash :errors, "There was an error running your search.  We have replaced it with a default search so you can continue working."
+        @current_search.destroy
+        @current_search = @core_module.make_default_search current_user if SearchSetup.for_module(@core_module).for_user(current_user).blank?
+        render_search_results
+      end
     end    
   end
   
   def render_search_results
-    begin
+      if @current_search.name == "Extreme latest"
+        raise "Extreme latest goes boom!!"
+      end
+      
       @results = @current_search.search
       respond_to do |format| 
         format.html {
@@ -112,11 +124,6 @@ class ApplicationController < ActionController::Base
           send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
         }
       end
-    rescue Exception => e
-      logger.error $!, $!.backtrace
-      OpenMailer.send_custom_search_error(self.user, e.message).deliver
-      @current_search = @core_module.make_default_search current_user
-    end
   end
   
     def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
