@@ -6,5 +6,6 @@ Comment Created: <%=@comment.created_at%>
 <%=@comment.body%>
 
 <%unless @link.nil? %>
-You can view this item at <%=@link%>
+If you have a chain.io account, you can view this item by clicking this link:
+<%=@link%>
 <% end %>

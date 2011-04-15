@@ -50,7 +50,7 @@ class OpenMailer < ActionMailer::Base
     @user = current_user
     @comment = comment
     @link = link 
-    mail(:to => to_address, :subject => "[chain.io] #{comment.subject}") do |format|
+    mail(:to => to_address, :reply_to => current_user.email, :subject => "[chain.io] #{comment.subject}") do |format|
       format.text
     end
   end
