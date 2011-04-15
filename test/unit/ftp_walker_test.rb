@@ -4,6 +4,14 @@ require 'net/ftp'
 
 class FtpWalkerTest < ActiveSupport::TestCase
 
+  test "no system code" do
+    ms = MasterSetup.first
+    ms.system_code = nil
+    ms.save!
+
+    assert "no system code" == FtpWalker.new.go
+  end
+
   test "with real server" do #dependent on test server being active
     #set system code
     ms = MasterSetup.first
