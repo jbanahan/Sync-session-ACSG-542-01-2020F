@@ -58,56 +58,23 @@ class ApplicationController < ActionController::Base
   def advanced_search(core_module)
     @core_module = core_module
     @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
-    if SearchSetup.for_module(@core_module).for_user(current_user).length==0
-      @current_search = @core_module.make_default_search current_user
-    end
-    @current_search = params[:sid].nil? ? SearchSetup.for_module(@core_module).for_user(current_user).order("last_accessed DESC").first : SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first
+    @current_search = get_search_to_run
     if @current_search.user != current_user
       error_redirect "You cannot run a search that is assigned to a different user."
     else
-      @results = @current_search.search
-      respond_to do |format| 
-        format.html {
-          @current_search.touch(true)
-          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
-          render :layout => 'one_col'
-        }
-        format.csv {
-          @results = @results.where("1=1")
-          render_csv("#{core_module.label}.csv")
-        }
-        format.json {
-          @results = @results.paginate(:per_page => 20, :page => params[:page])
-          rval = []
-          cols = @current_search.search_columns.order("rank ASC")
-          GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
-            row_data = []
-            row.each do |c|
-              row_data << c.to_s
-            end
-            rr = ResultRecord.new
-            rr.data=row_data
-            rr.url=url_for obj
-            rval << rr
-          end
-          sr = SearchResult.new
-          sr.columns = []
-          cols.each {|col|
-            sr.columns << model_field_label(col.model_field_uid) 
-          }
-          sr.records = rval
-          sr.name = @current_search.name
-          render :json => sr
-        }
-        format.xls {
-          book = XlsMaker.new.make(@current_search,@results.where("1=1")) 
-          spreadsheet = StringIO.new 
-          book.write spreadsheet 
-          send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
-        }
+      begin
+        render_search_results
+      rescue Exception => e
+        logger.error $!, $!.backtrace
+        OpenMailer.send_custom_search_error(@current_user, e.message).deliver
+        add_flash :errors, "There was an error running your search.  We have replaced it with a different search so you can continue working."
+        @current_search.destroy
+        @current_search = get_search_to_run
+        render_search_results
       end
-    end
+    end    
   end
+
   
     def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
         cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
@@ -227,6 +194,62 @@ class ApplicationController < ActionController::Base
   end
   
     private
+
+  def get_search_to_run
+    s = nil
+    s = SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
+    s = SearchSetup.for_module(@core_module).for_user(current_user).order("last_accessed DESC").first
+    s = @core_module.make_default_search current_user if s.nil?
+    s
+  end
+  
+  def render_search_results
+      if @current_search.name == "Extreme latest" && current_user.sys_admin?
+        raise "Extreme latest goes boom!!"
+      end
+      
+      @results = @current_search.search
+      respond_to do |format| 
+        format.html {
+          @current_search.touch(true)
+          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+          render :layout => 'one_col'
+        }
+        format.csv {
+          @results = @results.where("1=1")
+          render_csv("#{core_module.label}.csv")
+        }
+        format.json {
+          @results = @results.paginate(:per_page => 20, :page => params[:page])
+          rval = []
+          cols = @current_search.search_columns.order("rank ASC")
+          GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
+            row_data = []
+            row.each do |c|
+              row_data << c.to_s
+            end
+            rr = ResultRecord.new
+            rr.data=row_data
+            rr.url=url_for obj
+            rval << rr
+          end
+          sr = SearchResult.new
+          sr.columns = []
+          cols.each {|col|
+            sr.columns << model_field_label(col.model_field_uid) 
+          }
+          sr.records = rval
+          sr.name = @current_search.name
+          render :json => sr
+        }
+        format.xls {
+          book = XlsMaker.new.make(@current_search,@results.where("1=1")) 
+          spreadsheet = StringIO.new 
+          book.write spreadsheet 
+          send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
+        }
+      end
+  end
     def sortable_search_heading(f_short)
       help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
     end

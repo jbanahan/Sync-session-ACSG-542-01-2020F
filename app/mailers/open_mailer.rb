@@ -83,11 +83,32 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
+  def send_custom_search_error(user, error_message)
+    @user = user
+    @error_message = error_message
+    mail(:to => "bug@aspect9.com", :subject => "[chain.io Exception] Search Failure") do |format|
+      format.text
+    end
+  end
+
   def send_generic_exception e, additional_messages=[]
     @exception = e
     @additional_messages = additional_messages
     mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - #{e.message}") do |format|
       format.text
+    end
+  end
+
+  private
+  def sanitize_filename(filename)
+    filename.strip.tap do |name|
+      # NOTE: File.basename doesn't work right with Windows paths on Unix
+      # get only the filename, not the whole path
+      name.sub! /\A.*(\\|\/)/, ''
+      # Finally, replace all non alphanumeric, underscore
+      # or periods with underscore
+      name.gsub! /[^\w\.\-]/, '_'
+>>>>>>> F1-65
     end
   end
 end

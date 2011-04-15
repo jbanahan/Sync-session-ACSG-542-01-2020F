@@ -165,40 +165,51 @@ class SearchSetup < ActiveRecord::Base
   end
 
   private 
+  
   def has_company(model_prefix,type_prefix)
     has_one_of ["#{model_prefix}_#{type_prefix}_name","#{model_prefix}_#{type_prefix}_id","#{model_prefix}_#{type_prefix}_syscode"]
   end
+  
   def has_column(model_field_uid)
     !self.search_columns.where(:model_field_uid=>model_field_uid).empty?
   end
+  
   def has_one_of columns
     columns.each {|c| return true if has_column c}
     return false
   end
+  
   def has_classification_country_column
     has_one_of ["class_cntry_name","class_cntry_iso"]
   end
+  
   def contains_module(m)
     self.search_columns.each {|c| 
       return true if  ModelField.find_by_uid(c.model_field_uid).core_module == m
     }
     false
   end
+  
   def private_search(secure=true)
     base = Kernel.const_get(self.module_type)
+    
     self.search_criterions.each do |sc|
       base = sc.apply(base)
     end
+
     self.sort_criterions.order("rank ASC").each do |sort|
       base = sort.apply(base)
     end
+    
     base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
     base.search_secure self.user, base if secure
     base
   end
+  
   def label model_field_uid
     ModelField.find_by_uid(model_field_uid).label
   end
+  
   def combine_field_names model_field_uids
     r = ""
     model_field_uids.each_with_index do |f,i|
@@ -208,6 +219,7 @@ class SearchSetup < ActiveRecord::Base
     end
     r
   end
+  
   def combined_company_fields module_prefix, company_type
     p = "#{module_prefix}_#{company_type}"
     combine_field_names ["#{p}_name","#{p}_id","#{p}_syscode"]
