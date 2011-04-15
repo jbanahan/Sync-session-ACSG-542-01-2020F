@@ -84,7 +84,7 @@ function add_tf_row(link,parent_index) {
 <%content_for :action_bar do %>
 <button id='btn_save'>Save</button>
 
-<% if Country.import_locations.size > 1 && !OfficialTariff.nil? %>
+<% if Country.import_locations.size > 1 && !OfficialTariff.first.nil? %>
 	<button id='btn_auto_classify'>Auto Classify</button>
 <% end %>
 
