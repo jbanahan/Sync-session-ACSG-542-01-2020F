@@ -37,7 +37,8 @@ class CsvTariffLoader
       FIELD_MAP.each do |header,lmda|
         col_num = headers.index header
         unless col_num.nil?
-          lmda.call ot, row[col_num]
+          val = row[col_num]
+          lmda.call ot, (val.responds_to?('strip') ? val.strip : val)
         end
       end
       ot.save!

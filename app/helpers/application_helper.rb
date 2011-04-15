@@ -71,9 +71,9 @@ module ApplicationHelper
 
   def show_tariff hts_number, country_id, with_popup_link=true
     if with_popup_link
-      link_to hts_number, "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
+      link_to hts_number.hts_format, "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
     else
-      return hts_number
+      return hts_number.hts_format
     end
   end
 
