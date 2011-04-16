@@ -113,37 +113,27 @@ class Product < ActiveRecord::Base
           official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_1).first
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
-            if matches.length==1
-            to_load.hts_1 = matches.first.hts_code
-            elsif matches.length > 1
+            to_load.hts_1 = matches.first.hts_code if matches.length==1
             to_load.hts_1_matches = matches
-            end
           end
         end
         if !base_tariff.hts_2.empty? && base_tariff.hts_2.length > 5
           official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_2).first
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
-            if matches.length==1
-            to_load.hts_2 = matches.first.hts_code
-            elsif matches.length > 1
+            to_load.hts_2 = matches.first.hts_code if matches.length==1
             to_load.hts_2_matches = matches
-            end
           end
         end
         if !base_tariff.hts_3.empty? && base_tariff.hts_3.length > 5
           official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_3).first
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
-            if matches.length==1
-            to_load.hts_3 = matches.first.hts_code
-            elsif matches.length > 1
+            to_load.hts_3 = matches.first.hts_code if matches.length==1
             to_load.hts_3_matches = matches
-            end
           end
         end
       end
     end
   end
-
 end

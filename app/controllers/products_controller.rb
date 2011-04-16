@@ -134,6 +134,7 @@ class ProductsController < ApplicationController
         update_status @product
         base_country = Country.find(params[:base_country_id])
         @product.auto_classify(base_country)
+        add_flash :notices, "Auto-classification complete, select tariffs below."
         render 'classify'
       }
     end
