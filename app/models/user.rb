@@ -56,6 +56,15 @@ class User < ActiveRecord::Base
     return n
   end
   
+  def zendesk_url
+    timestamp = Time.now.utc.to_i.to_s
+    token = "MrpSvPXafsfZKuQzYAvpCTjbhe5WDVvPwmfzAneyTcTvVsHc"
+    base_url = "http://support.chain.io/access/remote"
+    hash_base = self.full_name << self.email << token << timestamp
+    hash = Digest::MD5.hexdigest(hash_base)
+    "#{base_url}?#{{:email=>self.email,:name=>self.full_name,:timestamp=>timestamp,:hash=>hash}.to_query}"
+  end
+
   def can_view?(user)
     return user.admin? || self==user
   end

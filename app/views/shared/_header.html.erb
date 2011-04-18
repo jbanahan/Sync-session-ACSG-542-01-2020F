@@ -11,7 +11,7 @@
   <title>chain.io</title>
   <link rel="shortcut icon" href="/favicon.ico" />
   <%= stylesheet_link_tag :all, :media=>"all" %>
-  <link rel="stylesheet" type="text/css" href="print_css/print.css" media="print" />
+  <link rel="stylesheet" type="text/css" href="/print_css/print.css" media="print" />
   <%= javascript_include_tag "jquery-1.4.4.min.js", "jquery-rails.js", "jquery-ui-1.8.7.custom.min.js", "application.js", "jquery.validate.js", "visualize.jQuery.js", "jquery.tools.min.js", "adv_search.js" %>
   <%= csrf_meta_tag %>
   <script>
@@ -138,8 +138,7 @@
         <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
         <% if current_user.admin? %><%= link_to 'Settings', settings_path, {:title=>"Administrator System Settings",:class=>"tiplink"} %> |<%end%>
-        <a href='#' id='lnk_feedback' class='tiplink' title='Send feedback to the programmers.' >Feedback</a> | 
-        <%= help_link "Help" %> |
+        <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
         <%= link_to 'Logout', logout_path %>
     </div>
   <% end %>
