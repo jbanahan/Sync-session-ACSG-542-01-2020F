@@ -108,7 +108,6 @@ class OpenMailer < ActionMailer::Base
       # Finally, replace all non alphanumeric, underscore
       # or periods with underscore
       name.gsub! /[^\w\.\-]/, '_'
->>>>>>> F1-65
     end
   end
 end
