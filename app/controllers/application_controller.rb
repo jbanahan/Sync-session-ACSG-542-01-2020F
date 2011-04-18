@@ -217,7 +217,7 @@ class ApplicationController < ActionController::Base
         }
         format.csv {
           @results = @results.where("1=1")
-          render_csv("#{core_module.label}.csv")
+          render_csv("#{@core_module.label}.csv")
         }
         format.json {
           @results = @results.paginate(:per_page => 20, :page => params[:page])
