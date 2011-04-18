@@ -43,6 +43,10 @@ class Product < ActiveRecord::Base
     return user.create_products?
   end
 
+  def can_classify?(user)
+    can_edit?(user) && user.edit_classifications?
+  end
+
   def find_same
     found = Product.where({:unique_identifier => self.unique_identifier})
     raise "Found multiple orders with the same unique identifier #{self.unique_identifier}" if found.size > 1

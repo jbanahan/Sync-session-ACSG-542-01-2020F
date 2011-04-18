@@ -322,18 +322,26 @@ hrs_opts = {"midnight"=>"0"}
 <h2>Results</h2>
 <table class='detail_table'>
   <thead><tr>
+    <th>&nbsp;</th>
     <%@current_search.search_columns.order("rank ASC").each do |c|%>
     <th><%=model_field_label(c.model_field_uid)%></th>
     <% end %>
-    <th>&nbsp;</th>
   </tr></thead>
   <tbody>
     <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain).go do |row,obj| %>
       <tr class='hover'>
+        <td>
+          <%=link_to "View", obj %> 
+          <%if obj.respond_to?('can_edit?') && obj.can_edit?(current_user)%>
+          | <%=link_to "Edit", send("edit_#{obj.class.to_s.underscore}_path",obj)%>
+          <%end%>
+          <%if obj.respond_to?('can_classify?') && obj.can_classify?(current_user)%>
+          | <%=link_to "Classify", send("classify_#{obj.class.to_s.underscore}_path",obj)%>
+          <%end%>
+        </td>
         <% row.each do |r| %>
         <td><%=r%></td>
         <% end %>
-        <td><%=link_to 'Go', obj %></td>
       </tr>
     <% end %>
    </tbody>
