@@ -1,4 +1,4 @@
-class CsvTariffLoader
+class TariffLoader
   
   FIELD_MAP = {
     "HSCODE" => lambda {|o,d| o.hts_code = d},
@@ -29,16 +29,16 @@ class CsvTariffLoader
     puts "Deleting tariffs for #{@country.name}"
     OfficialTariff.where(:country_id=>@country).destroy_all
     #load new
-    headers = nil
     i = 0
-    CSV.foreach(@file_path, {:headers=>true}) do |row|
-      headers = row.headers if headers.nil?
+    parser = get_parser
+    parser.foreach(@file_path) do |row|
+      headers = parser.headers
       ot = OfficialTariff.new(:country=>@country)
       FIELD_MAP.each do |header,lmda|
         col_num = headers.index header
         unless col_num.nil?
           val = row[col_num]
-          lmda.call ot, (val.responds_to?('strip') ? val.strip : val)
+          lmda.call ot, (val.respond_to?('strip') ? val.strip : val)
         end
       end
       ot.save!
@@ -55,8 +55,45 @@ class CsvTariffLoader
       if File.file? file_path
         c = Country.where(:iso_code => entry[0,2].upcase).first
         raise "Country not found with ISO #{entry[0,2]} for file #{entry}" if c.nil?
-        CsvTariffLoader.new(c,file_path).process
+        TariffLoader.new(c,file_path).process
       end
     end
+  end
+
+  def get_parser 
+    @file_path.downcase.end_with?("xls") ? XlsParser.new : CsvParser.new
+  end
+
+  class CsvParser
+
+    def headers
+      raise "Headers not initialized (a row must be read first)" unless @headers
+      @headers
+    end
+
+    def foreach file_path, &block
+      CSV.foreach(file_path, {:headers=>true}) do |row|
+        @headers = row.headers unless @headers
+        yield row
+      end
+    end
+
+  end
+
+  class XlsParser
+
+    def headers
+      raise "Headers not initialzied (a row must be read first)" unless @headers
+      @headers
+    end
+
+    def foreach file_path, &block
+      sheet = Spreadsheet.open(file_path).worksheet 0
+      @headers = sheet.row 0
+      sheet.each 1 do |row|
+        yield row
+      end
+    end
+
   end
 end
