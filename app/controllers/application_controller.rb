@@ -237,7 +237,7 @@ class ApplicationController < ActionController::Base
   end
 
   #add this redirect at the end of your update controller action to support next & previous buttons
-  def redirect_update base_object
+  def redirect_update base_object, action="edit"
     target = nil
     if params[:c_next]
       target = next_object
@@ -247,7 +247,7 @@ class ApplicationController < ActionController::Base
       add_flash :errors, "No more items in the search list." if target.nil?
     end
     if target
-      redirect_to send("edit_#{base_object.class.to_s.underscore}_path",target)
+      redirect_to send("#{action}_#{base_object.class.to_s.underscore}_path",target)
     else
       redirect_to(@product) 
     end

@@ -89,7 +89,7 @@ class ProductsController < ApplicationController
                   end
                   History.create_product_changed(@product, current_user, product_url(@product))
                   format.html { 
-                    redirect_update @product  
+                    redirect_update @product, (params[:c_classify] ? "classify" : "edit") 
                   }
                   format.xml  { head :ok }
               else
