@@ -61,6 +61,10 @@ class CoreModule
   def new_object
     @new_object_lambda.call
   end
+
+  def find id
+    Kernel.const_get(class_name).find id 
+  end
   
   #hash of model_fields keyed by UID
   def model_fields

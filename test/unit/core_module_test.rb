@@ -1,6 +1,16 @@
 require 'test_helper'
 
 class CoreModuleTest < ActiveSupport::TestCase
+  test "find" do 
+    p = Product.create!(:unique_identifier=>"cm_find")
+    found = CoreModule::PRODUCT.find p.id
+    assert found==p
+
+    o = Order.create!(:order_number=>"cm_find", :vendor_id=>companies(:vendor).id)
+    found = CoreModule::ORDER.find o.id
+    assert found == o
+  end
+
   test "find statusable" do
     expected_count = 1
     cms = CoreModule.find_statusable

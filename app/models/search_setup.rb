@@ -9,6 +9,7 @@ class SearchSetup < ActiveRecord::Base
   has_many :search_schedules, :dependent => :destroy
   has_many :imported_files, :dependent => :destroy
   has_many :dashboard_widgets, :dependent => :destroy
+  has_one :search_run, :dependent => :destroy
 
   belongs_to :user
   
@@ -105,12 +106,16 @@ class SearchSetup < ActiveRecord::Base
     ss
   end
 
+  def core_module
+    CoreModule.find_by_class_name self.module_type
+  end
+
   #does this search have the appropriate columns set to be used as a file upload?
   #acceptes an optional array that will have any user facing messages appended to it
   def uploadable? messages=[]
     #refactor later to use setup within CoreModule to figure this out instead of hard codes
     start_messages_count = messages.size
-    cm = CoreModule.find_by_class_name self.module_type
+    cm = core_module 
     messages << "Search's core module not set." if cm.nil?
 
     if cm==CoreModule::DELIVERY
@@ -203,6 +208,16 @@ class SearchSetup < ActiveRecord::Base
     
     base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
     base.search_secure self.user, base if secure
+
+    #rebuild search_run
+    unless self.id.nil? #only if in database
+      if self.search_run.nil?
+        self.create_search_run
+      else
+        self.search_run.reset_cursor
+        self.search_run.save
+      end
+    end
     base
   end
   

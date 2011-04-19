@@ -1,0 +1,11 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  result_cache: MyText
+  position: 1
+  search_setup_id: 1
+
+two:
+  result_cache: MyText
+  position: 1
+  search_setup_id: 1
