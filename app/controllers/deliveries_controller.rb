@@ -81,7 +81,7 @@ class DeliveriesController < ApplicationController
 						add_flash :notices, "Delivery was updated successfully."
 					end
           History.create_delivery_changed(@delivery, current_user, delivery_url(@delivery))
-          format.html { redirect_to(@delivery) }
+          format.html { redirect_update(@delivery) }
           format.xml  { head :ok }
         else
           errors_to_flash @delivery, :now => true

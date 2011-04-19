@@ -1,23 +1,35 @@
 <% content_for :javascript do %>
-	$(function() {
-	 setupShippingAddress('Master Company',$('#shipment_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@shipment.ship_to_id.nil? ? '' : ",#{@shipment.ship_to_id}"%>);
-	 setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),<%=@shipment.vendor.nil? ? "'not set'": @shipment.vendor.id%><%=@shipment.ship_from_id.nil? ? '' : ",#{@shipment.ship_from_id}"%>);
-   getAddress($('#ship_from_ad'),$("#shipment_ship_from_id").val());
-   $("#shipment_vendor_id").change(function() {
-      setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),$(this).val());
-    });
-    $("#btn_save").button().click(function() {
-      $("#frm_shp").submit();
-    });
-    $("#btn_cancel").button().click(function() {
-      window.location = '<%=url_for @shipment%>';
-    });
+$(function() {
+	setupShippingAddress('Master Company',$('#shipment_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@shipment.ship_to_id.nil? ? '' : ",#{@shipment.ship_to_id}"%>);
+	setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),<%=@shipment.vendor.nil? ? "'not set'": @shipment.vendor.id%><%=@shipment.ship_from_id.nil? ? '' : ",#{@shipment.ship_from_id}"%>);
+  getAddress($('#ship_from_ad'),$("#shipment_ship_from_id").val());
+  $("#shipment_vendor_id").change(function() {
+     setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),$(this).val());
   });
+  $("#btn_save").click(function() {
+    $("#frm_shp").submit();
+  });
+  $("#btn_edit_next").click(function() {
+    next_action_to_form($("#frm_shp"));
+    $("#frm_shp").submit();
+  });
+  $("#btn_edit_previous").click(function() {
+    previous_action_to_form($("#frm_shp"));
+    $("#frm_shp").submit();
+  });
+  $("#btn_cancel").click(function() {
+    window.location = '<%=url_for @shipment%>';
+  });
+});
 <% end %>
 
 <% content_for :action_bar do %>
 <button id='btn_save'>Save</button>
 <button id='btn_cancel'>Cancel</button>
+<% unless @shipment.id.nil? %>
+<button id='btn_edit_next'>Next</button>
+<button id='btn_edit_previous'>Previous</button>
+<% end %>
 <% end %>
 
 <%= form_for @shipment, :html => {:id=>'frm_shp'} do |f| %>

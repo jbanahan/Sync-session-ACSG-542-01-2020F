@@ -20,6 +20,7 @@
   <% if @delivery.can_edit?(current_user) %>
   <button id='btn_edit'>Edit</button>
   <%end%> 
+  <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "deliveries"} %>
 <% end %>
 
 <div class='content_head'>

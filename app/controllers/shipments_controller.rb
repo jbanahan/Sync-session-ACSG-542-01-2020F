@@ -78,7 +78,7 @@ class ShipmentsController < ApplicationController
 						add_flash :notices, "Shipment was updated successfully."
 					end
 					History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
-          format.html { redirect_to(@shipment) }
+          format.html { redirect_update(@shipment) }
           format.xml  { head :ok }
         else
           errors_to_flash @shipment, :now => true

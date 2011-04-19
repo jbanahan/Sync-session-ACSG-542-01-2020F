@@ -6,6 +6,14 @@ $(function() {
   $("#btn_cancel").click(function() {
     window.location = '<%=url_for @product%>';
   });
+  $("#btn_edit_next").click(function() {
+    next_action_to_form($("#frm_prod"));
+    checkUOMChange();
+  });
+  $("#btn_edit_previous").click(function() {
+    previous_action_to_form($("#frm_prod"));
+    checkUOMChange();
+  });
 });
 function checkUOMChange() {
   ou = $("#original_uom").val();
@@ -22,8 +30,12 @@ function checkUOMChange() {
 <% end %>
 
 <% content_for :action_bar do %>
-<button id='btn_save'>Save</button>
-<button id='btn_cancel'>Cancel</button>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+  <% unless @product.id.nil? %>
+    <button id='btn_edit_next'>Next</button>
+    <button id='btn_edit_previous'>Previous</button>
+  <% end %>
 <% end %>
 <%= render :partial => 'shared/worksheet', :locals=>{:base_obj => @product}%>
 <%= form_for @product, :html=>{:id=>'frm_prod'} do |f| %>

@@ -85,7 +85,7 @@ class SalesOrdersController < ApplicationController
       respond_to do |format|
         if @sales_order.update_attributes(params[:sales_order])
           add_flash :notices, "Sale successfully updated."
-          format.html { redirect_to(@sales_order) }
+          format.html { redirect_update(@sales_order) }
           format.xml  { head :ok }
         else
           errors_to_flash @sales_order

@@ -47,6 +47,7 @@
   <% if @line.nil? && @order.can_edit?(current_user)%>
     <button id='btn_add_line'>Add Product</button>
   <% end %>
+  <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "orders"} %>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
 

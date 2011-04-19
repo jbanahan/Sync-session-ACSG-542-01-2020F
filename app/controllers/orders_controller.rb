@@ -97,7 +97,9 @@ class OrdersController < ApplicationController
                 if update_custom_fields @order
                   add_flash :notices, "Order was updated successfully."
                 end
-                format.html { redirect_to(@order) }
+                format.html {
+                    redirect_update @order
+                }
                 format.xml  { head :ok }
             else
                 errors_to_flash @order, :now => true

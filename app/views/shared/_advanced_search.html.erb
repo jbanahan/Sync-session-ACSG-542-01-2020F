@@ -328,21 +328,23 @@ hrs_opts = {"midnight"=>"0"}
     <% end %>
   </tr></thead>
   <tbody>
+    <% cursor = @results.per_page * (@results.current_page-1) #because will_paginate's first page is 1, not 0 %>
     <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain).go do |row,obj| %>
       <tr class='hover'>
         <td>
-          <%=link_to "View", obj %> 
+          <%=link_to "View", send("#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor) %> 
           <%if obj.respond_to?('can_edit?') && obj.can_edit?(current_user)%>
-          | <%=link_to "Edit", send("edit_#{obj.class.to_s.underscore}_path",obj)%>
+          | <%=link_to "Edit", send("edit_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
           <%end%>
           <%if obj.respond_to?('can_classify?') && obj.can_classify?(current_user)%>
-          | <%=link_to "Classify", send("classify_#{obj.class.to_s.underscore}_path",obj)%>
+          | <%=link_to "Classify", send("classify_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
           <%end%>
         </td>
         <% row.each do |r| %>
         <td><%=r%></td>
         <% end %>
       </tr>
+      <%cursor += 1%>
     <% end %>
    </tbody>
 </table>

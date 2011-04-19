@@ -539,3 +539,12 @@ function loadUserList(destinationSelect,selectedId) {
     destinationSelect.html(h);
   });
 }
+function next_action_to_form(form) {
+  hidden_to_form(form,"c_next","true");
+}
+function previous_action_to_form(form) {
+  hidden_to_form(form,"c_previous","true");
+}
+function hidden_to_form(form,name,value) {
+  form.append("<input type='hidden' name='"+name+"' value='"+value+"' />");
+}

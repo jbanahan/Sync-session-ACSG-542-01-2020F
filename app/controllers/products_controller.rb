@@ -24,6 +24,7 @@ class ProductsController < ApplicationController
       }
     end
 
+
     # GET /products/new
     # GET /products/new.xml
     def new
@@ -87,7 +88,9 @@ class ProductsController < ApplicationController
                     add_flash :notices, "Product updated successfully."
                   end
                   History.create_product_changed(@product, current_user, product_url(@product))
-                  format.html { redirect_to(@product) }
+                  format.html { 
+                    redirect_update @product  
+                  }
                   format.xml  { head :ok }
               else
                   errors_to_flash @product

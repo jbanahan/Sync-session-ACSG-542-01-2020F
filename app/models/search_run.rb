@@ -35,6 +35,10 @@ class SearchRun < ActiveRecord::Base
   def move_forward
     self.position = cursor+1
   end
+  #moves internal cursor back by 1
+  def move_back
+    self.position = cursor-1
+  end
 
   def cursor
     if self.position.nil?

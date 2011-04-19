@@ -7,6 +7,7 @@ class ApplicationController < ActionController::Base
     before_filter :update_message_count
     before_filter :set_user_time_zone
     before_filter :log_request
+    before_filter :set_cursor_position
 
     helper_method :current_user
     helper_method :master_company
@@ -193,8 +194,65 @@ class ApplicationController < ActionController::Base
     end
   end
   
-    private
+  #get the next object from the most recently run search 
+  def next_object(move=true)
+    sr = search_run
+    n = sr.next_object
+    if move && !n.nil?
+      sr.move_forward
+      sr.save
+    end
+    n
+  end
 
+  #get the previous object from the most recenty run search
+  def previous_object(move=true)
+    sr = search_run
+    n = sr.previous_object
+    if move && !n.nil?
+      sr.move_back
+      sr.save
+    end
+    n
+  end
+
+  #action to show next object from search result (supporting next button)
+  def show_next
+    n = next_object
+    if n.nil?
+      error_redirect "No more items in the search list."
+    else
+      redirect_to n
+    end
+  end
+  
+  #action to show previous object from search result (supporting previous button)
+  def show_previous
+    n = previous_object
+    if n.nil?
+      error_redirect "No more items in the search list."
+    else
+      redirect_to n
+    end
+  end
+
+  #add this redirect at the end of your update controller action to support next & previous buttons
+  def redirect_update base_object
+    target = nil
+    if params[:c_next]
+      target = next_object
+      add_flash :errors, "No more items in the search list." if target.nil?
+    elsif params[:c_previous]
+      target = previous_object
+      add_flash :errors, "No more items in the search list." if target.nil?
+    end
+    if target
+      redirect_to send("edit_#{base_object.class.to_s.underscore}_path",target)
+    else
+      redirect_to(@product) 
+    end
+  end
+  
   def get_search_to_run
     s = nil
     s = SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
@@ -203,6 +261,25 @@ class ApplicationController < ActionController::Base
     s
   end
   
+  def search_run
+    return nil unless self.respond_to?('root_class') || @core_module
+    @core_module = CoreModule.find_by_class_name self.root_class.to_s unless @core_module
+    ss = get_search_to_run
+    sr = ss.search_run
+    sr = ss.create_search_run if sr.nil?
+    sr
+  end
+
+  private
+  def set_cursor_position
+    cp = params[:c_pos]
+    return unless cp && cp.match(/^[0-9]*$/)
+    sr = search_run
+    return unless sr
+    sr.position = cp.to_i
+    sr.save
+  end
+
   def render_search_results
       if @current_search.name == "Extreme latest" && current_user.sys_admin?
         raise "Extreme latest goes boom!!"
