@@ -2,41 +2,54 @@ var OpenChain = (function() {
   //private stuff
   var mappedKeys = new Object();
   var keyMapPopUp = null;
+  var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
-    for(att in mappedKeys) {
-      $(document).unbind('keydown',mappedKeys[att].action);
-    }
+    $(document).unbind('keyup');
+    $(document).bind('keyup','k',showKeyboardMapPopUp);
   }
   var showKeyboardMapPopUp = function() {
-    var str = "Action Keys:<br />x: Undo Action Keys (close this window)<br />";
-    for(att in mappedKeys) {
+    $(document).unbind('keyup');
+    var str = "Action Keys:<br />k: Undo Action Keys (close this window)<br />";
+    for(var att in mappedKeys) {
       str += att+": "+mappedKeys[att].description+"<br />";
-      $(document).bind('keydown',att,mappedKeys[att].action);
+      function assignKey() {
+        var mAtt = att;
+        $(document).bind('keyup',mAtt,
+          function () {
+            keyMapPopUp.dialog('close');
+            mappedKeys[mAtt].action();
+          }
+        );
+      }
+      assignKey();
     }
-    $(document).bind('keydown','x',function() {keyMapPopUp.dialog('close');});
+    $(document).bind('keyup','k',keyDialogClose);
     keyMapPopUp.html(str);
     keyMapPopUp.dialog('open');
   }
 
   return {
     //public stuff
-    addKeyboardMap: function(key,desc,act) {
-      var mapping = (function() {
-        return {
-          description: desc,
-          action: act
-        }
-      })();
-      mappedKeys[key]=mapping;
+    addKeyMap: function(key,desc,act) {
+      mappedKeys[key]=new Object();
+      mappedKeys[key].description = desc;
+      mappedKeys[key].action = act;
     },
-    activateHotKeys: function(popupParent) {
+    activateHotKeys: function() {
       if(!keyMapPopUp) {
-        popupParent.append("<div id='mod_keymap'></div>");
+        $("body").append("<div id='mod_keymap'></div>");
         keyMapPopUp = $("#mod_keymap");
-        keyMapPopUp.dialog({autoOpen:false,width:'auto',
-          beforeClose: function() {unbindKeys();}});
+        keyMapPopUp.dialog({autoOpen:false,width:'auto',title:"Action Keys",
+          beforeClose: function() {
+            unbindKeys();
+          }});
+        $(document).bind('keyup','k',showKeyboardMapPopUp);
+        $("#footer").append("<div style='text-align:center'>This page has action keys. Press &quot;k&quot; to activate.</div>");
       }
-      $(document).bind('keydown','k',showKeyboardMapPopUp);
+    },
+    //keymapping shortcut to pass an object id and have it clicked when the user uses the hotkey
+    addClickMap: function(key,desc,object_id) {
+      OpenChain.addKeyMap(key,desc,function() {$("#"+object_id).click();});
     }
   };
 })();

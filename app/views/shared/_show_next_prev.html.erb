@@ -2,6 +2,9 @@
 $(function() {
   $("#btn_show_next").click(function() {window.location='<%=send("show_next_#{table_name}_path")%>';});
   $("#btn_show_previous").click(function() {window.location='<%=send("show_previous_#{table_name}_path")%>';});
+  OpenChain.addKeyMap('n',"Next",function() {$("#btn_show_next").click();});
+  OpenChain.addKeyMap('p',"Previous",function() {$("#btn_show_previous").click();});
+  OpenChain.activateHotKeys();
 });
 <%end%>
 

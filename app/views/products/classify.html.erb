@@ -15,6 +15,15 @@ $(function() {
   });
   $("#btn_cancel").click(function() {window.location='<%=product_path(@product)%>';});
   $("#btn_auto_classify").click(function() {autoClassify();});
+
+  OpenChain.addClickMap('s',"Save","btn_save");
+  OpenChain.addClickMap('n',"Next","btn_edit_next");
+  OpenChain.addClickMap('p',"Previous","btn_edit_previous");
+  OpenChain.addClickMap('c',"Cancel","btn_cancel");
+  OpenChain.addClickMap('a',"Auto-Classify","btn_auto_classify");
+  OpenChain.addKeyMap('j',"Jump To Classification Section",function() {window.location.hash=""; window.location.hash="classifications";});
+  OpenChain.activateHotKeys();
+
   addRemoveHook();
   $(".hts_option").click(function(ev) {
     ev.preventDefault();
