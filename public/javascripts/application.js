@@ -1,8 +1,46 @@
-// Place your application-specific JavaScript functions and classes here
-// This file is automatically included by javascript_include_tag :defaults
-$( function() {
-    
+var OpenChain = (function() {
+  //private stuff
+  var mappedKeys = new Object();
+  var keyMapPopUp = null;
+  var unbindKeys = function() {
+    for(att in mappedKeys) {
+      $(document).unbind('keydown',mappedKeys[att].action);
+    }
+  }
+  var showKeyboardMapPopUp = function() {
+    var str = "Action Keys:<br />x: Undo Action Keys (close this window)<br />";
+    for(att in mappedKeys) {
+      str += att+": "+mappedKeys[att].description+"<br />";
+      $(document).bind('keydown',att,mappedKeys[att].action);
+    }
+    $(document).bind('keydown','x',function() {keyMapPopUp.dialog('close');});
+    keyMapPopUp.html(str);
+    keyMapPopUp.dialog('open');
+  }
 
+  return {
+    //public stuff
+    addKeyboardMap: function(key,desc,act) {
+      var mapping = (function() {
+        return {
+          description: desc,
+          action: act
+        }
+      })();
+      mappedKeys[key]=mapping;
+    },
+    activateHotKeys: function(popupParent) {
+      if(!keyMapPopUp) {
+        popupParent.append("<div id='mod_keymap'></div>");
+        keyMapPopUp = $("#mod_keymap");
+        keyMapPopUp.dialog({autoOpen:false,width:'auto',
+          beforeClose: function() {unbindKeys();}});
+      }
+      $(document).bind('keydown','k',showKeyboardMapPopUp);
+    }
+  };
+})();
+$( function() {
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();
