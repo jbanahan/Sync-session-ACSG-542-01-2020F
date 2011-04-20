@@ -249,7 +249,7 @@ class ApplicationController < ActionController::Base
     if target
       redirect_to send("#{action}_#{base_object.class.to_s.underscore}_path",target)
     else
-      redirect_to(@product) 
+      redirect_to(base_object) 
     end
   end
   

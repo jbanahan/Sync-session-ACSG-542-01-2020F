@@ -5,6 +5,8 @@ $(function() {
     .click(function() {
       window.location = '<%=edit_shipment_path(@shipment)%>';
     });
+  OpenChain.addClickMap('e','Edit','btn_edit');
+  OpenChain.activateHotKeys();
   $( "#item_change_subscription_submit").button();
   $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
     buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});

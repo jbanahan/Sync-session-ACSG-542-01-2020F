@@ -6,8 +6,8 @@
         window.location = '<%=edit_product_path(@product)%>';
       });
     $("#btn_classify").click(function() {window.location='<%=classify_product_path%>';});
-    OpenChain.addKeyMap('e',"Edit",function() {$("#btn_edit").click();});
-    OpenChain.addKeyMap('l',"Classify",function() {$("#btn_classify").click();});
+    OpenChain.addClickMap('e',"Edit","btn_edit");
+    OpenChain.addClickMap('l',"Classify","btn_classify");
     OpenChain.activateHotKeys();
   <% end %>
     $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
