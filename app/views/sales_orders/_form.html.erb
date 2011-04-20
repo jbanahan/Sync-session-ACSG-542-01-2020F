@@ -18,6 +18,11 @@ $(function() {
   $("#btn_cancel").click(function() {
     window.location = '<%=url_for @sales_order%>';
   });
+  OpenChain.addClickMap('s','Save','btn_save');
+  OpenChain.addClickMap('c','Cancel','btn_cancel');
+  OpenChain.addClickMap('n','Next','btn_edit_next');
+  OpenChain.addClickMap('p','Previous','btn_edit_previous');
+  OpenChain.activateHotKeys();
 });
 
 <% end %>

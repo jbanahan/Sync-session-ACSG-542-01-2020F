@@ -1,8 +1,59 @@
-// Place your application-specific JavaScript functions and classes here
-// This file is automatically included by javascript_include_tag :defaults
-$( function() {
-    
+var OpenChain = (function() {
+  //private stuff
+  var mappedKeys = new Object();
+  var keyMapPopUp = null;
+  var keyDialogClose = function() {keyMapPopUp.dialog('close');}
+  var unbindKeys = function() {
+    $(document).unbind('keyup');
+    $(document).bind('keyup','k',showKeyboardMapPopUp);
+  }
+  var showKeyboardMapPopUp = function() {
+    $(document).unbind('keyup');
+    var str = "Action Keys:<br />k: Undo Action Keys (close this window)<br />";
+    for(var att in mappedKeys) {
+      str += att+": "+mappedKeys[att].description+"<br />";
+      function assignKey() {
+        var mAtt = att;
+        $(document).bind('keyup',mAtt,
+          function () {
+            keyMapPopUp.dialog('close');
+            mappedKeys[mAtt].action();
+          }
+        );
+      }
+      assignKey();
+    }
+    $(document).bind('keyup','k',keyDialogClose);
+    keyMapPopUp.html(str);
+    keyMapPopUp.dialog('open');
+  }
 
+  return {
+    //public stuff
+    addKeyMap: function(key,desc,act) {
+      mappedKeys[key]=new Object();
+      mappedKeys[key].description = desc;
+      mappedKeys[key].action = act;
+    },
+    activateHotKeys: function() {
+      if(!keyMapPopUp) {
+        $("body").append("<div id='mod_keymap'></div>");
+        keyMapPopUp = $("#mod_keymap");
+        keyMapPopUp.dialog({autoOpen:false,width:'auto',title:"Action Keys",
+          beforeClose: function() {
+            unbindKeys();
+          }});
+        $(document).bind('keyup','k',showKeyboardMapPopUp);
+        $("#footer").append("<div style='text-align:center'>This page has action keys. Press &quot;k&quot; to activate.</div>");
+      }
+    },
+    //keymapping shortcut to pass an object id and have it clicked when the user uses the hotkey
+    addClickMap: function(key,desc,object_id) {
+      OpenChain.addKeyMap(key,desc,function() {$("#"+object_id).click();});
+    }
+  };
+})();
+$( function() {
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();
@@ -373,6 +424,8 @@ function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
   $("#btn_add_line").button().click(function() {
     $("#mod_edit_line").dialog('open');
   });
+  OpenChain.addClickMap(isSalesOrder ? 'l' : 'o','Add '+(isSalesOrder ? 'Sale' : 'Order'),'btn_add_order');
+  OpenChain.addClickMap('r','Add Product','btn_add_line');
   $(".lnk_detail").click(function(ev) {
     ev.preventDefault();
     $(this).parents("tr.shp_line").next().toggle();

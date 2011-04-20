@@ -6,10 +6,11 @@
       .click(function() {
         window.location = '<%=edit_order_path(@order)%>';
       });
+      OpenChain.addClickMap('e','Edit','btn_edit');
     <% end %>
     <% if @order.related_shipments.length == 0  && current_user.company.master %>
-    $("#btn_delete")
-      .button();
+    $("#btn_delete").button();
+    OpenChain.addClickMap('d','Delete','btn_delete');
     <% end %>
     $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
       width:'auto',
@@ -19,6 +20,9 @@
     $("#btn_add_line").button().click(function() {
       $("#mod_edit_line").dialog('open');
     });
+    <% if @line.nil? && @order.can_edit?(current_user)%>
+      OpenChain.addClickMap('a','Add Product','btn_add_line');
+    <% end %>
     $("#mod_subscriptions").dialog({autoOpen:false,title:'Subscriptions',
         buttons:{"Subscribe":function() {$("#frm_sub").submit();}}
       });

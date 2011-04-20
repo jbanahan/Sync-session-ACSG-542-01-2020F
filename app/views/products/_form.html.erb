@@ -14,6 +14,13 @@ $(function() {
     previous_action_to_form($("#frm_prod"));
     checkUOMChange();
   });
+  OpenChain.addClickMap('s',"Save","btn_save");
+  <% unless @product.id.nil? %>
+  OpenChain.addClickMap('n',"Next","btn_edit_next");
+  OpenChain.addClickMap('p','Previous','btn_edit_previous');
+  <% end %>
+  OpenChain.addClickMap('c',"Cancel","btn_cancel");
+  OpenChain.activateHotKeys();
 });
 function checkUOMChange() {
   ou = $("#original_uom").val();
