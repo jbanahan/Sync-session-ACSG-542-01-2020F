@@ -424,7 +424,7 @@ function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
   $("#btn_add_line").button().click(function() {
     $("#mod_edit_line").dialog('open');
   });
-  OpenChain.addClickMap('o','Add '+(isSalesOrder ? 'Sale' : 'Order'),'btn_add_order');
+  OpenChain.addClickMap(isSalesOrder ? 'l' : 'o','Add '+(isSalesOrder ? 'Sale' : 'Order'),'btn_add_order');
   OpenChain.addClickMap('r','Add Product','btn_add_line');
   $(".lnk_detail").click(function(ev) {
     ev.preventDefault();

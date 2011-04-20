@@ -4,6 +4,7 @@ $(function() {
   $("#btn_edit").button().click(function() {
     window.location = '<%=url_for edit_sales_order_path(@sales_order)%>';
   });
+  OpenChain.addClickMap('e','Edit','btn_edit');
   <%end%>
   $("#mod_subscriptions").dialog({autoOpen:false,title:'Subscriptions',
       buttons:{"Subscribe":function() {$("#frm_sub").submit();}}
@@ -22,6 +23,7 @@ $(function() {
   });  
   <% if @sales_order.can_edit?(current_user) && !@line.nil? %>
     $("#mod_edit_line").dialog('open');
+    OpenChain.addClickMap('r','Add Product','btn_add_line');
   <% end %>
   $("#edit_line_product").change(function() {
     if($(this).val().length>0) {
@@ -31,7 +33,10 @@ $(function() {
       });
     }
   });
-  <% if current_user.company.master && !@sales_order.locked? %>$("#btn_delete").button();<%end%>
+  <% if current_user.company.master && !@sales_order.locked? %>
+    $("#btn_delete").button();
+    OpenChain.addClickMap('d','Delete','btn_delete');
+  <%end%>
 });
 <%end%>
 <%content_for :action_bar do%>
