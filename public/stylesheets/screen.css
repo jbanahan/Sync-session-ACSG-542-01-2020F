@@ -37,6 +37,10 @@ img {
 .section_insert_heading {
   font-size: 2em; 
 }
+.search_row_break td {
+  border-top: 1px solid #d7d7d7;
+  padding-top: 4px;
+}
 .detail_table {
   font-size: 90%;
   width: 95%;

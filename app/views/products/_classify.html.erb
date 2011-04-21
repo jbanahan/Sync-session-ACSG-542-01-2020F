@@ -1,0 +1,38 @@
+
+<div id='classifications'>
+<a name='classifications'></a>
+<h2>Classifications</h2>
+<% classification_count = 0 %>
+<% form_obj.fields_for :classifications do |cf| %>
+  <div class='classification_box cf_row'>
+      <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
+      <%=cf.hidden_field :country_id%>
+      <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
+      <div class='classification_detail_box'>
+        <table>
+        <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>
+        </table>
+      </div>
+      <table class='detail_table hts_table'>
+      <thead>
+        <th><%=field_label :hts_line_number%></th>
+        <th><%=field_label :hts_hts_1%></th>
+        <th><%=field_label :hts_hts_2%></th>
+        <th><%=field_label :hts_hts_3%></th>
+        <th>&nbsp;</th>    
+      </thead>
+      <tbody class='tr_body'>
+        <% cf.fields_for :tariff_records do |tf| %>
+          <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
+        <% end %>
+        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:OpenChain.add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <% classification_count += 1 %>
+<% end %>
+</div>
+<div id="mod_pick_country" style="display:none">
+  Multiple countries have existing classifications, which one do you want to use to auto-classify?<br />
+  <select id='sel_pick_country'></select>
+</div>

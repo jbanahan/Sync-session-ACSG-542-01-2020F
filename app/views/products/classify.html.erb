@@ -14,7 +14,7 @@ $(function() {
     $("#frm_p").submit();
   });
   $("#btn_cancel").click(function() {window.location='<%=product_path(@product)%>';});
-  $("#btn_auto_classify").click(function() {autoClassify();});
+  $("#btn_auto_classify").click(function() {OpenChain.autoClassify($("#frm_p"),'<%=auto_classify_product_path(@product)%>');});
 
   OpenChain.addClickMap('s',"Save","btn_save");
   OpenChain.addClickMap('n',"Next","btn_edit_next");
@@ -27,41 +27,6 @@ $(function() {
   OpenChain.initClassifyPage();
 
 });
-function countriesWithHTS() {
-  var c_count = 0;
-  $(".country_title").each(function() {
-    var hts_tbl = $(this).nextAll(".hts_table");
-    var found = false;
-    hts_tbl.find(".hts_field").each(function() {
-      if($(this).val().length>5) {
-        found = true;
-      }
-    });
-    if(found) { 
-      c_count++; 
-      $("#sel_pick_country").append("<option value='"+$(this).attr("cid")+"'>"+$(this).html()+"</option>");
-    }
-  });
-  return c_count;
-}
-function autoClassify() {
-  var c_count = countriesWithHTS();
-  switch(c_count) {
-    case 0: 
-      window.alert("Please enter HTS info for at least one country before auto-classifying."); 
-      return;
-    case 1:
-      completeAutoClassify($("#sel_pick_country").children("option:first").val());
-      break;
-    default:
-      $("#mod_pick_country").dialog({title:"Select Country",
-        buttons:{"OK":function() {completeAutoClassify($("#sel_pick_country").val());}}});
-  }
-}
-function completeAutoClassify(country_id) {
-  $("#frm_p").append("<input type='hidden' name='base_country_id' value='"+country_id+"' />");
-  $("#frm_p").attr("action",'<%=auto_classify_product_path(@product)%>').submit();
-}
 <%end%>
 <%content_for :action_bar do %>
   <button id='btn_save'>Save</button>
@@ -89,43 +54,5 @@ function completeAutoClassify(country_id) {
 
 <hr />
 <% form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
-<div id='classifications'>
-<a name='classifications'></a>
-<h2>Classifications</h2>
-<% classification_count = 0 %>
-<% f.fields_for :classifications do |cf| %>
-  <div class='classification_box cf_row'>
-      <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
-      <%=cf.hidden_field :country_id%>
-      <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
-      <div class='classification_detail_box'>
-        <table>
-        <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>
-        </table>
-      </div>
-      <table class='detail_table hts_table'>
-      <thead>
-        <th><%=field_label :hts_line_number%></th>
-        <th><%=field_label :hts_hts_1%></th>
-        <th><%=field_label :hts_hts_2%></th>
-        <th><%=field_label :hts_hts_3%></th>
-        <th>&nbsp;</th>    
-      </thead>
-      <tbody class='tr_body'>
-        <% cf.fields_for :tariff_records do |tf| %>
-          <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
-        <% end %>
-        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:OpenChain.add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
-      </tbody>
-    </table>
-  </div>
-  <% classification_count += 1 %>
+  <%=render :partial=>'classify', :locals=>{:form_obj=>f}%>
 <% end %>
-</div>
-<br />
-
-<% end %>
-<div id="mod_pick_country" style="display:none">
-  Multiple countries have existing classifications, which one do you want to use to auto-classify?<br />
-  <select id='sel_pick_country'></select>
-</div>

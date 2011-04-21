@@ -81,7 +81,8 @@ class Product < ActiveRecord::Base
 
   #Classify for other countries based on the classifications that already exist for the base_country provided.
   def auto_classify(base_country)
-    base_classification = self.classifications.where(:country_id=>base_country).first
+    base_classification = nil
+    self.classifications.each {|c| base_classification = c if c.country==base_country}
     Country.import_locations.each do |country|
       unless base_country==country
         c = nil

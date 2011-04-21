@@ -76,6 +76,40 @@ var OpenChain = (function() {
         });
       });
     },
+    autoClassify: function(form_obj,action_path) {
+      var c_count = function() {
+        var c = 0;
+        $(".country_title").each(function() {
+          var hts_tbl = $(this).nextAll(".hts_table");
+          var found = false;
+          hts_tbl.find(".hts_field").each(function() {
+            if($(this).val().length>5) {
+              found = true;
+            }
+          });
+          if(found) { 
+            c++; 
+            $("#sel_pick_country").append("<option value='"+$(this).attr("cid")+"'>"+$(this).html()+"</option>");
+          }
+        });
+        return c;
+      }();
+      var completeAutoClassify = function(form_obj,action_path,country_id) {
+        form_obj.append("<input type='hidden' name='base_country_id' value='"+country_id+"' />");
+        form_obj.attr("action",action_path).submit();
+      }
+      switch(c_count) {
+        case 0: 
+          window.alert("Please enter HTS info for at least one country before auto-classifying."); 
+          return;
+        case 1:
+          completeAutoClassify(form_obj,action_path,$("#sel_pick_country").children("option:first").val());
+          break;
+        default:
+          $("#mod_pick_country").dialog({title:"Select Country",
+            buttons:{"OK":function() {completeAutoClassify(form_obj,action_path,$("#sel_pick_country").val());}}});
+      }
+    },
     add_tf_row: function(link,parent_index) {
       my_index = new Date().getTime();
       content = "<tr class=\"tf_row\">"

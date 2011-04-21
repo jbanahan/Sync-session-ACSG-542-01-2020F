@@ -336,23 +336,27 @@ hrs_opts = {"midnight"=>"0"}
   </tr></thead>
   <tbody>
     <% cursor = @results.per_page * (@results.current_page-1) #because will_paginate's first page is 1, not 0 %>
+    <% last_object = nil %>
     <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain).go do |row,obj| %>
-      <tr class='hover'>
-        <% unless @bulk_actions.blank? %><td><input type='checkbox' pk='<%=obj.id%>' /></td><% end %>
+      <tr class='hover <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
+        <% if !@bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
         <td>
-          <%=link_to "View", send("#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor) %> 
-          <%if obj.respond_to?('can_edit?') && obj.can_edit?(current_user)%>
-          | <%=link_to "Edit", send("edit_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
-          <%end%>
-          <%if obj.respond_to?('can_classify?') && obj.can_classify?(current_user)%>
-          | <%=link_to "Classify", send("classify_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
-          <%end%>
+          <% if obj!=last_object %>
+            <%=link_to "View", send("#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor) %> 
+            <%if obj.respond_to?('can_edit?') && obj.can_edit?(current_user)%>
+            | <%=link_to "Edit", send("edit_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
+            <%end%>
+            <%if obj.respond_to?('can_classify?') && obj.can_classify?(current_user)%>
+            | <%=link_to "Classify", send("classify_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
+            <%end%>
+          <% end %>
         </td>
         <% row.each do |r| %>
         <td><%=r%></td>
         <% end %>
       </tr>
       <%cursor += 1%>
+      <%last_object = obj%>
     <% end %>
    </tbody>
 </table>

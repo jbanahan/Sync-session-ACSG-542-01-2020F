@@ -90,6 +90,7 @@ OpenChain::Application.routes.draw do
       post 'bulk_update'
       post 'bulk_classify'
       post 'bulk_update_classifications'
+      post 'bulk_auto_classify'
     end
     member do
       get 'classify'

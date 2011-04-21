@@ -9,7 +9,7 @@ class ProductsController < ApplicationController
     def index
       @bulk_actions = {}
       @bulk_actions["Edit Selected"]=bulk_edit_products_path if current_user.edit_products?
-      @bulk_actions["Update Selected"]=bulk_update_products_path if current_user.edit_classifications?
+      @bulk_actions["Classify Selected"]=bulk_classify_products_path if current_user.edit_classifications?
       advanced_search CoreModule::PRODUCT
     end
 
@@ -145,6 +145,15 @@ class ProductsController < ApplicationController
       }
     end
 
+  def bulk_auto_classify
+    @pks = params[:pk]
+    @base_product = Product.new(params[:product])
+    base_country = Country.find(params[:base_country_id])
+    @base_product.auto_classify base_country
+    add_flash :notices, "Auto-classification complete, select tariffs below."
+    render 'bulk_classify'
+  end
+
   def bulk_edit
     @pks = params[:pk]
   end
@@ -166,10 +175,11 @@ class ProductsController < ApplicationController
             History.create_product_changed(p, current_user, product_url(p))
           else
             good_count += -1
+            add_flash :errors, "There was an error updating product #{p.unique_identifier}."
           end
         else
           good_count += -1
-          add_flash :errors, "You do not have permission to edit product #{p.unique_identifier}.  Other products have been updated."
+          add_flash :errors, "You do not have permission to edit product #{p.unique_identifier}."
         end
       end
       add_flash :notices, "#{help.pluralize good_count, module_label.downcase} updated successfully."
@@ -179,10 +189,35 @@ class ProductsController < ApplicationController
 
   def bulk_classify
     @pks = params[:pk]
+    @base_product = Product.new
+    Country.import_locations.sort_classification_rank.each do |c|
+      @base_product.classifications.build(:country=>c)
+    end
   end
 
   def bulk_update_classifications
-
+    action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
+      @pks = params[:pk]
+      good_count = @pks.size
+      @pks.values.each do |key|
+        p = Product.find key
+        if p.can_classify?(current_user)
+          #reset classifications
+          p.classifications.destroy_all
+          if p.update_attributes(params[:product])
+            save_classification_custom_fields(p,params[:product])
+            update_status p
+          else
+            add_flash :errors, "There was an error updating product #{p.unique_identifier}."
+          end
+        else
+          add_flash :errors, "You do not have permission to classify product #{p.unique_identifier}."
+          goodcount += -1
+        end
+      end
+      add_flash :notices, "#{help.pluralize good_count, module_label.downcase} updated successfully."
+      redirect_to products_path
+    }
   end
     
     private
