@@ -50,6 +50,42 @@ var OpenChain = (function() {
     //keymapping shortcut to pass an object id and have it clicked when the user uses the hotkey
     addClickMap: function(key,desc,object_id) {
       OpenChain.addKeyMap(key,desc,function() {$("#"+object_id).click();});
+    },
+    initClassifyPage: function() {
+      $(".tf_remove").live('click',function(ev) {
+        destroy_nested('tf',$(this));
+        ev.preventDefault();
+      });
+      $(".hts_option").click(function(ev) {
+        ev.preventDefault();
+        $(this).prevAll("input.hts_field").val($(this).html());
+      });
+      $("form").submit(function() {
+        $(".tf_row").each(function() {
+          var has_data = false;
+          $(this).find(".hts_field").each(function() {
+            if(!has_data) {
+              has_data = $(this).val().length>0;
+            }
+          });
+          if(!has_data) {
+            $(this).find(".tf_remove").each(function() {
+              destroy_nested('tf',$(this));
+            });
+          }
+        });
+      });
+    },
+    add_tf_row: function(link,parent_index) {
+      my_index = new Date().getTime();
+      content = "<tr class=\"tf_row\">"
+      content += "<td><input id='product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_line_number' name='product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][line_number]' size='3' type='text' /></td>";
+      for(i=1; i<4; i++) {
+        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' /></td>"; 
+      }
+      content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
+      link.parents('.add_row').before(content);
+      link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
     }
   };
 })();

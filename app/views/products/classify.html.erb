@@ -24,26 +24,8 @@ $(function() {
   OpenChain.addKeyMap('j',"Jump To Classification Section",function() {window.location.hash=""; window.location.hash="classifications";});
   OpenChain.activateHotKeys();
 
-  addRemoveHook();
-  $(".hts_option").click(function(ev) {
-    ev.preventDefault();
-    $(this).prevAll("input.hts_field").val($(this).html());
-  });
-  $("#frm_p").submit(function() {
-    $(".tf_row").each(function() {
-      var has_data = false;
-      $(this).find(".hts_field").each(function() {
-        if(!has_data) {
-          has_data = $(this).val().length>0;
-        }
-      });
-      if(!has_data) {
-        $(this).find(".tf_remove").each(function() {
-          destroy_nested('tf',$(this));
-        });
-      }
-    });
-  });
+  OpenChain.initClassifyPage();
+
 });
 function countriesWithHTS() {
   var c_count = 0;
@@ -79,25 +61,6 @@ function autoClassify() {
 function completeAutoClassify(country_id) {
   $("#frm_p").append("<input type='hidden' name='base_country_id' value='"+country_id+"' />");
   $("#frm_p").attr("action",'<%=auto_classify_product_path(@product)%>').submit();
-}
-function addRemoveHook() {
-  
-  $(".tf_remove").click(function(ev) {
-    destroy_nested('tf',$(this));
-    ev.preventDefault();
-  });
-}
-function add_tf_row(link,parent_index) {
-  my_index = new Date().getTime();
-  content = "<tr class=\"tf_row\">"
-  content += "<td><input id='product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_line_number' name='product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][line_number]' size='3' type='text' /></td>";
-  for(i=1; i<4; i++) {
-    content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' /></td>"; 
-  }
-  content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
-  link.parents('.add_row').before(content);
-  link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
-  addRemoveHook();
 }
 <%end%>
 <%content_for :action_bar do %>
@@ -152,7 +115,7 @@ function add_tf_row(link,parent_index) {
         <% cf.fields_for :tariff_records do |tf| %>
           <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
         <% end %>
-        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
+        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:OpenChain.add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
       </tbody>
     </table>
   </div>

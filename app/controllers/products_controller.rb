@@ -178,7 +178,7 @@ class ProductsController < ApplicationController
   end
 
   def bulk_classify
-
+    @pks = params[:pk]
   end
 
   def bulk_update_classifications
