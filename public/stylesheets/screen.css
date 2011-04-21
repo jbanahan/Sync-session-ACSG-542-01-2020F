@@ -53,6 +53,9 @@ img {
     color: #FFFFFF;
     text-align: left;
 }
+.detail_table th {
+  text-align: left;
+}
 .detail_table thead a {
   color: white;
   text-decoration: none;
@@ -105,6 +108,9 @@ input, textarea, select {
     background: #FFFFFF;
     border: 1px solid #707070;
 }
+input[type="checkbox"] {
+  padding: 0px;
+}
 a {
     color: #707070;
 }
@@ -151,7 +157,7 @@ img {
     margin-right: 1em;
     font-size: 80%;
 }
-#corner_links, #corner_links a, #corner_links a:visited, #corner_title a, #corner_title a:visited{
+#corner_links, #corner_links a, #corner_links a:visited, #corner_title a, #corner_title a:visited {
     color:#151515;
 }
 #corner_links a:hover, #corner_title a:hover {

@@ -20,14 +20,14 @@ var OCSearch = (function() {
   }
 
   var initBulkSelectors = function() {
-    $("#result_table").find(":checkbox:not(#chk_sel_all)").change(rewriteBulkForm);
+    $("#result_table").find(":checkbox:not(#chk_sel_all)").click(rewriteBulkForm);
     var selAllBinding = function() {
-      $("#result_table").find(":checkbox:not(#chk_sel_all)").unbind('change').attr('checked',(allSelected ? '' : 'checked')).change(rewriteBulkForm);;
-      $("#chk_sel_all").unbind('change').attr('checked','').change(selAllBinding);
+      $("#result_table").find(":checkbox:not(#chk_sel_all)").unbind('click').attr('checked',(allSelected ? '' : 'checked')).click(rewriteBulkForm);;
+      $("#chk_sel_all").unbind('click').attr('checked','').click(selAllBinding);
       allSelected = !allSelected;
       rewriteBulkForm();
     }
-    $("#chk_sel_all").change(selAllBinding);
+    $("#chk_sel_all").click(selAllBinding);
   }
     
   return {
