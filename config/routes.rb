@@ -86,6 +86,10 @@ OpenChain::Application.routes.draw do
     collection do
       get 'show_next'
       get 'show_previous'
+      post 'bulk_edit'
+      post 'bulk_update'
+      post 'bulk_classify'
+      post 'bulk_update_classifications'
     end
     member do
       get 'classify'

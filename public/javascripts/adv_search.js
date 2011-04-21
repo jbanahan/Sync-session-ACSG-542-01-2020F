@@ -1,3 +1,48 @@
+var OCSearch = (function() {
+  var allSelected = false;
+  var bulkButtons = new Array();
+  var rewriteBulkForm = function() {
+    var checkedIds = new Array();
+    $("#div_bulk_content").html("");
+    $("#result_table").find(":checked").each(function(index, item) {
+      checkedIds.push($(item).attr('pk'));
+    });
+    for(var x=0;x<checkedIds.length;x++) {
+      $("#div_bulk_content").append("<input type='hidden' name='pk["+x+"]' value='"+checkedIds[x]+"' />"); 
+    }
+    for(var x=0;x<bulkButtons.length;x++) {
+      if(checkedIds.length) {
+        bulkButtons[x].show();
+      } else {
+        bulkButtons[x].hide();
+      }
+    }
+  }
+
+  var initBulkSelectors = function() {
+    $("#result_table").find(":checkbox:not(#chk_sel_all)").change(rewriteBulkForm);
+    var selAllBinding = function() {
+      $("#result_table").find(":checkbox:not(#chk_sel_all)").unbind('change').attr('checked',(allSelected ? '' : 'checked')).change(rewriteBulkForm);;
+      $("#chk_sel_all").unbind('change').attr('checked','').change(selAllBinding);
+      allSelected = !allSelected;
+      rewriteBulkForm();
+    }
+    $("#chk_sel_all").change(selAllBinding);
+  }
+    
+  return {
+    init: function() {
+      $("#frm_bulk").attr('action','');
+      initBulkSelectors();
+    },
+    addBulkHandler: function(button_name,form_path) {
+      var b = $("#"+button_name);
+      bulkButtons.push(b);
+      b.click(function() {$("#frm_bulk").attr('action',form_path).submit();});
+      rewriteBulkForm();
+    }
+  };
+})();
 function getDay(container,abbreviation) {
   return container.children(".sch_"+abbreviation).val()=="true"
 }

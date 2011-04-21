@@ -7,6 +7,9 @@ class ProductsController < ApplicationController
 	end
 
     def index
+      @bulk_actions = {}
+      @bulk_actions["Edit Selected"]=bulk_edit_products_path if current_user.edit_products?
+      @bulk_actions["Update Selected"]=bulk_update_products_path if current_user.edit_classifications?
       advanced_search CoreModule::PRODUCT
     end
 
@@ -142,6 +145,45 @@ class ProductsController < ApplicationController
       }
     end
 
+  def bulk_edit
+    @pks = params[:pk]
+  end
+
+  def bulk_update
+    action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
+      @pks = params[:pk]
+      good_count = @pks.size
+      @pks.values.each do |key|
+        p = Product.find key
+        if p.can_edit?(current_user)
+          [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
+          if p.update_attributes(params[:product])
+            if update_custom_fields p
+              update_status p 
+            else
+              good_count += -1
+            end
+            History.create_product_changed(p, current_user, product_url(p))
+          else
+            good_count += -1
+          end
+        else
+          good_count += -1
+          add_flash :errors, "You do not have permission to edit product #{p.unique_identifier}.  Other products have been updated."
+        end
+      end
+      add_flash :notices, "#{help.pluralize good_count, module_label.downcase} updated successfully."
+      redirect_to products_path
+    }
+  end
+
+  def bulk_classify
+
+  end
+
+  def bulk_update_classifications
+
+  end
     
     private
     def secure_classifications
@@ -158,6 +200,10 @@ class ProductsController < ApplicationController
           end
         end    
       end  
+    end
+
+    def module_label
+      CoreModule::PRODUCT.label
     end
 
 end

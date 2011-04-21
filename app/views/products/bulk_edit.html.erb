@@ -1,0 +1,22 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#btn_save").click(function() {$("#frm_bu").submit();});
+  $("#btn_cancel").click(function() {window.location='<%=products_path%>';});
+  OpenChain.addClickMap('s','Save','btn_save');
+  OpenChain.addClickMap('c','Cancel','btn_cancel');
+  OpenChain.activateHotKeys();
+});
+<%end%>
+<%content_for :action_bar do %>
+  <button id='btn_save'>Save</button>
+  <button id='btn_cancel'>Cancel</button>
+<%end%>
+<div class='bulk_header_inner'>
+  Changes will be applied to <strong><%=pluralize @pks.size, CoreModule::PRODUCT.label.downcase%></strong>.
+</div>
+<%=form_for Product.new, :url=>bulk_update_products_path, :html=>{:method=>"POST", :id=>"frm_bu"} do |f| %>
+  <%@pks.each do |k,v|%>
+    <%=hidden_field_tag "pk[#{k}]", v %>
+  <%end%>
+  <%=render :partial=> 'product_edit', :locals=>{:form_obj => f,:hide_no_bulk_fields=>true}%>
+<% end %>

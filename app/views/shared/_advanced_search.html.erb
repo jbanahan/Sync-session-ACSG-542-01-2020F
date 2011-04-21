@@ -1,5 +1,11 @@
 <%content_for :javascript do%>
 $(function() {
+  OCSearch.init();
+  <% unless @bulk_actions.blank? %>
+    <% @bulk_actions.each do |k,v| %>
+      OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=v%>');
+    <% end %>
+  <% end %>
   $("#lnk_no_upload").click(function(ev) {
     ev.preventDefault();
     $("#mod_no_upload").dialog('open');
@@ -320,9 +326,10 @@ hrs_opts = {"midnight"=>"0"}
 </div>
 
 <h2>Results</h2>
-<table class='detail_table'>
+<table class='detail_table' id='result_table'>
   <thead><tr>
-    <th>&nbsp;</th>
+    <% unless @bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
+    <th>Actions</th>
     <%@current_search.search_columns.order("rank ASC").each do |c|%>
     <th><%=model_field_label(c.model_field_uid)%></th>
     <% end %>
@@ -331,6 +338,7 @@ hrs_opts = {"midnight"=>"0"}
     <% cursor = @results.per_page * (@results.current_page-1) #because will_paginate's first page is 1, not 0 %>
     <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain).go do |row,obj| %>
       <tr class='hover'>
+        <% unless @bulk_actions.blank? %><td><input type='checkbox' pk='<%=obj.id%>' /></td><% end %>
         <td>
           <%=link_to "View", send("#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor) %> 
           <%if obj.respond_to?('can_edit?') && obj.can_edit?(current_user)%>
@@ -352,20 +360,31 @@ hrs_opts = {"midnight"=>"0"}
 </ul>
 <%= will_paginate @results %>
 </div>  
-<button id='btn_download'>Download</button>
-<%msgs = [] %>
-<% if @current_search.uploadable? msgs %>
-&nbsp;
-<button id='btn_upload'>Upload</button>
-<% else %>
-<a href='#' id='lnk_no_upload'>Upload?</a>
-<div style='display:none;' id='mod_no_upload'>
-<p>Some searches cannot be used as upload because the computer will not have enough information to process the data.</p>
-<p>Here's why this upload can't be used:</p>
-<ul>
-<%msgs.each do |m| %>
-<li><%=m%>
-<%end%>
-</ul>
+<div> 
+  <%=form_tag('',:id=>'frm_bulk') do %>
+    <div id='div_bulk_content'></div>
+  <% end %>
 </div>
+<%content_for :action_bar do %>
+  <%unless @bulk_actions.blank?%>
+    <%@bulk_actions.keys.each do |k|%>
+      <button id='<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>'><%=k%></button>
+    <%end%>
+  <%end%>
+  <button id='btn_download'>Download</button>
+  <%msgs = [] %>
+  <% if @current_search.uploadable? msgs %>
+  <button id='btn_upload'>Upload</button>
+  <% else %>
+  <a href='#' id='lnk_no_upload'>Upload?</a>
+  <div style='display:none;' id='mod_no_upload'>
+  <p>Some searches cannot be used as upload because the computer will not have enough information to process the data.</p>
+  <p>Here's why this upload can't be used:</p>
+  <ul>
+  <%msgs.each do |m| %>
+  <li><%=m%>
+  <%end%>
+  </ul>
+  </div>
+  <% end %>
 <% end %>
