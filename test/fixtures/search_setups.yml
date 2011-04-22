@@ -5,14 +5,12 @@ one:
   user_id: 1
   module_type: MyString
   simple: false
-  last_accessed: 2011-01-25 15:19:39
 
 two:
   name: MyString
   user_id: 1
   module_type: MyString
   simple: false
-  last_accessed: 2011-01-25 15:19:39
 
 imported_file_setup:
   name: Imported File Product Search

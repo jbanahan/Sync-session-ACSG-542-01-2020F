@@ -14,7 +14,7 @@ class CoreModule
     o = {:worksheetable => false, :statusable=>false, :file_format=>false, 
         :new_object => lambda {Kernel.const_get(class_name).new},
         :children => [], :make_default_search => lambda {|user|
-          ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>class_name,:simple=>false,:last_accessed=>Time.now)
+          ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>class_name,:simple=>false)
           model_fields.keys.each_with_index do |uid,i|
             ss.search_columns.create(:rank=>i,:model_field_uid=>uid) if i < 3
           end

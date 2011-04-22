@@ -33,6 +33,13 @@ class SearchSetup < ActiveRecord::Base
     
   scope :for_user, lambda {|u| where(:user_id => u)} 
   scope :for_module, lambda {|m| where(:module_type => m.class_name)}
+  
+  def self.find_last_accessed user, core_module
+    SearchSetup.for_user(user).for_module(core_module).
+      joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id").
+      order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
+      first
+  end
 
   def sorted_columns
     self.search_columns.order("rank ASC")
@@ -52,15 +59,22 @@ class SearchSetup < ActiveRecord::Base
     CoreModule.find_by_class_name(self.module_type).default_module_chain
   end
   
-  def touch(save_obj=false)
-    self.last_accessed = Time.now
-    self.save if save_obj 
+  def touch
+    sr = self.search_run
+    sr = self.build_search_run(:position=>0) if sr.nil?
+    sr.last_accessed = Time.now
+    sr.save
+  end
+
+  def last_accessed
+    sr = self.search_run
+    sr.nil? ? nil : sr.last_accessed
   end
 
   # Returns a new, saved search setup with the columns passed from the given array
   def self.create_with_columns(model_field_uids,user,name="Default")
     ss = SearchSetup.create(:name=>name,:user => user,:module_type=>ModelField.find_by_uid(model_field_uids[0]).core_module.class_name,
-        :simple=>false,:last_accessed=>Time.now)
+        :simple=>false)
     model_field_uids.each_with_index do |uid,i|
       ss.search_columns.create(:rank=>i,:model_field_uid=>uid)
     end
@@ -78,8 +92,6 @@ class SearchSetup < ActiveRecord::Base
   # all built.
   #
   # If a true parameter is provided, everything in the tree will be saved to the database.
-  # 
-  # last_accessed is left empty intentionally
   def deep_copy(new_name, save_obj=false) 
     ss = SearchSetup.new(:name => new_name, :module_type => self.module_type, :user => self.user, :simple => self.simple, :download_format => self.download_format)
     ss.save if save_obj

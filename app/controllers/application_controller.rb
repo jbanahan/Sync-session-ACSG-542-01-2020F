@@ -256,7 +256,7 @@ class ApplicationController < ActionController::Base
   def get_search_to_run
     s = nil
     s = SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
-    s = SearchSetup.for_module(@core_module).for_user(current_user).order("last_accessed DESC").first if s.nil?
+    s = SearchSetup.find_last_accessed current_user, @core_module if s.nil?
     s = @core_module.make_default_search current_user if s.nil?
     s
   end
@@ -288,7 +288,7 @@ class ApplicationController < ActionController::Base
       @results = @current_search.search
       respond_to do |format| 
         format.html {
-          @current_search.touch(true)
+          @current_search.touch
           @results = @results.paginate(:per_page => 20, :page => params[:page]) 
           render :layout => 'one_col'
         }
