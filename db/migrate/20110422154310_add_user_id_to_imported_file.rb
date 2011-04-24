@@ -9,12 +9,6 @@ class AddUserIdToImportedFile < ActiveRecord::Migration
   end
 
   def self.migrate_user_ids
-    ImportedFile.all.each do |f|
-      ss = f.search_setup
-      unless ss.nil?
-        f.user_id = ss.user_id
-        f.save!
-      end
-    end
+    execute 'update imported_files set user_id = (select user_id from search_setups where search_setups.id = imported_files.search_setup_id);'
   end
 end
