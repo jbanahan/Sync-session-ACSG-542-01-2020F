@@ -7,7 +7,7 @@ class CoreModule
       :statusable, #works with status rules
       :worksheetable, #works with worksheet uploads
       :file_formatable, #can be used for file formats
-      :make_default_search_lambda #make the search setup that a user will see before they customize
+      :default_search_columns #array of columns to be included when a default search is created
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
   def initialize(class_name,label,opts={})
@@ -19,7 +19,8 @@ class CoreModule
             ss.search_columns.create(:rank=>i,:model_field_uid=>uid) if i < 3
           end
           ss
-        }
+        },
+        :bulk_actions_labmda => lambda {return Hash.new}
       }.
       merge(opts)
     @class_name = class_name
@@ -32,7 +33,8 @@ class CoreModule
     @children = o[:children]
     @child_lambdas = o[:child_lambdas]
     @child_joins = o[:child_joins]
-    @make_default_search_lambda = o[:make_default_search]
+    @default_search_columns = o[:default_search_columns]
+    @bulk_actions_lambda = o[:bulk_actions_lambda]
   end
   
   def default_module_chain
@@ -41,9 +43,13 @@ class CoreModule
     @default_module_chain.add self
     @default_module_chain
   end
+
+  def bulk_actions user
+    @bulk_actions_lambda.call user
+  end
   
   def make_default_search(user)
-    @make_default_search_lambda.call(user)
+    SearchSetup.create_with_columns(@default_search_columns,user)
   end
   #can have status set on the module 
   def statusable?
@@ -96,30 +102,28 @@ class CoreModule
       :children => [ORDER_LINE],
       :child_lambdas => {ORDER_LINE => lambda {|parent| parent.order_lines}},
       :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"},
-      :make_default_search => lambda {|user| 
-        uids = [:ord_ord_num,:ord_ord_date,:ord_ven_name,:ordln_puid,:ordln_ordered_qty]
-        SearchSetup.create_with_columns(uids,user)
-      }
+      :default_search_columns => [:ord_ord_num,:ord_ord_date,:ord_ven_name,:ordln_puid,:ordln_ordered_qty]
     })
   SHIPMENT_LINE = new("ShipmentLine", "Shipment Line")
   SHIPMENT = new("Shipment","Shipment",
     {:children=>[SHIPMENT_LINE],
     :child_lambdas => {SHIPMENT_LINE => lambda {|p| p.shipment_lines}},
     :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id"},
-    :make_default_search => lambda {|user| SearchSetup.create_with_columns([:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],user)}})
+    :default_search_columns => [:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name]})
   SALE_LINE = new("SalesOrderLine","Sale Line")
   SALE = new("SalesOrder","Sale",
     {:children => [SALE_LINE],
       :child_lambdas => {SALE_LINE => lambda {|parent| parent.sales_order_lines}},
       :child_joins => {SALE_LINE => "LEFT OUTER JOIN sales_order_lines ON sales_orders.id = sales_order_lines.sales_order_id"},
-      :make_default_search => lambda {|user| SearchSetup.create_with_columns([:sale_order_number,:sale_order_date,:sale_cust_name],user)}
+      :default_search_columns => [:sale_order_number,:sale_order_date,:sale_cust_name]
     })
   DELIVERY_LINE = new("DeliveryLine","Delivery Line")
   DELIVERY = new("Delivery","Delivery",
     {:children=>[DELIVERY_LINE],
     :child_lambdas => {DELIVERY_LINE => lambda {|p| p.delivery_lines}},
     :child_joins => {DELIVERY_LINE => "LEFT OUTER JOIN delivery_lines on deliveries.id = delivery_lines.delivery_id"},
-    :make_default_search => lambda {|user| SearchSetup.create_with_columns([:del_ref,:del_mode,:del_car_name,:del_cust_name],user)}})
+    :default_search_columns => [:del_ref,:del_mode,:del_car_name,:del_cust_name]
+    })
   TARIFF = new("TariffRecord","Tariff")
   CLASSIFICATION = new("Classification","Classification",{
       :children => [TARIFF],
@@ -130,7 +134,13 @@ class CoreModule
       :children => [CLASSIFICATION],
       :child_lambdas => {CLASSIFICATION => lambda {|p| p.classifications}},
       :child_joins => {CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id"},
-      :make_default_search => lambda {|user| SearchSetup.create_with_columns([:prod_uid,:prod_name,:prod_ven_name],user)}
+      :default_search_columns => [:prod_uid,:prod_name,:prod_ven_name],
+      :bulk_actions_lambda => lambda {|current_user| 
+        bulk_actions = {}
+        bulk_actions["Edit Selected"]='bulk_edit_products_path' if current_user.edit_products?
+        bulk_actions["Classify Selected"]='bulk_classify_products_path' if current_user.edit_classifications?
+        bulk_actions
+      }
   })
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE]
 

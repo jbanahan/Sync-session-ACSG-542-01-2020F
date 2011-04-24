@@ -4,7 +4,7 @@ $(function() {
 });
 <%end%>
 <%content_for :action_bar do %>
-<button id='btn_process' class='attach_button'>Process</button>
+<button id='btn_process' class='attach_button'>Upload</button>
 <%end%>
 <h2>Upload File for <em><%=@search_setup.name%></em></h2>
 <%= form_for [@search_setup,@imported_file], :html => { :multipart => true, :id=>"frm_fi" } do |f| %>

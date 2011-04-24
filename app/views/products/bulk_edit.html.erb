@@ -12,11 +12,15 @@ $(function() {
   <button id='btn_cancel'>Cancel</button>
 <%end%>
 <div class='bulk_header_inner'>
-  Changes will be applied to <strong><%=pluralize @pks.size, CoreModule::PRODUCT.label.downcase%></strong>.
+  Changes will be applied to <strong><%=pluralize @search_run ? @search_run.total_objects : @pks.size, CoreModule::PRODUCT.label.downcase%></strong>.
 </div>
 <%=form_for Product.new, :url=>bulk_update_products_path, :html=>{:method=>"POST", :id=>"frm_bu"} do |f| %>
-  <%@pks.each do |k,v|%>
-    <%=hidden_field_tag "pk[#{k}]", v %>
+  <%if @search_run %>
+    <%=hidden_field_tag "sr_id", @search_run.id%>
+  <%else%>
+    <%@pks.each do |k,v|%>
+      <%=hidden_field_tag "pk[#{k}]", v %>
+    <%end%>
   <%end%>
   <%=render :partial=> 'product_edit', :locals=>{:form_obj => f,:hide_no_bulk_fields=>true}%>
 <% end %>

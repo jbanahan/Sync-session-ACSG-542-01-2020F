@@ -1,9 +1,9 @@
 <%content_for :javascript do%>
 $(function() {
-  OCSearch.init();
+  OCSearch.init(<%=@results.total_entries%>,<%=@current_search.search_run.id%>);
   <% unless @bulk_actions.blank? %>
     <% @bulk_actions.each do |k,v| %>
-      OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=v%>');
+      OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=send(v)%>');
     <% end %>
   <% end %>
   $("#lnk_no_upload").click(function(ev) {
@@ -326,6 +326,7 @@ hrs_opts = {"midnight"=>"0"}
 </div>
 
 <h2>Results</h2>
+<div id='bulk_message'></div>
 <table class='detail_table' id='result_table'>
   <thead><tr>
     <% unless @bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
@@ -342,20 +343,14 @@ hrs_opts = {"midnight"=>"0"}
         <% if !@bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
         <td>
           <% if obj!=last_object %>
-            <%=link_to "View", send("#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor) %> 
-            <%if obj.respond_to?('can_edit?') && obj.can_edit?(current_user)%>
-            | <%=link_to "Edit", send("edit_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
-            <%end%>
-            <%if obj.respond_to?('can_classify?') && obj.can_classify?(current_user)%>
-            | <%=link_to "Classify", send("classify_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
-            <%end%>
+            <%=render :partial=>'shared/search_links', :locals=>{:obj=>obj,:cursor=>cursor}%> 
+            <%cursor += 1%>
           <% end %>
         </td>
         <% row.each do |r| %>
         <td><%=r%></td>
         <% end %>
       </tr>
-      <%cursor += 1%>
       <%last_object = obj%>
     <% end %>
    </tbody>

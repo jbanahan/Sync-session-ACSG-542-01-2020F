@@ -7,7 +7,7 @@ class SearchSetup < ActiveRecord::Base
   has_many :sort_criterions, :dependent => :destroy
   has_many :search_columns, :dependent => :destroy
   has_many :search_schedules, :dependent => :destroy
-  has_many :imported_files, :dependent => :destroy
+  has_many :imported_files 
   has_many :dashboard_widgets, :dependent => :destroy
   has_one :search_run, :dependent => :destroy
 
@@ -63,6 +63,7 @@ class SearchSetup < ActiveRecord::Base
     sr = self.search_run
     sr = self.build_search_run(:position=>0) if sr.nil?
     sr.last_accessed = Time.now
+    sr.user_id = self.user_id
     sr.save
   end
 
@@ -219,7 +220,7 @@ class SearchSetup < ActiveRecord::Base
     end
     
     base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
-    base.search_secure self.user, base if secure
+    base = base.search_secure self.user, base if secure
 
     #rebuild search_run
     unless self.id.nil? #only if in database

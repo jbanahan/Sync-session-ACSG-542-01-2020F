@@ -7,9 +7,7 @@ class ProductsController < ApplicationController
 	end
 
     def index
-      @bulk_actions = {}
-      @bulk_actions["Edit Selected"]=bulk_edit_products_path if current_user.edit_products?
-      @bulk_actions["Classify Selected"]=bulk_classify_products_path if current_user.edit_classifications?
+      @bulk_actions = CoreModule::PRODUCT.bulk_actions current_user
       advanced_search CoreModule::PRODUCT
     end
 
@@ -147,6 +145,7 @@ class ProductsController < ApplicationController
 
   def bulk_auto_classify
     @pks = params[:pk]
+    @search_run = params[:sr_id]
     @base_product = Product.new(params[:product])
     base_country = Country.find(params[:base_country_id])
     @base_product.auto_classify base_country
@@ -156,14 +155,14 @@ class ProductsController < ApplicationController
 
   def bulk_edit
     @pks = params[:pk]
+    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
   end
 
   def bulk_update
     action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
-      @pks = params[:pk]
-      good_count = @pks.size
-      @pks.values.each do |key|
-        p = Product.find key
+      good_count = nil 
+      bulk_objects do |gc,p|
+        good_count = gc if good_count.nil?
         if p.can_edit?(current_user)
           [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
           if p.update_attributes(params[:product])
@@ -189,6 +188,7 @@ class ProductsController < ApplicationController
 
   def bulk_classify
     @pks = params[:pk]
+    @search_run = params[:sr_id]
     @base_product = Product.new
     Country.import_locations.sort_classification_rank.each do |c|
       @base_product.classifications.build(:country=>c)
@@ -197,9 +197,9 @@ class ProductsController < ApplicationController
 
   def bulk_update_classifications
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
-      @pks = params[:pk]
-      good_count = @pks.size
-      @pks.values.each do |key|
+      good_count = nil
+      bulk_objects do |gc, p|
+        good_count = gc if good_count.nil?
         p = Product.find key
         if p.can_classify?(current_user)
           #reset classifications
@@ -221,6 +221,25 @@ class ProductsController < ApplicationController
   end
     
     private
+
+    def bulk_objects &block
+      sr_id = params[:sr_id]
+      if !sr_id.blank? && sr_id.match(/^[0-9]*$/)
+        sr = SearchRun.find sr_id
+        good_count = sr.total_objects
+        sr.all_objects.each do |o|
+          yield good_count, o
+        end
+      else
+        pks = params[:pk]
+        good_count = pks.size
+        pks.values.each do |key|
+          p = Product.find key
+          yield good_count, p  
+        end
+      end
+    end
+
     def secure_classifications
       params[:product][:classifications_attributes] = nil unless params[:product].nil? || current_user.edit_classifications?
     end

@@ -3,6 +3,34 @@ class SearchRun < ActiveRecord::Base
   PAGE_SIZE = 20
 
   belongs_to :search_setup
+  belongs_to :imported_file
+
+  def self.find_last_run user, core_module
+    SearchRun.
+      joins("LEFT OUTER JOIN search_setups ON search_runs.search_setup_id = search_setups.id").
+      joins("LEFT OUTER JOIN imported_files ON search_runs.imported_file_id = imported_files.id").
+      where("search_setups.module_type = :core_module OR imported_files.module_type = :core_module",:core_module=>core_module.class_name).
+      where(:user_id=>user.id).
+      order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
+      readonly(false). #http://stackoverflow.com/questions/639171/what-is-causing-this-activerecordreadonlyrecord-error/3445029#3445029
+      first
+  end
+
+  def total_objects
+    r = all_objects.size
+    r.is_a?(Hash) ? r.size : r #if the search has a group by, then the first size call will return an ordered has
+  end
+
+  def all_objects
+    if !self.search_setup.nil?
+      return self.search_setup.search.readonly(false)
+    end
+    return @changed_objects unless @changed_objects.nil?
+    fir = self.imported_file.last_file_import_finished
+    return [] if fir.nil?
+    @changed_objects = fir.changed_objects
+    return @changed_objects
+  end
 
   def current_id
     c_obj = current_object
@@ -58,15 +86,24 @@ class SearchRun < ActiveRecord::Base
   def find_object cursor_offset
     target = cursor + cursor_offset
     return nil if target < 0
-    in_cache = !self.starting_cache_position.nil? && 
-      !self.result_cache.nil? && 
-      target >= self.starting_cache_position &&
-      target < self.starting_cache_position+PAGE_SIZE
-    if !in_cache
-      target_page = target / PAGE_SIZE
-      load_cache target_page 
+    if !self.search_setup_id.nil?
+      in_cache = !self.starting_cache_position.nil? && 
+        !self.result_cache.nil? && 
+        target >= self.starting_cache_position &&
+        target < self.starting_cache_position+PAGE_SIZE
+      if !in_cache
+        target_page = target / PAGE_SIZE
+        load_cache target_page 
+      end
+      get_object_from_cache target
+    else
+      if @changed_objects.nil?
+        fir = self.imported_file.last_file_import_finished
+        return nil if fir.nil?
+        @changed_objects = fir.changed_objects
+      end
+      return target < @changed_objects.size ? @changed_objects[target] : nil
     end
-    get_object_from_cache target
   end
 
   def load_cache target_page

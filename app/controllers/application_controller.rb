@@ -57,23 +57,28 @@ class ApplicationController < ActionController::Base
   end
 
   def advanced_search(core_module)
-    @core_module = core_module
-    @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
-    @current_search = get_search_to_run
-    if @current_search.user != current_user
-      error_redirect "You cannot run a search that is assigned to a different user."
+    last_run = SearchRun.find_last_run current_user, core_module
+    if params[:force_search] || last_run.nil? || !last_run.search_setup_id.nil?
+      @core_module = core_module
+      @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
+      @current_search = get_search_to_run
+      if @current_search.user != current_user
+        error_redirect "You cannot run a search that is assigned to a different user."
+      else
+        begin
+          render_search_results
+        rescue Exception => e
+          logger.error $!, $!.backtrace
+          OpenMailer.send_custom_search_error(@current_user, e.message).deliver
+          add_flash :errors, "There was an error running your search.  We have replaced it with a different search so you can continue working."
+          @current_search.destroy
+          @current_search = get_search_to_run
+          render_search_results
+        end
+      end    
     else
-      begin
-        render_search_results
-      rescue Exception => e
-        logger.error $!, $!.backtrace
-        OpenMailer.send_custom_search_error(@current_user, e.message).deliver
-        add_flash :errors, "There was an error running your search.  We have replaced it with a different search so you can continue working."
-        @current_search.destroy
-        @current_search = get_search_to_run
-        render_search_results
-      end
-    end    
+      redirect_to last_run.imported_file
+    end
   end
 
   
@@ -264,9 +269,12 @@ class ApplicationController < ActionController::Base
   def search_run
     return nil unless self.respond_to?('root_class') || @core_module
     @core_module = CoreModule.find_by_class_name self.root_class.to_s unless @core_module
-    ss = get_search_to_run
-    sr = ss.search_run
-    sr = ss.create_search_run if sr.nil?
+    sr = SearchRun.find_last_run current_user, @core_module
+    if sr.nil?
+      ss = get_search_to_run
+      sr = ss.search_run
+      sr = ss.create_search_run if sr.nil?
+    end
     sr
   end
 

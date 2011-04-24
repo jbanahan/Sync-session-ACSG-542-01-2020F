@@ -1,35 +1,135 @@
 <% content_for :javascript do %>
+  var importedFilePreviewLoaded = false;
   $(function() {
-    $("#btn_process")
-      .button()
-      .click(function() {
-        window.location = '<%=process_file_search_setup_imported_file_path(@search_setup,@imported_file)%>';
+    <% unless @search_run.blank? %>
+      OCSearch.init(<%=@search_run.total_objects%>,<%=@search_run.id%>);
+    <% end %>
+    <% unless @bulk_actions.blank?%>
+      <% @bulk_actions.each do |k,v| %>
+        OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=send(v)%>');
+      <% end %>
+    <% end%>
+    <% unless @imported_file.search_setup.nil? %>
+    $("#btn_process").click(function() {$("#mod_preview").dialog('open');});
+    $("#btn_download").click(function() {window.location='<%=download_imported_file_path @imported_file%>';});
+    $("#mod_preview").dialog({autoOpen:false,width:'auto',title:"Preview",buttons:{
+      "Go":function() {
+        $("#mod_preview").dialog('close');
+        $("#mod_processing").dialog('open');
+        window.location = '<%=process_file_search_setup_imported_file_path(@imported_file.search_setup,@imported_file)%>';
+      },
+      "Cancel":function() {$("#mod_preview").dialog('close');}
+      },
+      open:function() {
+        if(!importedFilePreviewLoaded) {
+          $.getJSON('<%=preview_imported_file_path @imported_file%>',function(data) {
+            var str = "<ul>";
+            for(var i=0;i<data.length;i++) {
+              str += "<li>"+data[i]+"</li>";
+            }
+            str += "</ul>";
+            $("#preview_content").html(str);
+            importedFilePreviewLoaded = true;
+          });
+        }
+      }
       });
-  });
-  $(document).ready(function() {
-    $('#process_alert').fadeIn('slow').delay(2000).fadeOut();
+    $("#mod_processing").dialog({autoOpen:false,width:'auto',title:"Processing",
+      modal:true,closeOnEscapse:false,close:function() {$("#mod_processing").dialog('open')}});
+      <%if @file_import_result.nil?%>
+    $("#mod_preview").dialog('open');
+      <%end%>
+    <% end %>
   });
 <% end %>
-<% content_for :action_bar do %>
-  <button id='btn_process'>Process</button>
-<% end %>
-<div id='process_alert' style='display:none; text-align:right; color:green; float:right'>
-<h3>You must click process to finish importing the file &gt;&gt;</h3>
-</div>
-<p>
-  <b>Name:</b>&nbsp;<%= link_to @imported_file.attached_file_name, download_search_setup_imported_file_path(@search_setup,@imported_file) %>
-</p>
 
-<h2>Preview</h2>
-<div>
-  <b>The first row of this file will perform the following actions.<br/>  
-    Please double check that it looks right before clicking process.<br />
-    <span style='color:red;'>There is no undo for this action.</span></b>
+<% content_for :action_bar do %>
+  <% unless @imported_file.search_setup.nil? %>
+    <button id='btn_process'>Process</button>
+  <% end %>
+  <button id='btn_download'>Download</button>
+  <%unless @bulk_actions.blank?%>
+    <%@bulk_actions.each do |k,v|%>
+      <button id='<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>'><%=k%></button>
+    <%end%>
+  <%end%>
+<% end %>
+<table>
+  <tr>
+    <td width='50%' style='vertical-align:top;'>
+      <table>
+        <%=field_row "File Name", @imported_file.attached_file_name %>
+        <%=field_row "Uploaded At", @imported_file.created_at %>
+        <%=field_row "Uploaded By", @imported_file.user ? @imported_file.user.full_name : ""%>
+      </table>
+    </td>
+    <td width='50%' style='vertical-align:top;'>
+      <table>
+        <%=field_row "Last Processed", @file_import_result.nil? ? "Never" : @file_import_result.finished_at %>
+        <%=field_row "File Rows", @file_import_result.nil? ? "" : @file_import_result.change_records.size %>
+        <%=field_row "Records", @changed_objects.nil? ? "" : @changed_objects.size %>
+      </table>
+    </td>
+  </tr>
+</table>
+<div id='last_results'>
+<div id='bulk_message'></div>
+<%unless @file_import_result.nil?%>
+<table class='detail_table' id='result_table'>
+  <thead>
+    <% unless @bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
+    <th>Actions</th>
+    <%@imported_file.core_module.default_search_columns.each do |col|%>
+      <%mf = ModelField.find_by_uid col%>
+      <th><%=mf.label%></th>
+    <%end%>
+  </thead>
+  <tbody>
+    <% cursor = 0 %>
+    <% last_object = nil %>
+    <%GridMaker.new(@changed_objects,@columns,[],@imported_file.core_module.default_module_chain).go do |row,obj|%>
+      <tr class='hover <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
+        <% if !@bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
+        <td>
+          <% if obj!=last_object %>
+            <%=render :partial=>'shared/search_links', :locals=>{:obj=>obj,:cursor=>cursor}%> 
+            <%cursor += 1%>
+          <% end %>
+        </td>
+        <% row.each do |r| %>
+        <td><%=r%></td>
+        <% end %>
+      </tr>
+      <%last_object = obj%>
+    <%end%>
+  </tbody>
+</table>
+  <% if @max_pages>1%>
+    <div class='pagination'>
+     <%if @target_page>0%><%=link_to "&#8592;Previous".html_safe, imported_file_path(@imported_file,:page=>@target_page-1)%><%end%> 
+     <%(0..@max_pages-1).each do |p|%>
+        <%if @target_page!=p%><%=link_to p+1, imported_file_path(@imported_file,:page=>p)%><%else%><%=p+1%><%end%>
+     <%end%>
+     <%if @target_page<@max_pages-1%><%=link_to "Next&#8594;".html_safe,  imported_file_path(@imported_file,:page=>@target_page+1)%><%end%>
+    </div>
+  <%end%>
+<%end%>
 </div>
 <div>
-  <ul>
-   <% @imported_file.preview.each do |m| %>
-    <li><%=m%></li>
-   <% end %>
-  </ul>
+  <%=form_tag('',:id=>'frm_bulk') do %>
+    <div id='div_bulk_content'></div>
+  <%end%>
+</div>
+<div id='mod_preview' style='display:none;'>
+  <div>
+    <b>The first row of this file will perform the following actions.<br/>  
+      Please double check that it looks right before clicking process.<br />
+      <span style='color:red;'>There is no undo for this action.</span></b>
+  </div>
+  <div id='preview_content'>
+    Loading...
+  </div>
+</div>
+<div id='mod_processing' style='display:none;'>
+  File processing.  This may take several minutes.  You can open a new browser tab or window to continue working while the file processes.
 </div>
