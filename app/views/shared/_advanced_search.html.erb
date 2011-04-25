@@ -348,7 +348,7 @@ hrs_opts = {"midnight"=>"0"}
           <% end %>
         </td>
         <% row.each do |r| %>
-        <td><%=r%></td>
+        <td><%=r.blank? ? "&nbsp;".html_safe : r%></td>
         <% end %>
       </tr>
       <%last_object = obj%>
