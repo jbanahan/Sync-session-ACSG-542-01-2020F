@@ -1,3 +1,4 @@
+<% hide_no_bulk_fields = nil if local_assigns[:hide_no_bulk_fields].nil?%>
 <table>
   <%unless hide_no_bulk_fields%>
     <%=field_row field_label(:prod_uid), form_obj.text_field(:unique_identifier) %>
