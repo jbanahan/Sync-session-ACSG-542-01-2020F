@@ -165,6 +165,7 @@ class ProductsController < ApplicationController
         good_count = gc if good_count.nil?
         if p.can_edit?(current_user)
           [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
+          params[:product].each {|k,v| params[:product].delete k if v.blank?}
           if p.update_attributes(params[:product])
             if update_custom_fields p
               update_status p 
