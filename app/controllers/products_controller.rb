@@ -201,7 +201,6 @@ class ProductsController < ApplicationController
       good_count = nil
       bulk_objects do |gc, p|
         good_count = gc if good_count.nil?
-        p = Product.find key
         if p.can_classify?(current_user)
           #reset classifications
           p.classifications.destroy_all
