@@ -52,11 +52,14 @@ class ImportedFilesController < ApplicationController
         @max_pages = (changed_objs.size / 20)+1
       end
       idx = 0
-      @columns = @imported_file.core_module.default_search_columns.collect {|c| 
-        sc = SearchColumn.new(:model_field_uid=>c.to_s,:rank=>idx)
-        idx += 1
-        sc
-      }
+      @columns = @imported_file.search_columns
+      if @columns.blank?
+        @columns = @imported_file.core_module.default_search_columns.collect {|c| 
+          sc = SearchColumn.new(:model_field_uid=>c.to_s,:rank=>idx)
+          idx += 1
+          sc
+        }
+      end
       @bulk_actions = f.core_module.bulk_actions current_user
     }
   end

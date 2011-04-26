@@ -14,6 +14,7 @@ class ImportedFile < ActiveRecord::Base
   belongs_to :user
   has_many :search_runs
   has_many :file_import_results, :dependent=>:destroy
+  has_many :search_columns
 
   validates_presence_of :module_type
   
@@ -37,6 +38,7 @@ class ImportedFile < ActiveRecord::Base
 
   def process(user,options={})
     begin
+      import_search_columns      
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
       FileImportProcessor.process self, [FileImportProcessorListener.new(self,user)]
     rescue => e 
@@ -90,6 +92,18 @@ class ImportedFile < ActiveRecord::Base
   private
   def no_post
     false
+  end
+
+  def import_search_columns
+    if !self.search_setup.nil? && self.search_columns.blank?
+      no_copy = [:id,:created_at,:updated_at,:search_setup_id,:imported_file_id]
+      self.search_setup.search_columns.each do |col|
+        my_col = self.search_columns.build
+        col.attributes.each { |attr, value| 
+          eval("my_col.#{attr}= col.#{attr}") unless no_copy.include?(attr.to_sym)} 
+        my_col.save
+      end
+    end
   end
 
   class FileImportProcessorListener

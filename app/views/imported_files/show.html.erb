@@ -72,16 +72,15 @@
     </td>
   </tr>
 </table>
-<div id='last_results'>
+<div id='main_search_cont'>
 <div id='bulk_message'></div>
 <%unless @file_import_result.nil?%>
 <table class='detail_table' id='result_table'>
   <thead>
     <% unless @bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
     <th>Actions</th>
-    <%@imported_file.core_module.default_search_columns.each do |col|%>
-      <%mf = ModelField.find_by_uid col%>
-      <th><%=mf.label%></th>
+    <%@columns.each do |col|%>
+      <th><%=col.find_model_field.label%></th>
     <%end%>
   </thead>
   <tbody>
