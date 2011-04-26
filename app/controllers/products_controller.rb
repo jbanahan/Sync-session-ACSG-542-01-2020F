@@ -145,7 +145,7 @@ class ProductsController < ApplicationController
 
   def bulk_auto_classify
     @pks = params[:pk]
-    @search_run = params[:sr_id]
+    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new(params[:product])
     base_country = Country.find(params[:base_country_id])
     @base_product.auto_classify base_country
@@ -189,7 +189,7 @@ class ProductsController < ApplicationController
 
   def bulk_classify
     @pks = params[:pk]
-    @search_run = params[:sr_id]
+    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new
     Country.import_locations.sort_classification_rank.each do |c|
       @base_product.classifications.build(:country=>c)
