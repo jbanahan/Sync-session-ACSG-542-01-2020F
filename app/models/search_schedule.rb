@@ -43,7 +43,7 @@ class SearchSchedule < ActiveRecord::Base
       log.info "#{Time.now}: Attempting to schedule job for Schedule #{self.id}, with cron \"#{cs}" if log
       scheduler.cron cs, {:tags=> RUFUS_TAG} { SearchSchedule.find(self.id).run log } if any_days_scheduled? && self.run_hour
       log.info "#{Time.now}: Scheduled job for Schedule #{self.id}, with cron \"#{cs}\"" if log
-    rescue StandardException => e
+    rescue StandardError => e
       if log
         log.error e
       else
