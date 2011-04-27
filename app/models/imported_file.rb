@@ -10,13 +10,37 @@ class ImportedFile < ActiveRecord::Base
     :bucket => 'chain-io'
   before_post_process :no_post
   
-
   belongs_to :search_setup
-    
-  def process(options={})
+  belongs_to :user
+  has_many :search_runs
+  has_many :file_import_results, :dependent=>:destroy
+  has_many :search_columns
+
+  validates_presence_of :module_type
+  
+  def last_file_import
+    self.file_import_results.order("created_at DESC").first
+  end
+  def last_file_import_finished
+    self.file_import_results.order("finished_at DESC").first
+  end
+  
+  def core_module
+    CoreModule.find_by_class_name self.module_type
+  end
+  def can_view?(user)
+    return true if user.sys_admin? || user.admin?
+    return false if self.user_id.nil? 
+    return true if self.user_id==user.id
+    return true if self.user.company==user.company
+    return false
+  end
+
+  def process(user,options={})
     begin
+      import_search_columns      
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
-      FileImportProcessor.process self
+      FileImportProcessor.process self, [FileImportProcessorListener.new(self,user)]
     rescue => e 
       self.errors[:base] << "There was an error processing the file: #{e.message}"
     end
@@ -24,7 +48,7 @@ class ImportedFile < ActiveRecord::Base
     return self.errors.size == 0
   end
   
-  def preview(options={})
+  def preview(user,options={})
     begin
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
       msgs = FileImportProcessor.preview self
@@ -68,5 +92,38 @@ class ImportedFile < ActiveRecord::Base
   private
   def no_post
     false
+  end
+
+  def import_search_columns
+    if !self.search_setup.nil? && self.search_columns.blank?
+      no_copy = [:id,:created_at,:updated_at,:search_setup_id,:imported_file_id]
+      self.search_setup.search_columns.each do |col|
+        my_col = self.search_columns.build
+        col.attributes.each { |attr, value| 
+          eval("my_col.#{attr}= col.#{attr}") unless no_copy.include?(attr.to_sym)} 
+        my_col.save
+      end
+    end
+  end
+
+  class FileImportProcessorListener
+
+    def initialize(imported_file,user)
+      @fr = imported_file.file_import_results.build(:run_by=>user)
+    end
+
+    def process_row row_number, object, messages
+      @fr.change_records.create(:record_sequence_number=>row_number,:recordable=>object)
+    end
+
+    def process_start time
+      @fr.started_at=time
+      @fr.save
+    end
+
+    def process_end time
+      @fr.finished_at= time
+      @fr.save
+    end
   end
 end

@@ -101,8 +101,10 @@ class FtpWalker
     @downloaded.each do |file,search_setup|
       imp = search_setup.imported_files.build(:ignore_first_row=>false)
       imp.attached = file
+      imp.module_type = search_setup.module_type
+      imp.user = search_setup.user
       imp.save
-      imp.process
+      imp.process search_setup.user 
     end
   end
 

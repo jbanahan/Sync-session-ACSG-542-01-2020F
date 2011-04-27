@@ -1,3 +1,75 @@
+var OCSearch = (function() {
+  var allSelected = false;
+  var maxObjects;
+  var searchRunId;
+  var bulkButtons = new Array();
+  var allObjectsMode = false;
+
+  var rewriteBulkForm = function() {
+    var checked = $("#result_table").find(":checked");
+    if(allObjectsMode && checked.length==$("#result_table").find(":checkbox:not(#chk_sel_all)").length) {
+      $("#div_bulk_content").html("<input type='hidden' name='sr_id' value='"+searchRunId+"' />");
+      $("#bulk_message").html("All "+maxObjects+" items selected.")
+    } else {
+      allObjectsMode = false;
+      var checkedIds = new Array();
+      $("#div_bulk_content").html("");
+      checked.each(function(index, item) {
+        checkedIds.push($(item).attr('pk'));
+      });
+      for(var x=0;x<checkedIds.length;x++) {
+        $("#div_bulk_content").append("<input type='hidden' name='pk["+x+"]' value='"+checkedIds[x]+"' />"); 
+      }
+      for(var x=0;x<bulkButtons.length;x++) {
+        if(checkedIds.length) {
+          bulkButtons[x].show();
+        } else {
+          bulkButtons[x].hide();
+        }
+      }
+      if($("#result_table").find(":checkbox:not(#chk_sel_all)").length==checkedIds.length) {
+        $("#bulk_message").html("All "+checkedIds.length ? checkedIds.length+" items on this page selected. To select all "+maxObjects+" items click <a href='#' class='sel_full'>here</a>." : "&nbsp;");
+      } else {
+        $("#bulk_message").html("&nbsp;");
+      }
+    }
+  }
+
+  var initBulkSelectors = function() {
+    $("#result_table").find(":checkbox:not(#chk_sel_all)").click(rewriteBulkForm);
+    var selAllBinding = function() {
+      $("#result_table").find(":checkbox:not(#chk_sel_all)").unbind('click').attr('checked',(allSelected ? '' : 'checked')).click(rewriteBulkForm);;
+      $("#chk_sel_all").unbind('click').attr('checked','').click(selAllBinding);
+      allSelected = !allSelected;
+      rewriteBulkForm();
+    }
+    $("#chk_sel_all").click(selAllBinding);
+  }
+
+  var initSelectFullList = function() {
+    $(".sel_full").live('click',function(ev) {
+      ev.preventDefault();
+      allObjectsMode = true;
+      rewriteBulkForm();
+    });
+  }
+    
+  return {
+    init: function(max_objects,search_run_id) {
+      maxObjects = max_objects;
+      searchRunId = search_run_id;
+      $("#frm_bulk").attr('action','');
+      initBulkSelectors();
+      initSelectFullList();
+    },
+    addBulkHandler: function(button_name,form_path) {
+      var b = $("#"+button_name);
+      bulkButtons.push(b);
+      b.click(function() {$("#frm_bulk").attr('action',form_path).submit();});
+      rewriteBulkForm();
+    }
+  };
+})();
 function getDay(container,abbreviation) {
   return container.children(".sch_"+abbreviation).val()=="true"
 }

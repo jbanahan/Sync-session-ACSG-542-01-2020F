@@ -7,8 +7,9 @@ class SearchSetup < ActiveRecord::Base
   has_many :sort_criterions, :dependent => :destroy
   has_many :search_columns, :dependent => :destroy
   has_many :search_schedules, :dependent => :destroy
-  has_many :imported_files, :dependent => :destroy
+  has_many :imported_files 
   has_many :dashboard_widgets, :dependent => :destroy
+  has_one :search_run, :dependent => :destroy
 
   belongs_to :user
   
@@ -32,6 +33,13 @@ class SearchSetup < ActiveRecord::Base
     
   scope :for_user, lambda {|u| where(:user_id => u)} 
   scope :for_module, lambda {|m| where(:module_type => m.class_name)}
+  
+  def self.find_last_accessed user, core_module
+    SearchSetup.for_user(user).for_module(core_module).
+      joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id").
+      order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
+      first
+  end
 
   def sorted_columns
     self.search_columns.order("rank ASC")
@@ -51,15 +59,23 @@ class SearchSetup < ActiveRecord::Base
     CoreModule.find_by_class_name(self.module_type).default_module_chain
   end
   
-  def touch(save_obj=false)
-    self.last_accessed = Time.now
-    self.save if save_obj 
+  def touch
+    sr = self.search_run
+    sr = self.build_search_run(:position=>0) if sr.nil?
+    sr.last_accessed = Time.now
+    sr.user_id = self.user_id
+    sr.save
+  end
+
+  def last_accessed
+    sr = self.search_run
+    sr.nil? ? nil : sr.last_accessed
   end
 
   # Returns a new, saved search setup with the columns passed from the given array
   def self.create_with_columns(model_field_uids,user,name="Default")
     ss = SearchSetup.create(:name=>name,:user => user,:module_type=>ModelField.find_by_uid(model_field_uids[0]).core_module.class_name,
-        :simple=>false,:last_accessed=>Time.now)
+        :simple=>false)
     model_field_uids.each_with_index do |uid,i|
       ss.search_columns.create(:rank=>i,:model_field_uid=>uid)
     end
@@ -77,8 +93,6 @@ class SearchSetup < ActiveRecord::Base
   # all built.
   #
   # If a true parameter is provided, everything in the tree will be saved to the database.
-  # 
-  # last_accessed is left empty intentionally
   def deep_copy(new_name, save_obj=false) 
     ss = SearchSetup.new(:name => new_name, :module_type => self.module_type, :user => self.user, :simple => self.simple, :download_format => self.download_format)
     ss.save if save_obj
@@ -105,12 +119,16 @@ class SearchSetup < ActiveRecord::Base
     ss
   end
 
+  def core_module
+    CoreModule.find_by_class_name self.module_type
+  end
+
   #does this search have the appropriate columns set to be used as a file upload?
   #acceptes an optional array that will have any user facing messages appended to it
   def uploadable? messages=[]
     #refactor later to use setup within CoreModule to figure this out instead of hard codes
     start_messages_count = messages.size
-    cm = CoreModule.find_by_class_name self.module_type
+    cm = core_module 
     messages << "Search's core module not set." if cm.nil?
 
     if cm==CoreModule::DELIVERY
@@ -202,7 +220,17 @@ class SearchSetup < ActiveRecord::Base
     end
     
     base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
-    base.search_secure self.user, base if secure
+    base = base.search_secure self.user, base if secure
+
+    #rebuild search_run
+    unless self.id.nil? #only if in database
+      if self.search_run.nil?
+        self.create_search_run
+      else
+        self.search_run.reset_cursor
+        self.search_run.save
+      end
+    end
     base
   end
   

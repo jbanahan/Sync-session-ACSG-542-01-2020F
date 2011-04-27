@@ -205,11 +205,6 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert s.last_accessed.nil?, "last accessed should not have been touched"
     s.touch
     assert s.last_accessed > 3.seconds.ago, "Last accessed should be just now."
-    assert s.id.nil?, "Should not have saved"
-    s.last_accessed = 1.day.ago
-    s.touch(true)
-    assert s.last_accessed > 3.seconds.ago, "Last accessed should be just now."
-    assert !s.id.nil?, "Should have saved"
   end
   
   test "for user scope" do
@@ -228,6 +223,25 @@ class SearchSetupTest < ActiveSupport::TestCase
     result = SearchSetup.for_module(CoreModule::PRODUCT).where(:name=>name)
     assert result.length==1, "Should only find one"
     assert result.first==s1
+  end
+
+  test "find_last_accessed" do 
+    SearchSetup.destroy_all #clear fixtures
+    s1 = SearchSetup.create!(:name=>"my srch",:user_id=>1, :module_type=>"Product")
+    s2 = SearchSetup.create!(:name=>"s2",:user_id=>1, :module_type=>"Product")
+    s3 = SearchSetup.create!(:name=>"s3",:user_id=>1, :module_type=>"Shipment")
+    s4 = SearchSetup.create!(:name=>"s4",:user_id=>2, :module_type=>"Product")
+    s1.touch
+    f = SearchSetup.find_last_accessed User.find(1), CoreModule::PRODUCT
+    assert f==s1
+    f = SearchSetup.find_last_accessed User.find(1), CoreModule::SHIPMENT
+    assert f==s3
+    f = SearchSetup.find_last_accessed User.find(2), CoreModule::PRODUCT
+    assert f = s4
+    f = SearchSetup.find_last_accessed User.find(1), CoreModule::ORDER
+    assert f.nil?
+    f = SearchSetup.find_last_accessed User.find(3), CoreModule::PRODUCT
+    assert f.nil?
   end
   
   test "deep copy" do

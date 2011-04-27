@@ -7,6 +7,7 @@ class ApplicationController < ActionController::Base
     before_filter :update_message_count
     before_filter :set_user_time_zone
     before_filter :log_request
+    before_filter :set_cursor_position
 
     helper_method :current_user
     helper_method :master_company
@@ -56,23 +57,28 @@ class ApplicationController < ActionController::Base
   end
 
   def advanced_search(core_module)
-    @core_module = core_module
-    @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
-    @current_search = get_search_to_run
-    if @current_search.user != current_user
-      error_redirect "You cannot run a search that is assigned to a different user."
+    last_run = SearchRun.find_last_run current_user, core_module
+    if params[:force_search] || last_run.nil? || !last_run.search_setup_id.nil?
+      @core_module = core_module
+      @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
+      @current_search = get_search_to_run
+      if @current_search.user != current_user
+        error_redirect "You cannot run a search that is assigned to a different user."
+      else
+        begin
+          render_search_results
+        rescue Exception => e
+          logger.error $!, $!.backtrace
+          OpenMailer.send_custom_search_error(@current_user, e.message).deliver
+          add_flash :errors, "There was an error running your search.  We have replaced it with a different search so you can continue working."
+          @current_search.destroy
+          @current_search = get_search_to_run
+          render_search_results
+        end
+      end    
     else
-      begin
-        render_search_results
-      rescue Exception => e
-        logger.error $!, $!.backtrace
-        OpenMailer.send_custom_search_error(@current_user, e.message).deliver
-        add_flash :errors, "There was an error running your search.  We have replaced it with a different search so you can continue working."
-        @current_search.destroy
-        @current_search = get_search_to_run
-        render_search_results
-      end
-    end    
+      redirect_to last_run.imported_file
+    end
   end
 
   
@@ -193,16 +199,95 @@ class ApplicationController < ActionController::Base
     end
   end
   
-    private
+  #get the next object from the most recently run search 
+  def next_object(move=true)
+    sr = search_run
+    n = sr.next_object
+    if move && !n.nil?
+      sr.move_forward
+      sr.save
+    end
+    n
+  end
 
+  #get the previous object from the most recenty run search
+  def previous_object(move=true)
+    sr = search_run
+    n = sr.previous_object
+    if move && !n.nil?
+      sr.move_back
+      sr.save
+    end
+    n
+  end
+
+  #action to show next object from search result (supporting next button)
+  def show_next
+    n = next_object
+    if n.nil?
+      error_redirect "No more items in the search list."
+    else
+      redirect_to n
+    end
+  end
+  
+  #action to show previous object from search result (supporting previous button)
+  def show_previous
+    n = previous_object
+    if n.nil?
+      error_redirect "No more items in the search list."
+    else
+      redirect_to n
+    end
+  end
+
+  #add this redirect at the end of your update controller action to support next & previous buttons
+  def redirect_update base_object, action="edit"
+    target = nil
+    if params[:c_next]
+      target = next_object
+      add_flash :errors, "No more items in the search list." if target.nil?
+    elsif params[:c_previous]
+      target = previous_object
+      add_flash :errors, "No more items in the search list." if target.nil?
+    end
+    if target
+      redirect_to send("#{action}_#{base_object.class.to_s.underscore}_path",target)
+    else
+      redirect_to(base_object) 
+    end
+  end
+  
   def get_search_to_run
     s = nil
     s = SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
-    s = SearchSetup.for_module(@core_module).for_user(current_user).order("last_accessed DESC").first if s.nil?
+    s = SearchSetup.find_last_accessed current_user, @core_module if s.nil?
     s = @core_module.make_default_search current_user if s.nil?
     s
   end
   
+  def search_run
+    return nil unless self.respond_to?('root_class') || @core_module
+    @core_module = CoreModule.find_by_class_name self.root_class.to_s unless @core_module
+    sr = SearchRun.find_last_run current_user, @core_module
+    if sr.nil?
+      ss = get_search_to_run
+      sr = ss.search_run
+      sr = ss.create_search_run if sr.nil?
+    end
+    sr
+  end
+
+  private
+  def set_cursor_position
+    cp = params[:c_pos]
+    return unless cp && cp.match(/^[0-9]*$/)
+    sr = search_run
+    return unless sr
+    sr.position = cp.to_i
+    sr.save
+  end
+
   def render_search_results
       if @current_search.name == "Extreme latest" && current_user.sys_admin?
         raise "Extreme latest goes boom!!"
@@ -211,7 +296,7 @@ class ApplicationController < ActionController::Base
       @results = @current_search.search
       respond_to do |format| 
         format.html {
-          @current_search.touch(true)
+          @current_search.touch
           @results = @results.paginate(:per_page => 20, :page => params[:page]) 
           render :layout => 'one_col'
         }

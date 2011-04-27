@@ -8,6 +8,7 @@ $(function() {
   $("#btn_comment_add").click(function() {
     $("#mod_comments_add").dialog('open');
   });
+  OpenChain.addKeyMap('m',"Add Comment",function() {$("#btn_comment_add").click();});
   $("#mod_comment_send").dialog({autoOpen:false,title:'Email Comment',
     width:'auto',
     buttons:{"Send":function() {sendComment(); $("#mod_comment_send").dialog('close'); },

@@ -21,3 +21,26 @@ String.class_eval do
     end 
   end
 end
+
+module Spreadsheet
+
+  module Excel
+    class Row
+      alias_method :original_array, :[]
+
+      def [] idx, len=nil
+        r = len.nil? ? original_array(idx) : original_array(idx,len)
+        !r.nil? && r.is_a?(Float) && r.to_i==r ? r.to_i : r
+      end
+    end
+  end
+
+  class Row 
+    alias_method :original_array, :[]
+
+    def [] idx, len=nil
+      r = len.nil? ? original_array(idx) : original_array(idx,len)
+      !r.nil? && r.is_a?(Float) && r.to_i==r ? r.to_i : r
+    end
+  end
+end

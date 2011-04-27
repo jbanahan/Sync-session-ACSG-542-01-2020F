@@ -3,92 +3,41 @@ $(function() {
   $("#btn_save").click(function() {
     $("#frm_p").attr("action",'<%=product_path%>').submit();
   });
+  $("#btn_edit_next").click(function() {
+    next_action_to_form($("#frm_p"));
+    hidden_to_form($("#frm_p"),"c_classify","true");
+    $("#frm_p").submit();
+  });
+  $("#btn_edit_previous").click(function() {
+    previous_action_to_form($("#frm_p"))
+    hidden_to_form($("#frm_p"),"c_classify","true");
+    $("#frm_p").submit();
+  });
   $("#btn_cancel").click(function() {window.location='<%=product_path(@product)%>';});
-  $("#btn_auto_classify").click(function() {autoClassify();});
-  addRemoveHook();
-  $(".hts_option").click(function(ev) {
-    ev.preventDefault();
-    $(this).prevAll("input.hts_field").val($(this).html());
-  });
-  $("#frm_p").submit(function() {
-    $(".tf_row").each(function() {
-      var has_data = false;
-      $(this).find(".hts_field").each(function() {
-        if(!has_data) {
-          has_data = $(this).val().length>0;
-        }
-      });
-      if(!has_data) {
-        $(this).find(".tf_remove").each(function() {
-          destroy_nested('tf',$(this));
-        });
-      }
-    });
-  });
+  $("#btn_auto_classify").click(function() {OpenChain.autoClassify($("#frm_p"),'<%=auto_classify_product_path(@product)%>');});
+
+  OpenChain.addClickMap('s',"Save","btn_save");
+  OpenChain.addClickMap('n',"Next","btn_edit_next");
+  OpenChain.addClickMap('p',"Previous","btn_edit_previous");
+  OpenChain.addClickMap('c',"Cancel","btn_cancel");
+  OpenChain.addClickMap('a',"Auto-Classify","btn_auto_classify");
+  OpenChain.addKeyMap('j',"Jump To Classification Section",function() {window.location.hash=""; window.location.hash="classifications";});
+  OpenChain.activateHotKeys();
+
+  OpenChain.initClassifyPage();
+
 });
-function countriesWithHTS() {
-  var c_count = 0;
-  $(".country_title").each(function() {
-    var hts_tbl = $(this).nextAll(".hts_table");
-    var found = false;
-    hts_tbl.find(".hts_field").each(function() {
-      if($(this).val().length>5) {
-        found = true;
-      }
-    });
-    if(found) { 
-      c_count++; 
-      $("#sel_pick_country").append("<option value='"+$(this).attr("cid")+"'>"+$(this).html()+"</option>");
-    }
-  });
-  return c_count;
-}
-function autoClassify() {
-  var c_count = countriesWithHTS();
-  switch(c_count) {
-    case 0: 
-      window.alert("Please enter HTS info for at least one country before auto-classifying."); 
-      return;
-    case 1:
-      completeAutoClassify($("#sel_pick_country").children("option:first").val());
-      break;
-    default:
-      $("#mod_pick_country").dialog({title:"Select Country",
-        buttons:{"OK":function() {completeAutoClassify($("#sel_pick_country").val());}}});
-  }
-}
-function completeAutoClassify(country_id) {
-  $("#frm_p").append("<input type='hidden' name='base_country_id' value='"+country_id+"' />");
-  $("#frm_p").attr("action",'<%=auto_classify_product_path(@product)%>').submit();
-}
-function addRemoveHook() {
-  
-  $(".tf_remove").click(function(ev) {
-    destroy_nested('tf',$(this));
-    ev.preventDefault();
-  });
-}
-function add_tf_row(link,parent_index) {
-  my_index = new Date().getTime();
-  content = "<tr class=\"tf_row\">"
-  content += "<td><input id='product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_line_number' name='product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][line_number]' size='3' type='text' /></td>";
-  for(i=1; i<4; i++) {
-    content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' /></td>"; 
-  }
-  content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
-  link.parents('.add_row').before(content);
-  link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
-  addRemoveHook();
-}
 <%end%>
 <%content_for :action_bar do %>
-<button id='btn_save'>Save</button>
+  <button id='btn_save'>Save</button>
 
-<% if Country.import_locations.size > 1 && !OfficialTariff.first.nil? %>
-	<button id='btn_auto_classify'>Auto Classify</button>
-<% end %>
+  <% if Country.import_locations.size > 1 && !OfficialTariff.first.nil? %>
+    <button id='btn_auto_classify'>Auto Classify</button>
+  <% end %>
 
-<button id='btn_cancel'>Cancel</button>
+  <button id='btn_cancel'>Cancel</button>
+  <button id='btn_edit_next'>Next</button>
+  <button id='btn_edit_previous'>Previous</button>
 <% end %>
 <a href='#classifications'>Jump To Classifications</a>
 <br />
@@ -105,43 +54,5 @@ function add_tf_row(link,parent_index) {
 
 <hr />
 <% form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
-<div id='classifications'>
-<a name='classifications'></a>
-<h2>Classifications</h2>
-<% classification_count = 0 %>
-<% f.fields_for :classifications do |cf| %>
-  <div class='classification_box cf_row'>
-      <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
-      <%=cf.hidden_field :country_id%>
-      <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
-      <div class='classification_detail_box'>
-        <table>
-        <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>
-        </table>
-      </div>
-      <table class='detail_table hts_table'>
-      <thead>
-        <th><%=field_label :hts_line_number%></th>
-        <th><%=field_label :hts_hts_1%></th>
-        <th><%=field_label :hts_hts_2%></th>
-        <th><%=field_label :hts_hts_3%></th>
-        <th>&nbsp;</th>    
-      </thead>
-      <tbody class='tr_body'>
-        <% cf.fields_for :tariff_records do |tf| %>
-          <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
-        <% end %>
-        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
-      </tbody>
-    </table>
-  </div>
-  <% classification_count += 1 %>
+  <%=render :partial=>'classify', :locals=>{:form_obj=>f}%>
 <% end %>
-</div>
-<br />
-
-<% end %>
-<div id="mod_pick_country" style="display:none">
-  Multiple countries have existing classifications, which one do you want to use to auto-classify?<br />
-  <select id='sel_pick_country'></select>
-</div>

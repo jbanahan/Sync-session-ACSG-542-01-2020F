@@ -12,7 +12,7 @@
   <link rel="shortcut icon" href="/favicon.ico" />
   <%= stylesheet_link_tag :all, :media=>"all" %>
   <link rel="stylesheet" type="text/css" href="/print_css/print.css" media="print" />
-  <%= javascript_include_tag "jquery-1.4.4.min.js", "jquery-rails.js", "jquery-ui-1.8.7.custom.min.js", "application.js", "jquery.validate.js", "visualize.jQuery.js", "jquery.tools.min.js", "adv_search.js" %>
+  <%= javascript_include_tag "jquery-1.4.4.min.js", "jquery-rails.js", "jquery-ui-1.8.7.custom.min.js", "jquery.validate.js", "jquery.tools.min.js", "jquery.hotkeys.js", "application.js", "adv_search.js" %>
   <%= csrf_meta_tag %>
   <script>
   <% if current_user %>
@@ -21,7 +21,7 @@
     $( "#btn_orders" )
       .button()
       .click(function() {
-        window.location = '<%=orders_path%>';
+        window.location = '<%=orders_path%>?force_search=true';
       })<% if current_user.add_orders? %>
       .next()
         .button( {
@@ -40,7 +40,7 @@
     $( "#btn_shipments" )
       .button()
       .click(function() {
-        window.location = '<%=shipments_path%>';
+        window.location = '<%=shipments_path%>?force_search=true';
       })<%if current_user.add_shipments?%>
       .next()
         .button( {
@@ -58,7 +58,7 @@
     $( "#btn_products" )
       .button()
       .click(function() {
-        window.location = '<%=products_path%>';
+        window.location = '<%=products_path%>?force_search=true';
       })<%if current_user.add_products?%>
       .next()
         .button( {
@@ -76,7 +76,7 @@
   $( "#btn_sales" )
       .button()
       .click(function() {
-        window.location = '<%=sales_orders_path%>';
+        window.location = '<%=sales_orders_path%>?force_search=true';
       })<%if current_user.add_sales_orders?%>
       .next()
         .button( {
@@ -95,7 +95,7 @@
   $( "#btn_deliveries" )
       .button()
       .click(function() {
-        window.location = '<%=deliveries_path%>';
+        window.location = '<%=deliveries_path%>?force_search=true';
       })<%if current_user.add_deliveries?%>
       .next()
         .button( {
@@ -137,6 +137,7 @@
     <div id="corner_links">
         <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
+        <%if !current_user.imported_files.blank?%><%=link_to "My Uploads", imported_files_path%> | <%end%>
         <% if current_user.admin? %><%= link_to 'Settings', settings_path, {:title=>"Administrator System Settings",:class=>"tiplink"} %> |<%end%>
         <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
         <%= link_to 'Logout', logout_path %>

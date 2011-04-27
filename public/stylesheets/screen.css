@@ -37,6 +37,10 @@ img {
 .section_insert_heading {
   font-size: 2em; 
 }
+.search_row_break td {
+  border-top: 1px solid #d7d7d7;
+  padding-top: 4px;
+}
 .detail_table {
   font-size: 90%;
   width: 95%;
@@ -48,6 +52,9 @@ img {
     background-color: #151515;
     color: #FFFFFF;
     text-align: left;
+}
+.detail_table th {
+  text-align: left;
 }
 .detail_table thead a {
   color: white;
@@ -101,6 +108,9 @@ input, textarea, select {
     background: #FFFFFF;
     border: 1px solid #707070;
 }
+input[type="checkbox"] {
+  padding: 0px;
+}
 a {
     color: #707070;
 }
@@ -147,7 +157,7 @@ img {
     margin-right: 1em;
     font-size: 80%;
 }
-#corner_links, #corner_links a, #corner_links a:visited, #corner_title a, #corner_title a:visited{
+#corner_links, #corner_links a, #corner_links a:visited, #corner_title a, #corner_title a:visited {
     color:#151515;
 }
 #corner_links a:hover, #corner_title a:hover {
@@ -191,7 +201,7 @@ img {
     position: relative;
 }
 
-.col1, .col2 {
+.col1, .col2, .bottom_action_bar {
     float: left;
     position: relative;
     padding: 1em 0 1em 0;
@@ -214,7 +224,7 @@ img {
 .rightmenu .colleft {
     right:15%;      /* right column width */
 }
-.rightmenu .col1 {
+.rightmenu .col1, .rightmenu .bottom_action_bar {
     width:81%;      /* left column content width (left column width minus left and right padding) */
     left: 16%;     /* (right column width) plus (left column left padding) */
 }
@@ -348,6 +358,17 @@ img {
 }
 .comment_edit {
   display: none;
+}
+/* Bulk Editing */
+.bulk_header_inner {
+  margin: .5em 0 1em 20%;
+  width: 60%;
+  text-align: center;
+  font-size: 110%;
+}
+#bulk_message {
+  margin: .5em 3em .5em 3em;
+  text-align: center;
 }
 
 /* SCREEN SPECIFIC */

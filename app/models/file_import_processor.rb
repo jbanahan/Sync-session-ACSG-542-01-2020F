@@ -1,28 +1,30 @@
 class FileImportProcessor 
-#YOU DON'T NEED TO CALL ANY INSTANCE METHDOS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
-  def self.process(import_file)
-    find_processor(import_file).process_file
+#YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
+  def self.process(import_file,listeners=[])
+    find_processor(import_file,listeners).process_file
   end
-  def self.preview(import_file)
-    find_processor(import_file).preview_file
+  def self.preview(import_file,listeners=[])
+    find_processor(import_file,listeners).preview_file
   end
 
-  def initialize(import_file, data)
+  def initialize(import_file, data, listeners=[])
     @import_file = import_file
     @search_setup = import_file.search_setup
     @core_module = CoreModule.find_by_class_name(@search_setup.module_type)
     @module_chain = @core_module.default_module_chain
     @data = data
+    @listeners = listeners
   end
   
   
   def process_file
-    processed_row = false
     begin
+      fire_start
+      processed_row = false
       r = @import_file.ignore_first_row ? 1 : 0
       get_rows do |row|
         begin
-          do_row row, true
+          do_row r+1, row, true
         rescue => e
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
         end
@@ -30,27 +32,29 @@ class FileImportProcessor
       end
     rescue => e
       @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
+    ensure
+      fire_end
     end 
   end
   
   def preview_file
     begin
       get_rows do |row|
-        return do_row row, false
+        return do_row @import_file.ignore_first_row ? 2 : 1, row, false
       end
     rescue => e
       @import_file.errors[:base] << e.message
       return ["There was an error reading the file: #{e.message}"]
     end
   end
-  def self.find_processor import_file  
+  def self.find_processor import_file, listeners=[]
     if import_file.attached_file_name.downcase.ends_with?("xls") 
-      return SpreadsheetImportProcessor.new(import_file,import_file.attachment_as_workbook)
+      return SpreadsheetImportProcessor.new(import_file,import_file.attachment_as_workbook,listeners)
     else
-      return CSVImportProcessor.new(import_file,import_file.attachment_data)
+      return CSVImportProcessor.new(import_file,import_file.attachment_data,listeners)
     end
   end
-  def do_row row, save
+  def do_row row_number, row, save
     messages = []
     data_map = {}
     @module_chain.to_a.each do |mod|
@@ -92,6 +96,7 @@ class FileImportProcessor
         obj.save
       end
     end
+    fire_row row_number, object_map[@core_module], messages
     messages
   end
 
@@ -198,6 +203,23 @@ class FileImportProcessor
         raise "A sale's customer cannot be changed via a file upload."
       end
     end
+  end
+
+  private
+  def fire_start
+    fire_event :process_start, Time.now
+  end
+
+  def fire_row row_number, obj, messages
+    @listeners.each {|ls| ls.process_row row_number, obj, messages if ls.respond_to?('process_row')}
+  end
+
+  def fire_end
+    fire_event :process_end, Time.now
+  end
+
+  def fire_event method, data 
+    @listeners.each {|ls| ls.send method, data if ls.respond_to?(method) }
   end
 end
 

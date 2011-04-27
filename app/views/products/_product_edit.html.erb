@@ -1,0 +1,11 @@
+<% hide_no_bulk_fields = nil if local_assigns[:hide_no_bulk_fields].nil?%>
+<table>
+  <%unless hide_no_bulk_fields%>
+    <%=field_row field_label(:prod_uid), form_obj.text_field(:unique_identifier) %>
+    <%=field_row field_label(:prod_ven_name), form_obj.collection_select(:vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "Select a vendor"}) %>
+  <%end%>
+  <%=field_row field_label(:prod_name), form_obj.text_field(:name) %>
+  <%=field_row field_label(:prod_uom), form_obj.text_field(:unit_of_measure, :id=>'txt_uom') %>
+  <%=field_row field_label(:prod_div_name), form_obj.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}) %>
+  <%=show_custom_fields form_obj.object, {:form=>true, :table=>true}%>
+</table>	

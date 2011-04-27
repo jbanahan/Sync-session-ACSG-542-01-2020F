@@ -1,8 +1,129 @@
-// Place your application-specific JavaScript functions and classes here
-// This file is automatically included by javascript_include_tag :defaults
-$( function() {
-    
+var OpenChain = (function() {
+  //private stuff
+  var mappedKeys = new Object();
+  var keyMapPopUp = null;
+  var keyDialogClose = function() {keyMapPopUp.dialog('close');}
+  var unbindKeys = function() {
+    $(document).unbind('keyup');
+    $(document).bind('keyup','k',showKeyboardMapPopUp);
+  }
+  var showKeyboardMapPopUp = function() {
+    $(document).unbind('keyup');
+    var str = "Action Keys:<br />k: Undo Action Keys (close this window)<br />";
+    for(var att in mappedKeys) {
+      str += att+": "+mappedKeys[att].description+"<br />";
+      function assignKey() {
+        var mAtt = att;
+        $(document).bind('keyup',mAtt,
+          function () {
+            keyMapPopUp.dialog('close');
+            mappedKeys[mAtt].action();
+          }
+        );
+      }
+      assignKey();
+    }
+    $(document).bind('keyup','k',keyDialogClose);
+    keyMapPopUp.html(str);
+    keyMapPopUp.dialog('open');
+  }
 
+  return {
+    //public stuff
+    addKeyMap: function(key,desc,act) {
+      mappedKeys[key]=new Object();
+      mappedKeys[key].description = desc;
+      mappedKeys[key].action = act;
+    },
+    activateHotKeys: function() {
+      if(!keyMapPopUp) {
+        $("body").append("<div id='mod_keymap'></div>");
+        keyMapPopUp = $("#mod_keymap");
+        keyMapPopUp.dialog({autoOpen:false,width:'auto',title:"Action Keys",
+          beforeClose: function() {
+            unbindKeys();
+          }});
+        $(document).bind('keyup','k',showKeyboardMapPopUp);
+        $("#footer").append("<div style='text-align:center'>This page has action keys. Press &quot;k&quot; to activate.</div>");
+      }
+    },
+    //keymapping shortcut to pass an object id and have it clicked when the user uses the hotkey
+    addClickMap: function(key,desc,object_id) {
+      OpenChain.addKeyMap(key,desc,function() {$("#"+object_id).click();});
+    },
+    initClassifyPage: function() {
+      $(".tf_remove").live('click',function(ev) {
+        destroy_nested('tf',$(this));
+        ev.preventDefault();
+      });
+      $(".hts_option").click(function(ev) {
+        ev.preventDefault();
+        $(this).prevAll("input.hts_field").val($(this).html());
+      });
+      $("form").submit(function() {
+        $(".tf_row").each(function() {
+          var has_data = false;
+          $(this).find(".hts_field").each(function() {
+            if(!has_data) {
+              has_data = $(this).val().length>0;
+            }
+          });
+          if(!has_data) {
+            $(this).find(".tf_remove").each(function() {
+              destroy_nested('tf',$(this));
+            });
+          }
+        });
+      });
+    },
+    autoClassify: function(form_obj,action_path) {
+      var c_count = function() {
+        var c = 0;
+        $(".country_title").each(function() {
+          var hts_tbl = $(this).nextAll(".hts_table");
+          var found = false;
+          hts_tbl.find(".hts_field").each(function() {
+            if($(this).val().length>5) {
+              found = true;
+            }
+          });
+          if(found) { 
+            c++; 
+            $("#sel_pick_country").append("<option value='"+$(this).attr("cid")+"'>"+$(this).html()+"</option>");
+          }
+        });
+        return c;
+      }();
+      var completeAutoClassify = function(form_obj,action_path,country_id) {
+        form_obj.append("<input type='hidden' name='base_country_id' value='"+country_id+"' />");
+        form_obj.attr("action",action_path).submit();
+      }
+      switch(c_count) {
+        case 0: 
+          window.alert("Please enter HTS info for at least one country before auto-classifying."); 
+          return;
+        case 1:
+          completeAutoClassify(form_obj,action_path,$("#sel_pick_country").children("option:first").val());
+          break;
+        default:
+          $("#mod_pick_country").dialog({title:"Select Country",
+            buttons:{"OK":function() {completeAutoClassify(form_obj,action_path,$("#sel_pick_country").val());}}});
+      }
+    },
+    add_tf_row: function(link,parent_index) {
+      my_index = new Date().getTime();
+      content = "<tr class=\"tf_row\">"
+      content += "<td><input id='product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_line_number' name='product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][line_number]' size='3' type='text' /></td>";
+      for(i=1; i<4; i++) {
+        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' /></td>"; 
+      }
+      content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
+      link.parents('.add_row').before(content);
+      link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
+    }
+  };
+})();
+$( function() {
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();
@@ -373,6 +494,8 @@ function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
   $("#btn_add_line").button().click(function() {
     $("#mod_edit_line").dialog('open');
   });
+  OpenChain.addClickMap(isSalesOrder ? 'l' : 'o','Add '+(isSalesOrder ? 'Sale' : 'Order'),'btn_add_order');
+  OpenChain.addClickMap('r','Add Product','btn_add_line');
   $(".lnk_detail").click(function(ev) {
     ev.preventDefault();
     $(this).parents("tr.shp_line").next().toggle();
@@ -538,4 +661,13 @@ function loadUserList(destinationSelect,selectedId) {
     }
     destinationSelect.html(h);
   });
+}
+function next_action_to_form(form) {
+  hidden_to_form(form,"c_next","true");
+}
+function previous_action_to_form(form) {
+  hidden_to_form(form,"c_previous","true");
+}
+function hidden_to_form(form,name,value) {
+  form.append("<input type='hidden' name='"+name+"' value='"+value+"' />");
 }

@@ -14,6 +14,7 @@ class User < ActiveRecord::Base
   has_many   :messages, :dependent => :destroy
   has_many   :debug_records, :dependent => :destroy
   has_many   :dashboard_widgets, :dependent => :destroy
+  has_many   :imported_files
   
   validates  :company, :presence => true
   

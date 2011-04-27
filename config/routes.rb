@@ -63,32 +63,59 @@ OpenChain::Application.routes.draw do
 	resources :piece_sets
 
   resources :shipments do
+    collection do
+      get 'show_next'
+      get 'show_previous'
+    end
     resources :shipment_lines do
       post :create_multiple, :on => :collection
     end
 	end
 	
 	resources :deliveries do
+    collection do
+      get 'show_next'
+      get 'show_previous'
+    end
     resources :delivery_lines do
       post :create_multiple, :on => :collection
     end
 	end
 
   resources :products do
-    get 'classify', :on=>:member
-    post :auto_classify, :on=>:member
-    put  :auto_classify, :on=>:member
+    collection do
+      get 'show_next'
+      get 'show_previous'
+      post 'bulk_edit'
+      post 'bulk_update'
+      post 'bulk_classify'
+      post 'bulk_update_classifications'
+      post 'bulk_auto_classify'
+    end
+    member do
+      get 'classify'
+      post :auto_classify 
+      put  :auto_classify
+      put :import_worksheet 
+    end
     post :import_new_worksheet, :on=>:new
-    put :import_worksheet, :on=>:member
   end
 
   resources :orders do
-    get 'all_open', :on=>:collection
+    collection do
+      get 'show_next'
+      get 'show_previous'
+      get 'all_open'
+    end
 		resources :order_lines
 	end
 	
   resources :sales_orders do
-    get 'all_open', :on=>:collection
+    collection do
+      get 'show_next'
+      get 'show_previous'
+      get 'all_open'
+    end
     resources :sales_order_lines
   end
 
@@ -113,6 +140,14 @@ OpenChain::Application.routes.draw do
 		get :shipping_address_list, :on => :member
   end
   
+  resources :imported_files, :only => [:index, :show] do
+    member do
+      get 'preview'
+      get 'download'
+      get 'process'
+    end
+  end
+
   resources :search_setups do
     member do
       get 'copy'

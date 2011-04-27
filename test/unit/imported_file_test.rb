@@ -1,19 +1,86 @@
 require 'test_helper'
 
 class ImportedFileTest < ActiveSupport::TestCase
+
+  test "core_module" do
+    i = ImportedFile.new(:module_type=>"Product")
+    assert i.core_module==CoreModule::PRODUCT
+  end
+
+  test "find file_import" do
+    f = ImportedFile.create!(:module_type=>"Product")
+    r1 = f.file_import_results.create!(:finished_at=>2.days.ago,:created_at=>2.days.ago)
+    r2 = f.file_import_results.create!
+
+    found = f.last_file_import_finished
+    assert r1==found
+    found = f.last_file_import
+    assert r2==found
+  end
+
+  test "File Import Result Created" do
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"ss1",:user_id=>1)
+    ss.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
+    f = ImportedFile.create!(:module_type=>ss.module_type,:attached_file_name => 'fname', :search_setup_id => ss.id, :ignore_first_row => false)
+    attachment_data = "puid001\npuid002"
+    f.process(User.find(1),:attachment_data=>attachment_data)
+    results = f.file_import_results
+    assert results.size==1
+    r = results.first
+    assert r.started_at>10.seconds.ago
+    assert r.finished_at > 10.seconds.ago
+    assert r.run_by.id==1
+    change_records = r.change_records
+    assert change_records.size==2, "Should have had 2 change records, had #{change_records.size}"
+    good_uids = ["puid001","puid002"]
+    change_records.each do |cr|
+      assert cr.recordable.is_a?(Product)
+      good_uids.delete(cr.recordable.unique_identifier)
+    end
+    assert good_uids.size==0
+  end
+
+  test "can_view?" do
+    #you can view an imported file if it was imported by you or someone in your company.
+    #admins & sys_admins can view all imported files
+    
+    mu = users(:masteruser)
+    vu = users(:vendoruser)
+    au = users(:adminuser)
+    su = User.create!(:username=>"sauser",:password=>"abc123",:password_confirmation=>"abc123",:email=>"ababa@ba.com",:company_id=>companies(:master).id)
+    su.sys_admin = true
+    su.save!
+    vu2 = User.create!(:username=>"vu2user",:password=>"123abc",:password_confirmation=>"123abc",:email=>"bababa@aa.com",:company_id=>companies(:vendor).id)
+
+    file = ImportedFile.new(:user=>vu)
+    assert !file.can_view?(mu)
+    assert file.can_view?(vu)
+    assert file.can_view?(vu2)
+    assert file.can_view?(au)
+    assert file.can_view?(su)
+  end
+
   test "process" do
     base_order = Order.find(1)
     new_order_date = "2001-01-03"
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
-    ImportedFile.find(1).process({:attachment_data => attachment})
+    f = ImportedFile.find(1)
+    f.process(User.find(1),{:attachment_data => attachment})
     assert Order.find(1).order_date==Date.new(2001,1,3), "Order Date was not updated."
+    #validate columns imported
+    scs = ImportedFile.find(1).search_columns.order("rank ASC").all 
+    assert scs.length==2
+    assert scs[0].model_field_uid=="ord_ord_num"
+    assert scs[0].rank == 0
+    assert scs[1].model_field_uid=="ord_ord_date"
+    assert scs[1].rank == 1
   end
   
   test "process order with product detail" do
     base_prod = Product.find(1)
     base_order = Order.find(2)
     attachment = "#{base_order.order_number},#{base_prod.unique_identifier}"
-    ImportedFile.find(2).process({:attachment_data => attachment})
+    ImportedFile.find(2).process(User.find(1),{:attachment_data => attachment})
     assert Order.find(2).order_lines.first.product_id == base_prod.id, "Product was not id #{base_prod.id}"
   end
 
@@ -21,7 +88,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     base_order = Order.find(1)
     new_order_date = "2001-01-03"
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
-    r = ImportedFile.find(1).preview({:attachment_data => attachment})
+    r = ImportedFile.find(1).preview(User.find(1),{:attachment_data => attachment})
     assert r.length == 2, "Should have returned two results, returned #{r.length}"
     assert r.include?("#{ModelField.find_by_uid(:ord_ord_num).label} set to #{base_order.order_number}"), "Messages didn't include order number.  All messages #{r.to_s}"
     assert r.include? "#{ModelField.find_by_uid(:ord_ord_date).label} set to #{new_order_date}"
@@ -35,9 +102,9 @@ class ImportedFileTest < ActiveSupport::TestCase
     ic.save!
     ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
-    f = ImportedFile.new(:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row => true)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row => true)
     f.save!
-    assert !f.process({:attachment_data => attachment}), "Process passed and should have failed."
+    assert !f.process(ic.user,{:attachment_data => attachment}), "Process passed and should have failed."
     assert f.errors[:base].include?("Row 2: An order's vendor cannot be changed via a file upload."), "Did not find vendor error message."
   end
   
@@ -48,11 +115,11 @@ class ImportedFileTest < ActiveSupport::TestCase
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
     ic.search_columns.create(:model_field_uid => "ordln_puid", :rank => 2)
     ic.search_columns.create(:model_field_uid => "ordln_ordered_qty", :rank => 3)
-    f = ImportedFile.new(:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row => false)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row => false)
     f.save!
     order_number = "r_e_d_o_c_h"
     attachment = "#{order_number},2,\"\",\"\""
-    assert f.process({:attachment_data => attachment}), "Imported File did not process successfully: #{f.errors.to_s}"
+    assert f.process(ic.user,{:attachment_data => attachment}), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Order.where(:order_number => order_number).first
     assert found.id > 0, "Should have found order that was saved."
     assert found.order_lines.size == 0, "Should not have saved a detail."
@@ -74,8 +141,8 @@ class ImportedFileTest < ActiveSupport::TestCase
       ic.search_columns.create!(:model_field_uid => mf.uid, :rank => i)
     end
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row=>false)
-    assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row=>false)
+    assert f.process(ic.user,:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Order.where(:order_number => vh[:order_number]).first
     assert found.order_date.yday == vh[:order_date].yday, "Order date failed"
     assert found.vendor_id == vh[:vendor_id], "vendor id failed"
@@ -102,8 +169,8 @@ class ImportedFileTest < ActiveSupport::TestCase
     end
     ss.search_columns.create!(:model_field_uid => "_blank", :rank=>1000) #testing a blank column
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:attached_file_name => 'fname', :search_setup_id => ss.id, :ignore_first_row=>false)
-    assert f.process(:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
+    f = ImportedFile.new(:module_type=>ss.module_type,:attached_file_name => 'fname', :search_setup_id => ss.id, :ignore_first_row=>false)
+    assert f.process(ss.user,:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:unique_identifier]).first
     assert found.name == vh[:name], "name failed"
     assert found.vendor_id == vh[:vendor_id], "vendor id failed"
@@ -125,7 +192,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       ss.search_columns.create!(:model_field_uid => uid,:rank=>i)
     end
     f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
-    assert f.process(:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
+    assert f.process(ss.user,:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:prod_uid]).first
     assert found.vendor_id == vh[:prod_ven_id], "vendor id failed"
     classifications = found.classifications
@@ -143,7 +210,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     attach_array.pop 2
     attach_array << vh[:hts_line_number]
     attach_array << vh[:hts_hts_1]
-    assert f.process(:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
+    assert f.process(ss.user,:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
     p2 = Product.where(:unique_identifier => vh[:prod_uid]).first
     assert p2 == found, "Should have found same object in database."
     assert p2.classifications.size==1, "Should still have 1 element."
@@ -164,7 +231,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"cpstest",:user_id=>users(:masteruser))
     ["prod_uid","*cf_1"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
     f = ss.imported_files.new(:attached_file_name=>'fn.csv',:ignore_first_row=>false)
-    assert f.process(:attachment_data=>"#{p.unique_identifier},true")
+    assert f.process(User.find(1),:attachment_data=>"#{p.unique_identifier},true")
 
     p = Product.find p.id
     assert p.status_rule==status_rules(:ProductIsApproved), "Status rule should have been #{status_rules(:ProductIsApproved).id}, was #{p.status_rule_id}"

@@ -1,0 +1,13 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  file_import_result_id: 1
+  recordable_id: 1
+  recordable_type: MyString
+  record_sequence_number: 1
+
+two:
+  file_import_result_id: 1
+  recordable_id: 1
+  recordable_type: MyString
+  record_sequence_number: 1

@@ -1,0 +1,22 @@
+<table class='detail_table'>
+  <thead>
+    <th></th>
+    <th>Name</th>
+    <th>Module</th>
+    <th>Uploaded</th>
+    <th>Last Processed</th>
+  </thead>
+  <tbody>
+    <%@imported_files.each do |imp|%>
+      <tr class='hover'>
+        <td><%=link_to "Go", imp%></td>
+        <td><%=imp.attached_file_name%></td>
+        <td><%=imp.core_module.label%></td>
+        <td><%=imp.created_at%></td>
+        <% fir = imp.last_file_import_finished%>
+        <td><%=fir.nil? ? "" : fir.finished_at%></td>
+      </tr>
+    <%end%>
+  </tbody>
+</table>
+<%=will_paginate @imported_files%>
