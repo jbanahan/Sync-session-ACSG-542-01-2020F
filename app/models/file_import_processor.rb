@@ -83,7 +83,11 @@ class FileImportProcessor
         custom_fields.each do |mf,data|
           cd = CustomDefinition.find mf.custom_id
           cv = obj.get_custom_value cd
-          cv.value = data
+          if cd.data_type.to_sym==:boolean
+            set_boolean_value cv, data
+          else
+            cv.value = data
+          end
           messages << "#{cd.label} set to #{cv.value}"
           cv.save if save
         end
@@ -98,6 +102,17 @@ class FileImportProcessor
     end
     fire_row row_number, object_map[@core_module], messages
     messages
+  end
+
+  def set_boolean_value cv, data
+    if !data.nil? && data.to_s.length>0
+      dstr = data.to_s.downcase.strip
+      if ["y","t"].include?(dstr[0])
+        cv.value = true
+      elsif ["n","f"].include?(dstr[0])
+        cv.value = false
+      end
+    end
   end
 
   def fields_for_me_or_children? data_map, cm
