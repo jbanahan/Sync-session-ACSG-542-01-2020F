@@ -104,6 +104,19 @@ class ImportedFilesController < ApplicationController
     }
   end
 
+  def destroy
+    f = ImportedFile.find(params[:id])
+    action_secure(f.can_delete?(current_user),f,{:lock_check=>false,:verb=>"delete",:module_name=>"uploaded file"}) {
+      if f.file_import_results.blank?
+        f.destroy
+        add_flash :notices, "File successfully deleted."
+        redirect_to imported_files_path
+      else
+        error_redirect "You cannot delete an upload that has already been processed."
+      end
+    }
+  end
+
 private
   #target_page is 0 based
   def get_page array, target_page, page_size

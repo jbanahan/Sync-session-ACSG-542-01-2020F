@@ -35,6 +35,13 @@ class ImportedFile < ActiveRecord::Base
     return true if self.user.company==user.company
     return false
   end
+  def can_delete?(user)
+    can_view? user
+  end
+
+  def deletable?
+    self.file_import_results.blank?
+  end
 
   def process(user,options={})
     begin

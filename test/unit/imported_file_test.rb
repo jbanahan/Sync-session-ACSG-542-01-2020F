@@ -2,6 +2,13 @@ require 'test_helper'
 
 class ImportedFileTest < ActiveSupport::TestCase
 
+  test "deletable?" do
+    i = ImportedFile.new()
+    assert i.deletable?
+    i.file_import_results.build
+    assert !i.deletable?
+  end
+
   test "core_module" do
     i = ImportedFile.new(:module_type=>"Product")
     assert i.core_module==CoreModule::PRODUCT
