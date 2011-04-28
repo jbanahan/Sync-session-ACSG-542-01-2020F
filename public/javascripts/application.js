@@ -30,8 +30,13 @@ var OpenChain = (function() {
   var initLinkButtons = function() {
     $(".btn_link").each(function() {
       var lnk = $(this).attr('link_to');
+      var key = $(this).attr('key_map');
       if(lnk) {
         $(this).click(function() {window.location=lnk;});
+        if(key) {
+          OpenChain.addKeyMap(key,$(this).html(),function() {window.location=lnk;});
+          OpenChain.activateHotKeys();
+        }
       }
     });
   }

@@ -40,7 +40,7 @@
   <button id='btn_edit'>Edit</button>
   <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
 <%end%>
-<button class='btn_link' link_to='<%=products_path%>'>Back To Search</button>
+<button class='btn_link' link_to='<%=products_path%>' key_map='b'>Back To Search</button>
 <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "products"} %>
 
 <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:product_id => @product.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>

@@ -22,6 +22,7 @@
   <% if @delivery.can_edit?(current_user) %>
   <button id='btn_edit'>Edit</button>
   <%end%> 
+  <button class='btn_link' link_to='<%=deliveries_path%>' key_map='b'>Back To Search</button>
   <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "deliveries"} %>
 <% end %>
 
