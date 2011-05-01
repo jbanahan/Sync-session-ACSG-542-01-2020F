@@ -49,7 +49,6 @@ class CustomDefinition < ActiveRecord::Base
     :integer => "Integer"
   }
   
-  protected
   def set_cache
     CACHE.set "#{self.class.to_s.tableize}-#{self.id}", self unless self.id.nil?
   end
