@@ -14,7 +14,7 @@ class CustomDefinition < ActiveRecord::Base
   after_find :set_cache
 
   def self.cached_find id
-    o = CACHE.get "custom_definition-#{id}"
+    o = CACHE.get "custom_definitions-#{id}"
     if o.nil?
       o = find id
     end
