@@ -5,7 +5,8 @@ class CustomValue < ActiveRecord::Base
   validates  :customizable_id, :presence => true
   validates  :customizable_type, :presence => true
   validate   :validate_unique_record_per_object_and_definition
-  after_save :set_cache
+  after_commit :set_cache
+  after_find :set_cache
   
   def self.cached_find_unique custom_definition_id, customizable
     c = CACHE.get unique_cache_key(custom_definition_id, customizable.id, customizable.class)
@@ -30,7 +31,8 @@ class CustomValue < ActiveRecord::Base
   
   def set_cache
     if !self.id.nil? && !self.custom_definition_id.nil? && (!self.customizable_id.nil? && !self.customizable_type.nil?)
-      CACHE.set CustomValue.unique_cache_key(self.custom_definition_id,self.customizable_id,self.customizable_type), self
+      to_set = self.destroyed? ? nil : self
+      CACHE.set CustomValue.unique_cache_key(self.custom_definition_id,self.customizable_id,self.customizable_type), to_set unless self.id.nil?
     end
   end
   private
