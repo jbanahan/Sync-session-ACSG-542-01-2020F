@@ -44,6 +44,7 @@ GEM
       configatron
       hashie
     daemons (1.0.10)
+    dalli (1.0.3)
     erubis (2.6.6)
       abstract (>= 1.0.0)
     exception_notification_rails3 (1.2.0)
@@ -129,6 +130,7 @@ DEPENDENCIES
   authlogic
   aws-s3
   cover_me (>= 1.0.0.rc6)
+  dalli
   exception_notification_rails3
   meta_search
   mocha (= 0.9.12)

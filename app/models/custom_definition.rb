@@ -10,7 +10,16 @@ class CustomDefinition < ActiveRecord::Base
   
   after_save :reset_model_field_constants 
   after_save :reset_field_label
-  
+  after_save :set_cache
+
+  def self.cached_find id
+    o = CACHE.get "custom_definition-#{id}"
+    if o.nil?
+      o = find id
+      o.set_cache
+    end
+  end
+
   def date?
     (!self.data_type.nil?) && self.data_type=="date"
   end
@@ -40,6 +49,10 @@ class CustomDefinition < ActiveRecord::Base
     :integer => "Integer"
   }
   
+  protected
+  def set_cache
+    CACHE.set "#{self.class.to_s.tableize}-#{self.id}", self unless self.id.nil?
+  end
   private
   def reset_model_field_constants
     ModelField.reset_custom_fields
@@ -48,4 +61,6 @@ class CustomDefinition < ActiveRecord::Base
   def reset_field_label
     FieldLabel.set_label "*cf_#{self.id}", self.label
   end
+
+
 end

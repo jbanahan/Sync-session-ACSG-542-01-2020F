@@ -88,7 +88,7 @@ class ApplicationController < ActionController::Base
         unless cpp.nil?
           cpp.each do |k,v|
             definition_id = k.to_s
-            cd = CustomDefinition.find(definition_id)
+            cd = CustomDefinition.cached_find(definition_id)
             cv = customizable_parent.get_custom_value cd
             cv.value = v
             cv.save

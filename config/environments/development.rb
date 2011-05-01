@@ -1,3 +1,4 @@
+require 'dalli'
 OpenChain::Application.configure do
   # Settings specified here will take precedence over those in config/environment.rb
 
@@ -22,5 +23,9 @@ OpenChain::Application.configure do
 
   # Only use best-standards-support built into browsers
   config.action_dispatch.best_standards_support = :builtin
+
+  config.after_initialize do
+    CACHE = Dalli::Client.new ['localhost:11211', 'localhost:9990'], {:namespace=>MasterSetup.get.uuid}
+  end
 end
 
