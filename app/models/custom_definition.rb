@@ -16,8 +16,9 @@ class CustomDefinition < ActiveRecord::Base
     o = CACHE.get "custom_definition-#{id}"
     if o.nil?
       o = find id
-      o.set_cache
+      o.set_cache unless o.nil?
     end
+    o
   end
 
   def date?
