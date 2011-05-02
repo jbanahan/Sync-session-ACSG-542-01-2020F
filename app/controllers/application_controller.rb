@@ -43,7 +43,7 @@ class ApplicationController < ActionController::Base
     end
 
   def master_setup
-    MasterSetup.first
+    MasterSetup.get
   end
 
   class SearchResult

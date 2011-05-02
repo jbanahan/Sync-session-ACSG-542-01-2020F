@@ -3,7 +3,7 @@ class Attachment < ActiveRecord::Base
     :storage => :s3,
     :s3_credentials => "#{Rails.root}/config/s3.yml",
     :s3_permissions => :private,
-    :path => "#{MasterSetup.first.uuid}/attachment/:id/:filename",
+    :path => "#{MasterSetup.get.uuid}/attachment/:id/:filename",
     :bucket => 'chain-io'
   before_post_process :no_post
   

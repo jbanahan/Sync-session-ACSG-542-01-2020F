@@ -2,6 +2,8 @@ class MasterSetup < ActiveRecord::Base
 
   CACHE_KEY = "MasterSetup:setup"
 
+  after_update :update_cache #only after update, when MasterSetup is created, the CACHE won't be set yet
+
   def version
     Rails.root.join("config","version.txt").read
   end
@@ -26,5 +28,10 @@ class MasterSetup < ActiveRecord::Base
       m = MasterSetup.create!(:uuid => UUIDTools::UUID.timestamp_create.to_s)
     end
     m
+  end
+
+  private
+  def update_cache
+    CACHE.set CACHE_KEY, self
   end
 end

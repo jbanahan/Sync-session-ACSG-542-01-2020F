@@ -4,7 +4,7 @@
 <h2>Classifications</h2>
 <% classification_count = 0 %>
 <% form_obj.fields_for :classifications do |cf| %>
-  <div class='classification_box cf_row'>
+  <div class='classification_box cf_row' must_submit='<%=!cf.object.id.nil?%>'>
       <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
       <%=cf.hidden_field :country_id%>
       <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    

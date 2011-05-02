@@ -148,6 +148,6 @@ class User < ActiveRecord::Base
 
   private
   def master_setup
-    MasterSetup.first
+    MasterSetup.get
   end
 end
