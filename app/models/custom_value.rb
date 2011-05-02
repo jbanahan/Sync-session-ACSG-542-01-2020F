@@ -46,6 +46,6 @@ class CustomValue < ActiveRecord::Base
   end
 
   def self.unique_cache_key custom_definition_id, customizable_id, customizable_type
-    "custom_values:u_c_k:#{custom_definition_id}:#{customizable_id}:#{customizable_type}"
+    "CustomValue:u_c_k:#{custom_definition_id}:#{customizable_id}:#{customizable_type}"
   end
 end

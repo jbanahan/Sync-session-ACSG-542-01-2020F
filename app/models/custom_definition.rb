@@ -14,7 +14,7 @@ class CustomDefinition < ActiveRecord::Base
   after_find :set_cache
 
   def self.cached_find id
-    o = CACHE.get "custom_definitions-#{id}"
+    o = CACHE.get "CustomDefinition:id:#{id}"
     if o.nil?
       o = find id
     end
@@ -52,7 +52,7 @@ class CustomDefinition < ActiveRecord::Base
   
   def set_cache
     to_set = self.destroyed? ? nil : self
-    CACHE.set "#{self.class.to_s.tableize}-#{self.id}", to_set unless self.id.nil?
+    CACHE.set "CustomDefinition:id:#{self.id}", to_set unless self.id.nil?
   end
   private
   def reset_model_field_constants

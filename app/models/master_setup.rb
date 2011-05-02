@@ -1,6 +1,6 @@
 class MasterSetup < ActiveRecord::Base
 
-  CACHE_KEY = "master_setup"
+  CACHE_KEY = "MasterSetup:setup"
 
   def version
     Rails.root.join("config","version.txt").read
