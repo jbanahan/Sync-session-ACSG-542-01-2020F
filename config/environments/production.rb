@@ -1,3 +1,4 @@
+require 'dalli'
 OpenChain::Application.configure do
   # Settings specified here will take precedence over those in config/environment.rb
 
@@ -46,4 +47,5 @@ OpenChain::Application.configure do
 
   # Send deprecation notices to registered listeners
   config.active_support.deprecation = :notify
+  
 end

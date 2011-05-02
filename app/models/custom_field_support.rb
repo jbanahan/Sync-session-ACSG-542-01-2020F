@@ -8,11 +8,13 @@ module CustomFieldSupport
   end
   
   def get_custom_value(custom_definition)
-    cv = self.custom_values.where(:custom_definition_id => custom_definition).first
+    cv = CustomValue.cached_find_unique custom_definition.id, self
+    cv = self.custom_values.where(:custom_definition_id => custom_definition).first if cv.nil?
     cv.nil? ? self.custom_values.build(:custom_definition => custom_definition) : cv
   end
 
   def get_custom_value_by_id(id)
-    get_custom_value(CustomDefinition.find(id))
+    get_custom_value(CustomDefinition.cached_find(id))
   end
+
 end

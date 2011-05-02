@@ -43,7 +43,7 @@ class ApplicationController < ActionController::Base
     end
 
   def master_setup
-    MasterSetup.first
+    MasterSetup.get
   end
 
   class SearchResult
@@ -88,10 +88,12 @@ class ApplicationController < ActionController::Base
         unless cpp.nil?
           cpp.each do |k,v|
             definition_id = k.to_s
-            cd = CustomDefinition.find(definition_id)
+            cd = CustomDefinition.cached_find(definition_id)
             cv = customizable_parent.get_custom_value cd
-            cv.value = v
-            cv.save
+            unless (v.blank? && cv.value.blank?) || v==cv.value
+              cv.value = v
+              cv.save
+            end
             pass = false unless cv.errors.empty?
             errors_to_flash cv
           end

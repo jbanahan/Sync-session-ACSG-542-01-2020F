@@ -44,6 +44,7 @@ GEM
       configatron
       hashie
     daemons (1.0.10)
+    dalli (1.0.3)
     erubis (2.6.6)
       abstract (>= 1.0.0)
     exception_notification_rails3 (1.2.0)
@@ -71,6 +72,7 @@ GEM
       gem_plugin (~> 0.2.3)
     mysql2 (0.2.6)
     mysql2 (0.2.6-x86-mingw32)
+    newrelic_rpm (2.14.1)
     paperclip (2.3.8)
       activerecord
       activesupport
@@ -128,11 +130,13 @@ DEPENDENCIES
   authlogic
   aws-s3
   cover_me (>= 1.0.0.rc6)
+  dalli
   exception_notification_rails3
   meta_search
   mocha (= 0.9.12)
   mongrel (= 1.2.0.pre2)
   mysql2
+  newrelic_rpm
   paperclip (= 2.3.8)
   rails (= 3.0.3)
   ruby-debug19

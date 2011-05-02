@@ -1,11 +1,11 @@
 class MasterSetupsController < ApplicationController
   def index
-    redirect_to edit_master_setup_path MasterSetup.first
+    redirect_to edit_master_setup_path MasterSetup.get
   end
 
   def edit
     sys_admin_secure("Only sys admins can edit the master setup.") {
-      @ms = MasterSetup.first
+      @ms = MasterSetup.get
     }
   end
 

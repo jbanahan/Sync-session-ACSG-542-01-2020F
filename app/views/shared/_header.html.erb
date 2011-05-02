@@ -5,7 +5,7 @@
   no_buttons = true if @no_buttons
   no_buttons = true if !local_assigns[:not_buttons].nil?
 %>
-<!-- System UUID: <%=MasterSetup.first.uuid%> -->
+<!-- System UUID: <%=MasterSetup.get.uuid%> -->
 <head>
   <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
   <title>chain.io</title>

@@ -40,6 +40,21 @@ var OpenChain = (function() {
       }
     });
   }
+  var removeEmptyClassifications = function() {
+    $(".classification_box").each(function() {
+      var drop_me = true;
+      if($(this).attr('must_submit')=="false") {
+        $(this).find(':input[type!="hidden"]').each(function() {
+          if($(this).is(':checked') || ($(this).attr('type')!='checkbox' && $(this).val().length>0 )) {
+            drop_me = false;
+          }
+        });
+        if(drop_me) {
+          $(this).remove();
+        }
+      }
+    });
+  }
 
   return {
     //public stuff
@@ -74,6 +89,7 @@ var OpenChain = (function() {
         $(this).prevAll("input.hts_field").val($(this).html());
       });
       $("form").submit(function() {
+        removeEmptyClassifications();
         $(".tf_row").each(function() {
           var has_data = false;
           $(this).find(".hts_field").each(function() {
