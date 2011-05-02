@@ -45,6 +45,7 @@
   <% if current_user.company.master && !@order.locked? %>
   <button id='btn_edit'>Edit</button>
   <% end %>
+  <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
   <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? %>
     <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
   <% end %>

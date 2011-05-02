@@ -2,6 +2,13 @@ require 'test_helper'
 
 class ImportedFileTest < ActiveSupport::TestCase
 
+  test "deletable?" do
+    i = ImportedFile.new()
+    assert i.deletable?
+    i.file_import_results.build
+    assert !i.deletable?
+  end
+
   test "core_module" do
     i = ImportedFile.new(:module_type=>"Product")
     assert i.core_module==CoreModule::PRODUCT
@@ -237,4 +244,25 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert p.status_rule==status_rules(:ProductIsApproved), "Status rule should have been #{status_rules(:ProductIsApproved).id}, was #{p.status_rule_id}"
   end
 
+  test "boolean value" do 
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"booltest",:user_id => 1)
+    cd = CustomDefinition.create!(:label=>"boolt",:data_type=>"boolean",:module_type=>"Product")
+    ["prod_uid","*cf_#{cd.id}"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
+    f = ss.imported_files.new(:attached_file_name=>"myf.csv",:ignore_first_row=>false)
+    data = [{:uid=>"bool1",:bv=>"Yes",:should=>true},
+      {:uid=>"bool2",:bv=>"True",:should=>true},
+      {:uid=>"bool3",:bv=>"F",:should=>false},
+      {:uid=>"bool4",:bv=>"No",:should=>false},
+      {:uid=>"bool5",:bv=>"j",:should=>nil}
+      ]
+    attachment = ""
+    data.each {|h| attachment << "#{h[:uid]},#{h[:bv]}\n"}
+    assert f.process(User.find(1),:attachment_data=>attachment), "Process failed: #{f.errors}"
+
+    data.each do |h|
+      p = Product.where(:unique_identifier=>h[:uid]).first
+      cv = p.get_custom_value cd
+      assert cv.value==h[:should], "Product #{h[:uid]}, Should have found #{h[:should]}, found #{cv.value}"
+    end
+  end
 end

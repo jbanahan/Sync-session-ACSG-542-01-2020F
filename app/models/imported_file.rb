@@ -6,7 +6,7 @@ class ImportedFile < ActiveRecord::Base
     :storage => :s3,
     :s3_credentials => "#{Rails.root}/config/s3.yml",
     :s3_permissions => :private,
-    :path => "#{MasterSetup.first.uuid}/imported_file/:id/:filename",
+    :path => "#{MasterSetup.first.nil? ? "UNKNOWN" : MasterSetup.first.uuid}/imported_file/:id/:filename", #conditional on MasterSetup to allow migrations to run
     :bucket => 'chain-io'
   before_post_process :no_post
   
@@ -34,6 +34,13 @@ class ImportedFile < ActiveRecord::Base
     return true if self.user_id==user.id
     return true if self.user.company==user.company
     return false
+  end
+  def can_delete?(user)
+    can_view? user
+  end
+
+  def deletable?
+    self.file_import_results.blank?
   end
 
   def process(user,options={})

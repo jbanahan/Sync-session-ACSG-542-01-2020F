@@ -20,7 +20,7 @@ class CoreModule
           end
           ss
         },
-        :bulk_actions_labmda => lambda {return Hash.new}
+        :bulk_actions_lambda => lambda {|current_user| return Hash.new}
       }.
       merge(opts)
     @class_name = class_name

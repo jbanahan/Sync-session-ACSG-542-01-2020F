@@ -140,7 +140,7 @@ OpenChain::Application.routes.draw do
 		get :shipping_address_list, :on => :member
   end
   
-  resources :imported_files, :only => [:index, :show] do
+  resources :imported_files, :only => [:index, :show, :destroy] do
     member do
       get 'preview'
       get 'download'

@@ -27,6 +27,19 @@ var OpenChain = (function() {
     keyMapPopUp.html(str);
     keyMapPopUp.dialog('open');
   }
+  var initLinkButtons = function() {
+    $(".btn_link").each(function() {
+      var lnk = $(this).attr('link_to');
+      var key = $(this).attr('key_map');
+      if(lnk) {
+        $(this).click(function() {window.location=lnk;});
+        if(key) {
+          OpenChain.addKeyMap(key,$(this).html(),function() {window.location=lnk;});
+          OpenChain.activateHotKeys();
+        }
+      }
+    });
+  }
 
   return {
     //public stuff
@@ -120,10 +133,14 @@ var OpenChain = (function() {
       content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
       link.parents('.add_row').before(content);
       link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
+    },
+    init: function() {
+      initLinkButtons();
     }
   };
 })();
 $( function() {
+    OpenChain.init();
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();
