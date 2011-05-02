@@ -33,6 +33,23 @@ def execute_scheduler
       logger.info "#{Time.now}: FTP Sweep Complete"
     end
   end
+  
+  scheduler.every("3m") do
+    error_wrapper "FTP Sweeper" do
+      m = MasterSetup.first
+      if m && !m.system_code.nil?
+        if m.ftp_polling_active?
+          logger.info "#{Time.now}: Sweeping FTP folder."
+          FtpWalker.new.go
+          logger.info "#{Time.now}: FTP Sweep Complete"
+        else
+          logger.info "#{Time.now}: FTP disabled (polling flag off)"
+        end
+      else
+        logger.info "#{Time.now}: FTP disabled (system code not configured)"
+      end
+    end
+  end
 end
 
 # Create the main logger and set some useful variables.
