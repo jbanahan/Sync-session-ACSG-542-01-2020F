@@ -267,6 +267,7 @@ class ModelField
   end
 
   def self.make_hts_arrays(rank_start,uid_prefix) 
+    canada = Country.where(:iso_code=>"CA").first
     id_counter = rank_start
     r = []
     (1..3).each do |i|
@@ -286,6 +287,23 @@ class ModelField
         :join_alias => "OT_#{i}",
         :data_type=>:string
       }]
+      if canada && canada.import_location
+        id_counter += 1
+        r << [id_counter,"#{uid_prefix}_hts_#{i}_gpt".to_sym, :general_preferential_tariff_rate,"HTS #{i} - GPT Rate",{
+          :import_lambda => lambda {|obj,data| return "GPT Rate cannot be set by import, ignored."},
+          :export_lambda => lambda {|t|
+            ot = case i
+              when 1 then t.hts_1_official_tariff
+              when 2 then t.hts_2_official_tariff
+              when 3 then t.hts_3_official_tariff
+            end
+            ot.nil? ? "" : ot.general_preferential_tariff_rate
+          },
+          :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+          :join_alias => "OT_#{i}",
+          :data_type=>:string
+        }]
+      end
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_qc".to_sym,:category,"HTS #{i} - Quota Category",{
         :import_lambda => lambda {|obj,data| return "Quota Category cannot be set by import, ignored."},

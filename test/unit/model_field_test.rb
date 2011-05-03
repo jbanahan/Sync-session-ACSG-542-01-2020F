@@ -2,6 +2,28 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
   
+  test "gpt" do
+  #only show GPT field if company has canadian tariff setup
+    ca = Country.new
+    ca.iso_code = "CA"
+    ca.save!
+    mf = ModelField.find_by_uid :hts_hts_1_gpt
+    assert mf.nil?
+    ca.import_location = true
+    ca.save!
+    ModelField.reload
+    mf = ModelField.find_by_uid :hts_hts_1_gpt
+    assert !mf.nil?
+    assert mf.label=="HTS 1 - GPT Rate"
+    ot = OfficialTariff.create!(:hts_code=>"999999",:general_preferential_tariff_rate=>"123",:country_id=>ca.id,:full_description=>"fake")
+    p = Product.first
+    c = p.classifications.create!(:country_id=>ca.id)
+    t = c.tariff_records.create!(:hts_1=>ot.hts_code,:line_number=>1)
+    r = mf.process_export t
+    assert r == ot.general_preferential_tariff_rate, "Expected #{ot.general_preferential_tariff_rate}, got #{r}"
+
+  end
+
   test "public" do 
     mf = ModelField.find_by_uid "shp_ref"
     assert !mf.public?
