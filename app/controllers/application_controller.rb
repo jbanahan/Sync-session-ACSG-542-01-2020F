@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
     require 'yaml'
 
     protect_from_forgery
+    before_filter :new_relic
     before_filter :require_user
     before_filter :check_tos
     before_filter :update_message_count
@@ -449,5 +450,11 @@ def model_field_label(model_field_uid)
     mf = ModelField.find_by_uid(model_field_uid)
     return "" if mf.nil?
     return mf.label
+  end
+  def new_relic
+    m = MasterSetup.get
+    NewRelic::Agent.add_custom_parameters(:uuid=>m.uuid)
+    NewRelic::Agent.add_custom_parameters(:system_code=>m.system_code)
+    NewRelic::Agent.add_custom_parameters(:user=>current_user.username) unless current_user.nil?
   end
 end
