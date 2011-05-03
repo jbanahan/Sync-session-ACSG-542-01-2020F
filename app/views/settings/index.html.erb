@@ -11,6 +11,8 @@ These are often files like a &quot;Quote Sheet&quot; or a &quot;Purchase Order&q
 <h2><%= link_to 'Status Rules', status_rules_path %></h2>
 <p>Setup the rules that determine what status a particular item has.</p>
 <%if current_user.sys_admin? %>
+<h2><%= link_to 'Active Users', active_users_path %></h2>
+<p>Show users who have viewed a page in the last 30 minutes.</p>
 <h2><%= link_to 'Master Setup', master_setups_path %></h2>
 <p>The master system settings (for system administrators who know what they're doing!)
 <%end%>
