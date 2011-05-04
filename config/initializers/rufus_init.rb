@@ -25,19 +25,11 @@ def execute_scheduler
       end
     end
   end
-  scheduler.every("3m") do
-    error_wrapper "FTP Sweeper" do
-      logger.info "#{Time.now}: Sweeping FTP folder."
-      m = MasterSetup.first
-      FtpWalker.new.go if m && !m.system_code.nil?
-      logger.info "#{Time.now}: FTP Sweep Complete"
-    end
-  end
   
   scheduler.every("3m") do
     error_wrapper "FTP Sweeper" do
       m = MasterSetup.first
-      if m && !m.system_code.nil?
+      if m && m.system_code
         if m.ftp_polling_active?
           logger.info "#{Time.now}: Sweeping FTP folder."
           FtpWalker.new.go
