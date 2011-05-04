@@ -87,7 +87,7 @@ class Product < ActiveRecord::Base
       unless base_country==country
         c = nil
         self.classifications.each {|pc| c = pc if pc.country==country}
-        c = self.classifications.build(:country_id => country) if c.nil?
+        c = self.classifications.build(:country_id => country.id) if c.nil?
         load_tariff_record(base_country,base_classification,c)
       end
     end
