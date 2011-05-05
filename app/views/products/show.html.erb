@@ -51,25 +51,26 @@
 <% if current_user.view_deliveries? && @product.has_deliveries? %><button id='btn_delivery_jump'>Deliveries</button><%end%>
 -->
 <% end %>
-
-<table class='detail_table'>
-<thead><tr><th>Product Information</th></tr></thead>
-<tbody>
-<tr><td>
-<!-- fields -->
-	<table>
-	  <%=field_row field_label(:prod_status_name),@product.status_name %>
-	  <%=field_row field_label(:prod_uid), @product.unique_identifier%>
-	  <%=field_row field_label(:prod_name),@product.name%>
-	  <%=field_row field_label(:prod_uom), @product.unit_of_measure%>
-	  <%=field_row field_label(:prod_ven_name), @product.vendor.nil? ? "" : @product.vendor.name%>
-	  <%=field_row field_label(:prod_div_name), @product.division.nil? ? "" : @product.division.name%>
-    <%=show_custom_fields @product, {:table=>true}%>
-	</table>
-</td></tr>
-</tbody>
-</table>
-
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
+<div class='next_to_attachments'>
+  <table class='detail_table'>
+<!--  <thead><tr><th>Product Information</th></tr></thead>-->
+  <tbody>
+  <tr><td>
+  <!-- fields -->
+    <table>
+      <%=field_row field_label(:prod_status_name),@product.status_name %>
+      <%=field_row field_label(:prod_uid), @product.unique_identifier%>
+      <%=field_row field_label(:prod_name),@product.name%>
+      <%=field_row field_label(:prod_uom), @product.unit_of_measure%>
+      <%=field_row field_label(:prod_ven_name), @product.vendor.nil? ? "" : @product.vendor.name%>
+      <%=field_row field_label(:prod_div_name), @product.division.nil? ? "" : @product.division.name%>
+      <%=show_custom_fields @product, {:table=>true}%>
+    </table>
+  </td></tr>
+  </tbody>
+  </table>
+</div>
 <% if current_user.view_classifications? %>
 <div class='attachments_container section_insert'>
   <h2 class='section_insert_heading'>Classifications</h2>
@@ -106,7 +107,6 @@
 <% end %>
 
 <%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 

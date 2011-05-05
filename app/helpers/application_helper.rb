@@ -1,4 +1,30 @@
 module ApplicationHelper
+  ICON_WRITE = "icon_write.png"
+  ICON_SHEET = "icon_sheet.png"
+  ICON_PRESENT = "icon_present.png"
+  ICON_PDF = "icon_pdf.png"
+  ICONS = {:doc=>ICON_WRITE,:docx=>ICON_WRITE,:docm=>ICON_WRITE,:odt=>ICON_WRITE,
+    :xls=>ICON_SHEET,:xlsx=>ICON_SHEET,:xlsm=>ICON_SHEET,:ods=>ICON_SHEET,
+    :ppt=>ICON_PRESENT,:pptx=>ICON_PRESENT,:pptm=>ICON_PRESENT,:odp=>ICON_PRESENT,
+    :pdf=>ICON_PDF
+  }
+
+  def attachment_icon att
+    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px"}
+    link_opts = {}
+    fn = att.attached_file_name
+    icon = image_tag("icon_other.png",opts)
+    if att.web_preview?
+      opts[:width]="75px"
+      opts[:style]="border:1px solid #d7d7d7;"
+      link_opts[:target]="chainio_attachment"
+      icon = image_tag(download_attachment_path(att), opts)
+    elsif !fn.blank?
+      ext = fn.split('.').last.downcase.to_sym
+      icon = image_tag(ICONS[ext],opts) unless ICONS[ext].nil?
+    end
+    link_to icon, download_attachment_path(att), link_opts
+  end
   def field_label model_field_uid
     mf = ModelField.find_by_uid model_field_uid
     return "Unknown Field" if mf.nil?

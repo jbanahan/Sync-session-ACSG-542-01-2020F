@@ -47,10 +47,10 @@ $(function() {
   </tr></tbody>
 </table>
 <br />
+<div style='width:95%;margin-bottom:10px;'>
+<%=render :partial=>'shared/attachments', :locals=>{:attachable=>@shipment}%>
+<div class='next_to_attachments'>
 <table class='detail_table' >
-  <thead>
-    <tr><th>Attributes</th></tr>
-  </thead>
   <tbody>
     <tr>
       <td style='width:50%'>
@@ -64,7 +64,8 @@ $(function() {
     </tr>
   </tbody>
 </table>
-
+</div>
+</div>
 <table class='detail_table'>
   <thead>
     <tr><th><%=field_label(:shpln_line_number)%></th>
@@ -104,7 +105,6 @@ $(function() {
 </table>
 <%=render :partial => 'shared/pack_lines', :locals=>{:parent=>@shipment, :line=>@line, :products=>@products, :is_sales_order=>false} %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @shipment} %>
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @shipment}%>
 <div id='mod_subscriptions' style='display:none;'>
   <% 
   change_subs = ItemChangeSubscription.where({:shipment_id => @shipment.id, :user_id => current_user.id})

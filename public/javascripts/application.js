@@ -2,6 +2,7 @@ var OpenChain = (function() {
   //private stuff
   var mappedKeys = new Object();
   var keyMapPopUp = null;
+
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
     $(document).unbind('keyup');
@@ -149,6 +150,13 @@ var OpenChain = (function() {
       content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
       link.parents('.add_row').before(content);
       link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
+    },
+    initAttachments: function() {
+      $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{
+        "Attach":function() {$("#frm_attach").submit();},
+        "Cancel":function() {$("#mod_attach").dialog('close');}
+      }});
+      $("#btn_add_attachment").click(function() {$("#mod_attach").dialog('open');});
     },
     init: function() {
       initLinkButtons();

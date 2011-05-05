@@ -56,9 +56,10 @@
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
 
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
+<div class='next_to_attachments'>
 <!-- fields -->
 <table class='detail_table'>
-  <thead><tr><th>Order Information</th></tr></thead>
   <tbody><tr><td>
   <table>
   <%=field_row field_label(:ord_ord_num), @order.order_number  %>
@@ -71,6 +72,7 @@
   </td></tr>
   </tbody>
 </table>
+</div>
 <br />
 <table class="detail_table">
 	<thead>
@@ -113,7 +115,6 @@
 <%end %> 
 </table>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
 <% form_line = @line.nil? ? @order.order_lines.build : @line %>
 <div id='mod_edit_line' style='display:none;'>
   <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
