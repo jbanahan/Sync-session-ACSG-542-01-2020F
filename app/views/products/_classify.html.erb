@@ -23,9 +23,9 @@
       </thead>
       <tbody class='tr_body'>
         <% cf.fields_for :tariff_records do |tf| %>
-          <%= render :partial => 'tariff_record_row', :locals => {:f => tf } %>
+          <%= render :partial => 'tariff_record_row', :locals => {:f => tf, :country_id=>cf.object.country_id } %>
         <% end %>
-        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:OpenChain.add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>);">Add</a></td></tr>
+        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:OpenChain.add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>,<%=cf.object.country_id%>);">Add</a></td></tr>
       </tbody>
     </table>
   </div>

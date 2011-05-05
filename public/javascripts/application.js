@@ -56,6 +56,67 @@ var OpenChain = (function() {
       }
     });
   }
+  var validateHTSFormat = function(hts) {
+    if(hts.length<6) {
+      return false;
+    }
+    if(hts.match(/[^0-9\. ]/)!=null) {
+      return false;
+    }
+    return true;
+  }
+  var validateHTSValue = function(country_id,hts_field) {
+    var get_result_box = function() {
+      var to_write = hts_field.siblings(".tariff_result");
+      if(to_write.length==0) {
+        hts_field.closest("td").append("<div class='tariff_result'></div>");
+      }
+      to_write = hts_field.siblings(".tariff_result"); 
+
+    }
+    var invalid_callback = function() {
+      hts_field.addClass("error");
+    }
+    var valid_callback = function(data) {
+      hts_field.removeClass("error");
+      writeTariffInfo(data,hts,country_id);
+    }
+    var writeTariffInfo = function(data,hts,country_id) {
+      var t = data.official_tariff;
+      var to_write =
+      var h = t.remaining_description+"<br />";
+      if(t.general_rate) {
+        h+="General Rate: "+t.general_rate+"<br />";
+      }
+      if(t.erga_omnes_rate) {
+        h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
+      }
+      if(t.most_favored_nation_rate) {
+        h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
+      }
+      if(t.general_preferential_tariff_rate) {
+        h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
+      }
+      h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+hts+"'>info</a>";
+      to_write.html(h)
+    }
+    hts = hts_field.val();
+    if(hts.length==0) {
+      $(this).removeClass("error");
+    }
+    if(!validateHTSFormat(hts)) {
+      invalid_callback();
+      return
+    }
+    $.getJSON('/official_tariffs/find?hts='+hts+'&cid='+country_id,function(data) {
+      if(data==null) {
+        invalid_callback();
+      }
+      else {
+        valid_callback(data);
+      }
+    });
+  }
 
   return {
     //public stuff
@@ -105,6 +166,8 @@ var OpenChain = (function() {
           }
         });
       });
+      $(".hts_field").live('blur',function() {validateHTSValue($(this).attr('country'),$(this))});
+      $(".hts_field").each(function() {validateHTSValue($(this).attr('country'),$(this))});
     },
     autoClassify: function(form_obj,action_path) {
       var c_count = function() {
@@ -140,12 +203,12 @@ var OpenChain = (function() {
             buttons:{"OK":function() {completeAutoClassify(form_obj,action_path,$("#sel_pick_country").val());}}});
       }
     },
-    add_tf_row: function(link,parent_index) {
+    add_tf_row: function(link,parent_index,country_id) {
       my_index = new Date().getTime();
       content = "<tr class=\"tf_row\">"
       content += "<td><input id='product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_line_number' name='product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][line_number]' size='3' type='text' /></td>";
       for(i=1; i<4; i++) {
-        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' /></td>"; 
+        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' country='"+country_id+"' /></td>"; 
       }
       content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
       link.parents('.add_row').before(content);
@@ -160,7 +223,7 @@ var OpenChain = (function() {
     },
     init: function() {
       initLinkButtons();
-    }
+    },
   };
 })();
 $( function() {
