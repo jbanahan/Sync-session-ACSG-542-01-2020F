@@ -4,6 +4,14 @@ A chain.io custom search linked to this email account appears to have failed.
 
 The transmission details are below:
 
-Error Message: <%=@error_message%>
+Error Message: <%=@error.message%>
+
+Backtrace:
+<%=@error.backtrace.join("\n")%>
+
+Parameters:
+<%@params.each do |k,v|%>
+<%=k%>: <%=v%>
+<%end%>
 
 Please do not reply to this message, we are attending to the failure.  If you need additional help, please email support@chain.io.

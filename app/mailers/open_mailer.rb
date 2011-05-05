@@ -83,9 +83,10 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
-  def send_custom_search_error(user, error_message)
+  def send_custom_search_error(user, error, params)
     @user = user
-    @error_message = error_message
+    @error = error  
+    @params = params
     mail(:to => "bug@aspect9.com", :subject => "[chain.io Exception] Search Failure") do |format|
       format.text
     end

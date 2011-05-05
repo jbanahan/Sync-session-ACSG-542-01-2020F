@@ -70,7 +70,7 @@ class ApplicationController < ActionController::Base
           render_search_results
         rescue Exception => e
           logger.error $!, $!.backtrace
-          OpenMailer.send_custom_search_error(@current_user, e.message).deliver
+          OpenMailer.send_custom_search_error(@current_user, e, params).deliver
           add_flash :errors, "There was an error running your search.  We have replaced it with a different search so you can continue working."
           @current_search.destroy
           @current_search = get_search_to_run
