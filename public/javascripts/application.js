@@ -72,41 +72,49 @@ var OpenChain = (function() {
         hts_field.closest("td").append("<div class='tariff_result'></div>");
       }
       to_write = hts_field.siblings(".tariff_result"); 
-
+      return to_write;
     }
     var invalid_callback = function() {
       hts_field.addClass("error");
+      var to_write = get_result_box();
+      to_write.html("Invalid tariff number.");
     }
     var valid_callback = function(data) {
       hts_field.removeClass("error");
       writeTariffInfo(data,hts,country_id);
     }
     var writeTariffInfo = function(data,hts,country_id) {
-      var t = data.official_tariff;
-      var to_write =
-      var h = t.remaining_description+"<br />";
-      if(t.general_rate) {
-        h+="General Rate: "+t.general_rate+"<br />";
+      var t, h, to_write;
+      to_write = get_result_box();
+      h = "";
+      if(data!="country not loaded") {
+        t = data.official_tariff;
+        h = t.remaining_description+"<br />";
+        if(t.general_rate) {
+          h+="General Rate: "+t.general_rate+"<br />";
+        }
+        if(t.erga_omnes_rate) {
+          h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
+        }
+        if(t.most_favored_nation_rate) {
+          h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
+        }
+        if(t.general_preferential_tariff_rate) {
+          h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
+        }
+        h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+hts+"'>info</a>";
       }
-      if(t.erga_omnes_rate) {
-        h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
-      }
-      if(t.most_favored_nation_rate) {
-        h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
-      }
-      if(t.general_preferential_tariff_rate) {
-        h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
-      }
-      h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+hts+"'>info</a>";
-      to_write.html(h)
+      to_write.html(h);
     }
     hts = hts_field.val();
     if(hts.length==0) {
       $(this).removeClass("error");
+      get_result_box().html("");
+      return;
     }
     if(!validateHTSFormat(hts)) {
       invalid_callback();
-      return
+      return;
     }
     $.getJSON('/official_tariffs/find?hts='+hts+'&cid='+country_id,function(data) {
       if(data==null) {
