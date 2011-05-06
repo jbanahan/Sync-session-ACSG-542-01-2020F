@@ -231,7 +231,7 @@ var OpenChain = (function() {
     },
     init: function() {
       initLinkButtons();
-    },
+    }
   };
 })();
 $( function() {
