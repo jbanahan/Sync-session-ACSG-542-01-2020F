@@ -53,6 +53,6 @@ $(function() {
 </table>
 
 <hr />
-<% form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
+<%= form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
   <%=render :partial=>'classify', :locals=>{:form_obj=>f}%>
 <% end %>

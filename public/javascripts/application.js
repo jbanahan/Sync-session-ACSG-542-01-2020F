@@ -2,6 +2,7 @@ var OpenChain = (function() {
   //private stuff
   var mappedKeys = new Object();
   var keyMapPopUp = null;
+  var invalidTariffFields = new Array();
 
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
@@ -56,6 +57,13 @@ var OpenChain = (function() {
       }
     });
   }
+  var removeFromInvalidTariffs = function(hts_field) {
+    var fieldId = hts_field.attr("id");
+    var invalidPosition = jQuery.inArray(fieldId,invalidTariffFields);
+    if(invalidPosition!=-1) {
+      invalidTariffFields.splice(invalidPosition,1);
+    }
+  }
   var validateHTSFormat = function(hts) {
     if(hts.length<6) {
       return false;
@@ -75,6 +83,7 @@ var OpenChain = (function() {
       return to_write;
     }
     var invalid_callback = function() {
+      invalidTariffFields.push(hts_field.attr("id"));
       hts_field.addClass("error");
       var to_write = get_result_box();
       to_write.html("Invalid tariff number.");
@@ -106,6 +115,7 @@ var OpenChain = (function() {
       }
       to_write.html(h);
     }
+    removeFromInvalidTariffs(hts_field);
     hts = hts_field.val();
     if(hts.length==0) {
       $(this).removeClass("error");
@@ -151,6 +161,7 @@ var OpenChain = (function() {
     },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
+        $(this).closest("tr").find(".hts_field").each(function() {removeFromInvalidTariffs($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
@@ -159,6 +170,10 @@ var OpenChain = (function() {
         $(this).prevAll("input.hts_field").val($(this).html());
       });
       $("form").submit(function() {
+        if(invalidTariffFields.length) {
+          window.alert("Pleaes fix or erase invalid tariff numbers.");
+          return false;
+        }
         removeEmptyClassifications();
         $(".tf_row").each(function() {
           var has_data = false;
