@@ -232,7 +232,7 @@ function submitForm() {
   }
   var srt_uids = []
   $("#used_sorts option").each(function() {
-    srt_uids.push([$(this).attr("value"),$(this).attr("ord")])
+    srt_uids.push([$(this).attr("value"),$(this).attr("ord")]);
   });
   for(i=0;i<srt_uids.length;i++) {
     var h = "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][rank]' value='"+i+"' />";

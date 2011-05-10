@@ -2,6 +2,8 @@ var OpenChain = (function() {
   //private stuff
   var mappedKeys = new Object();
   var keyMapPopUp = null;
+  var invalidTariffFields = new Array();
+
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
     $(document).unbind('keyup');
@@ -55,6 +57,84 @@ var OpenChain = (function() {
       }
     });
   }
+  var removeFromInvalidTariffs = function(hts_field) {
+    var fieldId = hts_field.attr("id");
+    var invalidPosition = jQuery.inArray(fieldId,invalidTariffFields);
+    if(invalidPosition!=-1) {
+      invalidTariffFields.splice(invalidPosition,1);
+    }
+  }
+  var validateHTSFormat = function(hts) {
+    if(hts.length<6) {
+      return false;
+    }
+    if(hts.match(/[^0-9\. ]/)!=null) {
+      return false;
+    }
+    return true;
+  }
+  var validateHTSValue = function(country_id,hts_field) {
+    var get_result_box = function() {
+      var to_write = hts_field.siblings(".tariff_result");
+      if(to_write.length==0) {
+        hts_field.closest("td").append("<div class='tariff_result'></div>");
+      }
+      to_write = hts_field.siblings(".tariff_result"); 
+      return to_write;
+    }
+    var invalid_callback = function() {
+      invalidTariffFields.push(hts_field.attr("id"));
+      hts_field.addClass("error");
+      var to_write = get_result_box();
+      to_write.html("Invalid tariff number.");
+    }
+    var valid_callback = function(data) {
+      hts_field.removeClass("error");
+      writeTariffInfo(data,hts,country_id);
+    }
+    var writeTariffInfo = function(data,hts,country_id) {
+      var t, h, to_write;
+      to_write = get_result_box();
+      h = "";
+      if(data!="country not loaded") {
+        t = data.official_tariff;
+        h = t.remaining_description+"<br />";
+        if(t.general_rate) {
+          h+="General Rate: "+t.general_rate+"<br />";
+        }
+        if(t.erga_omnes_rate) {
+          h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
+        }
+        if(t.most_favored_nation_rate) {
+          h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
+        }
+        if(t.general_preferential_tariff_rate) {
+          h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
+        }
+        h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+hts+"'>info</a>";
+      }
+      to_write.html(h);
+    }
+    removeFromInvalidTariffs(hts_field);
+    hts = hts_field.val();
+    if(hts.length==0) {
+      $(this).removeClass("error");
+      get_result_box().html("");
+      return;
+    }
+    if(!validateHTSFormat(hts)) {
+      invalid_callback();
+      return;
+    }
+    $.getJSON('/official_tariffs/find?hts='+hts+'&cid='+country_id,function(data) {
+      if(data==null) {
+        invalid_callback();
+      }
+      else {
+        valid_callback(data);
+      }
+    });
+  }
 
   return {
     //public stuff
@@ -81,6 +161,7 @@ var OpenChain = (function() {
     },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
+        $(this).closest("tr").find(".hts_field").each(function() {removeFromInvalidTariffs($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
@@ -89,6 +170,10 @@ var OpenChain = (function() {
         $(this).prevAll("input.hts_field").val($(this).html());
       });
       $("form").submit(function() {
+        if(invalidTariffFields.length) {
+          window.alert("Pleaes fix or erase invalid tariff numbers.");
+          return false;
+        }
         removeEmptyClassifications();
         $(".tf_row").each(function() {
           var has_data = false;
@@ -104,6 +189,8 @@ var OpenChain = (function() {
           }
         });
       });
+      $(".hts_field").live('blur',function() {validateHTSValue($(this).attr('country'),$(this))});
+      $(".hts_field").each(function() {validateHTSValue($(this).attr('country'),$(this))});
     },
     autoClassify: function(form_obj,action_path) {
       var c_count = function() {
@@ -139,16 +226,23 @@ var OpenChain = (function() {
             buttons:{"OK":function() {completeAutoClassify(form_obj,action_path,$("#sel_pick_country").val());}}});
       }
     },
-    add_tf_row: function(link,parent_index) {
+    add_tf_row: function(link,parent_index,country_id) {
       my_index = new Date().getTime();
       content = "<tr class=\"tf_row\">"
       content += "<td><input id='product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_line_number' name='product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][line_number]' size='3' type='text' /></td>";
       for(i=1; i<4; i++) {
-        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' /></td>"; 
+        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' country='"+country_id+"' /></td>"; 
       }
       content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
       link.parents('.add_row').before(content);
       link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
+    },
+    initAttachments: function() {
+      $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{
+        "Attach":function() {$("#frm_attach").submit();},
+        "Cancel":function() {$("#mod_attach").dialog('close');}
+      }});
+      $("#btn_add_attachment").click(function() {$("#mod_attach").dialog('open');});
     },
     init: function() {
       initLinkButtons();

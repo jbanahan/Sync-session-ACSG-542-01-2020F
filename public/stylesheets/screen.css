@@ -323,12 +323,46 @@ img {
 .field_row textarea {
   width: 14.7em;
 }
-
-.attachments_container {
-  padding: 5px
-  text-align: right;
+/* Attachment Box */
+.attachments_box {
+  width: 38%;
+  float: right;
+  margin-right: 2%;
+  margin-bottom: 10px;
 }
-
+.attachment_heading {
+  text-align: center;
+  font-weight: bold;
+}
+.attachment_table {
+  width: 100%;
+}
+.attachment_table td {
+  width: 50%;
+  border: 1px solid #d7d7d7;
+  text-align: center;
+  font-size: 80%;
+  vertical-align: top;
+  padding-top: 5px;
+}
+.attachment_delete {
+  text-align: right
+}
+.attachment_delete img {
+  margin: 0px;
+}
+.attachment_icon {
+  margin: 5px;
+}
+.attachment_type {
+  font-weight: bold;
+}
+#mod_attach {
+  display: none;
+}
+.next_to_attachments {
+width:60%;
+}
 /* Comments boxes */
 
 .comment_input {

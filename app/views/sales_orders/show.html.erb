@@ -51,9 +51,9 @@ $(function() {
   <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "sales_orders"} %>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:sales_order_id => @sales_order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <%end%>
-
+<%=render :partial=>'shared/attachments',:locals=>{:attachable=>@sales_order}%>
+<div class='next_to_attachments'>
 <table class='detail_table'>
-<thead><tr><th>Sale Information</th></tr></thead>
 <tbody><tr><td>
   <table>
     <%=field_row field_label(:sale_order_number), @sales_order.order_number %>
@@ -63,7 +63,7 @@ $(function() {
   </table>
 </td></tr></tbody>
 </table>
-
+</div>
 <div>
       
 <table class="detail_table">
@@ -98,7 +98,6 @@ $(function() {
 </table>
 </div>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @sales_order} %>
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @sales_order} %>
 <% form_line = @line.nil? ? @sales_order.sales_order_lines.build : @line %>
 <% form_line.default_line_number %>
 <div id='mod_edit_line' style='display:none;'>

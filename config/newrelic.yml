@@ -207,6 +207,13 @@ development:
   
   # Enable textmate links
   # textmate: true
+  error_collector:
+    
+    # Error collector is enabled by default. Set this to false to turn
+    # it off. This feature is only available at the Silver and above
+    # product levels
+    enabled: false
+
 
 test:
   <<: *default_settings

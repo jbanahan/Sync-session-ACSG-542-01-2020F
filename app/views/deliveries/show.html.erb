@@ -46,10 +46,10 @@
   </tr></tbody>
 </table>
 <br />
+<div style="width:95%;margin-bottom:10px">
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @delivery} %>
+<div class='next_to_attachments'>
 <table class='detail_table' >
-  <thead>
-    <tr><th>Attributes</th></tr>
-  </thead>
   <tbody>
     <tr>
       <td>
@@ -64,7 +64,8 @@
     </tr>
     </tbody>
 </table>
-
+</div>
+</div>
 
 <table class='detail_table'>
   <thead>
@@ -105,7 +106,6 @@
 </table>
 <%=render :partial => 'shared/pack_lines', :locals => {:parent=>@delivery, :line=>@line, :products=>@products, :is_sales_order=>true} %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @delivery} %>
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @delivery} %>
 <div id='mod_pick_order' style='display:none;'>
   <p id='add_ord_content'>
     Add Sale: <%= select_tag "sales_order_id", options_from_collection_for_select(SalesOrder.where("customer_id = ? ",@delivery.customer), "id", "order_number") %>
