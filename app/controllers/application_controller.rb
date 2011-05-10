@@ -82,7 +82,22 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  
+  def validate_and_save_module base_object, &block
+   #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
+   #this method will automaticall save custom fields and will rollback if the validation fails
+   #if you pass in a block, it will run after the object (and custom fields) are saved but before the validation runs
+    begin
+      base_object.transaction do 
+        base_object.save!
+        update_custom_fields(base_object)
+        yield
+        OpenChain::FieldLogicValidator.validate!(base_object) 
+      end
+    rescue OpenChain::ValidationLogicError
+      #ok to do nothing here, error messages were injected by FieldLogicValidator.validate
+    end
+  end
+
     def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
         cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
         pass = true
@@ -164,8 +179,8 @@ class ApplicationController < ActionController::Base
       render :text => CsvMaker.new.make(@current_search,@results) 
     end
 
-    def error_redirect(message)
-        add_flash :errors, message
+    def error_redirect(message=nil)
+        add_flash :errors, message unless message.nil?
         redirect_to request.referrer
     end
     

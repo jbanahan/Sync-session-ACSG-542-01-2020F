@@ -1,5 +1,6 @@
 OpenChain::Application.routes.draw do
 
+  resources :field_validator_rules
   resources :field_labels, :only=>[:index] do
     post 'save', :on=>:collection
   end

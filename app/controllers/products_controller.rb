@@ -1,3 +1,4 @@
+require 'open_chain/field_logic'
 class ProductsController < ApplicationController
   include Worksheetable
   before_filter :secure_classifications
@@ -54,23 +55,20 @@ class ProductsController < ApplicationController
       p = Product.new(params[:product])
       action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product"}) {
         @product = p
+        validate_and_save_module(@product) {
+          save_classification_custom_fields(@product,params[:product])
+          update_status @product
+        }
         respond_to do |format|
-            if @product.save
-								if update_custom_fields @product
-								  save_classification_custom_fields(@product,params[:product])
-								  update_status @product
-									add_flash :notices, "Product created successfully."
-								end
-                History.create_product_changed(@product, current_user, product_url(@product))
-                format.html { redirect_to(@product)}
-                format.xml  { render :xml => @product, :status => :created, :location => @product }
-            else
-                errors_to_flash @product, :now => true
-                @divisions = Division.all
-                @vendors = Company.where(["vendor = ?",true])
-                format.html { render :action => "new" }
-                format.xml  { render :xml => @product.errors, :status => :unprocessable_entity }
-            end
+          if @product.errors.empty?
+            add_flash :notices, "Product created successfully."
+            format.html { redirect_to @product }
+          else
+            errors_to_flash @product, :now=>true
+            @divisions = Division.all
+            @vendors = Company.where(:vendor=>true)
+            format.html { render :action=>"new"}
+          end
         end
       }  
     end
@@ -81,23 +79,17 @@ class ProductsController < ApplicationController
         p = Product.find(params[:id])
         action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
           @product = p
+          validate_and_save_module(@product) {
+            save_classification_custom_fields @product,params[:product]
+            update_status @product
+          }
           respond_to do |format|
-              if @product.update_attributes(params[:product])
-                  if update_custom_fields @product
-                    save_classification_custom_fields(@product,params[:product])
-                    update_status @product
-                    add_flash :notices, "Product updated successfully."
-                  end
-                  History.create_product_changed(@product, current_user, product_url(@product))
-                  format.html { 
-                    redirect_update @product, (params[:c_classify] ? "classify" : "edit") 
-                  }
-                  format.xml  { head :ok }
-              else
-                  errors_to_flash @product
-                  format.html { render :action => "edit" }
-                  format.xml  { render :xml => @product.errors, :status => :unprocessable_entity }
-              end
+            if @product.errors.empty?
+              format.html {redirect_update @product, (params[:c_classify] ? "classify" : "edit")}
+            else
+              errors_to_flash @product 
+              format.html {error_redirect}
+            end
           end
         }
     end

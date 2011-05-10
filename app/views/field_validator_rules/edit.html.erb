@@ -1,0 +1,19 @@
+<% content_for :javascript do%>
+$(function() {
+  $("#btn_delete").button();
+  OpenChain.addClickMap('d',"Delete","btn_delete");
+});
+
+<%end%>
+<% content_for :action_bar do%>
+  <button class="form_to" key_map="s" form_id="frm_rule">Save</button> 
+  <%=button_to('Delete', field_validator_rule_path(@rule),:method=>:delete, :confirm=>"Are you sure?", :id=>"btn_delete")%>
+<% end %>
+<%=form_for @rule, :html=>{:id=>"frm_rule"} do |f| %>
+  <table>
+  <%=field_row "Module", CoreModule.find_by_class_name(@rule.module_type).label%>
+  <%=field_row "Field", @rule.model_field.label%>
+  <%=field_row "Custom Error Message", f.text_field(:custom_message)%>
+  <%=field_row "Regular Expression", f.text_field(:regex)%>
+  </table>
+<%end%>

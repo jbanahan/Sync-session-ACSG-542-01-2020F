@@ -42,6 +42,19 @@ var OpenChain = (function() {
       }
     });
   }
+  var initFormButtons = function() {
+    $(".form_to").each(function() {
+      var frm_id = $(this).attr('form_id');
+      var key = $(this).attr('key_map');
+      if(frm_id) {
+        $(this).click(function() {$("#"+frm_id).submit();});
+        if(key) {
+          OpenChain.addKeyMap(key,$(this).html(),function() {$("#"+frm_id).submit();});
+          OpenChain.activateHotKeys();
+        }
+      }
+    });
+  }
   var removeEmptyClassifications = function() {
     $(".classification_box").each(function() {
       var drop_me = true;
@@ -246,6 +259,7 @@ var OpenChain = (function() {
     },
     init: function() {
       initLinkButtons();
+      initFormButtons();
     }
   };
 })();

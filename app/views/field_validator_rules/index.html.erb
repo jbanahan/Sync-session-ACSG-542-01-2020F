@@ -1,0 +1,4 @@
+<%@rules.each do |r|%>
+  <h1><%=r.model_field.label%></h1>
+  <%=r.module_type%>, <%=link_to "Edit", edit_field_validator_rule_path(r)%>
+<%end%>
