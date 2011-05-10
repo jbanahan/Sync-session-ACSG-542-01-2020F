@@ -55,7 +55,7 @@ class ProductsController < ApplicationController
       p = Product.new(params[:product])
       action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product"}) {
         @product = p
-        validate_and_save_module(@product) {
+        validate_and_save_module(@product,params[:product]) {
           save_classification_custom_fields(@product,params[:product])
           update_status @product
         }
@@ -79,7 +79,7 @@ class ProductsController < ApplicationController
         p = Product.find(params[:id])
         action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
           @product = p
-          validate_and_save_module(@product) {
+          validate_and_save_module(@product,params[:product]) {
             save_classification_custom_fields @product,params[:product]
             update_status @product
           }
@@ -152,22 +152,20 @@ class ProductsController < ApplicationController
 
   def bulk_update
     action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
+      [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
+      params[:product].each {|k,v| params[:product].delete k if v.blank?}
       good_count = nil 
       bulk_objects do |gc,p|
         good_count = gc if good_count.nil?
         if p.can_edit?(current_user)
-          [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
-          params[:product].each {|k,v| params[:product].delete k if v.blank?}
-          if p.update_attributes(params[:product])
-            if update_custom_fields p
-              update_status p 
-            else
-              good_count += -1
-            end
-            History.create_product_changed(p, current_user, product_url(p))
-          else
+          validate_and_save_module(p,params[:product]) {
+            update_status p
+          }
+          if !p.errors.empty?
             good_count += -1
-            add_flash :errors, "There was an error updating product #{p.unique_identifier}."
+            p.errors.full_messages.each do |m|
+              add_flash :errors, "Error updating product #{p.unique_identifier}: #{m}"
+            end
           end
         else
           good_count += -1
@@ -192,19 +190,29 @@ class ProductsController < ApplicationController
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
       good_count = nil
       bulk_objects do |gc, p|
-        good_count = gc if good_count.nil?
-        if p.can_classify?(current_user)
-          #reset classifications
-          p.classifications.destroy_all
-          if p.update_attributes(params[:product])
-            save_classification_custom_fields(p,params[:product])
-            update_status p
+        begin
+          if p.can_classify?(current_user)
+            Product.transaction do
+              good_count = gc if good_count.nil?
+              #reset classifications
+              p.classifications.destroy_all
+              validate_and_save_module(p,params[:product],true) {
+                save_classification_custom_fields(p,params[:product])
+                update_status p
+              }
+            end
           else
-            add_flash :errors, "There was an error updating product #{p.unique_identifier}."
+            add_flash :errors, "You do not have permission to classify product #{p.unique_identifier}."
+            good_count += -1
           end
-        else
-          add_flash :errors, "You do not have permission to classify product #{p.unique_identifier}."
-          goodcount += -1
+        rescue OpenChain::ValidationLogicError
+          #ok to do nothing here
+        end
+        if !p.errors.empty?
+          good_count += -1
+          p.errors.full_messages.each do |m|
+            add_flash :errors, "Error updating product #{p.unique_identifier}: #{m}"
+          end
         end
       end
       add_flash :notices, "#{help.pluralize good_count, module_label.downcase} updated successfully."

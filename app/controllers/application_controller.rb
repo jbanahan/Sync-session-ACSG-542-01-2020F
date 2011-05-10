@@ -82,19 +82,22 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def validate_and_save_module base_object, &block
+  def validate_and_save_module base_object, parameters, raise_exception=false, &block
    #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
-   #this method will automaticall save custom fields and will rollback if the validation fails
+   #this method will automatically save custom fields and will rollback if the validation fails
+   #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
    #if you pass in a block, it will run after the object (and custom fields) are saved but before the validation runs
     begin
       base_object.transaction do 
-        base_object.save!
+        base_object.update_attributes(parameters)
         update_custom_fields(base_object)
         yield
         OpenChain::FieldLogicValidator.validate!(base_object) 
       end
     rescue OpenChain::ValidationLogicError
       #ok to do nothing here, error messages were injected by FieldLogicValidator.validate
+      debugger
+      raise $! if raise_exception
     end
   end
 
