@@ -21,7 +21,7 @@ class OfficialTariffsController < ApplicationController
   end
   
   def find
-    hts = params[:hts]
+    hts = TariffRecord.clean_hts params[:hts]
     cid = params[:cid]
     ot = OfficialTariff.where(:hts_code=>hts,:country_id=>cid).first
     if ot.nil?

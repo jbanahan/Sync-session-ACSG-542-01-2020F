@@ -12,15 +12,15 @@ class TariffRecord < ActiveRecord::Base
   dont_shallow_merge :TariffRecord, ['id','created_at','updated_at','line_number','classification_id']
   
   def hts_1=(str)
-    write_attribute(:hts_1, clean_hts(str))
+    write_attribute(:hts_1, TariffRecord.clean_hts(str))
   end
 
   def hts_2=(str)
-    write_attribute(:hts_2, clean_hts(str))
+    write_attribute(:hts_2, TariffRecord.clean_hts(str))
   end
 
   def hts_3=(str)
-    write_attribute(:hts_3, clean_hts(str))
+    write_attribute(:hts_3, TariffRecord.clean_hts(str))
   end
 
   def hts_1_official_tariff
@@ -51,10 +51,12 @@ class TariffRecord < ActiveRecord::Base
     return r.empty? ? nil : r.first
   end
 
-  private
-  def clean_hts(str)
+ 
+  def self.clean_hts(str)
     str.to_s.gsub(/[^0-9]/,'') unless str.nil?
   end
+  
+  private
   def find_official_tariff hts_number
     OfficialTariff.where(:country_id=>self.classification.country,:hts_code=>hts_number).first unless self.classification.nil? || hts_number.blank?
   end
