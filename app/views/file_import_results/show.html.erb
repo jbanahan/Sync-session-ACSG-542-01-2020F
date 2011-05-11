@@ -1,0 +1,41 @@
+<% content_for :javascript do %>
+$(function() {
+  $(".toggle_record").click(function(ev) {
+    ev.preventDefault();
+    var content_row = $(this).closest("tr").next()
+    content_row.toggle();
+    if(!content_row.hasClass('loaded')) {
+      $.getJSON('<%=messages_file_import_result_path(@file_import_result)%>?cr_id='+$(this).attr("cr_id"),function(data) {
+        var h = "No messages exist for this row.";
+        if(data.length) {
+          h = "";
+          for(var i=0;i<data.length;i++) {
+            h+=data[i]+"<br />";
+          }
+        }
+        content_row.children("td").first().html(h);
+        content_row.addClass('loaded');
+      });
+    }
+  }); 
+});
+<% end %>
+<% content_for :action_bar do%>
+  <button id='btn_back' class='btn_link' link_to='<%=imported_file_path(@imported_file)%>'>Back</button>
+<%end%>
+<table>
+  <%=field_row "File Name", @imported_file.attached_file_name%>
+  <%=field_row "Processed At", @file_import_result.finished_at%>
+</table>
+<br />
+<br />
+<table class='detail_table'>
+  <thead><tr>
+    <th>Row</th><th>Status</th>
+  </tr></thead>
+  <%@change_records.each do |r|%>
+    <tr class='hover'><td><a href='#' class='toggle_record' cr_id='<%=r.id%>'><%=r.record_sequence_number%></a></td><td class='<%=r.failed? ? "error" : ""%>'><%=r.failed? ? "Error" : "Success"%></td></tr>
+    <tr style='display:none;'><td colspan='2' style='padding-left:2em;'><%=image_tag "ajax-loader.gif"%> Loading...</td></tr>
+  <%end%>
+</table>
+<%= will_paginate @change_records%>

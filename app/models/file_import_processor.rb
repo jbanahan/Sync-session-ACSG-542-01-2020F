@@ -108,7 +108,6 @@ class FileImportProcessor
     rescue OpenChain::ValidationLogicError
       core_object = object_map[@core_module]
       core_object.errors.full_messages.each {|m| 
-        @import_file.errors[:base] << m
         messages << "ERROR: #{m}"
       }
       fire_row row_number, nil, messages, true #true = failed

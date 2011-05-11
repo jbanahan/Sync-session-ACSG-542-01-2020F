@@ -6,7 +6,12 @@ class FileImportResult < ActiveRecord::Base
   def changed_objects
     r = self.change_records.collect {|a| a.recordable}
     r.uniq!
+    r.delete nil
     r
+  end
+
+  def error_count
+    self.change_records.where(:failed=>true).count
   end
 
 end
