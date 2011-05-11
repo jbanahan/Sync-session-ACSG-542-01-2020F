@@ -4,6 +4,33 @@ var OpenChain = (function() {
   var keyMapPopUp = null;
   var invalidTariffFields = new Array();
 
+  var initRemoteValidate = function() {
+    $(".rvalidate").live('change',function() {
+        remoteValidate($(this));
+    });
+  }
+  var remoteValidate = function(field) {
+    mf_id = field.attr('mf_id');
+    if(!mf_id) {
+      return;
+    }
+    field.nextAll(".val_status").remove();
+    field.after("<img src='/images/ajax-loader.gif' class='val_status' title='Validating...' style='display:none;'/>");
+    field.next().fadeIn();
+    $.getJSON('/field_validator_rules/validate',{mf_id: mf_id, value: field.val()},function(data) {
+      field.nextAll(".val_status").remove();
+      if(data.length) {
+        var m = "";
+        $.each(data,function(i,v) {m += v+"<br />"});
+        field.addClass("error");
+        field.after("<img src='/images/error.png' alt='Field Error' class='val_status'/>");
+        field.next().after("<div class='val_status tooltip'>"+m+"</div>");
+        field.next().tooltip();
+      } else {
+        field.removeClass("error");
+      }
+    });
+  }
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
     $(document).unbind('keyup');
@@ -151,6 +178,7 @@ var OpenChain = (function() {
 
   return {
     //public stuff
+
     addKeyMap: function(key,desc,act) {
       mappedKeys[key]=new Object();
       mappedKeys[key].description = desc;
@@ -260,6 +288,7 @@ var OpenChain = (function() {
     init: function() {
       initLinkButtons();
       initFormButtons();
+      initRemoteValidate();
     }
   };
 })();

@@ -14,6 +14,7 @@ $(function() {
   <%=field_row "Module", CoreModule.find_by_class_name(@rule.module_type).label%>
   <%=field_row "Field", @rule.model_field.label%>
   <%=field_row "Custom Error Message", f.text_field(:custom_message)%>
+  <%=field_row "Required", f.check_box(:required) %>
   <%=field_row "Regular Expression", f.text_field(:regex)%>
   </table>
 <%end%>

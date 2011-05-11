@@ -1,10 +1,37 @@
 class FieldValidatorRulesController < ApplicationController
 
+  def validate
+    mf_id = params[:mf_id]
+    msgs = []
+    rules = FieldValidatorRule.find_cached_by_model_field_uid mf_id
+    rules.each do |r|
+      msgs += r.validate_input params[:value]
+    end
+    render :json=>msgs
+  end
+
   def index
     admin_secure {
       @rules = FieldValidatorRule.all
     }
   end
+
+  def new 
+    admin_secure {
+      model_field_id = params[:mf_id]
+      if model_field_id.blank?
+        error_redirect "mf_id parameter must be set to create a new rule" 
+        return
+      end
+      if ModelField.find_by_uid(model_field_id).nil?
+        error_redirect "ModelField with id #{model_fiedl_id} not found."
+        return
+      end
+      rule = FieldValidatorRule.where(:model_field_uid=>model_field_id).first
+      rule = FieldValidatorRule.create(:model_field_uid=>model_field_id) if rule.nil?
+      redirect_to edit_field_validator_rule_path rule
+    }
+  end 
 
   def edit
     admin_secure {

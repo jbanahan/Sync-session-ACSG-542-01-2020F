@@ -7,8 +7,8 @@ module OpenChain
       rules = FieldValidatorRule.find_cached_by_core_module cm
       rules.each do |rule|
         msg = rule.validate_field record, nested
-        if msg
-          record.errors[:base] << msg
+        if !msg.empty?
+          msg.each {|m| record.errors[:base] << m}
           passed = false
         end
       end
