@@ -182,6 +182,19 @@ class CoreModule
     to_proc.each {|c| r << [c.label,c.class_name]}
     r
   end
+
+  #make hash of arrays to work with FormOptionsHelper.grouped_options_for_select
+  def self.grouped_options
+    r = {}
+    mods = CORE_MODULES.sort {|x,y| x.label <=> y.label}
+    mods.each do |cm|
+      flds = cm.model_fields.values.sort {|x,y| x.label <=> y.label}
+      fld_array = []
+      flds.each {|f| fld_array << [f.label,f.uid]}
+      r[cm.label] = fld_array
+    end
+    r
+  end
   
   private
   def self.test_to_array

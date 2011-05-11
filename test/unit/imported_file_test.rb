@@ -43,6 +43,11 @@ class ImportedFileTest < ActiveSupport::TestCase
     change_records.each do |cr|
       assert cr.recordable.is_a?(Product)
       good_uids.delete(cr.recordable.unique_identifier)
+      msgs = cr.change_record_messages
+      assert msgs.size==1
+      msg = msgs.first
+      good_msgs = ["Unique Identifier set to puid001","Unique Identifier set to puid002"]
+      assert good_msgs.include?(msg.message), "Message not in good_msgs array: #{msg.message}"
     end
     assert good_uids.size==0
   end
@@ -65,6 +70,48 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert file.can_view?(vu2)
     assert file.can_view?(au)
     assert file.can_view?(su)
+  end
+
+  test "failed row" do
+    #tests that a validation catches the line that doesn't have an "a" and writes a failed change record
+    vendor_id = companies(:vendor).id
+    attachment = "abc,#{vendor_id}\ndef,#{vendor_id}\nabd,#{vendor_id}"
+
+    rule = FieldValidatorRule.create!(:model_field_uid=>"ord_ord_num",:regex=>"^a.*",:custom_message=>"cmsg")
+
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
+    ic.save!
+    ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
+    ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row =>false)
+    f.save!
+    f.process(users(:masteruser),{:attachment_data=>attachment})
+    fr = f.file_import_results.first
+    orders = []
+    ["abc","abd"].each do |n|
+      ord = Order.where(:order_number=>n).first
+      assert !ord.nil?
+      orders << ord
+    end
+
+    change_records = fr.change_records
+    assert change_records.size==3 #one for each row
+    
+    found_failed = false
+    change_records.each do |cr|
+      changed = cr.recordable
+      if changed.nil?
+        assert cr.failed?
+        found_failed = true
+        msgs = cr.change_record_messages.collect {|m| m.message}
+        assert msgs.include?("ERROR: #{rule.custom_message}"), "Expected to include ERROR: #{rule.custom_message}, array: #{msgs}" 
+
+      else
+        orders.delete changed
+      end
+    end
+    assert found_failed
+    assert orders.empty?
   end
 
   test "process" do

@@ -1,3 +1,23 @@
+<%content_for :javascript do%>
+$(function() {
+  $("#mod_new").dialog({autoOpen:false,title:"Select a Field",buttons:{
+    "New":function() {
+      if($("#sel_new").val().length>0) {
+        window.location='<%=new_field_validator_rule_path%>?mf_id='+$("#sel_new").val();
+      } else {
+        window.alert("Please select a field first.");
+      }
+    },
+    "Cancel":function() {$("#mod_new").dialog('close');}
+  }});
+  $("#btn_new").click(function() {$("#mod_new").dialog('open');});
+  OpenChain.addClickMap('n','New',"btn_new");
+  OpenChain.activateHotKeys();
+});
+<%end%>
+<%content_for :action_bar do%>
+  <button id='btn_new'>New</button>
+<%end%>
 <table class='detail_table'>
   <thead><tr><th>&nbsp;</th><th>Field</th><th>Module</th></tr></thead>
   <tbody>
@@ -9,3 +29,6 @@
 <%end%>
   <tbody>
 </table>
+<div id='mod_new' style='display:none;'>
+  <%=model_field_select_tag("sel_new",:id=>"sel_new")%>
+</div>

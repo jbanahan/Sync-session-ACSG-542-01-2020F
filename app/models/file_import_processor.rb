@@ -56,51 +56,66 @@ class FileImportProcessor
   end
   def do_row row_number, row, save
     messages = []
-    data_map = {}
-    @module_chain.to_a.each do |mod|
-      data_map[mod] = {}
-    end
-    @search_setup.sorted_columns.each do |col|
-      mf = col.find_model_field
-      data_map[mf.core_module][mf.uid]=row[col.rank] unless mf.uid==:_blank
-    end
     object_map = {}
-    @module_chain.to_a.each do |mod|
-      if fields_for_me_or_children? data_map, mod
-        parent_mod = @module_chain.parent mod
-        obj = parent_mod.nil? ? mod.new_object : parent_mod.child_objects(mod,object_map[parent_mod]).build
-        object_map[mod] = obj
-        custom_fields = {}
-        data_map[mod].each do |uid,data|
-          mf = ModelField.find_by_uid uid
-          if mf.custom?
-            custom_fields[mf] = data
-          else
-            messages << mf.process_import(obj, data)
+    begin
+      ActiveRecord::Base.transaction do
+        data_map = {}
+        @module_chain.to_a.each do |mod|
+          data_map[mod] = {}
+        end
+        @search_setup.sorted_columns.each do |col|
+          mf = col.find_model_field
+          data_map[mf.core_module][mf.uid]=row[col.rank] unless mf.uid==:_blank
+        end
+        @module_chain.to_a.each do |mod|
+          if fields_for_me_or_children? data_map, mod
+            parent_mod = @module_chain.parent mod
+            obj = parent_mod.nil? ? mod.new_object : parent_mod.child_objects(mod,object_map[parent_mod]).build
+            object_map[mod] = obj
+            custom_fields = {}
+            data_map[mod].each do |uid,data|
+              mf = ModelField.find_by_uid uid
+              if mf.custom?
+                custom_fields[mf] = data
+              else
+                messages << mf.process_import(obj, data)
+              end
+            end
+            obj = merge_or_create obj, save
+            custom_fields.each do |mf,data|
+              cd = CustomDefinition.find mf.custom_id
+              cv = obj.get_custom_value cd
+              if cd.data_type.to_sym==:boolean
+                set_boolean_value cv, data
+              else
+                cv.value = data
+              end
+              messages << "#{cd.label} set to #{cv.value}"
+              cv.save if save
+            end
+            object_map[mod] = obj
           end
         end
-        obj = merge_or_create obj, save
-        custom_fields.each do |mf,data|
-          cd = CustomDefinition.find mf.custom_id
-          cv = obj.get_custom_value cd
-          if cd.data_type.to_sym==:boolean
-            set_boolean_value cv, data
-          else
-            cv.value = data
+        object_map.values.each do |obj|
+          if obj.class.include?(StatusableSupport)
+            obj.set_status
+            obj.save
           end
-          messages << "#{cd.label} set to #{cv.value}"
-          cv.save if save
         end
-        object_map[mod] = obj
+        OpenChain::FieldLogicValidator.validate! object_map[@core_module]
+        fire_row row_number, object_map[@core_module], messages
       end
+    rescue OpenChain::ValidationLogicError
+      core_object = object_map[@core_module]
+      core_object.errors.full_messages.each {|m| 
+        @import_file.errors[:base] << m
+        messages << "ERROR: #{m}"
+      }
+      fire_row row_number, nil, messages, true #true = failed
+    rescue
+      fire_row row_number, nil, messages, true
+      raise $!
     end
-    object_map.values.each do |obj|
-      if obj.class.include?(StatusableSupport)
-        obj.set_status
-        obj.save
-      end
-    end
-    fire_row row_number, object_map[@core_module], messages
     messages
   end
 
@@ -225,8 +240,8 @@ class FileImportProcessor
     fire_event :process_start, Time.now
   end
 
-  def fire_row row_number, obj, messages
-    @listeners.each {|ls| ls.process_row row_number, obj, messages if ls.respond_to?('process_row')}
+  def fire_row row_number, obj, messages, failed=false
+    @listeners.each {|ls| ls.process_row row_number, obj, messages, failed if ls.respond_to?('process_row')}
   end
 
   def fire_end
