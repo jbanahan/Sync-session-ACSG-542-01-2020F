@@ -8,13 +8,34 @@ $(function() {
 <% content_for :action_bar do%>
   <button class="form_to" key_map="s" form_id="frm_rule">Save</button> 
   <%=button_to('Delete', field_validator_rule_path(@rule),:method=>:delete, :confirm=>"Are you sure?", :id=>"btn_delete")%>
+  <button class="btn_link" key_map="b" link_to="<%=field_validator_rules_path%>">Back</button>
 <% end %>
+<% mf = @rule.model_field%>
 <%=form_for @rule, :html=>{:id=>"frm_rule"} do |f| %>
   <table>
   <%=field_row "Module", CoreModule.find_by_class_name(@rule.module_type).label%>
   <%=field_row "Field", @rule.model_field.label%>
+  <%=field_row "Comment", content_tag(:span,f.text_area(:comment,:rows=>5)+tag("br")+"Put notes here, they won't change how the rule works.")%>
   <%=field_row "Custom Error Message", f.text_field(:custom_message)%>
   <%=field_row "Required", f.check_box(:required) %>
-  <%=field_row "Regular Expression", f.text_field(:regex)%>
+  <% if [:decimal,:integer].include? mf.data_type%>
+    <%=field_row "Greater Than", f.text_field(:greater_than,:class=>mf.data_type)%>
+    <%=field_row "Less Than", f.text_field(:less_than,:class=>mf.data_type)%>
+  <% end%>
+  <% if [:date,:datetime].include? mf.data_type%>
+    <%=field_row "More Than", content_tag(:span,f.text_field(:more_than_ago,:class=>:integer,:size=>3)+" "+f.select(:more_than_ago_uom,["days","weeks","months","years"])+" ago.")%></td></tr>
+    <%=field_row "Less Than", content_tag(:span,f.text_field(:less_than_from_now,:class=>:integer,:size=>3)+" "+f.select(:less_than_from_now_uom,["days","weeks","months","years"])+" from now.")%></td></tr>
+    <%=field_row "After", f.text_field(:greater_than_date,:class=>"isdate")%>
+    <%=field_row "Before", f.text_field(:less_than_date,:class=>"isdate")%>
+  <% end%>
+  <% if [:string,:text].include? mf.data_type%>
+    <%=field_row "Minimum Length", f.text_field(:minimum_length,:class=>:integer)%>
+    <%=field_row "Maximum Length", f.text_field(:maximum_length,:class=>:integer)%>
+    <%=field_row "Starts With", f.text_field(:starts_with)%>
+    <%=field_row "Ends With", f.text_field(:ends_with)%>
+    <%=field_row "Contains", f.text_field(:contains)%>
+    <%=field_row "Is One Of", content_tag(:span,f.text_area(:one_of,:rows=>5)+tag("br")+"Put each value on it's own line.")%>
+  <% end%>
+  <%=field_row "Regular Expression", content_tag(:span,f.text_field(:regex)+tag("br")+"See "+link_to("this article","http://en.wikipedia.org/wiki/Regular_expression",:target=>"_blank")+".")%>
   </table>
 <%end%>

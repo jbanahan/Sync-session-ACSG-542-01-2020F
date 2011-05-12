@@ -24,6 +24,10 @@ module ApplicationHelper
     inner_opts = opts_for_model_text_field model_field_uid, opts
     text_field_tag(field_name,value,inner_opts)
   end
+  def model_text_area_tag field_name, model_field_uid, value, opts={}
+    inner_opts = opts_for_model_text_field model_field_uid, opts
+    text_area_tag(field_name,value,inner_opts);
+  end
 
 
   def attachment_icon att
@@ -76,7 +80,7 @@ module ApplicationHelper
   		      field = c_val ? "Yes" : "No"
   		    end
   		  elsif d.data_type=='text'
-  		    field = opts[:form] ? text_area_tag(name, c_val, {:title=>"#{d.tool_tip}", :class=>field_tip_class,:rows=>5, :cols=>24}) : "#{c_val}"
+  		    field = opts[:form] ? model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>field_tip_class,:rows=>5, :cols=>24}) : "#{c_val}"
   		  else
           field = opts[:form] ? model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}", :size=>"30"}) : "#{c_val}"
   		  end

@@ -294,6 +294,8 @@ var OpenChain = (function() {
 })();
 $( function() {
     OpenChain.init();
+    $(".decimal").jStepper();
+    $(".integer").jStepper({allowDecimals:false});
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();

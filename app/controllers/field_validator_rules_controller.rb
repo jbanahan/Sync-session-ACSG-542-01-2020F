@@ -4,8 +4,20 @@ class FieldValidatorRulesController < ApplicationController
     mf_id = params[:mf_id]
     msgs = []
     rules = FieldValidatorRule.find_cached_by_model_field_uid mf_id
+    v = params[:value]
+    mf = ModelField.find_by_uid mf_id
+    case mf.data_type
+    when :date
+      v = Date.parse v
+    when :integer
+      v = v.to_i
+    when :decimal
+      v = v.to_f
+    when :datetime
+      v = Time.zone.parse v
+    end
     rules.each do |r|
-      msgs += r.validate_input params[:value]
+      msgs += r.validate_input v
     end
     render :json=>msgs
   end

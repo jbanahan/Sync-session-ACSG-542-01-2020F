@@ -19,12 +19,13 @@ $(function() {
   <button id='btn_new'>New</button>
 <%end%>
 <table class='detail_table'>
-  <thead><tr><th>&nbsp;</th><th>Field</th><th>Module</th></tr></thead>
+  <thead><tr><th>&nbsp;</th><th>Field</th><th>Module</th><th>Comment</th></tr></thead>
   <tbody>
 <%@rules.each do |r|%>
   <tr class='hover'><td><%=link_to "Edit", edit_field_validator_rule_path(r)%></td>
   <td><%=ModelField.find_by_uid(r.model_field_uid).label%></td>
   <td><%=CoreModule.find_by_class_name(r.module_type).label%></td>
+  <td><%=r.comment%></td>
   </tr>
 <%end%>
   <tbody>
