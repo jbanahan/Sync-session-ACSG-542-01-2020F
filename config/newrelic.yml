@@ -3,7 +3,7 @@
 # Rails and Java applications with deep visibility and low overhead.  For more
 # information, visit www.newrelic.com.
 #
-# Generated April 30, 2011
+# Generated May 12, 2011
 #
 # This configuration file is custom generated for Aspect 9
 
@@ -48,7 +48,7 @@ common: &default_settings
   # The newrelic agent generates its own log file to keep its logging
   # information separate from that of your application.  Specify its
   # log level here.
-  log_level: info
+  log_level: finest 
   
   # The newrelic agent communicates with the New Relic service via http by
   # default.  If you want to communicate via https to increase
@@ -100,7 +100,7 @@ common: &default_settings
   # Java: create a config setting called "ignored_params" and set it to
   #     a comma separated list of HTTP parameter names.
   #     ex: ignored_params: credit_card, ssn, password 
-  capture_params: true
+  capture_params: false
 
 
   # Transaction tracer captures deep information about slow
@@ -203,17 +203,10 @@ development:
   # executed since starting the mongrel.
   # NOTE: There is substantial overhead when running in developer mode.
   # Do not use for production or load testing.  
-  developer_mode: false 
+  developer_mode: true
   
   # Enable textmate links
   # textmate: true
-  error_collector:
-    
-    # Error collector is enabled by default. Set this to false to turn
-    # it off. This feature is only available at the Silver and above
-    # product levels
-    enabled: false
-
 
 test:
   <<: *default_settings
@@ -229,3 +222,10 @@ production:
   <<: *default_settings
   monitor_mode: true
 
+# Many applications have a staging environment which behaves
+# identically to production.  Support for that environment is provided
+# here.  By default, the staging environment has the agent turned on.
+staging:
+  <<: *default_settings
+  monitor_mode: true
+  app_name: My Application (Staging)
