@@ -114,7 +114,7 @@ class Product < ActiveRecord::Base
     if to_classify.tariff_records.empty? #if the classification already has records, leave it alone
       base_classification.tariff_records.each do |base_tariff|
         to_load = to_classify.tariff_records.build
-        if !base_tariff.hts_1.empty? && base_tariff.hts_1.length > 5
+        if !base_tariff.hts_1.blank? && base_tariff.hts_1.length > 5
           official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_1).first
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
@@ -122,7 +122,7 @@ class Product < ActiveRecord::Base
             to_load.hts_1_matches = matches
           end
         end
-        if !base_tariff.hts_2.empty? && base_tariff.hts_2.length > 5
+        if !base_tariff.hts_2.blank? && base_tariff.hts_2.length > 5
           official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_2).first
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
@@ -130,7 +130,7 @@ class Product < ActiveRecord::Base
             to_load.hts_2_matches = matches
           end
         end
-        if !base_tariff.hts_3.empty? && base_tariff.hts_3.length > 5
+        if !base_tariff.hts_3.blank? && base_tariff.hts_3.length > 5
           official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_3).first
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
