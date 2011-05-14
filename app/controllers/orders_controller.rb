@@ -66,12 +66,12 @@ class OrdersController < ApplicationController
       o = Order.new(params[:order])
       action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
         @order = o
+        validate_and_save_module(@order,params[:order]) {
+          #add any extra save steps here
+        }
         respond_to do |format|
-          if @order.save
-              History.create_order_changed(@order,current_user,order_url(@order))
-							if update_custom_fields @order
-                  add_flash :notices, "Order was created successfully."
-                end
+          if @order.errors.empty?
+              debugger
               format.html { redirect_to(@order) }
               format.xml  { render :xml => @order, :status => :created, :location => @order }
           else

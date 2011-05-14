@@ -54,44 +54,48 @@ class ProductsController < ApplicationController
     def create
       p = Product.new(params[:product])
       action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product"}) {
-        @product = p
-        validate_and_save_module(@product,params[:product]) {
-          save_classification_custom_fields(@product,params[:product])
-          update_status @product
-        }
-        respond_to do |format|
-          if @product.errors.empty?
+        succeed = lambda { |p|
+          respond_to do |format|
             add_flash :notices, "Product created successfully."
-            format.html { redirect_to @product }
-          else
+            format.html { redirect_to p }
+          end
+        }
+        failure = lambda { |p,e|
+          respond_to do |format|
+            @product = Product.new(params[:product])
+            set_custom_fields(@product) {|cv| @product.inject_custom_value cv}
+            e.full_messages.each {|m| @product.errors[:base]<<m}
             errors_to_flash @product, :now=>true
-            @divisions = Division.all
-            @vendors = Company.where(:vendor=>true)
             format.html { render :action=>"new"}
           end
-        end
+        }
+        before_validate = lambda { |p|
+          save_classification_custom_fields(p,params[:product])
+          update_status p
+        }
+        validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
       }  
     end
 
     # PUT /products/1
     # PUT /products/1.xml
     def update
-        p = Product.find(params[:id])
-        action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
-          @product = p
-          validate_and_save_module(@product,params[:product]) {
-            save_classification_custom_fields @product,params[:product]
-            update_status @product
-          }
-          respond_to do |format|
-            if @product.errors.empty?
-              format.html {redirect_update @product, (params[:c_classify] ? "classify" : "edit")}
-            else
-              errors_to_flash @product 
-              format.html {error_redirect}
-            end
-          end
+      p = Product.find(params[:id])
+      action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+        succeed = lambda {|p|
+          add_flash :notices, "Product was saved successfully."
+          redirect_update p, (params[:c_classify] ? "classify" : "edit")
         }
+        failure = lambda {|p,errors|
+          errors_to_flash p
+          error_redirect
+        }
+        before_validate = lambda {|p|
+          save_classification_custom_fields p,params[:product]
+          update_status p
+        }
+        validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
+      }
     end
 
     # DELETE /products/1
@@ -125,13 +129,15 @@ class ProductsController < ApplicationController
       p = Product.find(params[:id])
       action_secure(p.can_edit?(current_user) && current_user.edit_classifications?,p,{:verb => "classify for",:module_name=>"product"}) {
         @product = p
-        @product.update_attributes(params[:product])
-        save_classification_custom_fields(@product,params[:product])
-        update_status @product
-        base_country = Country.find_cached_by_id(params[:base_country_id])
-        @product.auto_classify(base_country)
-        add_flash :notices, "Auto-classification complete, select tariffs below."
-        render 'classify'
+        p.transaction do
+          @product.update_attributes(params[:product])
+          save_classification_custom_fields(@product,params[:product])
+          update_status @product
+          base_country = Country.find_cached_by_id(params[:base_country_id])
+          @product.auto_classify(base_country)
+          add_flash :notices, "Auto-classification complete, select tariffs below."
+          render 'classify'
+        end
       }
     end
 
@@ -158,15 +164,13 @@ class ProductsController < ApplicationController
       bulk_objects do |gc,p|
         good_count = gc if good_count.nil?
         if p.can_edit?(current_user)
-          validate_and_save_module(p,params[:product]) {
-            update_status p
-          }
-          if !p.errors.empty?
+          success = lambda {|o| }
+          failure = lambda {|o,errors|
             good_count += -1
-            p.errors.full_messages.each do |m|
-              add_flash :errors, "Error updating product #{p.unique_identifier}: #{m}"
-            end
-          end
+            errors.full_messages.each {|m| add_flash :errors, "Error updating product #{o.unique_identifier}: #{m}"}
+          }
+          before_validate = lambda {|o| update_status o}
+          validate_and_save_module(p,params[:product],success,failure,:before_validate=>before_validate)
         else
           good_count += -1
           add_flash :errors, "You do not have permission to edit product #{p.unique_identifier}."
@@ -196,10 +200,17 @@ class ProductsController < ApplicationController
               good_count = gc if good_count.nil?
               #reset classifications
               p.classifications.destroy_all
-              validate_and_save_module(p,params[:product],true) {
-                save_classification_custom_fields(p,params[:product])
-                update_status p
+              success = lambda {|o| }
+              failure = lambda {|o,errors|
+                good_count += -1
+                errors.full_messages.each {|m| add_flash :errors, "Error saving product #{o.unique_identifier}: #{m}"}
+                raise OpenChain::ValidationLogicError
               }
+              before_validate = lambda {|o| 
+                save_classification_custom_fields(o,params[:product])
+                update_status o
+              }
+              validate_and_save_module(p,params[:product],success,failure,:before_validate=>before_validate)
             end
           else
             add_flash :errors, "You do not have permission to classify product #{p.unique_identifier}."
@@ -207,12 +218,6 @@ class ProductsController < ApplicationController
           end
         rescue OpenChain::ValidationLogicError
           #ok to do nothing here
-        end
-        if !p.errors.empty?
-          good_count += -1
-          p.errors.full_messages.each do |m|
-            add_flash :errors, "Error updating product #{p.unique_identifier}: #{m}"
-          end
         end
       end
       add_flash :notices, "#{help.pluralize good_count, module_label.downcase} updated successfully."
