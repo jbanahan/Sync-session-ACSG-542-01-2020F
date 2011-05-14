@@ -1,9 +1,0 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-one:
-  model_field_uid: MyString
-  label: MyString
-
-two:
-  model_field_uid: MyString
-  label: MyString

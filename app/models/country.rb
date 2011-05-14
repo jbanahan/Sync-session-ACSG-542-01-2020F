@@ -1,6 +1,7 @@
 class Country < ActiveRecord::Base
   
   attr_accessible :import_location, :classification_rank
+  after_commit :update_cache
   
   scope :import_locations, where(:import_location=>true)
   scope :sort_name, order("name ASC") 
@@ -11,6 +12,13 @@ class Country < ActiveRecord::Base
   scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
 
 	validates_uniqueness_of :iso_code
+
+  def self.find_cached_by_id country_id
+    c = CACHE.get("Country:id:#{country_id}")
+    c = Country.find country_id if c.nil?
+    CACHE.set("Country:id:#{country_id}", c) unless c.nil?
+    c
+  end
 	
 	def self.load_default_countries
     all_countries = [["AFGHANISTAN","AF"],["ALAND ISLANDS","AX"],["ALBANIA","AL"],["ALGERIA","DZ"],
@@ -86,4 +94,9 @@ class Country < ActiveRecord::Base
     end
     return nil
 	end
+
+  private
+  def update_cache
+    CACHE.set "Country:id:#{self.id}", self
+  end
 end

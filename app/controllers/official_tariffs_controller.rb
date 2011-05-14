@@ -23,7 +23,7 @@ class OfficialTariffsController < ApplicationController
   def find
     hts = params[:hts]
     cid = params[:cid]
-    ot = OfficialTariff.where(:hts_code=>hts,:country_id=>cid).first
+    ot = OfficialTariff.find_cached_by_hts_code_and_country_id hts, cid 
     if ot.nil?
       if OfficialTariff.where(:country_id=>cid).empty?
         render :json => "country not loaded".to_json

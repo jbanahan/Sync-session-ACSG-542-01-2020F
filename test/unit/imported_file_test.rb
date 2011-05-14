@@ -231,6 +231,18 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert found.division_id == vh[:div_id], "division id failed"
   end
 
+  test "product with bad hts" do
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
+    attach_array = ["pbhts","US","","9999999999"]
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
+    ss.search_columns.create!(:model_field_uid=>:hts_line_number,:rank=>2)
+    ss.search_columns.create!(:model_field_uid=>:hts_hts_1,:rank=>3)
+    assert !f.process(ss.user,:attachment_data=>attach_array.to_csv)
+    assert !f.errors.full_messages.first.index("HTS Number 9999999999 is invalid for US.").nil?
+  end
+
   test "product with classification and tariffs" do
     vh = {
       :prod_uid=>"pwc_test",
@@ -239,6 +251,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       :hts_line_number => "",
       :hts_hts_1 => "9900778811"
     }
+    OfficialTariff.create!(:hts_code=>vh[:hts_hts_1],:country_id=>countries(:us).id,:full_description=>"FD")
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"test", :user_id=> users(:masteruser).id)
     attach_array = []
     [:prod_uid,:prod_ven_id,:class_cntry_iso,:hts_line_number,:hts_hts_1].each_with_index do |uid,i|
@@ -261,6 +274,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     #change HTS number and reprocess
     vh[:hts_hts_1] = "1234567890"
     vh[:hts_line_number] = tariffs.first.line_number
+    OfficialTariff.create!(:hts_code=>vh[:hts_hts_1],:country_id=>countries(:us).id,:full_description=>"FD")
     attach_array.pop 2
     attach_array << vh[:hts_line_number]
     attach_array << vh[:hts_hts_1]

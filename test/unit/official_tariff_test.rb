@@ -1,7 +1,13 @@
 require 'test_helper'
 
 class OfficialTariffTest < ActiveSupport::TestCase
-  # Replace this with your real tests.
+
+  test "find cached by hts code and country id" do
+    t = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>"7777777777",:full_description=>"FA")
+    found = OfficialTariff.find_cached_by_hts_code_and_country_id "7777777777", countries(:us).id
+    assert t == found
+  end
+
   test "find matches" do
     us = countries(:us)
     china = countries(:china)

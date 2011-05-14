@@ -128,7 +128,7 @@ class ProductsController < ApplicationController
         @product.update_attributes(params[:product])
         save_classification_custom_fields(@product,params[:product])
         update_status @product
-        base_country = Country.find(params[:base_country_id])
+        base_country = Country.find_cached_by_id(params[:base_country_id])
         @product.auto_classify(base_country)
         add_flash :notices, "Auto-classification complete, select tariffs below."
         render 'classify'
@@ -139,7 +139,7 @@ class ProductsController < ApplicationController
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new(params[:product])
-    base_country = Country.find(params[:base_country_id])
+    base_country = Country.find_cached_by_id(params[:base_country_id])
     @base_product.auto_classify base_country
     add_flash :notices, "Auto-classification complete, select tariffs below."
     render 'bulk_classify'

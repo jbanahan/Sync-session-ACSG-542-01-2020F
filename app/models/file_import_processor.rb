@@ -208,6 +208,16 @@ class FileImportProcessor
 
   class ProductRulesProcessor < RulesProcessor
     def before_save(obj)
+      if obj.is_a? TariffRecord
+        #make sure the tariff is valid
+        country_id = obj.classification.country_id
+        [obj.hts_1,obj.hts_2,obj.hts_3].each_with_index do |h,i|
+          unless h.blank?
+            ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id 
+            raise "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." if ot.nil?
+          end
+        end
+      end
     end
     
     def before_merge(shell,database_object)
