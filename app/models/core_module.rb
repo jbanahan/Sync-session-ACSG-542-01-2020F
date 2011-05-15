@@ -142,7 +142,7 @@ class CoreModule
         bulk_actions
       }
   })
-  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,TARIFF,CLASSIFICATION]
+  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new

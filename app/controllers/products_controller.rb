@@ -62,7 +62,7 @@ class ProductsController < ApplicationController
         }
         failure = lambda { |p,e|
           respond_to do |format|
-            @product = Product.new(params[:product])
+            @product = Product.new(params[:product]) #transaction failure requires new object
             set_custom_fields(@product) {|cv| @product.inject_custom_value cv}
             e.full_messages.each {|m| @product.errors[:base]<<m}
             errors_to_flash @product, :now=>true

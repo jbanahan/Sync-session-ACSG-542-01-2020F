@@ -58,41 +58,35 @@ class SalesOrdersController < ApplicationController
   def create
     o = SalesOrder.new(params[:sales_order])
     action_secure(o.can_edit?(current_user),o,{:verb => "create", :module_name=>"order"}) {
-      @sales_order = o
-      respond_to do |format|
-        if @sales_order.save
-					if update_custom_fields @sales_order
-						add_flash :notices, "Sale successfully saved."
-					end
-          format.html { redirect_to(@sales_order) }
-          format.xml  { render :xml => @sales_order, :status => :created, :location => @sales_order }
-        else
-          errors_to_flash @sales_order
-          format.html { render :action => "new" }
-          format.xml  { render :xml => @sales_order.errors, :status => :unprocessable_entity }
-        end
-      end
+      success = lambda {|so|
+        add_flash :notices, "Sale created successfully."
+        redirect_to so
+      }
+      failure = lambda {|so, errors|
+        errors_to_flash so, :now=>true
+        @sales_order = SalesOrder.new(params[:sales_order]) #transaction failure requires new object
+        set_custom_fields(@sales_order) {|cv| @sales_order.inject_custom_value cv}
+        render :action=>"new"
+      }
+      validate_and_save_module(o,params[:sales_order],success,failure)
     }
   end
 
   # PUT /sales_orders/1
   # PUT /sales_orders/1.xml
   def update
-    
     o = SalesOrder.find(params[:id])
     action_secure(o.can_edit?(current_user),o,{:verb => "edit", :module_name=>"order"}) {
-      @sales_order = o
-      respond_to do |format|
-        if @sales_order.update_attributes(params[:sales_order])
-          add_flash :notices, "Sale successfully updated."
-          format.html { redirect_update(@sales_order) }
-          format.xml  { head :ok }
-        else
-          errors_to_flash @sales_order
-          format.html { render :action => "edit" }
-          format.xml  { render :xml => @sales_order.errors, :status => :unprocessable_entity }
-        end
-      end
+      success = lambda {|so|
+        add_flash :notices, "Sale was updated successfully."
+        redirect_update so
+      }
+      failure = lambda {|so,errors|
+        errors_to_flash so, :now=>true
+        @sales_order = so
+        render :action=>"edit"
+      }
+      validate_and_save_module o, params[:sales_order], success, failure
     }
   end
 

@@ -87,21 +87,24 @@ class ApplicationController < ActionController::Base
    #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
    #this method will automatically save custom fields and will rollback if the validation fails
    #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
-    inner_opts = {:before_validate=>lambda {}}
+    inner_opts = {:before_validate=>lambda {|obj|}}
     inner_opts.merge! opts
     begin
       base_object.transaction do 
-        base_object.update_attributes(parameters)
+        base_object.update_attributes!(parameters)
         update_custom_fields(base_object)
         inner_opts[:before_validate].call base_object
-        debugger
         OpenChain::FieldLogicValidator.validate!(base_object) 
         succeed_lambda.call base_object
       end
     rescue OpenChain::ValidationLogicError
       fail_lambda.call base_object, base_object.errors
+    rescue ActiveRecord::RecordInvalid
+      if $!.record != base_object
+        $!.record.errors.full_messages.each {|m| base_object.errors[:base]<<m}
+      end
+      fail_lambda.call base_object, base_object.errors
     end
-    
   end
 
     #loads the custom values into the parent object without saving

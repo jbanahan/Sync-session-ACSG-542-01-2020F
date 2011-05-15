@@ -25,7 +25,9 @@ var OpenChain = (function() {
         field.addClass("error");
         field.after("<img src='/images/error.png' alt='Field Error' class='val_status'/>");
         field.next().after("<div class='val_status tooltip'>"+m+"</div>");
-        field.next().tooltip();
+        field.next().tooltip({onShow: function() {
+          return OpenChain.raiseTooltip(this.getTip());
+        }});
       } else {
         field.removeClass("error");
       }
@@ -179,6 +181,11 @@ var OpenChain = (function() {
   return {
     //public stuff
 
+    raiseTooltip: function(tip) {
+      tip.css('z-index','5000');
+      $("body").append(tip);
+      return true;
+    },
     addKeyMap: function(key,desc,act) {
       mappedKeys[key]=new Object();
       mappedKeys[key].description = desc;
@@ -320,7 +327,7 @@ $( function() {
       effect: "fade",
       opacity: 0.9,
       onBeforeShow: function(event, position){
-        this.getTip().css({'z-index':'9999'});
+        OpenChain.raiseTooltip(this.getTip());
        }
     });
     $(".tiplink").tooltip({position:"bottom center", effect: "fade", opacity: 0.9, offset: [8,0]});
@@ -735,7 +742,7 @@ function openPackSalesOrder(id) {
     var i;
     for(i=0;i<order.sales_order_lines.length;i++) {
       var line = order.sales_order_lines[i];
-      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_sales_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]'/></td></tr>";
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_sales_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='delln_delivery_qty' class='rvalidate'/></td></tr>";
     }
     h += "</tbody></table>";
     $("#div_pack_order_content").html(h);
@@ -751,7 +758,7 @@ function openPackOrder(id) {
     var i;
     for(i=0;i<order.order_lines.length;i++) {
       var line = order.order_lines[i];
-      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' /></td></tr>";
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='shpln_shipped_qty' class='rvalidate'/></td></tr>";
     }
     h += "</tbody></table>";
     $("#div_pack_order_content").html(h);
