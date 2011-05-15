@@ -1,7 +1,11 @@
 require 'test_helper'
 
 class CustomDefinitionTest < ActiveSupport::TestCase
-  # Replace this with your real tests.
+  test "model_field_uid" do 
+    cd = CustomDefinition.create!(:module_type=>"Order",:label=>"x",:data_type=>"date")
+    assert cd.model_field_uid == "*cf_#{cd.id}", "Expected *cf_#{cd.id}, got #{cd.model_field_uid}"
+  end
+
   test "date" do
     cd = CustomDefinition.new(:module_type=>"Order", :label=>"x",:data_type=>"date")
 		assert cd.date?, "If data_type is \"date\" .date? should have been true"

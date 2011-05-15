@@ -4,6 +4,44 @@ var OpenChain = (function() {
   var keyMapPopUp = null;
   var invalidTariffFields = new Array();
 
+  var initRemoteValidate = function() {
+    $(".rvalidate").live('change',function() {
+        remoteValidate($(this));
+    });
+    $("form").live('submit',function(ev) {
+      remoteValidateFormBlock($(this),ev);
+    });
+  }
+  var remoteValidateFormBlock = function(form,ev) {
+    if(form.find("input.error").size()) {
+      window.alert("Please correct errors and try again.");
+      ev.preventDefault();
+    }
+  }
+  var remoteValidate = function(field) {
+    mf_id = field.attr('mf_id');
+    if(!mf_id) {
+      return;
+    }
+    field.nextAll(".val_status").remove();
+    field.after("<img src='/images/ajax-loader.gif' class='val_status' title='Validating...' style='display:none;'/>");
+    field.next().fadeIn();
+    $.getJSON('/field_validator_rules/validate',{mf_id: mf_id, value: field.val()},function(data) {
+      field.nextAll(".val_status").remove();
+      if(data.length) {
+        var m = "";
+        $.each(data,function(i,v) {m += v+"<br />"});
+        field.addClass("error");
+        field.after("<img src='/images/error.png' alt='Field Error' class='val_status'/>");
+        field.next().after("<div class='val_status tooltip'>"+m+"</div>");
+        field.next().tooltip({onShow: function() {
+          return OpenChain.raiseTooltip(this.getTip());
+        }});
+      } else {
+        field.removeClass("error");
+      }
+    });
+  }
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
     $(document).unbind('keyup');
@@ -37,6 +75,19 @@ var OpenChain = (function() {
         $(this).click(function() {window.location=lnk;});
         if(key) {
           OpenChain.addKeyMap(key,$(this).html(),function() {window.location=lnk;});
+          OpenChain.activateHotKeys();
+        }
+      }
+    });
+  }
+  var initFormButtons = function() {
+    $(".form_to").each(function() {
+      var frm_id = $(this).attr('form_id');
+      var key = $(this).attr('key_map');
+      if(frm_id) {
+        $(this).click(function() {$("#"+frm_id).submit();});
+        if(key) {
+          OpenChain.addKeyMap(key,$(this).html(),function() {$("#"+frm_id).submit();});
           OpenChain.activateHotKeys();
         }
       }
@@ -138,6 +189,12 @@ var OpenChain = (function() {
 
   return {
     //public stuff
+
+    raiseTooltip: function(tip) {
+      tip.css('z-index','5000');
+      $("body").append(tip);
+      return true;
+    },
     addKeyMap: function(key,desc,act) {
       mappedKeys[key]=new Object();
       mappedKeys[key].description = desc;
@@ -246,11 +303,15 @@ var OpenChain = (function() {
     },
     init: function() {
       initLinkButtons();
+      initFormButtons();
+      initRemoteValidate();
     }
   };
 })();
 $( function() {
     OpenChain.init();
+    $(".decimal").jStepper();
+    $(".integer").jStepper({allowDecimals:false});
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
       $('#notice').fadeOut();
@@ -275,7 +336,7 @@ $( function() {
       effect: "fade",
       opacity: 0.9,
       onBeforeShow: function(event, position){
-        this.getTip().css({'z-index':'9999'});
+        OpenChain.raiseTooltip(this.getTip());
        }
     });
     $(".tiplink").tooltip({position:"bottom center", effect: "fade", opacity: 0.9, offset: [8,0]});
@@ -690,7 +751,7 @@ function openPackSalesOrder(id) {
     var i;
     for(i=0;i<order.sales_order_lines.length;i++) {
       var line = order.sales_order_lines[i];
-      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_sales_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]'/></td></tr>";
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_sales_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='delln_delivery_qty' class='rvalidate'/></td></tr>";
     }
     h += "</tbody></table>";
     $("#div_pack_order_content").html(h);
@@ -706,7 +767,7 @@ function openPackOrder(id) {
     var i;
     for(i=0;i<order.order_lines.length;i++) {
       var line = order.order_lines[i];
-      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' /></td></tr>";
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='shpln_shipped_qty' class='rvalidate'/></td></tr>";
     }
     h += "</tbody></table>";
     $("#div_pack_order_content").html(h);

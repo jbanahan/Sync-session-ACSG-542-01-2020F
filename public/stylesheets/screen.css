@@ -126,9 +126,11 @@ p {
     margin: .4em 0 .8em 0;
     padding: 0;
 }
+/*
 img {
     margin: 10px 0 5px;
 }
+*/
 /* Header styles */
 #title {
     text-decoration: none;
@@ -285,7 +287,6 @@ img {
   color:#fff;
   text-align:left;
   font-size:12px;
-
   /* outline radius for mozilla/firefox only */
   -moz-box-shadow:0 0 10px #000;
   -webkit-box-shadow:0 0 10px #000;

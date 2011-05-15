@@ -7,6 +7,7 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :sort_criterions, :dependent => :destroy
   has_many   :search_criterions, :dependent => :destroy
   has_many   :search_columns, :dependent => :destroy
+  has_many   :field_validator_rules, :dependent => :destroy
   
   after_save :reset_model_field_constants 
   after_save :reset_field_label
@@ -19,6 +20,10 @@ class CustomDefinition < ActiveRecord::Base
       o = find id
     end
     o
+  end
+
+  def model_field_uid
+    self.id.nil? ? nil : "*cf_#{id}"
   end
 
   def date?

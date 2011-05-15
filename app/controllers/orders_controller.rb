@@ -65,23 +65,19 @@ class OrdersController < ApplicationController
     def create
       o = Order.new(params[:order])
       action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
-        @order = o
-        respond_to do |format|
-          if @order.save
-              History.create_order_changed(@order,current_user,order_url(@order))
-							if update_custom_fields @order
-                  add_flash :notices, "Order was created successfully."
-                end
-              format.html { redirect_to(@order) }
-              format.xml  { render :xml => @order, :status => :created, :location => @order }
-          else
-              errors_to_flash @order, :now => true
-              @divisions = Division.all
-              @vendors = Company.find_vendors.not_locked
-              format.html { render :action => "new" }
-              format.xml  { render :xml => @order.errors, :status => :unprocessable_entity }
-          end
-        end        
+        success = lambda {|o|
+          add_flash :notices, "Order created successfully."
+          redirect_to o
+        }
+        failure = lambda {|o,errors|
+          errors_to_flash o, :now=>true
+          @order = Order.new(params[:order])
+          set_custom_fields(@order) {|cv| @order.inject_custom_value cv}
+          @divisions = Division.all
+          @vendors = Company.find_vendors.not_locked
+          render :action=>"new"
+        }
+        validate_and_save_module(o,params[:order],success,failure)
       }
     end
 
@@ -90,23 +86,18 @@ class OrdersController < ApplicationController
     def update
       o = Order.find(params[:id])
       action_secure(current_user.company.master,o,{:module_name=>"order"}) {
-        @order = o
-        respond_to do |format|
-            if @order.update_attributes(params[:order])
-                History.create_order_changed(@order,current_user,order_url(@order))
-                if update_custom_fields @order
-                  add_flash :notices, "Order was updated successfully."
-                end
-                format.html {
-                    redirect_update @order
-                }
-                format.xml  { head :ok }
-            else
-                errors_to_flash @order, :now => true
-                format.html { render :action => "edit" }
-                format.xml  { render :xml => @order.errors, :status => :unprocessable_entity }
-            end
-        end
+        succeed = lambda {|ord|
+          add_flash :notices, "Order was updated successfully."
+          redirect_update ord
+        }
+        failure = lambda {|ord,errors|
+          errors_to_flash ord, :now=>true
+          @order = ord
+          @divisions = Division.all
+          @vendors = Company.find_vendors.not_locked
+          render :action=>"edit"
+        }
+        validate_and_save_module o, params[:order], succeed, failure
       }
     end
 

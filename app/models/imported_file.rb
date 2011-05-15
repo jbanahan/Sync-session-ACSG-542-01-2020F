@@ -119,8 +119,9 @@ class ImportedFile < ActiveRecord::Base
       @fr = imported_file.file_import_results.build(:run_by=>user)
     end
 
-    def process_row row_number, object, messages
-      @fr.change_records.create(:record_sequence_number=>row_number,:recordable=>object)
+    def process_row row_number, object, messages, failed=false
+      cr = @fr.change_records.create(:record_sequence_number=>row_number,:recordable=>object,:failed=>failed)
+      messages.each {|m| cr.change_record_messages.create(:message=>m)}
     end
 
     def process_start time

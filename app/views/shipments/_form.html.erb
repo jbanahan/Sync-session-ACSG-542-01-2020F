@@ -40,7 +40,7 @@ $(function() {
 <%= form_for @shipment, :html => {:id=>'frm_shp'} do |f| %>
 <div class='content_head'>
   <span class='content_head_label'><%=field_label :shp_ref%>:</span>
-  <b><%= f.text_field :reference %></b>
+  <b><%=model_text_field f, :reference, :shp_ref  %></b>
   <br />
   <span class='content_head_label'><%=field_label :shp_ven_name%>:</span>
   <% if @shipment.shipment_lines.size > 0 %>

@@ -1,4 +1,5 @@
 class ApplicationController < ActionController::Base
+    require 'open_chain/field_logic'
     require 'yaml'
 
     protect_from_forgery
@@ -82,24 +83,52 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  
-    def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
-        cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
-        pass = true
-        unless cpp.nil?
-          cpp.each do |k,v|
-            definition_id = k.to_s
-            cd = CustomDefinition.cached_find(definition_id)
-            cv = customizable_parent.get_custom_value cd
-            unless (v.blank? && cv.value.blank?) || v==cv.value
-              cv.value = v
-              cv.save
-            end
-            pass = false unless cv.errors.empty?
-            errors_to_flash cv
+  def validate_and_save_module base_object, parameters, succeed_lambda, fail_lambda, opts={}
+   #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
+   #this method will automatically save custom fields and will rollback if the validation fails
+   #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
+    inner_opts = {:before_validate=>lambda {|obj|}}
+    inner_opts.merge! opts
+    begin
+      base_object.transaction do 
+        base_object.update_attributes!(parameters)
+        update_custom_fields(base_object)
+        inner_opts[:before_validate].call base_object
+        OpenChain::FieldLogicValidator.validate!(base_object) 
+        succeed_lambda.call base_object
+      end
+    rescue OpenChain::ValidationLogicError
+      fail_lambda.call base_object, base_object.errors
+    rescue ActiveRecord::RecordInvalid
+      if $!.record != base_object
+        $!.record.errors.full_messages.each {|m| base_object.errors[:base]<<m}
+      end
+      fail_lambda.call base_object, base_object.errors
+    end
+  end
+
+    #loads the custom values into the parent object without saving
+    def set_custom_fields customizable_parent, customizable_parent_params = nil, &block
+      cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
+      pass = true
+      unless cpp.nil?
+        cpp.each do |k,v|
+          definition_id = k.to_s
+          cd = CustomDefinition.cached_find(definition_id)
+          cv = customizable_parent.get_custom_value cd
+          unless (v.blank? && cv.value.blank?) || v==cv.value
+            cv.value = v
+            yield cv if block_given?
           end
+          pass = false unless cv.errors.empty?
+          errors_to_flash cv
         end
-        pass
+      end
+      pass
+    end
+
+    def update_custom_fields(customizable_parent, customizable_parent_params=nil) 
+      set_custom_fields(customizable_parent, customizable_parent_params) {|cv| cv.save!}
     end
     
     def update_status(statusable)
@@ -164,8 +193,8 @@ class ApplicationController < ActionController::Base
       render :text => CsvMaker.new.make(@current_search,@results) 
     end
 
-    def error_redirect(message)
-        add_flash :errors, message
+    def error_redirect(message=nil)
+        add_flash :errors, message unless message.nil?
         redirect_to request.referrer
     end
     

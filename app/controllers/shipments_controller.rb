@@ -48,21 +48,18 @@ class ShipmentsController < ApplicationController
   def create
     s = Shipment.new(params[:shipment])
     action_secure(s.can_edit?(current_user),s,{:verb => "create",:module_name=>"shipment"}) {
-      @shipment = s
-      respond_to do |format|
-        if @shipment.save
-					if update_custom_fields @shipment
-						add_flash :notices, "Shipment was created successfully."
-					end
-          History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
-          format.html { redirect_to(@shipment) }
-          format.xml  { render :xml => @shipment, :status => :created, :location => @shipment }
-        else
-          errors_to_flash @shipment
-  				format.html { render :action => "new" }
-          format.xml  { render :xml => @shipment.errors, :status => :unprocessable_entity }
-        end
-      end
+      succeed = lambda {|sh|
+			  add_flash :notices, "Shipment was created successfully."
+        redirect_to sh
+      }
+      failure = lambda {|sh,errors|
+        @shipment = Shipment.new(params[:shipment]) #transaction failure requires new object
+        set_custom_fields(@shipment) {|cv| @shipment.inject_custom_value cv}
+        errors.full_messages.each {|m| @shipment.errors[:base]<<m}
+        errors_to_flash @shipment
+        render :action=>"new"
+      }
+      validate_and_save_module(s,params[:shipment],succeed,failure)
     }
   end
 
@@ -71,21 +68,16 @@ class ShipmentsController < ApplicationController
   def update
     s = Shipment.find(params[:id])
     action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
-      respond_to do |format|
-        @shipment = s
-        if @shipment.update_attributes(params[:shipment])
-					if update_custom_fields @shipment
-						add_flash :notices, "Shipment was updated successfully."
-					end
-					History.create_shipment_changed(@shipment, current_user, shipment_url(@shipment))
-          format.html { redirect_update(@shipment) }
-          format.xml  { head :ok }
-        else
-          errors_to_flash @shipment, :now => true
-  				format.html { render :action => "edit" }
-          format.xml  { render :xml => @shipment.errors, :status => :unprocessable_entity }
-        end
-      end
+      succeed = lambda {|shp|
+        add_flash :notices, "Shipment was updated successfully."
+        redirect_update s
+      }
+      failure = lambda {|shp,errors|
+        errors_to_flash shp, :now=>true
+        @shipment = shp
+        render :action=>"edit"
+      }
+      validate_and_save_module s, params[:shipment], succeed, failure
     }
   end
 

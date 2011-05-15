@@ -50,22 +50,18 @@ class DeliveriesController < ApplicationController
   def create
     d = Delivery.new(params[:delivery])
     action_secure(d.can_edit?(current_user),d,{:verb => "create",:module_name=>"delivery"}) {
-      @delivery = d
-
-      respond_to do |format|
-        if @delivery.save
-					if update_custom_fields @delivery
-						add_flash :notices, "Delivery was created successfully."
-					end
-          History.create_delivery_changed(@delivery, current_user, delivery_url(@delivery))
-          format.html { redirect_to(@delivery) }
-          format.xml  { render :xml => @delivery, :status => :created, :location => @delivery }
-        else
-          errors_to_flash @delivery
-          format.html { render :action => "new" }
-          format.xml  { render :xml => @delivery.errors, :status => :unprocessable_entity }
-        end
-      end
+      succeed = lambda {|del|
+        add_flash :notices, "Delivery was created successfully."
+        redirect_to del
+      }
+      failure = lambda {|del,errors|
+        @delivery = Delivery.new(params[:delivery]) #transaction failure requires new object
+        set_custom_fields(@delivery) {|cv| @delivery.inject_custom_value cv}
+        errors.full_messages.each {|m| @delivery.errors[:base]<<m}
+        errors_to_flash @delivery
+        render :action => "new"
+      }
+      validate_and_save_module d, params[:delivery], succeed, failure
     }
   end
 
@@ -74,21 +70,16 @@ class DeliveriesController < ApplicationController
   def update
     d = Delivery.find(params[:id])
     action_secure(d.can_edit?(current_user),d,{:verb => "edit",:module_name=>"delivery"}) {
-      @delivery = d
-      respond_to do |format|
-        if @delivery.update_attributes(params[:delivery])
-					if update_custom_fields @delivery
-						add_flash :notices, "Delivery was updated successfully."
-					end
-          History.create_delivery_changed(@delivery, current_user, delivery_url(@delivery))
-          format.html { redirect_update(@delivery) }
-          format.xml  { head :ok }
-        else
-          errors_to_flash @delivery, :now => true
-          format.html { render :action => "edit" }
-          format.xml  { render :xml => @delivery.errors, :status => :unprocessable_entity }
-        end
-      end
+      succeed = lambda {|del|
+        add_flash :notices, "Delivery was updated successfully"
+        redirect_update del
+      }
+      failure = lambda {|del, errors|
+        errors_to_flash del, :now=>true
+        @delivery = del
+        render :action=> "edit"
+      }
+      validate_and_save_module d, params[:delivery], succeed, failure
     }
   end
 

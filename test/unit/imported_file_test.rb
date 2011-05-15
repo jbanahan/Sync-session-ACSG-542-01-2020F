@@ -43,6 +43,11 @@ class ImportedFileTest < ActiveSupport::TestCase
     change_records.each do |cr|
       assert cr.recordable.is_a?(Product)
       good_uids.delete(cr.recordable.unique_identifier)
+      msgs = cr.change_record_messages
+      assert msgs.size==1
+      msg = msgs.first
+      good_msgs = ["Unique Identifier set to puid001","Unique Identifier set to puid002"]
+      assert good_msgs.include?(msg.message), "Message not in good_msgs array: #{msg.message}"
     end
     assert good_uids.size==0
   end
@@ -65,6 +70,48 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert file.can_view?(vu2)
     assert file.can_view?(au)
     assert file.can_view?(su)
+  end
+
+  test "failed row" do
+    #tests that a validation catches the line that doesn't have an "a" and writes a failed change record
+    vendor_id = companies(:vendor).id
+    attachment = "abc,#{vendor_id}\ndef,#{vendor_id}\nabd,#{vendor_id}"
+
+    rule = FieldValidatorRule.create!(:model_field_uid=>"ord_ord_num",:regex=>"^a.*",:custom_message=>"cmsg")
+
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
+    ic.save!
+    ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
+    ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row =>false)
+    f.save!
+    f.process(users(:masteruser),{:attachment_data=>attachment})
+    fr = f.file_import_results.first
+    orders = []
+    ["abc","abd"].each do |n|
+      ord = Order.where(:order_number=>n).first
+      assert !ord.nil?
+      orders << ord
+    end
+
+    change_records = fr.change_records
+    assert change_records.size==3 #one for each row
+    
+    found_failed = false
+    change_records.each do |cr|
+      changed = cr.recordable
+      if changed.nil?
+        assert cr.failed?
+        found_failed = true
+        msgs = cr.change_record_messages.collect {|m| m.message}
+        assert msgs.include?("ERROR: #{rule.custom_message}"), "Expected to include ERROR: #{rule.custom_message}, array: #{msgs}" 
+
+      else
+        orders.delete changed
+      end
+    end
+    assert found_failed
+    assert orders.empty?
   end
 
   test "process" do
@@ -184,6 +231,18 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert found.division_id == vh[:div_id], "division id failed"
   end
 
+  test "product with bad hts" do
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
+    attach_array = ["pbhts","US","","9999999999"]
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
+    ss.search_columns.create!(:model_field_uid=>:hts_line_number,:rank=>2)
+    ss.search_columns.create!(:model_field_uid=>:hts_hts_1,:rank=>3)
+    assert !f.process(ss.user,:attachment_data=>attach_array.to_csv)
+    assert !f.errors.full_messages.first.index("HTS Number 9999999999 is invalid for US.").nil?
+  end
+
   test "product with classification and tariffs" do
     vh = {
       :prod_uid=>"pwc_test",
@@ -192,6 +251,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       :hts_line_number => "",
       :hts_hts_1 => "9900778811"
     }
+    OfficialTariff.create!(:hts_code=>vh[:hts_hts_1],:country_id=>countries(:us).id,:full_description=>"FD")
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"test", :user_id=> users(:masteruser).id)
     attach_array = []
     [:prod_uid,:prod_ven_id,:class_cntry_iso,:hts_line_number,:hts_hts_1].each_with_index do |uid,i|
@@ -214,6 +274,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     #change HTS number and reprocess
     vh[:hts_hts_1] = "1234567890"
     vh[:hts_line_number] = tariffs.first.line_number
+    OfficialTariff.create!(:hts_code=>vh[:hts_hts_1],:country_id=>countries(:us).id,:full_description=>"FD")
     attach_array.pop 2
     attach_array << vh[:hts_line_number]
     attach_array << vh[:hts_hts_1]

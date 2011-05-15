@@ -37,7 +37,7 @@ $(function() {
 <%= form_for(@sales_order, :html=>{:id=>'frm_so'}) do |f| %>
 
   <div class='content_head'>
-    <p><span class='content_head_label'><%=field_label :sale_order_number%>: </span><%= f.text_field :order_number %></p>
+    <p><span class='content_head_label'><%=field_label :sale_order_number%>: </span><%=model_text_field(f,:order_number,:sale_order_number) %></p>
     <p><span class='content_head_label'><%=field_label :sale_cust_name%>: </span><%= f.collection_select :customer_id, Company.where(:customer => true).not_locked, :id, :name, options ={:prompt => "Select a customer"} %></p>
   </div>
   <table style='width:100%;'><!--table based layout... good enough for now-->
@@ -53,7 +53,7 @@ $(function() {
         <table class='detail_table'>
           <thead><tr><th>Attributes</th></tr></thead>
           <tbody><tr><td>
-            <b><%=field_label :sale_order_date%>: </b><%= f.text_field :order_date, "class" => "isdate" %><br />
+            <b><%=field_label :sale_order_date%>: </b><%= model_text_field(f,:order_date,:sale_order_date, :class=>"isdate") %><br />
             <b><%=field_label :sale_div_name%>: </b><%= f.collection_select :division_id, Division.all, :id, :name, options ={:prompt => (Division.all.size>1 ? "Select a division" : nil)} %><br />
       			<%=show_custom_fields @sales_order, {:form => true}%>
           </td></tr></tbody>  

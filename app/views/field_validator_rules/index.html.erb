@@ -1,0 +1,35 @@
+<%content_for :javascript do%>
+$(function() {
+  $("#mod_new").dialog({autoOpen:false,title:"Select a Field",buttons:{
+    "New":function() {
+      if($("#sel_new").val().length>0) {
+        window.location='<%=new_field_validator_rule_path%>?mf_id='+$("#sel_new").val();
+      } else {
+        window.alert("Please select a field first.");
+      }
+    },
+    "Cancel":function() {$("#mod_new").dialog('close');}
+  }});
+  $("#btn_new").click(function() {$("#mod_new").dialog('open');});
+  OpenChain.addClickMap('n','New',"btn_new");
+  OpenChain.activateHotKeys();
+});
+<%end%>
+<%content_for :action_bar do%>
+  <button id='btn_new'>New</button>
+<%end%>
+<table class='detail_table'>
+  <thead><tr><th>&nbsp;</th><th>Field</th><th>Module</th><th>Comment</th></tr></thead>
+  <tbody>
+<%@rules.each do |r|%>
+  <tr class='hover'><td><%=link_to "Edit", edit_field_validator_rule_path(r)%></td>
+  <td><%=ModelField.find_by_uid(r.model_field_uid).label%></td>
+  <td><%=CoreModule.find_by_class_name(r.module_type).label%></td>
+  <td><%=r.comment%></td>
+  </tr>
+<%end%>
+  <tbody>
+</table>
+<div id='mod_new' style='display:none;'>
+  <%=model_field_select_tag("sel_new",:id=>"sel_new")%>
+</div>

@@ -9,6 +9,27 @@ module ApplicationHelper
     :pdf=>ICON_PDF
   }
 
+  #build a select box with all model_fields grouped by module.
+  def model_field_select_tag(name,opts={})
+    select_tag name, grouped_options_for_select(CoreModule.grouped_options,nil,"Select a Field"), opts
+  end
+
+  #builds a text field to back a field represented with a model_field_uid in the ModelField constants.
+  def model_text_field form_object, field_name, model_field_uid, opts={}
+    inner_opts = opts_for_model_text_field model_field_uid, opts
+    form_object.text_field(field_name,inner_opts)
+  end
+
+  def model_text_field_tag field_name, model_field_uid, value, opts={}
+    inner_opts = opts_for_model_text_field model_field_uid, opts
+    text_field_tag(field_name,value,inner_opts)
+  end
+  def model_text_area_tag field_name, model_field_uid, value, opts={}
+    inner_opts = opts_for_model_text_field model_field_uid, opts
+    text_area_tag(field_name,value,inner_opts);
+  end
+
+
   def attachment_icon att
     opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px"}
     link_opts = {}
@@ -59,15 +80,15 @@ module ApplicationHelper
   		      field = c_val ? "Yes" : "No"
   		    end
   		  elsif d.data_type=='text'
-  		    field = opts[:form] ? text_area_tag(name, c_val, {:title=>"#{d.tool_tip}", :class=>field_tip_class,:rows=>5, :cols=>24}) : "#{c_val}"
+  		    field = opts[:form] ? model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>field_tip_class,:rows=>5, :cols=>24}) : "#{c_val}"
   		  else
-          field = opts[:form] ? text_field_tag(name, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}", :size=>"30"}) : "#{c_val}"
+          field = opts[:form] ? model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}", :size=>"30"}) : "#{c_val}"
   		  end
         x << field_row(d.label,field)          
   		else
 				z = "<b>".html_safe+d.label+": </b>".html_safe
 				if opts[:form]
-				  z << text_field_tag(name, c_val, :title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}")
+				  z << model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}"})
 				else
 				  z << "#{c_val}"
 				end
@@ -107,5 +128,18 @@ module ApplicationHelper
 
   def tariff_more_info hts_number, country_id
     link_to "info", "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
+  end
+
+  private
+  def opts_for_model_text_field model_field_uid, opts
+    inner_opts = {:class=>val_class(model_field_uid),:mf_id=>model_field_uid}
+    passed_class = opts.delete(:class)
+    inner_opts[:class] << " " << passed_class unless passed_class.blank?
+    inner_opts.merge! opts
+    inner_opts 
+  end
+  def val_class model_field_uid
+  #returns the string "rvalidate" if the field needs remote validation
+    FieldValidatorRule.find_cached_by_model_field_uid(model_field_uid.to_s).empty? ? "" : "rvalidate"
   end
 end

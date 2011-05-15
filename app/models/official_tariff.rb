@@ -1,4 +1,7 @@
 class OfficialTariff < ActiveRecord::Base
+
+  after_commit :update_cache
+
   belongs_to :country
   has_one :official_quota
 
@@ -8,6 +11,14 @@ class OfficialTariff < ActiveRecord::Base
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
   
+  #return tariff for hts_code & country_id
+  def self.find_cached_by_hts_code_and_country_id hts_code, country_id
+    t = CACHE.get("OfficialTariff:ct:#{hts_code}:#{country_id}")
+    t = OfficialTariff.where(:country_id=>country_id,:hts_code=>hts_code).first if t.nil?
+    CACHE.set("OfficialTariff:ct:#{hts_code}:#{country_id}",t) unless t.nil?
+    t
+  end
+
   #return all potential tariffs that match at the 6 digit level
   def find_matches(other_country)
     h = self.hts_code.length > 6 ? self.hts_code[0,6] : self.hts_code
@@ -21,4 +32,8 @@ class OfficialTariff < ActiveRecord::Base
     result
   end
 
+  private
+  def update_cache
+    CACHE.set "OfficialTariff:ct:#{self.hts_code}:#{self.country_id}", self
+  end
 end

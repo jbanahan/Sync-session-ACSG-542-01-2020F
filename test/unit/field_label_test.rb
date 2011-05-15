@@ -1,6 +1,11 @@
 require 'test_helper'
 
 class FieldLabelTest < ActiveSupport::TestCase
+
+  def teardown #make sure label_cache is cleared
+    FieldLabel::LABEL_CACHE.clear
+  end
+
   test "set_label" do
     expected_label = "abc123"
     mfuid = "fake_mfuid"

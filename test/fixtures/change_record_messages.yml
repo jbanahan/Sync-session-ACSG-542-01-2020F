@@ -1,0 +1,9 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  change_record_id: 1
+  message: MyString
+
+two:
+  change_record_id: 1
+  message: MyString

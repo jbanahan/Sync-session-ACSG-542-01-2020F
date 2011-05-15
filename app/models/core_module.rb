@@ -142,7 +142,7 @@ class CoreModule
         bulk_actions
       }
   })
-  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE]
+  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
@@ -180,6 +180,19 @@ class CoreModule
     to_proc = test_to_array {|c| block_given? ? (yield c) : true}
     r = []
     to_proc.each {|c| r << [c.label,c.class_name]}
+    r
+  end
+
+  #make hash of arrays to work with FormOptionsHelper.grouped_options_for_select
+  def self.grouped_options
+    r = {}
+    mods = CORE_MODULES.sort {|x,y| x.label <=> y.label}
+    mods.each do |cm|
+      flds = cm.model_fields.values.sort {|x,y| x.label <=> y.label}
+      fld_array = []
+      flds.each {|f| fld_array << [f.label,f.uid]}
+      r[cm.label] = fld_array
+    end
     r
   end
   

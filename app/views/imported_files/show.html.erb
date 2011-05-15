@@ -55,6 +55,9 @@
   <% if @imported_file.deletable? && @imported_file.can_delete?(current_user)%>
     <%=button_to('Delete', imported_file_path(@imported_file),:method=>:delete, :confirm=>"Are you sure?", :id=>"btn_delete")%>
   <% end %>
+  <% unless @file_import_result.nil?%>
+    <button class='btn_link' link_to='<%=file_import_result_path(@file_import_result)%>'>Log</button>
+  <%end%>
   <%unless @bulk_actions.blank?%>
     <%@bulk_actions.each do |k,v|%>
       <button id='<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>'><%=k%></button>
@@ -75,6 +78,12 @@
         <%=field_row "Last Processed", @file_import_result.nil? ? "Never" : @file_import_result.finished_at %>
         <%=field_row "File Rows", @file_import_result.nil? ? "" : @file_import_result.change_records.size %>
         <%=field_row "Records", @search_run.nil? ? "" : @search_run.total_objects %>
+        <% if @file_import_result%>
+          <% error_count = @file_import_result.error_count%>
+          <% if error_count>0%>
+            <%=field_row "Errors", link_to(pluralize(error_count,"error"), @file_import_result, :class=>"error")%>
+          <%end%>
+        <%end%>
       </table>
     </td>
   </tr>

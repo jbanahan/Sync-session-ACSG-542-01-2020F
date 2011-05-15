@@ -1,5 +1,8 @@
 OpenChain::Application.routes.draw do
 
+  resources :field_validator_rules do
+    get 'validate', :on=>:collection
+  end
   resources :field_labels, :only=>[:index] do
     post 'save', :on=>:collection
   end
@@ -141,6 +144,11 @@ OpenChain::Application.routes.draw do
 		get :shipping_address_list, :on => :member
   end
   
+  resources :file_import_results, :only => [:show] do
+    member do
+      get 'messages'
+    end
+  end
   resources :imported_files, :only => [:index, :show, :destroy] do
     member do
       get 'preview'
