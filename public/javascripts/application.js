@@ -8,6 +8,15 @@ var OpenChain = (function() {
     $(".rvalidate").live('change',function() {
         remoteValidate($(this));
     });
+    $("form").live('submit',function(ev) {
+      remoteValidateFormBlock($(this),ev);
+    });
+  }
+  var remoteValidateFormBlock = function(form,ev) {
+    if(form.find("input.error").size()) {
+      window.alert("Please correct errors and try again.");
+      ev.preventDefault();
+    }
   }
   var remoteValidate = function(field) {
     mf_id = field.attr('mf_id');
