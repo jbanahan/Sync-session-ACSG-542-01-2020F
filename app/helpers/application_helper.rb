@@ -10,19 +10,31 @@ module ApplicationHelper
   }
 
   #build a select box with all model_fields grouped by module.
-  def model_field_select_tag(name,opts={})
+  def select_model_fields_tag(name,opts={})
     select_tag name, grouped_options_for_select(CoreModule.grouped_options,nil,"Select a Field"), opts
   end
 
   #builds a text field to back a field represented with a model_field_uid in the ModelField constants.
+  #will write a select box if the field's validators include a .one_of validation
   def model_text_field form_object, field_name, model_field_uid, opts={}
     inner_opts = opts_for_model_text_field model_field_uid, opts
-    form_object.text_field(field_name,inner_opts)
+    r = FieldValidatorRule.find_cached_by_model_field_uid model_field_uid
+    if r.size>0 && r[0].one_of_array.size > 0
+      form_object.select(field_name,r[0].one_of_array,{:include_blank=>true},inner_opts)
+    else
+      form_object.text_field(field_name,inner_opts)
+    end
   end
 
   def model_text_field_tag field_name, model_field_uid, value, opts={}
     inner_opts = opts_for_model_text_field model_field_uid, opts
-    text_field_tag(field_name,value,inner_opts)
+    r = FieldValidatorRule.find_cached_by_model_field_uid model_field_uid
+    if r.size>0 && r[0].one_of_array.size>0
+      a = [""]+r[0].one_of_array
+      select_tag(field_name,options_for_select(a,value),inner_opts)
+    else
+      text_field_tag(field_name,value,inner_opts)
+    end
   end
   def model_text_area_tag field_name, model_field_uid, value, opts={}
     inner_opts = opts_for_model_text_field model_field_uid, opts

@@ -3,6 +3,23 @@ require 'open_chain/field_logic'
 
 class FieldLogicValidatorTest < ActiveSupport::TestCase
 
+  test "one of array - empty" do 
+    f = FieldValidatorRule.new
+    result = f.one_of_array
+    assert result.size==0
+    f.one_of = "    "
+    result = f.one_of_array
+    assert result.size==0
+  end
+
+  test "one of array" do
+    f = FieldValidatorRule.new(:one_of=>"abc \ndef, \nghi\n 1991$(10)")
+    result = f.one_of_array
+    assert result.size==4, "Expected 4, got #{result.size}"
+    expected = ["abc","def,","ghi","1991$(10)"]
+    assert result==expected
+  end
+
   test "base failure" do
     f = FieldValidatorRule.create!(:model_field_uid=>"prod_uid",:regex=>"abc",:custom_message=>"failed!")
     p = Product.new(:unique_identifier=>"def")

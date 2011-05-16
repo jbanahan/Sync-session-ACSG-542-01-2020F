@@ -56,6 +56,13 @@ class FieldValidatorRule < ActiveRecord::Base
     Set.new(r).to_a
   end
 
+  #returns the value of the one_of field as an array
+  def one_of_array 
+    return [] if self.one_of.blank?
+    r = self.one_of.split("\n")
+    return r.collect {|v| v.strip}
+  end
+
   def required? 
     self.required 
   end
@@ -117,8 +124,8 @@ class FieldValidatorRule < ActiveRecord::Base
   end
   def validate_one_of val
     return [] if self.one_of.blank?
-    good_vals = self.one_of.split "\n"
-    test_vals = good_vals.collect {|v| v.strip.downcase} #remove whitespace and make lowercase
+    good_vals = self.one_of_array 
+    test_vals = good_vals.collect {|v| v.downcase} #remove whitespace and make lowercase
     return [error_message("#{@mf.label} must be one of: #{good_vals.join(", ")}.")] unless test_vals.include? val.to_s.strip.downcase
     return []
   end
