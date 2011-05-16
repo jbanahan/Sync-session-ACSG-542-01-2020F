@@ -2,6 +2,20 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
   
+
+  test "system code" do 
+    m = MasterSetup.get
+    m.system_code = "ABC"
+    m.save!
+    expected = m.system_code
+    mf_ids = [:prod_system_code,:ord_system_code,:shp_system_code,:sale_system_code,:del_system_code]
+    mf_ids.each do |id|
+      mf = ModelField.find_by_uid id
+      val = mf.process_export "dummyobject"
+      assert val==expected
+    end
+  end
+
   test "import / export regulations" do
     #only show import regulations if company has tariffs with them
     ot = OfficialTariff.create!(:hts_code=>"9999999",:import_regulations=>"xyz",:export_regulations=>"abc",:country_id=>Country.first.id,:full_description=>"FD")

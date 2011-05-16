@@ -440,6 +440,15 @@ class ModelField
     }]
     r
   end
+  def self.make_master_setup_array rank_start, uid_prefix, label_prefix
+    r = []
+    r << [rank_start,"#{uid_prefix}_system_code".to_sym,:system_code,"#{label_prefix}Master System Code", {
+      :import_lambda => lambda {|detail,data| return "Master System Code cannot by set by import, ignored."},
+      :export_lambda => lambda {|detail| return MasterSetup.get.system_code},
+      :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
+      :data_type=>:string
+    }]
+  end
 
   def self.add_custom_fields(core_module,base_class,label_prefix,parameters={})
     max = 0
@@ -507,6 +516,7 @@ class ModelField
     ]
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","","products")
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","","products")
+    add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod","")
     
     add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","Classification - ","classifications")
 
@@ -521,6 +531,7 @@ class ModelField
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","","orders")
     add_fields CoreModule::ORDER, make_division_arrays(300,"ord","","orders")
+    add_fields CoreModule::ORDER, make_master_setup_array(400,"ord","")
 
     add_fields CoreModule::ORDER_LINE, [
       [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
@@ -537,6 +548,7 @@ class ModelField
     add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","","shipments")
     add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","","shipments")
     add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","","shipments")
+    add_fields CoreModule::SHIPMENT, make_master_setup_array(400,"shp","")
     
     add_fields CoreModule::SHIPMENT_LINE, [
       [1,:shpln_line_number,:line_number,"Shipment - Row",{:data_type=>:integer}],
@@ -552,6 +564,7 @@ class ModelField
     add_fields CoreModule::SALE, make_customer_arrays(100,"sale","","sales_orders")
     add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","","sales_orders")
     add_fields CoreModule::SALE, make_division_arrays(300,"sale","","sales_orders")
+    add_fields CoreModule::SALE, make_master_setup_array(400,"sale","")
 
     add_fields CoreModule::SALE_LINE, [
       [1,:soln_line_number,:line_number,"Sale Row", {:data_type=>:integer}],
@@ -568,6 +581,7 @@ class ModelField
     add_fields CoreModule::DELIVERY, make_ship_to_arrays(200,"del","","deliveries")
     add_fields CoreModule::DELIVERY, make_carrier_arrays(300,"del","","deliveries")
     add_fields CoreModule::DELIVERY, make_customer_arrays(400,"del","","deliveries")
+    add_fields CoreModule::DELIVERY, make_master_setup_array(500,"del","")
 
     add_fields CoreModule::DELIVERY_LINE, [
       [1,:delln_line_number,:line_number,"Delivery Row",{:data_type=>:integer}],
