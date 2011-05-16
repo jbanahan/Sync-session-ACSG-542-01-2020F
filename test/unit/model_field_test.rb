@@ -2,6 +2,24 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
   
+  test "import / export regulations" do
+    #only show import regulations if company has tariffs with them
+    ot = OfficialTariff.create!(:hts_code=>"9999999",:import_regulations=>"xyz",:export_regulations=>"abc",:country_id=>Country.first.id,:full_description=>"FD")
+    ModelField.reload
+    
+    t = Product.create!(:unique_identifier=>"IER").classifications.create!(:country_id=>Country.first.id).tariff_records.create!(:line_number=>1,:hts_1=>ot.hts_code,:hts_2=>ot.hts_code,:hts_3=>ot.hts_code)
+    mf_ids = [:hts_hts_1_impregs,:hts_hts_2_impregs,:hts_hts_3_impregs,:hts_hts_1_expregs,:hts_hts_2_expregs,:hts_hts_3_expregs]
+    mf_ids.each do |id|
+      mf = ModelField.find_by_uid id
+      val = mf.process_export t
+      expected = (id.to_s.end_with?("expregs") ? ot.export_regulations : ot.import_regulations)
+      assert val==expected, "MFID: #{id}, Expected #{expected}, got #{val}"
+    end
+    OfficialTariff.destroy_all
+    ModelField.reload
+    mf_ids.each {|id| assert ModelField.find_by_uid(id).nil?}
+  end
+
   test "gpt" do
   #only show GPT field if company has canadian tariff setup
     ca = Country.new

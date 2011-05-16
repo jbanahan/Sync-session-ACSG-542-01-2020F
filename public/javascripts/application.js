@@ -149,7 +149,7 @@ var OpenChain = (function() {
       h = "";
       if(data!="country not loaded") {
         t = data.official_tariff;
-        h = t.remaining_description+"<br />";
+        h = t.remaining_description+"<br />"; 
         if(t.general_rate) {
           h+="General Rate: "+t.general_rate+"<br />";
         }
@@ -161,6 +161,12 @@ var OpenChain = (function() {
         }
         if(t.general_preferential_tariff_rate) {
           h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
+        }
+        if(t.import_regulations) {
+          h+="Import Regulations: "+t.import_regulations+"<br />";
+        }
+        if(t.export_regulations) {
+          h+="Export Regulations: "+t.export_regulations+"<br />";
         }
         h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+hts+"'>info</a>";
       }
@@ -814,6 +820,8 @@ function tariffPopUp(htsNumber,country_id) {
         h += htsDataRow("GPT:",o.general_preferential_tariff_rate);
         h += htsDataRow("Erga Omnes:",o.erga_omnes_rate);
         h += htsDataRow("Column 2:",o.column_2_rate);
+        h += htsDataRow("Import Regulations:",o.import_regulations);
+        h += htsDataRow("Export Regulations:",o.export_regulations);
         if(o.official_quota!=undefined) {
           h += htsDataRow("Quota Category",o.official_quota.category);
           h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor);

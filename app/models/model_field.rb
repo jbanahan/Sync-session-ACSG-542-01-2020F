@@ -304,6 +304,38 @@ class ModelField
           :data_type=>:string
         }]
       end
+      if OfficialTariff.where("import_regulations is not null OR export_regulations is not null").count>0
+        id_counter += 1
+        r << [id_counter,"#{uid_prefix}_hts_#{i}_impregs".to_sym, :import_regulations,"HTS #{i} - Import Regulations",{
+          :import_lambda => lambda {|obj,data| return "HTS Import Regulations cannot be set by import, ignored."},
+          :export_lambda => lambda {|t|
+            ot = case i
+              when 1 then t.hts_1_official_tariff
+              when 2 then t.hts_2_official_tariff
+              when 3 then t.hts_3_official_tariff
+            end
+            ot.nil? ? "" : ot.import_regulations
+          },
+          :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+          :join_alias => "OT_#{i}",
+          :data_type=>:string
+        }]
+        id_counter += 1
+        r << [id_counter,"#{uid_prefix}_hts_#{i}_expregs".to_sym, :export_regulations,"HTS #{i} - Export Regulations",{
+          :import_lambda => lambda {|obj,data| return "HTS Export Regulations cannot be set by export, ignored."},
+          :export_lambda => lambda {|t|
+            ot = case i
+              when 1 then t.hts_1_official_tariff
+              when 2 then t.hts_2_official_tariff
+              when 3 then t.hts_3_official_tariff
+            end
+            ot.nil? ? "" : ot.export_regulations
+          },
+          :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+          :join_alias => "OT_#{i}",
+          :data_type=>:string
+        }]
+      end
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_qc".to_sym,:category,"HTS #{i} - Quota Category",{
         :import_lambda => lambda {|obj,data| return "Quota Category cannot be set by import, ignored."},
@@ -440,6 +472,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery,"")
   end
   def self.reload 
+    MODEL_FIELDS.clear
     add_fields CoreModule::PRODUCT, [
       [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
       #2 is available to use
