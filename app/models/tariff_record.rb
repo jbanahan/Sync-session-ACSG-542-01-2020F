@@ -1,7 +1,9 @@
 class TariffRecord < ActiveRecord::Base
   include ShallowMerger
+  include CustomFieldSupport
   #hold arrays of OfficialTariffs for potential matches to be used for this record
-  attr_accessor :hts_1_matches, :hts_2_matches, :hts_3_matches 
+  attr_accessor :hts_1_matches, :hts_2_matches, :hts_3_matches, 
+    :view_sequence #used to identified records generated from the screen so we can apply custom fields to the right record
   
   belongs_to :classification
 

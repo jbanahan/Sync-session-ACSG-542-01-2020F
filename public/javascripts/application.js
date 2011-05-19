@@ -195,7 +195,9 @@ var OpenChain = (function() {
 
   return {
     //public stuff
-
+    test: function() {
+      removeEmptyClassifications();
+    },
     raiseTooltip: function(tip) {
       tip.css('z-index','5000');
       $("body").append(tip);
@@ -224,7 +226,7 @@ var OpenChain = (function() {
     },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
-        $(this).closest("tr").find(".hts_field").each(function() {removeFromInvalidTariffs($(this));});
+        $(this).closest(".tf_row").find(".hts_field").each(function() {removeFromInvalidTariffs($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });

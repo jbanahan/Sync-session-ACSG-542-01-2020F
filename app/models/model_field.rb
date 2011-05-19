@@ -458,7 +458,7 @@ class ModelField
     base_class.new.custom_definitions.order("rank ASC").each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id}))
+      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{label_prefix}#{d.label}"}))
       model_hash[mf.uid.to_sym] = mf
     end
   end
@@ -474,6 +474,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::PRODUCT,Product,"")
     ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification,"Classification - ")
+    ModelField.add_custom_fields(CoreModule::TARIFF,TariffRecord,"HTS - ")
     ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment,"Header - ")
     ModelField.add_custom_fields(CoreModule::SHIPMENT_LINE,ShipmentLine,"Line - ")
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder,"Header - ")

@@ -1,36 +1,104 @@
-
+<style>
+.classification_box {
+  width: 95%;
+  margin-bottom: 10px;
+}
+.classification_box td {
+  vertical-align: top;
+}
+.classification_box .class_ctry_name {
+  background-color: black;
+  color: white;
+}
+.class_cntry_name {
+  font-size: 125%;
+}
+.tr_hts {
+  width: 99%;
+  margin-left: .5%;
+  border-collapse: collapse;
+}
+.tr_hts td {
+  vertical-align: top;
+  width: 33%;
+}
+.tr_hts th {
+  background-color: #d7d7d7;
+  text-align: left;
+}
+.tf_row, .tr_add_box, .cf_box {
+  border: 1px solid #d7d7d7;
+  margin: 3px;
+}
+.tf_row:hover, .tr_add_box:hover, .cf_box:hover {
+  border: 1px solid black;
+}
+.tr_add_box {
+  text-align: right;
+}
+.tr_close {
+  margin: 0px;
+  padding: 0px;
+  text-align: right;
+  float: right;
+  display: inline;
+  background-color: #d7d7d7;
+}
+.tf_line_number {
+  width: 2em;
+}
+</style>
 <div id='classifications'>
-<a name='classifications'></a>
-<h2>Classifications</h2>
-<% classification_count = 0 %>
-<% form_obj.fields_for :classifications do |cf| %>
-  <div class='classification_box cf_row' must_submit='<%=!cf.object.id.nil?%>'>
-      <h3 class='country_title' cid='<%=cf.object.country.id%>'><%=cf.object.country.name.titleize%></h3>
-      <%=cf.hidden_field :country_id%>
-      <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
-      <div class='classification_detail_box'>
-        <table>
-        <%= show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name => "classification_custom[#{classification_count}]"} %>
-        </table>
-      </div>
-      <table class='detail_table hts_table'>
-      <thead>
-        <th><%=field_label :hts_line_number%></th>
-        <th><%=field_label :hts_hts_1%></th>
-        <th><%=field_label :hts_hts_2%></th>
-        <th><%=field_label :hts_hts_3%></th>
-        <th>&nbsp;</th>    
-      </thead>
-      <tbody class='tr_body'>
-        <% cf.fields_for :tariff_records do |tf| %>
-          <%= render :partial => 'tariff_record_row', :locals => {:f => tf, :country_id=>cf.object.country_id } %>
-        <% end %>
-        <tr class='add_row'><td colspan='2'><a id='add_tr_<%=classification_count%>' href="javascript:OpenChain.add_tf_row($('#add_tr_<%=classification_count%>'),<%=classification_count%>,<%=cf.object.country_id%>);">Add</a></td></tr>
+  <a name='classifications'></a>
+  <h2>Classifications</h2>
+  <% classification_count = 0 %>
+  <% tariff_view_sequence = 0 %>
+  <% form_obj.fields_for :classifications do |cf| %>
+    <table class='classification_box' must_submit='<%=!cf.object.id.nil?%>'>
+      <thead><tr><th class='class_ctry_name'><%=cf.object.country.name.titleize%></th></tr></thead>
+      <tbody>
+        <tr>
+          <td class='class_tr_box'>
+            <div class='cf_box'>
+              <table>
+                <%=cf.hidden_field :country_id%>
+                <%=show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name=>"classification_custom[#{classification_count}]"}%>
+              </table>
+            </div>
+            <% tariff_count = 0 %>
+            <% cf.fields_for :tariff_records do |tf| %>
+              <input type='hidden' name='product[classifications_attributes][<%=classification_count%>][tariff_records_attributes][<%=tariff_count%>][view_sequence]' value='<%=tariff_view_sequence%>' />
+              <div class='tf_row'>
+                  <div class='tr_close'><%= tf.hidden_field :_destroy, "class" => "tf_destroy"%><%=link_to image_tag('x.png'), '#', :class=>'tf_remove'%></div>
+                <table>
+                  <%=field_row field_label(:hts_line_number), model_text_field(tf,:line_number, :hts_line_number, {:class=>'tf_line_number'})%> 
+                  <%=show_custom_fields tf.object, {:form=>true, :table=>true, :parent_name=>"tariff_custom[#{tariff_view_sequence}]"} %>
+                </table>
+                <table class='tr_hts'>
+                  <thead>
+                    <tr>
+                      <th><%=field_label :hts_hts_1%></th>
+                      <th><%=field_label :hts_hts_2%></th>
+                      <th><%=field_label :hts_hts_3%></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <%=render :partial=>'tariff_record_row', :locals=>{:f=>tf, :country_id=>cf.object.country_id}%>
+                  </tbody>
+                </table>
+              </div>
+              <% tariff_view_sequence += 1%>
+              <% tariff_count += 1%>
+            <% end %>
+            <div class='tr_add_box'>
+              <button>Add Component</button>
+            </div>
+          </td>
+        </tr>
       </tbody>
     </table>
-  </div>
-  <% classification_count += 1 %>
-<% end %>
+    <% classification_count += 1 %>
+  <% end %>
 </div>
 <div id="mod_pick_country" style="display:none">
   Multiple countries have existing classifications, which one do you want to use to auto-classify?<br />

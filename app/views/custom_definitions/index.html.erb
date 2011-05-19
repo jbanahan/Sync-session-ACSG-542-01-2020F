@@ -17,7 +17,7 @@ $(function() {
 <% @custom_definitions.each do |cd| %>
   <tr class='hover'>
     <td><%= link_to cd.label, cd %></td>
-    <td><%= cd.module_type %></td>
+    <td><%= CoreModule.find_by_class_name(cd.module_type).label %></td>
 		<td><%= CustomDefinition::DATA_TYPE_LABELS[cd.data_type.intern]%></td>
     <td><%= cd.rank %></td>
   </tr>

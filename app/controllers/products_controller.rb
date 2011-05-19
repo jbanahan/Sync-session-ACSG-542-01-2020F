@@ -250,14 +250,26 @@ class ProductsController < ApplicationController
     end
     
     def save_classification_custom_fields(product,product_params)
-      return if product_params.nil? || product_params[:classifications_attributes].nil?
+      return if product_params.nil? || product_params[:classifications_attributes].nil? || params[:classification_custom].nil?
       product.classifications.each do |classification|
         product_params[:classifications_attributes].each do |k,v|
           if v[:country_id] == classification.country_id.to_s
-            update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf] unless params[:classification_custom].nil?
+            update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
           end  
         end
+        save_tariff_custom_fields(classification)
       end    
+    end
+
+    def save_tariff_custom_fields(classification)
+      classification.tariff_records.each do |tr|
+        vs = tr.view_sequence
+        debugger
+        custom_container = params[:tariff_custom][vs]
+        unless p.blank? || custom_container.blank?
+          update_custom_fields tr, p[:tariffrecord_cf]
+        end
+      end
     end
 
     def module_label

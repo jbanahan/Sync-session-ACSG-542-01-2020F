@@ -15,7 +15,7 @@ $(function() {
 
 <table>
 <%=field_row "Label", @custom_definition.label %>
-<%=field_row "Module", @custom_definition.module_type %>
+<%=field_row "Module", CoreModule.find_by_class_name(@custom_definition.module_type).label %>
 <%=field_row "Data Type", CustomDefinition::DATA_TYPE_LABELS[@custom_definition.data_type.intern] %>
 <%=field_row "Tip", @custom_definition.tool_tip %>
 <%=field_row "Sort Rank", @custom_definition.rank %>
