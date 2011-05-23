@@ -30,7 +30,7 @@ $(function() {
   <h2>Classifications</h2>
   <% classification_count = 0 %>
   <% tariff_view_sequence = 0 %>
-  <% form_obj.fields_for :classifications, form_obj.object.classifications.sort_classification_rank do |cf| %>
+  <% form_obj.fields_for :classifications do |cf| %>
     <table class='classification_box' must_submit='<%=!cf.object.id.nil?%>'>
       <thead><tr><th class='class_ctry_name'><%=cf.object.country.name.titleize%></th></tr></thead>
       <tbody>
