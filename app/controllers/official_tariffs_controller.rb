@@ -31,7 +31,7 @@ class OfficialTariffsController < ApplicationController
         render :json => nil.to_json
       end
     else
-      render :json => ot.to_json(:include =>{:country => {:only => :name},:official_quota=>{:only=>[:category,:unit_of_measure,:square_meter_equivalent_factor]}})
+      render :json => ot.to_json(:include =>{:country => {:only => [:name,:iso_code]},:official_quota=>{:only=>[:category,:unit_of_measure,:square_meter_equivalent_factor]}})
     end
   end
   

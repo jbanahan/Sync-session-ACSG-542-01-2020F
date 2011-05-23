@@ -15,7 +15,7 @@ String.class_eval do
     when 9
       return "#{cleaned[0..3]}.#{cleaned[4..5]}.#{cleaned[6..8]}"
     when 10
-      return "#{cleaned[0..3]}.#{cleaned[4..5]}.#{cleaned[6..7]}.#{cleaned[8..9]}"
+      return "#{cleaned[0..3]}.#{cleaned[4..5]}.#{cleaned[6..9]}"
     else
       return "#{cleaned[0..3]}.#{cleaned[4..5]}.#{cleaned[6..7]}.#{cleaned[8..(cleaned.length-1)]}"
     end 
