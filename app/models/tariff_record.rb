@@ -41,8 +41,8 @@ class TariffRecord < ActiveRecord::Base
     #WARNING: this is used by a migration so it can't go away or be renamed without 
     #editing 20110315202025_add_line_number_to_tariff_record.rb migration
     if self.line_number.nil? || self.line_number < 1
-      max = nil
-      max = TariffRecord.where(:classification_id => self.classification_id).maximum(:line_number) unless self.classification_id.nil?
+      max = 0
+      self.classification.tariff_records.each {|tr| max = tr.line_number unless tr.line_number.nil? || tr.line_number < max}
       self.line_number = (max.nil? || max < 1) ? 1 : (max + 1)
     end
   end 

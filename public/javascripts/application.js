@@ -260,17 +260,17 @@ var OpenChain = (function() {
     autoClassify: function(form_obj,action_path) {
       var c_count = function() {
         var c = 0;
-        $(".country_title").each(function() {
-          var hts_tbl = $(this).nextAll(".hts_table");
+        $(".classification_box").each(function() {
           var found = false;
-          hts_tbl.find(".hts_field").each(function() {
+          $(this).find(".hts_field").each(function() {
             if($(this).val().length>5) {
               found = true;
             }
           });
           if(found) { 
             c++; 
-            $("#sel_pick_country").append("<option value='"+$(this).attr("cid")+"'>"+$(this).html()+"</option>");
+            cid = $(this).find(".hdn_country_id").val();  
+            $("#sel_pick_country").append("<option value='"+cid+"'>"+$(this).find(".class_ctry_name").html()+"</option>");
           }
         });
         return c;
