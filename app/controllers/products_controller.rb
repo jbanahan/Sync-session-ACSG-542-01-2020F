@@ -7,139 +7,139 @@ class ProductsController < ApplicationController
 		Product
 	end
 
-    def index
-      @bulk_actions = CoreModule::PRODUCT.bulk_actions current_user
-      advanced_search CoreModule::PRODUCT
-    end
+  def index
+    @bulk_actions = CoreModule::PRODUCT.bulk_actions current_user
+    advanced_search CoreModule::PRODUCT
+  end
 
-    # GET /products/1
-    # GET /products/1.xml
-    def show
-      p = Product.find(params[:id], :include => [:custom_values,{:classifications => [:custom_values, :tariff_records]}])
-      action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
-        @product = p
+  # GET /products/1
+  # GET /products/1.xml
+  def show
+    p = Product.find(params[:id], :include => [:custom_values,{:classifications => [:custom_values, :tariff_records]}])
+    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
+      @product = p
+      respond_to do |format|
+          format.html # show.html.erb
+          format.xml  { render :xml => @product }
+          format.json { render :json => @product }
+      end          
+    }
+  end
+
+
+  # GET /products/new
+  # GET /products/new.xml
+  def new
+    p = Product.new
+    action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product",:lock_check=>false}) {
+      @product = p
+
+      respond_to do |format|
+          format.html # new.html.erb
+          format.xml  { render :xml => @product }
+      end
+    }
+  end
+
+  # GET /products/1/edit
+  def edit
+    p = Product.find(params[:id])
+    action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+      @product = p
+    }
+  end
+
+  # POST /products
+  # POST /products.xml
+  def create
+    p = Product.new(params[:product])
+    action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product"}) {
+      succeed = lambda { |p|
         respond_to do |format|
-            format.html # show.html.erb
-            format.xml  { render :xml => @product }
-            format.json { render :json => @product }
-        end          
+          add_flash :notices, "Product created successfully."
+          format.html { redirect_to p }
+        end
       }
-    end
-
-
-    # GET /products/new
-    # GET /products/new.xml
-    def new
-      p = Product.new
-      action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product",:lock_check=>false}) {
-        @product = p
-
+      failure = lambda { |p,e|
         respond_to do |format|
-            format.html # new.html.erb
-            format.xml  { render :xml => @product }
+          @product = Product.new(params[:product]) #transaction failure requires new object
+          set_custom_fields(@product) {|cv| @product.inject_custom_value cv}
+          e.full_messages.each {|m| @product.errors[:base]<<m}
+          errors_to_flash @product, :now=>true
+          format.html { render :action=>"new"}
         end
       }
-    end
-
-    # GET /products/1/edit
-    def edit
-      p = Product.find(params[:id])
-      action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
-        @product = p
+      before_validate = lambda { |p|
+        save_classification_custom_fields(p,params[:product])
+        update_status p
       }
-    end
+      validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
+    }  
+  end
 
-    # POST /products
-    # POST /products.xml
-    def create
-      p = Product.new(params[:product])
-      action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product"}) {
-        succeed = lambda { |p|
-          respond_to do |format|
-            add_flash :notices, "Product created successfully."
-            format.html { redirect_to p }
-          end
-        }
-        failure = lambda { |p,e|
-          respond_to do |format|
-            @product = Product.new(params[:product]) #transaction failure requires new object
-            set_custom_fields(@product) {|cv| @product.inject_custom_value cv}
-            e.full_messages.each {|m| @product.errors[:base]<<m}
-            errors_to_flash @product, :now=>true
-            format.html { render :action=>"new"}
-          end
-        }
-        before_validate = lambda { |p|
-          save_classification_custom_fields(p,params[:product])
-          update_status p
-        }
-        validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
-      }  
-    end
-
-    # PUT /products/1
-    # PUT /products/1.xml
-    def update
-      p = Product.find(params[:id])
-      action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
-        succeed = lambda {|p|
-          add_flash :notices, "Product was saved successfully."
-          redirect_update p, (params[:c_classify] ? "classify" : "edit")
-        }
-        failure = lambda {|p,errors|
-          errors_to_flash p
-          error_redirect
-        }
-        before_validate = lambda {|p|
-          save_classification_custom_fields p,params[:product]
-          update_status p
-        }
-        validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
+  # PUT /products/1
+  # PUT /products/1.xml
+  def update
+    p = Product.find(params[:id])
+    action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+      succeed = lambda {|p|
+        add_flash :notices, "Product was saved successfully."
+        redirect_update p, (params[:c_classify] ? "classify" : "edit")
       }
-    end
-
-    # DELETE /products/1
-    # DELETE /products/1.xml
-    def destroy
-      p = Product.find(params[:id])
-      action_secure(current_user.company.master,p,{:verb => "delete",:module_name=>"product"}) {
-        @product = p
-        @product.destroy
-        errors_to_flash @product
-
-        respond_to do |format|
-            format.html { redirect_to(products_url) }
-            format.xml  { head :ok }
-        end
+      failure = lambda {|p,errors|
+        errors_to_flash p
+        error_redirect
       }
-    end
+      before_validate = lambda {|p|
+        save_classification_custom_fields p,params[:product]
+        update_status p
+      }
+      validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
+    }
+  end
 
-    
-    def classify
-      p = Product.find(params[:id])
-      action_secure(p.can_classify?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
-        @product = p
-        Country.import_locations.sort_classification_rank.each do |c|
-          p.classifications.build(:country => c) if p.classifications.where(:country_id=>c).empty?
-        end
-      }
-    end
-    
-    def auto_classify
-      p = Product.find(params[:id])
-      action_secure(p.can_edit?(current_user) && current_user.edit_classifications?,p,{:verb => "classify for",:module_name=>"product"}) {
-        @product = p
-        p.transaction do
-          @product.update_attributes(params[:product])
-          save_classification_custom_fields(@product,params[:product])
-          update_status @product
-          base_country = Country.find_cached_by_id(params[:base_country_id])
-          @product.auto_classify(base_country)
-          add_flash :notices, "Auto-classification complete, select tariffs below."
-          render 'classify'
-        end
-      }
-    end
+  # DELETE /products/1
+  # DELETE /products/1.xml
+  def destroy
+    p = Product.find(params[:id])
+    action_secure(current_user.company.master,p,{:verb => "delete",:module_name=>"product"}) {
+      @product = p
+      @product.destroy
+      errors_to_flash @product
+
+      respond_to do |format|
+          format.html { redirect_to(products_url) }
+          format.xml  { head :ok }
+      end
+    }
+  end
+
+  
+  def classify
+    p = Product.find(params[:id])
+    action_secure(p.can_classify?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
+      @product = p
+      Country.import_locations.sort_classification_rank.each do |c|
+        p.classifications.build(:country => c) if p.classifications.where(:country_id=>c).empty?
+      end
+    }
+  end
+  
+  def auto_classify
+    p = Product.find(params[:id])
+    action_secure(p.can_edit?(current_user) && current_user.edit_classifications?,p,{:verb => "classify for",:module_name=>"product"}) {
+      @product = p
+      p.transaction do
+        @product.update_attributes(params[:product])
+        save_classification_custom_fields(@product,params[:product])
+        update_status @product
+        base_country = Country.find_cached_by_id(params[:base_country_id])
+        @product.auto_classify(base_country)
+        add_flash :notices, "Auto-classification complete, select tariffs below."
+        render 'classify'
+      end
+    }
+  end
 
   def bulk_auto_classify
     @pks = params[:pk]
@@ -266,8 +266,8 @@ class ProductsController < ApplicationController
         vs = tr.view_sequence
         debugger
         custom_container = params[:tariff_custom][vs]
-        unless p.blank? || custom_container.blank?
-          update_custom_fields tr, p[:tariffrecord_cf]
+        unless custom_container.blank?
+          update_custom_fields tr, custom_container[:tariffrecord_cf]
         end
       end
     end

@@ -168,7 +168,7 @@ var OpenChain = (function() {
         if(t.export_regulations) {
           h+="Export Regulations: "+t.export_regulations+"<br />";
         }
-        h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+hts+"'>info</a>";
+        h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
       }
       to_write.html(h);
     }

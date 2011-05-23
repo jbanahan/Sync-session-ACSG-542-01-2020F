@@ -1,3 +1,30 @@
+<% content_for :javascript do %>
+$(function() {
+  $(".btn_add_component").click(function(ev) {
+    ev.preventDefault();
+    var seed = new Date().getTime(); 
+    var tf_row = $(this).parent().siblings(".tf_row:first").clone();
+    var custom_fields = tf_row.find('[name^="tariff_custom["]');
+    custom_fields.each(function() {
+      var cf_id = $(this).attr('mf_id').substring(4);
+      $(this).attr('name','tariff_custom['+seed+']tariffrecord_cf['+cf_id+']');
+      $(this).attr('value','');
+    });
+    var static_fields = tf_row.find('[name^="product[classifications_attributes]["]').each(function() {
+      var start_name = $(this).attr('name');
+      var str_ind = start_name.indexOf('[tariff_records_attributes]');
+      var new_name = start_name.substring(0,str_ind + 28)+seed+"]"+start_name.substring(start_name.lastIndexOf("["));
+      $(this).attr('name',new_name);
+      $(this).attr('value','');
+    });
+    tf_row.find('.tariff_result').html('');
+    var vs = tf_row.children('[name$="[view_sequence]"]');
+    vs.attr('value',seed);
+    $(this).parent().before(tf_row);
+    tf_row.show();
+  });
+});
+<%end%>
 <style>
 .classification_box {
   width: 95%;
@@ -14,9 +41,8 @@
   font-size: 125%;
 }
 .tr_hts {
-  width: 99%;
-  margin-left: .5%;
-  border-collapse: collapse;
+  width: 95%;
+  margin-left: 4%;
 }
 .tr_hts td {
   vertical-align: top;
@@ -26,11 +52,12 @@
   background-color: #d7d7d7;
   text-align: left;
 }
-.tf_row, .tr_add_box, .cf_box {
-  border: 1px solid #d7d7d7;
+.tf_row {
+  border: 1px solid white;
+  border-top: 1px solid black;
   margin: 3px;
 }
-.tf_row:hover, .tr_add_box:hover, .cf_box:hover {
+.tf_row:hover {
   border: 1px solid black;
 }
 .tr_add_box {
@@ -65,33 +92,17 @@
                 <%=show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name=>"classification_custom[#{classification_count}]"}%>
               </table>
             </div>
+            <% if cf.object.tariff_records.blank? %>
+              <%cf.object.tariff_records.build %>
+            <% end %>
             <% tariff_count = 0 %>
             <% cf.fields_for :tariff_records do |tf| %>
-              <input type='hidden' name='product[classifications_attributes][<%=classification_count%>][tariff_records_attributes][<%=tariff_count%>][view_sequence]' value='<%=tariff_view_sequence%>' />
-              <div class='tf_row'>
-                  <div class='tr_close'><%= tf.hidden_field :_destroy, "class" => "tf_destroy"%><%=link_to image_tag('x.png'), '#', :class=>'tf_remove'%></div>
-                <table>
-                  <%=field_row field_label(:hts_line_number), model_text_field(tf,:line_number, :hts_line_number, {:class=>'tf_line_number'})%> 
-                  <%=show_custom_fields tf.object, {:form=>true, :table=>true, :parent_name=>"tariff_custom[#{tariff_view_sequence}]"} %>
-                </table>
-                <table class='tr_hts'>
-                  <thead>
-                    <tr>
-                      <th><%=field_label :hts_hts_1%></th>
-                      <th><%=field_label :hts_hts_2%></th>
-                      <th><%=field_label :hts_hts_3%></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <%=render :partial=>'tariff_record_row', :locals=>{:f=>tf, :country_id=>cf.object.country_id}%>
-                  </tbody>
-                </table>
-              </div>
+              <%=render :partial=>'tariff_record_row', :locals=>{:f=>tf, :classification_count=>classification_count,:tariff_count=>tariff_count,:tariff_view_sequence=>tariff_view_sequence,:country_id=>cf.object.country_id}%>
               <% tariff_view_sequence += 1%>
               <% tariff_count += 1%>
             <% end %>
             <div class='tr_add_box'>
-              <button>Add Component</button>
+              <button class='btn_add_component'>Add Component</button>
             </div>
           </td>
         </tr>
