@@ -25,62 +25,12 @@ $(function() {
   });
 });
 <%end%>
-<style>
-.classification_box {
-  width: 95%;
-  margin-bottom: 10px;
-}
-.classification_box td {
-  vertical-align: top;
-}
-.classification_box .class_ctry_name {
-  background-color: black;
-  color: white;
-}
-.class_cntry_name {
-  font-size: 125%;
-}
-.tr_hts {
-  width: 95%;
-  margin-left: 4%;
-}
-.tr_hts td {
-  vertical-align: top;
-  width: 33%;
-}
-.tr_hts th {
-  background-color: #d7d7d7;
-  text-align: left;
-}
-.tf_row {
-  border: 1px solid white;
-  border-top: 1px solid black;
-  margin: 3px;
-}
-.tf_row:hover {
-  border: 1px solid black;
-}
-.tr_add_box {
-  text-align: right;
-}
-.tr_close {
-  margin: 0px;
-  padding: 0px;
-  text-align: right;
-  float: right;
-  display: inline;
-  background-color: #d7d7d7;
-}
-.tf_line_number {
-  width: 2em;
-}
-</style>
 <div id='classifications'>
   <a name='classifications'></a>
   <h2>Classifications</h2>
   <% classification_count = 0 %>
   <% tariff_view_sequence = 0 %>
-  <% form_obj.fields_for :classifications do |cf| %>
+  <% form_obj.fields_for :classifications, form_obj.object.classifications.sort_classification_rank do |cf| %>
     <table class='classification_box' must_submit='<%=!cf.object.id.nil?%>'>
       <thead><tr><th class='class_ctry_name'><%=cf.object.country.name.titleize%></th></tr></thead>
       <tbody>

@@ -75,33 +75,44 @@
 <div class='attachments_container section_insert'>
   <h2 class='section_insert_heading'>Classifications</h2>
   <% @product.classifications.sort_classification_rank.each do |c| %>
-  <div> <!--isolate each classification-->
-    <h2><%=c.country.name.titleize%></h2>
-    <a href='#' class='classification_expand'>Show Details</a><a href='#' class='classification_shrink'>Hide Details</a>    
-    <div class='classification_detail_box'>
-      <table>
-      <%=show_custom_fields c, {:table=>true} %>
-      </table>
-    </div>
-    <table class='detail_table'>
-      <thead>
-        <th><%=field_label :hts_line_number%></th>
-        <th><%=field_label :hts_hts_1%></th>
-        <th><%=field_label :hts_hts_2%></th>
-        <th><%=field_label :hts_hts_3%></th>    
-      </thead>
+    <table class='classification_box'>
+      <thead><tr><th class='class_ctry_name'><%=c.country.name.titleize%></th></tr></thead>
       <tbody>
-        <% c.tariff_records.each do |t| %>
         <tr>
-          <td><%=t.line_number%></td>
-          <td><%=show_tariff t.hts_1,c.country_id%></td>
-          <td><%=show_tariff t.hts_2,c.country_id%></td>
-          <td><%=show_tariff t.hts_3,c.country_id%></td>
+          <td class='class_tr_box'>
+            <div class='cf_box'>
+              <table>
+                <%=show_custom_fields c, {:table=>true}%>
+              </table>
+            </div> 
+            <% c.tariff_records.each do |t| %>
+              <div class='tf_row'>
+                <table>
+                  <%=field_row field_label(:hts_line_number), t.line_number%>
+                  <%=show_custom_fields t, {:table=>true}%>
+                </table>
+                <table class='tr_hts'>
+                  <thead>
+                    <tr>
+                      <th><%=field_label :hts_hts_1%></th>
+                      <th><%=field_label :hts_hts_2%></th>
+                      <th><%=field_label :hts_hts_3%></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><%=show_tariff t.hts_1,c.country_id%></td>
+                      <td><%=show_tariff t.hts_2,c.country_id%></td>
+                      <td><%=show_tariff t.hts_3,c.country_id%></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            <% end %>
+          </td>
         </tr>
-        <% end %>
       </tbody>
     </table>
-  </div>
     <% end %>
 </div>
 <% end %>

@@ -264,7 +264,6 @@ class ProductsController < ApplicationController
     def save_tariff_custom_fields(classification)
       classification.tariff_records.each do |tr|
         vs = tr.view_sequence
-        debugger
         custom_container = params[:tariff_custom][vs]
         unless custom_container.blank?
           update_custom_fields tr, custom_container[:tariffrecord_cf]
