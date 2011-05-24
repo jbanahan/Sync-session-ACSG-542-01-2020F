@@ -3,6 +3,7 @@ class Product < ActiveRecord::Base
   include CustomFieldSupport
   include StatusableSupport
   include ShallowMerger
+  include TouchesParentsChangedAt
 
   CORE_MODULE = CoreModule::PRODUCT
 

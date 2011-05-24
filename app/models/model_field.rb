@@ -513,7 +513,8 @@ class ModelField
         :join_alias => "prod_class_count",
         :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
         :data_type => :integer
-      }]
+      }],
+      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}]
     ]
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","","products")
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","","products")

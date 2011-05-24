@@ -45,7 +45,7 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == operators[:ew]
         return value_to_test.downcase.end_with?(self.value.downcase)
       end
-    elsif d == :date
+    elsif [:date, :datetime].include? d
       self_val = Date.parse self.value.to_s
       if self.operator == operators[:eq]
         return value_to_test == self_val

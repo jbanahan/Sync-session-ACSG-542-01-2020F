@@ -1,4 +1,6 @@
 class CustomValue < ActiveRecord::Base
+  include TouchesParentsChangedAt
+  
   belongs_to :custom_definition
   belongs_to :customizable, :polymorphic => true
   validates  :custom_definition, :presence => true
@@ -35,6 +37,16 @@ class CustomValue < ActiveRecord::Base
       CACHE.set CustomValue.unique_cache_key(self.custom_definition_id,self.customizable_id,self.customizable_type), to_set unless self.id.nil?
     end
   end
+
+  def touch_parents_changed_at #overriden to find core module differently
+    ct = self.customizable_type
+    unless ct.nil?
+      cm = CoreModule.find_by_class_name ct
+      cm.touch_parents_changed_at self.customizable unless cm.nil?
+    end
+  end
+
+
   private
   def validate_unique_record_per_object_and_definition
     found = CustomValue.where(:customizable_id => self.customizable_id,

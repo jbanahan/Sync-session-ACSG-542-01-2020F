@@ -1,6 +1,58 @@
 require 'test_helper'
 
 class CoreModuleTest < ActiveSupport::TestCase
+
+  test "touch parent updated - CUSTOM VALUE" do
+    cd = CustomDefinition.create!(:module_type=>"Product",:label=>"tpucv",:data_type=>:integer)
+    p = Product.create!(:unique_identifier=>"tpucv")
+    ActiveRecord::Base.connection.execute("UPDATE products set changed_at = null WHERE id = #{p.id}") #reset in DB without hitting other callbacks
+    p.reload
+    assert p.changed_at.nil?
+    cv = p.get_custom_value cd
+    cv.value = 123
+    cv.save!
+    p.reload
+    assert p.changed_at > 1.second.ago
+  end
+
+  test "touch parent update - PRODUCT" do 
+    p = Product.create!(:unique_identifier=>"tpup")
+    p.reload
+    assert p.changed_at > 1.second.ago
+    ActiveRecord::Base.connection.execute("UPDATE products set changed_at = null WHERE id = #{p.id}") #reset in DB without hitting other callbacks
+    p.reload
+    assert p.changed_at.nil?
+    p.name= "123"
+    p.save!
+    assert p.changed_at > 1.second.ago
+  end
+
+  test "touch parent update - CLASSIFICATION" do
+    p = Product.create!(:unique_identifier=>"tpu")
+    ActiveRecord::Base.connection.execute("UPDATE products set changed_at = null WHERE id = #{p.id}") #reset in DB without hitting other callbacks
+    p = p.reload 
+    assert p.changed_at.nil?
+    c = p.classifications.create!(:country_id=>Country.first.id)
+    p = p.reload #reload from db to make sure changed_at was saved
+    time = p.changed_at
+    assert time > 1.second.ago
+  end
+
+  test "touch parent updated - TARIFF_RECORD" do
+    p = Product.create!(:unique_identifier=>"tpu")
+    c = p.classifications.create!(:country_id=>Country.first.id)
+    ActiveRecord::Base.connection.execute("UPDATE products set changed_at = null WHERE id = #{p.id}") #reset in DB without hitting other callbacks
+    p = Product.find p.id
+    assert p.changed_at.nil?
+    t = c.tariff_records.create!
+    p = Product.find p.id #reload from db to make sure changed_at was saved
+    time = p.changed_at
+    assert time > 2.seconds.ago
+    t.save!
+    new_time = p.changed_at
+    assert time==new_time, "Updating within 1 minute shouldn't change time, old time: #{time}, new time: #{new_time}"
+  end
+
   test "find" do 
     p = Product.create!(:unique_identifier=>"cm_find")
     found = CoreModule::PRODUCT.find p.id

@@ -7,7 +7,8 @@ class CoreModule
       :statusable, #works with status rules
       :worksheetable, #works with worksheet uploads
       :file_formatable, #can be used for file formats
-      :default_search_columns #array of columns to be included when a default search is created
+      :default_search_columns, #array of columns to be included when a default search is created
+      :changed_at_parents_lambda #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
   def initialize(class_name,label,opts={})
@@ -20,7 +21,8 @@ class CoreModule
           end
           ss
         },
-        :bulk_actions_lambda => lambda {|current_user| return Hash.new}
+        :bulk_actions_lambda => lambda {|current_user| return Hash.new},
+        :changed_at_parents_lambda => lambda {|base_object| []}
       }.
       merge(opts)
     @class_name = class_name
@@ -35,8 +37,21 @@ class CoreModule
     @child_joins = o[:child_joins]
     @default_search_columns = o[:default_search_columns]
     @bulk_actions_lambda = o[:bulk_actions_lambda]
+    @changed_at_parents_lambda = o[:changed_at_parents_lambda]
   end
   
+  #find's the given objects parents that should have their changed_at values updated, updates them, and saves them.
+  #This method will not re-update or save a changed_at value that is less than 1 minute old to save on constant DB writes
+  def touch_parents_changed_at base_object
+    @changed_at_parents_lambda.call(base_object).each do |p|
+      ca = p.changed_at
+      if ca.nil? || ca < 1.minute.ago
+        p.changed_at = Time.now
+        p.save
+      end
+    end
+  end
+
   def default_module_chain
     return @default_module_chain unless @default_module_chain.nil?
     @default_module_chain = ModuleChain.new
@@ -124,11 +139,22 @@ class CoreModule
     :child_joins => {DELIVERY_LINE => "LEFT OUTER JOIN delivery_lines on deliveries.id = delivery_lines.delivery_id"},
     :default_search_columns => [:del_ref,:del_mode,:del_car_name,:del_cust_name]
     })
-  TARIFF = new("TariffRecord","Tariff")
+  TARIFF = new("TariffRecord","Tariff",{
+    :changed_at_parents_lambda=>lambda {|tr|
+      r = []
+      c = tr.classification
+      unless c.nil?
+        p = c.product
+        r << p unless p.nil?
+      end
+      r
+    }
+  })
   CLASSIFICATION = new("Classification","Classification",{
       :children => [TARIFF],
       :child_lambdas => {TARIFF => lambda {|p| p.tariff_records}},
-      :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"}
+      :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"},
+      :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] }
   })
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
       :children => [CLASSIFICATION],
@@ -140,7 +166,8 @@ class CoreModule
         bulk_actions["Edit Selected"]='bulk_edit_products_path' if current_user.edit_products?
         bulk_actions["Classify Selected"]='bulk_classify_products_path' if current_user.edit_classifications?
         bulk_actions
-      }
+      },
+      :changed_at_parents_lambda=>lambda {|p| [p]} #only update self
   })
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION]
 

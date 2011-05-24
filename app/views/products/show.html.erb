@@ -66,6 +66,7 @@
       <%=field_row field_label(:prod_ven_name), @product.vendor.nil? ? "" : @product.vendor.name%>
       <%=field_row field_label(:prod_div_name), @product.division.nil? ? "" : @product.division.name%>
       <%=show_custom_fields @product, {:table=>true}%>
+      <%=field_row field_label(:prod_changed_at),@product.changed_at%>
     </table>
   </td></tr>
   </tbody>

@@ -1,6 +1,7 @@
 class Classification < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger
+  include TouchesParentsChangedAt
   
   belongs_to :product
   belongs_to :country
