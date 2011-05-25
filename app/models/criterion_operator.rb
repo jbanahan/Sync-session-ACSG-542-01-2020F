@@ -15,10 +15,15 @@ class CriterionOperator
     new("sw"," LIKE ?","Starts With"),
     new("ew"," LIKE ?","Ends With"),
     new("null"," IS NULL","Is Empty"),
-    new("notnull"," IS NOT NULL","Is Not Empty")
+    new("notnull"," IS NOT NULL","Is Not Empty"),
+    new("bda"," < DATE_ADD(CURDATE(), INTERVAL -? DAY)","Before _ Days Ago"),
+    new("ada"," >= DATE_ADD(CURDATE(), INTERVAL -? DAY)","After _ Days Ago"),
+    new("adf"," >= DATE_ADD(CURDATE(), INTERVAL ? DAY)","After _ Days From Now"),
+    new("bdf"," < DATE_ADD(CURDATE(), INTERVAL ? DAY)","Before _ Days From Now")
   ]
   
   def self.find_by_key(key)
     OPERATORS.each {|o| return o if o.key==key}
+    nil
   end
 end

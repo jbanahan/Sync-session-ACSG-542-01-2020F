@@ -1,6 +1,80 @@
 require 'test_helper'
 
 class SearchCriterionTest < ActiveSupport::TestCase
+
+  test "before days ago" do
+    o = Order.create!(:order_number=>"ordbda",:order_date=>4.days.ago,:vendor_id=>companies(:vendor).id)
+    sc = SearchCriterion.create!(:model_field_uid =>:ord_ord_date,:operator=>"bda",:value=>3)
+    found = sc.apply(Order).collect {|ord| ord.id}
+    assert found.include?(o.id)
+    assert sc.passes?(o.order_date)
+    
+    [4,5].each do |i|
+      sc.value = i
+      r = sc.apply(Order)
+      found = r.collect {|ord| ord.id}
+      assert !found.include?(o.id), "Failed for #{i} days ago."
+      assert !sc.passes?(o.order_date), "Failed for #{i} days ago."
+    end
+  end
+
+  test "after days ago" do 
+    o = Order.create!(:order_number=>"ordbda",:order_date=>4.days.ago,:vendor_id=>companies(:vendor).id)
+    sc = SearchCriterion.create!(:model_field_uid =>:ord_ord_date,:operator=>"ada",:value=>3)
+    [4,5].each do |i|
+      sc.value = i
+      found = sc.apply(Order).collect {|ord| ord.id}
+      assert found.include?(o.id), "Failed for #{i} days."
+      assert sc.passes?(o.order_date)
+    end
+    
+    [3].each do |i|
+      sc.value = i
+      r = sc.apply(Order)
+      found = r.collect {|ord| ord.id}
+      assert !found.include?(o.id), "Failed for #{i} days ago."
+      assert !sc.passes?(o.order_date), "Failed for #{i} days ago."
+    end
+  end
+
+  test "after days from now" do
+    o = Order.create!(:order_number=>"ordbda",:order_date=>4.days.from_now,:vendor_id=>companies(:vendor).id)
+    sc = SearchCriterion.create!(:model_field_uid =>:ord_ord_date,:operator=>"adf",:value=>3)
+    [3,4].each do |i|
+      sc.value = i
+      found = sc.apply(Order).collect {|ord| ord.id}
+      assert found.include?(o.id)
+      assert sc.passes?(o.order_date)
+    end
+    
+    [5].each do |i|
+      sc.value = i
+      r = sc.apply(Order)
+      found = r.collect {|ord| ord.id}
+      assert !found.include?(o.id), "Failed for #{i} days ago."
+      assert !sc.passes?(o.order_date), "Failed for #{i} days ago."
+    end
+  end
+
+  test "before days from now" do 
+    o = Order.create!(:order_number=>"ordbda",:order_date=>4.days.from_now,:vendor_id=>companies(:vendor).id)
+    sc = SearchCriterion.create!(:model_field_uid =>:ord_ord_date,:operator=>"bdf",:value=>3)
+    [5].each do |i|
+      sc.value = i
+      found = sc.apply(Order).collect {|ord| ord.id}
+      assert found.include?(o.id)
+      assert sc.passes?(o.order_date)
+    end
+    
+    [3,4].each do |i|
+      sc.value = i
+      r = sc.apply(Order)
+      found = r.collect {|ord| ord.id}
+      assert !found.include?(o.id), "Failed for #{i} days ago."
+      assert !sc.passes?(o.order_date), "Failed for #{i} days ago."
+    end
+  end
+
   
   test "with join" do
     v = Company.create!(:name=>"VVVVVV", :vendor=>true)

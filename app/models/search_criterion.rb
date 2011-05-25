@@ -29,47 +29,52 @@ class SearchCriterion < ActiveRecord::Base
     mf = find_model_field
     d = mf.data_type
     
-    operators = {:eq => "eq", :co => "co", :sw => "sw", :ew => "ew", :null => "null", 
-      :notnull => "notnull", :gt => "gt", :lt => "lt"}
-    
-    return value_to_test.nil? if self.operator == operators[:null]
-    return !value_to_test.nil? if self.operator == operators[:notnull]
+    return value_to_test.nil? if self.operator == "null" 
+    return !value_to_test.nil? if self.operator == "notnull"
     
     if [:string, :text].include? d
-      if self.operator == operators[:eq]
+      if self.operator == "eq"
         return value_to_test.downcase == self.value.downcase
-      elsif self.operator == operators[:co]
+      elsif self.operator == "co"
         return value_to_test.downcase.include?(self.value.downcase)
-      elsif self.operator == operators[:sw]
+      elsif self.operator == "sw"
         return value_to_test.downcase.start_with?(self.value.downcase)
-      elsif self.operator == operators[:ew]
+      elsif self.operator == "ew"
         return value_to_test.downcase.end_with?(self.value.downcase)
       end
     elsif [:date, :datetime].include? d
-      self_val = Date.parse self.value.to_s
-      if self.operator == operators[:eq]
+      self_val = ["eq","gt","lt"].include?(self.operator) ? Date.parse(self.value.to_s) : number_value(:integer,self.value)
+      if self.operator == "eq"
         return value_to_test == self_val
-      elsif self.operator == operators[:gt]
+      elsif self.operator == "gt"
         return value_to_test > self_val
-      elsif self.operator == operators[:lt]
+      elsif self.operator == "lt"
         return value_to_test < self_val
+      elsif self.operator == "bda"
+        return value_to_test.to_date < self_val.days.ago.to_date #.to_date gets rid of times that screw up comparisons
+      elsif self.operator == "ada"
+        return value_to_test.to_date >= self_val.days.ago.to_date
+      elsif self.operator == "adf"
+        return value_to_test.to_date >= self_val.days.from_now.to_date
+      elsif self.operator == "bdf"
+        return value_to_test.to_date < self_val.days.from_now.to_date
       end
     elsif d == :boolean
-      if self.operator == operators[:eq]
+      if self.operator == "eq"
         self_val = ["t","true","yes","y"].include?(self.value.downcase)
         return value_to_test == self_val
       end  
     elsif [:decimal, :integer].include? d
       self_val = number_value d, self.value
-      if self.operator == operators[:eq]
+      if self.operator == "eq"
         return value_to_test == self_val
-      elsif self.operator == operators[:gt]
+      elsif self.operator == "gt"
         return value_to_test > self_val
-      elsif self.operator == operators[:lt]
+      elsif self.operator == "lt"
         return value_to_test < self_val
-      elsif self.operator == operators[:sw]
+      elsif self.operator == "sw"
         return value_to_test.to_s.start_with?(self.value.to_s)
-      elsif self.operator == operators[:ew]
+      elsif self.operator == "ew"
         return value_to_test.to_s.end_with?(self.value.to_s)
       end
     end
