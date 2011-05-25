@@ -169,7 +169,8 @@ class CoreModule
       },
       :changed_at_parents_lambda=>lambda {|p| [p]} #only update self
   })
-  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION]
+  OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
+  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
@@ -213,7 +214,7 @@ class CoreModule
   #make hash of arrays to work with FormOptionsHelper.grouped_options_for_select
   def self.grouped_options
     r = {}
-    mods = CORE_MODULES.sort {|x,y| x.label <=> y.label}
+    mods = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION].sort {|x,y| x.label <=> y.label}
     mods.each do |cm|
       flds = cm.model_fields.values.sort {|x,y| x.label <=> y.label}
       fld_array = []

@@ -16,7 +16,7 @@ OpenChain::Application.routes.draw do
   resources :master_setups
   resources :attachment_types
 
-  resources :official_tariffs do
+  resources :official_tariffs, :only=>[:index,:show] do
     get 'find', :on => :collection
   end
 
@@ -37,6 +37,7 @@ OpenChain::Application.routes.draw do
   match "/login" => "user_sessions#new", :as => :login
   match "/logout" => "user_sessions#destroy", :as => :logout
   match "/settings" => "settings#index", :as => :settings
+  match "/tools" => "settings#tools", :as => :tools
   match "/active_users" => "settings#active_users", :as=>:active_users
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"

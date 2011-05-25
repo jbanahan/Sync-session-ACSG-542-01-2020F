@@ -137,8 +137,7 @@
     <div id="corner_links">
         <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> 
         <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
-        <%if !current_user.imported_files.blank?%><%=link_to "My Uploads", imported_files_path%> | <%end%>
-        <% if current_user.admin? %><%= link_to 'Settings', settings_path, {:title=>"Administrator System Settings",:class=>"tiplink"} %> |<%end%>
+        <%= link_to 'Tools', tools_path%> | 
         <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
         <%= link_to 'Logout', logout_path %>
     </div>

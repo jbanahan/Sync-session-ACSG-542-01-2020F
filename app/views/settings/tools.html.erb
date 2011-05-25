@@ -1,0 +1,10 @@
+<%if !current_user.imported_files.blank?%>
+  <h2><%=link_to "My Uploads", imported_files_path%></h2>
+  <p>Work with the files that you have previously uploaded.</p>
+<%end%>
+<h2><%=link_to "Tariff Database", official_tariffs_path%></h2>
+<p>Search the tariffs for your subscribed countries.</p>
+<% if current_user.admin? %>
+  <h2><%= link_to 'Settings', settings_path%></h2>
+  <p>Work with administrative system settings.</p>
+<%end%>
