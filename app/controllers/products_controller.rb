@@ -262,6 +262,7 @@ class ProductsController < ApplicationController
     end
 
     def save_tariff_custom_fields(classification)
+      return if params[:tariff_custom].nil?
       classification.tariff_records.each do |tr|
         vs = tr.view_sequence
         custom_container = params[:tariff_custom][vs]
