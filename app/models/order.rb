@@ -11,9 +11,9 @@ class Order < ActiveRecord::Base
 	
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number'
 	has_many   :histories, :dependent => :destroy
-	has_many   :item_change_subscriptions
-  has_many   :comments, :as => :commentable
-  has_many   :attachments, :as => :attachable 	
+	has_many   :item_change_subscriptions, :dependent => :destroy
+  has_many   :comments, :as => :commentable, :dependent => :destroy
+  has_many   :attachments, :as => :attachable, :dependent => :destroy 	
 	
 	def related_shipments
 	  r = Set.new

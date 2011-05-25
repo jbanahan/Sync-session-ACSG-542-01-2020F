@@ -8,10 +8,10 @@ class SalesOrder < ActiveRecord::Base
   belongs_to :ship_to, :class_name => "Address"
   
   has_many    :histories, :dependent => :destroy
-  has_many    :item_change_subscriptions
+  has_many    :item_change_subscriptions, :dependent => :destroy
   has_many    :sales_order_lines, :dependent => :destroy
-  has_many   :comments, :as => :commentable
-  has_many   :attachments, :as => :attachable
+  has_many   :comments, :as => :commentable, :dependent => :destroy
+  has_many   :attachments, :as => :attachable, :dependent => :destroy
 
   validates :customer, :presence => true
 

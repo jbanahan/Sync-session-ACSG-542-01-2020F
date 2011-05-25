@@ -10,8 +10,8 @@ class Delivery < ActiveRecord::Base
   
   has_many   :histories, :dependent => :destroy
   has_many   :sales_order_lines, :through => :piece_sets
-  has_many   :comments, :as => :commentable
-  has_many   :attachments, :as => :attachable
+  has_many   :comments, :as => :commentable, :dependent => :destroy
+  has_many   :attachments, :as => :attachable, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
 
   validates :customer, :presence => true

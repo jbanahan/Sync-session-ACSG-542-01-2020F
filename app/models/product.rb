@@ -19,9 +19,9 @@ class Product < ActiveRecord::Base
   has_many   :shipment_lines, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
   has_many   :histories, :dependent => :destroy
-  has_many   :attachments, :as => :attachable
-  has_many   :comments, :as => :commentable
-  has_many   :item_change_subscriptions
+  has_many   :attachments, :as => :attachable, :dependent => :destroy
+  has_many   :comments, :as => :commentable, :dependent => :destroy
+  has_many   :item_change_subscriptions, :dependent => :destroy
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true,
     :reject_if => lambda { |a| a[:country_id].blank?}
