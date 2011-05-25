@@ -73,9 +73,9 @@ GEM
     mysql2 (0.2.6)
     mysql2 (0.2.6-x86-mingw32)
     newrelic_rpm (2.14.1)
-    paperclip (2.3.8)
-      activerecord
-      activesupport
+    paperclip (2.3.10)
+      activerecord (>= 2.3.0)
+      activesupport (>= 2.3.2)
     polyglot (0.3.1)
     rack (1.2.1)
     rack-mount (0.6.13)
@@ -137,7 +137,7 @@ DEPENDENCIES
   mongrel (= 1.2.0.pre2)
   mysql2
   newrelic_rpm
-  paperclip (= 2.3.8)
+  paperclip (= 2.3.10)
   rails (= 3.0.3)
   ruby-debug19
   rufus-scheduler (= 2.0.8)
