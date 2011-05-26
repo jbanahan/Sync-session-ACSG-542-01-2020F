@@ -53,6 +53,89 @@ var OCSearch = (function() {
       rewriteBulkForm();
     });
   }
+
+  var initSearchCriterions = function() {
+    var getDataType = function(f) {
+      return f.parents("tr:first").find(".srch_crit_fld option:selected").attr('dtype');
+    }
+    var numDateVal = function(f) {
+      var dt = getDataType(f);
+      if(dt=="date" || dt=="datetime") {
+        f.datepicker({dateFormat: 'yy-mm-dd'});
+      }
+      if(dt=="integer" || dt=="decimal" || dt=="fixnum"){
+        f.jStepper();
+      }
+    }
+    var relDateVal = function(f) {
+      f.jStepper();
+    }
+    var writeSearchOperators = function(modelField,selected) {
+      var dt = getDataType(modelField);
+      var h = "";
+      if(dt=="date" || dt=="datetime") {
+        h += "<option value='eq'>Equals</option>";
+        h += "<option value='gt'>After</option>";
+        h += "<option value='lt'>Before</option>";
+        h += "<option value='bda'>Before _ Days Ago</option>";
+        h += "<option value='ada'>After _ Days Ago</option>";
+        h += "<option value='bdf'>Before _ Days From Now</option>";
+        h += "<option value='adf'>After _ Days From Now</option>";
+      }
+      if(dt=="integer" || dt=="decimal" || dt=="fixnum") {
+        h += "<option value='eq'>Equals</option>";
+        h += "<option value='gt'>Greater Than</option>";
+        h += "<option value='lt'>Less Than</option>";
+        h += "<option value='sw'>Starts With</option>";
+        h += "<option value='ew'>Ends With</option>";
+        h += "<option value='co'>Contains</option>";
+      }
+      if(dt=="string" || dt=="text") {
+        h += "<option value='eq'>Equals</option>";
+        h += "<option value='sw'>Starts With</option>";
+        h += "<option value='ew'>Ends With</option>";
+        h += "<option value='co'>Contains</option>";
+      }
+      h += "<option value='null'>Is Empty</option>";
+      h += "<option value='notnull'>Is Not Empty</option>";
+      var op = modelField.parents("tr:first").find(".srch_crit_oper");
+      op.html(h);
+      op.val(selected);
+      op.change();
+    }
+    var validations = {
+      gt:numDateVal,
+      lt:numDateVal,
+      eq:numDateVal,
+      sw:numDateVal,
+      ew:numDateVal,
+      co:numDateVal,
+      ada:relDateVal,
+      adf:relDateVal,
+      bda:relDateVal,
+      bdf:relDateVal,
+      'null':function(f) {f.hide();},
+      'notnull':function(f) {f.hide()}
+    }
+    var bindValueValidations = function(tr) {
+      var op = tr.find(".srch_crit_oper");
+      var vField = tr.find(".srch_crit_value");
+      vField.unbind(); //remove bindings
+      vField.show();
+      vField.val('');
+      vField.datepicker('destroy');
+      var v = validations[op.val()]
+      if(v) {
+        v(vField);
+      }
+    }
+    $(".srch_crit_oper").live('change',function() {
+      bindValueValidations($(this).parents("tr:first"));
+    });
+    $(".srch_crit_fld").live('change',function() {
+      writeSearchOperators($(this));
+    });
+  }
     
   return {
     init: function(max_objects,search_run_id) {
@@ -61,6 +144,7 @@ var OCSearch = (function() {
       $("#frm_bulk").attr('action','');
       initBulkSelectors();
       initSelectFullList();
+      initSearchCriterions();
     },
     addBulkHandler: function(button_name,form_path) {
       var b = $("#"+button_name);
