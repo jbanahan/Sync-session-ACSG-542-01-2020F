@@ -60,11 +60,15 @@ class ApplicationController < ActionController::Base
 
   def advanced_search(core_module)
     last_run = SearchRun.find_last_run current_user, core_module
-    if params[:force_search] || last_run.nil? || !last_run.search_setup_id.nil?
+    debugger
+    if params[:force_search] || last_run.nil? || !last_run.search_setup_id.nil? || params[:sid]
+      debugger
       @core_module = core_module
       @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
       @current_search = get_search_to_run
-      if @current_search.user != current_user
+      if @current_search.nil?
+        error_redirect "Search with this ID could not be found."
+      elsif @current_search.user != current_user
         error_redirect "You cannot run a search that is assigned to a different user."
       else
         begin
@@ -291,9 +295,8 @@ class ApplicationController < ActionController::Base
   end
   
   def get_search_to_run
-    s = nil
-    s = SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
-    s = SearchSetup.find_last_accessed current_user, @core_module if s.nil?
+    return SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
+    s = SearchSetup.find_last_accessed current_user, @core_module
     s = @core_module.make_default_search current_user if s.nil?
     s
   end
