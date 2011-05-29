@@ -26,6 +26,11 @@ class CustomDefinition < ActiveRecord::Base
     self.id.nil? ? nil : "*cf_#{id}"
   end
 
+  def model_field
+    mu = model_field_uid
+    mu.nil? ? nil : ModelField.find_by_uid(mu)
+  end
+
   def date?
     (!self.data_type.nil?) && self.data_type=="date"
   end

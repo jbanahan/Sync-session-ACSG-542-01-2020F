@@ -17,6 +17,7 @@ class ModelField
               obj.send("#{@field_name}")
             end
           },
+          :entity_type_field => false
         }.merge(options)
     @uid = uid
     @core_module = core_module
@@ -34,8 +35,20 @@ class ModelField
     @public_searchable = @public && pf.first.searchable
     @qualified_field_name = o[:qualified_field_name]
     @label_override = o[:label_override]
+    @entity_type_field = o[:entity_type_field]
   end
   
+  #get the array of entity types for which this field should be displayed
+  def entity_type_ids
+    EntityTypeField.cached_entity_type_ids self 
+  end
+
+  #does this field represent the "Entity Type" field for the module.  This is used by the application helper to 
+  #make sure that this field is always displayed (even if it is not on the entity type field list)
+  def entity_type_field?
+    @entity_type_field
+  end
+
   def label
     return @label_override unless @label_override.nil?
     FieldLabel.label_text @uid
@@ -506,7 +519,24 @@ class ModelField
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","","official_tariffs")
     add_fields CoreModule::PRODUCT, [
       [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
-      #2 is available to use
+      [2,:prod_ent_type,:name,"Product Type",{:entity_type_field=>true,
+        :import_lambda => lambda {|detail,data|
+          et = EntityType.where(:name=>data).first
+          if et
+            detail.entity_type = et
+            return "#{ModelField.find_by_uid(:prod_ent_type).label} set to #{et.name}."
+          else
+            return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
+          end
+        },
+        :export_lambda => lambda {|detail|
+          et = detail.entity_type
+          et.nil? ? "" : et.name
+        },
+        :join_statement => "LEFT OUTER JOIN entity_types AS prod_entity_type_name ON prod_entity_type_name.id = products.entity_type_id",
+        :join_alias => "prod_entity_type_name",
+        :data_type=>:integer
+      }],
       [3,:prod_name,:name,"Name",{:data_type=>:string}],
       [4,:prod_uom,:unit_of_measure,"Unit of Measure",{:data_type=>:string}],
       #5 and 6 are now created with the make_vendor_arrays method below, Don't use them.

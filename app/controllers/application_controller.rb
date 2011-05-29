@@ -60,9 +60,7 @@ class ApplicationController < ActionController::Base
 
   def advanced_search(core_module)
     last_run = SearchRun.find_last_run current_user, core_module
-    debugger
     if params[:force_search] || last_run.nil? || !last_run.search_setup_id.nil? || params[:sid]
-      debugger
       @core_module = core_module
       @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
       @current_search = get_search_to_run

@@ -33,7 +33,6 @@ class ProductsController < ApplicationController
     p = Product.new
     action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product",:lock_check=>false}) {
       @product = p
-
       respond_to do |format|
           format.html # new.html.erb
           format.xml  { render :xml => @product }

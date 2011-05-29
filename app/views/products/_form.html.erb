@@ -21,6 +21,9 @@ $(function() {
   <% end %>
   OpenChain.addClickMap('c',"Cancel","btn_cancel");
   OpenChain.activateHotKeys();
+  <% if @product.entity_type_id %>
+    OpenChain.hideByEntityType($("#product_header"),'<%=@product.entity_type_id%>');
+  <% end %>
 });
 function checkUOMChange() {
   ou = $("#original_uom").val();
