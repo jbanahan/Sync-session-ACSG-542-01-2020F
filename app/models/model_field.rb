@@ -49,9 +49,12 @@ class ModelField
     @entity_type_field
   end
 
-  def label
-    return @label_override unless @label_override.nil?
-    FieldLabel.label_text @uid
+  #get the label that can be shown to the user.  If force_label is true or false, the CoreModule's prefix will or will not be appended.  If nil, it will use the default of the CoreModule's show_field_prefix
+  def label(force_label=nil)
+    do_prefix = force_label.nil? && self.core_module ? self.core_module.show_field_prefix : force_label
+    r = do_prefix ? "#{self.core_module.label} - " : ""
+    return "#{r}#{@label_override}" unless @label_override.nil?
+    "#{r}#{FieldLabel.label_text @uid}"
   end
 
   def qualified_field_name
@@ -106,11 +109,11 @@ class ModelField
     end
   end 
   
-  def self.make_division_arrays(rank_start,uid_prefix,label_prefix,table_name)
+  def self.make_division_arrays(rank_start,uid_prefix,table_name)
     r = [
-      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"#{label_prefix}Division ID"]
+      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"Division ID"]
     ]
-    n = [rank_start+1,"#{uid_prefix}_div_name".to_sym, :name,"#{label_prefix}Division Name",{
+    n = [rank_start+1,"#{uid_prefix}_div_name".to_sym, :name,"Division Name",{
       :import_lambda => lambda {|obj,data|
         d = Division.where(:name => data).first
         obj.division = d
@@ -128,11 +131,11 @@ class ModelField
     r << n
     r
   end
-  def self.make_carrier_arrays(rank_start,uid_prefix,label_prefix,table_name)
+  def self.make_carrier_arrays(rank_start,uid_prefix,table_name)
     r = [
-      [rank_start,"#{uid_prefix}_car_id".to_sym,:carrier_id,"#{label_prefix}Carrier ID"]
+      [rank_start,"#{uid_prefix}_car_id".to_sym,:carrier_id,"Carrier ID"]
     ]
-    r << [rank_start+1,"#{uid_prefix}_car_name".to_sym, :name,"#{label_prefix}Carrier Name",{
+    r << [rank_start+1,"#{uid_prefix}_car_name".to_sym, :name,"Carrier Name",{
       :import_lambda => lambda {|obj,data|
         carrier = Company.where(:name => data).where(:carrier => true).first
         unless carrier.nil?
@@ -149,7 +152,7 @@ class ModelField
       :join_alias => "#{table_name}_car_comp",
       :data_type => :string
     }]
-    r << [rank_start+2,"#{uid_prefix}_car_syscode".to_sym,:system_code,"#{label_prefix}Carrier System Code", {
+    r << [rank_start+2,"#{uid_prefix}_car_syscode".to_sym,:system_code,"Carrier System Code", {
       :import_lambda => lambda {|obj,data|
         carrier = Company.where(:system_code=>data,:carrier=>true).first
         obj.carrier = carrier
@@ -166,11 +169,11 @@ class ModelField
     }]
     r
   end
-  def self.make_customer_arrays(rank_start,uid_prefix,label_prefix,table_name) 
+  def self.make_customer_arrays(rank_start,uid_prefix,table_name) 
     r = [
-      [rank_start,"#{uid_prefix}_cust_id".to_sym,:customer_id,"#{label_prefix}Customer ID"]
+      [rank_start,"#{uid_prefix}_cust_id".to_sym,:customer_id,"Customer ID"]
     ]
-    r << [rank_start+1,"#{uid_prefix}_cust_name".to_sym, :name,"#{label_prefix}Customer Name", {
+    r << [rank_start+1,"#{uid_prefix}_cust_name".to_sym, :name,"Customer Name", {
       :import_lambda => lambda {|detail,data|
         c = Company.where(:name => data).where(:customer => true).first
         unless c.nil?
@@ -187,7 +190,7 @@ class ModelField
       :join_alias => "#{table_name}_cust_comp",
       :data_type=>:string
     }]
-    r << [rank_start+2,"#{uid_prefix}_cust_syscode".to_sym,:system_code,"#{label_prefix}Customer System Code", {
+    r << [rank_start+2,"#{uid_prefix}_cust_syscode".to_sym,:system_code,"Customer System Code", {
       :import_lambda => lambda {|o,data|
         customer = Company.where(:system_code=>data,:customer=>true).first
         o.customer = customer
@@ -204,11 +207,11 @@ class ModelField
     }]
     r
   end
-  def self.make_vendor_arrays(rank_start,uid_prefix,label_prefix,table_name) 
+  def self.make_vendor_arrays(rank_start,uid_prefix,table_name) 
     r = [
-      [rank_start,"#{uid_prefix}_ven_id".to_sym,:vendor_id,"#{label_prefix}Vendor ID"]
+      [rank_start,"#{uid_prefix}_ven_id".to_sym,:vendor_id,"Vendor ID"]
     ]
-    r << [rank_start+1,"#{uid_prefix}_ven_name".to_sym, :name,"#{label_prefix}Vendor Name", {
+    r << [rank_start+1,"#{uid_prefix}_ven_name".to_sym, :name,"Vendor Name", {
       :import_lambda => lambda {|detail,data|
         vendor = Company.where(:name => data).where(:vendor => true).first
         unless vendor.nil?
@@ -225,7 +228,7 @@ class ModelField
       :join_alias => "#{table_name}_vend_comp",
       :data_type=>:string
     }]
-    r << [rank_start+2,"#{uid_prefix}_ven_syscode".to_sym,:system_code,"#{label_prefix}Vendor System Code", {
+    r << [rank_start+2,"#{uid_prefix}_ven_syscode".to_sym,:system_code,"Vendor System Code", {
       :import_lambda => lambda {|o,data|
         vendor = Company.where(:system_code=>data,:vendor=>true).first
         unless vendor.nil?
@@ -244,13 +247,13 @@ class ModelField
   end
 
   #Don't use this.  Use make_ship_from_arrays or make_ship_to_arrays
-  def self.make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,ft)
+  def self.make_ship_arrays(rank_start,uid_prefix,table_name,ft)
     raise "Invalid shipping from/to indicator provided: #{ft}" unless ["from","to"].include?(ft)
     ftc = ft.titleize
     r = [
-      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"#{label_prefix}Ship #{ftc} ID"]
+      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"Ship #{ftc} ID"]
     ]
-    n = [rank_start+1,"#{uid_prefix}_ship_#{ft}_name".to_sym,:name,"#{label_prefix}Ship #{ftc} Name", {
+    n = [rank_start+1,"#{uid_prefix}_ship_#{ft}_name".to_sym,:name,"Ship #{ftc} Name", {
       :import_lambda => lambda {|obj,data|
         a = Address.where(:name=>data).where(:shipping => true).first
         if ft=="to"
@@ -284,9 +287,9 @@ class ModelField
     id_counter = rank_start
     r = []
     (1..3).each do |i|
-      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS #{i}"]
+      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}"]
       id_counter += 1
-      r << [id_counter,"#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate,"HTS #{i} - General Rate",{
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate,"#{i} - General Rate",{
         :import_lambda => lambda {|obj,data| return "General Duty Rate cannot be set by import, ignored."},
         :export_lambda => lambda {|t|
           ot = case i
@@ -302,7 +305,7 @@ class ModelField
       }]
       if canada && canada.import_location
         id_counter += 1
-        r << [id_counter,"#{uid_prefix}_hts_#{i}_gpt".to_sym, :general_preferential_tariff_rate,"HTS #{i} - GPT Rate",{
+        r << [id_counter,"#{uid_prefix}_hts_#{i}_gpt".to_sym, :general_preferential_tariff_rate,"#{i} - GPT Rate",{
           :import_lambda => lambda {|obj,data| return "GPT Rate cannot be set by import, ignored."},
           :export_lambda => lambda {|t|
             ot = case i
@@ -319,7 +322,7 @@ class ModelField
       end
       if OfficialTariff.where("import_regulations is not null OR export_regulations is not null").count>0
         id_counter += 1
-        r << [id_counter,"#{uid_prefix}_hts_#{i}_impregs".to_sym, :import_regulations,"HTS #{i} - Import Regulations",{
+        r << [id_counter,"#{uid_prefix}_hts_#{i}_impregs".to_sym, :import_regulations,"#{i} - Import Regulations",{
           :import_lambda => lambda {|obj,data| return "HTS Import Regulations cannot be set by import, ignored."},
           :export_lambda => lambda {|t|
             ot = case i
@@ -334,7 +337,7 @@ class ModelField
           :data_type=>:string
         }]
         id_counter += 1
-        r << [id_counter,"#{uid_prefix}_hts_#{i}_expregs".to_sym, :export_regulations,"HTS #{i} - Export Regulations",{
+        r << [id_counter,"#{uid_prefix}_hts_#{i}_expregs".to_sym, :export_regulations,"#{i} - Export Regulations",{
           :import_lambda => lambda {|obj,data| return "HTS Export Regulations cannot be set by export, ignored."},
           :export_lambda => lambda {|t|
             ot = case i
@@ -350,7 +353,7 @@ class ModelField
         }]
       end
       id_counter += 1
-      r << [id_counter,"#{uid_prefix}_hts_#{i}_qc".to_sym,:category,"HTS #{i} - Quota Category",{
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_qc".to_sym,:category,"#{i} - Quota Category",{
         :import_lambda => lambda {|obj,data| return "Quota Category cannot be set by import, ignored."},
         :export_lambda => lambda {|t|
           ot = case i
@@ -370,15 +373,15 @@ class ModelField
     r
   end
   
-  def self.make_ship_to_arrays(rank_start,uid_prefix,label_prefix,table_name)
-    make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,"to")
+  def self.make_ship_to_arrays(rank_start,uid_prefix,table_name)
+    make_ship_arrays(rank_start,uid_prefix,table_name,"to")
   end
-  def self.make_ship_from_arrays(rank_start,uid_prefix,label_prefix,table_name)
-    make_ship_arrays(rank_start,uid_prefix,label_prefix,table_name,"from")
+  def self.make_ship_from_arrays(rank_start,uid_prefix,table_name)
+    make_ship_arrays(rank_start,uid_prefix,table_name,"from")
   end
-  def self.make_country_arrays(rank_start,uid_prefix,label_prefix,table_name)
+  def self.make_country_arrays(rank_start,uid_prefix,table_name)
     r = []
-    r << [rank_start,"#{uid_prefix}_cntry_name".to_sym, :name,"#{label_prefix}Country Name", {
+    r << [rank_start,"#{uid_prefix}_cntry_name".to_sym, :name,"Country Name", {
       :import_lambda => lambda {|detail,data|
         c = Country.where(:name => data).first
         detail.country = c
@@ -393,7 +396,7 @@ class ModelField
       :join_alias => "#{table_name}_country",
       :data_type=>:string
     }]
-    r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "#{label_prefix}Country ISO Code",{
+    r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "Country ISO Code",{
       :import_lambda => lambda {|detail,data|
         c = Country.where(:iso_code => data).first
         detail.country = c
@@ -410,9 +413,9 @@ class ModelField
     }]
     r
   end
-  def self.make_product_arrays(rank_start,uid_prefix,label_prefix,table_name)
+  def self.make_product_arrays(rank_start,uid_prefix,table_name)
     r = []
-    r << [rank_start,"#{uid_prefix}_puid".to_sym, :unique_identifier,"#{label_prefix}Product Unique ID", {
+    r << [rank_start,"#{uid_prefix}_puid".to_sym, :unique_identifier,"Product Unique ID", {
       :import_lambda => lambda {|detail,data|
         p = Product.where(:unique_identifier=>data).first
         return "Product not found with unique identifier #{data}" if p.nil?
@@ -429,7 +432,7 @@ class ModelField
       :join_statement => "LEFT OUTER JOIN products AS #{uid_prefix}_puid ON #{uid_prefix}_puid.id = #{table_name}.product_id",
       :join_alias => "#{uid_prefix}_puid",:data_type=>:string
     }]
-    r << [rank_start+1,"#{uid_prefix}_pname".to_sym, :name,"#{label_prefix}Product Name",{
+    r << [rank_start+1,"#{uid_prefix}_pname".to_sym, :name,"Product Name",{
       :import_lambda => lambda {|detail,data|
         prods = Product.where(:name=>data)
         if prods.size>1
@@ -453,9 +456,9 @@ class ModelField
     }]
     r
   end
-  def self.make_master_setup_array rank_start, uid_prefix, label_prefix
+  def self.make_master_setup_array rank_start, uid_prefix
     r = []
-    r << [rank_start,"#{uid_prefix}_system_code".to_sym,:system_code,"#{label_prefix}Master System Code", {
+    r << [rank_start,"#{uid_prefix}_system_code".to_sym,:system_code,"Master System Code", {
       :import_lambda => lambda {|detail,data| return "Master System Code cannot by set by import, ignored."},
       :export_lambda => lambda {|detail| return MasterSetup.get.system_code},
       :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
@@ -463,7 +466,7 @@ class ModelField
     }]
   end
 
-  def self.add_custom_fields(core_module,base_class,label_prefix,parameters={})
+  def self.add_custom_fields(core_module,base_class,parameters={})
     max = 0
     m_type = core_module.class_name.intern
     model_hash = MODEL_FIELDS[m_type]
@@ -471,7 +474,7 @@ class ModelField
     base_class.new.custom_definitions.order("rank ASC").each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{label_prefix}#{d.label}"}))
+      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}"}))
       model_hash[mf.uid.to_sym] = mf
     end
   end
@@ -483,16 +486,16 @@ class ModelField
         h.delete k unless v.custom_id.nil?
       end
     end
-    ModelField.add_custom_fields(CoreModule::ORDER,Order,"Header - ")
-    ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine,"Line - ")
-    ModelField.add_custom_fields(CoreModule::PRODUCT,Product,"")
-    ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification,"Classification - ")
-    ModelField.add_custom_fields(CoreModule::TARIFF,TariffRecord,"HTS - ")
-    ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment,"Header - ")
-    ModelField.add_custom_fields(CoreModule::SHIPMENT_LINE,ShipmentLine,"Line - ")
-    ModelField.add_custom_fields(CoreModule::SALE,SalesOrder,"Header - ")
-    ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine,"Line - ")
-    ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery,"")
+    ModelField.add_custom_fields(CoreModule::ORDER,Order)
+    ModelField.add_custom_fields(CoreModule::ORDER_LINE,OrderLine)
+    ModelField.add_custom_fields(CoreModule::PRODUCT,Product)
+    ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification)
+    ModelField.add_custom_fields(CoreModule::TARIFF,TariffRecord)
+    ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment)
+    ModelField.add_custom_fields(CoreModule::SHIPMENT_LINE,ShipmentLine)
+    ModelField.add_custom_fields(CoreModule::SALE,SalesOrder)
+    ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine)
+    ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery)
   end
   def self.reload 
     MODEL_FIELDS.clear
@@ -516,7 +519,7 @@ class ModelField
       [17,:ot_import_regs,:import_regulations,"Import Regulations",{:data_type=>:string}],
       [18,:ot_export_regs,:export_regulations,"Export Regulations",{:data_type=>:string}]
     ]
-    add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","","official_tariffs")
+    add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
     add_fields CoreModule::PRODUCT, [
       [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
       [2,:prod_ent_type,:name,"Product Type",{:entity_type_field=>true,
@@ -567,11 +570,11 @@ class ModelField
       }],
       [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}]
     ]
-    add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","","products")
-    add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","","products")
-    add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod","")
+    add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")
+    add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
+    add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
     
-    add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","Classification - ","classifications")
+    add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
 
     add_fields CoreModule::TARIFF, [
       [4,:hts_line_number,:line_number,"HTS Row"]
@@ -581,66 +584,66 @@ class ModelField
       [1,:ord_ord_num,:order_number,"Order Number"],
       [2,:ord_ord_date,:order_date,"Order Date",{:data_type=>:date}],
     ]
-    add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","","orders")
-    add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","","orders")
-    add_fields CoreModule::ORDER, make_division_arrays(300,"ord","","orders")
-    add_fields CoreModule::ORDER, make_master_setup_array(400,"ord","")
+    add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
+    add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
+    add_fields CoreModule::ORDER, make_division_arrays(300,"ord","orders")
+    add_fields CoreModule::ORDER, make_master_setup_array(400,"ord")
 
     add_fields CoreModule::ORDER_LINE, [
       [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
       [3,:ordln_ordered_qty,:quantity,"Order Quantity",{:data_type=>:decimal}],
       [4,:ordln_ppu,:price_per_unit,"Price / Unit",{:data_type=>:decimal}]
     ]
-    add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","","order_lines")
+    add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
 
     add_fields CoreModule::SHIPMENT, [
       [1,:shp_ref,:reference,"Reference Number",{:data_type=>:string}],
       [2,:shp_mode,:mode,"Mode",{:data_type=>:string}],
     ]
-    add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","","shipments")
-    add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","","shipments")
-    add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","","shipments")
-    add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","","shipments")
-    add_fields CoreModule::SHIPMENT, make_master_setup_array(400,"shp","")
+    add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
+    add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")
+    add_fields CoreModule::SHIPMENT, make_ship_from_arrays(250,"shp","shipments")
+    add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","shipments")
+    add_fields CoreModule::SHIPMENT, make_master_setup_array(400,"shp")
     
     add_fields CoreModule::SHIPMENT_LINE, [
       [1,:shpln_line_number,:line_number,"Shipment - Row",{:data_type=>:integer}],
       [2,:shpln_shipped_qty,:quantity,"Shipment Row Quantity",{:data_type=>:decimal}]
     ]
-    add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","","shipment_lines")
+    add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
 
 
     add_fields CoreModule::SALE, [
       [1,:sale_order_number,:order_number,"Sale Number",{:data_type=>:string}],
       [2,:sale_order_date,:order_date,"Sale Date",{:data_type=>:date}],
     ]
-    add_fields CoreModule::SALE, make_customer_arrays(100,"sale","","sales_orders")
-    add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","","sales_orders")
-    add_fields CoreModule::SALE, make_division_arrays(300,"sale","","sales_orders")
-    add_fields CoreModule::SALE, make_master_setup_array(400,"sale","")
+    add_fields CoreModule::SALE, make_customer_arrays(100,"sale","sales_orders")
+    add_fields CoreModule::SALE, make_ship_to_arrays(200,"sale","sales_orders")
+    add_fields CoreModule::SALE, make_division_arrays(300,"sale","sales_orders")
+    add_fields CoreModule::SALE, make_master_setup_array(400,"sale")
 
     add_fields CoreModule::SALE_LINE, [
       [1,:soln_line_number,:line_number,"Sale Row", {:data_type=>:integer}],
       [3,:soln_ordered_qty,:quantity,"Sale Quantity",{:data_type=>:decimal}],
       [4,:soln_ppu,:price_per_unit,"Price / Unit",{:data_type => :decimal}]
     ]
-    add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","","sale_order_lines")
+    add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","sale_order_lines")
     
     add_fields CoreModule::DELIVERY, [
       [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
       [2,:del_mode,:mode,"Mode",{:data_type=>:string}],
     ]
-    add_fields CoreModule::DELIVERY, make_ship_from_arrays(100,"del","","deliveries")
-    add_fields CoreModule::DELIVERY, make_ship_to_arrays(200,"del","","deliveries")
-    add_fields CoreModule::DELIVERY, make_carrier_arrays(300,"del","","deliveries")
-    add_fields CoreModule::DELIVERY, make_customer_arrays(400,"del","","deliveries")
-    add_fields CoreModule::DELIVERY, make_master_setup_array(500,"del","")
+    add_fields CoreModule::DELIVERY, make_ship_from_arrays(100,"del","deliveries")
+    add_fields CoreModule::DELIVERY, make_ship_to_arrays(200,"del","deliveries")
+    add_fields CoreModule::DELIVERY, make_carrier_arrays(300,"del","deliveries")
+    add_fields CoreModule::DELIVERY, make_customer_arrays(400,"del","deliveries")
+    add_fields CoreModule::DELIVERY, make_master_setup_array(500,"del")
 
     add_fields CoreModule::DELIVERY_LINE, [
       [1,:delln_line_number,:line_number,"Delivery Row",{:data_type=>:integer}],
       [2,:delln_delivery_qty,:quantity,"Delivery Row Qauntity",{:data_type=>:decimal}]
     ]
-    add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","Line - ","delivery_lines")
+    add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","delivery_lines")
     reset_custom_fields
   end
 

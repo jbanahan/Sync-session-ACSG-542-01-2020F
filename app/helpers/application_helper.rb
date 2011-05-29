@@ -9,7 +9,7 @@ module ApplicationHelper
     :pdf=>ICON_PDF
   }
 
-  def field_view_row object, model_field_uid
+  def field_view_row object, model_field_uid, show_prefix=nil
     mf = ModelField.find_by_uid(model_field_uid)
     show_field = true
     if !mf.entity_type_field? && object.respond_to?('entity_type_id')
@@ -17,7 +17,7 @@ module ApplicationHelper
       ids = mf.entity_type_ids
       show_field = false if !e_id.nil? && !ids.include?(e_id)
     end
-    show_field ? field_row(field_label(model_field_uid),  mf.process_export(object)) : ""
+    show_field ? field_row(field_label(model_field_uid,show_prefix),  mf.process_export(object)) : ""
   end
 
   #build a select box with all model_fields grouped by module.
@@ -69,10 +69,11 @@ module ApplicationHelper
     end
     link_to icon, download_attachment_path(att), link_opts
   end
-  def field_label model_field_uid, never_hide=false
+  #show the label for the field.  show_prefix options: nil=default core module behavior, true=always show prefix, false=never show prefix
+  def field_label model_field_uid, show_prefix=nil
     mf = ModelField.find_by_uid model_field_uid
     return "Unknown Field" if mf.nil?
-    content_tag(:span,mf.label,{:class=>"fld_lbl #{never_hide ? "neverhide" : ""}",:entity_type_ids=>entity_type_ids(mf)})
+    content_tag(:span,mf.label(show_prefix),{:class=>"fld_lbl",:entity_type_ids=>entity_type_ids(mf)})
   end
   def help_link(text,page_name=nil)
     "<a href='/help#{page_name.blank? ? "" : "?page="+page_name}' target='chainio_help'>#{text}</a>".html_safe
@@ -87,7 +88,7 @@ module ApplicationHelper
     !customizable.custom_definitions.empty?
   end
   def show_custom_fields(customizable, opts={})
-		opts = {:form=>false, :table=>false}.merge(opts)
+		opts = {:form=>false, :table=>false, :show_prefix=>nil}.merge(opts)
 	  x = ""
 	  customizable.custom_definitions.order("rank ASC, label ASC").each {|d|
       mf = d.model_field
@@ -106,12 +107,12 @@ module ApplicationHelper
           else
             field = model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{data_type_class(mf)} #{field_tip_class}", :size=>"30"})
           end
-          x << field_row(field_label(d.model_field_uid),field)          
+          x << field_row(field_label(d.model_field_uid,opts[:show_prefix]),field)          
         else
-          x << field_view_row(customizable, d.model_field_uid)
+          x << field_view_row(customizable, d.model_field_uid,opts[:show_prefix])
         end
       else
-        z = "<b>".html_safe+field_label(d.model_field_uid)+": </b>".html_safe
+        z = "<b>".html_safe+field_label(d.model_field_uid,opts[:show_prefix])+": </b>".html_safe
         if opts[:form]
           z << model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}"})
         else
@@ -123,8 +124,8 @@ module ApplicationHelper
     return opts[:table] ? x.html_safe : content_tag(:div, x.html_safe, :class=>'custom_field_box')	  
   end
   
-  def field_row(label, field) 
-    content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field), :class=>'hover field_row')
+  def field_row(label, field, never_hide=false) 
+    content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
   
   def model_field_label(model_field_uid) 

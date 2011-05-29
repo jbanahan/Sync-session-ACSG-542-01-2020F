@@ -8,6 +8,7 @@ class CoreModule
       :worksheetable, #works with worksheet uploads
       :file_formatable, #can be used for file formats
       :default_search_columns, #array of columns to be included when a default search is created
+      :show_field_prefix, #should the default option for this module's field's labels be to show the module name as a prefix (true =  "Classification - Country Name", false="Country Name")
       :changed_at_parents_lambda #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
@@ -22,7 +23,8 @@ class CoreModule
           ss
         },
         :bulk_actions_lambda => lambda {|current_user| return Hash.new},
-        :changed_at_parents_lambda => lambda {|base_object| []}
+        :changed_at_parents_lambda => lambda {|base_object| []},
+        :show_field_prefix => false
       }.
       merge(opts)
     @class_name = class_name
@@ -38,6 +40,7 @@ class CoreModule
     @default_search_columns = o[:default_search_columns]
     @bulk_actions_lambda = o[:bulk_actions_lambda]
     @changed_at_parents_lambda = o[:changed_at_parents_lambda]
+    @show_field_prefix = o[:show_field_prefix]
   end
   
   #find's the given objects parents that should have their changed_at values updated, updates them, and saves them.
@@ -111,7 +114,7 @@ class CoreModule
     CoreModule.recursive_module_level(0,self,core_module)      
   end
     
-  ORDER_LINE = new("OrderLine","Order Line") 
+  ORDER_LINE = new("OrderLine","Order Line",:show_field_prefix=>true) 
   ORDER = new("Order","Order",
     {:file_formatable=>true,
       :children => [ORDER_LINE],
@@ -119,20 +122,20 @@ class CoreModule
       :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"},
       :default_search_columns => [:ord_ord_num,:ord_ord_date,:ord_ven_name,:ordln_puid,:ordln_ordered_qty]
     })
-  SHIPMENT_LINE = new("ShipmentLine", "Shipment Line")
+  SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",:show_field_prefix=>true)
   SHIPMENT = new("Shipment","Shipment",
     {:children=>[SHIPMENT_LINE],
     :child_lambdas => {SHIPMENT_LINE => lambda {|p| p.shipment_lines}},
     :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id"},
     :default_search_columns => [:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name]})
-  SALE_LINE = new("SalesOrderLine","Sale Line")
+  SALE_LINE = new("SalesOrderLine","Sale Line",:show_field_prefix=>true)
   SALE = new("SalesOrder","Sale",
     {:children => [SALE_LINE],
       :child_lambdas => {SALE_LINE => lambda {|parent| parent.sales_order_lines}},
       :child_joins => {SALE_LINE => "LEFT OUTER JOIN sales_order_lines ON sales_orders.id = sales_order_lines.sales_order_id"},
       :default_search_columns => [:sale_order_number,:sale_order_date,:sale_cust_name]
     })
-  DELIVERY_LINE = new("DeliveryLine","Delivery Line")
+  DELIVERY_LINE = new("DeliveryLine","Delivery Line",:show_field_prefix=>true)
   DELIVERY = new("Delivery","Delivery",
     {:children=>[DELIVERY_LINE],
     :child_lambdas => {DELIVERY_LINE => lambda {|p| p.delivery_lines}},
@@ -148,13 +151,15 @@ class CoreModule
         r << p unless p.nil?
       end
       r
-    }
+    },
+    :show_field_prefix=>true
   })
   CLASSIFICATION = new("Classification","Classification",{
       :children => [TARIFF],
       :child_lambdas => {TARIFF => lambda {|p| p.tariff_records}},
       :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"},
-      :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] }
+      :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] },
+      :show_field_prefix=>true
   })
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
       :children => [CLASSIFICATION],

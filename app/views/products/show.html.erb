@@ -51,28 +51,13 @@
 <% if current_user.view_deliveries? && @product.has_deliveries? %><button id='btn_delivery_jump'>Deliveries</button><%end%>
 -->
 <% end %>
+<div>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
 <div class='next_to_attachments'>
-  <table class='detail_table'>
-<!--  <thead><tr><th>Product Information</th></tr></thead>-->
-  <tbody>
-  <tr><td>
-  <!-- fields -->
-    <table>
-      <%=field_view_row @product, :prod_status_name%>
-      <%=field_view_row @product, :prod_uid%>
-      <%=field_view_row @product, :prod_name%>
-      <%=field_view_row @product, :prod_uom%>
-      <%=field_view_row @product, :prod_ven_name%>
-      <%=field_view_row @product, :prod_div_name%>
-      <%=show_custom_fields @product, {:table=>true}%>
-      <%=field_view_row @product, :prod_ent_type%>
-      <%=field_view_row @product, :prod_changed_at%>
-    </table>
-  </td></tr>
-  </tbody>
-  </table>
+<%=render :partial => 'product_view', :locals => {:product => @product} %>
 </div>
+</div>
+<%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
 <% if current_user.view_classifications? %>
 <div class='attachments_container section_insert'>
   <h2 class='section_insert_heading'>Classifications</h2>
@@ -84,21 +69,21 @@
           <td class='class_tr_box'>
             <div class='cf_box'>
               <table>
-                <%=show_custom_fields c, {:table=>true}%>
+                <%=show_custom_fields c, {:table=>true,:show_prefix=>false}%>
               </table>
             </div> 
             <% c.tariff_records.each do |t| %>
               <div class='tf_row'>
                 <table>
-                  <%=field_row field_label(:hts_line_number), t.line_number%>
-                  <%=show_custom_fields t, {:table=>true}%>
+                  <%=field_row field_label(:hts_line_number,false), t.line_number%>
+                  <%=show_custom_fields t, {:table=>true,:show_prefix=>false}%>
                 </table>
                 <table class='tr_hts'>
                   <thead>
                     <tr>
-                      <th><%=field_label :hts_hts_1%></th>
-                      <th><%=field_label :hts_hts_2%></th>
-                      <th><%=field_label :hts_hts_3%></th>
+                      <th><%=field_label :hts_hts_1, false%></th>
+                      <th><%=field_label :hts_hts_2, false%></th>
+                      <th><%=field_label :hts_hts_3, false%></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -119,7 +104,6 @@
 </div>
 <% end %>
 
-<%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 

@@ -197,8 +197,8 @@ var OpenChain = (function() {
     //public stuff
     hideByEntityType: function(table,entityTypeId) {
       if(entityTypeId.length) {
-        table.find('.fld_lbl').not('.neverhide').not('[entity_type_ids*="*'+entityTypeId+'*"]').each(function() {
-          $(this).parents(".field_row:first").hide(); 
+        table.find('.fld_lbl').not('[entity_type_ids*="*'+entityTypeId+'*"]').each(function() {
+          $(this).parents(".field_row:first").not(".neverhide").hide(); 
         });
       } else {
         table.find('.fld_lbl').each(function() {$(this).parents(".field_row:first").fadeIn('slow');});

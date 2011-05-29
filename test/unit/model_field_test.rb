@@ -2,6 +2,24 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
   
+  test "field label prefix" do
+    #order shouldn't have prefix
+    assert !CoreModule::ORDER.show_field_prefix, "Setup issue"
+    #classification should
+    assert CoreModule::CLASSIFICATION.show_field_prefix, "Setup issue"
+    
+    mf = ModelField.find_by_uid :ord_ord_num
+    assert mf.label=="Order Number"
+    assert mf.label(true) == "#{CoreModule::ORDER.label} - Order Number"
+    assert mf.label(false) == "Order Number"
+
+    mf = ModelField.find_by_uid :class_cntry_name
+    assert mf.label=="#{CoreModule::CLASSIFICATION.label} - Country Name"
+    assert mf.label(true)=="#{CoreModule::CLASSIFICATION.label} - Country Name"
+    assert mf.label(false)=="Country Name"
+
+  end
+
   test "entity type" do 
     p = Product.new
     mf = ModelField.find_by_uid :prod_ent_type
@@ -55,7 +73,8 @@ class ModelFieldTest < ActiveSupport::TestCase
     ModelField.reload
     mf = ModelField.find_by_uid :hts_hts_1_gpt
     assert !mf.nil?
-    assert mf.label=="HTS 1 - GPT Rate"
+    expected = "Tariff - 1 - GPT Rate"
+    assert mf.label==expected, "Expected #{expected}, Found #{mf.label}"
     ot = OfficialTariff.create!(:hts_code=>"999999",:general_preferential_tariff_rate=>"123",:country_id=>ca.id,:full_description=>"fake")
     p = Product.first
     c = p.classifications.create!(:country_id=>ca.id)

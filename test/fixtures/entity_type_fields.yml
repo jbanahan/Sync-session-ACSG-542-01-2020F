@@ -1,0 +1,9 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  model_field_uid: MyString
+  entity_type_id: 1
+
+two:
+  model_field_uid: MyString
+  entity_type_id: 1

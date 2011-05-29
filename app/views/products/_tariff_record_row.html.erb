@@ -2,15 +2,15 @@
 <input type='hidden' name='product[classifications_attributes][<%=classification_count%>][tariff_records_attributes][<%=tariff_count%>][view_sequence]' value='<%=tariff_view_sequence%>' />
     <div class='tr_close'><%= f.hidden_field :_destroy, "class" => "tf_destroy"%><%=link_to image_tag('x.png'), '#', :class=>'tf_remove'%></div>
   <table>
-    <%=field_row field_label(:hts_line_number), model_text_field(f,:line_number, :hts_line_number, {:class=>'tf_line_number'})%> 
-    <%=show_custom_fields f.object, {:form=>true, :table=>true, :parent_name=>"tariff_custom[#{tariff_view_sequence}]"} %>
+    <%=field_row field_label(:hts_line_number,false), model_text_field(f,:line_number, :hts_line_number, {:class=>'tf_line_number'})%> 
+    <%=show_custom_fields f.object, {:form=>true, :show_prefix=>false, :table=>true, :parent_name=>"tariff_custom[#{tariff_view_sequence}]"} %>
   </table>
   <table class='tr_hts'>
     <thead>
       <tr>
-        <th><%=field_label :hts_hts_1%></th>
-        <th><%=field_label :hts_hts_2%></th>
-        <th><%=field_label :hts_hts_3%></th>
+        <th><%=field_label :hts_hts_1, false%></th>
+        <th><%=field_label :hts_hts_2, false%></th>
+        <th><%=field_label :hts_hts_3, false%></th>
       </tr>
     </thead>
     <tbody>

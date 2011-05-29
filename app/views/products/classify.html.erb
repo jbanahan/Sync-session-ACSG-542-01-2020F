@@ -41,19 +41,15 @@ $(function() {
 <% end %>
 <a href='#classifications'>Jump To Classifications</a>
 <br />
-<h2>Product Information</h2>
-<table>
-  <%=field_row field_label(:prod_status_name), @product.status_name %>
-  <%=field_row field_label(:prod_uid), @product.unique_identifier%>
-  <%=field_row field_label(:prod_name),@product.name%>
-  <%=field_row field_label(:prod_uom), @product.unit_of_measure%>
-  <%=field_row field_label(:prod_ven_name), @product.vendor.nil? ? "" : @product.vendor.name%>
-  <%=field_row field_label(:prod_div_name), @product.division.nil? ? "" : @product.division.name%>
-  <%=show_custom_fields @product, {:table=>true}%>
-  <%=field_row field_label(:prod_changed_at),@product.changed_at%>
-</table>
+<div>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
+<div class='next_to_attachments'>
+<%=render :partial => 'product_view', :locals => {:product => @product} %>
+</div>
+</div>
 
-<hr />
-<%= form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
-  <%=render :partial=>'classify', :locals=>{:form_obj=>f}%>
-<% end %>
+<div class='section_insert'>
+  <%= form_for(@product,:html=>{:id=>"frm_p"}) do |f| %>
+    <%=render :partial=>'classify', :locals=>{:form_obj=>f}%>
+  <% end %>
+</div>
