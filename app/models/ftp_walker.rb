@@ -51,8 +51,9 @@ class FtpWalker
       } 
     rescue Timeout::Error
       log.error "FTP job timed out!"
+    ensure
+      run_imports
     end
-    run_imports
   end
 
   class DownloadedFile
