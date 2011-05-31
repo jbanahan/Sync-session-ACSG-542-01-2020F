@@ -4,4 +4,4 @@
 
   cache_class = Rails.env=="test" ? TestExtensions::MockCache : Dalli::Client
 
-  CACHE = cache_class.new ['localhost:11211'], {:namespace=>CacheManager.namespace}
+  CACHE = cache_class.new ['localhost:11211'], {:namespace=>CacheManager.namespace} if MasterSetup.table_exists?
