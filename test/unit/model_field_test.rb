@@ -23,7 +23,7 @@ class ModelFieldTest < ActiveSupport::TestCase
   test "entity type" do 
     p = Product.new
     mf = ModelField.find_by_uid :prod_ent_type
-    et = EntityType.create!("test entity type")
+    et = EntityType.create!(:name=>"test entity type")
     mf.process_import p, et.name
     assert p.entity_type == et
     et_name = mf.process_export p

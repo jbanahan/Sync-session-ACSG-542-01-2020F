@@ -8,6 +8,8 @@
 These are often files like a &quot;Quote Sheet&quot; or a &quot;Purchase Order&quot;.</p> 
 <h2><%= link_to 'Attachment Types', attachment_types_path%></h2>
 <p>Setup the items that show in the attachment type drop down lists.</p>
+<h2><%= link_to 'Product Types', entity_types_path%></h2>
+<p>Setup product types that filter the fields shown on the product view and edit screen.</p>
 <h2><%= link_to 'Status Rules', status_rules_path %></h2>
 <p>Setup the rules that determine what status a particular item has.</p>
 <%if current_user.sys_admin? %>
