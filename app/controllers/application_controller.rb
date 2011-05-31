@@ -482,9 +482,11 @@ def model_field_label(model_field_uid)
     return mf.label
   end
   def new_relic
-    m = MasterSetup.get
-    NewRelic::Agent.add_custom_parameters(:uuid=>m.uuid)
-    NewRelic::Agent.add_custom_parameters(:system_code=>m.system_code)
-    NewRelic::Agent.add_custom_parameters(:user=>current_user.username) unless current_user.nil?
+    if Rails.env=='production'
+      m = MasterSetup.get
+      NewRelic::Agent.add_custom_parameters(:uuid=>m.uuid)
+      NewRelic::Agent.add_custom_parameters(:system_code=>m.system_code)
+      NewRelic::Agent.add_custom_parameters(:user=>current_user.username) unless current_user.nil?
+    end
   end
 end
