@@ -101,7 +101,7 @@ class FtpWalker
     imp.user = search_setup.user
     imp.save!
     imp.process search_setup.user 
-    file.delete
+    File.delete(file.path) 
   end
 
 #get the subdirectories for the current working directory and return the ftp object back to its original state
