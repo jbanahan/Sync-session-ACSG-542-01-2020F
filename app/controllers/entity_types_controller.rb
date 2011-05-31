@@ -62,6 +62,9 @@ class EntityTypesController < ApplicationController
       end
     }
   end
+  def show
+    redirect_to edit_entity_type_path(EntityType.find(params[:id]))
+  end
 
   private
   def prep_edit_screen et
