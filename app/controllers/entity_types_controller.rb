@@ -41,12 +41,24 @@ class EntityTypesController < ApplicationController
           new_fields = params[:entity_type_fields]
           new_fields.each {|mfid,val| et.entity_type_fields.create!(:model_field_uid=>mfid)}
           add_flash :notices, "Save successful"
-          redirect_to edit_entity_type_path et
+          redirect_to edit_entity_type_path(et)
         else
           errors_to_flash et, :now=>true
           prep_edit_screen et
           render 'edit'
         end
+      end
+    }
+  end
+  def destroy 
+    admin_secure {
+      et = EntityType.find params[:id]
+      if et.destroy
+        add_flash :notices, "Delete successful"
+        redirect_to entity_types_path
+      else
+        errors_to_flash et
+        redirect_to edit_entity_type_path(et)
       end
     }
   end

@@ -12,7 +12,12 @@ $(function() {
     <%=field_row field_label(:prod_ven_name), form_obj.collection_select(:vendor_id, Company.find_vendors.not_locked, :id, :name, {:prompt => "Select a vendor"}) %>
   <%end%>
   <%=field_row field_label(:prod_name), model_text_field(form_obj,:name,:prod_name) %>
-  <%=field_row field_label(:prod_ent_type), form_obj.collection_select(:entity_type_id, EntityType.where(:module_type=>CoreModule::PRODUCT.class_name),:id,:name, {:include_blank=>true}, {:class=>"entity_type"}), true%>
+  <%
+    entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name)
+    if entity_types.size > 0
+  %>
+    <%=field_row field_label(:prod_ent_type), form_obj.collection_select(:entity_type_id, entity_types,:id,:name, {:include_blank=>true}, {:class=>"entity_type"}), true%>
+  <% end %>
   <%=field_row field_label(:prod_uom), model_text_field(form_obj,:unit_of_measure,:prod_uom,:id=>'txt_uom')%>
   <%=field_row field_label(:prod_div_name), form_obj.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}) %>
   <%=show_custom_fields form_obj.object, {:form=>true, :table=>true}%>

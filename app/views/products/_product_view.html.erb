@@ -2,7 +2,9 @@
     <%=field_view_row product, :prod_status_name%>
     <%=field_view_row product, :prod_uid%>
     <%=field_view_row product, :prod_name%>
-    <%=field_view_row product, :prod_ent_type%>
+    <% if product.entity_type_id %>
+      <%=field_view_row product, :prod_ent_type%>
+    <% end %>
     <%=field_view_row product, :prod_uom%>
     <%=field_view_row product, :prod_ven_name%>
     <%=field_view_row product, :prod_div_name%>
