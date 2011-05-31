@@ -2,6 +2,10 @@ require 'test_helper'
 
 class SearchCriterionTest < ActiveSupport::TestCase
 
+  def setup
+    ActiveRecord::Base.connection.execute("set time_zone = '+0:00'") #ensure we're working in UTC to make sure local system offsets don't screw with date math
+  end
+
   test "before days ago" do
     o = Order.create!(:order_number=>"ordbda",:order_date=>4.days.ago,:vendor_id=>companies(:vendor).id)
     sc = SearchCriterion.create!(:model_field_uid =>:ord_ord_date,:operator=>"bda",:value=>3)
