@@ -1,0 +1,11 @@
+  <table>
+    <%=field_view_row product, :prod_status_name%>
+    <%=field_view_row product, :prod_uid%>
+    <%=field_view_row product, :prod_name%>
+    <%=field_view_row product, :prod_ent_type%>
+    <%=field_view_row product, :prod_uom%>
+    <%=field_view_row product, :prod_ven_name%>
+    <%=field_view_row product, :prod_div_name%>
+    <%=show_custom_fields product, {:table=>true}%>
+    <%=field_view_row product, :prod_changed_at%>
+  </table>

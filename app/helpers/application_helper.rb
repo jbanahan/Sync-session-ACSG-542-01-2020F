@@ -9,6 +9,17 @@ module ApplicationHelper
     :pdf=>ICON_PDF
   }
 
+  def field_view_row object, model_field_uid, show_prefix=nil
+    mf = ModelField.find_by_uid(model_field_uid)
+    show_field = true
+    if !mf.entity_type_field? && object.respond_to?('entity_type_id')
+      e_id = object.entity_type_id
+      ids = mf.entity_type_ids
+      show_field = false if !e_id.nil? && !ids.include?(e_id)
+    end
+    show_field ? field_row(field_label(model_field_uid,show_prefix),  mf.process_export(object)) : ""
+  end
+
   #build a select box with all model_fields grouped by module.
   def select_model_fields_tag(name,opts={})
     select_tag name, grouped_options_for_select(CoreModule.grouped_options,nil,"Select a Field"), opts
@@ -58,10 +69,11 @@ module ApplicationHelper
     end
     link_to icon, download_attachment_path(att), link_opts
   end
-  def field_label model_field_uid
+  #show the label for the field.  show_prefix options: nil=default core module behavior, true=always show prefix, false=never show prefix
+  def field_label model_field_uid, show_prefix=nil
     mf = ModelField.find_by_uid model_field_uid
     return "Unknown Field" if mf.nil?
-    mf.label
+    content_tag(:span,mf.label(show_prefix),{:class=>"fld_lbl",:entity_type_ids=>entity_type_ids(mf)})
   end
   def help_link(text,page_name=nil)
     "<a href='/help#{page_name.blank? ? "" : "?page="+page_name}' target='chainio_help'>#{text}</a>".html_safe
@@ -76,42 +88,44 @@ module ApplicationHelper
     !customizable.custom_definitions.empty?
   end
   def show_custom_fields(customizable, opts={})
-		opts = {:form=>false, :table=>false}.merge(opts)
+		opts = {:form=>false, :table=>false, :show_prefix=>nil}.merge(opts)
 	  x = ""
 	  customizable.custom_definitions.order("rank ASC, label ASC").each {|d|
-			name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
-			name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
-			c_val = customizable.get_custom_value(d).value
-  		if opts[:table]
-  		  field = ''
-        field_tip_class = d.tool_tip.blank? ? "" : "fieldtip"
-  		  if d.data_type=='boolean'
-  		    if opts[:form]
-  		      field = hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:title=>"#{d.tool_tip}",:class=>"cv_chkbx #{field_tip_class}", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
-  		    else
-  		      field = c_val ? "Yes" : "No"
-  		    end
-  		  elsif d.data_type=='text'
-  		    field = opts[:form] ? model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>field_tip_class,:rows=>5, :cols=>24}) : "#{c_val}"
-  		  else
-          field = opts[:form] ? model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}", :size=>"30"}) : "#{c_val}"
-  		  end
-        x << field_row(d.label,field)          
-  		else
-				z = "<b>".html_safe+d.label+": </b>".html_safe
-				if opts[:form]
-				  z << model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}"})
-				else
-				  z << "#{c_val}"
-				end
-				x << content_tag(:div, z.html_safe, :class=>'field')  	
-		  end
+      mf = d.model_field
+      name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
+      name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
+      c_val = customizable.get_custom_value(d).value
+      if opts[:table]
+        if opts[:form]
+          field = ''
+          field_tip_class = d.tool_tip.blank? ? "" : "fieldtip"
+          case d.data_type
+          when 'boolean'
+            field = hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:title=>"#{d.tool_tip}",:class=>"cv_chkbx #{field_tip_class} #{data_type_class(mf)}", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
+          when 'text'
+            field = model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{field_tip_class} #{data_type_class(mf)}",:rows=>5, :cols=>24})
+          else
+            field = model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{data_type_class(mf)} #{field_tip_class}", :size=>"30"})
+          end
+          x << field_row(field_label(d.model_field_uid,opts[:show_prefix]),field)          
+        else
+          x << field_view_row(customizable, d.model_field_uid,opts[:show_prefix])
+        end
+      else
+        z = "<b>".html_safe+field_label(d.model_field_uid,opts[:show_prefix])+": </b>".html_safe
+        if opts[:form]
+          z << model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}"})
+        else
+          z << "#{c_val}"
+        end
+        x << content_tag(:div, z.html_safe, :class=>'field')  	
+      end
 	  }
     return opts[:table] ? x.html_safe : content_tag(:div, x.html_safe, :class=>'custom_field_box')	  
   end
   
-  def field_row(label, field) 
-    content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field), :class=>'hover field_row')
+  def field_row(label, field, never_hide=false) 
+    content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
   
   def model_field_label(model_field_uid) 
@@ -153,5 +167,25 @@ module ApplicationHelper
   def val_class model_field_uid
   #returns the string "rvalidate" if the field needs remote validation
     FieldValidatorRule.find_cached_by_model_field_uid(model_field_uid.to_s).empty? ? "" : "rvalidate"
+  end
+  def entity_type_ids model_field
+    ids = model_field.entity_type_ids 
+    r = "*"
+    ids.each {|i| r << "#{i}*"}
+    r
+  end
+  def data_type_class model_field
+    case model_field.data_type
+    when :date
+      return " isdate "
+    when :datetime
+      return " isdate "
+    when :integer
+      return " integer "
+    when :decimal
+      return " decimal "
+    else
+      return ""
+    end
   end
 end

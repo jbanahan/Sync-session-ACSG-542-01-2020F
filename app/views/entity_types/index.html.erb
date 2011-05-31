@@ -1,0 +1,15 @@
+<%=content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=new_entity_type_path%>' key_map='n'>New</button>
+<%end%>
+<table class='detail_table'>
+  <thead><tr><th>&nbsp;</th><th>Module</th><th>Name</th></tr></thead>
+  <tbody>
+    <%@entity_types.each do |et| %>
+      <tr class='hover'>
+        <td><%=link_to 'Edit', edit_entity_type_path(et) %></td>
+        <td><%=CoreModule.find_by_class_name(et.module_type).label %></td>
+        <td><%=et.name%></td>
+      </tr>
+    <%end%>
+  </tbody>
+</table>

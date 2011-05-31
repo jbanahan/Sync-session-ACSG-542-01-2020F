@@ -10,6 +10,7 @@ class Product < ActiveRecord::Base
   belongs_to :vendor, :class_name => "Company"
   belongs_to :division
   belongs_to :status_rule
+  belongs_to :entity_type
   validates	 :unique_identifier, :presence => true
   validates_uniqueness_of :unique_identifier
 

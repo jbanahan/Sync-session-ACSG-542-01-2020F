@@ -32,9 +32,9 @@ function sendComment() {
 <%content_for :action_bar do%>
   <button id='btn_comment_add'>Add Comment</button>
 <%end%>
-<div id='comments_container section_insert'>
+<% unless commentable.comments.empty? %>
+<div id='comments_container' class='section_insert'>
   <h2 class='section_insert_heading'>Comments <span style='font-weight: normal; font-size: 50%;'>(<a href='#' class='comment_exp_all'>open all</a><a href='#' class='comment_cls_all' style='display:none;'>close all</a>)</span></h2>
-  <% unless commentable.comments.empty? %>
   <table class='comment_table'>
     <tbody>
       <%commentable.comments.each do |c| %>
@@ -72,8 +72,8 @@ function sendComment() {
       <%end%>
     </tbody>
   </table>
-  <% end %>
 </div>
+<% end %>
 <div id='mod_comments_add' style='display:none;'>
   <%=form_for(commentable.comments.build, :html=>{:id=>'frm_comment_add'}) do |f| %>
     <%=f.hidden_field :commentable_id %>

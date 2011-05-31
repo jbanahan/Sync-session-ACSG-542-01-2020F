@@ -39,7 +39,7 @@ $(function() {
             <div class='cf_box'>
               <table>
                 <%=cf.hidden_field :country_id, :class=>"hdn_country_id"%>
-                <%=show_custom_fields cf.object, {:form=>true, :table=>true, :parent_name=>"classification_custom[#{classification_count}]"}%>
+                <%=show_custom_fields cf.object, {:form=>true, :table=>true, :show_prefix=>false, :parent_name=>"classification_custom[#{classification_count}]"}%>
               </table>
             </div>
             <% if cf.object.tariff_records.blank? %>

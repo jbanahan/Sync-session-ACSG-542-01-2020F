@@ -33,6 +33,8 @@ img {
 }
 .section_insert {
   margin-top: 1em;
+  display: table;
+  width: 100%;
 }
 .section_insert_heading {
   font-size: 2em; 

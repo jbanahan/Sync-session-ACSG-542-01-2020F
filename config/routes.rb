@@ -1,5 +1,6 @@
 OpenChain::Application.routes.draw do
 
+  resources :entity_types
   resources :field_validator_rules do
     get 'validate', :on=>:collection
   end
