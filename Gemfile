@@ -17,6 +17,6 @@ gem 'rufus-scheduler', '2.0.8'
 gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
 gem 'cover_me', '>= 1.0.0.rc6', :group => :test
 group :production do
-  gem 'newrelic_rpm'
+  gem 'newrelic_rpm', '3.0.1'
 end
 gem 'dalli'
