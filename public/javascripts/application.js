@@ -837,6 +837,10 @@ function tariffPopUp(htsNumber,country_id) {
           h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor);
           h += htsDataRow("SME UOM",o.official_quota.unit_of_measure);
         }
+        h += htsDataRow("Notes:",o.notes);
+        if(o.auto_classify_ignore) {
+          h += htsDataRow("Ignore For Auto Classify","Yes")
+        }
         h += "</tbody></table>";
       }
       c.html(h);
