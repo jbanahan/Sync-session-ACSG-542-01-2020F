@@ -48,7 +48,7 @@ class UserSessionsController < ApplicationController
   # DELETE /user_sessions/1.xml
   def destroy
     @user_session = UserSession.find
-    @user_session.destroy
+    @user_session.destroy if @user_session #would be nil if logout action is hit when user is not logged in (Lighthouse ticket 199)
 
     respond_to do |format|
       add_flash :notices, "You are logged out.  Thanks for visiting."
