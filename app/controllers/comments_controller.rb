@@ -24,7 +24,11 @@ class CommentsController < ApplicationController
     redirect_to commentable
   end
   def show 
-    redirect_to Comment.find(params[:id]).commentable
+    begin
+      redirect_to Comment.find(params[:id]).commentable
+    rescue ActiveRecord::RecordNotFound
+      error_redirect "The comment you are searching for has been deleted."
+    end
   end
   def update
     cmt = Comment.find(params[:id])
