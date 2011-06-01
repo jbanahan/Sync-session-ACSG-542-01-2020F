@@ -13,9 +13,9 @@ class OfficialTariff < ActiveRecord::Base
   
   #return tariff for hts_code & country_id
   def self.find_cached_by_hts_code_and_country_id hts_code, country_id
-    t = CACHE.get("OfficialTariff:ct:#{hts_code}:#{country_id}")
+    t = CACHE.get("OfficialTariff:ct:#{hts_code.strip}:#{country_id}")
     t = OfficialTariff.where(:country_id=>country_id,:hts_code=>hts_code).first if t.nil?
-    CACHE.set("OfficialTariff:ct:#{hts_code}:#{country_id}",t) unless t.nil?
+    CACHE.set("OfficialTariff:ct:#{hts_code.strip}:#{country_id}",t) unless t.nil?
     t
   end
 
@@ -25,15 +25,27 @@ class OfficialTariff < ActiveRecord::Base
     OfficialTariff.where(:country_id=>other_country).where("hts_code like ?","#{h}%")
   end
 
+  def meta_data
+    @meta_data = OfficialTariffMetaData.where(:country_id=>self.country_id,:hts_code=>self.hts_code).first if @meta_data.nil?
+    @meta_data = OfficialTariffMetaData.new(:country_id=>self.country_id,:hts_code=>self.hts_code) if @meta_data.nil?
+    @meta_data
+  end
+
   #override as_json to format hts_code
   def as_json(options={})
     result = super({ :except => :hts_code }.merge(options))
-    result["official_tariff"]["hts_code"] = hts_code.hts_format unless hts_code.nil?
+    otr = result["official_tariff"]
+    otr["hts_code"] = hts_code.hts_format unless hts_code.nil?
+    md = self.meta_data
+    unless md.nil?
+      otr["notes"]=md.notes.nil? ? "" : md.notes
+      otr["auto_classify_ignore"] = md.auto_classify_ignore ? true : false
+    end
     result
   end
 
   private
   def update_cache
-    CACHE.set "OfficialTariff:ct:#{self.hts_code}:#{self.country_id}", self
+    CACHE.set "OfficialTariff:ct:#{self.hts_code.strip}:#{self.country_id}", self
   end
 end

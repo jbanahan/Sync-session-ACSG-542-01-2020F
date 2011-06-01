@@ -20,6 +20,7 @@ OpenChain::Application.routes.draw do
   resources :official_tariffs, :only=>[:index,:show] do
     get 'find', :on => :collection
   end
+  resources :official_tariff_meta_datas, :only=>[:create,:update]
 
   resources :status_rules
   resources :attachments do
