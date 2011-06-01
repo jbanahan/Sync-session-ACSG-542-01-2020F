@@ -241,7 +241,7 @@ var OpenChain = (function() {
       });
       $("form").submit(function() {
         if(invalidTariffFields.length) {
-          window.alert("Pleaes fix or erase invalid tariff numbers.");
+          window.alert("Please fix or erase invalid tariff numbers.");
           return false;
         }
         removeEmptyClassifications();
