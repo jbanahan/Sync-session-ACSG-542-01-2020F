@@ -3,6 +3,9 @@ require 'net/ftp'
 
 class FtpWalker
 
+  @@files_being_processed = []
+
+
   def go
   #this will need a lot more config to be multi-user, multi-file, but just getting Vandegrift going right now
     sys_code = MasterSetup.get.system_code
@@ -88,9 +91,16 @@ class FtpWalker
   def process_files ftp, file_list, search_setup
     ["#{Rails.root}/tmp","#{Rails.root}/tmp/ftpdown"].each {|p| Dir.mkdir(p) unless File.directory?(p)}
     file_list.each do |f|
-      ftp.getbinaryfile f, "#{Rails.root}/tmp/ftpdown/#{f}"
-      process_file File.new("#{Rails.root}/tmp/ftpdown/#{f}"), search_setup
-      ftp.delete f
+      unless @@files_being_processed.include? f #another thread has claimed this file
+        begin
+          @@files_being_processed << f
+          ftp.getbinaryfile f, "#{Rails.root}/tmp/ftpdown/#{f}"
+          process_file File.new("#{Rails.root}/tmp/ftpdown/#{f}"), search_setup
+          ftp.delete f
+        ensure
+          @@files_being_processed.delete f
+        end
+      end
     end
   end
 
