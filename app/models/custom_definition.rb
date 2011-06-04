@@ -66,7 +66,7 @@ class CustomDefinition < ActiveRecord::Base
   end
   private
   def reset_model_field_constants
-    ModelField.reset_custom_fields
+    ModelField.reset_custom_fields true #reset flag in cached to make sure other passenger instances reload themselves
   end
 
   def reset_field_label

@@ -1,4 +1,5 @@
 class ModelField
+  @@last_loaded = nil
   attr_reader :model, :field_name, :label_prefix, :sort_rank, 
               :import_lambda, :export_lambda, 
               :custom_id, :data_type, :core_module, 
@@ -479,7 +480,7 @@ class ModelField
     end
   end
   
-  def self.reset_custom_fields
+  def self.reset_custom_fields(update_cache_time=false)
     CoreModule::CORE_MODULES.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]
       h.each do |k,v|
@@ -496,8 +497,11 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder)
     ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine)
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery)
+    @@last_loaded = Time.now
+    CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
   end
-  def self.reload 
+
+  def self.reload(update_cache_time=false)
     MODEL_FIELDS.clear
     add_fields CoreModule::OFFICIAL_TARIFF, [
       [1,:ot_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
@@ -656,6 +660,7 @@ class ModelField
       :export_lambda => lambda {|o| },
       :data_type => :string
     }) if uid.to_sym == :_blank
+    reload_if_stale
     MODEL_FIELDS.values.each do |h|
       u = uid.to_sym
       return h[u] unless h[u].nil?
@@ -664,6 +669,7 @@ class ModelField
   end
   
   def self.find_by_module_type(type_symbol)
+    reload_if_stale
     h = MODEL_FIELDS[type_symbol]
     h.nil? ? [] : h.values.to_a
   end
@@ -684,6 +690,13 @@ class ModelField
   
   def self.sort_by_label(mf_array)
     return mf_array.sort { |a,b| a.label <=> b.label }
+  end
+
+  def self.reload_if_stale
+    cache_time = CACHE.get "ModelField:last_loaded"
+    if !cache_time.nil? && (@@last_loaded.nil? || @@last_loaded < cache_time)
+      reload
+    end
   end
 
 end

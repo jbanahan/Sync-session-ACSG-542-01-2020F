@@ -92,6 +92,7 @@ class CoreModule
   
   #hash of model_fields keyed by UID
   def model_fields
+    ModelField.reset_if_stale
     ModelField::MODEL_FIELDS[@class_name.to_sym]
   end
   
