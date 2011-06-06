@@ -1,6 +1,22 @@
 require 'test_helper'
 
 class CustomDefinitionTest < ActiveSupport::TestCase
+
+  test "default value - integer" do
+    expected = 99
+    cd = CustomDefinition.create!(:module_type=>"Order",:label=>"x",:data_type=>"integer",:default_value=>expected.to_s)
+    o = Order.new
+    cv = o.get_custom_value cd
+    assert cv.value==expected
+  end
+  test "default value" do 
+    expected = "ABCDEF"
+    cd = CustomDefinition.create!(:module_type=>"Order",:label=>"x",:data_type=>"string",:default_value=>expected)
+    o = Order.new
+    cv = o.get_custom_value cd
+    assert cv.value==expected
+  end
+
   test "model_field_uid" do 
     cd = CustomDefinition.create!(:module_type=>"Order",:label=>"x",:data_type=>"date")
     assert cd.model_field_uid == "*cf_#{cd.id}", "Expected *cf_#{cd.id}, got #{cd.model_field_uid}"

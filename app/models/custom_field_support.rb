@@ -11,7 +11,11 @@ module CustomFieldSupport
     return @injected[custom_definition.id] if @injected && @injected[custom_definition.id]
     cv = self.connection.outside_transaction? ? CustomValue.cached_find_unique(custom_definition.id, self) : nil 
     cv = self.custom_values.where(:custom_definition_id => custom_definition).first if cv.nil?
-    cv.nil? ? self.custom_values.build(:custom_definition => custom_definition) : cv
+    if cv.nil?
+      cv = self.custom_values.build(:custom_definition => custom_definition)
+      cv.value = custom_definition.default_value unless custom_definition.default_value.nil?
+    end
+    cv
   end
 
   def get_custom_value_by_id(id)
@@ -19,7 +23,7 @@ module CustomFieldSupport
   end
 
   #when you inject a custom value, it will be the value returned by this instance's get_custom_value methods for the appropriate custom_definition for the life of the object, 
-  #regardless of database changes. Basically, you're overriding any database or cache checks with a hard coded value.
+  #regardless of database changes. Basically, you're overriding any database or cache checks with a hard coded value for the lifetime of this object in memory.
   #use cautiously
   def inject_custom_value custom_value
     @injected = {} unless @injected

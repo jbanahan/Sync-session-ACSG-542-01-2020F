@@ -22,14 +22,7 @@ class CustomDefinitionsController < ApplicationController
   # GET /custom_definitions/1
   # GET /custom_definitions/1.xml
   def show
-    c = CustomDefinition.find(params[:id])
-		action_secure(c.can_view?(current_user),c,{:lock_check => false, :verb => "view", :module_name=>"custom field"}) {
-			@custom_definition = c
-			respond_to do |format|
-				format.html # show.html.erb
-				format.xml  { render :xml => @custom_definition }
-			end
-		}
+    redirect_to edit_custom_definition_path(CustomDefinition.find(params[:id]))
   end
 
   # GET /custom_definitions/new
