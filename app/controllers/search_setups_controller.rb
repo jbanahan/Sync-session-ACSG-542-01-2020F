@@ -57,4 +57,12 @@ class SearchSetupsController < ApplicationController
     end
     redirect_to mod_type
   end
+  def sticky_open
+    current_user.update_attributes({:search_open=>true})
+    render :text => ""
+  end
+  def sticky_close
+    current_user.update_attributes({:search_open=>false})
+    render :text => ""
+  end
 end

@@ -151,6 +151,18 @@ var OCSearch = (function() {
       bulkButtons.push(b);
       b.click(function() {$("#frm_bulk").attr('action',form_path).submit();});
       rewriteBulkForm();
+    },
+    showSetup: function() {
+      $("#search_setup_outer").show("blind", { direction: "vertical" }, 500)
+      $("#show_srch_setup").hide();
+      $("#hide_srch_setup").show();
+      $.post('/search_setups/sticky_open');
+    },
+    hideSetup: function() {
+      $("#search_setup_outer").hide("blind", { direction: "vertical" }, 500)
+      $("#hide_srch_setup").hide();
+      $("#show_srch_setup").show();
+      $.post('/search_setups/sticky_close');
     }
   };
 })();

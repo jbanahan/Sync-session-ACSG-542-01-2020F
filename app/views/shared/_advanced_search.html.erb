@@ -6,6 +6,9 @@ $(function() {
       OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=send(v)%>');
     <% end %>
   <% end %>
+  <%if current_user.search_open? %>
+    OCSearch.showSetup();
+  <%end%>
   $("#lnk_no_upload").click(function(ev) {
     ev.preventDefault();
     $("#mod_no_upload").dialog('open');
@@ -90,15 +93,11 @@ $(function() {
   
   $("#show_srch_setup").click(function(ev) {
     ev.preventDefault();
-    $("#search_setup_outer").show("blind", { direction: "vertical" }, 500)
-    $(this).hide();
-    $("#hide_srch_setup").show();
+    OCSearch.showSetup();
   });
   $("#hide_srch_setup").click(function(ev) {
     ev.preventDefault();
-    $("#search_setup_outer").hide("blind", { direction: "vertical" }, 500)
-    $(this).hide();
-    $("#show_srch_setup").show();
+    OCSearch.hideSetup();
   });
   $(".sp_remove").live('click',function(ev) {
     ev.preventDefault();
@@ -203,7 +202,10 @@ function addNewSearchCriterion() {
 <%end%>
 
 <div id='main_search_cont'>
-Search Setup: <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>&nbsp;<a href='#' id='show_srch_setup'>Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Setup</a><br />
+<div id='search_select_box'>
+  <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>
+  &nbsp;<a href='#' id='show_srch_setup'>Show Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Hide Setup</a>
+</div>
 <div id='search_setup_outer' style='display:none;'>
   <div id='search_setup'>
     <%=form_for(@current_search, :html=>{:id=>"frm_current_search"}) do |f| %>
@@ -335,7 +337,6 @@ hrs_opts = {"midnight"=>"0"}
   </div>
 </div>
 
-<h2>Results</h2>
 <div id='bulk_message'></div>
 <table class='detail_table' id='result_table'>
   <thead><tr>

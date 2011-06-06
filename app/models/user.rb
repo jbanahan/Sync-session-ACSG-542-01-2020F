@@ -4,7 +4,7 @@ class User < ActiveRecord::Base
   attr_accessible :username, :email, :password, 
     :password_confirmation, :time_zone, 
     :email_format, :company_id,
-    :first_name, :last_name
+    :first_name, :last_name, :search_open
   
   belongs_to :company
   
@@ -51,6 +51,11 @@ class User < ActiveRecord::Base
     return !self.disabled
   end
   
+  #should the advanced search box be open on the user's screen
+  def search_open?
+    return self.search_open
+  end
+
   def full_name
     n = (self.first_name.nil? ? '' : self.first_name + " ") + (self.last_name.nil? ? '' : self.last_name)
     n = self.username if n.strip.length==0

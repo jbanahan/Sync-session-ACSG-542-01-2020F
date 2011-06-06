@@ -161,6 +161,10 @@ OpenChain::Application.routes.draw do
   end
 
   resources :search_setups do
+    collection do
+      post 'sticky_open'
+      post 'sticky_close'
+    end
     member do
       get 'copy'
       get 'give'
