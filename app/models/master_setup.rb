@@ -13,11 +13,13 @@ class MasterSetup < ActiveRecord::Base
     cache_initalized = true
     begin
       m = CACHE.get CACHE_KEY 
+      raise "MasterSetup cache returned a TrueClass!" if !m.nil? && m.is_a?(TrueClass)
       return m unless m.nil?
     rescue NameError
       cache_initalized = false
     end
     m = init_base_setup
+    raise "MasterSetup init_base_setup returned a TrueClass!" if m.is_a?(TrueClass)
     CACHE.set CACHE_KEY, m if cache_initalized
     m
   end
