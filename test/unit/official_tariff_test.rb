@@ -2,19 +2,37 @@ require 'test_helper'
 
 class OfficialTariffTest < ActiveSupport::TestCase
 
+  test "binding ruling url" do
+    t = OfficialTariff.new(:country_id=>Country.where(:iso_code=>"US").first.id,:hts_code=>"1234567890")
+    found = t.binding_ruling_url
+    expected = "http://rulings.cbp.gov/index.asp?qu=1234%2E56%2E7890&vw=results" 
+    assert found==expected
+    t.country=Country.where(:iso_code=>"IT").first
+    expected = "http://ec.europa.eu/taxation_customs/dds2/ebti/ebti_consultation.jsp?Lang=en&nomenc=123456&orderby=0&Expand=true&offset=1&range=25"
+    found = t.binding_ruling_url
+    assert found==expected, "Expected: #{expected}, Found: #{found}"
+    t.country=Country.where(:iso_code=>"CN").first
+    assert t.binding_ruling_url.nil?
+  end
+
   test "as_json" do
     hts_seed = "1234567890"
-    t = OfficialTariff.create!(:country_id=>Country.first.id,:hts_code=>hts_seed,:full_description=>"XB")
+    t = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>hts_seed,:full_description=>"XB")
     j = t.as_json["official_tariff"]
     assert j["hts_code"]==hts_seed.hts_format
     assert j["notes"] == ""
     assert j["auto_classify_ignore"] == false
+    assert j["binding_ruling_url"] =="http://rulings.cbp.gov/index.asp?qu=1234%2E56%2E7890&vw=results"
     md = t.meta_data
     md.auto_classify_ignore = true
     md.notes="123abc"
     j = t.as_json["official_tariff"]
     assert j["notes"]=="123abc", "Expected 123abc, got #{j["notes"]}"
     assert j["auto_classify_ignore"]
+
+    t.country = Country.where(:iso_code=>"CN").first
+    j = t.as_json["official_tariff"]
+    assert j["binding_ruling_url"].nil?
   end
 
   test "meta_data" do

@@ -1,5 +1,8 @@
 class Country < ActiveRecord::Base
   
+  @@eu_iso_codes = ['AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV',
+    'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
+  
   attr_accessible :import_location, :classification_rank
   after_commit :update_cache
   
@@ -12,6 +15,10 @@ class Country < ActiveRecord::Base
   scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
 
 	validates_uniqueness_of :iso_code
+
+  def european_union?
+    @@eu_iso_codes.include?(self.iso_code)
+  end
 
   def self.find_cached_by_id country_id
     c = CACHE.get("Country:id:#{country_id}")

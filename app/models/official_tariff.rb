@@ -11,6 +11,16 @@ class OfficialTariff < ActiveRecord::Base
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
   
+  #address for external link to certain countries' binding ruling databases
+  def binding_ruling_url
+    return nil if self.country.nil? || self.hts_code.nil?
+    if self.country.iso_code == 'US'
+      return "http://rulings.cbp.gov/index.asp?qu=#{self.hts_code.hts_format.gsub(/\./,"%2E")}&vw=results" 
+    elsif self.country.european_union?
+      return "http://ec.europa.eu/taxation_customs/dds2/ebti/ebti_consultation.jsp?Lang=en&nomenc=#{six_digit_hts}&orderby=0&Expand=true&offset=1&range=25"
+    end
+    nil
+  end
   #return tariff for hts_code & country_id
   def self.find_cached_by_hts_code_and_country_id hts_code, country_id
     t = CACHE.get("OfficialTariff:ct:#{hts_code.strip}:#{country_id}")
@@ -21,7 +31,7 @@ class OfficialTariff < ActiveRecord::Base
 
   #return all potential tariffs that match at the 6 digit level
   def find_matches(other_country)
-    h = self.hts_code.length > 6 ? self.hts_code[0,6] : self.hts_code
+    h = six_digit_hts
     OfficialTariff.where(:country_id=>other_country).where("hts_code like ?","#{h}%")
   end
 
@@ -41,11 +51,17 @@ class OfficialTariff < ActiveRecord::Base
       otr["notes"]=md.notes.nil? ? "" : md.notes
       otr["auto_classify_ignore"] = md.auto_classify_ignore ? true : false
     end
+    br = binding_ruling_url
+    otr["binding_ruling_url"] = br unless br.nil?
     result
   end
 
   private
   def update_cache
     CACHE.set "OfficialTariff:ct:#{self.hts_code.strip}:#{self.country_id}", self
+  end
+
+  def six_digit_hts
+    self.hts_code.length > 6 ? self.hts_code[0,6] : self.hts_code
   end
 end

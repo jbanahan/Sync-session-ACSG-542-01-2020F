@@ -829,8 +829,8 @@ function tariffPopUp(htsNumber,country_id) {
         h += htsDataRow("Column 2:",o.column_2_rate);
         h += htsDataRow("Import Regulations:",o.import_regulations);
         h += htsDataRow("Export Regulations:",o.export_regulations);
-        if(o.country.iso_code=="US") {
-          h += htsDataRow("Binding Rulings:","<a href='http://rulings.cbp.gov/index.asp?qu="+o.hts_code.replace(/\./g,'%2E')+"&vw=results' target='rulings'>Click Here</a>");
+        if(o.binding_ruling_url) {
+          h += htsDataRow("Binding Rulings:","<a href='"+o.binding_ruling_url+"' target='rulings'>Click Here</a>");
         }
         if(o.official_quota!=undefined) {
           h += htsDataRow("Quota Category",o.official_quota.category);

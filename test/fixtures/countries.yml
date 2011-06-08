@@ -9,3 +9,8 @@ china:
   name: CHINA
   iso_code: CN
   import_location: true
+
+italy:
+  name: ITALY
+  iso_code: IT
+  import_location: false

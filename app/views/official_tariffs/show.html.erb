@@ -27,8 +27,9 @@
     <%=field_row field_label(:ot_import_regs), @official_tariff.import_regulations%>
     <%=field_row field_label(:ot_export_regs), @official_tariff.export_regulations%>
     <%end%>
-    <%if @official_tariff.country.iso_code=="US"%>
-      <%=field_row "Binding Rulings", link_to("Click Here","http://rulings.cbp.gov/index.asp?qu=#{@official_tariff.hts_code.hts_format.gsub(/\./,"%2E")}&vw=results",:target=>"rulings")%>
+    <% b_ruling = @official_tariff.binding_ruling_url %>
+    <% if !b_ruling.nil?%>
+      <%=field_row "Binding Rulings", link_to("Click Here",b_ruling,:target=>"rulings")%>
     <%end%>
     <%if @official_tariff.official_quota%>
       <%oq = @official_tariff.official_quota%>
