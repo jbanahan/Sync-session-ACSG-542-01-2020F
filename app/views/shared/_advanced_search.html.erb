@@ -175,7 +175,7 @@ function addSearchCriterion(m,field,operator,value,id) {
       h += "<input id='search_setup_search_criterions_attributes_"+m+"_id' name='search_setup[search_criterions_attributes]["+m+"][id]' type='hidden' value='"+id+"'>";
     }
     h += "<select id='search_setup_search_criterions_attributes_"+m+"_model_field_uid' name='search_setup[search_criterions_attributes]["+m+"][model_field_uid]' class='srch_crit_fld'>";
-    <%@core_module.model_fields_including_children.values.each do |mf| %>
+    <%ModelField.sort_by_label(@core_module.model_fields_including_children.values).each do |mf| %>
     h = h + "<option value='<%=mf.uid%>' dtype='<%=mf.data_type%>'><%=mf.label%></option>";
     <%end%>
     h = h + "</select></td>";
