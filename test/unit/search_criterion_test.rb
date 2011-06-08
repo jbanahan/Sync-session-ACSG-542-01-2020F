@@ -101,6 +101,51 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert result.first == p, "Should have returned product created in this test."
   end
 
+  def result_includes_id(result,id)
+    found = result.collect {|f| f.id}
+    found.include? id
+  end
+
+  test "database not equal - string" do
+    p = Product.create!(:unique_identifier=>"DNE")
+    sc = SearchCriterion.create!(:model_field_uid=>"prod_uid",:operator=>"nq",:value=>"DNEF")
+    assert result_includes_id(sc.apply(Product), p.id)
+    sc.value=p.unique_identifier
+    sc.save!
+    assert !result_includes_id(sc.apply(Product), p.id)
+  end
+
+  test "database not equal - integer / date" do
+    cd_i = CustomDefinition.create!(:module_type=>"Product",:label=>"CDI",:data_type=>"integer")
+    cd_d = CustomDefinition.create!(:module_type=>"Product",:label=>"CDD",:data_type=>"date")
+    p = Product.create!(:unique_identifier=>"DBEID")
+    cv_i = p.get_custom_value(cd_i)
+    cv_i.value=10
+    cv_i.save!
+    cv_d = p.get_custom_value(cd_d)
+    cv_d.value=1.day.ago
+    cv_d.save!
+
+    sc_i = SearchCriterion.create!(:model_field_uid=>"*cf_#{cd_i.id}",:operator=>"nq",:value=>cv_i.value+1)
+    assert result_includes_id(sc_i.apply(Product), p.id)
+    sc_i.value=cv_i.value
+    sc_i.save!
+    assert !result_includes_id(sc_i.apply(Product), p.id)
+    cv_i.value=nil
+    cv_i.save!
+    assert result_includes_id(sc_i.apply(Product), p.id)
+
+    sc_d = SearchCriterion.create!(:model_field_uid=>"*cf_#{cd_d.id}",:operator=>"nq",:value=>3.days.ago)
+    assert result_includes_id(sc_d.apply(Product), p.id)
+    sc_d.value=1.day.ago
+    sc_d.save!
+    r = sc_d.apply(Product)
+    assert !result_includes_id(r,p.id), "Should not have include result: Custom Value: #{cv_d.value}, Search Criterion Value: #{sc_d.value}, SQL: #{r.to_sql}"
+    cv_d.value=nil
+    cv_d.save!
+    assert result_includes_id(sc_d.apply(Product), p.id)
+  end
+
   test "passes? :string all operator permutations" do
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("prod_uid").uid, :operator => "co", 
       :value=>"cde")
@@ -122,6 +167,11 @@ class SearchCriterionTest < ActiveSupport::TestCase
     sc.operator="eq"
     assert sc.passes?("cde")
     assert !sc.passes?("edc")
+
+    sc.operator="nq"
+    assert sc.passes?(nil)
+    assert sc.passes?("cdef")
+    assert !sc.passes?("cde")
   end
   
   test "passes? :text all operator permutations" do
@@ -132,20 +182,25 @@ class SearchCriterionTest < ActiveSupport::TestCase
     #reload to make sure we have the data types that will really come out of the database
     sc = SearchCriterion.find(sc.id)
     
-      assert sc.passes?("abcdef")
-      assert !sc.passes?("cp")
+    assert sc.passes?("abcdef")
+    assert !sc.passes?("cp")
 
-      sc.operator="sw"
-      assert sc.passes?("cdef")
-      assert !sc.passes?("de")
+    sc.operator="sw"
+    assert sc.passes?("cdef")
+    assert !sc.passes?("de")
 
-      sc.operator="ew"
-      assert sc.passes?("abcde")
-      assert !sc.passes?("cd")
+    sc.operator="ew"
+    assert sc.passes?("abcde")
+    assert !sc.passes?("cd")
 
-      sc.operator="eq"
-      assert sc.passes?("cde")
-      assert !sc.passes?("edc")
+    sc.operator="eq"
+    assert sc.passes?("cde")
+    assert !sc.passes?("edc")
+
+    sc.operator="nq"
+    assert sc.passes?(nil)
+    assert sc.passes?("cdef")
+    assert !sc.passes?("cde")
   end
 
   test "passes? :boolean all operator permutations" do
@@ -185,6 +240,11 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert sc.passes?(16.9)
     assert !sc.passes?(6)
     
+    sc.operator="nq"
+    assert sc.passes?(nil)
+    assert sc.passes?(6.91)
+    assert !sc.passes?(6.9)
+
     sc.operator="null"
     assert sc.passes?(sc.value=nil)
     assert !sc.passes?(sc.value=6.9)
@@ -192,6 +252,7 @@ class SearchCriterionTest < ActiveSupport::TestCase
     sc.operator="notnull"
     assert sc.passes?(sc.value=6.9)
     assert !sc.passes?(sc.value=nil)
+
   end
   
   test "passes? :integer all operator permutations" do
@@ -201,52 +262,62 @@ class SearchCriterionTest < ActiveSupport::TestCase
     #reload to make sure we have the data types that will really come out of the database
     sc = SearchCriterion.find(sc.id)
     
-      assert sc.passes?(15)
-      assert !sc.passes?(6)
+    assert sc.passes?(15)
+    assert !sc.passes?(6)
 
-      sc.operator="gt"
-      assert sc.passes?(17)
-      assert !sc.passes?(9)
+    sc.operator="gt"
+    assert sc.passes?(17)
+    assert !sc.passes?(9)
 
-      sc.operator="lt"
-      assert sc.passes?(10)
-      assert !sc.passes?(20)
+    sc.operator="lt"
+    assert sc.passes?(10)
+    assert !sc.passes?(20)
 
-      sc.operator="sw"
-      assert sc.passes?(150)
-      assert !sc.passes?(5)
+    sc.operator="sw"
+    assert sc.passes?(150)
+    assert !sc.passes?(5)
 
-      sc.operator="ew"
-      assert sc.passes?(515)
-      assert !sc.passes?(1)
+    sc.operator="ew"
+    assert sc.passes?(515)
+    assert !sc.passes?(1)
 
-      sc.operator="null"
-      assert sc.passes?(sc.value=nil)
-      assert !sc.passes?(sc.value=15)
+    sc.operator="nq"
+    assert sc.passes?(nil)
+    assert sc.passes?(14)
+    assert !sc.passes?(15)
 
-      sc.operator="notnull"
-      assert sc.passes?(sc.value=15)
-      assert !sc.passes?(sc.value=nil)
+    sc.operator="null"
+    assert sc.passes?(sc.value=nil)
+    assert !sc.passes?(sc.value=15)
+
+    sc.operator="notnull"
+    assert sc.passes?(sc.value=15)
+    assert !sc.passes?(sc.value=nil)
   end
   
   test "passes? :date all operator permutations" do
-    d = Date.new
+    d = 1.day.ago 
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("sale_order_date").uid, 
       :operator => "eq", :value=>d)
     
     #reload to make sure we have the data types that will really come out of the database
     sc = SearchCriterion.find(sc.id)
 
+    assert sc.passes?(d)
+    assert !sc.passes?(d + 6.days)
+    
+    sc.operator = "gt"
+    assert sc.passes?(d + 10.days)
+    assert !sc.passes?(d - 6.days)
+    
+    sc.operator = "lt"
+    assert sc.passes?(d - 10.days)
+    assert !sc.passes?(d + 6.days)
 
-      assert sc.passes?(d)
-      assert !sc.passes?(d + 6)
-      
-      sc.operator = "gt"
-      assert sc.passes?(d + 10)
-      assert !sc.passes?(d - 6)
-      
-      sc.operator = "lt"
-      assert sc.passes?(d - 10)
-      assert !sc.passes?(d + 6)
+    sc.operator = "nq"
+    assert sc.passes?(nil)
+    assert sc.passes?(d-1.day)
+    assert !sc.passes?(d), "Passed, shouldn't have: sc.value=#{sc.value}, test value #{d}"
+  
   end
 end

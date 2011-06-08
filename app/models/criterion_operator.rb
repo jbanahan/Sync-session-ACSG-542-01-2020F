@@ -1,25 +1,30 @@
 class CriterionOperator
-  attr_reader :key, :query_string, :label
+  attr_reader :key, :label
   
   def initialize(key, query_string, label)
     @key = key
     @query_string = query_string
     @label = label
   end
+
+  def query_string(field_name)
+    @query_string.gsub(/_fn_/,field_name)
+  end
   
   OPERATORS = [
-    new("eq"," = ?","Equals"),
-    new("gt"," > ?","Greater Than"),
-    new("lt"," < ?","Less Than"),
-    new("co"," LIKE ?","Contains"),
-    new("sw"," LIKE ?","Starts With"),
-    new("ew"," LIKE ?","Ends With"),
-    new("null"," IS NULL","Is Empty"),
-    new("notnull"," IS NOT NULL","Is Not Empty"),
-    new("bda"," < DATE_ADD(CURDATE(), INTERVAL -? DAY)","Before _ Days Ago"),
-    new("ada"," >= DATE_ADD(CURDATE(), INTERVAL -? DAY)","After _ Days Ago"),
-    new("adf"," >= DATE_ADD(CURDATE(), INTERVAL ? DAY)","After _ Days From Now"),
-    new("bdf"," < DATE_ADD(CURDATE(), INTERVAL ? DAY)","Before _ Days From Now")
+    new("eq","_fn_ = ?","Equals"),
+    new("gt","_fn_ > ?","Greater Than"),
+    new("lt","_fn_ < ?","Less Than"),
+    new("co","_fn_ LIKE ?","Contains"),
+    new("sw","_fn_ LIKE ?","Starts With"),
+    new("ew","_fn_ LIKE ?","Ends With"),
+    new("null","_fn_ IS NULL","Is Empty"),
+    new("notnull","_fn_ IS NOT NULL","Is Not Empty"),
+    new("bda","_fn_ < DATE_ADD(CURDATE(), INTERVAL -? DAY)","Before _ Days Ago"),
+    new("ada","_fn_ >= DATE_ADD(CURDATE(), INTERVAL -? DAY)","After _ Days Ago"),
+    new("adf","_fn_ >= DATE_ADD(CURDATE(), INTERVAL ? DAY)","After _ Days From Now"),
+    new("bdf","_fn_ < DATE_ADD(CURDATE(), INTERVAL ? DAY)","Before _ Days From Now"),
+    new("nq","(_fn_ IS NULL OR NOT _fn_ = ?)","Not Equal To")
   ]
   
   def self.find_by_key(key)

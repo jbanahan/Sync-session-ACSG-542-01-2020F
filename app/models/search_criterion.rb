@@ -28,7 +28,10 @@ class SearchCriterion < ActiveRecord::Base
   def passes?(value_to_test)
     mf = find_model_field
     d = mf.data_type
-    
+
+    nil_fails_operators = ["co","sw","ew","gt","lt","bda","ada","adf","bdf"] #all of these operators should return false if value_to_test is nil
+    return false if value_to_test.nil? && nil_fails_operators.include?(self.operator)
+
     return value_to_test.nil? if self.operator == "null" 
     return !value_to_test.nil? if self.operator == "notnull"
     
@@ -41,28 +44,40 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.downcase.start_with?(self.value.downcase)
       elsif self.operator == "ew"
         return value_to_test.downcase.end_with?(self.value.downcase)
+      elsif self.operator == "nq"
+        return value_to_test.nil? || value_to_test.downcase!=self.value.downcase
       end
     elsif [:date, :datetime].include? d
-      self_val = ["eq","gt","lt"].include?(self.operator) ? Date.parse(self.value.to_s) : number_value(:integer,self.value)
+      vt = d==:date && !value_to_test.nil? ? value_to_test.to_date : value_to_test
+      self_val = ["eq","gt","lt","nq"].include?(self.operator) ? Date.parse(self.value.to_s) : number_value(:integer,self.value)
       if self.operator == "eq"
-        return value_to_test == self_val
+        return vt == self_val
       elsif self.operator == "gt"
-        return value_to_test > self_val
+        return vt > self_val
       elsif self.operator == "lt"
-        return value_to_test < self_val
+        return vt < self_val
       elsif self.operator == "bda"
-        return value_to_test.to_date < self_val.days.ago.to_date #.to_date gets rid of times that screw up comparisons
+        return vt < self_val.days.ago.to_date #.to_date gets rid of times that screw up comparisons
       elsif self.operator == "ada"
-        return value_to_test.to_date >= self_val.days.ago.to_date
+        return vt >= self_val.days.ago.to_date
       elsif self.operator == "adf"
-        return value_to_test.to_date >= self_val.days.from_now.to_date
+        return vt >= self_val.days.from_now.to_date
       elsif self.operator == "bdf"
-        return value_to_test.to_date < self_val.days.from_now.to_date
+        return vt < self_val.days.from_now.to_date
+      elsif self.operator == "nq"
+        return vt.nil?  || vt!=self_val
       end
     elsif d == :boolean
+      self_val = ["t","true","yes","y"].include?(self.value.downcase)
       if self.operator == "eq"
-        self_val = ["t","true","yes","y"].include?(self.value.downcase)
         return value_to_test == self_val
+      elsif self.operator == "nq"
+        #testing not equal to true
+        if ["t","true","yes","y"].include(self.value.downcase)
+          return value_to_test.nil? || !value_to_test
+        else
+          return value_to_test
+        end
       end  
     elsif [:decimal, :integer].include? d
       self_val = number_value d, self.value
@@ -76,6 +91,8 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.to_s.start_with?(self.value.to_s)
       elsif self.operator == "ew"
         return value_to_test.to_s.end_with?(self.value.to_s)
+      elsif self.operator == "nq"
+        return value_to_test.nil? || value_to_test!=self_val
       end
     end
   end
@@ -105,7 +122,7 @@ class SearchCriterion < ActiveRecord::Base
         bool_val = where_value ? "custom_values.boolean_value = ?" : "(custom_values.boolean_value is null OR custom_values.boolean_value = ?)"
         "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{bool_val})"
       else
-        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND custom_values.#{cd.data_column} #{CriterionOperator.find_by_key(self.operator).query_string})"
+        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}")})"
       end
     else
       if boolean_field?
@@ -113,7 +130,7 @@ class SearchCriterion < ActiveRecord::Base
           "#{mf.qualified_field_name} = ?" :
           "(#{mf.qualified_field_name} = ? OR #{mf.qualified_field_name} is null)"
       else
-        "#{mf.qualified_field_name} #{CriterionOperator.find_by_key(self.operator).query_string}"
+        CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name)
       end
     end
   end
@@ -130,20 +147,25 @@ class SearchCriterion < ActiveRecord::Base
     return find_model_field.data_type==:decimal
   end
 
+  def date_field?
+    return find_model_field.data_type==:date
+  end
+
   #value formatted properly for the appropriate condition in the SQL
   def where_value
-    return ["t","true","yes","y"].include? self.value.downcase if boolean_field?
+    self_val = date_field? && !self.value.nil? && self.value.is_a?(Time)? self.value.to_date : self.value
+    return ["t","true","yes","y"].include? self_val.downcase if boolean_field?
     
-    return self.value.to_i if integer_field?
+    return self_val.to_i if integer_field?
     
     if self.operator=="co"
-      return "%#{self.value}%"
+      return "%#{self_val}%"
     elsif self.operator=="sw"
-      return "#{self.value}%"
+      return "#{self_val}%"
     elsif self.operator=="ew"
-      return "%#{self.value}"
+      return "%#{self_val}"
     else
-      return self.value
+      return self_val
     end
   end
 
