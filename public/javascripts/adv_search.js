@@ -75,6 +75,7 @@ var OCSearch = (function() {
       var h = "";
       if(dt=="date" || dt=="datetime") {
         h += "<option value='eq'>Equals</option>";
+        h += "<option value='nq'>Not Equal To</option>";
         h += "<option value='gt'>After</option>";
         h += "<option value='lt'>Before</option>";
         h += "<option value='bda'>Before _ Days Ago</option>";
@@ -84,6 +85,7 @@ var OCSearch = (function() {
       }
       if(dt=="integer" || dt=="decimal" || dt=="fixnum") {
         h += "<option value='eq'>Equals</option>";
+        h += "<option value='nq'>Not Equal To</option>";
         h += "<option value='gt'>Greater Than</option>";
         h += "<option value='lt'>Less Than</option>";
         h += "<option value='sw'>Starts With</option>";
@@ -92,6 +94,7 @@ var OCSearch = (function() {
       }
       if(dt=="string" || dt=="text") {
         h += "<option value='eq'>Equals</option>";
+        h += "<option value='nq'>Not Equal To</option>";
         h += "<option value='sw'>Starts With</option>";
         h += "<option value='ew'>Ends With</option>";
         h += "<option value='co'>Contains</option>";
@@ -107,6 +110,7 @@ var OCSearch = (function() {
       gt:numDateVal,
       lt:numDateVal,
       eq:numDateVal,
+      nq:numDateVal,
       sw:numDateVal,
       ew:numDateVal,
       co:numDateVal,

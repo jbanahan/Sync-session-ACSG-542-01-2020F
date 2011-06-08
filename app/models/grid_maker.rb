@@ -59,8 +59,11 @@ class GridMaker
       mf = c.find_model_field
       obj = row_objects[mf.core_module]
       val = mf.process_export(obj)
-      return true if obj.nil? && c.operator=="null"
-      return false if obj.nil? || !c.passes?(val) 
+      if obj.nil? && ["null","nq"].include?(c.operator)
+        #ok, just continue to testing the next criterion
+      elsif obj.nil? || !c.passes?(val)
+        return false
+      end
     end
     true
   end
