@@ -127,8 +127,11 @@ class UsersController < ApplicationController
     end
   end
   def set_admin_params(u,p)
-    u.admin = current_user.admin? && !p[:is_admin].nil? && p[:is_admin]=="true"
-    u.sys_admin = current_user.sys_admin? && !p[:is_sys_admin].nil? && p[:is_sys_admin]=="true"
+    if current_user.admin?
+      u.admin = !p[:is_admin].nil? && p[:is_admin]=="true"
+      u.sys_admin = !p[:is_sys_admin].nil? && p[:is_sys_admin]=="true"
+      u.disabled = !p[:is_disabled].nil? && p[:is_disabled]=="true"
+    end
   end
 
   def toggle_enabled

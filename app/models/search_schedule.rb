@@ -28,6 +28,10 @@ class SearchSchedule < ActiveRecord::Base
   def run log=nil
     log.info "#{Time.now}: Search schedule #{self.id} starting." if log
     srch_setup = self.search_setup
+    if !srch_setup.user.active?
+      log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
+      return
+    end
     cm = CoreModule.find_by_class_name srch_setup.module_type
     extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
     attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"

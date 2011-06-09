@@ -24,6 +24,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <%=field_row "Time Zone", f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones) %>
   <%=field_row "Email Format", f.select(:email_format,["html","text"])%>
   <% if current_user.admin? %>
+    <%=field_row "Account Locked", "<input type='checkbox' name='is_disabled' id='disabled' value='true' #{@user.disabled ? "checked='true'" : ""}/>".html_safe%>
     <%=field_row "Administrator", raw("<input type='checkbox' name='is_admin' id='admin' value='true' #{@user.admin ? "checked='true'" : ""}/>")%>
     <% if current_user.sys_admin? %>
       <%=field_row "Sys Administrator", raw("<input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' #{@user.sys_admin ? "checked='true'" : ""} />  (Aspect 9 Employees Only)")%>
