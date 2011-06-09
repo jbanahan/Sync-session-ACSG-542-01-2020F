@@ -231,7 +231,6 @@ class SearchSetup < ActiveRecord::Base
         self.search_run.save
       end
     end
-    debugger
     base
   end
   

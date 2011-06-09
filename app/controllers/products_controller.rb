@@ -18,6 +18,7 @@ class ProductsController < ApplicationController
     p = Product.find(params[:id], :include => [:custom_values,{:classifications => [:custom_values, :tariff_records]}])
     action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
       @product = p
+      p.load_custom_values #caches all custom values
       respond_to do |format|
           format.html # show.html.erb
           format.xml  { render :xml => @product }

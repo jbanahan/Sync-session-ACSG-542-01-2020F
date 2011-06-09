@@ -2,6 +2,20 @@ require 'test_helper'
 
 class ProductTest < ActiveSupport::TestCase
 
+  test "load_custom_values" do
+    cd = CustomDefinition.create!(:module_type=>"Product",:data_type=>"integer",:label=>"AGKL")
+    p = Product.create!(:unique_identifier=>"PUIDN")
+    base_cv = p.get_custom_value cd
+    base_cv.value=10
+    base_cv.save!
+    p = Product.find p.id
+    p.load_custom_values
+    cv = p.get_custom_value cd
+    assert_equal cv.custom_definition_id, cd.id
+    assert_same cv, p.get_custom_value(cd)
+    assert_not_same cv, base_cv
+  end
+
   test "auto classify" do
     us = countries(:us)
     us.import_location = true

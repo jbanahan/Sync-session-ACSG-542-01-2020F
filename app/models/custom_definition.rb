@@ -11,13 +11,22 @@ class CustomDefinition < ActiveRecord::Base
   
   after_save :reset_model_field_constants 
   after_save :reset_field_label
-  after_commit :set_cache
+  after_commit :reset_cache
   after_find :set_cache
 
   def self.cached_find id
     o = CACHE.get "CustomDefinition:id:#{id}"
     if o.nil?
       o = find id
+    end
+    o
+  end
+
+  def self.cached_find_by_module_type module_type
+    o = CACHE.get "CustomDefinition:module_type:#{module_type}"
+    if o.nil?
+      o = CustomDefinition.where(:module_type => module_type)
+      CACHE.set "CustomDefinition:module_type:#{module_type}", o
     end
     o
   end
@@ -63,6 +72,12 @@ class CustomDefinition < ActiveRecord::Base
   def set_cache
     to_set = self.destroyed? ? nil : self
     CACHE.set "CustomDefinition:id:#{self.id}", to_set unless self.id.nil?
+  end
+
+  def reset_cache
+    CACHE.delete "CustomDefinition:id:#{self.id}" unless self.id.nil?
+    CACHE.delete "CustomDefinition:module_type:#{self.module_type}" unless self.module_type.nil?
+    set_cache
   end
   private
   def reset_model_field_constants
