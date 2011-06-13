@@ -4,10 +4,10 @@ class EntitySnapshot < ActiveRecord::Base
 
   validates :recordable, :presence => true
 
-  def self.create_from_entity entity
+  def self.create_from_entity entity, user=User.current
     cm = CoreModule.find_by_class_name entity.class.to_s
     raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
-    EntitySnapshot.create(:recordable=>entity,:user=>User.current,:snapshot=>cm.entity_json(entity))
+    EntitySnapshot.create(:recordable=>entity,:user=>user,:snapshot=>cm.entity_json(entity))
   end
 
   def snapshot_json

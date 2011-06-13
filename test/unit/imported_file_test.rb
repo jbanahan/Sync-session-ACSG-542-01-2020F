@@ -2,6 +2,10 @@ require 'test_helper'
 
 class ImportedFileTest < ActiveSupport::TestCase
 
+  def setup
+    ModelField.reload
+  end
+
   test "deletable?" do
     i = ImportedFile.new()
     assert i.deletable?

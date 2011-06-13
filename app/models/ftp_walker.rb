@@ -7,7 +7,6 @@ class FtpWalker
 
 
   def go
-  #this will need a lot more config to be multi-user, multi-file, but just getting Vandegrift going right now
     sys_code = MasterSetup.get.system_code
     return "no system code" if sys_code.blank?
     file_path = "#{Rails.root}/config/ftp.yml"

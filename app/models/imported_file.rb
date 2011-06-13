@@ -122,6 +122,7 @@ class ImportedFile < ActiveRecord::Base
     def process_row row_number, object, messages, failed=false
       cr = @fr.change_records.create(:record_sequence_number=>row_number,:recordable=>object,:failed=>failed)
       messages.each {|m| cr.change_record_messages.create(:message=>m)}
+      object.create_snapshot(@fr.run_by) if object.respond_to?('create_snapshot')
     end
 
     def process_start time

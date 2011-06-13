@@ -8,6 +8,8 @@ class CreateEntitySnapshots < ActiveRecord::Migration
 
       t.timestamps
     end
+    add_index :entity_snapshots, [:recordable_id,:recordable_type]
+    add_index :entity_snapshots, :user_id
   end
 
   def self.down

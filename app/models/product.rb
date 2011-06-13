@@ -4,6 +4,7 @@ class Product < ActiveRecord::Base
   include StatusableSupport
   include ShallowMerger
   include TouchesParentsChangedAt
+  include EntitySnapshotSupport
 
   CORE_MODULE = CoreModule::PRODUCT
 
