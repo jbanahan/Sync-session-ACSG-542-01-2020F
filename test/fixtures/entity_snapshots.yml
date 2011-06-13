@@ -1,0 +1,13 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  recordable_type: MyString
+  recordable_id: 1
+  snapshot: MyText
+  user_id: 1
+
+two:
+  recordable_type: MyString
+  recordable_id: 1
+  snapshot: MyText
+  user_id: 1

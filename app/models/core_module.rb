@@ -9,7 +9,8 @@ class CoreModule
       :file_formatable, #can be used for file formats
       :default_search_columns, #array of columns to be included when a default search is created
       :show_field_prefix, #should the default option for this module's field's labels be to show the module name as a prefix (true =  "Classification - Country Name", false="Country Name")
-      :changed_at_parents_lambda #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers
+      :changed_at_parents_lambda, #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers
+      :entity_json_lambda #lambda return hash suitable for conversion into json containing all model fields
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
   def initialize(class_name,label,opts={})
@@ -24,7 +25,8 @@ class CoreModule
         },
         :bulk_actions_lambda => lambda {|current_user| return Hash.new},
         :changed_at_parents_lambda => lambda {|base_object| []},
-        :show_field_prefix => false
+        :show_field_prefix => false,
+        :entity_json_lambda => lambda {|entity| raise "#{@label} does not support creating entity json records."}
       }.
       merge(opts)
     @class_name = class_name
@@ -41,8 +43,15 @@ class CoreModule
     @bulk_actions_lambda = o[:bulk_actions_lambda]
     @changed_at_parents_lambda = o[:changed_at_parents_lambda]
     @show_field_prefix = o[:show_field_prefix]
+    @entity_json_lambda = o[:entity_json_lambda]
   end
   
+  #returns a json representation of the entity and all of it's children
+  def entity_json base_object
+    j = @entity_json_lambda.call(base_object)   
+    ActiveSupport::JSON.encode j
+  end
+
   #find's the given objects parents that should have their changed_at values updated, updates them, and saves them.
   #This method will not re-update or save a changed_at value that is less than 1 minute old to save on constant DB writes
   def touch_parents_changed_at base_object
@@ -114,7 +123,7 @@ class CoreModule
   def module_level(core_module)
     CoreModule.recursive_module_level(0,self,core_module)      
   end
-    
+
   ORDER_LINE = new("OrderLine","Order Line",:show_field_prefix=>true) 
   ORDER = new("Order","Order",
     {:file_formatable=>true,
@@ -153,14 +162,39 @@ class CoreModule
       end
       r
     },
-    :show_field_prefix=>true
+    :show_field_prefix=>true,
+    :entity_json_lambda => lambda {|t|
+      mh = {'entity'=>{'core_module'=>'TariffRecord','record_id'=>t.id,'model_fields'=>{}}}
+      mfh = mh['entity']['model_fields']
+      TARIFF.model_fields.values.each do |mf|
+        v = mf.process_export t
+        mfh[mf.uid] = v unless v.nil?
+      end
+      mh
+    }
   })
   CLASSIFICATION = new("Classification","Classification",{
       :children => [TARIFF],
       :child_lambdas => {TARIFF => lambda {|p| p.tariff_records}},
       :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"},
       :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] },
-      :show_field_prefix=>true
+      :show_field_prefix=>true,
+      :entity_json_lambda => lambda {|c|
+        mh = {'entity'=>{'core_module'=>'Classification','record_id'=>c.id,'model_fields'=>{}}}
+        mfh = mh['entity']['model_fields']
+        CLASSIFICATION.model_fields.values.each do |mf|
+          v = mf.process_export c
+          mfh[mf.uid] = v unless v.nil?
+        end
+        unless c.tariff_records.blank?
+          eca = []
+          mh['entity']['children'] = eca
+          c.tariff_records.each do |t|
+            eca << TARIFF.entity_json_lambda.call(t)
+          end
+        end
+        mh
+      }
   })
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
       :children => [CLASSIFICATION],
@@ -173,7 +207,24 @@ class CoreModule
         bulk_actions["Classify Selected"]='bulk_classify_products_path' if current_user.edit_classifications?
         bulk_actions
       },
-      :changed_at_parents_lambda=>lambda {|p| [p]} #only update self
+      :changed_at_parents_lambda=>lambda {|p| [p]},#only update self
+      :entity_json_lambda => lambda {|p|
+        master_hash = {'entity'=>{'core_module'=>'Product','record_id'=>p.id,'model_fields'=>{}}}
+        mf_hash = master_hash['entity']['model_fields']
+        PRODUCT.model_fields.values.each do |mf|
+          v = mf.process_export p
+          mf_hash[mf.uid] = v unless v.nil?
+        end
+        classifications = p.classifications
+        unless classifications.blank?
+          eca = []
+          master_hash['entity']['children'] = eca
+          classifications.each do |c|
+            eca << CLASSIFICATION.entity_json_lambda.call(c)
+          end
+        end
+        master_hash
+      }
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF]

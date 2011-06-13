@@ -1,4 +1,6 @@
 class User < ActiveRecord::Base
+  cattr_accessor :current
+
   acts_as_authentic
   
   attr_accessible :username, :email, :password, 
