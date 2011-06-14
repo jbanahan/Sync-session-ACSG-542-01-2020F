@@ -87,6 +87,7 @@ class FileImportProcessor
             end
             obj = merge_or_create obj, save
             object_map[mod] = obj
+            obj.load_custom_values unless custom_fields.blank? #pre load the values
             custom_fields.each do |mf,data|
               cd = CustomDefinition.find mf.custom_id
               cv = obj.get_custom_value cd
