@@ -118,7 +118,7 @@ class ImportedFile < ActiveRecord::Base
   class FileImportProcessorListener
 
     def initialize(imported_file,user)
-      @fr = imported_file.file_import_results.build(:run_by=>user)
+      @fr = imported_file.file_import_results.create(:run_by=>user)
     end
 
     def process_row row_number, object, messages, failed=false

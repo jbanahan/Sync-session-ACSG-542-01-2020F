@@ -107,6 +107,7 @@ class FileImportProcessor
             obj.save
           end
         end
+        Rails.logger.info "object_map[@core_module] is nill for row #{row_number} in imported_file: #{@import_file.id}" if object_map[@core_module].nil?
         OpenChain::FieldLogicValidator.validate! object_map[@core_module] unless object_map[@core_module].nil?
         fire_row row_number, object_map[@core_module], messages
       end
