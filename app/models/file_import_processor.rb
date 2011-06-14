@@ -90,13 +90,14 @@ class FileImportProcessor
             custom_fields.each do |mf,data|
               cd = CustomDefinition.find mf.custom_id
               cv = obj.get_custom_value cd
+              orig_value = cv.value
               if cd.data_type.to_sym==:boolean
                 set_boolean_value cv, data
               else
                 cv.value = data
               end
               messages << "#{cd.label} set to #{cv.value}"
-              cv.save if save
+              cv.save if save && !(orig_value.blank? && data.blank?) 
             end
             object_map[mod] = obj
           end
