@@ -86,6 +86,7 @@ class FileImportProcessor
               end
             end
             obj = merge_or_create obj, save
+            object_map[mod] = obj
             custom_fields.each do |mf,data|
               cd = CustomDefinition.find mf.custom_id
               cv = obj.get_custom_value cd
@@ -106,7 +107,7 @@ class FileImportProcessor
             obj.save
           end
         end
-        OpenChain::FieldLogicValidator.validate! object_map[@core_module]
+        OpenChain::FieldLogicValidator.validate! object_map[@core_module] unless object_map[@core_module].nil?
         fire_row row_number, object_map[@core_module], messages
       end
     rescue OpenChain::ValidationLogicError
