@@ -21,14 +21,16 @@ class CustomDefinition < ActiveRecord::Base
     end
     o
   end
-
+  
+  #returns an Array of custom definitions for the module, sorted by rank then label
+  #Note: Internally this calls .all on the result from the DB, so are getting back a real array, not an ActiveRecord result.
   def self.cached_find_by_module_type module_type
     o = CACHE.get "CustomDefinition:module_type:#{module_type}"
     if o.nil?
-      o = CustomDefinition.where(:module_type => module_type)
+      o = CustomDefinition.where(:module_type => module_type).order("rank ASC, label ASC").all
       CACHE.set "CustomDefinition:module_type:#{module_type}", o
     end
-    o
+    o.clone
   end
 
   def model_field_uid

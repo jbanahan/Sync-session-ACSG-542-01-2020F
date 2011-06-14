@@ -90,7 +90,7 @@ module ApplicationHelper
   def show_custom_fields(customizable, opts={})
 		opts = {:form=>false, :table=>false, :show_prefix=>nil}.merge(opts)
 	  x = ""
-	  customizable.custom_definitions.order("rank ASC, label ASC").each {|d|
+	  customizable.custom_definitions.each {|d|
       mf = d.model_field
       name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
       name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
