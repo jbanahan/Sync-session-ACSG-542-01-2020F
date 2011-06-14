@@ -91,10 +91,12 @@ class FileImportProcessor
             end
             obj = merge_or_create obj, save
             object_map[mod] = obj
-            obj.load_custom_values unless custom_fields.blank? #pre load the values
+            cv_map = {}
+            obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
             custom_fields.each do |mf,data|
               cd = @custom_definition_map[mf.custom_id]
-              cv = obj.get_custom_value cd
+              cv = cv_map[cd.id]
+              cv = obj.custom_values.build(:custom_definition=>cd) if cv.nil?
               orig_value = cv.value
               if cd.data_type.to_sym==:boolean
                 set_boolean_value cv, data
