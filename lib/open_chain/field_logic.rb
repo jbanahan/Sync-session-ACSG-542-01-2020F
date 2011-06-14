@@ -4,6 +4,15 @@ module OpenChain
     def self.validate record, nested=false
       passed = true
       cm = CoreModule.find_by_class_name record.class.to_s
+      #need more info on why we got records in here without appropriate core modules
+      if cm.nil?
+        begin
+          raise "Core Module Not Found for class #{record.class.to_s}"
+        rescue
+          OpenMailer.send_generic_exception($!).deliver
+        end
+        return true
+      end
       rules = FieldValidatorRule.find_cached_by_core_module cm
       rules.each do |rule|
         msg = rule.validate_field record, nested
