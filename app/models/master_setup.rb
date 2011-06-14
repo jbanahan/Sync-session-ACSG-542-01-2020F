@@ -13,13 +13,13 @@ class MasterSetup < ActiveRecord::Base
     cache_initalized = true
     begin
       m = CACHE.get CACHE_KEY 
-      return m unless m.nil?
+      return m unless m.nil? || !m.is_a?(MasterSetup)
     rescue NameError
       cache_initalized = false
     end
     m = init_base_setup
     CACHE.set CACHE_KEY, m if cache_initalized
-    m
+    m.is_a?(MasterSetup) ? m : MasterSetup.first
   end
 
   def self.init_base_setup
