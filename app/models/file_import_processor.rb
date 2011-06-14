@@ -96,7 +96,7 @@ class FileImportProcessor
             custom_fields.each do |mf,data|
               cd = @custom_definition_map[mf.custom_id]
               cv = cv_map[cd.id]
-              cv = obj.custom_values.build(:custom_definition=>cd) if cv.nil?
+              cv = obj.custom_values.build(:custom_definition_id=>cd.id) if cv.nil?
               orig_value = cv.value
               if cd.data_type.to_sym==:boolean
                 set_boolean_value cv, data

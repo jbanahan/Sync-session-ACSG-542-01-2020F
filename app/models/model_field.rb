@@ -13,7 +13,7 @@ class ModelField
           },
           :export_lambda => lambda {|obj|
             if self.custom?
-            obj.get_custom_value(CustomDefinition.find(@custom_id)).value
+            obj.get_custom_value(CustomDefinition.cached_find(@custom_id)).value
             else
               obj.send("#{@field_name}")
             end
