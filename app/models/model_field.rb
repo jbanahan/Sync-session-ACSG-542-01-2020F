@@ -498,6 +498,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine)
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery)
     @@last_loaded = Time.now
+    Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_cache_time
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
   end
 
@@ -648,10 +649,10 @@ class ModelField
       [2,:delln_delivery_qty,:quantity,"Delivery Row Qauntity",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","delivery_lines")
-    reset_custom_fields
+    reset_custom_fields update_cache_time
   end
 
-  reload
+  reload 
 
   def self.find_by_uid(uid)
     return ModelField.new(10000,:_blank,nil,nil,{
@@ -694,13 +695,14 @@ class ModelField
 
   def self.reload_if_stale
     cache_time = CACHE.get "ModelField:last_loaded"
-    if !cache_time.is_a?(Time)
+    if !cache_time.nil? && !cache_time.is_a?(Time)
       begin
         raise "cache_time was a #{cache_time.class} object!"
       rescue
         OpenMailer.send_generic_exception($!, ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]).deliver
       ensure
         cache_time = nil
+        reload
       end
     end
     if !cache_time.nil? && (@@last_loaded.nil? || @@last_loaded < cache_time)
