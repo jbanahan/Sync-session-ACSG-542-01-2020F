@@ -89,7 +89,7 @@ class FileImportProcessor
             object_map[mod] = obj
             obj.load_custom_values unless custom_fields.blank? #pre load the values
             custom_fields.each do |mf,data|
-              cd = CustomDefinition.find mf.custom_id
+              cd = CustomDefinition.cached_find mf.custom_id
               cv = obj.get_custom_value cd
               orig_value = cv.value
               if cd.data_type.to_sym==:boolean
