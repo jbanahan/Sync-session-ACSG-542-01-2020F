@@ -1,0 +1,47 @@
+<%diff.model_fields_changed.each do |mfuid,c|%>
+  <div>
+  <%mf = ModelField.find_by_uid(mfuid)%>
+  <% 
+    if mf.data_type==:datetime
+      c[0] = Time.parse(c[0]) unless c[0].blank?
+      c[1] = Time.parse(c[1]) unless c[1].blank?
+    end %>
+  <% if c[0].blank? && c[1].blank? %>
+  <% elsif c[0].blank? %>
+    <%=ModelField.find_by_uid(mfuid).label%> set to &quot;<%=c[1]%>&quot;
+  <% elsif c[1].blank? %>
+    <%=ModelField.find_by_uid(mfuid).label%> &quot;<%=c[0]%>&quot; erased.
+  <% else %>
+    <%=ModelField.find_by_uid(mfuid).label%> changed from &quot;<%=c[0]%>&quot; to &quot;<%=c[1]%>&quot;
+  <% end %>
+  </div>
+<%end%>
+<div style='margin-left: 1em;'>
+  <%if !diff.nested_blank?(diff.children_added)%>
+    <% diff.children_added.each do |ca|%>
+      <%r = ca.recordable%>
+      <% if !ca.blank? %>
+        <h3>Added <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <%=render :partial=>'shared/history', :locals=>{:diff=>ca} %>
+      <% end %>
+    <% end %>
+  <%end%>
+  <%if !diff.nested_blank?(diff.children_deleted)%>
+    <% diff.children_deleted.each do |ca|%>
+      <%r = ca.recordable%>
+      <% if !ca.blank? %>
+        <h3>Deleted <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <%=render :partial=>'shared/history', :locals=>{:diff=>ca} %>
+      <% end %>
+    <% end %>
+  <%end%>
+  <%if !diff.nested_blank?(diff.children_in_both)%>
+    <% diff.children_in_both.each do |ca|%>
+      <%r = ca.recordable%>
+      <% if !ca.blank? %>
+        <h3>Changed <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <%=render :partial=>'shared/history', :locals=>{:diff=>ca} %>
+      <% end %>
+    <% end %>
+  <%end%>
+</div>

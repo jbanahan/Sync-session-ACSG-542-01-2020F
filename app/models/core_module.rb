@@ -44,8 +44,14 @@ class CoreModule
     @changed_at_parents_lambda = o[:changed_at_parents_lambda]
     @show_field_prefix = o[:show_field_prefix]
     @entity_json_lambda = o[:entity_json_lambda]
+    @unique_id_field_name = o[:unique_id_field_name]
   end
   
+  #returns the model field that you can show to the user to uniquely identify the record
+  def unique_id_field
+    ModelField.find_by_uid @unique_id_field_name
+  end
+
   #returns a json representation of the entity and all of it's children
   def entity_json base_object
     j = @entity_json_lambda.call(base_object)   
@@ -124,33 +130,37 @@ class CoreModule
     CoreModule.recursive_module_level(0,self,core_module)      
   end
 
-  ORDER_LINE = new("OrderLine","Order Line",:show_field_prefix=>true) 
+  ORDER_LINE = new("OrderLine","Order Line",{:show_field_prefix=>true,:unique_id_field_name=>:ordln_line_number}) 
   ORDER = new("Order","Order",
     {:file_formatable=>true,
       :children => [ORDER_LINE],
       :child_lambdas => {ORDER_LINE => lambda {|parent| parent.order_lines}},
       :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"},
-      :default_search_columns => [:ord_ord_num,:ord_ord_date,:ord_ven_name,:ordln_puid,:ordln_ordered_qty]
+      :default_search_columns => [:ord_ord_num,:ord_ord_date,:ord_ven_name,:ordln_puid,:ordln_ordered_qty],
+      :unique_id_field_name => :ord_ord_num
     })
-  SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",:show_field_prefix=>true)
+  SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",{:show_field_prefix=>true,:unique_id_field_name=>:shpln_line_number})
   SHIPMENT = new("Shipment","Shipment",
     {:children=>[SHIPMENT_LINE],
     :child_lambdas => {SHIPMENT_LINE => lambda {|p| p.shipment_lines}},
     :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id"},
-    :default_search_columns => [:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name]})
-  SALE_LINE = new("SalesOrderLine","Sale Line",:show_field_prefix=>true)
+    :default_search_columns => [:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],
+    :unique_id_field_name=>:shp_ref})
+  SALE_LINE = new("SalesOrderLine","Sale Line",{:show_field_prefix=>true,:unique_id_field_name=>:soln_line_number})
   SALE = new("SalesOrder","Sale",
     {:children => [SALE_LINE],
       :child_lambdas => {SALE_LINE => lambda {|parent| parent.sales_order_lines}},
       :child_joins => {SALE_LINE => "LEFT OUTER JOIN sales_order_lines ON sales_orders.id = sales_order_lines.sales_order_id"},
-      :default_search_columns => [:sale_order_number,:sale_order_date,:sale_cust_name]
+      :default_search_columns => [:sale_order_number,:sale_order_date,:sale_cust_name],
+      :unique_id_field_name=>:sale_order_number
     })
-  DELIVERY_LINE = new("DeliveryLine","Delivery Line",:show_field_prefix=>true)
+  DELIVERY_LINE = new("DeliveryLine","Delivery Line",{:show_field_prefix=>true,:unique_id_field_name=>:delln_line_number})
   DELIVERY = new("Delivery","Delivery",
     {:children=>[DELIVERY_LINE],
     :child_lambdas => {DELIVERY_LINE => lambda {|p| p.delivery_lines}},
     :child_joins => {DELIVERY_LINE => "LEFT OUTER JOIN delivery_lines on deliveries.id = delivery_lines.delivery_id"},
-    :default_search_columns => [:del_ref,:del_mode,:del_car_name,:del_cust_name]
+    :default_search_columns => [:del_ref,:del_mode,:del_car_name,:del_cust_name],
+    :unique_id_field_name=>:del_ref
     })
   TARIFF = new("TariffRecord","Tariff",{
     :changed_at_parents_lambda=>lambda {|tr|
@@ -171,7 +181,8 @@ class CoreModule
         mfh[mf.uid] = v unless v.nil?
       end
       mh
-    }
+    },
+    :unique_id_field_name=>:hts_line_number
   })
   CLASSIFICATION = new("Classification","Classification",{
       :children => [TARIFF],
@@ -194,7 +205,8 @@ class CoreModule
           end
         end
         mh
-      }
+      },
+      :unique_id_field_name=>:class_cntry_iso
   })
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
       :children => [CLASSIFICATION],
@@ -224,7 +236,8 @@ class CoreModule
           end
         end
         master_hash
-      }
+      },
+      :unique_id_field_name=>:prod_uid
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF]

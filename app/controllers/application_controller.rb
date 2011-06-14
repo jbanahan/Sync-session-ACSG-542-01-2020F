@@ -97,7 +97,7 @@ class ApplicationController < ActionController::Base
         update_custom_fields(base_object)
         inner_opts[:before_validate].call base_object
         OpenChain::FieldLogicValidator.validate!(base_object) 
-        base_object.create_snapshot if base_object.respond_to?('create_snapshot')
+        base_object.class.find(base_object.id).create_snapshot if base_object.respond_to?('create_snapshot')
         succeed_lambda.call base_object
       end
     rescue OpenChain::ValidationLogicError

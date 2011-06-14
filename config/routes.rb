@@ -100,6 +100,7 @@ OpenChain::Application.routes.draw do
       post 'bulk_auto_classify'
     end
     member do
+      get 'history'
       get 'classify'
       post :auto_classify 
       put  :auto_classify

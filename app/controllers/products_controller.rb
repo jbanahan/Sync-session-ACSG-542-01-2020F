@@ -27,6 +27,14 @@ class ProductsController < ApplicationController
     }
   end
 
+  def history
+    p = Product.find params[:id]
+    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
+      @product = p
+      @snapshots = p.entity_snapshots.order("entity_snapshots.id DESC").paginate(:per_page=>5,:page => params[:page])
+    }
+  end
+
 
   # GET /products/new
   # GET /products/new.xml
