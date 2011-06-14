@@ -14,6 +14,10 @@ class FileImportProcessor
     @module_chain = @core_module.default_module_chain
     @data = data
     @listeners = listeners
+    @custom_definition_map = {}
+    CustomDefinition.all.each do |cd|
+      @custom_definition_map[cd.id] = cd
+    end
   end
   
   
@@ -89,7 +93,7 @@ class FileImportProcessor
             object_map[mod] = obj
             obj.load_custom_values unless custom_fields.blank? #pre load the values
             custom_fields.each do |mf,data|
-              cd = CustomDefinition.cached_find mf.custom_id
+              cd = @custom_definition_map[mf.custom_id]
               cv = obj.get_custom_value cd
               orig_value = cv.value
               if cd.data_type.to_sym==:boolean
