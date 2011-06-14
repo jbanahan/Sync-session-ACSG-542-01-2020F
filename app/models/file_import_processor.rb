@@ -22,11 +22,13 @@ class FileImportProcessor
       fire_start
       processed_row = false
       r = @import_file.ignore_first_row ? 1 : 0
+      error_email_count = 0
       get_rows do |row|
         begin
           do_row r+1, row, true
         rescue => e
-          OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver
+          OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver if error_email_count < 20 #don't send more than 20 messaegs for same file
+          error_email_count += 1
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
         end
         r += 1
