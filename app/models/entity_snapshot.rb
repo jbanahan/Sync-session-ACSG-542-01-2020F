@@ -50,7 +50,7 @@ class EntitySnapshot < ActiveRecord::Base
     if new_children
       new_children.each do |nc|
         entities_in_new << "#{nc['entity']['record_id']}-#{nc['entity']['core_module']}"
-        oc = find_matching_child old_children, nc
+        oc = old_children.nil? ? nil : find_matching_child(old_children, nc)
         if oc
           d.children_in_both << diff_json(oc, nc)
         else

@@ -85,6 +85,16 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  #controller action to display generic history page
+  def history
+    p = root_class.find params[:id]
+    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"item",:lock_check=>false}) {
+      @base_object = p
+      @snapshots = p.entity_snapshots.order("entity_snapshots.id DESC").paginate(:per_page=>5,:page => params[:page])
+      render 'shared/history'
+    }
+  end
+  
   def validate_and_save_module base_object, parameters, succeed_lambda, fail_lambda, opts={}
    #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
    #this method will automatically save custom fields and will rollback if the validation fails

@@ -18,7 +18,8 @@ class ModelField
               obj.send("#{@field_name}")
             end
           },
-          :entity_type_field => false
+          :entity_type_field => false,
+          :history_ignore => false
         }.merge(options)
     @uid = uid
     @core_module = core_module
@@ -37,8 +38,14 @@ class ModelField
     @qualified_field_name = o[:qualified_field_name]
     @label_override = o[:label_override]
     @entity_type_field = o[:entity_type_field]
+    @history_ignore = o[:history_ignore]
   end
   
+  #should the entity snapshot system ignore this field when recording an item's history state
+  def history_ignore?
+    @history_ignore
+  end
+
   #get the array of entity types for which this field should be displayed
   def entity_type_ids
     EntityTypeField.cached_entity_type_ids self 
@@ -112,7 +119,7 @@ class ModelField
   
   def self.make_division_arrays(rank_start,uid_prefix,table_name)
     r = [
-      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"Division ID"]
+      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"Division ID",{:history_ignore=>true}]
     ]
     n = [rank_start+1,"#{uid_prefix}_div_name".to_sym, :name,"Division Name",{
       :import_lambda => lambda {|obj,data|
@@ -134,7 +141,7 @@ class ModelField
   end
   def self.make_carrier_arrays(rank_start,uid_prefix,table_name)
     r = [
-      [rank_start,"#{uid_prefix}_car_id".to_sym,:carrier_id,"Carrier ID"]
+      [rank_start,"#{uid_prefix}_car_id".to_sym,:carrier_id,"Carrier ID",{:history_ignore=>true}]
     ]
     r << [rank_start+1,"#{uid_prefix}_car_name".to_sym, :name,"Carrier Name",{
       :import_lambda => lambda {|obj,data|
@@ -172,7 +179,7 @@ class ModelField
   end
   def self.make_customer_arrays(rank_start,uid_prefix,table_name) 
     r = [
-      [rank_start,"#{uid_prefix}_cust_id".to_sym,:customer_id,"Customer ID"]
+      [rank_start,"#{uid_prefix}_cust_id".to_sym,:customer_id,"Customer ID",{:history_ignore=>true}]
     ]
     r << [rank_start+1,"#{uid_prefix}_cust_name".to_sym, :name,"Customer Name", {
       :import_lambda => lambda {|detail,data|
@@ -210,7 +217,7 @@ class ModelField
   end
   def self.make_vendor_arrays(rank_start,uid_prefix,table_name) 
     r = [
-      [rank_start,"#{uid_prefix}_ven_id".to_sym,:vendor_id,"Vendor ID"]
+      [rank_start,"#{uid_prefix}_ven_id".to_sym,:vendor_id,"Vendor ID",{:history_ignore=>true}]
     ]
     r << [rank_start+1,"#{uid_prefix}_ven_name".to_sym, :name,"Vendor Name", {
       :import_lambda => lambda {|detail,data|
@@ -252,7 +259,7 @@ class ModelField
     raise "Invalid shipping from/to indicator provided: #{ft}" unless ["from","to"].include?(ft)
     ftc = ft.titleize
     r = [
-      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"Ship #{ftc} ID"]
+      [rank_start,"#{uid_prefix}_ship_#{ft}_id".to_sym,"ship_#{ft}_id".to_sym,"Ship #{ftc} ID",{:history_ignore=>true}]
     ]
     n = [rank_start+1,"#{uid_prefix}_ship_#{ft}_name".to_sym,:name,"Ship #{ftc} Name", {
       :import_lambda => lambda {|obj,data|
@@ -302,7 +309,8 @@ class ModelField
         },
         :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
         :join_alias => "OT_#{i}",
-        :data_type=>:string
+        :data_type=>:string,
+        :history_ignore=>true
       }]
       if canada && canada.import_location
         id_counter += 1
@@ -318,7 +326,8 @@ class ModelField
           },
           :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
           :join_alias => "OT_#{i}",
-          :data_type=>:string
+          :data_type=>:string,
+          :history_ignore=>true
         }]
       end
       if OfficialTariff.where("import_regulations is not null OR export_regulations is not null").count>0
@@ -335,7 +344,8 @@ class ModelField
           },
           :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
           :join_alias => "OT_#{i}",
-          :data_type=>:string
+          :data_type=>:string,
+          :history_ignore=>true
         }]
         id_counter += 1
         r << [id_counter,"#{uid_prefix}_hts_#{i}_expregs".to_sym, :export_regulations,"#{i} - Export Regulations",{
@@ -350,7 +360,8 @@ class ModelField
           },
           :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
           :join_alias => "OT_#{i}",
-          :data_type=>:string
+          :data_type=>:string,
+          :history_ignore=>true
         }]
       end
       id_counter += 1
@@ -368,7 +379,8 @@ class ModelField
         },
         :join_statement => "LEFT OUTER JOIN official_quotas AS OQ_#{i} on OQ_#{i}.hts_code = tariff_records.hts_#{i} AND OQ_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
         :join_alias => "OQ_#{i}",
-        :data_type=>:string
+        :data_type=>:string,
+        :history_ignore=>true
       }]
     end
     r
@@ -410,7 +422,8 @@ class ModelField
       :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.iso_code},
       :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.country_id",
       :join_alias => "#{table_name}_country",
-      :data_type=>:string  
+      :data_type=>:string,
+      :history_ignore=>true
     }]
     r
   end
@@ -463,7 +476,8 @@ class ModelField
       :import_lambda => lambda {|detail,data| return "Master System Code cannot by set by import, ignored."},
       :export_lambda => lambda {|detail| return MasterSetup.get.system_code},
       :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
-      :data_type=>:string
+      :data_type=>:string,
+      :history_ignore=>true
     }]
   end
 

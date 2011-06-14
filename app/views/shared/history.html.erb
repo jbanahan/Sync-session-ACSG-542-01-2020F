@@ -1,0 +1,19 @@
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=url_for(@base_object)%>' key_map='b'>Back</button>
+<%end%>
+<h1>History: <%=CoreModule.find_by_object(@base_object).unique_id_field.process_export(@base_object)%></h1>
+<div>
+  <%@snapshots.each do |s| %>
+    <div>
+      <% d = s.diff_vs_previous %>
+      <h2><%=s.user.full_name%> - <%=s.created_at %></h2>
+      <div style='margin-left:1em;'>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>d}%>
+      </div>
+    </div>
+  <%end%>
+  <%if @snapshots.blank? %>
+    This item does not have any history records.  It might have been created before history tracking was turned on.
+  <%end%>
+  <%=will_paginate @snapshots%>
+</div>

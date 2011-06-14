@@ -23,6 +23,7 @@ $(function() {
     <button id='btn_edit'>Edit</button>
   <%end%> 
   <button class='btn_link' link_to='<%=shipments_path%>' key_map='b'>Back To Search</button>
+  <button class='btn_link' link_to='<%=history_shipment_path(@shipment)%>' key_map='h'>History</button>
   <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "shipments"} %>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:shipment_id => @shipment.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>

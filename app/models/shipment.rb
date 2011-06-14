@@ -1,6 +1,7 @@
 class Shipment < ActiveRecord::Base
 	include CustomFieldSupport
   include ShallowMerger
+  include EntitySnapshotSupport
 	
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"

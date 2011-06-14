@@ -21,8 +21,8 @@
     <% diff.children_added.each do |ca|%>
       <%r = ca.recordable%>
       <% if !ca.blank? %>
-        <h3>Added <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history', :locals=>{:diff=>ca} %>
+        <h3>Added Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>
@@ -30,8 +30,8 @@
     <% diff.children_deleted.each do |ca|%>
       <%r = ca.recordable%>
       <% if !ca.blank? %>
-        <h3>Deleted <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history', :locals=>{:diff=>ca} %>
+        <h3>Deleted Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>
@@ -39,8 +39,8 @@
     <% diff.children_in_both.each do |ca|%>
       <%r = ca.recordable%>
       <% if !ca.blank? %>
-        <h3>Changed <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
-        <%=render :partial=>'shared/history', :locals=>{:diff=>ca} %>
+        <h3>Changed Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>

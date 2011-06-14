@@ -2,6 +2,7 @@ class SalesOrder < ActiveRecord::Base
   include OrderSupport
 	include CustomFieldSupport
   include ShallowMerger
+  include EntitySnapshotSupport
 
   belongs_to :customer, :class_name => "Company"
   belongs_to :division

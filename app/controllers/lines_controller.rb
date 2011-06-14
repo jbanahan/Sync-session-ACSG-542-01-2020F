@@ -4,16 +4,17 @@ class LinesController < ApplicationController
   def create_multiple
     o = find_parent
     action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>module_name}) {
-      params[:lines].each do |p|
-        line = child_objects(o).build(p[1])
-        begin
-          line.transaction do
+      begin
+        o.transaction do
+          params[:lines].each do |p|
+            line = child_objects(o).build(p[1])
             line.save if before_save(line)
             OpenChain::FieldLogicValidator.validate! line
           end
-        rescue OpenChain::ValidationLogicError
-          errors_to_flash line
+          o.create_snapshot if o.respond_to?('create_snapshot')
         end
+      rescue OpenChain::ValidationLogicError
+        errors_to_flash line
       end
       redirect_to o
     }
@@ -30,6 +31,7 @@ class LinesController < ApplicationController
             update_custom_fields line, params[update_custom_field_symbol]
             OpenChain::FieldLogicValidator.validate! line
           end
+          o.create_snapshot if o.respond_to?('create_snapshot')
         end
       rescue OpenChain::ValidationLogicError
         errors_to_flash line
@@ -45,6 +47,7 @@ class LinesController < ApplicationController
   		@line = find_line
   		@line.destroy
   		errors_to_flash @line
+      o.create_snapshot if o.respond_to?('create_snapshot')
   		redirect_to o 
 		}
 	end
@@ -74,6 +77,7 @@ class LinesController < ApplicationController
               update_custom_fields line, params[update_custom_field_symbol]
               after_update line
               OpenChain::FieldLogicValidator.validate! line
+              o.create_snapshot if o.respond_to?('create_snapshot')
               add_flash :notices, "Line updated sucessfully."
               good = true
             end

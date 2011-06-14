@@ -74,6 +74,9 @@ OpenChain::Application.routes.draw do
       get 'show_next'
       get 'show_previous'
     end
+    member do
+      get 'history'
+    end
     resources :shipment_lines do
       post :create_multiple, :on => :collection
     end
@@ -83,6 +86,9 @@ OpenChain::Application.routes.draw do
     collection do
       get 'show_next'
       get 'show_previous'
+    end
+    member do
+      get 'history'
     end
     resources :delivery_lines do
       post :create_multiple, :on => :collection
@@ -115,6 +121,9 @@ OpenChain::Application.routes.draw do
       get 'show_previous'
       get 'all_open'
     end
+    member do
+      get 'history'
+    end
 		resources :order_lines
 	end
 	
@@ -123,6 +132,9 @@ OpenChain::Application.routes.draw do
       get 'show_next'
       get 'show_previous'
       get 'all_open'
+    end
+    member do
+      get 'history'
     end
     resources :sales_order_lines
   end

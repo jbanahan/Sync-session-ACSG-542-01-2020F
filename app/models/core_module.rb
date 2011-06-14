@@ -26,7 +26,27 @@ class CoreModule
         :bulk_actions_lambda => lambda {|current_user| return Hash.new},
         :changed_at_parents_lambda => lambda {|base_object| []},
         :show_field_prefix => false,
-        :entity_json_lambda => lambda {|entity| raise "#{@label} does not support creating entity json records."}
+        :entity_json_lambda => lambda { |entity|
+          master_hash = {'entity'=>{'core_module'=>self.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
+          mf_hash = master_hash['entity']['model_fields']
+          self.model_fields.values.each do |mf|
+            v = mf.process_export entity 
+            mf_hash[mf.uid] = v unless v.nil? || mf.history_ignore?
+          end
+          dmc = self.default_module_chain
+          child_mc = dmc.child self
+          unless child_mc.nil?
+            child_objects = self.child_objects(child_mc,entity)
+            unless child_objects.blank?
+              eca = []
+              master_hash['entity']['children'] = eca
+              child_objects.each do |c|
+                eca << child_mc.entity_json_lambda.call(c)
+              end
+            end
+          end
+          master_hash
+        }
       }.
       merge(opts)
     @class_name = class_name
@@ -173,15 +193,6 @@ class CoreModule
       r
     },
     :show_field_prefix=>true,
-    :entity_json_lambda => lambda {|t|
-      mh = {'entity'=>{'core_module'=>'TariffRecord','record_id'=>t.id,'model_fields'=>{}}}
-      mfh = mh['entity']['model_fields']
-      TARIFF.model_fields.values.each do |mf|
-        v = mf.process_export t
-        mfh[mf.uid] = v unless v.nil?
-      end
-      mh
-    },
     :unique_id_field_name=>:hts_line_number
   })
   CLASSIFICATION = new("Classification","Classification",{
@@ -190,22 +201,6 @@ class CoreModule
       :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"},
       :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] },
       :show_field_prefix=>true,
-      :entity_json_lambda => lambda {|c|
-        mh = {'entity'=>{'core_module'=>'Classification','record_id'=>c.id,'model_fields'=>{}}}
-        mfh = mh['entity']['model_fields']
-        CLASSIFICATION.model_fields.values.each do |mf|
-          v = mf.process_export c
-          mfh[mf.uid] = v unless v.nil?
-        end
-        unless c.tariff_records.blank?
-          eca = []
-          mh['entity']['children'] = eca
-          c.tariff_records.each do |t|
-            eca << TARIFF.entity_json_lambda.call(t)
-          end
-        end
-        mh
-      },
       :unique_id_field_name=>:class_cntry_iso
   })
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
@@ -220,23 +215,6 @@ class CoreModule
         bulk_actions
       },
       :changed_at_parents_lambda=>lambda {|p| [p]},#only update self
-      :entity_json_lambda => lambda {|p|
-        master_hash = {'entity'=>{'core_module'=>'Product','record_id'=>p.id,'model_fields'=>{}}}
-        mf_hash = master_hash['entity']['model_fields']
-        PRODUCT.model_fields.values.each do |mf|
-          v = mf.process_export p
-          mf_hash[mf.uid] = v unless v.nil?
-        end
-        classifications = p.classifications
-        unless classifications.blank?
-          eca = []
-          master_hash['entity']['children'] = eca
-          classifications.each do |c|
-            eca << CLASSIFICATION.entity_json_lambda.call(c)
-          end
-        end
-        master_hash
-      },
       :unique_id_field_name=>:prod_uid
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
@@ -263,6 +241,10 @@ class CoreModule
       end
     end
     return nil
+  end
+
+  def self.find_by_object(obj)
+    find_by_class_name obj.class.to_s
   end
   
   def self.find_file_formatable

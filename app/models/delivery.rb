@@ -2,6 +2,7 @@ class Delivery < ActiveRecord::Base
   
 	include CustomFieldSupport
   include ShallowMerger
+  include EntitySnapshotSupport
 	
   belongs_to  :carrier, :class_name => "Company"
   belongs_to  :customer,  :class_name => "Company"

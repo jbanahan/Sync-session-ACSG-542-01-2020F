@@ -23,6 +23,7 @@
   <button id='btn_edit'>Edit</button>
   <%end%> 
   <button class='btn_link' link_to='<%=deliveries_path%>' key_map='b'>Back To Search</button>
+  <button class='btn_link' link_to='<%=history_delivery_path(@delivery)%>' key_map='h'>History</button>
   <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "deliveries"} %>
 <% end %>
 
