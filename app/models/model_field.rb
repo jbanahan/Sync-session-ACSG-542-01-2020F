@@ -694,6 +694,15 @@ class ModelField
 
   def self.reload_if_stale
     cache_time = CACHE.get "ModelField:last_loaded"
+    if !cache_time.is_a?(Time)
+      begin
+        raise "cache_time was a #{cache_time.class} object!"
+      rescue
+        OpenMailer.send_generic_exception $!, ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
+      ensure
+        cache_time = nil
+      end
+    end
     if !cache_time.nil? && (@@last_loaded.nil? || @@last_loaded < cache_time)
       reload
     end
