@@ -122,8 +122,11 @@ class ImportedFile < ActiveRecord::Base
     end
 
     def process_row row_number, object, messages, failed=false
-      cr = @fr.change_records.create(:record_sequence_number=>row_number,:recordable=>object,:failed=>failed)
-      messages.each {|m| cr.change_record_messages.create(:message=>m)}
+      cr = ChangeRecord.create(:record_sequence_number=>row_number,:recordable=>object,:failed=>failed,:file_import_result_id=>@fr.id)
+      msg_sql = []
+      messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
+      sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")}"
+      ActiveRecord::Base.connection.execute sql
     end
 
     def process_start time
