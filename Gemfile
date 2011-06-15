@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.0.3'
+gem 'rails', '3.0.8'
 gem 'mysql2'
 gem 'mongrel', '1.2.0.pre2'
 gem 'sqlite3-ruby', :require => 'sqlite3'
@@ -16,6 +16,9 @@ gem 'ruby-debug19'
 gem 'rufus-scheduler', '2.0.8'
 gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
 gem 'cover_me', '>= 1.0.0.rc6', :group => :test
+group :test do
+  gem 'ruby-prof'
+end
 group :production do
   gem 'newrelic_rpm', '3.0.1'
 end
