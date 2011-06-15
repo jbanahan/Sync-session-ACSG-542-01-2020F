@@ -51,7 +51,7 @@ class Product < ActiveRecord::Base
   end
 
   def find_same
-    found = Product.where({:unique_identifier => self.unique_identifier.to_s})
+    found = self.unique_identifier.nil? ? [] : Product.where({:unique_identifier => self.unique_identifier.to_s})
     raise "Found multiple products with the same unique identifier #{self.unique_identifier}" if found.size > 1
     return found.empty? ? nil : found.first
   end

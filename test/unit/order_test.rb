@@ -65,12 +65,12 @@ class OrderTest < ActiveSupport::TestCase
   end
   
   test "find same" do
-    source = Order.find(1)
+    source = Order.create!(:order_number=>'123456zb',:vendor_id=>companies(:vendor).id)
     o = Order.new
     o.order_number = source.order_number
     found = o.find_same
     assert found == source, "Should have found source order."
-    o.order_number = "don't find this"
+    o.order_number = 123456
     assert o.find_same.nil?, "Should not find an order"
   end
   

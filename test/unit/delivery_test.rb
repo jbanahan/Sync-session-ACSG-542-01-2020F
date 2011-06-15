@@ -29,4 +29,12 @@ class DeliveryTest < ActiveSupport::TestCase
     d.customer.locked = true
     assert d.locked?, "Should be locked if customer is locked."
   end
+
+  test "find same" do
+    d = Delivery.create!(:reference=>"12345bbb",:customer_id=>companies(:customer).id)
+    d2 = Delivery.new(:reference=>d.reference,:customer_id=>d.customer_id)
+    assert_equal d, d2.find_same
+    d3 = Delivery.new(:reference=>12345,:customer_id=>d.customer_id)
+    assert_nil d3.find_same
+  end
 end

@@ -20,7 +20,7 @@ class Shipment < ActiveRecord::Base
 
   dont_shallow_merge :Shipment, ['id','created_at','updated_at','vendor_id','reference']
   def find_same
-    f = Shipment.where(:reference=>self.reference).where(:vendor_id=>self.vendor_id)
+    f = self.reference.nil? ? [] : Shipment.where(:reference=>self.reference.to_s).where(:vendor_id=>self.vendor_id)
     raise "Multiple shipments wtih reference \"#{self.reference} and vendor ID #{self.vendor_id} exist." if f.size > 1
     return f.empty? ? nil : f.first
   end

@@ -28,4 +28,11 @@ class SalesOrderTest < ActiveSupport::TestCase
     assert so.locked?, "Sales order should be locked because customer is locked."
   end
   
+  test "find same" do
+    s = SalesOrder.create!(:order_number=>"123bbb",:customer_id=>companies(:customer).id)
+    s2 = SalesOrder.new(:order_number=>s.order_number)
+    assert_equal s, s2.find_same
+    s3 = SalesOrder.new(:order_number=>123)
+    assert_nil s3.find_same
+  end
 end

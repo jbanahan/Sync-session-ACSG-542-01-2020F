@@ -19,7 +19,7 @@ class SalesOrder < ActiveRecord::Base
   dont_shallow_merge :SalesOrder, ['id','created_at','updated_at','order_number']
 
   def find_same
-    found = SalesOrder.where(:order_number => self.order_number)
+    found = self.order_number.nil? ? [] : SalesOrder.where(:order_number => self.order_number.to_s)
     raise "Found multiple sales with the same order number #{self.order_number}" if found.size > 1
     return found.empty? ? nil : found.first
   end

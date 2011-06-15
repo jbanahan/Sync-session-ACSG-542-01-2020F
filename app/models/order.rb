@@ -37,7 +37,7 @@ class Order < ActiveRecord::Base
   end
   
   def find_same
-    found = Order.where({:order_number => self.order_number})
+    found = self.order_number.nil? ? [] : Order.where({:order_number => self.order_number.to_s})
     raise "Found multiple orders with the same order number #{self.order_number}" if found.size > 1
     return found.empty? ? nil : found.first
   end

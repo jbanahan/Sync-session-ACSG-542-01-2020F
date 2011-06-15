@@ -21,7 +21,7 @@ class Delivery < ActiveRecord::Base
 
   dont_shallow_merge :Delivery, ['id','created_at','updated_at','customer_id','reference']
   def find_same
-    f = Delivery.where(:reference=>self.reference).where(:customer_id=>self.customer_id)
+    f = self.reference.nil? ? [] : Delivery.where(:reference=>self.reference.to_s).where(:customer_id=>self.customer_id)
     raise "Multiple deliveries with reference \"#{self.reference} and customer ID #{self.customer_id} exist." if f.size > 1
     return f.empty? ? nil : f.first
   end
