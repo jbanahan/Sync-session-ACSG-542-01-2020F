@@ -166,7 +166,22 @@ module ApplicationHelper
   end
   def val_class model_field_uid
   #returns the string "rvalidate" if the field needs remote validation
-    FieldValidatorRule.find_cached_by_model_field_uid(model_field_uid.to_s).empty? ? "" : "rvalidate"
+    r = ""
+    r << "rvalidate " if FieldValidatorRule.find_cached_by_model_field_uid(model_field_uid.to_s).empty?
+    mf = ModelField.find_by_uid(model_field_uid)
+    case mf.data_type
+    when :decimal
+      r << "decimal "
+    when :integer
+      r << "integer "
+    when :date
+      r << "isdate "
+    when :datetime
+      r << "isdate "
+    when :fixnum
+      r << "decimal "
+    end
+    r
   end
   def entity_type_ids model_field
     ids = model_field.entity_type_ids 

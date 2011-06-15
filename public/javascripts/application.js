@@ -764,10 +764,11 @@ function openPackSalesOrder(id) {
     var i;
     for(i=0;i<order.sales_order_lines.length;i++) {
       var line = order.sales_order_lines[i];
-      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_sales_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='delln_delivery_qty' class='rvalidate'/></td></tr>";
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_sales_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='delln_delivery_qty' class='decimal rvalidate'/></td></tr>";
     }
     h += "</tbody></table>";
     $("#div_pack_order_content").html(h);
+    $(".decimal").jStepper();
   });
 }
 function openPackOrder(id) {
@@ -780,10 +781,11 @@ function openPackOrder(id) {
     var i;
     for(i=0;i<order.order_lines.length;i++) {
       var line = order.order_lines[i];
-      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='shpln_shipped_qty' class='rvalidate'/></td></tr>";
+      h+="<tr><td><input type='hidden' name='[lines]["+i+"][linked_order_line_id]' value='"+line.id+"'/>"+line.line_number+"</td><td>"+line.product.name+"<input type='hidden' name='[lines]["+i+"][product_id]' value='"+line.product.id+"'/></td><td>"+line.quantity+"</td><td><input type='text' name='[lines]["+i+"][quantity]' mf_id='shpln_shipped_qty' class='decimal rvalidate'/></td></tr>";
     }
     h += "</tbody></table>";
     $("#div_pack_order_content").html(h);
+    $(".decimal").jStepper();
   });
 }
 function tariffPopUp(htsNumber,country_id) {

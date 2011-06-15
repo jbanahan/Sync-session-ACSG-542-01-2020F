@@ -17,7 +17,7 @@ $(function() {
   <%= form_for([parent, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
   <table>
     <% form_line.default_line_number%>
-    <%=field_row "Line Number", f.text_field(:line_number, "size" => 2) %>
+    <%=field_row "Line Number", model_text_field(f,:line_number,is_sales_order ? "delln_line_number" : "shpln_line_number",:size=>2)%>
     <%=field_row "Product", f.collection_select(:product_id, products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
     <%=field_row "Ship Quantity", model_text_field(f,:quantity,is_sales_order ? "delln_delivery_qty" : "shpln_shipped_qty",:size=>5) %>
     <%=field_row "Unit of Measure", content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
