@@ -31,6 +31,8 @@ module ApplicationHelper
     inner_opts = opts_for_model_text_field model_field_uid, opts
     r = FieldValidatorRule.find_cached_by_model_field_uid model_field_uid
     if r.size>0 && r[0].one_of_array.size > 0
+      inner_opts.delete :size
+      inner_opts.delete "size"
       form_object.select(field_name,r[0].one_of_array,{:include_blank=>true},inner_opts)
     else
       form_object.text_field(field_name,inner_opts)
@@ -41,6 +43,8 @@ module ApplicationHelper
     inner_opts = opts_for_model_text_field model_field_uid, opts
     r = FieldValidatorRule.find_cached_by_model_field_uid model_field_uid
     if r.size>0 && r[0].one_of_array.size>0
+      inner_opts.delete :size
+      inner_opts.delete "size"
       a = [""]+r[0].one_of_array
       select_tag(field_name,options_for_select(a,value),inner_opts)
     else
