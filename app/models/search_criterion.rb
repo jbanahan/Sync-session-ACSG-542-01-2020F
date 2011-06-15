@@ -117,7 +117,7 @@ class SearchCriterion < ActiveRecord::Base
     table_name = mf.join_alias
     if custom_field? 
       c_def_id = mf.custom_id
-      cd = CustomDefinition.find(c_def_id)
+      cd = CustomDefinition.cached_find(c_def_id)
       if boolean_field?
         bool_val = where_value ? "custom_values.boolean_value = ?" : "(custom_values.boolean_value is null OR custom_values.boolean_value = ?)"
         "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{bool_val})"

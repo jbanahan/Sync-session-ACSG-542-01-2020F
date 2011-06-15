@@ -14,14 +14,14 @@ class MasterSetup < ActiveRecord::Base
     begin
       m = CACHE.get CACHE_KEY 
       raise "MasterSetup cache returned a TrueClass!" if !m.nil? && m.is_a?(TrueClass)
-      return m unless m.nil?
+      return m unless m.nil? || !m.is_a?(MasterSetup)
     rescue NameError
       cache_initalized = false
     end
     m = init_base_setup
     raise "MasterSetup init_base_setup returned a TrueClass!" if m.is_a?(TrueClass)
     CACHE.set CACHE_KEY, m if cache_initalized
-    m
+    m.is_a?(MasterSetup) ? m : MasterSetup.first
   end
 
   def self.init_base_setup

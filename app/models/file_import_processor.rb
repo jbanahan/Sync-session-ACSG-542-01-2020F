@@ -14,6 +14,10 @@ class FileImportProcessor
     @module_chain = @core_module.default_module_chain
     @data = data
     @listeners = listeners
+    @custom_definition_map = {}
+    CustomDefinition.all.each do |cd|
+      @custom_definition_map[cd.id] = cd
+    end
   end
   
   
@@ -22,15 +26,19 @@ class FileImportProcessor
       fire_start
       processed_row = false
       r = @import_file.ignore_first_row ? 1 : 0
+      error_email_count = 0
       get_rows do |row|
         begin
           do_row r+1, row, true
         rescue => e
+          OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver if error_email_count < 20 #don't send more than 20 messaegs for same file
+          error_email_count += 1
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
         end
         r += 1
       end
     rescue => e
+      OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver
       @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
     ensure
       fire_end
@@ -82,16 +90,21 @@ class FileImportProcessor
               end
             end
             obj = merge_or_create obj, save
+            object_map[mod] = obj
+            cv_map = {}
+            obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
             custom_fields.each do |mf,data|
-              cd = CustomDefinition.find mf.custom_id
-              cv = obj.get_custom_value cd
+              cd = @custom_definition_map[mf.custom_id]
+              cv = cv_map[cd.id]
+              cv = obj.custom_values.build(:custom_definition_id=>cd.id) if cv.nil?
+              orig_value = cv.value
               if cd.data_type.to_sym==:boolean
                 set_boolean_value cv, data
               else
                 cv.value = data
               end
               messages << "#{cd.label} set to #{cv.value}"
-              cv.save if save
+              cv.save if save && !(orig_value.blank? && data.blank?) 
             end
             object_map[mod] = obj
           end
@@ -102,7 +115,8 @@ class FileImportProcessor
             obj.save
           end
         end
-        OpenChain::FieldLogicValidator.validate! object_map[@core_module]
+        Rails.logger.info "object_map[@core_module] is nill for row #{row_number} in imported_file: #{@import_file.id}" if object_map[@core_module].nil?
+        OpenChain::FieldLogicValidator.validate! object_map[@core_module] unless object_map[@core_module].nil?
         fire_row row_number, object_map[@core_module], messages
       end
     rescue OpenChain::ValidationLogicError

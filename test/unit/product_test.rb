@@ -2,6 +2,13 @@ require 'test_helper'
 
 class ProductTest < ActiveSupport::TestCase
 
+  test "numeric unique identifier" do
+    p = Product.create!(:unique_identifier=>"123456X")
+    p2 = Product.create!(:unique_identifier=>"123456")
+    to_test = Product.new(:unique_identifier=>123456)
+    assert_equal p2, to_test.find_same
+  end
+
   test "load_custom_values" do
     cd = CustomDefinition.create!(:module_type=>"Product",:data_type=>"integer",:label=>"AGKL")
     p = Product.create!(:unique_identifier=>"PUIDN")

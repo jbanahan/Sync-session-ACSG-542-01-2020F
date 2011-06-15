@@ -7,7 +7,11 @@ class CustomValueTest < ActiveSupport::TestCase
       :customizable_type => "Order")
     n = CustomValue.new(:custom_definition => base.custom_definition, :customizable_id => 1000,
       :customizable_type => "Order")
-    assert !n.save, "Should have failed on dup record"
+    begin
+      n.save
+      assert false, "Should have raised exception"
+    rescue ActiveRecord::RecordNotUnique
+    end
     n = CustomValue.new(:custom_definition => CustomDefinition.create!(:label=>"x", :module_type=>"Shipment",:data_type=>"String"), :customizable_id => 1000,
       :customizable_type => "Order")
     assert n.save, "Should have passed with different custom_definition_id"
