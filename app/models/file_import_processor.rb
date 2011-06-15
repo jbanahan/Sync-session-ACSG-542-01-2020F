@@ -231,6 +231,8 @@ class FileImportProcessor
             raise "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." if ot.nil?
           end
         end
+        #make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
+        raise "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
       end
     end
     

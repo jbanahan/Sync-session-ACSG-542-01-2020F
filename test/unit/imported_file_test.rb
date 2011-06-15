@@ -238,7 +238,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   test "product with bad hts" do
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
     f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
-    attach_array = ["pbhts","US","","9999999999"]
+    attach_array = ["pbhts","US","1","9999999999"]
     ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
     ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
     ss.search_columns.create!(:model_field_uid=>:hts_line_number,:rank=>2)
@@ -247,12 +247,25 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert !f.errors.full_messages.first.index("HTS Number 9999999999 is invalid for US.").nil?
   end
 
+  test "product missing HTS line number" do 
+    ot = OfficialTariff.create!(:hts_code=>"1555555555",:country_id=>countries(:us).id,:full_description=>"FD")
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
+    attach_array = ["pbhts","US","",ot.hts_code]
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
+    ss.search_columns.create!(:model_field_uid=>:hts_line_number,:rank=>2)
+    ss.search_columns.create!(:model_field_uid=>:hts_hts_1,:rank=>3)
+    assert !f.process(ss.user,:attachment_data=>attach_array.to_csv)
+    assert !f.errors.full_messages.first.index("Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}.").nil?
+  end
+
   test "product with classification and tariffs" do
     vh = {
       :prod_uid=>"pwc_test",
       :prod_ven_id=>companies(:vendor).id,
       :class_cntry_iso => "US",
-      :hts_line_number => "",
+      :hts_line_number => "1",
       :hts_hts_1 => "9900778811"
     }
     OfficialTariff.create!(:hts_code=>vh[:hts_hts_1],:country_id=>countries(:us).id,:full_description=>"FD")
