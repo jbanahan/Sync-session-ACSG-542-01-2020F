@@ -94,7 +94,7 @@ class ModelField
     if @custom_id.nil?
       return Kernel.const_get(@model).columns_hash[@field_name.to_s].klass.to_s.downcase.to_sym
     else
-      return CustomDefinition.find(@custom_id).data_type.downcase.to_sym
+      return CustomDefinition.cached_find(@custom_id).data_type.downcase.to_sym
     end
   end
   
