@@ -35,11 +35,11 @@ class EntitySnapshotTest < ActiveSupport::TestCase
 
     assert_equal 1, diff.children_added.size
     cn_diff = diff.children_added.first
-    assert_equal [nil,'CN'], cn_diff.model_fields_changed['class_cntry_iso']
+    assert_equal [nil,'CHINA'], cn_diff.model_fields_changed['class_cntry_name']
     
     assert_equal 1, diff.children_deleted.size
     it_diff = diff.children_deleted.first
-    assert_equal ['IT',nil], it_diff.model_fields_changed['class_cntry_iso']
+    assert_equal ['ITALY',nil], it_diff.model_fields_changed['class_cntry_name']
   end
 
   test "previous" do 
@@ -78,14 +78,14 @@ class EntitySnapshotTest < ActiveSupport::TestCase
     assert_equal p.unique_identifier, product_fields['prod_uid']
     assert_equal cv.value, product_fields["*cf_#{pcd.id}"]
     children = sj['children']
-    expected_countries = ['US','CN']
+    expected_countries = ['UNITED STATES','CHINA']
     expected_classification_ids = p.classifications.collect {|x| x.id }
     assert_equal 2, children.size
     children.each do |classification_json|
       cje = classification_json['entity']
       assert_equal 'Classification', cje['core_module']
       expected_classification_ids.delete cje['record_id']
-      expected_countries.delete cje['model_fields']['class_cntry_iso']
+      expected_countries.delete cje['model_fields']['class_cntry_name']
       class_children = cje['children']
       assert_equal 2, class_children.size
       expected_hts = ["1234567890","0987654321"]

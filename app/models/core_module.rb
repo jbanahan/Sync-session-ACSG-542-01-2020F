@@ -26,22 +26,21 @@ class CoreModule
         :bulk_actions_lambda => lambda {|current_user| return Hash.new},
         :changed_at_parents_lambda => lambda {|base_object| []},
         :show_field_prefix => false,
-        :entity_json_lambda => lambda { |entity|
+        :entity_json_lambda => lambda { |entity,module_chain|
           master_hash = {'entity'=>{'core_module'=>self.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
           mf_hash = master_hash['entity']['model_fields']
           self.model_fields.values.each do |mf|
             v = mf.process_export entity 
             mf_hash[mf.uid] = v unless v.nil? || mf.history_ignore?
           end
-          dmc = self.default_module_chain
-          child_mc = dmc.child self
+          child_mc = module_chain.child self
           unless child_mc.nil?
             child_objects = self.child_objects(child_mc,entity)
             unless child_objects.blank?
               eca = []
               master_hash['entity']['children'] = eca
               child_objects.each do |c|
-                eca << child_mc.entity_json_lambda.call(c)
+                eca << child_mc.entity_json_lambda.call(c,module_chain)
               end
             end
           end
@@ -74,7 +73,7 @@ class CoreModule
 
   #returns a json representation of the entity and all of it's children
   def entity_json base_object
-    j = @entity_json_lambda.call(base_object)   
+    j = @entity_json_lambda.call(base_object,default_module_chain)   
     ActiveSupport::JSON.encode j
   end
 
