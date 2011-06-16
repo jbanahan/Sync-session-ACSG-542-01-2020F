@@ -109,6 +109,7 @@ var OpenChain = (function() {
     });
   }
   var removeFromInvalidTariffs = function(hts_field) {
+    hts_field.removeClass("error");
     var fieldId = hts_field.attr("id");
     var invalidPosition = jQuery.inArray(fieldId,invalidTariffFields);
     if(invalidPosition!=-1) {
@@ -240,7 +241,7 @@ var OpenChain = (function() {
         $(this).prevAll("input.hts_field").val($(this).html());
       });
       $("form").submit(function() {
-        if(invalidTariffFields.length) {
+        if(invalidTariffFields.length>0) {
           window.alert("Please fix or erase invalid tariff numbers.");
           return false;
         }
