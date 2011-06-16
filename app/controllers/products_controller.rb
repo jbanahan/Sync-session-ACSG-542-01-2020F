@@ -254,10 +254,12 @@ class ProductsController < ApplicationController
     def save_classification_custom_fields(product,product_params)
       return if product_params.nil? || product_params[:classifications_attributes].nil? || params[:classification_custom].nil?
       product.classifications.each do |classification|
-        product_params[:classifications_attributes].each do |k,v|
-          if v[:country_id] == classification.country_id.to_s
-            update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
-          end  
+        unless classification.destroyed?
+          product_params[:classifications_attributes].each do |k,v|
+            if v[:country_id] == classification.country_id.to_s
+              update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
+            end  
+          end
         end
         save_tariff_custom_fields(classification)
       end    
@@ -266,10 +268,12 @@ class ProductsController < ApplicationController
     def save_tariff_custom_fields(classification)
       return if params[:tariff_custom].nil?
       classification.tariff_records.each do |tr|
-        vs = tr.view_sequence
-        custom_container = params[:tariff_custom][vs]
-        unless custom_container.blank?
-          update_custom_fields tr, custom_container[:tariffrecord_cf]
+        unless tr.destroyed?
+          vs = tr.view_sequence
+          custom_container = params[:tariff_custom][vs]
+          unless custom_container.blank?
+            update_custom_fields tr, custom_container[:tariffrecord_cf]
+          end
         end
       end
     end
