@@ -38,8 +38,8 @@ $(document).ready( function() {
 </table>
 <% end %>
 <% unless @company.locked? %>
-<% if edit_add.nil? && @current_user.admin?%><button id='btn_add_address'>Add Address</button><%end%>
-<% if @current_user.admin? %>
+<% if edit_add.nil? && current_user.admin?%><button id='btn_add_address'>Add Address</button><%end%>
+<% if current_user.admin? %>
 <div id='mod_address' style="display:none;">
 <%= form_for(edit_add.nil? ? @company.addresses.build : edit_add) do |f| %>
 
