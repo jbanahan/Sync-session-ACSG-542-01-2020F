@@ -196,6 +196,22 @@ var OpenChain = (function() {
 
   return {
     //public stuff
+    loadUserList: function(destinationSelect,selectedId) {
+      $.getJSON('/users.json',function(data) {
+        var i;
+        var h = "";
+        for(i=0;i<data.length;i++) {
+          var company = data[i].company;
+          var j;
+          for(j=0;j<company.users.length;j++) {
+            var u = company.users[j];
+            var selected = (u.id==selectedId ? "selected=\'true\' " : "");
+            h += "<option value='"+u.id+"' "+selected+">"+company.name+" - "+u.full_name+"</option>";
+          }
+        }
+        destinationSelect.html(h);
+      });
+    },
     hideByEntityType: function(table,entityTypeId) {
       table.find('.fld_lbl').each(function() {$(this).parents(".field_row:first").fadeIn('slow');});
       if(entityTypeId.length) {
@@ -859,22 +875,6 @@ function htsDataRow(label,data) {
   }
 }
 
-function loadUserList(destinationSelect,selectedId) {
-  $.getJSON('/users.json',function(data) {
-    var i;
-    var h = "";
-    for(i=0;i<data.length;i++) {
-      var company = data[i].company;
-      var j;
-      for(j=0;j<company.users.length;j++) {
-        var u = company.users[j];
-        var selected = (u.id==selectedId ? "selected=\'true\' " : "");
-        h += "<option value='"+u.id+"' "+selected+">"+company.name+" - "+u.first_name+" "+u.last_name+"</option>";
-      }
-    }
-    destinationSelect.html(h);
-  });
-}
 function next_action_to_form(form) {
   hidden_to_form(form,"c_next","true");
 }
