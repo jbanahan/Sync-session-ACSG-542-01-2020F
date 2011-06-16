@@ -43,7 +43,7 @@ class OfficialTariff < ActiveRecord::Base
 
   #override as_json to format hts_code
   def as_json(options={})
-    result = super({ :except => :hts_code }.merge(options))
+    result = super({ :except => :hts_code }.merge(options.nil? ? {} : options))
     otr = result["official_tariff"]
     otr["hts_code"] = hts_code.hts_format unless hts_code.nil?
     md = self.meta_data

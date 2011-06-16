@@ -3,8 +3,8 @@
   <%mf = ModelField.find_by_uid(mfuid)%>
   <% 
     if mf.data_type==:datetime
-      c[0] = Time.parse(c[0]) unless c[0].blank?
-      c[1] = Time.parse(c[1]) unless c[1].blank?
+      c[0] = Time.parse(c[0]) unless c[0].blank? || !c[0].is_a?(String)
+      c[1] = Time.parse(c[1]) unless c[1].blank? || !c[1].is_a?(String)
     end %>
   <% if c[0].blank? && c[1].blank? %>
   <% elsif c[0].blank? %>
