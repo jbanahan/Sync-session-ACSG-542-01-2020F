@@ -14,7 +14,7 @@ class MasterSetup < ActiveRecord::Base
     raise "MasterSetup cache returned a #{m.class} !" if !m.nil? && !m.is_a?(MasterSetup)
     if m.nil?
       m = init_base_setup
-      CACHE.set CACHE_KEY, m if cache_initalized
+      CACHE.set CACHE_KEY, m 
     elsif !m.is_a?(MasterSetup)
       logger.info "#{Time.now}: MasterSetup returned a #{m.class}"
     end
