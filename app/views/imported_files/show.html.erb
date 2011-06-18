@@ -38,7 +38,7 @@
         }
       }
       });
-    $("#mod_processing").dialog({autoOpen:false,width:'auto',title:"Processing",
+    $("#mod_processing").dialog({autoOpen:false,width:300,title:"Processing",
       modal:true,closeOnEscapse:false,close:function() {$("#mod_processing").dialog('open')}});
       <%if @file_import_result.nil?%>
     $("#mod_preview").dialog('open');
@@ -75,7 +75,7 @@
     </td>
     <td width='50%' style='vertical-align:top;'>
       <table>
-        <%=field_row "Last Processed", @file_import_result.nil? ? "Never" : @file_import_result.finished_at %>
+        <%=field_row "Last Processed", @file_import_result.nil? ? "Never" : (@file_import_result.finished_at.nil? ? "Processing" : @file_import_result.finished_at) %>
         <%=field_row "File Rows", @file_import_result.nil? ? "" : @file_import_result.change_records.size %>
         <%=field_row "Records", @search_run.nil? ? "" : @search_run.total_objects %>
         <% if @file_import_result%>
@@ -146,5 +146,5 @@
   </div>
 </div>
 <div id='mod_processing' style='display:none;'>
-  File processing.  This may take several minutes.  You can open a new browser tab or window to continue working while the file processes.
+  File processing in the background.  This may take several minutes.  You will receive a message when processing is complete.
 </div>

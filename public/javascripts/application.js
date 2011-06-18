@@ -194,6 +194,21 @@ var OpenChain = (function() {
     });
   }
 
+  var pollingEnabled = true;
+  var pollForMessages = function() {
+    setInterval(function() {
+      if(pollingEnabled) {
+        $.getJSON('/messages/message_count',function(data) {
+          if(data>0) {
+            $('#message_envelope').show();
+          } else {
+            $('#message_envelope').hide();
+          }
+        });
+      }}, 30000
+    );
+  }
+
   return {
     //public stuff
     loadUserList: function(destinationSelect,selectedId) {
@@ -331,10 +346,14 @@ var OpenChain = (function() {
       }});
       $("#btn_add_attachment").click(function() {$("#mod_attach").dialog('open');});
     },
+    disableMessagePolling: function() {
+      pollingEnabled = false;
+    },
     init: function() {
       initLinkButtons();
       initFormButtons();
       initRemoteValidate();
+      pollForMessages();
     }
   };
 })();
@@ -565,14 +584,6 @@ function setSearchDatePicker(val_text,isDate) {
     } else {
         val_text.datepicker("destroy");
     }
-}
-
-function toggleMessageRead(id, onCallback) {
-    $.get('/messages/'+id+'/read', function(data) {
-        onCallback(id);
-        readCount = data;
-        $("#message_count").html((readCount!='0') ? "(<a href='/messages'>"+readCount+"</a>)" : "");
-    });
 }
 
 function addHiddenFormField(parentForm,name,value,id,style_class) {

@@ -6,6 +6,18 @@ class ImportedFileTest < ActiveSupport::TestCase
     ModelField.reload
   end
 
+  test "defer process" do
+    Rufus::Scheduler::PlainScheduler.any_instance.stubs(:in).returns(nil).once
+
+    
+    ss = SearchSetup.create!(:name=>'abc',:user_id=>User.first.id,:module_type=>"Product")
+    i = ss.imported_files.create!(:module_type=>"Product")
+    u = User.first
+
+    i.process(u,{:defer=>true})
+
+  end
+
   test "deletable?" do
     i = ImportedFile.new()
     assert i.deletable?
@@ -275,7 +287,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       attach_array << vh[uid]
       ss.search_columns.create!(:model_field_uid => uid,:rank=>i)
     end
-    f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
+    f = ss.imported_files.create!(:attached_file_name=>'fname',:ignore_first_row=>false,:module_type=>"Product")
     assert f.process(ss.user,:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:prod_uid]).first
     assert found.vendor_id == vh[:prod_ven_id], "vendor id failed"

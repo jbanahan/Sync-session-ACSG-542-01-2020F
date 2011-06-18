@@ -2,6 +2,9 @@ class ImportedFile < ActiveRecord::Base
   
   require 'open-uri'
 
+
+  @@scheduler = Rufus::Scheduler.start_new 
+
   has_attached_file :attached,
     :storage => :s3,
     :s3_credentials => "#{Rails.root}/config/s3.yml",
@@ -47,7 +50,12 @@ class ImportedFile < ActiveRecord::Base
     begin
       import_search_columns      
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
-      FileImportProcessor.process self, [FileImportProcessorListener.new(self,user)]
+      fj = FileImportProcessJob.new(self,user)
+      if options[:defer]
+        @@scheduler.in '1s', fj 
+      else
+        fj.call nil
+      end
     rescue => e 
       self.errors[:base] << "There was an error processing the file: #{e.message}"
       OpenMailer.send_generic_exception(e, ["Imported File ID: #{self.id}"]).deliver
@@ -115,18 +123,32 @@ class ImportedFile < ActiveRecord::Base
     end
   end
 
+  class FileImportProcessJob
+    def initialize imported_file, user_id
+      @imported_file = imported_file
+      @user_id = user_id
+    end
+
+    def call job
+      FileImportProcessor.process @imported_file, [FileImportProcessorListener.new(@imported_file,@user_id)]
+    end
+  end
+  
   class FileImportProcessorListener
 
-    def initialize(imported_file,user)
-      @fr = imported_file.file_import_results.build(:run_by=>user)
+    def initialize(imported_file,user_id)
+      @imported_file = imported_file
+      @fr = @imported_file.file_import_results.build(:run_by=>User.find(user_id))
     end
 
     def process_row row_number, object, messages, failed=false
       cr = ChangeRecord.create(:record_sequence_number=>row_number,:recordable=>object,:failed=>failed,:file_import_result_id=>@fr.id)
-      msg_sql = []
-      messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
-      sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")}"
-      ActiveRecord::Base.connection.execute sql
+      unless messages.blank?
+        msg_sql = []
+        messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
+        sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")}"
+        ActiveRecord::Base.connection.execute sql
+      end
       object.create_snapshot(@fr.run_by) if object.respond_to?('create_snapshot')
     end
 
@@ -138,6 +160,7 @@ class ImportedFile < ActiveRecord::Base
     def process_end time
       @fr.finished_at= time
       @fr.save
+      @fr.run_by.messages.create(:subject=>"File Processing Complete", :body=>"File #{@imported_file.attached_file_name} has completed.<br /><br />Click <a href='#{Rails.application.routes.url_helpers.imported_file_path(@imported_file)}'>here</a> to see the results.") unless @imported_file.id.nil?
     end
   end
 end

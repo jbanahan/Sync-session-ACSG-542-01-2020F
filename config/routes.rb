@@ -60,6 +60,7 @@ OpenChain::Application.routes.draw do
     end
     collection do
       get 'read_all'
+      get 'message_count'
     end
   end
 

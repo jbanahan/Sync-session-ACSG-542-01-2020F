@@ -44,4 +44,8 @@ class MessagesController < ApplicationController
     current_user.messages.update_all :viewed => true
     render :text => "yes"
   end
+
+  def message_count
+    render :json => @message_count.to_json
+  end
 end

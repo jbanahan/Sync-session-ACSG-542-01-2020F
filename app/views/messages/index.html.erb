@@ -7,10 +7,12 @@
         id = $(ui.newContent).attr("id");
         unRead = $("#mhead_"+id).hasClass("unread")
         if(unRead) {
-          toggleMessageRead(id, function(x) {
-            $("#mhead_"+x).removeClass("unread");
-            $("#mhead_"+x).addClass("read");
-            $("#btn_unread_"+x).show()
+          $.get('/messages/'+id+'/read',function(data) {
+            if(data>0) {
+              $('#message_envelope').show();
+            } else {
+              $('#message_envelope').hide();
+            }
           });
         }
       }
@@ -23,7 +25,6 @@
         $('.unread').each(function() {
           $(this).removeClass("unread");
           $(this).addClass("read");
-          $("#message_count").html('');
         });
       });
     $(".btn_delete").each(function() {

@@ -17,6 +17,9 @@
   <script>
   <% if current_user %>
   $(function() {
+    <% if Rails.env=='development' %>
+      OpenChain.disableMessagePolling();
+    <% end %>
     <% if current_user.view_orders?%>
     $( "#btn_orders" )
       .button()
@@ -135,8 +138,8 @@
   <% if current_user %>
     <% unless no_buttons %>
     <div id="corner_links">
-        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> 
-        <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
+        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> | 
+        <%= link_to 'Messages', messages_path %> <%=link_to(image_tag('envelope.png',{:alt=>'Messages',:style=>"vertical-align:bottom; display:#{@message_count==0 ? "none" : "inline"};",:id=>'message_envelope'}), messages_path)%> |
         <%= link_to 'Tools', tools_path%> | 
         <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
         <%= link_to 'Logout', logout_path %>
