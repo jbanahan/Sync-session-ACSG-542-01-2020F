@@ -2,6 +2,25 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
   
+  test "classification - component count" do
+    p = Product.create!(:unique_identifier=>"pidcc")
+    c_us = p.classifications.create!(:country_id => countries(:us).id)
+    c_cn = p.classifications.create!(:country_id => countries(:china).id)
+    c_cn.tariff_records.create!(:hts_1=>"1234567890")
+    
+    mf = ModelField.find_by_uid :class_comp_cnt
+    assert_equal 0, mf.process_export(c_us)
+    assert_equal 1, mf.process_export(c_cn)
+
+    sc = SearchCriterion.new(:model_field_uid=>mf.uid,:operator=>"eq",:value=>"1")
+    r = Classification.where(:product_id=>p.id)
+    r = sc.apply(r)
+
+    assert_equal 1, r.size
+    assert_equal c_cn, r.first
+
+  end
+
   test "field label prefix" do
     #order shouldn't have prefix
     assert !CoreModule::ORDER.show_field_prefix, "Setup issue"
