@@ -36,19 +36,6 @@ class UserTest < ActiveSupport::TestCase
     assert u.full_name == "uname", "full_name should have substituted username when length of first+last was 0"
   end
 
-  def enable_all_personal_permissions u
-    p_hash = {}
-    [
-      'order_view','order_edit','order_delete','order_attach','order_comment',
-      'shipment_view','shipment_edit','shipment_delete','shipment_attach','shipment_comment',
-      'sales_order_view','sales_order_edit','sales_order_delete','sales_order_attach','sales_order_comment',
-      'delivery_view','delivery_edit','delivery_delete','delivery_attach','delivery_comment',
-      'product_view','product_edit','product_delete','product_attach','product_comment',
-      'classification_view','classification_edit'
-    ].each do |permission|
-      u[permission] = true
-    end
-  end
 
   test "classification permissions" do
     u = users(:masteruser)
