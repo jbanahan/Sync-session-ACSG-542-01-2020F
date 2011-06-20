@@ -1,4 +1,4 @@
-class OfficialTariffMetaDatasController < ApplicationController
+class OfficialTariffMetaDatumController < ApplicationController
 
   def update
     otmd = OfficialTariffMetaData.find params[:id]
