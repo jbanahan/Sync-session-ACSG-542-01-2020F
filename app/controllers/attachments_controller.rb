@@ -2,7 +2,7 @@ class AttachmentsController < ApplicationController
   def create
     if att = Attachment.create(params[:attachment])
       attachable = att.attachable
-      unless attachable.can_edit?(current_user)
+      unless attachable.can_attach?(current_user)
         att.destroy
         add_flash :errors, "You do not have permission to attach items to this object."
       end
@@ -18,7 +18,7 @@ class AttachmentsController < ApplicationController
   def destroy
     att = Attachment.find(params[:id])
     attachable = att.attachable
-    if attachable.can_edit?(current_user)
+    if attachable.can_attach?(current_user)
       att.destroy
       errors_to_flash att
     else

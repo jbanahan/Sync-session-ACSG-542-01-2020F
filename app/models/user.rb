@@ -6,7 +6,13 @@ class User < ActiveRecord::Base
   attr_accessible :username, :email, :password, 
     :password_confirmation, :time_zone, 
     :email_format, :company_id,
-    :first_name, :last_name, :search_open
+    :first_name, :last_name, :search_open,
+    :order_view, :order_edit, :order_delete, :order_attach, :order_comment,
+    :shipment_view, :shipment_edit, :shipment_delete, :shipment_attach, :shipment_comment,
+    :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
+    :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
+    :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
+    :classification_view, :classification_edit
   
   belongs_to :company
   
@@ -83,109 +89,109 @@ class User < ActiveRecord::Base
   
   #permissions
   def view_orders?
-    return self.order_view? && master_setup.order_enabled && (master_company? || self.company.vendor?)
+    return self.order_view? && self.company.view_orders? 
   end
   def add_orders?
-    return self.order_edit? && master_setup.order_enabled && (master_company?)
+    return self.order_edit? && self.company.add_orders?
   end
   def edit_orders?
-    return self.order_edit? && master_setup.order_enabled && (master_company?)
+    return self.order_edit? && self.company.edit_orders?
   end
   def delete_orders?
-    return self.order_delete? && master_setup.order_enabled && master_company?
+    return self.order_delete? && self.company.delete_orders?
   end
   def attach_orders?
-    return self.order_attach? && master_setup.order_enabled && (master_company? || self.company.vendor?)
+    return self.order_attach? && self.company.attach_orders?
   end
   def comment_orders?
-    return self.order_comment? && master_setup.order_enabled && (master_company? || self.company.vendor?)
+    return self.order_comment? && self.company.comment_orders?
   end
   
   def view_products?
-    return self.product_view? && (master_company? || self.company.vendor? || self.company.carrier?)
+    return self.product_view? && self.company.view_products? 
   end
   def add_products?
-    return self.product_edit? && master_company? 
+    return self.product_edit? && self.company.add_products?
   end
   def edit_products?
-    return self.product_edit? && master_company?
+    return self.product_edit? && self.company.edit_products?
   end
   def create_products?
     return add_products?
   end
   def delete_products?
-    return self.product_delete? && master_company?
+    return self.product_delete? && self.company.delete_products?
   end
   def attach_products?
-    return self.product_attach? && (master_company? || self.company.vendor? || self.company.carrier?)
+    return self.product_attach? && self.company.attach_products?
   end
   def comment_products?
-    return self.product_comment? && (master_company? || self.company.vendor? || self.company.carrier?)
+    return self.product_comment? && self.company.comment_products?
   end
   
   def view_sales_orders?
-    return self.sales_order_view? && master_setup.sales_order_enabled && (master_company? || self.company.customer?)
+    return self.sales_order_view? && self.company.view_sales_orders? 
   end
   def add_sales_orders?
-    return self.sales_order_edit? && master_setup.sales_order_enabled && (master_company?)
+    return self.sales_order_edit? && self.company.add_sales_orders?
   end
   def edit_sales_orders?
-    return self.sales_order_edit? && master_setup.sales_order_enabled && (master_company?)
+    return self.sales_order_edit? && self.company.edit_sales_orders?
   end
   def delete_sales_orders?
-    return self.sales_order_delete? && master_setup.sales_order_enabled && master_company?
+    return self.sales_order_delete? && self.company.delete_sales_orders?
   end
   def attach_sales_orders?
-    return self.sales_order_attach? && master_setup.sales_order_enabled && (master_company? || self.company.customer?)
+    return self.sales_order_attach? && self.company.attach_sales_orders?
   end
   def comment_sales_orders?
-    return self.sales_order_comment? && master_setup.sales_order_enabled && (master_company? || self.company.customer?)
+    return self.sales_order_comment? && self.company.comment_sales_orders?
   end
 
   
   def view_shipments?
-    return self.shipment_view && company_view_edit_shipments? 
+    return self.shipment_view && self.company.view_shipments?
   end
   def add_shipments?
-    return self.shipment_edit? && company_view_edit_shipments?
+    return self.shipment_edit? && self.company.add_shipments?
   end
   def edit_shipments?
-    return self.shipment_edit? && company_view_edit_shipments?
+    return self.shipment_edit? && self.company.edit_shipments?
   end
   def delete_shipments?
-    return self.shipment_delete? && master_setup.shipment_enabled? && master_company?
+    return self.shipment_delete? && self.company.delete_shipments?
   end
   def comment_shipments?
-    return self.shipment_comment? && company_view_edit_shipments?
+    return self.shipment_comment? && self.company.comment_shipments?
   end
   def attach_shipments?
-    return self.shipment_attach? && company_view_edit_shipments?
+    return self.shipment_attach? && self.company.attach_shipments?
   end
   
   def view_deliveries?
-    return self.delivery_view? && company_view_deliveries?
+    return self.delivery_view? && self.company.view_deliveries?
   end
   def add_deliveries?
-    return self.delivery_edit? && company_edit_deliveries? 
+    return self.delivery_edit? && self.company.add_deliveries?
   end
   def edit_deliveries?
-    return self.delivery_edit? && company_edit_deliveries?
+    return self.delivery_edit? && self.company.edit_deliveries?
   end
   def delete_deliveries?
-    return self.delivery_delete? && master_setup.delivery_enabled && master_company?
+    return self.delivery_delete? && self.company.delete_deliveries?
   end
   def comment_deliveries?
-    return self.delivery_comment? && company_view_deliveries? 
+    return self.delivery_comment? && self.company.comment_deliveries?
   end
   def attach_deliveries?
-    return self.delivery_attach? && company_view_deliveries?
+    return self.delivery_attach? && self.company.attach_deliveries?
   end
 
   def view_classifications?
-    return self.classification_view? && master_setup.classification_enabled && (master_company? || self.company.vendor? || self.company.carrier?)
+    return self.classification_view? && self.company.view_classifications?
   end
   def add_classifications?
-    return self.classification_edit? && master_setup.classification_enabled && master_company?
+    return self.classification_edit? && self.company.add_classifications?
   end
   def edit_classifications?
     return add_classifications?
@@ -210,13 +216,4 @@ class User < ActiveRecord::Base
     MasterSetup.get 
   end
 
-  def company_view_deliveries?
-    company_edit_deliveries? || (self.company.customer? && master_setup.delivery_enabled)
-  end
-  def company_edit_deliveries?
-    master_setup.delivery_enabled && (self.company.master || self.company.carrier?)
-  end
-  def company_view_edit_shipments?
-    master_setup.shipment_enabled && (master_company? || self.company.vendor? || self.company.carrier?)
-  end
 end

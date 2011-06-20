@@ -35,6 +35,74 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     <% end %>
  <% end %>
   </table>
+
+  <% if current_user.admin? %>
+  <h2>Permissions</h2>
+  <% ms = MasterSetup.get%>
+  <table class='detail_table'>
+    <thead><tr><th width='20%'>Module</th><th width='15%'>View</th><th width='15%'>Add / Edit</th><th width='15%'>Delete</th><th width='15%'>Add Comments</th><th width='15%'>Add Attachments</th></tr></thead>
+    <tbody>
+      <% if ms.order_enabled? %>
+        <tr class='permission_row'>
+          <td class='hover'><%=CoreModule::ORDER.label%></td>
+          <td class='hover'><%= permission_box @user, 'view_orders?', :order_view, f %></td>
+          <td class='hover'><%= permission_box @user, 'edit_orders?', :order_edit, f %></td>
+          <td class='hover'><%= permission_box @user, 'delete_orders?', :order_delete, f %></td>
+          <td class='hover'><%= permission_box @user, 'comment_orders?', :order_comment, f %></td>
+          <td class='hover'><%= permission_box @user, 'attach_orders?', :order_attach, f %></td>
+        </tr>
+      <% end %>
+      <% if ms.shipment_enabled? %>
+        <tr class='permission_row'>
+          <td class='hover'><%=CoreModule::SHIPMENT.label%></td>
+          <td class='hover'><%= permission_box @user, 'view_shipments?', :shipment_view, f %></td>
+          <td class='hover'><%= permission_box @user, 'edit_shipments?', :shipment_edit, f %></td>
+          <td class='hover'><%= permission_box @user, 'delete_shipments?', :shipment_delete, f %></td>
+          <td class='hover'><%= permission_box @user, 'comment_shipments?', :shipment_comment, f %></td>
+          <td class='hover'><%= permission_box @user, 'attach_shipments?', :shipment_attach, f %></td>
+        </tr>
+      <% end %>
+      <% if ms.sales_order_enabled? %>
+        <tr class='permission_row'>
+          <td class='hover'><%=CoreModule::SALE.label%></td>
+          <td class='hover'><%= permission_box @user, 'view_sales_orders?', :sales_order_view, f %></td>
+          <td class='hover'><%= permission_box @user, 'edit_sales_orders?', :sales_order_edit, f %></td>
+          <td class='hover'><%= permission_box @user, 'delete_sales_orders?', :sales_order_delete, f %></td>
+          <td class='hover'><%= permission_box @user, 'comment_sales_orders?', :sales_order_comment, f %></td>
+          <td class='hover'><%= permission_box @user, 'attach_sales_orders?', :sales_order_attach, f %></td>
+        </tr>
+      <% end %>
+      <% if ms.delivery_enabled? %>
+        <tr class='permission_row'>
+          <td class='hover'><%=CoreModule::DELIVERY.label%></td>
+          <td class='hover'><%= permission_box @user, 'view_deliveries?', :delivery_view, f %></td>
+          <td class='hover'><%= permission_box @user, 'edit_deliveries?', :delivery_edit, f %></td>
+          <td class='hover'><%= permission_box @user, 'delete_deliveries?', :delivery_delete, f %></td>
+          <td class='hover'><%= permission_box @user, 'comment_deliveries?', :delivery_comment, f %></td>
+          <td class='hover'><%= permission_box @user, 'attach_deliveries?', :delivery_attach, f %></td>
+        </tr>
+      <% end %>
+        <tr class='permission_row'>
+          <td class='hover'><%=CoreModule::PRODUCT.label%></td>
+          <td class='hover'><%= permission_box @user, 'view_products?', :product_view, f %></td>
+          <td class='hover'><%= permission_box @user, 'edit_products?', :product_edit, f %></td>
+          <td class='hover'><%= permission_box @user, 'delete_products?', :product_delete, f %></td>
+          <td class='hover'><%= permission_box @user, 'comment_products?', :product_comment, f %></td>
+          <td class='hover'><%= permission_box @user, 'attach_products?', :product_attach, f %></td>
+        </tr>
+      <% if ms.classification_enabled? %>
+        <tr class='permission_row'>
+          <td class='hover'><%=CoreModule::CLASSIFICATION.label%></td>
+          <td class='hover'><%= permission_box @user, 'view_classifications?', :classification_view, f %></td>
+          <td class='hover'><%= permission_box @user, 'edit_classifications?', :classification_edit, f %></td>
+          <td class='hover'>n/a</td>
+          <td class='hover'>n/a</td>
+          <td class='hover'>n/a</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <% end %>
 <% end %>
 <br />
 <br />

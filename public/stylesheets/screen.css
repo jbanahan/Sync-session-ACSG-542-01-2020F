@@ -490,3 +490,9 @@ width:60%;
 #main_search_cont {
   overflow-x: auto;
 }
+.permission_row td {
+  border-bottom: 1px solid #d7d7d7;
+  padding: 2px;
+  vertical-align: middle;
+  text-align: center;
+}

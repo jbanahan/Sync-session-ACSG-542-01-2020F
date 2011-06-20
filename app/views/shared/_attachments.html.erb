@@ -4,7 +4,7 @@ $(function() {
   $("#sub_attach").button();
 });    
 <% end %>
-<% if attachable.can_edit?(current_user)%>
+<% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
 <% content_for :action_bar do %>
   <button id='btn_add_attachment'>Add Attachment</button>
 <%end%>
@@ -29,15 +29,13 @@ $(function() {
     <% if(c%2==1)%></tr><%end%>
   </table>
 </div>
-<%if attachable.can_edit?(current_user) %>
-    <div id='mod_attach'>
-    Attach File:<br />
-    <% att = attachable.attachments.build %>
-    <%=form_for att, :html=>{:multipart=>true,:id=>"frm_attach"} do |f|%>
+<div id='mod_attach'>
+  Attach File:<br />
+  <% att = attachable.attachments.build %>
+  <%=form_for att, :html=>{:multipart=>true,:id=>"frm_attach"} do |f|%>
     <%=f.hidden_field :attachable_id %>
     <%=f.hidden_field :attachable_type %>
     <%=f.collection_select :attachment_type, AttachmentType.all, :name, :name %>
     <%=f.file_field :attached %>
-    <% end %>
-  </div>
-<%end%>
+  <% end %>
+</div>

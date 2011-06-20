@@ -3,7 +3,7 @@ class CommentsController < ApplicationController
     cmt = nil
     if cmt = Comment.create(params[:comment])
       commentable = cmt.commentable
-      unless commentable.can_edit?(current_user)
+      unless commentable.can_comment?(current_user)
         add_flash :errors, "You do not have permission to add comments to this item."
       end
       cmt.user = current_user
