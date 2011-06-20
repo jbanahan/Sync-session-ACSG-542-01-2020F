@@ -36,12 +36,130 @@ class UserTest < ActiveSupport::TestCase
     assert u.full_name == "uname", "full_name should have substituted username when length of first+last was 0"
   end
 
+  def enable_all_personal_permissions u
+    p_hash = {}
+    [
+      'order_view','order_edit','order_delete','order_attach','order_comment',
+      'shipment_view','shipment_edit','shipment_delete','shipment_attach','shipment_comment',
+      'sales_order_view','sales_order_edit','sales_order_delete','sales_order_attach','sales_order_comment',
+      'delivery_view','delivery_edit','delivery_delete','delivery_attach','delivery_comment',
+      'product_view','product_edit','product_delete','product_attach','product_comment',
+      'classification_view','classification_edit'
+    ].each do |permission|
+      u[permission] = true
+    end
+  end
+
+  test "classification permissions" do
+    u = users(:masteruser)
+    enable_all_personal_permissions u
+    assert u.view_classifications?
+    assert u.edit_classifications?
+    u.classification_edit = false
+    assert !u.edit_classifications?
+    u.classification_view = false
+    assert !u.view_classifications?
+
+    [users(:vendoruser),users(:carrier4user),users(:customer6user)].each do |usr|
+      enable_all_personal_permissions usr
+      unless usr.company.customer?
+        assert usr.view_classifications?
+      end
+      assert !usr.edit_classifications?
+    end
+  end
+
+  test "product permissions" do 
+    u = users(:masteruser)
+    enable_all_personal_permissions u
+    assert u.view_products?
+    assert u.edit_products?
+    assert u.add_products?
+    assert u.delete_products?
+    assert u.comment_products?
+    assert u.attach_products?
+    u.product_attach = false
+    assert !u.attach_products?
+    u.product_comment = false
+    assert !u.comment_products?
+    u.product_edit = false
+    assert !u.add_products?
+    assert !u.edit_products?
+    u.product_view = false
+    assert !u.view_products?
+
+    u = users(:vendoruser)
+    enable_all_personal_permissions u
+    assert u.view_products?
+    assert !u.edit_products? && !u.add_products?
+    assert u.comment_products?
+    assert u.attach_products?
+
+    u = users(:carrier4user)
+    enable_all_personal_permissions u
+    assert u.view_products?
+    assert !u.edit_products? && !u.add_products?
+    assert u.comment_products?
+    assert u.attach_products?
+
+    u = users(:customer6user)
+    enable_all_personal_permissions u
+    assert !u.view_products? && !u.edit_products? && !u.add_products? && !u.comment_products? && !u.attach_products?
+  end
+  test "order permissions" do
+    u = users(:masteruser)
+    assert u.view_orders?
+    assert u.edit_orders?
+    assert u.add_orders?
+    assert u.delete_orders?
+    assert u.comment_orders?
+    assert u.attach_orders?
+    u.order_attach = false
+    assert !u.attach_orders?
+    u.order_comment = false
+    assert !u.comment_orders?
+    u.order_delete = false
+    assert !u.delete_orders?
+    u.order_edit = false
+    assert !u.edit_orders?
+    u.order_view = false
+    assert !u.view_orders?
+
+    u = users(:vendoruser)
+    enable_all_personal_permissions u
+    assert u.order_edit? #test personal permission
+    assert u.view_orders?
+    assert !u.edit_orders?
+    assert !u.delete_orders?
+    assert !u.add_orders?
+    assert u.attach_orders?
+    assert u.comment_orders?
+
+    u = users(:carrier4user)
+    enable_all_personal_permissions u
+    assert !u.view_orders? && !u.edit_orders? && !u.delete_orders? && !u.add_orders? && !u.attach_orders? && !u.comment_orders?
+
+    u = users(:customer6user)
+    enable_all_personal_permissions u
+    assert !u.view_orders? && !u.edit_orders? && !u.delete_orders? && !u.add_orders? && !u.attach_orders? && !u.comment_orders?
+  end
+
   test "sales order permissions" do
     u = users(:masteruser)
     assert u.company.master?, "Setup wrong, user one should be part of master company."
     assert u.view_sales_orders?, "Master user should be able to view sales orders."
     assert u.edit_sales_orders?, "Master user should be able to edit sales orders."
     assert u.add_sales_orders?, "Master user should be able to create sales orders."
+    assert u.comment_sales_orders?
+    assert u.attach_sales_orders?
+    u.sales_order_attach = false
+    assert !u.attach_sales_orders?
+    u.sales_order_comment = false
+    assert !u.comment_sales_orders?
+    u.sales_order_edit = false
+    assert !u.edit_sales_orders? && !u.add_sales_orders?
+    u.sales_order_delete = false
+    assert !u.delete_sales_orders?
     u = User.find(6)
     assert u.company.customer?, "Setup wrong, user six should be part of a customer company."
     assert u.view_sales_orders?, "Customer user should be able to view sales orders."
@@ -55,10 +173,28 @@ class UserTest < ActiveSupport::TestCase
   
   test "shipment permissions" do
     u = users(:masteruser)
+    u.shipment_view = true
+    u.shipment_edit = true
+    u.shipment_attach = true
+    u.shipment_comment = true
+    u.shipment_delete = true
     assert u.company.master?, "Setup wrong, user one should be part of master company."
     assert u.view_shipments?, "Master user should be able to view shipments."
     assert u.edit_shipments?, "Master user should be able to edit shipments."
     assert u.add_shipments?, "Master user should be able to create shipments."
+    assert u.comment_shipments?
+    assert u.attach_shipments?
+    assert u.delete_shipments?
+    u.shipment_view = false
+    assert !u.view_shipments?
+    u.shipment_edit = false
+    assert !u.edit_shipments?
+    u.shipment_attach = false
+    assert !u.attach_shipments?
+    u.shipment_comment = false
+    assert !u.comment_shipments?
+    u.shipment_delete = false
+    assert !u.delete_shipments?
     u = users(:vendoruser)
     assert u.company.vendor?, "Setup wrong, user 2 should be part of a vendor company."
     assert u.view_shipments?, "Vendor user should be able to view shipments."
@@ -82,6 +218,20 @@ class UserTest < ActiveSupport::TestCase
     assert u.view_deliveries?, "Master user should be able to view deliveries."
     assert u.edit_deliveries?, "Master user should be able to edit deliveries."
     assert u.add_deliveries?, "Master user should be able to add deliveries."
+    assert u.delete_deliveries?
+    assert u.attach_deliveries?
+    assert u.comment_deliveries?
+    u.delivery_view = false
+    assert !u.view_deliveries?
+    u.delivery_edit = false
+    assert !u.edit_deliveries?
+    assert !u.add_deliveries?
+    u.delivery_delete = false
+    assert !u.delete_deliveries?
+    u.delivery_comment = false
+    assert !u.comment_deliveries?
+    u.delivery_attach = false
+    assert !u.attach_deliveries?
     u = User.find(6)
     assert u.company.customer?, "Setup wrong, user six should be part of a customer company."
     assert u.view_deliveries?, "Customer user should be able to view deliveries."
@@ -98,20 +248,6 @@ class UserTest < ActiveSupport::TestCase
              u.add_deliveries?), "Non-customer, non-carrier, & non-master should NOT be able to create/edit/view deliveries."
   end
 
-  test "classification permissions" do
-    u = users(:masteruser)
-    assert u.view_classifications?, "Master user should be able to view classifications."
-    assert u.edit_classifications?, "Master user should be able to edit classifications."
-    assert u.add_classifications?,  "Master user should be able to add classifications."
-    u = users(:customer6user)
-    assert !(u.view_classifications? || u.edit_classifications? || u.add_classifications?), "Customer should not be able to view, edit, add classifications."
-    u = users(:vendoruser)
-    assert u.view_classifications?, "Vendor should be able to view classifications."
-    assert !(u.edit_classifications? || u.add_classifications?), "Vendor should not be able to edit or add classifications."
-    u = users(:carrier4user)
-    assert u.view_classifications?, "Carrier should be able to view classifications."
-    assert !(u.edit_classifications? || u.add_classifications?), "Carrier should not be able to edit or add classifications."
-  end
   
   test "milestone_plan permissions" do
     assert users(:adminuser).edit_milestone_plans?, "Admin user should be able to edit milestone plans."
@@ -127,6 +263,7 @@ class UserTest < ActiveSupport::TestCase
     assert !a_u.view_orders? && !a_u.edit_orders? && !a_u.add_orders?, "Shouldn't be able to work with orders if they're not enabled."
     m.shipment_enabled = false
     m.save!
+    a_u = users(:adminuser)
     assert !a_u.view_shipments? && !a_u.edit_shipments? && !a_u.add_shipments?, "Shouldn't be able to work with shipments if they're not enabled."
     m.sales_order_enabled = false
     m.save!
