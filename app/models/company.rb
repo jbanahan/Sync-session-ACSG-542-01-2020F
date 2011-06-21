@@ -157,9 +157,6 @@ class Company < ActiveRecord::Base
     return company_view_deliveries?
   end
 
-  def view_classifications?
-    return master_setup.classification_enabled && (self.master? || self.vendor? || self.carrier?)
-  end
   def add_classifications?
     return master_setup.classification_enabled && self.master?
   end

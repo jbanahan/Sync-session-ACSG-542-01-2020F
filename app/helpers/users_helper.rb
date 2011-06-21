@@ -4,7 +4,7 @@ module UsersHelper
     if user.company.send(permission_method_name)
       return form_obj.check_box permission_field
     else
-      return "n/a"
+      return content_tag(:span, "n/a", :class=>:light_text) 
     end
   end
 

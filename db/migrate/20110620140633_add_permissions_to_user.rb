@@ -30,7 +30,6 @@ class AddPermissionsToUser < ActiveRecord::Migration
     add_column :users, :product_comment, :boolean
     add_column :users, :product_attach, :boolean
 
-    add_column :users, :classification_view, :boolean
     add_column :users, :classification_edit, :boolean
   end
 
@@ -65,7 +64,6 @@ class AddPermissionsToUser < ActiveRecord::Migration
     remove_column :users, :product_comment
     remove_column :users, :product_attach
 
-    remove_column :users, :classification_view
     remove_column :users, :classification_edit
   end
 end

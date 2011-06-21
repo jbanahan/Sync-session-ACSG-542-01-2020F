@@ -20,7 +20,7 @@ class ActiveSupport::TestCase
       'sales_order_view','sales_order_edit','sales_order_delete','sales_order_attach','sales_order_comment',
       'delivery_view','delivery_edit','delivery_delete','delivery_attach','delivery_comment',
       'product_view','product_edit','product_delete','product_attach','product_comment',
-      'classification_view','classification_edit'
+      'classification_edit'
     ].each do |permission|
       user[permission] = true
     end

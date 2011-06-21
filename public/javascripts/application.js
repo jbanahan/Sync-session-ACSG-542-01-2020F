@@ -194,10 +194,9 @@ var OpenChain = (function() {
     });
   }
 
-  var pollingEnabled = true;
+  var pollingId;
   var pollForMessages = function() {
-    setInterval(function() {
-      if(pollingEnabled) {
+    return setInterval(function() {
         $.getJSON('/messages/message_count',function(data) {
           if(data>0) {
             $('#message_envelope').show();
@@ -205,7 +204,7 @@ var OpenChain = (function() {
             $('#message_envelope').hide();
           }
         });
-      }}, 30000
+      }, 30000
     );
   }
 
@@ -347,13 +346,13 @@ var OpenChain = (function() {
       $("#btn_add_attachment").click(function() {$("#mod_attach").dialog('open');});
     },
     disableMessagePolling: function() {
-      pollingEnabled = false;
+      clearInterval(pollingId) 
     },
     init: function() {
       initLinkButtons();
       initFormButtons();
       initRemoteValidate();
-      pollForMessages();
+      pollingId = pollForMessages();
     }
   };
 })();

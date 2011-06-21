@@ -17,9 +17,6 @@
   <script>
   <% if current_user %>
   $(function() {
-    <% if Rails.env=='development' %>
-      OpenChain.disableMessagePolling();
-    <% end %>
     <% if current_user.view_orders?%>
     $( "#btn_orders" )
       .button()
@@ -116,6 +113,9 @@
   });
   <% end %>
   <%= yield :javascript%>
+  <% if Rails.env=='development' %>
+    $(document).ready(OpenChain.disableMessagePolling);
+  <% end %>
   //Google Analytics
    var _gaq = _gaq || [];
    _gaq.push(['_setAccount', 'UA-21693406-2']);

@@ -93,11 +93,11 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
       <% if ms.classification_enabled? %>
         <tr class='permission_row'>
           <td class='hover'><%=CoreModule::CLASSIFICATION.label%></td>
-          <td class='hover'><%= permission_box @user, 'view_classifications?', :classification_view, f %></td>
+          <td class='hover'><span class='light_text'>n/a</span></td>
           <td class='hover'><%= permission_box @user, 'edit_classifications?', :classification_edit, f %></td>
-          <td class='hover'>n/a</td>
-          <td class='hover'>n/a</td>
-          <td class='hover'>n/a</td>
+          <td class='hover'><span class='light_text'>n/a</span></td>
+          <td class='hover'><span class='light_text'>n/a</span></td>
+          <td class='hover'><span class='light_text'>n/a</span></td>
         </tr>
       <% end %>
     </tbody>

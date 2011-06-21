@@ -40,18 +40,12 @@ class UserTest < ActiveSupport::TestCase
   test "classification permissions" do
     u = users(:masteruser)
     enable_all_personal_permissions u
-    assert u.view_classifications?
     assert u.edit_classifications?
     u.classification_edit = false
     assert !u.edit_classifications?
-    u.classification_view = false
-    assert !u.view_classifications?
 
     [users(:vendoruser),users(:carrier4user),users(:customer6user)].each do |usr|
       enable_all_personal_permissions usr
-      unless usr.company.customer?
-        assert usr.view_classifications?
-      end
       assert !usr.edit_classifications?
     end
   end
@@ -260,7 +254,7 @@ class UserTest < ActiveSupport::TestCase
     assert !a_u.view_deliveries? && !a_u.edit_deliveries? && !a_u.add_deliveries?, "Shouldn't be able to work with deliveries if they're not enabled."
     m.classification_enabled = false
     m.save!
-    assert !a_u.view_classifications? && !a_u.edit_classifications? && !a_u.add_classifications?, "Shouldn't be able to work with classifications if they're not enabled."
+    assert !a_u.edit_classifications? && !a_u.add_classifications?, "Shouldn't be able to work with classifications if they're not enabled."
   end
   
   test "debug_active?" do 

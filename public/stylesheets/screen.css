@@ -195,6 +195,9 @@ img {
     color: red;
     font-weight: bold;
 }
+.light_text {
+  color: #707070;
+}
 /* column container */
 .colmask {
     position: relative;	/* This fixes the IE7 overflow hidden bug */

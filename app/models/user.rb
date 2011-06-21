@@ -187,9 +187,6 @@ class User < ActiveRecord::Base
     return self.delivery_attach? && self.company.attach_deliveries?
   end
 
-  def view_classifications?
-    return self.classification_view? && self.company.view_classifications?
-  end
   def add_classifications?
     return self.classification_edit? && self.company.add_classifications?
   end
