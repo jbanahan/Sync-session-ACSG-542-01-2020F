@@ -73,7 +73,8 @@ class ApplicationController < ActionController::Base
           render_search_results
         rescue Exception => e
           logger.error $!, $!.backtrace
-          OpenMailer.send_custom_search_error(@current_user, e, params).deliver
+          error_params = {:current_search_id=>@current_search.id, :username=>current_user.username,:current_search_name => @current_search.name}.merge(params)
+          OpenMailer.send_custom_search_error(@current_user, e, error_params).deliver
           current_user.search_open = true
           current_user.save
           add_flash :errors, "There was an error running your search.  Only the setup area is being displayed."
