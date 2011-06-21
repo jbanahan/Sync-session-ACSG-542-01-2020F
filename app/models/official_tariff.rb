@@ -36,8 +36,8 @@ class OfficialTariff < ActiveRecord::Base
   end
 
   def meta_data
-    @meta_data = OfficialTariffMetaData.where(:country_id=>self.country_id,:hts_code=>self.hts_code).first if @meta_data.nil?
-    @meta_data = OfficialTariffMetaData.new(:country_id=>self.country_id,:hts_code=>self.hts_code) if @meta_data.nil?
+    @meta_data = OfficialTariffMetaDatum.where(:country_id=>self.country_id,:hts_code=>self.hts_code).first if @meta_data.nil?
+    @meta_data = OfficialTariffMetaDatum.new(:country_id=>self.country_id,:hts_code=>self.hts_code) if @meta_data.nil?
     @meta_data
   end
 
