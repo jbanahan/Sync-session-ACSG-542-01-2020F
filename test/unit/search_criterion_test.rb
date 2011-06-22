@@ -9,11 +9,35 @@ class SearchCriterionTest < ActiveSupport::TestCase
   test "one of" do
     o = Order.create!(:order_number=>"ordoneof",:vendor_id=>companies(:vendor).id)
     o2 = Order.create!(:order_number=>"od1d",:vendor_id=>companies(:vendor).id)
-    sc = SearchCriterion.create!(:model_field_uid=>:ord_ord_num,:operator=>"in",:value=>"#{o.order_number}\n#{o2.order_number}\nord3")
+    sc = SearchCriterion.create!(:model_field_uid=>:ord_ord_num,:operator=>"in",:value=>"#{o.order_number}\r\n#{o2.order_number}\nord3")
     found = sc.apply(Order)
     assert_equal 2, found.size
     assert found.include? o
     assert found.include? o2
+
+    assert sc.passes?(o.order_number)
+    assert sc.passes?(o2.order_number)
+    assert !sc.passes?("ddd")
+
+    cd = CustomDefinition.create!(:module_type=>"Order",:label=>"CDI",:data_type=>"integer")
+    cv = o.get_custom_value cd
+    cv.value = 10
+    cv.save!
+    cv = o2.get_custom_value cd
+    cv.value = 5
+    cv.save!
+
+    sc.model_field_uid = "*cf_#{cd.id}"
+    sc.value = "5\r\n10\r\n12"
+
+    found = sc.apply(Order)
+    assert_equal 2, found.size
+    assert found.include? o
+    assert found.include? o2
+
+    assert sc.passes?(5)
+    assert sc.passes?(10)
+    assert !sc.passes?(6)
   end
 
   test "before days ago" do

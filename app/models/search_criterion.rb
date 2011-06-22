@@ -46,6 +46,8 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.downcase.end_with?(self.value.downcase)
       elsif self.operator == "nq"
         return value_to_test.nil? || value_to_test.downcase!=self.value.downcase
+      elsif self.operator == "in"
+        return break_rows(self.value.downcase).include?(value_to_test.downcase)
       end
     elsif [:date, :datetime].include? d
       vt = d==:date && !value_to_test.nil? ? value_to_test.to_date : value_to_test
@@ -93,6 +95,8 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.to_s.end_with?(self.value.to_s)
       elsif self.operator == "nq"
         return value_to_test.nil? || value_to_test!=self_val
+      elsif self.operator == "in"
+        return break_rows(self.value.downcase).include?(value_to_test.to_s)
       end
     end
   end
@@ -156,7 +160,7 @@ class SearchCriterion < ActiveRecord::Base
     self_val = date_field? && !self.value.nil? && self.value.is_a?(Time)? self.value.to_date : self.value
     return ["t","true","yes","y"].include? self_val.downcase if boolean_field?
     
-    return self_val.to_i if integer_field?
+    return self_val.to_i if integer_field? && self.operator!="in"
     
     case self.operator
     when "co"
@@ -166,10 +170,14 @@ class SearchCriterion < ActiveRecord::Base
     when "ew"
       return "%#{self_val}"
     when "in"
-      return self_val.split("\n")
+      return break_rows(self_val)
     else
       return self_val
     end
+  end
+
+  def break_rows val
+    val.strip.split(/[\r\n,\r,\n]/)
   end
 
 end

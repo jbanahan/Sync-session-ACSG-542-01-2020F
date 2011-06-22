@@ -165,7 +165,7 @@ $(function() {
   });
 <% sc_counter = 0 %>
 <% @current_search.search_criterions.each do |sc| %>
-  addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=sc.value%>','<%=sc.id%>');
+  addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc.value%>','<%=sc.id%>');
   <% sc_counter += 1 %>
 <% end %>
 });
@@ -180,7 +180,7 @@ function addSearchCriterion(m,field,operator,value,id) {
     <%end%>
     h = h + "</select></td>";
     h = h + "<td><select id='search_setup_search_criterions_attributes_"+m+"_operator' name='search_setup[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
-    h = h + "</select></td><td><input id='search_setup_search_criterions_attributes_"+m+"_value' name='search_setup[search_criterions_attributes]["+m+"][value]' size='30' type='text' class='srch_crit_value' /></td>";
+    h = h + "</select></td><td><"+(operator=='in' ? "textarea rows='4' cols='30'" : "input size='30' type='text'")+" id='search_setup_search_criterions_attributes_"+m+"_value' name='search_setup[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></td>";
     h = h + "<td><input class='sp_destroy' id='search_setup_search_criterions_attributes_"+m+"__destroy' name='search_setup[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><%=image_tag("x.png", :title=>"Remove").gsub(/\"/,"'").html_safe%></a></td></tr>";
   $("#sp_table").append(h);
   var row = $("#sp_table").find("tr:last");
@@ -191,6 +191,7 @@ function addSearchCriterion(m,field,operator,value,id) {
   mf.change();
   if(operator) {
     row.find(".srch_crit_oper").val(operator);
+    row.find(".srch_crit_oper").change();
   }
   if(value) {
     row.find(".srch_crit_value").val(value);
