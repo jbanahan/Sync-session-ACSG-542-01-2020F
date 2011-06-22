@@ -24,7 +24,8 @@ class CriterionOperator
     new("ada","_fn_ >= DATE_ADD(CURDATE(), INTERVAL -? DAY)","After _ Days Ago"),
     new("adf","_fn_ >= DATE_ADD(CURDATE(), INTERVAL ? DAY)","After _ Days From Now"),
     new("bdf","_fn_ < DATE_ADD(CURDATE(), INTERVAL ? DAY)","Before _ Days From Now"),
-    new("nq","(_fn_ IS NULL OR NOT _fn_ = ?)","Not Equal To")
+    new("nq","(_fn_ IS NULL OR NOT _fn_ = ?)","Not Equal To"),
+    new("in","(_fn_ IN (?))","One Of")
   ]
   
   def self.find_by_key(key)

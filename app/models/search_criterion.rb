@@ -158,12 +158,15 @@ class SearchCriterion < ActiveRecord::Base
     
     return self_val.to_i if integer_field?
     
-    if self.operator=="co"
+    case self.operator
+    when "co"
       return "%#{self_val}%"
-    elsif self.operator=="sw"
+    when "sw"
       return "#{self_val}%"
-    elsif self.operator=="ew"
+    when "ew"
       return "%#{self_val}"
+    when "in"
+      return self_val.split("\n")
     else
       return self_val
     end

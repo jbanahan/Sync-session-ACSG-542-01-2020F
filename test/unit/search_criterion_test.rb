@@ -6,6 +6,16 @@ class SearchCriterionTest < ActiveSupport::TestCase
     ActiveRecord::Base.connection.execute("set time_zone = '+0:00'") #ensure we're working in UTC to make sure local system offsets don't screw with date math
   end
 
+  test "one of" do
+    o = Order.create!(:order_number=>"ordoneof",:vendor_id=>companies(:vendor).id)
+    o2 = Order.create!(:order_number=>"od1d",:vendor_id=>companies(:vendor).id)
+    sc = SearchCriterion.create!(:model_field_uid=>:ord_ord_num,:operator=>"in",:value=>"#{o.order_number}\n#{o2.order_number}\nord3")
+    found = sc.apply(Order)
+    assert_equal 2, found.size
+    assert found.include? o
+    assert found.include? o2
+  end
+
   test "before days ago" do
     o = Order.create!(:order_number=>"ordbda",:order_date=>4.days.ago,:vendor_id=>companies(:vendor).id)
     sc = SearchCriterion.create!(:model_field_uid =>:ord_ord_date,:operator=>"bda",:value=>3)
