@@ -1,9 +1,9 @@
-class OfficialTariffMetaDatasController < ApplicationController
+class OfficialTariffMetaDataController < ApplicationController
 
   def update
-    otmd = OfficialTariffMetaData.find params[:id]
+    otmd = OfficialTariffMetaDatum.find params[:id]
     action_secure(current_user.edit_classifications?,otmd,{:lock_check=>false,:verb=>"update",:module_name=>"HTS record"}) {
-      if otmd.update_attributes params[:official_tariff_meta_data]
+      if otmd.update_attributes params[:official_tariff_meta_datum]
         add_flash :notices, "Record saved successfully."
       else
         errors_to_flash otmd
@@ -13,7 +13,7 @@ class OfficialTariffMetaDatasController < ApplicationController
   end
 
   def create
-    otmd = OfficialTariffMetaData.new(params[:official_tariff_meta_data])
+    otmd = OfficialTariffMetaDatum.new(params[:official_tariff_meta_datum])
     action_secure(current_user.edit_classifications?,otmd,{:lock_check=>false,:verb=>"update",:module_name=>"HTS record"}) {
       if otmd.save
         add_flash :notices, "Record saved successfully."

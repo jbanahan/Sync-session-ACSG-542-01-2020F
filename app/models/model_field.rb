@@ -678,7 +678,7 @@ class ModelField
 
   reload 
 
-  def self.find_by_uid(uid)
+  def self.find_by_uid(uid,dont_retry=false)
     return ModelField.new(10000,:_blank,nil,nil,{
       :label_override => "[blank]",
       :import_lambda => lambda {|o,d| "Field ignored"},
@@ -689,6 +689,11 @@ class ModelField
     MODEL_FIELDS.values.each do |h|
       u = uid.to_sym
       return h[u] unless h[u].nil?
+    end
+    unless dont_retry
+      #reload and try again 
+      ModelField.reload true 
+      find_by_uid uid, true
     end
     return nil
   end

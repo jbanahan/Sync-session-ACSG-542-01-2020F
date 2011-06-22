@@ -90,6 +90,7 @@ class CustomDefinition < ActiveRecord::Base
     CACHE.delete "CustomDefinition:id:#{self.id}" unless self.id.nil?
     CACHE.delete "CustomDefinition:module_type:#{self.module_type}" unless self.module_type.nil?
     set_cache
+    ModelField.reload true
   end
   private
   def reset_model_field_constants

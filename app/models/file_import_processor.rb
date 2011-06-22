@@ -237,7 +237,7 @@ class FileImportProcessor
     end
     
     def before_merge(shell,database_object)
-      if shell.class==Product && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
+      if shell.class==Product && !shell.vendor_id.nil? && !database_object.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
           raise "An product's vendor cannot be changed via a file upload."
       end
     end

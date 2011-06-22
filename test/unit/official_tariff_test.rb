@@ -40,7 +40,7 @@ class OfficialTariffTest < ActiveSupport::TestCase
     #getting meta data before it's created should work like .build
     otmd = t.meta_data
     assert otmd.id.nil?
-    assert otmd.is_a?(OfficialTariffMetaData)
+    assert otmd.is_a?(OfficialTariffMetaDatum)
     assert otmd.hts_code==t.hts_code
     assert otmd.country_id==t.country_id
     otmd.notes = "abcdd"

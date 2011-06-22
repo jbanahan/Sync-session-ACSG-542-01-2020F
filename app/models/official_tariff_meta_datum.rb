@@ -1,4 +1,4 @@
-class OfficialTariffMetaData < ActiveRecord::Base
+class OfficialTariffMetaDatum < ActiveRecord::Base
   validates :country_id, :presence=>true
   validates :hts_code, :presence=>true
   set_table_name :official_tariff_meta_datas
