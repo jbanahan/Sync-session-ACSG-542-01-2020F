@@ -429,8 +429,10 @@ class ApplicationController < ActionController::Base
     end
 
     def current_user
-        return User.current unless User.current.nil?
-        User.current = current_user_session && current_user_session.record
+        return @current_user unless @current_user.nil?
+        @current_user = current_user_session && current_user_session.record
+        User.current = @current_user
+        @current_user
     end
 
     def require_user
