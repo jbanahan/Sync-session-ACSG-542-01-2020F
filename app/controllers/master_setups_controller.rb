@@ -18,4 +18,20 @@ class MasterSetupsController < ApplicationController
     }
   end
 
+  def show_system_message
+    admin_secure("Only administrators can work with the system message.") {
+    
+    } 
+  end
+
+  def set_system_message
+    admin_secure("Only administrators can set the system message.") {
+      m = MasterSetup.get
+      m.system_message = params[:system_message]
+      add_flash :notices, "System message updated successfully." if m.save
+      errors_to_flash m
+      redirect_to show_system_message_master_setups_path
+    }
+  end
+
 end

@@ -12,11 +12,13 @@ These are often files like a &quot;Quote Sheet&quot; or a &quot;Purchase Order&q
 <p>Setup product types that filter the fields shown on the product view and edit screen.</p>
 <h2><%= link_to 'Status Rules', status_rules_path %></h2>
 <p>Setup the rules that determine what status a particular item has.</p>
+<h2><%= link_to 'System Message', show_system_message_master_setups_path %></h2>
+<p>Set a message that will appear on the top of every page.</p>
 <%if current_user.sys_admin? %>
-<h2><%= link_to 'Active Users', active_users_path %></h2>
-<p>Show users who have viewed a page in the last 30 minutes.</p>
-<h2><%= link_to 'Master Setup', master_setups_path %></h2>
-<p>The master system settings (for system administrators who know what they're doing!)
+  <h2><%= link_to 'Active Users', active_users_path %></h2>
+  <p>Show users who have viewed a page in the last 30 minutes.</p>
+  <h2><%= link_to 'Master Setup', master_setups_path %></h2>
+  <p>The master system settings (for system administrators who know what they're doing!)
 <%end%>
 <h1>Field Settings</h1>
 <h2><%= link_to 'Hard Coded Field Names', field_labels_path%></h2>

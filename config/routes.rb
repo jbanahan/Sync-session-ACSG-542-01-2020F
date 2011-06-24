@@ -14,7 +14,12 @@ OpenChain::Application.routes.draw do
       post 'save'
     end
   end
-  resources :master_setups
+  resources :master_setups do
+    collection do
+      get 'show_system_message'
+      post 'set_system_message'
+    end
+  end
   resources :attachment_types
 
   resources :official_tariffs, :only=>[:index,:show] do
