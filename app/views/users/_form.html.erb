@@ -40,7 +40,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <h2>Permissions</h2>
   <% ms = MasterSetup.get%>
   <table class='detail_table'>
-    <thead><tr><th width='20%'>Module</th><th width='15%'>View</th><th width='15%'>Add / Edit</th><th width='15%'>Delete</th><th width='15%'>Add Comments</th><th width='15%'>Add Attachments</th></tr></thead>
+    <thead><tr><th width='20%'>Module</th><th width='15%'>View</th><th width='15%'>Add / Edit</th><th width='15%'>Delete</th><th width='15%'>Add Comments</th><th width='15%'>Manage Attachments</th></tr></thead>
     <tbody>
       <% if ms.order_enabled? %>
         <tr class='permission_row'>
