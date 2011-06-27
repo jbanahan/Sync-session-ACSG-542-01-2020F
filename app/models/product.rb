@@ -50,6 +50,14 @@ class Product < ActiveRecord::Base
     can_edit?(user) && user.edit_classifications?
   end
 
+  def can_comment? user
+    return user.comment_products? && self.can_view?(user)
+  end
+
+  def can_attach? user
+    return user.attach_products? && self.can_view?(user)
+  end
+
   def find_same
     found = self.unique_identifier.nil? ? [] : Product.where({:unique_identifier => self.unique_identifier.to_s})
     raise "Found multiple products with the same unique identifier #{self.unique_identifier}" if found.size > 1
