@@ -31,6 +31,14 @@ class Order < ActiveRecord::Base
 	def can_edit?(user)
 	  return user.edit_orders?
 	end
+
+  def can_comment? user
+    return user.comment_orders? && self.can_view?(user)
+  end
+
+  def can_attach? user
+    return user.attach_orders? && self.can_view?(user)
+  end
 	
 	def self.find_by_vendor(vendor)
     return Order.where({:vendor_id => vendor})

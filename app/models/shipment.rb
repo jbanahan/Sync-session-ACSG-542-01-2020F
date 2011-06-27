@@ -38,6 +38,14 @@ class Shipment < ActiveRecord::Base
 	  #same rules as view
 	  return can_view? user
 	end
+  
+  def can_comment?(user)
+    return user.comment_shipments? && self.can_view?
+  end
+
+  def can_attach?(user)
+    return user.attach_shipments? && self.can_view?
+  end
 	
 	def locked?
 	  (!self.vendor.nil? && self.vendor.locked?) ||

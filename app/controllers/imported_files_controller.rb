@@ -83,14 +83,9 @@ class ImportedFilesController < ApplicationController
   def process_file
     f = ImportedFile.find(params[:id])
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"process",:module_name=>"uploaded file"}) {
-      @imported_file = f
-      if @imported_file.process current_user
-        add_flash :notices, "File successfully processed."
-        redirect_to @imported_file 
-      else
-        errors_to_flash @imported_file
-        redirect_to request.referrer
-      end
+      f.process current_user, {:defer=>true}
+      add_flash :notices, "Your file is being processed.  You will receive a message when it has completed."
+      redirect_to root_path
     }
   end  
   

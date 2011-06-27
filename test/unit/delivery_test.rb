@@ -1,23 +1,24 @@
 require 'test_helper'
 
 class DeliveryTest < ActiveSupport::TestCase
+
   # Replace this with your real tests.
   test "can view" do
     s = Delivery.find(1) #customer 6, carrier 5
-    assert s.can_view?(User.find(5)), "Matching carrier failed."
-    assert !s.can_view?(User.find(4)), "Non-matching carrier failed."
-    assert s.can_view?(User.find(6)), "Matching vendor failed."
-    assert !s.can_view?(User.find(7)), "Non-matching vendor failed."
-    assert s.can_view?(User.find(1)), "Master user failed."
+    assert s.can_view?(enable_all_personal_permissions User.find(5)), "Matching carrier failed."
+    assert !s.can_view?(enable_all_personal_permissions User.find(4)), "Non-matching carrier failed."
+    assert s.can_view?(enable_all_personal_permissions User.find(6)), "Matching vendor failed."
+    assert !s.can_view?(enable_all_personal_permissions User.find(7)), "Non-matching vendor failed."
+    assert s.can_view?(enable_all_personal_permissions User.find(1)), "Master user failed."
   end
   
   test "can edit" do
     s = Delivery.find(1) #customer 6, carrier 5
-    assert s.can_edit?(User.find(5)), "Matching carrier failed."
-    assert !s.can_edit?(User.find(4)), "Non-matching carrier failed."
-    assert !s.can_edit?(User.find(6)), "Matching customer shouldn't be able to edit."
-    assert !s.can_edit?(User.find(7)), "Non-matching customer shouldn't be able to edit"
-    assert s.can_edit?(User.find(1)), "Master user failed."
+    assert s.can_edit?(enable_all_personal_permissions User.find(5)), "Matching carrier failed."
+    assert !s.can_edit?(enable_all_personal_permissions User.find(4)), "Non-matching carrier failed."
+    assert !s.can_edit?(enable_all_personal_permissions User.find(6)), "Matching customer shouldn't be able to edit."
+    assert !s.can_edit?(enable_all_personal_permissions User.find(7)), "Non-matching customer shouldn't be able to edit"
+    assert s.can_edit?(enable_all_personal_permissions User.find(1)), "Master user failed."
   end
   
   test "locked" do

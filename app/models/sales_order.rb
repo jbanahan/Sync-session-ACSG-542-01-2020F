@@ -30,6 +30,12 @@ class SalesOrder < ActiveRecord::Base
   def can_edit?(user)
     user.edit_sales_orders? && user.company.master 
   end
+  def can_comment?(user)
+    user.comment_sales_orders? && can_view?(user)
+  end
+  def can_attach?(user)
+    user.attach_sales_orders? && can_view?(user)
+  end
   def locked?
     !self.customer.nil? && self.customer.locked?
   end

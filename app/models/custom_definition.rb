@@ -15,7 +15,12 @@ class CustomDefinition < ActiveRecord::Base
   after_find :set_cache
 
   def self.cached_find id
-    o = CACHE.get "CustomDefinition:id:#{id}"
+    o = nil
+    begin
+      o = CACHE.get "CustomDefinition:id:#{id}"
+    rescue
+      OpenMailer.send_generic_exception $!, ["Exception rescued, you don't need to contact the user."]
+    end
     if o.nil?
       o = find id
     end
@@ -25,12 +30,17 @@ class CustomDefinition < ActiveRecord::Base
   #returns an Array of custom definitions for the module, sorted by rank then label
   #Note: Internally this calls .all on the result from the DB, so are getting back a real array, not an ActiveRecord result.
   def self.cached_find_by_module_type module_type
-    o = CACHE.get "CustomDefinition:module_type:#{module_type}"
-    if o.nil?
-      o = CustomDefinition.where(:module_type => module_type).order("rank ASC, label ASC").all
-      CACHE.set "CustomDefinition:module_type:#{module_type}", o
+    begin
+      o = CACHE.get "CustomDefinition:module_type:#{module_type}"
+      if o.nil?
+        o = CustomDefinition.where(:module_type => module_type).order("rank ASC, label ASC").all
+        CACHE.set "CustomDefinition:module_type:#{module_type}", o
+      end
+      return o.clone
+    rescue
+      OpenMailer.send_generic_exception $!, ["Exception rescued, you don't need to contact the user."]
+      return CustomDefinition.where(:module_type=>module_type).order("rank ASC, label ASC").all
     end
-    o.clone
   end
 
   def model_field_uid

@@ -37,6 +37,12 @@ class Delivery < ActiveRecord::Base
     (!self.carrier.nil? && self.carrier==user.company) ||
     (!self.customer.nil? && self.customer==user.company) )
   end
+  def can_comment?(user)
+    user.comment_deliveries? && can_view?(user)
+  end
+  def can_attach?(user)
+    user.attach_deliveries? && can_view?(user)
+  end
   def locked? 
     (!self.carrier.nil? && self.carrier.locked?) ||
     (!self.customer.nil? && self.customer.locked?)

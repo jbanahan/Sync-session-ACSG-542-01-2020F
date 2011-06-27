@@ -194,8 +194,38 @@ var OpenChain = (function() {
     });
   }
 
+  var pollingId;
+  var pollForMessages = function() {
+    return setInterval(function() {
+        $.getJSON('/messages/message_count',function(data) {
+          if(data>0) {
+            $('#message_envelope').show();
+          } else {
+            $('#message_envelope').hide();
+          }
+        });
+      }, 30000
+    );
+  }
+
   return {
     //public stuff
+    loadUserList: function(destinationSelect,selectedId) {
+      $.getJSON('/users.json',function(data) {
+        var i;
+        var h = "";
+        for(i=0;i<data.length;i++) {
+          var company = data[i].company;
+          var j;
+          for(j=0;j<company.users.length;j++) {
+            var u = company.users[j];
+            var selected = (u.id==selectedId ? "selected=\'true\' " : "");
+            h += "<option value='"+u.id+"' "+selected+">"+company.name+" - "+u.full_name+"</option>";
+          }
+        }
+        destinationSelect.html(h);
+      });
+    },
     hideByEntityType: function(table,entityTypeId) {
       table.find('.fld_lbl').each(function() {$(this).parents(".field_row:first").fadeIn('slow');});
       if(entityTypeId.length) {
@@ -315,10 +345,14 @@ var OpenChain = (function() {
       }});
       $("#btn_add_attachment").click(function() {$("#mod_attach").dialog('open');});
     },
+    disableMessagePolling: function() {
+      clearInterval(pollingId) 
+    },
     init: function() {
       initLinkButtons();
       initFormButtons();
       initRemoteValidate();
+      pollingId = pollForMessages();
     }
   };
 })();
@@ -549,14 +583,6 @@ function setSearchDatePicker(val_text,isDate) {
     } else {
         val_text.datepicker("destroy");
     }
-}
-
-function toggleMessageRead(id, onCallback) {
-    $.get('/messages/'+id+'/read', function(data) {
-        onCallback(id);
-        readCount = data;
-        $("#message_count").html((readCount!='0') ? "(<a href='/messages'>"+readCount+"</a>)" : "");
-    });
 }
 
 function addHiddenFormField(parentForm,name,value,id,style_class) {
@@ -859,22 +885,6 @@ function htsDataRow(label,data) {
   }
 }
 
-function loadUserList(destinationSelect,selectedId) {
-  $.getJSON('/users.json',function(data) {
-    var i;
-    var h = "";
-    for(i=0;i<data.length;i++) {
-      var company = data[i].company;
-      var j;
-      for(j=0;j<company.users.length;j++) {
-        var u = company.users[j];
-        var selected = (u.id==selectedId ? "selected=\'true\' " : "");
-        h += "<option value='"+u.id+"' "+selected+">"+company.name+" - "+u.first_name+" "+u.last_name+"</option>";
-      }
-    }
-    destinationSelect.html(h);
-  });
-}
 function next_action_to_form(form) {
   hidden_to_form(form,"c_next","true");
 }

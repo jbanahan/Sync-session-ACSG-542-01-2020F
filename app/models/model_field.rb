@@ -593,6 +593,16 @@ class ModelField
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
     add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
     
+    add_fields CoreModule::CLASSIFICATION, [
+      [1,:class_comp_cnt, :comp_count, "Component Count", {
+        :import_lambda => lambda {|obj,data| return "Component Count was ignored. (read only)"},
+        :export_lambda => lambda {|obj| obj.tariff_records.size },
+        :join_statement => "LEFT OUTER JOIN (SELECT count(id) as comp_count, classification_id FROM tariff_records group by classification_id) as class_comp_cnt ON class_comp_cnt.classification_id = classifications.id",
+        :join_alias => "class_comp_cnt",
+        :qualified_field_name => "ifnull(class_comp_cnt.comp_count,0)",
+        :data_type => :integer
+      }]
+    ]
     add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
 
     add_fields CoreModule::TARIFF, [

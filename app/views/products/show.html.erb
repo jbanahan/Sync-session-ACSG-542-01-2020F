@@ -58,7 +58,6 @@
 </div>
 </div>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
-<% if current_user.view_classifications? %>
 <div class='attachments_container section_insert'>
   <h2 class='section_insert_heading'>Classifications</h2>
   <% @product.classifications.sort_classification_rank.each do |c| %>
@@ -102,8 +101,6 @@
     </table>
     <% end %>
 </div>
-<% end %>
-
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 

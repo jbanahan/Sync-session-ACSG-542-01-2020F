@@ -20,7 +20,7 @@ class UsersController < ApplicationController
           else
             companies = [current_user.company,Company.where(:master=>true).first]
           end
-          render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name]}})
+          render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
         }
       end
     end

@@ -21,11 +21,11 @@ img {
   background-color: #F2BDBD;
 }
 .unread {
-    color: #061544;
+    color: white;
     font-weight:bolder;
 }
 .read {
-    color: #575757;
+    color: white;
     font-weight:lighter;
 }
 #search_setup_outer {
@@ -194,6 +194,13 @@ img {
 .errors_message {
     color: red;
     font-weight: bold;
+}
+.system_message {
+  color: #993300;
+  font-weight: bold;
+}
+.light_text {
+  color: #707070;
 }
 /* column container */
 .colmask {
@@ -489,4 +496,10 @@ width:60%;
 }
 #main_search_cont {
   overflow-x: auto;
+}
+.permission_row td {
+  border-bottom: 1px solid #d7d7d7;
+  padding: 2px;
+  vertical-align: middle;
+  text-align: center;
 }

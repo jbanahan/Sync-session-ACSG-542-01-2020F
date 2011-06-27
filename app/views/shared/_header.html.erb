@@ -4,8 +4,9 @@
   no_buttons = false
   no_buttons = true if @no_buttons
   no_buttons = true if !local_assigns[:not_buttons].nil?
+  ms = MasterSetup.get
 %>
-<!-- System UUID: <%=MasterSetup.get.uuid%> -->
+<!-- System UUID: <%=ms.uuid%> -->
 <head>
   <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
   <title>chain.io</title>
@@ -113,6 +114,9 @@
   });
   <% end %>
   <%= yield :javascript%>
+  <% if Rails.env=='development' %>
+    $(document).ready(OpenChain.disableMessagePolling);
+  <% end %>
   //Google Analytics
    var _gaq = _gaq || [];
    _gaq.push(['_setAccount', 'UA-21693406-2']);
@@ -135,8 +139,8 @@
   <% if current_user %>
     <% unless no_buttons %>
     <div id="corner_links">
-        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> 
-        <span id='message_count'><%if @message_count > 0 %>(<%=link_to @message_count.to_s, messages_path %>)<%end%></span> |
+        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> | 
+        <%= link_to 'Messages', messages_path %> <%=link_to(image_tag('envelope.png',{:alt=>'Messages',:style=>"vertical-align:bottom; display:#{@message_count==0 ? "none" : "inline"};",:id=>'message_envelope'}), messages_path)%> |
         <%= link_to 'Tools', tools_path%> | 
         <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
         <%= link_to 'Logout', logout_path %>
@@ -155,7 +159,7 @@
     <% end %>
   <% end %>
   <% unless no_buttons %>
-  <% if has_messages %>
+  <% if has_messages || !ms.system_message.blank?%>
     <div id='notice' class='notices col1 ui-corner-all' style='display:none;'>
 			<div id='notice_hide'><a href="#" id="lnk_hide_notice">Hide</a></div>
     <% [:errors,:notices].each do |type|
@@ -165,6 +169,9 @@
     <%    end
        end 
     %>
+    <% unless ms.system_message.blank? %>
+      <div class='system_message'><%=ms.system_message%></div>
+    <% end %>
     </div>
   <% end %>
   <% end %>

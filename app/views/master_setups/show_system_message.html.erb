@@ -1,0 +1,7 @@
+<%content_for :action_bar do %>
+<button class="form_to" form_id="frm_sysm">Save</button>
+<button class="btn_link" link_to="<%=settings_path%>">Cancel</button> 
+<%end%>
+<%=form_tag set_system_message_master_setups_path, :method=>:post, :id=>'frm_sysm' do %>
+  <%=text_area_tag :system_message, MasterSetup.get.system_message, :cols=>50, :rows=>10 %>
+<% end %>

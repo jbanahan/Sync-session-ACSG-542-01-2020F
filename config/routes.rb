@@ -14,7 +14,12 @@ OpenChain::Application.routes.draw do
       post 'save'
     end
   end
-  resources :master_setups
+  resources :master_setups do
+    collection do
+      get 'show_system_message'
+      post 'set_system_message'
+    end
+  end
   resources :attachment_types
 
   resources :official_tariffs, :only=>[:index,:show] do
@@ -60,6 +65,7 @@ OpenChain::Application.routes.draw do
     end
     collection do
       get 'read_all'
+      get 'message_count'
     end
   end
 

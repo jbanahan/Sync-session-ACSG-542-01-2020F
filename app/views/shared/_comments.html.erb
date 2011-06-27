@@ -29,8 +29,10 @@ function sendComment() {
   }
 }
 <% end %>
-<%content_for :action_bar do%>
-  <button id='btn_comment_add'>Add Comment</button>
+<% if (!commentable.respond_to?('can_comment?') || commentable.can_comment?(current_user)) %>
+  <%content_for :action_bar do%>
+    <button id='btn_comment_add'>Add Comment</button>
+  <% end %>
 <%end%>
 <% unless commentable.comments.empty? %>
 <div id='comments_container' class='section_insert'>

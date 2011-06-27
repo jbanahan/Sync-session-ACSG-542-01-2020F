@@ -2,25 +2,22 @@ class MasterSetup < ActiveRecord::Base
 
   CACHE_KEY = "MasterSetup:setup"
 
-  after_update :update_cache #only after update, when MasterSetup is created, the CACHE won't be set yet
+  after_update :update_cache 
+  after_find :update_cache
 
   def version
     Rails.root.join("config","version.txt").read
   end
 
   def self.get
-    m = nil
-    cache_initalized = true
-    begin
-      m = CACHE.get CACHE_KEY 
-      raise "MasterSetup cache returned a TrueClass!" if !m.nil? && m.is_a?(TrueClass)
-      return m unless m.nil? || !m.is_a?(MasterSetup)
-    rescue NameError
-      cache_initalized = false
+    m = CACHE.get CACHE_KEY 
+    raise "MasterSetup cache returned a #{m.class} !" if !m.nil? && !m.is_a?(MasterSetup)
+    if m.nil?
+      m = init_base_setup
+      CACHE.set CACHE_KEY, m 
+    elsif !m.is_a?(MasterSetup)
+      logger.info "#{Time.now}: MasterSetup returned a #{m.class}"
     end
-    m = init_base_setup
-    raise "MasterSetup init_base_setup returned a TrueClass!" if m.is_a?(TrueClass)
-    CACHE.set CACHE_KEY, m if cache_initalized
     m.is_a?(MasterSetup) ? m : MasterSetup.first
   end
 

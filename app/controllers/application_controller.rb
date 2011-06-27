@@ -73,11 +73,12 @@ class ApplicationController < ActionController::Base
           render_search_results
         rescue Exception => e
           logger.error $!, $!.backtrace
-          OpenMailer.send_custom_search_error(@current_user, e, params).deliver
-          add_flash :errors, "There was an error running your search.  We have replaced it with a different search so you can continue working."
-          @current_search.destroy
-          @current_search = get_search_to_run
-          render_search_results
+          error_params = {:current_search_id=>@current_search.id, :username=>current_user.username,:current_search_name => @current_search.name}.merge(params)
+          OpenMailer.send_custom_search_error(@current_user, e, error_params).deliver
+          current_user.search_open = true
+          current_user.save
+          add_flash :errors, "There was an error running your search.  Only the setup area is being displayed."
+          render_search_results true #render without the results
         end
       end    
     else
@@ -332,12 +333,12 @@ class ApplicationController < ActionController::Base
     sr.save
   end
 
-  def render_search_results
-      if @current_search.name == "Extreme latest" && current_user.sys_admin?
+  def render_search_results no_results = false
+      if !no_results && @current_search.name == "Extreme latest" && current_user.sys_admin?
         raise "Extreme latest goes boom!!"
       end
       
-      @results = @current_search.search
+      @results = no_results ? [] : @current_search.search
       respond_to do |format| 
         format.html {
           @current_search.touch

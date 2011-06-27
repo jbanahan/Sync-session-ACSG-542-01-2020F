@@ -91,6 +91,7 @@ var OCSearch = (function() {
         h += "<option value='sw'>Starts With</option>";
         h += "<option value='ew'>Ends With</option>";
         h += "<option value='co'>Contains</option>";
+        h += "<option value='in'>One Of</option>";
       }
       if(dt=="string" || dt=="text") {
         h += "<option value='eq'>Equals</option>";
@@ -98,6 +99,7 @@ var OCSearch = (function() {
         h += "<option value='sw'>Starts With</option>";
         h += "<option value='ew'>Ends With</option>";
         h += "<option value='co'>Contains</option>";
+        h += "<option value='in'>One Of</option>";
       }
       h += "<option value='null'>Is Empty</option>";
       h += "<option value='notnull'>Is Not Empty</option>";
@@ -124,6 +126,14 @@ var OCSearch = (function() {
     var bindValueValidations = function(tr) {
       var op = tr.find(".srch_crit_oper");
       var vField = tr.find(".srch_crit_value");
+      var opVal = op.val();
+      var tagName = vField[0].nodeName.toLowerCase();
+      if(opVal=='in' && tagName!='textarea') {
+        vField.replaceWith("<textarea class='srch_crit_value' name='"+vField.attr('name')+"' cols='30' rows='5' id='"+vField.attr('id')+"' />");
+        return;
+      } else if (opVal!='in' && tagName=='textarea') {
+        vField.replaceWith("<input type='text' size='30' id='"+vField.attr('id')+"' name='"+vField.attr('name')+"' class='srch_crit_value' />")
+      }
       vField.unbind(); //remove bindings
       vField.show();
       vField.val('');

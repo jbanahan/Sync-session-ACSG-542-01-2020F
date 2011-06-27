@@ -5,6 +5,32 @@ masteruser:
   company_id: 1
   username: masteruser
   email: MyString@bademail.com
+  order_view: true
+  order_edit: true
+  order_attach: true
+  order_delete: true
+  order_comment: true
+  product_view: true
+  product_edit: true
+  product_attach: true
+  product_delete: true
+  product_comment: true
+  shipment_view: true
+  shipment_edit: true
+  shipment_attach: true
+  shipment_delete: true
+  shipment_comment: true
+  classification_edit: true
+  sales_order_view: true
+  sales_order_edit: true
+  sales_order_attach: true
+  sales_order_delete: true
+  sales_order_comment: true
+  delivery_view: true
+  delivery_edit: true
+  delivery_attach: true
+  delivery_delete: true
+  delivery_comment: true
 
 adminuser:
   id: 8
@@ -16,6 +42,9 @@ vendoruser:
   first_name: Joe
   last_name: VendLast
   company_id: 2
+  shipment_view: true
+  shipment_edit: true
+  
 
 vendor2user:
   id: 3
@@ -24,6 +53,10 @@ vendor2user:
 carrier4user:
   id: 4
   company_id: 4
+  shipment_view: true
+  shipment_edit: true
+  delivery_view: true
+  delivery_edit: true
   
 carrier5user:
   id: 5
@@ -32,6 +65,8 @@ carrier5user:
 customer6user:
   id: 6
   company_id: 6
+  delivery_view: true
+  sales_order_view: true
 
 customer7user:
   id: 7

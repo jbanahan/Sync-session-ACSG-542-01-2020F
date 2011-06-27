@@ -12,7 +12,7 @@ class OrderTest < ActiveSupport::TestCase
   test "vendor can view" do
     ord = Order.find(1)
     assert ord.vendor_id = 2, "Setup check: Order 1's vendor should be company 2"
-    user = User.find(2)
+    user = enable_all_personal_permissions User.find(2)
     assert user.company_id = 2, "Setup check: User 2 should be for company 2"
     assert user.company.vendor, "Setup check: Company should be vendor"
     assert ord.can_view?(user), "Vendor user cannot view order for own company."
@@ -21,7 +21,7 @@ class OrderTest < ActiveSupport::TestCase
   test "vendor cannot view other vendor's order" do
     ord = Order.find(1)
     assert ord.vendor_id = 2, "Setup check: Order 1's vendor should be company 2"
-    user = User.find(3)
+    user = enable_all_personal_permissions User.find(3)
     assert user.company_id = 3, "Setup check: User 3 should be for company 3"
     assert user.company.vendor, "Setup check: Company should be vendor"
     assert !ord.can_view?(user), "Vendor user can view order for different company."
