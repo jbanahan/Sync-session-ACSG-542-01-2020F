@@ -10,6 +10,9 @@ module HoldsCustomDefinition
     self.custom_definition_id = mf.custom_id unless mf.nil?
   end
 
+  def model_field
+    find_model_field
+  end
   def find_model_field
     ModelField.find_by_uid self[:model_field_uid]
   end

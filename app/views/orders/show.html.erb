@@ -102,7 +102,7 @@
   	<td>
   	  <% if @order.can_edit?(current_user) && !@order.locked?%>
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
-  		  <% if line.custom_definitions.length > 0%>
+  		  <% if line.custom_definitions.length > 0 || !MilestoneForecast.joins(:piece_set).where("piece_sets.order_line_id=?",line.id).blank?%>
   		  &nbsp;|&nbsp;
   		  <a id='lnk_det_s_<%=line.id%>' href="javascript:$('#det_<%=line.id%>').fadeIn('slow');$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
   		  <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
@@ -111,7 +111,30 @@
   	</td>
 	</tr>
 	<tr style='display:none;' id='det_<%=line.id%>'>
-	  <td></td><td colspan='8' ><%= show_custom_fields line %></td>
+	  <td></td>
+      <td colspan='8' >
+        <%= show_custom_fields line %><br />
+        <table style='width:95%'>
+          <thead><tr><th colspan='2'>Milestone</th><th>Actual</th><th>Forecast</th><th>Plan</th></tr></thead>
+          <tbody>
+            <% line.piece_sets.each do |ps| %>
+              <% unless ps.milestone_forecasts.blank?%>
+                <tr>
+                  <td colspan='5'>
+                    <strong>Shipment: <%=ps.shipment_line.nil? ? "[none]" : link_to(ps.shipment_line.shipment.reference, ps.shipment_line.shipment) %> Line: <%=ps.shipment_line.nil? ? "[none]" : ps.shipment_line.line_number%></strong>
+                  </td>
+                </tr>
+                <%ps.milestone_forecasts.each do |fc| %>
+                  <tr class='hover'>
+                    <td>&nbsp;</td>
+                    <td><%=fc.milestone_definition.model_field.label%></td><td><%=fc.actual%></td><td><%=fc.forecast%></td><td><%=fc.planned%></td>
+                  </tr>
+                <%end%>
+              <%end%>
+            <% end %>
+          </tbody>
+        </table>
+      </td>
 	</tr>
 <%end %> 
 </table>
