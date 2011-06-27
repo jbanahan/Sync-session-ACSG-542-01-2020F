@@ -45,5 +45,6 @@ module OpenChain
       :email_prefix => "[chain.io Exception] ",
       :sender_address => %{"Exception Notifier" <bug@chain.io>},
       :exception_recipients => %w{bug@aspect9.com}
+    config.active_record.schema_format = :sql
   end
 end
