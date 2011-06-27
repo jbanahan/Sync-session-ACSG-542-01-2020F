@@ -4,6 +4,7 @@ class LinesController < ApplicationController
   def create_multiple
     o = find_parent
     action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>module_name}) {
+      line = nil
       begin
         o.transaction do
           params[:lines].each do |p|
@@ -14,7 +15,7 @@ class LinesController < ApplicationController
           o.create_snapshot if o.respond_to?('create_snapshot')
         end
       rescue OpenChain::ValidationLogicError
-        errors_to_flash line
+        errors_to_flash line unless line.nil?
       end
       redirect_to o
     }
