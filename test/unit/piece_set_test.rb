@@ -1,6 +1,30 @@
 require 'test_helper'
 
 class PieceSetTest < ActiveSupport::TestCase
+
+  test "build forecasts" do
+    o = Order.create!(:order_number=>'pstbf',:vendor_id=>companies(:vendor).id)
+    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first.id, :quantity=>10)
+    ps = o_line.piece_sets.create!(:quantity=>o_line.quantity)
+    cv = o.get_custom_value(CustomDefinition.create!(:label=>"cd1",:module_type=>"Order",:data_type=>:date))
+    cv.value=1.day.ago
+    cv.save!
+
+    mp = MilestonePlan.create!(:name=>"mp")
+    md = mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{cv.custom_definition_id}")
+
+    ps.build_forecasts #shouldn't do anything because milestone plan isn't set
+    assert ps.milestone_forecasts.blank?
+    ps.milestone_plan = mp
+    ps.build_forecasts
+
+    assert_equal 1, ps.milestone_forecasts.size
+    f = ps.milestone_forecasts.first
+    assert_equal md, f.milestone_definition
+    assert_equal 1.day.ago.to_date, f.planned
+    assert_equal 1.day.ago.to_date, f.forecast
+  end
+
   test "quantity greater than zero" do
     p = PieceSet.find(1)
     p.quantity = -1

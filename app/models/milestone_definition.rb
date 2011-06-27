@@ -4,6 +4,7 @@ class MilestoneDefinition < ActiveRecord::Base
   belongs_to :milestone_plan
   belongs_to :previous_milestone_definition, :class_name=>"MilestoneDefinition"
   has_many :next_milestone_definitions, :class_name=>"MilestoneDefinition", :foreign_key=>"previous_milestone_definition_id"
+  has_many :milestone_forecasts, :dependent=>:destroy
 
   def forecast piece_set
     av = MilestoneDefinition.last_actual piece_set, self

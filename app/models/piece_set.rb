@@ -6,10 +6,20 @@ class PieceSet < ActiveRecord::Base
     belongs_to :delivery_line
     belongs_to :milestone_plan
 
+    has_many :milestone_forecasts, :dependent=>:destroy
+
     validates :quantity, :presence => true
     validates_numericality_of :quantity, :greater_than_or_equal_to => 0
     validate :validate_product_integrity
   
+  def create_forecasts
+    self.build_forecasts
+    self.milestone_forecasts.each {|f| f.save}
+  end
+  def build_forecasts
+    self.milestone_plan.build_forecasts self unless self.milestone_plan.blank?
+  end
+
   private
   def validate_product_integrity
     #all linked objects must have the same product
