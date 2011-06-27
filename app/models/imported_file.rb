@@ -147,7 +147,11 @@ class ImportedFile < ActiveRecord::Base
         msg_sql = []
         messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
         sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")}"
-        ActiveRecord::Base.connection.execute sql
+        begin
+          ActiveRecord::Base.connection.execute sql
+        rescue
+          OpenMailer.send_generic_exception $!
+        end
       end
       object.create_snapshot(@fr.run_by) if object.respond_to?('create_snapshot')
     end
