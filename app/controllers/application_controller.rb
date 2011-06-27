@@ -457,7 +457,7 @@ class ApplicationController < ActionController::Base
 
 
     def store_location
-      session[:return_to] = request.request_uri
+      session[:return_to] = request.fullpath unless request.fullpath.match(/message_count/) 
     end
 
     def redirect_back_or_default(default)
