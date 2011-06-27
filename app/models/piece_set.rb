@@ -4,6 +4,7 @@ class PieceSet < ActiveRecord::Base
     belongs_to :sales_order_line
     belongs_to :shipment_line
     belongs_to :delivery_line
+    belongs_to :milestone_plan
 
     validates :quantity, :presence => true
     validates_numericality_of :quantity, :greater_than_or_equal_to => 0

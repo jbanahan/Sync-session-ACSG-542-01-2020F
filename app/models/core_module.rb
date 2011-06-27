@@ -9,7 +9,8 @@ class CoreModule
       :file_formatable, #can be used for file formats
       :default_search_columns, #array of columns to be included when a default search is created
       :show_field_prefix, #should the default option for this module's field's labels be to show the module name as a prefix (true =  "Classification - Country Name", false="Country Name")
-      :changed_at_parents_lambda, #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers
+      :changed_at_parents_lambda, #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers,
+      :object_from_piece_set_lambda, #lambda returning the appropriate object for this module based on the given PieceSet (or nil)
       :entity_json_lambda #lambda return hash suitable for conversion into json containing all model fields
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
@@ -45,7 +46,8 @@ class CoreModule
             end
           end
           master_hash
-        }
+        },
+        :object_from_piece_set_lambda => lambda {|ps| nil}
       }.
       merge(opts)
     @class_name = class_name
@@ -64,8 +66,13 @@ class CoreModule
     @show_field_prefix = o[:show_field_prefix]
     @entity_json_lambda = o[:entity_json_lambda]
     @unique_id_field_name = o[:unique_id_field_name]
+    @object_from_piece_set_lambda = o[:object_from_piece_set_lambda]
   end
   
+  #returns the appropriate object for the core module based on the piece set given
+  def object_from_piece_set piece_set
+    @object_from_piece_set_lambda.call piece_set
+  end
   #returns the model field that you can show to the user to uniquely identify the record
   def unique_id_field
     ModelField.find_by_uid @unique_id_field_name
@@ -149,37 +156,61 @@ class CoreModule
     CoreModule.recursive_module_level(0,self,core_module)      
   end
 
-  ORDER_LINE = new("OrderLine","Order Line",{:show_field_prefix=>true,:unique_id_field_name=>:ordln_line_number}) 
+  ORDER_LINE = new("OrderLine","Order Line",{
+    :show_field_prefix=>true,
+    :unique_id_field_name=>:ordln_line_number,
+    :object_from_piece_set_lambda => lambda {|ps| ps.order_line}
+  }) 
   ORDER = new("Order","Order",
     {:file_formatable=>true,
       :children => [ORDER_LINE],
       :child_lambdas => {ORDER_LINE => lambda {|parent| parent.order_lines}},
       :child_joins => {ORDER_LINE => "LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id"},
       :default_search_columns => [:ord_ord_num,:ord_ord_date,:ord_ven_name,:ordln_puid,:ordln_ordered_qty],
-      :unique_id_field_name => :ord_ord_num
+      :unique_id_field_name => :ord_ord_num,
+      :object_from_piece_set_lambda => lambda {|ps|
+        o_line = ps.order_line
+        o_line.nil? ? nil : o_line.order
+      }
     })
-  SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",{:show_field_prefix=>true,:unique_id_field_name=>:shpln_line_number})
+  SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",{
+    :show_field_prefix=>true,
+    :unique_id_field_name=>:shpln_line_number,
+    :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line}
+  })
   SHIPMENT = new("Shipment","Shipment",
     {:children=>[SHIPMENT_LINE],
     :child_lambdas => {SHIPMENT_LINE => lambda {|p| p.shipment_lines}},
     :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id"},
     :default_search_columns => [:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],
-    :unique_id_field_name=>:shp_ref})
-  SALE_LINE = new("SalesOrderLine","Sale Line",{:show_field_prefix=>true,:unique_id_field_name=>:soln_line_number})
+    :unique_id_field_name=>:shp_ref,
+    :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment}
+    })
+  SALE_LINE = new("SalesOrderLine","Sale Line",{
+    :show_field_prefix=>true,
+    :unique_id_field_name=>:soln_line_number,
+    :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line}
+    })
   SALE = new("SalesOrder","Sale",
     {:children => [SALE_LINE],
       :child_lambdas => {SALE_LINE => lambda {|parent| parent.sales_order_lines}},
       :child_joins => {SALE_LINE => "LEFT OUTER JOIN sales_order_lines ON sales_orders.id = sales_order_lines.sales_order_id"},
       :default_search_columns => [:sale_order_number,:sale_order_date,:sale_cust_name],
-      :unique_id_field_name=>:sale_order_number
+      :unique_id_field_name=>:sale_order_number,
+      :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line.nil? ? nil : ps.sales_order_line.sales_order}
     })
-  DELIVERY_LINE = new("DeliveryLine","Delivery Line",{:show_field_prefix=>true,:unique_id_field_name=>:delln_line_number})
+  DELIVERY_LINE = new("DeliveryLine","Delivery Line",{
+    :show_field_prefix=>true,
+    :unique_id_field_name=>:delln_line_number,
+    :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line}
+    })
   DELIVERY = new("Delivery","Delivery",
     {:children=>[DELIVERY_LINE],
     :child_lambdas => {DELIVERY_LINE => lambda {|p| p.delivery_lines}},
     :child_joins => {DELIVERY_LINE => "LEFT OUTER JOIN delivery_lines on deliveries.id = delivery_lines.delivery_id"},
     :default_search_columns => [:del_ref,:del_mode,:del_car_name,:del_cust_name],
-    :unique_id_field_name=>:del_ref
+    :unique_id_field_name=>:del_ref,
+    :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line.nil? ? nil : ps.delivery_line.delivery}
     })
   TARIFF = new("TariffRecord","Tariff",{
     :changed_at_parents_lambda=>lambda {|tr|

@@ -2,6 +2,16 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
   
+  test "export from piece set" do 
+    o = Order.create!(:order_number=>"expfromps",:vendor_id=>companies(:vendor).id)
+    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first,:quantity=>1)
+    ps = o_line.piece_sets.create!(:quantity=>1)
+
+    mf = ModelField.find_by_uid :ord_ord_num
+    assert_equal o.order_number, mf.export_from_piece_set(ps)
+    assert_nil ModelField.find_by_uid(:shp_ref).export_from_piece_set(ps)
+  end
+
   test "classification - component count" do
     p = Product.create!(:unique_identifier=>"pidcc")
     c_us = p.classifications.create!(:country_id => countries(:us).id)
