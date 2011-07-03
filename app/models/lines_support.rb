@@ -49,6 +49,24 @@ module LinesSupport
     end
   end
 
+  #returns the worst milestone state of all associated piece sets
+  def worst_milestone_state
+    return nil if self.piece_sets.blank?
+    highest_index = nil
+    self.piece_sets.each do |p|
+      ms = p.milestone_state
+      if ms
+        ms_index = MilestoneForecast::ORDERED_STATES.index(ms)
+        if highest_index.nil?
+          highest_index = ms_index
+        elsif !ms_index.nil? && ms_index > highest_index
+          highest_index = ms_index
+        end
+      end
+    end
+    highest_index.nil? ? nil : MilestoneForecast::ORDERED_STATES[highest_index]
+  end
+
   private
   def process_link field_symbol, id
     unless id.nil?

@@ -8,15 +8,17 @@ class MilestonePlan < ActiveRecord::Base
 
   def build_forecasts piece_set
     #preload existing forecasts to avoid N+1 calls
+    ms = piece_set.milestone_forecast_set
+    ms = piece_set.build_milestone_forecast_set if ms.nil?
     existing_forecasts = {}
-    piece_set.milestone_forecasts.each do |ef|
+    ms.milestone_forecasts.each do |ef|
       existing_forecasts[ef.milestone_definition_id] = ef
     end
     self.milestone_definitions.each do |md|
       f = existing_forecasts[md.id]
-      f = piece_set.milestone_forecasts.build(:milestone_definition=>md) if f.nil?
+      f = ms.milestone_forecasts.build(:milestone_definition=>md) if f.nil?
       f.forecast = md.forecast piece_set
-      f.planned = f.forecast if f.planned.nil?
+      f.planned = md.plan piece_set unless f.planned
     end
   end
 

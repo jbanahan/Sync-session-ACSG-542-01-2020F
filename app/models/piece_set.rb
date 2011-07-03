@@ -6,7 +6,7 @@ class PieceSet < ActiveRecord::Base
     belongs_to :delivery_line
     belongs_to :milestone_plan
 
-    has_many :milestone_forecasts, :dependent=>:destroy
+    has_one :milestone_forecast_set, :dependent=>:destroy, :autosave=>true
 
     validates :quantity, :presence => true
     validates_numericality_of :quantity, :greater_than_or_equal_to => 0
@@ -14,10 +14,16 @@ class PieceSet < ActiveRecord::Base
   
   def create_forecasts
     self.build_forecasts
-    self.milestone_forecasts.each {|f| f.save}
+    self.milestone_forecast_set.save! unless self.milestone_forecast_set.nil?
+    self.milestone_forecast_set
   end
   def build_forecasts
     self.milestone_plan.build_forecasts self unless self.milestone_plan.blank?
+    self.milestone_forecast_set
+  end
+
+  def milestone_state
+    self.milestone_forecast_set.blank? ? nil : self.milestone_forecast_set.state
   end
 
   private

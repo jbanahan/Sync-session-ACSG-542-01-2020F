@@ -2,7 +2,6 @@ require 'test_helper'
 
 class ShipmentTest < ActiveSupport::TestCase
  
-  
   test "can view" do
     s = Shipment.find(2) #carrier 5, vendor 3
     assert s.can_view?(enable_all_personal_permissions User.find(5)), "Matching carrier failed."

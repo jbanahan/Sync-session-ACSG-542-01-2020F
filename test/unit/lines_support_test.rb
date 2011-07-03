@@ -2,6 +2,20 @@ require 'test_helper'
 
 class LinesSupportTest < ActiveSupport::TestCase
 
+  test "worst milestone state" do
+    oline = OrderLine.new
+    assert_nil oline.worst_milestone_state
+
+    ps_nil = oline.piece_sets.build
+    ps_nil.stubs(:milestone_state).returns(nil)
+    assert_nil oline.worst_milestone_state
+    
+    MilestoneForecast::ORDERED_STATES.each do |s|
+      oline.piece_sets.build.stubs(:milestone_state).returns(s)
+      assert_equal s, oline.worst_milestone_state
+    end
+  end
+
   test "linked piece sets" do
     original_qty = 50
     sline = Shipment.first.shipment_lines.create!(:line_number=>1000,:quantity=>original_qty,:product_id=>Shipment.first.vendor.vendor_products.first)

@@ -1,7 +1,7 @@
 require 'test_helper'
 
 class OrderTest < ActiveSupport::TestCase
-  
+
   test "master company user can view" do
     ord = Order.find(1)
     user = User.find(1)

@@ -9,6 +9,36 @@ class MilestoneDefinitionTest < ActiveSupport::TestCase
     @order_md = @mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{@order_date.id}")
     @shipment_md = @mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{@ship_date.id}",:previous_milestone_definition_id=>@order_md.id,:days_after_previous=>30,:final_milestone=>true)
   end
+  
+  test "plan" do
+    p = Product.where(:vendor_id=>companies(:vendor).id).first
+    ord = Order.create!(:order_number=>"ordnum",:vendor_id=>companies(:vendor).id)
+    o_line = ord.order_lines.create!(:product_id=>p,:quantity=>100,:line_number=>1)
+    ps = o_line.piece_sets.create!(:quantity=>100)
+
+    assert_nil @order_md.plan(ps)
+    assert_nil @shipment_md.plan(ps)
+
+    order_cv = ord.get_custom_value @order_date
+    order_cv.value = Time.now
+    order_cv.save!
+    order_cv.reload #to ensure correct data type for equality match
+
+    assert_equal 0.days.ago.to_date, @order_md.plan(ps)
+    assert_equal 30.days.from_now.to_date, @shipment_md.plan(ps)
+
+    shp = Shipment.create!(:reference=>"shprf",:vendor_id=>ord.vendor_id)
+    s_line = shp.shipment_lines.create!(:product_id=>p,:quantity=>100,:line_number=>1)
+    ps.update_attributes!(:shipment_line_id=>s_line.id)
+    shp_cv = shp.get_custom_value @ship_date
+    shp_cv.value = 2.days.from_now.to_date
+    shp_cv.save!
+    shp_cv.reload
+
+    #putting an actual value in the second milestone date shouldn't change the plan that's generated
+    assert_equal 0.days.ago.to_date, @order_md.plan(ps)
+    assert_equal 30.days.from_now.to_date, @shipment_md.plan(ps)
+  end
 
   test "relationship traversal" do
 =begin

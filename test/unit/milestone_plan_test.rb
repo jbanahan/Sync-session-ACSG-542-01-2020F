@@ -10,6 +10,41 @@ class MilestonePlanTest < ActiveSupport::TestCase
     @shipment_md = @mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{@ship_date.id}",:previous_milestone_definition_id=>@order_md.id,:days_after_previous=>30,:final_milestone=>true)
   end
 
+  test "build plan after events happened" do
+    o = Order.create!(:order_number=>"mptbf",:vendor_id=>companies(:vendor).id)
+    o_line = o.order_lines.create!(:line_number=>1, :product_id=>Product.where(:vendor_id=>o.vendor_id).first.id, :quantity=>50)
+    cv = o.get_custom_value @order_date
+    cv.value = 2.days.ago.to_date
+    cv.save!
+
+    s = Shipment.create!(:reference=>"shrp",:vendor_id=>companies(:vendor).id)
+    s_line = s.shipment_lines.create(:line_number=>1, :product_id=>o_line.product_id, :quantity=>o_line.quantity)
+    cv = s.get_custom_value @ship_date
+    cv.value = 1.day.ago.to_date
+    cv.save!
+
+    ps = PieceSet.create!(:order_line_id=>o_line.id,:shipment_line_id=>s_line.id,:quantity=>o_line.quantity)
+
+    @mp.build_forecasts ps
+    expected_defs = [@order_md,@shipment_md]
+    forecasts = ps.milestone_forecast_set.milestone_forecasts
+    forecasts.each {|f| expected_defs.delete f.milestone_definition}
+    assert expected_defs.empty?
+
+    forecasts.each do |f|
+      case f.milestone_definition
+      when @order_md
+        assert_equal 2.days.ago.to_date, f.planned
+        assert_equal 2.days.ago.to_date, f.forecast
+      when @shipment_md
+        assert_equal 28.days.from_now.to_date, f.planned
+        assert_equal 1.days.ago.to_date, f.forecast
+      else
+        flunk "Unexpected milestone definition found: #{f.milestone_definition}"
+      end
+    end
+  end
+
   test "build forecast" do
     o = Order.create!(:order_number=>"mptbf",:vendor_id=>companies(:vendor).id)
     o_line = o.order_lines.create!(:line_number=>1, :product_id=>Product.where(:vendor_id=>o.vendor_id).first.id, :quantity=>50)
@@ -19,13 +54,15 @@ class MilestonePlanTest < ActiveSupport::TestCase
     cv.save!
 
     @mp.build_forecasts ps
-
-    assert_equal 2, ps.milestone_forecasts.size
+    
+    assert_not_nil ps.milestone_forecast_set
+    forecasts = ps.milestone_forecast_set.milestone_forecasts
+    assert_equal 2, forecasts.size
     expected_defs = [@order_md,@shipment_md]
-    ps.milestone_forecasts.each {|f| expected_defs.delete f.milestone_definition}
+    forecasts.each {|f| expected_defs.delete f.milestone_definition}
     assert_equal 0, expected_defs.size
 
-    ps.milestone_forecasts.each do |f|
+    forecasts.each do |f|
       case f.milestone_definition
       when @order_md
         assert_equal 2.days.ago.to_date, f.planned
@@ -44,8 +81,9 @@ class MilestonePlanTest < ActiveSupport::TestCase
 
     @mp.build_forecasts ps
 
-    assert_equal 2, ps.milestone_forecasts.size
-    ps.milestone_forecasts.each do |f|
+    forecasts = ps.milestone_forecast_set.milestone_forecasts
+    assert_equal 2, forecasts.size
+    forecasts.each do |f|
       case f.milestone_definition
       when @order_md
         assert_equal 2.days.ago.to_date, f.planned

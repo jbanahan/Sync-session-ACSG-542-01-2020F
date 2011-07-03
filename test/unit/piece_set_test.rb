@@ -14,12 +14,12 @@ class PieceSetTest < ActiveSupport::TestCase
     md = mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{cv.custom_definition_id}")
 
     ps.build_forecasts #shouldn't do anything because milestone plan isn't set
-    assert ps.milestone_forecasts.blank?
+    assert ps.milestone_forecast_set.blank?
     ps.milestone_plan = mp
     ps.build_forecasts
 
-    assert_equal 1, ps.milestone_forecasts.size
-    f = ps.milestone_forecasts.first
+    assert_equal 1, ps.milestone_forecast_set.milestone_forecasts.size
+    f = ps.milestone_forecast_set.milestone_forecasts.first
     assert_equal md, f.milestone_definition
     assert_equal 1.day.ago.to_date, f.planned
     assert_equal 1.day.ago.to_date, f.forecast

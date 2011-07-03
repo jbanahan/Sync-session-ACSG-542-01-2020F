@@ -38,7 +38,7 @@ CREATE TABLE `attachments` (
   `attachment_type` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_attachments_on_attachable_id_and_attachable_type` (`attachable_id`,`attachable_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `change_record_messages` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -128,7 +128,7 @@ CREATE TABLE `custom_definitions` (
   `default_value` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_custom_definitions_on_module_type` (`module_type`)
-) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `custom_values` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -147,7 +147,7 @@ CREATE TABLE `custom_values` (
   UNIQUE KEY `cv_unique_composite` (`customizable_id`,`customizable_type`,`custom_definition_id`),
   KEY `index_custom_values_on_customizable_id_and_customizable_type` (`customizable_id`,`customizable_type`),
   KEY `index_custom_values_on_custom_definition_id` (`custom_definition_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1166 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1173 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `dashboard_widgets` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -216,7 +216,7 @@ CREATE TABLE `entity_snapshots` (
   PRIMARY KEY (`id`),
   KEY `index_entity_snapshots_on_recordable_id_and_recordable_type` (`recordable_id`,`recordable_type`),
   KEY `index_entity_snapshots_on_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1166 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1179 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `entity_type_fields` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -245,7 +245,7 @@ CREATE TABLE `field_labels` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_field_labels_on_model_field_uid` (`model_field_uid`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `field_validator_rules` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -303,7 +303,7 @@ CREATE TABLE `histories` (
   `sales_order_line_id` int(11) DEFAULT NULL,
   `delivery_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=598 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=601 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `history_details` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -403,19 +403,32 @@ CREATE TABLE `milestone_definitions` (
   `custom_definition_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_milestone_definitions_on_milestone_plan_id` (`milestone_plan_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+
+CREATE TABLE `milestone_forecast_sets` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `piece_set_id` int(11) DEFAULT NULL,
+  `state` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `one_per_piece_set` (`piece_set_id`),
+  KEY `mfs_state` (`state`)
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `milestone_forecasts` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `milestone_definition_id` int(11) DEFAULT NULL,
-  `piece_set_id` int(11) DEFAULT NULL,
+  `milestone_forecast_set_id` int(11) DEFAULT NULL,
   `planned` date DEFAULT NULL,
   `forecast` date DEFAULT NULL,
+  `state` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_forecasts` (`piece_set_id`,`milestone_definition_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+  UNIQUE KEY `unique_forecasts` (`milestone_forecast_set_id`,`milestone_definition_id`),
+  KEY `mf_state` (`state`)
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `milestone_plans` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -424,7 +437,7 @@ CREATE TABLE `milestone_plans` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `official_quotas` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -491,7 +504,7 @@ CREATE TABLE `order_lines` (
   `quantity` decimal(13,4) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_order_lines_on_order_id` (`order_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `orders` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -518,7 +531,7 @@ CREATE TABLE `piece_sets` (
   `delivery_line_id` int(11) DEFAULT NULL,
   `milestone_plan_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `products` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -588,7 +601,7 @@ CREATE TABLE `search_columns` (
   `imported_file_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_search_columns_on_search_setup_id` (`search_setup_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1379 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1400 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `search_criterions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -602,7 +615,7 @@ CREATE TABLE `search_criterions` (
   `custom_definition_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_search_criterions_on_search_setup_id` (`search_setup_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=29 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `search_runs` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -671,7 +684,7 @@ CREATE TABLE `shipment_lines` (
   `quantity` decimal(13,4) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_shipment_lines_on_shipment_id` (`shipment_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `shipments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,

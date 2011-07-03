@@ -321,12 +321,6 @@ img {
   display: none;
 }
 
-/* feedback box */
-#mod_feedback textarea {
-  font-size: 90%;
-  width: 95%;
-}
-
 /* Edit tables */
 .label_cell {
 	font-weight: bold;
@@ -419,6 +413,26 @@ width:60%;
 #bulk_message {
   margin: .5em 3em .5em 3em;
   text-align: center;
+}
+.milestone_subhead td {
+  padding: 3px;
+  text-align: center;
+  font-weight: bold;
+}
+.ms_pending {
+  background-color: green;
+}
+.ms_overdue {
+  background-color: red;
+}
+.ms_missed {
+  background-color: #FF704D;
+}
+.ms_achieved {
+  background-color: #66A366;
+}
+.ms_trouble {
+  background-color: yellow;
 }
 
 /* SCREEN SPECIFIC */
