@@ -26,6 +26,10 @@ class MilestoneForecast < ActiveRecord::Base
     self.milestone_definition.actual self.milestone_forecast_set.piece_set
   end
 
+  def label
+    return self.milestone_definition.model_field.label if self.milestone_definition
+  end
+
   def overdue?
     return false unless actual.nil? && !planned.nil?
     return planned < Time.now.utc.to_date

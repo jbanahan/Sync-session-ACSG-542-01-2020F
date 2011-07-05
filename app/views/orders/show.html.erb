@@ -90,7 +90,7 @@
 	
 		<% @order.order_lines.each do |line| %>
     <% line_state = line.worst_milestone_state %>
-	<tr class='hover'>
+	<tr class='hover ord_det_row'>
 	  <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
 	  <td><b><%= link_to line.product.name, product_path(line.product) %></b></td>
   	<td><%= line.quantity %></td>
@@ -104,7 +104,7 @@
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
   		  <% if line.custom_definitions.length > 0 || !MilestoneForecastSet.joins(:piece_set).where("piece_sets.order_line_id=?",line.id).blank?%>
   		  &nbsp;|&nbsp;
-  		  <a id='lnk_det_s_<%=line.id%>' href="javascript:$('#det_<%=line.id%>').fadeIn('slow');$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
+  		  <a id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
   		  <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
   		  <% end %>
   		<% end %> 
@@ -114,26 +114,7 @@
 	  <td></td>
       <td colspan='8' >
         <%= show_custom_fields line %><br />
-        <table style='width:95%'>
-          <thead><tr><th colspan='2'>Milestone</th><th>Actual</th><th>Forecast</th><th>Plan</th></tr></thead>
-          <tbody>
-            <% line.piece_sets.each do |ps| %>
-              <% unless ps.milestone_forecast_set.blank?%>
-                <tr class='milestone_subhead <%="ms_#{ps.milestone_forecast_set.state.downcase}"%>'>
-                  <td colspan='5'>
-                    Plan: <%=ps.milestone_plan.name%> - Shipment: <%=ps.shipment_line.nil? ? "[none]" : link_to(ps.shipment_line.shipment.reference, ps.shipment_line.shipment) %>
-                  </td>
-                </tr>
-                <%ps.milestone_forecast_set.milestone_forecasts.each do |fc| %>
-                  <tr class='hover'>
-                    <td>&nbsp;</td>
-                    <td><%=fc.milestone_definition.model_field.label%></td><td class='<%="ms_#{fc.state.downcase}"%>'><%=fc.actual%></td><td><%=fc.forecast%></td><td><%=fc.planned%></td>
-                  </tr>
-                <%end%>
-              <%end%>
-            <% end %>
-          </tbody>
-        </table>
+        <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
       </td>
 	</tr>
 <%end %> 

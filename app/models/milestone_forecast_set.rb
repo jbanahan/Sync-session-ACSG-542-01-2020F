@@ -7,6 +7,16 @@ class MilestoneForecastSet < ActiveRecord::Base
 
   before_save :set_state
 
+  def as_json(opts={}) 
+    super(:include=>{:milestone_forecasts=>{:methods=>[:label,:actual]},:piece_set=>{:only=>:id,:methods=>[:identifiers]}})
+  end
+
+  def find_forecast_by_definition milestone_definition
+    #searches in memory so it can be used with the build methods, not just create
+    milestone_forecasts.each {|f| return f if f.milestone_definition==milestone_definition}
+    nil
+  end
+
   def set_state
     last = find_last_milestone_forecast
     if last
@@ -15,12 +25,6 @@ class MilestoneForecastSet < ActiveRecord::Base
     else
       self.state = "Unplanned"
     end
-  end
-
-  def find_forecast_by_definition milestone_definition
-    #searches in memory so it can be used with the build methods, not just create
-    milestone_forecasts.each {|f| return f if f.milestone_definition==milestone_definition}
-    nil
   end
 
   private

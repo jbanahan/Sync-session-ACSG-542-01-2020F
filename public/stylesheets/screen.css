@@ -414,6 +414,22 @@ width:60%;
   margin: .5em 3em .5em 3em;
   text-align: center;
 }
+/* Milestones */
+.milestones_cont {
+  margin-bottom: 1em;
+}
+.ms_col_1 {
+  width: 5%;
+}
+.ms_col_2 {
+  width: 35%;
+}
+.ms_col_date {
+  width: 20%;
+}
+.ms_tbl {
+  width: 100%;
+}
 .milestone_subhead td {
   padding: 3px;
   text-align: center;
@@ -436,6 +452,9 @@ width:60%;
 }
 
 /* SCREEN SPECIFIC */
+.ord_det_row td{
+  border-top: 1px solid #d7d7d7;
+}
 .classification_box {
   width: 95%;
   margin-bottom: 10px;

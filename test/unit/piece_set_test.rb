@@ -2,6 +2,31 @@ require 'test_helper'
 
 class PieceSetTest < ActiveSupport::TestCase
 
+  test "identifiers" do
+    ven_id = companies(:vendor).id
+    o = Order.create!(:order_number=>'ordnum123',:vendor_id=>ven_id)
+    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first.id, :quantity=>10)
+    s = Shipment.create!(:reference=>"sref123",:vendor_id=>ven_id)
+    s_line = s.shipment_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>10)
+    so = SalesOrder.create!(:order_number=>"sonum123",:customer_id=>companies(:customer).id)
+    so_line = so.sales_order_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>10)
+    d = Delivery.create!(:reference=>"dref123",:customer_id=>so.customer_id)
+    d_line = d.delivery_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>10)
+
+    ps = PieceSet.create!(:order_line_id=>o_line.id,:shipment_line_id=>s_line.id,:sales_order_line_id=>so_line.id,:delivery_line_id=>d_line.id,:quantity=>10)
+    
+    r = ps.identifiers
+
+    assert_equal ModelField.find_by_uid(:ord_ord_num).label, r[:order][:label]
+    assert_equal o.order_number, r[:order][:value]
+    assert_equal ModelField.find_by_uid(:shp_ref).label, r[:shipment][:label]
+    assert_equal s.reference, r[:shipment][:value]
+    assert_equal ModelField.find_by_uid(:sale_order_number).label, r[:sales_order][:label]
+    assert_equal so.order_number, r[:sales_order][:value]
+    assert_equal ModelField.find_by_uid(:del_ref).label, r[:delivery][:label]
+    assert_equal d.reference, r[:delivery][:value]
+  end
+
   test "build forecasts" do
     o = Order.create!(:order_number=>'pstbf',:vendor_id=>companies(:vendor).id)
     o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first.id, :quantity=>10)

@@ -208,8 +208,56 @@ var OpenChain = (function() {
     );
   }
 
+  var renderMilestones = function(parentContainer,milestoneSetJson,headingModule,isAdmin) { 
+    var mfs = milestoneSetJson.milestone_forecast_set;
+    var ident = mfs.piece_set.identifiers[headingModule];
+    var h = "<table class='ms_tbl'><tr class='milestone_subhead'><td colspan='5' class='ms_"+mfs.state.toLowerCase()+"'>"+ident.label+": "+ident.value+"</td></tr>";
+    for(var i=0;i<mfs.milestone_forecasts.length;i++) {
+      var mf = mfs.milestone_forecasts[i]
+      h += "<tr><td class='ms_col_1'></td><td class='ms_col_2'>"+mf.label+"</td><td class='ms_"+mf.state.toLowerCase()+" ms_col_date'>"+(mf.actual ? mf.actual : "")+"</td><td class='ms_col_date'>"+(mf.forecast ? mf.forecast : "")+"</td><td class='ms_col_date'>"+(mf.planned ? mf.planned : "")+"</td></tr>";
+    }
+    h += "<tr class='ms_action_links'><td colspan='5'>";
+    if(isAdmin) {
+     h += "<a href=\"javascript:OpenChain.replanMilestone("+mfs.id+",'"+parentContainer.attr('id')+"','"+headingModule+"',"+isAdmin+");\">Replan</a>";
+    }
+    h += "</td></tr></table>";
+    parentContainer.html(h);
+  }
+  var orderLineMilestones = function(parentContainer,orderLineId,isAdmin) {
+    $.getJSON('/milestone_forecast_sets/show_by_order_line_id?line_id='+orderLineId,function(data) {
+      parentContainer.hide();
+      var h = "<table class='ms_tbl'><thead><tr><th width='40%'>Milestone</th><th width='20%'>Actual</th><th width='20%'>Forecast</th><th width='20%'>Plan</th></tr></table>";
+      for(var i=0;i<data.length;i++) {
+        h += "<div id='mfs_"+data[i].milestone_forecast_set.id+"'/>";
+      }
+      parentContainer.html(h);
+      for(i=0;i<data.length;i++) {
+        renderMilestones($("#mfs_"+data[i].milestone_forecast_set.id),data[i],'shipment',isAdmin);
+      }
+      parentContainer.fadeIn('slow');
+    });                  
+  }
   return {
     //public stuff
+    replanMilestone: function(milestoneSetId,parentContainerId,headingModule,isAdmin) {
+      if(window.confirm("Are you sure? Replanning will reset all planned dates.  There is no undo for this action.")) {
+        var parentContainer = $("#"+parentContainerId);
+        parentContainer.fadeOut('slow').html('Replanning...').fadeIn('slow');
+        $.post('/milestone_forecast_sets/'+milestoneSetId+'/replan',function(data) {
+          parentContainer.hide();
+          renderMilestones(parentContainer,data,headingModule,isAdmin);
+          parentContainer.fadeIn('slow');
+        });              
+      }
+      return false;
+    },
+    showOrderLineDetail: function(orderLineId,isAdmin) {
+      var detRow = $("#det_"+orderLineId);
+      var mCont = detRow.find(".milestones_cont");
+      mCont.html("Loading Milestones...");
+      detRow.fadeIn('slow');
+      orderLineMilestones(mCont,orderLineId,isAdmin);
+    },
     loadUserList: function(destinationSelect,selectedId) {
       $.getJSON('/users.json',function(data) {
         var i;

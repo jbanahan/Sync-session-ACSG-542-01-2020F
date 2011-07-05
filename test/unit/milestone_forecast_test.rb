@@ -7,6 +7,12 @@ class MilestoneForecastTest < ActiveSupport::TestCase
     generic_forecast_setup
   end
 
+  test "label" do 
+    @ps.create_forecasts
+    @ps.reload
+    assert_equal @od.label, @ps.milestone_forecast_set.milestone_forecasts.first.label  
+  end
+
   test "trouble downstream from overdue" do
     md2 = @mp.milestone_definitions.create!(:model_field_uid=>:ord_ord_date,:previous_milestone_definition_id=>@md.id,:days_after_previous=>1)
     cd = CustomDefinition.create!(:label=>"cd",:module_type=>"Order", :data_type=>:date)

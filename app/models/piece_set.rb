@@ -26,6 +26,15 @@ class PieceSet < ActiveRecord::Base
     self.milestone_forecast_set.blank? ? nil : self.milestone_forecast_set.state
   end
 
+  def identifiers
+    r = {}
+    r[:order] = {:label=>ModelField.find_by_uid(:ord_ord_num).label,:value=>self.order_line.order.order_number} if self.order_line
+    r[:shipment] = {:label=>ModelField.find_by_uid(:shp_ref).label,:value=>self.shipment_line.shipment.reference} if self.shipment_line
+    r[:sales_order] = {:label=>ModelField.find_by_uid(:sale_order_number).label,:value=>self.sales_order_line.sales_order.order_number} if self.sales_order_line
+    r[:delivery] = {:label=>ModelField.find_by_uid(:del_ref).label,:value=>self.delivery_line.delivery.reference} if self.delivery_line
+    r
+  end
+
   private
   def validate_product_integrity
     #all linked objects must have the same product

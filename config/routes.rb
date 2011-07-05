@@ -1,5 +1,11 @@
 OpenChain::Application.routes.draw do
 
+  resources :milestone_forecast_sets do 
+    post 'replan', :on=>:member
+    collection do
+      get 'show_by_order_line_id'
+    end
+  end
   resources :entity_types
   resources :field_validator_rules do
     get 'validate', :on=>:collection
