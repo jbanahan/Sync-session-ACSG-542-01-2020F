@@ -1,5 +1,6 @@
 var OpenChain = (function() {
   //private stuff
+  var authToken;
   var mappedKeys = new Object();
   var keyMapPopUp = null;
   var invalidTariffFields = new Array();
@@ -211,12 +212,17 @@ var OpenChain = (function() {
   var renderMilestones = function(parentContainer,milestoneSetJson,headingModule,isAdmin) { 
     var mfs = milestoneSetJson.milestone_forecast_set;
     var ident = mfs.piece_set.identifiers[headingModule];
-    var h = "<table class='ms_tbl'><tr class='milestone_subhead'><td colspan='5' class='ms_"+mfs.state.toLowerCase()+"'>"+ident.label+": "+ident.value+"</td></tr>";
+    var h = "<table class='ms_tbl'><tr class='milestone_subhead'><td colspan='5' class='ms_"+mfs.state.toLowerCase()+"'>";
+    h += ident ? (ident.label+": "+ident.value) : "&nbsp";
+    h += "</td></tr>";
     for(var i=0;i<mfs.milestone_forecasts.length;i++) {
       var mf = mfs.milestone_forecasts[i]
       h += "<tr><td class='ms_col_1'></td><td class='ms_col_2'>"+mf.label+"</td><td class='ms_"+mf.state.toLowerCase()+" ms_col_date'>"+(mf.actual ? mf.actual : "")+"</td><td class='ms_col_date'>"+(mf.forecast ? mf.forecast : "")+"</td><td class='ms_col_date'>"+(mf.planned ? mf.planned : "")+"</td></tr>";
     }
     h += "<tr class='ms_action_links'><td colspan='5'>";
+    if(mfs.can_change_plan) {
+      h += "<a href=\"javascript:OpenChain.changePlan("+mfs.id+",'"+parentContainer.attr('id')+"','"+headingModule+"',"+isAdmin+");\">Change Plan</a> | ";
+    }
     if(isAdmin) {
      h += "<a href=\"javascript:OpenChain.replanMilestone("+mfs.id+",'"+parentContainer.attr('id')+"','"+headingModule+"',"+isAdmin+");\">Replan</a>";
     }
@@ -237,8 +243,43 @@ var OpenChain = (function() {
       parentContainer.fadeIn('slow');
     });                  
   }
+  var showChangePlan = function(dialogContainer,parentContainer,milestoneSetId,headingModule,isAdmin) {
+    dialogContainer.dialog('destroy');
+    dialogContainer.dialog({modal:true,buttons:{"OK":function() {
+      dialogContainer.dialog('close');
+      $.post('/milestone_forecast_sets/'+milestoneSetId+'/change_plan',{plan_id:$("#sel_plan").val(),authenticity_token:authToken},function(data) {
+        renderMilestones(parentContainer,data,headingModule,isAdmin);
+      });
+    }}});
+  }
   return {
     //public stuff
+    setAuthToken: function(t) {
+      authToken = t;
+    },
+    changePlan: function(milestoneSetId,parentContainerId,headingModule,isAdmin) {
+      var mp = $("#mod_loading_plans");
+      if(!mp.length) {
+        $("body").append("<div id='mod_loading_plans' style='display:none;'>Loading Milestone Plans...</div>");
+        mp = $("#mod_loading_plans")
+      }
+      var md = $("#mod_pick_plan");
+      if(!md.length) {
+        $.get('/milestone_plans.json',function(plans) {
+          var h = "<div id='mod_pick_plan' style='display:none;'><select id='sel_plan'><option value=''>Select A Plan</option>";
+          for(var i=0;i<plans.length;i++) {
+            h += "<option value='"+plans[i].milestone_plan.id+"'>"+plans[i].milestone_plan.name+"</option>";
+          }
+          h += "</select></div>";
+          $("body").append(h);
+          $("#mod_pick_plan").dialog({autoOpen:false,modal:true});
+          showChangePlan($("#mod_pick_plan"),$("#"+parentContainerId),milestoneSetId,headingModule,isAdmin);
+        });
+      } else {
+        showChangePlan(md,$("#"+parentContainerId),milestoneSetId,headingModule,isAdmin);
+      }
+      return false;
+    },
     replanMilestone: function(milestoneSetId,parentContainerId,headingModule,isAdmin) {
       if(window.confirm("Are you sure? Replanning will reset all planned dates.  There is no undo for this action.")) {
         var parentContainer = $("#"+parentContainerId);

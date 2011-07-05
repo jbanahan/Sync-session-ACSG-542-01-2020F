@@ -1,5 +1,4 @@
 class SalesOrder < ActiveRecord::Base
-  include OrderSupport
 	include CustomFieldSupport
   include ShallowMerger
   include EntitySnapshotSupport
@@ -51,10 +50,4 @@ class SalesOrder < ActiveRecord::Base
       return base_object.where("1=0")
     end
   end
-
-  private
-  #needed for OrderSupport mixin
-  def get_lines
-    self.sales_order_lines
-  end  
 end

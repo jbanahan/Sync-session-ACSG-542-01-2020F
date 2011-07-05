@@ -21,6 +21,7 @@ class LinesSupportTest < ActiveSupport::TestCase
     sline = Shipment.first.shipment_lines.create!(:line_number=>1000,:quantity=>original_qty,:product_id=>Shipment.first.vendor.vendor_products.first)
     #create initial piece sets
     oline = Order.first.order_lines.create!(:product_id=>sline.product_id)
+    oline.piece_sets.create!(:quantity=>original_qty+10) #piece set should get split into two
     soline = SalesOrder.first.sales_order_lines.create!(:product_id=>sline.product_id)
     dline = Delivery.first.delivery_lines.create!(:product_id=>sline.product_id)
     sline.linked_order_line_id = oline.id
@@ -33,6 +34,11 @@ class LinesSupportTest < ActiveSupport::TestCase
     assert psets.where(:order_line_id=>oline.id,:quantity=>original_qty).size==1, "Should have found one piece set for order & qty."
     assert psets.where(:sales_order_line_id=>soline.id,:quantity=>original_qty).size==1, "Should have found one piece set for sales order & qty."
     assert psets.where(:delivery_line_id=>dline.id,:quantity=>original_qty).size==1, "Should have found one piece set for delivery & qty."
+
+    oline_psets = PieceSet.where(:order_line_id=>oline.id)
+    assert_equal 2, oline_psets.size
+    assert PieceSet.where(:order_line_id=>oline.id,:shipment_line_id=>sline.id,:quantity=>original_qty).first
+    assert PieceSet.where(:order_line_id=>oline.id,:shipment_line_id=>nil,:quantity=>10).first
 
     qty2 = original_qty + 10
     sline2 = ShipmentLine.find(sline.id) #fresh object without attributes set

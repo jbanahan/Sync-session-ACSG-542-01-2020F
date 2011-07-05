@@ -16,6 +16,7 @@
   <%= javascript_include_tag "jquery-1.4.4.min.js", "rails.js", "jquery-ui-1.8.7.custom.min.js", "jquery.validate.js", "jquery.tools.min.js", "jquery.hotkeys.js", "jquery.jstepper.min.js", "application.js", "adv_search.js" %>
   <%= csrf_meta_tag %>
   <script>
+  OpenChain.setAuthToken('<%=form_authenticity_token%>');
   <% if current_user %>
   $(function() {
     <% if current_user.view_orders?%>

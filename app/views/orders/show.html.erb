@@ -130,8 +130,8 @@
     <%=field_row field_label(:ordln_ordered_qty, false), f.text_field(:quantity, "size" => 5) %>
     <%=field_row field_label(:prod_uom, false), content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
     <%=field_row field_label(:ordln_ppu, false), f.text_field(:price_per_unit, "size" => 5) %>
-    <%if !MilestonePlan.blank? %>
-      <%=field_row "Plan", select_tag("milestone_plan",options_from_collection_for_select(MilestonePlan.all,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{:prompt=>"-Select a plan"})%>
+    <%if !form_line.id && !MilestonePlan.blank? %>
+      <%=field_row "Plan", select_tag("milestone_plan_id",options_from_collection_for_select(MilestonePlan.all,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{:prompt=>"-Select a plan"})%>
     <%end%>
     <%= show_custom_fields form_line, {:form => true, :table=>true}%>
   </table>

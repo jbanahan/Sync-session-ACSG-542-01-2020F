@@ -71,6 +71,16 @@ module LinesSupport
   def process_link field_symbol, id
     unless id.nil?
       ps = self.piece_sets.where(field_symbol=>id).first
+      if ps.nil? #if there is a PieceSet only linked to the "linked line", it's a place holder that needs to have it's quantity reduced or be replaced
+        holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0))=?",id).first
+        if holding_piece_set
+          if holding_piece_set.quantity <= self.quantity
+            ps = holding_piece_set
+          else
+            holding_piece_set.update_attributes(:quantity=>holding_piece_set.quantity-self.quantity)
+          end
+        end
+      end
       ps = self.piece_sets.build(field_symbol=>id) if ps.nil?
       ps.quantity = self.quantity
       ps.save

@@ -8,7 +8,7 @@ class MilestoneForecastSet < ActiveRecord::Base
   before_save :set_state
 
   def as_json(opts={}) 
-    super(:include=>{:milestone_forecasts=>{:methods=>[:label,:actual]},:piece_set=>{:only=>:id,:methods=>[:identifiers]}})
+    super(:methods=>[:can_change_plan],:include=>{:milestone_forecasts=>{:methods=>[:label,:actual]},:piece_set=>{:only=>:id,:methods=>[:identifiers]}})
   end
 
   def find_forecast_by_definition milestone_definition
@@ -27,6 +27,10 @@ class MilestoneForecastSet < ActiveRecord::Base
     end
   end
 
+  #can the currently logged in user change the plan, doesn't end in ? for json/javascript compatibility
+  def can_change_plan
+    piece_set && User.current && piece_set.change_milestone_plan?(User.current)
+  end
   private
   def find_last_milestone_forecast
     r = nil
@@ -41,5 +45,4 @@ class MilestoneForecastSet < ActiveRecord::Base
     end
     r
   end
-
 end

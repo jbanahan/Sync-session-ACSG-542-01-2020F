@@ -12,6 +12,13 @@ class PieceSet < ActiveRecord::Base
     validates_numericality_of :quantity, :greater_than_or_equal_to => 0
     validate :validate_product_integrity
   
+  def change_milestone_plan? user
+    return false if order_line && !order_line.order.can_edit?(user)
+    return false if shipment_line && !shipment_line.shipment.can_edit?(user)
+    return false if sales_order_line && !sales_order_line.sales_order.can_edit?(user)
+    return false if delivery_line && !delivery_line.delivery.can_edit?(user)
+    return true
+  end
   def create_forecasts
     self.build_forecasts
     self.milestone_forecast_set.save! unless self.milestone_forecast_set.nil?

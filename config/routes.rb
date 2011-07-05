@@ -1,7 +1,11 @@
 OpenChain::Application.routes.draw do
 
+  resources :milestone_plans
   resources :milestone_forecast_sets do 
-    post 'replan', :on=>:member
+    member do
+      post 'replan'
+      post 'change_plan'
+    end
     collection do
       get 'show_by_order_line_id'
     end

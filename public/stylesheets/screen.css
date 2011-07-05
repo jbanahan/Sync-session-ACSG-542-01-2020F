@@ -418,6 +418,9 @@ width:60%;
 .milestones_cont {
   margin-bottom: 1em;
 }
+.ms_action_links {
+  text-align: right;
+}
 .ms_col_1 {
   width: 5%;
 }
