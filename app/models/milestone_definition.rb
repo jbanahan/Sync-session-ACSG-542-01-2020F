@@ -24,6 +24,12 @@ class MilestoneDefinition < ActiveRecord::Base
     end
   end
 
+  def label
+    if self.model_field
+      self.model_field.label
+    end
+  end
+
   def plan piece_set
     return actual(piece_set) if self.previous_milestone_definition.nil?
     days_to_add = self.days_after_previous

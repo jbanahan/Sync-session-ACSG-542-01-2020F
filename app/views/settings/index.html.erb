@@ -3,17 +3,19 @@
 <p>Setup your company description or your vendors and carriers.</p>
 <h2><%= link_to 'Countries', countries_path%></h2>
 <p>Set options for various countries.</p>
-<h2><%= link_to 'Worksheet Setups', worksheet_configs_path %></h2>
-<p>Setup the file formats for the Import Worksheet buttons.  These are used to upload a single Excel sheet that fills in one record's data.  
-These are often files like a &quot;Quote Sheet&quot; or a &quot;Purchase Order&quot;.</p> 
 <h2><%= link_to 'Attachment Types', attachment_types_path%></h2>
 <p>Setup the items that show in the attachment type drop down lists.</p>
+<h2><%= link_to 'Milestone Plans', milestone_plans_path%></h2>
+<p>Set the milestone schedules that your products follow through your supply chain.</p>
 <h2><%= link_to 'Product Types', entity_types_path%></h2>
 <p>Setup product types that filter the fields shown on the product view and edit screen.</p>
 <h2><%= link_to 'Status Rules', status_rules_path %></h2>
 <p>Setup the rules that determine what status a particular item has.</p>
 <h2><%= link_to 'System Message', show_system_message_master_setups_path %></h2>
 <p>Set a message that will appear on the top of every page.</p>
+<h2><%= link_to 'Worksheet Setups', worksheet_configs_path %></h2>
+<p>Setup the file formats for the Import Worksheet buttons.  These are used to upload a single Excel sheet that fills in one record's data.  
+These are often files like a &quot;Quote Sheet&quot; or a &quot;Purchase Order&quot;.</p> 
 <%if current_user.sys_admin? %>
   <h2><%= link_to 'Active Users', active_users_path %></h2>
   <p>Show users who have viewed a page in the last 30 minutes.</p>

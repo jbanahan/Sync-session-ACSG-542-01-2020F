@@ -1,0 +1,52 @@
+<%content_for :head_tags do %>
+  <%= javascript_include_tag "milestone_plan.js" %>
+<%end%>
+<%content_for :javascript do %>
+$(function() {
+  $(".sel_def_field").live('change',function() {
+    var selected = [];
+    $(".sel_def_field").each(function() {
+      var myOpt = $(this).find(":selected");
+      if(myOpt.length) {
+        selected.push([myOpt.val(),myOpt.html()]);
+      }
+    });
+    var h = "";
+    for(var i=0;i<selected.length;i++) {
+      h += "<option value='"+selected[i][0]+"'>"+selected[i][1]+"</option>";
+    }
+    $(".sel_prev_def").each(function(idx,fld) {
+      var v = $(fld).find("option:selected").val();
+      $(fld).html(h);
+      $(fld).val(v);
+    });
+  });
+});
+<%end%>
+<%content_for :action_bar do %>
+  <button class='form_to' form_id='frm_mp'>Save</button>
+  <button class='btn_link' link_to='<%=milestone_plans_path%>'>Cancel</button>
+<%end%>
+<%=form_for @mp, :html=>{:id=>'frm_mp'} do |f| %>
+<table>
+<%=field_row "Name", f.text_field(:name)%>
+</table>
+<table class='detail_table'>
+<thead><tr><th>Field</th><th>Days After</th><th>Based On</th></tr></thead>
+<tbody>
+<% sd = @mp.starting_definition.nil? ? @mp.milestone_definitions.build : @mp.starting_definition%>
+<%f.fields_for :milestone_definitions, sd do |sdf|%>
+<tr><td><%=sdf.select :model_field_uid, grouped_options_for_select(@available_fields,sd.model_field_uid), {}, :class=>:sel_def_field%></td></tr>
+<%end%>
+<%f.fields_for :milestone_definitions  do |mdf|%>
+<%md = mdf.object%>
+  <%unless mdf.object.previous_milestone_definition_id.nil?%>
+    <tr>
+      <td><%=mdf.select :model_field_uid, grouped_options_for_select(@available_fields,mdf.object.model_field_uid), {}, :class=>:sel_def_field%></td>
+      <td><%=mdf.text_field :days_after_previous, :class=>:integer%></td>
+      <td><%=mdf.collection_select :previous_milestone_definition_id, @mp.milestone_definitions, :id, :label, {}, :class=>:sel_prev_def%></td></tr>
+  <%end%>
+<%end%>
+</tbody>
+</table>
+<%end%>

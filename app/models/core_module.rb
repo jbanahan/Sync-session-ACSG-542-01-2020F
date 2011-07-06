@@ -294,13 +294,14 @@ class CoreModule
   end
 
   #make hash of arrays to work with FormOptionsHelper.grouped_options_for_select
-  def self.grouped_options
+  def self.grouped_options opts = {}
+    inner_opts = {:core_modules => [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION], :filter=>lambda {|f| true}}.merge(opts)
     r = {}
-    mods = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION].sort {|x,y| x.label <=> y.label}
+    mods = inner_opts[:core_modules].sort {|x,y| x.label <=> y.label}
     mods.each do |cm|
       flds = cm.model_fields.values.sort {|x,y| x.label <=> y.label}
       fld_array = []
-      flds.each {|f| fld_array << [f.label,f.uid]}
+      flds.each {|f| fld_array << [f.label,f.uid] if inner_opts[:filter].call(f)}
       r[cm.label] = fld_array
     end
     r

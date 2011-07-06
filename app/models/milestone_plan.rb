@@ -6,6 +6,10 @@ class MilestonePlan < ActiveRecord::Base
   validate :only_one_starting_definition
   validate :only_one_finish_definition
 
+  after_save :update_plans
+
+  accepts_nested_attributes_for :milestone_definitions
+
   def build_forecasts piece_set
     #preload existing forecasts to avoid N+1 calls
     ms = piece_set.milestone_forecast_set
@@ -19,6 +23,12 @@ class MilestonePlan < ActiveRecord::Base
       f = ms.milestone_forecasts.build(:milestone_definition=>md) if f.nil?
       f.forecast = md.forecast piece_set
       f.planned = md.plan piece_set unless f.planned
+    end
+  end
+
+  def starting_definition
+    self.milestone_definitions.each do |md|
+      return md if md.previous_milestone_definition_id.nil?
     end
   end
 
@@ -48,5 +58,8 @@ class MilestonePlan < ActiveRecord::Base
         end
       end
     end
+  end
+  def update_plans
+    PieceSet.where(:milestone_plan_id=>self.id).each {|ps| ps.create_forecasts}
   end
 end
