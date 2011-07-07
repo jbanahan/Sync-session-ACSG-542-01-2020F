@@ -1,5 +1,6 @@
 #CODE COPIED FROM: https://github.com/jmettraux/rufus-scheduler/issues/10/
 require 'rufus/scheduler'
+require 'open_chain/delayed_job_manager'
 
 def error_wrapper job_name, &block
   begin
@@ -22,6 +23,17 @@ def execute_scheduler
         SearchSchedule.reset_schedule scheduler, logger
       else
         logger.info "Skipping scheduled job rebuild: Not production"
+      end
+    end
+  end
+
+  #make sure delayed job workers are running
+  scheduler.every("30s") do
+    error_wrapper "Delayed Job Monitor" do
+      logger.info "#{Time.now}: Monitoring for delayed_job worker"
+      unless DelayedJobManager.running?
+        logger.info "#{Time.now}: Starting delayed_job"
+        DelayedJobManager.start
       end
     end
   end

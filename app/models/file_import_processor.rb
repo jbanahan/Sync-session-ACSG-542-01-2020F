@@ -1,4 +1,6 @@
 class FileImportProcessor 
+  require 'open_chain/field_logic.rb'
+
 #YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
   def self.process(import_file,listeners=[])
     find_processor(import_file,listeners).process_file

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20110625173822) do
+ActiveRecord::Schema.define(:version => 20110707151450) do
 
   create_table "addresses", :force => true do |t|
     t.string   "name"
@@ -146,7 +146,7 @@ ActiveRecord::Schema.define(:version => 20110625173822) do
   end
 
   add_index "custom_values", ["custom_definition_id"], :name => "index_custom_values_on_custom_definition_id"
-  add_index "custom_values", ["customizable_id", "customizable_type", "custom_definition_id"], :name => "cv_unique_composite", :unique=>true
+  add_index "custom_values", ["customizable_id", "customizable_type", "custom_definition_id"], :name => "cv_unique_composite"
   add_index "custom_values", ["customizable_id", "customizable_type"], :name => "index_custom_values_on_customizable_id_and_customizable_type"
 
   create_table "dashboard_widgets", :force => true do |t|
@@ -167,6 +167,21 @@ ActiveRecord::Schema.define(:version => 20110625173822) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "delayed_jobs", :force => true do |t|
+    t.integer  "priority",   :default => 0
+    t.integer  "attempts",   :default => 0
+    t.text     "handler"
+    t.text     "last_error"
+    t.datetime "run_at"
+    t.datetime "locked_at"
+    t.datetime "failed_at"
+    t.string   "locked_by"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "delayed_jobs", ["priority", "run_at"], :name => "delayed_jobs_priority"
 
   create_table "deliveries", :force => true do |t|
     t.integer  "ship_from_id"
@@ -375,6 +390,29 @@ ActiveRecord::Schema.define(:version => 20110625173822) do
   end
 
   add_index "milestone_definitions", ["milestone_plan_id"], :name => "index_milestone_definitions_on_milestone_plan_id"
+
+  create_table "milestone_forecast_sets", :force => true do |t|
+    t.integer  "piece_set_id"
+    t.string   "state"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "milestone_forecast_sets", ["piece_set_id"], :name => "one_per_piece_set"
+  add_index "milestone_forecast_sets", ["state"], :name => "mfs_state"
+
+  create_table "milestone_forecasts", :force => true do |t|
+    t.integer  "milestone_definition_id"
+    t.integer  "milestone_forecast_set_id"
+    t.date     "planned"
+    t.date     "forecast"
+    t.string   "state"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "milestone_forecasts", ["milestone_forecast_set_id", "milestone_definition_id"], :name => "unique_forecasts"
+  add_index "milestone_forecasts", ["state"], :name => "mf_state"
 
   create_table "milestone_plans", :force => true do |t|
     t.string   "name"

@@ -3,8 +3,6 @@ class ImportedFile < ActiveRecord::Base
   require 'open-uri'
 
 
-  @@scheduler = Rufus::Scheduler.start_new 
-
   has_attached_file :attached,
     :storage => :s3,
     :s3_credentials => "#{Rails.root}/config/s3.yml",
@@ -52,7 +50,7 @@ class ImportedFile < ActiveRecord::Base
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
       fj = FileImportProcessJob.new(self,user)
       if options[:defer]
-        @@scheduler.in '1s', fj 
+        self.delay.process user
       else
         fj.call nil
       end
