@@ -63,17 +63,10 @@ class ImportedFile < ActiveRecord::Base
   end
   
   def preview(user,options={})
-    begin
-      @a_data = options[:attachment_data] if !options[:attachment_data].nil?
-      msgs = FileImportProcessor.preview self
-      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
-      msgs
-    rescue => e
-      self.errors[:base] << e.message
-      OpenMailer.send_generic_exception(e, ["Imported File ID: #{self.id}"]).deliver
-      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver
-      return ["There was an error reading the file: #{e.message}"]
-    end
+    @a_data = options[:attachment_data] if !options[:attachment_data].nil?
+    msgs = FileImportProcessor.preview self
+    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
+    msgs
   end
   
   

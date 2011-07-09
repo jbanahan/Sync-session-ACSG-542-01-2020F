@@ -54,9 +54,12 @@ class SearchSetup < ActiveRecord::Base
     private_search false
   end
 
+  def core_module
+    CoreModule.find_by_class_name(self.module_type)
+  end
 
   def module_chain
-    CoreModule.find_by_class_name(self.module_type).default_module_chain
+    core_module.default_module_chain
   end
   
   def touch

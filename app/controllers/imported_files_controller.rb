@@ -85,7 +85,11 @@ class ImportedFilesController < ApplicationController
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"process",:module_name=>"uploaded file"}) {
       f.process current_user, {:defer=>true}
       add_flash :notices, "Your file is being processed.  You will receive a message when it has completed."
-      redirect_to root_path
+      if f.search_setup
+        redirect_by_core_module(f.search_setup.core_module,true)
+      else
+        redirect_to root_path
+      end
     }
   end  
   
@@ -93,7 +97,14 @@ class ImportedFilesController < ApplicationController
     f = ImportedFile.find(params[:id])
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"view",:module_name=>"uploaded file"}) {
       respond_to do |format|
-        format.json { render :json=>f.preview(current_user) }
+        format.json { 
+          begin
+            render :json=>f.preview(current_user) 
+          rescue
+            OpenMailer.delay.send_generic_exception $!, ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
+            render :json=>{:error=>true}
+          end
+        }
         format.html { render :text=>"This page is not accessible for end users."}
       end
     }
