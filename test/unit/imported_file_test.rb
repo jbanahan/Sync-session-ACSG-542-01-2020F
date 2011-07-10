@@ -7,7 +7,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
 
   test "defer process" do
-    Rufus::Scheduler::PlainScheduler.any_instance.stubs(:in).returns(nil).once
+    ImportedFile.any_instance.expects(:delay).returns(nil)
 
     
     ss = SearchSetup.create!(:name=>'abc',:user_id=>User.first.id,:module_type=>"Product")
