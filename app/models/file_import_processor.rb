@@ -28,13 +28,10 @@ class FileImportProcessor
       fire_start
       processed_row = false
       r = @import_file.ignore_first_row ? 1 : 0
-      error_email_count = 0
       get_rows do |row|
         begin
           do_row r+1, row, true
         rescue => e
-          OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver if error_email_count < 20 #don't send more than 20 messaegs for same file
-          error_email_count += 1
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
         end
         r += 1
@@ -86,7 +83,7 @@ class FileImportProcessor
                 messages << mf.process_import(obj, data)
               end
             end
-            obj = merge_or_create obj, save
+            obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
             object_map[mod] = obj
             cv_map = {}
             obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
@@ -117,8 +114,8 @@ class FileImportProcessor
         fire_row row_number, object_map[@core_module], messages
       end
     rescue OpenChain::ValidationLogicError
-      core_object = object_map[@core_module]
-      core_object.errors.full_messages.each {|m| 
+      @core_object = object_map[@core_module] unless @core_object
+      @core_object.errors.full_messages.each {|m| 
         messages << "ERROR: #{m}"
       }
       fire_row row_number, nil, messages, true #true = failed
@@ -129,6 +126,26 @@ class FileImportProcessor
     messages
   end
 
+  #is this record allowed to be added / updated based on the search_setup's update mode
+  def update_mode_check obj, update_mode, was_new
+    case update_mode
+    when "add"
+      @created_objects = [] unless @created_objects
+      if !was_new && !@created_objects.include?(obj.id)
+        @core_object = obj
+        obj.errors[:base] << "Cannot update record when Update Mode is set to \"Add Only\"." 
+        raise OpenChain::ValidationLogicError 
+      end
+      @created_objects << obj.id #mark that this object was created in this session so we know it can be updated again even in add mode
+    when "update"
+      if was_new
+        @core_object = obj
+        obj.errors[:base] << "Cannot add a record when Update Mode is set to \"Update Only\"."
+        raise OpenChain::ValidationLogicError
+      end
+    end
+  end
+  
   def set_boolean_value cv, data
     if !data.nil? && data.to_s.length>0
       dstr = data.to_s.downcase.strip
@@ -155,7 +172,7 @@ class FileImportProcessor
     return false
   end
   
-  def merge_or_create(base,save,options={})
+  def merge_or_create(base,save,is_top_level,options={})
     dest = base.find_same
     if dest.nil?
       dest = base
@@ -163,8 +180,11 @@ class FileImportProcessor
       before_merge base, dest
       dest.shallow_merge_into base, options
     end
+    is_new = dest.new_record?
     before_save dest
     dest.save! if save
+    #if this is the top level object, check against the search_setup#update_mode
+    update_mode_check(dest,@search_setup.update_mode,is_new) if is_top_level
     return dest
   end
   

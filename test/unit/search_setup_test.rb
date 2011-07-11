@@ -2,6 +2,23 @@ require 'test_helper'
 
 class SearchSetupTest < ActiveSupport::TestCase
 
+  test "valid & invalid update modes" do
+    base = SearchSetup.new(:module_type=>"Product", :name=>"TDUPM", :user_id=>User.first.id)
+    base.update_mode = "any" #good one
+    assert base.save
+    base.update_mode = "add" #good one
+    assert base.save
+    base.update_mode = "update" #good one
+    assert base.save
+    base.update_mode = "invalid" #bad one
+    assert !base.save
+  end
+
+  test "default update_mode" do
+    base = SearchSetup.create!(:module_type=>"Product", :name=>"TDUPM", :user_id=>User.first.id)
+    assert_equal "any", base.update_mode
+  end
+
   test "give_to" do
     source_user = users(:vendoruser)
     dest_user = users(:masteruser)

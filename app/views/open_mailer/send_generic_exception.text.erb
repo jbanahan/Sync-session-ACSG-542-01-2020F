@@ -7,4 +7,6 @@ Master UUID: <%=MasterSetup.get.uuid%>
 Time: <%=Time.now%>
 
 Additional Messages:
-<%=@additional_messages%>
+<%@additional_messages.each do |m|%>
+<%=m%>
+<%end%>

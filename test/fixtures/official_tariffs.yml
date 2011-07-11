@@ -1,15 +1,9 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+us:
+  hts_code: 9999990000
+  country: us
+  full_description: abcd
 
-one:
-  country_id: 1
-  hts_code: MyString
-  full_description: MyText
-  special_rates: MyString
-  general_rate: MyString
-
-two:
-  country_id: 1
-  hts_code: MyString
-  full_description: MyText
-  special_rates: MyString
-  general_rate: MyString
+china:
+  hts_code: 0000009999
+  country: china
+  full_description: defg

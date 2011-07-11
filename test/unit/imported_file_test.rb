@@ -6,6 +6,142 @@ class ImportedFileTest < ActiveSupport::TestCase
     ModelField.reload
   end
 
+  test "add with two details" do
+
+    cn_ot = OfficialTariff.create!(:country_id=>countries(:china).id,:hts_code=>"1234567890",:full_description=>"fd")
+    us_ot = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>"09876543210",:full_description=>"DF")
+
+    u = users(:masteruser)
+    ss = SearchSetup.create!(:update_mode=>"add",:module_type=>"Product",:name=>"addo",:user_id=>u.id)
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
+    ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>2)
+    ss.search_columns.create!(:model_field_uid=>:hts_line_number,:rank=>3)
+    ss.search_columns.create!(:model_field_uid=>:hts_hts_1,:rank=>4)
+
+    existing_product = Product.create!(:unique_identifier=>"addonlyprod",:name=>"base name")
+    new_product_uid = "newproductuid"
+
+    #first line should be rejected, 2nd & 3rd lines should create 1 product w/ two classifications
+    data = "#{existing_product.unique_identifier},pname,US,1,6101200021\n#{new_product_uid},pname2,CN,1,#{cn_ot.hts_code}\n#{new_product_uid},pname2,US,1,#{us_ot.hts_code}"
+
+    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i.process(u,:attachment_data=>data)
+
+    assert_equal existing_product.name, Product.find(existing_product.id).name #first product should not have been updated
+    found = Product.where(:unique_identifier=>new_product_uid).first #second product should have been added
+    assert_equal 2, found.classifications.size
+
+    assert_equal ["CN","US"], (found.classifications.collect {|c| c.country.iso_code}).sort
+    
+    change_records = i.file_import_results.first.change_records
+    assert_equal 3, change_records.size
+    found_pass = false
+    found_fail = false
+    change_records.each do |cr|
+      if cr.failed?
+        found_fail = true
+      else
+        found_pass = true
+      end
+    end
+    assert found_pass
+    assert found_fail
+  end
+  test "add or update" do
+    u = users(:masteruser)
+    ss = SearchSetup.create!(:update_mode=>"any",:module_type=>"Product",:name=>"updo",:user_id=>u.id)
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
+
+    existing_product = Product.create!(:unique_identifier=>"addonlyprod",:name=>"base name")
+    new_product_uid = "newproductuid"
+
+    data = "#{existing_product.unique_identifier},pname\n#{new_product_uid},pname2"
+
+    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i.process(u,:attachment_data=>data)
+
+    assert_equal "pname", Product.find(existing_product.id).name #first product should have been updated
+    assert Product.where(:unique_identifier=>new_product_uid).first #second product should have been added
+    
+    change_records = i.file_import_results.first.change_records
+    assert_equal 2, change_records.size
+    found_pass = false
+    found_fail = false
+    change_records.each do |cr|
+      if cr.failed?
+        found_fail = true
+      else
+        found_pass = true
+      end
+    end
+    assert found_pass
+    assert !found_fail
+  end
+  test "update only" do
+    u = users(:masteruser)
+    ss = SearchSetup.create!(:update_mode=>"update",:module_type=>"Product",:name=>"updo",:user_id=>u.id)
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
+
+    existing_product = Product.create!(:unique_identifier=>"addonlyprod",:name=>"base name")
+    new_product_uid = "newproductuid"
+
+    data = "#{existing_product.unique_identifier},pname\n#{new_product_uid},pname2"
+
+    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i.process(u,:attachment_data=>data)
+
+    assert_equal "pname", Product.find(existing_product.id).name #first product should have been updated
+    assert !Product.where(:unique_identifier=>new_product_uid).first #second product should not have been added
+    
+    change_records = i.file_import_results.first.change_records
+    assert_equal 2, change_records.size
+    found_pass = false
+    found_fail = false
+    change_records.each do |cr|
+      if cr.failed?
+        found_fail = true
+      else
+        found_pass = true
+      end
+    end
+    assert found_pass
+    assert found_fail
+  end
+  test "add only" do
+    u = users(:masteruser)
+    ss = SearchSetup.create!(:update_mode=>"add",:module_type=>"Product",:name=>"addo",:user_id=>u.id)
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
+
+    existing_product = Product.create!(:unique_identifier=>"addonlyprod",:name=>"base name")
+    new_product_uid = "newproductuid"
+
+    data = "#{existing_product.unique_identifier},pname\n#{new_product_uid},pname2"
+
+    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i.process(u,:attachment_data=>data)
+
+    assert_equal existing_product.name, Product.find(existing_product.id).name #first product should not have been updated
+    assert Product.where(:unique_identifier=>new_product_uid).first #second product should have been added
+    
+    change_records = i.file_import_results.first.change_records
+    assert_equal 2, change_records.size
+    found_pass = false
+    found_fail = false
+    change_records.each do |cr|
+      if cr.failed?
+        found_fail = true
+      else
+        found_pass = true
+      end
+    end
+    assert found_pass
+    assert found_fail
+  end
+
   test "defer process" do
     ImportedFile.any_instance.expects(:delay).returns(nil)
 
