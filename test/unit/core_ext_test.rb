@@ -2,6 +2,20 @@ require 'test_helper'
  
 class CoreExtTest < ActiveSupport::TestCase 
 
+  test "Exception email_me" do
+    begin
+      raise "Hello World"
+    rescue
+      $!.email_me [], false #false = not delayed
+      $!.email_me #default = delayed
+    end
+    sent_mail = ActionMailer::Base.deliveries.pop
+    assert_equal "bug@aspect9.com", sent_mail.to.first 
+    assert_equal "[chain.io Exception] - Hello World", sent_mail.subject
+    dj = Delayed::Job.first
+    assert dj.handler.include?("send_generic_exception")
+  end
+
   test "Spreadsheet Float" do
     wb = Spreadsheet::Workbook.new
     s = wb.create_worksheet

@@ -92,10 +92,13 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
-  def send_generic_exception e, additional_messages=[]
+  def send_generic_exception e, additional_messages=[], error_message=nil, backtrace=nil
     @exception = e
+    @error_message = error_message ? error_message : e.message
+    @backtrace = backtrace ? backtrace : e.backtrace
+    @backtrace = [] unless @backtrace
     @additional_messages = additional_messages
-    mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - #{e.message}") do |format|
+    mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - #{@error_message}") do |format|
       format.text
     end
   end

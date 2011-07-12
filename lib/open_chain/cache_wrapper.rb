@@ -21,8 +21,7 @@ class CacheWrapper
     begin
       yield
     rescue
-      OpenMailer.delay.send_exception($!)
-      return nil
+      $!.email_me
     end
   end
 
