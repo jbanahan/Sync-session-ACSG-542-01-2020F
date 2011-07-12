@@ -352,7 +352,7 @@ hrs_opts = {"midnight"=>"0"}
     <% cursor = @results.per_page * (@results.current_page-1) #because will_paginate's first page is 1, not 0 %>
     <% last_object = nil %>
     <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain).go do |row,obj| %>
-      <tr class='hover <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
+      <tr class='hover search_row <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
         <% if !@bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
         <td>
           <% if obj!=last_object %>

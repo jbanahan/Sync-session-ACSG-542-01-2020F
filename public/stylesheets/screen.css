@@ -506,3 +506,6 @@ width:60%;
 #update_mode_help {
   text-decoration: none;
 }
+.search_row {
+  cursor: pointer;
+}
