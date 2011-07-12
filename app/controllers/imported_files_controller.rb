@@ -101,8 +101,7 @@ class ImportedFilesController < ApplicationController
           begin
             render :json=>f.preview(current_user) 
           rescue
-            debugger
-            OpenMailer.delay.send_generic_exception $!, ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
+            $!.email_me ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
             render :json=>{:error=>true}
           end
         }

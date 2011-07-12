@@ -56,7 +56,7 @@ class ImportedFile < ActiveRecord::Base
       end
     rescue => e 
       self.errors[:base] << "There was an error processing the file: #{e.message}"
-      OpenMailer.send_generic_exception(e, ["Imported File ID: #{self.id}"]).deliver
+      e.email_me ["Imported File ID: #{self.id}"]
     end
     OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
     return self.errors.size == 0
@@ -141,7 +141,7 @@ class ImportedFile < ActiveRecord::Base
         begin
           ActiveRecord::Base.connection.execute sql
         rescue
-          OpenMailer.send_generic_exception $!
+          $!.email_me
         end
       end
       object.create_snapshot(@fr.run_by) if object.respond_to?('create_snapshot')

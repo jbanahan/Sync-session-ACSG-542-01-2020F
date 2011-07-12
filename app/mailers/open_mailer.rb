@@ -92,6 +92,7 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
+  #only Exception#email_me should use this.  Everything else should just call .email_me on the exception
   def send_generic_exception e, additional_messages=[], error_message=nil, backtrace=nil
     @exception = e
     @error_message = error_message ? error_message : e.message

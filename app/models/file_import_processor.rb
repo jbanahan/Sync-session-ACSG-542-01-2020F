@@ -38,7 +38,7 @@ class FileImportProcessor
         r += 1
       end
     rescue => e
-      OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver
+      e.email_me ["Imported File ID: #{@import_file.id}"]
       @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
     ensure
       fire_end

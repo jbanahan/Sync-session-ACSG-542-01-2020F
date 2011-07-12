@@ -67,7 +67,7 @@ class FtpWalker
       ftp.connect server, port
       yield ftp
     rescue => e
-      OpenMailer.send_generic_exception(e).deliver
+      e.email_me
       raise e
     ensure
       ftp.close if !ftp.nil? && !ftp.closed?
