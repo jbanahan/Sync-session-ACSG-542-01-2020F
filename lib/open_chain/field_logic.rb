@@ -39,6 +39,11 @@ module OpenChain
 
 
   class ValidationLogicError < StandardError
+    attr_accessor :base_object
+
+    def initialize(base_obj=nil)
+      self.base_object = base_obj
+    end
 
   end
 

@@ -73,6 +73,7 @@ class FileImportProcessor
           if fields_for_me_or_children? data_map, mod
             parent_mod = @module_chain.parent mod
             obj = parent_mod.nil? ? mod.new_object : parent_mod.child_objects(mod,object_map[parent_mod]).build
+            @core_object = obj if parent_mod.nil? #this is the top level object
             object_map[mod] = obj
             custom_fields = {}
             data_map[mod].each do |uid,data|
@@ -84,6 +85,7 @@ class FileImportProcessor
               end
             end
             obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
+            @core_object = obj unless parent_mod #this is the replaced top level object
             object_map[mod] = obj
             cv_map = {}
             obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
@@ -114,8 +116,10 @@ class FileImportProcessor
         fire_row row_number, object_map[@core_module], messages
       end
     rescue OpenChain::ValidationLogicError
-      @core_object = object_map[@core_module] unless @core_object
-      @core_object.errors.full_messages.each {|m| 
+      my_base = $!.base_object
+      my_base = @core_object unless my_base
+      my_base = object_map[@core_module] unless my_base
+      my_base.errors.full_messages.each {|m| 
         messages << "ERROR: #{m}"
       }
       fire_row row_number, nil, messages, true #true = failed
@@ -131,18 +135,10 @@ class FileImportProcessor
     case update_mode
     when "add"
       @created_objects = [] unless @created_objects
-      if !was_new && !@created_objects.include?(obj.id)
-        @core_object = obj
-        obj.errors[:base] << "Cannot update record when Update Mode is set to \"Add Only\"." 
-        raise OpenChain::ValidationLogicError 
-      end
+      FileImportProcessor.raise_validation_exception obj, "Cannot update record when Update Mode is set to \"Add Only\"." if !was_new && !@created_objects.include?(obj.id)
       @created_objects << obj.id #mark that this object was created in this session so we know it can be updated again even in add mode
     when "update"
-      if was_new
-        @core_object = obj
-        obj.errors[:base] << "Cannot add a record when Update Mode is set to \"Update Only\"."
-        raise OpenChain::ValidationLogicError
-      end
+      FileImportProcessor.raise_validation_exception obj, "Cannot add a record when Update Mode is set to \"Update Only\"." if was_new
     end
   end
   
@@ -189,11 +185,11 @@ class FileImportProcessor
   end
   
   def before_save(dest)
-    get_rules_processor.before_save dest
+    get_rules_processor.before_save dest, @core_object
   end
   
   def before_merge(shell,database_object)
-    get_rules_processor.before_merge shell, database_object
+    get_rules_processor.before_merge shell, database_object, @core_object
   end
 
   def get_rules_processor
@@ -207,6 +203,11 @@ class FileImportProcessor
       @rules_processor = h.nil? ? RulesProcessor.new : h.new
     end
     @rules_processor
+  end
+
+  def self.raise_validation_exception core_object, message
+    core_object.errors[:base] << message
+    raise OpenChain::ValidationLogicError.new(core_object)
   end
 
   class CSVImportProcessor < FileImportProcessor
@@ -229,50 +230,50 @@ class FileImportProcessor
   end
     
   class RulesProcessor
-    def before_save obj
+    def before_save obj, top_level_object
       #stub
     end
-    def before_merge obj, database_object
+    def before_merge obj, database_object, top_level_object
       #stub
     end
   end
 
   class ProductRulesProcessor < RulesProcessor
-    def before_save(obj)
+    def before_save obj, top_level_object
       if obj.is_a? TariffRecord
         #make sure the tariff is valid
         country_id = obj.classification.country_id
         [obj.hts_1,obj.hts_2,obj.hts_3].each_with_index do |h,i|
           unless h.blank?
             ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id 
-            raise "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." if ot.nil?
+            FileImportProcessor.raise_validation_exception top_level_object, "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." if ot.nil?
           end
         end
         #make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
-        raise "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
+        FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
       end
     end
     
-    def before_merge(shell,database_object)
+    def before_merge(shell,database_object,top_level_object)
       if shell.class==Product && !shell.vendor_id.nil? && !database_object.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
-          raise "An product's vendor cannot be changed via a file upload."
+          FileImportProcessor.raise_validation_exception top_level_object, "An product's vendor cannot be changed via a file upload."
       end
     end
   end
 
   class OrderRulesProcessor < RulesProcessor
     
-    def before_merge(shell,database_object)
+    def before_merge(shell,database_object,top_level_object)
       if shell.class == Order && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
-          raise "An order's vendor cannot be changed via a file upload."
+          FileImportProcessor.raise_validation_exception top_level_object, "An order's vendor cannot be changed via a file upload."
       end
     end
   end
 
   class SaleRulesProcessor < CSVImportProcessor
-    def before_merge(shell,database_object)
+    def before_merge(shell,database_object,top_level_object)
       if shell.class == SalesOrder && !shell.customer_id.nil? && shell.customer_id!=database_object.customer_id
-        raise "A sale's customer cannot be changed via a file upload."
+        FileImportProcessor.raise_validation_exception top_level_object, "A sale's customer cannot be changed via a file upload."
       end
     end
   end
