@@ -5,8 +5,8 @@ class FileImportProcessor
   def self.process(import_file,listeners=[])
     find_processor(import_file,listeners).process_file
   end
-  def self.preview(import_file,listeners=[])
-    find_processor(import_file,listeners).preview_file
+  def self.preview(import_file)
+    find_processor(import_file,[PreviewListener.new]).preview_file
   end
 
   def initialize(import_file, data, listeners=[])
@@ -30,7 +30,8 @@ class FileImportProcessor
       r = @import_file.ignore_first_row ? 1 : 0
       get_rows do |row|
         begin
-          do_row r+1, row, true
+          obj = do_row r+1, row, true
+          obj.errors.full_messages.each {|m| @import_file.errors[:base] << "Row #{r+1}: #{m}"}
         rescue => e
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
         end
@@ -46,7 +47,8 @@ class FileImportProcessor
   
   def preview_file
     get_rows do |row|
-      return do_row @import_file.ignore_first_row ? 2 : 1, row, false
+      do_row @import_file.ignore_first_row ? 2 : 1, row, false
+      return @listeners.first.messages
     end
   end
   def self.find_processor import_file, listeners=[]
@@ -100,7 +102,7 @@ class FileImportProcessor
                 cv.value = data
               end
               messages << "#{cd.label} set to #{cv.value}"
-              cv.save if save && !(orig_value.blank? && data.blank?) 
+              cv.save! if save && !(orig_value.blank? && data.blank?) 
             end
             object_map[mod] = obj
           end
@@ -108,7 +110,7 @@ class FileImportProcessor
         object_map.values.each do |obj|
           if obj.class.include?(StatusableSupport)
             obj.set_status
-            obj.save
+            obj.save!
           end
         end
         Rails.logger.info "object_map[@core_module] is nill for row #{row_number} in imported_file: #{@import_file.id}" if object_map[@core_module].nil?
@@ -127,7 +129,7 @@ class FileImportProcessor
       fire_row row_number, nil, messages, true
       raise $!
     end
-    messages
+    @core_object
   end
 
   #is this record allowed to be added / updated based on the search_setup's update mode
@@ -173,6 +175,7 @@ class FileImportProcessor
     if dest.nil?
       dest = base
     else
+      base.destroy
       before_merge base, dest
       dest.shallow_merge_into base, options
     end
@@ -293,6 +296,21 @@ class FileImportProcessor
 
   def fire_event method, data 
     @listeners.each {|ls| ls.send method, data if ls.respond_to?(method) }
+  end
+
+  class PreviewListener
+    attr_accessor :messages
+    def process_row row_number, object, messages, failed=false
+      self.messages = messages
+    end
+
+    def process_start time
+      #stub
+    end
+
+    def process_end time
+      #stub
+    end
   end
 end
 

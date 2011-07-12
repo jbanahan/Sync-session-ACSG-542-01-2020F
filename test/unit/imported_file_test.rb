@@ -438,7 +438,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     #change HTS number and reprocess
     vh[:hts_hts_1] = "1234567890"
-    vh[:hts_line_number] = tariffs.first.line_number
+    vh[:hts_line_number] = "1"
     OfficialTariff.create!(:hts_code=>vh[:hts_hts_1],:country_id=>countries(:us).id,:full_description=>"FD")
     attach_array.pop 2
     attach_array << vh[:hts_line_number]

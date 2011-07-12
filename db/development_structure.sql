@@ -47,7 +47,7 @@ CREATE TABLE `change_record_messages` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3555 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=3637 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `change_records` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -60,7 +60,7 @@ CREATE TABLE `change_records` (
   `failed` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_change_records_on_file_import_result_id` (`file_import_result_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2461 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=2478 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `classifications` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -72,7 +72,7 @@ CREATE TABLE `classifications` (
   PRIMARY KEY (`id`),
   KEY `index_classifications_on_product_id` (`product_id`),
   KEY `index_classifications_on_country_id` (`country_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=614 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=618 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `comments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -185,7 +185,7 @@ CREATE TABLE `delayed_jobs` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `delayed_jobs_priority` (`priority`,`run_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `deliveries` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -232,7 +232,7 @@ CREATE TABLE `entity_snapshots` (
   PRIMARY KEY (`id`),
   KEY `index_entity_snapshots_on_recordable_id_and_recordable_type` (`recordable_id`,`recordable_type`),
   KEY `index_entity_snapshots_on_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1200 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1209 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `entity_type_fields` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -301,7 +301,7 @@ CREATE TABLE `file_import_results` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_file_import_results_on_imported_file_id_and_finished_at` (`imported_file_id`,`finished_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `histories` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -319,7 +319,7 @@ CREATE TABLE `histories` (
   `sales_order_line_id` int(11) DEFAULT NULL,
   `delivery_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=609 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=610 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `history_details` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -346,7 +346,7 @@ CREATE TABLE `imported_files` (
   `module_type` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_imported_files_on_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `item_change_subscriptions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -407,7 +407,7 @@ CREATE TABLE `messages` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_messages_on_user_id` (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=139 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=144 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `milestone_definitions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -564,7 +564,7 @@ CREATE TABLE `products` (
   PRIMARY KEY (`id`),
   KEY `index_products_on_unique_identifier` (`unique_identifier`),
   KEY `index_products_on_name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=221 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=224 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `public_fields` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -617,7 +617,7 @@ CREATE TABLE `search_columns` (
   `imported_file_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_search_columns_on_search_setup_id` (`search_setup_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1452 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1488 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `search_criterions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -646,7 +646,7 @@ CREATE TABLE `search_runs` (
   `user_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_search_runs_on_user_id_and_last_accessed` (`user_id`,`last_accessed`)
-) ENGINE=InnoDB AUTO_INCREMENT=64 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=67 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `search_schedules` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -751,7 +751,7 @@ CREATE TABLE `tariff_records` (
   `line_number` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_tariff_records_on_classification_id` (`classification_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=359 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=363 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `user_sessions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
