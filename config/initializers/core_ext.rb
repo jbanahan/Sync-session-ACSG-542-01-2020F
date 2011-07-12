@@ -22,6 +22,16 @@ String.class_eval do
   end
 end
 
+Exception.class_eval do
+  def email_me messages=[], delayed=true
+    if delayed
+      OpenMailer.delay.send_generic_exception(self,messages,self.message,self.backtrace)
+    else
+      OpenMailer.send_generic_exception(self,messages,self.message,self.backtrace).deliver
+    end
+  end
+end
+
 module Spreadsheet
 
   module Excel
