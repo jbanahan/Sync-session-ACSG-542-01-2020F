@@ -28,7 +28,7 @@ def execute_scheduler
   end
 
   #make sure delayed job workers are running
-  scheduler.every("30s") do
+  scheduler.every("2m") do
     error_wrapper "Delayed Job Monitor" do
       if DelayedJobManager.should_be_running? && !DelayedJobManager.running?
         logger.info "#{Time.now}: Starting delayed_job"
