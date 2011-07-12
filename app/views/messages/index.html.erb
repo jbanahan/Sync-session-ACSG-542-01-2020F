@@ -30,19 +30,18 @@
     $(".btn_delete").each(function() {
       id = $(this).attr("id").substring(11,$(this).attr("id").length);
       $(this).button().click(function() {
-        if ( confirm("Are you sure you want to delete this message?") )
+        if ( confirm("Are you sure you want to delete this message?") ) {
             $.ajax({
                 url: '/messages/'+id,
                 type: 'post',
-                dataType: 'script',
-                data: { '_method': 'delete' },
+                data: { '_method': 'delete' }
             });            
             $("#"+id).effect('fade');
             $("#mhead_h3_"+id).effect('fade', function() {
               $("#"+id).remove();
               $("#mhead_h3_"+id).remove();
             });
-            
+	}            
       });
     });
   });
