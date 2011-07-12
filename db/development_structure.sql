@@ -185,7 +185,7 @@ CREATE TABLE `delayed_jobs` (
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `delayed_jobs_priority` (`priority`,`run_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=32 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE TABLE `deliveries` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -319,7 +319,7 @@ CREATE TABLE `histories` (
   `sales_order_line_id` int(11) DEFAULT NULL,
   `delivery_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=610 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=611 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `history_details` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
