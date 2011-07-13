@@ -155,7 +155,11 @@ class ImportedFile < ActiveRecord::Base
     def process_end time
       @fr.finished_at= time
       @fr.save
-      @fr.run_by.messages.create(:subject=>"File Processing Complete", :body=>"File #{@imported_file.attached_file_name} has completed.<br /><br />Click <a href='#{Rails.application.routes.url_helpers.imported_file_path(@imported_file)}'>here</a> to see the results.") unless @imported_file.id.nil?
+      error_count = @fr.error_count
+      body = "File #{@imported_file.attached_file_name} has completed.<br />Records Saved: #{@fr.changed_objects.size}<br />"
+      body << "Errors: #{error_count}<br />" if error_count>0
+      body << "<br />Click <a href='#{Rails.application.routes.url_helpers.imported_file_path(@imported_file)}'>here</a> to see the results."
+      @fr.run_by.messages.create(:subject=>"File Processing Complete #{error_count>0 ? "("+error_count.to_s+" Errors)" : ""}", :body=>body) unless @imported_file.id.nil?
     end
   end
 end
