@@ -93,12 +93,15 @@ class OpenMailer < ActionMailer::Base
   end
 
   #only Exception#email_me should use this.  Everything else should just call .email_me on the exception
-  def send_generic_exception e, additional_messages=[], error_message=nil, backtrace=nil
+  def send_generic_exception e, additional_messages=[], error_message=nil, backtrace=nil, attachment_paths=[]
     @exception = e
     @error_message = error_message ? error_message : e.message
     @backtrace = backtrace ? backtrace : e.backtrace
     @backtrace = [] unless @backtrace
     @additional_messages = additional_messages
+    attachment_paths.each do |ap|
+      attachments[File.basename(ap)] = File.read(ap) if File.exists? ap
+    end
     mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - #{@error_message}") do |format|
       format.text
     end

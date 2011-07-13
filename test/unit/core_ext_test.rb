@@ -2,11 +2,31 @@ require 'test_helper'
  
 class CoreExtTest < ActiveSupport::TestCase 
 
+  test "Exception email_me with attachments" do
+    temp_files = []
+    temp_strings = ['test_file_1','test_file_2']
+    temp_strings.each do |t|
+      f = Tempfile.new(t)
+      f << t
+      f.close
+      temp_files << f
+    end
+
+    begin
+      raise "exception_mail"
+    rescue
+      $!.email_me [], temp_files.collect {|t| t.path}, true #setting delayed=true, should be ignored because attachments are there
+    end
+    sent_mail = ActionMailer::Base.deliveries.pop
+    assert_equal "bug@aspect9.com", sent_mail.to.first
+    assert_equal 2, sent_mail.attachments.size
+  end
+
   test "Exception email_me" do
     begin
       raise "Hello World"
     rescue
-      $!.email_me [], false #false = not delayed
+      $!.email_me [], [], false #false = not delayed
       $!.email_me #default = delayed
     end
     sent_mail = ActionMailer::Base.deliveries.pop
