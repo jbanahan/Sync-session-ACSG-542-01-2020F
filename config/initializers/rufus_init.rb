@@ -26,6 +26,12 @@ def execute_scheduler
     end
   end
   
+  scheduler.cron '0 23 * * *' do
+    error_wrapper "Messages Purge" do
+      Message.purge_messages
+    end
+  end
+
   scheduler.every("3m") do
     error_wrapper "FTP Sweeper" do
       m = MasterSetup.first
