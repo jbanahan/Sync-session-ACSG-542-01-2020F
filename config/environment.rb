@@ -14,7 +14,6 @@ if defined?(PhusionPassenger)
   PhusionPassenger.on_event(:starting_worker_process) do |forked|
     # Only works with DalliStore
     if forked
-      Rails.cache.reset
       CACHE.reset
     end
   end
