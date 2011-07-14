@@ -30,6 +30,7 @@ class MilestonePlan < ActiveRecord::Base
     self.milestone_definitions.each do |md|
       return md if md.previous_milestone_definition_id.nil?
     end
+    nil
   end
 
   private

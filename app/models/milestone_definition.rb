@@ -50,6 +50,15 @@ class MilestoneDefinition < ActiveRecord::Base
     ModelField.find_by_uid(self.model_field_uid).export_from_piece_set(piece_set)
   end
 
+  def previous_milestone_model_field_uid
+    p = self.previous_milestone_definition
+    p.nil? ? nil : p.model_field_uid
+  end
+
+  def as_json options={}
+    super(:methods=>[:previous_milestone_model_field_uid])
+  end
+
   private
   def self.first_definition_in_plan milestone_def
     return milestone_def if milestone_def.previous_milestone_definition.nil?

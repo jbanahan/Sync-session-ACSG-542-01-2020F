@@ -11,6 +11,19 @@ class ActiveSupport::TestCase
   # -- they do not yet inherit this setting
   fixtures :all
 
+  def login user
+    user.password = user.password_confirmation = "pwd123456"
+    user.tos_accept = Time.now 
+    user.save!
+    post_via_redirect '/user_sessions', {"user_session[username]"=>user.username,"user_session[password]"=>'pwd123456'}
+    assert_response 200
+    assert_equal '/', path
+  end
+
+  def logout
+    get '/logout'
+  end
+
   # Add more helper methods to be used by all tests here...
   def enable_all_personal_permissions user
     p_hash = {}

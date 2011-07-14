@@ -1,6 +1,8 @@
 OpenChain::Application.routes.draw do
 
-  resources :milestone_plans
+  resources :milestone_plans do
+    resources :milestone_definitions, :only => [:index]
+  end
   resources :milestone_forecast_sets do 
     member do
       post 'replan'

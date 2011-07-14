@@ -10,10 +10,8 @@ class MilestonePlanTest < ActiveSupport::TestCase
     @shipment_md = @mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{@ship_date.id}",:previous_milestone_definition_id=>@order_md.id,:days_after_previous=>30,:final_milestone=>true)
   end
 
-  test "accepts nested attributes for definitions" do
-    hash = {:milestone_definition_attributes=>[{:id=>@shipment_md.id,:days_after_previous=>5}]}
-    @mp.update_attributes hash
-    assert_equal 5, MilestoneDefinition.find(@shipment_md.id).days_after_previous
+  test "no starting definition" do
+    assert_nil MilestonePlan.new.starting_definition
   end
 
   test "auto-recreate after save" do
