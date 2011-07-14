@@ -150,6 +150,23 @@ var OCSearch = (function() {
       writeSearchOperators($(this));
     });
   }
+
+  var initPopUpHelp = function() {
+    $("#mod_update_mode_help").dialog({autoOpen:false, width:500, buttons:{"OK":function() {$("#mod_update_mode_help").dialog('close');}}});
+    $("#update_mode_help").click(function(evt) {
+      evt.preventDefault();
+      $("#mod_update_mode_help").dialog('open');
+    });
+  }
+
+  var initRowDoubleClick = function() {
+    $(".search_row").dblclick(function() {
+      $(this).find(".double_click_action").each(function() {
+        window.location = $(this).attr("href");
+      });
+    });
+    $(".search_row").find("a").dblclick(function(evt) {evt.stopPropagation();}) //prevent an accidental double-click on a link from bubbling up to the row
+  }
     
   return {
     init: function(max_objects,search_run_id) {
@@ -159,6 +176,8 @@ var OCSearch = (function() {
       initBulkSelectors();
       initSelectFullList();
       initSearchCriterions();
+      initPopUpHelp();
+      initRowDoubleClick();
     },
     addBulkHandler: function(button_name,form_path) {
       var b = $("#"+button_name);

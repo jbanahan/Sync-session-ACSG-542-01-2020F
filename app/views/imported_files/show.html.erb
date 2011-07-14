@@ -14,34 +14,47 @@
     OpenChain.addClickMap('d','Delete','btn_delete');
     <%end%>
     <% unless @imported_file.search_setup.nil? %>
-    $("#btn_process").click(function() {$("#mod_preview").dialog('open');});
+    $("#btn_process").click(function() {$("#mod_loading").dialog('open');});
     $("#btn_download").click(function() {window.location='<%=download_imported_file_path @imported_file%>';});
-    $("#mod_preview").dialog({autoOpen:false,width:'auto',title:"Preview",buttons:{
+    $("#mod_loading").dialog({autoOpen:false,width:300,title:"Preview Loading",modal:true,
+      open:function() {
+        if(!importedFilePreviewLoaded) {
+          $.getJSON('<%=preview_imported_file_path @imported_file%>',function(data) {
+            if(data.error) {
+              $("#mod_loading").dialog('close');
+              $("#mod_error").dialog('open');         
+            } else {
+              var str = "<ul>";
+              for(var i=0;i<data.length;i++) {
+                str += "<li>"+data[i]+"</li>";
+              }
+              str += "</ul>";
+              $("#preview_content").html(str);
+              importedFilePreviewLoaded = true;
+              $("#mod_loading").dialog('close');
+              $("#mod_preview").dialog('open');
+            }
+          });
+        } else {
+          $("#mod_loading").dialog('close');
+          $("#mod_preview").dialog('open');
+        }
+      }
+    });
+    $("#mod_preview").dialog({autoOpen:false,width:400,title:"Preview",modal:true,buttons:{
       "Go":function() {
         $("#mod_preview").dialog('close');
         $("#mod_processing").dialog('open');
         window.location = '<%=process_file_search_setup_imported_file_path(@imported_file.search_setup,@imported_file)%>';
       },
       "Cancel":function() {$("#mod_preview").dialog('close');}
-      },
-      open:function() {
-        if(!importedFilePreviewLoaded) {
-          $.getJSON('<%=preview_imported_file_path @imported_file%>',function(data) {
-            var str = "<ul>";
-            for(var i=0;i<data.length;i++) {
-              str += "<li>"+data[i]+"</li>";
-            }
-            str += "</ul>";
-            $("#preview_content").html(str);
-            importedFilePreviewLoaded = true;
-          });
-        }
       }
       });
+    $("#mod_error").dialog({autoOpen:false,width:300,title:"Error Reading File",modal:true,buttons:{"OK":function() {$("#mod_error").dialog('close');}}});
     $("#mod_processing").dialog({autoOpen:false,width:300,title:"Processing",
       modal:true,closeOnEscapse:false,close:function() {$("#mod_processing").dialog('open')}});
       <%if @file_import_result.nil?%>
-    $("#mod_preview").dialog('open');
+        $("#mod_loading").dialog('open');
       <%end%>
     <% end %>
   });
@@ -147,4 +160,12 @@
 </div>
 <div id='mod_processing' style='display:none;'>
   File processing in the background.  This may take several minutes.  You will receive a message when processing is complete.
+</div>
+<div id='mod_loading' style='display:none;'>
+  A preview of your file is loading.  Please wait.
+</div>
+<div id='mod_error' style='display:none;'>
+  <p>There was an error reading the file you uploaded.  This might be related to corruption in the original file.</p>
+  <p>Many times this can be fixed by opening the file in Excel and saving as a &quot;CSV&quot; file.</p>
+  <p>If this does not work, please open a ticket by clicking the Help link at the top of the page.</p>
 </div>

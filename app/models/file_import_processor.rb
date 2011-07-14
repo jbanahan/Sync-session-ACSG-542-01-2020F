@@ -1,10 +1,12 @@
 class FileImportProcessor 
+  require 'open_chain/field_logic.rb'
+
 #YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
   def self.process(import_file,listeners=[])
     find_processor(import_file,listeners).process_file
   end
-  def self.preview(import_file,listeners=[])
-    find_processor(import_file,listeners).preview_file
+  def self.preview(import_file)
+    find_processor(import_file,[PreviewListener.new]).preview_file
   end
 
   def initialize(import_file, data, listeners=[])
@@ -26,19 +28,17 @@ class FileImportProcessor
       fire_start
       processed_row = false
       r = @import_file.ignore_first_row ? 1 : 0
-      error_email_count = 0
       get_rows do |row|
         begin
-          do_row r+1, row, true
+          obj = do_row r+1, row, true
+          obj.errors.full_messages.each {|m| @import_file.errors[:base] << "Row #{r+1}: #{m}"}
         rescue => e
-          OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver if error_email_count < 20 #don't send more than 20 messaegs for same file
-          error_email_count += 1
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
         end
         r += 1
       end
     rescue => e
-      OpenMailer.send_generic_exception(e, ["Imported File ID: #{@import_file.id}"]).deliver
+      e.email_me ["Imported File ID: #{@import_file.id}"]
       @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
     ensure
       fire_end
@@ -46,13 +46,9 @@ class FileImportProcessor
   end
   
   def preview_file
-    begin
-      get_rows do |row|
-        return do_row @import_file.ignore_first_row ? 2 : 1, row, false
-      end
-    rescue => e
-      @import_file.errors[:base] << e.message
-      return ["There was an error reading the file: #{e.message}"]
+    get_rows do |row|
+      do_row @import_file.ignore_first_row ? 2 : 1, row, false
+      return @listeners.first.messages
     end
   end
   def self.find_processor import_file, listeners=[]
@@ -79,6 +75,7 @@ class FileImportProcessor
           if fields_for_me_or_children? data_map, mod
             parent_mod = @module_chain.parent mod
             obj = parent_mod.nil? ? mod.new_object : parent_mod.child_objects(mod,object_map[parent_mod]).build
+            @core_object = obj if parent_mod.nil? #this is the top level object
             object_map[mod] = obj
             custom_fields = {}
             data_map[mod].each do |uid,data|
@@ -89,7 +86,8 @@ class FileImportProcessor
                 messages << mf.process_import(obj, data)
               end
             end
-            obj = merge_or_create obj, save
+            obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
+            @core_object = obj unless parent_mod #this is the replaced top level object
             object_map[mod] = obj
             cv_map = {}
             obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
@@ -104,7 +102,7 @@ class FileImportProcessor
                 cv.value = data
               end
               messages << "#{cd.label} set to #{cv.value}"
-              cv.save if save && !(orig_value.blank? && data.blank?) 
+              cv.save! if save && !(orig_value.blank? && data.blank?) 
             end
             object_map[mod] = obj
           end
@@ -112,7 +110,7 @@ class FileImportProcessor
         object_map.values.each do |obj|
           if obj.class.include?(StatusableSupport)
             obj.set_status
-            obj.save
+            obj.save!
           end
         end
         Rails.logger.info "object_map[@core_module] is nill for row #{row_number} in imported_file: #{@import_file.id}" if object_map[@core_module].nil?
@@ -120,8 +118,10 @@ class FileImportProcessor
         fire_row row_number, object_map[@core_module], messages
       end
     rescue OpenChain::ValidationLogicError
-      core_object = object_map[@core_module]
-      core_object.errors.full_messages.each {|m| 
+      my_base = $!.base_object
+      my_base = @core_object unless my_base
+      my_base = object_map[@core_module] unless my_base
+      my_base.errors.full_messages.each {|m| 
         messages << "ERROR: #{m}"
       }
       fire_row row_number, nil, messages, true #true = failed
@@ -129,9 +129,21 @@ class FileImportProcessor
       fire_row row_number, nil, messages, true
       raise $!
     end
-    messages
+    @core_object
   end
 
+  #is this record allowed to be added / updated based on the search_setup's update mode
+  def update_mode_check obj, update_mode, was_new
+    case update_mode
+    when "add"
+      @created_objects = [] unless @created_objects
+      FileImportProcessor.raise_validation_exception obj, "Cannot update record when Update Mode is set to \"Add Only\"." if !was_new && !@created_objects.include?(obj.id)
+      @created_objects << obj.id #mark that this object was created in this session so we know it can be updated again even in add mode
+    when "update"
+      FileImportProcessor.raise_validation_exception obj, "Cannot add a record when Update Mode is set to \"Update Only\"." if was_new
+    end
+  end
+  
   def set_boolean_value cv, data
     if !data.nil? && data.to_s.length>0
       dstr = data.to_s.downcase.strip
@@ -158,25 +170,29 @@ class FileImportProcessor
     return false
   end
   
-  def merge_or_create(base,save,options={})
+  def merge_or_create(base,save,is_top_level,options={})
     dest = base.find_same
     if dest.nil?
       dest = base
     else
+      base.destroy
       before_merge base, dest
       dest.shallow_merge_into base, options
     end
+    is_new = dest.new_record?
     before_save dest
     dest.save! if save
+    #if this is the top level object, check against the search_setup#update_mode
+    update_mode_check(dest,@search_setup.update_mode,is_new) if is_top_level
     return dest
   end
   
   def before_save(dest)
-    get_rules_processor.before_save dest
+    get_rules_processor.before_save dest, @core_object
   end
   
   def before_merge(shell,database_object)
-    get_rules_processor.before_merge shell, database_object
+    get_rules_processor.before_merge shell, database_object, @core_object
   end
 
   def get_rules_processor
@@ -190,6 +206,11 @@ class FileImportProcessor
       @rules_processor = h.nil? ? RulesProcessor.new : h.new
     end
     @rules_processor
+  end
+
+  def self.raise_validation_exception core_object, message
+    core_object.errors[:base] << message
+    raise OpenChain::ValidationLogicError.new(core_object)
   end
 
   class CSVImportProcessor < FileImportProcessor
@@ -212,50 +233,50 @@ class FileImportProcessor
   end
     
   class RulesProcessor
-    def before_save obj
+    def before_save obj, top_level_object
       #stub
     end
-    def before_merge obj, database_object
+    def before_merge obj, database_object, top_level_object
       #stub
     end
   end
 
   class ProductRulesProcessor < RulesProcessor
-    def before_save(obj)
+    def before_save obj, top_level_object
       if obj.is_a? TariffRecord
         #make sure the tariff is valid
         country_id = obj.classification.country_id
         [obj.hts_1,obj.hts_2,obj.hts_3].each_with_index do |h,i|
           unless h.blank?
             ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id 
-            raise "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." if ot.nil?
+            FileImportProcessor.raise_validation_exception top_level_object, "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." if ot.nil?
           end
         end
         #make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
-        raise "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
+        FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
       end
     end
     
-    def before_merge(shell,database_object)
+    def before_merge(shell,database_object,top_level_object)
       if shell.class==Product && !shell.vendor_id.nil? && !database_object.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
-          raise "An product's vendor cannot be changed via a file upload."
+          FileImportProcessor.raise_validation_exception top_level_object, "An product's vendor cannot be changed via a file upload."
       end
     end
   end
 
   class OrderRulesProcessor < RulesProcessor
     
-    def before_merge(shell,database_object)
+    def before_merge(shell,database_object,top_level_object)
       if shell.class == Order && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
-          raise "An order's vendor cannot be changed via a file upload."
+          FileImportProcessor.raise_validation_exception top_level_object, "An order's vendor cannot be changed via a file upload."
       end
     end
   end
 
   class SaleRulesProcessor < CSVImportProcessor
-    def before_merge(shell,database_object)
+    def before_merge(shell,database_object,top_level_object)
       if shell.class == SalesOrder && !shell.customer_id.nil? && shell.customer_id!=database_object.customer_id
-        raise "A sale's customer cannot be changed via a file upload."
+        FileImportProcessor.raise_validation_exception top_level_object, "A sale's customer cannot be changed via a file upload."
       end
     end
   end
@@ -275,6 +296,21 @@ class FileImportProcessor
 
   def fire_event method, data 
     @listeners.each {|ls| ls.send method, data if ls.respond_to?(method) }
+  end
+
+  class PreviewListener
+    attr_accessor :messages
+    def process_row row_number, object, messages, failed=false
+      self.messages = messages
+    end
+
+    def process_start time
+      #stub
+    end
+
+    def process_end time
+      #stub
+    end
   end
 end
 

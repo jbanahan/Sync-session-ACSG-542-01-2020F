@@ -17,9 +17,11 @@ class TariffLoader
     "HSCODE" => lambda {|o,d| o.hts_code = d},
     "FULL_DESC" => lambda {|o,d| o.full_description = d},
     "SPC_RATES" => lambda {|o,d| o.special_rates = d},
+    "SR1" => lambda {|o,d| o.special_rates = d},
     "UNITCODE" => lambda {|o,d| o.unit_of_measure = d},
     "GENERAL" => lambda {|o,d| o.general_rate = d},
     "GENERAL_RATE" => lambda {|o,d| o.general_rate = d},
+    "GR1" => lambda {|o,d| o.general_rate = d},
     "CHAPTER" => lambda {|o,d| o.chapter = d},
     "HEADING" => lambda {|o,d| o.heading = d},
     "SUBHEADING" => lambda {|o,d| o.sub_heading = d},
@@ -30,6 +32,7 @@ class TariffLoader
     "GPT" => lambda {|o,d| o.general_preferential_tariff_rate = d},
     "ERGA_OMNES" => lambda {|o,d| o.erga_omnes_rate = d},
     "COL2_RATE" => lambda {|o,d| o.column_2_rate = d},
+    "RATE2" => lambda {|o,d| o.column_2_rate = d},
     "Import Reg 1" => IMPORT_REG_LAMBDA,
     "Import Reg 2" => IMPORT_REG_LAMBDA,
     "Import Reg 3" => IMPORT_REG_LAMBDA,
@@ -57,7 +60,7 @@ class TariffLoader
       parser = get_parser
       parser.foreach(@file_path) do |row|
         headers = parser.headers
-        headers.each {|h| raise "Column #{h} cannot be identified." if FIELD_MAP[h].nil?}
+#headers.each {|h| raise "Column #{h} cannot be identified." if FIELD_MAP[h].nil?}
         ot = OfficialTariff.new(:country=>@country)
         FIELD_MAP.each do |header,lmda|
           col_num = headers.index header

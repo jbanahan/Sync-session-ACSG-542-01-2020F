@@ -40,11 +40,11 @@ class Shipment < ActiveRecord::Base
 	end
   
   def can_comment?(user)
-    return user.comment_shipments? && self.can_view?
+    return user.comment_shipments? && self.can_view?(user)
   end
 
   def can_attach?(user)
-    return user.attach_shipments? && self.can_view?
+    return user.attach_shipments? && self.can_view?(user)
   end
 	
 	def locked?

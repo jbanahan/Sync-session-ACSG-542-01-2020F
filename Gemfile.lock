@@ -46,6 +46,9 @@ GEM
       hashie
     daemons (1.0.10)
     dalli (1.0.5)
+    delayed_job (2.1.4)
+      activesupport (~> 3.0)
+      daemons
     erubis (2.6.6)
       abstract (>= 1.0.0)
     exception_notification_rails3 (1.2.0)
@@ -133,6 +136,7 @@ DEPENDENCIES
   aws-s3 (= 0.6.2)
   cover_me (>= 1.0.0.rc6)
   dalli (= 1.0.5)
+  delayed_job (= 2.1.4)
   exception_notification_rails3
   meta_search (= 1.0.5)
   mocha (= 0.9.12)

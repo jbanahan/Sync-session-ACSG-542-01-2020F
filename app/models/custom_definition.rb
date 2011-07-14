@@ -19,7 +19,7 @@ class CustomDefinition < ActiveRecord::Base
     begin
       o = CACHE.get "CustomDefinition:id:#{id}"
     rescue
-      OpenMailer.send_generic_exception $!, ["Exception rescued, you don't need to contact the user."]
+      $!.email_me ["Exception rescued, you don't need to contact the user."]
     end
     if o.nil?
       o = find id
@@ -38,7 +38,7 @@ class CustomDefinition < ActiveRecord::Base
       end
       return o.clone
     rescue
-      OpenMailer.send_generic_exception $!, ["Exception rescued, you don't need to contact the user."]
+      $!.email_me ["Exception rescued, you don't need to contact the user."]
       return CustomDefinition.where(:module_type=>module_type).order("rank ASC, label ASC").all
     end
   end

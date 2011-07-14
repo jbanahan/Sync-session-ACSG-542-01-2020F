@@ -114,7 +114,7 @@
   });
   <% end %>
   <%= yield :javascript%>
-  <% if Rails.env=='development' %>
+  <% if Rails.env=='development' || current_user.nil?%>
     $(document).ready(OpenChain.disableMessagePolling);
   <% end %>
   //Google Analytics

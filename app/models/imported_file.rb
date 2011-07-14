@@ -3,8 +3,6 @@ class ImportedFile < ActiveRecord::Base
   require 'open-uri'
 
 
-  @@scheduler = Rufus::Scheduler.start_new 
-
   has_attached_file :attached,
     :storage => :s3,
     :s3_credentials => "#{Rails.root}/config/s3.yml",
@@ -52,30 +50,23 @@ class ImportedFile < ActiveRecord::Base
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
       fj = FileImportProcessJob.new(self,user)
       if options[:defer]
-        @@scheduler.in '1s', fj 
+        self.delay.process user
       else
         fj.call nil
       end
     rescue => e 
       self.errors[:base] << "There was an error processing the file: #{e.message}"
-      OpenMailer.send_generic_exception(e, ["Imported File ID: #{self.id}"]).deliver
+      e.email_me ["Imported File ID: #{self.id}"]
     end
     OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
     return self.errors.size == 0
   end
   
   def preview(user,options={})
-    begin
-      @a_data = options[:attachment_data] if !options[:attachment_data].nil?
-      msgs = FileImportProcessor.preview self
-      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
-      msgs
-    rescue => e
-      self.errors[:base] << e.message
-      OpenMailer.send_generic_exception(e, ["Imported File ID: #{self.id}"]).deliver
-      OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver
-      return ["There was an error reading the file: #{e.message}"]
-    end
+    @a_data = options[:attachment_data] if !options[:attachment_data].nil?
+    msgs = FileImportProcessor.preview self
+    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
+    msgs
   end
   
   
@@ -150,7 +141,7 @@ class ImportedFile < ActiveRecord::Base
         begin
           ActiveRecord::Base.connection.execute sql
         rescue
-          OpenMailer.send_generic_exception $!
+          $!.email_me
         end
       end
       object.create_snapshot(@fr.run_by) if object.respond_to?('create_snapshot')
@@ -164,7 +155,11 @@ class ImportedFile < ActiveRecord::Base
     def process_end time
       @fr.finished_at= time
       @fr.save
-      @fr.run_by.messages.create(:subject=>"File Processing Complete", :body=>"File #{@imported_file.attached_file_name} has completed.<br /><br />Click <a href='#{Rails.application.routes.url_helpers.imported_file_path(@imported_file)}'>here</a> to see the results.") unless @imported_file.id.nil?
+      error_count = @fr.error_count
+      body = "File #{@imported_file.attached_file_name} has completed.<br />Records Saved: #{@fr.changed_objects.size}<br />"
+      body << "Errors: #{error_count}<br />" if error_count>0
+      body << "<br />Click <a href='#{Rails.application.routes.url_helpers.imported_file_path(@imported_file)}'>here</a> to see the results."
+      @fr.run_by.messages.create(:subject=>"File Processing Complete #{error_count>0 ? "("+error_count.to_s+" Errors)" : ""}", :body=>body) unless @imported_file.id.nil?
     end
   end
 end
