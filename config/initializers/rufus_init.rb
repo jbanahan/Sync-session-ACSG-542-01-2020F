@@ -41,6 +41,17 @@ def execute_scheduler
           DelayedJobManager.stop
         end
       end
+      #monitor queue depth
+      if DelayedJobManager.should_be_running?
+        job_count = Delayed::Job.where("run_at < ?",15.minutes.ago).count
+        if job_count > 0
+          begin
+            raise "#{job_count} jobs over 15 minutes old in delayed_job queue for #{Rails.root.to_s}"
+          rescue
+            $!.email_me [], [], false #don't delay the send (since we don't want it to go into the already backed up queue)
+          end
+        end
+      end
     end
   end
   
