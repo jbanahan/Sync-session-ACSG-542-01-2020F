@@ -306,7 +306,7 @@ class CoreModule
     end
     r
   end
-  
+
   private
   def self.test_to_array
     r = []

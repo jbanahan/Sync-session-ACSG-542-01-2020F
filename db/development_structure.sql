@@ -319,7 +319,7 @@ CREATE TABLE `histories` (
   `sales_order_line_id` int(11) DEFAULT NULL,
   `delivery_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=614 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=615 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `history_details` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -417,9 +417,10 @@ CREATE TABLE `milestone_definitions` (
   `previous_milestone_definition_id` int(11) DEFAULT NULL,
   `final_milestone` tinyint(1) DEFAULT NULL,
   `custom_definition_id` int(11) DEFAULT NULL,
+  `display_rank` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `index_milestone_definitions_on_milestone_plan_id` (`milestone_plan_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `milestone_forecast_sets` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -444,7 +445,7 @@ CREATE TABLE `milestone_forecasts` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_forecasts` (`milestone_forecast_set_id`,`milestone_definition_id`),
   KEY `mf_state` (`state`)
-) ENGINE=InnoDB AUTO_INCREMENT=186 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=198 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `milestone_plans` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -453,7 +454,7 @@ CREATE TABLE `milestone_plans` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1;
 
 CREATE TABLE `official_quotas` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1178,3 +1179,5 @@ INSERT INTO schema_migrations (version) VALUES ('20110627155804');
 INSERT INTO schema_migrations (version) VALUES ('20110707151450');
 
 INSERT INTO schema_migrations (version) VALUES ('20110711151259');
+
+INSERT INTO schema_migrations (version) VALUES ('20110715181312');

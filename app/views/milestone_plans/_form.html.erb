@@ -2,6 +2,14 @@
   <%= javascript_include_tag "milestone_plan.js" %>
 <%end%>
 
+<%content_for :javascript do %>
+$(function() {
+  <%if @milestone_plan.id %>
+  OpenChainMilestonePlan.init(<%=@milestone_plan.id%>,<%=@available_fields.to_json.html_safe%>);    
+  <%end%>
+});
+<%end%>
+
 <%content_for :action_bar do %>
   <button class='form_to' form_id='frm_mp'>Save</button>
   <button class='btn_link' link_to='<%=milestone_plans_path%>'>Cancel</button>
@@ -12,12 +20,14 @@
     <%=field_row "Name", f.text_field(:name)%>
   </table>
 
-  <table class='detail_table'>
-    <thead><tr><th>Field</th><th>Days After</th><th>Based On</th><th>SLA Complete</th></tr></thead>
+  <table class='detail_table' id='definitions_table'>
+    <thead><tr><th></th><th>Field</th><th>Days After</th><th>Based On</th><th>SLA Complete</th></tr></thead>
     <tbody>
-      <% sd = @milestone_plan.starting_definition.nil? ? @milestone_plan.milestone_definitions.build : @milestone_plan.starting_definition%>
+      <% sd = @milestone_plan.starting_definition.nil? ? @milestone_plan.milestone_definitions.build(:display_rank=>0) : @milestone_plan.starting_definition%>
       <%=f.fields_for :milestone_definitions, sd do |sdf|%>
-        <tr id='first_milestone_row'><td><%=sdf.select :model_field_uid, grouped_options_for_select(@available_fields,sd.model_field_uid), {}, :class=>:sel_def_field%></td></tr>
+        <tr id='first_milestone_row' class='definition_row'>
+          <td><a href='#' class='add_row'>+</a><%=sdf.hidden_field :display_rank%></td>
+          <td><%=sdf.select :model_field_uid, grouped_options_for_select(@available_fields,sd.model_field_uid), {}, :class=>:sel_def_field%></td></tr>
       <%end%>
       </tbody>
   </table>
