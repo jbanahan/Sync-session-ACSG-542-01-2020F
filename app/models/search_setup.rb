@@ -1,7 +1,12 @@
 class SearchSetup < ActiveRecord::Base
+
+  #hash of valid update modes. keys are valid database values, values are acceptable descriptions for the view layer
+  UPDATE_MODES = {"any"=>"Add or Update","add"=>"Add Only","update"=>"Update Only"}
+
   validates   :name, :presence => true
   validates   :user, :presence => true
   validates   :module_type, :presence => true
+  validates_inclusion_of :update_mode, :in => UPDATE_MODES.keys.to_a
   
   has_many :search_criterions, :dependent => :destroy
   has_many :sort_criterions, :dependent => :destroy
@@ -13,6 +18,8 @@ class SearchSetup < ActiveRecord::Base
 
   belongs_to :user
   
+  before_validation :set_update_mode
+
   accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
     :reject_if => lambda { |a| 
       r_val = false
@@ -54,9 +61,12 @@ class SearchSetup < ActiveRecord::Base
     private_search false
   end
 
+  def core_module
+    CoreModule.find_by_class_name(self.module_type)
+  end
 
   def module_chain
-    CoreModule.find_by_class_name(self.module_type).default_module_chain
+    core_module.default_module_chain
   end
   
   def touch
@@ -184,6 +194,11 @@ class SearchSetup < ActiveRecord::Base
 
   private 
   
+  #sets the default update_mode if it is blank
+  def set_update_mode
+    self.update_mode = "any" if self.update_mode.blank?
+  end
+
   def has_company(model_prefix,type_prefix)
     has_one_of ["#{model_prefix}_#{type_prefix}_name","#{model_prefix}_#{type_prefix}_id","#{model_prefix}_#{type_prefix}_syscode"]
   end

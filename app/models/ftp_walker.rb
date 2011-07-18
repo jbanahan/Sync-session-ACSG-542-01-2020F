@@ -67,7 +67,7 @@ class FtpWalker
       ftp.connect server, port
       yield ftp
     rescue => e
-      OpenMailer.send_generic_exception(e).deliver
+      e.email_me
       raise e
     ensure
       ftp.close if !ftp.nil? && !ftp.closed?
@@ -91,11 +91,14 @@ class FtpWalker
     ["#{Rails.root}/tmp","#{Rails.root}/tmp/ftpdown"].each {|p| Dir.mkdir(p) unless File.directory?(p)}
     file_list.each do |f|
       unless @@files_being_processed.include? f #another thread has claimed this file
+        current_file_path = "#{Rails.root}/tmp/ftpdown/#{f}"
         begin
           @@files_being_processed << f
-          ftp.getbinaryfile f, "#{Rails.root}/tmp/ftpdown/#{f}"
-          process_file File.new("#{Rails.root}/tmp/ftpdown/#{f}"), search_setup
+          ftp.getbinaryfile f, current_file_path 
+          process_file File.new(current_file_path), search_setup
           ftp.delete f
+        rescue
+          $!.email_me ["Error processing file from ftp walker.","Current File Path: #{current_file_path}"], [current_file_path]
         ensure
           @@files_being_processed.delete f
         end

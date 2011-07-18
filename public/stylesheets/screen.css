@@ -539,3 +539,9 @@ width:60%;
   vertical-align: middle;
   text-align: center;
 }
+#update_mode_help {
+  text-decoration: none;
+}
+.search_row {
+  cursor: pointer;
+}

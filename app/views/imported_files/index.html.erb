@@ -5,6 +5,8 @@
     <th>Module</th>
     <th>Uploaded</th>
     <th>Last Processed</th>
+    <th>Records Saved</th>
+    <th>Errors</th>
   </thead>
   <tbody>
     <%@imported_files.each do |imp|%>
@@ -15,6 +17,9 @@
         <td><%=imp.created_at%></td>
         <% fir = imp.last_file_import_finished%>
         <td><%=fir.nil? ? "" : fir.finished_at%></td>
+        <td><%=fir.nil? ? "" : fir.changed_objects.size%></td>
+        <% ec = fir.nil? ? 0 : fir.error_count %>
+        <td><span class='error'><%=ec>0 ? ec : ""%></span></td>
       </tr>
     <%end%>
   </tbody>

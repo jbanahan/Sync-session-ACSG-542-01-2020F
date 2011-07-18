@@ -1,4 +1,4 @@
-<%=link_to "View", send("#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor) %> 
+<%=link_to "View", send("#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor), :class=>:double_click_action %> 
 <%if obj.respond_to?('can_edit?') && obj.can_edit?(current_user)%>
   | <%=link_to "Edit", send("edit_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
 <%end%>

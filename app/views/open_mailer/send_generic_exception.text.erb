@@ -1,10 +1,15 @@
 Error: <%=@exception%>
-
-Backtrace:
-<%=@exception.backtrace%>
-
+Message: <%=@error_message%>
 Master UUID: <%=MasterSetup.get.uuid%>
 Time: <%=Time.now%>
+Root: <%=Rails.root.to_s%>
 
 Additional Messages:
-<%=@additional_messages%>
+<%@additional_messages.each do |m|%>
+<%=m%>
+<%end%>
+
+Backtrace:
+<%@backtrace.each do |b|%>
+<%=b%>
+<%end%>

@@ -26,3 +26,16 @@ $(function() {
   <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
 </table>
 <%end%>
+
+<h2>Delayed Job</h2>
+<table class='detail_table'>
+  <thead>
+    <tr><th>ID</th><th>Priority</th><th>Attempts</th><th>Handler</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th></tr>
+  </thead>
+  <% Delayed::Job.all.each do |dj| %>
+    <tr>
+      <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><textarea width='15'><%=dj.handler%></textarea></td>
+      <td><%=dj.last_error%></td><td><%=dj.run_at%></td><td><%=dj.locked_at%></td><td><%=dj.failed_at%></td><td><%=dj.locked_by%></td>
+    </tr>
+  <% end %>
+</table>

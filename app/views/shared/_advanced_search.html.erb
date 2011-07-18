@@ -219,7 +219,8 @@ function addNewSearchCriterion() {
     </ul>
     <div id='setup_cont'>
       Name: <%=f.text_field :name, "id"=>"current_name" %><br />
-      Download Format: <%=f.select :download_format, ["xls","csv"] %>
+      Download Format: <%=f.select :download_format, ["xls","csv"] %><br />
+      Update Mode: <%=f.select :update_mode, SearchSetup::UPDATE_MODES.map {|k,v| [v,k]} %> <a href='#' id='update_mode_help'>?</a>
       <%=f.hidden_field :module_type %>
     </div>
     <div id='params_cont'>
@@ -351,7 +352,7 @@ hrs_opts = {"midnight"=>"0"}
     <% cursor = @results.per_page * (@results.current_page-1) #because will_paginate's first page is 1, not 0 %>
     <% last_object = nil %>
     <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain).go do |row,obj| %>
-      <tr class='hover <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
+      <tr class='hover search_row <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
         <% if !@bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
         <td>
           <% if obj!=last_object %>
@@ -375,6 +376,20 @@ hrs_opts = {"midnight"=>"0"}
   <%=form_tag('',:id=>'frm_bulk') do %>
     <div id='div_bulk_content'></div>
   <% end %>
+</div>
+<div id='mod_update_mode_help' style='display:none;'>
+<div style='font-size:80%;'>
+  <p>Update mode helps you avoid accidentally adding or updating records in the system when you upload a spreadsheet.</p>
+  <p>
+    <b>Modes:</b>
+    <ul>
+      <li><b>Add or Update</b>: You're allowed to create new items and update existing ones.  (This is the default setting.)</li>
+      <li><b>Add Only:</b>: You're only allowed to create new items.  You might use this if you are adding new Products and want to make sure that you're not accidently overwriting an existing product.</li>
+      <li><b>Update Only:</b>: You're only allowed to update existing items. You might use this if you are uploading a Order status update and know that you shouldn't have any new orders.</li>
+    </ul>
+  </p>
+  <p>This setting only affects the top level item (Order, Product, Shipment, etc.), you can always add or update Lines, Classifications, etc.</p>
+</div>
 </div>
 <%content_for :action_bar do %>
   <%unless @bulk_actions.blank?%>

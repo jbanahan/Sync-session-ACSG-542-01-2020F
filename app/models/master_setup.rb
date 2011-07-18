@@ -10,13 +10,14 @@ class MasterSetup < ActiveRecord::Base
   end
 
   def self.get
-    m = CACHE.get CACHE_KEY 
-    raise "MasterSetup cache returned a #{m.class} !" if !m.nil? && !m.is_a?(MasterSetup)
-    if m.nil?
+    m = nil
+    begin
+      m = CACHE.get CACHE_KEY 
+    rescue
+    end
+    if m.nil? || !m.is_a?(MasterSetup)
       m = init_base_setup
       CACHE.set CACHE_KEY, m 
-    elsif !m.is_a?(MasterSetup)
-      logger.info "#{Time.now}: MasterSetup returned a #{m.class}"
     end
     m.is_a?(MasterSetup) ? m : MasterSetup.first
   end
