@@ -4,9 +4,7 @@
 
 <%content_for :javascript do %>
 $(function() {
-  <%if @milestone_plan.id %>
-  OpenChainMilestonePlan.init(<%=@milestone_plan.id%>,<%=@available_fields.to_json.html_safe%>);    
-  <%end%>
+  OpenChainMilestonePlan.init(<%=@milestone_plan.id ? @milestone_plan.id : 0%>,<%=@available_fields.to_json.html_safe%>);    
 });
 <%end%>
 
@@ -17,18 +15,33 @@ $(function() {
 
 <%=form_for @milestone_plan, :html=>{:id=>'frm_mp'} do |f| %>
   <table>
-    <%=field_row "Name", f.text_field(:name)%>
+    <%=field_row "Name", f.text_field(:name, :id=>"mp_name")%>
   </table>
 
   <table class='detail_table' id='definitions_table'>
-    <thead><tr><th></th><th>Field</th><th>Days After</th><th>Based On</th><th>SLA Complete</th></tr></thead>
+    <thead><tr><th></th><th>Field</th><th>Days After</th><th>Based On</th><th>SLA Complete <a href='#' class='sla_help'>?</a></th></tr></thead>
     <tbody>
-      <% sd = @milestone_plan.starting_definition.nil? ? @milestone_plan.milestone_definitions.build(:display_rank=>0) : @milestone_plan.starting_definition%>
-      <%=f.fields_for :milestone_definitions, sd do |sdf|%>
+      <% starting_def = @milestone_plan.starting_definition.nil? ? @milestone_plan.milestone_definitions.build(:display_rank=>0) : @milestone_plan.starting_definition%>
+      <%=f.fields_for :milestone_definitions, starting_def do |sdf|%>
         <tr id='first_milestone_row' class='definition_row'>
-          <td><a href='#' class='add_row'>+</a><%=sdf.hidden_field :display_rank%></td>
-          <td><%=sdf.select :model_field_uid, grouped_options_for_select(@available_fields,sd.model_field_uid), {}, :class=>:sel_def_field%></td></tr>
+          <td><a href='#' class='add_row'><img src='/images/green_plus_24.png' alt='Add Row' title='Add Row'/></a><%=sdf.hidden_field :display_rank%></td>
+          <td><%=sdf.hidden_field :model_field_uid, :class=>:hdn_mfuid, :id=>:starting_def_uid%><span class='mfuid_lbl' /></td></tr>
       <%end%>
       </tbody>
   </table>
 <%end%>
+
+<div id='mod_sla_help' style='display:none;'>
+  <p>The <strong>SLA Complete</strong> flag marks the point when your plan is complete from a status standpoint.  This date is used to figure out the plan's status (red/yellow/green).  In most cases, this is the last milestone, but not always.</p>
+  <p>For example, you may consider your inbound supply chain complete when the product is delivered to the warehouse, but you might also want to track the payment to the vendor, which could happen later.  
+    In this case, you'd mark the &quot;Receipt Date&quot; as the SLA Complete date.  A late &quot;Paid Date&quot; would not turn the milestone plan red.</p>
+</div>
+<div id='mod_new_prompt' style='display:none;'>
+  <p>Select a starting point for this plan.</p>
+  <p>This is usually a field that you fill in at the beginning of the process like &quot;Order Date&quot; or &quot;Expected Ship Date&quot;.</p>
+  <p><select id='sel_first_milestone'><%=grouped_options_for_select(@available_fields)%></select></p>
+</div>
+<div id='mod_edit_row' style='display:none;'>
+  <div id='edit_errors' class='error'></div>
+  <div id='edit_row_inner'></div>
+</div>
