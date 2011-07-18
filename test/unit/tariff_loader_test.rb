@@ -55,29 +55,4 @@ class TariffLoaderTest < ActiveSupport::TestCase
     end
   end
 
-  test "fail on unknown column" do
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet
-    cols = ["HSCODE","FULL_DESC","bad col"]
-    row1_data = []
-    row1_expected = {}
-    cols.each_index do |i|
-      s1 = "val-#{i}"
-      row1_data << s1
-      row1_expected[cols[i]] = s1
-    end
-    sheet.row(0).replace cols
-    sheet.row(1).replace row1_data
-    t = Tempfile.new(["tariffloadertest-failcol",".xls"])
-    wb.write t.path
-
-    loader = TariffLoader.new(Country.first,t.path)
-    begin
-      loader.process
-      assert false, "Should have thrown exception on bad column"
-    rescue
-      assert $!.message=="Column #{cols[2]} cannot be identified.", "Wrong exception: #{$!.message}"
-    end
-  end
-
 end
