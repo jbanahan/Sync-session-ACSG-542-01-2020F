@@ -16,6 +16,10 @@ class CacheWrapper
     error_wrap {@cache.delete key}
   end
 
+  def reset
+    @cache.reset
+  end
+
   private
   def error_wrap &block
     begin

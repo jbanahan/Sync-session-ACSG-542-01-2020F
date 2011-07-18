@@ -31,6 +31,8 @@ class LinesController < ApplicationController
             line.save! 
             update_custom_fields line, params[update_custom_field_symbol]
             OpenChain::FieldLogicValidator.validate! line
+            line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>params[:milestone_plan_id]) if params[:milestone_plan_id]
+            line.piece_sets.each {|p| p.create_forecasts}
           end
           o.create_snapshot if o.respond_to?('create_snapshot')
         end
@@ -78,6 +80,7 @@ class LinesController < ApplicationController
               update_custom_fields line, params[update_custom_field_symbol]
               after_update line
               OpenChain::FieldLogicValidator.validate! line
+              line.piece_sets.each {|p| p.create_forecasts}
               o.create_snapshot if o.respond_to?('create_snapshot')
               add_flash :notices, "Line updated sucessfully."
               good = true

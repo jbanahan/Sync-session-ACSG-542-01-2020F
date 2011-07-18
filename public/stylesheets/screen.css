@@ -321,12 +321,6 @@ img {
   display: none;
 }
 
-/* feedback box */
-#mod_feedback textarea {
-  font-size: 90%;
-  width: 95%;
-}
-
 /* Edit tables */
 .label_cell {
 	font-weight: bold;
@@ -420,8 +414,50 @@ width:60%;
   margin: .5em 3em .5em 3em;
   text-align: center;
 }
+/* Milestones */
+.milestones_cont {
+  margin-bottom: 1em;
+}
+.ms_action_links {
+  text-align: right;
+}
+.ms_col_1 {
+  width: 5%;
+}
+.ms_col_2 {
+  width: 35%;
+}
+.ms_col_date {
+  width: 20%;
+}
+.ms_tbl {
+  width: 100%;
+}
+.milestone_subhead td {
+  padding: 3px;
+  text-align: center;
+  font-weight: bold;
+}
+.ms_pending {
+  background-color: green;
+}
+.ms_overdue {
+  background-color: red;
+}
+.ms_missed {
+  background-color: #FF704D;
+}
+.ms_achieved {
+  background-color: #66A366;
+}
+.ms_trouble {
+  background-color: yellow;
+}
 
 /* SCREEN SPECIFIC */
+.ord_det_row td{
+  border-top: 1px solid #d7d7d7;
+}
 .classification_box {
   width: 95%;
   margin-bottom: 10px;

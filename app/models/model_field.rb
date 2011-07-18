@@ -40,6 +40,12 @@ class ModelField
     @entity_type_field = o[:entity_type_field]
     @history_ignore = o[:history_ignore]
   end
+
+  #returns the value of the process_export method based on the object found within the given piece set (or nil if the object is not found)
+  def export_from_piece_set piece_set
+    obj = self.core_module.object_from_piece_set piece_set
+    obj.nil? ? nil : self.process_export(obj)
+  end
   
   #should the entity snapshot system ignore this field when recording an item's history state
   def history_ignore?

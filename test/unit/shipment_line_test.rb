@@ -10,6 +10,7 @@ class ShipmentLineTest < ActiveSupport::TestCase
     ps = PieceSet.create!(:order_line=>oline,:shipment_line=>sline,:quantity=>2)
     ps2 = PieceSet.create!(:order_line=>oline2,:shipment_line=>sline,:quantity=>8)
     
+    sline.reload
     r = sline.related_orders
     assert r.size==2, "Should have found 2 orders, found #{r.size}"
     [oline.order,oline2.order].each {|o| assert r.include?(o), "Should have found order #{o.order_number}, didn't."}

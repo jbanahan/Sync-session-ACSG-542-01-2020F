@@ -1,5 +1,4 @@
 class Order < ActiveRecord::Base
-  include OrderSupport
   include CustomFieldSupport
   include ShallowMerger
   include EntitySnapshotSupport
@@ -15,7 +14,8 @@ class Order < ActiveRecord::Base
 	has_many   :item_change_subscriptions, :dependent => :destroy
   has_many   :comments, :as => :commentable, :dependent => :destroy
   has_many   :attachments, :as => :attachable, :dependent => :destroy 	
-	
+	has_many   :piece_sets, :through => :order_lines
+
 	def related_shipments
 	  r = Set.new
 	  self.order_lines.each do |line|
@@ -81,11 +81,5 @@ class Order < ActiveRecord::Base
     else
       return base_object.where("1=0")
     end
-  end
-
-  private
-  #needed for OrderSupport mixin
-  def get_lines
-    return self.order_lines
   end
 end

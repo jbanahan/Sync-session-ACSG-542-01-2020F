@@ -9,3 +9,12 @@ CACHE = CacheWrapper.new(Rails.env=='test' ? TestExtensions::MockCache.new : Dal
 OpenChain::Application.initialize!
 
 Mime::Type.register "application/vnd.ms-excel", :xls
+
+if defined?(PhusionPassenger)
+  PhusionPassenger.on_event(:starting_worker_process) do |forked|
+    # Only works with DalliStore
+    if forked
+      CACHE.reset
+    end
+  end
+end

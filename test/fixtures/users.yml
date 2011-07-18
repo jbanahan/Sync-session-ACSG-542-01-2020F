@@ -5,6 +5,14 @@ masteruser:
   company_id: 1
   username: masteruser
   email: MyString@bademail.com
+  last_name: master_last
+  #begin authlogic/functional testing stuff
+  password_salt: <%= salt = Authlogic::Random.hex_token %>
+  crypted_password: <%= Authlogic::CryptoProviders::Sha512.encrypt("benrocks" + salt) %>
+  persistence_token: <%= Authlogic::Random.hex_token %>
+  perishable_token: <%= Authlogic::Random.friendly_token %>
+  tos_accept: <%=Time.now%>
+  #end authlogic/functional testing stuff
   order_view: true
   order_edit: true
   order_attach: true
@@ -36,6 +44,15 @@ adminuser:
   id: 8
   company_id: 1
   admin: true
+  email: adminuser@bademail.bad
+  last_name: admin_last
+  #begin authlogic/functional testing stuff
+  password_salt: <%= salt = Authlogic::Random.hex_token %>
+  crypted_password: <%= Authlogic::CryptoProviders::Sha512.encrypt("benrocks" + salt) %>
+  persistence_token: <%= Authlogic::Random.hex_token %>
+  perishable_token: <%= Authlogic::Random.friendly_token %>
+  tos_accept: <%=Time.now%>
+  #end authlogic/functional testing stuff
 
 vendoruser:
   id: 2
@@ -44,7 +61,14 @@ vendoruser:
   company_id: 2
   shipment_view: true
   shipment_edit: true
-  
+  email: vendoruser@bademail.bad
+  #begin authlogic/functional testing stuff
+  password_salt: <%= salt = Authlogic::Random.hex_token %>
+  crypted_password: <%= Authlogic::CryptoProviders::Sha512.encrypt("benrocks" + salt) %>
+  persistence_token: <%= Authlogic::Random.hex_token %>
+  perishable_token: <%= Authlogic::Random.friendly_token %>
+  tos_accept: <%=Time.now%>
+  #end authlogic/functional testing stuff
 
 vendor2user:
   id: 3
