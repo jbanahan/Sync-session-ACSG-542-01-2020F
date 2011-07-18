@@ -14,7 +14,7 @@ class MilestonePlanTest < ActiveSupport::TestCase
     assert_nil MilestonePlan.new.starting_definition
   end
 
-  test "auto-recreate after save" do
+  test "replan all" do
     o = Order.create!(:order_number=>"mptbf",:vendor_id=>companies(:vendor).id)
     o_line = o.order_lines.create!(:line_number=>1, :product_id=>Product.where(:vendor_id=>o.vendor_id).first.id, :quantity=>50)
     cv = o.get_custom_value @order_date
@@ -31,7 +31,8 @@ class MilestonePlanTest < ActiveSupport::TestCase
 
     @mp.update_attributes(:name=>"something different")
 
-    #saving @mp should have created miletones for ps
+    #replanning should build for assoicated piece sets
+    @mp.replan_all
 
     ps.reload
     assert ps.milestone_forecast_set

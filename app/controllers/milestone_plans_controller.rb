@@ -29,6 +29,7 @@ class MilestonePlansController < ApplicationController
         build_definitions @milestone_plan
         @milestone_plan.save
         if @milestone_plan.errors.blank?
+          @milestone_plan.delay.replan_all
           add_flash :notices, "Milestone plan created successfully."
           redirect_to edit_milestone_plan_path(@milestone_plan)
         else
@@ -49,6 +50,7 @@ class MilestonePlansController < ApplicationController
         build_definitions @milestone_plan
         @milestone_plan.save
         if @milestone_plan.errors.blank?
+          @milestone_plan.delay.replan_all
           add_flash :notices, "Milestone plan saved successfully."
         else
           errors_to_flash @milestone_plan

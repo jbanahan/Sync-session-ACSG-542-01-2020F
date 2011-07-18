@@ -14,6 +14,9 @@ $(function() {
 <%end%>
 
 <%=form_for @milestone_plan, :html=>{:id=>'frm_mp'} do |f| %>
+  <%if @milestone_plan.id %>
+  <div class='error' style='text-align:center;margin:2em;'><strong>Warning:</strong> Editing an existing milestone plan will replan all associated milestones.<br/>If you only want changes for new milestones, create a new plan.</div>
+  <%end%>
   <table>
     <%=field_row "Name", f.text_field(:name, :id=>"mp_name")%>
   </table>

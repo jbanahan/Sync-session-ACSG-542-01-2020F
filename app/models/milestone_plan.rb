@@ -6,8 +6,6 @@ class MilestonePlan < ActiveRecord::Base
   validate :only_one_starting_definition
   validate :only_one_finish_definition
 
-  after_save :update_plans
-
   accepts_nested_attributes_for :milestone_definitions
 
   def build_forecasts piece_set
@@ -31,6 +29,10 @@ class MilestonePlan < ActiveRecord::Base
       return md if md.previous_milestone_definition_id.nil?
     end
     nil
+  end
+
+  def replan_all
+    PieceSet.where(:milestone_plan_id=>self.id).each {|ps| ps.create_forecasts}
   end
 
   private
@@ -59,8 +61,5 @@ class MilestonePlan < ActiveRecord::Base
         end
       end
     end
-  end
-  def update_plans
-    PieceSet.where(:milestone_plan_id=>self.id).each {|ps| ps.create_forecasts}
   end
 end
