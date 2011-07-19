@@ -618,6 +618,16 @@ class ModelField
     add_fields CoreModule::ORDER, [
       [1,:ord_ord_num,:order_number,"Order Number"],
       [2,:ord_ord_date,:order_date,"Order Date",{:data_type=>:date}],
+      [3,:ord_ms_state,:state,"Milestone State",{:data_type=>:string,
+        :import_lambda => lambda {|o,d| return "Milestone State was ignored. (read only)"},
+        :export_lambda => lambda {|obj| obj.worst_milestone_state },
+        :qualified_field_name => %{(SELECT milestone_forecast_sets.state as ms_state 
+            FROM milestone_forecast_sets 
+            INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id 
+            INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id
+            WHERE order_lines.order_id = orders.id 
+            ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)}
+      }]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
@@ -627,7 +637,12 @@ class ModelField
     add_fields CoreModule::ORDER_LINE, [
       [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
       [3,:ordln_ordered_qty,:quantity,"Order Quantity",{:data_type=>:decimal}],
-      [4,:ordln_ppu,:price_per_unit,"Price / Unit",{:data_type=>:decimal}]
+      [4,:ordln_ppu,:price_per_unit,"Price / Unit",{:data_type=>:decimal}],
+      [5,:ordln_ms_state,:state,"Milestone State",{:data_type=>:string,
+        :import_lambda => lambda {|obj,data| return "Milestone State was ignored. (read only)"},
+        :export_lambda => lambda {|obj| obj.worst_milestone_state },
+        :qualified_field_name => "(SELECT IFNULL(milestone_forecast_sets.state,'') as ms_state FROM milestone_forecast_sets INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id WHERE piece_sets.order_line_id = order_lines.id ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)"
+      }]
     ]
     add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
 

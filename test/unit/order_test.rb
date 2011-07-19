@@ -2,6 +2,37 @@ require 'test_helper'
 
 class OrderTest < ActiveSupport::TestCase
 
+  test "worst milestone state" do
+    cd = CustomDefinition.create!(:module_type=>"Shipment",:data_type=>:date,:label=>"Arrival Date")
+    mp = MilestonePlan.create!(:name=>"worst state")
+    md_1 = mp.milestone_definitions.create!(:model_field_uid=>:ord_ord_date)
+    mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{cd.id}",:previous_milestone_definition_id=>md_1.id,:days_after_previous=>5)
+    
+
+    o = Order.create!(:order_number=>"olms",:vendor_id=>companies(:vendor).id,:order_date=>30.days.ago)
+    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first,:quantity=>100)
+    
+    s_1 = Shipment.create!(:reference=>"ref1",:vendor_id=>o.vendor_id)
+    s_line_1 = s_1.shipment_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>90)
+    ps_1 = o_line.piece_sets.create!(:quantity=>90,:shipment_line_id=>s_line_1.id,:milestone_plan_id=>mp.id)
+    
+    cv = s_1.get_custom_value(cd)
+    cv.value = 29.days.ago #passes milestone test, so should have milestone state "Achieved"
+    cv.save!
+
+    s_2 = Shipment.create!(:reference=>"ref2",:vendor_id=>o.vendor_id)
+    s_line_2 = s_2.shipment_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>10)
+    ps_2 = o_line.piece_sets.create!(:quantity=>10,:shipment_line_id=>s_line_2.id,:milestone_plan_id=>mp.id)
+    #s_2 does not have arrival date set so should have milestone state "Overdue"
+
+    #build milestone forecast sets
+    [ps_1,ps_2].each {|p| p.create_forecasts}
+
+    o.reload
+
+    assert "Overdue", o.worst_milestone_state
+  end
+
   test "master company user can view" do
     ord = Order.find(1)
     user = User.find(1)

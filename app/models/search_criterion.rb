@@ -36,8 +36,9 @@ class SearchCriterion < ActiveRecord::Base
     return !value_to_test.nil? if self.operator == "notnull"
     
     if [:string, :text].include? d
+      return self.value.nil? if value_to_test.nil?
       if self.operator == "eq"
-        return value_to_test.downcase == self.value.downcase
+        return value_to_test.nil? ? self.value.nil? : value_to_test.downcase == self.value.downcase
       elsif self.operator == "co"
         return value_to_test.downcase.include?(self.value.downcase)
       elsif self.operator == "sw"
