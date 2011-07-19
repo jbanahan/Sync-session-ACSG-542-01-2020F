@@ -3,10 +3,8 @@ class SearchSchedule < ActiveRecord::Base
 
   belongs_to :search_setup
 
-  #reload all SearchSchedules within the given scheduler
-  def self.reset_schedule scheduler, log=nil
-    begin
-    log.info "#{Time.now}: Resetting Scheduled Jobs" if log
+  def self.unschedule_jobs scheduler, log=nil
+    log.info "#{Time.now}: Clearing Scheduled Jobs" if log
     #unschedule all jobs
     jobs = scheduler.find_by_tag(RUFUS_TAG) 
     log.info "#{Time.now}: #{jobs.length} jobs to be removed." if log
@@ -14,6 +12,11 @@ class SearchSchedule < ActiveRecord::Base
       log.info "#{Time.now}: Removing job #{job.job_id}" if log
       scheduler.unschedule job.job_id
     }
+  end
+
+  #load all SearchSchedules within the given scheduler
+  def self.schedule_jobs scheduler, log=nil
+    begin
     #schedule all
     SearchSchedule.all.each {|ss| ss.schedule scheduler, log}
     rescue Exception => e
