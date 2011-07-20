@@ -208,5 +208,6 @@ OpenChain::Application.routes.draw do
     end 
   end
   
+  resources :error_log_entries, :only => [:index, :show]
   root :to => "dashboard_widgets#index"
 end
