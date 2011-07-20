@@ -107,10 +107,12 @@ class FileImportProcessor
             object_map[mod] = obj
           end
         end
-        object_map.values.each do |obj|
-          if obj.class.include?(StatusableSupport)
-            obj.set_status
-            obj.save!
+        if save
+          object_map.values.each do |obj|
+            if obj.class.include?(StatusableSupport)
+              obj.set_status
+              obj.save!
+            end
           end
         end
         Rails.logger.info "object_map[@core_module] is nill for row #{row_number} in imported_file: #{@import_file.id}" if object_map[@core_module].nil?
