@@ -22,11 +22,13 @@ class CacheWrapper
 
   private
   def error_wrap &block
+    r = nil
     begin
-      yield
+      r = yield
     rescue
       $!.email_me
     end
+    r
   end
 
 end

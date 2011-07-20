@@ -67,7 +67,7 @@ class FtpWalker
       ftp.connect server, port
       yield ftp
     rescue => e
-      e.email_me
+      e.log_me
       raise e
     ensure
       ftp.close if !ftp.nil? && !ftp.closed?
@@ -98,7 +98,7 @@ class FtpWalker
           process_file File.new(current_file_path), search_setup
           ftp.delete f
         rescue
-          $!.email_me ["Error processing file from ftp walker.","Current File Path: #{current_file_path}"], [current_file_path]
+          $!.log_me ["Error processing file from ftp walker.","Current File Path: #{current_file_path}"], [current_file_path]
         ensure
           @@files_being_processed.delete f
         end

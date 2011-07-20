@@ -749,7 +749,7 @@ class ModelField
       begin
         raise "cache_time was a #{cache_time.class} object!"
       rescue
-        $!.email_me ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
+        $!.log_me ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
       ensure
         cache_time = nil
         reload

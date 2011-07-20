@@ -23,14 +23,15 @@ String.class_eval do
 end
 
 Exception.class_eval do
-  #emails the exception to bug@aspect9.com.  
-  #Delayed option is ignored when attachment_paths are included since we can't be garunteed that the attachments 
-  #will be on the same server as the delayed_job worker
-  def email_me messages=[], attachment_paths=[], delayed=true
-    if delayed && attachment_paths.blank?
-      OpenMailer.delay.send_generic_exception(self,messages,self.message,self.backtrace)
-    else
-      OpenMailer.send_generic_exception(self,messages,self.message,self.backtrace,attachment_paths).deliver
+  #logs the exception to the database and emails it to bug@aspect9.com
+  def log_me messages=[], attachment_paths=[]
+    e = ErrorLogEntry.create_from_exception $!, messages
+    if e.email_me?
+      if attachment_paths.blank?
+        OpenMailer.delay.send_generic_exception(self,messages,self.message,self.backtrace)
+      else
+        OpenMailer.send_generic_exception(self,messages,self.message,self.backtrace,attachment_paths).deliver
+      end
     end
   end
 end

@@ -101,7 +101,7 @@ class ImportedFilesController < ApplicationController
           begin
             render :json=>f.preview(current_user) 
           rescue
-            $!.email_me ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
+            $!.log_me ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
             render :json=>{:error=>true}
           end
         }

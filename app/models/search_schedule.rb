@@ -114,7 +114,7 @@ class SearchSchedule < ActiveRecord::Base
           "Account: #{self.ftp_username}\r"+
           "Subfolder: #{self.ftp_subfolder}\r"+
           "Error Message: #{e.message}")
-        e.email_me ["FTP TO: #{self.ftp_server}","FTP USER: #{self.ftp_username}","FTP OPTS: #{opts}","User: #{user}"]
+        e.log_me ["FTP TO: #{self.ftp_server}","FTP USER: #{self.ftp_username}","FTP OPTS: #{opts}","User: #{user}"]
       end
       "#{Time.now}: FTP complete"
     end
