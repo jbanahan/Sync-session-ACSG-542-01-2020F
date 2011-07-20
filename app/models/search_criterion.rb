@@ -29,7 +29,7 @@ class SearchCriterion < ActiveRecord::Base
     mf = find_model_field
     d = mf.data_type
 
-    nil_fails_operators = ["co","sw","ew","gt","lt","bda","ada","adf","bdf"] #all of these operators should return false if value_to_test is nil
+    nil_fails_operators = ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf"] #all of these operators should return false if value_to_test is nil
     return false if value_to_test.nil? && nil_fails_operators.include?(self.operator)
 
     return value_to_test.nil? if self.operator == "null" 
@@ -41,6 +41,8 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.nil? ? self.value.nil? : value_to_test.downcase == self.value.downcase
       elsif self.operator == "co"
         return value_to_test.downcase.include?(self.value.downcase)
+      elsif self.operator == "nc"
+        return !value_to_test.downcase.include?(self.value.downcase)
       elsif self.operator == "sw"
         return value_to_test.downcase.start_with?(self.value.downcase)
       elsif self.operator == "ew"
@@ -165,6 +167,8 @@ class SearchCriterion < ActiveRecord::Base
     
     case self.operator
     when "co"
+      return "%#{self_val}%"
+    when "nc"
       return "%#{self_val}%"
     when "sw"
       return "#{self_val}%"

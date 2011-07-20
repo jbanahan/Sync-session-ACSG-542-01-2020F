@@ -99,6 +99,7 @@ var OCSearch = (function() {
         h += "<option value='sw'>Starts With</option>";
         h += "<option value='ew'>Ends With</option>";
         h += "<option value='co'>Contains</option>";
+        h += "<option value='nc'>Doesn't Contain</option>";
         h += "<option value='in'>One Of</option>";
       }
       h += "<option value='null'>Is Empty</option>";
