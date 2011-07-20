@@ -2,9 +2,9 @@
 require 'rufus/scheduler'
 require 'open_chain/delayed_job_manager'
 
-def error_wrapper job_name, &block
+def job_wrapper job_name, &block
   begin
-    yield
+    yield unless Rails.env=='test'
   rescue
     OpenMailer.send_generic_exception $!, ["Scheduled Job: #{job_name}"]
   end
@@ -21,12 +21,14 @@ def execute_scheduler
 
   #register to be active server
   scheduler.every '10s' do 
-    ScheduleServer.check_in
+    job_wrapper "Schedule Check In" do
+      ScheduleServer.check_in
+    end
   end
 
   #Rebuild index to capture any saved schedules
   scheduler.every("10m") do
-    error_wrapper "Search Schedule" do
+    job_wrapper "Search Schedule" do
       if Rails.env == "production"
         logger.info "#{Time.now}: Rebuilding search schedule jobs "
         SearchSchedule.unschedule_jobs scheduler, logger
@@ -39,7 +41,7 @@ def execute_scheduler
 
   #make sure delayed job workers are running
   scheduler.every("30s") do
-    error_wrapper "Delayed Job Monitor" do
+    job_wrapper "Delayed Job Monitor" do
       if DelayedJobManager.script_running?
         logger.info "#{Time.now}: Skipping delayed_job check. Script already running."
       else
@@ -66,13 +68,13 @@ def execute_scheduler
   end
   
   scheduler.cron '0 23 * * *' do
-    error_wrapper "Messages Purge" do
+    job_wrapper "Messages Purge" do
       Message.purge_messages
     end
   end
 
   scheduler.every("3m") do
-    error_wrapper "FTP Sweeper" do
+    job_wrapper "FTP Sweeper" do
       if_active_server do
         m = MasterSetup.first
         if m && m.system_code
