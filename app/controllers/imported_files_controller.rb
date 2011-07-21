@@ -85,15 +85,17 @@ class ImportedFilesController < ApplicationController
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"download",:module_name=>"uploaded file"}) {
       if f.nil?
         error_redirect "File could not be found."
-      elsif f.last_file_import_result.nil?
+      elsif f.last_file_import_finished.nil?
         error_redirect "No results available.  This file has not been processed yet."
       else
-        if import_file.attached_file_name.downcase.ends_with?("xls") 
-          book = XlsMaker.new.make_from_results f.last_file_import_result.changed_objects, f.search_columns.order("rank asc")
+        if f.attached_file_name.downcase.ends_with?("xls") 
+          book = XlsMaker.new.make_from_results f.last_file_import_finished.changed_objects, f.search_columns.order("rank asc"), f.core_module.default_module_chain 
           spreadsheet = StringIO.new 
           book.write spreadsheet 
-          send_data spreadsheet.string, :filename => f.attached_file_name, :type =>  "application/vnd.ms-excel"
+          send_data spreadsheet.string, :filename => f.attached_file_name, :type =>  "application/vnd.ms-excel", :disposition=>'attachment'
         else
+          csv = CsvMaker.new.make_from_results f.last_file_import_finished.changed_objects, f.search_columns.order("rank ASC"), f.core_module.default_module_chain
+          send_data csv, :filename => f.attached_file_name, :type=>f.attached_content_type, :disposition=>'attachment'
         end
       end
     }

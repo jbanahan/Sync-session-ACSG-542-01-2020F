@@ -14,12 +14,19 @@ class ImportedFilesControllerTest < ActionController::TestCase
 
     prod_ident = "MYPRODUCTNUMBER_DOWNLOAD_ITEMS"
 
-    tf = TempFile.new(['download-items-test','.csv'])
-    tf << "#{order_number},EA"
+    tf = Tempfile.new(['download-items-test','.csv'])
+    tf << "#{prod_ident},EA"
+    tf.close
 
-    imp = ss.imported_files.create!(:user_id=>ss.user.id,:module_type=>ss.module_type,:attached=>File.open(tf.path,'rb'))
+    imp = ss.imported_files.create!(:user_id=>ss.user.id,:module_type=>ss.module_type,:attached=>File.open(tf.path,'rb'),:ignore_first_row=>false)
 
     assert imp.process(ss.user)
+    assert imp.errors.blank?
+
+    p = Product.where(:unique_identifier=>prod_ident).first
+    assert_equal "EA", p.unit_of_measure
+    p.unit_of_measure = "DOZ"
+    p.save!
 
     get :download_items, {:id=>imp.id}
     
@@ -27,14 +34,10 @@ class ImportedFilesControllerTest < ActionController::TestCase
 
     imp.reload
 
-    p = Product.where(:unique_identifier=>prod_ident).first
-    assert_not_nil p
-    p.unit_of_measure = "DOZ"
-    p.save!
 
     b = @response.body
 
-    assert_equal "#{product_ident},DOZ"
+    assert b.include?("#{prod_ident},DOZ")
 
   end
 end

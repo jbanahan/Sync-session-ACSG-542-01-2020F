@@ -237,7 +237,7 @@ class ApplicationController < ActionController::Base
         headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
       end
     
-      render :text => CsvMaker.new.make(@current_search,@results) 
+      render :text => CsvMaker.new.make_from_results(@current_search,@results) 
     end
 
     def error_redirect(message=nil)
