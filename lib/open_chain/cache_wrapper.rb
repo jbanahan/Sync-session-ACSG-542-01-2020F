@@ -26,7 +26,7 @@ class CacheWrapper
     begin
       r = yield
     rescue
-      $!.email_me
+      $!.log_me
     end
     r
   end
