@@ -64,13 +64,14 @@
   <% unless @imported_file.search_setup.nil? %>
     <button id='btn_process'>Process</button>
   <% end %>
-  <button id='btn_download'>Download</button>
   <% if @imported_file.deletable? && @imported_file.can_delete?(current_user)%>
     <%=button_to('Delete', imported_file_path(@imported_file),:method=>:delete, :confirm=>"Are you sure?", :id=>"btn_delete")%>
   <% end %>
   <% unless @file_import_result.nil?%>
     <button class='btn_link' link_to='<%=file_import_result_path(@file_import_result)%>'>Log</button>
+    <button class='btn_link' link_to='<%=download_items_imported_file_path(@imported_file)%>'>Download Items</button>
   <%end%>
+  <button id='btn_download'>Download Original</button>
   <%unless @bulk_actions.blank?%>
     <%@bulk_actions.each do |k,v|%>
       <button id='<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>'><%=k%></button>
