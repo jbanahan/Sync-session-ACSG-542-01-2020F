@@ -82,7 +82,7 @@ class SearchSchedule < ActiveRecord::Base
 
   def write_xls srch_setup
     t = Tempfile.new("scheduled_search_run")
-    XlsMaker.new.make(srch_setup,srch_setup.search).write t
+    XlsMaker.new.make_from_search(srch_setup,srch_setup.search).write t
     t
   end
 

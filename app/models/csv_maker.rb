@@ -1,26 +1,30 @@
 class CsvMaker
   require 'csv'
 
-  attr_accessor :columns
-  attr_accessor :opts
-  attr_accessor :all_modules
+  def make_from_search(current_search, results)
+    columns = current_search.search_columns.order("rank ASC")
+    generate results, columns, current_search.search_criterions, current_search.module_chain
+  end
 
-  def make(current_search, results)
-    self.opts = {:write_headers=>true,:row_sep => "\r\n"}
-    headers = []
-    self.all_modules = []
-    self.columns = current_search.search_columns.order("rank ASC")
-    self.columns.each do |c|
-      headers << model_field_label(c.model_field_uid)
-      mf = ModelField.find_by_uid(c.model_field_uid)
-      self.all_modules << mf.core_module unless mf.uid == :blank || self.all_modules.include?(mf.core_module)
-    end
-    opts[:headers] = headers 
+  def make_from_results results, columns, module_chain
+    generate results, columns, [], module_chain
+  end
 
-    x = CSV.generate(self.opts) do |csv|
-      gm = GridMaker.new(results,self.columns,current_search.search_criterions,current_search.module_chain)
+  private
+
+  def generate results, columns, criterions, module_chain
+    CSV.generate(prep_opts(columns)) do |csv|
+      gm = GridMaker.new(results,columns,criterions,module_chain)
       gm.go {|row,obj| csv << row}
     end
+  end
+
+  def prep_opts columns
+    opts = {:write_headers=>true,:row_sep => "\r\n",:headers=>[]} 
+    columns.each do |c|
+      opts[:headers] << model_field_label(c.model_field_uid)
+    end
+    opts
   end
 
   def model_field_label(model_field_uid) 

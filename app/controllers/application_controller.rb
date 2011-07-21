@@ -406,7 +406,7 @@ class ApplicationController < ActionController::Base
           render :json => sr
         }
         format.xls {
-          book = XlsMaker.new.make(@current_search,@results.where("1=1")) 
+          book = XlsMaker.new.make_from_search(@current_search,@results.where("1=1")) 
           spreadsheet = StringIO.new 
           book.write spreadsheet 
           send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
