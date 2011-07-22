@@ -12,7 +12,7 @@ module OpenChain
 
     #do not initialize this method directly, use the static #upgrade method instead
     def initialize target
-      @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now}_#{target}.log" 
+      @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log" 
       @log = Logger.new(@log_path)
       @target = target
     end
@@ -44,6 +44,12 @@ module OpenChain
       capture_and_log "touch tmp/stop.txt"
       @log.info "Stopping Delayed Job"
       DelayedJobManager.stop
+      dj_count = 0
+      while DelayedJobManager.running? && dj_count < 10
+        @log.info "Waiting for delayed job to stop"
+        sleep 10
+        dj_count += 1
+      end
       raise UpgradeFailure.new("Delayed job should be stopped and is still running.") if DelayedJobManager.running?
       @log.info "Delayed Job stopped, running bundle install"
       capture_and_log "bundle install"
