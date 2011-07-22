@@ -13,7 +13,7 @@ private
     stdout, stderr, status = Open3.capture3 'git fetch'
     raise "git fetch failed: #{stderr}" unless status.success?
     puts "Source fetched, checking out #{target}"
-    stdout, stderr, status = Open3.catpure3 "git checkout #{target}"
+    stdout, stderr, status = Open3.capture3 "git checkout #{target}"
     raise "git checkout failed: #{stderr}" unless status.success?
     puts "Source checked out"
   end
