@@ -25,6 +25,7 @@ end
 Exception.class_eval do
   #logs the exception to the database and emails it to bug@aspect9.com
   def log_me messages=[], attachment_paths=[]
+    return unless MasterSetup.connection.table_exists? 'error_log_entries'
     e = ErrorLogEntry.create_from_exception $!, messages
     msgs = messages.blank? ? [] : messages
     msgs << "Error Database ID: #{e.id}"
