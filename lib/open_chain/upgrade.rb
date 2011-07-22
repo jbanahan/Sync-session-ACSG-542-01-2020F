@@ -33,7 +33,7 @@ module OpenChain
       @log.info "Source checked out"
     end
 
-    def apply_upgrade log
+    def apply_upgrade
       
       @log.info "Touching stop.txt"
       capture_and_log "touch tmp/stop.txt"
