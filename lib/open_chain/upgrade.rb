@@ -19,9 +19,14 @@ module OpenChain
     
     #do not call this directly, use the static #upgrade method instead
     def go
-      get_source 
-      apply_upgrade
-      @log_path
+      begin
+        get_source 
+        apply_upgrade
+        @log_path
+      rescue
+        @log.error $!.message
+        raise $!
+      end
     end
 
     private
@@ -52,8 +57,8 @@ module OpenChain
 
     def capture_and_log command
       stdout, stderr, status = Open3.capture3 command
-      @log.info stdout
-      @log.info stderr
+      @log.info stdout unless stdout.blank?
+      @log.info stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
     end
   end
