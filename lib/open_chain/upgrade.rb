@@ -52,8 +52,8 @@ module OpenChain
 
     def capture_and_log command
       stdout, stderr, status = Open3.capture3 command
-      @log.info stdout.to_s
-      @log.info stderr.to_s
+      @log.info stdout
+      @log.info stderr
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
     end
   end
