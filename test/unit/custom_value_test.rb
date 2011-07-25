@@ -1,7 +1,41 @@
 require 'test_helper'
 
 class CustomValueTest < ActiveSupport::TestCase
-  # Replace this with your real tests.
+  
+  test "date processing" do
+    cd = CustomDefinition.create!(:data_type=>:date,:module_type=>"Product",:label=>"myl")
+
+    #date object
+    o = Order.new
+    cv = o.get_custom_value cd
+    cv.value = Date.new(2010,01,03)
+    assert_equal Date.new(2010,01,03), cv.value
+
+    #us format
+    o = Order.new
+    cv = o.get_custom_value cd
+    cv.value = "12/25/2011"
+    assert_equal Date.new(2011,12,25), cv.value
+
+    #rest of world format
+    o = Order.new
+    cv = o.get_custom_value cd
+    cv.value = "25-8-2011"
+    assert_equal Date.new(2011,8,25), cv.value
+
+    #geek format
+    o = Order.new
+    cv = o.get_custom_value cd
+    cv.value = "2004-04-20"
+    assert_equal Date.new(2004,4,20), cv.value
+
+    #nil value
+    o = Order.new
+    cv = o.get_custom_value cd
+    cv.value = nil
+    assert_nil cv.value
+  end
+
   test "uniqueness" do
     base = CustomValue.create!(:custom_definition => CustomDefinition.first, :customizable_id => 1000,
       :customizable_type => "Order")

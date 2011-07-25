@@ -8,9 +8,10 @@ class ModelField
   
   def initialize(rank,uid,core_module, field, options={})
     o = {:import_lambda =>  lambda {|obj,data|
-           obj.send("#{@field_name}=".intern,data)
-           return "#{FieldLabel.label_text uid} set to #{data}"
-          },
+          d = [:date,:datetime].include?(self.data_type) ? parse_date(data) : data
+          obj.send("#{@field_name}=".intern,d)
+          return "#{FieldLabel.label_text uid} set to #{d}"
+        },
           :export_lambda => lambda {|obj|
             if self.custom?
             obj.get_custom_value(CustomDefinition.cached_find(@custom_id)).value
@@ -760,4 +761,14 @@ class ModelField
     end
   end
 
+  def parse_date d
+    return d unless d.is_a?(String)
+    if /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.match(d)
+      return Date.new(d[6,4].to_i,d[0,2].to_i,d[3,2].to_i)
+    elsif /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.match(d)
+      return Date.new(d[6,4].to_i,d[3,2].to_i,d[0,2].to_i)
+    else
+      return d
+    end
+  end
 end
