@@ -26,6 +26,7 @@ $(function() {
   <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
   <% ss = ScheduleServer.first %>
   <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})"%>
+  <%=field_row "Target Version", @ms.target_version%>
   <%=field_row "Server With Migration Lock", @ms.migration_host%>
 </table>
 <%end%>
@@ -40,5 +41,15 @@ $(function() {
       <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><textarea width='15'><%=dj.handler%></textarea></td>
       <td><%=dj.last_error%></td><td><%=dj.run_at%></td><td><%=dj.locked_at%></td><td><%=dj.failed_at%></td><td><%=dj.locked_by%></td>
     </tr>
+  <% end %>
+</table>
+
+<h2>Instances</h2>
+<table class='detail_table'>
+  <thead>
+    <tr><th>Host Name</th><th>Version</th><th>Last Check In</th></tr>
+  </thead>
+  <% InstanceInformation.order("last_check_in DESC").each do |ii| %>
+    <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'><td><%=ii.host%></td><td><%=ii.version%></td><td><%=ii.last_check_in%></td></tr>
   <% end %>
 </table>

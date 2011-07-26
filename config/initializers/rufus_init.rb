@@ -34,6 +34,13 @@ def execute_scheduler
     end
   end
 
+  #check in for Instance Information table
+  scheduler.every '30s' do
+    job_wrapper "Instance Check In" do
+      InstanceInformation.check_in
+    end
+  end
+
   #Rebuild index to capture any saved schedules
   scheduler.every("10m") do
     job_wrapper "Search Schedule" do

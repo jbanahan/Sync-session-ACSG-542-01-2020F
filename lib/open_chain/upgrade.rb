@@ -12,16 +12,21 @@ module OpenChain
 
     #do not initialize this method directly, use the static #upgrade method instead
     def initialize target
-      @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log" 
-      @log = Logger.new(@log_path)
       @target = target
     end
     
     #do not call this directly, use the static #upgrade method instead
     def go
+      return "Skipping, upgrade_running.txt exists"if File.exists?("tmp/upgrade_running.txt")
       begin
+        capture_and_log "touch tmp/upgrade_running.txt"
+        @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log" 
+        @log = Logger.new(@log_path)
         get_source 
         apply_upgrade
+        #upgrade_running.txt will stick around if one of the previous methods blew an exception
+        #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
+        capture_and_log "rm tmp/upgrade_running.txt" 
         @log_path
       rescue
         @log.error $!.message
