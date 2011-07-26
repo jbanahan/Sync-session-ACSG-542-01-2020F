@@ -30,7 +30,7 @@ def execute_scheduler
   #check for upgrades
   scheduler.every '30s' do
     job_wrapper "Upgrade Check" do
-      OpenChain::Upgrade.upgrade MasterSetup.get.target_version if MasterSetup.need_upgrade?
+      OpenChain::Upgrade.upgrade MasterSetup.get.target_version if Rails.env=="production" && MasterSetup.need_upgrade?
     end
   end
 
