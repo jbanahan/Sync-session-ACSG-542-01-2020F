@@ -9,6 +9,7 @@ class Shipment < ActiveRecord::Base
 	belongs_to	:ship_to,	:class_name => "Address"
 	
 	has_many   :shipment_lines, :dependent => :destroy
+  has_many   :piece_sets, :through=>:shipment_lines
   has_many   :histories, :dependent => :destroy
   has_many   :comments, :as => :commentable, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy

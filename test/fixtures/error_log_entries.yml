@@ -1,0 +1,13 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  exception_class: MyString
+  error_message: MyText
+  additional_messages_json: MyText
+  backtrace_json: MyText
+
+two:
+  exception_class: MyString
+  error_message: MyText
+  additional_messages_json: MyText
+  backtrace_json: MyText

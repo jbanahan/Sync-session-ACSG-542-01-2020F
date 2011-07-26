@@ -2,7 +2,20 @@ require 'test_helper'
  
 class CoreExtTest < ActiveSupport::TestCase 
 
-  test "Exception email_me with attachments" do
+  test "Log exception" do
+    begin
+      raise "logged_exception"
+    rescue
+      $!.log_me ["extra_message_1","extra_message_2"]
+    end
+
+    e = ErrorLogEntry.last
+    assert_equal "logged_exception", e.error_message
+    assert e.backtrace.is_a?(Array)
+    assert_equal "extra_message_1", e.additional_messages[0]
+    assert_equal "extra_message_2", e.additional_messages[1]
+  end
+  test "Exception log_me with attachments" do
     temp_files = []
     temp_strings = ['test_file_1','test_file_2']
     temp_strings.each do |t|
@@ -15,23 +28,19 @@ class CoreExtTest < ActiveSupport::TestCase
     begin
       raise "exception_mail"
     rescue
-      $!.email_me [], temp_files.collect {|t| t.path}, true #setting delayed=true, should be ignored because attachments are there
+      $!.log_me [], temp_files.collect {|t| t.path}
     end
     sent_mail = ActionMailer::Base.deliveries.pop
     assert_equal "bug@aspect9.com", sent_mail.to.first
     assert_equal 2, sent_mail.attachments.size
   end
 
-  test "Exception email_me" do
+  test "Exception email" do
     begin
       raise "Hello World"
     rescue
-      $!.email_me [], [], false #false = not delayed
-      $!.email_me #default = delayed
+      $!.log_me
     end
-    sent_mail = ActionMailer::Base.deliveries.pop
-    assert_equal "bug@aspect9.com", sent_mail.to.first 
-    assert_equal "[chain.io Exception] - Hello World", sent_mail.subject
     dj = Delayed::Job.first
     assert dj.handler.include?("send_generic_exception")
   end

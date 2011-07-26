@@ -1,5 +1,4 @@
 class Order < ActiveRecord::Base
-  include OrderSupport
   include CustomFieldSupport
   include ShallowMerger
   include EntitySnapshotSupport
@@ -15,7 +14,8 @@ class Order < ActiveRecord::Base
 	has_many   :item_change_subscriptions, :dependent => :destroy
   has_many   :comments, :as => :commentable, :dependent => :destroy
   has_many   :attachments, :as => :attachable, :dependent => :destroy 	
-	
+	has_many   :piece_sets, :through => :order_lines
+
 	def related_shipments
 	  r = Set.new
 	  self.order_lines.each do |line|
@@ -83,9 +83,21 @@ class Order < ActiveRecord::Base
     end
   end
 
-  private
-  #needed for OrderSupport mixin
-  def get_lines
-    return self.order_lines
+  def worst_milestone_state
+    return nil if self.piece_sets.blank?
+    highest_index = nil
+    self.piece_sets.each do |p|
+      ms = p.milestone_state
+      if ms
+        ms_index = MilestoneForecast::ORDERED_STATES.index(ms)
+        if highest_index.nil?
+          highest_index = ms_index
+        elsif !ms_index.nil? && ms_index > highest_index
+          highest_index = ms_index
+        end
+      end
+    end
+    highest_index.nil? ? nil : MilestoneForecast::ORDERED_STATES[highest_index]
   end
+
 end

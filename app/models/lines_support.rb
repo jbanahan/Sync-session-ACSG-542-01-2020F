@@ -49,10 +49,38 @@ module LinesSupport
     end
   end
 
+  #returns the worst milestone state of all associated piece sets
+  def worst_milestone_state
+    return nil if self.piece_sets.blank?
+    highest_index = nil
+    self.piece_sets.each do |p|
+      ms = p.milestone_state
+      if ms
+        ms_index = MilestoneForecast::ORDERED_STATES.index(ms)
+        if highest_index.nil?
+          highest_index = ms_index
+        elsif !ms_index.nil? && ms_index > highest_index
+          highest_index = ms_index
+        end
+      end
+    end
+    highest_index.nil? ? nil : MilestoneForecast::ORDERED_STATES[highest_index]
+  end
+
   private
   def process_link field_symbol, id
     unless id.nil?
       ps = self.piece_sets.where(field_symbol=>id).first
+      if ps.nil? #if there is a PieceSet only linked to the "linked line", it's a place holder that needs to have it's quantity reduced or be replaced
+        holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0))=?",id).first
+        if holding_piece_set
+          if holding_piece_set.quantity <= self.quantity
+            ps = holding_piece_set
+          else
+            holding_piece_set.update_attributes(:quantity=>holding_piece_set.quantity-self.quantity)
+          end
+        end
+      end
       ps = self.piece_sets.build(field_symbol=>id) if ps.nil?
       ps.quantity = self.quantity
       ps.save

@@ -2,12 +2,16 @@
 require 'rufus/scheduler'
 require 'open_chain/delayed_job_manager'
 
-def error_wrapper job_name, &block
+def job_wrapper job_name, &block
   begin
-    yield
+    yield unless Rails.env=='test'
   rescue
     OpenMailer.send_generic_exception $!, ["Scheduled Job: #{job_name}"]
   end
+end
+
+def if_active_server &block
+  yield if ScheduleServer.active_schedule_server?
 end
 
 def execute_scheduler
@@ -15,12 +19,20 @@ def execute_scheduler
   scheduler = Rufus::Scheduler.start_new  
   logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
 
+  #register to be active server
+  scheduler.every '10s' do 
+    job_wrapper "Schedule Check In" do
+      ScheduleServer.check_in
+    end
+  end
+
   #Rebuild index to capture any saved schedules
   scheduler.every("10m") do
-    error_wrapper "Search Schedule" do
+    job_wrapper "Search Schedule" do
       if Rails.env == "production"
         logger.info "#{Time.now}: Rebuilding search schedule jobs "
-        SearchSchedule.reset_schedule scheduler, logger
+        SearchSchedule.unschedule_jobs scheduler, logger
+        if_active_server {SearchSchedule.schedule_jobs scheduler, logger}
       else
         logger.info "Skipping scheduled job rebuild: Not production"
       end
@@ -28,8 +40,8 @@ def execute_scheduler
   end
 
   #make sure delayed job workers are running
-  scheduler.every("2m") do
-    error_wrapper "Delayed Job Monitor" do
+  scheduler.every("30s") do
+    job_wrapper "Delayed Job Monitor" do
       if DelayedJobManager.script_running?
         logger.info "#{Time.now}: Skipping delayed_job check. Script already running."
       else
@@ -55,19 +67,27 @@ def execute_scheduler
     end
   end
   
+  scheduler.cron '0 23 * * *' do
+    job_wrapper "Messages Purge" do
+      Message.purge_messages
+    end
+  end
+
   scheduler.every("3m") do
-    error_wrapper "FTP Sweeper" do
-      m = MasterSetup.first
-      if m && m.system_code
-        if m.ftp_polling_active?
-          logger.info "#{Time.now}: Sweeping FTP folder."
-          FtpWalker.new.go
-          logger.info "#{Time.now}: FTP Sweep Complete"
+    job_wrapper "FTP Sweeper" do
+      if_active_server do
+        m = MasterSetup.first
+        if m && m.system_code
+          if m.ftp_polling_active?
+            logger.info "#{Time.now}: Sweeping FTP folder."
+            FtpWalker.new.go
+            logger.info "#{Time.now}: FTP Sweep Complete"
+          else
+            logger.info "#{Time.now}: FTP disabled (polling flag off)"
+          end
         else
-          logger.info "#{Time.now}: FTP disabled (polling flag off)"
+          logger.info "#{Time.now}: FTP disabled (system code not configured)"
         end
-      else
-        logger.info "#{Time.now}: FTP disabled (system code not configured)"
       end
     end
   end

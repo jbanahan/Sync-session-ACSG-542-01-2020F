@@ -1,0 +1,15 @@
+<%content_for :action_bar do %>
+<button class='btn_link' link_to='<%=new_milestone_plan_path%>' key_map='n'>New</button>
+<button class='btn_link' link_to='<%=settings_path%>' key_map='s'>Settings</button>
+<%end%>
+<table class='detail_table'>
+  <thead><tr><th /><th>Name</th></tr></thead>
+  <tbody>
+    <%MilestonePlan.all.each do |mp|%>
+      <tr class='hover'>
+        <td><%=link_to 'Edit', edit_milestone_plan_path(mp)%></td>
+        <td><%=mp.name%></td>
+      </tr>
+    <%end%>
+  </tbody>
+</table>

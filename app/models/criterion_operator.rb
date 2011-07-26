@@ -16,6 +16,7 @@ class CriterionOperator
     new("gt","_fn_ > ?","Greater Than"),
     new("lt","_fn_ < ?","Less Than"),
     new("co","_fn_ LIKE ?","Contains"),
+    new("nc","NOT _fn_ LIKE ?","Doesn't Contain"),
     new("sw","_fn_ LIKE ?","Starts With"),
     new("ew","_fn_ LIKE ?","Ends With"),
     new("null","_fn_ IS NULL","Is Empty"),

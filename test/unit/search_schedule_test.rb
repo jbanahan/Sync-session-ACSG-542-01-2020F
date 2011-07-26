@@ -93,7 +93,8 @@ class SearchScheduleTest < ActiveSupport::TestCase
     search2 = u.search_setups.create!(:name=>"reset_schedule2",:module_type=>"Product")
     ss2 = search2.search_schedules.create!(:run_tuesday=>true,:run_hour=>2)
     
-    SearchSchedule.reset_schedule scheduler
+    SearchSchedule.unschedule_jobs scheduler
+    SearchSchedule.schedule_jobs scheduler
     
     jobs = scheduler.find_by_tag(SearchSchedule::RUFUS_TAG)
     assert jobs.length==2, "Should have found 2 jobs, found #{jobs.length}"
@@ -103,7 +104,8 @@ class SearchScheduleTest < ActiveSupport::TestCase
     jobs = scheduler.find_by_tag(SearchSchedule::RUFUS_TAG)
     assert jobs.length==2, "Should still find 2 jobs before resetting, found #{jobs.length}"
 
-    SearchSchedule.reset_schedule scheduler
+    SearchSchedule.unschedule_jobs scheduler
+    SearchSchedule.schedule_jobs scheduler
     jobs = scheduler.find_by_tag(SearchSchedule::RUFUS_TAG)
     assert jobs.length==1, "Should find 1 job after resetting, found #{jobs.length}"
   end

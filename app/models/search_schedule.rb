@@ -3,10 +3,8 @@ class SearchSchedule < ActiveRecord::Base
 
   belongs_to :search_setup
 
-  #reload all SearchSchedules within the given scheduler
-  def self.reset_schedule scheduler, log=nil
-    begin
-    log.info "#{Time.now}: Resetting Scheduled Jobs" if log
+  def self.unschedule_jobs scheduler, log=nil
+    log.info "#{Time.now}: Clearing Scheduled Jobs" if log
     #unschedule all jobs
     jobs = scheduler.find_by_tag(RUFUS_TAG) 
     log.info "#{Time.now}: #{jobs.length} jobs to be removed." if log
@@ -14,6 +12,11 @@ class SearchSchedule < ActiveRecord::Base
       log.info "#{Time.now}: Removing job #{job.job_id}" if log
       scheduler.unschedule job.job_id
     }
+  end
+
+  #load all SearchSchedules within the given scheduler
+  def self.schedule_jobs scheduler, log=nil
+    begin
     #schedule all
     SearchSchedule.all.each {|ss| ss.schedule scheduler, log}
     rescue Exception => e
@@ -72,14 +75,14 @@ class SearchSchedule < ActiveRecord::Base
 
   def write_csv srch_setup
     t = Tempfile.open("scheduled_search_run")
-    t.write CsvMaker.new.make(srch_setup,srch_setup.search)
+    t.write CsvMaker.new.make_from_search(srch_setup,srch_setup.search)
     t.close
     t 
   end
 
   def write_xls srch_setup
     t = Tempfile.new("scheduled_search_run")
-    XlsMaker.new.make(srch_setup,srch_setup.search).write t
+    XlsMaker.new.make_from_search(srch_setup,srch_setup.search).write t
     t
   end
 
@@ -111,7 +114,7 @@ class SearchSchedule < ActiveRecord::Base
           "Account: #{self.ftp_username}\r"+
           "Subfolder: #{self.ftp_subfolder}\r"+
           "Error Message: #{e.message}")
-        e.email_me ["FTP TO: #{self.ftp_server}","FTP USER: #{self.ftp_username}","FTP OPTS: #{opts}","User: #{user}"]
+        e.log_me ["FTP TO: #{self.ftp_server}","FTP USER: #{self.ftp_username}","FTP OPTS: #{opts}","User: #{user}"]
       end
       "#{Time.now}: FTP complete"
     end

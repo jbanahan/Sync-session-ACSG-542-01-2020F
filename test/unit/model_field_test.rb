@@ -1,7 +1,113 @@
 require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
+
+  #test date formats
+  test "date formats" do
+    o = Order.create!(:order_number=>"on123",:vendor_id=>companies(:vendor).id)
+
+    mf = ModelField.find_by_uid :ord_ord_date
+
+    #real date
+    r_date = Date.new(2006,02,19)
+    mf.process_import o, r_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2006,02,19), o.order_date
+
+    #geek test
+    g_date = "2011-04-20"
+    mf.process_import o, g_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2011,4,20), o.order_date
+
+    #american format test
+    am_date = "12/25/2009"
+    mf.process_import o, am_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2009, 12, 25), o.order_date
+
+    #rest of the world test
+    eu_date = "25-8-2010"
+    mf.process_import o, eu_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2010, 8, 25), o.order_date
+
+    #nil test
+    mf.process_import o, nil
+    o.save!
+    o.reload
+    assert_nil o.order_date
+  end
+
   
+  #goal of this test is to make sure that the milestone state shows the worst available value for the line
+  test "order milestone state" do
+    cd = CustomDefinition.create!(:module_type=>"Shipment",:data_type=>:date,:label=>"Arrival Date")
+    mp = MilestonePlan.create!(:name=>"worst state")
+    md_1 = mp.milestone_definitions.create!(:model_field_uid=>:ord_ord_date)
+    mp.milestone_definitions.create!(:model_field_uid=>"*cf_#{cd.id}",:previous_milestone_definition_id=>md_1.id,:days_after_previous=>5)
+    
+
+    o = Order.create!(:order_number=>"olms",:vendor_id=>companies(:vendor).id,:order_date=>30.days.ago)
+    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first,:quantity=>100)
+    
+    s_1 = Shipment.create!(:reference=>"ref1",:vendor_id=>o.vendor_id)
+    s_line_1 = s_1.shipment_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>90)
+    ps_1 = o_line.piece_sets.create!(:quantity=>90,:shipment_line_id=>s_line_1.id,:milestone_plan_id=>mp.id)
+    
+    cv = s_1.get_custom_value(cd)
+    cv.value = 29.days.ago #passes milestone test, so should have milestone state "Achieved"
+    cv.save!
+
+    s_2 = Shipment.create!(:reference=>"ref2",:vendor_id=>o.vendor_id)
+    s_line_2 = s_2.shipment_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>10)
+    ps_2 = o_line.piece_sets.create!(:quantity=>10,:shipment_line_id=>s_line_2.id,:milestone_plan_id=>mp.id)
+    #s_2 does not have arrival date set so should have milestone state "Overdue"
+
+    #build milestone forecast sets
+    [ps_1,ps_2].each {|p| p.create_forecasts}
+
+    assert_equal "Achieved", ps_1.milestone_forecast_set.state
+    assert_equal "Overdue", ps_2.milestone_forecast_set.state
+
+    #test the line
+    mf = ModelField.find_by_uid(:ordln_ms_state)
+    assert_equal "Overdue", mf.process_export(o_line)
+
+    sc = SearchCriterion.new(:model_field_uid=>mf.uid,:operator=>"eq",:value=>"Overdue")
+    r = sc.apply(OrderLine.where("1=1")) 
+    assert_equal o_line, r.first
+
+    sc.value="Achieved"
+    assert_nil sc.apply(OrderLine.where(:id=>o_line.id)).first
+
+    #test the order header
+    mf_order = ModelField.find_by_uid(:ord_ms_state)
+    assert_equal "Overdue", mf_order.process_export(o)
+
+    sc = SearchCriterion.new(:model_field_uid=>mf_order.uid,:operator=>'eq',:value=>"Overdue")
+    r = sc.apply(Order.where("1=1"))
+    assert_equal o, r.first
+
+    sc.value="Achieved"
+    r = sc.apply(Order.where("1=1"))
+    assert_nil r.first
+  end
+
+  test "export from piece set" do 
+    o = Order.create!(:order_number=>"expfromps",:vendor_id=>companies(:vendor).id)
+    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first,:quantity=>1)
+    ps = o_line.piece_sets.create!(:quantity=>1)
+
+    mf = ModelField.find_by_uid :ord_ord_num
+    assert_equal o.order_number, mf.export_from_piece_set(ps)
+    assert_nil ModelField.find_by_uid(:shp_ref).export_from_piece_set(ps)
+  end
+
   test "classification - component count" do
     p = Product.create!(:unique_identifier=>"pidcc")
     c_us = p.classifications.create!(:country_id => countries(:us).id)

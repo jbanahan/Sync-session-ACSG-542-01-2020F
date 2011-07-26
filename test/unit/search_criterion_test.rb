@@ -180,6 +180,16 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert result_includes_id(sc_d.apply(Product), p.id)
   end
 
+  test "database does not contain" do
+    sc = SearchCriterion.create!(:model_field_uid=>"ord_ord_num",:operator=>"nc",:value=>"ord")
+    find_me = Order.create!(:order_number=>"XXX",:vendor_id=>companies(:vendor).id)
+    dont_find_me = Order.create!(:order_number=>"123ord123",:vendor_id=>companies(:vendor).id)
+
+    r = sc.apply(Order)
+    assert result_includes_id(r,find_me.id)
+    assert !result_includes_id(r,dont_find_me.id)
+  end
+
   test "passes? :string all operator permutations" do
     sc = SearchCriterion.create!(:model_field_uid=>ModelField.find_by_uid("prod_uid").uid, :operator => "co", 
       :value=>"cde")
@@ -190,6 +200,10 @@ class SearchCriterionTest < ActiveSupport::TestCase
     assert sc.passes?("abcdef")
     assert !sc.passes?("cp")
     
+    sc.operator="nc" #does not contain
+    assert sc.passes?("cp")
+    assert !sc.passes?("cdef")
+
     sc.operator="sw"
     assert sc.passes?("cdef")
     assert !sc.passes?("de")
@@ -218,6 +232,10 @@ class SearchCriterionTest < ActiveSupport::TestCase
     
     assert sc.passes?("abcdef")
     assert !sc.passes?("cp")
+
+    sc.operator="nc" #does not contain
+    assert sc.passes?("cp")
+    assert !sc.passes?("cdef")
 
     sc.operator="sw"
     assert sc.passes?("cdef")

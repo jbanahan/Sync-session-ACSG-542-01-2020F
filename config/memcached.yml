@@ -1,0 +1,11 @@
+development:
+  server: localhost
+  port: 11211
+
+test:
+  server: localhost
+  port: 11211
+
+production:
+  server: mserver.chain.io
+  port: 11211

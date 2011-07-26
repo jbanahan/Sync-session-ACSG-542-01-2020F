@@ -8,9 +8,10 @@ class ModelField
   
   def initialize(rank,uid,core_module, field, options={})
     o = {:import_lambda =>  lambda {|obj,data|
-           obj.send("#{@field_name}=".intern,data)
-           return "#{FieldLabel.label_text uid} set to #{data}"
-          },
+          d = [:date,:datetime].include?(self.data_type) ? parse_date(data) : data
+          obj.send("#{@field_name}=".intern,d)
+          return "#{FieldLabel.label_text uid} set to #{d}"
+        },
           :export_lambda => lambda {|obj|
             if self.custom?
             obj.get_custom_value(CustomDefinition.cached_find(@custom_id)).value
@@ -39,6 +40,12 @@ class ModelField
     @label_override = o[:label_override]
     @entity_type_field = o[:entity_type_field]
     @history_ignore = o[:history_ignore]
+  end
+
+  #returns the value of the process_export method based on the object found within the given piece set (or nil if the object is not found)
+  def export_from_piece_set piece_set
+    obj = self.core_module.object_from_piece_set piece_set
+    obj.nil? ? nil : self.process_export(obj)
   end
   
   #should the entity snapshot system ignore this field when recording an item's history state
@@ -612,6 +619,16 @@ class ModelField
     add_fields CoreModule::ORDER, [
       [1,:ord_ord_num,:order_number,"Order Number"],
       [2,:ord_ord_date,:order_date,"Order Date",{:data_type=>:date}],
+      [3,:ord_ms_state,:state,"Milestone State",{:data_type=>:string,
+        :import_lambda => lambda {|o,d| return "Milestone State was ignored. (read only)"},
+        :export_lambda => lambda {|obj| obj.worst_milestone_state },
+        :qualified_field_name => %{(SELECT milestone_forecast_sets.state as ms_state 
+            FROM milestone_forecast_sets 
+            INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id 
+            INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id
+            WHERE order_lines.order_id = orders.id 
+            ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)}
+      }]
     ]
     add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
     add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
@@ -621,7 +638,12 @@ class ModelField
     add_fields CoreModule::ORDER_LINE, [
       [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
       [3,:ordln_ordered_qty,:quantity,"Order Quantity",{:data_type=>:decimal}],
-      [4,:ordln_ppu,:price_per_unit,"Price / Unit",{:data_type=>:decimal}]
+      [4,:ordln_ppu,:price_per_unit,"Price / Unit",{:data_type=>:decimal}],
+      [5,:ordln_ms_state,:state,"Milestone State",{:data_type=>:string,
+        :import_lambda => lambda {|obj,data| return "Milestone State was ignored. (read only)"},
+        :export_lambda => lambda {|obj| obj.worst_milestone_state },
+        :qualified_field_name => "(SELECT IFNULL(milestone_forecast_sets.state,'') as ms_state FROM milestone_forecast_sets INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id WHERE piece_sets.order_line_id = order_lines.id ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)"
+      }]
     ]
     add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
 
@@ -728,7 +750,7 @@ class ModelField
       begin
         raise "cache_time was a #{cache_time.class} object!"
       rescue
-        $!.email_me ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
+        $!.log_me ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
       ensure
         cache_time = nil
         reload
@@ -739,4 +761,14 @@ class ModelField
     end
   end
 
+  def parse_date d
+    return d unless d.is_a?(String)
+    if /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.match(d)
+      return Date.new(d[6,4].to_i,d[0,2].to_i,d[3,2].to_i)
+    elsif /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.match(d)
+      return Date.new(d[6,4].to_i,d[3,2].to_i,d[0,2].to_i)
+    else
+      return d
+    end
+  end
 end

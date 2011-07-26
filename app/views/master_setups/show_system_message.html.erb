@@ -2,6 +2,7 @@
 <button class="form_to" form_id="frm_sysm">Save</button>
 <button class="btn_link" link_to="<%=settings_path%>">Cancel</button> 
 <%end%>
+<p>Enter the message that you would like all users to see in the box below and click Save.</p>
 <%=form_tag set_system_message_master_setups_path, :method=>:post, :id=>'frm_sysm' do %>
   <%=text_area_tag :system_message, MasterSetup.get.system_message, :cols=>50, :rows=>10 %>
 <% end %>

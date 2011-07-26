@@ -77,21 +77,21 @@
 <br />
 <table class="detail_table">
 	<thead>
-	  <th><%=field_label :ordln_line_number%></th>
-		<th><%=field_label :prod_name%></th>
-		<th><%=field_label :ordln_ordered_qty%></th>
+	  <th><%=field_label :ordln_line_number, false%></th>
+		<th><%=field_label :prod_name, false%></th>
+		<th><%=field_label :ordln_ordered_qty, false%></th>
 		<th>Shipped</th>
 		<th>Received</th>
-		<th><%=field_label :prod_uom%></th>
-		<th><%=field_label :ordln_ppu%></th>
+		<th><%=field_label :prod_uom, false%></th>
+		<th><%=field_label :ordln_ppu, false%></th>
 		<th>Total Price</th>
 		<th></th>
 	</thead>
 	
 		<% @order.order_lines.each do |line| %>
-
-	<tr class='hover'>
-	  <td><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
+    <% line_state = line.worst_milestone_state %>
+	<tr class='hover ord_det_row'>
+	  <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
 	  <td><b><%= link_to line.product.name, product_path(line.product) %></b></td>
   	<td><%= line.quantity %></td>
   	<td><%=line.shipped_qty%></td>
@@ -102,16 +102,20 @@
   	<td>
   	  <% if @order.can_edit?(current_user) && !@order.locked?%>
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
-  		  <% if line.custom_definitions.length > 0%>
+  		  <% if line.custom_definitions.length > 0 || !MilestoneForecastSet.joins(:piece_set).where("piece_sets.order_line_id=?",line.id).blank?%>
   		  &nbsp;|&nbsp;
-  		  <a id='lnk_det_s_<%=line.id%>' href="javascript:$('#det_<%=line.id%>').fadeIn('slow');$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
+  		  <a id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
   		  <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
   		  <% end %>
   		<% end %> 
   	</td>
 	</tr>
 	<tr style='display:none;' id='det_<%=line.id%>'>
-	  <td></td><td colspan='8' ><%= show_custom_fields line %></td>
+	  <td></td>
+      <td colspan='8' >
+        <%= show_custom_fields line %><br />
+        <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
+      </td>
 	</tr>
 <%end %> 
 </table>
@@ -121,11 +125,14 @@
   <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
   <table>
     <% form_line.default_line_number%>
-    <%=field_row field_label(:ordln_line_number), f.text_field(:line_number, "size" => 2) %>
-    <%=field_row field_label(:prod_name), f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"})%>
-    <%=field_row field_label(:ordln_ordered_qty), f.text_field(:quantity, "size" => 5) %>
-    <%=field_row field_label(:prod_uom), content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
-    <%=field_row field_label(:ordln_ppu), f.text_field(:price_per_unit, "size" => 5) %>
+    <%=field_row field_label(:ordln_line_number,false), f.text_field(:line_number, "size" => 2) %>
+    <%=field_row field_label(:prod_name), form_line.new_record? ? f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"}) : form_line.product.name%>
+    <%=field_row field_label(:ordln_ordered_qty, false), f.text_field(:quantity, "size" => 5) %>
+    <%=field_row field_label(:prod_uom, false), content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
+    <%=field_row field_label(:ordln_ppu, false), f.text_field(:price_per_unit, "size" => 5) %>
+    <%if !form_line.id && !MilestonePlan.blank? %>
+      <%=field_row "Plan", select_tag("milestone_plan_id",options_from_collection_for_select(MilestonePlan.all,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{:prompt=>"-Select a plan"})%>
+    <%end%>
     <%= show_custom_fields form_line, {:form => true, :table=>true}%>
   </table>
   <% end %>

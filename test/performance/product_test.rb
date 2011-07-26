@@ -7,11 +7,7 @@ class ProductTest < ActionDispatch::PerformanceTest
     #login
     u = User.new(:company_id=>companies(:master).id,:username=>"ptestuser",
         :password=>"pwd123456",:password_confirmation=>"pwd123456",:email=>"unittest@chain.io")
-    u.tos_accept = Time.now 
-    u.save!
-    post_via_redirect '/user_sessions', {"user_session[username]"=>u.username,"user_session[password]"=>'pwd123456'}
-    assert_response 200
-    assert_equal '/', path
+    login u
   end
 
   test "show product" do

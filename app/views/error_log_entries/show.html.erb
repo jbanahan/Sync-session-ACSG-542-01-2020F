@@ -1,0 +1,16 @@
+<table>
+<%=field_row 'Class', @error_log_entry.exception_class%>
+<%=field_row 'Message', @error_log_entry.error_message%>
+<%=field_row 'Time', @error_log_entry.created_at%>
+<%msgs = ""%>
+<%@error_log_entry.additional_messages.each {|m| msgs << "#{m}<br />"}%>
+<%=field_row 'Other Messages', msgs.html_safe%>
+</table>
+<h2>Trace</h2>
+<%bt = ""%>
+<%@error_log_entry.backtrace.each {|b| bt << "#{b}\n"}%>
+
+<pre style='overflow-x: auto;'>
+  
+<%=bt.html_safe%>
+</pre>

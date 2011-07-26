@@ -140,6 +140,7 @@ class ApplicationController < ActionController::Base
         update_custom_fields(base_object)
         inner_opts[:before_validate].call base_object
         OpenChain::FieldLogicValidator.validate!(base_object) 
+        base_object.piece_sets.each {|p| p.create_forecasts} if base_object.respond_to?('piece_sets')
         base_object.class.find(base_object.id).create_snapshot if base_object.respond_to?('create_snapshot')
         succeed_lambda.call base_object
       end
@@ -236,7 +237,7 @@ class ApplicationController < ActionController::Base
         headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
       end
     
-      render :text => CsvMaker.new.make(@current_search,@results) 
+      render :text => CsvMaker.new.make_from_results(@current_search,@results) 
     end
 
     def error_redirect(message=nil)
@@ -405,7 +406,7 @@ class ApplicationController < ActionController::Base
           render :json => sr
         }
         format.xls {
-          book = XlsMaker.new.make(@current_search,@results.where("1=1")) 
+          book = XlsMaker.new.make_from_search(@current_search,@results.where("1=1")) 
           spreadsheet = StringIO.new 
           book.write spreadsheet 
           send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"

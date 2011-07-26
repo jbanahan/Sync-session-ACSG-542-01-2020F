@@ -1,0 +1,14 @@
+<table class='detail_table'>
+  <thead><tr><th></th><th>Error Class</th><th>Message</th><th>Time</th></tr></thead>
+  <tbody>
+    <%@error_entries.each do |ee|%>
+      <tr>
+        <td><%=link_to 'View', ee%></td>
+        <td><%=ee.exception_class%></td>
+        <td><%=ee.error_message%></td>
+        <td><%=ee.created_at%></td>
+      </tr>
+    <%end%>
+  </tbody>
+</table>
+<%=will_paginate @error_entries%>

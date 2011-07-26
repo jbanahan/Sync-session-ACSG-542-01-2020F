@@ -80,6 +80,27 @@ class ImportedFilesController < ApplicationController
     }
   end
 
+  def download_items
+    f = ImportedFile.find(params[:id])
+    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"download",:module_name=>"uploaded file"}) {
+      if f.nil?
+        error_redirect "File could not be found."
+      elsif f.last_file_import_finished.nil?
+        error_redirect "No results available.  This file has not been processed yet."
+      else
+        if f.attached_file_name.downcase.ends_with?("xls") 
+          book = XlsMaker.new.make_from_results f.last_file_import_finished.changed_objects, f.search_columns.order("rank asc"), f.core_module.default_module_chain 
+          spreadsheet = StringIO.new 
+          book.write spreadsheet 
+          send_data spreadsheet.string, :filename => f.attached_file_name, :type =>  "application/vnd.ms-excel", :disposition=>'attachment'
+        else
+          csv = CsvMaker.new.make_from_results f.last_file_import_finished.changed_objects, f.search_columns.order("rank ASC"), f.core_module.default_module_chain
+          send_data csv, :filename => f.attached_file_name, :type=>f.attached_content_type, :disposition=>'attachment'
+        end
+      end
+    }
+  end
+
   def process_file
     f = ImportedFile.find(params[:id])
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"process",:module_name=>"uploaded file"}) {
@@ -101,7 +122,7 @@ class ImportedFilesController < ApplicationController
           begin
             render :json=>f.preview(current_user) 
           rescue
-            $!.email_me ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
+            $!.log_me ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
             render :json=>{:error=>true}
           end
         }

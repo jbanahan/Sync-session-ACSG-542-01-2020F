@@ -8,6 +8,7 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :search_criterions, :dependent => :destroy
   has_many   :search_columns, :dependent => :destroy
   has_many   :field_validator_rules, :dependent => :destroy
+  has_many   :milestone_definitions, :dependent => :destroy
   
   after_save :reset_model_field_constants 
   after_save :reset_field_label
@@ -19,7 +20,7 @@ class CustomDefinition < ActiveRecord::Base
     begin
       o = CACHE.get "CustomDefinition:id:#{id}"
     rescue
-      $!.email_me ["Exception rescued, you don't need to contact the user."]
+      $!.log_me ["Exception rescued, you don't need to contact the user."]
     end
     if o.nil?
       o = find id
@@ -38,7 +39,7 @@ class CustomDefinition < ActiveRecord::Base
       end
       return o.clone
     rescue
-      $!.email_me ["Exception rescued, you don't need to contact the user."]
+      $!.log_me ["Exception rescued, you don't need to contact the user."]
       return CustomDefinition.where(:module_type=>module_type).order("rank ASC, label ASC").all
     end
   end
