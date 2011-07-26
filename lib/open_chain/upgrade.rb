@@ -13,6 +13,7 @@ module OpenChain
     #do not initialize this method directly, use the static #upgrade method instead
     def initialize target
       @target = target
+      @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log" 
     end
     
     #do not call this directly, use the static #upgrade method instead
@@ -20,7 +21,6 @@ module OpenChain
       return "Skipping, upgrade_running.txt exists"if File.exists?("tmp/upgrade_running.txt")
       @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.get.version, :to_version=>@target)
       begin
-        @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log" 
         @log = Logger.new(@log_path)
         capture_and_log "touch tmp/upgrade_running.txt"
         get_source 
@@ -39,7 +39,7 @@ module OpenChain
 
     private
     def finish_upgrade_log
-      @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path))
+      @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
     def get_source 
       @log.info "Fetching source"
