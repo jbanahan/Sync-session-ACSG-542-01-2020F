@@ -36,4 +36,20 @@ class MasterSetupTest < ActiveSupport::TestCase
     assert !MasterSetup.get_migration_lock(a_host)
     MasterSetup.release_migration_lock
   end
+
+  test "need upgrade" do
+    current_version = MasterSetup.get.version
+
+    #if target_version isn't set, return false
+    MasterSetup.get.update_attributes :target_version=>nil
+    assert !MasterSetup.need_upgrade?
+
+    #make sure current_version is the same as target_version
+    MasterSetup.get.update_attributes :target_version=>current_version
+    assert !MasterSetup.need_upgrade?
+
+    #if target version != current version, then return true
+    MasterSetup.get.update_attributes :target_version=>"somethingelse"
+    assert MasterSetup.need_upgrade?
+  end
 end

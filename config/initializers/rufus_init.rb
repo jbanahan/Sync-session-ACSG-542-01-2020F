@@ -1,6 +1,7 @@
 #CODE COPIED FROM: https://github.com/jmettraux/rufus-scheduler/issues/10/
 require 'rufus/scheduler'
 require 'open_chain/delayed_job_manager'
+require 'open_chain/upgrade'
 
 def job_wrapper job_name, &block
   begin
@@ -23,6 +24,13 @@ def execute_scheduler
   scheduler.every '10s' do 
     job_wrapper "Schedule Check In" do
       ScheduleServer.check_in
+    end
+  end
+
+  #check for upgrades
+  scheduler.every '30s' do
+    job_wrapper "Upgrade Check" do
+      OpenChain::Upgrade.upgrade MasterSetup.get.target_version if MasterSetup.needs_upgrade?
     end
   end
 

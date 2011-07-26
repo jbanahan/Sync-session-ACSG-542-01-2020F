@@ -37,6 +37,11 @@ class MasterSetup < ActiveRecord::Base
     end
   end
 
+  def self.need_upgrade?
+    ms = MasterSetup.get
+    !ms.target_version.blank? && ms.version.strip!=ms.target_version.strip
+  end
+
   def self.release_migration_lock
     c = MasterSetup.connection
     begin
