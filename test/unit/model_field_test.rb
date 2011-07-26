@@ -1,6 +1,48 @@
 require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
+
+  #test date formats
+  test "date formats" do
+    o = Order.create!(:order_number=>"on123",:vendor_id=>companies(:vendor).id)
+
+    mf = ModelField.find_by_uid :ord_ord_date
+
+    #real date
+    r_date = Date.new(2006,02,19)
+    mf.process_import o, r_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2006,02,19), o.order_date
+
+    #geek test
+    g_date = "2011-04-20"
+    mf.process_import o, g_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2011,4,20), o.order_date
+
+    #american format test
+    am_date = "12/25/2009"
+    mf.process_import o, am_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2009, 12, 25), o.order_date
+
+    #rest of the world test
+    eu_date = "25-8-2010"
+    mf.process_import o, eu_date
+    o.save!
+    o.reload
+    assert_equal Date.new(2010, 8, 25), o.order_date
+
+    #nil test
+    mf.process_import o, nil
+    o.save!
+    o.reload
+    assert_nil o.order_date
+  end
+
   
   #goal of this test is to make sure that the milestone state shows the worst available value for the line
   test "order milestone state" do

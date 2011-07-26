@@ -27,7 +27,8 @@ class CustomValue < ActiveRecord::Base
   def value=(val)
     d = self.custom_definition
     raise "Cannot set custom value without a custom definition" if d.nil?
-    self.send "#{d.data_type}_value=", val
+    v = [:date,:datetime].include?(d.data_type) ? parse_date(val) : val
+    self.send "#{d.data_type}_value=", v
   end
   
   def set_cache
@@ -49,5 +50,15 @@ class CustomValue < ActiveRecord::Base
   private
   def self.unique_cache_key custom_definition_id, customizable_id, customizable_type
     "CustomValue:u_c_k:#{custom_definition_id}:#{customizable_id}:#{customizable_type}"
+  end
+  def parse_date d
+    return d unless d.is_a?(String)
+    if /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.match(d)
+      return Date.new(d[6,4].to_i,d[0,2].to_i,d[3,2].to_i)
+    elsif /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.match(d)
+      return Date.new(d[6,4].to_i,d[3,2].to_i,d[0,2].to_i)
+    else
+      return d
+    end
   end
 end
