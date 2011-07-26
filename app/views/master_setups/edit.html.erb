@@ -26,6 +26,7 @@ $(function() {
   <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
   <% ss = ScheduleServer.first %>
   <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})"%>
+  <%=field_row "Server With Migration Lock", @ms.migration_host%>
 </table>
 <%end%>
 

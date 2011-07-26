@@ -54,11 +54,22 @@ module OpenChain
       @log.info "Delayed Job stopped, running bundle install"
       capture_and_log "bundle install"
       @log.info "Bundle complete, running migrations"
-      capture_and_log "rake db:migrate"
+      migrate
       @log.info "Migration complete"
       @log.info "Touching restart.txt"
       capture_and_log "touch tmp/restart.txt"
       @log.info "Upgrade complete"
+    end
+    
+    def migrate
+      c = 0
+      while !MasterSetup.get_migration_lock && c<12 #2 minute wait
+        @log.info "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
+        sleep 10
+        c += 1
+      end
+      raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock
+      capture_and_log "rake db:migrate"
     end
 
     def capture_and_log command
