@@ -1,5 +1,7 @@
 class InstanceInformation < ActiveRecord::Base
 
+  has_many :upgrade_logs, :dependent => :destroy
+
   #check in with database, the hostname variable only needs to be passed in test cases
   def self.check_in hostname = nil
     h = hostname.blank? ? `hostname`.strip : hostname
@@ -7,6 +9,7 @@ class InstanceInformation < ActiveRecord::Base
     ii.last_check_in = 0.seconds.ago
     ii.version = MasterSetup.get.version
     ii.save
+    ii
   end
 
 end

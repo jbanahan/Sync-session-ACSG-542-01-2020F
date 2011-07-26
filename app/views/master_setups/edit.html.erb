@@ -6,6 +6,10 @@ $(function() {
   $("#btn_cancel").click(function() {
     window.location = '<%=settings_path%>';
   });
+  $(".upgrade_count").click(function() {
+    $(this).preventDefault();
+    $(this).next('.upgrade_list').slideDown();
+  });
 });
 <%end%>
 <%content_for :action_bar do %>
@@ -47,9 +51,21 @@ $(function() {
 <h2>Instances</h2>
 <table class='detail_table'>
   <thead>
-    <tr><th>Host Name</th><th>Version</th><th>Last Check In</th></tr>
+    <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
   </thead>
   <% InstanceInformation.order("last_check_in DESC").each do |ii| %>
-    <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'><td><%=ii.host%></td><td><%=ii.version%></td><td><%=ii.last_check_in%></td></tr>
+    <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'>
+      <td><%=ii.host%></td>
+      <td><%=ii.version%></td>
+      <td><%=ii.last_check_in%></td>
+      <td>
+        <a href='#' class='upgrade_count'><%=pluralize ii.upgrade_logs.count, "log"%></a>
+        <div class='upgrade_list' style='display:none;'>
+          <%ii.upgrade_logs.order("started_at DESC").each do |u|%>
+            <%=link_to u.started_at.to_s, u%><br />
+          <%end%>
+        </div>
+      </td>
+    </tr>
   <% end %>
 </table>

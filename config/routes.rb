@@ -32,6 +32,7 @@ OpenChain::Application.routes.draw do
       post 'set_system_message'
     end
   end
+  resources :upgrade_logs, :only=>[:show]
   resources :attachment_types
 
   resources :official_tariffs, :only=>[:index,:show] do
