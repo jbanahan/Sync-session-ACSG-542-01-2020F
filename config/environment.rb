@@ -18,3 +18,5 @@ if defined?(PhusionPassenger)
     end
   end
 end
+
+AWS.config(YAML.load(File.read('config/s3.yml'))[Rails.env.to_s])

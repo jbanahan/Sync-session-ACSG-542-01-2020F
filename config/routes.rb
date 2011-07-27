@@ -30,6 +30,7 @@ OpenChain::Application.routes.draw do
     collection do
       get 'show_system_message'
       post 'set_system_message'
+      post 'upgrade'
     end
   end
   resources :upgrade_logs, :only=>[:show]

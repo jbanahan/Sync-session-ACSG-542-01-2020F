@@ -10,10 +10,18 @@ $(function() {
     evt.preventDefault();
     $(this).next('.upgrade_list').slideDown();
   });
+  $("#mod_upgrade").dialog({autoOpen:false,modal:true,buttons:{
+    "OK":function() {$("#frm_upgrade").submit();},
+    "Cancel":function() {$("#mod_upgrade").dialog('close');}
+  }});
+  $("#btn_upgrade").click(function(evt) {
+    $("#mod_upgrade").dialog('open');  
+  });
 });
 <%end%>
 <%content_for :action_bar do %>
 <button id='btn_save'>Save</button>
+<button id='btn_upgrade'>Upgrade</button>
 <button id='btn_cancel'>Cancel</button>
 <%end%>
 <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
@@ -69,3 +77,12 @@ $(function() {
     </tr>
   <% end %>
 </table>
+
+<div id='mod_upgrade' style='display:none;'>
+  <%=form_tag '/master_setups/upgrade', :id=>:frm_upgrade do |f| %>
+    <table>
+      <%=field_row "Version", text_field_tag(:name) %>
+      <%=field_row "Upgrade Password", password_field_tag(:upgrade_password)%>
+    </table>
+  <%end%>
+</div>

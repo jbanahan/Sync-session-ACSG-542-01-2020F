@@ -1,2 +1,9 @@
-access_key_id: AKIAJLRP2ASDQBRRVWCA
-secret_access_key: 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
+production:
+  access_key_id: AKIAJLRP2ASDQBRRVWCA
+  secret_access_key: 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
+test:
+  access_key_id: AKIAIS22AWIULTA7VWXQ
+  secret_access_key: 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
+development:
+  access_key_id: AKIAIS22AWIULTA7VWXQ
+  secret_access_key: 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
