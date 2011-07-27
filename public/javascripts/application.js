@@ -98,7 +98,7 @@ var OpenChain = (function() {
     $(".classification_box").each(function() {
       var drop_me = true;
       if($(this).attr('must_submit')=="false") {
-        $(this).find(':input[type!="hidden"]').each(function() {
+        $(this).find(':input[type!="hidden"][type!="button"]').each(function() {
           if($(this).is(':checked') || ($(this).attr('type')!='checkbox' && $(this).val().length>0 )) {
             drop_me = false;
           }
