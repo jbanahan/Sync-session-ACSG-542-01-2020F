@@ -5,7 +5,7 @@ var OpenChainMilestonePlan = (function() {
     var h = "<tr id='milestone_row_"+my_index+"' style='display:none;' class='definition_row' row_index='"+my_index+"'>";
     h += "<td><a href='#' class='add_row'><img src='/images/green_plus_24.png' alt='Add Row' title='Add Row' /></a>&nbsp;<a href='#' class='remove_row'><img src='/images/gray_minus_24.png' alt='Remove Row' title='Remove Row'/></a>&nbsp;<a href='#' class='edit_row'><img src='/images/blue_edit_24.png' title='Edit' alt='Edit'/></a><input type='hidden' name='[milestone_definition_rows]["+my_index+"][display_rank]' value='"+json_data.display_rank+"'/></td>";
     h += "<td><input type='hidden' class='hdn_mfuid' name='[milestone_definition_rows]["+my_index+"][model_field_uid]' value='"+json_data.model_field_uid+"'/><span class='mfuid_lbl'/></td>";
-    h += "<td><input type='text' name='[milestone_definition_rows]["+my_index+"][days_after_previous]' value='"+json_data.days_after_previous+"' disabled='disabled' style='border:none;width:2em;color:black;'/></td>";
+    h += "<td><input type='text' name='[milestone_definition_rows]["+my_index+"][days_after_previous]' value='"+json_data.days_after_previous+"' readonly='readonly' style='border:none;width:2em;color:black;'/></td>";
     h += "<td><input type='hidden' class='hdn_mfuid' name='[milestone_definition_rows]["+my_index+"][previous_model_field_uid]' value='"+json_data.previous_milestone_model_field_uid+"'/><span class='mfuid_lbl' /></td>";
     h += "<td><input type='checkbox' disabled='disabled' name='[milestone_definition_rows]["+my_index+"][final_milestone]' value='1' "+(json_data.final_milestone ? "checked='checked'" : "")+"/></td></tr>";
     previousRow.after(h);

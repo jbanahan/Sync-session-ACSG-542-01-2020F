@@ -73,6 +73,7 @@ class MilestonePlansController < ApplicationController
     end
   end
   def process_row milestone_plan, row, rows_hash, row_key
+  debugger
     previous_def = nil #milestone definition object 
     existing_def = nil #existing milestone definition object already set to this model_field_uid
     milestone_plan.milestone_definitions.all.each do |md| #.all forces only good object, (not in-memory junk left over from other passes through the loop)
@@ -80,7 +81,7 @@ class MilestonePlansController < ApplicationController
       existing_def = md if row['model_field_uid']==md.model_field_uid
     end
     return nil unless previous_def #if we didn't find the previous model field then it hasn't been built yet, so don't do anything
-    attribute_hash = {:model_field_uid=>row['model_field_uid'],:previous_milestone_definition_id=>previous_def.id,:display_rank=>row['display_rank'],:days_after_previous=>row[:days_after_previous],:final_milestone=>!row['final_milestone'].blank?}
+    attribute_hash = {:model_field_uid=>row['model_field_uid'],:previous_milestone_definition_id=>previous_def.id,:display_rank=>row['display_rank'],:days_after_previous=>row['days_after_previous'],:final_milestone=>!row['final_milestone'].blank?}
     definition = nil
     if existing_def
       if(row['destroy'])
