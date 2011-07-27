@@ -237,7 +237,7 @@ class ApplicationController < ActionController::Base
         headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
       end
     
-      render :text => CsvMaker.new.make_from_results(@current_search,@results) 
+      render :text => CsvMaker.new.make_from_search(@current_search,@results) 
     end
 
     def error_redirect(message=nil)
@@ -379,7 +379,7 @@ class ApplicationController < ActionController::Base
           render :layout => 'one_col'
         }
         format.csv {
-          @results = @results.where("1=1")
+          @results = @results.where("1=1") unless no_results
           render_csv("#{@core_module.label}.csv")
         }
         format.json {
