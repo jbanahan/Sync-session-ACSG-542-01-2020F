@@ -22,6 +22,19 @@ class OfficialTariffsController < ApplicationController
     end
   end
   
+  def schedule_b_matches
+    ot = OfficialTariff.find_cached_by_hts_code_and_country_id TariffRecord.clean_hts(params[:hts]), Country.where(:iso_code=>'US').first.id
+    if ot.nil?
+      if OfficialTariff.where(:country_id=>cid).empty?
+        render :json => "country not loaded".to_json
+      else
+        render :json => nil.to_json
+      end
+    else
+      render :json => ot.find_schedule_b_matches
+    end
+  end
+
   def secure base_search
     base_search #no extra security
   end
