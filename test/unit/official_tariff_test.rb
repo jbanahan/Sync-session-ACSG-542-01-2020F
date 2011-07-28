@@ -2,6 +2,15 @@ require 'test_helper'
 
 class OfficialTariffTest < ActiveSupport::TestCase
 
+  test "find schedule b matches" do
+    ot = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>'0121000100',:full_description=>"HORSE")
+    ["0121001111","0121002222","0121990000"].each {|t| OfficialScheduleBCode.create!(:hts_code=>t)}
+    r = ot.find_schedule_b_matches
+    assert_equal 2, r.size
+    r = r.to_a.sort {|t1,t2| t1.hts_code <=> t2.hts_code}
+    assert_equal ["0121001111","0121002222"], r.collect {|t| t.hts_code}
+  end
+
   test "binding ruling url" do
     t = OfficialTariff.new(:country_id=>Country.where(:iso_code=>"US").first.id,:hts_code=>"1234567890")
     found = t.binding_ruling_url
