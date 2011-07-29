@@ -73,6 +73,14 @@
           <%end%>
         </td>
       </tr>
+     <%if f.object.has_schedule_b? || f.object.classification.country.iso_code=='US' %>
+      <tr><th>Schedule B 1</th><th>Schedule B 2</th><th>Schedule B 3</th></tr>
+      <tr>
+        <td><%=f.text_field :schedule_b_1, :class=>:sched_b_field%></td>
+        <td><%=f.text_field :schedule_b_2, :class=>:sched_b_field%></td>
+        <td><%=f.text_field :schedule_b_3, :class=>:sched_b_field%></td>
+      </tr>
+     <%end%>
     </tbody>
   </table>
 </div>

@@ -509,6 +509,9 @@ width:60%;
 .hts_field {
   width: 8em;
 }
+.sched_b_field {
+  width: 8em;
+}
 .help_title {
   display: block;
   font-size: 200%;
