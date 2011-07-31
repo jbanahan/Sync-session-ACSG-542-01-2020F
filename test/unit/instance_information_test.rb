@@ -4,7 +4,7 @@ class InstanceInformationTest < ActiveSupport::TestCase
 
   test "check_in" do
 
-    assert InstanceInformation.all.blank?
+    InstanceInformation.destroy_all #make sure we're starting clean
 
     InstanceInformation.check_in
 
