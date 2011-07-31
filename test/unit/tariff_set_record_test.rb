@@ -2,6 +2,15 @@ require 'test_helper'
 
 class TariffSetRecordTest < ActiveSupport::TestCase
 
+  test "build_official_tariff" do 
+    t = TariffSetRecord.new(:country_id=>1,:full_description=>"abc",:chapter=>"chpt",:hts_code=>"12345678",:tariff_set_id=>1,:created_at=>Time.now,:updated_at=>Time.now)
+    ot = t.build_official_tariff
+    assert_equal 1, ot.country_id
+    assert_equal "abc", ot.full_description
+    assert_equal "chpt", ot.chapter
+    assert_equal "12345678", ot.hts_code
+  end
+
   test "compare" do
     #tariff_set_id should be ignored for comparison purposes
 

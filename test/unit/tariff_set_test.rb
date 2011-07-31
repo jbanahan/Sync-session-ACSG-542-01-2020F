@@ -1,6 +1,30 @@
 require 'test_helper'
 
 class TariffSetTest < ActiveSupport::TestCase
+  test "activate" do
+    c1 = Country.first
+    c2 = Country.last
+    assert c1!=c2 #setup check
+
+    should_be_gone = OfficialTariff.create!(:country_id => c1.id, :hts_code=>"1234567890",:full_description=>"FD1")
+    should_be_changed = OfficialTariff.create!(:country_id=>c1.id, :hts_code=>"1234555555",:full_description=>"FD3")
+    should_stay = OfficialTariff.create!(:country_id => c2.id, :hts_code=>should_be_gone.hts_code, :full_description=>"FD2")
+
+    ts = TariffSet.create!(:country_id=>c1.id,:label=>"newts")
+    r = ts.tariff_set_records
+    r.create!(:country_id=>c1.id,:hts_code=>should_be_changed.hts_code,:full_description=>"changed_desc")
+    r.create!(:country_id=>c1.id,:hts_code=>"9999999999")
+
+    ts.activate
+
+    found = OfficialTariff.where(:country_id=>c1.id)
+
+    assert_equal 2, found.size
+    assert_equal "changed_desc", OfficialTariff.where(:country_id=>c1.id,:hts_code=>"1234555555").first.full_description
+    assert OfficialTariff.where(:country_id=>c1.id,:hts_code=>"9999999999").first
+    assert OfficialTariff.where(:country_id=>c2.id,:hts_code=>should_stay.hts_code).first
+    assert_nil OfficialTariff.where(:country_id=>c1.id,:hts_code=>should_be_gone.hts_code).first
+  end
   test "compare" do
     old = TariffSet.create!(:country_id=>countries(:us).id,:label=>"old")
     new = TariffSet.create!(:country_id=>countries(:us).id,:label=>"new")

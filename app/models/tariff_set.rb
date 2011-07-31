@@ -2,6 +2,16 @@ class TariffSet < ActiveRecord::Base
   has_many :tariff_set_records, :dependent => :destroy
   belongs_to :country
 
+  #replaces the OfficialTariffs for this country with the values from this set
+  def activate
+    OfficialTariff.transaction do
+      OfficialTariff.where(:country_id=>self.country_id).destroy_all
+      self.tariff_set_records.each do |tsr|
+        tsr.build_official_tariff.save!
+      end
+    end
+  end
+
   #returns an array where the first element is a collection of TariffSetRecords that have been added
   #the second element is a collection of TariffSetRecords that have been removed
   #and the third element is a hash where the key is the hts_code and the values are the output of TariffSetRecord#compare for records that have changed

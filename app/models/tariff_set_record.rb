@@ -2,6 +2,11 @@ class TariffSetRecord < ActiveRecord::Base
   belongs_to :tariff_set
   belongs_to :country
 
+  #create an unsaved OfficialTariff with the same data as this record
+  def build_official_tariff
+    OfficialTariff.new(self.attributes.select {|k,v| !["id","created_at","udpated_at","tariff_set_id"].include?(k)})
+  end
+
   #returns an array of hashes where the first element is this object's attributes that are different
   #and the second element is the other object's elements that are different
   def compare other_tariff_set_record

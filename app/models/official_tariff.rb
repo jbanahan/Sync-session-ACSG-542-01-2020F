@@ -7,7 +7,6 @@ class OfficialTariff < ActiveRecord::Base
 
   validates :country, :presence => true
   validates :hts_code, :presence => true
-  validates :full_description, :presence => true
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
   

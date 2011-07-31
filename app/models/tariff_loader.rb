@@ -74,16 +74,30 @@ class TariffLoader
   end
 
   def self.process_file file_path, tariff_set_label
-      if File.file? file_path
-        c = Country.where(:iso_code => file_path.split('/').last[0,2].upcase).first
-        raise "Country not found with ISO #{file_path.split('/').last[0,2].upcase} for file #{file_path}" if c.nil?
-        TariffLoader.new(c,file_path,tariff_set_label).process
-      end
+    raise "#{file_path} is not a file." unless File.file? file_path
+    c = Country.where(:iso_code => file_path.split('/').last[0,2].upcase).first
+    raise "Country not found with ISO #{file_path.split('/').last[0,2].upcase} for file #{file_path}" if c.nil?
+    TariffLoader.new(c,file_path,tariff_set_label).process
   end
-  def self.process_folder folder_path, tariff_set_label
-    Dir.foreach(folder_path) do |entry|
-      file_path = "#{folder_path}/#{entry}"
-      TariffLoader.process_file file_path, tariff_set_label
+
+  def self.process_s3 s3_key, country, tariff_set_label
+    Tempfile.open(['tariff_s3',"#{s3_key.split('.').last}"]) do |t|
+      t.binmode
+      begin
+        base = YAML.load(IO.read("config/s3.yml"))
+        y = {} #need to convert string keys into symbols
+        base.each do |k,v|
+          y[k.to_sym] = v
+        end
+        AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
+        AWS::S3::S3Object.stream(s3_key, 'chain-io') do |chunk|
+          t.write chunk
+        end
+        t.flush
+        TariffLoader.new(country,t.path,tariff_set_label).process
+      ensure
+        AWS::S3::S3Object.disconnect if AWS::S3::S3Object.connected?
+      end
     end
   end
 
