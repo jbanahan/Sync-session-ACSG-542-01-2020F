@@ -37,11 +37,6 @@ GEM
       builder
       mime-types
       xml-simple
-    aws-sdk (1.0.2)
-      httparty (~> 0.7)
-      json (~> 1.4)
-      nokogiri (~> 1.4.4)
-      uuidtools (~> 2.1)
     builder (2.1.2)
     columnize (0.3.4)
     configatron (2.8.2)
@@ -49,7 +44,6 @@ GEM
     cover_me (1.1.1)
       configatron
       hashie
-    crack (0.1.8)
     daemons (1.0.10)
     dalli (1.0.5)
     delayed_job (2.1.4)
@@ -60,10 +54,7 @@ GEM
     exception_notification_rails3 (1.2.0)
     gem_plugin (0.2.3)
     hashie (1.1.0)
-    httparty (0.7.8)
-      crack (= 0.1.8)
     i18n (0.5.0)
-    json (1.5.3)
     linecache19 (0.5.12)
       ruby_core_source (>= 0.1.4)
     mail (2.2.19)
@@ -83,7 +74,6 @@ GEM
       gem_plugin (~> 0.2.3)
     mysql2 (0.2.8)
     newrelic_rpm (3.0.1)
-    nokogiri (1.4.7)
     paperclip (2.3.10)
       activerecord (>= 2.3.0)
       activesupport (>= 2.3.2)
@@ -141,7 +131,6 @@ PLATFORMS
 DEPENDENCIES
   authlogic (= 3.0.3)
   aws-s3 (= 0.6.2)
-  aws-sdk (= 1.0.2)
   cover_me (>= 1.0.0.rc6)
   dalli (= 1.0.5)
   delayed_job (= 2.1.4)

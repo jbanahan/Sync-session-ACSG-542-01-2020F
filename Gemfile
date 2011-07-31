@@ -24,4 +24,3 @@ group :production do
   gem 'newrelic_rpm', '3.0.1'
 end
 gem 'dalli', '1.0.5'
-gem 'aws-sdk', '1.0.2'

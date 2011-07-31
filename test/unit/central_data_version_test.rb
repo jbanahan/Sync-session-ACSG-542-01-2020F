@@ -20,7 +20,7 @@ class CentralDataVersionTest < ActiveSupport::TestCase
     assert_equal v.name, v2.name
     assert_equal v.upgrade_password, v2.upgrade_password
 
-    v2.destroy
+    OpenChain::CentralData::Version.destroy v2.name 
 
     assert_nil OpenChain::CentralData::Version.get("cv")
   end
