@@ -129,4 +129,16 @@ class CoreModuleTest < ActiveSupport::TestCase
     assert product.module_level(CoreModule::TARIFF)==2, "Tariff should be 2, was #{product.module_level(CoreModule::TARIFF)}"
     assert product.module_level(CoreModule::ORDER).nil?, "Order should be nil because it's not in the child tree."
   end
+  
+  test "order enabled?" do
+    assert CoreModule::ORDER.enabled?
+  end
+  
+  test "order_line enabled?" do
+    assert CoreModule::ORDER_LINE.enabled?
+  end
+  
+  test "shipment enabled?" do
+    assert CoreModule::SHIPMENT.enabled?
+  end
 end
