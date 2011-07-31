@@ -45,23 +45,20 @@ class TariffLoader
     "CALCULATIONMETHOD" => lambda {|o,d|}
   }
 
-  def initialize(country,file_path)
+  def initialize(country,file_path,tariff_set_label)
     @country = country
     @file_path = file_path  
+    @tariff_set_label = tariff_set_label
   end
   
   def process
-    #clear existing
     OfficialTariff.transaction do
-      puts "Deleting tariffs for #{@country.name}"
-      OfficialTariff.where(:country_id=>@country).destroy_all
-      #load new
+      ts = TariffSet.create!(:country_id=>@country.id,:label=>@tariff_set_label)
       i = 0
       parser = get_parser
       parser.foreach(@file_path) do |row|
         headers = parser.headers
-#headers.each {|h| raise "Column #{h} cannot be identified." if FIELD_MAP[h].nil?}
-        ot = OfficialTariff.new(:country=>@country)
+        ot = TariffSetRecord.new(:tariff_set_id=>ts.id,:country=>@country) #use .new instead of ts.tariff_set_records.build to avoid large in memory array
         FIELD_MAP.each do |header,lmda|
           col_num = headers.index header
           unless col_num.nil?
@@ -73,19 +70,20 @@ class TariffLoader
         puts "Processed line #{i} for country: #{@country.name}" if i>50 && i%50==0
         i += 1
       end
-      puts "Re-linking tariffs for #{@country.name}"
-      OfficialQuota.relink_country @country 
     end
   end
 
-  def self.process_folder folder_path
+  def self.process_file file_path, tariff_set_label
+      if File.file? file_path
+        c = Country.where(:iso_code => file_path.split('/').last[0,2].upcase).first
+        raise "Country not found with ISO #{file_path.split('/').last[0,2].upcase} for file #{file_path}" if c.nil?
+        TariffLoader.new(c,file_path,tariff_set_label).process
+      end
+  end
+  def self.process_folder folder_path, tariff_set_label
     Dir.foreach(folder_path) do |entry|
       file_path = "#{folder_path}/#{entry}"
-      if File.file? file_path
-        c = Country.where(:iso_code => entry[0,2].upcase).first
-        raise "Country not found with ISO #{entry[0,2]} for file #{entry}" if c.nil?
-        TariffLoader.new(c,file_path).process
-      end
+      TariffLoader.process_file file_path, tariff_set_label
     end
   end
 
