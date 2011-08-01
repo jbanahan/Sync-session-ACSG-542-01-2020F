@@ -299,10 +299,13 @@ class ModelField
 
   def self.make_hts_arrays(rank_start,uid_prefix) 
     canada = Country.where(:iso_code=>"CA").first
+    us = Country.where(:iso_code=>"US").first
     id_counter = rank_start
     r = []
     (1..3).each do |i|
       r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}"]
+      id_counter += 1
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_schedb".to_sym,"schedule_b_#{i}".to_sym,"Schedule B Code #{i}"] if us && us.import_location #make sure us exists so test fixtures pass
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate,"#{i} - General Rate",{
         :import_lambda => lambda {|obj,data| return "General Duty Rate cannot be set by import, ignored."},

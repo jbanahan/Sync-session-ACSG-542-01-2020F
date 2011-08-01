@@ -512,6 +512,9 @@ width:60%;
 .sched_b_field {
   width: 8em;
 }
+.sched_b_opt {
+  margin-top: 5px;
+}
 .help_title {
   display: block;
   font-size: 200%;
