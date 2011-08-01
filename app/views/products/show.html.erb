@@ -91,6 +91,18 @@
                       <td><%=show_tariff t.hts_2,c.country_id%></td>
                       <td><%=show_tariff t.hts_3,c.country_id%></td>
                     </tr>
+                    <% if t.has_schedule_b?%>
+                      <tr>
+                        <th><%=field_label :hts_hts_1_schedb, false%></th>
+                        <th><%=field_label :hts_hts_2_schedb, false%></th>
+                        <th><%=field_label :hts_hts_3_schedb, false%></th>
+                      </tr>
+                      <tr>
+                       <td><%=show_schedule_b t.schedule_b_1%></td> 
+                       <td><%=show_schedule_b t.schedule_b_2%></td> 
+                       <td><%=show_schedule_b t.schedule_b_3%></td> 
+                      </tr>
+                    <% end %>
                   </tbody>
                 </table>
               </div>

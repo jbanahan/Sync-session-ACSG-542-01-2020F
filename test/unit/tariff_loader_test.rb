@@ -2,6 +2,57 @@ require 'test_helper'
 require 'spreadsheet'
 class TariffLoaderTest < ActiveSupport::TestCase
 
+  test "s3" do 
+    wb = Spreadsheet::Workbook.new
+    sheet = wb.create_worksheet
+    cols = ["HSCODE","FULL_DESC","SPC_RATES","UNITCODE","GENERAL","CHAPTER","HEADING","SUBHEADING","REST_DESC","ADDVALOREMRATE","PERUNIT","MFN","GPT","ERGA_OMNES","COL2_RATE",
+      "Import Reg 1","Import Reg 2","Import Reg 3","Import Reg 4","Export Reg 1","Export Reg 2","Export Reg 3","Export Reg 4"]
+    row1_data = []
+    row2_data = []
+    row1_expected = {}
+    row2_expected = {}
+    cols.each_index do |i|
+      s1 = "val-#{i}"
+      s2 = "s2-#{i}"
+      row1_data << s1
+      row2_data << s2
+      row1_expected[cols[i]] = s1
+      row2_expected[cols[i]] = s2
+    end
+    sheet.row(0).replace cols
+    sheet.row(1).replace row1_data
+    sheet.row(2).replace row2_data
+    t = Tempfile.new(["tariffloadertest-general",".xls"])
+    wb.write t.path
+
+    country = Country.first
+    label = "ABCDEFS3"
+
+    #PUT THE FILE TO S3
+    base = YAML.load(IO.read("config/s3.yml"))
+    y = {} #need to convert string keys into symbols
+    base.each do |k,v|
+      y[k.to_sym] = v
+    end
+    begin
+      key = "#{Rails.env.to_s}/TariffStore/#{t.path.split('/').last}"
+      AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
+      AWS::S3::S3Object.store key, open(t.path), 'chain-io'
+      AWS::S3::S3Object.disconnect!
+
+      TariffLoader.process_s3 key, country, label
+
+    ensure
+      AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
+      AWS::S3::S3Object.delete key, 'chain-io'
+      AWS::S3::S3Object.disconnect!
+    end
+
+    ts = TariffSet.where(:label=>label).first
+    assert_equal country, ts.country
+    assert_equal 2, ts.tariff_set_records.size
+  end
+
   test "general" do
     wb = Spreadsheet::Workbook.new
     sheet = wb.create_worksheet
@@ -26,14 +77,18 @@ class TariffLoaderTest < ActiveSupport::TestCase
     wb.write t.path
 
     country = Country.first
-    loader = TariffLoader.new(country,t.path)
+    label = "ABCDEF"
+    loader = TariffLoader.new(country,t.path,label)
     
     loader.process
 
-    all = OfficialTariff.where(:country_id=>country.id)
-    assert all.size==2
-    result1 = OfficialTariff.where(:country_id=>country.id,:hts_code=>row1_data[0]).first
-    result2 = OfficialTariff.where(:country_id=>country.id,:hts_code=>row2_data[0]).first
+
+    ts = TariffSet.where(:label=>label).first
+    assert_equal label, ts.label
+    assert_equal country, ts.country
+    assert_equal 2, ts.tariff_set_records.size
+    result1 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>row1_data[0]).first
+    result2 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>row2_data[0]).first
     [result1,result2].each do |r|
       exp = r.hts_code==row1_data[0] ? row1_expected : row2_expected
       assert r.full_description==exp["FULL_DESC"]

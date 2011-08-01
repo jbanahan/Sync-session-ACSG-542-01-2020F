@@ -15,7 +15,7 @@ class Classification < ActiveRecord::Base
   has_many :tariff_records, :dependent => :destroy, :before_add => :set_nested
    
   accepts_nested_attributes_for :tariff_records, :allow_destroy => true, 
-    :reject_if => lambda { |a| a[:hts_1].blank? && (a[:_destroy].blank? || a[:_destroy]=="false")}
+    :reject_if => lambda { |a| a[:hts_1].blank? && a[:schedule_b_1].blank? && (a[:_destroy].blank? || a[:_destroy]=="false")}
 
 
   dont_shallow_merge :Classification, ['id','created_at','updated_at','country_id','product_id']

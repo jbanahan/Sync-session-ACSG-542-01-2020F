@@ -38,6 +38,8 @@ OpenChain::Application.routes.draw do
 
   resources :official_tariffs, :only=>[:index,:show] do
     get 'find', :on => :collection
+    get 'find_schedule_b', :on => :collection
+    get 'schedule_b_matches', :on => :collection
   end
   resources :official_tariff_meta_data, :only=>[:create,:update]
 

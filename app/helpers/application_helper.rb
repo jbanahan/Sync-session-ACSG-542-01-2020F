@@ -147,6 +147,14 @@ module ApplicationHelper
     CSV.generate_line base, {:row_sep=>"",:col_sep=>", "} 
   end
 
+  def show_schedule_b schedule_b_number, with_popup_link=true
+    return "" if schedule_b_number.blank?
+    if with_popup_link
+      return link_to schedule_b_number.hts_format, "#", {:class=>'lnk_schedb_popup',:schedb=>schedule_b_number}
+    else
+      return schedule_b_number.hts_format
+    end
+  end
   def show_tariff hts_number, country_id, with_popup_link=true
     return "" if hts_number.blank?
     if with_popup_link
