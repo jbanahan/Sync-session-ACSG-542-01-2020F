@@ -9,6 +9,8 @@ class CustomValue < ActiveRecord::Base
   after_commit :set_cache
   after_find :set_cache
   
+  default_scope includes(:custom_definition)
+
   def self.cached_find_unique custom_definition_id, customizable
     c = CACHE.get unique_cache_key(custom_definition_id, customizable.id, customizable.class)
     if c.nil?
