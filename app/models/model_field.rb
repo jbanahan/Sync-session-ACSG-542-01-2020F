@@ -106,7 +106,8 @@ class ModelField
   
   def determine_data_type
     if @custom_id.nil?
-      return Kernel.const_get(@model).columns_hash[@field_name.to_s].klass.to_s.downcase.to_sym
+      col = Kernel.const_get(@model).columns_hash[@field_name.to_s]
+      return col.nil? ? nil : col.klass.to_s.downcase.to_sym #if col is nil, we probably haven't run the migration yet and are in the install process
     else
       return CustomDefinition.cached_find(@custom_id).data_type.downcase.to_sym
     end
