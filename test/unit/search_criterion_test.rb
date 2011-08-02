@@ -6,6 +6,15 @@ class SearchCriterionTest < ActiveSupport::TestCase
     ActiveRecord::Base.connection.execute("set time_zone = '+0:00'") #ensure we're working in UTC to make sure local system offsets don't screw with date math
   end
 
+  test "empty custom value" do
+    cd = CustomDefinition.create!(:module_type=>"Product",:label=>"CD1",:data_type=>"date")
+    p = Product.create!(:unique_identifier=>"uid")
+    sc = SearchCriterion.new(:model_field_uid=>"*cf_#{cd.id}",:operator=>"null")
+    found = sc.apply(Product)
+    assert found.include? p
+    assert sc.passes? p.get_custom_value(cd).value
+  end
+
   test "one of" do
     o = Order.create!(:order_number=>"ordoneof",:vendor_id=>companies(:vendor).id)
     o2 = Order.create!(:order_number=>"od1d",:vendor_id=>companies(:vendor).id)
