@@ -18,6 +18,7 @@ $(function() {
       $(this).attr('value','');
     });
     tf_row.find('.tariff_result').html('');
+    tf_row.find('.sched_b_options').html('');
     var vs = tf_row.children('[name$="[view_sequence]"]');
     vs.attr('value',seed);
     $(this).parent().before(tf_row);
