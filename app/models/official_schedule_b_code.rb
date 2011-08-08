@@ -22,7 +22,7 @@ class OfficialScheduleBCode < ActiveRecord::Base
         osb.update_attributes data_hash
       }
     end
-    OfficialTariff.count
+    OfficialScheduleBCode.count
   end
 
 end

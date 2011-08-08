@@ -6,7 +6,7 @@ class OfficialScheduleBCodeTest < ActiveSupport::TestCase
     file = 'test/assets/schedule_b.txt'
     assert OfficialScheduleBCode.first.nil?
 
-    OfficialScheduleBCode.load_from_census_file file
+    assert_equal 2, OfficialScheduleBCode.load_from_census_file(file)
 
     assert_equal 2, OfficialScheduleBCode.count
 
