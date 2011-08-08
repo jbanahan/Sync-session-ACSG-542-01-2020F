@@ -1,3 +1,5 @@
+require 'open_chain/central_data'
+
 class MasterSetupsController < ApplicationController
   def index
     redirect_to edit_master_setup_path MasterSetup.get
@@ -31,6 +33,23 @@ class MasterSetupsController < ApplicationController
       add_flash :notices, "System message updated successfully." if m.save
       errors_to_flash m
       redirect_to show_system_message_master_setups_path
+    }
+  end
+
+  def upgrade
+    sys_admin_secure("Only system administrators can run upgrades.") {
+      m = MasterSetup.get
+      v = OpenChain::CentralData::Version.get params[:name]
+      if v.nil?
+        add_flash :errors, "You must specify a valid version name to upgrade to."
+      elsif v.upgrade_password!=params[:upgrade_password]
+        add_flash :errors, "Upgrade password was incorrect."
+      else
+        m.target_version = v.name
+        m.save
+        add_flash :notices, "Upgrade to version #{v.name} initiated."
+      end
+      redirect_to edit_master_setup_path m
     }
   end
 

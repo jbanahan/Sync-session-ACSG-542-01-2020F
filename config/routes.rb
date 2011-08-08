@@ -30,12 +30,16 @@ OpenChain::Application.routes.draw do
     collection do
       get 'show_system_message'
       post 'set_system_message'
+      post 'upgrade'
     end
   end
+  resources :upgrade_logs, :only=>[:show]
   resources :attachment_types
 
   resources :official_tariffs, :only=>[:index,:show] do
     get 'find', :on => :collection
+    get 'find_schedule_b', :on => :collection
+    get 'schedule_b_matches', :on => :collection
   end
   resources :official_tariff_meta_data, :only=>[:create,:update]
 

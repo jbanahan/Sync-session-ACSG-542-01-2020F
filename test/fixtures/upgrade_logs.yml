@@ -1,0 +1,17 @@
+# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
+
+one:
+  from_version: MyString
+  to_version: MyString
+  started_at: 2011-07-26 19:25:31
+  finished_at: 2011-07-26 19:25:31
+  log: MyText
+  instance_information_id: 1
+
+two:
+  from_version: MyString
+  to_version: MyString
+  started_at: 2011-07-26 19:25:31
+  finished_at: 2011-07-26 19:25:31
+  log: MyText
+  instance_information_id: 1

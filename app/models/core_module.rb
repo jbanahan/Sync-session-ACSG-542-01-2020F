@@ -11,7 +11,8 @@ class CoreModule
       :show_field_prefix, #should the default option for this module's field's labels be to show the module name as a prefix (true =  "Classification - Country Name", false="Country Name")
       :changed_at_parents_lambda, #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers,
       :object_from_piece_set_lambda, #lambda returning the appropriate object for this module based on the given PieceSet (or nil)
-      :entity_json_lambda #lambda return hash suitable for conversion into json containing all model fields
+      :entity_json_lambda, #lambda return hash suitable for conversion into json containing all model fields
+      :enabled_lambda
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
   
   def initialize(class_name,label,opts={})
@@ -47,7 +48,8 @@ class CoreModule
           end
           master_hash
         },
-        :object_from_piece_set_lambda => lambda {|ps| nil}
+        :object_from_piece_set_lambda => lambda {|ps| nil},
+        :enabled_lambda => lambda { true }
       }.
       merge(opts)
     @class_name = class_name
@@ -67,6 +69,7 @@ class CoreModule
     @entity_json_lambda = o[:entity_json_lambda]
     @unique_id_field_name = o[:unique_id_field_name]
     @object_from_piece_set_lambda = o[:object_from_piece_set_lambda]
+    @enabled_lambda = o[:enabled_lambda]
   end
   
   #returns the appropriate object for the core module based on the piece set given
@@ -159,7 +162,8 @@ class CoreModule
   ORDER_LINE = new("OrderLine","Order Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:ordln_line_number,
-    :object_from_piece_set_lambda => lambda {|ps| ps.order_line}
+    :object_from_piece_set_lambda => lambda {|ps| ps.order_line},
+    :enabled_lambda => lambda { MasterSetup.get.order_enabled? }
   }) 
   ORDER = new("Order","Order",
     {:file_formatable=>true,
@@ -171,12 +175,14 @@ class CoreModule
       :object_from_piece_set_lambda => lambda {|ps|
         o_line = ps.order_line
         o_line.nil? ? nil : o_line.order
-      }
+      },
+      :enabled_lambda => lambda { MasterSetup.get.order_enabled? }
     })
   SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:shpln_line_number,
-    :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line}
+    :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line},
+    :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? }
   })
   SHIPMENT = new("Shipment","Shipment",
     {:children=>[SHIPMENT_LINE],
@@ -184,12 +190,14 @@ class CoreModule
     :child_joins => {SHIPMENT_LINE => "LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id"},
     :default_search_columns => [:shp_ref,:shp_mode,:shp_ven_name,:shp_car_name],
     :unique_id_field_name=>:shp_ref,
-    :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment}
+    :object_from_piece_set_lambda => lambda {|ps| ps.shipment_line.nil? ? nil : ps.shipment_line.shipment},
+    :enabled_lambda => lambda { MasterSetup.get.shipment_enabled? }
     })
   SALE_LINE = new("SalesOrderLine","Sale Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:soln_line_number,
-    :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line}
+    :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line},
+    :enabled_lambda => lambda { MasterSetup.get.sale_enabled? }
     })
   SALE = new("SalesOrder","Sale",
     {:children => [SALE_LINE],
@@ -197,12 +205,14 @@ class CoreModule
       :child_joins => {SALE_LINE => "LEFT OUTER JOIN sales_order_lines ON sales_orders.id = sales_order_lines.sales_order_id"},
       :default_search_columns => [:sale_order_number,:sale_order_date,:sale_cust_name],
       :unique_id_field_name=>:sale_order_number,
-      :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line.nil? ? nil : ps.sales_order_line.sales_order}
+      :object_from_piece_set_lambda => lambda {|ps| ps.sales_order_line.nil? ? nil : ps.sales_order_line.sales_order},
+      :enabled_lambda => lambda { MasterSetup.get.sale_enabled? }
     })
   DELIVERY_LINE = new("DeliveryLine","Delivery Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:delln_line_number,
-    :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line}
+    :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line},
+    :enabled_lambda => lambda { MasterSetup.get.delivery_enabled? }
     })
   DELIVERY = new("Delivery","Delivery",
     {:children=>[DELIVERY_LINE],
@@ -210,7 +220,8 @@ class CoreModule
     :child_joins => {DELIVERY_LINE => "LEFT OUTER JOIN delivery_lines on deliveries.id = delivery_lines.delivery_id"},
     :default_search_columns => [:del_ref,:del_mode,:del_car_name,:del_cust_name],
     :unique_id_field_name=>:del_ref,
-    :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line.nil? ? nil : ps.delivery_line.delivery}
+    :object_from_piece_set_lambda => lambda {|ps| ps.delivery_line.nil? ? nil : ps.delivery_line.delivery},
+    :enabled_lambda => lambda { MasterSetup.get.delivery_enabled? }
     })
   TARIFF = new("TariffRecord","Tariff",{
     :changed_at_parents_lambda=>lambda {|tr|
@@ -223,7 +234,8 @@ class CoreModule
       r
     },
     :show_field_prefix=>true,
-    :unique_id_field_name=>:hts_line_number
+    :unique_id_field_name=>:hts_line_number,
+    :enabled_lambda => lambda { MasterSetup.get.classification_enabled? }
   })
   CLASSIFICATION = new("Classification","Classification",{
       :children => [TARIFF],
@@ -231,7 +243,8 @@ class CoreModule
       :child_joins => {TARIFF => "LEFT OUTER JOIN tariff_records ON classifications.id = tariff_records.classification_id"},
       :changed_at_parents_lambda=>lambda {|c| c.product.nil? ? [] : [c.product] },
       :show_field_prefix=>true,
-      :unique_id_field_name=>:class_cntry_iso
+      :unique_id_field_name=>:class_cntry_iso,
+      :enabled_lambda => lambda { MasterSetup.get.classification_enabled? }
   })
   PRODUCT = new("Product","Product",{:statusable=>true,:file_formatable=>true,:worksheetable=>true,
       :children => [CLASSIFICATION],
@@ -305,6 +318,10 @@ class CoreModule
       r[cm.label] = fld_array
     end
     r
+  end
+
+  def enabled?
+    @enabled_lambda.call
   end
 
   private

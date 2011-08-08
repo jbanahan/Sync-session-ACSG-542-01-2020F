@@ -56,7 +56,7 @@ img {
 .detail_table td {
     vertical-align: top;
 }
-.detail_table thead, .date_grid td:hover {
+.detail_table th, .date_grid td:hover {
     background-color: #151515;
     color: #FFFFFF;
     text-align: left;
@@ -508,6 +508,12 @@ width:60%;
 }
 .hts_field {
   width: 8em;
+}
+.sched_b_field {
+  width: 8em;
+}
+.sched_b_opt {
+  margin-top: 5px;
 }
 .help_title {
   display: block;

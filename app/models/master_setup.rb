@@ -9,6 +9,7 @@ class MasterSetup < ActiveRecord::Base
     Rails.root.join("config","version.txt").read
   end
 
+  #get the master setup for this instance, first trying the cache, then trying the DB, then creating and returning a new one
   def self.get
     m = nil
     begin
@@ -20,6 +21,36 @@ class MasterSetup < ActiveRecord::Base
       CACHE.set CACHE_KEY, m 
     end
     m.is_a?(MasterSetup) ? m : MasterSetup.first
+  end
+
+  def self.get_migration_lock hostname=nil
+    h = hostname.blank? ? `hostname`.strip : hostname
+    c = MasterSetup.connection
+    begin
+      c.execute "LOCK TABLES master_setups WRITE;"
+      c.execute "UPDATE master_setups SET migration_host = '#{h}' WHERE migration_host is null;"
+      found_host = c.execute("SELECT migration_host FROM master_setups;").first.first
+      return found_host==h
+    ensure
+      c.execute "UNLOCK TABLES;"
+      MasterSetup.first #makes sure the after_find callback is called to update the cache
+    end
+  end
+
+  def self.need_upgrade?
+    ms = MasterSetup.get
+    !ms.target_version.blank? && ms.version.strip!=ms.target_version.strip
+  end
+
+  def self.release_migration_lock
+    c = MasterSetup.connection
+    begin
+      c.execute "LOCK TABLES master_setups WRITE;"
+      c.execute "UPDATE master_setups SET migration_host = null;"
+    ensure
+      c.execute "UNLOCK TABLES;"
+      MasterSetup.first #makes sure the after_find callback is called to update the cache
+    end
   end
 
   def self.init_base_setup

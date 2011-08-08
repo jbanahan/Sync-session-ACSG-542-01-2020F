@@ -27,6 +27,18 @@ class TariffRecord < ActiveRecord::Base
     write_attribute(:hts_3, TariffRecord.clean_hts(str))
   end
 
+  def schedule_b_1=(str)
+    write_attribute(:schedule_b_1, TariffRecord.clean_hts(str))
+  end
+
+  def schedule_b_2=(str)
+    write_attribute(:schedule_b_2, TariffRecord.clean_hts(str))
+  end
+
+  def schedule_b_3=(str)
+    write_attribute(:schedule_b_3, TariffRecord.clean_hts(str))
+  end
+
   def hts_1_official_tariff
     find_official_tariff self.hts_1  
   end
@@ -39,6 +51,13 @@ class TariffRecord < ActiveRecord::Base
     find_official_tariff self.hts_3
   end
   
+  #are any of the 3 schedule b code fields populated
+  def has_schedule_b?
+    !self.schedule_b_1.blank? || 
+    !self.schedule_b_2.blank? ||
+    !self.schedule_b_3.blank?
+  end
+
   def auto_set_line_number 
     #WARNING: this is used by a migration so it can't go away or be renamed without 
     #editing 20110315202025_add_line_number_to_tariff_record.rb migration

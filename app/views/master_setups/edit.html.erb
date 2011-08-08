@@ -6,10 +6,22 @@ $(function() {
   $("#btn_cancel").click(function() {
     window.location = '<%=settings_path%>';
   });
+  $(".upgrade_count").click(function(evt) {
+    evt.preventDefault();
+    $(this).next('.upgrade_list').slideDown();
+  });
+  $("#mod_upgrade").dialog({autoOpen:false,modal:true,buttons:{
+    "OK":function() {$("#frm_upgrade").submit();},
+    "Cancel":function() {$("#mod_upgrade").dialog('close');}
+  }});
+  $("#btn_upgrade").click(function(evt) {
+    $("#mod_upgrade").dialog('open');  
+  });
 });
 <%end%>
 <%content_for :action_bar do %>
 <button id='btn_save'>Save</button>
+<button id='btn_upgrade'>Upgrade</button>
 <button id='btn_cancel'>Cancel</button>
 <%end%>
 <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
@@ -26,6 +38,8 @@ $(function() {
   <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
   <% ss = ScheduleServer.first %>
   <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})"%>
+  <%=field_row "Target Version", @ms.target_version%>
+  <%=field_row "Server With Migration Lock", @ms.migration_host%>
 </table>
 <%end%>
 
@@ -41,3 +55,34 @@ $(function() {
     </tr>
   <% end %>
 </table>
+
+<h2>Instances</h2>
+<table class='detail_table'>
+  <thead>
+    <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
+  </thead>
+  <% InstanceInformation.order("last_check_in DESC").each do |ii| %>
+    <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'>
+      <td><%=ii.host%></td>
+      <td><%=ii.version%></td>
+      <td><%=ii.last_check_in%></td>
+      <td>
+        <a href='#' class='upgrade_count'><%=pluralize ii.upgrade_logs.count, "log"%></a>
+        <div class='upgrade_list' style='display:none;'>
+          <%ii.upgrade_logs.order("started_at DESC").each do |u|%>
+            <%=link_to u.started_at.to_s, u%><br />
+          <%end%>
+        </div>
+      </td>
+    </tr>
+  <% end %>
+</table>
+
+<div id='mod_upgrade' style='display:none;'>
+  <%=form_tag '/master_setups/upgrade', :id=>:frm_upgrade do |f| %>
+    <table>
+      <%=field_row "Version", text_field_tag(:name) %>
+      <%=field_row "Upgrade Password", password_field_tag(:upgrade_password)%>
+    </table>
+  <%end%>
+</div>

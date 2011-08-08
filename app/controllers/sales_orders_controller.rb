@@ -7,7 +7,7 @@ class SalesOrdersController < ApplicationController
     advanced_search CoreModule::SALE
   end
   def all_open
-    if current_user.view_orders?
+    if current_user.view_sales_orders?
       respond_to do |format|
         format.json { render :json => SalesOrder.search_secure(current_user,SalesOrder).to_json(:only =>[:id,:order_number]) }
       end

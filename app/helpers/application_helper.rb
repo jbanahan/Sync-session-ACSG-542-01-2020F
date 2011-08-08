@@ -118,7 +118,14 @@ module ApplicationHelper
       else
         z = "<b>".html_safe+field_label(d.model_field_uid,opts[:show_prefix])+": </b>".html_safe
         if opts[:form]
-          z << model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}"})
+          case d.data_type
+          when 'boolean'
+            z << hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:title=>"#{d.tool_tip}",:class=>"cv_chkbx #{field_tip_class} #{data_type_class(mf)}", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
+          when 'text'
+            z << model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{field_tip_class} #{data_type_class(mf)}",:rows=>5, :cols=>24})
+          else
+            z << model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}"})
+          end
         else
           z << "#{c_val}"
         end
@@ -147,6 +154,14 @@ module ApplicationHelper
     CSV.generate_line base, {:row_sep=>"",:col_sep=>", "} 
   end
 
+  def show_schedule_b schedule_b_number, with_popup_link=true
+    return "" if schedule_b_number.blank?
+    if with_popup_link
+      return link_to schedule_b_number.hts_format, "#", {:class=>'lnk_schedb_popup',:schedb=>schedule_b_number}
+    else
+      return schedule_b_number.hts_format
+    end
+  end
   def show_tariff hts_number, country_id, with_popup_link=true
     return "" if hts_number.blank?
     if with_popup_link

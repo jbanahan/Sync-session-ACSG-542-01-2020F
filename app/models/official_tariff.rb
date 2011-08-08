@@ -7,7 +7,6 @@ class OfficialTariff < ActiveRecord::Base
 
   validates :country, :presence => true
   validates :hts_code, :presence => true
-  validates :full_description, :presence => true
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
   
@@ -33,6 +32,10 @@ class OfficialTariff < ActiveRecord::Base
   def find_matches(other_country)
     h = six_digit_hts
     OfficialTariff.where(:country_id=>other_country).where("hts_code like ?","#{h}%")
+  end
+
+  def find_schedule_b_matches
+    OfficialScheduleBCode.where("hts_code like ?","#{six_digit_hts}%")
   end
 
   def meta_data

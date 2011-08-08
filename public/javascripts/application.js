@@ -126,13 +126,36 @@ var OpenChain = (function() {
     }
     return true;
   }
-  var validateHTSValue = function(country_id,hts_field) {
+  var writeScheduleBMatches = function(htsField) {
+    var col, schedBField;
+    col = htsField.attr("col");
+    schedBField = htsField.parents(".tf_row").find('input.sched_b_field[col="'+col+'"]')
+    if(schedBField.length) {
+      $.getJSON('/official_tariffs/schedule_b_matches?hts='+htsField.val(),function(data) {
+        var to_write = schedBField.siblings('.sched_b_options');
+        if(to_write.length==0) {
+          schedBField.closest("td").append("<div class='sched_b_options'></div>");
+          to_write = schedBField.siblings('.sched_b_options');
+        }
+        var h = "";
+        var sb;
+        for(var i=0; i<data.length; i++) {
+          sb = data[i].official_schedule_b_code
+          h += "<div class='sched_b_opt'><a href='#' class='sched_b_option'>"+sb.hts_code+"</a><br />";
+          h += sb.short_description+"<br />";
+          h += "<a href='#' class='lnk_schedb_popup' schedb='"+sb.hts_code+"'>info</a>";
+        }
+        to_write.html(h);
+      }); 
+    }
+  }
+  var validateOfficialValue = function(uri,hts_field,writeDataFunction) {
     var get_result_box = function() {
       var to_write = hts_field.siblings(".tariff_result");
       if(to_write.length==0) {
         hts_field.closest("td").append("<div class='tariff_result'></div>");
+        to_write = hts_field.siblings(".tariff_result"); 
       }
-      to_write = hts_field.siblings(".tariff_result"); 
       return to_write;
     }
     var invalid_callback = function() {
@@ -143,15 +166,42 @@ var OpenChain = (function() {
     }
     var valid_callback = function(data) {
       hts_field.removeClass("error");
-      writeTariffInfo(data,hts,country_id);
+      writeTariffInfo(data);
+      if(hts_field.hasClass("hts_field")) {
+        writeScheduleBMatches(hts_field);
+      }
     }
-    var writeTariffInfo = function(data,hts,country_id) {
+    var writeTariffInfo = function(data) {
       var t, h, to_write;
       to_write = get_result_box();
-      h = "";
+      h = writeDataFunction(data);
+      to_write.html(h);
+    }
+    removeFromInvalidTariffs(hts_field);
+    var hts = hts_field.val();
+    if(hts.length==0) {
+      $(this).removeClass("error");
+      get_result_box().html("");
+      return;
+    }
+    if(!validateHTSFormat(hts)) {
+      invalid_callback();
+      return;
+    }
+    $.getJSON(uri,function(data) {
+      if(data==null) {
+        invalid_callback();
+      }
+      else {
+        valid_callback(data);
+      }
+    });
+  }
+  var validateHTSValue = function(country_id,hts_field) {
+    var wdf = function(data) {  
       if(data!="country not loaded") {
-        t = data.official_tariff;
-        h = t.remaining_description+"<br />"; 
+        var t = data.official_tariff;
+        var h = t.remaining_description+"<br />"; 
         if(t.general_rate) {
           h+="General Rate: "+t.general_rate+"<br />";
         }
@@ -172,27 +222,23 @@ var OpenChain = (function() {
         }
         h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
       }
-      to_write.html(h);
+      return h;
     }
-    removeFromInvalidTariffs(hts_field);
-    hts = hts_field.val();
-    if(hts.length==0) {
-      $(this).removeClass("error");
-      get_result_box().html("");
-      return;
-    }
-    if(!validateHTSFormat(hts)) {
-      invalid_callback();
-      return;
-    }
-    $.getJSON('/official_tariffs/find?hts='+hts+'&cid='+country_id,function(data) {
-      if(data==null) {
-        invalid_callback();
+    validateOfficialValue('/official_tariffs/find?hts='+hts_field.val()+'&cid='+country_id,hts_field,wdf)
+  }
+  var validateScheduleBValue = function(hts_field) {
+    var wdf = function(data) {
+      var h, t;
+      h = "";
+      if(data) {
+        t = data.official_schedule_b_code;
+        h = t.short_description+"<br />"
+        h += "<a href='#' class='lnk_schedb_popup' schedb='"+t.hts_code+"'>info</a>";
       }
-      else {
-        valid_callback(data);
-      }
-    });
+      return h;
+    }
+
+    validateOfficialValue('/official_tariffs/find_schedule_b?hts='+hts_field.val(),hts_field,wdf);
   }
 
   var pollingId;
@@ -251,6 +297,52 @@ var OpenChain = (function() {
         renderMilestones(parentContainer,data,headingModule,isAdmin);
       });
     }}});
+  }
+  var initScheduleBLinks = function() {
+    $(".lnk_schedb_popup").live('click',function(evt) {
+      evt.preventDefault();
+      scheduleBPopUp($(this).attr("schedb"));
+    }); 
+  }
+  var scheduleBPopUp = function(hts) {
+    var mp = $("#mod_sched_b");
+    if(!mp.length) {
+      $("body").append("<div id='mod_sched_b' style='display:none;'><div id='sched_b_cont'>Loading Schedule B Data</div></div>")
+      mp = $("#mod_sched_b");
+      mp.dialog({autoOpen:false,width:'400',height:'500',buttons:{"OK":function() {$("#mod_sched_b").dialog('close');}}});
+    }
+    var c = $("#sched_b_cont");
+    c.html("Loading Schedule B Data");
+    mp.dialog('open');
+    $.ajax({
+      url:'/official_tariffs/find_schedule_b?hts='+hts,
+      dataType:'json',
+      error: function(req,msg,obj) {
+        c.html("We're sorry, an error occurred while trying to load this information.");
+
+      },
+      success: function(data) {
+        var h = '';
+        if(data==null) {
+          h = "No data was found for tariff "+hts;
+        } else {
+          var o = data.official_schedule_b_code;
+          h = "<table class='tbl_hts_popup'><tbody>";
+          h += htsDataRow("Tariff #:",o.hts_code);
+          h += htsDataRow("Short Description:",o.short_description);
+          h += htsDataRow("Long Description:",o.long_description);
+          h += htsDataRow("Quantity 1",o.quantity_1);
+          h += htsDataRow("Quantity 2",o.quantity_2);
+          h += htsDataRow("SITC Code",o.sitc_code);
+          h += htsDataRow("End Use Classification",o.end_use_classification);
+          h += htsDataRow("USDA Code",o.usda_code);
+          h += htsDataRow("NAICS Classification",o.naics_classification);
+          h += htsDataRow("HiTech Classification",o.hitech_classification);
+          h += "</tbody></table>";
+        }
+        c.html(h);
+      }
+    });
   }
   return {
     //public stuff
@@ -352,12 +444,17 @@ var OpenChain = (function() {
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
         $(this).closest(".tf_row").find(".hts_field").each(function() {removeFromInvalidTariffs($(this));});
+        $(this).closest(".tf_row").find(".sched_b_field").each(function() {removeFromInvalidTariffs($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
       $(".hts_option").click(function(ev) {
         ev.preventDefault();
         $(this).prevAll("input.hts_field").val($(this).html());
+      });
+      $(".sched_b_option").live('click',function(ev) {
+        ev.preventDefault();
+        $(this).closest("td").find("input.sched_b_field").val($(this).html());
       });
       $("form").submit(function() {
         if(invalidTariffFields.length>0) {
@@ -367,7 +464,7 @@ var OpenChain = (function() {
         removeEmptyClassifications();
         $(".tf_row").each(function() {
           var has_data = false;
-          $(this).find(".hts_field").each(function() {
+          $(this).find(".hts_field, .sched_b_field").each(function() {
             if(!has_data) {
               has_data = $(this).val().length>0;
             }
@@ -379,6 +476,8 @@ var OpenChain = (function() {
           }
         });
       });
+      $(".sched_b_field").live('blur',function() {validateScheduleBValue($(this));});
+      $(".sched_b_field").each(function() {validateScheduleBValue($(this));});
       $(".hts_field").live('blur',function() {validateHTSValue($(this).attr('country'),$(this))});
       $(".hts_field").each(function() {validateHTSValue($(this).attr('country'),$(this))});
     },
@@ -441,6 +540,7 @@ var OpenChain = (function() {
       initLinkButtons();
       initFormButtons();
       initRemoteValidate();
+      initScheduleBLinks();
       pollingId = pollForMessages();
     }
   };

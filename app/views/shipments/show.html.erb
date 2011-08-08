@@ -51,18 +51,11 @@ $(function() {
 <div style='width:95%;margin-bottom:10px;'>
 <%=render :partial=>'shared/attachments', :locals=>{:attachable=>@shipment}%>
 <div class='next_to_attachments'>
-<table class='detail_table' >
+<table>
   <tbody>
-    <tr>
-      <td style='width:50%'>
-        <b><%=field_label(:shp_car_name)%>:</b>
-        <%= @shipment.carrier_id.nil? ? '' : @shipment.carrier.name %>
-        <br />
-        <b><%=field_label(:shp_mode)%>:</b>
-        <%=@shipment.mode %>
-				<%=show_custom_fields @shipment%>
-      </td>
-    </tr>
+    <%=field_row field_label(:shp_car_name), (@shipment.carrier_id.nil? ? '' : @shipment.carrier.name)%>
+    <%=field_row field_label(:shp_mode), @shipment.mode%>
+		<%=show_custom_fields @shipment, {:table=>true}%>
   </tbody>
 </table>
 </div>

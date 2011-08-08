@@ -106,7 +106,8 @@ class ModelField
   
   def determine_data_type
     if @custom_id.nil?
-      return Kernel.const_get(@model).columns_hash[@field_name.to_s].klass.to_s.downcase.to_sym
+      col = Kernel.const_get(@model).columns_hash[@field_name.to_s]
+      return col.nil? ? nil : col.klass.to_s.downcase.to_sym #if col is nil, we probably haven't run the migration yet and are in the install process
     else
       return CustomDefinition.cached_find(@custom_id).data_type.downcase.to_sym
     end
@@ -299,10 +300,13 @@ class ModelField
 
   def self.make_hts_arrays(rank_start,uid_prefix) 
     canada = Country.where(:iso_code=>"CA").first
+    us = Country.where(:iso_code=>"US").first
     id_counter = rank_start
     r = []
     (1..3).each do |i|
       r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}"]
+      id_counter += 1
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_schedb".to_sym,"schedule_b_#{i}".to_sym,"Schedule B Code #{i}"] if us && us.import_location #make sure us exists so test fixtures pass
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate,"#{i} - General Rate",{
         :import_lambda => lambda {|obj,data| return "General Duty Rate cannot be set by import, ignored."},
