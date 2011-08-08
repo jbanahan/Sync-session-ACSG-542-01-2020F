@@ -20,6 +20,10 @@ class OfficialScheduleBCodeTest < ActiveSupport::TestCase
     assert_equal "0", b.usda_code
     assert_equal "112920", b.naics_classification
     assert_equal "00", b.hitech_classification
+
+    #run again, make sure we don't have duplicate records
+    OfficialScheduleBCode.load_from_census_file file
+    assert_equal 2, OfficialScheduleBCode.count
   end
 
 end
