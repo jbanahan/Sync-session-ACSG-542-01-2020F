@@ -73,7 +73,6 @@ class MilestonePlansController < ApplicationController
     end
   end
   def process_row milestone_plan, row, rows_hash, row_key
-  debugger
     previous_def = nil #milestone definition object 
     existing_def = nil #existing milestone definition object already set to this model_field_uid
     milestone_plan.milestone_definitions.all.each do |md| #.all forces only good object, (not in-memory junk left over from other passes through the loop)
