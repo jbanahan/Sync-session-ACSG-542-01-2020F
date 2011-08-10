@@ -47,13 +47,17 @@ class ImportedFile < ActiveRecord::Base
   #output the data for a file based on the current state of the items created/updated by this file
   def make_items_file search_criterions=[]
     if self.attached_file_name.downcase.ends_with?("xls") 
-      book = XlsMaker.new.make_from_results self.last_file_import_finished.changed_objects, self.search_columns.order("rank asc"), self.core_module.default_module_chain 
+      book = XlsMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank asc"), self.core_module.default_module_chain, search_criterions 
       spreadsheet = StringIO.new 
       book.write spreadsheet 
       spreadsheet.string
     else
-      CsvMaker.new.make_from_results self.last_file_import_finished.changed_objects, self.search_columns.order("rank ASC"), self.core_module.default_module_chain
+      CsvMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank ASC"), self.core_module.default_module_chain, search_criterions
     end
+  end
+
+  def email_items_file current_user, email_addresses, search_criterions=[]
+     OpenMailer.send_uploaded_items(email_addresses,self,make_items_file(search_criterions),current_user).deliver
   end
 
   def process(user,options={})

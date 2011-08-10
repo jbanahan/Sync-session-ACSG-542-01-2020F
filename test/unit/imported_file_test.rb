@@ -6,6 +6,25 @@ class ImportedFileTest < ActiveSupport::TestCase
     ModelField.reload
   end
 
+  test "email items file" do
+    u = users(:masteruser)
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"PID",:user_id=>u.id)
+    ss.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>"prod_name",:rank=>1)
+
+    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i.process(u,:attachment_data=>"PID123456,abc\nPID654321,xyz")
+
+    Product.where(:unique_identifier=>"PID123456").first.update_attributes(:name=>"def") #the output should have def, not abc
+
+    i.email_items_file u, 'test@chain.io'
+
+    email = ActionMailer::Base.deliveries.pop
+    assert_equal "test@chain.io", email.to.first
+    assert_equal "[chain.io] Product File Result", email.subject
+    assert_equal 1, email.attachments.size
+
+  end
   test "make items file" do
     u = users(:masteruser)
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"PID",:user_id=>u.id)

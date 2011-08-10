@@ -6,8 +6,8 @@ class CsvMaker
     generate results, columns, current_search.search_criterions, current_search.module_chain
   end
 
-  def make_from_results results, columns, module_chain
-    generate results, columns, [], module_chain
+  def make_from_results results, columns, module_chain, search_criterions = []
+    generate results, columns, search_criterions, module_chain
   end
 
   private

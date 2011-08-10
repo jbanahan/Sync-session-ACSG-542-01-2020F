@@ -83,19 +83,25 @@ class ImportedFilesController < ApplicationController
   def download_items
     f = ImportedFile.find(params[:id])
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"download",:module_name=>"uploaded file"}) {
+      criterions = []
+      #is there a filter?
+      if params[:search_setup]
+        #right now the UI only allows one filter, but this loop future proofs it
+        params[:search_setup]['search_criterions_attributes'].values.each do |sc_hash|
+          criterions << SearchCriterion.new(sc_hash) 
+        end
+      end
       if f.nil?
         error_redirect "File could not be found."
       elsif f.last_file_import_finished.nil?
         error_redirect "No results available.  This file has not been processed yet."
       else
-        if f.attached_file_name.downcase.ends_with?("xls") 
-          book = XlsMaker.new.make_from_results f.last_file_import_finished.changed_objects, f.search_columns.order("rank asc"), f.core_module.default_module_chain 
-          spreadsheet = StringIO.new 
-          book.write spreadsheet 
-          send_data spreadsheet.string, :filename => f.attached_file_name, :type =>  "application/vnd.ms-excel", :disposition=>'attachment'
+        if params[:send_to]=='email' && !params[:email_to].blank?
+          f.delay.email_items_file current_user, params[:email_to], criterions
+          add_flash :notices, "The file will be sent to #{params[:email_to]}"
+          redirect_to f
         else
-          csv = CsvMaker.new.make_from_results f.last_file_import_finished.changed_objects, f.search_columns.order("rank ASC"), f.core_module.default_module_chain
-          send_data csv, :filename => f.attached_file_name, :type=>f.attached_content_type, :disposition=>'attachment'
+          send_data f.make_items_file(criterions), :filename => f.attached_file_name, :type=>f.attached_content_type, :disposition=>'attachment'
         end
       end
     }

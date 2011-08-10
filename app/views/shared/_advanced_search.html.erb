@@ -174,7 +174,7 @@ function addSearchCriterion(m,field,operator,value,id) {
   <%ModelField.sort_by_label(@core_module.model_fields_including_children.values).each do |mf| %>
     fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
   <%end%>
-  OCSearch.addSearchCriterion($("#sp_table"),fields,m,field,operator,value,id);
+  OCSearch.addSearchCriterion($("#sp_table"),fields,m,field,operator,value,id,true);
 }
 function addNewSearchCriterion() {
   addSearchCriterion(new Date().getTime(),null,null,null);

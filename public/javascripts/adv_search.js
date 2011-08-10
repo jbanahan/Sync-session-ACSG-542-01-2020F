@@ -198,7 +198,7 @@ var OCSearch = (function() {
       $("#show_srch_setup").show();
       $.post('/search_setups/sticky_close');
     },
-    addSearchCriterion: function(parentTable,fieldList,m,field,operator,value,id) {
+    addSearchCriterion: function(parentTable,fieldList,m,field,operator,value,id,canDelete) {
       var h = "<tr class='sp_row'><td>";
         if(id) {
           h += "<input id='search_setup_search_criterions_attributes_"+m+"_id' name='search_setup[search_criterions_attributes]["+m+"][id]' type='hidden' value='"+id+"'>";
@@ -210,7 +210,9 @@ var OCSearch = (function() {
         h = h + "</select></td>";
         h = h + "<td><select id='search_setup_search_criterions_attributes_"+m+"_operator' name='search_setup[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
         h = h + "</select></td><td><"+(operator=='in' ? "textarea rows='4' cols='30'" : "input size='30' type='text'")+" id='search_setup_search_criterions_attributes_"+m+"_value' name='search_setup[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></td>";
-        h = h + "<td><input class='sp_destroy' id='search_setup_search_criterions_attributes_"+m+"__destroy' name='search_setup[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='/images/x.png' title='remove' /></a></td></tr>";
+        if(canDelete) {
+          h = h + "<td><input class='sp_destroy' id='search_setup_search_criterions_attributes_"+m+"__destroy' name='search_setup[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='/images/x.png' title='remove' /></a></td></tr>";
+        }
       parentTable.append(h);
       var row = parentTable.find("tr:last");
       var mf = row.find(".srch_crit_fld");

@@ -37,7 +37,7 @@ class CacheWrapper
     begin
       r = yield
     rescue
-      $!.log_me
+      $!.log_me ["Swallowed by open_chain/cache_wrapper. The process should have continued.."]
     end
     r
   end

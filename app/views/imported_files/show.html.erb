@@ -64,17 +64,17 @@
         <%ModelField.sort_by_label(@imported_file.core_module.model_fields_including_children.values).each do |mf| %>
           fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
         <%end%>
-        OCSearch.addSearchCriterion($("#download_items_crits"),fields,new Date().getTime(),null,null,null);
+        OCSearch.addSearchCriterion($("#download_items_crits"),fields,new Date().getTime(),null,null,null,false);
       } else {
         $("#download_items_crits").html("");
       }
     });
     $("input[name='send_to']").change(function() {
       if($("#di_email_radio").is(":checked")) {
-        $("#di_email").show();
+        $("#di_email_box").show();
       } else {
         $("#di_email").val("");
-        $("#di_email").hide();
+        $("#di_email_box").hide();
       }
     });
     $("#btn_di").click(function() {$("#mod_download_items").dialog('open');});
@@ -200,7 +200,7 @@
   <hr />
   <div>
     <input type='radio' name='send_to' value='download' checked='checked' /> Download<br/>
-    <input type='radio' name='send_to' value='email' id='di_email_radio'/> Email <input type='text' name='email_to' width='30' id='di_email' style='display:none;'/>
+    <input type='radio' name='send_to' value='email' id='di_email_radio'/> Email <span id='di_email_box' style='display:none;'><input type='text' name='email_to' width='30' id='di_email'/><span style='font-size:90%'>Separate addresses with a comma.</span></span>
   </div>
   <%end%>
 </div>

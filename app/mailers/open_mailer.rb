@@ -62,6 +62,14 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
+  def send_uploaded_items(to,imported_file,data,current_user)
+    attachments[imported_file.attached_file_name] = data
+    @current_user = current_user
+    mail(:to=>to, :reply_to=>current_user.email, :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result") do |format|
+      format.text
+    end
+  end
+
 #ERROR EMAILS
   def send_search_fail(to,search_name,error_message,ftp_server,ftp_username,ftp_subfolder)
     @search_name = search_name
