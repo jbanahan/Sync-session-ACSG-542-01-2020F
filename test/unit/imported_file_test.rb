@@ -6,6 +6,28 @@ class ImportedFileTest < ActiveSupport::TestCase
     ModelField.reload
   end
 
+  test "make items file" do
+    u = users(:masteruser)
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"PID",:user_id=>u.id)
+    ss.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>"prod_name",:rank=>1)
+
+    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i.process(u,:attachment_data=>"PID123456,abc\nPID654321,xyz")
+
+    Product.where(:unique_identifier=>"PID123456").first.update_attributes(:name=>"def") #the output should have def, not abc
+
+    assert_equal "Unique Identifier,Name\r\nPID123456,def\r\nPID654321,xyz\r\n", i.make_items_file
+
+    i.update_attributes(:attached_file_name=>"fname.xls")
+
+    output = i.make_items_file [SearchCriterion.new(:model_field_uid=>"prod_uid",:operator=>"eq",:value=>"PID123456")]
+    wb = Spreadsheet.open StringIO.new(output)
+    sheet = wb.worksheet 0
+    assert_equal 1, sheet.last_row_index
+    assert_equal "PID123456", sheet.row(1)[0]
+    assert_equal "def", sheet.row(1)[1]
+  end
   test "add with two details" do
 
     cn_ot = OfficialTariff.create!(:country_id=>countries(:china).id,:hts_code=>"1234567890",:full_description=>"fd")

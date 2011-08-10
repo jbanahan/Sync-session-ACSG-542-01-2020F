@@ -57,6 +57,27 @@
         $("#mod_loading").dialog('open');
       <%end%>
     <% end %>
+    $("#mod_download_items").dialog({autoOpen:false,width:600,title:"Download Items",modal:true,buttons:{"OK":function(){$("#frm_di").submit(); },"Cancel":function() {$("#mod_download_items").dialog('close');}}});
+    $("#filter_download").change(function() {
+      if($(this).is(":checked")) {
+        var fields = [];
+        <%ModelField.sort_by_label(@imported_file.core_module.model_fields_including_children.values).each do |mf| %>
+          fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
+        <%end%>
+        OCSearch.addSearchCriterion($("#download_items_crits"),fields,new Date().getTime(),null,null,null);
+      } else {
+        $("#download_items_crits").html("");
+      }
+    });
+    $("input[name='send_to']").change(function() {
+      if($("#di_email_radio").is(":checked")) {
+        $("#di_email").show();
+      } else {
+        $("#di_email").val("");
+        $("#di_email").hide();
+      }
+    });
+    $("#btn_di").click(function() {$("#mod_download_items").dialog('open');});
   });
 <% end %>
 
@@ -69,7 +90,7 @@
   <% end %>
   <% unless @file_import_result.nil?%>
     <button class='btn_link' link_to='<%=file_import_result_path(@file_import_result)%>'>Log</button>
-    <button class='btn_link' link_to='<%=download_items_imported_file_path(@imported_file)%>'>Download Items</button>
+    <button id='btn_di'>Download Items</button>
   <%end%>
   <button id='btn_download'>Download Original</button>
   <%unless @bulk_actions.blank?%>
@@ -169,4 +190,17 @@
   <p>There was an error reading the file you uploaded.  This might be related to corruption in the original file.</p>
   <p>Many times this can be fixed by opening the file in Excel and saving as a &quot;CSV&quot; file.</p>
   <p>If this does not work, please open a ticket by clicking the Help link at the top of the page.</p>
+</div>
+<div id='mod_download_items' style='display:none;'>
+  <%=form_tag download_items_imported_file_path(@imported_file), :method=>:post, :id=>"frm_di" do %>
+  <div>
+    <input type='checkbox' id='filter_download' /> Filter
+  </div>
+  <table style='font-size:80%;' id='download_items_crits'></table>
+  <hr />
+  <div>
+    <input type='radio' name='send_to' value='download' checked='checked' /> Download<br/>
+    <input type='radio' name='send_to' value='email' id='di_email_radio'/> Email <input type='text' name='email_to' width='30' id='di_email' style='display:none;'/>
+  </div>
+  <%end%>
 </div>

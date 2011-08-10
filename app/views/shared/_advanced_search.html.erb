@@ -170,32 +170,11 @@ $(function() {
 <% end %>
 });
 function addSearchCriterion(m,field,operator,value,id) {
-  var h = "<tr class='sp_row'><td>";
-    if(id) {
-      h += "<input id='search_setup_search_criterions_attributes_"+m+"_id' name='search_setup[search_criterions_attributes]["+m+"][id]' type='hidden' value='"+id+"'>";
-    }
-    h += "<select id='search_setup_search_criterions_attributes_"+m+"_model_field_uid' name='search_setup[search_criterions_attributes]["+m+"][model_field_uid]' class='srch_crit_fld'>";
-    <%ModelField.sort_by_label(@core_module.model_fields_including_children.values).each do |mf| %>
-    h = h + "<option value='<%=mf.uid%>' dtype='<%=mf.data_type%>'><%=mf.label%></option>";
-    <%end%>
-    h = h + "</select></td>";
-    h = h + "<td><select id='search_setup_search_criterions_attributes_"+m+"_operator' name='search_setup[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
-    h = h + "</select></td><td><"+(operator=='in' ? "textarea rows='4' cols='30'" : "input size='30' type='text'")+" id='search_setup_search_criterions_attributes_"+m+"_value' name='search_setup[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></td>";
-    h = h + "<td><input class='sp_destroy' id='search_setup_search_criterions_attributes_"+m+"__destroy' name='search_setup[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><%=image_tag("x.png", :title=>"Remove").gsub(/\"/,"'").html_safe%></a></td></tr>";
-  $("#sp_table").append(h);
-  var row = $("#sp_table").find("tr:last");
-  var mf = row.find(".srch_crit_fld");
-  if(field) {
-    mf.val(field);
-  }
-  mf.change();
-  if(operator) {
-    row.find(".srch_crit_oper").val(operator);
-    row.find(".srch_crit_oper").change();
-  }
-  if(value) {
-    row.find(".srch_crit_value").val(value);
-  }
+  var fields = [];
+  <%ModelField.sort_by_label(@core_module.model_fields_including_children.values).each do |mf| %>
+    fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
+  <%end%>
+  OCSearch.addSearchCriterion($("#sp_table"),fields,m,field,operator,value,id);
 }
 function addNewSearchCriterion() {
   addSearchCriterion(new Date().getTime(),null,null,null);

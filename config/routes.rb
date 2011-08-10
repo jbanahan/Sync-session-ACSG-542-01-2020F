@@ -191,7 +191,7 @@ OpenChain::Application.routes.draw do
     member do
       get 'preview'
       get 'download'
-      get 'download_items'
+      post 'download_items'
       get 'process'
     end
   end

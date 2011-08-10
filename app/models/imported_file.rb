@@ -44,6 +44,18 @@ class ImportedFile < ActiveRecord::Base
     self.file_import_results.blank?
   end
 
+  #output the data for a file based on the current state of the items created/updated by this file
+  def make_items_file search_criterions=[]
+    if self.attached_file_name.downcase.ends_with?("xls") 
+      book = XlsMaker.new.make_from_results self.last_file_import_finished.changed_objects, self.search_columns.order("rank asc"), self.core_module.default_module_chain 
+      spreadsheet = StringIO.new 
+      book.write spreadsheet 
+      spreadsheet.string
+    else
+      CsvMaker.new.make_from_results self.last_file_import_finished.changed_objects, self.search_columns.order("rank ASC"), self.core_module.default_module_chain
+    end
+  end
+
   def process(user,options={})
     begin
       import_search_columns      
