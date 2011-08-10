@@ -95,8 +95,10 @@ class FtpWalker
         begin
           @@files_being_processed << f
           ftp.getbinaryfile f, current_file_path 
-          process_file File.new(current_file_path), search_setup
-          ftp.delete f
+          if response_good?(ftp) && File.exists?(current_file_path)
+            process_file File.new(current_file_path), search_setup
+            ftp.delete f
+          end
         rescue
           $!.log_me ["Error processing file from ftp walker.","Current File Path: #{current_file_path}"], [current_file_path]
         ensure
