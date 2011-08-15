@@ -71,7 +71,11 @@ module OpenChain
           AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
           yield
         ensure
-          AWS::S3::S3Object.disconnect if AWS::S3::S3Object.connected?
+          begin
+            AWS::S3::S3Object.disconnect if AWS::S3::S3Object.connected?
+          rescue
+            #noop
+          end
         end
       end
       #return array with get_versions result and found index (or nil as second element if not found)
