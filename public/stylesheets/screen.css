@@ -7,7 +7,7 @@ body {
     min-width: 600px;		/* Minimum width of layout - remove line if not required */
     /* The min-width property does not work in old versions of Internet Explorer */
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    background-color: #BDBDBD;
+    background-color: #eee;
     /*background-image: url('/images/background.jpg');*/
     background-repeat: repeat-x;
 }
@@ -147,40 +147,45 @@ img {
 #header {
     clear: both;
     float: left;
-    width: 99%;
+    width: 100%;
+    background-color: #151515;
+}
+#linkbar .ui-button {
+  border: none;
+  font-size: .9em;
+  margin-top: 0px;
+  margin-bottom: 0px;
 }
 #linkbar {
-    width: 100%;
-    /*position: relative;*/
     text-align: left;
-    padding-left: 10px;
-    padding-bottom: 2px;
-    margin-top: 10px;
+    padding: 0px 0px 0px 10px;
+    background-color: #151515;
 }
 #top_box {
-  width: 98%;
+  margin-top: .2em;
+  background-color: #eee;
   vertical-align: top;
+  padding-bottom: 10px;
 }
 #corner_links {
-    padding-top: 5px;
     float: right;
-    margin-right: 1em;
+    padding: 5px 1em 5px 1em;
     font-size: 80%;
 }
 #corner_links, #corner_links a, #corner_links a:visited, #corner_title a, #corner_title a:visited {
-    color:#151515;
+    color: #151515;
 }
 #corner_links a:hover, #corner_title a:hover {
   color:#1eb816;
 }
 #corner_title {
     margin-left: 1%;
-    color: #FFFFFF;
-    font-weight: 900;
-    font-size: 125%;
 }
 #corner_title a {
   text-decoration: none;
+}
+#corner_title img {
+  margin-top: .5em;
 }
 .notices {
     width:97%;
@@ -205,7 +210,6 @@ img {
 /* column container */
 .colmask {
     position: relative;	/* This fixes the IE7 overflow hidden bug */
-    padding-top: 10px;
     clear: both;
     float: left;
     width: 100%;			/* width of whole page */
@@ -228,9 +232,8 @@ img {
 .col1 {
     background: #FFFFFF;
     padding-left: 1em;
-    border-style: ridge;
-    border-color: #707070;
-    border-width: 2px;
+    border-bottom: 1px solid black;
+    border-right: 1px solid black;
 }
 .col2 {
     padding-left: 1em;
@@ -243,7 +246,7 @@ img {
 }
 .rightmenu .col1, .rightmenu .bottom_action_bar {
     width:81%;      /* left column content width (left column width minus left and right padding) */
-    left: 16%;     /* (right column width) plus (left column left padding) */
+    left: 15%;     /* (right column width) plus (left column left padding) */
 }
 .rightmenu .col2 {
     width:14%;      /* right column content width (right column width minus left and right padding) */
