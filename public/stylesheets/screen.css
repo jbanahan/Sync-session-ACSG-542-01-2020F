@@ -188,21 +188,26 @@ img {
   margin-top: .5em;
 }
 .notices {
-    width:97%;
-    margin-left:1%;
-    margin-top: 1em;
+  float: left;
+  position: relative;
+  width: 100%;
+  background-color: white;
+  border: 1px solid black;
+  margin: 0 0 1em 0;
+  color: green;
+  padding: 1em;
 }
 #notice_hide {
 	text-align: right;
-	padding-right: 1em;
+  float: right;
+  margin-right: 1em;
+  padding-right: 1em;
 }
 .errors_message {
     color: red;
-    font-weight: bold;
 }
 .system_message {
   color: #993300;
-  font-weight: bold;
 }
 .light_text {
   color: #707070;
@@ -232,8 +237,7 @@ img {
 .col1 {
     background: #FFFFFF;
     padding-left: 1em;
-    border-bottom: 1px solid black;
-    border-right: 1px solid black;
+    border: 1px solid black;
 }
 .col2 {
     padding-left: 1em;
@@ -242,18 +246,18 @@ img {
 .rightmenu {
 }
 .rightmenu .colleft {
-    right:15%;      /* right column width */
+    right:12%;      /* right column width */
 }
 .rightmenu .col1, .rightmenu .bottom_action_bar {
-    width:81%;      /* left column content width (left column width minus left and right padding) */
-    left: 15%;     /* (right column width) plus (left column left padding) */
+    width:86%;      /* left column content width (left column width minus left and right padding) */
+    left: 12%;     /* (right column width) plus (left column left padding) */
 }
 .rightmenu .col2 {
-    width:14%;      /* right column content width (right column width minus left and right padding) */
-    left:17%;     /* (right column width) plus (left column left and right padding) plus (right column left padding) */
+    width:12%;      /* right column content width (right column width minus left and right padding) */
+    left:12%;     /* (right column width) plus (left column left and right padding) plus (right column left padding) */
 }
 .col2 button, .col2 input {
-    width: 90%;
+    width: 95%;
 }
 /* Footer styles */
 #footer {

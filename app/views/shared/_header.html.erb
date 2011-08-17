@@ -160,9 +160,11 @@
     </div>
     <% end %>
   <% end %>
+  </div>
+</div>
   <% unless no_buttons %>
   <% if has_messages || !ms.system_message.blank?%>
-    <div id='notice' class='notices col1 ui-corner-all' style='display:none;'>
+    <div id='notice' class='notices' style='display:none;'>
 			<div id='notice_hide'><a href="#" id="lnk_hide_notice">Hide</a></div>
     <% [:errors,:notices].each do |type|
           ary = flash[type].nil? ? [] : flash[type]
@@ -177,4 +179,3 @@
     </div>
   <% end %>
   <% end %>
-</div>

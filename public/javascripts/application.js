@@ -551,7 +551,7 @@ $( function() {
     $(".integer").jStepper({allowDecimals:false});
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
-      $('#notice').fadeOut();
+      $('#notice').slideUp('slow');
     });
     $(".btn_cancel_mod").click( function() {
         $.modal.close();
@@ -679,7 +679,7 @@ $( function() {
 $(document).ready( function() {
     handleCustomFieldCheckboxes();
     $(':checkbox').css('border-style','none');
-    $('#notice').fadeIn();
+    $('#notice').slideDown('slow');
     $('.focus_first').focus();
 
     //make the shared/search_box partial work
