@@ -1,4 +1,5 @@
 require 'open_chain/field_logic'
+require 'open_chain/bulk_update'
 class ProductsController < ApplicationController
   include Worksheetable
   before_filter :secure_classifications
@@ -194,35 +195,8 @@ class ProductsController < ApplicationController
 
   def bulk_update_classifications
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
-      good_count = nil
-      bulk_objects do |gc, p|
-        begin
-          if p.can_classify?(current_user)
-            Product.transaction do
-              good_count = gc if good_count.nil?
-              #reset classifications
-              p.classifications.destroy_all
-              success = lambda {|o| }
-              failure = lambda {|o,errors|
-                good_count += -1
-                errors.full_messages.each {|m| add_flash :errors, "Error saving product #{o.unique_identifier}: #{m}"}
-                raise OpenChain::ValidationLogicError
-              }
-              before_validate = lambda {|o| 
-                save_classification_custom_fields(o,params[:product])
-                update_status o
-              }
-              validate_and_save_module(p,params[:product],success,failure,:before_validate=>before_validate)
-            end
-          else
-            add_flash :errors, "You do not have permission to classify product #{p.unique_identifier}."
-            good_count += -1
-          end
-        rescue OpenChain::ValidationLogicError
-          #ok to do nothing here
-        end
-      end
-      add_flash :notices, "#{help.pluralize good_count, module_label.downcase} updated successfully."
+      OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id 
+      add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       redirect_to products_path
     }
   end
@@ -230,21 +204,7 @@ class ProductsController < ApplicationController
     private
 
     def bulk_objects &block
-      sr_id = params[:sr_id]
-      if !sr_id.blank? && sr_id.match(/^[0-9]*$/)
-        sr = SearchRun.find sr_id
-        good_count = sr.total_objects
-        sr.all_objects.each do |o|
-          yield good_count, o
-        end
-      else
-        pks = params[:pk]
-        good_count = pks.size
-        pks.values.each do |key|
-          p = Product.find key
-          yield good_count, p  
-        end
-      end
+      OpenChain::CoreModuleProcessor.bulk_objects params[:sr_id], params[:pk], &block
     end
 
     def secure_classifications
@@ -252,30 +212,7 @@ class ProductsController < ApplicationController
     end
     
     def save_classification_custom_fields(product,product_params)
-      return if product_params.nil? || product_params[:classifications_attributes].nil? || params[:classification_custom].nil?
-      product.classifications.each do |classification|
-        unless classification.destroyed?
-          product_params[:classifications_attributes].each do |k,v|
-            if v[:country_id] == classification.country_id.to_s
-              update_custom_fields classification, params[:classification_custom][k.to_sym][:classification_cf]
-            end  
-          end
-        end
-        save_tariff_custom_fields(classification)
-      end    
-    end
-
-    def save_tariff_custom_fields(classification)
-      return if params[:tariff_custom].nil?
-      classification.tariff_records.each do |tr|
-        unless tr.destroyed?
-          vs = tr.view_sequence
-          custom_container = params[:tariff_custom][vs]
-          unless custom_container.blank?
-            update_custom_fields tr, custom_container[:tariffrecord_cf]
-          end
-        end
-      end
+      OpenChain::CustomFieldProcessor.new(params).save_classification_custom_fields product, product_params
     end
 
     def module_label

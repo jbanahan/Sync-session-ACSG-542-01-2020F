@@ -750,9 +750,6 @@ class ModelField
 
   def self.reload_if_stale
     cache_time = CACHE.get "ModelField:last_loaded"
-    if cache_time.nil?
-      reload
-    end
     if !cache_time.nil? && !cache_time.is_a?(Time)
       begin
         raise "cache_time was a #{cache_time.class} object!"
