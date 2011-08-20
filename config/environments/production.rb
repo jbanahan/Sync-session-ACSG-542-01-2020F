@@ -48,4 +48,6 @@ OpenChain::Application.configure do
   # Send deprecation notices to registered listeners
   config.active_support.deprecation = :notify
   
+  #set path to include local ruby so forked processes can call bundle & rake
+  ENV['PATH'] = "#{ENV['PATH']:/usr/local/ruby/bin}"
 end
