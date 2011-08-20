@@ -7,6 +7,9 @@
   ms = MasterSetup.get
 %>
 <!-- System UUID: <%=ms.uuid%> -->
+<% if current_user && current_user.sys_admin? %>
+<!-- Hostname: <%=`hostname`.strip%> -->
+<% end %>
 <head>
   <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
   <title>chain.io</title>
