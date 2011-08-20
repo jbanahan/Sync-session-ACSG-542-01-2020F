@@ -81,6 +81,7 @@ module OpenChain
       end
       raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock
       capture_and_log "rake db:migrate"
+      MasterSetup.release_migration_lock
     end
 
     def capture_and_log command
