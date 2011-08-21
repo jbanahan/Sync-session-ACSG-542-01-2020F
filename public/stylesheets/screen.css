@@ -552,6 +552,15 @@ width:60%;
   vertical-align: middle;
   text-align: center;
 }
+#permissions .label {
+  font-weight: bold;
+}
+#permissions .label_cell {
+  text-align: left;
+}
+#permissions .check_toggles {
+  font-size: 85%;
+}
 #update_mode_help {
   text-decoration: none;
 }

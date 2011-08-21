@@ -6,6 +6,14 @@ cancel_redirect = "/"
 cancel_redirect = company_users_path(@company) if current_user.admin?
 %>
     $("#btn_cancel").click(function() {window.location = '<%=cancel_redirect%>'});
+    $(".check_all").click(function(evt) {
+      evt.preventDefault();
+      $(this).parents('tr.permission_row').find(':checkbox').attr('checked','checked');
+    });
+    $(".check_none").click(function(evt) {
+      evt.preventDefault();
+      $(this).parents('tr.permission_row').find(':checkbox').attr('checked','');
+    });
   });
 <%end%>
 <%content_for :action_bar do %>
@@ -39,12 +47,12 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <% if current_user.admin? %>
   <h2>Permissions</h2>
   <% ms = MasterSetup.get%>
-  <table class='detail_table'>
+  <table id='permissions' class='detail_table'>
     <thead><tr><th width='20%'>Module</th><th width='15%'>View</th><th width='15%'>Add / Edit</th><th width='15%'>Delete</th><th width='15%'>Manage Comments</th><th width='15%'>Manage Attachments</th></tr></thead>
     <tbody>
       <% if ms.order_enabled? %>
         <tr class='permission_row'>
-          <td class='hover'><%=CoreModule::ORDER.label%></td>
+          <td class='hover label_cell'><div class='label'><%=CoreModule::ORDER.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
           <td class='hover'><%= permission_box @user, 'view_orders?', :order_view, f %></td>
           <td class='hover'><%= permission_box @user, 'edit_orders?', :order_edit, f %></td>
           <td class='hover'><%= permission_box @user, 'delete_orders?', :order_delete, f %></td>
@@ -54,7 +62,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
       <% end %>
       <% if ms.shipment_enabled? %>
         <tr class='permission_row'>
-          <td class='hover'><%=CoreModule::SHIPMENT.label%></td>
+          <td class='hover label_cell'><div class='label'><%=CoreModule::SHIPMENT.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
           <td class='hover'><%= permission_box @user, 'view_shipments?', :shipment_view, f %></td>
           <td class='hover'><%= permission_box @user, 'edit_shipments?', :shipment_edit, f %></td>
           <td class='hover'><%= permission_box @user, 'delete_shipments?', :shipment_delete, f %></td>
@@ -64,7 +72,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
       <% end %>
       <% if ms.sales_order_enabled? %>
         <tr class='permission_row'>
-          <td class='hover'><%=CoreModule::SALE.label%></td>
+          <td class='hover label_cell'><div class='label'><%=CoreModule::SALE.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
           <td class='hover'><%= permission_box @user, 'view_sales_orders?', :sales_order_view, f %></td>
           <td class='hover'><%= permission_box @user, 'edit_sales_orders?', :sales_order_edit, f %></td>
           <td class='hover'><%= permission_box @user, 'delete_sales_orders?', :sales_order_delete, f %></td>
@@ -74,7 +82,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
       <% end %>
       <% if ms.delivery_enabled? %>
         <tr class='permission_row'>
-          <td class='hover'><%=CoreModule::DELIVERY.label%></td>
+          <td class='hover label_cell'><div class='label'><%=CoreModule::DELIVERY.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
           <td class='hover'><%= permission_box @user, 'view_deliveries?', :delivery_view, f %></td>
           <td class='hover'><%= permission_box @user, 'edit_deliveries?', :delivery_edit, f %></td>
           <td class='hover'><%= permission_box @user, 'delete_deliveries?', :delivery_delete, f %></td>
@@ -83,7 +91,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
         </tr>
       <% end %>
         <tr class='permission_row'>
-          <td class='hover'><%=CoreModule::PRODUCT.label%></td>
+          <td class='hover label_cell'><div class='label'><%=CoreModule::PRODUCT.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
           <td class='hover'><%= permission_box @user, 'view_products?', :product_view, f %></td>
           <td class='hover'><%= permission_box @user, 'edit_products?', :product_edit, f %></td>
           <td class='hover'><%= permission_box @user, 'delete_products?', :product_delete, f %></td>
@@ -92,7 +100,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
         </tr>
       <% if ms.classification_enabled? %>
         <tr class='permission_row'>
-          <td class='hover'><%=CoreModule::CLASSIFICATION.label%></td>
+          <td class='hover label_cell'><div class='label'><%=CoreModule::CLASSIFICATION.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
           <td class='hover'><span class='light_text'>n/a</span></td>
           <td class='hover'><%= permission_box @user, 'edit_classifications?', :classification_edit, f %></td>
           <td class='hover'><span class='light_text'>n/a</span></td>
