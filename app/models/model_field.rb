@@ -491,6 +491,21 @@ class ModelField
       :history_ignore=>true
     }]
   end
+  def self.make_last_changed_by rank, uid_prefix, base_class
+    table_name = base_class.table_name
+    [rank,"#{uid_prefix}_last_changed_by".to_sym,:username,"Last Changed By", {
+      :import_lambda => lambda {|a,b| return "Last Changed By cannot be set by import, ignored."},
+      :export_lambda => lambda {|obj| 
+        snap = obj.last_snapshot
+        snap.blank? ? "" : snap.user.username
+      },
+      :join_statement =>"LEFT OUTER JOIN (SELECT recordable_id, id, user_id FROM entity_snapshots where id IN (SELECT MAX(id) FROM entity_snapshots WHERE entity_snapshots.recordable_type = '#{base_class}' GROUP BY recordable_type, recordable_id)) #{uid_prefix}_es on #{uid_prefix}_es.recordable_id = #{table_name}.id LEFT OUTER JOIN users #{uid_prefix}_es_u on #{uid_prefix}_es.user_id = #{uid_prefix}_es_u.id",
+      :join_alias => "#{uid_prefix}_es_u",
+      :qualified_field_name => "ifnull(#{uid_prefix}_es_u.username,'')",
+      :data_type=>:string,
+      :history_ignore => true
+    }]
+  end
 
   def self.add_custom_fields(core_module,base_class,parameters={})
     max = 0
@@ -600,6 +615,7 @@ class ModelField
       }],
       [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}]
     ]
+    add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
     add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")

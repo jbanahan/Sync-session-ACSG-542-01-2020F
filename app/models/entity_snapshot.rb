@@ -3,6 +3,7 @@ class EntitySnapshot < ActiveRecord::Base
   belongs_to :user
 
   validates :recordable, :presence => true
+  validates :user, :presence => true
 
   def self.create_from_entity entity, user=User.current
     cm = CoreModule.find_by_class_name entity.class.to_s

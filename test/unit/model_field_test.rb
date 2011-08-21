@@ -2,6 +2,31 @@ require 'test_helper'
 
 class ModelFieldTest < ActiveSupport::TestCase
 
+  test "product - last changed by" do
+    u = User.create!(:username=>"abc123",:password=>"pwd19999",:password_confirmation=>"pwd19999",:company_id=>companies(:master),:email=>'test@chain.io')
+    u2 = User.create!(:username=>"123bdd",:password=>"998877",:password_confirmation=>"998877",:company_id=>u.company_id,:email=>'test2@chain.io')
+
+    product = Product.create!(:unique_identifier=>"PID")
+
+    mf = ModelField.find_by_uid(:prod_last_changed_by)
+    assert_equal '',  mf.process_export(product)
+
+    product.create_snapshot u
+
+    assert_equal u.username, mf.process_export(product)
+    
+    product.create_snapshot u2
+
+    assert_equal u2.username, mf.process_export(product)
+
+    sc = SearchCriterion.new(:model_field_uid=>:prod_last_changed_by,:operator=>'eq',:value=>u2.username)
+    r = sc.apply Product
+    assert_equal 1, r.size
+    sc.value = u.username
+    r = sc.apply Product
+    assert r.blank?
+  end
+
   #test date formats
   test "date formats" do
     o = Order.create!(:order_number=>"on123",:vendor_id=>companies(:vendor).id)
