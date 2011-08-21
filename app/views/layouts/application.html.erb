@@ -1,17 +1,7 @@
 <%= render :partial => 'shared/header' %>
-<div class="colmask rightmenu">
-  <div class="colleft"> 
-  	<div class="col1"> 
-  		<!-- Column 1 start --> 
-  		<%= yield %>
-  		<!-- Column 1 end --> 
-  	</div> 
-  	<div class="col2">
-  	  <%= yield :action_bar %>
-  	</div>
-	</div>
-</div> 
-			
+<table id='two_col_tbl'>
+  <tr><td id='two_col_left'><%=yield%></td><td id='two_col_right'%><%=yield :action_bar%></td>
+</table>
 <div id="footer">
 &nbsp;
 </div>
