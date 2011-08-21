@@ -1,15 +1,11 @@
 #generates grids from search results
 class GridMaker
-  
-  @objs
-  @fields
-  @chain
-  @used_modules
-  @criteria
 
   def initialize(base_objects,model_field_list,search_criterion_list,module_chain)
     @objs = base_objects
     @fields = model_field_list
+    #if we have more than 2 custom columns, then pre-cache the custom values
+    @pre_load_custom_values = (@fields.collect {|f| ModelField.find_by_uid(f.model_field_uid).custom?}).size > 2 
     @chain = module_chain
     @criteria = search_criterion_list
     load_used_modules
@@ -24,6 +20,7 @@ class GridMaker
   def recursive_go(cm,base_object_collection,row_objects,&block)
     child_modules = @chain.child_modules cm #all modules lower than this one in the chain
     base_object_collection.each do |o| 
+      o.load_custom_values if @pre_load_custom_values && o.respond_to?('load_custom_values') 
       row_objects[cm] = o #add myself to row_objects
       #there are lower level modules being used, recurse
       if (@used_modules & child_modules).length > 0 && cm.child_objects(child_modules.first,o).length > 0

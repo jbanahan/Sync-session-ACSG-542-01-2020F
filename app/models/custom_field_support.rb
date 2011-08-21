@@ -8,8 +8,8 @@ module CustomFieldSupport
   end
   
   def get_custom_value(custom_definition)
-    return @injected[custom_definition.id] if @injected && @injected[custom_definition.id]
-    return @custom_value_cache[custom_definition.id] unless @custom_value_cache.nil? || @custom_value_cache[custom_definition.id].nil?
+    cv = get_custom_value_by_overrides custom_definition.id
+    return cv if cv
     cv = self.connection.outside_transaction? ? CustomValue.cached_find_unique(custom_definition.id, self) : nil 
     cv = self.custom_values.where(:custom_definition_id => custom_definition).first if cv.nil?
     if cv.nil?
@@ -32,6 +32,8 @@ module CustomFieldSupport
   end
 
   def get_custom_value_by_id(id)
+    cv = get_custom_value_by_overrides id
+    return cv if cv
     get_custom_value(CustomDefinition.cached_find(id))
   end
 
@@ -43,4 +45,10 @@ module CustomFieldSupport
     @injected[custom_value.custom_definition_id] = custom_value
   end
 
+  private
+  def get_custom_value_by_overrides(custom_definition_id)
+    return @injected[custom_definition_id] if @injected && @injected[custom_definition_id]
+    return @custom_value_cache[custom_definition_id] unless @custom_value_cache.nil? || @custom_value_cache[custom_definition_id].nil?
+    return nil
+  end
 end

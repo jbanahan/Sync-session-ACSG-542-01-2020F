@@ -13,11 +13,7 @@ class ModelField
           return "#{FieldLabel.label_text uid} set to #{d}"
         },
           :export_lambda => lambda {|obj|
-            if self.custom?
-            obj.get_custom_value(CustomDefinition.cached_find(@custom_id)).value
-            else
-              obj.send("#{@field_name}")
-            end
+            self.custom? ? obj.get_custom_value_by_id(@custom_id).value : obj.send("#{@field_name}")
           },
           :entity_type_field => false,
           :history_ignore => false
