@@ -7,6 +7,9 @@ $(function() {
   });
   OpenChain.addClickMap('s','Save','btn_save');
   OpenChain.addClickMap('c','Cancel','btn_cancel');
+  <% if Country.import_locations.size > 1 && !OfficialTariff.first.nil? %>
+    OpenChain.addClickMap('a','Auto Classify','btn_auto_classify');
+  <% end %>
   OpenChain.activateHotKeys();
   OpenChain.initClassifyPage();
 });
