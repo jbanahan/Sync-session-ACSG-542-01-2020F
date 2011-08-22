@@ -83,7 +83,7 @@ class TariffLoader
     ts.activate if auto_activate
   end
 
-  def self.process_s3 s3_key, country, tariff_set_label
+  def self.process_s3 s3_key, country, tariff_set_label, auto_activate=false
     Tempfile.open(['tariff_s3',"#{s3_key.split('.').last}"]) do |t|
       t.binmode
       begin
@@ -97,7 +97,8 @@ class TariffLoader
           t.write chunk
         end
         t.flush
-        TariffLoader.new(country,t.path,tariff_set_label).process
+        ts = TariffLoader.new(country,t.path,tariff_set_label).process
+        ts.activate if auto_activate
       ensure
         AWS::S3::S3Object.disconnect if AWS::S3::S3Object.connected?
       end
