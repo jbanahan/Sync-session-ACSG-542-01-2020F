@@ -52,6 +52,7 @@ class TariffLoader
   end
   
   def process
+    ts = nil
     OfficialTariff.transaction do
       ts = TariffSet.create!(:country_id=>@country.id,:label=>@tariff_set_label)
       i = 0
@@ -71,13 +72,15 @@ class TariffLoader
         i += 1
       end
     end
+    ts
   end
 
-  def self.process_file file_path, tariff_set_label
+  def self.process_file file_path, tariff_set_label, auto_activate=false
     raise "#{file_path} is not a file." unless File.file? file_path
     c = Country.where(:iso_code => file_path.split('/').last[0,2].upcase).first
     raise "Country not found with ISO #{file_path.split('/').last[0,2].upcase} for file #{file_path}" if c.nil?
-    TariffLoader.new(c,file_path,tariff_set_label).process
+    ts = TariffLoader.new(c,file_path,tariff_set_label).process
+    ts.activate if auto_activate
   end
 
   def self.process_s3 s3_key, country, tariff_set_label
