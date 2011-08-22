@@ -2,6 +2,8 @@ class ImportedFile < ActiveRecord::Base
   
   require 'open-uri'
 
+  #hash of valid update modes. keys are valid database values, values are acceptable descriptions for the view layer
+  UPDATE_MODES = {"any"=>"Add or Update","add"=>"Add Only","update"=>"Update Only"}
 
   has_attached_file :attached,
     :storage => :s3,
@@ -17,7 +19,13 @@ class ImportedFile < ActiveRecord::Base
   has_many :file_import_results, :dependent=>:destroy
   has_many :search_columns
 
+  validates_presence_of :starting_row
+  validates_numericality_of :starting_row, :greater_than=>0
+  validates_presence_of :starting_column
+  validates_numericality_of :starting_column, :greater_than=>0
   validates_presence_of :module_type
+  validates_presence_of :update_mode
+  validates_inclusion_of :update_mode, :in => UPDATE_MODES.keys.to_a
   
   def last_file_import
     self.file_import_results.order("created_at DESC").first

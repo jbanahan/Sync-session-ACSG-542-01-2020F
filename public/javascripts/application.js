@@ -659,7 +659,6 @@ $( function() {
       myRow.prev().hide();
       myRow.next().show();
     });
-    attachmentButton();
 
     $("#edit_line_product").change(function() {
       if($(this).val().length>0) {
@@ -693,27 +692,7 @@ $(document).ready( function() {
       $(this).find(":input").blur();
     });
 });
-function attachmentButton() {
-  $(".attach_button").button();
-  $(".attach_button").each(function() {
-    var fileInput = $("body").find(":file");
-    var aButton = $(this);
-    if(fileInput.length!=1) {
-      //either many file objects or none, either way we can't automate behavior
-      return;
-    }
-    if(fileInput.val().length==0) {
-      $(this).hide();
-    }
-    fileInput.change(function() {
-      if(fileInput.val().length==0) {
-        aButton.fadeOut('slow');
-      } else {
-        aButton.fadeIn('slow');
-      }
-    });
-  });
-}
+
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }

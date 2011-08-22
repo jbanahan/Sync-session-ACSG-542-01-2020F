@@ -3,10 +3,15 @@
 one:
   id: 1
   search_setup: imported_file_setup
-  ignore_first_row: true
+  starting_row: 2
+  starting_column: 1
   attached_file_name: test.csv
+  update_mode: any
 
 two:
   id: 2
   search_setup: ifs_ord_prod 
+  starting_row: 1
+  starting_column: 1
   attached_file_name: test.csv
+  update_mode: any

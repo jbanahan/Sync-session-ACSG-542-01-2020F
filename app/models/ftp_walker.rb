@@ -109,7 +109,7 @@ class FtpWalker
   end
 
   def process_file file, search_setup
-    imp = search_setup.imported_files.build(:ignore_first_row=>false)
+    imp = search_setup.imported_files.build(:starting_row=>1,:starting_column=>1,:update_mode=>'any')
     imp.attached = file
     imp.module_type = search_setup.module_type
     imp.user = search_setup.user

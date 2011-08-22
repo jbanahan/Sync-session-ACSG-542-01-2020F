@@ -6,13 +6,25 @@ class ImportedFileTest < ActiveSupport::TestCase
     ModelField.reload
   end
 
+  test "valid & invalid update modes" do
+    base = ImportedFile.new(:module_type=>"Product")
+    base.update_mode = "any" #good one
+    assert base.save
+    base.update_mode = "add" #good one
+    assert base.save
+    base.update_mode = "update" #good one
+    assert base.save
+    base.update_mode = "invalid" #bad one
+    assert !base.save
+  end
+
   test "email items file" do
     u = users(:masteruser)
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"PID",:user_id=>u.id)
     ss.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
     ss.search_columns.create!(:model_field_uid=>"prod_name",:rank=>1)
 
-    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i = ss.imported_files.create!(:module_type=>"Product",:starting_row=>1,:starting_column=>1,:attached_file_name=>"fname.csv",:update_mode=>'any')
     i.process(u,:attachment_data=>"PID123456,abc\nPID654321,xyz")
 
     Product.where(:unique_identifier=>"PID123456").first.update_attributes(:name=>"def") #the output should have def, not abc
@@ -31,7 +43,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ss.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
     ss.search_columns.create!(:model_field_uid=>"prod_name",:rank=>1)
 
-    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i = ss.imported_files.create!(:module_type=>"Product",:starting_row=>1,:starting_column=>1,:attached_file_name=>"fname.csv",:update_mode=>'any')
     i.process(u,:attachment_data=>"PID123456,abc\nPID654321,xyz")
 
     Product.where(:unique_identifier=>"PID123456").first.update_attributes(:name=>"def") #the output should have def, not abc
@@ -53,7 +65,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     us_ot = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>"09876543210",:full_description=>"DF")
 
     u = users(:masteruser)
-    ss = SearchSetup.create!(:update_mode=>"add",:module_type=>"Product",:name=>"addo",:user_id=>u.id)
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"addo",:user_id=>u.id)
     ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
     ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
     ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>2)
@@ -66,7 +78,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     #first line should be rejected, 2nd & 3rd lines should create 1 product w/ two classifications
     data = "#{existing_product.unique_identifier},pname,US,1,6101200021\n#{new_product_uid},pname2,CN,1,#{cn_ot.hts_code}\n#{new_product_uid},pname2,US,1,#{us_ot.hts_code}"
 
-    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i = ss.imported_files.create!(:module_type=>"Product",:starting_row=>1,:starting_column=>1,:attached_file_name=>"fname.csv",:update_mode=>'add')
     i.process(u,:attachment_data=>data)
 
     assert_equal existing_product.name, Product.find(existing_product.id).name #first product should not have been updated
@@ -89,9 +101,26 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert found_pass
     assert found_fail
   end
+  test "process from 3rd row 2nd column" do
+    u = users(:masteruser)
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"23",:user_id=>u.id)
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
+    
+    data = "A1,B1,C1\nA2,B2,C2\nA3,B3,C3"
+
+    i = ss.imported_files.create!(:module_type=>"Product",:starting_row=>3,:starting_column=>2,:attached_file_name=>"fname.csv",:update_mode=>'any')
+    i.process u, :attachment_data=>data
+
+    should_not_find = ["A1","B1","C1","A2","B2","C2","A3","C3"]
+    should_not_find.each {|uid| assert_nil Product.where(:unique_identifier=>uid).first}
+
+    assert_equal "C3", Product.where(:unique_identifier=>"B3").first.name
+
+  end
   test "add or update" do
     u = users(:masteruser)
-    ss = SearchSetup.create!(:update_mode=>"any",:module_type=>"Product",:name=>"updo",:user_id=>u.id)
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"updo",:user_id=>u.id)
     ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
     ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
 
@@ -100,7 +129,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     data = "#{existing_product.unique_identifier},pname\n#{new_product_uid},pname2"
 
-    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i = ss.imported_files.create!(:module_type=>"Product",:starting_row=>1,:starting_column=>1,:attached_file_name=>"fname.csv",:update_mode=>'any')
     i.process(u,:attachment_data=>data)
 
     assert_equal "pname", Product.find(existing_product.id).name #first product should have been updated
@@ -122,7 +151,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
   test "update only" do
     u = users(:masteruser)
-    ss = SearchSetup.create!(:update_mode=>"update",:module_type=>"Product",:name=>"updo",:user_id=>u.id)
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"updo",:user_id=>u.id)
     ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
     ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
 
@@ -131,7 +160,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     data = "#{existing_product.unique_identifier},pname\n#{new_product_uid},pname2"
 
-    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i = ss.imported_files.create!(:module_type=>"Product",:starting_row=>1,:starting_column=>1,:attached_file_name=>"fname.csv",:update_mode=>'update')
     i.process(u,:attachment_data=>data)
 
     assert_equal "pname", Product.find(existing_product.id).name #first product should have been updated
@@ -153,7 +182,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
   test "add only" do
     u = users(:masteruser)
-    ss = SearchSetup.create!(:update_mode=>"add",:module_type=>"Product",:name=>"addo",:user_id=>u.id)
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"addo",:user_id=>u.id)
     ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
     ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>1)
 
@@ -162,7 +191,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     data = "#{existing_product.unique_identifier},pname\n#{new_product_uid},pname2"
 
-    i = ss.imported_files.create!(:module_type=>"Product",:ignore_first_row=>false,:attached_file_name=>"fname.csv")
+    i = ss.imported_files.create!(:update_mode=>"add",:module_type=>"Product",:starting_row=>1,:starting_column=>1,:attached_file_name=>"fname.csv")
     i.process(u,:attachment_data=>data)
 
     assert_equal existing_product.name, Product.find(existing_product.id).name #first product should not have been updated
@@ -188,7 +217,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     
     ss = SearchSetup.create!(:name=>'abc',:user_id=>User.first.id,:module_type=>"Product")
-    i = ss.imported_files.create!(:module_type=>"Product")
+    i = ss.imported_files.create!(:module_type=>"Product",:update_mode=>'any')
     u = User.first
 
     i.process(u,{:defer=>true})
@@ -208,7 +237,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
 
   test "find file_import" do
-    f = ImportedFile.create!(:module_type=>"Product")
+    f = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
     r1 = f.file_import_results.create!(:finished_at=>2.days.ago,:created_at=>2.days.ago)
     r2 = f.file_import_results.create!
 
@@ -221,7 +250,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   test "File Import Result Created" do
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"ss1",:user_id=>1)
     ss.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
-    f = ImportedFile.create!(:module_type=>ss.module_type,:attached_file_name => 'fname', :search_setup_id => ss.id, :ignore_first_row => false)
+    f = ImportedFile.create!(:module_type=>ss.module_type,:attached_file_name => 'fname', :search_setup_id => ss.id, :starting_row=>1,:starting_column=>1,:update_mode=>'any')
     attachment_data = "puid001\npuid002"
     f.process(User.find(1),:attachment_data=>attachment_data)
     results = f.file_import_results
@@ -276,7 +305,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ic.save!
     ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
-    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row =>false)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :starting_row=>1,:starting_column=>1,:update_mode=>'any')
     f.save!
     f.process(users(:masteruser),{:attachment_data=>attachment})
     fr = f.file_import_results.first
@@ -349,7 +378,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ic.save!
     ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
-    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row => true)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :starting_row=>1,:starting_column=>1, :update_mode=>'any')
     f.save!
     assert !f.process(ic.user,{:attachment_data => attachment}), "Process passed and should have failed."
     assert f.errors[:base].include?("Row 2: An order's vendor cannot be changed via a file upload."), "Did not find vendor error message."
@@ -362,7 +391,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
     ic.search_columns.create(:model_field_uid => "ordln_puid", :rank => 2)
     ic.search_columns.create(:model_field_uid => "ordln_ordered_qty", :rank => 3)
-    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row => false)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :starting_row=>1,:starting_column=>1, :update_mode=>'any')
     f.save!
     order_number = "r_e_d_o_c_h"
     attachment = "#{order_number},2,\"\",\"\""
@@ -388,7 +417,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       ic.search_columns.create!(:model_field_uid => mf.uid, :rank => i)
     end
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :ignore_first_row=>false)
+    f = ImportedFile.new(:module_type=>ic.module_type,:attached_file_name => 'fname', :search_setup_id => ic.id, :starting_row=>1,:starting_column=>1,:update_mode=>'any')
     assert f.process(ic.user,:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Order.where(:order_number => vh[:order_number]).first
     assert found.order_date.yday == vh[:order_date].yday, "Order date failed"
@@ -416,7 +445,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     end
     ss.search_columns.create!(:model_field_uid => "_blank", :rank=>1000) #testing a blank column
     attachment = attachment_vals.to_csv
-    f = ImportedFile.new(:module_type=>ss.module_type,:attached_file_name => 'fname', :search_setup_id => ss.id, :ignore_first_row=>false)
+    f = ImportedFile.new(:module_type=>ss.module_type,:attached_file_name => 'fname', :search_setup_id => ss.id, :starting_row=>1,:starting_column=>1,:update_mode=>'any')
     assert f.process(ss.user,:attachment_data => attachment), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:unique_identifier]).first
     assert found.name == vh[:name], "name failed"
@@ -426,7 +455,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
   test "product with bad hts" do
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
-    f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:starting_row=>1,:starting_column=>1, :update_mode=>'any')
     attach_array = ["pbhts","US","1","9999999999"]
     ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
     ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
@@ -439,7 +468,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   test "product missing HTS line number" do 
     ot = OfficialTariff.create!(:hts_code=>"1555555555",:country_id=>countries(:us).id,:full_description=>"FD")
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
-    f = ss.imported_files.new(:attached_file_name=>'fname',:ignore_first_row=>false)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:starting_row=>1,:starting_column=>1,:update_mode=>'any')
     attach_array = ["pbhts","US","",ot.hts_code]
     ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
     ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
@@ -464,7 +493,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       attach_array << vh[uid]
       ss.search_columns.create!(:model_field_uid => uid,:rank=>i)
     end
-    f = ss.imported_files.create!(:attached_file_name=>'fname',:ignore_first_row=>false,:module_type=>"Product")
+    f = ss.imported_files.create!(:attached_file_name=>'fname',:starting_row=>1,:starting_column=>1,:module_type=>"Product",:update_mode=>'any')
     assert f.process(ss.user,:attachment_data => attach_array.to_csv), "Imported File did not process successfully: #{f.errors.to_s}"
     found = Product.where(:unique_identifier => vh[:prod_uid]).first
     assert found.vendor_id == vh[:prod_ven_id], "vendor id failed"
@@ -504,7 +533,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"cpstest",:user_id=>users(:masteruser))
     ["prod_uid","*cf_1"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
-    f = ss.imported_files.new(:attached_file_name=>'fn.csv',:ignore_first_row=>false)
+    f = ss.imported_files.new(:attached_file_name=>'fn.csv',:starting_row=>1,:starting_column=>1,:update_mode=>'any')
     assert f.process(User.find(1),:attachment_data=>"#{p.unique_identifier},true")
 
     p = Product.find p.id
@@ -515,7 +544,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"booltest",:user_id => 1)
     cd = CustomDefinition.create!(:label=>"boolt",:data_type=>"boolean",:module_type=>"Product")
     ["prod_uid","*cf_#{cd.id}"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
-    f = ss.imported_files.new(:attached_file_name=>"myf.csv",:ignore_first_row=>false)
+    f = ss.imported_files.new(:attached_file_name=>"myf.csv",:starting_row=>1,:starting_column=>1,:update_mode=>'any')
     data = [{:uid=>"bool1",:bv=>"Yes",:should=>true},
       {:uid=>"bool2",:bv=>"True",:should=>true},
       {:uid=>"bool3",:bv=>"F",:should=>false},

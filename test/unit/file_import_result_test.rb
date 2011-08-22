@@ -15,7 +15,7 @@ class FileImportResultTest < ActiveSupport::TestCase
   end
 
   test "changed objects with filter" do 
-    i_file = ImportedFile.create(:module_type=>"Product")
+    i_file = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
     fir = i_file.file_import_results.create!
     3.times do |i| #add 3 products twice for 6 total change records
       p = Product.create!(:unique_identifier=>"#{i}pid")

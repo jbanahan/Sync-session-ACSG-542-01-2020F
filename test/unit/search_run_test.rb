@@ -15,7 +15,7 @@ class SearchRunTest < ActiveSupport::TestCase
     sr.all_objects.each {|o| to_find.delete o}
     assert to_find.size==0
 
-    f = ImportedFile.create!(:module_type=>"Product")
+    f = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
     fir = f.file_import_results.create!(:finished_at=>Time.now)
     [p1,p2].each do |p|
       fir.change_records.create!(:recordable=>p)
@@ -36,10 +36,10 @@ class SearchRunTest < ActiveSupport::TestCase
     bad_ss2 = SearchSetup.create!(:name=>"also bad",:module_type=>"Product",:user_id=>2)
     bssr2 = bad_ss2.create_search_run(:last_accessed=>1.day.ago,:user_id=>2)
     assert !bssr2.id.nil?, "Setup check 2"
-    f = ImportedFile.create!(:module_type=>"Product")
+    f = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
     fsr = f.search_runs.create!(:last_accessed=>2.days.ago,:user_id=>1)
     busr_fsr = f.search_runs.create!(:last_accessed=>1.day.ago,:user_id=>2)
-    bad_f = ImportedFile.create!(:module_type=>"Order")
+    bad_f = ImportedFile.create!(:module_type=>"Order",:update_mode=>'any')
     bad_fsr = bad_f.search_runs.create!(:last_accessed=>1.day.ago,:user_id=>1)
     assert !bad_fsr.id.nil?, "Setup check 3"
 

@@ -18,7 +18,7 @@ class ImportedFilesControllerTest < ActionController::TestCase
     tf << "#{prod_ident},EA"
     tf.close
 
-    imp = ss.imported_files.create!(:user_id=>ss.user.id,:module_type=>ss.module_type,:attached=>File.open(tf.path,'rb'),:ignore_first_row=>false)
+    imp = ss.imported_files.create!(:user_id=>ss.user.id,:module_type=>ss.module_type,:attached=>File.open(tf.path,'rb'),:starting_row=>1,:starting_column=>1,:update_mode=>'any')
 
     assert imp.process(ss.user)
     assert imp.errors.blank?

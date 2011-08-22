@@ -152,14 +152,6 @@ var OCSearch = (function() {
     });
   }
 
-  var initPopUpHelp = function() {
-    $("#mod_update_mode_help").dialog({autoOpen:false, width:500, buttons:{"OK":function() {$("#mod_update_mode_help").dialog('close');}}});
-    $("#update_mode_help").click(function(evt) {
-      evt.preventDefault();
-      $("#mod_update_mode_help").dialog('open');
-    });
-  }
-
   var initRowDoubleClick = function() {
     $(".search_row").dblclick(function() {
       $(this).find(".double_click_action").each(function() {
@@ -177,7 +169,6 @@ var OCSearch = (function() {
       initBulkSelectors();
       initSelectFullList();
       initSearchCriterions();
-      initPopUpHelp();
       initRowDoubleClick();
     },
     addBulkHandler: function(button_name,form_path) {

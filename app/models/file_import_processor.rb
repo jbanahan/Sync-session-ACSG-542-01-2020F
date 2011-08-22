@@ -27,7 +27,7 @@ class FileImportProcessor
     begin
       fire_start
       processed_row = false
-      r = @import_file.ignore_first_row ? 1 : 0
+      r = @import_file.starting_row - 1
       get_rows do |row|
         begin
           obj = do_row r+1, row, true
@@ -47,7 +47,7 @@ class FileImportProcessor
   
   def preview_file
     get_rows do |row|
-      do_row @import_file.ignore_first_row ? 2 : 1, row, false
+      do_row @import_file.starting_row, row, false
       return @listeners.first.messages
     end
   end
@@ -69,7 +69,7 @@ class FileImportProcessor
         end
         @search_setup.sorted_columns.each do |col|
           mf = col.find_model_field
-          data_map[mf.core_module][mf.uid]=row[col.rank] unless mf.uid==:_blank
+          data_map[mf.core_module][mf.uid]=row[col.rank + @import_file.starting_column - 1] unless mf.uid==:_blank
         end
         @module_chain.to_a.each do |mod|
           if fields_for_me_or_children? data_map, mod
@@ -185,7 +185,7 @@ class FileImportProcessor
     before_save dest
     dest.save! if save
     #if this is the top level object, check against the search_setup#update_mode
-    update_mode_check(dest,@search_setup.update_mode,is_new) if is_top_level
+    update_mode_check(dest,@import_file.update_mode,is_new) if is_top_level
     return dest
   end
   
@@ -218,8 +218,11 @@ class FileImportProcessor
   class CSVImportProcessor < FileImportProcessor
 
     def get_rows &block
-      CSV.parse(@data,{:skip_blanks=>true,:headers => @import_file.ignore_first_row}) do |row|
-        yield row
+      r = 0
+      start_row = @import_file.starting_row - 1
+      CSV.parse(@data,{:skip_blanks=>true}) do |row|
+        yield row if r >= start_row
+        r += 1
       end
     end
   end
@@ -228,7 +231,7 @@ class FileImportProcessor
     def get_rows &block
       @data
       s = @data.worksheet 0
-      s.each (@import_file.ignore_first_row ? 1 : 0) do |row|
+      s.each (@import_file.starting_row-1) do |row|
         yield row
       end
     end
