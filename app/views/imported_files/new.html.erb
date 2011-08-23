@@ -24,7 +24,7 @@ $(function() {
   <table>
   <%=field_row "File To Upload", f.file_field(:attached, :id=>"attch") %>
   <%=field_row "Update Mode", f.select(:update_mode, ImportedFile::UPDATE_MODES.map {|k,v| [v,k]}, {:include_blank=>true}, {:id=>"upd_mode"}) + "&nbsp;<a href='#' id='update_mode_help'>?</a>".html_safe%>
-  <%=field_row "Start At", ("Row "+f.select(:starting_row, 1..10, {}, {:style=>"width:4em;"}) + " and Column " + f.select(:starting_column, 1..10, {}, {:style=>"width:4em;"})).html_safe%>
+  <%=field_row "Start At", ("Row "+f.select(:starting_row, 1..10, {:selected=>2}, {:style=>"width:4em;"}) + " and Column " + f.select(:starting_column, 1..10, {}, {:style=>"width:4em;"})).html_safe%>
   </table>
 <% end %>
 
