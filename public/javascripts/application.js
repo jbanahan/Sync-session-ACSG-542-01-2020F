@@ -202,14 +202,18 @@ var OpenChain = (function() {
       if(data!="country not loaded") {
         var t = data.official_tariff;
         var h = t.remaining_description+"<br />"; 
-        if(t.general_rate) {
-          h+="General Rate: "+t.general_rate+"<br />";
-        }
-        if(t.erga_omnes_rate) {
-          h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
-        }
-        if(t.most_favored_nation_rate) {
-          h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
+        if(t.common_rate) {
+          h+="Common Rate: "+t.common_rate+"<br />";
+        } else {
+          if(t.general_rate) {
+            h+="General Rate: "+t.general_rate+"<br />";
+          }
+          if(t.erga_omnes_rate) {
+            h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
+          }
+          if(t.most_favored_nation_rate) {
+            h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
+          }
         }
         if(t.general_preferential_tariff_rate) {
           h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
@@ -1011,7 +1015,8 @@ function tariffPopUp(htsNumber,country_id) {
         h = "<table class='tbl_hts_popup'><tbody>";
         h += htsDataRow("Country:",o.country.name);
         h += htsDataRow("Tariff #:",o.hts_code);
-        h += htsDataRow("General Rate:",o.general_rate)
+        h += htsDataRow("Common Rate:",o.common_rate);
+        h += htsDataRow("General Rate:",o.general_rate);
         h += htsDataRow("Chapter:",o.chapter);
         h += htsDataRow("Heading:",o.heading);
         h += htsDataRow("Sub-Heading:",o.sub_heading);

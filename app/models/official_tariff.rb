@@ -67,4 +67,16 @@ class OfficialTariff < ActiveRecord::Base
   def six_digit_hts
     self.hts_code.length > 6 ? self.hts_code[0,6] : self.hts_code
   end
+
+  def set_common_rate
+    return unless self.country
+    if ['CA','CN'].include? country.iso_code
+      self.common_rate = self.most_favored_nation_rate
+    elsif country.european_union?
+      self.common_rate = self.erga_omnes_rate
+    else
+      self.common_rate = self.general_rate
+    end
+  end
+
 end
