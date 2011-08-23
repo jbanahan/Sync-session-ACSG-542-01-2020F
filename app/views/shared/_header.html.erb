@@ -20,7 +20,7 @@
   <%= javascript_include_tag "jquery-1.4.4.min.js", "rails.js", "jquery-ui-1.8.7.custom.min.js", "jquery.validate.js", "jquery.tools.min.js", "jquery.hotkeys.js", "jquery.jstepper.min.js", "application.js", "adv_search.js" %>
   <%= csrf_meta_tag %>
   <%= yield :head_tags%>
-  <script>
+  <script type='text/javascript'>
   OpenChain.setAuthToken('<%=form_authenticity_token%>');
   <% if current_user %>
   $(function() {
@@ -128,47 +128,72 @@
 <body>
 <div id="header">
   <div id="top_box">
-<% if !current_user || no_buttons %>
-  <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
-<% end %>
-  <% if current_user %>
-    <% unless no_buttons %>
-    <div id="corner_links">
-        <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> | 
-        <%= link_to 'Messages', messages_path %> <%=link_to(image_tag('envelope.png',{:alt=>'Messages',:style=>"vertical-align:bottom; display:#{@message_count==0 ? "none" : "inline"};",:id=>'message_envelope'}), messages_path)%> |
-        <%= link_to 'Tools', tools_path%> | 
-        <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
-        <%= link_to 'Logout', logout_path %>
-    </div>
-  <% end %>
-  <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
-  </div>
-  <% if current_user %>
-    <div id="linkbar">
-      <%if current_user.view_products?%><button id='btn_products' title='Search for products'>Products</button><%if current_user.add_products?%><button id='btn_new_product'>New Product</button><%end%><%end%>
-      <%if current_user.view_orders?%><button id='btn_orders' title='Search for orders'>Orders</button><%if current_user.add_orders? %><button id='btn_new_order'>New Order</button><%end%><%end%>
-      <%if current_user.view_shipments?%><button id='btn_shipments' title='Search for shipments'>Shipments</button><%if current_user.add_shipments?%><button id='btn_new_shipment'>New Shipment</button><%end%><%end%>
-      <%if current_user.view_sales_orders?%><button id='btn_sales' title='Search for sales'>Sales</button><%if current_user.add_sales_orders?%><button id='btn_new_sale'>New Sale</button><%end%><%end%>
-      <%if current_user.view_deliveries?%><button id='btn_deliveries' title='Search for deliveries'>Deliveries</button><%if current_user.add_deliveries?%><button id='btn_new_delivery'>New Delivery</button><%end%><%end%>      
-    </div>
+    <% if !current_user || no_buttons %>
+      <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
     <% end %>
+    <% if current_user %>
+      <% unless no_buttons %>
+        <div id="corner_links">
+            <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> | 
+            <%= link_to 'Messages', messages_path %> <%=link_to(image_tag('envelope.png',{:alt=>'Messages',:style=>"vertical-align:bottom; display:#{@message_count==0 ? "none" : "inline"};",:id=>'message_envelope'}), messages_path)%> |
+            <%= link_to 'Tools', tools_path%> | 
+            <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
+            <%= link_to 'Logout', logout_path %>
+        </div>
+      <% end %>
+      <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
+    <% end%>
+  </div> <!--close top box-->
+  <% if current_user%>
+    <div id="linkbar">
+      <%if current_user.view_products?%>
+        <button id='btn_products' title='Search for products'>Products</button>
+        <%if current_user.add_products?%>
+          <button id='btn_new_product'>New Product</button>
+        <%end%>
+      <%end%>
+      <%if current_user.view_orders?%>
+        <button id='btn_orders' title='Search for orders'>Orders</button>
+        <%if current_user.add_orders? %>
+          <button id='btn_new_order'>New Order</button>
+        <%end%>
+      <%end%>
+      <%if current_user.view_shipments?%>
+        <button id='btn_shipments' title='Search for shipments'>Shipments</button>
+        <%if current_user.add_shipments?%>
+          <button id='btn_new_shipment'>New Shipment</button>
+        <%end%>
+      <%end%>
+      <%if current_user.view_sales_orders?%>
+        <button id='btn_sales' title='Search for sales'>Sales</button>
+        <%if current_user.add_sales_orders?%>
+          <button id='btn_new_sale'>New Sale</button>
+        <%end%>
+      <%end%>
+      <%if current_user.view_deliveries?%>
+        <button id='btn_deliveries' title='Search for deliveries'>Deliveries</button>
+        <%if current_user.add_deliveries?%>
+          <button id='btn_new_delivery'>New Delivery</button>
+        <%end%>
+      <%end%>      
+    </div> <!--close linkbar-->
   <% end %>
-  </div>
 </div>
-  <% unless no_buttons %>
+<% unless no_buttons %>
   <% if has_messages || !ms.system_message.blank?%>
     <div id='notice' class='notices' style='display:none;'>
-			<div id='notice_hide'><a href="#" id="lnk_hide_notice">Hide</a></div>
-    <% [:errors,:notices].each do |type|
-          ary = flash[type].nil? ? [] : flash[type]
-          ary.each do |m| %>
-      <div class='<%=type%>_message'><%=m%></div>
-    <%    end
-       end 
-    %>
-    <% unless ms.system_message.blank? %>
-      <div class='system_message'><%=ms.system_message%></div>
-    <% end %>
+      <div id='notice_hide'>
+        <a href="#" id="lnk_hide_notice">Hide</a>
+      </div>
+      <% [:errors,:notices].each do |type| %>
+        <% ary = flash[type].nil? ? [] : flash[type] %>
+        <% ary.each do |m| %>
+          <div class='<%=type%>_message'><%=m%></div>
+        <% end %>
+      <% end %>
+      <% unless ms.system_message.blank? %>
+        <div class='system_message'><%=ms.system_message%></div>
+      <% end %>
     </div>
   <% end %>
-  <% end %>
+<% end %>

@@ -145,9 +145,6 @@ img {
     color: #707070;
 }
 #header {
-    clear: both;
-    float: left;
-    width: 100%;
     background-color: #151515;
 }
 #linkbar .ui-button {
@@ -188,9 +185,6 @@ img {
   margin-top: .5em;
 }
 .notices {
-  float: left;
-  position: relative;
-  width: 100%;
   background-color: white;
   border: 1px solid black;
   margin: 0 0 1em 0;
@@ -213,6 +207,7 @@ img {
   color: #707070;
 }
 #two_col_tbl {
+  margin-top: -1px; /*so top border of left column hides under linkbar*/
   width:100%;
   border-collapse: collapse;
   font-size: 80%;
@@ -226,8 +221,9 @@ img {
 #two_col_left {
   border-right: 1px solid black;
   border-bottom: 1px solid black;
+  border-top: 1px solid black;
   background-color: white;
-padding: .5em;
+  padding: .5em;
 }
 /* column container */
 .colmask {
@@ -254,7 +250,8 @@ padding: .5em;
 .col1 {
     background: #FFFFFF;
     padding-left: 1em;
-    border: 1px solid black;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
 }
 .col2 {
     padding-left: 1em;
@@ -274,6 +271,7 @@ padding: .5em;
     left:12%;     /* (right column width) plus (left column left and right padding) plus (right column left padding) */
 }
 #two_col_right button, #two_col_right input, .col2 button, .col2 input {
+    margin-left: 2.5%;
     width: 95%;
 }
 /* Footer styles */
