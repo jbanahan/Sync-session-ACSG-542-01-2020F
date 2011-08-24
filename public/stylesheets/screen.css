@@ -271,8 +271,7 @@ img {
     left:12%;     /* (right column width) plus (left column left and right padding) plus (right column left padding) */
 }
 #two_col_right button, #two_col_right input, .col2 button, .col2 input {
-    margin-left: 2.5%;
-    width: 95%;
+    width: 100%;
 }
 /* Footer styles */
 #footer {
