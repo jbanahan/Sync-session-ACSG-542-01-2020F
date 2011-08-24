@@ -28,6 +28,7 @@ module Worksheetable
     end
     begin
       wc.process obj, w.tempfile.path
+      obj.attachments.create(:attached=>w,:uploaded_by=>current_user)
       add_flash :notices, "Your worksheet was loaded successfully." , :now => true
     rescue Ole::Storage::FormatError
       add_flash :errors, "The file you uploaded was not a valid Excel 1997-2003 Workbook (.xls).  Please try again."
