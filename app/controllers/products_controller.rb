@@ -163,6 +163,7 @@ class ProductsController < ApplicationController
     action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
       [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
+      params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?}
       good_count = nil 
       bulk_objects do |gc,p|
         good_count = gc if good_count.nil?
