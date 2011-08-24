@@ -1,4 +1,4 @@
-<%=is_us = f.object.classification.country.iso_code=='US'%>
+<%is_us = f.object.classification.country.iso_code=='US'%>
 <div class='tf_row'>
 <input type='hidden' name='product[classifications_attributes][<%=classification_count%>][tariff_records_attributes][<%=tariff_count%>][view_sequence]' value='<%=tariff_view_sequence%>' />
     <div class='tr_close'><%= f.hidden_field :_destroy, "class" => "tf_destroy"%><%=link_to image_tag('x.png'), '#', :class=>'tf_remove'%></div>
