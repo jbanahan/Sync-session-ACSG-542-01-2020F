@@ -22,13 +22,13 @@ module OpenChain
     #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
     #this method will automatically save custom fields and will rollback if the validation fails
     #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
-    def self.validate_and_save_module base_object, parameters, succeed_lambda, fail_lambda, opts={}
+    def self.validate_and_save_module all_params, base_object, object_parameters, succeed_lambda, fail_lambda, opts={}
       inner_opts = {:before_validate=>lambda {|obj|}}
       inner_opts.merge! opts
       begin
         base_object.transaction do 
-          base_object.update_attributes!(parameters)
-          customizable_parent_params = parameters["#{base_object.class.to_s.downcase}_cf"]
+          base_object.update_attributes!(object_parameters)
+          customizable_parent_params = all_params["#{base_object.class.to_s.downcase}_cf"]
           OpenChain::CoreModuleProcessor.update_custom_fields base_object, customizable_parent_params
           inner_opts[:before_validate].call base_object
           OpenChain::FieldLogicValidator.validate!(base_object) 
