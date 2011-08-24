@@ -132,7 +132,7 @@ class ApplicationController < ActionController::Base
   #this method will automatically save custom fields and will rollback if the validation fails
   #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
   def validate_and_save_module base_object, parameters, succeed_lambda, fail_lambda, opts={}
-    OpenChain::CoreModuleProcessor.validate_and_save_module base_object, parameters, succeed_lambda, fail_lambda, opts
+    OpenChain::CoreModuleProcessor.validate_and_save_module params, base_object, parameters, succeed_lambda, fail_lambda, opts
   end
 
   #loads the custom values into the parent object without saving
