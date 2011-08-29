@@ -1,6 +1,7 @@
 class OfficialTariff < ActiveRecord::Base
 
   after_commit :update_cache
+  before_save :set_common_rate
 
   belongs_to :country
   has_one :official_quota
@@ -69,7 +70,9 @@ class OfficialTariff < ActiveRecord::Base
   end
 
   def set_common_rate
-    return unless self.country
+    country = self.country  
+    country = Country.find self.country_id if country.nil? && !self.country_id.nil?
+    return unless country
     if ['CA','CN'].include? country.iso_code
       self.common_rate = self.most_favored_nation_rate
     elsif country.european_union?
