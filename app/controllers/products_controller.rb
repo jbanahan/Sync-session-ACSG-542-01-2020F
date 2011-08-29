@@ -201,6 +201,16 @@ class ProductsController < ApplicationController
       redirect_to products_path
     }
   end
+
+  #instant classify the given objects
+  def bulk_instant_classify
+
+  end
+
+  #render html block for instant classification preview on a single product
+  def preview_instant_classify
+
+  end
     
     private
 

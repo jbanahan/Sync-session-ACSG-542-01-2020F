@@ -102,7 +102,29 @@ class Product < ActiveRecord::Base
         load_tariff_record(base_country,base_classification,c)
       end
     end
+  end
 
+  #Replace the current classifications with the given collection of classifications and writes this product with the new classifications to the database
+  #Any classification in the existing product that doesn't have a matching one by country in the new set is left alone
+  def replace_classifications new_classifications
+    begin
+      Product.transaction do
+        new_classifications.each do |nc|
+          self.classifications.where(:country_id=>nc.country_id).destroy_all #clear existing for this country
+          c = self.classifications.build
+          c.shallow_merge_into nc
+          c.country_id = nc.country_id #this isn't shallow merged
+          nc.tariff_records.each do |nt|
+            t = c.tariff_records.build
+            t.shallow_merge_into nt
+          end
+        end
+        self.save!
+        return true
+      end
+    rescue ActiveRecord::RecordNotSaved
+      return false
+    end
   end
 
 	def self.search_secure user, base_object
