@@ -3,15 +3,23 @@ require 'test_helper'
 class OfficialTariffTest < ActiveSupport::TestCase
 
   test "set common rate" do
-    #common rate auto set on save
-    ot = OfficialTariff.create!(:country_id=>countries(:china).id,:hts_code=>'123456789',:full_description=>"FDCN",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    ot = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>'123456789',:full_description=>"FDCN1",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    assert_equal ot.general_rate, ot.common_rate
+
+    ot = OfficialTariff.create!(:country_id=>countries(:china).id,:hts_code=>'123456789',:full_description=>"FDCN1",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
     assert_equal ot.most_favored_nation_rate, ot.common_rate
 
-    ot = OfficialTariff.create!(:country_id=>Country.create(:iso_code=>'CA').id,:hts_code=>'123456789',:full_description=>"FDCN",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    c = Country.new
+    c.iso_code = "CA"
+    c.save!
+    ot = OfficialTariff.create!(:country_id=>c.id,:hts_code=>'123456789',:full_description=>"FDCN2",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
     assert_equal ot.most_favored_nation_rate, ot.common_rate
     
     #EUROPEAN UNION TEST
-    ot = OfficialTariff.create!(:country_id=>Country.create(:iso_code=>'ES').id,:hts_code=>'123456789',:full_description=>"FDCN",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    c = Country.new
+    c.iso_code = "ES"
+    c.save!
+    ot = OfficialTariff.create!(:country_id=>c.id,:hts_code=>'123456789',:full_description=>"FDCN",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
     assert_equal ot.erga_omnes_rate, ot.common_rate
   end
 
