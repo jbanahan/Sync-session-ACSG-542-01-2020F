@@ -253,8 +253,9 @@ class CoreModule
       :default_search_columns => [:prod_uid,:prod_name,:prod_ven_name],
       :bulk_actions_lambda => lambda {|current_user| 
         bulk_actions = {}
-        bulk_actions["Edit Selected"]='bulk_edit_products_path' if current_user.edit_products?
-        bulk_actions["Classify Selected"]='bulk_classify_products_path' if current_user.edit_classifications?
+        bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products?
+        bulk_actions["Classify"]='bulk_classify_products_path' if current_user.edit_classifications?
+        bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? 
         bulk_actions
       },
       :changed_at_parents_lambda=>lambda {|p| [p]},#only update self

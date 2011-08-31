@@ -49,27 +49,25 @@ module OpenChain
   end
 
   class BulkInstantClassify
+    include ActiveSupport::Inflector 
     def self.go_serializable params_json, current_user_id
-      u = User.find user_id
+      u = User.find current_user_id
       params = ActiveSupport::JSON.decode params_json
       BulkInstantClassify.go params, u
     end
     def self.go params, current_user
       icr = InstantClassificationResult.create(:run_by_id=>current_user.id,:run_at=>0.seconds.ago)
-      instant_classifications = InstantClassification.includes(:search_criterions).order("rank ASC").to_a 
+      instant_classifications = InstantClassification.ranked #run this here to avoid calling inside the loop
       OpenChain::CoreModuleProcessor.bulk_objects(params['sr_id'],params['pk']) do |gc, product|
         result_record = icr.instant_classification_result_records.build(:product_id=>product.id)
-        ic_to_use = nil
-        instant_classifications.each do |ic|
-          ic_to_use = ic if ic.test? product
-          break if ic_to_use
-        end
+        ic_to_use = InstantClassification.find_by_product product, instant_classifications
         if ic_to_use
           result_record.entity_snapshot = product.create_snapshot(current_user) if product.replace_classifications ic_to_use.classifications.to_a
         end
         result_record.save
       end
       icr.update_attributes(:finished_at=>0.seconds.ago)
+      current_user.messages.create(:subject=>"Instant Classification Complete",:body=>"Your instant classification is complete.<br /><br />#{icr.instant_classification_result_records.size} products were inspected.<br />#{icr.instant_classification_result_records.where_changed.count} products were updated.<br /><br />Click <a href='/instant_classification_results/#{icr.id}'>here</a> to see the results.")
     end
   end
 

@@ -348,6 +348,24 @@ var OpenChain = (function() {
       }
     });
   }
+
+  var initEntitySnapshotPopups = function() {
+    $("a.entity_snapshot_popup").live('click',function(evt) {
+      var modal, inner;
+      evt.preventDefault();
+      modal = $("#mod_entity_snapshot");
+      if(modal.length==0) {
+        $("body").append("<div id='mod_entity_snapshot'><div id='mod_entity_snapshot_inner'>Loading...</div></div>")
+        modal = $("#mod_entity_snapshot");
+        modal.dialog({title:"Snapshot",autoOpen:false,width:'400',height:'500',buttons:{"Close":function() {$("#mod_entity_snapshot").dialog('close');}}});
+      }
+      inner = $("#mod_entity_snapshot_inner");
+      inner.html('Loading...');
+      modal.dialog('open');
+      $.get('/entity_snapshots/'+$(this).attr('entity_snapshot_id'),function(data) {inner.html(data);});
+    });
+  }
+
   return {
     //public stuff
     setAuthToken: function(t) {
@@ -545,6 +563,7 @@ var OpenChain = (function() {
       initFormButtons();
       initRemoteValidate();
       initScheduleBLinks();
+      initEntitySnapshotPopups();
       pollingId = pollForMessages();
     }
   };

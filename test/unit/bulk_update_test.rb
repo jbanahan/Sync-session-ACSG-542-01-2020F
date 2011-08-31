@@ -71,9 +71,14 @@ class BulkUpdateTest < ActiveSupport::TestCase
         assert_nil r.entity_snapshot
         assert !r.changed_product?
       else
-        fail "Unexpeted object #{p.to_s}"
+        fail "Unexpected object #{p.to_s}"
       end
     end
     assert expected_products.empty?
+
+  # then check that the user message was created
+    m = Message.last
+    assert_equal users(:masteruser).id.to_s, m.user_id.to_s
+    assert m.body.include?("instant")
   end
 end

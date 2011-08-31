@@ -204,12 +204,19 @@ class ProductsController < ApplicationController
 
   #instant classify the given objects
   def bulk_instant_classify
-
+    action_secure(current_user.edit_classifications?,Product.new,{:verb=>"instant classify",:module_name=>module_label.downcase.pluralize}) {
+      OpenChain::BulkInstantClassify.delay.go_serializable params.to_json, current_user.id
+      add_flash :notices, "These products will be instant classified in the background.  You will receive a system message when they're ready."
+      redirect_to products_path
+    }
   end
 
   #render html block for instant classification preview on a single product
-  def preview_instant_classify
-
+  def show_bulk_instant_classify
+    @pks = params[:pk]
+    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil 
+    @preview_product = @pks.blank? ? @search_run.current_object : Product.find(@pks.values.first)
+    @preview_instant_classification = InstantClassification.find_by_product @preview_product
   end
     
     private
