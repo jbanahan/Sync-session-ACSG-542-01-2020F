@@ -33,7 +33,7 @@ $(function() {
 	<b><%= @shipment.reference %></b>
 	<br />
 	<span class='content_head_label'><%=field_label(:shp_ven_name)%>:</span>
-  <b><%= @shipment.vendor.name %></b>
+  <b><%= @shipment.vendor ? @shipment.vendor.name : ''%></b>
   <br />&nbsp;
 </div>
 <table class='detail_table'>
