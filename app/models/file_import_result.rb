@@ -4,20 +4,12 @@ class FileImportResult < ActiveRecord::Base
   has_many :change_records
 
   def changed_objects search_criterions=[]
-    r = [] 
-    if search_criterions.blank?
-      r = self.change_records.collect {|a| a.recordable}
-    else
-      k = Kernel.const_get self.imported_file.core_module.class_name
-      r = k.joins("INNER JOIN change_records on #{k.table_name}.id = change_records.recordable_id and change_records.recordable_type = '#{self.imported_file.core_module.class_name}'").
-            where("change_records.file_import_result_id = ?",self.id)
-      search_criterions.each do |sc|
-        r = sc.apply r 
-      end
-      r = r.to_a
+    debugger if self.imported_file.nil?
+    k = Kernel.const_get self.imported_file.core_module.class_name
+    r = k.where("#{k.table_name}.id IN (SELECT recordable_id FROM `change_records` WHERE file_import_result_id = ? AND recordable_type = '#{self.imported_file.core_module.class_name}')",self.id)
+    search_criterions.each do |sc|
+      r = sc.apply r 
     end
-    r.uniq!
-    r.delete nil
     r
   end
 

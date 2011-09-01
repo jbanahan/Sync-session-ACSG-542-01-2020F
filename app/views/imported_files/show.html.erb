@@ -154,15 +154,7 @@
     <%end%>
   </tbody>
 </table>
-  <% if @max_pages>1%>
-    <div class='pagination'>
-     <%if @target_page>0%><%=link_to "&#8592;Previous".html_safe, imported_file_path(@imported_file,:page=>@target_page-1)%><%end%> 
-     <%(0..@max_pages-1).each do |p|%>
-        <%if @target_page!=p%><%=link_to p+1, imported_file_path(@imported_file,:page=>p)%><%else%><%=p+1%><%end%>
-     <%end%>
-     <%if @target_page<@max_pages-1%><%=link_to "Next&#8594;".html_safe,  imported_file_path(@imported_file,:page=>@target_page+1)%><%end%>
-    </div>
-  <%end%>
+<%=will_paginate @changed_objects%>
 <%end%>
 </div>
 <div>

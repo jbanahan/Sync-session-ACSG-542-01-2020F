@@ -17,6 +17,7 @@ class ImportedFile < ActiveRecord::Base
   has_many :file_import_results, :dependent=>:destroy
   has_many :search_columns
 
+  before_validation :set_module_type
   validates_presence_of :module_type
   
   def last_file_import
@@ -62,6 +63,7 @@ class ImportedFile < ActiveRecord::Base
 
   def process(user,options={})
     begin
+      self.save! if self.new_record? #make sure we're actually in the database
       import_search_columns      
       @a_data = options[:attachment_data] if !options[:attachment_data].nil?
       fj = FileImportProcessJob.new(self,user)
@@ -128,6 +130,11 @@ class ImportedFile < ActiveRecord::Base
         my_col.save
       end
     end
+  end
+
+  #callback to set the module_type if it's empty and the search_setup has one
+  def set_module_type
+    self.module_type = self.search_setup.module_type unless self.module_type || self.search_setup.nil?
   end
 
   class FileImportProcessJob

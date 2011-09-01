@@ -515,7 +515,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     ss = SearchSetup.create!(:module_type=>"Product",:name=>"booltest",:user_id => 1)
     cd = CustomDefinition.create!(:label=>"boolt",:data_type=>"boolean",:module_type=>"Product")
     ["prod_uid","*cf_#{cd.id}"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
-    f = ss.imported_files.new(:attached_file_name=>"myf.csv",:ignore_first_row=>false)
+    f = ss.imported_files.new(:attached_file_name=>"myf.csv",:ignore_first_row=>false,:module_type=>ss.module_type)
     data = [{:uid=>"bool1",:bv=>"Yes",:should=>true},
       {:uid=>"bool2",:bv=>"True",:should=>true},
       {:uid=>"bool3",:bv=>"F",:should=>false},

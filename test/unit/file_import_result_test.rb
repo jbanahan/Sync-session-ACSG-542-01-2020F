@@ -2,7 +2,8 @@ require 'test_helper'
 
 class FileImportResultTest < ActiveSupport::TestCase
   test "changed objects" do
-    fir = FileImportResult.create!
+    i_file = ImportedFile.create(:module_type=>"Product")
+    fir = i_file.file_import_results.create!
     3.times do |i| #add 3 products twice for 6 total change records
       p = Product.create!(:unique_identifier=>"#{i}pid")
       2.times { |z| fir.change_records.create!(:recordable=>p) }

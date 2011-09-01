@@ -45,12 +45,7 @@ class ImportedFilesController < ApplicationController
       s.save
       @search_run = s
       @file_import_result = @imported_file.last_file_import_finished
-      if @file_import_result      
-        @target_page = params[:page].nil? ? 0 : params[:page].to_i
-        changed_objs = @file_import_result.changed_objects
-        @changed_objects = get_page changed_objs, @target_page, 20
-        @max_pages = (changed_objs.size / 20)+1
-      end
+      @changed_objects = @file_import_result.changed_objects.paginate(:per_page=>20,:page => params[:page]) if @file_import_result
       idx = 0
       @columns = @imported_file.search_columns
       if @columns.blank?
@@ -150,10 +145,4 @@ class ImportedFilesController < ApplicationController
     }
   end
 
-private
-  #target_page is 0 based
-  def get_page array, target_page, page_size
-    a = array.slice (target_page*page_size), page_size
-    a.nil? ? [] : a
-  end
 end
