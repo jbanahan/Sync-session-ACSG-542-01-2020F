@@ -366,6 +366,14 @@ var OpenChain = (function() {
     });
   }
 
+  var dropTableHandlers = new Object();
+  var handleRowDrop = function(table,row) {
+    var handler = dropTableHandlers[$(table).attr('id')];
+    if(handler) {
+      handler(table,row);
+    }
+  }
+
   return {
     //public stuff
     setAuthToken: function(t) {
@@ -462,6 +470,15 @@ var OpenChain = (function() {
     //keymapping shortcut to pass an object id and have it clicked when the user uses the hotkey
     addClickMap: function(key,desc,object_id) {
       OpenChain.addKeyMap(key,desc,function() {$("#"+object_id).click();});
+    },
+    initDragTables: function() {
+      $("table.drag_table tr:even").addClass("drag_table_alt_row");
+      $("table.drag_table").tableDnD({dragHandle:'drag_handle',onDrop:function(table,row) {handleRowDrop(table,row);}});
+    },
+    //registers a function to be called when the given drag_table's row is dropped
+    //callback should be function(table,row)
+    registerDragTableDropHandler: function(table,handler) {
+      dropTableHandlers[table.attr('id')] = handler;
     },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
@@ -699,6 +716,7 @@ $( function() {
     });
 });
 $(document).ready( function() {
+    OpenChain.initDragTables();
     handleCustomFieldCheckboxes();
     $(':checkbox').css('border-style','none');
     $('#notice').slideDown('slow');

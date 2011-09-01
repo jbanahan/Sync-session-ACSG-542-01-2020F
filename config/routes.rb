@@ -1,6 +1,11 @@
 OpenChain::Application.routes.draw do
 
   resources :entity_snapshots, :only => [:show]
+  resources :instant_classifications do
+    collection do
+      post 'update_rank'
+    end
+  end
   resources :instant_classification_results, :only => [:show]
   resources :milestone_plans do
     resources :milestone_definitions, :only => [:index]
