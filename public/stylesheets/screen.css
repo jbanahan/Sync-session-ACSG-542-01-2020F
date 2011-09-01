@@ -559,6 +559,8 @@ width:60%;
   font-weight: bold;
 }
 #main_search_cont {
+  width: 100%;
+  position: relative;
   overflow-x: auto;
 }
 .permission_row td {
