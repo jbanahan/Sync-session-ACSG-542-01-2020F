@@ -163,6 +163,7 @@ class ProductsController < ApplicationController
     action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
       [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
+      params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?}
       good_count = nil 
       bulk_objects do |gc,p|
         good_count = gc if good_count.nil?
@@ -199,6 +200,23 @@ class ProductsController < ApplicationController
       add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       redirect_to products_path
     }
+  end
+
+  #instant classify the given objects
+  def bulk_instant_classify
+    action_secure(current_user.edit_classifications?,Product.new,{:verb=>"instant classify",:module_name=>module_label.downcase.pluralize}) {
+      OpenChain::BulkInstantClassify.delay.go_serializable params.to_json, current_user.id
+      add_flash :notices, "These products will be instant classified in the background.  You will receive a system message when they're ready."
+      redirect_to products_path
+    }
+  end
+
+  #render html block for instant classification preview on a single product
+  def show_bulk_instant_classify
+    @pks = params[:pk]
+    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil 
+    @preview_product = @pks.blank? ? @search_run.current_object : Product.find(@pks.values.first)
+    @preview_instant_classification = InstantClassification.find_by_product @preview_product
   end
     
     private

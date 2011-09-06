@@ -2,6 +2,40 @@ require 'test_helper'
 
 class ProductTest < ActiveSupport::TestCase
 
+  test "replace classifications" do
+    cd = CustomDefinition.create!(:label=>'cddd',:module_type=>'Classification',:data_type=>'string')
+
+    p = Product.create!(:unique_identifier=>"12349")
+    p.classifications.create!(:country_id=>countries(:us).id)
+    cc = p.classifications.create!(:country_id=>countries(:china).id)
+    cc.tariff_records.create!(:hts_1=>'33333333')
+
+    ic = InstantClassification.create!(:name=>'ic')
+    to_load_1 = ic.classifications.create!(:country_id=>countries(:china).id)
+    tr_1 = to_load_1.tariff_records.create!(:hts_1=>'123456789')
+    to_load_2 = ic.classifications.create!(:country_id=>countries(:italy).id)
+    tr_2 = to_load_2.tariff_records.create!(:hts_1=>'985823191')
+
+    p.replace_classifications [to_load_1,to_load_2]
+
+    found = Product.find(p.id)
+
+    assert_equal 3, p.classifications.size
+    #china should have been updated
+    fc_1 = p.classifications.where(:country_id=>countries(:china).id).first
+    assert_nil fc_1.instant_classification_id
+    assert_equal tr_1.hts_1, fc_1.tariff_records.first.hts_1
+    #italy should have been added
+    fc_2 = p.classifications.where(:country_id=>countries(:italy).id).first
+    assert_nil fc_2.instant_classification_id
+    assert_equal tr_2.hts_1, fc_2.tariff_records.first.hts_1
+    #us should have been left alone
+    fc_3 = p.classifications.where(:country_id=>countries(:us).id).first
+    assert_nil fc_3.instant_classification_id
+    assert fc_3.tariff_records.empty?
+
+  end
+
   test "numeric unique identifier" do
     p = Product.create!(:unique_identifier=>"123456X")
     p2 = Product.create!(:unique_identifier=>"123456")

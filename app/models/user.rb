@@ -23,6 +23,7 @@ class User < ActiveRecord::Base
   has_many   :debug_records, :dependent => :destroy
   has_many   :dashboard_widgets, :dependent => :destroy
   has_many   :imported_files
+  has_many   :instant_classification_results, :foreign_key => :run_by_id
   
   validates  :company, :presence => true
   

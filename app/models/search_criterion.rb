@@ -5,6 +5,7 @@ class SearchCriterion < ActiveRecord::Base
   belongs_to :milestone_plan
   belongs_to :status_rule  
   belongs_to :search_setup
+  belongs_to :instant_classification
   
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true
@@ -24,6 +25,10 @@ class SearchCriterion < ActiveRecord::Base
     "*cf_#{custom_definition.id}"
   end
 
+  #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_export expects)
+  def test? obj
+    passes?(ModelField.find_by_uid(self.model_field_uid).process_export(obj))
+  end
   #does the given value pass the criterion test
   def passes?(value_to_test)
     mf = find_model_field

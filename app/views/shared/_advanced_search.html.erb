@@ -99,14 +99,6 @@ $(function() {
     ev.preventDefault();
     OCSearch.hideSetup();
   });
-  $(".sp_remove").live('click',function(ev) {
-    ev.preventDefault();
-    destroy_nested('sp',$(this));
-  });
-  $("#sp_add").click(function(ev) {
-    ev.preventDefault();
-    addNewSearchCriterion();
-  });
   $("#btn_setup_save").click(function() {
     submitForm();
   });
@@ -163,24 +155,9 @@ $(function() {
     OpenChain.loadUserList($("#give_user_list"),"");
     $("#mod_give_to").dialog('open');
   });
-<% sc_counter = 0 %>
-<% @current_search.search_criterions.each do |sc| %>
-  addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc.value%>','<%=sc.id%>');
-  <% sc_counter += 1 %>
-<% end %>
 });
-function addSearchCriterion(m,field,operator,value,id) {
-  var fields = [];
-  <%ModelField.sort_by_label(@core_module.model_fields_including_children.values).each do |mf| %>
-    fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
-  <%end%>
-  OCSearch.addSearchCriterion($("#sp_table"),fields,m,field,operator,value,id,true);
-}
-function addNewSearchCriterion() {
-  addSearchCriterion(new Date().getTime(),null,null,null);
-}
 <%end%>
-
+<%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@current_search,:model_fields=>@core_module.model_fields_including_children.values,:wrapper=>'params_cont',:parent_hash_name=>'search_setup'}%>
 <div id='main_search_cont'>
 <div id='search_select_box'>
   <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>
@@ -199,13 +176,9 @@ function addNewSearchCriterion() {
     <div id='setup_cont'>
       Name: <%=f.text_field :name, "id"=>"current_name" %><br />
       Download Format: <%=f.select :download_format, ["xls","csv"] %><br />
-      Update Mode: <%=f.select :update_mode, SearchSetup::UPDATE_MODES.map {|k,v| [v,k]} %> <a href='#' id='update_mode_help'>?</a>
       <%=f.hidden_field :module_type %>
     </div>
     <div id='params_cont'>
-      <table id='sp_table'>
-      </table>
-      <a href='#' id='sp_add'>Add</a>
     </div>
     <div id='sorts_cont'>
       <table class='detail_table' style='width:0px;'>
@@ -355,20 +328,6 @@ hrs_opts = {"midnight"=>"0"}
   <%=form_tag('',:id=>'frm_bulk') do %>
     <div id='div_bulk_content'></div>
   <% end %>
-</div>
-<div id='mod_update_mode_help' style='display:none;'>
-<div style='font-size:80%;'>
-  <p>Update mode helps you avoid accidentally adding or updating records in the system when you upload a spreadsheet.</p>
-  <p>
-    <b>Modes:</b>
-    <ul>
-      <li><b>Add or Update</b>: You're allowed to create new items and update existing ones.  (This is the default setting.)</li>
-      <li><b>Add Only:</b>: You're only allowed to create new items.  You might use this if you are adding new Products and want to make sure that you're not accidently overwriting an existing product.</li>
-      <li><b>Update Only:</b>: You're only allowed to update existing items. You might use this if you are uploading a Order status update and know that you shouldn't have any new orders.</li>
-    </ul>
-  </p>
-  <p>This setting only affects the top level item (Order, Product, Shipment, etc.), you can always add or update Lines, Classifications, etc.</p>
-</div>
 </div>
 <%content_for :action_bar do %>
   <%unless @bulk_actions.blank?%>

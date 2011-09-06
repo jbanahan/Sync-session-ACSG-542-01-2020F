@@ -1,6 +1,19 @@
 <%content_for :javascript do %>
 $(function() {
-  $("#btn_process").click(function() {$("#frm_fi").submit();})
+  $("#btn_process").click(function() {
+    if($("#attch").val().length<1) {
+      window.alert("Please select a file to upload.");
+    } else if ($("#upd_mode").val()=="") {
+      window.alert("Please select an update mode.");
+    } else {
+      $("#frm_fi").submit();
+    }
+  })
+  $("#mod_update_mode_help").dialog({autoOpen:false, width:500, title:"Update Mode", buttons:{"OK":function() {$("#mod_update_mode_help").dialog('close');}}});
+  $("#update_mode_help").click(function(evt) {
+    evt.preventDefault();
+    $("#mod_update_mode_help").dialog('open');
+  });
 });
 <%end%>
 <%content_for :action_bar do %>
@@ -8,6 +21,24 @@ $(function() {
 <%end%>
 <h2>Upload File for <em><%=@search_setup.name%></em></h2>
 <%= form_for [@search_setup,@imported_file], :html => { :multipart => true, :id=>"frm_fi" } do |f| %>
-  <%= f.file_field :attached, :id=>"attch" %><br />
-  <%= f.check_box :ignore_first_row, :checked=>true%> First Row Is Headings
+  <table>
+  <%=field_row "File To Upload", f.file_field(:attached, :id=>"attch") %>
+  <%=field_row "Update Mode", f.select(:update_mode, ImportedFile::UPDATE_MODES.map {|k,v| [v,k]}, {:include_blank=>true}, {:id=>"upd_mode"}) + "&nbsp;<a href='#' id='update_mode_help'>?</a>".html_safe%>
+  <%=field_row "Start At", ("Row "+f.select(:starting_row, 1..10, {:selected=>2}, {:style=>"width:4em;"}) + " and Column " + f.select(:starting_column, 1..10, {}, {:style=>"width:4em;"})).html_safe%>
+  </table>
 <% end %>
+
+<div id='mod_update_mode_help' style='display:none;'>
+<div style='font-size:80%;'>
+  <p>Update mode helps you avoid accidentally adding or updating records in the system when you upload a spreadsheet.</p>
+  <p>
+    <b>Modes:</b>
+    <ul>
+      <li><b>Add or Update</b>: You're allowed to create new items and update existing ones.  (This is the default setting.)</li>
+      <li><b>Add Only:</b>: You're only allowed to create new items.  You might use this if you are adding new Products and want to make sure that you're not accidently overwriting an existing product.</li>
+      <li><b>Update Only:</b>: You're only allowed to update existing items. You might use this if you are uploading a Order status update and know that you shouldn't have any new orders.</li>
+    </ul>
+  </p>
+  <p>This setting only affects the top level item (Order, Product, Shipment, etc.), you can always add or update Lines, Classifications, etc.</p>
+</div>
+</div>

@@ -1,0 +1,84 @@
+<%content_for :action_bar do %>
+  <button class="form_to" form_id="frm_bu" key_map='g'>Go</button>
+<%end%>
+<div class='bulk_header_inner'>
+  Click &quot;Go&quot; to instant classify <strong><%=pluralize (@search_run ? @search_run.total_objects : @pks.size), CoreModule::PRODUCT.label.downcase%></strong>.<br />
+  <span class='error'>Warning: You cannot undo this action.</span>
+</div>
+
+<%=form_for @preview_product, :url=>bulk_instant_classify_products_path, :html=>{:method=>"POST", :id=>"frm_bu"} do |f| %>
+  <%if @search_run%>
+    <%=hidden_field_tag "sr_id", @search_run.id%>
+  <%else%>
+    <%@pks.each do |k,v|%>
+      <%=hidden_field_tag "pk[#{k}]", v %>
+    <%end%>
+  <%end%>
+<% end %>
+
+<h2>Preview of First Product</h2>
+<table>
+<%=field_view_row @preview_product, :prod_uid%>
+<%=field_view_row @preview_product, :prod_name%>
+<% if @preview_instant_classification%>
+  <%=field_row "Instant Classification Name", @preview_instant_classification.name%>
+<% end %>
+</table>
+<% if @preview_instant_classification %>
+  <div id='classifications'>
+    <%="There aren't any classifications for this Instant Classification" if @preview_instant_classification.classifications.blank?%>
+    <%@preview_instant_classification.classifications.each do |c|%>
+      <table class='classification_box'>
+        <thead><tr><th class='class_ctry_name'><%=c.country.name.titleize%></th></tr></thead>
+        <tbody>
+          <tr>
+            <td class='class_tr_box'>
+              <div class='cf_box'>
+                <table>
+                  <%=show_custom_fields c, {:form=>false, :table=>true, :show_prefix=>false}%>
+                </table>
+              </div>
+              <%is_us = c.country.iso_code=='US'%>
+              <%country_id = c.id%>
+              <% c.tariff_records.each do |tr| %>
+                <div class='tf_row'>
+                  <table>
+                    <%=field_view_row tr, :hts_line_number%> 
+                    <%=show_custom_fields tr, {:form=>false, :show_prefix=>false, :table=>true} %>
+                  </table>
+                  <table class='tr_hts'>
+                    <thead>
+                      <tr>
+                        <th><%=field_label :hts_hts_1, false%></th>
+                        <th><%=field_label :hts_hts_2, false%></th>
+                        <th><%=field_label :hts_hts_3, false%></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><%=text_field_tag :hts_1, tr.hts_1, :class=>"hts_field", :disabled=>:disabled, :country=>country_id, :col=>1%></td>
+                        <td><%=text_field_tag :hts_2, tr.hts_2, :class=>"hts_field", :disabled=>:disabled, :country=>country_id, :col=>2%></td>
+                        <td><%=text_field_tag :hts_3, tr.hts_3, :class=>"hts_field", :disabled=>:disabled, :country=>country_id, :col=>3%></td>
+                      </tr>
+                     <%if tr.has_schedule_b? || is_us %>
+                      <tr><th>Schedule B 1</th><th>Schedule B 2</th><th>Schedule B 3</th></tr>
+                      <tr>
+                        <td><%=text_field_tag :schedule_b_1, tr.schedule_b_1, :class=>:sched_b_field, :col=>1%></td>
+                        <td><%=text_field_tag :schedule_b_2, tr.schedule_b_2, :class=>:sched_b_field, :col=>2%></td>
+                        <td><%=text_field_tag :schedule_b_3, tr.schedule_b_3, :class=>:sched_b_field, :col=>3%></td>
+                      </tr>
+                     <%end%>
+                    </tbody>
+                  </table>
+                </div>
+              <% end %>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    <%end%>
+  </div>
+<% else %>
+No Instant Classifications match, this product will not be changed.
+<% end %>
+

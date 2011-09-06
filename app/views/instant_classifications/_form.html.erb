@@ -1,0 +1,19 @@
+<%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@instant_classification,:model_fields=>CoreModule::PRODUCT.model_fields.values,:wrapper=>'params_cont',:parent_hash_name=>'instant_classification'}%>
+<%content_for :javascript do %>
+  $(function() {OpenChain.initClassifyPage();});
+<%end%>
+<%content_for :action_bar do %>
+  <button class="form_to" form_id="frm_ic" key_map="s">Save</button>
+  <button class="btn_link" link_to="<%=instant_classifications_path%>" key_map="c">Cancel</button>
+<%end%>
+<%=form_for @instant_classification, :html=>{:id=>:frm_ic} do |f|%>
+  <h1>Instant Classification</h1>
+  <table>
+    <%=field_row "Name", f.text_field(:name)%>
+  </table>
+  <h2>Parameters</h2>
+  <div id='params_cont'>
+
+  </div>
+  <%=render :partial=>'products/classify', :locals=>{:form_obj=>f}%>
+<%end%>

@@ -1,5 +1,12 @@
 OpenChain::Application.routes.draw do
 
+  resources :entity_snapshots, :only => [:show]
+  resources :instant_classifications do
+    collection do
+      post 'update_rank'
+    end
+  end
+  resources :instant_classification_results, :only => [:show,:index]
   resources :milestone_plans do
     resources :milestone_definitions, :only => [:index]
   end
@@ -126,6 +133,8 @@ OpenChain::Application.routes.draw do
       post 'bulk_classify'
       post 'bulk_update_classifications'
       post 'bulk_auto_classify'
+      post 'bulk_instant_classify'
+      post 'show_bulk_instant_classify'
     end
     member do
       get 'history'

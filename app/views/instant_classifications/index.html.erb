@@ -1,0 +1,29 @@
+<%content_for :javascript do%>
+$(function() {
+  OpenChain.registerDragTableDropHandler($("#tbl_ic"),function(table,row) {
+    var list = [];
+    $(table).find('tr').each(function() {
+      var icId = $(this).attr('ic_id'); 
+      if(icId) {
+        list.push(icId);
+      }
+    });
+    $.post('/instant_classifications/update_rank',{'sort_order':list});
+  });
+});
+<%end%>
+<%content_for :action_bar do%>
+  <button class='btn_link' link_to='<%=new_instant_classification_path%>' key_map='n'>New</button>
+<%end%>
+<h1>Instant Classifications</h1>
+<div id='page_instructions'>Drag items to sort.  Items at the top of the list will be applied to products first.  Instant classification for each product stops at the first match on the list.</div>
+<table class='drag_table' id='tbl_ic'>
+<thead><tr><th></th><th>&nbsp;</th><th>Name</th></tr></thead>
+<tbody>
+  <%@instant_classifications.each do |ic|%>
+  <tr ic_id='<%=ic.id%>'>
+    <td class='drag_handle'>&nbsp;</td><td><%=link_to 'Edit', edit_instant_classification_path(ic)%></td><td><%=ic.name%></td>
+  </tr>
+  <% end %>
+</tbody>
+</table>

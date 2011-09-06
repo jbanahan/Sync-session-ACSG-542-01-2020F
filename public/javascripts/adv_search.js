@@ -54,7 +54,7 @@ var OCSearch = (function() {
     });
   }
 
-  var initSearchCriterions = function() {
+  var initSearchCrits = function() {
     var getDataType = function(f) {
       return f.parents("tr:first").find(".srch_crit_fld option:selected").attr('dtype');
     }
@@ -152,14 +152,6 @@ var OCSearch = (function() {
     });
   }
 
-  var initPopUpHelp = function() {
-    $("#mod_update_mode_help").dialog({autoOpen:false, width:500, buttons:{"OK":function() {$("#mod_update_mode_help").dialog('close');}}});
-    $("#update_mode_help").click(function(evt) {
-      evt.preventDefault();
-      $("#mod_update_mode_help").dialog('open');
-    });
-  }
-
   var initRowDoubleClick = function() {
     $(".search_row").dblclick(function() {
       $(this).find(".double_click_action").each(function() {
@@ -176,9 +168,10 @@ var OCSearch = (function() {
       $("#frm_bulk").attr('action','');
       initBulkSelectors();
       initSelectFullList();
-      initSearchCriterions();
-      initPopUpHelp();
       initRowDoubleClick();
+    },
+    initSearchCriterions: function() {
+      initSearchCrits();                      
     },
     addBulkHandler: function(button_name,form_path) {
       var b = $("#"+button_name);
@@ -198,20 +191,20 @@ var OCSearch = (function() {
       $("#show_srch_setup").show();
       $.post('/search_setups/sticky_close');
     },
-    addSearchCriterion: function(parentTable,fieldList,m,field,operator,value,id,canDelete) {
+    addSearchCriterion: function(parentTable,parentObject,fieldList,m,field,operator,value,id,canDelete) {
       var h = "<tr class='sp_row'><td>";
         if(id) {
-          h += "<input id='search_setup_search_criterions_attributes_"+m+"_id' name='search_setup[search_criterions_attributes]["+m+"][id]' type='hidden' value='"+id+"'>";
+          h += "<input id='"+parentObject+"_search_criterions_attributes_"+m+"_id' name='"+parentObject+"[search_criterions_attributes]["+m+"][id]' type='hidden' value='"+id+"'>";
         }
-        h += "<select id='search_setup_search_criterions_attributes_"+m+"_model_field_uid' name='search_setup[search_criterions_attributes]["+m+"][model_field_uid]' class='srch_crit_fld'>";
+        h += "<select id='"+parentObject+"_search_criterions_attributes_"+m+"_model_field_uid' name='"+parentObject+"[search_criterions_attributes]["+m+"][model_field_uid]' class='srch_crit_fld'>";
         for(var i=0;i<fieldList.length;i++) {
           h = h + "<option value='"+fieldList[i].uid+"' dtype='"+fieldList[i].dtype+"'>"+fieldList[i].label+"</option>";
         }
         h = h + "</select></td>";
-        h = h + "<td><select id='search_setup_search_criterions_attributes_"+m+"_operator' name='search_setup[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
-        h = h + "</select></td><td><"+(operator=='in' ? "textarea rows='4' cols='30'" : "input size='30' type='text'")+" id='search_setup_search_criterions_attributes_"+m+"_value' name='search_setup[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></td>";
+        h = h + "<td><select id='"+parentObject+"_search_criterions_attributes_"+m+"_operator' name='"+parentObject+"[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
+        h = h + "</select></td><td><"+(operator=='in' ? "textarea rows='4' cols='30'" : "input size='30' type='text'")+" id='"+parentObject+"_search_criterions_attributes_"+m+"_value' name='"+parentObject+"[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></td>";
         if(canDelete) {
-          h = h + "<td><input class='sp_destroy' id='search_setup_search_criterions_attributes_"+m+"__destroy' name='search_setup[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='/images/x.png' title='remove' /></a></td></tr>";
+          h = h + "<td><input class='sp_destroy' id='"+parentObject+"_search_criterions_attributes_"+m+"__destroy' name='"+parentObject+"[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='/images/x.png' title='remove' /></a></td></tr>";
         }
       parentTable.append(h);
       var row = parentTable.find("tr:last");

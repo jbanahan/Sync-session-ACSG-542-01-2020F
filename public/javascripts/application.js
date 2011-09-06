@@ -202,14 +202,18 @@ var OpenChain = (function() {
       if(data!="country not loaded") {
         var t = data.official_tariff;
         var h = t.remaining_description+"<br />"; 
-        if(t.general_rate) {
-          h+="General Rate: "+t.general_rate+"<br />";
-        }
-        if(t.erga_omnes_rate) {
-          h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
-        }
-        if(t.most_favored_nation_rate) {
-          h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
+        if(t.common_rate) {
+          h+="Common Rate: "+t.common_rate+"<br />";
+        } else {
+          if(t.general_rate) {
+            h+="General Rate: "+t.general_rate+"<br />";
+          }
+          if(t.erga_omnes_rate) {
+            h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
+          }
+          if(t.most_favored_nation_rate) {
+            h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
+          }
         }
         if(t.general_preferential_tariff_rate) {
           h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
@@ -344,6 +348,32 @@ var OpenChain = (function() {
       }
     });
   }
+
+  var initEntitySnapshotPopups = function() {
+    $("a.entity_snapshot_popup").live('click',function(evt) {
+      var modal, inner;
+      evt.preventDefault();
+      modal = $("#mod_entity_snapshot");
+      if(modal.length==0) {
+        $("body").append("<div id='mod_entity_snapshot'><div id='mod_entity_snapshot_inner'>Loading...</div></div>")
+        modal = $("#mod_entity_snapshot");
+        modal.dialog({title:"Snapshot",autoOpen:false,width:'400',height:'500',buttons:{"Close":function() {$("#mod_entity_snapshot").dialog('close');}}});
+      }
+      inner = $("#mod_entity_snapshot_inner");
+      inner.html('Loading...');
+      modal.dialog('open');
+      $.get('/entity_snapshots/'+$(this).attr('entity_snapshot_id'),function(data) {inner.html(data);});
+    });
+  }
+
+  var dropTableHandlers = new Object();
+  var handleRowDrop = function(table,row) {
+    var handler = dropTableHandlers[$(table).attr('id')];
+    if(handler) {
+      handler(table,row);
+    }
+  }
+
   return {
     //public stuff
     setAuthToken: function(t) {
@@ -440,6 +470,15 @@ var OpenChain = (function() {
     //keymapping shortcut to pass an object id and have it clicked when the user uses the hotkey
     addClickMap: function(key,desc,object_id) {
       OpenChain.addKeyMap(key,desc,function() {$("#"+object_id).click();});
+    },
+    initDragTables: function() {
+      $("table.drag_table tr:even").addClass("drag_table_alt_row");
+      $("table.drag_table").tableDnD({dragHandle:'drag_handle',onDrop:function(table,row) {handleRowDrop(table,row);}});
+    },
+    //registers a function to be called when the given drag_table's row is dropped
+    //callback should be function(table,row)
+    registerDragTableDropHandler: function(table,handler) {
+      dropTableHandlers[table.attr('id')] = handler;
     },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
@@ -541,6 +580,7 @@ var OpenChain = (function() {
       initFormButtons();
       initRemoteValidate();
       initScheduleBLinks();
+      initEntitySnapshotPopups();
       pollingId = pollForMessages();
     }
   };
@@ -659,7 +699,6 @@ $( function() {
       myRow.prev().hide();
       myRow.next().show();
     });
-    attachmentButton();
 
     $("#edit_line_product").change(function() {
       if($(this).val().length>0) {
@@ -677,6 +716,7 @@ $( function() {
     });
 });
 $(document).ready( function() {
+    OpenChain.initDragTables();
     handleCustomFieldCheckboxes();
     $(':checkbox').css('border-style','none');
     $('#notice').slideDown('slow');
@@ -693,27 +733,7 @@ $(document).ready( function() {
       $(this).find(":input").blur();
     });
 });
-function attachmentButton() {
-  $(".attach_button").button();
-  $(".attach_button").each(function() {
-    var fileInput = $("body").find(":file");
-    var aButton = $(this);
-    if(fileInput.length!=1) {
-      //either many file objects or none, either way we can't automate behavior
-      return;
-    }
-    if(fileInput.val().length==0) {
-      $(this).hide();
-    }
-    fileInput.change(function() {
-      if(fileInput.val().length==0) {
-        aButton.fadeOut('slow');
-      } else {
-        aButton.fadeIn('slow');
-      }
-    });
-  });
-}
+
 function endsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
@@ -1032,7 +1052,8 @@ function tariffPopUp(htsNumber,country_id) {
         h = "<table class='tbl_hts_popup'><tbody>";
         h += htsDataRow("Country:",o.country.name);
         h += htsDataRow("Tariff #:",o.hts_code);
-        h += htsDataRow("General Rate:",o.general_rate)
+        h += htsDataRow("Common Rate:",o.common_rate);
+        h += htsDataRow("General Rate:",o.general_rate);
         h += htsDataRow("Chapter:",o.chapter);
         h += htsDataRow("Heading:",o.heading);
         h += htsDataRow("Sub-Heading:",o.sub_heading);

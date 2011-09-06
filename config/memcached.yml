@@ -7,5 +7,5 @@ test:
   port: 11211
 
 production:
-  server: mserver.chain.io
+  server: chain-cache.roatcx.0001.use1.cache.amazonaws.com:11211 
   port: 11211

@@ -6,6 +6,13 @@ class SearchCriterionTest < ActiveSupport::TestCase
     ActiveRecord::Base.connection.execute("set time_zone = '+0:00'") #ensure we're working in UTC to make sure local system offsets don't screw with date math
   end
 
+  test "test?" do
+    p = Product.create!(:unique_identifier=>"uid111")
+    sc = SearchCriterion.new(:model_field_uid=>"prod_uid",:operator=>"eq",:value=>p.unique_identifier)
+    assert sc.test?(p)
+    p = Product.create!(:unique_identifier=>"somethingelse")
+    assert !sc.test?(p)
+  end
   test "empty custom value" do
     cd = CustomDefinition.create!(:module_type=>"Product",:label=>"CD1",:data_type=>"date")
     p = Product.create!(:unique_identifier=>"uid")

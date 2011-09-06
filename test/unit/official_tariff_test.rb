@@ -2,6 +2,27 @@ require 'test_helper'
 
 class OfficialTariffTest < ActiveSupport::TestCase
 
+  test "set common rate" do
+    ot = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>'123456789',:full_description=>"FDCN1",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    assert_equal ot.general_rate, ot.common_rate
+
+    ot = OfficialTariff.create!(:country_id=>countries(:china).id,:hts_code=>'123456789',:full_description=>"FDCN1",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    assert_equal ot.most_favored_nation_rate, ot.common_rate
+
+    c = Country.new
+    c.iso_code = "CA"
+    c.save!
+    ot = OfficialTariff.create!(:country_id=>c.id,:hts_code=>'123456789',:full_description=>"FDCN2",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    assert_equal ot.most_favored_nation_rate, ot.common_rate
+    
+    #EUROPEAN UNION TEST
+    c = Country.new
+    c.iso_code = "ES"
+    c.save!
+    ot = OfficialTariff.create!(:country_id=>c.id,:hts_code=>'123456789',:full_description=>"FDCN",:most_favored_nation_rate=>"123",:general_rate=>"999",:erga_omnes_rate=>"888")
+    assert_equal ot.erga_omnes_rate, ot.common_rate
+  end
+
   test "find schedule b matches" do
     ot = OfficialTariff.create!(:country_id=>countries(:us).id,:hts_code=>'0121000100',:full_description=>"HORSE")
     ["0121001111","0121002222","0121990000"].each {|t| OfficialScheduleBCode.create!(:hts_code=>t)}

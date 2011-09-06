@@ -319,6 +319,22 @@ class ModelField
         :data_type=>:string,
         :history_ignore=>true
       }]
+      id_counter += 1
+      r << [id_counter,"#{uid_prefix}_hts_#{i}_cr".to_sym, :common_rate,"#{i} - Common Rate",{
+        :import_lambda => lambda {|obj,data| return "Common Duty Rate cannot be set by import, ignored."},
+        :export_lambda => lambda {|t|
+          ot = case i
+            when 1 then t.hts_1_official_tariff
+            when 2 then t.hts_2_official_tariff
+            when 3 then t.hts_3_official_tariff
+          end
+          ot.nil? ? "" : ot.common_rate 
+        },
+        :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
+        :join_alias => "OT_#{i}",
+        :data_type=>:string,
+        :history_ignore=>true
+      }]
       if canada && canada.import_location
         id_counter += 1
         r << [id_counter,"#{uid_prefix}_hts_#{i}_gpt".to_sym, :general_preferential_tariff_rate,"#{i} - GPT Rate",{
@@ -558,7 +574,8 @@ class ModelField
       [15,:ot_uom,:unit_of_measure,"Unit of Measure",{:data_type=>:string}],
       [16,:ot_col_2,:column_2_rate,"Column 2 Rate",{:data_type=>:string}],
       [17,:ot_import_regs,:import_regulations,"Import Regulations",{:data_type=>:string}],
-      [18,:ot_export_regs,:export_regulations,"Export Regulations",{:data_type=>:string}]
+      [18,:ot_export_regs,:export_regulations,"Export Regulations",{:data_type=>:string}],
+      [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
     add_fields CoreModule::PRODUCT, [
