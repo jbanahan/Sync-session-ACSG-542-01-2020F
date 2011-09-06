@@ -1,7 +1,6 @@
-<% unless @content_only %>
-  <%content_for :action_bar do %>
-    <button class='btn_link' link_to='<%=url_for(@base_object)%>' key_map='b'>Back</button>
-  <%end%>
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=url_for(@base_object)%>' key_map='b'>Back</button>
+<%end%>
 <h1>History: <%=CoreModule.find_by_object(@base_object).unique_id_field.process_export(@base_object)%></h1>
 <% end %>
 <div>
@@ -17,7 +16,5 @@
   <%if @snapshots.blank? %>
     This item does not have any history records.  It might have been created before history tracking was turned on.
   <%end%>
-  <% unless @content_only %>
-    <%=will_paginate @snapshots%>
-  <% end %>
+  <%=will_paginate @snapshots%>
 </div>

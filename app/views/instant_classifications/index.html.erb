@@ -12,6 +12,9 @@ $(function() {
   });
 });
 <%end%>
+<%content_for :action_bar do%>
+  <button class='btn_link' link_to='<%=new_instant_classification_path%>' key_map='n'>New</button>
+<%end%>
 <h1>Instant Classifications</h1>
 <div id='page_instructions'>Drag items to sort.  Items at the top of the list will be applied to products first.  Instant classification for each product stops at the first match on the list.</div>
 <table class='drag_table' id='tbl_ic'>

@@ -3,6 +3,19 @@ class InstantClassification < ActiveRecord::Base
   has_many :search_criterions, :dependent=>:destroy
   has_many :classifications, :dependent=>:destroy
 
+  validates_presence_of :name
+
+  accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
+    :reject_if => lambda { |a| 
+      r_val = false
+      [:model_field_uid,:operator].each { |f|
+        r_val = true if a[f].blank?
+      } 
+      r_val
+    }
+  accepts_nested_attributes_for :classifications, :allow_destroy => true,
+    :reject_if => lambda { |a| a[:country_id].blank?}
+
   scope :ranked, order("rank ASC").includes(:search_criterions)
 
   # Find the InstantClassification that matches the given Product

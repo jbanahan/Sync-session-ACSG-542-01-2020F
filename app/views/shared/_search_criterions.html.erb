@@ -1,0 +1,29 @@
+<%content_for :javascript do%>
+  $(function() {
+    OCSearch.initSearchCriterions();
+    $(".sp_remove").live('click',function(ev) {
+      ev.preventDefault();
+      destroy_nested('sp',$(this));
+    });
+    $("#sp_add").live('click',function(ev) {
+      ev.preventDefault();
+      addNewSearchCriterion();
+    });
+    $('#<%=wrapper%>').html("<table id='sp_table'></table><a href='#' id='sp_add'>Add</a>");
+    <% sc_counter = 0 %>
+    <% current_search.search_criterions.each do |sc| %>
+      addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc.value%>','<%=sc.id%>');
+      <% sc_counter += 1 %>
+    <% end %>
+  });
+  function addSearchCriterion(m,field,operator,value,id) {
+    var fields = [];
+    <%ModelField.sort_by_label(model_fields).each do |mf| %>
+      fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
+    <%end%>
+    OCSearch.addSearchCriterion($("#sp_table"),'<%=parent_hash_name%>',fields,m,field,operator,value,id,true);
+  }
+  function addNewSearchCriterion() {
+    addSearchCriterion(new Date().getTime(),null,null,null);
+  }
+<%end%>

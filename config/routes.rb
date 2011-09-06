@@ -6,7 +6,7 @@ OpenChain::Application.routes.draw do
       post 'update_rank'
     end
   end
-  resources :instant_classification_results, :only => [:show]
+  resources :instant_classification_results, :only => [:show,:index]
   resources :milestone_plans do
     resources :milestone_definitions, :only => [:index]
   end

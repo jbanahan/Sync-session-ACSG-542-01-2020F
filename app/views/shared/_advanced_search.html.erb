@@ -99,14 +99,6 @@ $(function() {
     ev.preventDefault();
     OCSearch.hideSetup();
   });
-  $(".sp_remove").live('click',function(ev) {
-    ev.preventDefault();
-    destroy_nested('sp',$(this));
-  });
-  $("#sp_add").click(function(ev) {
-    ev.preventDefault();
-    addNewSearchCriterion();
-  });
   $("#btn_setup_save").click(function() {
     submitForm();
   });
@@ -163,24 +155,9 @@ $(function() {
     OpenChain.loadUserList($("#give_user_list"),"");
     $("#mod_give_to").dialog('open');
   });
-<% sc_counter = 0 %>
-<% @current_search.search_criterions.each do |sc| %>
-  addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc.value%>','<%=sc.id%>');
-  <% sc_counter += 1 %>
-<% end %>
 });
-function addSearchCriterion(m,field,operator,value,id) {
-  var fields = [];
-  <%ModelField.sort_by_label(@core_module.model_fields_including_children.values).each do |mf| %>
-    fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
-  <%end%>
-  OCSearch.addSearchCriterion($("#sp_table"),fields,m,field,operator,value,id,true);
-}
-function addNewSearchCriterion() {
-  addSearchCriterion(new Date().getTime(),null,null,null);
-}
 <%end%>
-
+<%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@current_search,:model_fields=>@core_module.model_fields_including_children.values,:wrapper=>'params_cont',:parent_hash_name=>'search_setup'}%>
 <div id='main_search_cont'>
 <div id='search_select_box'>
   <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>
@@ -202,9 +179,6 @@ function addNewSearchCriterion() {
       <%=f.hidden_field :module_type %>
     </div>
     <div id='params_cont'>
-      <table id='sp_table'>
-      </table>
-      <a href='#' id='sp_add'>Add</a>
     </div>
     <div id='sorts_cont'>
       <table class='detail_table' style='width:0px;'>

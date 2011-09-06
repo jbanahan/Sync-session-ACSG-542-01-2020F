@@ -1,0 +1,7 @@
+<%=render :partial=>'form'%>
+<%content_for :javascript do %>
+$(function() {$('#btn_delete').button();});
+<%end%>
+<%content_for :action_bar do %>
+  <%= button_to "Delete", @instant_classification, :method => :delete, :id=>:btn_delete, :confirm=>"Are you sure you want to delete this?" %>
+<%end%>

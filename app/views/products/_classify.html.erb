@@ -48,7 +48,7 @@ $(function() {
             <% end %>
             <% tariff_count = 0 %>
             <% cf.fields_for :tariff_records do |tf| %>
-              <%=render :partial=>'tariff_record_row', :locals=>{:f=>tf, :classification_count=>classification_count,:tariff_count=>tariff_count,:tariff_view_sequence=>tariff_view_sequence,:country_id=>cf.object.country_id}%>
+              <%=render :partial=>'products/tariff_record_row', :locals=>{:f=>tf, :classification_count=>classification_count,:tariff_count=>tariff_count,:tariff_view_sequence=>tariff_view_sequence,:country_id=>cf.object.country_id}%>
               <% tariff_view_sequence += 1%>
               <% tariff_count += 1%>
             <% end %>

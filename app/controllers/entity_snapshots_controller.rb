@@ -5,7 +5,7 @@ class EntitySnapshotsController < ApplicationController
       @base_object = es.recordable 
       @snapshots = [es]
       @content_only = true
-      render 'shared/history'
+      render :partial=>'shared/history_widget', :locals=>{:diff=>es.diff_vs_previous}
     }
   end
 end
