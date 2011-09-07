@@ -31,7 +31,7 @@ module OpenChain
                 CustomFieldProcessor.new(params).save_classification_custom_fields(o,params['product'])
                 OpenChain::CoreModuleProcessor.update_status o
               }
-              OpenChain::CoreModuleProcessor.validate_and_save_module(p,params['product'],success,failure,:before_validate=>before_validate)
+              OpenChain::CoreModuleProcessor.validate_and_save_module(params,p,params['product'],success,failure,:before_validate=>before_validate)
             end
           else
             error_count += 1
