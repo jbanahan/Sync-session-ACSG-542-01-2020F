@@ -33,13 +33,21 @@ class CacheWrapper
 
   private
   def error_wrap &block
-    r = nil
+    retried = false
     begin
-      r = yield
+      return yield
+    rescue Dalli::RingError
+      if retried
+        $!.log_me ["Second ring error, swallowing.  The process continued without cache result."]
+      else
+        reset
+        retried = true
+        retry
+      end
     rescue
-      $!.log_me ["Swallowed by open_chain/cache_wrapper. The process should have continued.."]
+      $!.log_me ["Swallowed by open_chain/cache_wrapper. The process continued without cache result."]
     end
-    r
+    return nil
   end
 
 end

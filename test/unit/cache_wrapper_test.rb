@@ -1,6 +1,24 @@
 require 'test_helper'
 
 class CacheWrapperTest < ActiveSupport::TestCase
+
+  test "ring error retry - fail once" do
+    mt = TestExtensions::MockCache.new
+    mt.stubs(:get).raises(Dalli::RingError).then.returns('x')
+    mt.expects(:reset)
+    cw = CacheWrapper.new(mt)
+    assert_equal 'x', cw.get('something')
+  end
+
+  test "ring error retry - fail twice" do
+    mt = TestExtensions::MockCache.new
+    mt.stubs(:get).raises(Dalli::RingError).then.raises(Dalli::RingError).then.returns('x')
+    mt.expects(:reset)
+    cw = CacheWrapper.new(mt)
+    assert_nil cw.get('something')
+    assert_equal 'x', cw.get('something')
+  end
+
   test "read yaml file" do
     # Read memcached.yml and confirm you have valid server configs
     yml_file = Tempfile.new('readymltest')
