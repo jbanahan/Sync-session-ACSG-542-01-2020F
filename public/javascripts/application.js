@@ -732,6 +732,9 @@ $(document).ready( function() {
     $("div.ui-dialog").live( "dialogbeforeclose", function(event, ui) {
       $(this).find(":input").blur();
     });
+    if(!$.support.boxModel) {
+      $("#two_col_action").find("span.ui-button-text").each(function() {$(this).html($(this).html().replace(/ /,'<br />'));});
+    }
 });
 
 function endsWith(str, suffix) {
