@@ -1,5 +1,8 @@
 OpenChain::Application.routes.draw do
 
+  resources :report_results, :only => [:index] do 
+    get 'download', :on => :member
+  end
   resources :entity_snapshots, :only => [:show]
   resources :instant_classifications do
     collection do
