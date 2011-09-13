@@ -1,6 +1,7 @@
 OpenChain::Application.routes.draw do
 
-  resources :report_results, :only => [:index] do 
+  resources :tariff_sets, :only => [:index]
+  resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
   end
   resources :entity_snapshots, :only => [:show]
@@ -80,6 +81,12 @@ OpenChain::Application.routes.draw do
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
   match "/public_fields/save" => "public_fields#save", :via => :post
+
+
+  #reports
+  match "/reports" => "reports#index", :via => :get
+  match "/reports/show_tariff_comparison" =>"reports#show_tariff_comparison", :via => :get
+  match "/reports/run_tariff_comparison" => "reports#run_tariff_comparison", :via => :post
 
   resources :custom_definitions
 

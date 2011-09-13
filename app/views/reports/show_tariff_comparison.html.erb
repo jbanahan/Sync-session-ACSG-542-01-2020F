@@ -1,0 +1,51 @@
+<%content_for :javascript do%>
+  $(function() {
+    $('#sel_country').change(function() {
+      var tsBox = $("#tariff_sets");
+      var countryId = $(this).val();
+      if(countryId.length) {
+        tsBox.html("Loading Tariff File Lists...");
+        $.getJSON('/tariff_sets?country_id='+countryId,function(data) {
+          var oldSelectHtml = "<select name='old_tariff_set_id' id='old_tariff_set_id'><option value=''></option>";
+          var newSelectHtml = "<select name='new_tariff_set_id' id='new_tariff_set_id'><option value=''></option>";
+          var i;
+          $.each(data,function(key,val) {
+            var opt = "<option value='"+val.tariff_set.id+"'>"+val.tariff_set.label+"</option>";
+            oldSelectHtml += opt;
+            newSelectHtml += opt;
+          });
+          oldSelectHtml += "</select>";
+          newSelectHtml += "</select>";
+          tsBox.html("<table><tr><td>Old Tariff File:</td><td>"+oldSelectHtml+"</td></tr><tr><td>New Tariff File:</td><td>"+newSelectHtml+"</td></tr></table>");
+        });                
+      } else {
+        tsBox.html("Select a country.");
+      }
+    });
+    $('#btn_run').click(function() {
+      if($('#sel_country').val().length < 1) {
+        window.alert("Please select a country.");
+        return; 
+      }
+      if($('#old_tariff_set_id').val().length < 1 || $('#new_tariff_set_id').val().length < 1) {
+        window.alert("Please select both tariff sets to compare.");
+        return;
+      }
+      $('#frm_run').submit();
+    });
+  });
+<%end%>
+
+<%content_for :action_bar do%>
+  <button id='btn_run'>Run Report</button>
+  <button class='btn_link' link_to='/reports'>Back</button>
+<%end%>
+
+<h2>Tariff Comparison Report</h2>
+<p>This report shows you the changes between two tariff files from the same country.</p>
+<p>Select A Country: <%=select_tag(:country, options_from_collection_for_select(@countries, :id, :name), :include_blank=>true, :id=>'sel_country')%></p>
+<%=form_tag('/reports/run_tariff_comparison', :id=>'frm_run') do -%>
+  <div id='tariff_sets'>
+
+  </div>
+<%end%>

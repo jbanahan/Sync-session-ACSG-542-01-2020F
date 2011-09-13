@@ -8,6 +8,13 @@
   <h2><%=link_to "My Instant Classification Results", instant_classification_results_path%></h2>
   <p>View the results of the instant classifications you've run.</p>
 <%end%>
+<h2>Reports</h2>
+<div class='indent'>
+  <h3><%=link_to "Run Reports", reports_path%></h3>
+  <p>Run a new report.</p>
+  <h3><%=link_to "My Reports", report_results_path%></h3>
+  <p>Access reports you've run in the last week.</p>
+</div>
 <h2><%=link_to "Tariff Database", official_tariffs_path%></h2>
 <p>Search the tariffs for your subscribed countries.</p>
 <% if current_user.admin? %>

@@ -17,6 +17,9 @@ img {
 .error, .exception_value {
     color: red;
 }
+.indent {
+  margin-left: 1em;
+}
 .bad_data {
   background-color: #F2BDBD;
 }
@@ -155,9 +158,6 @@ p {
     padding: 0;
 }
 /*
-img {
-    margin: 10px 0 5px;
-}
 */
 /* Header styles */
 #title {

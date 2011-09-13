@@ -5,6 +5,19 @@ describe ReportResult do
     @u = User.create!(:company_id=>Company.create!(:name=>'x').id,:username=>'user1',:password=>'pass123',:password_confirmation=>'pass123',:email=>'a@aspect9.com')
   end
 
+  describe 'friendly settings' do
+
+    it "should handle friendly settings array" do
+      r = ReportResult.new
+      r.friendly_settings = ['a','b']
+      r.friendly_settings.should == ['a','b']
+    end
+
+    it "should return empty array when no friendly settings are set" do
+      ReportResult.new.friendly_settings.should == []
+    end 
+  end
+
   describe "security" do
     before :each do 
       @r = ReportResult.new
@@ -34,7 +47,7 @@ describe ReportResult do
         def self.run_report user, opts
           loc = 'test/assets/sample_report.txt'
           File.open(loc,'w') {|f| f.write('mystring')}
-          File.absolute_path loc
+          File.new loc
         end
       end
       @report_class = SampleReport
@@ -44,7 +57,6 @@ describe ReportResult do
       ReportResult.any_instance.stub(:execute_report)
       ReportResult.run_report! 'nrr', @u, @report_class, {:settings=>{'o1'=>'o2'},:friendly_settings=>['a','b']}
       found = ReportResult.find_by_name('nrr')
-      found.name.should == 'nrr'
       found.run_by.should == @u
       found.report_class.should == @report_class.to_s
       found.run_at.should > 10.seconds.ago
@@ -80,6 +92,11 @@ describe ReportResult do
       m.size.should == 1
       m.first.body.should include "/report_results/#{found.id}/download" #message body includes download link
     end
+    it "delays the report with priority 100" do
+      ReportResult.any_instance.stub(:execute_report) #don't need report to run
+      ReportResult.any_instance.should_receive(:delay).with(:priority=>100).and_return(ReportResult.new)
+      ReportResult.run_report! 'delay', @u, @report_class
+    end
 
     describe "error handling" do
       before(:each) do
@@ -105,6 +122,33 @@ describe ReportResult do
         m.size.should == 1
         m.first.subject.should include "FAILED"
       end
+    end
+  end
+
+  describe "purge" do
+    before(:each) do
+      6.times do |i|
+        #alternate between making reports that are less than & greater than a week old
+        ReportResult.create!(:name=>'rr',:run_at=>(i.modulo(2)==0 ? 8.days.ago : 6.days.ago))
+      end
+    end
+    it "should have an eligible_for_purge scope that returns all reports more than a week old" do
+      found = ReportResult.eligible_for_purge
+      found.should have(3).items
+      found.each {|r| r.run_at.should be < 1.week.ago}
+    end
+    it "should return a purge_at time of 1 week after run_at" do
+      report = ReportResult.first
+      report.purge_at.should == (report.run_at+1.week)
+    end
+    it "should return nil for purge_at with no run_at" do
+      ReportResult.new.purge_at.should be_nil
+    end
+    it "should have a purge that actually reports that are eligible for purge" do
+      ReportResult.purge
+      found = ReportResult.all
+      found.should have(3).items
+      found.each {|r| r.purge_at.should be > 0.days.ago}
     end
   end
 

@@ -15,13 +15,14 @@ gem 'exception_notification_rails3', :require => 'exception_notifier'
 gem 'ruby-debug19', '0.11.6', :require => 'ruby-debug' 
 gem 'rufus-scheduler', '2.0.8'
 gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
-gem 'cover_me', '>= 1.0.0.rc6', :group => :test
 gem 'delayed_job', '2.1.4'
-gem 'rspec-rails', '2.6', :group => [:development,:test]
+gem 'dalli', '1.0.5'
+
+gem 'rspec-rails', '2.6', :group=>[:development,:test]
+gem 'factory_girl', :group=>[:development,:test]
 group :test do
 #  gem 'ruby-prof' - put this back after we go to Ruby 3.1 (see Rails commit 25288)
 end
 group :production do
   gem 'newrelic_rpm', '3.0.1'
 end
-gem 'dalli', '1.0.5'

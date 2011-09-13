@@ -39,11 +39,6 @@ GEM
       xml-simple
     builder (2.1.2)
     columnize (0.3.4)
-    configatron (2.8.2)
-      yamler (>= 0.1.0)
-    cover_me (1.1.1)
-      configatron
-      hashie
     daemons (1.0.10)
     dalli (1.0.5)
     delayed_job (2.1.4)
@@ -53,8 +48,8 @@ GEM
     erubis (2.6.6)
       abstract (>= 1.0.0)
     exception_notification_rails3 (1.2.0)
+    factory_girl (2.0.4)
     gem_plugin (0.2.3)
-    hashie (1.1.0)
     i18n (0.5.0)
     linecache19 (0.5.12)
       ruby_core_source (>= 0.1.4)
@@ -137,7 +132,6 @@ GEM
     uuidtools (2.1.0)
     will_paginate (3.0.pre2)
     xml-simple (1.1.0)
-    yamler (0.1.0)
 
 PLATFORMS
   ruby
@@ -145,10 +139,10 @@ PLATFORMS
 DEPENDENCIES
   authlogic (= 3.0.3)
   aws-s3 (= 0.6.2)
-  cover_me (>= 1.0.0.rc6)
   dalli (= 1.0.5)
   delayed_job (= 2.1.4)
   exception_notification_rails3
+  factory_girl
   meta_search (= 1.0.5)
   mocha (= 0.9.12)
   mongrel (= 1.2.0.pre2)

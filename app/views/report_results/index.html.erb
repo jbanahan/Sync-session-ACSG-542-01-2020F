@@ -1,0 +1,24 @@
+<%content_for :action_bar do %>
+  <% if current_user.admin? %>
+    <% if params[:show_all] %>
+      <button class='btn_link' link_to='<%=report_results_path%>'>Only My Reports</button>
+    <% else %>
+      <button class='btn_link' link_to='<%=report_results_path+"?show_all=true"%>'>All Users</button>
+    <% end %>
+  <% end %>
+<% end %>
+<h2>Report Results</h2>
+<table class='detail_table'>
+  <thead><tr><th>&nbsp;</th><th>Name</th><th>Run At</th><%if params[:show_all]%><th>Run By</th><%end%><th>Status</th></tr></thead>
+  <tbody>
+    <% @report_results.each do |r| %>
+      <tr class='hover'>
+      <td><%=link_to "Details", r%><%if r.report_data_file_name %> | <%=link_to "Download", download_report_result_path(r)%><%end%></td>
+      <td><%=r.name%></td>
+      <td><%=r.run_at%></td>
+      <%if params[:show_all]%><td><%=r.run_by.full_name%></td><%end%>
+      <td><%=r.status%></td></tr>
+    <%end%>
+  </tbody>
+</table>
+<%=will_paginate @report_results%>

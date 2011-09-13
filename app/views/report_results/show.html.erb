@@ -1,0 +1,19 @@
+<%content_for :action_bar do %>
+  <% if @report_result.report_data_file_name%>
+    <button class='btn_link' link_to='<%=download_report_result_path(@report_result)%>'>Download</button>
+  <% end%>
+  <button class='btn_link' link_to='<%=request.referrer%>'>Back</button%>
+<%end%>
+<h2>Report Result: <%=@report_result.name%></h2>
+<table>
+  <% if current_user.id != @report_result.run_by_id%>
+    <%=field_row "Run By", @report_result.run_by.full_name%> 
+  <% end %>
+  <%=field_row "Status", @report_result.status%>
+  <%=field_row "Run At", @report_result.run_at%>
+  <%=field_row "To Be Deleted At", @report_result.purge_at%>
+  <%=field_row "Settings", simple_format(@report_result.friendly_settings.join("\n"))%>
+  <%if @report_result.run_errors %>
+    <%=field_row "Errors", @report_result.run_errors%>
+  <%end%>
+</table>

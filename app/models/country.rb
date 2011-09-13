@@ -10,6 +10,7 @@ class Country < ActiveRecord::Base
   scope :sort_name, order("name ASC") 
   
 	has_many :addresses
+  has_many :tariff_sets
 	has_many :official_tariffs
 	
   scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")

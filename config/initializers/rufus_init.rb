@@ -54,28 +54,30 @@ def execute_scheduler
     end
   end
 
-  #make sure delayed job workers are running
-  scheduler.every("30s") do
-    job_wrapper "Delayed Job Monitor" do
-      if DelayedJobManager.script_running?
-        logger.info "#{Time.now}: Skipping delayed_job check. Script already running."
-      else
-        if DelayedJobManager.should_be_running? && !DelayedJobManager.running?
-          logger.info "#{Time.now}: Starting delayed_job"
-          DelayedJobManager.start
-        elsif !DelayedJobManager.should_be_running? && DelayedJobManager.running?
-          logger.info "#{Time.now}: Stopping delayed_job"
-          DelayedJobManager.stop
+  #make sure delayed job workers are running, in production
+  if Rails.env == 'production'
+    scheduler.every("30s") do
+      job_wrapper "Delayed Job Monitor" do
+        if DelayedJobManager.script_running?
+          logger.info "#{Time.now}: Skipping delayed_job check. Script already running."
+        else
+          if DelayedJobManager.should_be_running? && !DelayedJobManager.running?
+            logger.info "#{Time.now}: Starting delayed_job"
+            DelayedJobManager.start
+          elsif !DelayedJobManager.should_be_running? && DelayedJobManager.running?
+            logger.info "#{Time.now}: Stopping delayed_job"
+            DelayedJobManager.stop
+          end
         end
-      end
-      #monitor queue depth
-      if DelayedJobManager.should_be_running?
-        job_count = Delayed::Job.where("run_at < ?",15.minutes.ago).count
-        if job_count > 0
-          begin
-            raise "#{job_count} jobs over 15 minutes old in delayed_job queue for #{Rails.root.to_s}"
-          rescue
-            $!.email_me [], [], false #don't delay the send (since we don't want it to go into the already backed up queue)
+        #monitor queue depth
+        if DelayedJobManager.should_be_running?
+          job_count = Delayed::Job.where("run_at < ?",15.minutes.ago).count
+          if job_count > 0
+            begin
+              raise "#{job_count} jobs over 15 minutes old in delayed_job queue for #{Rails.root.to_s}"
+            rescue
+              $!.email_me [], [], false #don't delay the send (since we don't want it to go into the already backed up queue)
+            end
           end
         end
       end
@@ -83,8 +85,9 @@ def execute_scheduler
   end
   
   scheduler.cron '0 23 * * *' do
-    job_wrapper "Messages Purge" do
+    job_wrapper "Purges" do
       Message.purge_messages
+      ReportResults.purge
     end
   end
 
