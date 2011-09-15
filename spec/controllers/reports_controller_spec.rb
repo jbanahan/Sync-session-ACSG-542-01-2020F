@@ -8,6 +8,25 @@ describe ReportsController do
     UserSession.create @u
   end
 
+  describe 'stale tariffs report' do
+    context 'show' do
+      it 'should render the page' do
+        get :show_stale_tariffs
+        response.should be_success
+      end
+    end
+    context 'run' do
+      it 'should execute the report' do
+        ReportResult.stub(:execute_report) #don't really run the report
+        post :run_stale_tariffs
+        response.should redirect_to('/reports')
+        flash[:notices].should include("Your report has been scheduled. You'll receive a system message when it finishes.")
+
+        found = ReportResult.find_by_name 'Stale Tariffs'
+        found.run_by.should == @u
+      end
+    end
+  end
   describe 'tariff comparison report' do
     before(:all) do
       2.times do |i| 

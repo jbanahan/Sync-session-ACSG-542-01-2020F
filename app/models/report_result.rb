@@ -66,7 +66,7 @@ class ReportResult < ActiveRecord::Base
       self.save
       run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
 <p>You can download it by clicking <a href='/report_results/#{self.id}/download'>here</a>.</p>
-<p>You can view the report status page by clicking <a href='/report/results/#{self.id}'>here</a>.</p>"
+<p>You can view the report status page by clicking <a href='/report_results/#{self.id}'>here</a>.</p>"
       )
     rescue
       $!.log_me ["Report execution failure.","User: #{self.run_by.full_name}","ReportResultID: #{self.id}"]
