@@ -134,11 +134,11 @@
       <th><%=col.find_model_field.label%></th>
     <%end%>
   </thead>
-  <tbody>
+  <tbody class='pagination_wrapper'>
     <% cursor = 0 %>
     <% last_object = nil %>
     <%GridMaker.new(@changed_objects,@columns,[],@imported_file.core_module.default_module_chain).go do |row,obj|%>
-      <tr class='hover <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
+      <tr class='hover pagination_item <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
         <% if !@bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
         <td>
           <% if obj!=last_object %>
@@ -154,6 +154,7 @@
     <%end%>
   </tbody>
 </table>
+<div class='pagination_loading'></div>
 <%=will_paginate @changed_objects%>
 <%end%>
 </div>

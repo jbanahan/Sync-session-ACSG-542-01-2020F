@@ -380,8 +380,13 @@ var OpenChain = (function() {
         navSelector: 'div.pagination',
         nextSelector: 'div.pagination a:first',
         itemSelector: '.pagination_item',
-        loadingImg: '/images/ajax-loader.gif',
-        loadingText: ''
+        loading: {
+          img: '/images/ajax-loader.gif',
+          msgText: 'Checking for more items.', 
+          finishedMsg: "You've reached the end of the results.",
+          selector:'div.pagination_loading'
+        },
+        bufferPx: 100
       });
     }
   }
