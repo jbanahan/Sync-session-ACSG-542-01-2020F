@@ -374,6 +374,23 @@ var OpenChain = (function() {
     }
   }
 
+  var initInfiniteScroll = function() {
+    if($('div.pagination').length) {
+      $(".pagination_wrapper").infinitescroll({
+        navSelector: 'div.pagination',
+        nextSelector: 'div.pagination a:first',
+        itemSelector: '.pagination_item',
+        loading: {
+          img: '/images/ajax-loader.gif',
+          msgText: 'Checking for more items.', 
+          finishedMsg: "You've reached the end of the results.",
+          selector:'div.pagination_loading'
+        },
+        bufferPx: 100
+      });
+    }
+  }
+
   return {
     //public stuff
     setAuthToken: function(t) {
@@ -581,6 +598,7 @@ var OpenChain = (function() {
       initRemoteValidate();
       initScheduleBLinks();
       initEntitySnapshotPopups();
+      initInfiniteScroll();
       pollingId = pollForMessages();
     }
   };
