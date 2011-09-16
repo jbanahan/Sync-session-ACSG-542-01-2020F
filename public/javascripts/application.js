@@ -374,6 +374,18 @@ var OpenChain = (function() {
     }
   }
 
+  var initInfiniteScroll = function() {
+    if($('div.pagination').length) {
+      $(".pagination_wrapper").infinitescroll({
+        navSelector: 'div.pagination',
+        nextSelector: 'div.pagination a:first',
+        itemSelector: '.pagination_item',
+        loadingImg: '/images/ajax-loader.gif',
+        loadingText: ''
+      });
+    }
+  }
+
   return {
     //public stuff
     setAuthToken: function(t) {
@@ -581,6 +593,7 @@ var OpenChain = (function() {
       initRemoteValidate();
       initScheduleBLinks();
       initEntitySnapshotPopups();
+      initInfiniteScroll();
       pollingId = pollForMessages();
     }
   };
