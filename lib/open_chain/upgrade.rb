@@ -47,6 +47,9 @@ module OpenChain
       @log.info "Fetch complete, checking out #{@target}"
       capture_and_log "git checkout #{@target}"
       @log.info "Source checked out"
+      @log.info "Running bundle install"
+      capture_and_log "bundle install"
+      @log.info "Bundle complete, running migrations"
     end
 
     def apply_upgrade
@@ -62,9 +65,7 @@ module OpenChain
         dj_count += 1
       end
       raise UpgradeFailure.new("Delayed job should be stopped and is still running.") if DelayedJobManager.running?
-      @log.info "Delayed Job stopped, running bundle install"
-      capture_and_log "bundle install"
-      @log.info "Bundle complete, running migrations"
+      @log.info "Delayed Job stopped"
       migrate
       @log.info "Migration complete"
       @log.info "Touching restart.txt"
