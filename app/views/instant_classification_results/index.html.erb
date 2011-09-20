@@ -3,7 +3,7 @@
   <thead><tr><th>&nbsp;</th><th>Run At</th><th>Record Count</th></tr></thead>
   <tbody>
     <%@results.each do |r|%>
-      <tr class='hover'><tr><td><%=link_to "View", r%></td><td><%=r.created_at%></td><td><%=r.run_by ? r.run_by.full_name : ''%></td></tr>
+      <tr class='hover'><tr><td><%=link_to "View", r%></td><td><%=r.created_at%></td><td><%=r.instant_classification_result_records.count%></td></tr>
     <%end%>
   </tbody>
 </table>
