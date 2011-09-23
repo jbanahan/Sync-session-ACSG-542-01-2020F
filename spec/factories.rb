@@ -40,3 +40,7 @@ end
 Factory.define :tariff_record do |t|
   t.association :classification
 end
+Factory.define :linkable_attachment do |t|
+  t.model_field_uid 'mfuid'
+  t.value 'val'
+end
