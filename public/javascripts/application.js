@@ -373,7 +373,7 @@ var OpenChain = (function() {
       handler(table,row);
     }
   }
-
+/*
   var initInfiniteScroll = function() {
     if($('div.pagination').length) {
       $(".pagination_wrapper").infinitescroll({
@@ -390,7 +390,7 @@ var OpenChain = (function() {
       });
     }
   }
-
+*/
   return {
     //public stuff
     setAuthToken: function(t) {
@@ -598,7 +598,7 @@ var OpenChain = (function() {
       initRemoteValidate();
       initScheduleBLinks();
       initEntitySnapshotPopups();
-      initInfiniteScroll();
+      //initInfiniteScroll();
       pollingId = pollForMessages();
     }
   };
