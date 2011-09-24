@@ -33,3 +33,7 @@ Spork.prefork do
     config.use_transactional_fixtures = true
   end
 end
+
+Spork.each_run do
+  ModelField.reload
+end

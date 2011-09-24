@@ -24,8 +24,14 @@ describe LinkableAttachment do
     end
   end
   context 'link trigger' do
-    it 'should call submit attachment link processing to delayed_job on save'
-    it 'should add linked model fields to memcached on save'
+    it 'should call submit attachment link processing to delayed_job on save' do
+      LinkedAttachment.should_receive(:delay).and_return(LinkedAttachment)
+      LinkableAttachment.create(:model_field_uid=>'ord_ord_date',:value=>'2011-01-01')
+    end
+    it 'should add linked model fields to memcached on save' do
+      TestExtensions::MockCache.any_instance.should_receive(:set).with("LinkableAttachment:model_field_uids",['ord_ord_num'])
+      LinkableAttachment.create(:model_field_uid=>'ord_ord_num',:value=>'v')
+    end
   end
   describe 'model_field' do
     it 'should return a good model field' do
@@ -33,7 +39,7 @@ describe LinkableAttachment do
       linkable.model_field.uid.should == :ord_ord_num
     end
     it 'should return nil for a bad model filed' do
-      Factory(:linkable_attachment,:model_field_uid=>'somethingbad').should be nil
+      Factory(:linkable_attachment,:model_field_uid=>'somethingbad').model_field.should be nil
     end
   end
   describe 'model_field_uids' do
@@ -46,6 +52,9 @@ describe LinkableAttachment do
     it 'should return an empty array if no records' do
       LinkableAttachment.model_field_uids.should_not be nil 
     end
-    it 'should try to get model_fields from cache before hitting db'
+    it 'should try to get model_fields from cache before hitting db' do
+      TestExtensions::MockCache.any_instance.should_receive(:get).with("LinkableAttachment:model_field_uids").and_return(nil)
+      LinkableAttachment.model_field_uids
+    end
   end
 end

@@ -63,18 +63,34 @@ describe LinkedAttachment do
     end
     describe 'create_from_linkable_attachment' do
       before(:each) do 
-        @product = Factory(:product)
-        @linkable = Factory(:linkable_attachment,:model_field_uid=>'prod_uid',:value=>@product.unique_identifier)
+        @product = Factory(:product,:unit_of_measure=>'uomx')
+        @linkable = Factory(:linkable_attachment,:model_field_uid=>'prod_uom',:value=>@product.unit_of_measure)
       end
       it 'should create 1 with 1 matching attachable' do
         found = LinkedAttachment.create_from_linkable_attachment @linkable
-        found.should have(1).item
+        found.should have(1).linked_attachments
         found.first.attachable.should == @product
         found.first.linkable_attachment == @linkable
       end
-      it 'should create 2 with 2 matching attachables'
-      it 'should do nothing with no matching attachable'
-      it 'should do nothing if already linked to all potential matches'
+      it 'should create 2 with 2 matching attachables' do
+        p2 = Factory(:product,:unit_of_measure=>@product.unit_of_measure)
+        found = LinkedAttachment.create_from_linkable_attachment @linkable
+        found.should have(2).linked_attachments
+        products = [@product,p2]
+        found.each do |f| 
+          products.should include f.attachable
+          f.linkable_attachment.should == @linkable
+        end
+      end
+      it 'should do nothing with no matching attachable' do
+        @linkable.update_attributes(:value=>'somethingelse')
+        LinkedAttachment.create_from_linkable_attachment(@linkable).should be_empty
+      end
+      it 'should do nothing if already linked to all potential matches' do
+        LinkedAttachment.create_from_linkable_attachment @linkable #does the matches
+        LinkedAttachment.create_from_linkable_attachment(@linkable).should be_empty
+        LinkedAttachment.all.should have(1).linked_attachment
+      end
     end
   end
 end

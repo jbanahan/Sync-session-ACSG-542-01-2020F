@@ -131,7 +131,12 @@ class CoreModule
   end
 
   def find id
-    Kernel.const_get(class_name).find id 
+    klass.find id 
+  end
+
+  # return the class represented by the core module
+  def klass
+    Kernel.const_get(class_name)
   end
   
   #hash of model_fields keyed by UID

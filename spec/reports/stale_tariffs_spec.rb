@@ -20,7 +20,9 @@ describe OpenChain::Report::StaleTariffs do
     end
 
     it 'throws error when user has view product & is not from master company' do
-      @u.company.update_attributes(:master=>false)
+      c = Factory(:company)
+      @u.update_attributes(:company_id=>c.id)
+      @u.reload
       expect {
         OpenChain::Report::StaleTariffs.run_report(@u)
       }.to raise_error(/not from company/)
@@ -28,7 +30,7 @@ describe OpenChain::Report::StaleTariffs do
   end
 
   it 'should generate a tempfile' do
-    OpenChain::Report::StaleTariffs.run_report(@u).should be_a Tempfile
+    OpenChain::Report::StaleTariffs.run_report(@u).path.should include '/tmp/'
   end
 
   context 'with stale tariffs' do

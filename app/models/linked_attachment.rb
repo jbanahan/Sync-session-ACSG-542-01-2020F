@@ -6,6 +6,25 @@ class LinkedAttachment < ActiveRecord::Base
   validates :linkable_attachment, :presence => true
   validates :attachable, :presence => true
 
+  # creates new LinkedAttachment objects to join the given LinkableAttachment to existing CoreModule objects
+  # that match by the LinkableAttachment's model_field_uid and value
+  # Returns any LinkedAttachments that were created or an empty array
+  def self.create_from_linkable_attachment a
+    r = []
+    mf = a.model_field
+    return [] unless mf && a.value
+    sc = SearchCriterion.new(:operator=>'eq',:model_field_uid=>a.model_field_uid,:value=>a.value)
+    cm = mf.core_module
+    attachables = sc.apply cm.klass
+    attachables = attachables.where("NOT #{cm.table_name}.id IN (SELECT attachable_id FROM linked_attachments WHERE linkable_attachment_id = ? AND attachable_type = ?)", a.id, cm.class_name)
+    attachables.each do |att|
+      r << LinkedAttachment.create(:attachable=>att,:linkable_attachment=>a)
+    end
+    r
+  end
+
+  # creates new LinkedAttachment objects to join the given object to existing LinkableAttachments
+  # Returns any LinkedAttachments that were created or an empty array
   def self.create_from_attachable a
     r = []
     module_model_field_keys = CoreModule.find_by_object(a).model_fields.keys.collect{|k| k.to_s}
