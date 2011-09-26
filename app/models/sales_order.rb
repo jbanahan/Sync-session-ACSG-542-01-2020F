@@ -12,6 +12,8 @@ class SalesOrder < ActiveRecord::Base
   has_many    :sales_order_lines, :dependent => :destroy
   has_many   :comments, :as => :commentable, :dependent => :destroy
   has_many   :attachments, :as => :attachable, :dependent => :destroy
+  has_many   :linked_attachment, :as => :attachable, :dependent => :destroy
+  has_many   :linkable_attachments, :through => :linked_attachment
 
   validates :customer, :presence => true
 

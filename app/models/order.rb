@@ -15,6 +15,8 @@ class Order < ActiveRecord::Base
   has_many   :comments, :as => :commentable, :dependent => :destroy
   has_many   :attachments, :as => :attachable, :dependent => :destroy 	
 	has_many   :piece_sets, :through => :order_lines
+  has_many   :linked_attachments, :as => :attachable, :dependent => :destroy
+  has_many   :linkable_attachments, :through => :linked_attachments
 
 	def related_shipments
 	  r = Set.new

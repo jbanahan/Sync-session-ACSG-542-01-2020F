@@ -24,6 +24,8 @@ class Product < ActiveRecord::Base
   has_many   :attachments, :as => :attachable, :dependent => :destroy
   has_many   :comments, :as => :commentable, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy
+  has_many   :linked_attachments, :as => :attachable, :dependent => :destroy
+  has_many   :linkable_attachments, :through => :linked_attachments
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true,
     :reject_if => lambda { |a| a[:country_id].blank?}

@@ -14,6 +14,8 @@ class Shipment < ActiveRecord::Base
   has_many   :comments, :as => :commentable, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy
   has_many   :attachments, :as => :attachable, :dependent => :destroy
+  has_many   :linked_attachment, :as => :attachable, :dependent => :destroy
+  has_many   :linkable_attachments, :through => :linked_attachment
 
   validates  :vendor, :presence => true
 	validates  :reference, :presence => true

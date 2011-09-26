@@ -44,3 +44,23 @@ Factory.define :linkable_attachment do |t|
   t.model_field_uid 'mfuid'
   t.value 'val'
 end
+Factory.define :order do |o|
+  o.sequence(:order_number)
+  o.association :vendor, :factory => :company
+end
+Factory.define :shipment do |s|
+  s.sequence(:reference)
+  s.association :vendor, :factory => :company
+end
+Factory.define :sales_order do |s|
+  s.sequence(:order_number)
+  s.association :customer, :factory => :company
+end
+Factory.define :delivery do |d|
+  d.sequence(:reference)
+  d.association :customer, :factory => :company
+end
+Factory.define :linkable_attachment_import_rule do |a|
+  a.sequence(:path)
+  a.model_field_uid 'mfuid'
+end
