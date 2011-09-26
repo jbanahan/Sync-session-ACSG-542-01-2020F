@@ -46,5 +46,10 @@ module OpenChain
       :sender_address => %{"Exception Notifier" <bug@chain.io>},
       :exception_recipients => %w{bug@aspect9.com}
     config.active_record.schema_format = :sql
+    if Rails.env.test? 
+      initializer :after => :initialize_dependency_mechanism do 
+        ActiveSupport::Dependencies.mechanism = :load 
+      end 
+    end
   end
 end

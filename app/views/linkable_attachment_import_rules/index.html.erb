@@ -1,0 +1,12 @@
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=new_linkable_attachment_import_rule_path%>' key_map='n'>New</button>
+<%end%>
+<h1>Linkable Attachment Rules</h1>
+<table class='detail_table'>
+  <thead><tr><th>&nbsp;</th><th>Folder</th><th>Field</th></tr></thead>
+  <tbody>
+    <%@rules.each do |r|%>
+      <tr class='hover'><td><%=link_to "Edit", edit_linkable_attachment_import_rule_path(r)%></td><td><%=r.path%></td><td><%=ModelField.find_by_uid(r.model_field_uid).label%></td></tr>
+    <%end%>
+  </tbody>
+</table>

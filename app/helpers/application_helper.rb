@@ -21,8 +21,8 @@ module ApplicationHelper
   end
 
   #build a select box with all model_fields grouped by module.
-  def select_model_fields_tag(name,opts={})
-    select_tag name, grouped_options_for_select(CoreModule.grouped_options,nil,"Select a Field"), opts
+  def select_model_fields_tag(name,selected,opts={})
+    select_tag name, grouped_options_for_select(CoreModule.grouped_options,selected,"Select a Field"), opts
   end
 
   #builds a text field to back a field represented with a model_field_uid in the ModelField constants.
