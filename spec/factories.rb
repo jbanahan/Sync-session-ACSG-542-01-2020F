@@ -64,3 +64,8 @@ Factory.define :linkable_attachment_import_rule do |a|
   a.sequence(:path)
   a.model_field_uid 'mfuid'
 end
+Factory.define :search_setup do |s|
+  s.name  'search name'
+  s.module_type  'Product'
+  s.association :user
+end

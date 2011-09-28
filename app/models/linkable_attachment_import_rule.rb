@@ -15,7 +15,7 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
       def file.original_filename=(f); @original_filename = f; end
       def file.original_filename; @original_filename; end
       file.original_filename= original_filename
-      r = LinkableAttachment.create!(:model_field_uid=>rule.model_field_uid,:value=>get_value_from_filename(original_filename))
+      r = LinkableAttachment.create(:model_field_uid=>rule.model_field_uid,:value=>get_value_from_filename(original_filename))
       a = Attachment.new(:attachable=>r)
       a.attached = file
       a.save!
