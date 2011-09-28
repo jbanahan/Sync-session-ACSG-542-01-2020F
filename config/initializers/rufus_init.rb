@@ -2,6 +2,7 @@
 require 'rufus/scheduler'
 require 'open_chain/delayed_job_manager'
 require 'open_chain/upgrade'
+require 'open_chain/integration_client'
 
 def job_wrapper job_name, &block
   begin
@@ -51,6 +52,13 @@ def execute_scheduler
       else
         logger.info "Skipping scheduled job rebuild: Not production"
       end
+    end
+  end
+
+  #launch listener for jobs from integration server
+  if Rails.env == 'production'
+    scheduler.in '1s' do
+      OpenChain::IntegrationClient.go
     end
   end
 
