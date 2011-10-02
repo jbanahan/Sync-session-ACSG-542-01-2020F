@@ -101,6 +101,12 @@ class UsersController < ApplicationController
     end
 
     def email_new_message
+      ms = MasterSetup.get
+      if ms.host_with_port.nil?
+        ms.host_with_port = request.host_with_port
+        ms.save
+      end
+      
       current_user.email_new_messages = !!params[:email_new_messages]
       current_user.save
       redirect_to messages_path

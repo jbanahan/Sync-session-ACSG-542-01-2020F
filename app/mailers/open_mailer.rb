@@ -70,6 +70,18 @@ class OpenMailer < ActionMailer::Base
     end
   end
 
+  def send_message(message)
+    @message = message
+    @message_url = ''
+    if MasterSetup.get.host_with_port
+      @message_url = message_url(message, :host => MasterSetup.get.host_with_port)
+    end
+    
+    mail(:to => message.user.email, :subject => "[chain.io] New Message - #{message.subject}") do |format|
+      format.html
+    end
+  end
+  
 #ERROR EMAILS
   def send_search_fail(to,search_name,error_message,ftp_server,ftp_username,ftp_subfolder)
     @search_name = search_name
