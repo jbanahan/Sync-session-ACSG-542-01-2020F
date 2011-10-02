@@ -100,6 +100,12 @@ class UsersController < ApplicationController
       }
     end
 
+    def email_new_message
+      current_user.email_new_messages = !!params[:email_new_messages]
+      current_user.save
+      redirect_to messages_path
+    end
+
     def disable
       toggle_enabled
     end
