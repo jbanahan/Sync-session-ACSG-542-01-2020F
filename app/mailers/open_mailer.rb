@@ -72,9 +72,9 @@ class OpenMailer < ActionMailer::Base
 
   def send_message(message)
     @message = message
-    @message_url = ''
+    @messages_url = ''
     if MasterSetup.get.host_with_port
-      @message_url = message_url(message, :host => MasterSetup.get.host_with_port)
+      @messages_url = messages_url(:host => MasterSetup.get.host_with_port)
     end
     
     mail(:to => message.user.email, :subject => "[chain.io] New Message - #{message.subject}") do |format|
