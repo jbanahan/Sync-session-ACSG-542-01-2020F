@@ -1,0 +1,16 @@
+<%content_for :javascript do%>
+  $(function() {
+    OpenChain.loadUserList($("#user_list"),"");
+  });
+<%end%>
+<%content_for :action_bar do%>
+  <button class="form_to" form_id="frm_foo">Send</button>
+  <button class='btn_link' link_to='<%=messages_path%>'>Cancel</button>
+<%end%>
+<%=form_for @message, :html=>{:id=>'frm_foo'} do |f|%>
+  <table>
+    <%=field_row "User", f.select(:user_id,User.all.collect {|u| [u.username,u.id]},{:include_blank=>true}) %>
+    <%=field_row "Subject", f.text_field(:subject)%>
+    <%=field_row "Body", f.text_area(:body)%>
+  </table>
+<%end%>

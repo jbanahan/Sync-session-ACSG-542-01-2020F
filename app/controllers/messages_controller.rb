@@ -10,6 +10,28 @@ class MessagesController < ApplicationController
     end
   end
 
+  def new
+    sys_admin_secure {
+      @message = Message.new
+    }
+  end
+
+  def create 
+    sys_admin_secure {
+      params[:message].each {|k,v| params[:message][k] = help.strip_tags(v)}
+      m = Message.create(params[:message])
+      errors_to_flash m, :now=>true
+      if m.errors.blank?
+        add_flash :notices, "Your message has been sent."
+        redirect_to messages_path
+      else
+        @message = m
+        render :new
+      end
+    }
+  end
+
+
   # DELETE /messages/1
   # DELETE /messages/1.xml
   def destroy

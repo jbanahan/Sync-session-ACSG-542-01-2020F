@@ -95,7 +95,7 @@ OpenChain::Application.routes.draw do
 
   resources :worksheet_configs
   
-  resources :messages, :only => [:index, :destroy] do
+  resources :messages, :only => [:index, :new, :create, :destroy] do
     member do
       get 'read'
     end

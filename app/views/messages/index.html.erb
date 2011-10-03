@@ -49,6 +49,9 @@
 
 <% content_for :action_bar do %>
 <button id='btn_read_all'>Mark All Read</button>
+<% if(current_user.sys_admin?)%>
+  <button class='btn_link' link_to='<%=new_message_path%>'>Send</button>
+<%end%>
 <% end %>
 <div id="accordion" style='width:98%;'>
 <% @messages.each do |message| %>
