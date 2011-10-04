@@ -33,6 +33,11 @@ class UserSessionsController < ApplicationController
       if @user_session.save
         add_flash :notices, "Login successful."
         c = @user_session.user
+        if @user_session.user.host_with_port.nil?
+          @user_session.user.host_with_port = request.host_with_port
+          @user_session.user.save
+        end
+        
         History.create({:history_type => 'login', :user_id => c.id, :company_id => c.company_id})
         format.html { redirect_back_or_default(:root) }
         format.xml  { render :xml => @user_session, :status => :created, :location => @user_session }
