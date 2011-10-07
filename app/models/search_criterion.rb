@@ -37,8 +37,8 @@ class SearchCriterion < ActiveRecord::Base
     nil_fails_operators = ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf"] #all of these operators should return false if value_to_test is nil
     return false if value_to_test.nil? && nil_fails_operators.include?(self.operator)
 
-    return value_to_test.nil? if self.operator == "null" 
-    return !value_to_test.nil? if self.operator == "notnull"
+    return value_to_test.blank? if self.operator == "null" 
+    return !value_to_test.blank? if self.operator == "notnull"
     
     if [:string, :text].include? d
       return self.value.nil? if value_to_test.nil? && self.operator != 'nq'
