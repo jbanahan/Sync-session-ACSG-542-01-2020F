@@ -168,7 +168,11 @@ class SearchCriterion < ActiveRecord::Base
   #value formatted properly for the appropriate condition in the SQL
   def where_value
     self_val = date_field? && !self.value.nil? && self.value.is_a?(Time)? self.value.to_date : self.value
-    return ["t","true","yes","y"].include? self_val.downcase if boolean_field?
+    if boolean_field? && ['null','notnull'].include?(self.operator)
+      return self.operator=='notnull'
+    elsif boolean_field?
+      return ["t","true","yes","y"].include? self_val.downcase if boolean_field?
+    end
     
     return self_val.to_i if integer_field? && self.operator!="in"
     
