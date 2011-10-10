@@ -21,9 +21,9 @@ class Classification < ActiveRecord::Base
   dont_shallow_merge :Classification, ['id','created_at','updated_at','country_id','product_id','instant_classification_id']
     
   def find_same
-    r = Classification.where(:product_id=>self.product_id).where(:country_id=>self.country_id)
+    r = Classification.where(:product_id=>self.product_id).where(:country_id=>self.country_id).where("instant_classification_id is null")
     raise "Multiple Classifications found for product #{self.product_id} and country #{self.country_id}" if r.size > 1
-    return r.empty? ? nil : r.first    
+    return r.empty? || r.first.id == self.id ? nil : r.first    
   end
 
   private

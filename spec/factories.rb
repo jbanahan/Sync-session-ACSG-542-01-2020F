@@ -40,3 +40,8 @@ end
 Factory.define :tariff_record do |t|
   t.association :classification
 end
+Factory.define :custom_definition do |c|
+  c.label "customdef"
+  c.data_type "string"
+  c.module_type "Product"
+end
