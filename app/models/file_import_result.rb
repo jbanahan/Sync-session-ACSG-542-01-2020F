@@ -3,6 +3,8 @@ class FileImportResult < ActiveRecord::Base
   belongs_to :run_by, :class_name => "User"
   has_many :change_records
 
+  before_save :update_changed_object_count
+  
   def changed_objects search_criterions=[]
     debugger if self.imported_file.nil?
     k = Kernel.const_get self.imported_file.core_module.class_name
@@ -17,4 +19,7 @@ class FileImportResult < ActiveRecord::Base
     self.change_records.where(:failed=>true).count
   end
 
+  def update_changed_object_count
+    changed_object_count = self.changed_objects.count
+  end
 end
