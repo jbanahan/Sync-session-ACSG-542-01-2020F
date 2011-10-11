@@ -56,16 +56,23 @@ class OpenMailer < ActionMailer::Base
   end
 
   def send_search_result(to,search_name,attachment_name,file_path)
-    attachments[attachment_name] = File.read file_path
-    mail(:to => to, :subject => "[chain.io] #{search_name} Result") do |format|
+    mail(:to => to,
+      :subject => "[chain.io] #{search_name} Result",
+      :postmark_attachments => [File.open(file_path)]) do |format|
       format.text
     end
   end
 
   def send_uploaded_items(to,imported_file,data,current_user)
-    attachments[imported_file.attached_file_name] = data
     @current_user = current_user
-    mail(:to=>to, :reply_to=>current_user.email, :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result") do |format|
+    attachment = {"Name" => imported_file.attached_file_name,
+      "Content" => [data].pack("m"),
+      "ContentType" => "application/octet-stream"}
+    
+    mail(:to=>to,
+      :reply_to=>current_user.email,
+      :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result",
+      :postmark_attachments => [attachment]) do |format|
       format.text
     end
   end
@@ -119,10 +126,13 @@ class OpenMailer < ActionMailer::Base
     @backtrace = backtrace ? backtrace : e.backtrace
     @backtrace = [] unless @backtrace
     @additional_messages = additional_messages
+    attachment_files = []
     attachment_paths.each do |ap|
-      attachments[File.basename(ap)] = File.read(ap) if File.exists? ap
+      attachment_files << File.open(ap) if File.exists?(ap)
     end
-    mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - #{@error_message}") do |format|
+    mail(:to=>"bug@aspect9.com",
+      :subject =>"[chain.io Exception] - #{@error_message}",
+      :postmark_attachments => attachment_files) do |format|
       format.text
     end
   end
