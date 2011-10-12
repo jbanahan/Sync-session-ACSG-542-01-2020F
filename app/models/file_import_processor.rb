@@ -259,6 +259,11 @@ class FileImportProcessor
         end
         #make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
         FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
+      elsif obj.is_a? Classification
+        #make sure there is a country
+        if obj.country_id.blank? && obj.country.blank?
+          FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty classification country."
+        end
       end
     end
     

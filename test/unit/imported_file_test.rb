@@ -478,6 +478,19 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert !f.errors.full_messages.first.index("Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}.").nil?
   end
 
+  test "product missing classification country" do
+    ot = OfficialTariff.create!(:hts_code=>"1555555555",:country_id=>countries(:us).id,:full_description=>"FD")
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:starting_row=>1,:starting_column=>1,:update_mode=>'any')
+    attach_array = ["pbhts","","1",ot.hts_code]
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
+    ss.search_columns.create!(:model_field_uid=>:hts_line_number,:rank=>2)
+    ss.search_columns.create!(:model_field_uid=>:hts_hts_1,:rank=>3)
+    assert !f.process(ss.user,:attachment_data=>attach_array.to_csv)
+    assert !f.errors.full_messages.first.index("Line cannot be processed with empty classification country.").nil?
+  end
+
   test "product with classification and tariffs" do
     vh = {
       :prod_uid=>"pwc_test",
