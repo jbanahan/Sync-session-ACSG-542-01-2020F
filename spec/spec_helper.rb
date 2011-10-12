@@ -11,6 +11,9 @@ include Authlogic::TestCase
 # in spec/support/ and its subdirectories.
 Dir[Rails.root.join("spec/support/**/*.rb")].each {|f| require f}
 
+# Requires everything in lib
+Dir[Rails.root.join("lib/**/*.rb")].each {|f| require f}
+
 RSpec.configure do |config|
   # == Mock Framework
   #
