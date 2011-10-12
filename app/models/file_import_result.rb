@@ -3,10 +3,9 @@ class FileImportResult < ActiveRecord::Base
   belongs_to :run_by, :class_name => "User"
   has_many :change_records
 
-  before_save :update_changed_object_count
+  after_save :update_changed_object_count
   
   def changed_objects search_criterions=[]
-    debugger if self.imported_file.nil?
     k = Kernel.const_get self.imported_file.core_module.class_name
     r = k.where("#{k.table_name}.id IN (SELECT recordable_id FROM `change_records` WHERE file_import_result_id = ? AND recordable_type = '#{self.imported_file.core_module.class_name}')",self.id)
     search_criterions.each do |sc|
@@ -20,6 +19,14 @@ class FileImportResult < ActiveRecord::Base
   end
 
   def update_changed_object_count
-    changed_object_count = self.changed_objects.count
+    if @changed_count_updated #keeps the query from being run on the second save
+      @changed_count_updated = false
+    end
+    changed_count = self.changed_objects.count
+    if changed_count != self.changed_object_count
+      self.changed_object_count = changed_count
+      @changed_count_updated = true
+      self.save
+    end
   end
 end
