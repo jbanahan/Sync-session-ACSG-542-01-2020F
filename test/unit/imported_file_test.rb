@@ -352,6 +352,15 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert scs[1].rank == 1
   end
   
+  test "strip spaces" do
+    base_order = Order.find(1)
+    new_order_date = "2001-01-03"
+    attachment = "Order Number,Order Date\n #{base_order.order_number} ,#{new_order_date}"
+    f = ImportedFile.find(1)
+    f.process(User.find(1),{:attachment_data => attachment})
+    assert Order.find(1).order_date==Date.new(2001,1,3), "Order number not stripped."
+  end
+  
   test "process order with product detail" do
     base_prod = Product.find(1)
     base_order = Order.find(2)
