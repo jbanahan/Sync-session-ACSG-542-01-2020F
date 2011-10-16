@@ -25,7 +25,7 @@ describe OpenChain::Report::TariffComparison do
     end
 
     it "should output to a tempfile" do
-      @t.should be_a Tempfile
+      @t.path.should include '/tmp/'
     end
     
     it "should show added tariffs on first tab" do

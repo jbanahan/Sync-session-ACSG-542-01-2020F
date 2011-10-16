@@ -23,6 +23,7 @@ gem 'ffi-rzmq'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', :group=>[:development,:test]
 group :test do
+  gem 'spork'
 #  gem 'ruby-prof' - put this back after we go to Ruby 3.1 (see Rails commit 25288)
 end
 group :production do
