@@ -3,24 +3,105 @@ require 'spec_helper'
 describe ImportedFile do
 
   describe 'make_updated_file' do
-    context 'header only' do
+    context 'product' do
       before :each do 
         @xlc = mock "XLClient"
         @attached = mock "Attachment"
         @attached.should_receive(:path).and_return("some/location.xls")
-        OpenChain::XLClient.should_receive(:new).and_return(@xlc)
-        @imported_file = ImportedFile.new(:module_type=>"Product",:starting_row=>1,:starting_column=>1)
-        @imported_file.should_recieve(:attached).and_return(@attached)
+        OpenChain::XLClient.should_receive(:new).with("some/location.xls").and_return(@xlc)
+        @imported_file = Factory(:imported_file,:module_type=>"Product",:user=>Factory(:user),:attached_file_name=>'abc.xls')
+        @imported_file.should_receive(:attached).and_return(@attached)
+        success_hash = {"result"=>"success"}
+        @expected_alternate_location = /#{MasterSetup.get.uuid}\/updated_imported_files\/#{@imported_file.user_id}\/[0-9]{10}\.xls/
+        @xlc.should_receive(:save).with(@expected_alternate_location).and_return(success_hash)
+      end
+      it 'should save the result file' do
+        @xlc.should_receive(:last_row_number).and_return(-1)
+        result = @imported_file.make_updated_file
+        result.should match @expected_alternate_location
       end
       it 'should update header level products' do
-        ["prod_name","prod_uid"].each_with_index {|v,i| @imported_file.search_columns.build(:model_field_uid=>v,:rank=>i)}
-        @xlc.should_receive(:last_row_number).with(0).and_return(3)
+        ["prod_name","prod_uid"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        p1 = Factory(:product,:name=>"p1name")
+        p2 = Factory(:product,:name=>"p2name")
+        p3 = Factory(:product,:name=>"p3name")
+        @xlc.should_receive(:last_row_number).and_return(2)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname1","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p1.unique_identifier,"datatype"=>"string"}}])
+        @xlc.should_receive(:get_row).with(0,1).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname2","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p2.unique_identifier,"datatype"=>"string"}}])
+        @xlc.should_receive(:get_row).with(0,2).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname3","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p3.unique_identifier,"datatype"=>"string"}}])
+        @xlc.should_receive(:set_cell).with(0,0,0,p1.name)
+        @xlc.should_receive(:set_cell).with(0,1,0,p2.name)
+        @xlc.should_receive(:set_cell).with(0,2,0,p3.name)
+        @imported_file.make_updated_file
       end
-      it 'should clear row when product missing'
-      it 'should update custom values'
+      it 'should clear non-key fields when product missing' do
+        missing_value = "missing val"
+        ["prod_name","prod_uid"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        @xlc.should_receive(:last_row_number).and_return(0)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname1","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>missing_value,"datatype"=>"string"}}])
+        @xlc.should_receive(:set_cell).with(0,0,0,"")
+        @imported_file.make_updated_file
+      end
+      it 'should update custom values' do
+        cd = Factory(:custom_definition,:module_type=>"Product")
+        p = Factory(:product)
+        cv = p.get_custom_value(cd)
+        cv.value = "x"
+        cv.save!
+        [cd.model_field_uid,"prod_uid"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        @xlc.should_receive(:last_row_number).and_return(0)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>1},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}}])
+        @xlc.should_receive(:set_cell).with(0,0,0,"x")
+        @imported_file.make_updated_file
+      end
+      it 'should update classification level items' do
+        cd = Factory(:custom_definition,:module_type=>"Classification")
+        ["prod_uid","class_cntry_iso",cd.model_field_uid].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        p = Factory(:product)
+        ctry = Factory(:country)
+        c = p.classifications.create!(:country_id=>ctry.id)
+        cv = c.get_custom_value cd
+        cv.value = "y"
+        cv.save!
+        @xlc.should_receive(:last_row_number).and_return(0)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>"q","datatype"=>"string"}}])
+        @xlc.should_receive(:set_cell).with(0,0,2,"y")
+        @imported_file.make_updated_file
+      end
+      it 'should clear fields for missing child object' do
+        cd = Factory(:custom_definition,:module_type=>"Classification")
+        ["prod_uid","class_cntry_iso",cd.model_field_uid].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        p = Factory(:product)
+        ctry = Factory(:country)
+        c = p.classifications.create!(:country_id=>ctry.id)
+        cv = c.get_custom_value cd
+        cv.value = "y"
+        cv.save!
+        @xlc.should_receive(:last_row_number).and_return(0)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>"BAD","datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>"q","datatype"=>"string"}}])
+        @xlc.should_receive(:set_cell).with(0,0,2,"")
+        @imported_file.make_updated_file
+      end
+
+      it 'should update tariff level items' do
+        ["prod_uid","class_cntry_iso","hts_line_number","hts_hts_1"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        p = Factory(:product)
+        ctry = Factory(:country)
+        c = p.classifications.create!(:country_id=>ctry.id)
+        t = c.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
+        @xlc.should_receive(:last_row_number).and_return(0)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
+        @xlc.should_receive(:set_cell).with(0,0,3,"1234567890")
+        @imported_file.make_updated_file
+      end
     end
-    it 'should update classification level items'
-    it 'should update tariff level items'
   end
 
 end

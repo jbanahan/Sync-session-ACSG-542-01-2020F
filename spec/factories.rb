@@ -31,7 +31,7 @@ Factory.define :official_tariff do |t|
   t.association :country
 end
 Factory.define :product do |p|
-  p.sequence(:unique_identifier) {|n| "#{n}"}
+  p.sequence(:unique_identifier) {|n| "uid#{n}"}
 end
 Factory.define :classification do |c|
   c.association :product
