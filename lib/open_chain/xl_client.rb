@@ -6,7 +6,7 @@ module OpenChain
       if socket.nil?
         ctx = ZMQ::Context.new
         @socket = ctx.socket ZMQ::REQ
-        @socket.connect 'tcp://xlclient.chain.io:22000'
+        @need_to_connect = true
       else
         @socket = socket
       end
@@ -15,6 +15,10 @@ module OpenChain
 
     # Send the given command Hash to the server and return a Hash with the response
     def send command
+      if @need_to_connect
+        @socket.connect 'tcp://xlclient.chain.io:22000'
+        @need_to_connect = false
+      end
       json = command.to_json 
       r = {'errors'=>'Client error: did not successfully receive server response.'}
       begin
