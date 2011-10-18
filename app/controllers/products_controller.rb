@@ -67,7 +67,7 @@ class ProductsController < ApplicationController
         respond_to do |format|
           @product = Product.new(params[:product]) #transaction failure requires new object
           set_custom_fields(@product) {|cv| @product.inject_custom_value cv}
-          e.full_messages.each {|m| @product.errors[:base]<<m}
+          e.full_messages.each {|m| @product.errors[:base] << m}
           errors_to_flash @product, :now=>true
           format.html { render :action=>"new"}
         end
@@ -164,25 +164,39 @@ class ProductsController < ApplicationController
       [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
       params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?}
-      good_count = nil 
-      bulk_objects do |gc,p|
-        good_count = gc if good_count.nil?
-        if p.can_edit?(current_user)
-          success = lambda {|o| }
-          failure = lambda {|o,errors|
-            good_count += -1
-            errors.full_messages.each {|m| add_flash :errors, "Error updating product #{o.unique_identifier}: #{m}"}
-          }
-          before_validate = lambda {|o| update_status o}
-          validate_and_save_module(p,params[:product],success,failure,:before_validate=>before_validate)
-        else
-          good_count += -1
-          add_flash :errors, "You do not have permission to edit product #{p.unique_identifier}."
-        end
-      end
-      add_flash :notices, "#{help.pluralize good_count, module_label.downcase} updated successfully."
+      self.delay.batch_bulk_update(current_user, params)
       redirect_to products_path
     }
+  end
+
+  def batch_bulk_update(user, parameters = {})
+    update_errors = []
+    good_count = nil
+    bulk_objects do |gc, p|
+      good_count = gc if good_count.nil?
+      if p.can_edit?(user)
+        success = lambda {|o| }
+        failure = lambda {|o, errors|
+          good_count += -1
+          errors.full_messages.each {|m| update_errors << "Error updating product #{o.unique_identifier}: #{m}"}
+        }
+        before_validate = lambda {|o| update_status o}
+        validate_and_save_module(p, parameters[:product], success, failure, :before_validate=>before_validate)
+      else
+        good_count += -1
+        update_errors << "You do not have permission to edit product #{p.unique_identifier}."
+      end
+    end
+
+    subject = body = ""
+    if update_errors.empty?
+      subject = body = "Product update complete - #{help.pluralize good_count, module_label.downcase}."
+    else
+      # Create message for errors
+      subject = "Product update complete - #{update_errors.length} ERRORS"
+      body = update_errors.join("\n")
+    end
+    Message.create(:user=>user, :subject=>subject, :body=>body)
   end
 
   def bulk_classify
