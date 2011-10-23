@@ -191,7 +191,6 @@ class Product < ActiveRecord::Base
         }
         before_validate = lambda {|o| OpenChain::CoreModuleProcessor.update_status o}
         OpenChain::CoreModuleProcessor.validate_and_save_module parameters, p, parameters[:product], success, failure, :before_validate=>before_validate
-        # validate_and_save_module(p, product_info, success, failure, :before_validate=>before_validate)
       else
         good_count += -1
         update_errors << "You do not have permission to edit product #{p.unique_identifier}."
