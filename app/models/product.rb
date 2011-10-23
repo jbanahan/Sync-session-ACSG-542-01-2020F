@@ -177,4 +177,35 @@ class Product < ActiveRecord::Base
       end
     end
   end
+
+  def self.batch_bulk_update(user, parameters = {})
+    update_errors = []
+    good_count = nil
+    OpenChain::CoreModuleProcessor.bulk_objects(parameters[:sr_id], parameters[:pk]) do |gc, p|
+      good_count = gc if good_count.nil?
+      if p.can_edit?(user)
+        success = lambda {|o| }
+        failure = lambda {|o, errors|
+          good_count += -1
+          errors.full_messages.each {|m| update_errors << "Error updating product #{o.unique_identifier}: #{m}"}
+        }
+        before_validate = lambda {|o| OpenChain::CoreModuleProcessor.update_status o}
+        OpenChain::CoreModuleProcessor.validate_and_save_module parameters, p, parameters[:product], success, failure, :before_validate=>before_validate
+        # validate_and_save_module(p, product_info, success, failure, :before_validate=>before_validate)
+      else
+        good_count += -1
+        update_errors << "You do not have permission to edit product #{p.unique_identifier}."
+      end
+    end
+
+    subject = body = ""
+    if update_errors.empty?
+      subject = body = "Product update complete - #{ApplicationController::Helper.instance.pluralize good_count, CoreModule::PRODUCT.label.downcase}."
+    else
+      # Create message for errors
+      subject = "Product update complete - #{update_errors.length} ERRORS"
+      body = update_errors.join("\n")
+    end
+    Message.create(:user=>user, :subject=>subject, :body=>body)
+  end
 end
