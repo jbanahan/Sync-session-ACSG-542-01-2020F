@@ -226,7 +226,7 @@ class ProductsController < ApplicationController
     end
 
     def secure_classifications
-      params[:product][:classifications_attributes] = nil unless params[:product].nil? || current_user.edit_classifications?
+      params[:product].delete(:classifications_attributes) unless params[:product].nil? || current_user.edit_classifications?
     end
     
     def save_classification_custom_fields(product,product_params)
