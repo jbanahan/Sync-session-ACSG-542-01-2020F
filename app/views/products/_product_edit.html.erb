@@ -9,7 +9,7 @@ $(function() {
 <table id='product_header'>
   <%unless hide_no_bulk_fields%>
     <%=field_row field_label(:prod_uid), model_text_field(form_obj,:unique_identifier,:prod_uid)%>
-    <%=field_row field_label(:prod_ven_name), form_obj.collection_select(:vendor_id, Company.find_vendors.not_locked, :id, :name, {:prompt => "Select a vendor"}) %>
+    <%=field_row field_label(:prod_ven_name), form_obj.collection_select(:vendor_id, Company.find_vendors.not_locked.order('companies.name ASC'), :id, :name, {:prompt => "Select a vendor"}) %>
   <%end%>
   <%=field_row field_label(:prod_name), model_text_field(form_obj,:name,:prod_name) %>
   <%

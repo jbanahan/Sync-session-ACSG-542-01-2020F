@@ -31,7 +31,7 @@ Factory.define :official_tariff do |t|
   t.association :country
 end
 Factory.define :product do |p|
-  p.sequence(:unique_identifier) {|n| "#{n}"}
+  p.sequence(:unique_identifier) {|n| "uid#{n}"}
 end
 Factory.define :classification do |c|
   c.association :product
@@ -68,4 +68,18 @@ Factory.define :search_setup do |s|
   s.name  'search name'
   s.module_type  'Product'
   s.association :user
+Factory.define :custom_definition do |c|
+  c.label "customdef"
+  c.data_type "string"
+  c.module_type "Product"
+end
+Factory.define :imported_file do |f|
+  f.module_type "Product"
+  f.starting_row  1
+  f.starting_column  1
+  f.update_mode "any"
+end
+Factory.define :file_import_result do |f|
+  f.association :imported_file
+  f.association :run_by, :factory => :user
 end

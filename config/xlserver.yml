@@ -1,0 +1,6 @@
+development:
+  base_url: "http://localhost:22001"
+test:
+  base_url: "http://localhost:22001"
+production:
+  base_url: "http://xlserver.chain.io:22001"

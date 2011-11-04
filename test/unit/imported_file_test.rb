@@ -341,8 +341,9 @@ class ImportedFileTest < ActiveSupport::TestCase
     new_order_date = "2001-01-03"
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
     f = ImportedFile.find(1)
+    f.update_attributes(:module_type=>"Order")
     f.process(User.find(1),{:attachment_data => attachment})
-    assert Order.find(1).order_date==Date.new(2001,1,3), "Order Date was not updated."
+    assert_equal Date.new(2001,1,3), Order.find(1).order_date
     #validate columns imported
     scs = ImportedFile.find(1).search_columns.order("rank ASC").all 
     assert scs.length==2
@@ -352,10 +353,21 @@ class ImportedFileTest < ActiveSupport::TestCase
     assert scs[1].rank == 1
   end
   
+  test "strip spaces" do
+    base_order = Order.find(1)
+    new_order_date = "2001-01-03"
+    attachment = "Order Number,Order Date\n #{base_order.order_number} ,#{new_order_date}"
+    f = ImportedFile.find(1)
+    f.update_attributes(:module_type=>"Order")
+    f.process(User.find(1),{:attachment_data => attachment})
+    assert Order.find(1).order_date==Date.new(2001,1,3), "Order number not stripped."
+  end
+  
   test "process order with product detail" do
     base_prod = Product.find(1)
     base_order = Order.find(2)
     attachment = "#{base_order.order_number},#{base_prod.unique_identifier}"
+    ImportedFile.find(2).update_attributes(:module_type=>"Order")
     ImportedFile.find(2).process(User.find(1),{:attachment_data => attachment})
     assert Order.find(2).order_lines.first.product_id == base_prod.id, "Product was not id #{base_prod.id}"
   end
@@ -476,6 +488,19 @@ class ImportedFileTest < ActiveSupport::TestCase
     ss.search_columns.create!(:model_field_uid=>:hts_hts_1,:rank=>3)
     assert !f.process(ss.user,:attachment_data=>attach_array.to_csv)
     assert !f.errors.full_messages.first.index("Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}.").nil?
+  end
+
+  test "product missing classification country" do
+    ot = OfficialTariff.create!(:hts_code=>"1555555555",:country_id=>countries(:us).id,:full_description=>"FD")
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"tbpb",:user_id=>users(:masteruser).id)
+    f = ss.imported_files.new(:attached_file_name=>'fname',:starting_row=>1,:starting_column=>1,:update_mode=>'any')
+    attach_array = ["pbhts","","1",ot.hts_code]
+    ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>0)
+    ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
+    ss.search_columns.create!(:model_field_uid=>:hts_line_number,:rank=>2)
+    ss.search_columns.create!(:model_field_uid=>:hts_hts_1,:rank=>3)
+    assert !f.process(ss.user,:attachment_data=>attach_array.to_csv)
+    assert !f.errors.full_messages.first.index("Line cannot be processed with empty classification country.").nil?
   end
 
   test "product with classification and tariffs" do

@@ -1,0 +1,12 @@
+<%content_for :action_bar do %>
+  <button class="form_to" form_id="frm_em">Send</button>
+  <button class="btn_link" link_to="<%=imported_file_path @file%>">Cancel</button>
+<%end%>
+<%=form_tag email_file_imported_file_path(@file), :method => :post, :id=>'frm_em' do -%>
+  <table>
+    <%=field_row "To", text_field_tag(:to)%>
+    <%=field_row "Copy Me", check_box_tag(:cc,'yes', true) %>
+    <%=field_row "Subject", text_field_tag(:subject, "[chain.io] #{@file.core_module.label} data.")%>
+    <%=field_row "Body", text_area_tag(:body, "#{current_user.full_name} has sent you the attached file from chain.io.")%>
+  </table>
+<% end %>

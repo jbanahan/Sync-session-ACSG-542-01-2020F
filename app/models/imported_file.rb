@@ -1,3 +1,4 @@
+require 'open_chain/xl_client'
 class ImportedFile < ActiveRecord::Base
   
   require 'open-uri'
@@ -63,6 +64,47 @@ class ImportedFile < ActiveRecord::Base
     else
       CsvMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank ASC"), self.core_module.default_module_chain, search_criterions
     end
+  end
+
+  #email a new file that has in place updates to the original file with the current data in the database
+  def email_updated_file current_user, to, cc, subject, body
+    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', make_updated_file, self.attached_file_name).deliver!
+  end
+
+  #create a new file that does in place updates on the original file with the current data in the database
+  def make_updated_file
+    client = OpenChain::XLClient.new self.attached.path
+    module_chain = self.core_module.default_module_chain 
+    used_modules = Set.new
+    key_column_hash = {}
+    self.search_columns.each do |sc|
+      cm = sc.model_field.core_module
+      used_modules << cm
+      key_column_hash[cm] = sc if sc.key_column?
+    end
+    ((self.starting_row-1)..client.last_row_number(0)).each do |row_number|
+      row = client.get_row 0, row_number
+      object_hash = {} #database objects for this row
+      key_column_hash.each do |core_module,search_column|
+        cell = OpenChain::XLClient.find_cell_in_row row, search_column.rank
+        if cell
+          #set the value in the object hash to the object in the database that matches this row by the key column
+          obj = SearchCriterion.new(:model_field_uid=>search_column.model_field_uid,:operator=>"eq",:value=>cell['value']).apply(Kernel.const_get(core_module.class_name)).first
+          object_hash[core_module] = obj
+        end
+      end
+      self.search_columns.each_with_index do |sc,i|
+        if !sc.key_column?
+          obj = object_hash[sc.model_field.core_module]
+          value = obj ? sc.model_field.process_export(obj) : ""
+          client.set_cell(0,row_number,sc.rank,value)
+        end
+      end
+    end
+
+    target_location = "#{MasterSetup.get.uuid}/updated_imported_files/#{self.user_id}/#{Time.now.to_i}.#{self.attached_file_name.split('.').last}" 
+    client.save target_location
+    target_location
   end
 
   def email_items_file current_user, email_addresses, search_criterions=[]

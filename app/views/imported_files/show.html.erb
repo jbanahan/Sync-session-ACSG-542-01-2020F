@@ -77,22 +77,18 @@
         $("#di_email_box").hide();
       }
     });
-    $("#btn_di").click(function() {$("#mod_download_items").dialog('open');});
   });
 <% end %>
 
 <% content_for :action_bar do %>
-  <% unless @imported_file.search_setup.nil? %>
-    <button id='btn_process'>Process</button>
-  <% end %>
+  <button class='btn_link' link_to='<%=show_email_file_imported_file_path(@imported_file)%>'>Download Current</button>
+  <button id='btn_download'>Download Original</button>
   <% if @imported_file.deletable? && @imported_file.can_delete?(current_user)%>
     <%=button_to('Delete', imported_file_path(@imported_file),:method=>:delete, :confirm=>"Are you sure?", :id=>"btn_delete")%>
   <% end %>
   <% unless @file_import_result.nil?%>
     <button class='btn_link' link_to='<%=file_import_result_path(@file_import_result)%>'>Log</button>
-    <button id='btn_di'>Download Items</button>
   <%end%>
-  <button id='btn_download'>Download Original</button>
   <%unless @bulk_actions.blank?%>
     <%@bulk_actions.each do |k,v|%>
       <button id='<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>'><%=k%></button>
@@ -183,17 +179,4 @@
   <p>There was an error reading the file you uploaded.  This might be related to corruption in the original file.</p>
   <p>Many times this can be fixed by opening the file in Excel and saving as a &quot;CSV&quot; file.</p>
   <p>If this does not work, please open a ticket by clicking the Help link at the top of the page.</p>
-</div>
-<div id='mod_download_items' style='display:none;'>
-  <%=form_tag download_items_imported_file_path(@imported_file), :method=>:post, :id=>"frm_di" do %>
-  <div>
-    <input type='checkbox' id='filter_download' /> Filter
-  </div>
-  <table style='font-size:80%;' id='download_items_crits'></table>
-  <hr />
-  <div>
-    <input type='radio' name='send_to' value='download' checked='checked' /> Download<br/>
-    <input type='radio' name='send_to' value='email' id='di_email_radio'/> Email <span id='di_email_box' style='display:none;'><input type='text' name='email_to' width='30' id='di_email'/><span style='font-size:90%'>Separate addresses with a comma.</span></span>
-  </div>
-  <%end%>
 </div>

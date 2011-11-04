@@ -35,5 +35,7 @@ Spork.prefork do
 end
 
 Spork.each_run do
+  # Requires everything in lib
+  Dir[Rails.root.join("lib/**/*.rb")].each {|f| load f}
   ModelField.reload
 end

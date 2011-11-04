@@ -58,6 +58,31 @@ class ImportedFilesController < ApplicationController
       @bulk_actions = f.core_module.bulk_actions current_user
     }
   end
+
+  # show the user prompt page for emailing the imported file
+  def show_email_file
+    f = ImportedFile.find params[:id]
+    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"email",:module_name=>"uploaded file"}) {
+      @file = f
+    }
+  end
+
+  # email the updated current data for an imported_file
+  def email_file
+    f = ImportedFile.find params[:id]
+    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"email",:module_name=>"uploaded file"}) {
+      if params[:to].blank?
+        error_redirect "You must include a \"To\" address." 
+        return
+      end
+      cc_address = params[:cc] ? current_user.email : ""
+      subject = params[:subject].blank? ? "[chain.io] #{@file.core_module.label} data." : params[:subject]
+      body = params[:body].blank? ? "#{current_user.full_name} has sent you the attached file from chain.io." : params[:body]
+      f.delay.email_updated_file current_user, params[:to], cc_address, subject, body
+      add_flash :notices, "The file will be processed and sent shortly."
+      redirect_to f
+    }
+  end
   
   def download
     f = ImportedFile.find(params[:id])

@@ -69,7 +69,9 @@ class FileImportProcessor
         end
         @search_setup.sorted_columns.each do |col|
           mf = col.find_model_field
-          data_map[mf.core_module][mf.uid]=row[col.rank + @import_file.starting_column - 1] unless mf.uid==:_blank
+          r = row[col.rank + @import_file.starting_column - 1]
+          r = r.strip if r.is_a? String
+          data_map[mf.core_module][mf.uid]=r unless mf.uid==:_blank
         end
         @module_chain.to_a.each do |mod|
           if fields_for_me_or_children? data_map, mod
@@ -259,6 +261,11 @@ class FileImportProcessor
         end
         #make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
         FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
+      elsif obj.is_a? Classification
+        #make sure there is a country
+        if obj.country_id.blank? && obj.country.blank?
+          FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty classification country."
+        end
       end
     end
     
