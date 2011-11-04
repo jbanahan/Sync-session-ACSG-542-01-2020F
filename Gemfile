@@ -19,6 +19,7 @@ gem 'delayed_job', '2.1.4'
 gem 'dalli', '1.0.5'
 gem 'ffi'
 gem 'ffi-rzmq'
+gem 'patron', "~> 0.4.16"
 
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', :group=>[:development,:test]

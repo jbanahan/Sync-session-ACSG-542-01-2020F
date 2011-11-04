@@ -341,8 +341,9 @@ class ImportedFileTest < ActiveSupport::TestCase
     new_order_date = "2001-01-03"
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
     f = ImportedFile.find(1)
+    f.update_attributes(:module_type=>"Order")
     f.process(User.find(1),{:attachment_data => attachment})
-    assert Order.find(1).order_date==Date.new(2001,1,3), "Order Date was not updated."
+    assert_equal Date.new(2001,1,3), Order.find(1).order_date
     #validate columns imported
     scs = ImportedFile.find(1).search_columns.order("rank ASC").all 
     assert scs.length==2
@@ -357,6 +358,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     new_order_date = "2001-01-03"
     attachment = "Order Number,Order Date\n #{base_order.order_number} ,#{new_order_date}"
     f = ImportedFile.find(1)
+    f.update_attributes(:module_type=>"Order")
     f.process(User.find(1),{:attachment_data => attachment})
     assert Order.find(1).order_date==Date.new(2001,1,3), "Order number not stripped."
   end
@@ -365,6 +367,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     base_prod = Product.find(1)
     base_order = Order.find(2)
     attachment = "#{base_order.order_number},#{base_prod.unique_identifier}"
+    ImportedFile.find(2).update_attributes(:module_type=>"Order")
     ImportedFile.find(2).process(User.find(1),{:attachment_data => attachment})
     assert Order.find(2).order_lines.first.product_id == base_prod.id, "Product was not id #{base_prod.id}"
   end

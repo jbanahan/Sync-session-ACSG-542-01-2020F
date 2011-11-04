@@ -3,47 +3,41 @@ require 'spec_helper'
 describe OpenChain::XLClient do
 
   before :each do 
-    @socket = mock "Socket"
+    @session = mock "httpsession"
     @path = 'somepath'
     @dummy_response = {"my"=>"response"}
-    @client = OpenChain::XLClient.new @path, @socket
+    @client = OpenChain::XLClient.new @path, @session
   end
 
-  it 'should create socket if not supplied' do
+  it 'should create http session if not supplied' do
     c = OpenChain::XLClient.new(@path)
-    def c.sock; @socket; end
-    c.sock.should respond_to 'send_string'
-    c.sock.close
+    def c.session; @session; end
+    c.session.timeout.should == 10
   end
   it 'should send a command and receive a response hash' do
     cmd = {"some"=>"cmd"}
     expected_json = cmd.to_json
-    @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-    @socket.should_receive(:recv_string).and_return(@dummy_response.to_json)
+    resp = mock "response"
+    resp.should_receive(:body).and_return(@dummy_response.to_json)
+    @session.should_receive(:post).with('/process',expected_json).and_return(resp)
     r = @client.send cmd
     r.should == @dummy_response
   end
   it 'should send a new command' do
     cmd = {"command"=>"new","path"=>@path}
-    expected_json = cmd.to_json
-    @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-    @socket.should_receive(:recv_string).and_return(@dummy_response.to_json)
-    @client.new
+    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+    @client.new.should == @dummy_response
   end
   it 'should send a get cell command' do
     cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
-    expected_json = cmd.to_json
-    @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-    @socket.should_receive(:recv_string).and_return(@dummy_response.to_json)
-    @client.get_cell 0, 1, 2
+    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+    @client.get_cell( 0, 1, 2 ).should == @dummy_response
   end
   describe "set_cell" do
     after :each do
       cmd = {"command"=>"set_cell","path"=>@path,"payload"=>{"position"=>{"sheet"=>0,"row"=>1,"column"=>2},"cell"=>{"value"=>@value_content,"datatype"=>@datatype}}}
-      expected_json = cmd.to_json
-      @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-      @socket.should_receive(:recv_string).and_return(@dummy_response.to_json)
-      @client.set_cell 0, 1, 2, @value
+      @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+      @client.set_cell(  0, 1, 2, @value ).should == @dummy_response
 
     end
     it 'should handle strings' do
@@ -72,34 +66,26 @@ describe OpenChain::XLClient do
   end
   it 'should send a create_sheet command' do
     cmd = {"command"=>"create_sheet","path"=>@path,"payload"=>{"name"=>"a name"}}
-    expected_json = cmd.to_json
-    @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-    @socket.should_receive(:recv_string).and_return(@dummy_response.to_json)
-    @client.create_sheet "a name"
+    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+    @client.create_sheet(  "a name" ).should == @dummy_response
   end
   it 'should send a save command without alternate location' do
     cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>@path}}
-    expected_json = cmd.to_json
-    @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-    @socket.should_receive(:recv_string).and_return(@dummy_response.to_json)
-    @client.save
+    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+    @client.save.should == @dummy_response
   end
   it 'should send a save command with alternate location' do
     cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>'another/location'}}
-    expected_json = cmd.to_json
-    @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-    @socket.should_receive(:recv_string).and_return(@dummy_response.to_json)
-    @client.save 'another/location'
+    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+    @client.save(  'another/location' ).should == @dummy_response
   end
   it 'should get a row' do
     t = Time.now
     cmd = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>0,"row"=>10}}
-    expected_json = cmd.to_json
     return_array = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
                     {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
-    @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-    @socket.should_receive(:recv_string).and_return(return_array.to_json)
-    r = @client.get_row 0, 10
+    @client.should_receive(:send).with(cmd).and_return(return_array)
+    r = @client.get_row(0, 10 )
     r.should have(2).results
     first_cell = r[0]
     first_cell['position']['column'].should == 0
@@ -113,14 +99,12 @@ describe OpenChain::XLClient do
   describe 'last_row_number' do
     it 'should return the integer response' do
       cmd = {"command"=>"last_row_number","path"=>@path,"payload"=>{"sheet_index"=>0}}
-      expected_json = cmd.to_json
-      @socket.should_receive(:send_string).with(expected_json).and_return(nil)
-      @socket.should_receive(:recv_string).and_return({"result"=>10}.to_json)
+      @client.should_receive(:send).with(cmd).and_return({'result'=>10})
       @client.last_row_number(0).should == 10
     end
     it 'should raise error' do
-      @socket.should_receive(:send_string).and_return(nil)
-      @socket.should_receive(:recv_string).and_return({"errors"=>["msg1","msg2"]}.to_json)
+      err = {"errors"=>["msg1","msg2"]}
+      @client.should_receive(:send).and_return(err)
       lambda {@client.last_row_number(0)}.should raise_error "msg1\nmsg2"
     end
   end

@@ -1,31 +1,29 @@
+
 module OpenChain
   # Client to communicate with XLServer
   class XLClient
-    # Create a client with the given ZeroMQ socket
-    def initialize path, socket=nil
-      if socket.nil?
-        ctx = ZMQ::Context.new
-        @socket = ctx.socket ZMQ::REQ
-        @need_to_connect = true
-      else
-        @socket = socket
-      end
+    # Create a client with the Patron::Session 
+    def initialize path, session=nil  
       @path = path
+      @session = session
+      if @session.nil?
+        @session = Patron::Session.new
+        @session.timeout = 10
+        @session.base_url = YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']
+        @session.headers['Content-Type'] = 'text/json'
+      end
     end
 
     # Send the given command Hash to the server and return a Hash with the response
     def send command
-      if @need_to_connect
-        @socket.connect 'tcp://xlclient.chain.io:22000'
-        @need_to_connect = false
-      end
       json = command.to_json 
       r = {'errors'=>'Client error: did not successfully receive server response.'}
       begin
-        @socket.send_string json
-      ensure
-        server_response = @socket.recv_string
+        server_response = @session.post('/process',json).body
         r = JSON.parse server_response
+      rescue
+        puts $!
+        r = {'errors'=>"Communications error: #{$!.message}"}
       end
       r
     end

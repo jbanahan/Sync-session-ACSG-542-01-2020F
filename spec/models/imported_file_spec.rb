@@ -2,6 +2,24 @@ require 'spec_helper'
 
 describe ImportedFile do
 
+  describe 'email_updated_file' do
+    it 'should generate and send the file' do
+      current_user = Factory(:user)
+      to = 'a@b.com'
+      cc = 'c@d.com'
+      subj = 's'
+      body = 'b'
+      s3_path = 'x/y/z'
+      original_attachment_name = 'abc.xls'
+      f = Factory(:imported_file, :user=>current_user, :attached_file_name=>original_attachment_name)
+      mail = mock "mail delivery"
+      mail.stub(:deliver!).and_return(nil)
+      OpenMailer.should_receive(:send_s3_file).with(current_user,to,cc,subj,body,'chain-io',s3_path,original_attachment_name).and_return(mail)
+      f.should_receive(:make_updated_file).and_return(s3_path)
+      
+      f.email_updated_file current_user, to, cc, subj, body
+    end
+  end
   describe 'make_updated_file' do
     context 'product' do
       before :each do 

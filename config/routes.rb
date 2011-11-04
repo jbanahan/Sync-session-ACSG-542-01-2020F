@@ -212,6 +212,8 @@ OpenChain::Application.routes.draw do
   resources :imported_files, :only => [:index, :show, :destroy] do
     member do
       get 'preview'
+      get 'show_email_file'
+      post 'email_file'
       get 'download'
       post 'download_items'
       get 'process'

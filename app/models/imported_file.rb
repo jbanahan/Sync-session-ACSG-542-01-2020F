@@ -1,3 +1,4 @@
+require 'open_chain/xl_client'
 class ImportedFile < ActiveRecord::Base
   
   require 'open-uri'
@@ -63,6 +64,11 @@ class ImportedFile < ActiveRecord::Base
     else
       CsvMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank ASC"), self.core_module.default_module_chain, search_criterions
     end
+  end
+
+  #email a new file that has in place updates to the original file with the current data in the database
+  def email_updated_file current_user, to, cc, subject, body
+    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', make_updated_file, self.attached_file_name).deliver!
   end
 
   #create a new file that does in place updates on the original file with the current data in the database
