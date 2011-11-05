@@ -1,37 +1,29 @@
 <h1>General Settings</h1>
-<h2><%= link_to 'Companies', companies_path%></h2>
-<p>Setup your company description or your vendors and carriers.</p>
-<h2><%= link_to 'Countries', countries_path%></h2>
-<p>Set options for various countries.</p>
-<h2><%= link_to 'Attachment Types', attachment_types_path%></h2>
-<p>Setup the items that show in the attachment type drop down lists.</p>
-<h2><%= link_to 'Instant Classification Setup', instant_classifications_path%></h2>
-<p>Setup the rules for the Instant Classification engine.</p>
-<h2><%= link_to 'Milestone Plans', milestone_plans_path%></h2>
-<p>Set the milestone schedules that your products follow through your supply chain.</p>
-<h2><%= link_to 'Product Types', entity_types_path%></h2>
-<p>Setup product types that filter the fields shown on the product view and edit screen.</p>
-<h2><%= link_to 'Status Rules', status_rules_path %></h2>
-<p>Setup the rules that determine what status a particular item has.</p>
-<h2><%= link_to 'System Message', show_system_message_master_setups_path %></h2>
-<p>Set a message that will appear on the top of every page.</p>
-<h2><%= link_to 'Worksheet Setups', worksheet_configs_path %></h2>
-<p>Setup the file formats for the Import Worksheet buttons.  These are used to upload a single Excel sheet that fills in one record's data.  
-These are often files like a &quot;Quote Sheet&quot; or a &quot;Purchase Order&quot;.</p> 
-<%if current_user.sys_admin? %>
-  <h2><%= link_to 'Active Users', active_users_path %></h2>
-  <p>Show users who have viewed a page in the last 30 minutes.</p>
-  <h2><%= link_to 'Master Setup', master_setups_path %></h2>
-  <p>The master system settings (for system administrators who know what they're doing!)
-  <h2><%= link_to 'Error Log', error_log_entries_path %></h2>
-  <p>System errors, nuff said.</p>
-<%end%>
+<table>
+  <%=field_row link_to('Attachment Types', attachment_types_path),"Setup the items that show in the attachment type drop down lists."%>
+  <%=field_row link_to('Companies', companies_path),"Setup your company description or your vendors and carriers."%>
+  <%=field_row link_to('Countries', countries_path),"Set options for various countries."%>
+  <%=field_row link_to('Instant Classification Setup', instant_classifications_path),"Setup the rules for the Instant Classification engine."%>
+  <%=field_row link_to('Linkable Attachment Setup', linkable_attachment_import_rules_path),"Setup the rules for automatically linking FTP attachments."%>
+  <%=field_row link_to('Milestone Plans', milestone_plans_path),"Set the milestone schedules that your products follow through your supply chain."%>
+  <%=field_row link_to('Product Types', entity_types_path),"Setup product types that filter the fields shown on the product view and edit screen."%>
+  <%=field_row link_to('Status Rules', status_rules_path ),"Setup the rules that determine what status a particular item has."%>
+  <%=field_row link_to('System Message', show_system_message_master_setups_path ),"Set a message that will appear on the top of every page."%>
+  <%=field_row link_to('Worksheet Setups', worksheet_configs_path ),"Setup the file formats for the Import Worksheet buttons.  These are used to upload a single Excel sheet that fills in one record's data.  
+  These are often files like a \"Quote Sheet\" or a \"Purchase Order\"."%> 
+</table>
 <h1>Field Settings</h1>
-<h2><%= link_to 'Hard Coded Field Names', field_labels_path%></h2>
-<p>Set the names for the default fields in the system.</p>
-<h2><%= link_to 'Custom Fields', custom_definitions_path %></h2>
-<p>Add (or change) your own field specific to your installation.</p>
-<h2><%= link_to 'Public Fields', "/public_fields" %></h2>
-<p>Manage the fields that are available on the public shipment search screen.</p>
-<h2><%= link_to 'Field Rules', field_validator_rules_path%></h2>
-<p>Manage the rules that restrict what users can enter into fields.</p>
+<table>
+  <%=field_row link_to('Hard Coded Field Names', field_labels_path),"Set the names for the default fields in the system."%>
+  <%=field_row link_to('Custom Fields', custom_definitions_path ),"Add (or change) your own field specific to your installation."%>
+  <%=field_row link_to('Public Fields', "/public_fields" ),"Manage the fields that are available on the public shipment search screen."%>
+  <%=field_row link_to('Field Rules', field_validator_rules_path),"Manage the rules that restrict what users can enter into fields."%>
+</table>
+<%if current_user.sys_admin? %>
+  <h1>Sys Admin Settings</h1>
+  <table>
+    <%=field_row link_to('Active Users', active_users_path ),"Show users who have viewed a page in the last 30 minutes."%>
+    <%=field_row link_to('Master Setup', master_setups_path ),"The master system settings (for system administrators who know what they're doing!)"%>
+    <%=field_row link_to('Error Log', error_log_entries_path ),"System errors, nuff said."%>
+  </table>
+<%end%>
