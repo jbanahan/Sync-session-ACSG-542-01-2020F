@@ -68,6 +68,7 @@ Factory.define :search_setup do |s|
   s.name  'search name'
   s.module_type  'Product'
   s.association :user
+end
 Factory.define :custom_definition do |c|
   c.label "customdef"
   c.data_type "string"
