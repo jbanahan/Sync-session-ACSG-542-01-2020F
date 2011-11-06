@@ -147,8 +147,8 @@ DEPENDENCIES
   delayed_job (= 2.1.4)
   exception_notification_rails3
   factory_girl
-  ffi (= 1.0.9)
-  ffi-rzmq (= 0.8.0)
+  ffi (~> 1.0.9)
+  ffi-rzmq (~> 0.8.0)
   meta_search (= 1.0.5)
   mocha (= 0.9.12)
   mongrel (= 1.2.0.pre2)
