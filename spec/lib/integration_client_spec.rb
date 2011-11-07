@@ -15,7 +15,6 @@ describe OpenChain::IntegrationClient do
     end
   end
   it 'should connect, start processing commands, and shutdown' do
-
     cmd_one = {:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}
     cmd_shutdown = {:request_type=>'shutdown'}
     OpenChain::IntegrationClientCommandProcessor.should_receive(:process_remote_file).and_return(true)

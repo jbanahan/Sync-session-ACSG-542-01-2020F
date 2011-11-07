@@ -4,13 +4,13 @@ module OpenChain
     def self.go system_code
       sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
       q = sqs.queues.create system_code
-      in_memory_queue = []
       running = true
       while running
+        in_memory_queue = []
         while q.visible_messages > 0
           q.receive_message do |m|
             in_memory_queue << m
-            m.delete
+            m.visibility_timeout = 300 # 5 minutes
           end
         end
         in_memory_queue.sort! {|x,y| x.sent_timestamp <=> y.sent_timestamp}
@@ -18,6 +18,7 @@ module OpenChain
           cmd = JSON.parse m.body
           r = IntegrationClientCommandProcessor.process_command cmd
           running = false if r=='shutdown'
+          m.delete
         end
       end
     end
