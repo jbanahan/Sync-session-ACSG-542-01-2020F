@@ -6,19 +6,23 @@ module OpenChain
       q = sqs.queues.create system_code
       running = true
       while running
-        in_memory_queue = []
-        while q.visible_messages > 0
-          q.receive_message do |m|
-            in_memory_queue << m
-            m.visibility_timeout = 300 # 5 minutes
+        begin
+          in_memory_queue = []
+          while q.visible_messages > 0
+            q.receive_message do |m|
+              in_memory_queue << m
+              m.visibility_timeout = 300 # 5 minutes
+            end
           end
-        end
-        in_memory_queue.sort! {|x,y| x.sent_timestamp <=> y.sent_timestamp}
-        in_memory_queue.each do |m|
-          cmd = JSON.parse m.body
-          r = IntegrationClientCommandProcessor.process_command cmd
-          running = false if r=='shutdown'
-          m.delete
+          in_memory_queue.sort! {|x,y| x.sent_timestamp <=> y.sent_timestamp}
+          in_memory_queue.each do |m|
+            cmd = JSON.parse m.body
+            r = IntegrationClientCommandProcessor.process_command cmd
+            running = false if r=='shutdown'
+            m.delete
+          end
+        rescue
+          $!.log_me
         end
       end
     end
@@ -37,7 +41,7 @@ module OpenChain
 
     private
     def self.process_remote_file command
-      t = OpenChain::S3.download_to_tempfile(OpenChain::S3.bucket_name,command['remote_path'])
+      t = OpenChain::S3.download_to_tempfile(OpenChain::S3.integration_bucket_name,command['remote_path'])
       status_msg = 'Unknown error'
       begin
         dir, fname = Pathname.new(command['path']).split
