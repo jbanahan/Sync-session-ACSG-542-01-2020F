@@ -140,7 +140,7 @@ class ImportedFile < ActiveRecord::Base
   
   
   def attachment_as_workbook
-    t = S3.download_to_tempfile attached.options.fog_directory, attached.path
+    t = OpenChain::S3.download_to_tempfile attached.options.fog_directory, attached.path
     Spreadsheet.open t
   end
 
