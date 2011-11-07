@@ -8,6 +8,7 @@ module OpenChain
     end
     def self.download_to_tempfile bucket, key
       t = Tempfile.new('iodownload')
+      t.binmode
       t.write AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].read
       t.flush
       t
