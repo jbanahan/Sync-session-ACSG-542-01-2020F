@@ -1,4 +1,5 @@
 require 'open_chain/xl_client'
+require 'open_chain/s3'
 class ImportedFile < ActiveRecord::Base
   
   require 'open-uri'
@@ -139,13 +140,8 @@ class ImportedFile < ActiveRecord::Base
   
   
   def attachment_as_workbook
-    #http://www.webmantras.com/blog/?p=554
-    u = AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], {:expires_in => 10.minutes, :use_ssl => true}
-    book = nil
-    open u do |f|
-      book = Spreadsheet.open f
-    end
-    book
+    t = S3.download_to_tempfile attached.options.fog_directory, attached.path
+    Spreadsheet.open t
   end
 
   def attachment_data
