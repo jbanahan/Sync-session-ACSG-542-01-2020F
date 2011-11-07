@@ -19,6 +19,7 @@ module OpenChain
           in_memory_queue.each do |m|
             cmd = JSON.parse m.body
             r = IntegrationClientCommandProcessor.process_command cmd
+            raise r['message'] if r['response_type']=='error'
             running = false if r=='shutdown'
             m.delete
           end
@@ -32,7 +33,7 @@ module OpenChain
     def self.process_command command
       case command['request_type']
       when 'remote_file'
-        process_remote_file command
+        return process_remote_file command
       when 'shutdown'
         return 'shutdown'
       else
@@ -44,6 +45,7 @@ module OpenChain
     def self.process_remote_file command
       t = OpenChain::S3.download_to_tempfile(OpenChain::S3.integration_bucket_name,command['remote_path'])
       status_msg = 'Unknown error'
+      response_type = 'error'
       begin
         dir, fname = Pathname.new(command['path']).split
         def t.original_filename=(fn); @fn = fn; end
@@ -51,16 +53,22 @@ module OpenChain
         t.original_filename= fname.to_s
         linkable = LinkableAttachmentImportRule.import t.path, fname.to_s, dir.to_s
         if linkable
-          status_msg = linkable.errors.blank? ? 'success' : linkable.errors.full_messages.join("\n")
+          if linkable.errors.blank?
+            status_msg = 'success'
+            response_type = 'remote_file'
+          else
+            status_msg = linkable.errors.full_messages.join("\n")
+          end
         elsif command['path'].include? '/to_chain/'
           status_msg = process_imported_file command, t
+          response_type = 'remote_file' if status_msg == 'success'
         else
           status_msg = "Can't figure out what to do for path #{command['path']}"
         end
       ensure
         t.unlink
       end
-      return {'response_type'=>'remote_file','status'=>status_msg}
+      return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     end
 
     # expects path like /username/to_chain/module/search_name/file.ext
