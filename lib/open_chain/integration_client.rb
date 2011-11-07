@@ -1,4 +1,5 @@
 require 'aws-sdk'
+require 'open_chain/s3'
 module OpenChain
   class IntegrationClient
     def self.go system_code
