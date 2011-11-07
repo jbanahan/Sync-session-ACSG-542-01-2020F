@@ -5,11 +5,11 @@ class ReportResult < ActiveRecord::Base
 
   belongs_to :run_by, :class_name=>"User"
   has_attached_file :report_data,
-    :storage => :s3,
-    :s3_credentials => "#{Rails.root}/config/s3.yml",
-    :s3_permissions => :private,
-    :path => "#{MasterSetup.get.uuid}/report_result/:id/:filename",
-    :bucket => 'chain-io'
+    :storage => :fog,
+    :fog_credentials => FOG_S3,
+    :fog_public => false,
+    :fog_directory => 'chain-io',
+    :url => "#{MasterSetup.get.uuid}/report_result/:id/:filename"
   before_post_process :no_post
 
   scope :eligible_for_purge, where('run_at < ?',PURGE_WEEKS.weeks.ago)
@@ -80,19 +80,7 @@ class ReportResult < ActiveRecord::Base
 
   def report_content
     return nil unless report_data.path
-    retries = 0
-    begin
-      uri = URI.parse(AWS::S3::S3Object.url_for report_data.path, report_data.options[:bucket], {:expires_in => 2.minutes, :use_ssl => true})
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      response = http.request(Net::HTTP::Get.new(uri.request_uri))
-      response.body
-    rescue
-      retries+=1
-      retry if retries < 3
-      raise "File data could not be retrieved from the database."
-    end
+    AWS::S3.new(AWS_CREDENTIALS).buckets[report_data.options.fog_directory].objects[report_data.path].read
   end
 
   def secure_url(expires_in=10.seconds)

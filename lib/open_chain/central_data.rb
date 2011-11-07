@@ -47,36 +47,18 @@ module OpenChain
       private
       #get array of versions from s3 or return [] 
       def self.get_versions
-        connect {
-          r = AWS::S3::S3Object.exists?(key_name,"chain-io") ? AWS::S3::S3Object.value(key_name, "chain-io") : nil
-          a = r.blank? ? [] : ActiveSupport::JSON.decode(r)
-          a.collect {|vh| make_obj(vh)}
-        }
+        s3 = AWS::S3.new(AWS_CREDENTIALS)
+        obj = s3.buckets['chain-io'].objects[key_name]
+        r = obj.exists? ? obj.read : nil
+        a = r.blank? ? [] : ActiveSupport::JSON.decode(r)
+        a.collect {|vh| make_obj(vh)}
       end
       def self.write_versions version_array
-        connect {
-          AWS::S3::S3Object.store "#{Rails.env.to_s}/CentralData/Version", version_array.to_json, "chain-io"
-        }
+        s3 = AWS::S3.new(AWS_CREDENTIALS)
+        s3.buckets['chain-io'].objects["#{Rails.env.to_s}/CentralData/Version"].write version_array.to_json
       end
       def self.key_name
         "#{Rails.env.to_s}/CentralData/Version"
-      end
-      def self.connect 
-        base = YAML.load(IO.read("config/s3.yml"))
-        y = {} #need to convert string keys into symbols
-        base.each do |k,v|
-          y[k.to_sym] = v
-        end
-        begin
-          AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
-          yield
-        ensure
-          begin
-            AWS::S3::S3Object.disconnect if AWS::S3::S3Object.connected?
-          rescue
-            #noop
-          end
-        end
       end
       #return array with get_versions result and found index (or nil as second element if not found)
       def self.find name

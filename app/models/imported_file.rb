@@ -7,11 +7,11 @@ class ImportedFile < ActiveRecord::Base
   UPDATE_MODES = {"any"=>"Add or Update","add"=>"Add Only","update"=>"Update Only"}
 
   has_attached_file :attached,
-    :storage => :s3,
-    :s3_credentials => "#{Rails.root}/config/s3.yml",
-    :s3_permissions => :private,
-    :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/imported_file/:id/:filename", #conditional on MasterSetup to allow migrations to run
-    :bucket => 'chain-io'
+    :storage => :fog,
+    :fog_credentials => FOG_S3,
+    :fog_public => false,
+    :fog_directory => 'chain-io',
+    :url => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/imported_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
   before_post_process :no_post
   
   belongs_to :search_setup
@@ -150,19 +150,8 @@ class ImportedFile < ActiveRecord::Base
 
   def attachment_data
     return @a_data unless @a_data.nil?
-    retries = 0
-    begin
-      uri = URI.parse(AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], {:expires_in => 10.minutes, :use_ssl => true})
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      response = http.request(Net::HTTP::Get.new(uri.request_uri))
-      response.body
-    rescue
-      retries+=1
-      retry if retries < 3
-      raise "File data could not be retrieved from the database."
-    end
+    s3 = AWS::S3.new AWS_CREDENTIALS
+    s3.buckets[attached.options.fog_directory].objects[attached.path].read
   end
   
   private

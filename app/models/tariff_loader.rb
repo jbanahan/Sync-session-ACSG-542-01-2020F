@@ -86,22 +86,11 @@ class TariffLoader
   def self.process_s3 s3_key, country, tariff_set_label, auto_activate=false
     Tempfile.open(['tariff_s3',"#{s3_key.split('.').last}"]) do |t|
       t.binmode
-      begin
-        base = YAML.load(IO.read("config/s3.yml"))
-        y = {} #need to convert string keys into symbols
-        base.each do |k,v|
-          y[k.to_sym] = v
-        end
-        AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
-        AWS::S3::S3Object.stream(s3_key, 'chain-io') do |chunk|
-          t.write chunk
-        end
-        t.flush
-        ts = TariffLoader.new(country,t.path,tariff_set_label).process
-        ts.activate if auto_activate
-      ensure
-        AWS::S3::S3Object.disconnect if AWS::S3::S3Object.connected?
-      end
+      s3 = AWS::S3.new AWS_CREDENTIALS
+      t.write s3.buckets['chain-io'].objects[s3_key].read
+      t.flush
+      ts = TariffLoader.new(country,t.path,tariff_set_label).process
+      ts.activate if auto_activate
     end
   end
 

@@ -29,23 +29,13 @@ class TariffLoaderTest < ActiveSupport::TestCase
     label = "ABCDEFS3A"
 
     #PUT THE FILE TO S3
-    base = YAML.load(IO.read("config/s3.yml"))
-    y = {} #need to convert string keys into symbols
-    base.each do |k,v|
-      y[k.to_sym] = v
-    end
+    s3 = AWS::S3.new AWS_CREDENTIALS
     begin
       key = "#{Rails.env.to_s}/TariffStore/#{t.path.split('/').last}"
-      AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
-      AWS::S3::S3Object.store key, open(t.path), 'chain-io'
-      AWS::S3::S3Object.disconnect!
-
+      s3.buckets['chain-io'].objects[key].write(:file=>t.path)
       TariffLoader.process_s3 key, country, label, true
-
     ensure
-      AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
-      AWS::S3::S3Object.delete key, 'chain-io'
-      AWS::S3::S3Object.disconnect!
+      s3.buckets['chain-io'].objects[key].delete
     end
 
     ts = TariffSet.where(:label=>label).first
@@ -85,25 +75,14 @@ class TariffLoaderTest < ActiveSupport::TestCase
     label = "ABCDEFS3"
 
     #PUT THE FILE TO S3
-    base = YAML.load(IO.read("config/s3.yml"))
-    y = {} #need to convert string keys into symbols
-    base.each do |k,v|
-      y[k.to_sym] = v
-    end
+    s3 = AWS::S3.new AWS_CREDENTIALS
     begin
       key = "#{Rails.env.to_s}/TariffStore/#{t.path.split('/').last}"
-      AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
-      AWS::S3::S3Object.store key, open(t.path), 'chain-io'
-      AWS::S3::S3Object.disconnect!
-
+      s3.buckets['chain-io'].objects[key].write(:file=>t.path)
       TariffLoader.process_s3 key, country, label
-
     ensure
-      AWS::S3::S3Object.establish_connection!(y) unless AWS::S3::S3Object.connected?
-      AWS::S3::S3Object.delete key, 'chain-io'
-      AWS::S3::S3Object.disconnect!
+      s3.buckets['chain-io'].objects[key].delete
     end
-
     ts = TariffSet.where(:label=>label).first
     assert_equal country, ts.country
     assert_equal 2, ts.tariff_set_records.size

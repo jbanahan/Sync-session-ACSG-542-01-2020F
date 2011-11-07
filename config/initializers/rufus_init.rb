@@ -58,7 +58,7 @@ def execute_scheduler
   #launch listener for jobs from integration server
   if Rails.env == 'production'
     scheduler.in '1s' do
-      OpenChain::IntegrationClient.go
+     OpenChain::IntegrationClient.go MasterSetup.get.system_code
     end
   end
 
@@ -99,6 +99,7 @@ def execute_scheduler
     end
   end
 
+=begin
   scheduler.every("3m") do
     job_wrapper "FTP Sweeper" do
       if_active_server do
@@ -117,6 +118,7 @@ def execute_scheduler
       end
     end
   end
+=end
 end
 
 # Create the main logger and set some useful variables.

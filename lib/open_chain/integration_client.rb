@@ -1,13 +1,23 @@
+require 'aws-sdk'
 module OpenChain
   class IntegrationClient
-    def self.go remote_server, registration_port, system_code
-      client = OpenChain::ZmqIntegrationClientConnection.new
-      p = client.get_responder_port "tcp://#{remote_server}:#{registration_port}", system_code
-      client.connect_to_responder "tcp://#{remote_server}:#{p}"
-      r = true
-      while r
-        r = client.next_command do |cmd|
-          IntegrationClientCommandProcessor.process_command cmd
+    def self.go system_code
+      sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
+      q = sqs.queues.create system_code
+      in_memory_queue = []
+      running = true
+      while running
+        while q.visible_messages > 0
+          q.receive_message do |m|
+            in_memory_queue << m
+            m.delete
+          end
+        end
+        in_memory_queue.sort! {|x,y| x.sent_timestamp <=> y.sent_timestamp}
+        in_memory_queue.each do |m|
+          cmd = JSON.parse m.body
+          r = IntegrationClientCommandProcessor.process_command cmd
+          running = false if r=='shutdown'
         end
       end
     end
@@ -47,6 +57,7 @@ module OpenChain
       return {'response_type'=>'remote_file','status'=>status_msg}
     end
 
+    # expects path like /username/to_chain/module/search_name/file.ext
     def self.process_imported_file command, file
       dir, fname = Pathname.new(command['path']).split
       folder_list = dir.to_s.split('/')
@@ -63,53 +74,6 @@ module OpenChain
       return "Imported file could not be save: #{imp.errors.full_messages.join("\n")}" unless imp.errors.blank?
       imp.process user, {:defer=>true}
       return "success"
-    end
-  end
-
-  class ZmqIntegrationClientConnection
-    # Internally used socket for getting commands from server, set by connect_to_responder
-    attr_reader :responder_socket
-
-    # Get the port number from the server that should be used for the REP connection
-    def get_responder_port registration_server_uri, my_system_code
-      ctx = ZMQ::Context.new
-      s = ctx.socket ZMQ::REQ
-      s.connect registration_server_uri
-      begin
-        request_content = {:request_type=>'register',:instance_name=>my_system_code}.to_json
-        s.send_string request_content
-        response_hash = ActiveSupport::JSON.decode s.recv_string
-        bp = response_hash['bound_port']
-        if bp
-          return bp
-        else
-          raise "Error registering with integration server: #{response_hash}"
-        end
-      ensure
-        s.close
-      end
-    end
-
-    def connect_to_responder uri
-      ctx = ZMQ::Context.new
-      @responder_socket = ctx.socket ZMQ::REP
-      @responder_socket.connect uri
-    end
-
-    #return a hash with the next command from the server
-    #optionally pass in a socket if you haven't called connect_to_responder
-    #the block will be passed the hash sent from the server and must return a hash that will be sent back to the server as json
-    def next_command socket=nil
-      s = socket ? socket : @responder_socket
-      raise "Cannot get next Integration Server command: Socket not set." unless s 
-      r = yield(ActiveSupport::JSON.decode s.recv_string)
-      s.send_string r.to_json
-      r!='shutdown'
-    end
-
-    #close the socket if it exists
-    def close
-      @responder_socket.close if @responder_socket
     end
   end
 end

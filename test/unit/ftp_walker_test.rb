@@ -42,6 +42,9 @@ class FtpWalkerTest < ActiveSupport::TestCase
       ftp.passive = true
       ftp.login settings['user'], settings['password']
       ftp.chdir "/#{ms.system_code}/#{u.username}/to_chain/shipment/#{s.name}"
+      #clear anything that is there before putting
+      ftp.nlst.each {|f| ftp.delete f}
+
       ftp.puttextfile tmp
 
       FtpWalker.new.go
@@ -49,6 +52,7 @@ class FtpWalkerTest < ActiveSupport::TestCase
       file_list = ftp.nlst
       assert file_list.length==0, "File list should have been empty, was #{file_list.to_s}"
     ensure
+      ftp.nlst.each {|f| ftp.delete f}
       ftp.close
     end
 

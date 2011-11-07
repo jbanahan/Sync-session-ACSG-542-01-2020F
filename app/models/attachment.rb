@@ -1,10 +1,10 @@
 class Attachment < ActiveRecord::Base
   has_attached_file :attached,
-    :storage => :s3,
-    :s3_credentials => "#{Rails.root}/config/s3.yml",
-    :s3_permissions => :private,
-    :path => "#{MasterSetup.get.uuid}/attachment/:id/:filename",
-    :bucket => 'chain-io'
+    :storage => :fog,
+    :fog_credentials => FOG_S3,
+    :fog_public => false,
+    :fog_directory => 'chain-io',
+    :url => "#{MasterSetup.get.uuid}/attachment/:id/:filename"
   before_post_process :no_post
   
   belongs_to :uploaded_by, :class_name => "User"
