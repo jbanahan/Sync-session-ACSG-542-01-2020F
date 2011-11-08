@@ -32,6 +32,9 @@ describe OpenChain::S3 do
     after(:each) do
       OpenChain::S3.delete @bucket, @key
     end
+    it 'should get data' do
+      OpenChain::S3.get_data(@bucket,@key).should == @content
+    end
     it 'should round trip a file to tempfile' do
       new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key
       File.exist?(new_tempfile.path).should be_true

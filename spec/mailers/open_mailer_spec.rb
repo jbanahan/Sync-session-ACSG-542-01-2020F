@@ -14,7 +14,7 @@ describe OpenMailer do
       @s3_content = 'some content here'
       
       #mock s3 handling
-      AWS::S3::S3Object.should_receive(:value).with(@s3_path,@bucket).and_return(@s3_content)
+      OpenChain::S3.should_receive(:get_data).with(@bucket,@s3_path).and_return(@s3_content)
     end
     it 'should attach file from s3' do
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path).deliver

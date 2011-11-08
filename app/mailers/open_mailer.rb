@@ -73,7 +73,7 @@ class OpenMailer < ActionMailer::Base
   # Send a file that is currently on s3
   def send_s3_file current_user, to, cc, subject, body_text, bucket, s3_path, attachment_name=nil
     a_name = attachment_name.blank? ? s3_path.split('/').last : attachment_name
-    attachments[a_name] = AWS::S3::S3Object.value s3_path, bucket
+    attachments[a_name] = OpenChain::S3.get_data bucket, s3_path 
     @user = current_user
     @body_text = body_text
     mail(:to=>to, :cc=>cc, :reply_to=>current_user.email, :subject => subject) do |format|

@@ -6,10 +6,13 @@ module OpenChain
     def self.upload_file bucket, key, file
       AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].write(:file=>file.path)
     end
+    def self.get_data bucket, key
+      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].read
+    end
     def self.download_to_tempfile bucket, key
       t = Tempfile.new('iodownload')
       t.binmode
-      t.write AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].read
+      t.write OpenChain::S3.get_data bucket, key
       t.flush
       t
     end
