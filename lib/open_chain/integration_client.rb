@@ -2,18 +2,22 @@ require 'aws-sdk'
 require 'open_chain/s3'
 module OpenChain
   class IntegrationClient
-    def self.go system_code
+    def self.go system_code, shutdown_if_not_schedule_server = false
       sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
       q = sqs.queues.create system_code
       running = true
       while running
         begin
           in_memory_queue = []
-          while q.visible_messages > 0
-            q.receive_message do |m|
-              in_memory_queue << m
-              m.visibility_timeout = 300 # 5 minutes
+          if ScheduleServer.active_schedule_server?
+            while q.visible_messages > 0
+              q.receive_message do |m|
+                in_memory_queue << m
+                m.visibility_timeout = 300 # 5 minutes
+              end
             end
+          elsif shutdown_if_not_schedule_server
+            running = false
           end
           in_memory_queue.sort! {|x,y| x.sent_timestamp <=> y.sent_timestamp}
           in_memory_queue.each do |m|
@@ -26,6 +30,7 @@ module OpenChain
         rescue
           $!.log_me
         end
+        sleep 5
       end
     end
   end
