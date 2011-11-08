@@ -85,24 +85,19 @@ class ImportedFile < ActiveRecord::Base
     end
     ((self.starting_row-1)..client.last_row_number(0)).each do |row_number|
       row = client.get_row 0, row_number
-      object_hash = {} #database objects for this row
-      key_column_hash.each do |core_module,search_column|
-        cell = OpenChain::XLClient.find_cell_in_row row, search_column.rank
-        if cell
-          #set the value in the object hash to the object in the database that matches this row by the key column
-          obj = SearchCriterion.new(:model_field_uid=>search_column.model_field_uid,:operator=>"eq",:value=>cell['value']).apply(Kernel.const_get(core_module.class_name)).first
-          object_hash[core_module] = obj
-        end
-      end
+      top_criterion = make_search_criterion(module_chain.first,key_column_hash[module_chain.first],row)
+      k = top_criterion.apply module_chain.first.klass
+      search_criterions = [top_criterion]
+      used_modules.each {|ch| search_criterions << make_search_criterion(ch,key_column_hash[ch],row)}
+      values = GridMaker.single_row k.first, self.search_columns, search_criterions, module_chain
       self.search_columns.each_with_index do |sc,i|
-        if !sc.key_column?
-          obj = object_hash[sc.model_field.core_module]
-          value = obj ? sc.model_field.process_export(obj) : ""
-          client.set_cell(0,row_number,sc.rank,value)
+        if !sc.key_column? && sc.model_field_uid!='_blank'
+          v = values[sc.rank]
+          v = "" if v.nil?
+          client.set_cell(0,row_number,sc.rank,v)
         end
       end
     end
-
     target_location = "#{MasterSetup.get.uuid}/updated_imported_files/#{self.user_id}/#{Time.now.to_i}.#{self.attached_file_name.split('.').last}" 
     client.save target_location
     target_location
@@ -153,6 +148,16 @@ class ImportedFile < ActiveRecord::Base
   private
   def no_post
     false
+  end
+
+  #make the search criterion based on the key column and the excel row
+  def make_search_criterion core_module, column, row
+    cell = OpenChain::XLClient.find_cell_in_row row, column.rank
+    val = ''
+    if cell
+      val = cell['value'].respond_to?('strip') ? cell['value'].strip : cell['value']
+    end
+    return SearchCriterion.new(:model_field_uid=>column.model_field_uid,:operator=>'eq',:value=>val)
   end
 
   def import_search_columns

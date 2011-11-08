@@ -44,7 +44,8 @@ describe ImportedFile do
         p2 = Factory(:product,:name=>"p2name")
         p3 = Factory(:product,:name=>"p3name")
         @xlc.should_receive(:last_row_number).and_return(2)
-        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname1","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p1.unique_identifier,"datatype"=>"string"}}])
+        #first row has extra whitespace that should be stripped
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname1","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>" #{p1.unique_identifier} ","datatype"=>"string"}}])
         @xlc.should_receive(:get_row).with(0,1).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname2","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p2.unique_identifier,"datatype"=>"string"}}])
         @xlc.should_receive(:get_row).with(0,2).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname3","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p3.unique_identifier,"datatype"=>"string"}}])
         @xlc.should_receive(:set_cell).with(0,0,0,p1.name)
@@ -107,8 +108,10 @@ describe ImportedFile do
 
       it 'should update tariff level items' do
         ["prod_uid","class_cntry_iso","hts_line_number","hts_hts_1"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
-        p = Factory(:product)
         ctry = Factory(:country)
+        bad_product = Factory(:product)
+        bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4,:hts_1=>'0984717191')
+        p = Factory(:product)
         c = p.classifications.create!(:country_id=>ctry.id)
         t = c.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
         @xlc.should_receive(:last_row_number).and_return(0)

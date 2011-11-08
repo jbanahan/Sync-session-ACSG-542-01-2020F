@@ -1,6 +1,13 @@
 #generates grids from search results
 class GridMaker
 
+  #returns an array of for the object given in the same order as the given model fields
+  def self.single_row object, model_fields, search_criterions, module_chain
+    r = []
+    GridMaker.new([object],model_fields,search_criterions,module_chain).go {|v,o| r = v}
+    r
+  end
+
   def initialize(base_objects,model_field_list,search_criterion_list,module_chain)
     @objs = base_objects
     @fields = model_field_list

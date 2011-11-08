@@ -89,7 +89,7 @@ class SearchCriterion < ActiveRecord::Base
           return value_to_test
         end
       end  
-    elsif [:decimal, :integer].include? d
+    elsif [:decimal, :integer, :fixnum].include? d
       self_val = number_value d, self.value
       if self.operator == "eq"
         return value_to_test == self_val
