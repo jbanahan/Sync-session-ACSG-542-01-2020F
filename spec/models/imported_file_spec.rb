@@ -122,6 +122,16 @@ describe ImportedFile do
         @xlc.should_receive(:set_cell).with(0,0,3,"1234567890")
         @imported_file.make_updated_file
       end
+      it 'should handle products alone, even with child fields' do
+        ["prod_uid","class_cntry_iso","hts_line_number","hts_hts_1"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        @xlc.should_receive(:last_row_number).and_return(0)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>'X',"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>'US',"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>'1',"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
+        @xlc.should_receive(:set_cell).with(0,0,3,"")
+        @imported_file.make_updated_file
+      end
     end
   end
 

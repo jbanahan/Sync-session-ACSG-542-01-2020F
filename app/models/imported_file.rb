@@ -89,7 +89,7 @@ class ImportedFile < ActiveRecord::Base
       k = top_criterion.apply module_chain.first.klass
       search_criterions = [top_criterion]
       used_modules.each {|ch| search_criterions << make_search_criterion(ch,key_column_hash[ch],row)}
-      values = k.blank? ? [] : GridMaker.single_row k.first, self.search_columns, search_criterions, module_chain
+      values = k.first.nil? ? [] : GridMaker.single_row(k.first, self.search_columns, search_criterions, module_chain)
       self.search_columns.each_with_index do |sc,i|
         if !sc.key_column? && sc.model_field_uid!='_blank'
           v = values[sc.rank]
