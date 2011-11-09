@@ -1,5 +1,6 @@
 class LinkableAttachment < ActiveRecord::Base
   has_one :attachment, :as => :attachable, :dependent => :destroy
+  has_many :linked_attachments
 
   validates :model_field_uid, :presence => true
   validates :value, :presence => true
@@ -18,6 +19,17 @@ class LinkableAttachment < ActiveRecord::Base
   def model_field
     mf = ModelField.find_by_uid(self.model_field_uid)
     mf
+  end
+
+  def can_view? user
+    r = false
+    linked_attachments.each do |linked|
+      if linked.attachable.can_view? user
+        r = true
+        break
+      end
+    end
+    r
   end
 
   private
