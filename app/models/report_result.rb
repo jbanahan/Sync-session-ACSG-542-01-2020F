@@ -9,7 +9,7 @@ class ReportResult < ActiveRecord::Base
     :fog_credentials => FOG_S3,
     :fog_public => false,
     :fog_directory => 'chain-io',
-    :url => "#{MasterSetup.get.uuid}/report_result/:id/:filename"
+    :path => "#{MasterSetup.get.uuid}/report_result/:id/:filename"
   before_post_process :no_post
 
   scope :eligible_for_purge, where('run_at < ?',PURGE_WEEKS.weeks.ago)

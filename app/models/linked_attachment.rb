@@ -27,6 +27,7 @@ class LinkedAttachment < ActiveRecord::Base
   # Returns any LinkedAttachments that were created or an empty array
   def self.create_from_attachable a
     r = []
+    return r unless a.id > 0 #check to make sure it's in the DB in case the delayed job is fired after a transaction fails
     module_model_field_keys = CoreModule.find_by_object(a).model_fields.keys.collect{|k| k.to_s}
     all_model_fields = (module_model_field_keys & LinkableAttachment.model_field_uids)
     all_model_fields.in_groups_of(10).each do |mfuid_ary|

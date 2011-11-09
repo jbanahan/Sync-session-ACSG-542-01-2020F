@@ -1,21 +1,14 @@
 class Delivery < ActiveRecord::Base
   
-	include CustomFieldSupport
-  include ShallowMerger
-  include EntitySnapshotSupport
-	
+  include CoreObjectSupport
+
   belongs_to  :carrier, :class_name => "Company"
   belongs_to  :customer,  :class_name => "Company"
   belongs_to  :ship_from, :class_name => "Address"
   belongs_to  :ship_to, :class_name => "Address"
   
-  has_many   :histories, :dependent => :destroy
   has_many   :sales_order_lines, :through => :piece_sets
-  has_many   :comments, :as => :commentable, :dependent => :destroy
-  has_many   :attachments, :as => :attachable, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
-  has_many   :linked_attachment, :as => :attachable, :dependent => :destroy
-  has_many   :linkable_attachments, :through => :linked_attachment
 
   validates :customer, :presence => true
   validates :reference, :presence => true

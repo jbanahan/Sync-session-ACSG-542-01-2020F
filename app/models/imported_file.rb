@@ -12,7 +12,7 @@ class ImportedFile < ActiveRecord::Base
     :fog_credentials => FOG_S3,
     :fog_public => false,
     :fog_directory => 'chain-io',
-    :url => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/imported_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
+    :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/imported_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
   before_post_process :no_post
   
   belongs_to :search_setup

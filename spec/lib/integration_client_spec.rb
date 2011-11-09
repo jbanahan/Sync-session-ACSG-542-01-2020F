@@ -15,6 +15,9 @@ describe OpenChain::IntegrationClient do
     end
   end
   it 'should connect, start processing commands, and shutdown' do
+    #
+    # This will occasionlly fail when SQS returns the messages out of order, not sure how to accomodate
+    #
     cmd_one = {:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}
     cmd_shutdown = {:request_type=>'shutdown'}
     remote_file_response = {'response_type'=>'remote_file','status'=>'ok'}
@@ -36,18 +39,22 @@ describe OpenChain::IntegrationClientCommandProcessor do
   context 'request type: remote_file' do
     before(:each) do
       @t = Tempfile.new('t')
+      @t.write 'abcdefg'
+      @t.flush
       @success_hash = {'response_type'=>'remote_file','status'=>'success'}
       OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
     end
     it 'should create linkable attachment if linkable attachment rule match' do
-      LinkableAttachmentImportRule.should_receive(:import).with(@t.path,'this.csv','/path/to').and_return(LinkableAttachment.new)
+      LinkableAttachmentImportRule.create!(:path=>'/path/to',:model_field_uid=>'prod_uid')
       cmd = {'request_type'=>'remote_file','path'=>'/path/to/this.csv','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      attachment = LinkableAttachment.last
+      attachment.attachment.attached_file_name.should == 'this.csv'
     end
     it 'should return error if linkable attachment cannot be created' do
       failed_attachment = LinkableAttachment.new
       failed_attachment.errors[:base] = 'errmsg'
-      LinkableAttachmentImportRule.should_receive(:import).with(@t.path,'this.csv','/path/to').and_return(failed_attachment)
+      LinkableAttachmentImportRule.should_receive(:import).with(@t,'this.csv','/path/to').and_return(failed_attachment)
       cmd = {'request_type'=>'remote_file','path'=>'/path/to/this.csv','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {'response_type'=>'error','message'=>'errmsg'}
     end

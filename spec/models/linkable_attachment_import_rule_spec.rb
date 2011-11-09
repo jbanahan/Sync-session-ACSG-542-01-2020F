@@ -41,8 +41,10 @@ describe LinkableAttachmentImportRule do
         end
         it 'should create linkable attachment' do
           @result.should be_a LinkableAttachment
+          @result.id.should > 0
         end
         it 'should attach file' do
+          @result.attachment.id.should > 0
           @result.attachment.attached_file_name.should == @original_file_name
         end
         it 'should set model field uid' do

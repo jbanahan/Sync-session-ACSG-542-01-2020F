@@ -1,8 +1,5 @@
 class Shipment < ActiveRecord::Base
-	include CustomFieldSupport
-  include ShallowMerger
-  include EntitySnapshotSupport
-	
+  include CoreObjectSupport	
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"
 	belongs_to	:ship_from,	:class_name => "Address"
@@ -10,12 +7,6 @@ class Shipment < ActiveRecord::Base
 	
 	has_many   :shipment_lines, :dependent => :destroy
   has_many   :piece_sets, :through=>:shipment_lines
-  has_many   :histories, :dependent => :destroy
-  has_many   :comments, :as => :commentable, :dependent => :destroy
-  has_many   :item_change_subscriptions, :dependent => :destroy
-  has_many   :attachments, :as => :attachable, :dependent => :destroy
-  has_many   :linked_attachment, :as => :attachable, :dependent => :destroy
-  has_many   :linkable_attachments, :through => :linked_attachment
 
   validates  :vendor, :presence => true
 	validates  :reference, :presence => true

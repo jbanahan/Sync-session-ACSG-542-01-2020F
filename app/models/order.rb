@@ -1,8 +1,5 @@
 class Order < ActiveRecord::Base
-  include CustomFieldSupport
-  include ShallowMerger
-  include EntitySnapshotSupport
-
+  include CoreObjectSupport
   belongs_to :division
 	belongs_to :vendor,  :class_name => "Company"
 	belongs_to :ship_to, :class_name => "Address"
@@ -10,13 +7,7 @@ class Order < ActiveRecord::Base
 	validates  :vendor, :presence => true
 	
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number'
-	has_many   :histories, :dependent => :destroy
-	has_many   :item_change_subscriptions, :dependent => :destroy
-  has_many   :comments, :as => :commentable, :dependent => :destroy
-  has_many   :attachments, :as => :attachable, :dependent => :destroy 	
 	has_many   :piece_sets, :through => :order_lines
-  has_many   :linked_attachments, :as => :attachable, :dependent => :destroy
-  has_many   :linkable_attachments, :through => :linked_attachments
 
 	def related_shipments
 	  r = Set.new

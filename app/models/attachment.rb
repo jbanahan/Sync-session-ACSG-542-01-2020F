@@ -4,7 +4,7 @@ class Attachment < ActiveRecord::Base
     :fog_credentials => FOG_S3,
     :fog_public => false,
     :fog_directory => 'chain-io',
-    :url => "#{MasterSetup.get.uuid}/attachment/:id/:filename"
+    :path => "#{MasterSetup.get.uuid}/attachment/:id/:filename"
   before_post_process :no_post
   
   belongs_to :uploaded_by, :class_name => "User"
@@ -16,8 +16,7 @@ class Attachment < ActiveRecord::Base
   end
   
   def secure_url(expires_in=10.seconds)
-    options = {:expires_in => expires_in, :use_ssl => true}
-    AWS::S3::S3Object.url_for attached.path, attached.options[:bucket], options
+    AWS::S3.new(AWS_CREDENTIAL).buckets[attached.options.fog_directory].objects[attached.path].url_for(:read,expires=>expires_in,:secure=>true).to_s
   end
   
   private

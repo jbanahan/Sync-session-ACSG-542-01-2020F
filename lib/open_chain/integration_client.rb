@@ -56,7 +56,7 @@ module OpenChain
         def t.original_filename=(fn); @fn = fn; end
         def t.original_filename; @fn; end
         t.original_filename= fname.to_s
-        linkable = LinkableAttachmentImportRule.import t.path, fname.to_s, dir.to_s
+        linkable = LinkableAttachmentImportRule.import t, fname.to_s, dir.to_s
         if linkable
           if linkable.errors.blank?
             status_msg = 'success'
