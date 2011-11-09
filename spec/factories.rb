@@ -84,3 +84,5 @@ Factory.define :file_import_result do |f|
   f.association :imported_file
   f.association :run_by, :factory => :user
 end
+Factory.define :custom_file do |f|
+end
