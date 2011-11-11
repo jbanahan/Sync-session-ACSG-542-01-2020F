@@ -1,6 +1,17 @@
 require 'spec_helper'
 
 describe CustomFile do
+  context 'security' do
+    it 'should delegate view to handler' do
+      handler = mock "handler"
+      handler.should_receive(:can_view?).twice.and_return(true,false)
+      cf = CustomFile.new
+      cf.should_receive(:handler).twice.and_return(handler)
+      u = User.new
+      cf.can_view?(u).should be_true
+      cf.can_view?(u).should be_false
+    end
+  end
   context 'attachment handling' do
     before :each do
       @data = Time.now.to_s

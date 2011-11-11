@@ -5,13 +5,8 @@ module OpenChain
     # Create a client with the Patron::Session 
     def initialize path, session=nil  
       @path = path
-      @session = session
-      if @session.nil?
-        @session = Patron::Session.new
-        @session.timeout = 10
-        @session.base_url = YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']
-        @session.headers['Content-Type'] = 'text/json'
-      end
+      base_url = "#{YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']}/process"
+      @uri = URI(base_url)
     end
 
     # Send the given command Hash to the server and return a Hash with the response
@@ -19,11 +14,16 @@ module OpenChain
       json = command.to_json 
       r = {'errors'=>'Client error: did not successfully receive server response.'}
       begin
-        server_response = @session.post('/process',json).body
-        r = JSON.parse server_response
+        req = Net::HTTP::Post.new(@uri.path)
+        req.body = json
+        res = Net::HTTP.start(@uri.host,@uri.port) do |http|
+          http.request req
+        end
+        r = JSON.parse res.body
       rescue
         puts $!
-        r = {'errors'=>"Communications error: #{$!.message}"}
+        puts $!.backtrace
+        r = {'errors'=>["Communications error: #{$!.message}"]}
       end
       r
     end
@@ -93,7 +93,8 @@ module OpenChain
     
     private
     def raise_error r
-      error_messages = r['errors'] ? r['errors'].join("\n") : "Unknown error finding last_row_number #{r}"
+      error_messages = "Error: " + r.to_s
+      error_messages= r['errors'].respond_to?('join') ? r['errors'].join("\n") : r['errors'].to_s if r['errors']
       raise error_messages
     end
     def determine_datatype value

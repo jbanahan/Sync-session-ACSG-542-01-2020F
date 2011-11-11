@@ -1,5 +1,10 @@
+require 'open_chain/custom_handler/polo_msl_plus_handler'
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
+  has_many :linked_products, :through=> :custom_file_records, :source=> :linked_object, :source_type=> 'Product'
+  has_many :linked_objects, :through => :custom_file_records
+  has_many :search_runs
+  belongs_to :uploaded_by, :class_name=>'User'
   has_attached_file :attached,
     :storage => :fog,
     :fog_credentials => FOG_S3,
@@ -11,6 +16,10 @@ class CustomFile < ActiveRecord::Base
   # process the attached file using the appropriate handler
   def process user
     handler.process user
+  end
+
+  def can_view? user
+    handler.can_view? user
   end
 
   # get the custom file handler that will process this file based on it's file_type

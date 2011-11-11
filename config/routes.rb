@@ -1,7 +1,6 @@
 OpenChain::Application.routes.draw do
 
   resources :linkable_attachment_import_rules
-
   resources :tariff_sets, :only => [:index]
   resources :entity_snapshots, :only => [:show]
   resources :instant_classifications do
@@ -80,6 +79,15 @@ OpenChain::Application.routes.draw do
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
   match "/public_fields/save" => "public_fields#save", :via => :post
+
+  #custom features
+  resources :custom_files, :only => :show
+  match "/custom_features" => "custom_features#index", :via => :get
+  match "/custom_features/msl_plus" => "custom_features#msl_plus_index", :via => :get
+  match "/custom_features/msl_plus/:id" => "custom_features#msl_plus_show", :via => :get 
+  match "/custom_features/msl_plus/upload" => "custom_features#msl_plus_upload", :via => :post
+  match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_show_email", :via => :get
+  match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_send_email", :via => :post
 
 
   #reports

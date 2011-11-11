@@ -61,6 +61,27 @@ class MasterSetup < ActiveRecord::Base
     m
   end
 
+  # checks to see if the given custom feature is in the custom features list
+  def custom_feature? feature
+    custom_features_list.include? feature
+  end
+  # get the custom features enabled for this system as an array
+  def custom_features_list
+    return [] if self.custom_features.blank?
+    return self.custom_features.split('\n')
+  end
+
+  # set the custom features enabled for this system by passing an array or a string
+  def custom_features_list= data
+    d = data
+    if data.respond_to? 'join'
+      d = data.join('\n')
+    elsif data.respond_to? 'gsub'
+      d = data.gsub('\r','\n')
+    end
+    self.custom_features = d
+  end
+
   private
   def update_cache
     CACHE.set CACHE_KEY, self

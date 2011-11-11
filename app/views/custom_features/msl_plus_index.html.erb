@@ -1,0 +1,17 @@
+<% content_for :javascript do %>
+  $(function() {$('#btn_upload').button();});
+<% end %>
+<h1>MSL+ Files</h1>
+<h2>Upload</h2>
+<%= form_tag '/custom_features/msl_plus/upload', :multipart => true do %>
+  <%= file_field_tag :attached %> <%=submit_tag 'Upload', :id=>'btn_upload' %>
+<% end %>
+<h2>Existing Files</h2>
+<table class='detail_table'>
+  <thead><tr><th>File Name</th><th>Uploaded By</th><th>Uploaded At</th></tr></thead>
+  <tbody>
+    <%@files.each do |f|%>
+      <tr><td><%=link_to f.attached_file_name, "/custom_features/msl_plus/#{f.id}"%></td><td><%=f.uploaded_by ? f.uploaded_by.full_name : ""%></td><td><%=f.created_at%></td></tr>
+    <%end%>
+  </tbody>
+</table>

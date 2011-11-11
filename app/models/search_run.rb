@@ -4,12 +4,14 @@ class SearchRun < ActiveRecord::Base
 
   belongs_to :search_setup
   belongs_to :imported_file
+  belongs_to :custom_file
 
   def self.find_last_run user, core_module
     SearchRun.
       joins("LEFT OUTER JOIN search_setups ON search_runs.search_setup_id = search_setups.id").
       joins("LEFT OUTER JOIN imported_files ON search_runs.imported_file_id = imported_files.id").
-      where("search_setups.module_type = :core_module OR imported_files.module_type = :core_module",:core_module=>core_module.class_name).
+      joins("LEFT OUTER JOIN custom_files ON search_runs.custom_file_id = custom_files.id").
+      where("search_setups.module_type = :core_module OR imported_files.module_type = :core_module OR custom_files.module_type = :core_module",:core_module=>core_module.class_name).
       where(:user_id=>user.id).
       order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
       readonly(false). #http://stackoverflow.com/questions/639171/what-is-causing-this-activerecordreadonlyrecord-error/3445029#3445029

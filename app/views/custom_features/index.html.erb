@@ -1,0 +1,8 @@
+<% enabled_features = MasterSetup.get.custom_features_list%>
+<%if enabled_features.blank?%>
+  There aren't any custom features enabled for this system.
+<% else %>
+<% end%>
+<%if enabled_features.include? 'MSL+'%>
+  <%=link_to "MSL+ Upload", '/custom_features/msl_plus'%>
+<%end%>

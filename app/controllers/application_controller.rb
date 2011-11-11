@@ -113,8 +113,10 @@ class ApplicationController < ActionController::Base
           render_search_results true #render without the results
         end
       end    
-    else
+    elsif last_run.imported_file
       redirect_to last_run.imported_file
+    else
+      redirect_to last_run.custom_file
     end
   end
 

@@ -1,0 +1,12 @@
+<%content_for :action_bar do%>
+  <button class='btn_link' link_to="/custom_features/msl_plus/<%=@file.id%>/email">Send File</button>
+<%end%>
+<h1>MSL+ File</h1>
+<table>
+  <%=field_row "File", @file.attached_file_name%>
+  <%=field_row "Uploaded By", @file.uploaded_by ? @file.uploaded_by.full_name : ""%>
+  <%=field_row "Uploaded At", @file.created_at%>
+</table>
+<h2>Products</h2>
+<%= render :partial => 'shared/search_results', :locals => {:bulk_actions=>@bulk_actions, :module_chain=>CoreModule::PRODUCT.default_module_chain, :columns=>@columns,
+  :criterions=>[], :objects=>@products, :item_count=>@file.linked_products.count, :search_run_id=>@search_run.id} %>

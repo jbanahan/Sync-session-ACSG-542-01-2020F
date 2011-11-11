@@ -20,6 +20,6 @@ module CoreObjectSupport
   end
 
   def process_linked_attachments
-    LinkedAttachment.delay.create_from_attachable self
+    LinkedAttachment.delay.create_from_attachable self unless LinkableAttachmentImportRule.count.zero?
   end
 end

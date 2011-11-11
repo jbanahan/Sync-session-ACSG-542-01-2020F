@@ -1,3 +1,4 @@
+require 'open_chain/xl_client'
 module OpenChain
   module CustomHandler
     class PoloMslPlusHandler
@@ -6,8 +7,13 @@ module OpenChain
         @custom_file = custom_file
       end
 
+      def can_view? user
+        user.edit_products?
+      end
+
       def process user
         errors = []
+        @custom_file.update_attributes(:module_type=>CoreModule::PRODUCT.class_name)
         @custom_file.custom_file_records.delete_all #not worrying about callbacks here
         x = OpenChain::XLClient.new(@custom_file.attached.path)
         last_row_number = x.last_row_number 0
@@ -44,6 +50,11 @@ module OpenChain
             end
           end
         end
+        msg_body ="File #{@custom_file.attached_file_name} has completed.<br/><br/>" 
+        msg_body << "There were #{errors.size} errors.<br/><br/>" unless errors.blank?
+        msg_body << "Click <a href='/custom_features/msl_plus/#{@custom_file.id}'>here</a> to see the results."
+        user.messages.create(:subject=>"MSL+ File Complete #{errors.blank? ? "" : "#{errors.size} ERRORS"}",
+          :body=>msg_body)
         errors
       end
 
