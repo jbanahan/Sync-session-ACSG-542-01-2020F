@@ -34,7 +34,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     email = ActionMailer::Base.deliveries.pop
     assert_equal "test@chain.io", email.to.first
     assert_equal "[chain.io] Product File Result", email.subject
-    assert_equal 1, email.attachments.size
+    assert_equal 1, email.postmark_attachments.size
 
   end
   test "make items file" do

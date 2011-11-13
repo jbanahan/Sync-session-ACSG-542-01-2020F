@@ -23,14 +23,19 @@ describe OpenMailer do
       mail.to.should == [@to]
       mail.cc.should == [@cc]
       mail.subject.should == @subject
-      mail.has_attachments?.should == true
-      mail.attachments.first.filename.should == @filename
+      mail.postmark_attachments.should have(1).item
+      pa = mail.postmark_attachments.first
+      pa["Name"].should == @filename
+      pa["Content"].should == Base64.encode64(@s3_content)
+      pa["ContentType"].should == "application/octet-stream"
     end
     it 'should take attachment_name parameter' do
       alt_name = 'x.y'
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path,alt_name).deliver
       mail = ActionMailer::Base.deliveries.pop
-      mail.attachments.first.filename.should == alt_name
+      mail.postmark_attachments.should have(1).item
+      pa = mail.postmark_attachments.first
+      pa["Name"].should == alt_name
     end
   end
 end

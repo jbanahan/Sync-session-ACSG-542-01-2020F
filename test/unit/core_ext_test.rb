@@ -32,7 +32,7 @@ class CoreExtTest < ActiveSupport::TestCase
     end
     sent_mail = ActionMailer::Base.deliveries.pop
     assert_equal "bug@aspect9.com", sent_mail.to.first
-    assert_equal 2, sent_mail.attachments.size
+    assert_equal 2, sent_mail.postmark_attachments.size
   end
 
   test "Exception email" do

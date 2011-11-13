@@ -143,7 +143,7 @@ describe ImportedFile do
         t = c.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
         c_2 = p.classifications.create!(:country_id=>ctry_2.id)
         t_2 = c_2.tariff_records.create!(:line_number=>4,:hts_1=>988777789)
-        @xlc.should_receive(:last_row_number).twice.and_return(0,1)
+        @xlc.should_receive(:last_row_number).exactly(3).times.and_return(0,0,1)
         @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
                                                             {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
                                                             {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},

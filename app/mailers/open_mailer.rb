@@ -56,7 +56,6 @@ class OpenMailer < ActionMailer::Base
   end
 
   def send_search_result(to,search_name,attachment_name,file_path)
-    debugger
     m = mail(:to => to,
       :subject => "[chain.io] #{search_name} Result",
       :from => 'do-not-reply@chain.io')

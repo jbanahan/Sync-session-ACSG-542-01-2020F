@@ -31,7 +31,8 @@ describe ImportedFilesController do
       ImportedFile.should_receive(:find).and_return(@file)
     end
     it 'should send file' do
-      @file.should_receive(:email_updated_file).with(@u,@to_address,'',@subject,@body)
+      @file.should_receive(:delay).and_return(@file)
+      @file.should_receive(:email_updated_file).with(@u,@to_address,'',@subject,@body,{})
       post :email_file, @params
       response.should redirect_to imported_file_path(@file)
       flash[:notices].should include "The file will be processed and sent shortly."
@@ -45,7 +46,8 @@ describe ImportedFilesController do
     end
     it 'should copy me, if checked' do
       @params[:cc] = 'yes'
-      @file.should_receive(:email_updated_file).with(@u,@to_address,@u.email,@subject,@body)
+      @file.should_receive(:delay).and_return(@file)
+      @file.should_receive(:email_updated_file).with(@u,@to_address,@u.email,@subject,@body,{})
       post :email_file, @params
     end
     it 'should not allow if you cannot view the file' do
