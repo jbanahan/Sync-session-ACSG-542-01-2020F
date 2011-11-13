@@ -64,6 +64,12 @@ class ImportedFilesController < ApplicationController
     f = ImportedFile.find params[:id]
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"email",:module_name=>"uploaded file"}) {
       @file = f
+      # if the search has tariff record columns, then give the option to include extra countries
+      include_extra_countries = false
+      @file.search_columns.each do |sc|
+        include_extra_countries = true if sc.model_field.core_module == CoreModule::TARIFF
+      end
+      @extra_countries = include_extra_countries ? Country.import_locations.sort_name : nil 
     }
   end
 
@@ -78,7 +84,9 @@ class ImportedFilesController < ApplicationController
       cc_address = params[:cc] ? current_user.email : ""
       subject = params[:subject].blank? ? "[chain.io] #{@file.core_module.label} data." : params[:subject]
       body = params[:body].blank? ? "#{current_user.full_name} has sent you the attached file from chain.io." : params[:body]
-      f.delay.email_updated_file current_user, params[:to], cc_address, subject, body
+      opts = {}
+      opts[:extra_country_ids] = params[:extra_countries] unless params[:extra_countries].blank?
+      f.delay.email_updated_file current_user, params[:to], cc_address, subject, body, opts
       add_flash :notices, "The file will be processed and sent shortly."
       redirect_to f
     }

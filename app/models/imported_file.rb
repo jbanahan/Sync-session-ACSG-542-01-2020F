@@ -68,12 +68,12 @@ class ImportedFile < ActiveRecord::Base
   end
 
   #email a new file that has in place updates to the original file with the current data in the database
-  def email_updated_file current_user, to, cc, subject, body
-    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', make_updated_file, self.attached_file_name).deliver!
+  def email_updated_file current_user, to, cc, subject, body, opts={}
+    OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', make_updated_file(opts), self.attached_file_name).deliver!
   end
 
   #create a new file that does in place updates on the original file with the current data in the database
-  def make_updated_file
+  def make_updated_file opts={}
     client = OpenChain::XLClient.new self.attached.path
     module_chain = self.core_module.default_module_chain 
     used_modules = Set.new
@@ -83,6 +83,34 @@ class ImportedFile < ActiveRecord::Base
       used_modules << cm
       key_column_hash[cm] = sc if sc.key_column?
     end
+
+    # clone tariff rows for extra countries
+    extra_countries = opts[:extra_country_ids]
+    unless extra_countries.blank?
+      country_columns = []
+      self.search_columns.each do |sc|
+        country_columns << sc if sc.key_column? && sc.model_field.core_module == CoreModule::CLASSIFICATION
+      end
+      base_last_row = client.last_row_number 0
+      extra_countries.each do |c_id|
+        ((self.starting_row-1)..base_last_row).each_with_index do |row_number,i|
+          current_last_row = client.last_row_number 0
+          new_row_number = current_last_row+i+1
+          client.copy_row 0, row_number, new_row_number 
+          country_columns.each do |cc|
+            val = ''
+            case cc.model_field_uid
+              when 'class_cntry_name'
+                val = Country.find(c_id).name
+              when 'class_cntry_iso'
+                val = Country.find(c_id).iso_code
+            end
+            client.set_cell(0,new_row_number,cc.rank,val)
+          end
+        end
+      end
+    end
+
     ((self.starting_row-1)..client.last_row_number(0)).each do |row_number|
       row = client.get_row 0, row_number
       top_criterion = make_search_criterion(module_chain.first,key_column_hash[module_chain.first],row)

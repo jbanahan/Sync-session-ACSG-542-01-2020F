@@ -106,7 +106,7 @@
     </td>
   </tr>
 </table>
-<% if @search_run %>
+<% if @file_import_result %>
   <%= render :partial=>'shared/search_results', :locals=>{:bulk_actions=>@bulk_actions, :module_chain=>@imported_file.core_module.default_module_chain,
     :columns=>@columns, :criterions=>[], :objects=>@changed_objects, :item_count=>@search_run.total_objects, :search_run_id=>@search_run.id} %>
 <% end %>

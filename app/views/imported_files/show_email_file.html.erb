@@ -9,4 +9,10 @@
     <%=field_row "Subject", text_field_tag(:subject, "[chain.io] #{@file.core_module.label} data.")%>
     <%=field_row "Body", text_area_tag(:body, "#{current_user.full_name} has sent you the attached file from chain.io.")%>
   </table>
+  <% unless @extra_countries.blank? %>
+    <h2>Add Countries To Sheet</h2>
+    <% @extra_countries.each do |c| %>
+      <%=check_box_tag 'extra_countries[]', c.id%> <%=c.name%><br />
+    <% end %>
+  <% end %>
 <% end %>

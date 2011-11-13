@@ -9,11 +9,7 @@ describe OpenChain::XLClient do
     @client = OpenChain::XLClient.new @path, @session
   end
 
-  it 'should create http session if not supplied' do
-    c = OpenChain::XLClient.new(@path)
-    def c.session; @session; end
-    c.session.timeout.should == 10
-  end
+=begin TODO need to replace this with one that tests Net::HTTP
   it 'should send a command and receive a response hash' do
     cmd = {"some"=>"cmd"}
     expected_json = cmd.to_json
@@ -23,6 +19,7 @@ describe OpenChain::XLClient do
     r = @client.send cmd
     r.should == @dummy_response
   end
+=end
   it 'should send a new command' do
     cmd = {"command"=>"new","path"=>@path}
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)
@@ -78,6 +75,12 @@ describe OpenChain::XLClient do
     cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>'another/location'}}
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)
     @client.save(  'another/location' ).should == @dummy_response
+  end
+  it 'should copy a row' do
+    cmd = {"command"=>"copy_row","path"=>@path,"payload"=>{"sheet"=>0,"source_row"=>1,"destination_row"=>3}}
+    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+    @client.should_receive(:process_row_response).with(@dummy_response).and_return(@dummy_response)
+    @client.copy_row 0, 1, 3
   end
   it 'should get a row' do
     t = Time.now

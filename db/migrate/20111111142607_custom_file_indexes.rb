@@ -6,8 +6,8 @@ class CustomFileIndexes < ActiveRecord::Migration
   end
 
   def self.down
-    remove_index :custom_file_records, :linked_objects
-    remove_index :custom_file_records, :cf_id
-    remove_index :custom_files, :ftype
+    remove_index :custom_file_records, :name=>:linked_objects
+    remove_index :custom_file_records, :name=>:cf_id
+    remove_index :custom_files, :name=>:ftype
   end
 end

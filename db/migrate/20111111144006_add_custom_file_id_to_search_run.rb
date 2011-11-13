@@ -5,7 +5,7 @@ class AddCustomFileIdToSearchRun < ActiveRecord::Migration
   end
 
   def self.down
-    remove_index :search_runs, :cf_id
+    remove_index :search_runs, :name=>'cf_id'
     remove_column :search_runs, :custom_file_id
   end
 end

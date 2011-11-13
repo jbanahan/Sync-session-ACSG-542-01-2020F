@@ -66,14 +66,13 @@ module OpenChain
     def get_row sheet, row
       c = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>sheet,"row"=>row}}
       r = send c
-      if r.is_a? Array
-        r.each do |cell_set|
-          cell_set['cell']['value'] = Time.at(cell_set['cell']['value']) if cell_set['cell']['datatype'] == "datetime"
-        end
-      else
-        raise_error r
-      end
-      r
+      process_row_response r
+    end
+
+    def copy_row sheet, source_row, destination_row
+      cmd = {'command'=>'copy_row','path'=>@path,'payload'=>{'sheet'=>sheet,'source_row'=>source_row,'destination_row'=>destination_row}}
+      r = send cmd
+      process_row_response r
     end
 
     # wraps the save command
@@ -92,6 +91,16 @@ module OpenChain
     end
     
     private
+    def process_row_response r
+      if r.is_a? Array
+        r.each do |cell_set|
+          cell_set['cell']['value'] = Time.at(cell_set['cell']['value']) if cell_set['cell']['datatype'] == "datetime"
+        end
+      else
+        raise_error r
+      end
+      r
+    end
     def raise_error r
       error_messages = "Error: " + r.to_s
       error_messages= r['errors'].respond_to?('join') ? r['errors'].join("\n") : r['errors'].to_s if r['errors']

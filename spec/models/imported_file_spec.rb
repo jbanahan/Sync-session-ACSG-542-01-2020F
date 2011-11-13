@@ -132,6 +132,32 @@ describe ImportedFile do
         @xlc.should_receive(:set_cell).with(0,0,3,"")
         @imported_file.make_updated_file
       end
+      it 'should add extra countries' do
+        ["prod_uid","class_cntry_iso","hts_line_number","hts_hts_1"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        ctry = Factory(:country)
+        ctry_2 = Factory(:country)
+        bad_product = Factory(:product)
+        bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4,:hts_1=>'0984717191')
+        p = Factory(:product)
+        c = p.classifications.create!(:country_id=>ctry.id)
+        t = c.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
+        c_2 = p.classifications.create!(:country_id=>ctry_2.id)
+        t_2 = c_2.tariff_records.create!(:line_number=>4,:hts_1=>988777789)
+        @xlc.should_receive(:last_row_number).twice.and_return(0,1)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
+        @xlc.should_receive(:copy_row).with(0,0,1)
+        @xlc.should_receive(:set_cell).with(0,1,1,ctry_2.iso_code)
+        @xlc.should_receive(:get_row).with(0,1).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry_2.iso_code,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
+        @xlc.should_receive(:set_cell).with(0,1,3,t_2.hts_1)
+        @xlc.should_receive(:set_cell).with(0,0,3,"1234567890")
+        @imported_file.make_updated_file :extra_country_ids=>[ctry_2.id]
+      end
     end
   end
 
