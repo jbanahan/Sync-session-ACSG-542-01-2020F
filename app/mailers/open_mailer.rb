@@ -89,7 +89,7 @@ class OpenMailer < ActionMailer::Base
     @user = current_user
     @body_text = body_text
     m = mail(:to=>to, :cc=>cc, :reply_to=>current_user.email, :subject => subject)
-    m.postmark_attachments => attachment
+    m.postmark_attachments = attachment
     m
   end
 
