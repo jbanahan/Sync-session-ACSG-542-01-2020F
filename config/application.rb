@@ -51,5 +51,11 @@ module OpenChain
         ActiveSupport::Dependencies.mechanism = :load 
       end 
     end
+
+    config.action_mailer.delivery_method = :postmark
+    
+    email_settings = YAML::load(File.open("#{::Rails.root.to_s}/config/email.yml"))
+    postmark_api_key = email_settings[::Rails.env][:postmark_api_key] unless email_settings[::Rails.env].nil?
+    config.action_mailer.postmark_settings = { :api_key => postmark_api_key }
   end
 end

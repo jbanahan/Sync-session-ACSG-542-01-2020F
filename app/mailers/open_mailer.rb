@@ -56,31 +56,55 @@ class OpenMailer < ActionMailer::Base
   end
 
   def send_search_result(to,search_name,attachment_name,file_path)
-    attachments[attachment_name] = File.read file_path
-    mail(:to => to, :subject => "[chain.io] #{search_name} Result") do |format|
-      format.text
-    end
+    debugger
+    m = mail(:to => to,
+      :subject => "[chain.io] #{search_name} Result",
+      :from => 'do-not-reply@chain.io')
+    m.postmark_attachments = {
+      "Name"        => file_path.split('/').last,
+      "Content"     => Base64.encode64(File.read(file_path)),
+      "ContentType" => "application/octet-stream"
+    }
+    m
   end
 
   def send_uploaded_items(to,imported_file,data,current_user)
-    attachments[imported_file.attached_file_name] = data
     @current_user = current_user
-    mail(:to=>to, :reply_to=>current_user.email, :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result") do |format|
-      format.text
-    end
+    attachment = {"Name" => imported_file.attached_file_name,
+      "Content" => [data].pack("m"),
+      "ContentType" => "application/octet-stream"}
+    
+    m = mail(:to=>to,
+      :reply_to=>current_user.email,
+      :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
+    m.postmark_attachments = attachment
+    m
   end
 
   # Send a file that is currently on s3
   def send_s3_file current_user, to, cc, subject, body_text, bucket, s3_path, attachment_name=nil
     a_name = attachment_name.blank? ? s3_path.split('/').last : attachment_name
-    attachments[a_name] = OpenChain::S3.get_data bucket, s3_path 
+    t = OpenChain::S3.download_to_tempfile bucket, s3_path
+    attachment = {"Name" => a_name, "Content" => Base64.encode64(File.read(t.path)),"ContentType"=> "application/octet-stream"}
     @user = current_user
     @body_text = body_text
-    mail(:to=>to, :cc=>cc, :reply_to=>current_user.email, :subject => subject) do |format|
-      format.text
-    end
+    m = mail(:to=>to, :cc=>cc, :reply_to=>current_user.email, :subject => subject)
+    m.postmark_attachments => attachment
+    m
   end
 
+  def send_message(message)
+    @message = message
+    @messages_url = ''
+    if @message.user.host_with_port
+      @messages_url = messages_url(:host => @message.user.host_with_port)
+    end
+    
+    mail(:to => message.user.email, :subject => "[chain.io] New Message - #{message.subject}") do |format|
+      format.html
+    end
+  end
+  
 #ERROR EMAILS
   def send_search_fail(to,search_name,error_message,ftp_server,ftp_username,ftp_subfolder)
     @search_name = search_name
@@ -118,10 +142,13 @@ class OpenMailer < ActionMailer::Base
     @backtrace = backtrace ? backtrace : e.backtrace
     @backtrace = [] unless @backtrace
     @additional_messages = additional_messages
+    attachment_files = []
     attachment_paths.each do |ap|
-      attachments[File.basename(ap)] = File.read(ap) if File.exists? ap
+      attachment_files << File.open(ap) if File.exists?(ap)
     end
-    mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - #{@error_message}") do |format|
+    mail(:to=>"bug@aspect9.com",
+      :subject =>"[chain.io Exception] - #{@error_message}",
+      :postmark_attachments => attachment_files) do |format|
       format.text
     end
   end

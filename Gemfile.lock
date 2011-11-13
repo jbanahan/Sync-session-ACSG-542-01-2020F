@@ -101,8 +101,12 @@ GEM
       activesupport (>= 2.3.2)
       cocaine (>= 0.0.2)
       mime-types
-    patron (0.4.16)
     polyglot (0.3.2)
+    postmark (0.9.8)
+    postmark-rails (0.4.1)
+      actionmailer
+      postmark (>= 0.9.0)
+      rake
     rack (1.2.3)
     rack-mount (0.6.14)
       rack (>= 1.0.0)
@@ -182,7 +186,7 @@ DEPENDENCIES
   mysql2 (= 0.2.8)
   newrelic_rpm (= 3.0.1)
   paperclip (= 2.4.5)
-  patron (~> 0.4.16)
+  postmark-rails (= 0.4.1)
   rails (= 3.0.8)
   rspec-rails (= 2.6)
   ruby-debug19 (= 0.11.6)

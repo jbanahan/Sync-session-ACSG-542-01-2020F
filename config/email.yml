@@ -1,13 +1,4 @@
 development:
-  :address: mail.authsmtp.com
-  :port: 23 # 23, 26, 2525 or 25
-  :authentication: plain
-  :user_name: ac55256
-  :password: xypbavh3ymznef
-  :enable_starttls_auto: false
+  :postmark_api_key: 40b1d84f-de58-4ce6-9872-579a7ae8cf38
 production:
-  :address: domU-12-31-39-04-F2-54.compute-1.internal # Private DNS to util1 EC2 instance
-  :port: 25
-#  :authentication: plain
-#  :user_name: bglick231
-#  :password: soldpack
+  :postmark_api_key: 40b1d84f-de58-4ce6-9872-579a7ae8cf38

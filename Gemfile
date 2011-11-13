@@ -18,9 +18,9 @@ gem 'rufus-scheduler', '2.0.8'
 gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
 gem 'delayed_job', '2.1.4'
 gem 'dalli', '1.0.5'
-gem 'patron', "~> 0.4.16"
 gem 'ffi', '~> 1.0.9'
 gem 'ffi-rzmq', '~> 0.8.0'
+gem 'postmark-rails', '0.4.1'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', :group=>[:development,:test]
 group :test do

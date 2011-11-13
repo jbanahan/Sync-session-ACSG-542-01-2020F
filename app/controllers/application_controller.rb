@@ -42,6 +42,7 @@ class ApplicationController < ActionController::Base
         include Singleton
         include ActionView::Helpers::TextHelper
         include ActionView::Helpers::UrlHelper
+        include ActionView::Helpers::SanitizeHelper
     end
 
   def master_setup

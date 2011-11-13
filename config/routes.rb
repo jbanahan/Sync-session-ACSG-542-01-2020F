@@ -79,6 +79,7 @@ OpenChain::Application.routes.draw do
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
   match "/public_fields/save" => "public_fields#save", :via => :post
+  match "/users/email_new_message" => "users#email_new_message"
 
   #custom features
   resources :custom_files, :only => :show
@@ -105,7 +106,7 @@ OpenChain::Application.routes.draw do
 
   resources :worksheet_configs
   
-  resources :messages, :only => [:index, :destroy] do
+  resources :messages, :only => [:index, :new, :create, :destroy] do
     member do
       get 'read'
     end
