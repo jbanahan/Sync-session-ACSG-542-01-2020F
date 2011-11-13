@@ -11,7 +11,7 @@ class SettingsController < ApplicationController
   end
 
   def tools
-
+    render :layout=>'one_col'
   end
 
 end
