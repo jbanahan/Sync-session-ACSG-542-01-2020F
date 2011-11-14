@@ -138,24 +138,44 @@ describe ImportedFile do
         ctry_2 = Factory(:country)
         bad_product = Factory(:product)
         bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4,:hts_1=>'0984717191')
-        p = Factory(:product)
-        c = p.classifications.create!(:country_id=>ctry.id)
-        t = c.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
-        c_2 = p.classifications.create!(:country_id=>ctry_2.id)
-        t_2 = c_2.tariff_records.create!(:line_number=>4,:hts_1=>988777789)
-        @xlc.should_receive(:last_row_number).exactly(3).times.and_return(0,0,1)
-        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
+        
+        p_a = Factory(:product)
+        c_a = p_a.classifications.create!(:country_id=>ctry.id)
+        t_a = c_a.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
+        c_a_2 = p_a.classifications.create!(:country_id=>ctry_2.id)
+        t_a_2 = c_a_2.tariff_records.create!(:line_number=>4,:hts_1=>'988777789')
+
+        p_b = Factory(:product)
+        c_b = p_b.classifications.create!(:country_id=>ctry.id)
+        t_b = c_b.tariff_records.create(:line_number=>4,:hts_1=>'0987654321')
+        c_b_2 = p_b.classifications.create!(:country_id=>ctry_2.id)
+        t_b_2 = c_b_2.tariff_records.create!(:line_number=>4,:hts_1=>'44444444')
+
+        @xlc.should_receive(:last_row_number).exactly(4).times.and_return(1,1,2,3)
+        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_a.unique_identifier,"datatype"=>"string"}},
                                                             {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_a.line_number,"datatype"=>"number"}},
                                                             {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        @xlc.should_receive(:copy_row).with(0,0,1)
-        @xlc.should_receive(:set_cell).with(0,1,1,ctry_2.iso_code)
-        @xlc.should_receive(:get_row).with(0,1).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
+        @xlc.should_receive(:get_row).with(0,1).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_b.unique_identifier,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_b.line_number,"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
+        @xlc.should_receive(:copy_row).with(0,0,2)
+        @xlc.should_receive(:copy_row).with(0,1,3)
+        @xlc.should_receive(:set_cell).with(0,2,1,ctry_2.iso_code)
+        @xlc.should_receive(:set_cell).with(0,3,1,ctry_2.iso_code)
+        @xlc.should_receive(:get_row).with(0,2).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_a.unique_identifier,"datatype"=>"string"}},
                                                             {"position"=>{"column"=>1},"cell"=>{"value"=>ctry_2.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_a.line_number,"datatype"=>"number"}},
                                                             {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        @xlc.should_receive(:set_cell).with(0,1,3,t_2.hts_1)
-        @xlc.should_receive(:set_cell).with(0,0,3,"1234567890")
+        @xlc.should_receive(:get_row).with(0,3).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_b.unique_identifier,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry_2.iso_code,"datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_b.line_number,"datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
+        @xlc.should_receive(:set_cell).with(0,0,3,t_a.hts_1)
+        @xlc.should_receive(:set_cell).with(0,1,3,t_b.hts_1)
+        @xlc.should_receive(:set_cell).with(0,2,3,t_a_2.hts_1)
+        @xlc.should_receive(:set_cell).with(0,3,3,t_b_2.hts_1)
         @imported_file.make_updated_file :extra_country_ids=>[ctry_2.id]
       end
     end

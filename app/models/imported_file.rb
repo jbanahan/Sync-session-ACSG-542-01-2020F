@@ -95,7 +95,7 @@ class ImportedFile < ActiveRecord::Base
       extra_countries.each do |c_id|
         ((self.starting_row-1)..base_last_row).each_with_index do |row_number,i|
           current_last_row = client.last_row_number 0
-          new_row_number = current_last_row+i+1
+          new_row_number = current_last_row+1
           client.copy_row 0, row_number, new_row_number 
           country_columns.each do |cc|
             val = ''
