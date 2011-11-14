@@ -7,8 +7,7 @@ class CreateBrokerInvoiceLines < ActiveRecord::Migration
       t.decimal :charge_amount
       t.string :vendor_name
       t.string :vendor_reference
-      t.boolean :billable
-
+      t.string :charge_type
       t.timestamps
     end
 
