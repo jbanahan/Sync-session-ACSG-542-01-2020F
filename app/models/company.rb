@@ -58,6 +58,9 @@ class Company < ActiveRecord::Base
 
 
   #permissions
+  def view_entries?
+    return master_setup.entry_enabled && (self.master?)
+  end
   def view_orders?
     return master_setup.order_enabled && (self.master? || self.vendor?)
   end

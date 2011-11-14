@@ -549,6 +549,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder)
     ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine)
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery)
+    ModelField.add_custom_fields(CoreModule::ENTRY,Entry)
     @@last_loaded = Time.now
     Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_cache_time
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
@@ -578,6 +579,24 @@ class ModelField
       [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
+    add_fields CoreModule::ENTRY, [
+      [1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}],
+      [2,:ent_entry_num,:entry_number,"Entry Number",{:data_type=>:string}],
+      [3,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
+      [4,:ent_comp_num,:company_number,"Broker Company Number",{:data_type=>:string}],
+      [5,:ent_div_num,:division_number,"Broker Division Number",{:data_type=>:string}],
+      [6,:ent_cust_num,:customer_number,"Customer Number",{:data_type=>:string}],
+      [7,:ent_cust_name,:customer_name,"Customer Name",{:data_type=>:string}],
+      [8,:ent_type,:entry_type,"Entry Type",{:data_type=>:string}],
+      [9,:ent_arrival_date,:arrival_date,"Arrival Date",{:data_type=>:datetime}],
+      [10,:ent_filed_date,:entry_filed_date,"Entry Filed Date",{:data_type=>:datetime}],
+      [11,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
+      [12,:ent_first_release,:first_release_date,"First Release Date",{:data_type=>:datetime}],
+      [13,:ent_free_date,:free_date,"Free Date",{:data_type=>:datetime}],
+      [14,:ent_last_billed_date,:last_billed_date,"Last Bill Issued Date",{:data_type=>:datetime}],
+      [15,:ent_invoice_paid_date,:invoice_paid_date,"Invoice Paid Date",{:data_type=>:datetime}],
+      [16,:ent_liq_date,:liquidation_date,"Liquidation Date",{:data_type=>:datetime}]
+    ]
     add_fields CoreModule::PRODUCT, [
       [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
       [2,:prod_ent_type,:name,"Product Type",{:entity_type_field=>true,

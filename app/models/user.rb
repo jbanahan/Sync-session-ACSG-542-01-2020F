@@ -12,6 +12,7 @@ class User < ActiveRecord::Base
     :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
     :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
     :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
+    :entry_view,
     :classification_view, :classification_edit
   
   belongs_to :company
@@ -90,6 +91,9 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_entries?
+    return self.entry_view? && self.company.view_entries?
+  end
   def view_orders?
     return self.order_view? && self.company.view_orders? 
   end

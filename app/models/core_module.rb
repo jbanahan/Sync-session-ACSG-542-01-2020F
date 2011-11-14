@@ -280,8 +280,13 @@ class CoreModule
       :unique_id_field_name=>:prod_uid,
       :key_model_field_uids => [:prod_uid]
   })
+  ENTRY = new("Entry","Entry",{
+    :default_search_columns => [:ent_brok_ref,:ent_entry_num,:ent_release_date],
+    :unique_id_field_name=>:ent_brok_ref,
+    :key_mode_field_uids=>[:ent_brok_ref]
+  })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
-  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF]
+  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF,ENTRY]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
@@ -294,6 +299,7 @@ class CoreModule
   set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   set_default_module_chain SALE, [SALE,SALE_LINE]
   set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
+  set_default_module_chain ENTRY, [ENTRY]
   
   def self.find_by_class_name(c,case_insensitive=false)
     CORE_MODULES.each do|m|

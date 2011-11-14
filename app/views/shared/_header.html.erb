@@ -117,6 +117,9 @@
         .parent()
           .buttonset()<%end%>;
        <% end %>
+    <% if current_user.view_entries?%>
+      $("#btn_entries").button().click(function() {window.location = '<%=entries_path%>?force_search=true';})
+    <% end %>
   });
   <% end %>
   <%= yield :javascript%>
@@ -176,6 +179,9 @@
           <button id='btn_new_delivery'>New Delivery</button>
         <%end%>
       <%end%>      
+      <%if current_user.view_entries?%>
+        <button id='btn_entries' title='Search for entries'>Entries</button>
+      <%end%>
     </div> <!--close linkbar-->
   <% end %>
 </div>

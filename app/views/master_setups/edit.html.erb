@@ -36,6 +36,7 @@ $(function() {
   <%=field_row "Sale Enabled", f.check_box(:sales_order_enabled) %>
   <%=field_row "Delivery Enabled", f.check_box(:delivery_enabled) %>
   <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
+  <%=field_row "Entry Enabled", f.check_box(:entry_enabled)%>
   <%=field_row "Custom Features", f.text_area(:custom_features)%>
   <% ss = ScheduleServer.first %>
   <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})"%>

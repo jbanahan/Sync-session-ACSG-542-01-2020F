@@ -1,6 +1,6 @@
 class ModelFieldsController < ApplicationController
   def find_by_module_type
-    if ["Product","SalesOrder","SalesOrderLine","Delivery","Shipment","Order","OrderLine","OfficialTariff"].include? params[:module_type]
+    if ["Product","SalesOrder","SalesOrderLine","Delivery","Shipment","Order","OrderLine","OfficialTariff","Entry"].include? params[:module_type]
       model_fields = ModelField.sort_by_label(CoreModule.find_by_class_name(params[:module_type]).model_fields_including_children.values)
       mfs = custom_hash_for_json model_fields
       respond_to do |format|
