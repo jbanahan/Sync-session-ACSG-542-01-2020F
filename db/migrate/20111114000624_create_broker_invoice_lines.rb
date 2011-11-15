@@ -4,7 +4,7 @@ class CreateBrokerInvoiceLines < ActiveRecord::Migration
       t.integer :broker_invoice_id
       t.string :charge_code
       t.string :charge_description
-      t.decimal :charge_amount
+      t.decimal :charge_amount, :precision => 11, :scale => 2
       t.string :vendor_name
       t.string :vendor_reference
       t.string :charge_type

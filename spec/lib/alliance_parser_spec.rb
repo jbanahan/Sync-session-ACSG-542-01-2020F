@@ -122,7 +122,35 @@ describe OpenChain::AllianceParser do
     inv.bill_to_zip.should == @inv_b_zip
     inv.bill_to_country.should == @country
   end
-  it 'should update invoice'
+  it 'should update invoice' do
+    # first invoice
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
+    ent = Entry.first
+    ent.broker_invoices.should have(1).invoice
+    inv = ent.broker_invoices.first
+    inv.suffix.should == @inv_suffix
+    inv.invoice_total.should == @inv_total
+
+    #second invoice (update)
+    @inv_total = BigDecimal("99.09",2)
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
+    ent = Entry.first
+    ent.broker_invoices.should have(1).invoice
+    inv = ent.broker_invoices.first
+    inv.suffix.should == @inv_suffix
+    inv.invoice_total.should == @inv_total
+  end
+  it 'should add invoice with different suffix' do
+    entry = @make_entry_lambda.call
+    inv_1 = @make_invoice_lambda.call
+    @inv_suffix = '02'
+    inv_2 = @make_invoice_lambda.call
+    OpenChain::AllianceParser.parse [entry,inv_1,inv_2].join("\n")
+    ent = Entry.first
+    ent.broker_invoices.should have(2).invoices
+    ent.broker_invoices.where(:suffix=>'01').should have(1).invoice
+    ent.broker_invoices.where(:suffix=>'02').should have(1).invoice
+  end
   it 'should create invoice lines' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
@@ -135,6 +163,26 @@ describe OpenChain::AllianceParser do
       line.charge_description.should == src[:desc]
       line.charge_amount.should == src[:amt]
       line.vendor_name.should == src[:v_name]
+      line.vendor_reference.should == src[:v_ref]
+      line.charge_type.should == src[:type]
+    end
+  end
+  it 'should rebuild invoice lines on invoice update' do
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
+    @invoice_lines.each {|src| src[:desc] = "newdesc"}
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
+    ent = Entry.first
+    ent.broker_invoices.should have(1).invoice
+    inv = ent.broker_invoices.first
+    lines = inv.broker_invoice_lines
+    lines.should have(@invoice_lines.size).lines
+    @invoice_lines.each do |src|
+      line = inv.broker_invoice_lines.where(:charge_code=>src[:code]).first
+      line.charge_description.should == src[:desc]
+      line.charge_amount.should == src[:amt]
+      line.vendor_name.should == src[:v_name]
+      line.vendor_reference.should == src[:v_ref]
+      line.charge_type.should == src[:type]
     end
   end
 end

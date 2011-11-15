@@ -56,8 +56,11 @@ module OpenChain
         def t.original_filename=(fn); @fn = fn; end
         def t.original_filename; @fn; end
         t.original_filename= fname.to_s
-        linkable = LinkableAttachmentImportRule.import t, fname.to_s, dir.to_s
-        if linkable
+        if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
+          OpenChain::AllianceParser.parse IO.read t.path
+          status_msg = 'success'
+          response_type = 'remote_file'
+        elsif linkable = LinkableAttachmentImportRule.import(t, fname.to_s, dir.to_s)
           if linkable.errors.blank?
             status_msg = 'success'
             response_type = 'remote_file'

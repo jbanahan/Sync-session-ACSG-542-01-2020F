@@ -26,26 +26,28 @@ module OpenChain
     end
 
     def parse_entry rows
-      rows.each do |r|
-        break if @skip_entry
-        prefix = r[0,4]
-        case prefix
-          when "SH00"
-            process_sh00 r
-          when "SD00"
-            process_sd00 r
-          when "IH00"
-            process_ih00 r
-          when "IT00"
-            process_it00 r
+      Entry.transaction do 
+        rows.each do |r|
+          break if @skip_entry
+          prefix = r[0,4]
+          case prefix
+            when "SH00"
+              process_sh00 r
+            when "SD00"
+              process_sd00 r
+            when "IH00"
+              process_ih00 r
+            when "IT00"
+              process_it00 r
+            when "IL00"
+              process_il00 r
+          end
         end
-      end
-      if !@skip_entry
-        Entry.transaction do 
-          @entry.save! if @entry
+        if !@skip_entry
+            @entry.save! if @entry
         end
+        @skip_entry = false
       end
-      @skip_entry = false
     end
 
     private 
@@ -88,6 +90,20 @@ module OpenChain
       @invoice.bill_to_state = r[223,2].strip
       @invoice.bill_to_zip = r[225,9].strip
       @invoice.bill_to_country = Country.find_by_iso_code(r[234,2]) unless r[234,2].strip.blank?
+      @invoice.save! unless @invoice.id.blank? #save existing that are updated
+      @invoice.broker_invoice_lines.destroy_all
+    end
+
+    # invoice line
+    def process_il00 r
+      line = @invoice.broker_invoice_lines.build
+      line.charge_code = r[4,4].strip
+      line.charge_description = r[8,35].strip
+      line.charge_amount = parse_currency r[43,11]
+      line.vendor_name = r[54,30].strip
+      line.vendor_reference = r[84,15].strip
+      line.charge_type = r[99,1]
+      line.save unless @invoice.id.blank?
     end
 
     # invoice trailer
@@ -102,7 +118,7 @@ module OpenChain
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
     end
     def parse_currency str
-      BigDecimal.new str.insert(-3,".")
+      BigDecimal.new str.insert(-3,"."), 2
     end
   end
 end
