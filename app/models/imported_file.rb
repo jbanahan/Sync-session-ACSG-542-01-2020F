@@ -183,7 +183,7 @@ class ImportedFile < ActiveRecord::Base
     cell = OpenChain::XLClient.find_cell_in_row row, column.rank
     val = ''
     if cell
-      val = cell['value'].respond_to?('strip') ? cell['value'].strip : cell['value']
+      val = cell['value'].respond_to?('strip') ? cell['value'].strip : cell['value'].to_s
     end
     return SearchCriterion.new(:model_field_uid=>column.model_field_uid,:operator=>'eq',:value=>val)
   end
