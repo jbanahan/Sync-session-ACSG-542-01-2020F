@@ -280,13 +280,28 @@ class CoreModule
       :unique_id_field_name=>:prod_uid,
       :key_model_field_uids => [:prod_uid]
   })
+  BROKER_INVOICE_LINE = new("BrokerInvoiceLine","Broker Invoice Line",{
+    :changed_at_parents_labmda => lambda {|p| p.broker_invoice.nil? ? [] : [p.broker_invoice]},
+    :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
+    :unique_id_field_name=>:bi_line_charge_code,
+    :key_model_field_uids=>[:bi_line_charge_code]
+  })
+  BROKER_INVOICE = new("BrokerInvoice","Broker Invoice",{
+    :default_search_columns => [:bi_brok_ref,:bi_suffix,:bi_invoice_date,:bi_invoice_total],
+    :unique_id_field_name => :bi_suffix,
+    :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
+    :key_model_field_uids=>[:bi_brok_ref,:bi_suffix],
+    :children => [BROKER_INVOICE_LINE],
+    :child_lambdas => {BROKER_INVOICE_LINE => lambda {|i| i.broker_invoice_lines}},
+    :child_joins => {BROKER_INVOICE_LINE => "LEFT OUTER JOIN broker_invoice_lines on broker_invoices.id = broker_invoice_lines.broker_invoice_id"}
+  })
   ENTRY = new("Entry","Entry",{
     :default_search_columns => [:ent_brok_ref,:ent_entry_num,:ent_release_date],
     :unique_id_field_name=>:ent_brok_ref,
-    :key_mode_field_uids=>[:ent_brok_ref]
+    :key_model_field_uids=>[:ent_brok_ref]
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
-  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF,ENTRY]
+  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
@@ -300,6 +315,7 @@ class CoreModule
   set_default_module_chain SALE, [SALE,SALE_LINE]
   set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
   set_default_module_chain ENTRY, [ENTRY]
+  set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
   
   def self.find_by_class_name(c,case_insensitive=false)
     CORE_MODULES.each do|m|

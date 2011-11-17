@@ -52,6 +52,15 @@ describe OpenChain::AllianceParser do
       rows << i_trailer
       rows.join("\n")
     }
+    @si_lines = [
+      {:mbol=>'MAEU12345678',:it=>'123456789',:hbol=>'H325468',:sub=>'S19148kf'},
+      {:mbol=>'OOCL81851511',:it=>'V58242151',:hbol=>'H35156181',:sub=>'S5555555'}
+    ]
+    @make_si_lambda = lambda {
+      rows = []
+      @si_lines.each {|h| rows << "SI00#{h[:it].ljust(12)}#{h[:mbol].ljust(16)}#{h[:hbol].ljust(12)}#{h[:sub].ljust(12)}"}
+      rows.join("\n")
+    }
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
   end
   it 'should create entry' do
@@ -105,6 +114,25 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     Entry.count.should == 1
     Entry.first.customer_number.should == old_cust_num
+  end
+  it 'should populate entry header tracking fields' do
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
+    Entry.count.should == 1
+    ent = Entry.first
+    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n")
+    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n")
+    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n")
+    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n")
+  end
+  it 'should replace entry header tracking fields' do
+    Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs')
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
+    Entry.count.should == 1
+    ent = Entry.first
+    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n")
+    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n")
+    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n")
+    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n")
   end
   it 'should create invoice' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"

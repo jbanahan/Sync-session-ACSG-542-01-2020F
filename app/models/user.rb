@@ -13,6 +13,7 @@ class User < ActiveRecord::Base
     :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
     :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
     :entry_view,
+    :broker_invoice_view,
     :classification_view, :classification_edit
   
   belongs_to :company
@@ -91,6 +92,9 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_broker_invoices?
+    return self.broker_invoice_view && self.company.view_broker_invoices?
+  end
   def view_entries?
     return self.entry_view? && self.company.view_entries?
   end

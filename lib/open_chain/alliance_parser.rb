@@ -41,9 +41,15 @@ module OpenChain
               process_it00 r
             when "IL00"
               process_il00 r
+            when "SI00"
+              process_si00 r
           end
         end
         if !@skip_entry
+            @entry.it_numbers = @it_numbers.nil? ? "" : @it_numbers.join("\n")
+            @entry.master_bills_of_lading = @mbols.nil? ? "" : @mbols.join("\n")
+            @entry.house_bills_of_lading = @hbols.nil? ? "" : @hbols.join("\n")
+            @entry.sub_house_bills_of_lading = @sub_bols.nil? ? "" : @sub_bols.join("\n")
             @entry.save! if @entry
         end
         @skip_entry = false
@@ -109,6 +115,22 @@ module OpenChain
     # invoice trailer
     def process_it00 r
       @invoice = nil
+    end
+
+    # tracking numbers
+    def process_si00 r
+      @mbols ||= []
+      @hbols ||= []
+      @sub_bols ||= []
+      @it_numbers ||= []
+      it_number = r[4,12].strip
+      mbol = r[16,16].strip
+      hbol = r[32,12].strip
+      sub = r[44,12].strip
+      @it_numbers << it_number unless it_number.blank?
+      @mbols << mbol unless mbol.blank?
+      @hbols << hbol unless hbol.blank?
+      @sub_bols << sub unless sub.blank?
     end
 
     def parse_date str

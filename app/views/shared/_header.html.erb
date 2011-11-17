@@ -120,6 +120,9 @@
     <% if current_user.view_entries?%>
       $("#btn_entries").button().click(function() {window.location = '<%=entries_path%>?force_search=true';})
     <% end %>
+    <% if current_user.view_broker_invoices?%>
+      $("#btn_invoices").button().click(function() {window.location = '<%=broker_invoices_path%>?force_search=true';})
+    <% end %>
   });
   <% end %>
   <%= yield :javascript%>
@@ -181,6 +184,9 @@
       <%end%>      
       <%if current_user.view_entries?%>
         <button id='btn_entries' title='Search for entries'>Entries</button>
+      <%end%>
+      <%if current_user.view_broker_invoices?%>
+        <button id='btn_invoices' title='Search for invoices'>Invoices</button>
       <%end%>
     </div> <!--close linkbar-->
   <% end %>
