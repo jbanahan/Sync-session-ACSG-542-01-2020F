@@ -95,7 +95,7 @@ class ImportedFile < ActiveRecord::Base
       extra_countries.each do |c_id|
         ((self.starting_row-1)..base_last_row).each_with_index do |row_number,i|
           current_last_row = client.last_row_number 0
-          new_row_number = current_last_row+i+1
+          new_row_number = current_last_row+1
           client.copy_row 0, row_number, new_row_number 
           country_columns.each do |cc|
             val = ''
@@ -183,7 +183,12 @@ class ImportedFile < ActiveRecord::Base
     cell = OpenChain::XLClient.find_cell_in_row row, column.rank
     val = ''
     if cell
-      val = cell['value'].respond_to?('strip') ? cell['value'].strip : cell['value']
+      if cell['datatype']=='number' && column.model_field.data_type==:string && cell['value'].to_s.end_with?('.0')
+        v = cell['value'].to_s
+        val = v[0,v.length-2]
+      else
+        val = cell['value'].respond_to?('strip') ? cell['value'].strip : cell['value'].to_s
+      end
     end
     return SearchCriterion.new(:model_field_uid=>column.model_field_uid,:operator=>'eq',:value=>val)
   end

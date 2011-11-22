@@ -3,10 +3,9 @@ require 'spec_helper'
 describe OpenChain::XLClient do
 
   before :each do 
-    @session = mock "httpsession"
     @path = 'somepath'
     @dummy_response = {"my"=>"response"}
-    @client = OpenChain::XLClient.new @path, @session
+    @client = OpenChain::XLClient.new @path
   end
 
 =begin TODO need to replace this with one that tests Net::HTTP

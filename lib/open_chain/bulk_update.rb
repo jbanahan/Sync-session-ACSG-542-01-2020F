@@ -16,8 +16,10 @@ module OpenChain
           if p.can_classify?(current_user)
             Product.transaction do
               good_count = gc if good_count.nil?
-              #reset classifications
-              p.classifications.destroy_all
+              #destroy all classifications for countries passed in the hash
+              params['product']['classifications_attributes'].each do |k,v|
+                p.classifications.where(:country_id=>v['country_id']).destroy_all
+              end
               success = lambda {|o| }
               failure = lambda {|o,errors|
                 good_count += -1

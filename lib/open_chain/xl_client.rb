@@ -2,15 +2,17 @@
 module OpenChain
   # Client to communicate with XLServer
   class XLClient
-    # Create a client with the Patron::Session 
-    def initialize path, session=nil  
+  
+    def initialize path 
       @path = path
+      @session_id = "#{MasterSetup.get.uuid}-#{Process.pid}" #should be unqiue enough
       base_url = "#{YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']}/process"
       @uri = URI(base_url)
     end
 
     # Send the given command Hash to the server and return a Hash with the response
     def send command
+      command['session'] = @session_id
       json = command.to_json 
       r = {'errors'=>'Client error: did not successfully receive server response.'}
       begin
