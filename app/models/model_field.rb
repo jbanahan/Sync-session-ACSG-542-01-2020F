@@ -633,7 +633,7 @@ class ModelField
           inv.bill_to_country_id = cntry.id
           "Bill to Country set to #{data}"
         },
-        :export_lambda=> lambda {|inv| inv.bill_to_country_id.blank? ? "" : inv.country.iso_code},
+        :export_lambda=> lambda {|inv| inv.bill_to_country_id.blank? ? "" : inv.bill_to_country.iso_code},
         :join_statement => "LEFT OUTER JOIN countries as bi_country on bi_country.id = broker_invoices.bill_to_country_id"
       }],
       make_broker_invoice_entry_field(15,:bi_mbols,:master_bills_of_lading,"Master Bills",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.master_bills_of_lading}),
