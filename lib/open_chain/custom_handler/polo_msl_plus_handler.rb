@@ -35,6 +35,8 @@ module OpenChain
               cell_map[:fiber] = v
             when 28
               cell_map[:gcc] = v
+            when 45
+              cell_map[:msl_hts] = v
             end
           end
           if cell_map[:style].blank?
@@ -48,6 +50,7 @@ module OpenChain
               set_custom_value p, 'Season', cell_map[:season]
               set_custom_value p, 'Fiber Content %s', cell_map[:fiber]
               set_custom_value p, 'GCC Description', cell_map[:gcc]
+              set_custom_value p, 'MSL+ HTS Description', cell_map[:msl_hts]
               @custom_file.custom_file_records.create!(:linked_object=>p)
               p.create_snapshot user
             end

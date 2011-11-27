@@ -31,9 +31,9 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
       before :each do
         #make custom fields
         @cd_hash = {}
-        ["Board Number","Season","Fiber Content %s","GCC Description"].each {|label| @cd_hash[label] = Factory(:custom_definition,:label=>label,:module_type=>'Product')}
+        ["Board Number","Season","Fiber Content %s","GCC Description","MSL+ HTS Description"].each {|label| @cd_hash[label] = Factory(:custom_definition,:label=>label,:module_type=>'Product')}
 
-        @data = [{:style=>'abcdefg',:board=>'bn123',:season=>'SUM11',:name=>'afja',:fiber=>'123j213l',:gcc=>'gcc1'},
+        @data = [{:style=>'abcdefg',:board=>'bn123',:season=>'SUM11',:name=>'afja',:fiber=>'123j213l',:gcc=>'gcc1',:msl_hts=>'1235'},
           {:style=>'',:board=>'something'},
           {:style=>'qfiafla',:board=>'bzzz',:season=>'SPR12',:name=>'fdskj',:fiber=>'kjflfad',:gcc=>'gcc3'}
           ]
@@ -44,7 +44,8 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>9},'cell'=>{'value'=>d[:season],'datatype'=>'string'}},
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>20},'cell'=>{'value'=>d[:name],'datatype'=>'string'}},
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>21},'cell'=>{'value'=>d[:fiber],'datatype'=>'string'}},
-            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>28},'cell'=>{'value'=>d[:gcc],'datatype'=>'string'}}
+            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>28},'cell'=>{'value'=>d[:gcc],'datatype'=>'string'}},
+            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>45},'cell'=>{'value'=>d[:msl_hts],'datatype'=>'string'}}
           ]
           @xlc.should_receive(:get_row).with(0,i+4).and_return(r)
         end
@@ -57,7 +58,7 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
           result = Product.where(:unique_identifier=>d[:style],:name=>d[:name])
           result.should have(1).product
           p = result.first
-          sym_label = {:board=>"Board Number",:season=>"Season",:fiber=>"Fiber Content %s",:gcc=>"GCC Description"}
+          sym_label = {:board=>"Board Number",:season=>"Season",:fiber=>"Fiber Content %s",:gcc=>"GCC Description",:msl_hts=>"MSL+ HTS Description"}
           sym_label.each {|k,v| p.get_custom_value(@cd_hash[v]).value.should == d[k]}
         end
       end
