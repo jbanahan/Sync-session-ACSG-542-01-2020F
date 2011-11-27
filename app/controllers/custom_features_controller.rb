@@ -44,7 +44,9 @@ class CustomFeaturesController < ApplicationController
   def msl_plus_upload
     f = CustomFile.new(:file_type=>MSL_PLUS,:uploaded_by=>current_user,:attached=>params[:attached])
     action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"MSL+ File",:lock_check=>false}) {
-      if f.save
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
         f.delay.process(current_user)
         add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
       else
