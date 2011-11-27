@@ -84,8 +84,7 @@ class ReportResult < ActiveRecord::Base
   end
 
   def secure_url(expires_in=10.seconds)
-    options = {:expires_in => expires_in, :use_ssl => true}
-    AWS::S3::S3Object.url_for report_data.path, report_data.options[:bucket], options
+    AWS::S3.new(AWS_CREDENTIALS).buckets[report_data.options.fog_directory].objects[report_data.path].url_for(:read,:expires=>expires_in,:secure=>true).to_s
   end
 
   private
