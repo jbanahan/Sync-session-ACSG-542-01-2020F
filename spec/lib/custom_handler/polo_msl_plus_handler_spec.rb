@@ -31,11 +31,11 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
       before :each do
         #make custom fields
         @cd_hash = {}
-        ["Board Number","Season","Fiber Content %s"].each {|label| @cd_hash[label] = Factory(:custom_definition,:label=>label,:module_type=>'Product')}
+        ["Board Number","Season","Fiber Content %s","GCC Description"].each {|label| @cd_hash[label] = Factory(:custom_definition,:label=>label,:module_type=>'Product')}
 
-        @data = [{:style=>'abcdefg',:board=>'bn123',:season=>'SUM11',:name=>'afja',:fiber=>'123j213l'},
+        @data = [{:style=>'abcdefg',:board=>'bn123',:season=>'SUM11',:name=>'afja',:fiber=>'123j213l',:gcc=>'gcc1'},
           {:style=>'',:board=>'something'},
-          {:style=>'qfiafla',:board=>'bzzz',:season=>'SPR12',:name=>'fdskj',:fiber=>'kjflfad'}
+          {:style=>'qfiafla',:board=>'bzzz',:season=>'SPR12',:name=>'fdskj',:fiber=>'kjflfad',:gcc=>'gcc3'}
           ]
         @data.each_with_index do |d,i|
           r = [
@@ -43,7 +43,8 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>12},'cell'=>{'value'=>d[:board],'datatype'=>'string'}},
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>9},'cell'=>{'value'=>d[:season],'datatype'=>'string'}},
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>20},'cell'=>{'value'=>d[:name],'datatype'=>'string'}},
-            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>21},'cell'=>{'value'=>d[:fiber],'datatype'=>'string'}}
+            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>21},'cell'=>{'value'=>d[:fiber],'datatype'=>'string'}},
+            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>28},'cell'=>{'value'=>d[:gcc],'datatype'=>'string'}}
           ]
           @xlc.should_receive(:get_row).with(0,i+4).and_return(r)
         end
@@ -56,7 +57,7 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
           result = Product.where(:unique_identifier=>d[:style],:name=>d[:name])
           result.should have(1).product
           p = result.first
-          sym_label = {:board=>"Board Number",:season=>"Season",:fiber=>"Fiber Content %s"}
+          sym_label = {:board=>"Board Number",:season=>"Season",:fiber=>"Fiber Content %s",:gcc=>"GCC Description"}
           sym_label.each {|k,v| p.get_custom_value(@cd_hash[v]).value.should == d[k]}
         end
       end
@@ -123,6 +124,7 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
         height = '10'
         width = '11'
         length = '12'
+        gcc_desc = 'gcc'
         iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR']
         countries = {}
         expected_writes = [[29,'YES'],[44,name],[45,fiber],[119,height],[120,length],[121,width]]

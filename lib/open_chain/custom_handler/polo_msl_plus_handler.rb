@@ -33,6 +33,8 @@ module OpenChain
               cell_map[:name] = v
             when 21
               cell_map[:fiber] = v
+            when 28
+              cell_map[:gcc] = v
             end
           end
           if cell_map[:style].blank?
@@ -45,6 +47,7 @@ module OpenChain
               set_custom_value p, 'Board Number', cell_map[:board]
               set_custom_value p, 'Season', cell_map[:season]
               set_custom_value p, 'Fiber Content %s', cell_map[:fiber]
+              set_custom_value p, 'GCC Description', cell_map[:gcc]
               @custom_file.custom_file_records.create!(:linked_object=>p)
               p.create_snapshot user
             end
