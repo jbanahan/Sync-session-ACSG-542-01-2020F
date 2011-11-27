@@ -2,7 +2,8 @@ require 'spec_helper'
 
 describe OpenChain::AllianceParser do
   before :each do
-    @ref_num ='0000364690' 
+    @ref_num ='00364690' 
+    @entry_number = '316000364690'
     @cust_num = "NJEAN"
     @extract_date_str = "201002190115"
     @company_number = '01'
@@ -18,7 +19,7 @@ describe OpenChain::AllianceParser do
     @invoice_paid_date_str = '201101031442'
     @liquidation_date_str = '201104021522'
     @make_entry_lambda = lambda {
-      sh00 = "SH00#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}samples                                                               IDID000004701470140#{@entry_type}316003646907NJEAN     NAUTICA MENS JEANS DIV VF SPORTS   EY  00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       000000000001CTNS  0000000000050000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
+      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}samples                                                               IDID000004701470140#{@entry_type}#{@entry_number}NJEAN     NAUTICA MENS JEANS DIV VF SPORTS   EY  00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       000000000001CTNS  0000000000050000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       sd_entry_filed = "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
       sd_release = "SD0000019#{@release_date_str}200904061633Release Release Date                                                "
@@ -67,6 +68,7 @@ describe OpenChain::AllianceParser do
     file_content = @make_entry_lambda.call
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
+    ent.entry_number.should == @entry_number
     ent.customer_number.should == @cust_num
     ent.last_exported_from_source.should == @est.parse(@extract_date_str)
     ent.company_number.should == @company_number
@@ -81,6 +83,8 @@ describe OpenChain::AllianceParser do
     ent.last_billed_date.should == @est.parse(@last_billed_date_str)
     ent.invoice_paid_date.should == @est.parse(@invoice_paid_date_str)
     ent.liquidation_date.should == @est.parse(@liquidation_date_str)
+    ent.time_to_process.should < 5
+    ent.time_to_process.should > 0
   end
   it 'should create two entries' do
     r1 = '1234567890'

@@ -27,6 +27,7 @@ module OpenChain
 
     def parse_entry rows
       Entry.transaction do 
+        start_time = Time.now.to_i
         rows.each do |r|
           break if @skip_entry
           prefix = r[0,4]
@@ -50,6 +51,7 @@ module OpenChain
             @entry.master_bills_of_lading = @mbols.nil? ? "" : @mbols.join("\n")
             @entry.house_bills_of_lading = @hbols.nil? ? "" : @hbols.join("\n")
             @entry.sub_house_bills_of_lading = @sub_bols.nil? ? "" : @sub_bols.join("\n")
+            @entry.time_to_process = (Time.now.to_i-start_time)
             @entry.save! if @entry
         end
         @skip_entry = false
@@ -59,7 +61,7 @@ module OpenChain
     private 
     # header
     def process_sh00 r
-      brok_ref = r[4,10]
+      brok_ref = r[6,8]
       @entry = Entry.find_by_broker_reference brok_ref
       if @entry && @entry.last_exported_from_source && @entry.last_exported_from_source > parse_date_time(r[24,12]) #if current is newer than file
         @skip_entry = true
@@ -71,6 +73,7 @@ module OpenChain
         @entry.division_number = r[38,4].strip
         @entry.customer_name = r[42,35].strip
         @entry.entry_type = r[166,2].strip
+        @entry.entry_number = r[168,12]
       end
     end
 
