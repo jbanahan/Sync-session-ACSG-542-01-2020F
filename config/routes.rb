@@ -3,7 +3,14 @@ OpenChain::Application.routes.draw do
   resources :entries, :only => [:index,:show]
   resources :broker_invoices, :only => [:index,:show]
   resources :linkable_attachment_import_rules
-  resources :tariff_sets, :only => [:index]
+  resources :tariff_sets, :only => [:index] do
+    member do
+      get 'activate'
+    end
+    collection do
+      post 'load'
+    end
+  end
   resources :entity_snapshots, :only => [:show]
   resources :instant_classifications do
     collection do

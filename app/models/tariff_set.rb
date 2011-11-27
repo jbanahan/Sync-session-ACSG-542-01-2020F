@@ -2,12 +2,19 @@ class TariffSet < ActiveRecord::Base
   has_many :tariff_set_records, :dependent => :destroy
   belongs_to :country
 
-  #replaces the OfficialTariffs for this country with the values from this set
-  def activate
+  # Replaces the OfficialTariffs for this country with the values from this set
+  # If a user is provided, the user will receive a system message when the process is complete
+  def activate user=nil
     OfficialTariff.transaction do
       OfficialTariff.where(:country_id=>self.country_id).destroy_all
       self.tariff_set_records.each do |tsr|
         tsr.build_official_tariff.save!
+      end
+      TariffSet.where(:country_id=>self.country_id).where("tariff_sets.id = #{self.id} OR tariff_sets.active = ?",true).each do |ts|
+        ts.update_attributes(:active=>ts.id==self.id)
+      end
+      if user
+        user.messages.create(:subject=>"Tariff Set #{self.label} activated.",:body=>"Tariff Set #{self.label} has been successfully activated.")
       end
     end
   end
