@@ -518,6 +518,14 @@ class ModelField
       :history_ignore => true
     }]
   end
+  def self.make_broker_invoice_entry_field sequence_number, mf_uid,field_reference,label,data_type,export_lambda
+      [sequence_number,mf_uid,field_reference,label,{:data_type=>data_type,
+        :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
+        :export_lambda => export_lambda,
+        :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
+        :join_alias => "bi_entry"
+      }]
+  end
 
   def self.add_custom_fields(core_module,base_class,parameters={})
     max = 0
@@ -549,6 +557,9 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder)
     ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine)
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery)
+    ModelField.add_custom_fields(CoreModule::ENTRY,Entry)
+    ModelField.add_custom_fields(CoreModule::BROKER_INVOICE,BrokerInvoice)
+    ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
     @@last_loaded = Time.now
     Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_cache_time
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
@@ -578,6 +589,66 @@ class ModelField
       [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
+    add_fields CoreModule::ENTRY, [
+      [1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}],
+      [2,:ent_entry_num,:entry_number,"Entry Number",{:data_type=>:string}],
+      [3,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
+      [4,:ent_comp_num,:company_number,"Broker Company Number",{:data_type=>:string}],
+      [5,:ent_div_num,:division_number,"Broker Division Number",{:data_type=>:string}],
+      [6,:ent_cust_num,:customer_number,"Customer Number",{:data_type=>:string}],
+      [7,:ent_cust_name,:customer_name,"Customer Name",{:data_type=>:string}],
+      [8,:ent_type,:entry_type,"Entry Type",{:data_type=>:string}],
+      [9,:ent_arrival_date,:arrival_date,"Arrival Date",{:data_type=>:datetime}],
+      [10,:ent_filed_date,:entry_filed_date,"Entry Filed Date",{:data_type=>:datetime}],
+      [11,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
+      [12,:ent_first_release,:first_release_date,"First Release Date",{:data_type=>:datetime}],
+      [13,:ent_free_date,:free_date,"Free Date",{:data_type=>:datetime}],
+      [14,:ent_last_billed_date,:last_billed_date,"Last Bill Issued Date",{:data_type=>:datetime}],
+      [15,:ent_invoice_paid_date,:invoice_paid_date,"Invoice Paid Date",{:data_type=>:datetime}],
+      [16,:ent_liq_date,:liquidation_date,"Liquidation Date",{:data_type=>:datetime}],
+      [17,:ent_mbols,:master_bills_of_lading,"Master Bills",{:data_type=>:text}],
+      [18,:ent_hbols,:house_bills_of_lading,"House Bills",{:data_type=>:text}],
+      [19,:ent_sbols,:sub_house_bills_of_lading,"Sub House Bills",{:data_type=>:text}],
+      [20,:ent_it_numbers,:it_numbers,"IT Numbers",{:data_type=>:text}]
+    ]
+    add_fields CoreModule::BROKER_INVOICE, [
+      make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.broker_reference}),
+      [2,:bi_suffix,:suffix,"Suffix",:data_type=>:string],
+      [3,:bi_invoice_date,:invoice_date,"Invoice Date",:data_type=>:date],
+      [4,:bi_invoice_total,:invoice_total,"Total",:data_type=>:decimal],
+      [5,:bi_customer_number,:customer_number,"Customer Number",:data_type=>:string],
+      [6,:bi_to_name,:bill_to_name,"Bill To Name",:data_type=>:string],
+      [7,:bi_to_add1,:bill_to_address_1,"Bill To Address 1",:data_type=>:string],
+      [8,:bi_to_add2,:bill_to_address_2,"Bill To Address 2",:data_type=>:string],
+      [9,:bi_to_city,:bill_to_city,"Bill To City",:data_type=>:string],
+      [10,:bi_to_state,:bill_to_state,"Bill To State",:data_type=>:string],
+      [11,:bi_to_zip,:bill_to_zip,"Bill To Zip",:data_type=>:string],
+      make_broker_invoice_entry_field(12,:bi_entry_num,:entry_number,"Entry Number",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.entry_number}),
+      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.release_date}),
+      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.release_date}),
+      [14,:bi_to_country_iso,:iso_code,"Bill To Country Code",{:data_type=>:string,
+        :import_lambda=> lambda {|inv,data|
+          ctry = Country.find_by_iso_code data
+          "Country with ISO code #{data} could not be found." unless cntry
+          inv.bill_to_country_id = cntry.id
+          "Bill to Country set to #{data}"
+        },
+        :export_lambda=> lambda {|inv| inv.bill_to_country_id.blank? ? "" : inv.bill_to_country.iso_code},
+        :join_statement => "LEFT OUTER JOIN countries as bi_country on bi_country.id = broker_invoices.bill_to_country_id"
+      }],
+      make_broker_invoice_entry_field(15,:bi_mbols,:master_bills_of_lading,"Master Bills",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.master_bills_of_lading}),
+      make_broker_invoice_entry_field(16,:bi_hbols,:house_bills_of_lading,"House Bills",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.house_bills_of_lading}),
+      make_broker_invoice_entry_field(17,:bi_sbols,:sub_house_bills_of_lading,"Sub House Bills",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.sub_house_bills_of_lading}),
+      make_broker_invoice_entry_field(18,:bi_it_numbers,:it_numbers,"IT Numbers",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.it_numbers})
+    ]
+    add_fields CoreModule::BROKER_INVOICE_LINE, [
+      [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
+      [2,:bi_line_charge_description,:charge_description,"Description",{:data_type=>:string}],
+      [3,:bi_line_charge_amount,:charge_amount,"Amount",{:data_type=>:decimal}],
+      [4,:bi_line_vendor_name,:vendor_name,"Vendor",{:data_type=>:string}],
+      [5,:bi_line_vendor_reference,:vendor_reference,"Vendor Reference",{:data_type=>:string}],
+      [6,:bi_line_charge_type,:charge_type,"Charge Type",{:data_type=>:string}]
+    ]
     add_fields CoreModule::PRODUCT, [
       [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
       [2,:prod_ent_type,:name,"Product Type",{:entity_type_field=>true,

@@ -86,3 +86,12 @@ Factory.define :file_import_result do |f|
 end
 Factory.define :custom_file do |f|
 end
+Factory.define :entry do |f|
+
+end
+Factory.define :broker_invoice do |f|
+  f.association :entry
+end
+Factory.define :broker_invoice_line do |f|
+  f.association :broker_invoice
+end

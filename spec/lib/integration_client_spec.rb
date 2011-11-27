@@ -44,6 +44,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       @success_hash = {'response_type'=>'remote_file','status'=>'success'}
       OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
     end
+    it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
+      OpenChain::AllianceParser.should_receive(:parse).with('abcdefg')
+      cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+    end
+    it 'should not send data to alliance parser if custom feature is not enabled' do
+      cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_alliance/x.y"} 
+    end
     it 'should create linkable attachment if linkable attachment rule match' do
       LinkableAttachmentImportRule.create!(:path=>'/path/to',:model_field_uid=>'prod_uid')
       cmd = {'request_type'=>'remote_file','path'=>'/path/to/this.csv','remote_path'=>'12345'}

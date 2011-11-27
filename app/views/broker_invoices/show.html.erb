@@ -1,0 +1,22 @@
+<% content_for :action_bar do%>
+  <button class='btn_link' link_to='<%=broker_invoices_path%>' key_map='b'>Back To Search</button>
+<% end%>
+<table>
+  <%[:bi_brok_ref,:bi_suffix,
+    :bi_invoice_date,:bi_invoice_total,
+    :bi_customer_number,
+    :bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_entry_num,:bi_release_date,:bi_to_country_iso].each do |f|%>
+    <%=field_view_row @invoice, f%>
+  <%end%>
+</table>
+<h3>Lines</h3>
+<% @invoice.broker_invoice_lines.each do |line| %>
+  <table>
+    <%[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,
+    :bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type].each do |f| %>
+      <%=field_view_row line, f%>
+    <%end%>
+  </table>
+  <hr />
+<% end %>
+
