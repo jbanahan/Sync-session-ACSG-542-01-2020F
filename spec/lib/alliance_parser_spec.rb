@@ -10,6 +10,7 @@ describe OpenChain::AllianceParser do
     @division = '9988'
     @customer_name = 'cust name'
     @entry_type = '02'
+    @carrier_code = 'SCAC'
     @arrival_date_str = "201002201444"
     @entry_filed_date_str = "201002142326"
     @release_date_str = '201104231921'
@@ -18,8 +19,15 @@ describe OpenChain::AllianceParser do
     @last_billed_date_str = '201005121822'
     @invoice_paid_date_str = '201101031442'
     @liquidation_date_str = '201104021522'
+    @duty_due_date_str = '20110601'
+    @total_packages = 88
+    @total_fees = BigDecimal("999.88",2)
+    @total_duty = BigDecimal("55.27",2)
+    @total_duty_direct = BigDecimal("44.52",2)
+    @entered_value = BigDecimal("6622.48",2)
+    @customer_references = "ref1\nref2\nref3"
     @make_entry_lambda = lambda {
-      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}samples                                                               IDID000004701470140#{@entry_type}#{@entry_number}NJEAN     NAUTICA MENS JEANS DIV VF SPORTS   EY  00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       000000000001CTNS  0000000000050000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
+      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}samples                                                               IDID000004701470140#{@entry_type}#{@entry_number}NJEAN     NAUTICA MENS JEANS DIV VF SPORTS   #{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       000000000001CTNS  0000000000050000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       sd_entry_filed = "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
       sd_release = "SD0000019#{@release_date_str}200904061633Release Release Date                                                "
@@ -28,7 +36,8 @@ describe OpenChain::AllianceParser do
       sd_last_billed = "SD0000028#{@last_billed_date_str}200904061647Bill PrtLast Billed                                                 "
       sd_invoice_paid = "SD0000032#{@invoice_paid_date_str}200905111220InvPaid Invoice Paid by Customer                                    "
       sd_liquidation = "SD0000044#{@liquidation_date_str}201002190115Liq DateLiquidation Date                                            "
-      [sh00,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation].join("\n")
+      sd_duty_due = "SD0000042#{@duty_due_date_str}1606201111171606Pay Due Payment Due Date                                            "
+      [sh00,sd_duty_due,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation].join("\n")
     }
     @inv_suffix = "01"
     @inv_invoice_date_str = "20090406"
@@ -83,12 +92,21 @@ describe OpenChain::AllianceParser do
     ent.last_billed_date.should == @est.parse(@last_billed_date_str)
     ent.invoice_paid_date.should == @est.parse(@invoice_paid_date_str)
     ent.liquidation_date.should == @est.parse(@liquidation_date_str)
+    ent.duty_due_date.strfime("%Y%m%d").should == @duty_due_date_str
+    ent.carrier_code.should == @carrier_code
+    ent.total_packages.should == @total_packages
+    ent.total_fees.should == @total_fees
+    ent.total_duty.should == @total_duty
+    ent.total_duty_direct.should == @total_duty_direct
+    ent.entered_value.should == @entered_value
+    ent.customer_references.should == @customer_references
     ent.time_to_process.should < 5
     ent.time_to_process.should > 0
   end
+  it 'should total entry charges'
   it 'should create two entries' do
-    r1 = '1234567890'
-    r2 = '5647894565'
+    r1 = '12345678'
+    r2 = '56478945'
     fc_array = []
     [r1,r2].each do |r|
       @ref_num = r
