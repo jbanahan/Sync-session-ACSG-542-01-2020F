@@ -27,7 +27,7 @@ module OpenChain
 
     def parse_entry rows
       Entry.transaction do 
-        start_time = Time.now.to_i
+        start_time = Time.now
         rows.each do |r|
           break if @skip_entry
           prefix = r[0,4]
@@ -51,7 +51,7 @@ module OpenChain
             @entry.master_bills_of_lading = @mbols.nil? ? "" : @mbols.join("\n")
             @entry.house_bills_of_lading = @hbols.nil? ? "" : @hbols.join("\n")
             @entry.sub_house_bills_of_lading = @sub_bols.nil? ? "" : @sub_bols.join("\n")
-            @entry.time_to_process = (Time.now.to_i-start_time)
+            @entry.time_to_process = ((Time.now-start_time) * 1000).to_i #milliseconds
             @entry.save! if @entry
         end
         @skip_entry = false
