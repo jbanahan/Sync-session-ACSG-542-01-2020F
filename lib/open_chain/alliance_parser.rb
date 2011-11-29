@@ -9,7 +9,8 @@ module OpenChain
       '00052'=>:free_date,
       '00028'=>:last_billed_date,
       '00032'=>:invoice_paid_date,
-      '00044'=>:liquidation_date
+      '00044'=>:liquidation_date,
+      '00042'=>:duty_due_date
     }
     # take the text inside an internet tracking file from alliance and create/update the entry
     def self.parse file_content
@@ -34,6 +35,8 @@ module OpenChain
           case prefix
             when "SH00"
               process_sh00 r
+            when "SH01"
+              process_sh01 r
             when "SD00"
               process_sd00 r
             when "IH00"
@@ -44,13 +47,16 @@ module OpenChain
               process_il00 r
             when "SI00"
               process_si00 r
+            when "SR00"
+              process_sr00 r
           end
         end
         if !@skip_entry
-            @entry.it_numbers = @it_numbers.nil? ? "" : @it_numbers.join("\n")
-            @entry.master_bills_of_lading = @mbols.nil? ? "" : @mbols.join("\n")
-            @entry.house_bills_of_lading = @hbols.nil? ? "" : @hbols.join("\n")
-            @entry.sub_house_bills_of_lading = @sub_bols.nil? ? "" : @sub_bols.join("\n")
+            @entry.it_numbers = accumulated_string :it_number 
+            @entry.master_bills_of_lading = accumulated_string :mbol 
+            @entry.house_bills_of_lading = accumulated_string :hbol 
+            @entry.sub_house_bills_of_lading = accumulated_string :sub 
+            @entry.customer_references = accumulated_string :cust_ref
             @entry.time_to_process = ((Time.now-start_time) * 1000).to_i #milliseconds
             @entry.save! if @entry
         end
@@ -74,7 +80,17 @@ module OpenChain
         @entry.customer_name = r[42,35].strip
         @entry.entry_type = r[166,2].strip
         @entry.entry_number = r[168,12]
+        @entry.carrier_code = r[225,4].strip
+        @entry.total_packages = r[300,12]
       end
+    end
+
+    # header continuation
+    def process_sh01 r
+      @entry.total_fees = parse_currency r[85,12]
+      @entry.total_duty = parse_currency r[49,12]
+      @entry.total_duty_direct = parse_currency r[357,12]
+      @entry.entered_value = parse_currency r[384,13]
     end
 
     # date
@@ -122,28 +138,37 @@ module OpenChain
 
     # tracking numbers
     def process_si00 r
-      @mbols ||= []
-      @hbols ||= []
-      @sub_bols ||= []
-      @it_numbers ||= []
-      it_number = r[4,12].strip
-      mbol = r[16,16].strip
-      hbol = r[32,12].strip
-      sub = r[44,12].strip
-      @it_numbers << it_number unless it_number.blank?
-      @mbols << mbol unless mbol.blank?
-      @hbols << hbol unless hbol.blank?
-      @sub_bols << sub unless sub.blank?
+      accumulate_string :it_number, r[4,12].strip
+      accumulate_string :mbol, r[16,16].strip
+      accumulate_string :hbol, r[32,12].strip
+      accumulate_string :sub, r[44,12].strip
+    end
+
+    # customer references
+    def process_sr00 r
+      accumulate_string :cust_ref, r[4,35].strip 
     end
 
     def parse_date str
+      return nil if str.blank?
       Date.parse str
     end
     def parse_date_time str
+      return nil if str.blank?
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
     end
     def parse_currency str
       BigDecimal.new str.insert(-3,"."), 2
+    end
+
+    def accumulate_string string_code, value
+      @accumulated_strings ||= Hash.new
+      @accumulated_strings[string_code] ||= []
+      @accumulated_strings[string_code] << value unless value.blank?
+    end
+    def accumulated_string string_code
+      return "" unless @accumulated_strings && @accumulated_strings[string_code]
+      @accumulated_strings[string_code].join("\n")
     end
   end
 end

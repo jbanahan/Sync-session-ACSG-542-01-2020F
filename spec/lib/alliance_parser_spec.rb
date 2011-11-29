@@ -26,8 +26,10 @@ describe OpenChain::AllianceParser do
     @total_duty_direct = BigDecimal("44.52",2)
     @entered_value = BigDecimal("6622.48",2)
     @customer_references = "ref1\nref2\nref3"
+    convert_cur = lambda {|c,width| (c * 100).to_i.to_s.rjust(width,'0')}
     @make_entry_lambda = lambda {
-      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}samples                                                               IDID000004701470140#{@entry_type}#{@entry_number}NJEAN     NAUTICA MENS JEANS DIV VF SPORTS   #{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       000000000001CTNS  0000000000050000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
+      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}samples                                                               IDID000004701470140#{@entry_type}#{@entry_number}NJEAN     NAUTICA MENS JEANS DIV VF SPORTS   #{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       #{@total_packages.to_s.rjust(12,'0')}CTNS  0000000000050000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
+      sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}"
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       sd_entry_filed = "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
       sd_release = "SD0000019#{@release_date_str}200904061633Release Release Date                                                "
@@ -37,7 +39,13 @@ describe OpenChain::AllianceParser do
       sd_invoice_paid = "SD0000032#{@invoice_paid_date_str}200905111220InvPaid Invoice Paid by Customer                                    "
       sd_liquidation = "SD0000044#{@liquidation_date_str}201002190115Liq DateLiquidation Date                                            "
       sd_duty_due = "SD0000042#{@duty_due_date_str}1606201111171606Pay Due Payment Due Date                                            "
-      [sh00,sd_duty_due,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation].join("\n")
+      r = [sh00,sh01,sd_duty_due,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation]
+      unless @customer_references.blank?
+        @customer_references.split("\n").each do |cr|
+          r << "SR00#{cr.ljust(35)}"
+        end
+      end
+      r.join("\n")
     }
     @inv_suffix = "01"
     @inv_invoice_date_str = "20090406"
@@ -92,7 +100,7 @@ describe OpenChain::AllianceParser do
     ent.last_billed_date.should == @est.parse(@last_billed_date_str)
     ent.invoice_paid_date.should == @est.parse(@invoice_paid_date_str)
     ent.liquidation_date.should == @est.parse(@liquidation_date_str)
-    ent.duty_due_date.strfime("%Y%m%d").should == @duty_due_date_str
+    ent.duty_due_date.strftime("%Y%m%d").should == @duty_due_date_str
     ent.carrier_code.should == @carrier_code
     ent.total_packages.should == @total_packages
     ent.total_fees.should == @total_fees
@@ -100,10 +108,15 @@ describe OpenChain::AllianceParser do
     ent.total_duty_direct.should == @total_duty_direct
     ent.entered_value.should == @entered_value
     ent.customer_references.should == @customer_references
-    ent.time_to_process.should < 5
+    ent.time_to_process.should < 300 
     ent.time_to_process.should > 0
   end
-  it 'should total entry charges'
+  it 'should handle empty date' do
+    @arrival_date_str = '            '
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.arrival_date.should be_nil
+  end
   it 'should create two entries' do
     r1 = '12345678'
     r2 = '56478945'

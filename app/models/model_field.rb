@@ -518,10 +518,10 @@ class ModelField
       :history_ignore => true
     }]
   end
-  def self.make_broker_invoice_entry_field sequence_number, mf_uid,field_reference,label,data_type,export_lambda
+  def self.make_broker_invoice_entry_field sequence_number, mf_uid,field_reference,label,data_type,ent_exp_lambda
       [sequence_number,mf_uid,field_reference,label,{:data_type=>data_type,
         :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
-        :export_lambda => export_lambda,
+        :export_lambda => lambda {|inv| inv.entry.blank? ? "" : ent_exp_lambda.call(inv.entry)},
         :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
         :join_alias => "bi_entry"
       }]
@@ -609,10 +609,18 @@ class ModelField
       [17,:ent_mbols,:master_bills_of_lading,"Master Bills",{:data_type=>:text}],
       [18,:ent_hbols,:house_bills_of_lading,"House Bills",{:data_type=>:text}],
       [19,:ent_sbols,:sub_house_bills_of_lading,"Sub House Bills",{:data_type=>:text}],
-      [20,:ent_it_numbers,:it_numbers,"IT Numbers",{:data_type=>:text}]
+      [20,:ent_it_numbers,:it_numbers,"IT Numbers",{:data_type=>:text}],
+      [21,:ent_duty_due_date,:duty_due_date,"Duty Due Date",{:data_type=>:date}],
+      [22,:ent_carrier_code,:carrier_code,"Carrier Code",{:data_type=>:string}],
+      [23,:ent_total_packages,:total_packages,"Total Packages",{:data_type=>:integer}],
+      [24,:ent_total_fees,:total_fees,"Total Fees",{:data_type=>:decimal}],
+      [25,:ent_total_duty,:total_duty,"Total Duty",{:data_type=>:decimal}],
+      [26,:ent_total_duty_direct,:total_duty_direct,"Total Duty Direct",{:data_type=>:decimal}],
+      [27,:ent_entered_value,:entered_value,"Total Entered Value", {:data_type=>:decimal}],
+      [28,:ent_customer_references,:customer_references,"Customer References",{:data_type=>:text}]
     ]
     add_fields CoreModule::BROKER_INVOICE, [
-      make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.broker_reference}),
+      make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),
       [2,:bi_suffix,:suffix,"Suffix",:data_type=>:string],
       [3,:bi_invoice_date,:invoice_date,"Invoice Date",:data_type=>:date],
       [4,:bi_invoice_total,:invoice_total,"Total",:data_type=>:decimal],
@@ -623,9 +631,9 @@ class ModelField
       [9,:bi_to_city,:bill_to_city,"Bill To City",:data_type=>:string],
       [10,:bi_to_state,:bill_to_state,"Bill To State",:data_type=>:string],
       [11,:bi_to_zip,:bill_to_zip,"Bill To Zip",:data_type=>:string],
-      make_broker_invoice_entry_field(12,:bi_entry_num,:entry_number,"Entry Number",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.entry_number}),
-      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.release_date}),
-      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|inv| inv.entry.blank? ? "" : inv.entry.release_date}),
+      make_broker_invoice_entry_field(12,:bi_entry_num,:entry_number,"Entry Number",:string,lambda {|entry| entry.entry_number}),
+      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|entry| entry.release_date}),
+      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|entry| entry.release_date}),
       [14,:bi_to_country_iso,:iso_code,"Bill To Country Code",{:data_type=>:string,
         :import_lambda=> lambda {|inv,data|
           ctry = Country.find_by_iso_code data
@@ -636,10 +644,18 @@ class ModelField
         :export_lambda=> lambda {|inv| inv.bill_to_country_id.blank? ? "" : inv.bill_to_country.iso_code},
         :join_statement => "LEFT OUTER JOIN countries as bi_country on bi_country.id = broker_invoices.bill_to_country_id"
       }],
-      make_broker_invoice_entry_field(15,:bi_mbols,:master_bills_of_lading,"Master Bills",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.master_bills_of_lading}),
-      make_broker_invoice_entry_field(16,:bi_hbols,:house_bills_of_lading,"House Bills",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.house_bills_of_lading}),
-      make_broker_invoice_entry_field(17,:bi_sbols,:sub_house_bills_of_lading,"Sub House Bills",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.sub_house_bills_of_lading}),
-      make_broker_invoice_entry_field(18,:bi_it_numbers,:it_numbers,"IT Numbers",:text,lambda {|inv| inv.entry.blank? ? "" : inv.entry.it_numbers})
+      make_broker_invoice_entry_field(15,:bi_mbols,:master_bills_of_lading,"Master Bills",:text,lambda {|entry| entry.master_bills_of_lading}),
+      make_broker_invoice_entry_field(16,:bi_hbols,:house_bills_of_lading,"House Bills",:text,lambda {|entry| entry.house_bills_of_lading}),
+      make_broker_invoice_entry_field(17,:bi_sbols,:sub_house_bills_of_lading,"Sub House Bills",:text,lambda {|entry| entry.sub_house_bills_of_lading}),
+      make_broker_invoice_entry_field(18,:bi_it_numbers,:it_numbers,"IT Numbers",:text,lambda {|entry| entry.it_numbers}),
+      make_broker_invoice_entry_field(19,:bi_duty_due_date,:duty_due_date,"Duty Due Date",:date,lambda {|entry| entry.duty_due_date}),
+      make_broker_invoice_entry_field(20,:bi_carrier_code,:carrier_code,"Carrier Code",:string,lambda {|entry| entry.carrier_code}),
+      make_broker_invoice_entry_field(21,:bi_total_packages,:total_packages,"Total Packages",:integer,lambda {|entry| entry.total_packages}),
+      make_broker_invoice_entry_field(22,:bi_total_fees,:total_fees,"Total Fees",:decimal,lambda {|entry| entry.total_fees}),
+      make_broker_invoice_entry_field(25, :bi_ent_total_duty, :total_duty, "Total Duty", :decimal, lambda {|entry| entry.total_duty}),
+      make_broker_invoice_entry_field(26, :bi_ent_total_duty_direct, :total_duty_direct, "Total Duty Direct", :decimal, lambda {|entry| entry.total_duty_direct}),
+      make_broker_invoice_entry_field(27, :bi_ent_entered_value, :entered_value, "Total Entered Value", :decimal, lambda {|entry| entry.entered_value}),
+      make_broker_invoice_entry_field(28, :bi_ent_customer_references, :customer_references, "Customer References", :text, lambda {|entry| entry.customer_references})
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],

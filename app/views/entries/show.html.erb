@@ -1,5 +1,5 @@
 <table>
-  <%[:ent_brok_ref,:ent_entry_num,:ent_release_date,:ent_comp_num,:ent_div_num,:ent_cust_num,:ent_cust_name,:ent_type,:ent_arrival_date,:ent_filed_date,:ent_release_date,:ent_first_release,:ent_free_date,:ent_last_billed_date,:ent_invoice_paid_date,:ent_liq_date].each do |f|%>
+  <%CoreModule::ENTRY.model_fields.keys.each do |f|%>
     <%=field_view_row @entry, f%>
   <%end%>
 </table>
