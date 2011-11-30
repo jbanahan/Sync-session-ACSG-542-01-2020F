@@ -133,7 +133,7 @@ module OpenChain
         @entry.cotton_fee = v
       when '499'
         @entry.mpf = v
-      when '350'
+      when '501'
         @entry.hmf = v
       end
     end

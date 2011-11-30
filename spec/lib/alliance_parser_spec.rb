@@ -51,7 +51,7 @@ describe OpenChain::AllianceParser do
       sd_liquidation = "SD0000044#{@liquidation_date_str}201002190115Liq DateLiquidation Date                                            "
       sd_duty_due = "SD0000042#{@duty_due_date_str}1606201111171606Pay Due Payment Due Date                                            "
       sd_export = "SD0000001#{@export_date_str}201111171606Pay Due Payment Due Date                                            "
-      su_hmf = "SU01#{"".ljust(35)}350#{convert_cur.call(@hmf,11)}"
+      su_hmf = "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       su_mpf = "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       su_cotton = "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
       r = [sh00,sh01,sd_duty_due,sd_export,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation,su_hmf,su_mpf,su_cotton]
