@@ -26,9 +26,20 @@ describe OpenChain::AllianceParser do
     @total_duty_direct = BigDecimal("44.52",2)
     @entered_value = BigDecimal("6622.48",2)
     @customer_references = "ref1\nref2\nref3"
+    @export_date_str = '201104261121'
+    @merchandise_description = 'merch desc'
+    @total_packages_uom = 'CTN'
+    @entry_port_code = '1235'
+    @transport_mode_code = '11'
+    @ult_consignee_code = 'abcdef' 
+    @ult_consignee_name = 'u consign nm'
+    @gross_weight = 50
+    @hmf = BigDecimal('55.22',2)
+    @mpf = BigDecimal('271.14',2)
+    @cotton_fee = BigDecimal('123.31',2)
     convert_cur = lambda {|c,width| (c * 100).to_i.to_s.rjust(width,'0')}
     @make_entry_lambda = lambda {
-      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}samples                                                               IDID000004701470140#{@entry_type}#{@entry_number}NJEAN     NAUTICA MENS JEANS DIV VF SPORTS   #{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       #{@total_packages.to_s.rjust(12,'0')}CTNS  0000000000050000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
+      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID000004701#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@entry_number}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       #{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
       sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}"
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       sd_entry_filed = "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
@@ -39,7 +50,11 @@ describe OpenChain::AllianceParser do
       sd_invoice_paid = "SD0000032#{@invoice_paid_date_str}200905111220InvPaid Invoice Paid by Customer                                    "
       sd_liquidation = "SD0000044#{@liquidation_date_str}201002190115Liq DateLiquidation Date                                            "
       sd_duty_due = "SD0000042#{@duty_due_date_str}1606201111171606Pay Due Payment Due Date                                            "
-      r = [sh00,sh01,sd_duty_due,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation]
+      sd_export = "SD0000001#{@export_date_str}201111171606Pay Due Payment Due Date                                            "
+      su_hmf = "SU01#{"".ljust(35)}350#{convert_cur.call(@hmf,11)}"
+      su_mpf = "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
+      su_cotton = "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
+      r = [sh00,sh01,sd_duty_due,sd_export,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation,su_hmf,su_mpf,su_cotton]
       unless @customer_references.blank?
         @customer_references.split("\n").each do |cr|
           r << "SR00#{cr.ljust(35)}"
@@ -79,10 +94,30 @@ describe OpenChain::AllianceParser do
       @si_lines.each {|h| rows << "SI00#{h[:it].ljust(12)}#{h[:mbol].ljust(16)}#{h[:hbol].ljust(12)}#{h[:sub].ljust(12)}"}
       rows.join("\n")
     }
+    #array of hashes for each invoice
+    @commercial_invoices = [
+      {:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),:lines=>[
+        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',:spi_1=>"AX",:spi_2=>"A"},
+        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA'}
+      ]},
+      {:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),:lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X"}]},
+      {:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),:lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ'}]}
+    ] 
+    @make_commercial_invoices_lambda = lambda {
+      rows = []
+      @commercial_invoices.each do |ci|
+        rows << "CI00#{"".ljust(46)}#{convert_cur.call(ci[:invoiced_value],13)}#{"".ljust(33)}#{ci[:mfid].ljust(15)}"
+        ci[:lines].each do |line|
+          rows << "CL00#{"".ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{"".ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]} #{line[:vendor_name].ljust(35)}"
+          rows << "CT00#{"".ljust(25)}#{line[:spi_1] ? line[:spi_1].ljust(2) : "  "}#{line[:spi_2] ? line[:spi_2] : " "}"
+        end
+      end
+      rows.join("\n")
+    }
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
   end
   it 'should create entry' do
-    file_content = @make_entry_lambda.call
+    file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
     ent.entry_number.should == @entry_number
@@ -101,14 +136,55 @@ describe OpenChain::AllianceParser do
     ent.invoice_paid_date.should == @est.parse(@invoice_paid_date_str)
     ent.liquidation_date.should == @est.parse(@liquidation_date_str)
     ent.duty_due_date.strftime("%Y%m%d").should == @duty_due_date_str
+    ent.export_date.strftime("%Y%m%d").should == @export_date_str[0,8]
     ent.carrier_code.should == @carrier_code
     ent.total_packages.should == @total_packages
+    ent.total_packages_uom.should == @total_packages_uom
     ent.total_fees.should == @total_fees
     ent.total_duty.should == @total_duty
     ent.total_duty_direct.should == @total_duty_direct
     ent.entered_value.should == @entered_value
     ent.customer_references.should == @customer_references
-    ent.time_to_process.should < 300 
+    ent.merchandise_description.should == @merchandise_description
+    ent.transport_mode_code.should == @transport_mode_code
+    ent.entry_port_code.should == @entry_port_code
+    ent.ult_consignee_code.should == @ult_consignee_code
+    ent.ult_consignee_name.should == @ult_consignee_name
+    ent.gross_weight.should == @gross_weight
+    ent.cotton_fee.should == @cotton_fee
+    ent.hmf.should == @hmf
+    ent.mpf.should == @mpf
+    ent.mfids.split("\n").should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
+
+    expected_invoiced_value = BigDecimal("0",2)
+    expected_export_country_codes = Set.new
+    expected_origin_country_codes = Set.new
+    expected_vendor_names = Set.new
+    expected_total_units_uoms = Set.new
+    expected_spis = Set.new
+    expected_total_units = BigDecimal("0",2)
+    
+    @commercial_invoices.each do |ci| 
+      expected_invoiced_value += ci[:invoiced_value]
+      ci[:lines].each do |line|
+        expected_export_country_codes << line[:export_country_code]
+        expected_origin_country_codes << line[:origin_country_code]
+        expected_vendor_names << line[:vendor_name]
+        expected_total_units_uoms << line[:units_uom]
+        expected_total_units += line[:units]
+        [:spi_1,:spi_2].each {|s| expected_spis << line[s] if line[s]}
+      end
+    end
+
+    ent.total_invoiced_value.should == expected_invoiced_value
+    ent.export_country_codes.split("\n").should == expected_export_country_codes.to_a
+    ent.origin_country_codes.split("\n").should == expected_origin_country_codes.to_a
+    ent.vendor_names.split("\n").should == expected_vendor_names.to_a
+    ent.total_units.should == expected_total_units
+    ent.total_units_uoms.split("\n").should == expected_total_units_uoms.to_a
+    ent.special_program_indicators.split("\n").should == expected_spis.to_a
+
+    ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
   end
   it 'should handle empty date' do

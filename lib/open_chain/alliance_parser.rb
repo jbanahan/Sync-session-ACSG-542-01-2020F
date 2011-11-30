@@ -10,7 +10,8 @@ module OpenChain
       '00028'=>:last_billed_date,
       '00032'=>:invoice_paid_date,
       '00044'=>:liquidation_date,
-      '00042'=>:duty_due_date
+      '00042'=>:duty_due_date,
+      '00001'=>:export_date
     }
     # take the text inside an internet tracking file from alliance and create/update the entry
     def self.parse file_content
@@ -49,6 +50,14 @@ module OpenChain
               process_si00 r
             when "SR00"
               process_sr00 r
+            when "SU01"
+              process_su01 r
+            when "CI00"
+              process_ci00 r
+            when "CL00"
+              process_cl00 r
+            when "CT00"
+              process_ct00 r
           end
         end
         if !@skip_entry
@@ -57,8 +66,15 @@ module OpenChain
             @entry.house_bills_of_lading = accumulated_string :hbol 
             @entry.sub_house_bills_of_lading = accumulated_string :sub 
             @entry.customer_references = accumulated_string :cust_ref
-            @entry.time_to_process = ((Time.now-start_time) * 1000).to_i #milliseconds
+            @entry.mfids = accumulated_string :mfid
+            @entry.export_country_codes = accumulated_string :export_country_codes
+            @entry.origin_country_codes = accumulated_string :origin_country_codes
+            @entry.vendor_names = accumulated_string :vendor_names
+            @entry.total_units_uoms = accumulated_string :total_units_uoms
+            @entry.special_program_indicators = accumulated_string :spis
             @entry.save! if @entry
+            #set time to process in milliseconds without calling callbacks
+            @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
         end
         @skip_entry = false
       end
@@ -73,6 +89,8 @@ module OpenChain
         @skip_entry = true
       else
         @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
+        @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
+        @entry.total_units = 0 #reset, then accumulate as we process invoice lines
         @entry.customer_number = r[14,10].strip
         @entry.last_exported_from_source = parse_date_time r[24,12]
         @entry.company_number = r[36,2].strip
@@ -82,6 +100,13 @@ module OpenChain
         @entry.entry_number = r[168,12]
         @entry.carrier_code = r[225,4].strip
         @entry.total_packages = r[300,12]
+        @entry.total_packages_uom = r[312,6].strip
+        @entry.merchandise_description = r[77,70].strip
+        @entry.transport_mode_code = r[164,2]
+        @entry.entry_port_code = r[160,4]
+        @entry.ult_consignee_code = r[180,10].strip
+        @entry.ult_consignee_name = r[190,35].strip
+        @entry.gross_weight = r[318,12]
       end
     end
 
@@ -98,6 +123,40 @@ module OpenChain
       d = r[9,12]
       dp = DATE_MAP[r[4,5]]
       @entry.attributes= {dp=>parse_date_time(d)} if dp
+    end
+
+    # fees
+    def process_su01 r
+      v = parse_currency r[42,11]
+      case r[39,3]
+      when '056'
+        @entry.cotton_fee = v
+      when '499'
+        @entry.mpf = v
+      when '350'
+        @entry.hmf = v
+      end
+    end
+
+    # commercial invoice header
+    def process_ci00 r
+      accumulate_string :mfid, r[96,15].strip
+      @entry.total_invoiced_value += parse_currency r[50,13]
+    end
+
+    # commercial invoice line
+    def process_cl00 r
+      accumulate_string :export_country_codes, r[80,2]
+      accumulate_string :origin_country_codes, r[67,2]
+      accumulate_string :vendor_names, r[83,35].strip
+      accumulate_string :total_units_uoms, r[46,6].strip
+      @entry.total_units += parse_decimal r[34,12], 3 
+    end
+
+    # commercial invoice line - tariff
+    def process_ct00 r
+      accumulate_string :spis, r[29,2].strip
+      accumulate_string :spis, r[31].strip
     end
 
     # invoice header
@@ -157,18 +216,22 @@ module OpenChain
       return nil if str.blank?
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
     end
+    def parse_decimal str, decimal_places
+      offset = -(decimal_places+1)
+      BigDecimal.new str.insert(offset,"."), decimal_places
+    end
     def parse_currency str
-      BigDecimal.new str.insert(-3,"."), 2
+      parse_decimal str, 2
     end
 
     def accumulate_string string_code, value
       @accumulated_strings ||= Hash.new
-      @accumulated_strings[string_code] ||= []
+      @accumulated_strings[string_code] ||= Set.new
       @accumulated_strings[string_code] << value unless value.blank?
     end
     def accumulated_string string_code
       return "" unless @accumulated_strings && @accumulated_strings[string_code]
-      @accumulated_strings[string_code].join("\n")
+      @accumulated_strings[string_code].to_a.join("\n")
     end
   end
 end
