@@ -97,18 +97,19 @@ describe OpenChain::AllianceParser do
     #array of hashes for each invoice
     @commercial_invoices = [
       {:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),:lines=>[
-        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',:spi_1=>"AX",:spi_2=>"A"},
-        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA'}
+        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',:spi_1=>"AX",:spi_2=>"A",
+          :po_number=>'abcdefg'},
+        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301'}
       ]},
       {:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),:lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X"}]},
-      {:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),:lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ'}]}
+      {:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),:lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ',:po_number=>'jfdaila'}]}
     ] 
     @make_commercial_invoices_lambda = lambda {
       rows = []
       @commercial_invoices.each do |ci|
         rows << "CI00#{"".ljust(46)}#{convert_cur.call(ci[:invoiced_value],13)}#{"".ljust(33)}#{ci[:mfid].ljust(15)}"
         ci[:lines].each do |line|
-          rows << "CL00#{"".ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{"".ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]} #{line[:vendor_name].ljust(35)}"
+          rows << "CL00#{"".ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{"".ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]} #{line[:vendor_name].ljust(35)}#{"".ljust(62)}#{line[:po_number] ? line[:po_number].ljust(35) : "".ljust(35)}"
           rows << "CT00#{"".ljust(25)}#{line[:spi_1] ? line[:spi_1].ljust(2) : "  "}#{line[:spi_2] ? line[:spi_2] : " "}"
         end
       end
@@ -144,7 +145,7 @@ describe OpenChain::AllianceParser do
     ent.total_duty.should == @total_duty
     ent.total_duty_direct.should == @total_duty_direct
     ent.entered_value.should == @entered_value
-    ent.customer_references.should == @customer_references
+    ent.customer_references.should == @customer_references #make sure cust refs in sample data don't overlap with line level PO number or they'll be excluded on purpose
     ent.merchandise_description.should == @merchandise_description
     ent.transport_mode_code.should == @transport_mode_code
     ent.entry_port_code.should == @entry_port_code
@@ -162,6 +163,7 @@ describe OpenChain::AllianceParser do
     expected_vendor_names = Set.new
     expected_total_units_uoms = Set.new
     expected_spis = Set.new
+    expected_pos = Set.new 
     expected_total_units = BigDecimal("0",2)
     
     @commercial_invoices.each do |ci| 
@@ -172,6 +174,7 @@ describe OpenChain::AllianceParser do
         expected_vendor_names << line[:vendor_name]
         expected_total_units_uoms << line[:units_uom]
         expected_total_units += line[:units]
+        expected_pos << line[:po_number] if line[:po_number]
         [:spi_1,:spi_2].each {|s| expected_spis << line[s] if line[s]}
       end
     end
@@ -182,10 +185,17 @@ describe OpenChain::AllianceParser do
     ent.vendor_names.split("\n").should == expected_vendor_names.to_a
     ent.total_units.should == expected_total_units
     ent.total_units_uoms.split("\n").should == expected_total_units_uoms.to_a
+    ent.po_numbers.split("\n").should == expected_pos.to_a
     ent.special_program_indicators.split("\n").should == expected_spis.to_a
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
+  end
+  it 'should remove po numbers from cust ref' do
+    @customer_references = "a\nb\nc"
+    @commercial_invoices.first[:lines].first[:po_number] = "b"
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
+    Entry.find_by_broker_reference(@ref_num).customer_references.should == "a\nc"
   end
   it 'should handle empty date' do
     @arrival_date_str = '            '

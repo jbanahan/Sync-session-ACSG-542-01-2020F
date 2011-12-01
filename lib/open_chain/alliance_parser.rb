@@ -65,13 +65,14 @@ module OpenChain
             @entry.master_bills_of_lading = accumulated_string :mbol 
             @entry.house_bills_of_lading = accumulated_string :hbol 
             @entry.sub_house_bills_of_lading = accumulated_string :sub 
-            @entry.customer_references = accumulated_string :cust_ref
+            @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n")
             @entry.mfids = accumulated_string :mfid
             @entry.export_country_codes = accumulated_string :export_country_codes
             @entry.origin_country_codes = accumulated_string :origin_country_codes
             @entry.vendor_names = accumulated_string :vendor_names
             @entry.total_units_uoms = accumulated_string :total_units_uoms
             @entry.special_program_indicators = accumulated_string :spis
+            @entry.po_numbers = accumulated_string :po_numbers
             @entry.save! if @entry
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
@@ -150,6 +151,7 @@ module OpenChain
       accumulate_string :origin_country_codes, r[67,2]
       accumulate_string :vendor_names, r[83,35].strip
       accumulate_string :total_units_uoms, r[46,6].strip
+      accumulate_string :po_numbers, r[180,35].strip
       @entry.total_units += parse_decimal r[34,12], 3 
     end
 
