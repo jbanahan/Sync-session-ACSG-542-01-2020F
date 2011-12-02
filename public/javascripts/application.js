@@ -668,7 +668,7 @@ $( function() {
         $("#mod_export").dialog('open');
     });
     $("button").button();
-    
+    $("#quick_search_button").button();
     $(".classification_expand").click(function(ev) {
       ev.preventDefault();
       $(this).hide();

@@ -2,9 +2,18 @@ class QuickSearchController < ApplicationController
 
   def show
     error_redirect "You must enter a search value." if params[:v].blank?
-    all_modules = [CoreModule::ORDER,CoreModule::PRODUCT,CoreModule::ENTRY,CoreModule::INVOICE,CoreModule::SHIPMENT,CoreModule::SALE,CoreModule::DELIVERY]
-    @modules = all_modules.collect {|m| m.view? current_user}
+    @module_field_map = {
+      CoreModule::ORDER=>[:ord_ord_num],
+      CoreModule::PRODUCT=>[:prod_uid,:prod_name],
+      CoreModule::ENTRY=>[:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols],
+      CoreModule::BROKER_INVOICE=>[:bi_brok_ref],
+      CoreModule::SHIPMENT=>[:shp_ref],
+      CoreModule::SALE=>[:sale_order_number],
+      CoreModule::DELIVERY=>[:del_ref]
+    }
+    @module_field_map.delete_if {|k,v| !k.view?(current_user)}
     @value = params[:v]
+    render :layout=>'one_col'
   end
 
   # return a json result for the given search term and core module
@@ -31,6 +40,7 @@ class QuickSearchController < ApplicationController
         row = Hash.new
         row["values"] = model_fields.collect {|m| m.process_export(o)}
         row["link"] = url_for o
+        row["id"] = o.id
         r["rows"] << row
       end
     end

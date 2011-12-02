@@ -7,4 +7,8 @@ class BrokerInvoice < ActiveRecord::Base
   def can_view? user
     user.view_broker_invoices?
   end
+
+  def self.search_secure user, base_object
+    return base_object.where("1=1")
+  end
 end
