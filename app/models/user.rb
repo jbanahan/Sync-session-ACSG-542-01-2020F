@@ -90,6 +90,43 @@ class User < ActiveRecord::Base
   def can_edit?(user)
     return user.admin? || self==user
   end
+
+  # Can the given user view items for the given module
+  def view_module? core_module
+    case core_module
+    when CoreModule::ORDER
+      return self.view_orders?
+    when CoreModule::SHIPMENT
+      return self.view_shipments?
+    when CoreModule::PRODUCT
+      return self.view_products?
+    when CoreModule::SALE
+      return self.view_sales_orders?
+    when CoreModule::DELIVERY
+      return self.view_deliveries?
+    when CoreModule::ORDER_LINE
+      return self.view_orders?
+    when CoreModule::SHIPMENT_LINE
+      return self.view_shipments?
+    when CoreModule::DELIVERY_LINE
+      return self.view_deliveries?
+    when CoreModule::SALE_LINE
+      return self.view_sales_orders?
+    when CoreModule::TARIFF
+      return self.view_products?
+    when CoreModule::CLASSIFICATION
+      return self.view_products?
+    when CoreModule::OFFICIAL_TARIFF
+      return true
+    when CoreModule::ENTRY
+      return self.view_entries?
+    when CoreModule::BROKER_INVOICE
+      return self.view_broker_invoices?
+    when CoreModule::BROKER_INVOICE_LINE
+      return self.view_broker_invoices?
+    end
+    return false
+  end
   
   #permissions
   def view_broker_invoices?

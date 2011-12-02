@@ -84,6 +84,11 @@ class CoreModule
     ModelField.find_by_uid @unique_id_field_name
   end
 
+  #can the user view items for this module
+  def view? user
+    user.view_module? self
+  end
+
   #returns a json representation of the entity and all of it's children
   def entity_json base_object
     j = @entity_json_lambda.call(base_object,default_module_chain)   
