@@ -15,16 +15,23 @@ module OpenChain
     }
     # take the text inside an internet tracking file from alliance and create/update the entry
     def self.parse file_content
-      entry_lines = []
-      file_content.lines.each do |line|
-        prefix = line[0,4]
-        if !entry_lines.empty? && prefix=="SH00"
-          AllianceParser.new.parse_entry entry_lines 
-          entry_lines = []
+      begin
+        entry_lines = []
+        file_content.lines.each do |line|
+          prefix = line[0,4]
+          if !entry_lines.empty? && prefix=="SH00"
+            AllianceParser.new.parse_entry entry_lines 
+            entry_lines = []
+          end
+          entry_lines << line
         end
-        entry_lines << line
+        AllianceParser.new.parse_entry entry_lines if !entry_lines.empty?
+      rescue
+        tmp = Tempfile.new('alliance_error')
+        tmp << file_content
+        tmp.flush
+        $!.log_me ["Alliance parser failure."], [tmp.path]
       end
-      AllianceParser.new.parse_entry entry_lines if !entry_lines.empty?
     end
 
     def parse_entry rows
