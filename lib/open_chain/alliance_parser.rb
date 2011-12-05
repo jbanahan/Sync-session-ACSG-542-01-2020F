@@ -173,7 +173,7 @@ module OpenChain
       @invoice = nil
       @invoice = @entry.broker_invoices.where(:suffix=>r[4,2]).first if @entry.id  #existing entry, check for existing invoice
       @invoice = @entry.broker_invoices.build(:suffix=>r[4,2]) unless @invoice
-      @invoice.invoice_date = parse_date r[6,8]
+      @invoice.invoice_date = parse_date r[6,8] unless r[6,8] == "00000000"
       @invoice.invoice_total = parse_currency r[24,11]
       @invoice.customer_number = r[14,10].strip
       @invoice.bill_to_name = r[83,35].strip
