@@ -30,7 +30,7 @@ class QuickSearchController < ApplicationController
     else
       k = cm.klass 
       search_results = SearchCriterion.new(:model_field_uid=>params[:mfid],:operator=>"co",:value=>params[:v].strip).apply k
-      search_results = k.search_secure(current_user,search_results).limit(10)
+      search_results = k.search_secure(current_user,search_results).limit(11)
       default_fields = cm.default_search_columns
       default_fields = default_fields[0,3] if default_fields.size > 3
       model_fields = default_fields.collect {|mfuid| ModelField.find_by_uid mfuid}
@@ -38,7 +38,21 @@ class QuickSearchController < ApplicationController
       r["rows"] = []
       search_results.each do |o| 
         row = Hash.new
-        row["values"] = model_fields.collect {|m| m.process_export(o)}
+        row["values"] = model_fields.collect {|m| 
+          v = m.process_export(o)
+          if !v.blank?
+            debugger if m.data_type != :string
+            case m.data_type
+            when :date
+              v = v.strftime("%Y-%m-%d")
+            when :datetime
+              v = v.strftime("%Y-%m-%d %H:%M")
+            end
+          else
+            v = ""
+          end
+          v
+        }
         row["link"] = url_for o
         row["id"] = o.id
         r["rows"] << row
