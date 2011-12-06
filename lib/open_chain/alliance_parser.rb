@@ -27,7 +27,7 @@ module OpenChain
         end
         AllianceParser.new.parse_entry entry_lines if !entry_lines.empty?
       rescue
-        tmp = Tempfile.new(['alliance_error','txt'])
+        tmp = Tempfile.new(['alliance_error','.txt'])
         tmp << file_content
         tmp.flush
         $!.log_me ["Alliance parser failure."], [tmp.path]
