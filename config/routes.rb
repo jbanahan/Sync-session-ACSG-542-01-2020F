@@ -89,6 +89,8 @@ OpenChain::Application.routes.draw do
   match "/public_fields" => "public_fields#index"
   match "/public_fields/save" => "public_fields#save", :via => :post
   match "/users/email_new_message" => "users#email_new_message"
+  match "/quick_search" => "quick_search#show"
+  match "/quick_search/module_result" => "quick_search#module_result"
 
   #custom features
   resources :custom_files, :only => :show
