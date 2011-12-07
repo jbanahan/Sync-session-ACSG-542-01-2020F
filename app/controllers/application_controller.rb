@@ -434,6 +434,10 @@ class ApplicationController < ActionController::Base
     def current_user
         return @current_user unless @current_user.nil?
         @current_user = current_user_session && current_user_session.record
+        if @current_user.run_as
+          @run_as_user = @current_user
+          @current_user = @current_user.run_as
+        end
         User.current = @current_user
         @current_user
     end

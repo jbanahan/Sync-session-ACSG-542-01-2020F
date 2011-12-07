@@ -91,6 +91,8 @@ OpenChain::Application.routes.draw do
   match "/users/email_new_message" => "users#email_new_message"
   match "/quick_search" => "quick_search#show"
   match "/quick_search/module_result" => "quick_search#module_result"
+  match "/enable_run_as" => "users#enable_run_as"
+  match "/disable_run_as" => "users#disable_run_as"
 
   #custom features
   resources :custom_files, :only => :show

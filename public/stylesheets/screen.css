@@ -623,3 +623,9 @@ width:60%;
 .search_row {
   cursor: pointer;
 }
+#run_as_box {
+  background-color: #FF4747;
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid black;
+}

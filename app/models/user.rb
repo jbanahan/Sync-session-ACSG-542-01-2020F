@@ -17,6 +17,7 @@ class User < ActiveRecord::Base
     :classification_view, :classification_edit
   
   belongs_to :company
+  belongs_to :run_as, :class_name => "User"
   
   has_many   :histories, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy

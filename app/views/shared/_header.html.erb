@@ -132,6 +132,9 @@
   </script>
 </head>
 <body>
+<% if @run_as_user %>
+  <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+<% end %>
 <div id="header">
   <div id="top_box">
     <% if !current_user || no_buttons %>

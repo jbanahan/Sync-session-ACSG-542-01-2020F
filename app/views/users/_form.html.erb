@@ -10,6 +10,18 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
       evt.preventDefault();
       $(this).parents('tr.permission_row').find(':checkbox').attr('checked','checked');
     });
+    $("#mod_run_as").dialog({autoOpen:false,title:'Run As',
+      width:'auto',
+      buttons:{"OK":function() {$("#frm_run_as").submit();},
+               "Cancel":function() {$("#mod_run_as").dialog('close');}}  
+    });
+    $("#btn_run_as").click(function() {
+      <% if current_user == @user %>
+      $("#mod_run_as").dialog('open');
+      <% elsif current_user.admin? %>
+      window.location = '/enable_run_as?username=<%=@user.username%>';
+      <% end %>
+    });
     $(".check_none").click(function(evt) {
       evt.preventDefault();
       $(this).parents('tr.permission_row').find(':checkbox').attr('checked','');
@@ -19,6 +31,9 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 <%content_for :action_bar do %>
 <button id='btn_save'>Save</button>
 <button id='btn_cancel'>Cancel</button>
+  <% if current_user.admin? %>
+    <button id='btn_run_as'>Run As</button>
+  <% end %>
 <%end%>
 <%= form_for([@company, @user], :html=>{:id=>'frm_user'}) do |f| %>
   <%= f.hidden_field :company_id %>
@@ -141,3 +156,9 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 
 <p>You last accepted these agreements on: <%=current_user.tos_accept.nil? ? "Never" : current_user.tos_accept%></p>
 <% end %>
+<div id='mod_run_as' style='display:none;'>
+  <div>Enter the username for the account you want to run as.</div>
+  <form id='frm_run_as' method='GET' action='/enable_run_as'>
+    <input type='text' name='username'>
+  </form>
+</div>
