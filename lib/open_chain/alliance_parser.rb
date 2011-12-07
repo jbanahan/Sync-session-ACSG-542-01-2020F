@@ -72,6 +72,7 @@ module OpenChain
             @entry.master_bills_of_lading = accumulated_string :mbol 
             @entry.house_bills_of_lading = accumulated_string :hbol 
             @entry.sub_house_bills_of_lading = accumulated_string :sub 
+            [:cust_ref,:po_numbers].each {|x| @accumulated_strings[x] ||= []}
             @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n")
             @entry.mfids = accumulated_string :mfid
             @entry.export_country_codes = accumulated_string :export_country_codes
@@ -92,6 +93,7 @@ module OpenChain
     # header
     def process_sh00 r
       brok_ref = r[6,8]
+      @accumulated_strings = Hash.new
       @entry = Entry.find_by_broker_reference brok_ref
       if @entry && @entry.last_exported_from_source && @entry.last_exported_from_source > parse_date_time(r[24,12]) #if current is newer than file
         @skip_entry = true

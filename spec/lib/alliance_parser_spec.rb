@@ -191,11 +191,36 @@ describe OpenChain::AllianceParser do
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
   end
-  it 'should remove po numbers from cust ref' do
-    @customer_references = "a\nb\nc"
-    @commercial_invoices.first[:lines].first[:po_number] = "b"
-    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
-    Entry.find_by_broker_reference(@ref_num).customer_references.should == "a\nc"
+  context 'reference fields' do
+    it 'should remove po numbers from cust ref' do
+      @customer_references = "a\nb\nc"
+      @commercial_invoices.first[:lines].first[:po_number] = "b"
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
+      Entry.find_by_broker_reference(@ref_num).customer_references.should == "a\nc"
+    end
+    it 'should work with no customer references' do
+      @customer_references = nil
+      expected_pos = Set.new 
+      @commercial_invoices.each do |ci| 
+        ci[:lines].each do |line|
+          expected_pos << line[:po_number] if line[:po_number]
+        end
+      end
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
+      Entry.find_by_broker_reference(@ref_num).po_numbers.split("\n").should == expected_pos.to_a
+    end
+    it 'should work with no po numbers' do
+      @customer_references = "a\nb\nc"
+      @commercial_invoices.each do |ci| 
+        ci[:lines].each do |line|
+          line[:po_number] = nil 
+        end
+      end
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
+      ent = Entry.find_by_broker_reference(@ref_num)
+      ent.customer_references.should == "a\nb\nc"
+      ent.po_numbers.should be_blank
+    end
   end
   it 'should handle empty date' do
     @arrival_date_str = '            '
