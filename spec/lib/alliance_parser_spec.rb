@@ -25,7 +25,7 @@ describe OpenChain::AllianceParser do
     @total_duty = BigDecimal("55.27",2)
     @total_duty_direct = BigDecimal("44.52",2)
     @entered_value = BigDecimal("6622.48",2)
-    @customer_references = "ref1\nref2\nref3"
+    @customer_references = "ref1\n ref2\n ref3"
     @export_date_str = '201104261121'
     @merchandise_description = 'merch desc'
     @total_packages_uom = 'CTN'
@@ -155,7 +155,7 @@ describe OpenChain::AllianceParser do
     ent.cotton_fee.should == @cotton_fee
     ent.hmf.should == @hmf
     ent.mpf.should == @mpf
-    ent.mfids.split("\n").should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
+    ent.mfids.split("\n ").should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
 
     expected_invoiced_value = BigDecimal("0",2)
     expected_export_country_codes = Set.new
@@ -180,13 +180,13 @@ describe OpenChain::AllianceParser do
     end
 
     ent.total_invoiced_value.should == expected_invoiced_value
-    ent.export_country_codes.split("\n").should == expected_export_country_codes.to_a
-    ent.origin_country_codes.split("\n").should == expected_origin_country_codes.to_a
-    ent.vendor_names.split("\n").should == expected_vendor_names.to_a
+    ent.export_country_codes.split("\n ").should == expected_export_country_codes.to_a
+    ent.origin_country_codes.split("\n ").should == expected_origin_country_codes.to_a
+    ent.vendor_names.split("\n ").should == expected_vendor_names.to_a
     ent.total_units.should == expected_total_units
-    ent.total_units_uoms.split("\n").should == expected_total_units_uoms.to_a
-    ent.po_numbers.split("\n").should == expected_pos.to_a
-    ent.special_program_indicators.split("\n").should == expected_spis.to_a
+    ent.total_units_uoms.split("\n ").should == expected_total_units_uoms.to_a
+    ent.po_numbers.split("\n ").should == expected_pos.to_a
+    ent.special_program_indicators.split("\n ").should == expected_spis.to_a
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
@@ -196,7 +196,7 @@ describe OpenChain::AllianceParser do
       @customer_references = "a\nb\nc"
       @commercial_invoices.first[:lines].first[:po_number] = "b"
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
-      Entry.find_by_broker_reference(@ref_num).customer_references.should == "a\nc"
+      Entry.find_by_broker_reference(@ref_num).customer_references.should == "a\n c"
     end
     it 'should work with no customer references' do
       @customer_references = nil
@@ -207,7 +207,7 @@ describe OpenChain::AllianceParser do
         end
       end
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
-      Entry.find_by_broker_reference(@ref_num).po_numbers.split("\n").should == expected_pos.to_a
+      Entry.find_by_broker_reference(@ref_num).po_numbers.split("\n ").should == expected_pos.to_a
     end
     it 'should work with no po numbers' do
       @customer_references = "a\nb\nc"
@@ -218,7 +218,7 @@ describe OpenChain::AllianceParser do
       end
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
       ent = Entry.find_by_broker_reference(@ref_num)
-      ent.customer_references.should == "a\nb\nc"
+      ent.customer_references.should == "a\n b\n c"
       ent.po_numbers.should be_blank
     end
   end
@@ -265,20 +265,20 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
     Entry.count.should == 1
     ent = Entry.first
-    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n")
-    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n")
-    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n")
-    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n")
+    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n ")
+    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n ")
+    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n ")
+    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n ")
   end
   it 'should replace entry header tracking fields' do
     Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs')
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
     Entry.count.should == 1
     ent = Entry.first
-    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n")
-    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n")
-    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n")
-    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n")
+    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n ")
+    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n ")
+    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n ")
+    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n ")
   end
   it 'should create invoice' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
