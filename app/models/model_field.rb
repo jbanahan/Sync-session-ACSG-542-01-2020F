@@ -652,8 +652,7 @@ class ModelField
       [10,:bi_to_state,:bill_to_state,"Bill To State",:data_type=>:string],
       [11,:bi_to_zip,:bill_to_zip,"Bill To Zip",:data_type=>:string],
       make_broker_invoice_entry_field(12,:bi_entry_num,:entry_number,"Entry Number",:string,lambda {|entry| entry.entry_number}),
-      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|entry| entry.release_date}),
-      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:string,lambda {|entry| entry.release_date}),
+      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:datetime,lambda {|entry| entry.release_date}),
       [14,:bi_to_country_iso,:iso_code,"Bill To Country Code",{:data_type=>:string,
         :import_lambda=> lambda {|inv,data|
           ctry = Country.find_by_iso_code data
