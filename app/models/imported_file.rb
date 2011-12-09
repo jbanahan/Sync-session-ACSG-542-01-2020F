@@ -79,7 +79,7 @@ class ImportedFile < ActiveRecord::Base
     used_modules = Set.new
     key_column_hash = {}
     self.search_columns.each do |sc|
-      cm = sc.model_field.core_module
+      cm = sc.model_field.core_module if sc.model_field.core_module #blank won't have core module
       used_modules << cm
       key_column_hash[cm] = sc if sc.key_column?
     end
