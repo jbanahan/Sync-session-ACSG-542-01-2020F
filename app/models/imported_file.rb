@@ -79,9 +79,11 @@ class ImportedFile < ActiveRecord::Base
     used_modules = Set.new
     key_column_hash = {}
     self.search_columns.each do |sc|
-      cm = sc.model_field.core_module
-      used_modules << cm
-      key_column_hash[cm] = sc if sc.key_column?
+      if sc.model_field.core_module #blank won't have core module
+        cm = sc.model_field.core_module       
+        used_modules << cm
+        key_column_hash[cm] = sc if sc.key_column?
+      end
     end
 
     # clone tariff rows for extra countries

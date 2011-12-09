@@ -73,7 +73,7 @@ module OpenChain
             @entry.house_bills_of_lading = accumulated_string :hbol 
             @entry.sub_house_bills_of_lading = accumulated_string :sub 
             [:cust_ref,:po_numbers].each {|x| @accumulated_strings[x] ||= []}
-            @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n")
+            @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n ")
             @entry.mfids = accumulated_string :mfid
             @entry.export_country_codes = accumulated_string :export_country_codes
             @entry.origin_country_codes = accumulated_string :origin_country_codes
@@ -242,7 +242,7 @@ module OpenChain
     end
     def accumulated_string string_code
       return "" unless @accumulated_strings && @accumulated_strings[string_code]
-      @accumulated_strings[string_code].to_a.join("\n")
+      @accumulated_strings[string_code].to_a.join("\n ")
     end
   end
 end

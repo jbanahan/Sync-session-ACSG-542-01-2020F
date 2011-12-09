@@ -22,11 +22,16 @@ module OpenChain
           end
           in_memory_queue.sort! {|x,y| x.sent_timestamp <=> y.sent_timestamp}
           in_memory_queue.each do |m|
-            cmd = JSON.parse m.body
-            r = IntegrationClientCommandProcessor.process_command cmd
-            raise r['message'] if r['response_type']=='error'
-            running = false if r=='shutdown'
-            m.delete
+            begin
+              cmd = JSON.parse m.body
+              r = IntegrationClientCommandProcessor.process_command cmd
+              raise r['message'] if r['response_type']=='error'
+              running = false if r=='shutdown'
+            rescue
+              $!.log_me ["SQS Message: #{m.body}"]
+            ensure
+              m.delete
+            end
           end
         rescue
           $!.log_me
@@ -85,16 +90,16 @@ module OpenChain
       dir, fname = Pathname.new(command['path']).split
       folder_list = dir.to_s.split('/')
       user = User.where(:username=>folder_list[1]).first
-      return "Username #{folder_list[1]} not found." unless user
-      return "User #{user.username} is locked." unless user.active?
+      raise "Username #{folder_list[1]} not found." unless user
+      raise "User #{user.username} is locked." unless user.active?
       ss = user.search_setups.where(:module_type=>folder_list[3],:name=>folder_list[4]).first
-      return "Search named #{folder_list[4]} not found for module #{folder_list[3]}." unless ss
+      raise "Search named #{folder_list[4]} not found for module #{folder_list[3]}." unless ss
       imp = ss.imported_files.build(:starting_row=>1,:starting_column=>1,:update_mode=>'any')
       imp.attached = file
       imp.module_type = ss.module_type
       imp.user = user
       imp.save
-      return "Imported file could not be save: #{imp.errors.full_messages.join("\n")}" unless imp.errors.blank?
+      raise "Imported file could not be save: #{imp.errors.full_messages.join("\n")}" unless imp.errors.blank?
       imp.process user, {:defer=>true}
       return "success"
     end

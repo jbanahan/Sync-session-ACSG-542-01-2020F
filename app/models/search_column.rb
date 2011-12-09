@@ -6,6 +6,10 @@ class SearchColumn < ActiveRecord::Base
   # can this values in this column be used to find the appropriate unique object in the database
   def key_column?
     mf = model_field
-    mf.core_module.key_model_field_uids.include? mf.uid
+    if mf.core_module #blank won't have core module
+      mf.core_module.key_model_field_uids.include? mf.uid
+    else
+      false
+    end
   end
 end
