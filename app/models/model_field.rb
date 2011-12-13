@@ -639,6 +639,21 @@ class ModelField
       [47,:ent_hmf,:hmf,"HMF",{:data_type=>:decimal}],
       [48,:ent_mpf,:mpf,"MPF",{:data_type=>:decimal}]
     ]
+    add_fields CoreModule::COMMERCIAL_INVOICE, [
+      [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
+      [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}]
+    ]
+    add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
+      [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
+      [2,:cil_part_number,:part_number,"Part Number",{:data_type=>:string}],
+      [3,:cil_part_desc,:part_description,"Part Desc",{:data_type=>:string}],
+      [4,:cil_po_number,:po_number,"PO Number",{:data_type=>:string}],
+      [5,:cil_hts,:hts_number,"HTS",{:data_type=>:string}],
+      [6,:cil_duty,:duty_rate,"Duty",{:data_type=>:decimal}],
+      [7,:cil_units,:units,"Units",{:data_type=>:decimal}],
+      [8,:cil_uom,:unit_of_measure,"UOM",{:data_type=>:string}],
+      [9,:cil_value,:value,"Value",{:data_type=>:decimal}]
+    ]
     add_fields CoreModule::BROKER_INVOICE, [
       make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),
       [2,:bi_suffix,:suffix,"Suffix",:data_type=>:string],
