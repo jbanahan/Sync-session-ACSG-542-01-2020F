@@ -234,7 +234,14 @@ class FileImportProcessor
       @data
       s = @data.worksheet 0
       s.each (@import_file.starting_row-1) do |row|
-        yield row
+        process = false
+        row.each do |v|
+          if !v.blank?
+            process = true
+            break
+          end
+        end
+        yield row if process
       end
     end
   end
