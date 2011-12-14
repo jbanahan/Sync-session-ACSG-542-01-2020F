@@ -86,17 +86,17 @@ describe OpenChain::IntegrationClientCommandProcessor do
       context 'errors' do
         it 'should fail on bad user' do
           cmd = {'request_type'=>'remote_file','path'=>'/baduser/to_chain/product/search/file.csv','remote_path'=>'12345'}
-          OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {'response_type'=>'error','message'=>'Username baduser not found.'}
+          lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, 'Username baduser not found.'
         end
         it 'should fail on bad search setup name' do
           cmd = {'request_type'=>'remote_file','path'=>"/#{@user.username}/to_chain/product/badsearch/file.csv",'remote_path'=>'12345'}
-          OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {'response_type'=>'error','message'=>'Search named badsearch not found for module product.'}
+          lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, 'Search named badsearch not found for module product.'
         end
         it 'should fail on locked user' do
           @user.disabled = true
           @user.save!
           cmd = {'request_type'=>'remote_file','path'=>@path,'remote_path'=>'12345'}
-          OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {'response_type'=>'error','message'=>"User #{@user.username} is locked."}
+          lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, "User #{@user.username} is locked."
         end
       end
     end
