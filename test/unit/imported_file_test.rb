@@ -373,6 +373,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
 
   test "preview order" do
+    ImportedFile.find(1).update_attributes(:module_type=>"Order")
     base_order = Order.find(1)
     new_order_date = "2001-01-03"
     attachment = "Order Number,Order Date\n#{base_order.order_number},#{new_order_date}"
