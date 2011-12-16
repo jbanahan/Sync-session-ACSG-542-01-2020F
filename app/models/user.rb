@@ -12,7 +12,7 @@ class User < ActiveRecord::Base
     :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
     :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
     :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
-    :entry_view,
+    :entry_view, :entry_comment, :entry_attach,
     :broker_invoice_view,
     :classification_view, :classification_edit
   
@@ -135,6 +135,15 @@ class User < ActiveRecord::Base
   end
   def view_entries?
     return self.entry_view? && self.company.view_entries?
+  end
+  def comment_entries?
+    self.entry_comment? && self.company.view_entries?
+  end
+  def attach_entries?
+    self.entry_attach? && self.company.view_entries?
+  end
+  def edit_entries?
+    false
   end
   def view_orders?
     return self.order_view? && self.company.view_orders? 

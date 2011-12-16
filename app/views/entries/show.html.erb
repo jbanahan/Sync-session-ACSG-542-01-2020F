@@ -1,3 +1,4 @@
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @entry} %>
 <table>
   <%CoreModule::ENTRY.model_fields.keys.each do |f|%>
     <%=field_view_row @entry, f unless ModelField.find_by_uid(f).process_export(@entry).blank?%>

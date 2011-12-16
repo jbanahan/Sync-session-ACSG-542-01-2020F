@@ -129,8 +129,8 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
           <td class='hover'><%= permission_box @user, 'view_entries?', :entry_view, f %></td>
           <td class='hover'><span class='light_text'>n/a</span></td>
           <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
+          <td class='hover'><%= permission_box @user, 'comment_entries?', :entry_comment, f%></td>
+          <td class='hover'><%= permission_box @user, 'attach_entries?', :entry_attach, f%></td>
         </tr>
         <tr class='permission_row'>
           <td class='hover label_cell'><div class='label'><%=CoreModule::BROKER_INVOICE.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
