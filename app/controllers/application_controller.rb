@@ -95,7 +95,7 @@ class ApplicationController < ActionController::Base
     last_run = SearchRun.find_last_run current_user, core_module
     if params[:force_search] || last_run.nil? || !last_run.search_setup_id.nil? || params[:sid]
       @core_module = core_module
-      @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user)
+      @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user).order('name ASC')
       @current_search = get_search_to_run
       if @current_search.nil?
         error_redirect "Search with this ID could not be found."
