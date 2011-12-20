@@ -1,7 +1,7 @@
 class FileImportResult < ActiveRecord::Base
   belongs_to :imported_file
   belongs_to :run_by, :class_name => "User"
-  has_many :change_records, :order => "failed DESC"
+  has_many :change_records, :order => "failed DESC, record_sequence_number ASC"
 
   after_save :update_changed_object_count
   
