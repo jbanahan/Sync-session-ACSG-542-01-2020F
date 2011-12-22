@@ -9,5 +9,5 @@ class PowerOfAttorney < ActiveRecord::Base
     :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/power_of_attorney/:id/:filename" #conditional on MasterSetup to allow migrations to run
 
-  validates_attachment_presence
+  validates_attachment_presence :attachment
 end
