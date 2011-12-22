@@ -15,6 +15,7 @@ class Company < ActiveRecord::Base
 	has_many	:orders, :through => :divisions, :dependent => :destroy
 	has_many	:products, :through => :divisions, :dependent => :destroy
 	has_many  :histories, :dependent => :destroy
+  has_many  :power_of_attorneys, :dependent => :destroy
 	
 	def self.find_carriers
 		return Company.where(["carrier = ?",true])

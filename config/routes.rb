@@ -1,7 +1,4 @@
 OpenChain::Application.routes.draw do
-
-  resources :power_of_attorneys
-
   resources :linkable_attachment_import_rules
   resources :tariff_sets, :only => [:index]
   resources :entity_snapshots, :only => [:show]
@@ -207,6 +204,7 @@ OpenChain::Application.routes.draw do
   resources :companies do
 		resources :addresses
 		resources :divisions
+    resources :power_of_attorneys
 		resources :users do
 		  get :disable, :on => :member
 		  get :enable, :on => :member
