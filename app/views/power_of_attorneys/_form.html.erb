@@ -12,10 +12,11 @@ cancel_redirect = company_power_of_attorneys_path(@company) if current_user.admi
 <button id='btn_save'>Save</button>
 <button id='btn_cancel'>Cancel</button>
 <% end %>
-<%= form_for([@company, @power_of_attorney], :html=>{:id=>'frm_poa'}) do |f| %>
+<%= form_for([@company, @power_of_attorney], :html=>{:id=>'frm_poa', :multipart => true}) do |f| %>
   <%= f.hidden_field :company_id %>
   <table>
-  <%=field_row "Start date", f.text_field(:start_date, "class" => "isdate") %>
-  <%=field_row "Expiration date", f.text_field(:expiration_date, "class" => "isdate") %>
+  <%= field_row "Start date", f.text_field(:start_date, "class" => "isdate") %>
+  <%= field_row "Expiration date", f.text_field(:expiration_date, "class" => "isdate") %>
+  <%= field_row "POA Document", f.file_field(:attachment) %>
   </table>
 <% end %>

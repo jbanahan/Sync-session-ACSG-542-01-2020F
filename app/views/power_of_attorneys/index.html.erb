@@ -22,7 +22,7 @@
   <tbody>
     <% @power_of_attorneys.each do |poa| %>
       <tr>
-        <td><%= link_to power_of_attorney.start_date, edit_company_power_of_attorney_path(poa.company_id, company.id) %></td>
+        <td><%= link_to poa.start_date, edit_company_power_of_attorney_path(poa.company_id, poa.id) %></td>
         <td><%= poa.expiration_date %></td>
         <td><%= poa.uploaded_by %></td>
       </tr>
