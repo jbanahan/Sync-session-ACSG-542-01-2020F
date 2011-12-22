@@ -1,0 +1,49 @@
+<%= form_for(@power_of_attorney) do |f| %>
+  <% if @power_of_attorney.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@power_of_attorney.errors.count, "error") %> prohibited this power_of_attorney from being saved:</h2>
+
+      <ul>
+      <% @power_of_attorney.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :company_id %><br />
+    <%= f.text_field :company_id %>
+  </div>
+  <div class="field">
+    <%= f.label :start_date %><br />
+    <%= f.date_select :start_date %>
+  </div>
+  <div class="field">
+    <%= f.label :expiration_date %><br />
+    <%= f.date_select :expiration_date %>
+  </div>
+  <div class="field">
+    <%= f.label :uploaded_by %><br />
+    <%= f.text_field :uploaded_by %>
+  </div>
+  <div class="field">
+    <%= f.label :attachment_file_name %><br />
+    <%= f.text_field :attachment_file_name %>
+  </div>
+  <div class="field">
+    <%= f.label :attachment_content_type %><br />
+    <%= f.text_field :attachment_content_type %>
+  </div>
+  <div class="field">
+    <%= f.label :attachment_file_size %><br />
+    <%= f.text_field :attachment_file_size %>
+  </div>
+  <div class="field">
+    <%= f.label :attachment_updated_at %><br />
+    <%= f.datetime_select :attachment_updated_at %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

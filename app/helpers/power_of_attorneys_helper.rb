@@ -1,0 +1,2 @@
+module PowerOfAttorneysHelper
+end
