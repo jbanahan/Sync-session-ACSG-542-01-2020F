@@ -15,7 +15,7 @@ cancel_redirect = company_power_of_attorneys_path(@company) if current_user.admi
   <button id='btn_save'>Save</button>
   <button id='btn_cancel'>Cancel</button>
   <% if @power_of_attorney.attachment.exists? %>
-    <button id='btn_download'>Download Original</button>
+    <button id='btn_download'>Download Document</button>
   <% end %>
 <% end %>
 <%= form_for([@company, @power_of_attorney], :html=>{:id=>'frm_poa', :multipart => true}) do |f| %>

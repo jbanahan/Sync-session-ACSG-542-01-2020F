@@ -13,18 +13,26 @@
 <table class='detail_table'>
   <thead>
     <tr>
+      <th></th>
       <th>Start date</th>
       <th>Expiration date</th>
+      <th>Document updated at</th>
+      <th>Document</td>
+      <th>Document size</th>
       <th>Uploaded by</th>
     </tr>
   </thead>
   
   <tbody>
     <% @power_of_attorneys.each do |poa| %>
-      <tr>
-        <td><%= link_to poa.start_date, edit_company_power_of_attorney_path(poa.company_id, poa.id) %></td>
+      <tr class='hover'>
+        <td><%= link_to 'Go', edit_company_power_of_attorney_path(poa.company_id, poa.id) %></td>
+        <td><%= poa.start_date %></td>
         <td><%= poa.expiration_date %></td>
-        <td><%= poa.uploaded_by %></td>
+        <td><%= poa.attachment_updated_at %></td>
+        <td><%= poa.attachment_file_name %></td>
+        <td><%= poa.attachment_file_size %></td>
+        <td><%= poa.user.full_name %></td>
       </tr>
     <% end %>
   </tbody>
