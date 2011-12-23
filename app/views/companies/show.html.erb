@@ -30,6 +30,7 @@ $(function() {
   $("#btn_lock_submit")
     .button();
   $("#btn_unlock").button().click(function(){$("#mod_unlock").dialog('open');});
+  $("#btn_poas").button().click(function() {window.location = '<%= company_power_of_attorneys_path(@company) %>'});
   <% end %>
 });
 <% end %>
@@ -44,6 +45,7 @@ $(function() {
       <button id='btn_unlock'>Unlock</button>
     <%end%>
   <%end%>
+  <button id='btn_poas'>POAs</button>
 <% end %>
 
 <%if @company.locked %>
