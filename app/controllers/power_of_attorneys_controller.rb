@@ -1,6 +1,4 @@
 class PowerOfAttorneysController < ApplicationController
-  # GET /power_of_attorneys
-  # GET /power_of_attorneys.xml
   def index
     @company = Company.find(params[:company_id])
     @power_of_attorneys = PowerOfAttorney.where(["company_id = ?", params[:company_id]])
@@ -11,8 +9,6 @@ class PowerOfAttorneysController < ApplicationController
     end
   end
 
-  # GET /power_of_attorneys/1
-  # GET /power_of_attorneys/1.xml
   def show
     @power_of_attorney = PowerOfAttorney.find(params[:id])
     redirect_to edit_company_power_of_attorney_path @power_of_attorney
@@ -30,14 +26,11 @@ class PowerOfAttorneysController < ApplicationController
     end
   end
 
-  # GET /power_of_attorneys/1/edit
   def edit
     @power_of_attorney = PowerOfAttorney.find(params[:id])
     @company = @power_of_attorney.company
   end
 
-  # POST /power_of_attorneys
-  # POST /power_of_attorneys.xml
   def create
     @power_of_attorney = PowerOfAttorney.new(params[:power_of_attorney])
     @power_of_attorney.user = current_user
@@ -57,8 +50,6 @@ class PowerOfAttorneysController < ApplicationController
     end
   end
 
-  # PUT /power_of_attorneys/1
-  # PUT /power_of_attorneys/1.xml
   def update
     @power_of_attorney = PowerOfAttorney.find(params[:id])
     @power_of_attorney.user = current_user
@@ -77,8 +68,6 @@ class PowerOfAttorneysController < ApplicationController
     end
   end
 
-  # DELETE /power_of_attorneys/1
-  # DELETE /power_of_attorneys/1.xml
   def destroy
     @power_of_attorney = PowerOfAttorney.find(params[:id])
     @power_of_attorney.destroy
@@ -88,4 +77,18 @@ class PowerOfAttorneysController < ApplicationController
       format.xml  { head :ok }
     end
   end
+
+  def download
+    @power_of_attorney = PowerOfAttorney.find(params[:id])
+    if @power_of_attorney.nil?
+      add_flash :errors, "File could not be found."
+      redirect_to request.referrer
+    else
+      send_data @power_of_attorney.attachment_data, 
+      :filename => @power_of_attorney.attachment_file_name,
+      :type => @power_of_attorney.attachment_content_type,
+      :disposition => 'attachment'
+    end
+  end
+
 end

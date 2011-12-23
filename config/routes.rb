@@ -204,7 +204,12 @@ OpenChain::Application.routes.draw do
   resources :companies do
 		resources :addresses
 		resources :divisions
-    resources :power_of_attorneys
+    resources :power_of_attorneys do
+      member do
+        get 'download'
+      end
+    end
+    
 		resources :users do
 		  get :disable, :on => :member
 		  get :enable, :on => :member

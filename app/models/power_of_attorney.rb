@@ -10,4 +10,9 @@ class PowerOfAttorney < ActiveRecord::Base
     :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/power_of_attorney/:id/:filename" #conditional on MasterSetup to allow migrations to run
 
   validates_attachment_presence :attachment
+
+  def attachment_data
+    s3 = AWS::S3.new AWS_CREDENTIALS
+    s3.buckets[attachment.options.fog_directory].objects[attachment.path].read
+  end
 end
