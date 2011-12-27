@@ -637,7 +637,16 @@ class ModelField
       [45,:ent_total_packages_uom,:total_packages_uom,"Total Packages UOM",{:data_type=>:string}],
       [46,:ent_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal}],
       [47,:ent_hmf,:hmf,"HMF",{:data_type=>:decimal}],
-      [48,:ent_mpf,:mpf,"MPF",{:data_type=>:decimal}]
+      [48,:ent_mpf,:mpf,"MPF",{:data_type=>:decimal}],
+      [49,:ent_container_nums,:container_numbers,"Container Numbers",{:data_type=>:string}],
+      [50,:ent_container_sizes,:container_sizes,"Container Sizes",{:data_type=>:string}],
+      [51,:ent_fcl_lcl,:fcl_lcl,"FCL/LCL",{:data_type=>:string}],
+      [52,:ent_lading_port_code,:lading_port_code,"Port of Lading Code",{:data_type=>:string}],
+      [53,:ent_unlading_port_code,:unlading_port_code,"Port of Unlading Code",{:data_type=>:string}],
+      [54,:ent_consignee_address_1,:consignee_address_1,"Ult Consignee Address 1",{:data_type=>:string}],
+      [55,:ent_consignee_address_2,:consignee_address_2,"Ult Consignee Address 2",{:data_type=>:string}],
+      [56,:ent_consignee_city,:consignee_city,"Ult Consignee City",{:data_type=>:string}],
+      [57,:ent_consignee_state,:consignee_state,"Ult Consignee State",{:data_type=>:string}]
     ]
     add_fields CoreModule::BROKER_INVOICE, [
       make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),

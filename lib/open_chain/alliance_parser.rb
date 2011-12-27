@@ -13,6 +13,14 @@ module OpenChain
       '00042'=>:duty_due_date,
       '00001'=>:export_date
     }
+
+    # process all files in the archive for a given date.  Use this to reprocess old files
+    def self.process_day date
+      OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance") do |key|
+        parse OpenChain::S3.get_data(OpenChain::S3.integration_bucket_name, key)
+      end
+    end
+
     # take the text inside an internet tracking file from alliance and create/update the entry
     def self.parse file_content
       begin
@@ -45,6 +53,8 @@ module OpenChain
               process_sh00 r
             when "SH01"
               process_sh01 r
+            when "SH03"
+              process_sh03 r
             when "SD00"
               process_sd00 r
             when "IH00"
@@ -65,6 +75,8 @@ module OpenChain
               process_cl00 r
             when "CT00"
               process_ct00 r
+            when "SC00"
+              process_sc00 r
           end
         end
         if !@skip_entry
@@ -81,6 +93,10 @@ module OpenChain
             @entry.total_units_uoms = accumulated_string :total_units_uoms
             @entry.special_program_indicators = accumulated_string :spis
             @entry.po_numbers = accumulated_string :po_numbers
+            @entry.container_numbers = accumulated_string :container_numbers
+            @entry.container_sizes = accumulated_string :container_sizes
+            set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
+
             @entry.save! if @entry
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
@@ -113,7 +129,9 @@ module OpenChain
         @entry.total_packages_uom = r[312,6].strip
         @entry.merchandise_description = r[77,70].strip
         @entry.transport_mode_code = r[164,2]
-        @entry.entry_port_code = r[160,4]
+        @entry.entry_port_code = port_code r[160,4]
+        @entry.lading_port_code = port_code r[151,5]
+        @entry.unlading_port_code = port_code r[156,4]
         @entry.ult_consignee_code = r[180,10].strip
         @entry.ult_consignee_name = r[190,35].strip
         @entry.gross_weight = r[318,12]
@@ -126,6 +144,14 @@ module OpenChain
       @entry.total_duty = parse_currency r[49,12]
       @entry.total_duty_direct = parse_currency r[357,12]
       @entry.entered_value = parse_currency r[384,13]
+    end
+
+    # header continuation 3
+    def process_sh03 r
+      @entry.consignee_address_1 = r[288,35].strip
+      @entry.consignee_address_2 = r[323,35].strip
+      @entry.consignee_city = r[358,35].strip
+      @entry.consignee_state = r[393,2].strip
     end
 
     # date
@@ -217,6 +243,37 @@ module OpenChain
     # customer references
     def process_sr00 r
       accumulate_string :cust_ref, r[4,35].strip 
+    end
+
+    # containers
+    def process_sc00 r
+      accumulate_string :container_numbers, r[4,15].strip
+      accumulate_string :container_sizes, r[59,7].strip
+      accumulate_string :fcl_lcl, r[271] unless r[271].blank?
+    end
+
+    # make port code nil if all zeros
+    def port_code v
+      v.blank? || v.match(/^[0]*$/) ? nil : v
+    end
+
+    # set the fcl_lcl value based on the accumulated flags from the container lines
+    def set_fcl_lcl_value
+      vals = @accumulated_strings[:fcl_lcl]
+      v = nil
+      if !vals.blank?
+        if vals.size == 1
+          case vals.first
+            when 'F'
+              v = "FCL"
+            when 'L'
+              v = "LCL"
+          end
+        elsif vals.size > 1
+          v = 'Mixed'
+        end
+      end
+      @entry.fcl_lcl = v
     end
 
     def parse_date str

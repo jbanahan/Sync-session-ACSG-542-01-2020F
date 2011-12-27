@@ -110,6 +110,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_tariff_comparison" => "reports#run_tariff_comparison", :via => :post
   match "/reports/show_stale_tariffs" => "reports#show_stale_tariffs", :via => :get
   match "/reports/run_stale_tariffs" => "reports#run_stale_tariffs", :via => :post
+  match "/reports/show_shoes_for_crews_entry_breakdown" => "reports#show_shoes_for_crews_entry_breakdown", :via=>:get
+  match "/reports/run_shoes_for_crews_entry_breakdown" => "reports#run_shoes_for_crews_entry_breakdown", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member

@@ -30,17 +30,24 @@ describe OpenChain::AllianceParser do
     @merchandise_description = 'merch desc'
     @total_packages_uom = 'CTN'
     @entry_port_code = '1235'
+    @lading_port_code = '55468'
+    @unlading_port_code = '6685'
     @transport_mode_code = '11'
     @ult_consignee_code = 'abcdef' 
     @ult_consignee_name = 'u consign nm'
+    @consignee_address_1 = 'ca1'
+    @consignee_address_2 = 'ca2'
+    @consignee_city = 'ccity'
+    @consignee_state = 'NJ'
     @gross_weight = 50
     @hmf = BigDecimal('55.22',2)
     @mpf = BigDecimal('271.14',2)
     @cotton_fee = BigDecimal('123.31',2)
     convert_cur = lambda {|c,width| (c * 100).to_i.to_s.rjust(width,'0')}
     @make_entry_lambda = lambda {
-      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID000004701#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@entry_number}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       #{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
+      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@entry_number}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       #{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
       sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}"
+      sh03 = "SH03#{"".ljust(285)}#{@consignee_address_1.ljust(35)}#{@consignee_address_2.ljust(35)}#{@consignee_city.ljust(35)}#{@consignee_state.ljust(2)}"
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       sd_entry_filed = "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
       sd_release = "SD0000019#{@release_date_str}200904061633Release Release Date                                                "
@@ -54,7 +61,7 @@ describe OpenChain::AllianceParser do
       su_hmf = "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       su_mpf = "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       su_cotton = "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
-      r = [sh00,sh01,sd_duty_due,sd_export,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation,su_hmf,su_mpf,su_cotton]
+      r = [sh00,sh01,sh03,sd_duty_due,sd_export,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation,su_hmf,su_mpf,su_cotton]
       unless @customer_references.blank?
         @customer_references.split("\n").each do |cr|
           r << "SR00#{cr.ljust(35)}"
@@ -115,8 +122,59 @@ describe OpenChain::AllianceParser do
       end
       rows.join("\n")
     }
+    @containers = [
+      {:cnum=>'153153',:csize=>'abcdef',:fcl_lcl=>'F'},
+      {:cnum=>'afii1911010',:csize=>'123949',:fcl_lcl=>'L'}
+    ]
+    @make_containers_lambda = lambda {
+      rows = []
+      @containers.each do |c|
+        rows << "SC00#{c[:cnum].ljust(15)}#{"".ljust(40)}#{c[:csize].ljust(7)}#{"".ljust(205)}#{c[:fcl_lcl].ljust(1)}"
+      end
+      rows.join("\n")
+    }
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
+    @split_string = "\n "
   end
+  it 'should aggregate containers' do
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    expected_containers = @containers.collect {|c| c[:cnum]}
+    expected_sizes = @containers.collect {|c| c[:csize]}
+    ent.container_numbers.split(@split_string).should == expected_containers
+    ent.container_sizes.split(@split_string).should == expected_sizes
+  end
+  it 'should set fcl_lcl to mixed if different flags on different containers' do
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.fcl_lcl.should == 'Mixed'
+  end
+  it 'should set fcl_lcl to lcl if "L" on all containers' do
+    @containers.each {|c| c[:fcl_lcl] = "L"}
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.fcl_lcl.should == 'LCL'
+  end
+  it 'should set fcl_lcl to fcl if "F" on all containers' do
+    @containers.each {|c| c[:fcl_lcl] = "F"}
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.fcl_lcl.should == 'FCL'
+  end
+  it 'should set fcl_lcl to FCL even if only one container has value' do
+    @containers.each {|c| c[:fcl_lcl] = ""}
+    @containers.first[:fcl_lcl] = "F"
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.fcl_lcl.should == 'FCL'
+  end
+  it 'should set fcl_lcl to nil if no values' do
+    @containers.each {|c| c[:fcl_lcl] = ""}
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.fcl_lcl.should be_nil
+  end
+
   it 'should create entry' do
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
@@ -149,13 +207,19 @@ describe OpenChain::AllianceParser do
     ent.merchandise_description.should == @merchandise_description
     ent.transport_mode_code.should == @transport_mode_code
     ent.entry_port_code.should == @entry_port_code
+    ent.lading_port_code.should == @lading_port_code
+    ent.unlading_port_code.should == @unlading_port_code
     ent.ult_consignee_code.should == @ult_consignee_code
     ent.ult_consignee_name.should == @ult_consignee_name
+    ent.consignee_address_1 == @consignee_address_1
+    ent.consignee_address_2 == @consignee_address_2
+    ent.consignee_city == @consignee_city
+    ent.consignee_state == @consignee_state
     ent.gross_weight.should == @gross_weight
     ent.cotton_fee.should == @cotton_fee
     ent.hmf.should == @hmf
     ent.mpf.should == @mpf
-    ent.mfids.split("\n ").should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
+    ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
 
     expected_invoiced_value = BigDecimal("0",2)
     expected_export_country_codes = Set.new
@@ -180,16 +244,26 @@ describe OpenChain::AllianceParser do
     end
 
     ent.total_invoiced_value.should == expected_invoiced_value
-    ent.export_country_codes.split("\n ").should == expected_export_country_codes.to_a
-    ent.origin_country_codes.split("\n ").should == expected_origin_country_codes.to_a
-    ent.vendor_names.split("\n ").should == expected_vendor_names.to_a
+    ent.export_country_codes.split(@split_string).should == expected_export_country_codes.to_a
+    ent.origin_country_codes.split(@split_string).should == expected_origin_country_codes.to_a
+    ent.vendor_names.split(@split_string).should == expected_vendor_names.to_a
     ent.total_units.should == expected_total_units
-    ent.total_units_uoms.split("\n ").should == expected_total_units_uoms.to_a
-    ent.po_numbers.split("\n ").should == expected_pos.to_a
-    ent.special_program_indicators.split("\n ").should == expected_spis.to_a
+    ent.total_units_uoms.split(@split_string).should == expected_total_units_uoms.to_a
+    ent.po_numbers.split(@split_string).should == expected_pos.to_a
+    ent.special_program_indicators.split(@split_string).should == expected_spis.to_a
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
+  end
+  it 'should make all zero port codes nil' do
+    @lading_port_code = '00000'
+    @unlading_port_code = '0000'
+    @entry_port_code = '0000'
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.lading_port_code.should be_nil
+    ent.unlading_port_code.should be_nil
+    ent.entry_port_code.should be_nil
   end
   context 'reference fields' do
     it 'should remove po numbers from cust ref' do
@@ -207,7 +281,7 @@ describe OpenChain::AllianceParser do
         end
       end
       OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
-      Entry.find_by_broker_reference(@ref_num).po_numbers.split("\n ").should == expected_pos.to_a
+      Entry.find_by_broker_reference(@ref_num).po_numbers.split(@split_string).should == expected_pos.to_a
     end
     it 'should work with no po numbers' do
       @customer_references = "a\nb\nc"
@@ -265,20 +339,20 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
     Entry.count.should == 1
     ent = Entry.first
-    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n ")
-    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n ")
-    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n ")
-    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n ")
+    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join(@split_string)
+    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join(@split_string)
+    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join(@split_string)
+    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join(@split_string)
   end
   it 'should replace entry header tracking fields' do
     Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs')
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
     Entry.count.should == 1
     ent = Entry.first
-    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join("\n ")
-    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join("\n ")
-    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join("\n ")
-    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join("\n ")
+    ent.master_bills_of_lading.should == (@si_lines.collect {|h| h[:mbol]}).join(@split_string)
+    ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join(@split_string)
+    ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join(@split_string)
+    ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join(@split_string)
   end
   it 'should create invoice' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
@@ -357,6 +431,18 @@ describe OpenChain::AllianceParser do
       line.vendor_name.should == src[:v_name]
       line.vendor_reference.should == src[:v_ref]
       line.charge_type.should == src[:type]
+    end
+  end
+
+  describe 'process_day' do
+    it 'should process all files from the given day' do
+      d = Date.new
+      OpenChain::S3.should_receive(:integration_keys).with(d,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance").and_yield("a").and_yield("b")
+      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
+      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
+      OpenChain::AllianceParser.should_receive(:parse).with("x")
+      OpenChain::AllianceParser.should_receive(:parse).with("y")
+      OpenChain::AllianceParser.process_day d
     end
   end
 end

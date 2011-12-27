@@ -21,13 +21,13 @@ describe OpenChain::S3 do
   end
   describe 'IO' do
     before(:each) do
-      original_tempfile = Tempfile.new('abc')
+      @original_tempfile = Tempfile.new('abc')
       @content = "#{Time.now.to_f}"
       @key = "s3_io_#{Time.now.to_f}"
-      original_tempfile.write @content
-      original_tempfile.flush
+      @original_tempfile.write @content
+      @original_tempfile.flush
       
-      OpenChain::S3.upload_file @bucket, @key, original_tempfile
+      OpenChain::S3.upload_file @bucket, @key, @original_tempfile
     end
     after(:each) do
       OpenChain::S3.delete @bucket, @key
@@ -58,7 +58,21 @@ describe OpenChain::S3 do
         OpenChain::S3.exists?(@bucket,@key).should be_false
       end
     end
-
+    describe 'integration keys' do
+      before :each do
+        @my_keys = ["2011-12/26/subfolder/2/a.txt","2011-12/26/subfolder/2/b.txt"] #find these
+        @my_keys.each {|my_key| OpenChain::S3.upload_file @bucket, my_key, @original_tempfile}
+      end
+      after :each do
+        @my_keys.each {|my_key| OpenChain::S3.delete @bucket, my_key}
+      end
+      it 'should get keys from integration bucket by date' do
+        OpenChain::S3.should_receive(:integration_bucket_name).and_return(@bucket)
+        found_keys = []
+        OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
+        found_keys.should == @my_keys
+      end
+    end
   end
 
 end

@@ -33,5 +33,13 @@ module OpenChain
     def self.exists? bucket, key
       AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].exists?
     end
+
+    # get files uploaded to the integration bucket for a particular date and subfolder and passes each key name to the given block
+    def self.integration_keys upload_date, subfolder
+      prefix = "#{upload_date.strftime("%Y-%m/%d")}/#{subfolder}"
+      AWS::S3.new(AWS_CREDENTIALS).buckets[integration_bucket_name].objects.with_prefix(prefix).each do |obj|
+        yield obj.key
+      end
+    end
   end
 end

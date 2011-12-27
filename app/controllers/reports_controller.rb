@@ -27,6 +27,13 @@ class ReportsController < ApplicationController
     run_report "Stale Tariffs", OpenChain::Report::StaleTariffs, {}, []
   end
 
+  def show_shoes_for_crews_entry_breakdown
+    #nothing to do here
+  end
+  def run_shoes_for_crews_entry_breakdown
+    run_report "Shoes For Crews", OpenChain::Report::ShoesForCrewsEntryBreakdown, {}, []
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin
