@@ -11,7 +11,7 @@ class PowerOfAttorneysController < ApplicationController
 
   def show
     @power_of_attorney = PowerOfAttorney.find(params[:id])
-    redirect_to edit_company_power_of_attorney_path @power_of_attorney
+    redirect_to edit_company_power_of_attorney_path @power_of_attorney.company, @power_of_attorney
   end
 
   # GET /power_of_attorneys/new
