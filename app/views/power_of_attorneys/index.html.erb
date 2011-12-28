@@ -20,6 +20,7 @@
       <th>Document</td>
       <th>Document size</th>
       <th>Uploaded by</th>
+      <th>Options</th>
     </tr>
   </thead>
   
@@ -33,6 +34,7 @@
         <td><%= poa.attachment_file_name %></td>
         <td><%= poa.attachment_file_size %></td>
         <td><%= poa.user.full_name %></td>
+        <td><%= link_to "Delete", company_power_of_attorney_path(poa.company, poa), :method => :delete, :confirm => "Are you sure?" %></td>
       </tr>
     <% end %>
   </tbody>
