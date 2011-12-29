@@ -30,6 +30,9 @@ class ImportedFile < ActiveRecord::Base
   validates_presence_of :update_mode
   validates_inclusion_of :update_mode, :in => UPDATE_MODES.keys.to_a
   
+  def sorted_columns
+    self.search_columns.order("rank ASC")
+  end
   def last_file_import
     self.file_import_results.order("created_at DESC").first
   end

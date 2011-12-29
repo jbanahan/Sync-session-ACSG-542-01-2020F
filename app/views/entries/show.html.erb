@@ -1,5 +1,29 @@
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @entry} %>
 <table>
   <%CoreModule::ENTRY.model_fields.keys.each do |f|%>
-    <%=field_view_row @entry, f%>
+    <%=field_view_row @entry, f unless ModelField.find_by_uid(f).process_export(@entry).blank?%>
   <%end%>
 </table>
+<h2>Commercial Invoices</h2>
+<%@entry.commercial_invoices.each do |ci|%>
+  <table>
+      <%=field_row "Invoice Number", ci.invoice_number%>
+      <%=field_row "Vendor Name", ci.vendor_name%>      
+  </table>
+  <table class='detail_table'>
+    <thead><tr><th>Line</th><th>Material Number</th><th>Description</th><th>PO Number</th><th>HTS</th><th>Duty</th><th>Units</th><th>Value</th><th>Drawback Qty</th></tr></thead>
+    <%ci.commercial_invoice_lines.each do |ln|%>
+    <tr>
+      <td><%=ln.line_number%></td>
+      <td><%=ln.part_number%></td>
+      <td><%=ln.part_description%></td>
+      <td><%=ln.po_number%></td>
+      <td><a href='#' class='lnk_tariff_popup' country="<%=Country.find_by_iso_code('US').id%>" hts='<%=ln.hts_number%>'><%=ln.hts_number.hts_format%></a></td>
+      <td><%=ln.duty_rate%></td>
+      <td><%=ln.units%> <%=ln.unit_of_measure%></td>
+      <td><%=ln.value%></td>
+      <td><%=ln.drawback_qty%></td>
+    </tr>
+    <%end%>
+  </table>
+<%end%>

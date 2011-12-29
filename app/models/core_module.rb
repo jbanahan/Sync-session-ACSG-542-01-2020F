@@ -300,13 +300,28 @@ class CoreModule
     :child_lambdas => {BROKER_INVOICE_LINE => lambda {|i| i.broker_invoice_lines}},
     :child_joins => {BROKER_INVOICE_LINE => "LEFT OUTER JOIN broker_invoice_lines on broker_invoices.id = broker_invoice_lines.broker_invoice_id"}
   })
+  COMMERCIAL_INVOICE_LINE = new("CommercialInvoiceLine","Invoice Line",{
+    :enabled_lambda => lambda {true},
+    :unique_id_field_name=>:cil_line_number,
+    :key_model_field_uids=>[:cil_line_number]
+  })
+  COMMERCIAL_INVOICE = new("CommercialInvoice","Invoice",{
+    :unique_id_field_name => :invoice_number,
+    :key_model_field_uids=>[:invoice_number],
+    :children => [COMMERCIAL_INVOICE_LINE],
+    :child_lambdas => {COMMERCIAL_INVOICE_LINE=> lambda {|i| i.commercial_invoice_lines}},
+    :child_joins => {COMMERCIAL_INVOICE_LINE => "LEFT OUTER JOIN commercial_invoice_lines on commercial_invoices.id = commercial_invoice_lines.commercial_invoice_id"}
+  })
   ENTRY = new("Entry","Entry",{
     :default_search_columns => [:ent_brok_ref,:ent_entry_num,:ent_release_date],
     :unique_id_field_name=>:ent_brok_ref,
-    :key_model_field_uids=>[:ent_brok_ref]
+    :key_model_field_uids=>[:ent_brok_ref],
+    :children => [COMMERCIAL_INVOICE],
+    :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
+    :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"}
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
-  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE]
+  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
@@ -319,7 +334,7 @@ class CoreModule
   set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   set_default_module_chain SALE, [SALE,SALE_LINE]
   set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
-  set_default_module_chain ENTRY, [ENTRY]
+  set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE]
   set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
   
   def self.find_by_class_name(c,case_insensitive=false)

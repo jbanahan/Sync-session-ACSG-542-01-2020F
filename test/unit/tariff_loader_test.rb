@@ -79,7 +79,7 @@ class TariffLoaderTest < ActiveSupport::TestCase
     begin
       key = "#{Rails.env.to_s}/TariffStore/#{t.path.split('/').last}"
       s3.buckets['chain-io'].objects[key].write(:file=>t.path)
-      TariffLoader.process_s3 key, country, label
+      TariffLoader.process_s3 key, country, label, false
     ensure
       s3.buckets['chain-io'].objects[key].delete
     end
