@@ -269,7 +269,9 @@ module OpenChain
     # containers
     def process_sc00 r
       accumulate_string :container_numbers, r[4,15].strip
-      accumulate_string :container_sizes, r[59,7].strip
+      cont_size_num = r[59,7].strip
+      cont_size_desc = r.size>283 ? r[283,40].strip : ""
+      accumulate_string :container_sizes, (cont_size_desc.blank? ? cont_size_num : "#{cont_size_num}-#{cont_size_desc}")
       accumulate_string :fcl_lcl, r[271] unless r[271].blank?
     end
 

@@ -137,13 +137,13 @@ describe OpenChain::AllianceParser do
       rows.join("\n")
     }
     @containers = [
-      {:cnum=>'153153',:csize=>'abcdef',:fcl_lcl=>'F'},
-      {:cnum=>'afii1911010',:csize=>'123949',:fcl_lcl=>'L'}
+      {:cnum=>'153153',:csize=>'abcdef',:cdesc=>"HC",:fcl_lcl=>'F'},
+      {:cnum=>'afii1911010',:csize=>'123949',:cdesc=>"DRY VAN",:fcl_lcl=>'L'}
     ]
     @make_containers_lambda = lambda {
       rows = []
       @containers.each do |c|
-        rows << "SC00#{c[:cnum].ljust(15)}#{"".ljust(40)}#{c[:csize].ljust(7)}#{"".ljust(205)}#{c[:fcl_lcl].ljust(1)}"
+        rows << "SC00#{c[:cnum].ljust(15)}#{"".ljust(40)}#{c[:csize].ljust(7)}#{"".ljust(205)}#{c[:fcl_lcl].ljust(1)}#{"".ljust(11)}#{c[:cdesc].ljust(40)}"
       end
       rows.join("\n")
     }
@@ -154,7 +154,7 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
     expected_containers = @containers.collect {|c| c[:cnum]}
-    expected_sizes = @containers.collect {|c| c[:csize]}
+    expected_sizes = @containers.collect {|c| "#{c[:csize]}-#{c[:cdesc]}"}
     ent.container_numbers.split(@split_string).should == expected_containers
     ent.container_sizes.split(@split_string).should == expected_sizes
   end
