@@ -646,7 +646,47 @@ class ModelField
       [54,:ent_consignee_address_1,:consignee_address_1,"Ult Consignee Address 1",{:data_type=>:string}],
       [55,:ent_consignee_address_2,:consignee_address_2,"Ult Consignee Address 2",{:data_type=>:string}],
       [56,:ent_consignee_city,:consignee_city,"Ult Consignee City",{:data_type=>:string}],
-      [57,:ent_consignee_state,:consignee_state,"Ult Consignee State",{:data_type=>:string}]
+      [57,:ent_consignee_state,:consignee_state,"Ult Consignee State",{:data_type=>:string}],
+      [58,:ent_lading_port_name,:name,"Port of Lading Name",{:data_type=>:string,
+        :import_lambda => lambda { |ent, data|
+          port = Port.find_by_name data
+          return "Port with name \"#{data}\" could not be found." unless port
+          ent.lading_port_code = port.schedule_k_code
+          "Lading Port set to #{port.name}"
+        },
+        :export_lambda => lambda {|ent|
+          ent.lading_port.blank? ? "" : ent.lading_port.name
+        },
+        :join_statement => "LEFT OUTER JOIN ports as ent_lading_port on ent_lading_port.schedule_k_code = entries.lading_port_code",
+        :join_alias => "ent_lading_port"
+      }],
+      [59,:ent_unlading_port_name,:name,"Port of Unlading Name",{:data_type=>:string,
+        :import_lambda => lambda { |ent, data|
+          port = Port.find_by_name data
+          return "Port with name \"#{data}\" could not be found." unless port
+          ent.unlading_port_code = port.schedule_d_code
+          "Unlading Port set to #{port.name}"
+        },
+        :export_lambda => lambda {|ent|
+          ent.unlading_port.blank? ? "" : ent.unlading_port.name
+        },
+        :join_statement => "LEFT OUTER JOIN ports as ent_unlading_port on ent_unlading_port.schedule_d_code = entries.unlading_port_code",
+        :join_alias => "ent_unlading_port"
+      }],
+      [60,:ent_entry_port_name,:name,"Port of Entry Name",{:data_type=>:string,
+        :import_lambda => lambda { |ent, data|
+          port = Port.find_by_name data
+          return "Port with name \"#{data}\" could not be found." unless port
+          ent.entry_port_code = port.schedule_d_code
+          "Entry Port set to #{port.name}"
+        },
+        :export_lambda => lambda {|ent|
+          ent.entry_port.blank? ? "" : ent.entry_port.name
+        },
+        :join_statement => "LEFT OUTER JOIN ports as ent_entry_port on ent_entry_port.schedule_d_code = entries.entry_port_code",
+        :join_alias => "ent_entry_port"
+      }]
+
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, [
       [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
@@ -688,7 +728,7 @@ class ModelField
       [14,:bi_to_country_iso,:iso_code,"Bill To Country Code",{:data_type=>:string,
         :import_lambda=> lambda {|inv,data|
           ctry = Country.find_by_iso_code data
-          "Country with ISO code #{data} could not be found." unless cntry
+          return "Country with ISO code #{data} could not be found." unless cntry
           inv.bill_to_country_id = cntry.id
           "Bill to Country set to #{data}"
         },

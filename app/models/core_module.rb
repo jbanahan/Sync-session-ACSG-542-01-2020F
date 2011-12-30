@@ -302,11 +302,13 @@ class CoreModule
   })
   COMMERCIAL_INVOICE_LINE = new("CommercialInvoiceLine","Invoice Line",{
     :enabled_lambda => lambda {true},
+    :show_field_prefix=>true,
     :unique_id_field_name=>:cil_line_number,
     :key_model_field_uids=>[:cil_line_number]
   })
   COMMERCIAL_INVOICE = new("CommercialInvoice","Invoice",{
     :unique_id_field_name => :invoice_number,
+    :show_field_prefix=>true,
     :key_model_field_uids=>[:invoice_number],
     :children => [COMMERCIAL_INVOICE_LINE],
     :child_lambdas => {COMMERCIAL_INVOICE_LINE=> lambda {|i| i.commercial_invoice_lines}},

@@ -26,4 +26,20 @@ describe Entry do
       Factory(:entry).can_attach?(u).should be_false
     end
   end
+
+  context 'ports' do
+    before :each do 
+      @port = Factory(:port)
+    end
+    it 'should find matching lading port' do
+      ent = Factory(:entry,:lading_port_code=>@port.schedule_k_code)
+      ent.lading_port.should == @port
+    end
+    it 'should find matching unlading port' do
+      Factory(:entry,:unlading_port_code=>@port.schedule_d_code).unlading_port.should == @port
+    end
+    it 'should find matching entry port' do
+      Factory(:entry,:entry_port_code=>@port.schedule_d_code).entry_port.should == @port
+    end
+  end
 end

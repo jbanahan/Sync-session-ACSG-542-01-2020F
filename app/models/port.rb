@@ -1,0 +1,34 @@
+class Port < ActiveRecord::Base
+
+  validates :schedule_k_code, :format => {:with=>/^[0-9]{5}$/,:message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?} 
+  validates :schedule_d_code, :format => {:with=>/^[0-9]{4}$/,:message=>"Schedule D code must be 4 digits.", :if=>:schedule_d_code?} 
+
+  # loads schedule d ports from the US standard at http://www.census.gov/foreign-trade/schedules/d/dist3.txt
+  def self.load_schedule_d data
+    Port.transaction do
+      Port.where("schedule_d_code is not null").destroy_all
+      CSV.parse(data) do |row|
+        next unless row[0].blank? #don't process district code listings
+        Port.create!(:schedule_d_code=>row[1],:name=>row[2])
+      end
+    end
+  end
+
+  # loads schedule k ports from teh US standard (CODEQ version) at http://www.ndc.iwr.usace.army.mil/db/foreign/scheduleK/data/
+  def self.load_schedule_k data
+    Port.transaction do
+      Port.where("schedule_k_code is not null").destroy_all
+      data.lines do |row|
+        code = row[0,5]
+        name = "#{row[7,50].strip}, #{row[57,25].strip}"
+        p = Port.find_by_schedule_k_code code
+        if p
+          p.update_attributes(:schedule_k_code=>code,:name=>name)
+        else
+          Port.create!(:schedule_k_code=>code,:name=>name)
+        end
+      end
+    end
+  end
+
+end
