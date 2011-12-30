@@ -621,8 +621,8 @@ class ModelField
       [29,:ent_po_numbers,:po_numbers,"PO Numbers",{:data_type=>:text}],
       [30,:ent_mfids,:mfids,"MFID Numbers",{:data_type=>:text}],
       [31,:ent_total_invoiced_value,:total_invoiced_value,"Total Commercial Invoice Value",{:data_type=>:decimal}],
-      [32,:ent_export_country_codes,:export_country_codes,"Country of Export Codes",{:data_type=>:string}],
-      [33,:ent_origin_country_codes,:origin_country_codes,"Country of Origin Codes",{:data_type=>:string}],
+      [32,:ent_export_country_codes,:export_country_codes,"Country Export Codes",{:data_type=>:string}],
+      [33,:ent_origin_country_codes,:origin_country_codes,"Country Origin Codes",{:data_type=>:string}],
       [34,:ent_vendor_names,:vendor_names,"Vendor Names",{:data_type=>:text}],
       [35,:ent_spis,:special_program_indicators,"SPI(s)",{:data_type=>:string}],
       [36,:ent_export_date,:export_date,"Export Date",{:data_type=>:date}],
@@ -650,7 +650,15 @@ class ModelField
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, [
       [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
-      [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}]
+      [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}],
+      [3,:ci_currency,:currency,"Currency",{:data_type=>:string}],
+      [4,:ci_invoice_value_foreign,:invoice_value_foreign,"Invoice Value (Foreign)",{:data_type=>:decimal}],
+      [5,:ci_invoice_value,:invoice_value,"Invoice Value",{:data_type=>:decimal}],
+      [6,:ci_country_origin_code,:country_origin_code,"Country Origin Code",{:data_type=>:string}],
+      [7,:ci_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
+      [8,:ci_total_charges,:total_charges,"Charges",{:data_type=>:decimal}],
+      [9,:ci_invoice_date,:invoice_date,"Invoice Date",{:data_type=>:date}],
+      [10,:ci_mfid,:mfid,"MFID",{:data_type=>:string}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
       [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],

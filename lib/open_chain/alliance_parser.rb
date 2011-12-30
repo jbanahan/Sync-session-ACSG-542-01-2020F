@@ -98,6 +98,7 @@ module OpenChain
             set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
 
             @entry.save! if @entry
+            @commercial_invoices.each {|ci| ci.save!} if @commercial_invoices
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
         end
@@ -115,6 +116,7 @@ module OpenChain
         @skip_entry = true
       else
         @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
+        @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
         @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
         @entry.total_units = 0 #reset, then accumulate as we process invoice lines
         @entry.customer_number = r[14,10].strip
@@ -176,7 +178,26 @@ module OpenChain
 
     # commercial invoice header
     def process_ci00 r
-      accumulate_string :mfid, r[96,15].strip
+
+      @commercial_invoices ||= []
+      @c_invoice = nil #reset since we're building a new one 
+      @c_invoice = @entry.commercial_invoices.build
+      @commercial_invoices << @c_invoice
+      @c_invoice.invoice_number = r[4,22].strip
+      @c_invoice.currency = r[26,3].strip
+      @c_invoice.exchange_rate = parse_decimal r[29,8], 6
+      @c_invoice.invoice_value_foreign = parse_currency r[37,13]
+      @c_invoice.country_origin_code = r[63,2].strip
+      @c_invoice.gross_weight = r[65,12]
+      @c_invoice.total_charges = parse_currency r[77,11]
+      @c_invoice.invoice_date = parse_date r[88,8]
+
+      mfid = r[96,15].strip
+      @c_invoice.mfid = mfid
+      accumulate_string :mfid, mfid
+
+      invoice_value = parse_currency r[50,13]
+      @c_invoice.invoice_value = invoice_value
       @entry.total_invoiced_value += parse_currency r[50,13]
     end
 
@@ -224,7 +245,7 @@ module OpenChain
       line.vendor_name = r[54,30].strip
       line.vendor_reference = r[84,15].strip
       line.charge_type = r[99,1]
-      line.save unless @invoice.id.blank?
+      line.save! unless @invoice.id.blank?
     end
 
     # invoice trailer
@@ -277,11 +298,11 @@ module OpenChain
     end
 
     def parse_date str
-      return nil if str.blank?
+      return nil if str.blank? || str.match(/^[0]*$/)
       Date.parse str
     end
     def parse_date_time str
-      return nil if str.blank?
+      return nil if str.blank? || str.match(/^[0]*$/)
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
     end
     def parse_decimal str, decimal_places

@@ -7,8 +7,9 @@
 <h2>Commercial Invoices</h2>
 <%@entry.commercial_invoices.each do |ci|%>
   <table>
-      <%=field_row "Invoice Number", ci.invoice_number%>
-      <%=field_row "Vendor Name", ci.vendor_name%>      
+    <%CoreModule::COMMERCIAL_INVOICE.model_fields.keys.each do |f|%>
+      <%=field_view_row ci, f unless ModelField.find_by_uid(f).process_export(ci).blank?%>
+    <%end%>
   </table>
   <table class='detail_table'>
     <thead><tr><th>Line</th><th>Material Number</th><th>Description</th><th>PO Number</th><th>HTS</th><th>Duty</th><th>Units</th><th>Value</th><th>Drawback Qty</th></tr></thead>
@@ -26,4 +27,5 @@
     </tr>
     <%end%>
   </table>
+  <hr />
 <%end%>
