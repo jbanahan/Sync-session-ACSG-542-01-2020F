@@ -15,26 +15,10 @@ describe PowerOfAttorneysController do
     end
   end
 
-  describe "GET show" do
-    it "should redirect to edit page" do
-      get :show, :id => @poa, :company_id => @poa.company_id
-      response.should be_redirect
-      response.should redirect_to(:action => 'edit')
-    end
-  end
-
   describe "GET new" do
     it "assigns a new power_of_attorney" do
       get :new, :company_id => @company
       assigns(:power_of_attorney).should be_a_new(PowerOfAttorney)
-      response.should be_success
-    end
-  end
-
-  describe "GET edit" do
-    it "assigns the requested power_of_attorney as @poa" do
-      get :edit, :company_id => @company, :id => @poa.id
-      assigns(:power_of_attorney).should eq(@poa)
       response.should be_success
     end
   end
@@ -81,61 +65,6 @@ describe PowerOfAttorneysController do
         PowerOfAttorney.any_instance.stub(:save).and_return(false)
         post :create, :company_id => @company.id, :power_of_attorney => {}
         response.should render_template("new")
-      end
-    end
-  end
-
-  describe "PUT update" do
-    describe "with valid params" do
-      it "redirects to the POAs list" do
-        put :update, :company_id => @poa.company_id, :id => @poa.id, :power_of_attorney => {
-          :expiration_date => '2011-12-21'
-        }
-        response.should redirect_to(company_power_of_attorneys_path(@company))
-      end
-
-      it "updates start date" do
-        put :update, :company_id => @poa.company_id, :id => @poa.id, :power_of_attorney => {
-          :start_date => '2011-12-05'
-        }
-        PowerOfAttorney.find(@poa.id).start_date.to_s.should == '2011-12-05'
-      end
-
-      it "updates expiration date" do
-        put :update, :company_id => @poa.company_id, :id => @poa.id, :power_of_attorney => {
-          :expiration_date => '2011-12-21'
-        }
-        PowerOfAttorney.find(@poa.id).expiration_date.to_s.should == '2011-12-21'
-      end
-    end
-
-    describe "with invalid params" do
-      it "should not accept empty expiration date" do
-        put :update, :company_id => @poa.company_id, :id => @poa.id, :power_of_attorney => {
-          :expiration_date => ''
-        }
-        flash[:errors].should == [ "Expiration date can't be blank" ]
-      end
-
-      it "should not accept invalid expiration date" do
-        put :update, :company_id => @poa.company_id, :id => @poa.id, :power_of_attorney => {
-          :expiration_date => '2011-12-32'
-        }
-        flash[:errors].should == [ "Expiration date can't be blank" ]
-      end
-
-      it "should not accept empty start date" do
-        put :update, :company_id => @poa.company_id, :id => @poa.id, :power_of_attorney => {
-          :start_date => ''
-        }
-        flash[:errors].should == [ "Start date can't be blank" ]
-      end
-
-      it "should not accept invalid start date" do
-        put :update, :company_id => @poa.company_id, :id => @poa.id, :power_of_attorney => {
-          :start_date => '2011-12-00'
-        }
-        flash[:errors].should == [ "Start date can't be blank" ]
       end
     end
   end

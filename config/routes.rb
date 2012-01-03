@@ -204,7 +204,7 @@ OpenChain::Application.routes.draw do
   resources :companies do
 		resources :addresses
 		resources :divisions
-    resources :power_of_attorneys do
+    resources :power_of_attorneys, :only => [:index, :new, :create, :destroy] do
       member do
         get 'download'
       end
