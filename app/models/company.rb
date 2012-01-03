@@ -59,16 +59,16 @@ class Company < ActiveRecord::Base
 
   #permissions
   def view_broker_invoices?
-    return master_setup.broker_invoice_enabled && self.master?
+    return master_setup.broker_invoice_enabled && (self.master? || self.importer?)
   end
   def view_entries?
-    return master_setup.entry_enabled && (self.master?)
+    master_setup.entry_enabled && (self.master? || self.importer?)
   end
   def comment_entries?
-    return master_setup.entry_enabled
+    self.view_entries?
   end
   def attach_entries?
-    return master_setup.entry_enabled
+    self.view_entries?
   end
   def view_orders?
     return master_setup.order_enabled && (self.master? || self.vendor?)

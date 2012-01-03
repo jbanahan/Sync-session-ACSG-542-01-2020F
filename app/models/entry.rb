@@ -9,15 +9,15 @@ class Entry < ActiveRecord::Base
   belongs_to :entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'schedule_d_code'
 
   def can_view? user
-    user.view_entries?
+    user.view_entries? && company_permission?(user)
   end
 
   def can_comment? user
-    user.comment_entries?
+    user.comment_entries? && company_permission?(user)
   end
 
   def can_attach? user
-    user.attach_entries?
+    user.attach_entries? && company_permission?(user)
   end
 
   def can_edit? user
@@ -25,6 +25,11 @@ class Entry < ActiveRecord::Base
   end
 
   def self.search_secure user, base_object
-    return base_object.where("1=1")
+    user.company.master? ?  base_object.where("1=1") : base_object.where(:importer_id=>user.company_id)
+  end
+
+  private
+  def company_permission? user
+    self.importer_id==user.company_id || user.company.master?
   end
 end
