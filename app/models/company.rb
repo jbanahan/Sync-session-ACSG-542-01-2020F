@@ -2,6 +2,8 @@ class Company < ActiveRecord::Base
 	validates	:name,	:presence => true
 	validate  :master_lock
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
+  validates_uniqueness_of :alliance_customer_number, :if => lambda {!self.alliance_customer_number.blank?}, :message=>"is already taken."
+
 	has_many	:addresses, :dependent => :destroy
 	has_many	:divisions, :dependent => :destroy
 	has_many	:vendor_orders, :class_name => "Order", :foreign_key => "vendor_id", :dependent => :destroy

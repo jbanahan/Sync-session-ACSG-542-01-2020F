@@ -5,6 +5,12 @@ describe Company do
     before :each do
       MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)
     end
+    it 'should not allow duplicate alliance_customer_number' do
+      c1 = Factory(:company,:alliance_customer_number=>'123')
+      c2 = Company.new(:name=>'abc',:alliance_customer_number => c1.alliance_customer_number)
+      c2.save.should be_false
+      c2.errors.full_messages.first.should == "Alliance customer number is already taken."
+    end
     context 'entries' do
       it 'should not allow view if master setup is disabled' do
         MasterSetup.get.update_attributes(:entry_enabled=>false)
