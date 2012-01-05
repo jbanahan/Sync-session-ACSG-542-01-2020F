@@ -1,0 +1,23 @@
+<%content_for :javascript do%>
+  $(function() {
+    $('#btn_run').click(function() {
+      if($('#poa_expiration_date').val() == "") {
+        window.alert("Please choose expiration date");
+        return;
+      }
+
+      $('#frm_run').submit();
+    });
+  });
+<%end%>
+
+<%content_for :action_bar do%>
+  <button id='btn_run'>Run Report</button>
+  <button class='btn_link' link_to='/reports'>Back</button>
+<%end%>
+
+<h2>POA Expiration Report</h2>
+<p>This report shows all companies with Power of Attorneys expiring by given date.</p>
+<%=form_tag('/reports/run_poa_expirations', :method => 'get', :id=>'frm_run') do -%>
+  <p>Select Date: <%= text_field_tag(:poa_expiration_date, Date.today, "class" => "isdate") %></p>
+<%end%>

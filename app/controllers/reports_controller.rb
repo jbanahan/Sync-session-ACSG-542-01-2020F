@@ -27,6 +27,34 @@ class ReportsController < ApplicationController
     run_report "Stale Tariffs", OpenChain::Report::StaleTariffs, {}, []
   end
 
+  def show_poa_expirations
+    if current_user.admin?
+      render
+    else
+      error_redirect "You do not have permissions to view this report"
+    end
+  end
+
+  def run_poa_expirations
+    if current_user.admin?
+      begin
+        Date.parse(params[:poa_expiration_date])
+        expire_later = PowerOfAttorney.where(["expiration_date > ?", params[:poa_expiration_date]]).select(:company_id).map(&:company_id)
+        @poas = PowerOfAttorney.includes(:company).where(["expiration_date <= ?", params[:poa_expiration_date]]).order("companies.name ASC, expiration_date DESC").select do |poa|
+          poa unless expire_later.include?(poa.company_id)
+        end.uniq_by {|poa| poa.company_id}.paginate(:per_page => 20, :page => params[:page])
+      rescue ArgumentError
+        add_flash :errors, "Invalid date. Report will not be executed"
+        redirect_to reports_show_poa_expirations_path
+      rescue TypeError
+        add_flash :errors, "Invalid date. Report will not be executed"
+        redirect_to reports_show_poa_expirations_path
+      end
+    else
+      error_redirect "You do not have permissions to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

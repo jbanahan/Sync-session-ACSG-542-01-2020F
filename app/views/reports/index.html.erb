@@ -5,3 +5,8 @@
 
 <h3><%=link_to "Tariff Comparison", reports_show_tariff_comparison_path%></h3>
 <p>Compares two tariff files for the same country and shows you the HTS numbers that were added, removed, or changed.</p>
+
+<% if current_user.admin? %>
+<h3><%=link_to "POA Expiration", reports_show_poa_expirations_path%></h3>
+<p>Shows all companies with Power of Attorneys expiring by a given date.</p>
+<% end %>
