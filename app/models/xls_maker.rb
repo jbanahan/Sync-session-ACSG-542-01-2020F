@@ -38,7 +38,7 @@ class XlsMaker
   
   def process_row sheet, row_number, row_data, base_object
       row_data.each_with_index {|cell,col| 
-        sheet.row(row_number).push(cell)
+        sheet.row(row_number).push(cell.nil? ? "" : cell)
         sheet.row(row_number).set_format(col,@date_format) if cell.is_a? Date
       }
   end
