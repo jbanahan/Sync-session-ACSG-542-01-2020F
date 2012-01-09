@@ -92,4 +92,12 @@ Factory.define :power_of_attorney do |poa|
   poa.start_date "2011-12-01"
   poa.expiration_date "2011-12-31"
   poa.attachment_file_name "SpecAttachmentDocument.odt"
+Factory.define :entry do |f|
+
+end
+Factory.define :broker_invoice do |f|
+  f.association :entry
+end
+Factory.define :broker_invoice_line do |f|
+  f.association :broker_invoice
 end

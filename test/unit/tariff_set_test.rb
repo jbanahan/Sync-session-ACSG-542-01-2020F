@@ -10,6 +10,8 @@ class TariffSetTest < ActiveSupport::TestCase
     should_be_changed = OfficialTariff.create!(:country_id=>c1.id, :hts_code=>"1234555555",:full_description=>"FD3")
     should_stay = OfficialTariff.create!(:country_id => c2.id, :hts_code=>should_be_gone.hts_code, :full_description=>"FD2")
 
+    old_ts = TariffSet.create!(:country_id=>c1.id,:label=>"oldts",:active=>true)
+
     ts = TariffSet.create!(:country_id=>c1.id,:label=>"newts")
     r = ts.tariff_set_records
     r.create!(:country_id=>c1.id,:hts_code=>should_be_changed.hts_code,:full_description=>"changed_desc")
@@ -24,7 +26,18 @@ class TariffSetTest < ActiveSupport::TestCase
     assert OfficialTariff.where(:country_id=>c1.id,:hts_code=>"9999999999").first
     assert OfficialTariff.where(:country_id=>c2.id,:hts_code=>should_stay.hts_code).first
     assert_nil OfficialTariff.where(:country_id=>c1.id,:hts_code=>should_be_gone.hts_code).first
+    assert !TariffSet.find(old_ts.id).active? #should have deactivated old tariff set for same country
+    assert TariffSet.find(ts.id).active? #should have activated this tariff set
   end
+
+  test "activate should write user message" do
+    u = User.first
+    c = Country.first
+    ts = TariffSet.create!(:country_id=>c.id,:label=>"newts")
+    ts.activate u
+    assert_equal 1, u.messages.size
+  end
+
   test "compare" do
     old = TariffSet.create!(:country_id=>countries(:us).id,:label=>"old")
     new = TariffSet.create!(:country_id=>countries(:us).id,:label=>"new")

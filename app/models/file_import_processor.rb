@@ -12,7 +12,7 @@ class FileImportProcessor
   def initialize(import_file, data, listeners=[])
     @import_file = import_file
     @search_setup = import_file.search_setup
-    @core_module = CoreModule.find_by_class_name(@search_setup.module_type)
+    @core_module = CoreModule.find_by_class_name(import_file.module_type)
     @module_chain = @core_module.default_module_chain
     @data = data
     @listeners = listeners
@@ -67,7 +67,8 @@ class FileImportProcessor
         @module_chain.to_a.each do |mod|
           data_map[mod] = {}
         end
-        @search_setup.sorted_columns.each do |col|
+        columns = @import_file.sorted_columns.blank? ? @search_setup.sorted_columns : @import_file.sorted_columns
+        columns.each do |col|
           mf = col.find_model_field
           r = row[col.rank + @import_file.starting_column - 1]
           r = r.strip if r.is_a? String
@@ -234,7 +235,14 @@ class FileImportProcessor
       @data
       s = @data.worksheet 0
       s.each (@import_file.starting_row-1) do |row|
-        yield row
+        process = false
+        row.each do |v|
+          if !v.blank?
+            process = true
+            break
+          end
+        end
+        yield row if process
       end
     end
   end

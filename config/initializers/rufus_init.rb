@@ -62,6 +62,11 @@ def execute_scheduler
     end
   end
 
+  #monitor delayed job backlog
+  scheduler.every '60s' do
+    DelayedJobManager.monitor_backlog
+  end
+
   #make sure delayed job workers are running, in production
   if Rails.env == 'production'
     scheduler.every("30s") do

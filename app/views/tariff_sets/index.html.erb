@@ -1,0 +1,29 @@
+<%if current_user.sys_admin?%>
+  <%content_for :javascript do%>
+    $(function() {
+      $("#mod_load").dialog({autoOpen:false,title:"Load Tariff Set",width:400,
+        buttons:{"OK":function() {$("#frm_load").submit();},
+        "Cancel":function() {$("#mod_load").dialog('close');}}});
+      $("#btn_load").click(function() {$("#mod_load").dialog('open');});
+    });
+  <%end%>
+  <%content_for :action_bar do%>
+    <button id='btn_load'>Load</button>
+  <%end%>
+<%end%>
+<table class='detail_table'>
+  <thead><tr><th>Country</th><th>Set</th><th>Active</th></tr></thead>
+  <%@tariff_sets.each do |ts|%> 
+    <tr style='<%=ts.active? ? "font-weight:bold;" : ""%>'><td><%=ts.country.name%></td><td><%=ts.label%></td><td><%=ts.active? ? "Active" : link_to("activate",activate_tariff_set_path(ts))%></td></tr>
+  <%end%>
+</table>
+<%if current_user.sys_admin? %>
+  <div id='mod_load' style='display:none;'>
+    <%=form_tag load_tariff_sets_path, :method=>:post, :id=>'frm_load' do -%>
+      Country: <%=select_tag "country_id", options_from_collection_for_select(Country.import_locations.sort_name, "id", "name")%><br />
+      Label: <%=text_field_tag "label"%><br />
+      S3 Path: <%=text_field_tag "path"%><br />
+      Activate: <%=check_box_tag "activate", "yes"%>
+    <%end%>
+  </div>
+<%end%>

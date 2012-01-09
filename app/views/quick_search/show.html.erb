@@ -1,0 +1,55 @@
+<%content_for :javascript do%>
+$(function() {
+  <%@module_field_map.each do |cm,fields|%>
+    <%fields.each do |f|%>
+    $.getJSON('/quick_search/module_result?v=<%=@value%>&mfid=<%=f%>',function(data) {
+      var table, i, j, html, row, class_name, target_id, colspan;
+      class_name = "<%=cm.class_name%>";
+      table = $("#"+class_name+"_result_content");
+      colspan = <%=cm.default_search_columns.size > 3 ? 3 : cm.default_search_columns.size%>;
+      html = "<tr><td colspan='"+colspan+"' class='subhead'><%=ModelField.find_by_uid(f).label%></td></tr>";
+      for(i=0;i<data.rows.length;i++) {
+        row = data.rows[i];
+        html += "<tr>";
+        for(j=0;j<row.values.length;j++) {
+          html += "<td>"
+          if(j==0) {
+            html += "<a href='"+row.link+"'>";
+          }
+          html += row.values[j];
+          if(j==0) {
+            html += "</a>";
+          }
+          html += "</td>";
+        }
+        html += "</tr>";
+      }
+      if(data.rows.length==0) {
+        html += "<tr><td>No Results</td></tr>";
+      } else if (data.rows.length > 10) {
+        html += "<tr><td colspan='"+colspan+"'>More than 10 results found, use <a href='<%=url_for cm.klass%>'>advanced search</a> to add more filters.</td></tr>";
+      }
+      table.children("tbody").append(html);
+    });
+    <%end%>
+  <%end%>
+});
+<%end%>
+<h1>Search Results</h2>
+<%@module_field_map.each do |cm,fields|%>
+  <div id='<%=cm.class_name%>'>
+    <h2><%=cm.label%></h2>
+    <table class='detail_table' id='<%=cm.class_name%>_result_content'>
+      <thead><tr>
+        <% sc_counter = 0 %>
+        <%cm.default_search_columns.each do |f|%>
+          <% break if sc_counter > 2%>
+          <% sc_counter += 1%>
+          <th><%=ModelField.find_by_uid(f).label%></th>
+        <%end%>
+      </tr></thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+<%end%>

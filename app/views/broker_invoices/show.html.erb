@@ -1,0 +1,18 @@
+<% content_for :action_bar do%>
+  <button class='btn_link' link_to='<%=broker_invoices_path%>' key_map='b'>Back To Search</button>
+<% end%>
+<table>
+  <%CoreModule::BROKER_INVOICE.model_fields.keys.each do |f|%>
+    <%=field_view_row @invoice, f%>
+  <%end%>
+</table>
+<h3>Lines</h3>
+<% @invoice.broker_invoice_lines.each do |line| %>
+  <table>
+    <%CoreModule::BROKER_INVOICE_LINE.model_fields.keys.each do |f| %>
+      <%=field_view_row line, f%>
+    <%end%>
+  </table>
+  <hr />
+<% end %>
+

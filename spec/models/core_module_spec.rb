@@ -6,6 +6,11 @@ describe CoreModule do
     CoreModule::PRODUCT.klass.should be Product
   end
   describe 'key_columns' do
+    it 'should return for entry' do
+      uids = CoreModule::ENTRY.key_model_field_uids
+      uids.should == [:ent_brok_ref]
+      uids.first.should be_a_model_field_uid
+    end
     it 'should return for order' do
       uids = CoreModule::ORDER.key_model_field_uids
       uids.should == [:ord_ord_num]

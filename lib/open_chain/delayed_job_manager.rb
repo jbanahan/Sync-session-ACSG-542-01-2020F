@@ -1,5 +1,7 @@
 class DelayedJobManager
 
+  @@dont_send_until = 1.hour.ago #always send at the beginning
+
   #check the operating system to see if delayed_job worker process(es) are running for this instance
   def self.running?
     DelayedJobManager.find_running_job? "delayed_job"
@@ -34,6 +36,21 @@ class DelayedJobManager
     return File.new('tmp/stop.txt').mtime < File.new('tmp/restart.txt').mtime
   end
 
+  # generate errors if delayed job backlog is too deep
+  def self.monitor_backlog max_messages=30
+    return if @@dont_send_until > 0.seconds.ago
+    begin
+      c = Delayed::Job.count
+      raise "Delayed Job Queue Too Big: #{c} Items" if c > max_messages
+    rescue
+      @@dont_send_until = 30.minutes.from_now
+      $!.log_me [], [], false #don't delay the send since we know that the queue is backed up
+    end
+  end
+  #reset the timer for throttling montior_backlog error messages
+  def self.reset_backlog_monitor
+    @@dont_send_until = 1.minute.ago
+  end
   private
   def self.find_running_job? job_name, extra_check=lambda {|command_array| true}
     #use ps command to get all running processes filtered by "job_name", then make each row its own element in an array

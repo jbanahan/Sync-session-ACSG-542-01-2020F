@@ -4,7 +4,7 @@ class TariffSetRecord < ActiveRecord::Base
 
   #create an unsaved OfficialTariff with the same data as this record
   def build_official_tariff
-    OfficialTariff.new(self.attributes.select {|k,v| !["id","created_at","udpated_at","tariff_set_id"].include?(k)})
+    OfficialTariff.new(self.attributes.select {|k,v| !["id","created_at","updated_at","tariff_set_id"].include?(k)})
   end
 
   #returns an array of hashes where the first element is this object's attributes that are different

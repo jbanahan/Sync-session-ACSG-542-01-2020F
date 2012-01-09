@@ -114,6 +114,29 @@ class UsersController < ApplicationController
       toggle_enabled
     end
 
+    def enable_run_as
+      if current_user.admin?
+        u = User.find_by_username params[:username]
+        if u
+          current_user.run_as = u
+          current_user.save
+          redirect_to "/"
+        else
+          error_redirect "User with username #{params[:username]} not found."
+        end
+      else
+        error_redirect "You must be an administrator to run as a different user."
+      end
+    end
+    def disable_run_as
+      if @run_as_user
+        @run_as_user.run_as = nil
+        @run_as_user.save
+        add_flash :notices, "Run As disabled."
+      end
+      redirect_to '/'
+    end
+
     #Terms of service click through handling
     def accept_tos
       current_user.tos_accept = Time.now

@@ -117,6 +117,12 @@
         .parent()
           .buttonset()<%end%>;
        <% end %>
+    <% if current_user.view_entries?%>
+      $("#btn_entries").button().click(function() {window.location = '<%=entries_path%>?force_search=true';})
+    <% end %>
+    <% if current_user.view_broker_invoices?%>
+      $("#btn_invoices").button().click(function() {window.location = '<%=broker_invoices_path%>?force_search=true';})
+    <% end %>
   });
   <% end %>
   <%= yield :javascript%>
@@ -126,6 +132,9 @@
   </script>
 </head>
 <body>
+<% if @run_as_user %>
+  <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+<% end %>
 <div id="header">
   <div id="top_box">
     <% if !current_user || no_buttons %>
@@ -139,6 +148,7 @@
             <%= link_to 'Tools', tools_path%> | 
             <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
             <%= link_to 'Logout', logout_path %>
+            <div style='text-align:right;'><form action='/quick_search' method='GET'><input type='text' name='v' size='10'/><input type='submit' value='Search' id='quick_search_button' /></form></div>
         </div>
       <% end %>
       <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
@@ -176,6 +186,12 @@
           <button id='btn_new_delivery'>New Delivery</button>
         <%end%>
       <%end%>      
+      <%if current_user.view_entries?%>
+        <button id='btn_entries' title='Search for entries'>Entries</button>
+      <%end%>
+      <%if current_user.view_broker_invoices?%>
+        <button id='btn_invoices' title='Search for invoices'>Invoices</button>
+      <%end%>
     </div> <!--close linkbar-->
   <% end %>
 </div>

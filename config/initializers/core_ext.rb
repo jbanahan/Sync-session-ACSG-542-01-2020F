@@ -24,13 +24,13 @@ end
 
 Exception.class_eval do
   #logs the exception to the database and emails it to bug@aspect9.com
-  def log_me messages=[], attachment_paths=[]
+  def log_me messages=[], attachment_paths=[], send_now=false
     return unless MasterSetup.connection.table_exists? 'error_log_entries'
     e = ErrorLogEntry.create_from_exception $!, messages
     msgs = messages.blank? ? [] : messages
     msgs << "Error Database ID: #{e.id}"
     if e.email_me?
-      if attachment_paths.blank?
+      if attachment_paths.blank? && !send_now
         OpenMailer.delay.send_generic_exception(self,msgs,self.message,self.backtrace)
       else
         OpenMailer.send_generic_exception(self,msgs,self.message,self.backtrace,attachment_paths).deliver

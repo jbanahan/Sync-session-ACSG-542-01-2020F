@@ -1,6 +1,16 @@
 OpenChain::Application.routes.draw do
+
+  resources :entries, :only => [:index,:show]
+  resources :broker_invoices, :only => [:index,:show]
   resources :linkable_attachment_import_rules
-  resources :tariff_sets, :only => [:index]
+  resources :tariff_sets, :only => [:index] do
+    member do
+      get 'activate'
+    end
+    collection do
+      post 'load'
+    end
+  end
   resources :entity_snapshots, :only => [:show]
   resources :instant_classifications do
     collection do
@@ -79,6 +89,10 @@ OpenChain::Application.routes.draw do
   match "/public_fields" => "public_fields#index"
   match "/public_fields/save" => "public_fields#save", :via => :post
   match "/users/email_new_message" => "users#email_new_message"
+  match "/quick_search" => "quick_search#show"
+  match "/quick_search/module_result" => "quick_search#module_result"
+  match "/enable_run_as" => "users#enable_run_as"
+  match "/disable_run_as" => "users#disable_run_as"
 
   #custom features
   resources :custom_files, :only => :show
@@ -98,6 +112,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_stale_tariffs" => "reports#run_stale_tariffs", :via => :post
   match "/reports/show_poa_expirations" => "reports#show_poa_expirations", :via => :get
   match "/reports/run_poa_expirations" => "reports#run_poa_expirations", :via => :get
+  match "/reports/show_shoes_for_crews_entry_breakdown" => "reports#show_shoes_for_crews_entry_breakdown", :via=>:get
+  match "/reports/run_shoes_for_crews_entry_breakdown" => "reports#run_shoes_for_crews_entry_breakdown", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member

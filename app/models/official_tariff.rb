@@ -70,15 +70,15 @@ class OfficialTariff < ActiveRecord::Base
   end
 
   def set_common_rate
-    country = self.country  
-    country = Country.find self.country_id if country.nil? && !self.country_id.nil?
-    return unless country
-    if ['CA','CN'].include? country.iso_code
-      self.common_rate = self.most_favored_nation_rate
-    elsif country.european_union?
-      self.common_rate = self.erga_omnes_rate
-    else
-      self.common_rate = self.general_rate
+    if self.country_id
+      country = Country.find_cached_by_id self.country_id
+      if ['CA','CN'].include? country.iso_code
+        self.common_rate = self.most_favored_nation_rate
+      elsif country.european_union?
+        self.common_rate = self.erga_omnes_rate
+      else
+        self.common_rate = self.general_rate
+      end
     end
   end
 

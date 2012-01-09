@@ -77,6 +77,10 @@ img {
 .detail_table a {
     color: #151515;
 }
+.detail_table .subhead {
+  background-color: gray;
+  font-weight: bold;
+}
 .drag_table {
   border: 1px solid #ccc;
   border-collapse: collapse;
@@ -183,6 +187,11 @@ p {
   background-color: #eee;
   vertical-align: top;
   padding-bottom: 10px;
+}
+#quick_search_button {
+  line-height: 1;
+  padding: .4em .6em;
+  font-size: .9em;
 }
 #corner_links {
     float: right;
@@ -613,4 +622,10 @@ width:60%;
 }
 .search_row {
   cursor: pointer;
+}
+#run_as_box {
+  background-color: #FF4747;
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid black;
 }

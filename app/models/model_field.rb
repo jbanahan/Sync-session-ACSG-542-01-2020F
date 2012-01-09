@@ -518,6 +518,14 @@ class ModelField
       :history_ignore => true
     }]
   end
+  def self.make_broker_invoice_entry_field sequence_number, mf_uid,field_reference,label,data_type,ent_exp_lambda
+      [sequence_number,mf_uid,field_reference,label,{:data_type=>data_type,
+        :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
+        :export_lambda => lambda {|inv| inv.entry.blank? ? "" : ent_exp_lambda.call(inv.entry)},
+        :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
+        :join_alias => "bi_entry"
+      }]
+  end
 
   def self.add_custom_fields(core_module,base_class,parameters={})
     max = 0
@@ -549,6 +557,9 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder)
     ModelField.add_custom_fields(CoreModule::SALE_LINE,SalesOrderLine)
     ModelField.add_custom_fields(CoreModule::DELIVERY,Delivery)
+    ModelField.add_custom_fields(CoreModule::ENTRY,Entry)
+    ModelField.add_custom_fields(CoreModule::BROKER_INVOICE,BrokerInvoice)
+    ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
     @@last_loaded = Time.now
     Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_cache_time
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
@@ -578,6 +589,145 @@ class ModelField
       [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}]
     ]
     add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
+    add_fields CoreModule::ENTRY, [
+      [1,:ent_brok_ref,:broker_reference, "Broker Reference",{:data_type=>:string}],
+      [2,:ent_entry_num,:entry_number,"Entry Number",{:data_type=>:string}],
+      [3,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
+      [4,:ent_comp_num,:company_number,"Broker Company Number",{:data_type=>:string}],
+      [5,:ent_div_num,:division_number,"Broker Division Number",{:data_type=>:string}],
+      [6,:ent_cust_num,:customer_number,"Customer Number",{:data_type=>:string}],
+      [7,:ent_cust_name,:customer_name,"Customer Name",{:data_type=>:string}],
+      [8,:ent_type,:entry_type,"Entry Type",{:data_type=>:string}],
+      [9,:ent_arrival_date,:arrival_date,"Arrival Date",{:data_type=>:datetime}],
+      [10,:ent_filed_date,:entry_filed_date,"Entry Filed Date",{:data_type=>:datetime}],
+      [11,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
+      [12,:ent_first_release,:first_release_date,"First Release Date",{:data_type=>:datetime}],
+      [13,:ent_free_date,:free_date,"Free Date",{:data_type=>:datetime}],
+      [14,:ent_last_billed_date,:last_billed_date,"Last Bill Issued Date",{:data_type=>:datetime}],
+      [15,:ent_invoice_paid_date,:invoice_paid_date,"Invoice Paid Date",{:data_type=>:datetime}],
+      [16,:ent_liq_date,:liquidation_date,"Liquidation Date",{:data_type=>:datetime}],
+      [17,:ent_mbols,:master_bills_of_lading,"Master Bills",{:data_type=>:text}],
+      [18,:ent_hbols,:house_bills_of_lading,"House Bills",{:data_type=>:text}],
+      [19,:ent_sbols,:sub_house_bills_of_lading,"Sub House Bills",{:data_type=>:text}],
+      [20,:ent_it_numbers,:it_numbers,"IT Numbers",{:data_type=>:text}],
+      [21,:ent_duty_due_date,:duty_due_date,"Duty Due Date",{:data_type=>:date}],
+      [22,:ent_carrier_code,:carrier_code,"Carrier Code",{:data_type=>:string}],
+      [23,:ent_total_packages,:total_packages,"Total Packages",{:data_type=>:integer}],
+      [24,:ent_total_fees,:total_fees,"Total Fees",{:data_type=>:decimal}],
+      [25,:ent_total_duty,:total_duty,"Total Duty",{:data_type=>:decimal}],
+      [26,:ent_total_duty_direct,:total_duty_direct,"Total Duty Direct",{:data_type=>:decimal}],
+      [27,:ent_entered_value,:entered_value,"Total Entered Value", {:data_type=>:decimal}],
+      [28,:ent_customer_references,:customer_references,"Customer References",{:data_type=>:text}],
+      [29,:ent_po_numbers,:po_numbers,"PO Numbers",{:data_type=>:text}],
+      [30,:ent_mfids,:mfids,"MFID Numbers",{:data_type=>:text}],
+      [31,:ent_total_invoiced_value,:total_invoiced_value,"Total Commercial Invoice Value",{:data_type=>:decimal}],
+      [32,:ent_export_country_codes,:export_country_codes,"Country of Export Codes",{:data_type=>:string}],
+      [33,:ent_origin_country_codes,:origin_country_codes,"Country of Origin Codes",{:data_type=>:string}],
+      [34,:ent_vendor_names,:vendor_names,"Vendor Names",{:data_type=>:text}],
+      [35,:ent_spis,:special_program_indicators,"SPI(s)",{:data_type=>:string}],
+      [36,:ent_export_date,:export_date,"Export Date",{:data_type=>:date}],
+      [37,:ent_merch_desc,:merchandise_description,"Merchandise Description",{:data_type=>:string}],
+      [38,:ent_transport_mode_code,:transport_mode_code,"Mode of Transport",{:data_type=>:string}],
+      [39,:ent_total_units,:total_units,"Total Units",{:data_type=>:decimal}],
+      [40,:ent_total_units_uoms,:total_units_uoms,"Total Units UOMs",{:data_type=>:string}],
+      [41,:ent_entry_port_code,:entry_port_code,"Port of Entry Code",{:data_type=>:string}],
+      [42,:ent_ult_con_code,:ult_consignee_code,"Ult Consignee Code",{:data_type=>:string}],
+      [43,:ent_ult_con_name,:ult_consignee_name,"Ult Consignee Name",{:data_type=>:string}],
+      [44,:ent_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
+      [45,:ent_total_packages_uom,:total_packages_uom,"Total Packages UOM",{:data_type=>:string}],
+      [46,:ent_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal}],
+      [47,:ent_hmf,:hmf,"HMF",{:data_type=>:decimal}],
+      [48,:ent_mpf,:mpf,"MPF",{:data_type=>:decimal}],
+      [49,:ent_container_nums,:container_numbers,"Container Numbers",{:data_type=>:string}],
+      [50,:ent_container_sizes,:container_sizes,"Container Sizes",{:data_type=>:string}],
+      [51,:ent_fcl_lcl,:fcl_lcl,"FCL/LCL",{:data_type=>:string}],
+      [52,:ent_lading_port_code,:lading_port_code,"Port of Lading Code",{:data_type=>:string}],
+      [53,:ent_unlading_port_code,:unlading_port_code,"Port of Unlading Code",{:data_type=>:string}],
+      [54,:ent_consignee_address_1,:consignee_address_1,"Ult Consignee Address 1",{:data_type=>:string}],
+      [55,:ent_consignee_address_2,:consignee_address_2,"Ult Consignee Address 2",{:data_type=>:string}],
+      [56,:ent_consignee_city,:consignee_city,"Ult Consignee City",{:data_type=>:string}],
+      [57,:ent_consignee_state,:consignee_state,"Ult Consignee State",{:data_type=>:string}]
+    ]
+    add_fields CoreModule::COMMERCIAL_INVOICE, [
+      [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
+      [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}]
+    ]
+    add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
+      [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
+      [2,:cil_part_number,:part_number,"Part Number",{:data_type=>:string}],
+      [3,:cil_part_desc,:part_description,"Part Desc",{:data_type=>:string}],
+      [4,:cil_po_number,:po_number,"PO Number",{:data_type=>:string}],
+      [5,:cil_hts,:hts_number,"HTS",{:data_type=>:string}],
+      [6,:cil_duty,:duty_rate,"Duty",{:data_type=>:decimal}],
+      [7,:cil_units,:units,"Units",{:data_type=>:decimal}],
+      [8,:cil_uom,:unit_of_measure,"UOM",{:data_type=>:string}],
+      [9,:cil_value,:value,"Value",{:data_type=>:decimal}]
+    ]
+    add_fields CoreModule::BROKER_INVOICE, [
+      make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),
+      [2,:bi_suffix,:suffix,"Suffix",:data_type=>:string],
+      [3,:bi_invoice_date,:invoice_date,"Invoice Date",:data_type=>:date],
+      [4,:bi_invoice_total,:invoice_total,"Total",:data_type=>:decimal],
+      [5,:bi_customer_number,:customer_number,"Customer Number",:data_type=>:string],
+      [6,:bi_to_name,:bill_to_name,"Bill To Name",:data_type=>:string],
+      [7,:bi_to_add1,:bill_to_address_1,"Bill To Address 1",:data_type=>:string],
+      [8,:bi_to_add2,:bill_to_address_2,"Bill To Address 2",:data_type=>:string],
+      [9,:bi_to_city,:bill_to_city,"Bill To City",:data_type=>:string],
+      [10,:bi_to_state,:bill_to_state,"Bill To State",:data_type=>:string],
+      [11,:bi_to_zip,:bill_to_zip,"Bill To Zip",:data_type=>:string],
+      make_broker_invoice_entry_field(12,:bi_entry_num,:entry_number,"Entry Number",:string,lambda {|entry| entry.entry_number}),
+      make_broker_invoice_entry_field(13,:bi_release_date,:release_date,"Release Date",:datetime,lambda {|entry| entry.release_date}),
+      [14,:bi_to_country_iso,:iso_code,"Bill To Country Code",{:data_type=>:string,
+        :import_lambda=> lambda {|inv,data|
+          ctry = Country.find_by_iso_code data
+          "Country with ISO code #{data} could not be found." unless cntry
+          inv.bill_to_country_id = cntry.id
+          "Bill to Country set to #{data}"
+        },
+        :export_lambda=> lambda {|inv| inv.bill_to_country_id.blank? ? "" : inv.bill_to_country.iso_code},
+        :join_statement => "LEFT OUTER JOIN countries as bi_country on bi_country.id = broker_invoices.bill_to_country_id"
+      }],
+      make_broker_invoice_entry_field(15,:bi_mbols,:master_bills_of_lading,"Master Bills",:text,lambda {|entry| entry.master_bills_of_lading}),
+      make_broker_invoice_entry_field(16,:bi_hbols,:house_bills_of_lading,"House Bills",:text,lambda {|entry| entry.house_bills_of_lading}),
+      make_broker_invoice_entry_field(17,:bi_sbols,:sub_house_bills_of_lading,"Sub House Bills",:text,lambda {|entry| entry.sub_house_bills_of_lading}),
+      make_broker_invoice_entry_field(18,:bi_it_numbers,:it_numbers,"IT Numbers",:text,lambda {|entry| entry.it_numbers}),
+      make_broker_invoice_entry_field(19,:bi_duty_due_date,:duty_due_date,"Duty Due Date",:date,lambda {|entry| entry.duty_due_date}),
+      make_broker_invoice_entry_field(20,:bi_carrier_code,:carrier_code,"Carrier Code",:string,lambda {|entry| entry.carrier_code}),
+      make_broker_invoice_entry_field(21,:bi_total_packages,:total_packages,"Total Packages",:integer,lambda {|entry| entry.total_packages}),
+      make_broker_invoice_entry_field(22,:bi_total_fees,:total_fees,"Total Fees",:decimal,lambda {|entry| entry.total_fees}),
+      make_broker_invoice_entry_field(25, :bi_ent_total_duty, :total_duty, "Total Duty", :decimal, lambda {|entry| entry.total_duty}),
+      make_broker_invoice_entry_field(26, :bi_ent_total_duty_direct, :total_duty_direct, "Total Duty Direct", :decimal, lambda {|entry| entry.total_duty_direct}),
+      make_broker_invoice_entry_field(27, :bi_ent_entered_value, :entered_value, "Total Entered Value", :decimal, lambda {|entry| entry.entered_value}),
+      make_broker_invoice_entry_field(28, :bi_ent_customer_references, :customer_references, "Customer References", :text, lambda {|entry| entry.customer_references}),
+      make_broker_invoice_entry_field(29,:bi_ent_po_numbers,:po_numbers,"PO Numbers",:text,lambda {|entry| entry.po_numbers}),
+      make_broker_invoice_entry_field(30,:bi_ent_mfids,:mfids,"MFID Numbers",:text,lambda {|entry| entry.mfids}),
+      make_broker_invoice_entry_field(31,:bi_ent_total_invoiced_value,:total_invoiced_value,"Total Commercial Invoice Value",:decimal,lambda {|entry| entry.total_invoiced_value}),
+      make_broker_invoice_entry_field(32,:bi_ent_export_country_codes,:export_country_codes,"Country of Export Codes",:string,lambda {|entry| entry.export_country_codes}),
+      make_broker_invoice_entry_field(33,:bi_ent_origin_country_codes,:origin_country_codes,"Country of Origin Codes",:string,lambda {|entry| entry.origin_country_codes}),
+      make_broker_invoice_entry_field(34,:bi_ent_vendor_names,:vendor_names,"Vendor Names",:text,lambda {|entry| entry.vendor_names}),
+      make_broker_invoice_entry_field(35,:bi_ent_spis,:special_program_indicators,"SPI(s),",:string,lambda {|entry| entry.special_program_indicators}),
+      make_broker_invoice_entry_field(36,:bi_ent_export_date,:export_date,"Export Date",:date,lambda {|entry| entry.export_date}),
+      make_broker_invoice_entry_field(37,:bi_ent_merch_desc,:merchandise_description,"Merchandise Description",:string,lambda {|entry| entry.merchandise_description}),
+      make_broker_invoice_entry_field(38,:bi_ent_transport_mode_code,:transport_mode_code,"Mode of Transport",:string,lambda {|entry| entry.transport_mode_code}),
+      make_broker_invoice_entry_field(39,:bi_ent_total_units,:total_units,"Total Units",:decimal,lambda {|entry| entry.total_units}),
+      make_broker_invoice_entry_field(40,:bi_ent_total_units_uoms,:total_units_uoms,"Total Units UOMs",:string,lambda {|entry| entry.total_units_uoms}),
+      make_broker_invoice_entry_field(41,:bi_ent_entry_port_code,:entry_port_code,"Port of Entry Code",:string,lambda {|entry| entry.entry_port_code}),
+      make_broker_invoice_entry_field(42,:bi_ent_ult_con_code,:ult_consignee_code,"Ult Consignee Code",:string,lambda {|entry| entry.ult_consignee_code}),
+      make_broker_invoice_entry_field(43,:bi_ent_ult_con_name,:ult_consignee_name,"Ult Consignee Name",:string,lambda {|entry| entry.ult_consignee_name}),
+      make_broker_invoice_entry_field(44,:bi_ent_gross_weight,:gross_weight,"Gross Weight",:integer,lambda {|entry| entry.gross_weight}),
+      make_broker_invoice_entry_field(45,:bi_ent_total_packages_uom,:total_packages_uom,"Total Packages UOM",:string,lambda {|entry| entry.total_packages_uom}),
+      make_broker_invoice_entry_field(46,:bi_ent_cotton_fee,:cotton_fee,"Cotton Fee",:decimal,lambda {|entry| entry.cotton_fee}),
+      make_broker_invoice_entry_field(47,:bi_ent_hmf,:hmf,"HMF",:decimal,lambda {|entry| entry.hmf}),
+      make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decima,lambda {|entry| entry.mpf})
+    ]
+    add_fields CoreModule::BROKER_INVOICE_LINE, [
+      [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
+      [2,:bi_line_charge_description,:charge_description,"Description",{:data_type=>:string}],
+      [3,:bi_line_charge_amount,:charge_amount,"Amount",{:data_type=>:decimal}],
+      [4,:bi_line_vendor_name,:vendor_name,"Vendor",{:data_type=>:string}],
+      [5,:bi_line_vendor_reference,:vendor_reference,"Vendor Reference",{:data_type=>:string}],
+      [6,:bi_line_charge_type,:charge_type,"Charge Type",{:data_type=>:string}]
+    ]
     add_fields CoreModule::PRODUCT, [
       [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
       [2,:prod_ent_type,:name,"Product Type",{:entity_type_field=>true,

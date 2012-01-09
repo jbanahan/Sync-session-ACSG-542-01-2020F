@@ -12,7 +12,7 @@ class GridMaker
     @objs = base_objects
     @fields = model_field_list
     #if we have more than 2 custom columns, then pre-cache the custom values
-    @pre_load_custom_values = (@fields.collect {|f| ModelField.find_by_uid(f.model_field_uid).custom?}).size > 2 
+    @pre_load_custom_values = (@fields.collect {|f| f.model_field.custom?}).size > 2 
     @chain = module_chain
     @criteria = search_criterion_list
     load_used_modules
@@ -46,7 +46,7 @@ class GridMaker
       if f.model_field_uid=="_blank"
         r << ""
       else
-        mf = ModelField.find_by_uid f.model_field_uid
+        mf = f.model_field
         row_obj = row_objects[mf.core_module]
         if row_obj.nil?
           r << ""
@@ -74,7 +74,7 @@ class GridMaker
 
   def load_used_modules
     um = Set.new
-    @fields.each { |f| um << ModelField.find_by_uid(f.model_field_uid).core_module unless f.model_field_uid=="_blank" }
+    @fields.each { |f| um << f.model_field.core_module unless f.model_field_uid=="_blank" }
     @used_modules = um.to_a
   end
 end

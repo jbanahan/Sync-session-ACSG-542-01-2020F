@@ -22,7 +22,7 @@
       <% unless bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
       <th>Actions</th>
       <%columns.each do |col|%>
-        <th><%=col.find_model_field.label%></th>
+        <th><%=col.model_field.label%></th>
       <%end%>
     </thead>
     <tbody class='pagination_wrapper'>
