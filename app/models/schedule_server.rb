@@ -8,6 +8,7 @@ class ScheduleServer < ActiveRecord::Base
   #is this the current active server in the group (h variable only needs to be passed in unit tests)
   def self.active_schedule_server? h=HOSTNAME
     c = self.connection
+    return false if c.nil?
     begin
       c.execute "LOCK TABLES schedule_servers WRITE;"
       result = c.execute "SELECT `host` FROM schedule_servers;"
