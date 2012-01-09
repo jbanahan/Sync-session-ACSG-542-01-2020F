@@ -169,7 +169,7 @@ class ApplicationController < ActionController::Base
           @s_search = field_list[default_search]
           @selected_search = default_search 
         end
-        @s_con = params[:c].nil? ? 'eq' : params[:c]
+        @s_con = params[:c].nil? ? 'contains' : params[:c]
         sval = params[:s]
         sval = true if ['is_null','is_not_null','is_true','is_false'].include? @s_con
 				if @s_search[:custom]

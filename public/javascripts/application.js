@@ -668,7 +668,7 @@ $( function() {
         $("#mod_export").dialog('open');
     });
     $("button").button();
-    $("#quick_search_button").button();
+    
     $(".classification_expand").click(function(ev) {
       ev.preventDefault();
       $(this).hide();
@@ -794,8 +794,8 @@ function setConditionDropdown(val_text,con_select,date_or_bool) {
         appendSelect(con_select,'is_true','Yes');
         appendSelect(con_select,'is_false','No');
     } else {
-        appendSelect(con_select,'eq','equals');
         appendSelect(con_select,'contains','contains');
+        appendSelect(con_select,'eq','equals');
         appendSelect(con_select,'sw','starts with');
         appendSelect(con_select,'ew','ends with');
         appendSelect(con_select,'is_null','is empty');
