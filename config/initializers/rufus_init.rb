@@ -24,7 +24,7 @@ def execute_scheduler
   #register to be active server
   scheduler.every '10s' do 
     job_wrapper "Schedule Check In" do
-      ScheduleServer.check_in
+      ScheduleServer.check_in if DelayedJobManager.should_be_running?
     end
   end
 
