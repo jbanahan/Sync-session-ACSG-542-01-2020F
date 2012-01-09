@@ -37,19 +37,7 @@ class ReportsController < ApplicationController
 
   def run_poa_expirations
     if current_user.admin?
-      begin
-        Date.parse(params[:poa_expiration_date])
-        expire_later = PowerOfAttorney.where(["expiration_date > ?", params[:poa_expiration_date]]).select(:company_id).map(&:company_id)
-        @poas = PowerOfAttorney.includes(:company).where(["expiration_date <= ?", params[:poa_expiration_date]]).order("companies.name ASC, expiration_date DESC").select do |poa|
-          poa unless expire_later.include?(poa.company_id)
-        end.uniq_by {|poa| poa.company_id}.paginate(:per_page => 20, :page => params[:page])
-      rescue ArgumentError
-        add_flash :errors, "Invalid date. Report will not be executed"
-        redirect_to reports_show_poa_expirations_path
-      rescue TypeError
-        add_flash :errors, "Invalid date. Report will not be executed"
-        redirect_to reports_show_poa_expirations_path
-      end
+      run_report "POA Expirations", OpenChain::Report::POAExpiration, { "poa_expiration_date" => params[:poa_expiration_date] }, []
     else
       error_redirect "You do not have permissions to view this report"
     end
