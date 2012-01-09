@@ -1,13 +1,9 @@
-<% content_for :javascript do %>
-  $(function() {
-    $( "#btn_new" )
-      .button()
-      .click(function() {
-        window.location = '<%= new_company_power_of_attorney_path(@company )%>';
-      });
-  });
+<% content_for :action_bar do %>
+  <% unless @company.locked? %>
+    <button class='btn_link' link_to='<%= new_company_power_of_attorney_path(@company )%>' key_map='n'>New</button>
+  <% end %>
+  <button class='btn_link' link_to='<%= url_for @company%>' key_map='b'>Back</button>
 <% end %>
-
 <h1><%= @company.name %> Power of Attorneys</h1>
 
 <table class='detail_table'>
@@ -38,6 +34,3 @@
   </tbody>
 </table>
 
-<% unless @company.locked? %>
-<button id='btn_new'>New</button>
-<% end %>

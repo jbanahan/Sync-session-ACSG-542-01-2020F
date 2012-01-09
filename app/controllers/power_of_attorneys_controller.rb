@@ -4,7 +4,7 @@ class PowerOfAttorneysController < ApplicationController
     @power_of_attorneys = PowerOfAttorney.where(["company_id = ?", params[:company_id]])
 
     respond_to do |format|
-      format.html { render :layout => 'one_col' }
+      format.html { render  }
       format.xml  { render :xml => @power_of_attorneys }
     end
   end
