@@ -21,6 +21,11 @@ class DelayedJobManager
     `script/delayed_job stop`
   end
 
+  # call to "script/delayed_job restart &"
+  def self.restart
+    `script/delayed_job restart &`
+  end
+
   #checks the 'tmp/restart.txt' & 'tmp/stop.txt' files to see if we should have a worker job running
   def self.should_be_running?
     #if the restart file doesn't exist, we probably just installed 

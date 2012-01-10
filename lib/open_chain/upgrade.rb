@@ -5,9 +5,23 @@ module OpenChain
 
     #Upgrades the current instance to the target git tag
     #returns the absolute path to the upgrade log file
-    #raises and OpenChain::UpgradeFailure if there are any problems
+    #raises an OpenChain::UpgradeFailure if there are any problems
     def self.upgrade target
       Upgrade.new(target).go
+    end
+
+    # Check the MasterSetup to see if this instance needs to be upgrade to another version and do so if needed
+    #raises an OpenChain::UpgradeFailure if there are any problems
+    def self.upgrade_if_needed
+      if MasterSetup.need_upgrade?
+        upgrade MasterSetup.get.target_version
+      end
+    end
+
+    def self.upgrade_delayed_job_if_needed
+      if MasterSetup.need_upgrade?
+        Upgrade.new(MasterSetup.get.target_version).go_delayed_job
+      end
     end
 
     #do not initialize this method directly, use the static #upgrade method instead
@@ -34,6 +48,25 @@ module OpenChain
         raise $!
       ensure
         finish_upgrade_log 
+      end
+    end
+
+    def go_delayed_job
+      return "Skipping, upgrade_running.txt exists" if File.exists?('tmp/upgrade_running.txt')
+      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.get.version, :to_version=>@target)
+      begin
+        @log = Logger.new(@log_path)
+        capture_and_log "touch tmp/upgrade_running.txt"
+        get_source 
+        migrate
+        @log.info "Migration complete"
+        @log_path
+      rescue
+        @log.error $!.message
+        raise $!
+      ensure
+        finish_upgrade_log 
+        DelayedJobManager.restart
       end
     end
 
