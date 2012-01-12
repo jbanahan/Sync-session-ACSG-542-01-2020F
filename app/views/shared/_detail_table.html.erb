@@ -1,0 +1,16 @@
+<table class='detail_table'>
+  <thead><tr>
+    <%fields.each do |f|%>
+      <th><%=field_label f, false%></th>
+    <%end%>
+  </tr></thead>
+  <tbody>
+    <%lines.each do |line|%>
+      <tr class='hover'>
+        <%fields.each do |f|%>
+          <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
+        <%end%>
+      </tr>
+    <%end%>
+  </tbody>
+</table>

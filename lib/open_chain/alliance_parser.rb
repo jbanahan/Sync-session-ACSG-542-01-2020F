@@ -38,6 +38,7 @@ module OpenChain
         tmp = Tempfile.new(['alliance_error','.txt'])
         tmp << file_content
         tmp.flush
+        debugger
         $!.log_me ["Alliance parser failure."], [tmp.path]
       end
     end
@@ -99,6 +100,7 @@ module OpenChain
 
             @entry.save! if @entry
             @commercial_invoices.each {|ci| ci.save!} if @commercial_invoices
+            #set time to process in milliseconds without calling callbacks
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
         end
@@ -203,12 +205,24 @@ module OpenChain
 
     # commercial invoice line
     def process_cl00 r
-      accumulate_string :export_country_codes, r[80,2]
-      accumulate_string :origin_country_codes, r[67,2]
-      accumulate_string :vendor_names, r[83,35].strip
-      accumulate_string :total_units_uoms, r[46,6].strip
+      @c_line = @c_invoice.commercial_invoice_lines.build
+      @c_line.mid = r[52,15].strip
+      @c_line.part_number = r[4,30].strip
+      @c_line.po_number = r[180,35].strip
+      @c_line.units = parse_decimal r[34,12], 3
+      @c_line.unit_of_measure = r[46,6].strip
+      @c_line.value = parse_currency r[273,13] 
+      @c_line.country_origin_code = r[67,2].strip
+      @c_line.country_export_code = r[80,2]
+      @c_line.related_parties = r[82]=='Y'
+      @c_line.vendor_name = r[83,35].strip
+      @c_line.volume = parse_currency r[118,11] #not really currency, but 2 decimals, so it's ok
+      accumulate_string :export_country_codes, @c_line.country_export_code
+      accumulate_string :origin_country_codes, @c_line.country_origin_code
+      accumulate_string :vendor_names, @c_line.vendor_name 
+      accumulate_string :total_units_uoms, @c_line.unit_of_measure 
       accumulate_string :po_numbers, r[180,35].strip
-      @entry.total_units += parse_decimal r[34,12], 3 
+      @entry.total_units += @c_line.units 
     end
 
     # commercial invoice line - tariff
