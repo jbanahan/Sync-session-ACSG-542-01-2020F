@@ -27,6 +27,4 @@ group :test do
   gem 'spork'
 #  gem 'ruby-prof' - put this back after we go to Ruby 3.1 (see Rails commit 25288)
 end
-group :production do
-  gem 'newrelic_rpm', '3.0.1'
-end
+gem 'newrelic_rpm'

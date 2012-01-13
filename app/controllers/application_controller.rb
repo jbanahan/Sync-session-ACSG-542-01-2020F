@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
     require 'open_chain/field_logic'
     require 'yaml'
+    require 'newrelic_rpm'
 
     protect_from_forgery
     before_filter :new_relic
@@ -92,8 +93,8 @@ class ApplicationController < ActionController::Base
   end
 
   def advanced_search(core_module)
-    last_run = SearchRun.find_last_run current_user, core_module
-    if params[:force_search] || last_run.nil? || !last_run.search_setup_id.nil? || params[:sid]
+    @last_run = SearchRun.find_last_run current_user, core_module
+    if params[:force_search] || @last_run.nil? || !@last_run.search_setup_id.nil? || params[:sid]
       @core_module = core_module
       @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user).order('name ASC')
       @current_search = get_search_to_run
@@ -114,10 +115,10 @@ class ApplicationController < ActionController::Base
           render_search_results true #render without the results
         end
       end    
-    elsif last_run.imported_file
-      redirect_to last_run.imported_file
+    elsif @last_run.imported_file
+      redirect_to @last_run.imported_file
     else
-      redirect_to last_run.custom_file
+      redirect_to @last_run.custom_file
     end
   end
 
@@ -341,10 +342,12 @@ class ApplicationController < ActionController::Base
       end
       
       @results = no_results ? [] : @current_search.search
+      page = params[:page]
+      page = (@last_run.position/20) + 1 if @last_run && @last_run.position
       respond_to do |format| 
         format.html {
           @current_search.touch
-          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+          @results = @results.paginate(:per_page => 20, :page => page) 
           render :layout => 'one_col'
         }
         format.csv {
@@ -352,7 +355,7 @@ class ApplicationController < ActionController::Base
           render_csv("#{@core_module.label}.csv")
         }
         format.json {
-          @results = @results.paginate(:per_page => 20, :page => params[:page])
+          @results = @results.paginate(:per_page => 20, :page => page)
           rval = []
           cols = @current_search.search_columns.order("rank ASC")
           GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 

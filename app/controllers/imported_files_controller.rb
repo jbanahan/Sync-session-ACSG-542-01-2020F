@@ -45,7 +45,9 @@ class ImportedFilesController < ApplicationController
       s.save
       @search_run = s
       @file_import_result = @imported_file.last_file_import_finished
-      @changed_objects = @file_import_result.changed_objects.paginate(:per_page=>20,:page => params[:page]) if @file_import_result
+      page = params[:page]
+      page = (s.position/20)+1 if !page && s.position
+      @changed_objects = @file_import_result.changed_objects.paginate(:per_page=>20,:page => page) if @file_import_result
       idx = 0
       @columns = @imported_file.search_columns
       if @columns.blank?
