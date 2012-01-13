@@ -49,7 +49,7 @@ class DelayedJobManager
       raise "Delayed Job Queue Too Big: #{c} Items" if c > max_messages
     rescue
       @@dont_send_until = 30.minutes.from_now
-      $!.log_me [], [], false #don't delay the send since we know that the queue is backed up
+      $!.log_me [], [], true #don't delay the send since we know that the queue is backed up
     end
   end
   #reset the timer for throttling montior_backlog error messages
