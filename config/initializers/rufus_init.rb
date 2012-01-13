@@ -31,7 +31,7 @@ def execute_scheduler
   #check for upgrades
   scheduler.every '30s' do
     job_wrapper "Upgrade Check" do
-      if Rails.env='production'
+      if Rails.env=='production'
         OpenChain::Upgrade.upgrade_if_needed 
         OpenChain::Upgrade.delay.upgrade_delayed_job_if_needed
       end

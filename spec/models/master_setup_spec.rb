@@ -13,8 +13,8 @@ describe MasterSetup do
     end
     it 'should take a string with line breaks and return the array' do
       features = ['a','b','c']
-      @m.custom_features_list = features.join('\n')
-      @m.custom_features.should == features.join('\n')
+      @m.custom_features_list = features.join('\r\n')
+      @m.custom_features.should == features.join('\r\n')
       @m.custom_features_list = features
     end
     it 'should check on custom_feature?' do

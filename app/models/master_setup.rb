@@ -68,16 +68,16 @@ class MasterSetup < ActiveRecord::Base
   # get the custom features enabled for this system as an array
   def custom_features_list
     return [] if self.custom_features.blank?
-    return self.custom_features.lines
+    return self.custom_features.split($/).to_a
   end
 
   # set the custom features enabled for this system by passing an array or a string
   def custom_features_list= data
     d = data
     if data.respond_to? 'join'
-      d = data.join('\n')
-    elsif data.respond_to? 'gsub'
-      d = data.gsub('\r','\n')
+      d = data.join($/)
+    elsif data.respond_to? "gsub"
+      d = data.gsub("\r\n",$/).gsub("\r",$/).gsub("\n",$/)
     end
     self.custom_features = d
   end
