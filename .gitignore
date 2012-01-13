@@ -10,3 +10,4 @@ config/database.yml
 coverage/*
 coverage.data
 coverage/*
+.rvmrc*
