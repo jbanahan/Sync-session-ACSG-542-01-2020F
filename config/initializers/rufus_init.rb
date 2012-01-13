@@ -66,7 +66,7 @@ def execute_scheduler
   end
 
   #monitor delayed job backlog
-  scheduler.every '60s' do
+  scheduler.every '5m' do
     DelayedJobManager.monitor_backlog
   end
 
