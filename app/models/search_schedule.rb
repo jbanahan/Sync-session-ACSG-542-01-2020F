@@ -51,6 +51,7 @@ class SearchSchedule < ActiveRecord::Base
       scheduler.cron cs, {:tags=> RUFUS_TAG} { SearchSchedule.find(self.id).run log } if any_days_scheduled? && self.run_hour
       log.info "#{Time.now}: Scheduled job for Schedule #{self.id}, with cron \"#{cs}\"" if log
     rescue StandardError => e
+      e.log_me ["Scheduler error"]
       if log
         log.error e
       else
@@ -74,14 +75,14 @@ class SearchSchedule < ActiveRecord::Base
   private
 
   def write_csv srch_setup
-    t = Tempfile.open(["scheduled_search_run","csv"])
+    t = Tempfile.open(["scheduled_search_run",".csv"])
     t.write CsvMaker.new.make_from_search(srch_setup,srch_setup.search)
     t.close
     t 
   end
 
   def write_xls srch_setup
-    t = Tempfile.new(["scheduled_search_run","xls"])
+    t = Tempfile.new(["scheduled_search_run",".xls"])
     XlsMaker.new.make_from_search(srch_setup,srch_setup.search).write t
     t
   end
