@@ -97,7 +97,7 @@ module OpenChain
             @entry.container_numbers = accumulated_string :container_numbers
             @entry.container_sizes = accumulated_string :container_sizes
             set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
-
+            set_importer_id
             @entry.save! if @entry
             @commercial_invoices.each {|ci| ci.save!} if @commercial_invoices
             #set time to process in milliseconds without calling callbacks
@@ -118,6 +118,7 @@ module OpenChain
         @skip_entry = true
       else
         @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
+        @entry.source_system = "Alliance"
         @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
         @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
         @entry.total_units = 0 #reset, then accumulate as we process invoice lines
@@ -292,6 +293,12 @@ module OpenChain
     # make port code nil if all zeros
     def port_code v
       v.blank? || v.match(/^[0]*$/) ? nil : v
+    end
+
+    # match importer_id
+    def set_importer_id 
+      raise "Alliance @entry received without customer number" unless @entry.customer_number
+      @entry.importer = Company.find_or_create_by_alliance_customer_number(:alliance_customer_number=>@entry.customer_number, :name=>@entry.customer_name, :importer=>true)
     end
 
     # set the fcl_lcl value based on the accumulated flags from the container lines

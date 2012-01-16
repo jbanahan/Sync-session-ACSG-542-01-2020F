@@ -208,10 +208,26 @@ describe OpenChain::AllianceParser do
     ent.fcl_lcl.should be_nil
   end
 
+  it 'should match importer id if customer matches' do
+    company = Factory(:company,:importer=>true,:alliance_customer_number=>@cust_num)
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.importer.should == company
+  end
+  it 'should create importer if customer number does not match' do
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    ent = Entry.find_by_broker_reference @ref_num
+    company = Company.find_by_alliance_customer_number @cust_num
+    company.should be_importer
+    company.name.should == @customer_name
+    ent.importer.should == company
+  end
+
   it 'should create entry' do
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
+    ent.source_system.should == 'Alliance'
     ent.entry_number.should == @entry_number
     ent.customer_number.should == @cust_num
     ent.last_exported_from_source.should == @est.parse(@extract_date_str)

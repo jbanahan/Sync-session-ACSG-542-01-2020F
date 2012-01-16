@@ -6,10 +6,16 @@ class CompaniesController < ApplicationController
     'v_bool' => {:field => 'vendor', :label => 'Is A Vendor'},
     'car_bool' => {:field => 'carrier', :label => 'Is A Carrier'},
     'cus_bool' => {:field => 'customer', :label => 'Is A Customer'},
-    'l_bool' => {:field => 'locked', :label => 'Is Locked'}
+    'l_bool' => {:field => 'locked', :label => 'Is Locked'},
   }
   def index
-    s = build_search(SEARCH_PARAMS,'c_name','c_name')
+    sp = SEARCH_PARAMS
+    if MasterSetup.get.custom_feature? 'alliance'
+      sp = SEARCH_PARAMS.clone
+      sp['a_cust'] = {:field=>'alliance_customer_number', :label=>"Alliance Customer Number"}
+      @include_alliance = true
+    end
+    s = build_search(sp,'c_name','c_name')
     respond_to do |format|
         format.html {
             @companies = s.paginate(:per_page => 20, :page => params[:page])

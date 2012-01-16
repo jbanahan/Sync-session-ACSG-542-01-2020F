@@ -24,14 +24,17 @@ def execute_scheduler
   #register to be active server
   scheduler.every '10s' do 
     job_wrapper "Schedule Check In" do
-      ScheduleServer.check_in
+      ScheduleServer.check_in if DelayedJobManager.should_be_running?
     end
   end
 
   #check for upgrades
   scheduler.every '30s' do
     job_wrapper "Upgrade Check" do
-      OpenChain::Upgrade.upgrade MasterSetup.get.target_version if Rails.env=="production" && MasterSetup.need_upgrade?
+      if Rails.env=='production'
+        OpenChain::Upgrade.upgrade_if_needed 
+        OpenChain::Upgrade.delay.upgrade_delayed_job_if_needed
+      end
     end
   end
 
@@ -63,11 +66,12 @@ def execute_scheduler
   end
 
   #monitor delayed job backlog
-  scheduler.every '60s' do
+  scheduler.every '5m' do
     DelayedJobManager.monitor_backlog
   end
 
   #make sure delayed job workers are running, in production
+=begin
   if Rails.env == 'production'
     scheduler.every("30s") do
       job_wrapper "Delayed Job Monitor" do
@@ -96,6 +100,7 @@ def execute_scheduler
       end
     end
   end
+=end
   
   scheduler.cron '0 23 * * *' do
     job_wrapper "Purges" do
@@ -104,26 +109,6 @@ def execute_scheduler
     end
   end
 
-=begin
-  scheduler.every("3m") do
-    job_wrapper "FTP Sweeper" do
-      if_active_server do
-        m = MasterSetup.first
-        if m && m.system_code
-          if m.ftp_polling_active?
-            logger.info "#{Time.now}: Sweeping FTP folder."
-            FtpWalker.new.go
-            logger.info "#{Time.now}: FTP Sweep Complete"
-          else
-            logger.info "#{Time.now}: FTP disabled (polling flag off)"
-          end
-        else
-          logger.info "#{Time.now}: FTP disabled (system code not configured)"
-        end
-      end
-    end
-  end
-=end
 end
 
 # Create the main logger and set some useful variables.
