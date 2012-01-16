@@ -74,14 +74,14 @@ class SearchSchedule < ActiveRecord::Base
   private
 
   def write_csv srch_setup
-    t = Tempfile.open("scheduled_search_run")
+    t = Tempfile.open(["scheduled_search_run","csv"])
     t.write CsvMaker.new.make_from_search(srch_setup,srch_setup.search)
     t.close
     t 
   end
 
   def write_xls srch_setup
-    t = Tempfile.new("scheduled_search_run")
+    t = Tempfile.new(["scheduled_search_run","xls"])
     XlsMaker.new.make_from_search(srch_setup,srch_setup.search).write t
     t
   end
