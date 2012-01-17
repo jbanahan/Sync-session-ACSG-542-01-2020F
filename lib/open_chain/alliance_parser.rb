@@ -35,10 +35,11 @@ module OpenChain
         end
         AllianceParser.new.parse_entry entry_lines if !entry_lines.empty?
       rescue
+        puts $!
+        puts $!.backtrace
         tmp = Tempfile.new(['alliance_error','.txt'])
         tmp << file_content
         tmp.flush
-        debugger
         $!.log_me ["Alliance parser failure."], [tmp.path]
       end
     end
@@ -111,7 +112,7 @@ module OpenChain
     private 
     # header
     def process_sh00 r
-      brok_ref = r[6,8]
+      brok_ref = r[4,10].gsub(/^[0]*/,'')
       @accumulated_strings = Hash.new
       @entry = Entry.find_by_broker_reference brok_ref
       if @entry && @entry.last_exported_from_source && @entry.last_exported_from_source > parse_date_time(r[24,12]) #if current is newer than file
@@ -128,7 +129,7 @@ module OpenChain
         @entry.division_number = r[38,4].strip
         @entry.customer_name = r[42,35].strip
         @entry.entry_type = r[166,2].strip
-        @entry.entry_number = r[168,12]
+        @entry.entry_number = "#{r[168,3]}#{r[172,8]}"
         @entry.carrier_code = r[225,4].strip
         @entry.total_packages = r[300,12]
         @entry.total_packages_uom = r[312,6].strip
@@ -228,8 +229,23 @@ module OpenChain
 
     # commercial invoice line - tariff
     def process_ct00 r
-      accumulate_string :spis, r[29,2].strip
-      accumulate_string :spis, r[31].strip
+      @ct = @c_line.commercial_invoice_tariffs.build
+      @ct.hts_code = r[32,10].strip.ljust(10,"0")
+      @ct.duty_amount = parse_currency r[4,12]
+      @ct.entered_value = parse_currency r[16,13]
+      @ct.spi_primary = r[29,2].strip
+      @ct.spi_secondary = r[31].strip
+      @ct.classification_qty_1 = parse_currency r[42,12]
+      @ct.classification_qty_2 = parse_currency r[60,12]
+      @ct.classification_qty_3 = parse_currency r[78,12]
+      @ct.classification_uom_1 = r[54,6].strip
+      @ct.classification_uom_2 = r[72,6].strip
+      @ct.classification_uom_3 = r[90,6].strip
+      @ct.tariff_description = r[96,35].strip
+      gw = r[131,12].to_i
+      @ct.gross_weight = gw unless gw.nil?
+      accumulate_string :spis, @ct.spi_primary 
+      accumulate_string :spis, @ct.spi_secondary
     end
 
     # invoice header

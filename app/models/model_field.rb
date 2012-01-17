@@ -718,6 +718,21 @@ class ModelField
       [13,:cil_related_parties,:related_parties,"Related Parties",{:data_type=>:boolean}],
       [14,:cil_volume,:volume,"Volume",{:data_type=>:decimal}],
     ]
+    add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
+      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+      [2,:cit_duty_amount,:duty_amount,"Duty",{:data_type=>:decimal}],
+      [3,:cit_entered_value,:entered_value,"Entered Value",{:data_type=>:decimal}],
+      [4,:cit_spi_primary,:spi_primary,"SPI - Primary",{:data_type=>:string}],
+      [5,:cit_spi_secondary,:spi_secondary,"SPI - Secondary",{:data_type=>:string}],
+      [6,:cit_classification_qty_1,:classification_qty_1,"Quanity 1",{:data_type=>:decimal}],
+      [7,:cit_classification_uom_1,:classification_uom_1,"UOM 1",{:data_type=>:string}],
+      [8,:cit_classification_qty_2,:classification_qty_2,"Quanity 2",{:data_type=>:decimal}],
+      [9,:cit_classification_uom_2,:classification_uom_2,"UOM 2",{:data_type=>:string}],
+      [10,:cit_classification_qty_3,:classification_qty_3,"Quanity 3",{:data_type=>:decimal}],
+      [11,:cit_classification_uom_3,:classification_uom_3,"UOM 3",{:data_type=>:string}],
+      [12,:cit_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
+      [13,:cit_tariff_description,:tariff_description,"Description",{:data_type=>:string}]
+    ]
     add_fields CoreModule::BROKER_INVOICE, [
       make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),
       [2,:bi_suffix,:suffix,"Suffix",:data_type=>:string],

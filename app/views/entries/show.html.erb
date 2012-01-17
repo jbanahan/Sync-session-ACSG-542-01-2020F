@@ -16,7 +16,11 @@
   font-weight: bold;
   padding-right: 1em;
 }
+.ci_line td {
+  border-top: 1px solid #333;
+}
 </style>
+<a name='ent_header'></a>
 <div class='quick_jump'><span class='qj_label'>Jump To:</span>
   <a href='#c_invoices'>Commercial Invoices</a> |
   <a href='#b_invoices'>Broker Invoices</a>
@@ -111,8 +115,12 @@
 </table>
 <hr />
 <a name='c_invoices'></a>
-<%if @entry.commercial_invoices.count >1%>
-  <h2>Commercial Invoice Summary</h2>
+<div class='quick_jump'><span class='qj_label'>Jump To:</span>
+  <a href='#ent_header'>Top</a> |
+  <a href='#b_invoices'>Broker Invoices</a>
+</div>
+<%if @entry.commercial_invoices.count >0%>
+  <h1>Commercial Invoices</h1>
   <%ci_summary_fields = [:ci_invoice_number,:ci_vendor_name,:ci_invoice_value,:ci_gross_weight]%>
   <table class='detail_table'>
     <thead><tr>
@@ -155,7 +163,89 @@
       </tr>
     </tbody>
   </table>
-  <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_related_parties,:cil_volume],:lines=>ci.commercial_invoice_lines}%>
+  <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_related_parties,:cil_volume]%>
+  <table class='detail_table'>
+    <thead><tr>
+      <%fields.each do |f|%>
+        <th><%=field_label f, false%></th>
+      <%end%>
+    </tr></thead>
+    <tbody>
+      <%ci.commercial_invoice_lines.each do |line|%>
+        <tr class='hover ci_line'>
+          <%fields.each_with_index do |f,i|%>
+            <td <%="rowspan='2'" if i==0%> <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
+          <%end%>
+        </tr>
+        <% if line.commercial_invoice_tariffs.count > 0%>
+          <tr>
+            <td colspan='8' style='font-size:111%;'>
+              <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_spi_primary,:cit_spi_secondary,
+                :cit_classification_qty_1,:cit_classification_uom_1,:cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3,
+                :cit_gross_weight,:cit_tariff_description], :lines=>line.commercial_invoice_tariffs}%>
+            </td>
+          </tr>
+        <% end %>
+      <%end%>
+    </tbody>
+  </table>
   <hr />
+<%end%>
+<%if current_user.view_broker_invoices? && @entry.broker_invoices.count > 0%>
+  <a name='b_invoices'></a>
+  <div class='quick_jump'><span class='qj_label'>Jump To:</span>
+    <a href='#ent_header'>Top</a> |
+    <a href='#c_invoices'>Commercial Invoices</a>
+  </div>
+  <h1>Broker Invoices</h1>
+  <%fields = [:bi_invoice_date,:bi_suffix,:bi_invoice_total]%>
+  <table class='detail_table'>
+    <thead><tr>
+      <%fields.each do |f|%>
+        <th><%=field_label f, false%></th>
+      <%end%>
+    </tr></thead>
+    <tbody>
+      <%@entry.broker_invoices.each do |line|%>
+        <%if line.can_view? current_user %>
+          <tr class='hover'>
+            <%fields.each do |f|%>
+              <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>>
+                <%=f==:bi_invoice_date ? link_to(field_value(line,f),"#bi_#{line.id}") : field_value(line, f)%>
+              </td>
+            <%end%>
+          </tr>
+        <% end %>
+      <%end%>
+    </tbody>
+  </table>
+  <hr />
+  <%@entry.broker_invoices.each do |bi|%>
+    <% if bi.can_view? current_user%>
+      <a name='bi_<%=bi.id%>'></a>
+      <table class='ent_columns'>
+        <tbody>
+          <tr><td colspan='2'><h3><%=field_label :bi_invoice_date, false%> - <%=field_value(bi,:ci_invoice_date)%></h3></td></tr>
+          <tr>
+            <td style='width:50%;'>
+              <table>
+                <%[:bi_suffix,:bi_invoice_total].each do |f|%>
+                  <%=field_view_row bi,f,false%>
+                <%end%>
+              </table>
+            </td>
+            <td style='width:50%;'>
+              <table>
+                <%[:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso].each do |f|%>
+                  <%=field_view_row bi,f,false%>
+                <%end%>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type],:lines=>bi.broker_invoice_lines}%>
+    <% end %>
+  <%end%>
 <%end%>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @entry} %>
