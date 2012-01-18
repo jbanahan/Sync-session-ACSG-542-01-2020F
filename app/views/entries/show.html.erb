@@ -67,7 +67,7 @@
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_free_date,:ent_duty_due_date,:ent_liq_date].each do |f|%>
+          <%[:ent_duty_due_date,:ent_liq_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
