@@ -17,7 +17,28 @@ module ApplicationHelper
       ids = mf.entity_type_ids
       show_field = false if !e_id.nil? && !ids.include?(e_id)
     end
-    show_field ? field_row(field_label(model_field_uid,show_prefix),  mf.process_export(object)) : ""
+    r = ""
+    if show_field
+      r = field_row(field_label(model_field_uid,show_prefix),  field_value(object,mf),false,mf) 
+    end
+    r
+  end
+
+  # render the value of the given model field for the given object
+  # model_field can be either an instance of ModelField or a symbol with the model field's uid
+  def field_value object, model_field
+    mf = model_field.class==ModelField ? model_field : ModelField.find_by_uid(model_field)
+    val = mf.process_export object
+    if val && mf.currency
+      case mf.currency
+      when :usd
+        val = number_to_currency val
+      else
+        val = number_to_currency val, {:format=>"%n",:negative_format=>"-%n"}
+      end
+
+    end
+    val
   end
 
   #build a select box with all model_fields grouped by module.
@@ -135,8 +156,8 @@ module ApplicationHelper
     return opts[:table] ? x.html_safe : content_tag(:div, x.html_safe, :class=>'custom_field_box')	  
   end
   
-  def field_row(label, field, never_hide=false) 
-    content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
+  def field_row(label, field, never_hide=false, model_field=nil) 
+    content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field, :style=>"#{model_field && [:decimal,:integer].include?(model_field.data_type) ? "text-align:right;" : ""}"), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
   
   def model_field_label(model_field_uid) 

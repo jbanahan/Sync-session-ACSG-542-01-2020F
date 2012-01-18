@@ -2,8 +2,9 @@ require 'spec_helper'
 
 describe OpenChain::AllianceParser do
   before :each do
-    @ref_num ='00364690' 
-    @entry_number = '316000364690'
+    @ref_num ='36469000' 
+    @filer_code = '316'
+    @entry_ext = '12345678'
     @cust_num = "NJEAN"
     @extract_date_str = "201002190115"
     @company_number = '01'
@@ -43,9 +44,9 @@ describe OpenChain::AllianceParser do
     @hmf = BigDecimal('55.22',2)
     @mpf = BigDecimal('271.14',2)
     @cotton_fee = BigDecimal('123.31',2)
-    convert_cur = lambda {|c,width| (c * 100).to_i.to_s.rjust(width,'0')}
+    convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
     @make_entry_lambda = lambda {
-      sh00 = "SH0000#{@ref_num}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@entry_number}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       #{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
+      sh00 = "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     ETIHAD AIRWAYS      101       #{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
       sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}"
       sh03 = "SH03#{"".ljust(285)}#{@consignee_address_1.ljust(35)}#{@consignee_address_2.ljust(35)}#{@consignee_city.ljust(35)}#{@consignee_state.ljust(2)}"
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
@@ -107,19 +108,37 @@ describe OpenChain::AllianceParser do
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
         :lines=>[
-        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',:spi_1=>"AX",:spi_2=>"A",
-          :po_number=>'abcdefg'},
-        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301'}
+        {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',
+          :po_number=>'abcdefg',:part_number=>'1291010',
+          :mid=>'faljdsiadfl',:charges=>BigDecimal('120301.20'),:related_parties=>true,:volume=>BigDecimal('12391.21',2),:computed_value=>BigDecimal('123.45',2),
+          :value=>BigDecimal('3219.23',2),:computed_adjustments=>BigDecimal('3010.32',2),:computed_net_value=>BigDecimal('301.21',2),:computed_duty_percentage=>BigDecimal('0.81',2),
+          :related_parties => true, :mpf=>BigDecimal('27.01',2), :hmf=>BigDecimal('23.12',2), :cotton_fee=>BigDecimal('15.22',2),
+          :tariff=>[{
+            :duty_total=>BigDecimal("21.10",2),:entered_value=>BigDecimal('19311.12',2),:spi_primary=>'A',:spi_secondary=>'B',:hts_code=>'6504212121',
+            :class_q_1=>BigDecimal('10.04',2),:class_uom_1=>'ABC', 
+            :class_q_2=>BigDecimal('11.04',2),:class_uom_2=>'ABC', 
+            :class_q_3=>BigDecimal('12.04',2),:class_uom_3=>'ABC', 
+            :gross_weight=>"551",:tariff_description=>"ABC 123 DEF"
+          },
+          {
+            :duty_total=>BigDecimal("16.10",2),:entered_value=>BigDecimal('190311.12',2),:spi_primary=>'C',:spi_secondary=>'D',:hts_code=>'2702121210',
+            :class_q_1=>BigDecimal('14.04',2),:class_uom_1=>'ABC', 
+            :class_q_2=>BigDecimal('15.04',2),:class_uom_2=>'ABC', 
+            :class_q_3=>BigDecimal('16.04',2),:class_uom_3=>'ABC', 
+            :gross_weight=>"559",:tariff_description=>"BDAFDADdafda"
+          }]
+          },
+        {:part_number=>'101301',:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301'}
       ]},
       {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
-        :lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X"}
+        :lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X",:part_number=>'123918'}
         ]},
       {:invoice_number=>'ff30101ffz',:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
-        :lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ',:po_number=>'jfdaila'}
+        :lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ',:po_number=>'jfdaila',:part_number=>'fjasjds'}
         ]}
     ] 
     @make_commercial_invoices_lambda = lambda {
@@ -130,8 +149,18 @@ describe OpenChain::AllianceParser do
         ci00 << "#{ci[:gross_weight].rjust(12)}#{convert_cur.call(ci[:total_charges],11)}#{ci[:invoice_date]}#{ci[:mfid].ljust(15)}"
         rows << ci00
         ci[:lines].each do |line|
-          rows << "CL00#{"".ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{"".ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]} #{line[:vendor_name].ljust(35)}#{"".ljust(62)}#{line[:po_number] ? line[:po_number].ljust(35) : "".ljust(35)}"
-          rows << "CT00#{"".ljust(25)}#{line[:spi_1] ? line[:spi_1].ljust(2) : "  "}#{line[:spi_2] ? line[:spi_2] : " "}"
+          [:mid,:po_number].each {|k| line[k]='' unless line[k]}
+          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(51)}#{line[:po_number].ljust(35)}#{"".ljust(58)}#{convert_cur.call(line[:value],13)}"
+          if line[:tariff]
+            line[:tariff].each do |t|
+              t_row = "CT00#{convert_cur.call(t[:duty_total],12)}#{convert_cur.call(t[:entered_value],13)}#{t[:spi_primary].ljust(2)}#{t[:spi_secondary].ljust(1)}#{t[:hts_code].ljust(10)}"
+              (1..3).each do |i|
+                t_row << "#{convert_cur.call(t["class_q_#{i}".to_sym],12)}#{t["class_uom_#{i}".to_sym].ljust(6)}"
+              end
+              t_row << "#{t[:tariff_description].ljust(35)}#{t[:gross_weight].rjust(12,'0')}"
+              rows << t_row
+            end
+          end
         end
       end
       rows.join("\n")
@@ -209,7 +238,7 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
     ent.source_system.should == 'Alliance'
-    ent.entry_number.should == @entry_number
+    ent.entry_number.should == "#{@filer_code}#{@entry_ext}"
     ent.customer_number.should == @cust_num
     ent.last_exported_from_source.should == @est.parse(@extract_date_str)
     ent.company_number.should == @company_number
@@ -261,6 +290,9 @@ describe OpenChain::AllianceParser do
     expected_total_units = BigDecimal("0",2)
     
     @commercial_invoices.each do |ci| 
+      invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
+      invoices.should have(1).item
+      inv = invoices.first
       expected_invoiced_value += ci[:invoiced_value]
       ci[:lines].each do |line|
         expected_export_country_codes << line[:export_country_code]
@@ -268,12 +300,50 @@ describe OpenChain::AllianceParser do
         expected_vendor_names << line[:vendor_name]
         expected_total_units_uoms << line[:units_uom]
         expected_total_units += line[:units]
-        expected_pos << line[:po_number] if line[:po_number]
-        [:spi_1,:spi_2].each {|s| expected_spis << line[s] if line[s]}
+        expected_pos << line[:po_number] unless line[:po_number].blank?
+
+        ci_line = inv.commercial_invoice_lines.where(:part_number=>line[:part_number]).first
+        ci_line.mid.should == line[:mid]
+        ci_line.po_number.should == line[:po_number]
+        ci_line.units.should == line[:units]
+        ci_line.unit_of_measure.should == line[:units_uom]
+        ci_line.value.should == line[:value] unless line[:value].nil?
+        ci_line.mid.should == line[:mid]
+        ci_line.country_origin_code.should == line[:origin_country_code]
+        ci_line.charges.should == line[:total_charges]
+        ci_line.country_export_code.should == line[:export_country_code]
+        ci_line.related_parties?.should == (line[:related_parties] ? line[:related_parties] : false)
+        ci_line.vendor_name.should == line[:vendor_name]
+        ci_line.volume.should == line[:volume] if line[:volume]
+        ci_line.computed_value == line[:computed_value]
+        ci_line.computed_adjustments == line[:computed_adjustments]
+        ci_line.computed_net_value == line[:computed_net_value]
+        ci_line.computed_duty_percentage == line[:computed_duty_percentage]
+        ci_line.mpf == line[:mpf]
+        ci_line.hmf == line[:hmf]
+        ci_line.cotton_fee == line[:cotton_fee]
+        if line[:tariff]
+          line[:tariff].each do |t_line|
+            found = ci_line.commercial_invoice_tariffs.where(:hts_code=>t_line[:hts_code])
+            found.should have(1).record
+            t = found.first
+            t.duty_amount.should == t_line[:duty_total]
+            t.entered_value.should == t_line[:entered_value]
+            t.spi_primary.should == t_line[:spi_primary]
+            t.spi_secondary.should == t_line[:spi_secondary]
+            t.hts_code.should == t_line[:hts_code]
+            t.classification_qty_1.should == t_line[:class_q_1]
+            t.classification_qty_2.should == t_line[:class_q_2]
+            t.classification_qty_3.should == t_line[:class_q_3]
+            t.classification_uom_1.should == t_line[:class_uom_1]
+            t.classification_uom_2.should == t_line[:class_uom_2]
+            t.classification_uom_3.should == t_line[:class_uom_3]
+            t.tariff_description.should == t_line[:tariff_description]
+            t.gross_weight.to_s.should == t_line[:gross_weight]
+            [:spi_primary,:spi_secondary].each {|k| expected_spis << t_line[k] unless t_line[k].blank?}
+          end
+        end
       end
-      invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
-      invoices.should have(1).item
-      inv = invoices.first
       inv.currency.should == ci[:currency]
       inv.exchange_rate.should == ci[:exchange_rate]
       inv.invoice_value_foreign.should == ci[:invoice_value_foreign]

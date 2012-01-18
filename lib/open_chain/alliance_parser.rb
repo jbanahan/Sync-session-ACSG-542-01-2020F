@@ -35,6 +35,8 @@ module OpenChain
         end
         AllianceParser.new.parse_entry entry_lines if !entry_lines.empty?
       rescue
+        puts $!
+        puts $!.backtrace
         tmp = Tempfile.new(['alliance_error','.txt'])
         tmp << file_content
         tmp.flush
@@ -100,6 +102,7 @@ module OpenChain
             @entry.save! if @entry
             @commercial_invoices.each {|ci| ci.save!} if @commercial_invoices
             #set time to process in milliseconds without calling callbacks
+            #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
         end
         @skip_entry = false
@@ -109,7 +112,7 @@ module OpenChain
     private 
     # header
     def process_sh00 r
-      brok_ref = r[6,8]
+      brok_ref = r[4,10].gsub(/^[0]*/,'')
       @accumulated_strings = Hash.new
       @entry = Entry.find_by_broker_reference brok_ref
       if @entry && @entry.last_exported_from_source && @entry.last_exported_from_source > parse_date_time(r[24,12]) #if current is newer than file
@@ -126,7 +129,7 @@ module OpenChain
         @entry.division_number = r[38,4].strip
         @entry.customer_name = r[42,35].strip
         @entry.entry_type = r[166,2].strip
-        @entry.entry_number = r[168,12]
+        @entry.entry_number = "#{r[168,3]}#{r[172,8]}"
         @entry.carrier_code = r[225,4].strip
         @entry.total_packages = r[300,12]
         @entry.total_packages_uom = r[312,6].strip
@@ -204,18 +207,45 @@ module OpenChain
 
     # commercial invoice line
     def process_cl00 r
-      accumulate_string :export_country_codes, r[80,2]
-      accumulate_string :origin_country_codes, r[67,2]
-      accumulate_string :vendor_names, r[83,35].strip
-      accumulate_string :total_units_uoms, r[46,6].strip
+      @c_line = @c_invoice.commercial_invoice_lines.build
+      @c_line.mid = r[52,15].strip
+      @c_line.part_number = r[4,30].strip
+      @c_line.po_number = r[180,35].strip
+      @c_line.units = parse_decimal r[34,12], 3
+      @c_line.unit_of_measure = r[46,6].strip
+      @c_line.value = parse_currency r[273,13] 
+      @c_line.country_origin_code = r[67,2].strip
+      @c_line.country_export_code = r[80,2]
+      @c_line.related_parties = r[82]=='Y'
+      @c_line.vendor_name = r[83,35].strip
+      @c_line.volume = parse_currency r[118,11] #not really currency, but 2 decimals, so it's ok
+      accumulate_string :export_country_codes, @c_line.country_export_code
+      accumulate_string :origin_country_codes, @c_line.country_origin_code
+      accumulate_string :vendor_names, @c_line.vendor_name 
+      accumulate_string :total_units_uoms, @c_line.unit_of_measure 
       accumulate_string :po_numbers, r[180,35].strip
-      @entry.total_units += parse_decimal r[34,12], 3 
+      @entry.total_units += @c_line.units 
     end
 
     # commercial invoice line - tariff
     def process_ct00 r
-      accumulate_string :spis, r[29,2].strip
-      accumulate_string :spis, r[31].strip
+      @ct = @c_line.commercial_invoice_tariffs.build
+      @ct.hts_code = r[32,10].strip.ljust(10,"0")
+      @ct.duty_amount = parse_currency r[4,12]
+      @ct.entered_value = parse_currency r[16,13]
+      @ct.spi_primary = r[29,2].strip
+      @ct.spi_secondary = r[31].strip
+      @ct.classification_qty_1 = parse_currency r[42,12]
+      @ct.classification_qty_2 = parse_currency r[60,12]
+      @ct.classification_qty_3 = parse_currency r[78,12]
+      @ct.classification_uom_1 = r[54,6].strip
+      @ct.classification_uom_2 = r[72,6].strip
+      @ct.classification_uom_3 = r[90,6].strip
+      @ct.tariff_description = r[96,35].strip
+      gw = r[131,12].to_i
+      @ct.gross_weight = gw unless gw.nil?
+      accumulate_string :spis, @ct.spi_primary 
+      accumulate_string :spis, @ct.spi_secondary
     end
 
     # invoice header

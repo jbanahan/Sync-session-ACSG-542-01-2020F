@@ -36,8 +36,13 @@ class ModelField
     @label_override = o[:label_override]
     @entity_type_field = o[:entity_type_field]
     @history_ignore = o[:history_ignore]
+    @currency = o[:currency]
   end
 
+  # returns the default currency code for the value as a lowercase symbol (like :usd) or nil
+  def currency
+    @currency
+  end
   #returns the value of the process_export method based on the object found within the given piece set (or nil if the object is not found)
   def export_from_piece_set piece_set
     obj = self.core_module.object_from_piece_set piece_set
@@ -602,7 +607,6 @@ class ModelField
       [10,:ent_filed_date,:entry_filed_date,"Entry Filed Date",{:data_type=>:datetime}],
       [11,:ent_release_date,:release_date,"Release Date",{:data_type=>:datetime}],
       [12,:ent_first_release,:first_release_date,"First Release Date",{:data_type=>:datetime}],
-      [13,:ent_free_date,:free_date,"Free Date",{:data_type=>:datetime}],
       [14,:ent_last_billed_date,:last_billed_date,"Last Bill Issued Date",{:data_type=>:datetime}],
       [15,:ent_invoice_paid_date,:invoice_paid_date,"Invoice Paid Date",{:data_type=>:datetime}],
       [16,:ent_liq_date,:liquidation_date,"Liquidation Date",{:data_type=>:datetime}],
@@ -613,14 +617,14 @@ class ModelField
       [21,:ent_duty_due_date,:duty_due_date,"Duty Due Date",{:data_type=>:date}],
       [22,:ent_carrier_code,:carrier_code,"Carrier Code",{:data_type=>:string}],
       [23,:ent_total_packages,:total_packages,"Total Packages",{:data_type=>:integer}],
-      [24,:ent_total_fees,:total_fees,"Total Fees",{:data_type=>:decimal}],
-      [25,:ent_total_duty,:total_duty,"Total Duty",{:data_type=>:decimal}],
-      [26,:ent_total_duty_direct,:total_duty_direct,"Total Duty Direct",{:data_type=>:decimal}],
-      [27,:ent_entered_value,:entered_value,"Total Entered Value", {:data_type=>:decimal}],
+      [24,:ent_total_fees,:total_fees,"Total Fees",{:data_type=>:decimal,:currency=>:usd}],
+      [25,:ent_total_duty,:total_duty,"Total Duty",{:data_type=>:decimal,:currency=>:usd}],
+      [26,:ent_total_duty_direct,:total_duty_direct,"Total Duty Direct",{:data_type=>:decimal,:currency=>:usd}],
+      [27,:ent_entered_value,:entered_value,"Total Entered Value", {:data_type=>:decimal,:currency=>:usd}],
       [28,:ent_customer_references,:customer_references,"Customer References",{:data_type=>:text}],
       [29,:ent_po_numbers,:po_numbers,"PO Numbers",{:data_type=>:text}],
-      [30,:ent_mfids,:mfids,"MFID Numbers",{:data_type=>:text}],
-      [31,:ent_total_invoiced_value,:total_invoiced_value,"Total Commercial Invoice Value",{:data_type=>:decimal}],
+      [30,:ent_mfids,:mfids,"MID Numbers",{:data_type=>:text}],
+      [31,:ent_total_invoiced_value,:total_invoiced_value,"Total Commercial Invoice Value",{:data_type=>:decimal,:currency=>:usd}],
       [32,:ent_export_country_codes,:export_country_codes,"Country Export Codes",{:data_type=>:string}],
       [33,:ent_origin_country_codes,:origin_country_codes,"Country Origin Codes",{:data_type=>:string}],
       [34,:ent_vendor_names,:vendor_names,"Vendor Names",{:data_type=>:text}],
@@ -635,9 +639,9 @@ class ModelField
       [43,:ent_ult_con_name,:ult_consignee_name,"Ult Consignee Name",{:data_type=>:string}],
       [44,:ent_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
       [45,:ent_total_packages_uom,:total_packages_uom,"Total Packages UOM",{:data_type=>:string}],
-      [46,:ent_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal}],
-      [47,:ent_hmf,:hmf,"HMF",{:data_type=>:decimal}],
-      [48,:ent_mpf,:mpf,"MPF",{:data_type=>:decimal}],
+      [46,:ent_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal,:currency=>:usd}],
+      [47,:ent_hmf,:hmf,"HMF",{:data_type=>:decimal,:currency=>:usd}],
+      [48,:ent_mpf,:mpf,"MPF",{:data_type=>:decimal,:currency=>:usd}],
       [49,:ent_container_nums,:container_numbers,"Container Numbers",{:data_type=>:string}],
       [50,:ent_container_sizes,:container_sizes,"Container Sizes",{:data_type=>:string}],
       [51,:ent_fcl_lcl,:fcl_lcl,"FCL/LCL",{:data_type=>:string}],
@@ -692,24 +696,41 @@ class ModelField
       [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
       [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}],
       [3,:ci_currency,:currency,"Currency",{:data_type=>:string}],
-      [4,:ci_invoice_value_foreign,:invoice_value_foreign,"Invoice Value (Foreign)",{:data_type=>:decimal}],
-      [5,:ci_invoice_value,:invoice_value,"Invoice Value",{:data_type=>:decimal}],
+      [4,:ci_invoice_value_foreign,:invoice_value_foreign,"Invoice Value (Foreign)",{:data_type=>:decimal,:currency=>:other}],
+      [5,:ci_invoice_value,:invoice_value,"Invoice Value",{:data_type=>:decimal,:currency=>:usd}],
       [6,:ci_country_origin_code,:country_origin_code,"Country Origin Code",{:data_type=>:string}],
       [7,:ci_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
-      [8,:ci_total_charges,:total_charges,"Charges",{:data_type=>:decimal}],
+      [8,:ci_total_charges,:total_charges,"Charges",{:data_type=>:decimal,:currency=>:usd}],
       [9,:ci_invoice_date,:invoice_date,"Invoice Date",{:data_type=>:date}],
       [10,:ci_mfid,:mfid,"MFID",{:data_type=>:string}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
       [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
       [2,:cil_part_number,:part_number,"Part Number",{:data_type=>:string}],
-      [3,:cil_part_desc,:part_description,"Part Desc",{:data_type=>:string}],
       [4,:cil_po_number,:po_number,"PO Number",{:data_type=>:string}],
-      [5,:cil_hts,:hts_number,"HTS",{:data_type=>:string}],
-      [6,:cil_duty,:duty_rate,"Duty",{:data_type=>:decimal}],
       [7,:cil_units,:units,"Units",{:data_type=>:decimal}],
       [8,:cil_uom,:unit_of_measure,"UOM",{:data_type=>:string}],
-      [9,:cil_value,:value,"Value",{:data_type=>:decimal}]
+      [9,:cil_value,:value,"Value",{:data_type=>:decimal,:currency=>:other}],
+      [10,:cil_mid,:mid,"MID",{:data_type=>:string}],
+      [11,:cil_country_origin_code,:country_origin_code,"Country Origin Code",{:data_type=>:string}],
+      [12,:cil_country_export_code,:country_export_code,"Country Export Code",{:data_type=>:string}],
+      [13,:cil_related_parties,:related_parties,"Related Parties",{:data_type=>:boolean}],
+      [14,:cil_volume,:volume,"Volume",{:data_type=>:decimal}],
+    ]
+    add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
+      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+      [2,:cit_duty_amount,:duty_amount,"Duty",{:data_type=>:decimal}],
+      [3,:cit_entered_value,:entered_value,"Entered Value",{:data_type=>:decimal}],
+      [4,:cit_spi_primary,:spi_primary,"SPI - Primary",{:data_type=>:string}],
+      [5,:cit_spi_secondary,:spi_secondary,"SPI - Secondary",{:data_type=>:string}],
+      [6,:cit_classification_qty_1,:classification_qty_1,"Quanity 1",{:data_type=>:decimal}],
+      [7,:cit_classification_uom_1,:classification_uom_1,"UOM 1",{:data_type=>:string}],
+      [8,:cit_classification_qty_2,:classification_qty_2,"Quanity 2",{:data_type=>:decimal}],
+      [9,:cit_classification_uom_2,:classification_uom_2,"UOM 2",{:data_type=>:string}],
+      [10,:cit_classification_qty_3,:classification_qty_3,"Quanity 3",{:data_type=>:decimal}],
+      [11,:cit_classification_uom_3,:classification_uom_3,"UOM 3",{:data_type=>:string}],
+      [12,:cit_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
+      [13,:cit_tariff_description,:tariff_description,"Description",{:data_type=>:string}]
     ]
     add_fields CoreModule::BROKER_INVOICE, [
       make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),
@@ -748,7 +769,7 @@ class ModelField
       make_broker_invoice_entry_field(27, :bi_ent_entered_value, :entered_value, "Total Entered Value", :decimal, lambda {|entry| entry.entered_value}),
       make_broker_invoice_entry_field(28, :bi_ent_customer_references, :customer_references, "Customer References", :text, lambda {|entry| entry.customer_references}),
       make_broker_invoice_entry_field(29,:bi_ent_po_numbers,:po_numbers,"PO Numbers",:text,lambda {|entry| entry.po_numbers}),
-      make_broker_invoice_entry_field(30,:bi_ent_mfids,:mfids,"MFID Numbers",:text,lambda {|entry| entry.mfids}),
+      make_broker_invoice_entry_field(30,:bi_ent_mfids,:mfids,"MID Numbers",:text,lambda {|entry| entry.mfids}),
       make_broker_invoice_entry_field(31,:bi_ent_total_invoiced_value,:total_invoiced_value,"Total Commercial Invoice Value",:decimal,lambda {|entry| entry.total_invoiced_value}),
       make_broker_invoice_entry_field(32,:bi_ent_export_country_codes,:export_country_codes,"Country of Export Codes",:string,lambda {|entry| entry.export_country_codes}),
       make_broker_invoice_entry_field(33,:bi_ent_origin_country_codes,:origin_country_codes,"Country of Origin Codes",:string,lambda {|entry| entry.origin_country_codes}),

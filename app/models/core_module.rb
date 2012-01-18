@@ -300,13 +300,23 @@ class CoreModule
     :child_lambdas => {BROKER_INVOICE_LINE => lambda {|i| i.broker_invoice_lines}},
     :child_joins => {BROKER_INVOICE_LINE => "LEFT OUTER JOIN broker_invoice_lines on broker_invoices.id = broker_invoice_lines.broker_invoice_id"}
   })
+  COMMERCIAL_INVOICE_TARIFF = new("CommercialInvoiceTariff","Invoice Tariff",{
+    :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
+    :show_field_prefix => true,
+    :unique_id_field_name=>:cit_hts_code,
+    :key_model_field_uids=>[:cit_hts_code]
+  })
   COMMERCIAL_INVOICE_LINE = new("CommercialInvoiceLine","Invoice Line",{
-    :enabled_lambda => lambda {true},
+    :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
     :show_field_prefix=>true,
     :unique_id_field_name=>:cil_line_number,
-    :key_model_field_uids=>[:cil_line_number]
+    :key_model_field_uids=>[:cil_line_number],
+    :children => [COMMERCIAL_INVOICE_TARIFF],
+    :child_lambdas => {COMMERCIAL_INVOICE_TARIFF=>lambda {|i| i.commercial_invoice_tariffs}},
+    :child_joins => {COMMERCIAL_INVOICE_TARIFF=> "LEFT OUTER JOIN commercial_invoice_tariffs on commercial_invoice_lines.id = commercial_invoice_tariffs.commercial_invoice_line_id"}
   })
   COMMERCIAL_INVOICE = new("CommercialInvoice","Invoice",{
+    :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
     :unique_id_field_name => :invoice_number,
     :show_field_prefix=>true,
     :key_model_field_uids=>[:invoice_number],
@@ -315,6 +325,7 @@ class CoreModule
     :child_joins => {COMMERCIAL_INVOICE_LINE => "LEFT OUTER JOIN commercial_invoice_lines on commercial_invoices.id = commercial_invoice_lines.commercial_invoice_id"}
   })
   ENTRY = new("Entry","Entry",{
+    :enabled_lambda => lambda {MasterSetup.get.entry_enabled?},
     :default_search_columns => [:ent_brok_ref,:ent_entry_num,:ent_release_date],
     :unique_id_field_name=>:ent_brok_ref,
     :key_model_field_uids=>[:ent_brok_ref],
@@ -323,7 +334,8 @@ class CoreModule
     :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"}
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
-  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE]
+  CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
+    CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
@@ -336,7 +348,7 @@ class CoreModule
   set_default_module_chain PRODUCT, [PRODUCT, CLASSIFICATION, TARIFF]
   set_default_module_chain SALE, [SALE,SALE_LINE]
   set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
-  set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE]
+  set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
   set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
   
   def self.find_by_class_name(c,case_insensitive=false)
