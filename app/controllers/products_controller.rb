@@ -173,8 +173,10 @@ class ProductsController < ApplicationController
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new
+    OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
+    pre_loaded_countries = @base_product.classifications.collect {|c| c.country_id}
     Country.import_locations.sort_classification_rank.each do |c|
-      @base_product.classifications.build(:country=>c)
+      @base_product.classifications.build(:country=>c) unless pre_loaded_countries.include? c.id
     end
   end
 

@@ -347,6 +347,7 @@ class ApplicationController < ActionController::Base
       respond_to do |format| 
         format.html {
           @current_search.touch
+          @results = Product.where("1=0") if no_results
           @results = @results.paginate(:per_page => 20, :page => page) 
           render :layout => 'one_col'
         }
