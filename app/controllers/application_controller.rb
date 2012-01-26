@@ -337,13 +337,17 @@ class ApplicationController < ActionController::Base
   end
 
   def render_search_results no_results = false
-      if !no_results && @current_search.name == "Extreme latest" && current_user.sys_admin?
-        raise "Extreme latest goes boom!!"
-      end
-      
-      @results = no_results ? [] : @current_search.search
-      page = params[:page]
-      page = (@last_run.position/20) + 1 if @last_run && @last_run.position
+    if !no_results && @current_search.name == "Extreme latest" && current_user.sys_admin?
+      raise "Extreme latest goes boom!!"
+    end
+    
+    @results = no_results ? @current_search.core_module.klass.where("1=0") : @current_search.search
+    if no_results
+      @current_search.touch
+      @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+      self.formats = [:html]
+      render :layout => 'one_col'
+    else
       respond_to do |format| 
         format.html {
           @current_search.touch
@@ -385,6 +389,7 @@ class ApplicationController < ActionController::Base
           send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
         }
       end
+    end
   end
     def sortable_search_heading(f_short)
       help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
