@@ -1,0 +1,36 @@
+<% content_for :action_bar do %>
+  <% unless @company.locked? %>
+    <button class='btn_link' link_to='<%= new_company_power_of_attorney_path(@company )%>' key_map='n'>New</button>
+  <% end %>
+  <button class='btn_link' link_to='<%= url_for @company%>' key_map='b'>Back</button>
+<% end %>
+<h1><%= @company.name %> Power of Attorneys</h1>
+
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th></th>
+      <th><%= "Start date".titleize %></th>
+      <th><%= "Expiration date".titleize %></th>
+      <th><%= "Document updated at".titleize %></th>
+      <th>Document</td>
+      <th><%= "Uploaded by".titleize %></th>
+      <th>Options</th>
+    </tr>
+  </thead>
+  
+  <tbody>
+    <% @power_of_attorneys.each do |poa| %>
+      <tr class='hover'>
+        <td><%= link_to 'Download', download_company_power_of_attorney_path(poa.company_id, poa) %></td>
+        <td><%= poa.start_date %></td>
+        <td><%= poa.expiration_date %></td>
+        <td><%= poa.attachment_updated_at %></td>
+        <td><%= poa.attachment_file_name %></td>
+        <td><%= poa.user.full_name %></td>
+        <td><%= link_to "Delete", company_power_of_attorney_path(poa.company, poa), :method => :delete, :confirm => "Are you sure?" %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+

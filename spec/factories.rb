@@ -99,4 +99,10 @@ Factory.define :port do |f|
   f.schedule_k_code '23456'
   f.schedule_d_code '1424'
   f.name 'abc def'
+Factory.define :power_of_attorney do |poa|
+  poa.association :user
+  poa.association :company
+  poa.start_date "2011-12-01"
+  poa.expiration_date "2011-12-31"
+  poa.attachment_file_name "SpecAttachmentDocument.odt"
 end
