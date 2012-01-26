@@ -689,8 +689,9 @@ class ModelField
         },
         :join_statement => "LEFT OUTER JOIN ports as ent_entry_port on ent_entry_port.schedule_d_code = entries.entry_port_code",
         :join_alias => "ent_entry_port"
-      }]
-
+      }],
+      [61,:ent_vessel,:vessel,"Vessel/Airline",{:data_type=>:string}],
+      [62,:ent_voyage,:voyage,"Voyage/Flight",{:data_type=>:string}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, [
       [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],

@@ -140,6 +140,8 @@ module OpenChain
         @entry.unlading_port_code = port_code r[156,4]
         @entry.ult_consignee_code = r[180,10].strip
         @entry.ult_consignee_name = r[190,35].strip
+        @entry.vessel = r[270,20].strip
+        @entry.voyage = r[290,10].strip
         @entry.gross_weight = r[318,12]
       end
     end

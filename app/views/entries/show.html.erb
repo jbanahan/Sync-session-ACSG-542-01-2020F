@@ -90,7 +90,7 @@
         <table>
           <%[:ent_type,:ent_mfids,
             :ent_lading_port_name, :ent_unlading_port_name, :ent_entry_port_name,
-            :ent_export_country_codes,:ent_origin_country_codes,:ent_spis
+            :ent_export_country_codes,:ent_origin_country_codes,:ent_spis,:ent_vessel,:ent_voyage
           ].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
