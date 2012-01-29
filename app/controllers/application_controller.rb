@@ -352,7 +352,7 @@ class ApplicationController < ActionController::Base
         format.html {
           @current_search.touch
           @results = Product.where("1=0") if no_results
-          @results = @results.paginate(:per_page => 20, :page => page) 
+          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
           render :layout => 'one_col'
         }
         format.csv {

@@ -30,7 +30,7 @@
       <% last_object = nil %>
       <%GridMaker.new(objects,columns,criterions,module_chain).go do |row,obj|%>
         <tr class='hover pagination_item <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
-          <% if !bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
+          <% if !bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' id='sel_row_#{obj.id}' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
           <td>
             <% if obj!=last_object %>
               <%=render :partial=>'shared/search_links', :locals=>{:obj=>obj,:cursor=>cursor}%> 

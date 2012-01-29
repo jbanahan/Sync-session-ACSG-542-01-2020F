@@ -5,33 +5,84 @@ var OCSearch = (function() {
   var bulkButtons = new Array();
   var allObjectsMode = false;
 
+  var addSelectionCookie = function(search_run_id,primary_key) {
+    var cookie_name = "sr_"+search_run_id;
+    var cookie_content = getSelectedCookieVal(search_run_id);
+    $.cookie("sr_"+search_run_id,cookie_content+primary_key+"/");
+  }
+  var removeSelectionCookie = function(search_run_id,primary_key) {
+    var cookie_name = "sr_"+search_run_id;
+    var pks = getSelectedCookieArray(search_run_id);
+    var new_cookie = "";
+    var i;
+    for(i=0;i<pks.length;i++) {
+      if(pks[i]!=primary_key && pks[i].length>0) {
+        new_cookie += pks[i]+"/";
+      }
+    }
+    $.cookie(cookie_name,new_cookie)
+  }
+  var getSelectedCookieVal = function(searchRunId) {
+    var r = $.cookie("sr_"+searchRunId);
+    return r==null ? "" : r;
+  }
+  var getSelectedCookieArray = function(searchRunId) {
+    var x = getSelectedCookieVal(searchRunId).split("/");
+    var y = [];
+    for(var i=0;i<x.length; i++) {
+      if(x[i].length>0) {
+        y.push(x[i]);
+      }
+    }
+    return y;
+  }
+  var initBulkCheckboxes = function() {
+    var pks = getSelectedCookieArray(searchRunId);
+    var item;
+    for(var i=0;i<pks.length;i++) {
+      $("#sel_row_"+pks[i]).attr('checked','checked');
+    }
+  }
+
   var rewriteBulkForm = function() {
     var checked = $("#result_table").find(":checked");
+    var selectedIds = []; 
+    var cookieItems;
+    var totalCheckboxes = $("#result_table").find(":checkbox:not(#chk_sel_all)").length;
+    var msg;
     if(allObjectsMode && checked.length==$("#result_table").find(":checkbox:not(#chk_sel_all)").length) {
       $("#div_bulk_content").html("<input type='hidden' name='sr_id' value='"+searchRunId+"' />");
       $("#bulk_message").html("All "+maxObjects+" items selected.")
     } else {
       allObjectsMode = false;
-      var checkedIds = new Array();
       $("#div_bulk_content").html("");
-      checked.each(function(index, item) {
-        checkedIds.push($(item).attr('pk'));
+      $("#result_table").find(":checkbox:not(#chk_sel_all)").each(function(index, item) {
+        removeSelectionCookie(searchRunId,$(item).attr('pk'));
+        if($(item).is(':checked')) {
+          addSelectionCookie(searchRunId,$(item).attr('pk'));
+        }
       });
-      for(var x=0;x<checkedIds.length;x++) {
-        $("#div_bulk_content").append("<input type='hidden' name='pk["+x+"]' value='"+checkedIds[x]+"' />"); 
+      cookieItems = getSelectedCookieArray(searchRunId);
+      for(var x=0;x<cookieItems.length;x++) {
+        $("#div_bulk_content").append("<input type='hidden' name='pk["+x+"]' value='"+cookieItems[x]+"' />"); 
       }
       for(var x=0;x<bulkButtons.length;x++) {
-        if(checkedIds.length) {
+        if(cookieItems.length) {
           bulkButtons[x].show();
         } else {
           bulkButtons[x].hide();
         }
       }
-      if($("#result_table").find(":checkbox:not(#chk_sel_all)").length==checkedIds.length) {
-        $("#bulk_message").html("All "+checkedIds.length ? checkedIds.length+" items on this page selected. To select all "+maxObjects+" items click <a href='#' class='sel_full'>here</a>." : "&nbsp;");
+      if(cookieItems.length>0) {
+        msg = cookieItems.length+" selected ";
+        if(cookieItems.length < maxObjects) {
+          msg += " | <a href='#' class='sel_full'>Select all "+maxObjects+"</a>";
+        }
+        msg += " | <a href='#' class='sel_none'>Clear</a>";
       } else {
-        $("#bulk_message").html("&nbsp;");
+        msg = "&nbsp;";
       }
+      $("#bulk_message").html(msg);
     }
   }
 
@@ -50,6 +101,14 @@ var OCSearch = (function() {
     $(".sel_full").live('click',function(ev) {
       ev.preventDefault();
       allObjectsMode = true;
+      $("#result_table").find(":checkbox:not(#chk_sel_all)").attr('checked','checked');
+      rewriteBulkForm();
+    });
+    $(".sel_none").live('click',function(ev) {
+      ev.preventDefault();
+      allObjectsMode = false;
+      $.cookie("sr_"+searchRunId,'');
+      $("#result_table").find(':checkbox').attr('checked','');
       rewriteBulkForm();
     });
   }
@@ -166,6 +225,7 @@ var OCSearch = (function() {
       maxObjects = max_objects;
       searchRunId = search_run_id;
       $("#frm_bulk").attr('action','');
+      initBulkCheckboxes();
       initBulkSelectors();
       initSelectFullList();
       initRowDoubleClick();
