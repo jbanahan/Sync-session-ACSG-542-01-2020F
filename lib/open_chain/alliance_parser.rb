@@ -11,7 +11,8 @@ module OpenChain
       '00032'=>:invoice_paid_date,
       '00044'=>:liquidation_date,
       '00042'=>:duty_due_date,
-      '00001'=>:export_date
+      '00001'=>:export_date,
+      '00004'=>:file_logged_date
     }
 
     # process all files in the archive for a given date.  Use this to reprocess old files

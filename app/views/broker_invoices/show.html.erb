@@ -3,7 +3,12 @@
 <% end%>
 <table>
   <%CoreModule::BROKER_INVOICE.model_fields.keys.each do |f|%>
-    <%=field_view_row @invoice, f%>
+    <%if f==:bi_brok_ref%>
+      <% mf = ModelField.find_by_uid(f)%>
+      <%=field_row mf.label, link_to(mf.process_export(@invoice),entry_path(Entry.find_by_broker_reference(mf.process_export(@invoice))))%>
+    <%else%>
+      <%=field_view_row @invoice, f%>
+    <%end%>
   <%end%>
 </table>
 <h3>Lines</h3>

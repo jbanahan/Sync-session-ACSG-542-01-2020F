@@ -74,7 +74,7 @@
       </td>
       <td style="width:34%;">
         <table>
-          <%[:ent_last_billed_date,:ent_invoice_paid_date].each do |f|%>
+          <%[:ent_last_billed_date,:ent_invoice_paid_date,:ent_file_logged_date,:ent_last_exported_from_source].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>

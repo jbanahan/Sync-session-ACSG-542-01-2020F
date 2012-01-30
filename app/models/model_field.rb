@@ -691,7 +691,9 @@ class ModelField
         :join_alias => "ent_entry_port"
       }],
       [61,:ent_vessel,:vessel,"Vessel/Airline",{:data_type=>:string}],
-      [62,:ent_voyage,:voyage,"Voyage/Flight",{:data_type=>:string}]
+      [62,:ent_voyage,:voyage,"Voyage/Flight",{:data_type=>:string}],
+      [63,:ent_file_logged_date,:file_logged_date,"File Logged Date",{:data_type=>:datetime}],
+      [64,:ent_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, [
       [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],

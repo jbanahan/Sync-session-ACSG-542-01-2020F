@@ -21,6 +21,7 @@ describe OpenChain::AllianceParser do
     @invoice_paid_date_str = '201101031442'
     @liquidation_date_str = '201104021522'
     @duty_due_date_str = '20110601'
+    @file_logged_date_str = '201004191623'
     @total_packages = 88
     @total_fees = BigDecimal("999.88",2)
     @total_duty = BigDecimal("55.27",2)
@@ -61,10 +62,11 @@ describe OpenChain::AllianceParser do
       sd_liquidation = "SD0000044#{@liquidation_date_str}201002190115Liq DateLiquidation Date                                            "
       sd_duty_due = "SD0000042#{@duty_due_date_str}1606201111171606Pay Due Payment Due Date                                            "
       sd_export = "SD0000001#{@export_date_str}201111171606Pay Due Payment Due Date                                            "
+      sd_file_logged = "SD0000004#{@file_logged_date_str}201112211325Logged  File Logged or First Entry into System for Shipment     "
       su_hmf = "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       su_mpf = "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       su_cotton = "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
-      r = [sh00,sh01,sh03,sd_duty_due,sd_export,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation,su_hmf,su_mpf,su_cotton]
+      r = [sh00,sh01,sh03,sd_duty_due,sd_export,sd_arrival,sd_entry_filed,sd_release,sd_first_release,sd_free,sd_last_billed,sd_invoice_paid,sd_liquidation,sd_file_logged,su_hmf,su_mpf,su_cotton]
       unless @customer_references.blank?
         @customer_references.split("\n").each do |cr|
           r << "SR00#{cr.ljust(35)}"
@@ -250,6 +252,7 @@ describe OpenChain::AllianceParser do
     ent.arrival_date.should == @est.parse(@arrival_date_str)
     ent.entry_filed_date.should == @est.parse(@entry_filed_date_str)
     ent.release_date.should == @est.parse(@release_date_str)
+    ent.file_logged_date.should == @est.parse(@file_logged_date_str)
     ent.first_release_date.should == @est.parse(@first_release_date_str)
     ent.free_date.should == @est.parse(@free_date_str)
     ent.last_billed_date.should == @est.parse(@last_billed_date_str)
