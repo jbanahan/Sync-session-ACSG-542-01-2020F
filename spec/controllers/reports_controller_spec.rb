@@ -88,31 +88,18 @@ describe ReportsController do
     end
 
     context "run as admin" do
-      it "should handle empty expiration date" do
-        UserSession.create @admin
-        get :run_poa_expirations
-        response.should redirect_to reports_show_poa_expirations_path
-        flash[:errors].should include("Invalid date. Report will not be executed")
-      end
-
-      it "should handle invalid expiration date" do
-        UserSession.create @admin
-        get :run_poa_expirations, {'poa_expiration_date' => '2011-12-32'}
-        response.should redirect_to reports_show_poa_expirations_path
-        flash[:errors].should include("Invalid date. Report will not be executed")
-      end
-
       it "should run report for valid date and admin user" do
         UserSession.create @admin
         get :run_poa_expirations, {'poa_expiration_date' => '2012-01-20'}
-        response.should be_success
+        response.should be_redirect
+        flash[:notices].first.should == "Your report has been scheduled. You'll receive a system message when it finishes."
       end
     end
 
     context "run as non-admin user" do
       it "should not execute report" do
         get :run_poa_expirations, {'poa_expiration_date' => '2012-01-20'}
-        response.should_not be_success
+        flash[:errors].first.should == "You do not have permissions to view this report"
       end
     end
   end

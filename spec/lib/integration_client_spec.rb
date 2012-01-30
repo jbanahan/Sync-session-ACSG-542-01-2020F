@@ -18,6 +18,7 @@ describe OpenChain::IntegrationClient do
     #
     # This will occasionlly fail when SQS returns the messages out of order, not sure how to accomodate
     #
+    ScheduleServer.stub(:active_schedule_server?).and_return(:true)
     cmd_one = {:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}
     cmd_shutdown = {:request_type=>'shutdown'}
     remote_file_response = {'response_type'=>'remote_file','status'=>'ok'}

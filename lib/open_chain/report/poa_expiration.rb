@@ -6,7 +6,7 @@ module OpenChain
       # somehow date string is converted to date between receiving
       # params and invoking this method
       def self.run_report(run_by, settings)
-        raise 'Expiration date required.' unless settings['poa_expiration_date'] || settings['poa_expiration_date'].to_s.empty?
+        raise 'Expiration date required.' unless settings['poa_expiration_date'].to_s.empty?
         begin
           date_str = settings["poa_expiration_date"].to_s
           Date.parse(date_str)
