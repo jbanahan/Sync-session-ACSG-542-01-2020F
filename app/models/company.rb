@@ -2,6 +2,8 @@ class Company < ActiveRecord::Base
 	validates	:name,	:presence => true
 	validate  :master_lock
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
+  validates_uniqueness_of :alliance_customer_number, :if => lambda {!self.alliance_customer_number.blank?}, :message=>"is already taken."
+
 	has_many	:addresses, :dependent => :destroy
 	has_many	:divisions, :dependent => :destroy
 	has_many	:vendor_orders, :class_name => "Order", :foreign_key => "vendor_id", :dependent => :destroy
@@ -59,16 +61,16 @@ class Company < ActiveRecord::Base
 
   #permissions
   def view_broker_invoices?
-    return master_setup.broker_invoice_enabled && self.master?
+    return master_setup.broker_invoice_enabled && (self.master? || self.importer?)
   end
   def view_entries?
-    return master_setup.entry_enabled && (self.master?)
+    master_setup.entry_enabled && (self.master? || self.importer?)
   end
   def comment_entries?
-    return master_setup.entry_enabled
+    self.view_entries?
   end
   def attach_entries?
-    return master_setup.entry_enabled
+    self.view_entries?
   end
   def view_orders?
     return master_setup.order_enabled && (self.master? || self.vendor?)

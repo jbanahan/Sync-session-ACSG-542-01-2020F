@@ -21,6 +21,11 @@ class DelayedJobManager
     `script/delayed_job stop`
   end
 
+  # call to "script/delayed_job restart &"
+  def self.restart
+    `script/delayed_job restart &`
+  end
+
   #checks the 'tmp/restart.txt' & 'tmp/stop.txt' files to see if we should have a worker job running
   def self.should_be_running?
     #if the restart file doesn't exist, we probably just installed 
@@ -44,7 +49,7 @@ class DelayedJobManager
       raise "Delayed Job Queue Too Big: #{c} Items" if c > max_messages
     rescue
       @@dont_send_until = 30.minutes.from_now
-      $!.log_me [], [], false #don't delay the send since we know that the queue is backed up
+      $!.log_me [], [], true #don't delay the send since we know that the queue is backed up
     end
   end
   #reset the timer for throttling montior_backlog error messages

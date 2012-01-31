@@ -103,18 +103,32 @@ describe OpenChain::AllianceParser do
     }
     #array of hashes for each invoice
     @commercial_invoices = [
-      {:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),:lines=>[
+      {:invoice_number=>'19319111',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
+        :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
+        :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
+        :lines=>[
         {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',:spi_1=>"AX",:spi_2=>"A",
           :po_number=>'abcdefg'},
         {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301'}
       ]},
-      {:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),:lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X"}]},
-      {:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),:lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ',:po_number=>'jfdaila'}]}
+      {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
+        :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
+        :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
+        :lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X"}
+        ]},
+      {:invoice_number=>'ff30101ffz',:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),
+        :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
+        :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
+        :lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ',:po_number=>'jfdaila'}
+        ]}
     ] 
     @make_commercial_invoices_lambda = lambda {
       rows = []
       @commercial_invoices.each do |ci|
-        rows << "CI00#{"".ljust(46)}#{convert_cur.call(ci[:invoiced_value],13)}#{"".ljust(33)}#{ci[:mfid].ljust(15)}"
+        ci00 = "CI00#{ci[:invoice_number].ljust(22)}#{ci[:currency].ljust(3)}#{(ci[:exchange_rate] * 1000000).to_i.to_s.rjust(8,'0')}"
+        ci00 << "#{convert_cur.call(ci[:invoice_value_foreign],13)}#{convert_cur.call(ci[:invoiced_value],13)}#{ci[:country_origin_code].ljust(2)}"
+        ci00 << "#{ci[:gross_weight].rjust(12)}#{convert_cur.call(ci[:total_charges],11)}#{ci[:invoice_date]}#{ci[:mfid].ljust(15)}"
+        rows << ci00
         ci[:lines].each do |line|
           rows << "CL00#{"".ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{"".ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]} #{line[:vendor_name].ljust(35)}#{"".ljust(62)}#{line[:po_number] ? line[:po_number].ljust(35) : "".ljust(35)}"
           rows << "CT00#{"".ljust(25)}#{line[:spi_1] ? line[:spi_1].ljust(2) : "  "}#{line[:spi_2] ? line[:spi_2] : " "}"
@@ -123,13 +137,13 @@ describe OpenChain::AllianceParser do
       rows.join("\n")
     }
     @containers = [
-      {:cnum=>'153153',:csize=>'abcdef',:fcl_lcl=>'F'},
-      {:cnum=>'afii1911010',:csize=>'123949',:fcl_lcl=>'L'}
+      {:cnum=>'153153',:csize=>'abcdef',:cdesc=>"HC",:fcl_lcl=>'F'},
+      {:cnum=>'afii1911010',:csize=>'123949',:cdesc=>"DRY VAN",:fcl_lcl=>'L'}
     ]
     @make_containers_lambda = lambda {
       rows = []
       @containers.each do |c|
-        rows << "SC00#{c[:cnum].ljust(15)}#{"".ljust(40)}#{c[:csize].ljust(7)}#{"".ljust(205)}#{c[:fcl_lcl].ljust(1)}"
+        rows << "SC00#{c[:cnum].ljust(15)}#{"".ljust(40)}#{c[:csize].ljust(7)}#{"".ljust(205)}#{c[:fcl_lcl].ljust(1)}#{"".ljust(11)}#{c[:cdesc].ljust(40)}"
       end
       rows.join("\n")
     }
@@ -140,7 +154,7 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
     expected_containers = @containers.collect {|c| c[:cnum]}
-    expected_sizes = @containers.collect {|c| c[:csize]}
+    expected_sizes = @containers.collect {|c| "#{c[:csize]}-#{c[:cdesc]}"}
     ent.container_numbers.split(@split_string).should == expected_containers
     ent.container_sizes.split(@split_string).should == expected_sizes
   end
@@ -175,10 +189,26 @@ describe OpenChain::AllianceParser do
     ent.fcl_lcl.should be_nil
   end
 
+  it 'should match importer id if customer matches' do
+    company = Factory(:company,:importer=>true,:alliance_customer_number=>@cust_num)
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.importer.should == company
+  end
+  it 'should create importer if customer number does not match' do
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    ent = Entry.find_by_broker_reference @ref_num
+    company = Company.find_by_alliance_customer_number @cust_num
+    company.should be_importer
+    company.name.should == @customer_name
+    ent.importer.should == company
+  end
+
   it 'should create entry' do
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
+    ent.source_system.should == 'Alliance'
     ent.entry_number.should == @entry_number
     ent.customer_number.should == @cust_num
     ent.last_exported_from_source.should == @est.parse(@extract_date_str)
@@ -241,6 +271,18 @@ describe OpenChain::AllianceParser do
         expected_pos << line[:po_number] if line[:po_number]
         [:spi_1,:spi_2].each {|s| expected_spis << line[s] if line[s]}
       end
+      invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
+      invoices.should have(1).item
+      inv = invoices.first
+      inv.currency.should == ci[:currency]
+      inv.exchange_rate.should == ci[:exchange_rate]
+      inv.invoice_value_foreign.should == ci[:invoice_value_foreign]
+      inv.invoice_value.should == ci[:invoiced_value]
+      inv.country_origin_code.should == ci[:country_origin_code]
+      inv.total_charges.should == ci[:total_charges]
+      inv.gross_weight.should == ci[:gross_weight].to_i
+      inv.invoice_date.strftime("%Y%m%d").should == ci[:invoice_date]
+      inv.mfid.should == ci[:mfid]
     end
 
     ent.total_invoiced_value.should == expected_invoiced_value
@@ -255,6 +297,17 @@ describe OpenChain::AllianceParser do
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
   end
+
+  it 'should not duplicate commercial invoices when reprocessing' do
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.commercial_invoices.should have(@commercial_invoices.size).invoices
+    #do it twice
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.commercial_invoices.should have(@commercial_invoices.size).invoices
+  end
+
   it 'should make all zero port codes nil' do
     @lading_port_code = '00000'
     @unlading_port_code = '0000'

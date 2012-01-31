@@ -3,6 +3,7 @@ Message: <%=@error_message%>
 Master UUID: <%=MasterSetup.get.uuid%>
 Time: <%=Time.now%>
 Root: <%=Rails.root.to_s%>
+Host: <%=`hostname`.strip%>
 
 Additional Messages:
 <%@additional_messages.each do |m|%>

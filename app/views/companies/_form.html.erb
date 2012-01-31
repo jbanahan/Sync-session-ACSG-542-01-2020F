@@ -17,5 +17,7 @@ $(function() {
 <%=field_row "Carrier", f.check_box(:carrier) %>
 <%=field_row "Vendor", f.check_box(:vendor) %>
 <%=field_row "Customer", f.check_box(:customer) %>
+<%=field_row "Importer", f.check_box(:importer) %>
+<%=field_row("Alliance Customer Number", f.text_field(:alliance_customer_number)) if MasterSetup.get.custom_feature? "alliance"%>
 </table>
 <% end %>

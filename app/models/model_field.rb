@@ -621,8 +621,8 @@ class ModelField
       [29,:ent_po_numbers,:po_numbers,"PO Numbers",{:data_type=>:text}],
       [30,:ent_mfids,:mfids,"MFID Numbers",{:data_type=>:text}],
       [31,:ent_total_invoiced_value,:total_invoiced_value,"Total Commercial Invoice Value",{:data_type=>:decimal}],
-      [32,:ent_export_country_codes,:export_country_codes,"Country of Export Codes",{:data_type=>:string}],
-      [33,:ent_origin_country_codes,:origin_country_codes,"Country of Origin Codes",{:data_type=>:string}],
+      [32,:ent_export_country_codes,:export_country_codes,"Country Export Codes",{:data_type=>:string}],
+      [33,:ent_origin_country_codes,:origin_country_codes,"Country Origin Codes",{:data_type=>:string}],
       [34,:ent_vendor_names,:vendor_names,"Vendor Names",{:data_type=>:text}],
       [35,:ent_spis,:special_program_indicators,"SPI(s)",{:data_type=>:string}],
       [36,:ent_export_date,:export_date,"Export Date",{:data_type=>:date}],
@@ -646,11 +646,59 @@ class ModelField
       [54,:ent_consignee_address_1,:consignee_address_1,"Ult Consignee Address 1",{:data_type=>:string}],
       [55,:ent_consignee_address_2,:consignee_address_2,"Ult Consignee Address 2",{:data_type=>:string}],
       [56,:ent_consignee_city,:consignee_city,"Ult Consignee City",{:data_type=>:string}],
-      [57,:ent_consignee_state,:consignee_state,"Ult Consignee State",{:data_type=>:string}]
+      [57,:ent_consignee_state,:consignee_state,"Ult Consignee State",{:data_type=>:string}],
+      [58,:ent_lading_port_name,:name,"Port of Lading Name",{:data_type=>:string,
+        :import_lambda => lambda { |ent, data|
+          port = Port.find_by_name data
+          return "Port with name \"#{data}\" could not be found." unless port
+          ent.lading_port_code = port.schedule_k_code
+          "Lading Port set to #{port.name}"
+        },
+        :export_lambda => lambda {|ent|
+          ent.lading_port.blank? ? "" : ent.lading_port.name
+        },
+        :join_statement => "LEFT OUTER JOIN ports as ent_lading_port on ent_lading_port.schedule_k_code = entries.lading_port_code",
+        :join_alias => "ent_lading_port"
+      }],
+      [59,:ent_unlading_port_name,:name,"Port of Unlading Name",{:data_type=>:string,
+        :import_lambda => lambda { |ent, data|
+          port = Port.find_by_name data
+          return "Port with name \"#{data}\" could not be found." unless port
+          ent.unlading_port_code = port.schedule_d_code
+          "Unlading Port set to #{port.name}"
+        },
+        :export_lambda => lambda {|ent|
+          ent.unlading_port.blank? ? "" : ent.unlading_port.name
+        },
+        :join_statement => "LEFT OUTER JOIN ports as ent_unlading_port on ent_unlading_port.schedule_d_code = entries.unlading_port_code",
+        :join_alias => "ent_unlading_port"
+      }],
+      [60,:ent_entry_port_name,:name,"Port of Entry Name",{:data_type=>:string,
+        :import_lambda => lambda { |ent, data|
+          port = Port.find_by_name data
+          return "Port with name \"#{data}\" could not be found." unless port
+          ent.entry_port_code = port.schedule_d_code
+          "Entry Port set to #{port.name}"
+        },
+        :export_lambda => lambda {|ent|
+          ent.entry_port.blank? ? "" : ent.entry_port.name
+        },
+        :join_statement => "LEFT OUTER JOIN ports as ent_entry_port on ent_entry_port.schedule_d_code = entries.entry_port_code",
+        :join_alias => "ent_entry_port"
+      }]
+
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, [
       [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
-      [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}]
+      [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}],
+      [3,:ci_currency,:currency,"Currency",{:data_type=>:string}],
+      [4,:ci_invoice_value_foreign,:invoice_value_foreign,"Invoice Value (Foreign)",{:data_type=>:decimal}],
+      [5,:ci_invoice_value,:invoice_value,"Invoice Value",{:data_type=>:decimal}],
+      [6,:ci_country_origin_code,:country_origin_code,"Country Origin Code",{:data_type=>:string}],
+      [7,:ci_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
+      [8,:ci_total_charges,:total_charges,"Charges",{:data_type=>:decimal}],
+      [9,:ci_invoice_date,:invoice_date,"Invoice Date",{:data_type=>:date}],
+      [10,:ci_mfid,:mfid,"MFID",{:data_type=>:string}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
       [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
@@ -680,7 +728,7 @@ class ModelField
       [14,:bi_to_country_iso,:iso_code,"Bill To Country Code",{:data_type=>:string,
         :import_lambda=> lambda {|inv,data|
           ctry = Country.find_by_iso_code data
-          "Country with ISO code #{data} could not be found." unless cntry
+          return "Country with ISO code #{data} could not be found." unless cntry
           inv.bill_to_country_id = cntry.id
           "Bill to Country set to #{data}"
         },

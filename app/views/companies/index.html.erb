@@ -16,6 +16,9 @@
     <th><%=sortable_search_heading 'car_bool'%></th>
     <th><%=sortable_search_heading 'cus_bool'%></th>
     <th><%=sortable_search_heading 'v_bool'%></th>
+    <% if @include_alliance %>
+      <th><%=sortable_search_heading 'a_cust'%></th>
+    <% end %>
   </thead>
 
 <% @companies.each do |company| %>
@@ -24,6 +27,9 @@
     <td><%= company.carrier? ? "Yes" : "No" %></td>
     <td><%= company.customer? ? "Yes" : "No" %></td>
     <td><%= company.vendor? ? "Yes" : "No" %></td>
+    <% if @include_alliance %>
+      <td><%=company.alliance_customer_number%></td>
+    <% end %>
   </tr>
 <% end %>
 </table>

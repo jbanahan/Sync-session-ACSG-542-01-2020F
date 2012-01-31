@@ -7,7 +7,7 @@ module OpenChain
 
         row_cursor = 1
         bill_columns = []
-        entries = Entry.where(:customer_number=>"SHOES").where("export_date between '2011-01-01' and '2012-01-01'")
+        entries = Entry.where(:customer_number=>"SHOES").where("export_date between '2011-01-01' and '2012-01-01'").order("export_date ASC")
         entries.each do |e|
           charge_totals = {}
           e.broker_invoice_lines.each do |line|
@@ -26,12 +26,12 @@ module OpenChain
           row.push val(e,:ent_mbols)
           row.push val(e,:ent_container_nums)
           row.push val(e,:ent_vendor_names)
-          row.push val(e,:ent_lading_port_code)
+          row.push val(e,:ent_lading_port_name)
           row.push val(e,:ent_ult_con_name)
           row.push "#{val(e,:ent_consignee_address_1)} #{val(e,:ent_consignee_address_2)}"
           row.push val(e,:ent_consignee_city)
           row.push val(e,:ent_consignee_state)
-          row.push val(e,:ent_unlading_port_code)
+          row.push val(e,:ent_unlading_port_name)
           row.push val(e,:ent_gross_weight)
           row.push val(e,:ent_container_sizes)
           bill_columns.each do |cd|

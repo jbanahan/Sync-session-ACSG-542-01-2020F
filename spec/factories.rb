@@ -95,3 +95,8 @@ end
 Factory.define :broker_invoice_line do |f|
   f.association :broker_invoice
 end
+Factory.define :port do |f|
+  f.schedule_k_code '23456'
+  f.schedule_d_code '1424'
+  f.name 'abc def'
+end
