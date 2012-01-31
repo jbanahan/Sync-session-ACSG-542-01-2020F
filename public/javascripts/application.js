@@ -3,7 +3,7 @@ var OpenChain = (function() {
   var authToken;
   var mappedKeys = new Object();
   var keyMapPopUp = null;
-  var invalidTariffFields = new Array();
+  var invalidTariffFields = [];
 
   var initRemoteValidate = function() {
     $(".rvalidate").live('change',function() {

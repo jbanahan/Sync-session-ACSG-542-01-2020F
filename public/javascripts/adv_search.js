@@ -2,7 +2,7 @@ var OCSearch = (function() {
   var allSelected = false;
   var maxObjects;
   var searchRunId;
-  var bulkButtons = new Array();
+  var bulkButtons = [];
   var allObjectsMode = false;
 
   var addSelectionCookie = function(search_run_id,primary_key) {
