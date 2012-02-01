@@ -106,7 +106,7 @@ class ApplicationController < ActionController::Base
         begin
           render_search_results
         rescue Exception => e
-          logger.error $!, $!.backtrace
+          #logger.error $!, $!.backtrace
           error_params = {:current_search_id=>@current_search.id, :username=>current_user.username,:current_search_name => @current_search.name}.merge(params)
           OpenMailer.send_custom_search_error(@current_user, e, error_params).deliver
           current_user.search_open = true
