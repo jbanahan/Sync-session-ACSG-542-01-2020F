@@ -360,7 +360,7 @@ class ApplicationController < ActionController::Base
           render_csv("#{@core_module.label}.csv")
         }
         format.json {
-          @results = @results.paginate(:per_page => 20, :page => page)
+          @results = @results.paginate(:per_page => 20, :page => params[:page])
           rval = []
           cols = @current_search.search_columns.order("rank ASC")
           GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
