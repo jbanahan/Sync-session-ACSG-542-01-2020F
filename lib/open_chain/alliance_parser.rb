@@ -1,7 +1,7 @@
 require 'bigdecimal'
 module OpenChain
   class AllianceParser
-
+    SOURCE_CODE = 'Alliance'
     DATE_MAP = {'00012'=>:arrival_date,
       '00016'=>:entry_filed_date,
       '00019'=>:release_date,
@@ -83,6 +83,7 @@ module OpenChain
           end
         end
         if !@skip_entry
+            @entry.import_country = Country.find_by_iso_code('US')
             @entry.it_numbers = accumulated_string :it_number 
             @entry.master_bills_of_lading = accumulated_string :mbol 
             @entry.house_bills_of_lading = accumulated_string :hbol 
@@ -115,12 +116,12 @@ module OpenChain
     def process_sh00 r
       brok_ref = r[4,10].gsub(/^[0]*/,'')
       @accumulated_strings = Hash.new
-      @entry = Entry.find_by_broker_reference brok_ref
+      @entry = Entry.find_by_broker_reference_and_source_system brok_ref, SOURCE_CODE
       if @entry && @entry.last_exported_from_source && @entry.last_exported_from_source > parse_date_time(r[24,12]) #if current is newer than file
         @skip_entry = true
       else
         @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
-        @entry.source_system = "Alliance"
+        @entry.source_system = SOURCE_CODE
         @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
         @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
         @entry.total_units = 0 #reset, then accumulate as we process invoice lines

@@ -241,6 +241,7 @@ describe OpenChain::AllianceParser do
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
+    ent.import_country.should == Country.find_by_iso_code('US')
     ent.source_system.should == 'Alliance'
     ent.entry_number.should == "#{@filer_code}#{@entry_ext}"
     ent.customer_number.should == @cust_num
@@ -375,6 +376,13 @@ describe OpenChain::AllianceParser do
     ent.time_to_process.should > 0
   end
 
+  it 'should only update entries with Alliance as source' do
+    old_ent = Factory(:entry,:broker_reference=>@ref_num) #doesn't have matching source system
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    entries = Entry.where(:broker_reference=>@ref_num)
+    entries.should have(2).items
+  end
+
   it 'should not duplicate commercial invoices when reprocessing' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
@@ -475,7 +483,7 @@ describe OpenChain::AllianceParser do
     ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join(@split_string)
   end
   it 'should replace entry header tracking fields' do
-    Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs')
+    Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs',:source_system=>OpenChain::AllianceParser::SOURCE_CODE)
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
     Entry.count.should == 1
     ent = Entry.first

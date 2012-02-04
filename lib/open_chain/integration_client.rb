@@ -66,6 +66,10 @@ module OpenChain
           OpenChain::AllianceParser.parse IO.read t.path
           status_msg = 'success'
           response_type = 'remote_file'
+        elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
+          OpenChain::FenixParser.parse IO.read t.path
+          status_msg = 'success'
+          response_type = 'remote_file'
         elsif linkable = LinkableAttachmentImportRule.import(t, fname.to_s, dir.to_s)
           if linkable.errors.blank?
             status_msg = 'success'
