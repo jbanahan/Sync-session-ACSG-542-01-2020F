@@ -4,6 +4,11 @@ class ReportsController < ApplicationController
   def index
     
   end
+
+  # show the user a message if their report download has been delayed
+  def show_big_search_message
+    
+  end
   
   def show_tariff_comparison
     @countries = Country.where("id in (select country_id from tariff_sets)").order("name ASC")

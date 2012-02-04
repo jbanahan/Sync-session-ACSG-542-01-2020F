@@ -115,6 +115,7 @@ OpenChain::Application.routes.draw do
   match "/reports/run_poa_expirations" => "reports#run_poa_expirations", :via => :get
   match "/reports/show_shoes_for_crews_entry_breakdown" => "reports#show_shoes_for_crews_entry_breakdown", :via=>:get
   match "/reports/run_shoes_for_crews_entry_breakdown" => "reports#run_shoes_for_crews_entry_breakdown", :via=>:post
+  match "/reports/big_search" => "reports#show_big_search_message", :via=>:get
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member

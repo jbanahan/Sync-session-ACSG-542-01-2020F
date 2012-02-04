@@ -383,10 +383,15 @@ class ApplicationController < ActionController::Base
           render :json => sr
         }
         format.xls {
-          book = XlsMaker.new.make_from_search(@current_search,@results.where("1=1")) 
-          spreadsheet = StringIO.new 
-          book.write spreadsheet 
-          send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
+          if @results.length < 100
+            book = XlsMaker.new.make_from_search(@current_search,@results.where("1=1")) 
+            spreadsheet = StringIO.new 
+            book.write spreadsheet 
+            send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
+          else
+            ReportResult.run_report! @current_search.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>@current_search.id }
+            redirect_to '/reports/big_search'
+          end
         }
       end
     end
