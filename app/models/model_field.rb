@@ -305,7 +305,16 @@ class ModelField
     id_counter = rank_start
     r = []
     (1..3).each do |i|
-      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}"]
+      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}",{
+        :export_lambda => lambda {|t| 
+          h = case i
+            when 1 then t.hts_1
+            when 2 then t.hts_2
+            when 3 then t.hts_3
+          end
+          h.blank? ? "" : h.hts_format
+        }
+      }]
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_schedb".to_sym,"schedule_b_#{i}".to_sym,"Schedule B Code #{i}"] if us && us.import_location #make sure us exists so test fixtures pass
       id_counter += 1
@@ -739,7 +748,7 @@ class ModelField
       [17,:ent_unit_price,:unit_price,"Unit Price",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
-      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
       [2,:cit_duty_amount,:duty_amount,"Duty",{:data_type=>:decimal}],
       [3,:cit_entered_value,:entered_value,"Entered Value",{:data_type=>:decimal}],
       [4,:cit_spi_primary,:spi_primary,"SPI - Primary",{:data_type=>:string}],
