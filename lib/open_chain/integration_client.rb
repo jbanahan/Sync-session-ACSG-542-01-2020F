@@ -1,6 +1,7 @@
 require 'aws-sdk'
 require 'open_chain/s3'
 require 'open_chain/alliance_parser'
+require 'open_chain/fenix_parser'
 module OpenChain
   class IntegrationClient
     def self.go system_code, shutdown_if_not_schedule_server = false
