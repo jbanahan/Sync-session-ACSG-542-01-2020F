@@ -1,6 +1,7 @@
 require 'aws-sdk'
 require 'open_chain/s3'
 require 'open_chain/alliance_parser'
+require 'open_chain/fenix_parser'
 module OpenChain
   class IntegrationClient
     def self.go system_code, shutdown_if_not_schedule_server = false
@@ -64,6 +65,10 @@ module OpenChain
         t.original_filename= fname.to_s
         if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
           OpenChain::AllianceParser.parse IO.read t.path
+          status_msg = 'success'
+          response_type = 'remote_file'
+        elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
+          OpenChain::FenixParser.parse IO.read t.path
           status_msg = 'success'
           response_type = 'remote_file'
         elsif linkable = LinkableAttachmentImportRule.import(t, fname.to_s, dir.to_s)

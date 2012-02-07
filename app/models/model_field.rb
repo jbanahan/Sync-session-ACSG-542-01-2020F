@@ -305,7 +305,16 @@ class ModelField
     id_counter = rank_start
     r = []
     (1..3).each do |i|
-      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}"]
+      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}",{
+        :export_lambda => lambda {|t| 
+          h = case i
+            when 1 then t.hts_1
+            when 2 then t.hts_2
+            when 3 then t.hts_3
+          end
+          h.blank? ? "" : h.hts_format
+        }
+      }]
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_schedb".to_sym,"schedule_b_#{i}".to_sym,"Schedule B Code #{i}"] if us && us.import_location #make sure us exists so test fixtures pass
       id_counter += 1
@@ -420,35 +429,36 @@ class ModelField
   def self.make_ship_from_arrays(rank_start,uid_prefix,table_name)
     make_ship_arrays(rank_start,uid_prefix,table_name,"from")
   end
-  def self.make_country_arrays(rank_start,uid_prefix,table_name)
+  def self.make_country_arrays(rank_start,uid_prefix,table_name,join='country')
+    foreign_key = "#{join}_id"
     r = []
     r << [rank_start,"#{uid_prefix}_cntry_name".to_sym, :name,"Country Name", {
       :import_lambda => lambda {|detail,data|
         c = Country.where(:name => data).first
-        detail.country = c
+        eval "detail.#{join} = c"
         unless c.nil?
           return "Country set to #{c.name}"
         else
           return "Country not found with name \"#{data}\""
         end
       },
-      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.name},
-      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.country_id",
+      :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.name"},
+      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.#{foreign_key}",
       :join_alias => "#{table_name}_country",
       :data_type=>:string
     }]
     r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "Country ISO Code",{
       :import_lambda => lambda {|detail,data|
         c = Country.where(:iso_code => data).first
-        detail.country = c
+        eval "detail.#{join} = c"
         unless c.nil?
           return "Country set to #{c.name}"
         else
           return "Country not found with ISO Code \"#{data}\""
         end    
       },
-      :export_lambda => lambda {|detail| detail.country.nil? ? "" : detail.country.iso_code},
-      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.country_id",
+      :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.iso_code"},
+      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.#{foreign_key}",
       :join_alias => "#{table_name}_country",
       :data_type=>:string,
       :history_ignore=>true
@@ -693,8 +703,22 @@ class ModelField
       [61,:ent_vessel,:vessel,"Vessel/Airline",{:data_type=>:string}],
       [62,:ent_voyage,:voyage,"Voyage/Flight",{:data_type=>:string}],
       [63,:ent_file_logged_date,:file_logged_date,"File Logged Date",{:data_type=>:datetime}],
-      [64,:ent_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}]
+      [64,:ent_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}],
+      [65,:ent_importer_tax_id,:importer_tax_id,"Importer Tax ID",{:data_type=>:string}],
+      [66,:ent_cargo_control_number,:cargo_control_number,"Cargo Control Number",{:data_type=>:string}],
+      [67,:ent_ship_terms,:ship_terms,"Ship Terms (CA)",{:data_type=>:string}],
+      [68,:ent_direct_shipment_date,:direct_shipment_date,"Direct Shipment Date",{:data_type=>:date}],
+      [69,:ent_across_sent_date,:across_sent_date,"ACROSS Sent Date",{:data_type=>:datetime}],
+      [70,:ent_pars_ack_date,:pars_ack_date,"PARS ACK Date",{:data_type=>:datetime}],
+      [71,:ent_pars_reject_date,:pars_reject_date,"PARS Reject Date",{:data_type=>:datetime}],
+      [72,:ent_cadex_accept_date,:cadex_accept_date,"CADEX Accept Date",{:data_type=>:datetime}],
+      [73,:ent_cadex_sent_date,:cadex_sent_date,"CADEX Sent Date",{:data_type=>:datetime}],
+      [74,:ent_us_exit_port_code,:us_exit_port_code,"US Exit Port Code (CA)",{:data_type=>:string}],
+      [75,:ent_origin_state_code,:origin_state_codes,"Origin State Codes",{:data_type=>:string}],
+      [76,:ent_export_state_code,:export_state_codes,"Export State Codes",{:data_type=>:string}],
+      [77,:ent_recon_flags,:recon_flags,"Recon Flags",{:data_type=>:string}]
     ]
+    add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
       [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
       [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}],
@@ -719,9 +743,12 @@ class ModelField
       [12,:cil_country_export_code,:country_export_code,"Country Export Code",{:data_type=>:string}],
       [13,:cil_related_parties,:related_parties,"Related Parties",{:data_type=>:boolean}],
       [14,:cil_volume,:volume,"Volume",{:data_type=>:decimal}],
+      [15,:ent_state_export_code,:state_export_code,"State Export Code",{:data_type=>:string}],
+      [16,:ent_state_origin_code,:state_origin_code,"State Origin Code",{:data_type=>:string}],
+      [17,:ent_unit_price,:unit_price,"Unit Price",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
-      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
       [2,:cit_duty_amount,:duty_amount,"Duty",{:data_type=>:decimal}],
       [3,:cit_entered_value,:entered_value,"Entered Value",{:data_type=>:decimal}],
       [4,:cit_spi_primary,:spi_primary,"SPI - Primary",{:data_type=>:string}],
@@ -733,7 +760,14 @@ class ModelField
       [10,:cit_classification_qty_3,:classification_qty_3,"Quanity 3",{:data_type=>:decimal}],
       [11,:cit_classification_uom_3,:classification_uom_3,"UOM 3",{:data_type=>:string}],
       [12,:cit_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
-      [13,:cit_tariff_description,:tariff_description,"Description",{:data_type=>:string}]
+      [13,:cit_tariff_description,:tariff_description,"Description",{:data_type=>:string}],
+      [18,:ent_tariff_provision,:tariff_provision,"Tariff Provision",{:data_type=>:string}],
+      [19,:ent_value_for_duty_code,:value_for_duty_code,"VFD Code",{:data_type=>:string}],
+      [20,:ent_gst_rate_code,:gst_rate_code,"GST Rate Code",{:data_type=>:string}],
+      [21,:ent_gst_amount,:gst_amount,"GST Amount",{:data_type=>:decimal}],
+      [22,:ent_sima_amount,:sima_amount,"SIMA Amount",{:data_type=>:decimal}],
+      [23,:ent_excise_amount,:excise_amount,"Excise Amount",{:data_type=>:decimal}],
+      [24,:ent_excise_rate_code,:excise_rate_code,"Excise Rate Code",{:data_type=>:string}]
     ]
     add_fields CoreModule::BROKER_INVOICE, [
       make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),

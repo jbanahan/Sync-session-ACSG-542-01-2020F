@@ -108,7 +108,7 @@ module OpenChain
     
     def migrate
       c = 0
-      while !MasterSetup.get_migration_lock && c<12 #2 minute wait
+      while !MasterSetup.get_migration_lock && c<30 #5 minute wait
         @log.info "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
         sleep 10
         c += 1
