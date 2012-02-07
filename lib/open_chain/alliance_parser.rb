@@ -78,6 +78,8 @@ module OpenChain
               process_cl00 r
             when "CT00"
               process_ct00 r
+            when "CF00"
+              process_cf00 r
             when "SC00"
               process_sc00 r
           end
@@ -223,6 +225,11 @@ module OpenChain
       @c_line.related_parties = r[82]=='Y'
       @c_line.vendor_name = r[83,35].strip
       @c_line.volume = parse_currency r[118,11] #not really currency, but 2 decimals, so it's ok
+      @c_line.unit_price = @c_line.value / @c_line.units if @c_line.value > 0 && @c_line.units > 0
+      @c_line.computed_value = parse_currency r[260,13]
+      @c_line.computed_adjustments = parse_currency r[299,13]
+      @c_line.computed_net_value = parse_currency r[312,13]
+      @c_line.computed_duty_percentage = parse_currency r[325,8]
       accumulate_string :export_country_codes, @c_line.country_export_code
       accumulate_string :origin_country_codes, @c_line.country_origin_code
       accumulate_string :vendor_names, @c_line.vendor_name 
@@ -231,6 +238,16 @@ module OpenChain
       @entry.total_units += @c_line.units 
     end
 
+    # commercial invoice line - fees
+    def process_cf00 r
+      val = parse_currency r[7,11]
+      case r[4,3]
+        when '499'
+          @c_line.mpf = val
+        when '501'
+          @c_line.hmf = val
+      end
+    end
     # commercial invoice line - tariff
     def process_ct00 r
       @ct = @c_line.commercial_invoice_tariffs.build

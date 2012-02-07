@@ -154,7 +154,7 @@ describe OpenChain::AllianceParser do
         rows << ci00
         ci[:lines].each do |line|
           [:mid,:po_number].each {|k| line[k]='' unless line[k]}
-          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(51)}#{line[:po_number].ljust(35)}#{"".ljust(58)}#{convert_cur.call(line[:value],13)}"
+          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(51)}#{line[:po_number].ljust(35)}#{"".ljust(45)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{convert_cur.call(line[:computed_duty_percentage],8)}"
           if line[:tariff]
             line[:tariff].each do |t|
               t_row = "CT00#{convert_cur.call(t[:duty_total],12)}#{convert_cur.call(t[:entered_value],13)}#{t[:spi_primary].ljust(2)}#{t[:spi_secondary].ljust(1)}#{t[:hts_code].ljust(10)}"
@@ -165,6 +165,9 @@ describe OpenChain::AllianceParser do
               rows << t_row
             end
           end
+          rows << "CF00499#{convert_cur.call(line[:mpf],11)}" if line[:mpf]
+          rows << "CF00501#{convert_cur.call(line[:hmf],11)}" if line[:hmf]
+
         end
       end
       rows.join("\n")
@@ -323,13 +326,14 @@ describe OpenChain::AllianceParser do
         ci_line.related_parties?.should == (line[:related_parties] ? line[:related_parties] : false)
         ci_line.vendor_name.should == line[:vendor_name]
         ci_line.volume.should == line[:volume] if line[:volume]
-        ci_line.computed_value == line[:computed_value]
-        ci_line.computed_adjustments == line[:computed_adjustments]
-        ci_line.computed_net_value == line[:computed_net_value]
-        ci_line.computed_duty_percentage == line[:computed_duty_percentage]
-        ci_line.mpf == line[:mpf]
-        ci_line.hmf == line[:hmf]
-        ci_line.cotton_fee == line[:cotton_fee]
+        ci_line.computed_value.should == line[:computed_value] if line[:computed_value]
+        ci_line.computed_adjustments.should == line[:computed_adjustments] if line[:computed_adjustments]
+        ci_line.computed_net_value.should == line[:computed_net_value] if line[:computed_net_value]
+        ci_line.computed_duty_percentage.should == line[:computed_duty_percentage] if line[:computed_duty_percentage]
+        ci_line.mpf.should == line[:mpf]
+        ci_line.hmf.should == line[:hmf]
+#        ci_line.cotton_fee.should == line[:cotton_fee]
+        (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.units) * 100 ).to_i if ci_line.unit_price && ci_line.units
         if line[:tariff]
           line[:tariff].each do |t_line|
             found = ci_line.commercial_invoice_tariffs.where(:hts_code=>t_line[:hts_code])

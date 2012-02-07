@@ -24,11 +24,33 @@ describe OpenChain::FenixParser do
     @across_sent_date = '01/27/2012,09:24am'
     @pars_ack_date = '01/28/2012,11:15am'
     @pars_rej_date = '01/08/2012,11:15am'
+    @release_date = '01/09/2012,11:19am'
+    @cadex_sent_date = '01/10/2012,12:15pm'
+    @cadex_accept_date = '01/11/2012,01:13pm'
     @invoice_number = '12345'
     @invoice_date = '04/16/2012'
     @vendor_name = 'MR Vendor'
+    @release_type = '1251'
+    @employee_name = 'MIKE'
+    @file_logged_date = '12/16/2011'
+    @invoice_sequence = 1
+    @invoice_page = 1
+    @invoice_line = 1
+    @part_number = '123BBB'
+    @header_po = '123531'
+    @detail_po = ''
+    @container = 'cont'
+    @bill_of_lading = 'mbol'
+    @tariff_treatment = '2'
+    @hts = '30.30.30.30.03'
+    @tariff_provision = '9977'
+    @hts_qty = 100
+    @hts_uom = 'DOZ'
+    @comm_qty = 1200
+    @comm_uom = 'PCS'
+    @val_for_duty = '23'
     @entry_lambda = lambda {
-      data = "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"\",\"4522126971\", 1 ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , 1 , 1 ,\"57639\",\"CAT NOROX MEKP-925H CS560\",\"\",#{@country_export_code},#{@country_origin_code}, 2 ,\"2909.60.00.00\",0000, 174 ,KGM, 13 ,\"\", 0 , 1 , 384 ,NMB, 2.52 ,        967.68,       967.68,#{@direct_shipment_date},USD, 1.0097 ,        977.07, 0 ,          0.00, 5 ,         48.85,          0.00, 0 ,          0.00,         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,01/30/2012,09:48pm,,,,,,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"TINA\",\"1251\",\"\",\"N\",\" 0 \",\" 1 \",\"01/26/2012\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
+      data = "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, 2.52 ,        967.68,       967.68,#{@direct_shipment_date},USD, 1.0097 ,        977.07, 0 ,          0.00, 5 ,         48.85,          0.00, 0 ,          0.00,         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
       data
     }
   end
@@ -53,8 +75,19 @@ describe OpenChain::FenixParser do
     ent.pars_ack_date.should == @est.parse_us_base_format(@pars_ack_date.gsub(',',' '))
     ent.first_release_date.should == ent.pars_ack_date
     ent.pars_reject_date.should == @est.parse_us_base_format(@pars_rej_date.gsub(',',' '))
+    ent.release_date.should == @est.parse_us_base_format(@release_date.gsub(',',' '))
+    ent.cadex_sent_date.should == @est.parse_us_base_format(@cadex_sent_date.gsub(',',' '))
+    ent.cadex_accept_date.should == @est.parse_us_base_format(@cadex_accept_date.gsub(',',' '))
     ent.origin_country_codes.should == @country_origin_code
     ent.export_country_codes.should == @country_export_code
+    ent.release_type.should == @release_type
+    ent.employee_name.should == @employee_name
+    ent.file_logged_date.should == @est.parse_us_base_format("#{@file_logged_date},12:00am")
+    ent.po_numbers.should == @header_po
+    ent.container_numbers.should == @container
+    ent.vendor_names.should == @vendor_name
+    ent.time_to_process.should be > 0
+    ent.source_system.should == OpenChain::FenixParser::SOURCE_CODE
 
     #commercial invoice header
     ent.commercial_invoices.should have(1).invoice
@@ -62,7 +95,31 @@ describe OpenChain::FenixParser do
     ci.invoice_number.should == @invoice_number
     ci.invoice_date.should == Date.strptime(@invoice_date,@mdy)
     ci.vendor_name.should == @vendor_name
+
+    ci.commercial_invoice_lines.should have(1).line
+    line = ci.commercial_invoice_lines.first
+    line.part_number.should == @part_number
+    line.country_origin_code.should == @country_origin_code
+    line.country_export_code.should == @country_export_code
+    line.units.should == @comm_qty
+    line.unit_of_measure.should == @comm_uom
+
+    line.should have(1).commercial_invoice_tariffs
+    tar = line.commercial_invoice_tariffs.first
+    tar.spi_primary.should == @tariff_treatment
+    tar.hts_code.should == @hts
+    tar.tariff_provision.should == @tariff_provision
+    tar.classification_qty_1.should == @hts_qty
+    tar.classification_uom_1.should == @hts_uom
+    tar.value_for_duty_code.should == @val_for_duty
   end
+  
+  it 'should overwrite lines on reprocess' do
+    2.times {OpenChain::FenixParser.parse @entry_lambda.call}
+    Entry.where(:broker_reference=>@file_number).should have(1).record
+    Entry.find_by_broker_reference(@file_number).should have(1).commercial_invoices
+  end
+
   it 'should handle blank date time' do
     @across_sent_date = ','
     OpenChain::FenixParser.parse @entry_lambda.call
@@ -94,23 +151,100 @@ describe OpenChain::FenixParser do
     ent.export_country_codes.should == 'US'
     ent.export_state_codes.should == 'NJ'
     ent.origin_state_codes.should == 'IN'
+    ci_line = ent.commercial_invoices.first.commercial_invoice_lines.first
+    ci_line.country_origin_code.should == 'US'
+    ci_line.country_export_code.should == 'US'
+    ci_line.state_origin_code.should == 'IN'
+    ci_line.state_export_code.should == 'NJ'
   end
   it 'should 0 pad exit code to 4 chars' do # port ' 708  ' should be '0708'
     @exit_port_code = ' 444 '
     OpenChain::FenixParser.parse @entry_lambda.call
     Entry.find_by_broker_reference(@file_number).us_exit_port_code.should == '0444'
   end
+
   context 'multi line' do
-    it 'should save an entry with multiple lines one time'
-    it 'should overwrite header PO if populated in description 2 field'
+    before :each do
+      @invoices = [
+        {:seq=>1,:inv_num => '12345'},
+        {:seq=>2,:inv_num => '5555555'}
+      ]
+      @multi_line_lambda = lambda {
+        data = ""
+        @invoices.each do |inv|
+          @invoice_number = inv[:inv_num]
+          @invoice_sequence = inv[:seq]
+          @detail_po = inv[:detail_po] if inv[:detail_po]
+          @bill_of_lading = inv[:bol] if inv[:bol]
+          @container = inv[:cont] if inv[:cont]
+          @vendor_name = inv[:vend] if inv[:vend]
+          @country_origin_code = inv[:org] if inv[:org]
+          @country_export_code = inv[:exp] if inv[:exp]
+          data += @entry_lambda.call+"\r\n"
+        end
+        data.strip
+      }  
+      
+    end
+    it 'should save an entry with multiple invoices' do
+      OpenChain::FenixParser.parse @multi_line_lambda.call
+      entries = Entry.where(:broker_reference=>@file_number)
+      entries.should have(1).entry
+      entries.first.should have(2).commercial_invoices
+    end
+    it 'should save multiple invoice lines for the same invoice' do
+      @invoices[1][:seq]=1 #make both invoices part of same sequence
+      OpenChain::FenixParser.parse @multi_line_lambda.call
+      entries = Entry.where(:broker_reference=>@file_number)
+      entries.should have(1).entry
+      entries.first.should have(1).commercial_invoices
+      entries.first.commercial_invoices.first.should have(2).commercial_invoice_lines
+    end
+    it 'should overwrite header PO if populated in description 2 field' do
+      @invoices[0][:detail_po] = 'a'
+      @invoices[1][:detail_po] = 'b'
+      OpenChain::FenixParser.parse @multi_line_lambda.call
+      ent = Entry.find_by_broker_reference @file_number
+      ent.commercial_invoices.first.commercial_invoice_lines.first.po_number.should == 'a'
+      ent.commercial_invoices.last.commercial_invoice_lines.first.po_number.should == 'b'
+      ent.po_numbers.should == "a\n b"
+    end
     context 'accumulate fields' do
-      it 'bills of lading'
-      it 'vendor names'
-      it 'origin country codes'
-      it 'export country codes'
-      it 'origin state codes'
-      it 'export state codes'
-      it 'container numbers'
+      it 'bills of lading' do
+        ['x','y'].each_with_index {|b,i| @invoices[i][:bol]=b} 
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).master_bills_of_lading.should == "x\n y"
+      end
+      it 'vendor names' do
+        ['x','y'].each_with_index {|b,i| @invoices[i][:vend]=b} 
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).vendor_names.should == "x\n y"
+      end
+      it 'origin country codes' do
+        ['CN','UIN'].each_with_index {|b,i| @invoices[i][:org]=b} 
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).origin_country_codes.should == "CN\n US"
+      end
+      it 'export country codes' do
+        ['PR','UNJ'].each_with_index {|b,i| @invoices[i][:exp]=b} 
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).export_country_codes.should == "PR\n US"
+      end
+      it 'origin state codes' do
+        ['CN','UIN'].each_with_index {|b,i| @invoices[i][:org]=b} 
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).origin_state_codes.should == "IN"
+      end
+      it 'export state codes' do
+        ['UNV','UIN'].each_with_index {|b,i| @invoices[i][:exp]=b} 
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).export_state_codes.should == "NV\n IN"
+      end
+      it 'container numbers' do
+        ['x','y'].each_with_index {|b,i| @invoices[i][:cont]=b} 
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).container_numbers.should == "x\n y"
+      end
     end
   end
 end
