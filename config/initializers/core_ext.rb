@@ -1,3 +1,19 @@
+ActiveSupport::TimeZone.class_eval do
+  #parse a date in "01/28/2008 04:27am" format
+  def parse_us_base_format str
+    raise ArgumentError unless str.length==18
+    mon = str[0,2].to_i
+    day = str[3,2].to_i
+    year = str[6,4].to_i
+    meridian = str[16,2].downcase
+    hour = str[11,2].to_i
+    hour += 12 if meridian == 'pm' && hour!=12
+    hour = 0 if meridian == 'am' && hour==12
+    min = str[14,2].to_i
+
+    parse "#{year}-#{mon}-#{day} #{hour}:#{min}"
+  end
+end
 String.class_eval do
   #returns a copy of the string with decimals in the right place to look like a commonly formatted HTS number
   def hts_format
