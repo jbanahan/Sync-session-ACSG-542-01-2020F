@@ -156,6 +156,11 @@ module OpenChain
       @entry.total_duty = parse_currency r[49,12]
       @entry.total_duty_direct = parse_currency r[357,12]
       @entry.entered_value = parse_currency r[384,13]
+      accumulate_string :recon, "NAFTA" if r[397]!="N"
+      accumulate_string :recon, "VALUE" if r[398]!="N"
+      accumulate_string :recon, "CLASS" if r[399]!="N"
+      accumulate_string :recon, "9802" if r[400]!="N"
+      @entry.recon_flags = accumulated_string(:recon)
     end
 
     # header continuation 3

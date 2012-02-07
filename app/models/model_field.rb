@@ -706,7 +706,8 @@ class ModelField
       [73,:ent_cadex_sent_date,:cadex_sent_date,"CADEX Sent Date",{:data_type=>:datetime}],
       [74,:ent_us_exit_port_code,:us_exit_port_code,"US Exit Port Code (CA)",{:data_type=>:string}],
       [75,:ent_origin_state_code,:origin_state_codes,"Origin State Codes",{:data_type=>:string}],
-      [76,:ent_export_state_code,:export_state_codes,"Export State Codes",{:data_type=>:string}]
+      [76,:ent_export_state_code,:export_state_codes,"Export State Codes",{:data_type=>:string}],
+      [77,:ent_recon_flags,:recon_flags,"Recon Flags",{:data_type=>:string}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

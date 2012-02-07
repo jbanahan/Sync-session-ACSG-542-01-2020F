@@ -44,13 +44,14 @@ describe OpenChain::AllianceParser do
     @gross_weight = 50
     @vessel = 'vess'
     @voyage = 'voy'
+    @recon = 'BBBB'
     @hmf = BigDecimal('55.22',2)
     @mpf = BigDecimal('271.14',2)
     @cotton_fee = BigDecimal('123.31',2)
     convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
     @make_entry_lambda = lambda {
       sh00 = "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
-      sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}"
+      sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}"
       sh03 = "SH03#{"".ljust(285)}#{@consignee_address_1.ljust(35)}#{@consignee_address_2.ljust(35)}#{@consignee_city.ljust(35)}#{@consignee_state.ljust(2)}"
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       sd_entry_filed = "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
@@ -395,6 +396,34 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
     ent.commercial_invoices.should have(@commercial_invoices.size).invoices
+  end
+
+  context 'recon flags' do
+    it 'should expand nafta' do
+      @recon = 'BNNN'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "NAFTA"
+    end
+    it 'should expand value' do
+      @recon = 'NBNN'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "VALUE"
+    end
+    it 'should expand class' do
+      @recon = 'NNBN'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "CLASS"
+    end
+    it 'should expand 9802' do
+      @recon = 'NNNB'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "9802"
+    end
+    it 'should combine flags' do
+      @recon = 'BBBB'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "NAFTA\n VALUE\n CLASS\n 9802"
+    end
   end
 
   it 'should make all zero port codes nil' do
