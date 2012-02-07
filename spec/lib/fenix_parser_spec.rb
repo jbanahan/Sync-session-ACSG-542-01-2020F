@@ -49,8 +49,19 @@ describe OpenChain::FenixParser do
     @comm_qty = 1200
     @comm_uom = 'PCS'
     @val_for_duty = '23'
+    @unit_price = BigDecimal("12.21")
+    @line_value = BigDecimal("14652.00")
+    @currency = 'USD'
+    @exchange_rate = BigDecimal("1.01")
+    @entered_value = BigDecimal('14652.01')
+    @duty_amount = BigDecimal("1.27")
+    @gst_rate_code = '5'
+    @gst_amount = BigDecimal("5.05")
+    @sima_amount = BigDecimal("8.20")
+    @excise_amount = BigDecimal("2.22")
+    @excise_rate_code = '3'
     @entry_lambda = lambda {
-      data = "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, 2.52 ,        967.68,       967.68,#{@direct_shipment_date},USD, 1.0097 ,        977.07, 0 ,          0.00, 5 ,         48.85,          0.00, 0 ,          0.00,         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
+      data = "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, 0 ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
       data
     }
   end
@@ -95,6 +106,8 @@ describe OpenChain::FenixParser do
     ci.invoice_number.should == @invoice_number
     ci.invoice_date.should == Date.strptime(@invoice_date,@mdy)
     ci.vendor_name.should == @vendor_name
+    ci.currency.should == @currency
+    ci.exchange_rate.should == @exchange_rate
 
     ci.commercial_invoice_lines.should have(1).line
     line = ci.commercial_invoice_lines.first
@@ -103,6 +116,9 @@ describe OpenChain::FenixParser do
     line.country_export_code.should == @country_export_code
     line.units.should == @comm_qty
     line.unit_of_measure.should == @comm_uom
+    line.unit_price.should == @unit_price
+    line.value.should == @line_value
+    line.line_number.should == 1 
 
     line.should have(1).commercial_invoice_tariffs
     tar = line.commercial_invoice_tariffs.first
@@ -112,6 +128,12 @@ describe OpenChain::FenixParser do
     tar.classification_qty_1.should == @hts_qty
     tar.classification_uom_1.should == @hts_uom
     tar.value_for_duty_code.should == @val_for_duty
+    tar.entered_value.should == @entered_value
+    tar.gst_rate_code.should == @gst_rate_code
+    tar.gst_amount.should == @gst_amount
+    tar.sima_amount.should == @sima_amount
+    tar.excise_rate_code.should == @excise_rate_code
+    tar.excise_amount.should == @excise_amount
   end
   
   it 'should overwrite lines on reprocess' do
@@ -180,6 +202,7 @@ describe OpenChain::FenixParser do
           @vendor_name = inv[:vend] if inv[:vend]
           @country_origin_code = inv[:org] if inv[:org]
           @country_export_code = inv[:exp] if inv[:exp]
+          @comm_qty = inv[:cq] if inv[:cq]
           data += @entry_lambda.call+"\r\n"
         end
         data.strip
@@ -199,6 +222,8 @@ describe OpenChain::FenixParser do
       entries.should have(1).entry
       entries.first.should have(1).commercial_invoices
       entries.first.commercial_invoices.first.should have(2).commercial_invoice_lines
+      entries.first.commercial_invoices.first.commercial_invoice_lines.first.line_number.should == 1
+      entries.first.commercial_invoices.first.commercial_invoice_lines.last.line_number.should == 2
     end
     it 'should overwrite header PO if populated in description 2 field' do
       @invoices[0][:detail_po] = 'a'
@@ -210,6 +235,11 @@ describe OpenChain::FenixParser do
       ent.po_numbers.should == "a\n b"
     end
     context 'accumulate fields' do
+      it 'units' do
+        ['50.12','18.15'].each_with_index {|b,i| @invoices[i][:cq]=b}
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).total_units.should == BigDecimal('68.27')
+      end
       it 'bills of lading' do
         ['x','y'].each_with_index {|b,i| @invoices[i][:bol]=b} 
         OpenChain::FenixParser.parse @multi_line_lambda.call
