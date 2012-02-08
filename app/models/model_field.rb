@@ -729,7 +729,7 @@ class ModelField
       [7,:ci_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
       [8,:ci_total_charges,:total_charges,"Charges",{:data_type=>:decimal,:currency=>:usd}],
       [9,:ci_invoice_date,:invoice_date,"Invoice Date",{:data_type=>:date}],
-      [10,:ci_mfid,:mfid,"MFID",{:data_type=>:string}]
+      [10,:ci_mfid,:mfid,"MID",{:data_type=>:string}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
       [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
