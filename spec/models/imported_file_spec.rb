@@ -119,7 +119,7 @@ describe ImportedFile do
                                                             {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
                                                             {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
                                                             {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        @xlc.should_receive(:set_cell).with(0,0,3,"1234567890")
+        @xlc.should_receive(:set_cell).with(0,0,3,"1234567890".hts_format)
         @imported_file.make_updated_file
       end
       it 'should handle products alone, even with child fields' do
@@ -172,10 +172,10 @@ describe ImportedFile do
                                                             {"position"=>{"column"=>1},"cell"=>{"value"=>ctry_2.iso_code,"datatype"=>"string"}},
                                                             {"position"=>{"column"=>2},"cell"=>{"value"=>t_b.line_number,"datatype"=>"number"}},
                                                             {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        @xlc.should_receive(:set_cell).with(0,0,3,t_a.hts_1)
-        @xlc.should_receive(:set_cell).with(0,1,3,t_b.hts_1)
-        @xlc.should_receive(:set_cell).with(0,2,3,t_a_2.hts_1)
-        @xlc.should_receive(:set_cell).with(0,3,3,t_b_2.hts_1)
+        @xlc.should_receive(:set_cell).with(0,0,3,t_a.hts_1.hts_format)
+        @xlc.should_receive(:set_cell).with(0,1,3,t_b.hts_1.hts_format)
+        @xlc.should_receive(:set_cell).with(0,2,3,t_a_2.hts_1.hts_format)
+        @xlc.should_receive(:set_cell).with(0,3,3,t_b_2.hts_1.hts_format)
         @imported_file.make_updated_file :extra_country_ids=>[ctry_2.id]
       end
     end

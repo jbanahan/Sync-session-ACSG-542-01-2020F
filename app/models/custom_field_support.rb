@@ -10,7 +10,7 @@ module CustomFieldSupport
   def get_custom_value(custom_definition)
     cv = get_custom_value_by_overrides custom_definition.id
     return cv if cv
-    cv = self.connection.outside_transaction? ? CustomValue.cached_find_unique(custom_definition.id, self) : nil 
+#    cv = self.connection.outside_transaction? ? CustomValue.cached_find_unique(custom_definition.id, self) : nil 
     cv = self.custom_values.where(:custom_definition_id => custom_definition).first if cv.nil?
     if cv.nil?
       cv = self.custom_values.build(:custom_definition => custom_definition)
