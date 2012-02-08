@@ -10,6 +10,7 @@ class TariffSet < ActiveRecord::Base
       self.tariff_set_records.each do |tsr|
         tsr.build_official_tariff.save!
       end
+      OfficialQuota.relink_country(self.country)
       TariffSet.where(:country_id=>self.country_id).where("tariff_sets.id = #{self.id} OR tariff_sets.active = ?",true).each do |ts|
         ts.update_attributes(:active=>ts.id==self.id)
       end
