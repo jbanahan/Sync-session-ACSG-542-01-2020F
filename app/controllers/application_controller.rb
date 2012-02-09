@@ -6,7 +6,6 @@ class ApplicationController < ActionController::Base
     protect_from_forgery
     before_filter :new_relic
     before_filter :require_user
-    before_filter :check_tos
     before_filter :update_message_count
     before_filter :set_user_time_zone
     before_filter :log_request
@@ -464,17 +463,6 @@ class ApplicationController < ActionController::Base
         return false
       end
     end
-
-    def check_tos
-      if current_user && 
-        (current_user.tos_accept.nil? || 
-        current_user.tos_accept < TERMS[:privacy] ||
-        current_user.tos_accept < TERMS[:terms])
-        redirect_to "/show_tos"
-        return false
-      end
-    end
-
 
     def store_location
       session[:return_to] = request.fullpath unless request.fullpath.match(/message_count/) 
