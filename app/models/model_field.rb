@@ -884,7 +884,8 @@ class ModelField
         :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
         :data_type => :integer
       }],
-      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}]
+      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}],
+      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime}]
     ]
     add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")
