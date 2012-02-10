@@ -11,5 +11,6 @@ class EntriesController < ApplicationController
     action_secure(e.can_view?(current_user),e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
       @entry = e
     }
+    render :layout=>'one_col'
   end
 end

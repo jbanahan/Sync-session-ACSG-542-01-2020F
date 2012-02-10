@@ -15,7 +15,10 @@ class ScheduleServer < ActiveRecord::Base
     ensure
       c.execute "UNLOCK TABLES;"
     end
-    result.first.first==h 
+    row = result.first
+    cell = nil
+    cell = row.first if row
+    cell==h 
   end
 
   #check in and try to become the active server if needed

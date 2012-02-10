@@ -68,7 +68,9 @@ class MasterSetup < ActiveRecord::Base
   # get the custom features enabled for this system as an array
   def custom_features_list
     return [] if self.custom_features.blank?
-    return self.custom_features.split($/).to_a
+    features = self.custom_features.split($/).to_a
+    features.collect {|f| f.strip}
+
   end
 
   # set the custom features enabled for this system by passing an array or a string

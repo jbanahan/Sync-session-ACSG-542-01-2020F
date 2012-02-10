@@ -7,6 +7,47 @@ module OpenChain
       params = ActiveSupport::JSON.decode params_json
       BulkUpdateClassification.go params, u
     end
+
+    
+    # find all of the classifications in the selcted products that have the same country & tariff for all products and build an equivalent classification/tariff in the base product.
+    # selected_product can be either an array of product_ids or a SearchRun
+    def self.build_common_classifications selected_products, base_product
+      products = []
+      if selected_products.is_a? SearchRun 
+        products = selected_products.all_objects
+      elsif selected_products.respond_to? :values
+        products = Product.includes(:classifications=>:tariff_records).where("products.id in (?)",selected_products.values)
+      else
+        products = Product.includes(:classifications=>:tariff_records).where("products.id in (?)",selected_products)
+      end
+      classifications_by_country = {}
+      products.each do |p|
+        p.classifications.each do |c| 
+          classifications_by_country[c.country_id] ||= []
+          classifications_by_country[c.country_id] << c
+        end
+      end
+      classifications_by_country.each do |country_id,classifications|
+        if classifications.size == products.size
+          tariffs_by_hts_set = {}
+          classifications.each do |c|
+            c.tariff_records.each do |t|
+              hts = "#{t.hts_1}~#{t.hts_2}~#{t.hts_3}~#{t.line_number}"
+              tariffs_by_hts_set[hts] ||= []
+              tariffs_by_hts_set[hts] << t
+            end
+          end
+          tariffs_by_hts_set.each do |key,tariffs|
+            if tariffs.size == products.size
+              tr = tariffs.first
+              c = base_product.classifications.build(:country_id=>country_id)
+              c.tariff_records.build(:hts_1=>tr.hts_1,:hts_2=>tr.hts_2,:hts_3=>tr.hts_3,:line_number=>tr.line_number)
+            end
+          end
+        end
+      end
+    end
+
     def self.go params, current_user
       good_count = nil
       msgs = []

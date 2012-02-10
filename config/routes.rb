@@ -2,6 +2,7 @@ OpenChain::Application.routes.draw do
 
   resources :entries, :only => [:index,:show]
   resources :broker_invoices, :only => [:index,:show]
+
   resources :linkable_attachment_import_rules
   resources :tariff_sets, :only => [:index] do
     member do
@@ -110,8 +111,11 @@ OpenChain::Application.routes.draw do
   match "/reports/run_tariff_comparison" => "reports#run_tariff_comparison", :via => :post
   match "/reports/show_stale_tariffs" => "reports#show_stale_tariffs", :via => :get
   match "/reports/run_stale_tariffs" => "reports#run_stale_tariffs", :via => :post
+  match "/reports/show_poa_expirations" => "reports#show_poa_expirations", :via => :get
+  match "/reports/run_poa_expirations" => "reports#run_poa_expirations", :via => :get
   match "/reports/show_shoes_for_crews_entry_breakdown" => "reports#show_shoes_for_crews_entry_breakdown", :via=>:get
   match "/reports/run_shoes_for_crews_entry_breakdown" => "reports#run_shoes_for_crews_entry_breakdown", :via=>:post
+  match "/reports/big_search" => "reports#show_big_search_message", :via=>:get
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
@@ -220,6 +224,12 @@ OpenChain::Application.routes.draw do
   resources :companies do
 		resources :addresses
 		resources :divisions
+    resources :power_of_attorneys, :only => [:index, :new, :create, :destroy] do
+      member do
+        get 'download'
+      end
+    end
+    
 		resources :users do
 		  get :disable, :on => :member
 		  get :enable, :on => :member

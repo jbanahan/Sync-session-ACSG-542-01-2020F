@@ -4,6 +4,11 @@ class ReportsController < ApplicationController
   def index
     
   end
+
+  # show the user a message if their report download has been delayed
+  def show_big_search_message
+    
+  end
   
   def show_tariff_comparison
     @countries = Country.where("id in (select country_id from tariff_sets)").order("name ASC")
@@ -32,6 +37,21 @@ class ReportsController < ApplicationController
   end
   def run_shoes_for_crews_entry_breakdown
     run_report "Shoes For Crews", OpenChain::Report::ShoesForCrewsEntryBreakdown, {}, []
+  end
+  def show_poa_expirations
+    if current_user.admin?
+      render
+    else
+      error_redirect "You do not have permissions to view this report"
+    end
+  end
+
+  def run_poa_expirations
+    if current_user.admin?
+      run_report "POA Expirations", OpenChain::Report::POAExpiration, { "poa_expiration_date" => params[:poa_expiration_date] }, []
+    else
+      error_redirect "You do not have permissions to view this report"
+    end
   end
 
   private

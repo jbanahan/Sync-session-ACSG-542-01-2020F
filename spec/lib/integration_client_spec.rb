@@ -18,6 +18,7 @@ describe OpenChain::IntegrationClient do
     #
     # This will occasionlly fail when SQS returns the messages out of order, not sure how to accomodate
     #
+    ScheduleServer.stub(:active_schedule_server?).and_return(:true)
     cmd_one = {:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}
     cmd_shutdown = {:request_type=>'shutdown'}
     remote_file_response = {'response_type'=>'remote_file','status'=>'ok'}
@@ -43,6 +44,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       @t.flush
       @success_hash = {'response_type'=>'remote_file','status'=>'success'}
       OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+    end
+    it 'should send data to Fenix parser if custom feature enabled and path contains _fenix' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
+      OpenChain::FenixParser.should_receive(:parse).with('abcdefg')
+      cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+    end
+    it 'should not send data to Fenix parser if custom feature is not enabled' do
+      cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix/x.y"} 
     end
     it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)

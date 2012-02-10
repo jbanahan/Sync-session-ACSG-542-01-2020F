@@ -86,6 +86,13 @@ Factory.define :file_import_result do |f|
 end
 Factory.define :custom_file do |f|
 end
+Factory.define :power_of_attorney do |poa|
+  poa.association :user
+  poa.association :company
+  poa.start_date "2011-12-01"
+  poa.expiration_date "2011-12-31"
+  poa.attachment_file_name "SpecAttachmentDocument.odt"
+end
 Factory.define :entry do |f|
 
 end

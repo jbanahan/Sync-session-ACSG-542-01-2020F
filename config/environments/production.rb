@@ -23,7 +23,8 @@ OpenChain::Application.configure do
   # config.log_level = :debug
 
   # Use a different logger for distributed setups
-  # config.logger = SyslogLogger.new
+  # Rotate log files after 100 megabytes and keep 3 most recent files
+  config.logger = Logger.new(Rails.root.join("log", Rails.env + ".log"), 3, 100 * 1024 * 1024)
 
   # Use a different cache store in production
   # config.cache_store = :mem_cache_store

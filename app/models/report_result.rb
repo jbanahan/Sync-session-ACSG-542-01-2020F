@@ -1,4 +1,5 @@
 require 'open_chain/report'
+require 'open_chain/report/xls_search'
 class ReportResult < ActiveRecord::Base
   
   PURGE_WEEKS = 1 #purge all items older than this many weeks

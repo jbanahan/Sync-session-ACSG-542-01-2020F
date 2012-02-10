@@ -106,7 +106,7 @@ class ApplicationController < ActionController::Base
         begin
           render_search_results
         rescue Exception => e
-          logger.error $!, $!.backtrace
+          #logger.error $!, $!.backtrace
           error_params = {:current_search_id=>@current_search.id, :username=>current_user.username,:current_search_name => @current_search.name}.merge(params)
           OpenMailer.send_custom_search_error(@current_user, e, error_params).deliver
           current_user.search_open = true
@@ -337,17 +337,22 @@ class ApplicationController < ActionController::Base
   end
 
   def render_search_results no_results = false
-      if !no_results && @current_search.name == "Extreme latest" && current_user.sys_admin?
-        raise "Extreme latest goes boom!!"
-      end
-      
-      @results = no_results ? [] : @current_search.search
-      page = params[:page]
-      page = (@last_run.position/20) + 1 if @last_run && @last_run.position
+    if !no_results && @current_search.name == "Extreme latest" && current_user.sys_admin?
+      raise "Extreme latest goes boom!!"
+    end
+    
+    @results = no_results ? @current_search.core_module.klass.where("1=0") : @current_search.search
+    if no_results
+      @current_search.touch
+      @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+      self.formats = [:html]
+      render :layout => 'one_col'
+    else
       respond_to do |format| 
         format.html {
           @current_search.touch
-          @results = @results.paginate(:per_page => 20, :page => page) 
+          @results = Product.where("1=0") if no_results
+          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
           render :layout => 'one_col'
         }
         format.csv {
@@ -355,7 +360,7 @@ class ApplicationController < ActionController::Base
           render_csv("#{@core_module.label}.csv")
         }
         format.json {
-          @results = @results.paginate(:per_page => 20, :page => page)
+          @results = @results.paginate(:per_page => 20, :page => params[:page])
           rval = []
           cols = @current_search.search_columns.order("rank ASC")
           GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
@@ -378,10 +383,15 @@ class ApplicationController < ActionController::Base
           render :json => sr
         }
         format.xls {
-          book = XlsMaker.new.make_from_search(@current_search,@results.where("1=1")) 
-          spreadsheet = StringIO.new 
-          book.write spreadsheet 
-          send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
+          if @results.length < 100
+            book = XlsMaker.new.make_from_search(@current_search,@results.where("1=1")) 
+            spreadsheet = StringIO.new 
+            book.write spreadsheet 
+            send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
+          else
+            ReportResult.run_report! @current_search.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>@current_search.id }
+            redirect_to '/reports/big_search'
+          end
         }
       end
     end
