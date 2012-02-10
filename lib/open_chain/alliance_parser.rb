@@ -1,7 +1,7 @@
 require 'bigdecimal'
 module OpenChain
   class AllianceParser
-
+    SOURCE_CODE = 'Alliance'
     DATE_MAP = {'00012'=>:arrival_date,
       '00016'=>:entry_filed_date,
       '00019'=>:release_date,
@@ -78,11 +78,14 @@ module OpenChain
               process_cl00 r
             when "CT00"
               process_ct00 r
+            when "CF00"
+              process_cf00 r
             when "SC00"
               process_sc00 r
           end
         end
         if !@skip_entry
+            @entry.import_country = Country.find_by_iso_code('US')
             @entry.it_numbers = accumulated_string :it_number 
             @entry.master_bills_of_lading = accumulated_string :mbol 
             @entry.house_bills_of_lading = accumulated_string :hbol 
@@ -115,12 +118,12 @@ module OpenChain
     def process_sh00 r
       brok_ref = r[4,10].gsub(/^[0]*/,'')
       @accumulated_strings = Hash.new
-      @entry = Entry.find_by_broker_reference brok_ref
+      @entry = Entry.find_by_broker_reference_and_source_system brok_ref, SOURCE_CODE
       if @entry && @entry.last_exported_from_source && @entry.last_exported_from_source > parse_date_time(r[24,12]) #if current is newer than file
         @skip_entry = true
       else
         @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
-        @entry.source_system = "Alliance"
+        @entry.source_system = SOURCE_CODE
         @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
         @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
         @entry.total_units = 0 #reset, then accumulate as we process invoice lines
@@ -153,6 +156,11 @@ module OpenChain
       @entry.total_duty = parse_currency r[49,12]
       @entry.total_duty_direct = parse_currency r[357,12]
       @entry.entered_value = parse_currency r[384,13]
+      accumulate_string :recon, "NAFTA" if r[397]!="N"
+      accumulate_string :recon, "VALUE" if r[398]!="N"
+      accumulate_string :recon, "CLASS" if r[399]!="N"
+      accumulate_string :recon, "9802" if r[400]!="N"
+      @entry.recon_flags = accumulated_string(:recon)
     end
 
     # header continuation 3
@@ -222,6 +230,11 @@ module OpenChain
       @c_line.related_parties = r[82]=='Y'
       @c_line.vendor_name = r[83,35].strip
       @c_line.volume = parse_currency r[118,11] #not really currency, but 2 decimals, so it's ok
+      @c_line.unit_price = @c_line.value / @c_line.units if @c_line.value > 0 && @c_line.units > 0
+      @c_line.computed_value = parse_currency r[260,13]
+      @c_line.computed_adjustments = parse_currency r[299,13]
+      @c_line.computed_net_value = parse_currency r[312,13]
+      @c_line.computed_duty_percentage = parse_currency r[325,8]
       accumulate_string :export_country_codes, @c_line.country_export_code
       accumulate_string :origin_country_codes, @c_line.country_origin_code
       accumulate_string :vendor_names, @c_line.vendor_name 
@@ -230,6 +243,16 @@ module OpenChain
       @entry.total_units += @c_line.units 
     end
 
+    # commercial invoice line - fees
+    def process_cf00 r
+      val = parse_currency r[7,11]
+      case r[4,3]
+        when '499'
+          @c_line.mpf = val
+        when '501'
+          @c_line.hmf = val
+      end
+    end
     # commercial invoice line - tariff
     def process_ct00 r
       @ct = @c_line.commercial_invoice_tariffs.build

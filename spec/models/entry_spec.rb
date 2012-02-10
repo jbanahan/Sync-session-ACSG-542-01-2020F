@@ -80,5 +80,8 @@ describe Entry do
     it 'should find matching entry port' do
       Factory(:entry,:entry_port_code=>@port.schedule_d_code).entry_port.should == @port
     end
+    it 'should find matching us exit port' do
+      Factory(:entry,:us_exit_port_code=>@port.schedule_d_code).us_exit_port.should == @port
+    end
   end
 end

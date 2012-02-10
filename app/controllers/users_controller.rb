@@ -136,18 +136,6 @@ class UsersController < ApplicationController
       end
       redirect_to '/'
     end
-
-    #Terms of service click through handling
-    def accept_tos
-      current_user.tos_accept = Time.now
-      current_user.save
-      redirect_to "/"
-    end
-    
-    def show_tos
-
-    end
-
     
   private
   def set_debug_expiration(u)

@@ -136,6 +136,12 @@ class SearchSetup < ActiveRecord::Base
     cm = core_module 
     messages << "Search's core module not set." if cm.nil?
 
+    if cm==CoreModule::ENTRY
+      messages << "Upload functionality is not available for Entries."
+    end
+    if cm==CoreModule::BROKER_INVOICE
+      messages << "Upload functionality is not available for Invoices."
+    end
     if cm==CoreModule::DELIVERY
       messages << "You do not have permission to edit Deliveries." unless self.user.edit_deliveries?
       messages << "#{label "del_ref"} field is required to upload Deliveries." unless has_column "del_ref"

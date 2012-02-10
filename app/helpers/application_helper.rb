@@ -11,6 +11,7 @@ module ApplicationHelper
 
   def field_view_row object, model_field_uid, show_prefix=nil
     mf = ModelField.find_by_uid(model_field_uid)
+    debugger if mf.nil?
     show_field = true
     if !mf.entity_type_field? && object.respond_to?('entity_type_id')
       e_id = object.entity_type_id

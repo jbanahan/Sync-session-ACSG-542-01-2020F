@@ -45,6 +45,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       @success_hash = {'response_type'=>'remote_file','status'=>'success'}
       OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
     end
+    it 'should send data to Fenix parser if custom feature enabled and path contains _fenix' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
+      OpenChain::FenixParser.should_receive(:parse).with('abcdefg')
+      cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+    end
+    it 'should not send data to Fenix parser if custom feature is not enabled' do
+      cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix/x.y"} 
+    end
     it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       OpenChain::AllianceParser.should_receive(:parse).with('abcdefg')

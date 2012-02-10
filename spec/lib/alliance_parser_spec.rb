@@ -44,13 +44,14 @@ describe OpenChain::AllianceParser do
     @gross_weight = 50
     @vessel = 'vess'
     @voyage = 'voy'
+    @recon = 'BBBB'
     @hmf = BigDecimal('55.22',2)
     @mpf = BigDecimal('271.14',2)
     @cotton_fee = BigDecimal('123.31',2)
     convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
     @make_entry_lambda = lambda {
       sh00 = "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05 YYYYVFEDI     "
-      sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}"
+      sh01 = "SH01#{"".ljust(45)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(260)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}"
       sh03 = "SH03#{"".ljust(285)}#{@consignee_address_1.ljust(35)}#{@consignee_address_2.ljust(35)}#{@consignee_city.ljust(35)}#{@consignee_state.ljust(2)}"
       sd_arrival = "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       sd_entry_filed = "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
@@ -154,7 +155,7 @@ describe OpenChain::AllianceParser do
         rows << ci00
         ci[:lines].each do |line|
           [:mid,:po_number].each {|k| line[k]='' unless line[k]}
-          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(51)}#{line[:po_number].ljust(35)}#{"".ljust(58)}#{convert_cur.call(line[:value],13)}"
+          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(51)}#{line[:po_number].ljust(35)}#{"".ljust(45)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{convert_cur.call(line[:computed_duty_percentage],8)}"
           if line[:tariff]
             line[:tariff].each do |t|
               t_row = "CT00#{convert_cur.call(t[:duty_total],12)}#{convert_cur.call(t[:entered_value],13)}#{t[:spi_primary].ljust(2)}#{t[:spi_secondary].ljust(1)}#{t[:hts_code].ljust(10)}"
@@ -165,6 +166,9 @@ describe OpenChain::AllianceParser do
               rows << t_row
             end
           end
+          rows << "CF00499#{convert_cur.call(line[:mpf],11)}" if line[:mpf]
+          rows << "CF00501#{convert_cur.call(line[:hmf],11)}" if line[:hmf]
+
         end
       end
       rows.join("\n")
@@ -241,6 +245,7 @@ describe OpenChain::AllianceParser do
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
+    ent.import_country.should == Country.find_by_iso_code('US')
     ent.source_system.should == 'Alliance'
     ent.entry_number.should == "#{@filer_code}#{@entry_ext}"
     ent.customer_number.should == @cust_num
@@ -322,13 +327,14 @@ describe OpenChain::AllianceParser do
         ci_line.related_parties?.should == (line[:related_parties] ? line[:related_parties] : false)
         ci_line.vendor_name.should == line[:vendor_name]
         ci_line.volume.should == line[:volume] if line[:volume]
-        ci_line.computed_value == line[:computed_value]
-        ci_line.computed_adjustments == line[:computed_adjustments]
-        ci_line.computed_net_value == line[:computed_net_value]
-        ci_line.computed_duty_percentage == line[:computed_duty_percentage]
-        ci_line.mpf == line[:mpf]
-        ci_line.hmf == line[:hmf]
-        ci_line.cotton_fee == line[:cotton_fee]
+        ci_line.computed_value.should == line[:computed_value] if line[:computed_value]
+        ci_line.computed_adjustments.should == line[:computed_adjustments] if line[:computed_adjustments]
+        ci_line.computed_net_value.should == line[:computed_net_value] if line[:computed_net_value]
+        ci_line.computed_duty_percentage.should == line[:computed_duty_percentage] if line[:computed_duty_percentage]
+        ci_line.mpf.should == line[:mpf]
+        ci_line.hmf.should == line[:hmf]
+#        ci_line.cotton_fee.should == line[:cotton_fee]
+        (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.units) * 100 ).to_i if ci_line.unit_price && ci_line.units
         if line[:tariff]
           line[:tariff].each do |t_line|
             found = ci_line.commercial_invoice_tariffs.where(:hts_code=>t_line[:hts_code])
@@ -375,6 +381,13 @@ describe OpenChain::AllianceParser do
     ent.time_to_process.should > 0
   end
 
+  it 'should only update entries with Alliance as source' do
+    old_ent = Factory(:entry,:broker_reference=>@ref_num) #doesn't have matching source system
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    entries = Entry.where(:broker_reference=>@ref_num)
+    entries.should have(2).items
+  end
+
   it 'should not duplicate commercial invoices when reprocessing' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
@@ -383,6 +396,34 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num
     ent.commercial_invoices.should have(@commercial_invoices.size).invoices
+  end
+
+  context 'recon flags' do
+    it 'should expand nafta' do
+      @recon = 'BNNN'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "NAFTA"
+    end
+    it 'should expand value' do
+      @recon = 'NBNN'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "VALUE"
+    end
+    it 'should expand class' do
+      @recon = 'NNBN'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "CLASS"
+    end
+    it 'should expand 9802' do
+      @recon = 'NNNB'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "9802"
+    end
+    it 'should combine flags' do
+      @recon = 'BBBB'
+      OpenChain::AllianceParser.parse @make_entry_lambda.call
+      Entry.find_by_broker_reference(@ref_num).recon_flags.should == "NAFTA\n VALUE\n CLASS\n 9802"
+    end
   end
 
   it 'should make all zero port codes nil' do
@@ -475,7 +516,7 @@ describe OpenChain::AllianceParser do
     ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join(@split_string)
   end
   it 'should replace entry header tracking fields' do
-    Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs')
+    Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs',:source_system=>OpenChain::AllianceParser::SOURCE_CODE)
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
     Entry.count.should == 1
     ent = Entry.first

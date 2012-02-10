@@ -147,15 +147,6 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 <% end %>
 <br />
 <br />
-<% if current_user==@user %>
-<b>Terms of Service</b>
-<p>
-<b><a href='/privacy_policy.pdf' target='_new'>Privacy Policy</a></b> - Last Updated: <%=TERMS[:privacy]%><br/>
-<b><a href='/tos.pdf' target='_new'>Terms of Service</a></b> - Last Updated: <%=TERMS[:terms]%>
-</p>
-
-<p>You last accepted these agreements on: <%=current_user.tos_accept.nil? ? "Never" : current_user.tos_accept%></p>
-<% end %>
 <div id='mod_run_as' style='display:none;'>
   <div>Enter the username for the account you want to run as.</div>
   <form id='frm_run_as' method='GET' action='/enable_run_as'>
