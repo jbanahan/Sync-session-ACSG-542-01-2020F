@@ -524,3 +524,11 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
   }
   used_obj.html(h);
 }
+var hiddenColumns = new Array();
+function updateShowAllColumnsLink() {
+  if (0 == hiddenColumns.length) {
+    $('#show_all_columns').fadeOut();
+  } else {
+    $('#show_all_columns').fadeIn();
+  }
+}

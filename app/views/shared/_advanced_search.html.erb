@@ -155,6 +155,21 @@ $(function() {
     OpenChain.loadUserList($("#give_user_list"),"");
     $("#mod_give_to").dialog('open');
   });
+
+  updateShowAllColumnsLink();
+  $('table#result_table thead tr th').click(function() {
+    var col = $(this).prevAll().length + 1;
+    hiddenColumns.push(col);
+    updateShowAllColumnsLink();
+     $('td:nth-child(' + col + '),th:nth-child(' + col + ')').fadeOut();
+  });
+  $('#show_all_columns').click(function() {
+    $.each(hiddenColumns, function(index, column) {
+      $('td:nth-child(' + column + '),th:nth-child(' + column + ')').fadeIn();
+    });
+    hiddenColumns.splice(0, hiddenColumns.length);
+    updateShowAllColumnsLink();
+  });
 });
 <%end%>
 <%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@current_search,:model_fields=>@core_module.model_fields_including_children.values,:wrapper=>'params_cont',:parent_hash_name=>'search_setup'}%>
@@ -292,6 +307,7 @@ $(function() {
   </div>
 
   <div id='bulk_message'></div>
+  <p><a href='#' id='show_all_columns'>Show all columns</a>
   <table class='detail_table' id='result_table'>
     <thead><tr>
       <% unless @bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
