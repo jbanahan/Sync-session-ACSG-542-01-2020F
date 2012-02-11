@@ -9,6 +9,10 @@
 
     updateShowAllColumnsLink();
     $('table#result_table thead tr th').click(function() {
+      if ($(this).children(0).is("input") || $(this).text() == "Actions") {
+        return false;
+      }
+
       var col = $(this).prevAll().length + 1;
       hiddenColumns.push(col);
       updateShowAllColumnsLink();
