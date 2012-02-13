@@ -30,7 +30,10 @@ class XlsMaker
     @date_format = Spreadsheet::Format.new(:number_format => 'YYYY-MM-DD')
     cols.each do |c|
       mf = ModelField.find_by_uid c.model_field_uid
-      sheet.row(0).default_format = Spreadsheet::Format.new :weight => :bold
+      sheet.row(0).default_format = Spreadsheet::Format.new :weight => :bold,
+                                                            :color => :orange,
+                                                            :pattern_fg_color => :navy,
+                                                            :pattern => 1
       sheet.row(0).push(mf.nil? ? "" : mf.label)
     end
     wb
