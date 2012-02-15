@@ -526,9 +526,12 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
 }
 var hiddenColumns = new Array();
 function updateShowAllColumnsLink() {
+  var div_show_all_columns = $('#show_all_columns');
+  div_show_all_columns.children("p:first").remove();
   if (0 == hiddenColumns.length) {
-    $('#show_all_columns').fadeOut();
+    div_show_all_columns.append("<p>Click Headings To Hide Columns</p>")
+    div_show_all_columns.children("p:first").css("margin-bottom", "0pt");
   } else {
-    $('#show_all_columns').fadeIn();
+    div_show_all_columns.append("<p><a href='#' id='show_all_columns'>Show all columns</a>");
   }
 }
