@@ -1,4 +1,11 @@
 class OpenMailer < ActionMailer::Base
+  ATTACHMENT_LIMIT = 10.megabytes
+  ATTACHMENT_TEXT = <<EOS
+The attachments for this message were larger than the maximum system size.
+Click <a href='_path_'>here</a> to download the attachment directly.
+All system attachments are deleted after seven days, please retrieve your attachments promptly.
+EOS
+
   default :from => "do-not-reply@chain.io"
 
   # Subject can be set in your I18n file at config/locales/en.yml
@@ -56,6 +63,7 @@ class OpenMailer < ActionMailer::Base
   end
 
   def send_search_result(to,search_name,attachment_name,file_path)
+    attachment_saved = save_large_attachment(file_path, to)
     m = mail(:to => to,
       :subject => "[chain.io] #{search_name} Result",
       :from => 'do-not-reply@chain.io')
@@ -63,7 +71,7 @@ class OpenMailer < ActionMailer::Base
       "Name"        => file_path.split('/').last,
       "Content"     => Base64.encode64(File.read(file_path)),
       "ContentType" => "application/octet-stream"
-    }
+    } unless attachment_saved
     m
   end
 
@@ -162,5 +170,21 @@ class OpenMailer < ActionMailer::Base
       # or periods with underscore
       name.gsub! /[^\w\.\-]/, '_'
     end
+  end
+
+  def save_large_attachment(file_path, registered_emails)
+    if File.exist?(file_path) && File.size(file_path) > ATTACHMENT_LIMIT
+      ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
+
+      email_attachment = EmailAttachment.create!(:email => registered_emails)
+      email_attachment.attachment = Attachment.new(:attachable => email_attachment)
+      email_attachment.attachment.attached = File.open(file_path)
+      email_attachment.attachment.save
+      email_attachment.save
+
+      @body_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment))
+      return true
+    end
+    false
   end
 end
