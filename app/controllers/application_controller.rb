@@ -6,7 +6,6 @@ class ApplicationController < ActionController::Base
     protect_from_forgery
     before_filter :new_relic
     before_filter :require_user
-    before_filter :update_message_count
     before_filter :set_user_time_zone
     before_filter :log_request
     before_filter :set_cursor_position
@@ -16,7 +15,6 @@ class ApplicationController < ActionController::Base
     helper_method :add_flash
     helper_method :has_messages
     helper_method :errors_to_flash
-    helper_method :update_message_count
     helper_method :hash_flip
     helper_method :merge_params
     helper_method :sortable_search_heading
@@ -402,13 +400,6 @@ class ApplicationController < ActionController::Base
     def merge_params(p={})
         params.merge(p).delete_if{|k,v| v.blank?}
     end
-
-    def update_message_count
-        if !current_user.nil?
-            @message_count = Message.count(:conditions => ["user_id = #{current_user.id} AND viewed = ?",false])
-        end
-    end
-
 
     def errors_to_flash(obj, options={})
         if obj.errors.any?

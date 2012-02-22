@@ -19,7 +19,6 @@ Factory.define :user do |f|
   f.password_confirmation { |u| u.password }  
   f.sequence(:email) { |n| "foo#{n}@example.com" }  
   f.association :company
-  f.tos_accept Time.now
 end  
 Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
@@ -135,4 +134,9 @@ Factory.define :port do |f|
   f.schedule_k_code '23456'
   f.schedule_d_code '1424'
   f.name 'abc def'
+end
+Factory.define :message do |f|
+  f.subject 'ABC'
+  f.body 'DEF'
+  f.association :user
 end
