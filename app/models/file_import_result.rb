@@ -6,8 +6,9 @@ class FileImportResult < ActiveRecord::Base
   after_save :update_changed_object_count
   
   def changed_objects search_criterions=[]
-    k = Kernel.const_get self.imported_file.core_module.class_name
-    r = k.where("#{k.table_name}.id IN (SELECT recordable_id FROM `change_records` WHERE file_import_result_id = ? AND recordable_type = '#{self.imported_file.core_module.class_name}')",self.id)
+    cm = self.imported_file.core_module
+    k = Kernel.const_get cm.class_name
+    r = k.select("DISTINCT `#{cm.table_name}`.*").joins(:change_records).where('change_records.file_import_result_id = ?',self.id)
     search_criterions.each do |sc|
       r = sc.apply r 
     end
