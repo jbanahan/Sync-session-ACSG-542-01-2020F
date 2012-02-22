@@ -7,6 +7,7 @@ module LinesSupport
     base.instance_eval("has_many :sales_order_lines, :through => :piece_sets")
     base.instance_eval("has_many :shipment_lines, :through => :piece_sets")
     base.instance_eval("has_many :delivery_lines, :through => :piece_sets")
+    base.instance_eval("has_many :drawback_import_lines, :through => :piece_sets")
     base.instance_eval("before_validation :default_line_number")
     base.instance_eval("before_validation :default_quantity")
     base.instance_eval("validates :product, :presence => true")

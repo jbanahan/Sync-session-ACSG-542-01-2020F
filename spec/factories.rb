@@ -48,17 +48,46 @@ Factory.define :order do |o|
   o.sequence(:order_number)
   o.association :vendor, :factory => :company
 end
+Factory.define :order_line do |o|
+  o.association :product
+  o.quantity 1
+  o.sequence(:line_number)
+  o.association :order
+end
 Factory.define :shipment do |s|
   s.sequence(:reference)
   s.association :vendor, :factory => :company
+end
+Factory.define :shipment_line do |s|
+  s.sequence(:line_number)
+  s.quantity 1
+  s.association :product
+  s.association :shipment
 end
 Factory.define :sales_order do |s|
   s.sequence(:order_number)
   s.association :customer, :factory => :company
 end
+Factory.define :sales_order_line do |s|
+  s.sequence(:line_number)
+  s.quantity 1
+  s.association :product
+  s.association :sales_order
+end
 Factory.define :delivery do |d|
   d.sequence(:reference)
   d.association :customer, :factory => :company
+end
+Factory.define :delivery_line do |d|
+  d.sequence(:line_number)
+  d.quantity 1
+  d.association :product
+  d.association :delivery
+end
+Factory.define :drawback_import_line do |d|
+  d.sequence :line_number
+  d.quantity 1
+  d.association :product
 end
 Factory.define :linkable_attachment_import_rule do |a|
   a.sequence(:path)

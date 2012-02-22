@@ -5,6 +5,8 @@ class PieceSet < ActiveRecord::Base
     belongs_to :shipment_line
     belongs_to :delivery_line
     belongs_to :milestone_plan
+    belongs_to :commercial_invoice_line
+    belongs_to :drawback_import_line
 
     has_one :milestone_forecast_set, :dependent=>:destroy, :autosave=>true
 
@@ -46,11 +48,11 @@ class PieceSet < ActiveRecord::Base
   def validate_product_integrity
     #all linked objects must have the same product
     base_product = nil
-    [self.order_line,self.shipment_line,self.sales_order_line,self.delivery_line].each do |line|
+    [self.order_line,self.shipment_line,self.sales_order_line,self.delivery_line,self.drawback_import_line].each do |line|
       if !line.nil?
         if base_product.nil?
-          base_product = line.product
-        elsif !line.product.nil? && base_product!=line.product
+          base_product = line.product_id
+        elsif !line.product_id.nil? && base_product!=line.product_id
           self.errors[:base] << "Data Integrity Error: Piece Set cannot be saved with multiple linked products."
           return false
         end
