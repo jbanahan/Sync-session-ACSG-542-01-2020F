@@ -1,7 +1,5 @@
 class PublicShipmentsController < ApplicationController
     skip_before_filter :require_user
-    skip_before_filter :check_tos
-    skip_before_filter :update_message_count
     skip_before_filter :set_user_time_zone
     skip_before_filter :log_request
 

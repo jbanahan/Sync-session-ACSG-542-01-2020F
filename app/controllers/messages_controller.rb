@@ -1,4 +1,5 @@
 class MessagesController < ApplicationController
+  skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position, :only=>:message_count
   # GET /messages
   # GET /messages.xml
   def index
@@ -58,8 +59,7 @@ class MessagesController < ApplicationController
     else
       add_flash :errors, "You do not have permission to change another user's message."
     end
-    update_message_count
-    render :text => @message_count.to_s
+    render :text => Message.unread_message_count(current_user.id)
   end
   
   def read_all
@@ -68,6 +68,10 @@ class MessagesController < ApplicationController
   end
 
   def message_count
-    render :json => @message_count.to_json
+    if params[:user_id]
+      render :json => Message.unread_message_count(params[:user_id]) 
+    else
+      error_redirect "User ID is required."
+    end
   end
 end

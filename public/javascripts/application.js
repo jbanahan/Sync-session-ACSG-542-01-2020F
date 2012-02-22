@@ -246,9 +246,9 @@ var OpenChain = (function() {
   }
 
   var pollingId;
-  var pollForMessages = function() {
+  var pollForMessages = function(user_id) {
     return setInterval(function() {
-        $.getJSON('/messages/message_count',function(data) {
+        $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
           if(data>0) {
             $('#message_envelope').show();
           } else {
@@ -592,19 +592,21 @@ var OpenChain = (function() {
     disableMessagePolling: function() {
       clearInterval(pollingId) 
     },
-    init: function() {
+    init: function(user_id) {
       initLinkButtons();
       initFormButtons();
       initRemoteValidate();
       initScheduleBLinks();
       initEntitySnapshotPopups();
       //initInfiniteScroll();
-      pollingId = pollForMessages();
+      if(user_id) {
+        pollingId = pollForMessages(user_id);
+      }
     }
   };
 })();
 $( function() {
-    OpenChain.init();
+    OpenChain.init(OpenChain.user_id);
     $(".decimal").jStepper();
     $(".integer").jStepper({allowDecimals:false});
     $("#lnk_hide_notice").click(function(ev) {

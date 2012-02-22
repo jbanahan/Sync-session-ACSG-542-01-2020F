@@ -106,3 +106,8 @@ Factory.define :port do |f|
   f.schedule_d_code '1424'
   f.name 'abc def'
 end
+Factory.define :message do |f|
+  f.subject 'ABC'
+  f.body 'DEF'
+  f.association :user
+end

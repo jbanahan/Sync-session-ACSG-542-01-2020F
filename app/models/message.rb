@@ -17,4 +17,9 @@ class Message < ActiveRecord::Base
       OpenMailer.delay.send_message(self)
     end
   end
+
+  # efficent method to get unread message count with just a user_id
+  def self.unread_message_count user_id
+    Message.where(:user_id=>user_id).where("viewed is null OR viewed = ?",false).count
+  end
 end
