@@ -36,7 +36,7 @@ module OpenChain
       c = Company.find_or_create_by_name_and_importer importer_name, true
       @entry = Entry.find_by_entry_number_and_importer_id row[1], c.id
       @entry ||= Entry.new(:source_system=>SOURCE_CODE,:importer_id=>c.id,:import_country=>Country.find_by_iso_code('US'),:entry_number=>row[1])
-      @entry.commercial_invoices.destroy_all unless @entry.commercial_invoices.blank?
+      @entry.commercial_invoices.destroy_all 
       @invoice = @entry.commercial_invoices.build(:invoice_number=>'N/A') unless @invoice
       @entry.entry_port_code = row[4]
       @entry.arrival_date = datetime row[2]

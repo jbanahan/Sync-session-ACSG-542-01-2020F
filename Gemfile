@@ -24,7 +24,7 @@ gem 'postmark-rails', '0.4.1'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', :group=>[:development,:test]
 group :test do
-  gem 'spork'
+  gem 'spork', '0.9.0'
 #  gem 'ruby-prof' - put this back after we go to Ruby 3.1 (see Rails commit 25288)
 end
 gem 'newrelic_rpm'
