@@ -77,14 +77,19 @@ EOS
 
   def send_uploaded_items(to,imported_file,data,current_user)
     @current_user = current_user
-    attachment = {"Name" => imported_file.attached_file_name,
-      "Content" => [data].pack("m"),
-      "ContentType" => "application/octet-stream"}
+    data_to_send = [data].pack("m")
+    data_file_path = File.join("/tmp", imported_file.attached_file_name)
+    File.open(data_file_path, "w") { |f| f.write data_to_send } if data_to_send.length > ATTACHMENT_LIMIT
+    attachment_saved = save_large_attachment(data_file_path, to)
     
     m = mail(:to=>to,
       :reply_to=>current_user.email,
       :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
-    m.postmark_attachments = attachment
+    m.postmark_attachments = {
+      "Name" => imported_file.attached_file_name,
+      "Content" => data_to_send,
+      "ContentType" => "application/octet-stream"
+    } unless attachment_saved
     m
   end
 
@@ -92,11 +97,18 @@ EOS
   def send_s3_file current_user, to, cc, subject, body_text, bucket, s3_path, attachment_name=nil
     a_name = attachment_name.blank? ? s3_path.split('/').last : attachment_name
     t = OpenChain::S3.download_to_tempfile bucket, s3_path
-    attachment = {"Name" => a_name, "Content" => Base64.encode64(File.read(t.path)),"ContentType"=> "application/octet-stream"}
+    @body_text = ''
+    attachment_saved = save_large_attachment(t.path, to)
     @user = current_user
-    @body_text = body_text
+    # Concatenate passed message with the text set when large file is saved
+    # to S3 for direct download
+    @body_text = body_text + @body_text
     m = mail(:to=>to, :cc=>cc, :reply_to=>current_user.email, :subject => subject)
-    m.postmark_attachments = attachment
+    m.postmark_attachments = {
+      "Name" => a_name,
+      "Content" => Base64.encode64(File.read(t.path)),
+      "ContentType"=> "application/octet-stream"
+    } unless attachment_saved
     m
   end
 

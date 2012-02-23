@@ -1,0 +1,5 @@
+<p>The attached file has been sent from the Chain.io system by <%=@current_user.full_name%>.</p>
+
+<% if @body_text %>
+  <p><%= @body_text.html_safe %></p>
+<% end %>
