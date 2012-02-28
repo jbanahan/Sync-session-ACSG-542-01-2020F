@@ -117,7 +117,7 @@ describe OpenChain::FenixParser do
     line.part_number.should == @part_number
     line.country_origin_code.should == @country_origin_code
     line.country_export_code.should == @country_export_code
-    line.units.should == @comm_qty
+    line.quantity.should == @comm_qty
     line.unit_of_measure.should == @comm_uom
     line.unit_price.should == @unit_price
     line.value.should == @line_value

@@ -89,6 +89,32 @@ describe OpenChain::UnderArmourReceivingParser do
     line_2.get_custom_value(CustomDefinition.find_by_label('PO Number')).value.should == '123456'
 
   end
+  it 'should parse multiple pos for the same ibd / style / size' do
+    @xl_client.should_receive(:last_row_number).with(0).and_return(2)
+    @make_line_lambda.call(1,@line_array)
+    @line_array[4][1] = "123456"
+    @make_line_lambda.call(2,@line_array)
+    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    s = Shipment.first
+    s.should have(2).shipment_lines
+    line_1 = s.shipment_lines.where(:line_number=>1).first
+    line_1.get_custom_value(CustomDefinition.find_by_label("PO Number")).value.should == "450016177"
+    line_2 = s.shipment_lines.where(:line_number=>2).first
+    line_2.get_custom_value(CustomDefinition.find_by_label("PO Number")).value.should == "123456"
+  end
+  it 'should parse multiple sizes for same ibd / style / po' do
+    @xl_client.should_receive(:last_row_number).with(0).and_return(2)
+    @make_line_lambda.call(1,@line_array)
+    @line_array[10][1] = "SM"
+    @make_line_lambda.call(2,@line_array)
+    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    s = Shipment.first
+    s.should have(2).shipment_lines
+    line_1 = s.shipment_lines.where(:line_number=>1).first
+    line_1.get_custom_value(CustomDefinition.find_by_label("Size")).value.should == "LG"
+    line_2 = s.shipment_lines.where(:line_number=>2).first
+    line_2.get_custom_value(CustomDefinition.find_by_label("Size")).value.should == "SM"
+  end
   it 'should parse multiple shipments' do
     @xl_client.should_receive(:last_row_number).with(0).and_return(2)
     @make_line_lambda.call(1,@line_array)

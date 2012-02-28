@@ -2,6 +2,9 @@ require 'spec_helper'
 
 describe Order do
 
+  before :each do
+    LinkedAttachment.destroy_all
+  end
   describe 'linkable attachments' do
     it 'should have linkable attachments' do
       o = Factory(:order,:order_number=>'ordn')

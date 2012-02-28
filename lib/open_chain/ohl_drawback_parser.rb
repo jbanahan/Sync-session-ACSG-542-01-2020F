@@ -35,7 +35,7 @@ module OpenChain
       raise "Importer Name is required." if importer_name.blank?
       c = Company.find_or_create_by_name_and_importer importer_name, true
       @entry = Entry.find_by_entry_number_and_importer_id row[1], c.id
-      @entry ||= Entry.new(:source_system=>SOURCE_CODE,:importer_id=>c.id,:import_country=>Country.find_by_iso_code('US'),:entry_number=>row[1])
+      @entry ||= Entry.new(:source_system=>SOURCE_CODE,:importer_id=>c.id,:import_country=>Country.find_by_iso_code('US'),:entry_number=>row[1],:total_duty_direct=>0)
       @entry.commercial_invoices.destroy_all 
       @invoice = @entry.commercial_invoices.build(:invoice_number=>'N/A') unless @invoice
       @entry.entry_port_code = row[4]
@@ -56,6 +56,8 @@ module OpenChain
       t.classification_qty_1 = row[20]
       t.classification_uom_1 = row[21]
       t.hts_code = row[14].gsub('.','') if row[14]
+      t.entered_value = row[13]
+      @entry.total_duty_direct += row[18]
       @line_number += 1
     end
     

@@ -18,7 +18,7 @@ class LinkedAttachment < ActiveRecord::Base
     attachables = sc.apply cm.klass
     attachables = attachables.where("NOT #{cm.table_name}.id IN (SELECT attachable_id FROM linked_attachments WHERE linkable_attachment_id = ? AND attachable_type = ?)", a.id, cm.class_name)
     attachables.each do |att|
-      r << LinkedAttachment.create(:attachable=>att,:linkable_attachment=>a)
+      r << LinkedAttachment.create!(:attachable=>att,:linkable_attachment=>a)
     end
     r
   end
@@ -43,7 +43,7 @@ class LinkedAttachment < ActiveRecord::Base
         where = where_clauses.join("OR")
         found = LinkableAttachment.where(where,field_value_hash).where("NOT id IN (SELECT linkable_attachment_id FROM linked_attachments where attachable_type = ? AND attachable_id = ?)",a.class.to_s,a.id)
         found.each do |la|
-          r << LinkedAttachment.create(:attachable=>a,:linkable_attachment=>la)
+          r << LinkedAttachment.create!(:attachable=>a,:linkable_attachment=>la)
         end
       end
     end

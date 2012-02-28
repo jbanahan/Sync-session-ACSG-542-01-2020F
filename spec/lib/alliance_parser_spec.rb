@@ -317,7 +317,7 @@ describe OpenChain::AllianceParser do
         ci_line = inv.commercial_invoice_lines.where(:part_number=>line[:part_number]).first
         ci_line.mid.should == line[:mid]
         ci_line.po_number.should == line[:po_number]
-        ci_line.units.should == line[:units]
+        ci_line.quantity.should == line[:units]
         ci_line.unit_of_measure.should == line[:units_uom]
         ci_line.value.should == line[:value] unless line[:value].nil?
         ci_line.mid.should == line[:mid]
@@ -334,7 +334,7 @@ describe OpenChain::AllianceParser do
         ci_line.mpf.should == line[:mpf]
         ci_line.hmf.should == line[:hmf]
 #        ci_line.cotton_fee.should == line[:cotton_fee]
-        (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.units) * 100 ).to_i if ci_line.unit_price && ci_line.units
+        (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.quantity) * 100 ).to_i if ci_line.unit_price && ci_line.quantity
         if line[:tariff]
           line[:tariff].each do |t_line|
             found = ci_line.commercial_invoice_tariffs.where(:hts_code=>t_line[:hts_code])

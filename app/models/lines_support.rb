@@ -1,21 +1,28 @@
 module LinesSupport
 #need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
   def self.included(base)
-    base.instance_eval("belongs_to :product")
     base.instance_eval("has_many :piece_sets, :dependent => :destroy")
     base.instance_eval("has_many :order_lines, :through => :piece_sets")
     base.instance_eval("has_many :sales_order_lines, :through => :piece_sets")
     base.instance_eval("has_many :shipment_lines, :through => :piece_sets")
     base.instance_eval("has_many :delivery_lines, :through => :piece_sets")
     base.instance_eval("has_many :drawback_import_lines, :through => :piece_sets")
-    base.instance_eval("before_validation :default_line_number")
-    base.instance_eval("before_validation :default_quantity")
-    base.instance_eval("validates :product, :presence => true")
+    base.instance_eval("has_many :commercial_invoice_lines, :through => :piece_sets")
+    unless base.instance_eval("self.name") == "CommercialInvoiceLine"
+      base.instance_eval("belongs_to :product")
+      base.instance_eval("validates :product, :presence => true")
+      base.instance_eval("before_validation :default_quantity") 
+      unless base.instance_eval("self.name") == "DrawbackImportLine"
+        base.instance_eval("before_validation :default_line_number")
+      end
+    end
 #the writers below are used to indicate that a related piece set should be created on save
     base.instance_eval("attr_accessor :linked_order_line_id")
     base.instance_eval("attr_accessor :linked_shipment_line_id")
     base.instance_eval("attr_accessor :linked_sales_order_line_id")
     base.instance_eval("attr_accessor :linked_delivery_line_id")
+    base.instance_eval("attr_accessor :linked_drawback_line_id")
+    base.instance_eval("attr_accessor :linked_commercial_invoice_line_id")
     base.instance_eval("after_save :process_links")
   end
 
@@ -45,7 +52,8 @@ module LinesSupport
 
   def process_links
     {:order_line_id=>@linked_order_line_id,:shipment_line_id=>@linked_shipment_line_id,
-    :sales_order_line_id=>@linked_sales_order_line_id,:delivery_line_id=>@linked_delivery_line_id}.each do |s,i|
+    :sales_order_line_id=>@linked_sales_order_line_id,:delivery_line_id=>@linked_delivery_line_id,
+    :commercial_invoice_line_id=>@linked_commercial_invoice_line_id,:drawback_import_line_id=>@linked_drawback_line_id}.each do |s,i|
       process_link s,i
     end
   end
@@ -73,7 +81,7 @@ module LinesSupport
     unless id.nil?
       ps = self.piece_sets.where(field_symbol=>id).first
       if ps.nil? #if there is a PieceSet only linked to the "linked line", it's a place holder that needs to have it's quantity reduced or be replaced
-        holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0))=?",id).first
+        holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0)+ifnull(piece_sets.drawback_import_line_id,0)+ifnull(piece_sets.commercial_invoice_line_id,0))=?",id).first
         if holding_piece_set
           if holding_piece_set.quantity <= self.quantity
             ps = holding_piece_set

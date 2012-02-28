@@ -124,6 +124,13 @@ end
 Factory.define :entry do |f|
 
 end
+Factory.define :commercial_invoice do |f|
+  f.association :entry
+end
+Factory.define :commercial_invoice_line do |f|
+  f.association :commercial_invoice
+  f.sequence :line_number
+end
 Factory.define :broker_invoice do |f|
   f.association :entry
 end

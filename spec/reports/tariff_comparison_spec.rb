@@ -3,8 +3,8 @@ require 'open_chain/report'
 require 'spreadsheet'
 
 describe OpenChain::Report::TariffComparison do
-  before(:all) do
-    @country = Country.create!(:iso_code=>"ZZ",:name=>'zz country')
+  before(:each) do
+    @country = Factory(:country)
     @old_ts = TariffSet.create!(:country_id=>@country.id,:label=>'a')
     @new_ts = TariffSet.create!(:country_id=>@country.id,:label=>'b')
     @unchanged_hts = '123456789'

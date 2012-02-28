@@ -31,6 +31,16 @@ module CustomFieldSupport
     true
   end
 
+  # updates the custom value in the database (creating the record if needed)
+  # custom_definition can be either a CustomDefinition object or an integer representing the CustomDefinition#id
+  def update_custom_value! custom_definition, value
+    cd = custom_definition
+    cd = CustomDefinition.find_by_id custom_definition if custom_definition.is_a?(Numeric)
+    cv = get_custom_value(cd)
+    cv.value = value
+    cv.save!
+  end
+
   def get_custom_value_by_id(id)
     cv = get_custom_value_by_overrides id
     return cv if cv

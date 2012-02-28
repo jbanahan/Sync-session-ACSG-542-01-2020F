@@ -19,6 +19,7 @@ describe OpenChain::OhlDrawbackParser do
     ent.transport_mode_code.should == '-1'
     ent.total_invoiced_value.should == BigDecimal('66285.00') 
     ent.total_duty.should == BigDecimal('15403.01')
+    ent.total_duty_direct.should == BigDecimal('15542.21')
     ent.merchandise_description.should == 'WEARING APPAREL, FOOTWEAR'
   end
   it 'should handle empty mpf' do
@@ -49,6 +50,7 @@ describe OpenChain::OhlDrawbackParser do
     first_hts.duty_amount.should == BigDecimal('0.00')
     first_hts.classification_qty_1.should == BigDecimal('477')
     first_hts.classification_uom_1.should == 'DOZ'
+    first_hts.entered_value.should == BigDecimal('61544.00')
 
     other_hts = Entry.find_by_entry_number('11350368418').commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first
     other_hts.duty_amount.should == BigDecimal('26.35')

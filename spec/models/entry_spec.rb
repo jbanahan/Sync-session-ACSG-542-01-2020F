@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe Entry do
+  describe 'ocean?' do
+    it "should return false for nil transport mode" do
+      Entry.new.should_not be_ocean
+    end
+    it "should return true for 10" do
+      Entry.new(:transport_mode_code=>"10").should be_ocean
+    end
+    it "should return true for 11" do
+      Entry.new(:transport_mode_code=>"11").should be_ocean
+    end
+    it "should return false for any other value" do
+      Entry.new(:transport_mode_code=>"40").should_not be_ocean
+    end
+  end
   context 'security' do
     before :each do
       MasterSetup.get.update_attributes(:entry_enabled=>true)

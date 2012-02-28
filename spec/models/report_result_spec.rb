@@ -53,6 +53,9 @@ describe ReportResult do
       @report_class = SampleReport
       Delayed::Worker.delay_jobs = false
     end
+    after :each do
+      Delayed::Worker.delay_jobs = true
+    end
     it "should write data on report run" do
       ReportResult.any_instance.stub(:execute_report)
       ReportResult.run_report! 'nrr', @u, @report_class, {:settings=>{'o1'=>'o2'},:friendly_settings=>['a','b']}

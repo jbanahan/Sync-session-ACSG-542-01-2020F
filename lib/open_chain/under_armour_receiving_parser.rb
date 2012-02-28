@@ -11,13 +11,13 @@ module OpenChain
     }
 
     # parse file from s3
-    def self.parse_s3 s3_path
+    def self.parse_s3 s3_path, first_row=1
       product_cache = {}
       client = OpenChain::XLClient.new s3_path
       last_row_number = client.last_row_number 0
       val_set = []
       last_ibd_number = nil
-      (1..last_row_number).each do |row_num|
+      (first_row..last_row_number).each do |row_num|
         row = client.get_row 0, row_num
         val_hash = {}
         row.each do |cell|
@@ -46,7 +46,6 @@ module OpenChain
       val_set.each {|row| process_detail row}
       @shipment.save!
       val_set.each_with_index {|row,i| process_custom_values row, (i+1)}
-      puts "#{Time.now}: #{@shipment.reference}"
     end
     
     private
@@ -68,7 +67,7 @@ module OpenChain
     def process_detail row
       @row_num ||= 1
       @shipment_lines ||= {}
-      p = product(row)
+      p = row_uid row #style-color-size
       sd = @shipment_lines[p]
       if sd.nil?
         sd = @shipment.shipment_lines.build(:line_number=>@row_num,:product=>product(row))
@@ -80,13 +79,18 @@ module OpenChain
 
     def process_custom_values row, index
       prod = product(row)
-      line = ShipmentLine.find_by_shipment_id_and_product_id @shipment.id, prod.id
+      line = @shipment_lines[row_uid(row)] 
       CUSTOM_DEFINITIONS.each do |k,v|
         base = (k=='Delivery Date' ? @shipment : line)
         cv = base.get_custom_value @custom_definitions[k]
         cv.value = k=='PO Number' ? trim_numeric(row[v[2]]) : row[v[2]]
         cv.save!
       end
+    end
+
+    def row_uid row
+      # style-color-size-po
+      "#{row[8]}-#{row[10]}-#{row[4]}"
     end
 
     def product row

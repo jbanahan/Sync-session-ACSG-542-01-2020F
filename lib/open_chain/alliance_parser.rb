@@ -222,7 +222,7 @@ module OpenChain
       @c_line.mid = r[52,15].strip
       @c_line.part_number = r[4,30].strip
       @c_line.po_number = r[180,35].strip
-      @c_line.units = parse_decimal r[34,12], 3
+      @c_line.quantity = parse_decimal r[34,12], 3
       @c_line.unit_of_measure = r[46,6].strip
       @c_line.value = parse_currency r[273,13] 
       @c_line.country_origin_code = r[67,2].strip
@@ -230,7 +230,7 @@ module OpenChain
       @c_line.related_parties = r[82]=='Y'
       @c_line.vendor_name = r[83,35].strip
       @c_line.volume = parse_currency r[118,11] #not really currency, but 2 decimals, so it's ok
-      @c_line.unit_price = @c_line.value / @c_line.units if @c_line.value > 0 && @c_line.units > 0
+      @c_line.unit_price = @c_line.value / @c_line.quantity if @c_line.value > 0 && @c_line.quantity > 0
       @c_line.computed_value = parse_currency r[260,13]
       @c_line.computed_adjustments = parse_currency r[299,13]
       @c_line.computed_net_value = parse_currency r[312,13]
@@ -240,7 +240,7 @@ module OpenChain
       accumulate_string :vendor_names, @c_line.vendor_name 
       accumulate_string :total_units_uoms, @c_line.unit_of_measure 
       accumulate_string :po_numbers, r[180,35].strip
-      @entry.total_units += @c_line.units 
+      @entry.total_units += @c_line.quantity 
     end
 
     # commercial invoice line - fees

@@ -5,6 +5,8 @@ describe TariffSetsController do
   describe "index" do
 
     before(:each) do
+      Country.destroy_all
+      TariffSet.destroy_all
       @user = Factory(:user)
       activate_authlogic
       UserSession.create @user
@@ -41,6 +43,7 @@ describe TariffSetsController do
 
   describe "load" do
     before :each do
+      Country.destroy_all
       @country = Factory(:country)
     end
     context 'security' do
@@ -76,6 +79,7 @@ describe TariffSetsController do
   end
   describe "activate" do
     before :each do
+      Country.destroy_all
       @country = Factory(:country)
       @tariff_set = @country.tariff_sets.create!(:label=>'mylabel')
     end
