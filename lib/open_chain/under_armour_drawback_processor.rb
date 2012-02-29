@@ -37,6 +37,10 @@ module OpenChain
       tariff = c_line.commercial_invoice_tariffs.first #Under Armour will only have one
       total_units = BigDecimal("0.00")
       piece_sets.each {|ps| total_units += ps.quantity}
+      if (tariff.classification_uom_1.upcase=="DOZ" && (tariff.classification_qty_1*12)!=total_units) || (tariff.classification_uom_1.upcase!="DOZ" && total_units!=tariff.classification_qty_1)
+        cr.add_message "Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units}).", true
+        return r
+      end
       piece_sets.each do |ps|
         ship_line = ps.shipment_line
         shipment = ship_line.shipment
