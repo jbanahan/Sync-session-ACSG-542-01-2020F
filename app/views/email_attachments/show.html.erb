@@ -1,0 +1,8 @@
+<h1>Download Attachment</h1>
+
+<%= form_tag email_attachments_download_path do %>
+  <table>
+    <%= field_row "Email", text_field_tag("email", '', :size => 35)%>
+  </table>
+  <%= submit_tag "Download file", :id=>'email_attachment_download_submit' %>
+<% end %>

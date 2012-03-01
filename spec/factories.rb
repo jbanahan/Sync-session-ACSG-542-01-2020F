@@ -110,4 +110,11 @@ Factory.define :message do |f|
   f.subject 'ABC'
   f.body 'DEF'
   f.association :user
+Factory.define :attachment do |f|
+  f.attached_file_name "foo.bar"
+  f.attached_content_type "image/png"
+end
+Factory.define :email_attachment do |f|
+  f.email "ea@example.com"
+  f.after_create { |ea| ea.attachment = Factory(:attachment, :attachable => ea); ea.save }
 end

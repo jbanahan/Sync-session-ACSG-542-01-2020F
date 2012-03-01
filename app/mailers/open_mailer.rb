@@ -1,4 +1,11 @@
 class OpenMailer < ActionMailer::Base
+  ATTACHMENT_LIMIT = 10.megabytes
+  ATTACHMENT_TEXT = <<EOS
+The attachments for this message were larger than the maximum system size.
+Click <a href='_path_'>here</a> to download the attachment directly.
+All system attachments are deleted after seven days, please retrieve your attachments promptly.
+EOS
+
   default :from => "do-not-reply@chain.io"
 
   # Subject can be set in your I18n file at config/locales/en.yml
@@ -56,6 +63,7 @@ class OpenMailer < ActionMailer::Base
   end
 
   def send_search_result(to,search_name,attachment_name,file_path)
+    attachment_saved = save_large_attachment(file_path, to)
     m = mail(:to => to,
       :subject => "[chain.io] #{search_name} Result",
       :from => 'do-not-reply@chain.io')
@@ -63,20 +71,25 @@ class OpenMailer < ActionMailer::Base
       "Name"        => file_path.split('/').last,
       "Content"     => Base64.encode64(File.read(file_path)),
       "ContentType" => "application/octet-stream"
-    }
+    } unless attachment_saved
     m
   end
 
   def send_uploaded_items(to,imported_file,data,current_user)
     @current_user = current_user
-    attachment = {"Name" => imported_file.attached_file_name,
-      "Content" => [data].pack("m"),
-      "ContentType" => "application/octet-stream"}
+    data_to_send = [data].pack("m")
+    data_file_path = File.join("/tmp", imported_file.attached_file_name)
+    File.open(data_file_path, "w") { |f| f.write data_to_send } if data_to_send.length > ATTACHMENT_LIMIT
+    attachment_saved = save_large_attachment(data_file_path, to)
     
     m = mail(:to=>to,
       :reply_to=>current_user.email,
       :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
-    m.postmark_attachments = attachment
+    m.postmark_attachments = {
+      "Name" => imported_file.attached_file_name,
+      "Content" => data_to_send,
+      "ContentType" => "application/octet-stream"
+    } unless attachment_saved
     m
   end
 
@@ -84,11 +97,18 @@ class OpenMailer < ActionMailer::Base
   def send_s3_file current_user, to, cc, subject, body_text, bucket, s3_path, attachment_name=nil
     a_name = attachment_name.blank? ? s3_path.split('/').last : attachment_name
     t = OpenChain::S3.download_to_tempfile bucket, s3_path
-    attachment = {"Name" => a_name, "Content" => Base64.encode64(File.read(t.path)),"ContentType"=> "application/octet-stream"}
+    @body_text = ''
+    attachment_saved = save_large_attachment(t.path, to)
     @user = current_user
-    @body_text = body_text
+    # Concatenate passed message with the text set when large file is saved
+    # to S3 for direct download
+    @body_text = body_text + @body_text
     m = mail(:to=>to, :cc=>cc, :reply_to=>current_user.email, :subject => subject)
-    m.postmark_attachments = attachment
+    m.postmark_attachments = {
+      "Name" => a_name,
+      "Content" => Base64.encode64(File.read(t.path)),
+      "ContentType"=> "application/octet-stream"
+    } unless attachment_saved
     m
   end
 
@@ -162,5 +182,21 @@ class OpenMailer < ActionMailer::Base
       # or periods with underscore
       name.gsub! /[^\w\.\-]/, '_'
     end
+  end
+
+  def save_large_attachment(file_path, registered_emails)
+    if File.exist?(file_path) && File.size(file_path) > ATTACHMENT_LIMIT
+      ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
+
+      email_attachment = EmailAttachment.create!(:email => registered_emails)
+      email_attachment.attachment = Attachment.new(:attachable => email_attachment)
+      email_attachment.attachment.attached = File.open(file_path)
+      email_attachment.attachment.save
+      email_attachment.save
+
+      @body_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment))
+      return true
+    end
+    false
   end
 end

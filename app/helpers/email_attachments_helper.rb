@@ -1,0 +1,2 @@
+module EmailAttachmentsHelper
+end

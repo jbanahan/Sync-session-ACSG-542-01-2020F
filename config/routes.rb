@@ -1,5 +1,4 @@
 OpenChain::Application.routes.draw do
-
   resources :entries, :only => [:index,:show]
   resources :broker_invoices, :only => [:index,:show]
 
@@ -94,6 +93,9 @@ OpenChain::Application.routes.draw do
   match "/quick_search/module_result" => "quick_search#module_result"
   match "/enable_run_as" => "users#enable_run_as"
   match "/disable_run_as" => "users#disable_run_as"
+
+  match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
+  match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
 
   #custom features
   resources :custom_files, :only => :show
