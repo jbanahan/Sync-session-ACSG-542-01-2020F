@@ -7,7 +7,7 @@ describe OpenChain::OhlDrawbackParser do
     @sample_path = 'spec/support/bin/ohl_drawback_sample.xls'
     OpenChain::OhlDrawbackParser.parse @sample_path
   end
-  it 'should create entries based on sample' do
+  it 'should create entries based on sample, skipping Mode = "-1"' do
     Entry.all.should have(2).items
     Entry.all.collect {|e| e.entry_number}.should == ['11350368418','11353554642']
   end
@@ -16,7 +16,7 @@ describe OpenChain::OhlDrawbackParser do
     ent.entry_port_code.should == '1303'
     ent.arrival_date.should == @est.parse('2010-12-27') 
     ent.mpf.should == BigDecimal('139.20')
-    ent.transport_mode_code.should == '-1'
+    ent.transport_mode_code.should == '40'
     ent.total_invoiced_value.should == BigDecimal('66285.00') 
     ent.total_duty.should == BigDecimal('15403.01')
     ent.total_duty_direct.should == BigDecimal('15542.21')

@@ -22,6 +22,7 @@ module OpenChain
     # constructor, don't use, instead use static parse method
     def initialize entry_rows
       start_time = Time.now
+      return if entry_rows.first[8].to_s=="-1" #don't load FTZ entries
       process_header entry_rows.first
       entry_rows.each {|r| process_details r}
       @entry.save!
@@ -57,7 +58,7 @@ module OpenChain
       t.classification_uom_1 = row[21]
       t.hts_code = row[14].gsub('.','') if row[14]
       t.entered_value = row[13]
-      @entry.total_duty_direct += row[18]
+      @entry.total_duty_direct += row[18] unless row[18].nil?
       @line_number += 1
     end
     
