@@ -43,7 +43,7 @@ $(function() {
   <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})"%>
   <%=field_row "Target Version", @ms.target_version%>
   <%=field_row "Server With Migration Lock", @ms.migration_host%>
-  <%=field_row "Request Hosst (with port)", f.text_field(:request_host) %>
+  <%=field_row "Request Host (with port)", f.text_field(:request_host) %>
 </table>
 <%end%>
 
