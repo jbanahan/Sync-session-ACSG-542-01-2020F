@@ -146,6 +146,7 @@ Factory.define :message do |f|
   f.subject 'ABC'
   f.body 'DEF'
   f.association :user
+end
 Factory.define :attachment do |f|
   f.attached_file_name "foo.bar"
   f.attached_content_type "image/png"
