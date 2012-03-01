@@ -1,10 +1,28 @@
 module OpenChain
   class UnderArmourDrawbackProcessor
     
+    # Link entries to shipments and create drawback import lines, writing change records for each commercial invoice line
+    def self.process_entries entries
+      processor = UnderArmourDrawbackProcessor.new
+      entries.each do |entry|
+        entry.commercial_invoice_lines.each do |ci|
+          cr = ci.change_records.build
+          linked = processor.link_commercial_invoice_line ci, cr
+          if linked.empty?
+            cr.add_message "Line wasn't matched to any shipments.", true
+          else
+            processor.make_drawback_import_lines ci, cr 
+          end
+          cr.save!
+        end
+      end
+    end
     # Links a commercial invoice line to shipment lines if the commercial invoice line is not already linked and shipment line is not already linked
     # Takes an optional change record which should ve linked to the commercial invoice line. If it is not null, then messages will be added (but not saved) and the
     # failure flag will be set if no matches are made
+    # Returns an array of ShipmentLines that were matched
     def link_commercial_invoice_line c_line, change_record=nil
+      r = []
       entry = c_line.commercial_invoice.entry
       cr = change_record.nil? ? ChangeRecord.new : change_record #use a junk change record to make the rest of the coding easire if nil was passed
       if !c_line.piece_sets.where("shipment_line_id is not null").blank?
@@ -20,8 +38,10 @@ module OpenChain
           s_line.linked_commercial_invoice_line_id = c_line.id #force the piece set to be created on save
           s_line.save!
           cr.add_message "Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}"
+          r << s_line
         end
       end
+      r
     end
 
     # Makes drawback import lines for all commerical invoice line / shipment line pairs already connected to the given commercial invoice line
@@ -65,6 +85,7 @@ module OpenChain
         d.duty_per_unit = d.unit_price * d.rate
         d.save!
         ps.update_attributes(:drawback_import_line_id=>d.id)
+        cr.add_message "Drawback Import Line created successfully. (DB ID: #{d.id})"
         r << d
       end
       r
