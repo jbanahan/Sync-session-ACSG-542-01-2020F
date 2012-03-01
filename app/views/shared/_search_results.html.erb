@@ -6,6 +6,25 @@
         OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=send(v)%>');
       <% end %>
     <% end%>
+
+    updateShowAllColumnsLink();
+    $('table#result_table thead tr th').click(function() {
+      if ($(this).children(0).is("input") || $(this).text() == "Actions") {
+        return false;
+      }
+
+      var col = $(this).prevAll().length + 1;
+      hiddenColumns.push(col);
+      updateShowAllColumnsLink();
+       $('td:nth-child(' + col + '),th:nth-child(' + col + ')').fadeOut();
+    });
+    $('#show_all_columns').click(function() {
+      $.each(hiddenColumns, function(index, column) {
+        $('td:nth-child(' + column + '),th:nth-child(' + column + ')').fadeIn();
+      });
+      hiddenColumns.splice(0, hiddenColumns.length);
+      updateShowAllColumnsLink();
+    });
   });
 <% end %>
 <% content_for :action_bar do %>
@@ -17,6 +36,7 @@
 <% end %>
 <div id='main_search_cont'>
   <div id='bulk_message'></div>
+  <p><a href='#' id='show_all_columns'>Show all columns</a>
   <table class='detail_table' id='result_table'>
     <thead>
       <% unless bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>

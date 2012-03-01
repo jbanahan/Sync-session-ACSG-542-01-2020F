@@ -629,3 +629,7 @@ width:60%;
   font-weight: bold;
   border-bottom: 1px solid black;
 }
+#show_all_columns {
+  float: right;
+  margin-right: 5%;
+}
