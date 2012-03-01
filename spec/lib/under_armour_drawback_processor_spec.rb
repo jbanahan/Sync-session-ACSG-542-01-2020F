@@ -51,7 +51,6 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       @s_line.save!
       OpenChain::UnderArmourDrawbackProcessor.process_entries [@entry]
       cr = ChangeRecord.first
-      debugger
       cr.should be_failed
       cr.messages.should include("Line wasn't matched to any shipments.")
     end
@@ -266,6 +265,51 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       cr.messages.first.should == "Line does not have any unallocated shipment matches."
     end
     context "quantity validation" do
+      it "should not make line if shp qty is 0" do
+        @s_line.update_attributes(:quantity=>0)
+        cr = ChangeRecord.new
+        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
+        r.should be_blank
+        cr.should be_failed
+        cr.messages.first.should == "Cannot make line because linked shipment quantity is 0."
+      end
+      it "should not make line if shp qty is nil" do
+        @s_line.update_attributes(:quantity=>nil)
+        cr = ChangeRecord.new
+        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
+        r.should be_blank
+        cr.should be_failed
+        cr.messages.first.should == "Cannot make line because linked shipment quantity is 0."
+      end
+      it "should not make line if entered value is 0" do
+        @c_tar.update_attributes(:entered_value=>0)
+        cr = ChangeRecord.new
+        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
+        r.should be_blank
+        cr.should be_failed
+        cr.messages.first.should == "Cannot make line because entered value is 0."
+      end
+      it "should not make line if entered value is nil" do
+        @c_tar.update_attributes(:entered_value=>nil)
+        cr = ChangeRecord.new
+        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
+        r.should be_blank
+        cr.should be_failed
+        cr.messages.first.should == "Cannot make line because entered value is empty."
+      end
+      it "should not make line if duty amount is nil, 0 is fine" do
+        @c_tar.update_attributes(:duty_amount=>nil)
+        cr = ChangeRecord.new
+        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
+        r.should be_blank
+        cr.should be_failed
+        cr.messages.first.should == "Cannot make line because duty amount is empty."
+      end
       it "should not make line if shp qty is not equal to tariff qty and tariff uom is not DOZ" do
         @c_tar.update_attributes(:classification_qty_1=>20)
         cr = ChangeRecord.new

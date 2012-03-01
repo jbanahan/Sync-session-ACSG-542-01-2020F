@@ -57,9 +57,17 @@ module OpenChain
       tariff = c_line.commercial_invoice_tariffs.first #Under Armour will only have one
       total_units = BigDecimal("0.00")
       piece_sets.each {|ps| total_units += ps.quantity}
-      if (tariff.classification_uom_1.upcase=="DOZ" && (tariff.classification_qty_1*12)!=total_units) || (tariff.classification_uom_1.upcase!="DOZ" && total_units!=tariff.classification_qty_1)
-        cr.add_message "Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units}).", true
-        return r
+      [
+        [(total_units==0),"Cannot make line because linked shipment quantity is 0."],
+        [(tariff.entered_value==0),"Cannot make line because entered value is 0."],
+        [(tariff.entered_value.nil?),"Cannot make line because entered value is empty."],
+        [(tariff.duty_amount.nil?),"Cannot make line because duty amount is empty."],
+        [((tariff.classification_uom_1.upcase=="DOZ" && (tariff.classification_qty_1*12)!=total_units) || (tariff.classification_uom_1.upcase!="DOZ" && total_units!=tariff.classification_qty_1)), "Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units})."]
+      ].each do |x|
+        if x[0]
+          cr.add_message x[1], true
+          return r
+        end
       end
       piece_sets.each do |ps|
         ship_line = ps.shipment_line
