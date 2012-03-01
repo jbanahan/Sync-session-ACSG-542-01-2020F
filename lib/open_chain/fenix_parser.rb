@@ -131,8 +131,8 @@ module OpenChain
       inv_ln.line_number = @ci_line_count[line[15]]
       inv_ln.part_number = str_val(line[23])
       inv_ln.po_number = str_val(line[25])
-      inv_ln.units = dec_val(line[37])
-      @total_units += inv_ln.units if inv_ln.units
+      inv_ln.quantity = dec_val(line[37])
+      @total_units += inv_ln.quantity if inv_ln.quantity
       inv_ln.unit_of_measure = str_val(line[38])
       inv_ln.value = dec_val(line[40])
       unless inv_ln.value.nil?

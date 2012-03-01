@@ -737,7 +737,7 @@ class ModelField
       [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
       [2,:cil_part_number,:part_number,"Part Number",{:data_type=>:string}],
       [4,:cil_po_number,:po_number,"PO Number",{:data_type=>:string}],
-      [7,:cil_units,:units,"Units",{:data_type=>:decimal}],
+      [7,:cil_units,:quantity,"Units",{:data_type=>:decimal}],
       [8,:cil_uom,:unit_of_measure,"UOM",{:data_type=>:string}],
       [9,:cil_value,:value,"Value",{:data_type=>:decimal,:currency=>:other}],
       [10,:cil_mid,:mid,"MID",{:data_type=>:string}],

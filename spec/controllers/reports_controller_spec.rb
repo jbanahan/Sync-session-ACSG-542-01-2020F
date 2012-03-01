@@ -28,7 +28,8 @@ describe ReportsController do
     end
   end
   describe 'tariff comparison report' do
-    before(:all) do
+    before(:each) do
+      Country.destroy_all
       2.times do |i| 
         c = Factory(:country)
         c.tariff_sets.create(:label=>"t#{i}")
@@ -47,8 +48,11 @@ describe ReportsController do
     end
 
     context "run" do
-      before(:all) do
+      before(:each) do
         Delayed::Worker.delay_jobs = false
+      end
+      after :each do
+        Delayed::Worker.delay_jobs = true
       end
       it "should call report with tariff ids in settings" do
         ReportResult.any_instance.stub(:execute_report)
@@ -70,8 +74,10 @@ describe ReportsController do
   end
 
   describe "POA expiration report" do
-    before(:all) do
-      @admin = Factory(:user, :admin => true)
+    before(:each) do
+      @admin = Factory(:user)
+      @admin.admin = true
+      @admin.save
     end
     
     context "show" do

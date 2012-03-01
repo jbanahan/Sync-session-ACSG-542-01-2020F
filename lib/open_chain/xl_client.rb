@@ -19,6 +19,7 @@ module OpenChain
         req = Net::HTTP::Post.new(@uri.path)
         req.body = json
         res = Net::HTTP.start(@uri.host,@uri.port) do |http|
+          http.read_timeout = 600
           http.request req
         end
         r = JSON.parse res.body

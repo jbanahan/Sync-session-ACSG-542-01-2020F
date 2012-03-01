@@ -7,10 +7,7 @@ describe ReportResultsController do
     @base_user = User.create!(:email=>'basetest@aspect9.com',:username=>'base_test',:password=>'b12345',:password_confirmation=>'b12345',:company_id=>c.id)
     @admin_user = User.create!(:email=>'admintest@aspect9.com',:username=>'admin_test',:password=>'b12345',:password_confirmation=>'b12345',:company_id=>c.id)
     @admin_user.sys_admin = true
-    [@base_user,@admin_user].each do |u|
-      u.tos_accept = Time.now
-      u.save!
-    end
+    @admin_user.save!
     2.times do |i|
       @base_report = ReportResult.create!(:name=>'base_report',:run_by_id=>@base_user.id)
       @admin_report = ReportResult.create!(:name=>'admin_report',:run_by_id=>@admin_user.id)

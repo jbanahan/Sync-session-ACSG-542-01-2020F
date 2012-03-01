@@ -2,7 +2,12 @@ require "spec_helper"
 
 describe TariffSet do
   context 'activate' do
+    before :each do
+      Country.destroy_all
+      2.times { Factory(:country) }
+    end
     it "replaces official tariff" do
+
       c1 = Country.first
       c2 = Country.last
 
@@ -35,7 +40,8 @@ describe TariffSet do
     end
 
     it 'writes user message' do
-      u = User.first
+      u = Factory(:user)
+      u.should_not be_nil
       c = Country.first
       ts = TariffSet.create!(:country_id => c.id, :label => "newts")
       ts.activate u
@@ -45,8 +51,9 @@ describe TariffSet do
   
   context 'compare' do
     it "returns array of results" do
-      old = TariffSet.create!(:country_id => Country.find_by_iso_code(:us).id, :label => "old")
-      new = TariffSet.create!(:country_id => Country.find_by_iso_code(:us).id, :label => "new")
+      c = Factory(:country,:iso_code=>'US')
+      old = TariffSet.create!(:country_id => c.id, :label => "old")
+      new = TariffSet.create!(:country_id => c.id, :label => "new")
 
       #will be removed
       old.tariff_set_records.create!(:hts_code => "123", :country_id => old.country_id)
