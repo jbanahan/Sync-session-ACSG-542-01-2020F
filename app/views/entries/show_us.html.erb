@@ -106,7 +106,7 @@
       </td>
       <td style="width:34%;">
         <table>
-          <%[:ent_total_fees,:ent_total_duty,:ent_total_duty_direct,:ent_cotton_fee, :ent_hmf, :ent_mpf,:ent_entered_value,:ent_total_invoiced_value,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom].each do |f|%>
+          <%[:ent_total_fees,:ent_total_duty,:ent_total_duty_direct,:ent_cotton_fee, :ent_hmf, :ent_mpf,:ent_entered_value,:ent_total_invoiced_value,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom, :ent_broker_invoice_total].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
