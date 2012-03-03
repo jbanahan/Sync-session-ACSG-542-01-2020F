@@ -1,6 +1,7 @@
 module OpenChain
   class UnderArmourDrawbackProcessor
     
+    DOZENS_LABELS = ["DOZ","DPR"]
     # Link entries to shipments and create drawback import lines, writing change records for each commercial invoice line
     def self.process_entries entries
       processor = UnderArmourDrawbackProcessor.new
@@ -62,7 +63,8 @@ module OpenChain
         [(tariff.entered_value==0),"Cannot make line because entered value is 0."],
         [(tariff.entered_value.nil?),"Cannot make line because entered value is empty."],
         [(tariff.duty_amount.nil?),"Cannot make line because duty amount is empty."],
-        [((tariff.classification_uom_1.upcase=="DOZ" && (tariff.classification_qty_1*12)!=total_units) || (tariff.classification_uom_1.upcase!="DOZ" && total_units!=tariff.classification_qty_1)), "Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units})."]
+        [DOZENS_LABELS.include?(tariff.classification_uom_1.upcase.strip) && !((tariff.classification_qty_1*12)-total_units).between?(0,11),"Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units})."],
+        [(!DOZENS_LABELS.include?(tariff.classification_uom_1.upcase.strip)) && total_units!=tariff.classification_qty_1, "Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units})."]
       ].each do |x|
         if x[0]
           cr.add_message x[1], true

@@ -328,6 +328,26 @@ describe OpenChain::UnderArmourDrawbackProcessor do
         r.should have(1).result
         cr.should_not be_failed
       end
+      it "should make line if shp qty is within 12 less of tariff qty * 12 and uom is DOZ" do
+        @c_tar.update_attributes(:classification_qty_1=>12,:classification_uom_1=>"DOZ")
+        @s_line.update_attributes(:quantity=>140)
+        cr = ChangeRecord.new
+        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
+        r.should have(1).result
+        cr.should_not be_failed
+        PieceSet.first.quantity.should == 140
+      end
+      it "should apply DOZ logic if uom is DPR (dozen pairs)" do
+        @c_tar.update_attributes(:classification_qty_1=>12,:classification_uom_1=>"DPR")
+        @s_line.update_attributes(:quantity=>140)
+        cr = ChangeRecord.new
+        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
+        r.should have(1).result
+        cr.should_not be_failed
+        PieceSet.first.quantity.should == 140
+      end
       it "should not make line if shp qty is equal to tariff qty and tariff uom is DOZ" do
         @c_tar.update_attributes(:classification_uom_1=>"DOZ")
         cr = ChangeRecord.new
