@@ -717,7 +717,8 @@ class ModelField
       [75,:ent_origin_state_code,:origin_state_codes,"Origin State Codes",{:data_type=>:string}],
       [76,:ent_export_state_code,:export_state_codes,"Export State Codes",{:data_type=>:string}],
       [77,:ent_recon_flags,:recon_flags,"Recon Flags",{:data_type=>:string}],
-      [78,:ent_ca_entry_type,:entry_type,"Entry Type (CA)",{:data_type=>:string}]
+      [78,:ent_ca_entry_type,:entry_type,"Entry Type (CA)",{:data_type=>:string}],
+      [79, :ent_broker_invoice_total, :broker_invoice_total, "Total Broker Invoice", {:data_type=>:decimal, :currency=>:usd}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
