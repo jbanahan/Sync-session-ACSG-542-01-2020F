@@ -88,7 +88,7 @@ class EntitySnapshotTest < ActiveSupport::TestCase
       expected_countries.delete cje['model_fields']['class_cntry_name']
       class_children = cje['children']
       assert_equal 2, class_children.size
-      expected_hts = ["1234567890","0987654321"]
+      expected_hts = ["1234567890".hts_format,"0987654321".hts_format]
       class_children.each do |tariff_record_json|
         tje = tariff_record_json['entity']
         assert_equal 'TariffRecord', tje['core_module']

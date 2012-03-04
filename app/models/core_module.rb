@@ -33,7 +33,7 @@ class CoreModule
           master_hash = {'entity'=>{'core_module'=>self.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
           mf_hash = master_hash['entity']['model_fields']
           self.model_fields.values.each do |mf|
-            v = mf.process_export entity 
+            v = mf.process_export entity, nil, true 
             mf_hash[mf.uid] = v unless v.nil? || mf.history_ignore?
           end
           child_mc = module_chain.child self

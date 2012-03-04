@@ -11,7 +11,6 @@ masteruser:
   crypted_password: <%= Authlogic::CryptoProviders::Sha512.encrypt("benrocks" + salt) %>
   persistence_token: <%= Authlogic::Random.hex_token %>
   perishable_token: <%= Authlogic::Random.friendly_token %>
-  tos_accept: <%=Time.now%>
   #end authlogic/functional testing stuff
   order_view: true
   order_edit: true
@@ -51,7 +50,6 @@ adminuser:
   crypted_password: <%= Authlogic::CryptoProviders::Sha512.encrypt("benrocks" + salt) %>
   persistence_token: <%= Authlogic::Random.hex_token %>
   perishable_token: <%= Authlogic::Random.friendly_token %>
-  tos_accept: <%=Time.now%>
   #end authlogic/functional testing stuff
 
 vendoruser:
@@ -67,7 +65,6 @@ vendoruser:
   crypted_password: <%= Authlogic::CryptoProviders::Sha512.encrypt("benrocks" + salt) %>
   persistence_token: <%= Authlogic::Random.hex_token %>
   perishable_token: <%= Authlogic::Random.friendly_token %>
-  tos_accept: <%=Time.now%>
   #end authlogic/functional testing stuff
 
 vendor2user:

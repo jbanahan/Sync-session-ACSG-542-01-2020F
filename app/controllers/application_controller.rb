@@ -360,7 +360,7 @@ class ApplicationController < ActionController::Base
           @results = @results.paginate(:per_page => 20, :page => params[:page])
           rval = []
           cols = @current_search.search_columns.order("rank ASC")
-          GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain).go do |row,obj| 
+          GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain,current_user).go do |row,obj| 
             row_data = []
             row.each do |c|
               row_data << c.to_s

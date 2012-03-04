@@ -11,7 +11,7 @@ class XlsMakerTest < ActiveSupport::TestCase
 
     x = XlsMaker.new
 
-    wb = x.make_from_results [p1,p2], cols, CoreModule::PRODUCT.default_module_chain
+    wb = x.make_from_results [p1,p2], cols, CoreModule::PRODUCT.default_module_chain, User.first
 
     sheet = wb.worksheet 0
 

@@ -19,6 +19,7 @@
   function addSearchCriterion(m,field,operator,value,id) {
     var fields = [];
     <%ModelField.sort_by_label(model_fields).each do |mf| %>
+      <% next unless mf.can_view?(current_user)%>
       fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
     <%end%>
     OCSearch.addSearchCriterion($("#sp_table"),'<%=parent_hash_name%>',fields,m,field,operator,value,id,true);

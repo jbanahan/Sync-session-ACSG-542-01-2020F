@@ -5,7 +5,7 @@
   <%CoreModule::BROKER_INVOICE.model_fields.keys.each do |f|%>
     <%if f==:bi_brok_ref%>
       <% mf = ModelField.find_by_uid(f)%>
-      <%=field_row mf.label, link_to(mf.process_export(@invoice),entry_path(Entry.find_by_broker_reference(mf.process_export(@invoice))))%>
+      <%=field_row mf.label, link_to(mf.process_export(@invoice,current_user),entry_path(@invoice.entry))%>
     <%else%>
       <%=field_view_row @invoice, f%>
     <%end%>

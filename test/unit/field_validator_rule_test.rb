@@ -2,22 +2,6 @@ require 'test_helper'
 
 class FieldValidatorRuleTest < ActiveSupport::TestCase
 
-  test "maximum length" do
-    f = FieldValidatorRule.create!(:model_field_uid=>"ord_ord_num",:maximum_length=>3,:custom_message=>"1010")
-    f = FieldValidatorRule.find f.id #make sure we read from the DB to ensure data types are loaded properly
-    found = f.validate_input "abc"
-    assert found.empty?
-    found = f.validate_input "ab"
-    assert found.empty?
-    found = f.validate_input "abcd"
-    assert found.first==f.custom_message
-    found = f.validate_input "ab  " #should pass because whitespace doesn't count
-    assert found.empty?
-    found = f.validate_input ""
-    assert found.empty?
-    found = f.validate_input nil
-    assert found.empty?
-  end
 
   test "minimum length" do
     f = FieldValidatorRule.create!(:model_field_uid=>"ord_ord_num",:minimum_length=>3,:custom_message=>"1010")

@@ -5,18 +5,18 @@ class XlsMaker
     wb = prep_workbook cols
     sheet = wb.worksheet 0
     row_number = 1
-    GridMaker.new(results,cols,current_search.search_criterions,current_search.module_chain).go do |row,obj|
+    GridMaker.new(results,cols,current_search.search_criterions,current_search.module_chain,current_search.user).go do |row,obj|
       process_row sheet, row_number, row, obj
       row_number += 1
     end
     wb
   end
 
-  def make_from_results results, columns, module_chain, search_criterions=[]
+  def make_from_results results, columns, module_chain, user, search_criterions=[]
     wb = prep_workbook columns
     sheet = wb.worksheet 0
     row_number = 1
-    GridMaker.new(results,columns,search_criterions,module_chain).go do |row,obj|
+    GridMaker.new(results,columns,search_criterions,module_chain,user).go do |row,obj|
       process_row sheet, row_number, row, obj
       row_number += 1
     end

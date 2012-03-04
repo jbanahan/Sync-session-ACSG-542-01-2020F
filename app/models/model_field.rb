@@ -16,7 +16,8 @@ class ModelField
             self.custom? ? obj.get_custom_value_by_id(@custom_id).value : obj.send("#{@field_name}")
           },
           :entity_type_field => false,
-          :history_ignore => false
+          :history_ignore => false,
+          :can_view_lambda => lambda {|u| true}
         }.merge(options)
     @uid = uid
     @core_module = core_module
@@ -25,6 +26,7 @@ class ModelField
     @field_name = field
     @import_lambda = o[:import_lambda]
     @export_lambda = o[:export_lambda]
+    @can_view_lambda = o[:can_view_lambda]
     @custom_id = o[:custom_id]
     @join_statement = o[:join_statement]
     @join_alias = o[:join_alias]
@@ -39,14 +41,14 @@ class ModelField
     @currency = o[:currency]
   end
 
+  # returns true if the given user should be allowed to view this field
+  def can_view? user
+    @can_view_lambda.call user 
+  end
+
   # returns the default currency code for the value as a lowercase symbol (like :usd) or nil
   def currency
     @currency
-  end
-  #returns the value of the process_export method based on the object found within the given piece set (or nil if the object is not found)
-  def export_from_piece_set piece_set
-    obj = self.core_module.object_from_piece_set piece_set
-    obj.nil? ? nil : self.process_export(obj)
   end
   
   #should the entity snapshot system ignore this field when recording an item's history state
@@ -90,7 +92,10 @@ class ModelField
     @import_lambda.call(obj,data)
   end
 
-  def process_export(obj)
+  #show the value for the given field or "HIDDEN" if the user does not have field level permission
+  #if always_view is true, then the user permission check will be skipped
+  def process_export obj, user, always_view = false
+    return "HIDDEN" unless always_view || can_view?(user)
     obj.nil? ? '' : @export_lambda.call(obj)
   end
 
@@ -718,7 +723,7 @@ class ModelField
       [76,:ent_export_state_code,:export_state_codes,"Export State Codes",{:data_type=>:string}],
       [77,:ent_recon_flags,:recon_flags,"Recon Flags",{:data_type=>:string}],
       [78,:ent_ca_entry_type,:entry_type,"Entry Type (CA)",{:data_type=>:string}],
-      [79, :ent_broker_invoice_total, :broker_invoice_total, "Total Broker Invoice", {:data_type=>:decimal, :currency=>:usd}]
+      [79, :ent_broker_invoice_total, :broker_invoice_total, "Total Broker Invoice", {:data_type=>:decimal, :currency=>:usd, :can_view_lambda=>lambda {|u| u.view_broker_invoices?}}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

@@ -3,12 +3,14 @@ require 'test_helper'
 class GridMakerTest < ActiveSupport::TestCase
 
   test "one level grid" do
+
+    u = User.first
     products = [Product.new(:unique_identifier=>"a",:unit_of_measure=>"1"),Product.new(:unique_identifier=>"b",:unit_of_measure=>"2")]
     field_list = [SearchColumn.new(:model_field_uid=>"prod_uom"),SearchColumn.new(:model_field_uid=>"prod_uid")]
     mc = ModuleChain.new
     mc.add CoreModule::PRODUCT
 
-    gm = GridMaker.new(products,field_list,[],mc)
+    gm = GridMaker.new(products,field_list,[],mc,u)
     rc = RowCollector.new
 
     gm.go {|row,obj| rc.add row, obj}
@@ -22,6 +24,7 @@ class GridMakerTest < ActiveSupport::TestCase
   end
 
   test "three levels" do
+    u = User.first
     p1 = Product.create!(:unique_identifier=>"a",:vendor_id => companies(:vendor))
     c1a = p1.classifications.create!(:country_id => countries(:us).id)
     t1ay = c1a.tariff_records.create!(:hts_1 => "1010")
@@ -38,7 +41,7 @@ class GridMakerTest < ActiveSupport::TestCase
     mc.add CoreModule::CLASSIFICATION
     mc.add CoreModule::TARIFF
 
-    gm = GridMaker.new([p1,p2],field_list,[],mc)
+    gm = GridMaker.new([p1,p2],field_list,[],mc,u)
     rc = RowCollector.new
     
     gm.go {|row,obj| rc.add row, obj}
@@ -66,7 +69,7 @@ class GridMakerTest < ActiveSupport::TestCase
     crits = [SearchCriterion.new(:model_field_uid=>"class_cntry_iso",:operator => "eq",:value=>"US")]
     
     rc = RowCollector.new
-    GridMaker.new([p],cols,crits,CoreModule::PRODUCT.default_module_chain).go {|r,o| rc.add r, o}
+    GridMaker.new([p],cols,crits,CoreModule::PRODUCT.default_module_chain,User.first).go {|r,o| rc.add r, o}
 
     assert rc.rows.length == 1, "Should have returned 1 row, returned #{rc.rows.length}"
     assert rc.rows[0][0] == countries(:us).name, "Should have returned \"#{countries(:us).name}\", returned \"#{rc.rows[0][0]}\""

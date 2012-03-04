@@ -12,7 +12,7 @@
     <% @paged_results.each do |rec| %>
     <tr class='hover'>
       <td><%=link_to "View", rec.product%><%if rec.changed_product?%> | <%=link_to "Changes", "#", {:class=>'entity_snapshot_popup', :entity_snapshot_id=>rec.entity_snapshot_id}%><%end%></td>
-      <td><%=ModelField.find_by_uid(:prod_uid).process_export rec.product%></td>
+      <td><%=ModelField.find_by_uid(:prod_uid).process_export rec.product, current_user%></td>
       <td><%= rec.changed_product? ? "Yes" : "No" %></td>
     </tr>
     <% end %>

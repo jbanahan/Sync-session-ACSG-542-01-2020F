@@ -1,6 +1,7 @@
 <%diff.model_fields_changed.each do |mfuid,c|%>
   <div>
   <%mf = ModelField.find_by_uid(mfuid)%>
+  <% next unless mf.can_view? current_user %>
   <% 
     if mf.data_type==:datetime
       c[0] = Time.parse(c[0]) unless c[0].blank? || !c[0].is_a?(String)
@@ -21,7 +22,7 @@
     <% diff.children_added.each do |ca|%>
       <%r = ca.recordable%>
       <% if !ca.blank? %>
-        <h3>Added Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <h3>Added Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
@@ -30,7 +31,7 @@
     <% diff.children_deleted.each do |ca|%>
       <%r = ca.recordable%>
       <% if !ca.blank? %>
-        <h3>Deleted Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <h3>Deleted Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
@@ -39,7 +40,7 @@
     <% diff.children_in_both.each do |ca|%>
       <%r = ca.recordable%>
       <% if !ca.blank? %>
-        <h3>Changed Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r) unless r.nil?%></h3>
+        <h3>Changed Item: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>

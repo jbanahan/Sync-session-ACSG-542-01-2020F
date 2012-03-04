@@ -11,7 +11,7 @@ class CsvMakerTest < ActiveSupport::TestCase
 
     c = CsvMaker.new
 
-    data = c.make_from_results [p1,p2], cols, CoreModule::PRODUCT.default_module_chain
+    data = c.make_from_results [p1,p2], cols, CoreModule::PRODUCT.default_module_chain, User.first
 
     arrays = CSV.parse data
 

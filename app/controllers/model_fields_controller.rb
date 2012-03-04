@@ -1,10 +1,8 @@
 class ModelFieldsController < ApplicationController
   def find_by_module_type
     model_fields = ModelField.sort_by_label(CoreModule.find_by_class_name(params[:module_type]).model_fields_including_children.values)
-    mfs = custom_hash_for_json model_fields
-    respond_to do |format|
-      format.json { render :json => mfs.to_json }
-    end
+    mfs = custom_hash_for_json model_fields.select {|m| m.can_view? current_user}
+    render :json => mfs.to_json 
   end
   
   private

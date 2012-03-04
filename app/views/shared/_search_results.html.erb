@@ -48,7 +48,7 @@
     <tbody class='pagination_wrapper'>
       <% cursor = objects.per_page * (objects.current_page-1) #because will_paginate's first page is 1, not 0 %>
       <% last_object = nil %>
-      <%GridMaker.new(objects,columns,criterions,module_chain).go do |row,obj|%>
+      <%GridMaker.new(objects,columns,criterions,module_chain,current_user).go do |row,obj|%>
         <tr class='hover pagination_item <%=(!last_object.nil? && obj!=last_object) ? "search_row_break" : ""%>'>
           <% if !bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' id='sel_row_#{obj.id}' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
           <td>

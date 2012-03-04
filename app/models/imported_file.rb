@@ -61,12 +61,12 @@ class ImportedFile < ActiveRecord::Base
   #output the data for a file based on the current state of the items created/updated by this file
   def make_items_file search_criterions=[]
     if self.attached_file_name.downcase.ends_with?("xls") 
-      book = XlsMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank asc"), self.core_module.default_module_chain, search_criterions 
+      book = XlsMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank asc"), self.core_module.default_module_chain, self.user, search_criterions 
       spreadsheet = StringIO.new 
       book.write spreadsheet 
       spreadsheet.string
     else
-      CsvMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank ASC"), self.core_module.default_module_chain, search_criterions
+      CsvMaker.new.make_from_results self.last_file_import_finished.changed_objects(search_criterions), self.search_columns.order("rank ASC"), self.core_module.default_module_chain, self.user, search_criterions
     end
   end
 
@@ -122,7 +122,7 @@ class ImportedFile < ActiveRecord::Base
       k = top_criterion.apply module_chain.first.klass
       search_criterions = [top_criterion]
       used_modules.each {|ch| search_criterions << make_search_criterion(ch,key_column_hash[ch],row)}
-      values = k.first.nil? ? [] : GridMaker.single_row(k.first, self.search_columns, search_criterions, module_chain)
+      values = k.first.nil? ? [] : GridMaker.single_row(k.first, self.search_columns, search_criterions, module_chain,self.user)
       self.search_columns.each_with_index do |sc,i|
         if !sc.key_column? && sc.model_field_uid!='_blank'
           v = values[sc.rank]

@@ -2,19 +2,20 @@
 class GridMaker
 
   #returns an array of for the object given in the same order as the given model fields
-  def self.single_row object, model_fields, search_criterions, module_chain
+  def self.single_row object, model_fields, search_criterions, module_chain, user
     r = []
-    GridMaker.new([object],model_fields,search_criterions,module_chain).go {|v,o| r = v}
+    GridMaker.new([object],model_fields,search_criterions,module_chain, user).go {|v,o| r = v}
     r
   end
 
-  def initialize(base_objects,model_field_list,search_criterion_list,module_chain)
+  def initialize(base_objects,model_field_list,search_criterion_list,module_chain,user)
     @objs = base_objects
     @fields = model_field_list
     #if we have more than 2 custom columns, then pre-cache the custom values
     @pre_load_custom_values = (@fields.collect {|f| f.model_field.custom?}).size > 2 
     @chain = module_chain
     @criteria = search_criterion_list
+    @user = user
     load_used_modules
   end
 
@@ -51,7 +52,7 @@ class GridMaker
         if row_obj.nil?
           r << ""
         else
-          r << mf.process_export(row_objects[mf.core_module])
+          r << mf.process_export(row_objects[mf.core_module],@user)
         end
       end
     end
@@ -62,7 +63,7 @@ class GridMaker
     @criteria.each do |c|
       mf = c.find_model_field
       obj = row_objects[mf.core_module]
-      val = mf.process_export(obj)
+      val = mf.process_export(obj,@user)
       if obj.nil? && ["null","nq"].include?(c.operator)
         #ok, just continue to testing the next criterion
       elsif obj.nil? || !c.passes?(val)

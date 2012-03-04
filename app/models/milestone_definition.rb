@@ -47,7 +47,9 @@ class MilestoneDefinition < ActiveRecord::Base
   end
 
   def actual piece_set
-    ModelField.find_by_uid(self.model_field_uid).export_from_piece_set(piece_set)
+    mf = ModelField.find_by_uid(self.model_field_uid)
+    obj = mf.core_module.object_from_piece_set(piece_set)
+    obj.nil? ? nil : mf.process_export(obj,nil,true)
   end
 
   def previous_milestone_model_field_uid

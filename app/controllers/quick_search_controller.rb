@@ -40,7 +40,7 @@ class QuickSearchController < ApplicationController
       search_results.each do |o| 
         row = Hash.new
         row["values"] = model_fields.collect {|m| 
-          v = m.process_export(o)
+          v = m.process_export(o,current_user)
           if !v.blank?
             case m.data_type
             when :date

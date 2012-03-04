@@ -5,7 +5,7 @@
   <table>
   <%CoreModule::SHIPMENT.model_fields.each do |k,mf|%>
     <%if mf.public?%>
-      <%=field_row mf.label, mf.process_export(r)%>
+      <%=field_row mf.label, mf.process_export(r,nil,true)%>
     <%end%>
   <%end%>
   </table>

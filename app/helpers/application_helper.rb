@@ -12,8 +12,8 @@ module ApplicationHelper
   def field_view_row object, model_field_uid, show_prefix=nil
     mf = ModelField.find_by_uid(model_field_uid)
     debugger if mf.nil?
-    show_field = true
-    if !mf.entity_type_field? && object.respond_to?('entity_type_id')
+    show_field = mf.can_view? User.current
+    if show_field && !mf.entity_type_field? && object.respond_to?('entity_type_id')
       e_id = object.entity_type_id
       ids = mf.entity_type_ids
       show_field = false if !e_id.nil? && !ids.include?(e_id)
@@ -29,7 +29,7 @@ module ApplicationHelper
   # model_field can be either an instance of ModelField or a symbol with the model field's uid
   def field_value object, model_field
     mf = model_field.class==ModelField ? model_field : ModelField.find_by_uid(model_field)
-    val = mf.process_export object
+    val = mf.process_export object, User.current
     if val && mf.currency
       case mf.currency
       when :usd

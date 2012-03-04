@@ -9,9 +9,9 @@ class SearchCriterionTest < ActiveSupport::TestCase
   test "test?" do
     p = Product.create!(:unique_identifier=>"uid111")
     sc = SearchCriterion.new(:model_field_uid=>"prod_uid",:operator=>"eq",:value=>p.unique_identifier)
-    assert sc.test?(p)
+    assert sc.test?(p,User.first)
     p = Product.create!(:unique_identifier=>"somethingelse")
-    assert !sc.test?(p)
+    assert !sc.test?(p,User.first)
   end
   test "empty custom value" do
     cd = CustomDefinition.create!(:module_type=>"Product",:label=>"CD1",:data_type=>"date")

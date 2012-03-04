@@ -3,19 +3,18 @@ class CsvMaker
 
   def make_from_search(current_search, results)
     columns = current_search.search_columns.order("rank ASC")
-    generate results, columns, current_search.search_criterions, current_search.module_chain
+    generate results, columns, current_search.search_criterions, current_search.module_chain, current_search.user
   end
 
-  def make_from_results results, columns, module_chain, search_criterions = []
-    generate results, columns, search_criterions, module_chain
+  def make_from_results results, columns, module_chain, user, search_criterions = []
+    generate results, columns, search_criterions, module_chain, user
   end
 
   private
 
-  def generate results, columns, criterions, module_chain
+  def generate results, columns, criterions, module_chain, user
     CSV.generate(prep_opts(columns)) do |csv|
-      gm = GridMaker.new(results,columns,criterions,module_chain)
-      gm.go {|row,obj| csv << row}
+      GridMaker.new(results,columns,criterions,module_chain,user).go {|row,obj| csv << row}
     end
   end
 

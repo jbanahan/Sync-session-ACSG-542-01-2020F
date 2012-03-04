@@ -34,7 +34,7 @@ class LinkedAttachment < ActiveRecord::Base
       field_value_hash = {}
       mfuid_ary.each do |m| 
         unless m.nil?
-          v = ModelField.find_by_uid(m).process_export(a)
+          v = ModelField.find_by_uid(m).process_export(a,nil,true)
           field_value_hash[m.to_sym] = v if v 
         end
       end

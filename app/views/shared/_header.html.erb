@@ -127,7 +127,7 @@
   });
   <% end %>
   <%= yield :javascript%>
-  <% if Rails.env=='developmentXX' || current_user.nil?%>
+  <% if Rails.env=='development' || current_user.nil?%>
     $(document).ready(OpenChain.disableMessagePolling);
   <% end %>
   </script>

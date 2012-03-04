@@ -9,15 +9,15 @@ class ModelFieldTest < ActiveSupport::TestCase
     product = Product.create!(:unique_identifier=>"PID")
 
     mf = ModelField.find_by_uid(:prod_last_changed_by)
-    assert_equal '',  mf.process_export(product)
+    assert_equal '',  mf.process_export(product,u)
 
     product.create_snapshot u
 
-    assert_equal u.username, mf.process_export(product)
+    assert_equal u.username, mf.process_export(product,u)
     
     product.create_snapshot u2
 
-    assert_equal u2.username, mf.process_export(product)
+    assert_equal u2.username, mf.process_export(product,u)
 
     sc = SearchCriterion.new(:model_field_uid=>:prod_last_changed_by,:operator=>'eq',:value=>u2.username)
     r = sc.apply Product
@@ -101,7 +101,7 @@ class ModelFieldTest < ActiveSupport::TestCase
 
     #test the line
     mf = ModelField.find_by_uid(:ordln_ms_state)
-    assert_equal "Overdue", mf.process_export(o_line)
+    assert_equal "Overdue", mf.process_export(o_line,User.first)
 
     sc = SearchCriterion.new(:model_field_uid=>mf.uid,:operator=>"eq",:value=>"Overdue")
     r = sc.apply(OrderLine.where("1=1")) 
@@ -112,7 +112,7 @@ class ModelFieldTest < ActiveSupport::TestCase
 
     #test the order header
     mf_order = ModelField.find_by_uid(:ord_ms_state)
-    assert_equal "Overdue", mf_order.process_export(o)
+    assert_equal "Overdue", mf_order.process_export(o,User.first)
 
     sc = SearchCriterion.new(:model_field_uid=>mf_order.uid,:operator=>'eq',:value=>"Overdue")
     r = sc.apply(Order.where("1=1"))
@@ -123,16 +123,6 @@ class ModelFieldTest < ActiveSupport::TestCase
     assert_nil r.first
   end
 
-  test "export from piece set" do 
-    o = Order.create!(:order_number=>"expfromps",:vendor_id=>companies(:vendor).id)
-    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first,:quantity=>1)
-    ps = o_line.piece_sets.create!(:quantity=>1)
-
-    mf = ModelField.find_by_uid :ord_ord_num
-    assert_equal o.order_number, mf.export_from_piece_set(ps)
-    assert_nil ModelField.find_by_uid(:shp_ref).export_from_piece_set(ps)
-  end
-
   test "classification - component count" do
     p = Product.create!(:unique_identifier=>"pidcc")
     c_us = p.classifications.create!(:country_id => countries(:us).id)
@@ -140,8 +130,8 @@ class ModelFieldTest < ActiveSupport::TestCase
     c_cn.tariff_records.create!(:hts_1=>"1234567890")
     
     mf = ModelField.find_by_uid :class_comp_cnt
-    assert_equal 0, mf.process_export(c_us)
-    assert_equal 1, mf.process_export(c_cn)
+    assert_equal 0, mf.process_export(c_us,User.first)
+    assert_equal 1, mf.process_export(c_cn,User.first)
 
     sc = SearchCriterion.new(:model_field_uid=>mf.uid,:operator=>"eq",:value=>"1")
     r = Classification.where(:product_id=>p.id)
@@ -176,7 +166,7 @@ class ModelFieldTest < ActiveSupport::TestCase
     et = EntityType.create!(:name=>"test entity type")
     mf.process_import p, et.name
     assert p.entity_type == et
-    et_name = mf.process_export p
+    et_name = mf.process_export p,User.first
     assert et_name == et.name
   end
 
@@ -188,7 +178,7 @@ class ModelFieldTest < ActiveSupport::TestCase
     mf_ids = [:prod_system_code,:ord_system_code,:shp_system_code,:sale_system_code,:del_system_code]
     mf_ids.each do |id|
       mf = ModelField.find_by_uid id
-      val = mf.process_export "dummyobject"
+      val = mf.process_export "dummyobject",User.first
       assert val==expected
     end
   end
@@ -202,7 +192,7 @@ class ModelFieldTest < ActiveSupport::TestCase
     mf_ids = [:hts_hts_1_impregs,:hts_hts_2_impregs,:hts_hts_3_impregs,:hts_hts_1_expregs,:hts_hts_2_expregs,:hts_hts_3_expregs]
     mf_ids.each do |id|
       mf = ModelField.find_by_uid id
-      val = mf.process_export t
+      val = mf.process_export t,User.first
       expected = (id.to_s.end_with?("expregs") ? ot.export_regulations : ot.import_regulations)
       assert val==expected, "MFID: #{id}, Expected #{expected}, got #{val}"
     end
@@ -229,7 +219,7 @@ class ModelFieldTest < ActiveSupport::TestCase
     p = Product.first
     c = p.classifications.create!(:country_id=>ca.id)
     t = c.tariff_records.create!(:hts_1=>ot.hts_code,:line_number=>1)
-    r = mf.process_export t
+    r = mf.process_export t,User.first
     assert r == ot.general_preferential_tariff_rate, "Expected #{ot.general_preferential_tariff_rate}, got #{r}"
 
   end
@@ -285,7 +275,7 @@ class ModelFieldTest < ActiveSupport::TestCase
     mf.process_import oline, p.unique_identifier
     oline.save!
     assert oline.errors.empty?, "Order line should not have had any errors. Errors: #{oline.errors.full_messages}"
-    exp = mf.process_export(oline)
+    exp = mf.process_export(oline,User.first)
     assert exp==p.unique_identifier, "Export failed. Expected #{p.unique_identifier}, found: #{exp}"
   end
 

@@ -21,19 +21,19 @@ module OpenChain
 
           row = sheet.row(row_cursor)
           row.push "VFI"
-          row.push val(e,:ent_carrier_code)
-          row.push val(e,:ent_export_date)
-          row.push val(e,:ent_mbols)
-          row.push val(e,:ent_container_nums)
-          row.push val(e,:ent_vendor_names)
-          row.push val(e,:ent_lading_port_name)
-          row.push val(e,:ent_ult_con_name)
-          row.push "#{val(e,:ent_consignee_address_1)} #{val(e,:ent_consignee_address_2)}"
-          row.push val(e,:ent_consignee_city)
-          row.push val(e,:ent_consignee_state)
-          row.push val(e,:ent_unlading_port_name)
-          row.push val(e,:ent_gross_weight)
-          row.push val(e,:ent_container_sizes)
+          row.push val(e,:ent_carrier_code,run_by)
+          row.push val(e,:ent_export_date,run_by)
+          row.push val(e,:ent_mbols,run_by)
+          row.push val(e,:ent_container_nums,run_by)
+          row.push val(e,:ent_vendor_names,run_by)
+          row.push val(e,:ent_lading_port_name,run_by)
+          row.push val(e,:ent_ult_con_name,run_by)
+          row.push "#{val(e,:ent_consignee_address_1,run_by)} #{val(e,:ent_consignee_address_2,run_by)}"
+          row.push val(e,:ent_consignee_city,run_by)
+          row.push val(e,:ent_consignee_state,run_by)
+          row.push val(e,:ent_unlading_port_name,run_by)
+          row.push val(e,:ent_gross_weight,run_by)
+          row.push val(e,:ent_container_sizes,run_by)
           bill_columns.each do |cd|
             if charge_totals[cd]
               row.push << charge_totals[cd].to_f
@@ -67,8 +67,8 @@ module OpenChain
       end
 
       private
-      def self.val obj, uid
-        ModelField.find_by_uid(uid).process_export(obj)
+      def self.val obj, uid, run_by
+        ModelField.find_by_uid(uid).process_export(obj, run_by)
       end
     end
   end

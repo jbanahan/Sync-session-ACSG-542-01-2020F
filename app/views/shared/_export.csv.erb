@@ -22,7 +22,7 @@ x = CSV.generate(opts) do |csv|
           map.each {|m|
             mf = m.find_model_field 
             is_detail = m.find_model_field.core_module!=core_module
-            r << mf.process_export(is_detail ? d : o).to_s 
+            r << mf.process_export(is_detail ? d : o,current_user).to_s 
           }
           csv << r
         end
@@ -31,13 +31,13 @@ x = CSV.generate(opts) do |csv|
         map.each {|m|
           mf = m.find_model_field 
           is_detail = m.find_model_field.core_module!=core_module
-          r << mf.process_export(is_detail ? nil : o).to_s 
+          r << mf.process_export(is_detail ? nil : o,current_user).to_s 
         }
         csv << r
       end  
     else
       r = []
-      map.each {|m| r << m.find_model_field.process_export(o).to_s }
+      map.each {|m| r << m.find_model_field.process_export(o,current_user).to_s }
       csv << r
     end
   end
