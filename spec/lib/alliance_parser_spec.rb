@@ -560,15 +560,18 @@ describe OpenChain::AllianceParser do
     inv.invoice_total.should == @inv_total
   end
   it 'should add invoice with different suffix' do
+    @inv_total = BigDecimal("10.00")
     entry = @make_entry_lambda.call
     inv_1 = @make_invoice_lambda.call
     @inv_suffix = '02'
+    @inv_total = BigDecimal("20.00")
     inv_2 = @make_invoice_lambda.call
     OpenChain::AllianceParser.parse [entry,inv_1,inv_2].join("\n")
     ent = Entry.first
     ent.broker_invoices.should have(2).invoices
     ent.broker_invoices.where(:suffix=>'01').should have(1).invoice
     ent.broker_invoices.where(:suffix=>'02').should have(1).invoice
+    ent.broker_invoice_total.should == BigDecimal("30.00")
   end
   it 'should create invoice lines' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
