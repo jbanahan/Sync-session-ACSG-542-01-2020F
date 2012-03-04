@@ -4,7 +4,7 @@ require 'open_chain/alliance_parser'
 require 'open_chain/fenix_parser'
 module OpenChain
   class IntegrationClient
-    def self.go system_code, shutdown_if_not_schedule_server = false
+    def self.go system_code, shutdown_if_not_schedule_server = false, sleep_time = 5
       sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
       q = sqs.queues.create system_code
       running = true
@@ -12,11 +12,9 @@ module OpenChain
         begin
           in_memory_queue = []
           if ScheduleServer.active_schedule_server?
-            while q.visible_messages > 0
-              q.receive_message do |m|
-                in_memory_queue << m
-                m.visibility_timeout = 300 # 5 minutes
-              end
+            IntegrationClient.messages(q) do |m|
+              in_memory_queue << m
+              m.visibility_timeout = 300 # 5 minutes
             end
           elsif shutdown_if_not_schedule_server
             running = false
@@ -37,7 +35,16 @@ module OpenChain
         rescue
           $!.log_me
         end
-        sleep 5
+        sleep sleep_time
+      end
+    end
+
+    # get the messages from the SQS queue
+    def self.messages q
+      while q.visible_messages > 0
+        q.receive_message do |m|
+          yield m
+        end
       end
     end
   end
