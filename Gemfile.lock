@@ -51,8 +51,8 @@ GEM
       abstract (>= 1.0.0)
     exception_notification_rails3 (1.2.0)
     excon (0.9.4)
-    factory_girl (2.3.2)
-      activesupport
+    factory_girl (2.5.2)
+      activesupport (>= 2.3.9)
     ffi (1.0.11)
     ffi-rzmq (0.8.2)
     fog (1.1.2)
@@ -180,7 +180,7 @@ DEPENDENCIES
   dalli (= 1.1.4)
   delayed_job (= 2.1.4)
   exception_notification_rails3
-  factory_girl
+  factory_girl (= 2.5.2)
   ffi (~> 1.0.9)
   ffi-rzmq (~> 0.8.0)
   fog

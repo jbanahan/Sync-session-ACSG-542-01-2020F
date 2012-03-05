@@ -98,7 +98,7 @@ Factory.define :search_setup do |s|
   s.association :user
 end
 Factory.define :custom_definition do |c|
-  c.label "customdef"
+  c.sequence(:label)
   c.data_type "string"
   c.module_type "Product"
 end

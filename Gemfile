@@ -22,7 +22,7 @@ gem 'ffi', '~> 1.0.9'
 gem 'ffi-rzmq', '~> 0.8.0'
 gem 'postmark-rails', '0.4.1'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
-gem 'factory_girl', :group=>[:development,:test]
+gem 'factory_girl', '2.5.2', :group=>[:development,:test]
 group :test do
   gem 'spork', '0.9.0'
 #  gem 'ruby-prof' - put this back after we go to Ruby 3.1 (see Rails commit 25288)
