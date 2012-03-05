@@ -95,8 +95,8 @@ module OpenChain
             tr = classification.tariff_records.first
             next unless tr
             x.set_cell(0,n,35+i,tr.hts_1.blank? ? '' : tr.hts_1.hts_format)
-            x.set_cell(0,n,48+i,tr.hts_2.blank? ? '' : tr.hts_1.hts_format)
-            x.set_cell(0,n,61+i,tr.hts_3.blank? ? '' : tr.hts_1.hts_format)
+            x.set_cell(0,n,48+i,tr.hts_2.blank? ? '' : tr.hts_2.hts_format)
+            x.set_cell(0,n,61+i,tr.hts_3.blank? ? '' : tr.hts_3.hts_format)
           end
         end
         target = "#{MasterSetup.get.uuid}/updated_msl_plus_files/#{user.id}/#{Time.now.to_i}.#{@custom_file.attached_file_name.split('.').last}" 
