@@ -97,6 +97,8 @@ describe OpenChain::FenixParser do
     ent.po_numbers.should == @header_po
     ent.container_numbers.should == @container
     ent.vendor_names.should == @vendor_name
+    ent.total_invoiced_value.should == @line_value
+    ent.total_duty.should == @duty_amount
     ent.time_to_process.should be > 0
     ent.source_system.should == OpenChain::FenixParser::SOURCE_CODE
 
@@ -108,6 +110,7 @@ describe OpenChain::FenixParser do
     ci.vendor_name.should == @vendor_name
     ci.currency.should == @currency
     ci.exchange_rate.should == @exchange_rate
+    ci.invoice_value.should == @line_value
 
     ci.commercial_invoice_lines.should have(1).line
     line = ci.commercial_invoice_lines.first
@@ -128,6 +131,7 @@ describe OpenChain::FenixParser do
     tar.classification_qty_1.should == @hts_qty
     tar.classification_uom_1.should == @hts_uom
     tar.value_for_duty_code.should == @val_for_duty
+    tar.duty_amount.should == @duty_amount
     tar.entered_value.should == @entered_value
     tar.gst_rate_code.should == @gst_rate_code
     tar.gst_amount.should == @gst_amount
@@ -203,6 +207,8 @@ describe OpenChain::FenixParser do
           @country_origin_code = inv[:org] if inv[:org]
           @country_export_code = inv[:exp] if inv[:exp]
           @comm_qty = inv[:cq] if inv[:cq]
+          @line_value = inv[:line_val] if inv[:line_val]
+          @duty_amount = inv[:duty] if inv[:duty]
           data += @entry_lambda.call+"\r\n"
         end
         data.strip
@@ -235,6 +241,30 @@ describe OpenChain::FenixParser do
       ent.po_numbers.should == "a\n b"
     end
     context 'accumulate fields' do
+      it 'invoice value - different invoices' do
+        ['19.10','20.03'].each_with_index {|b,i| @invoices[i][:line_val]=b}
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        ent = Entry.find_by_broker_reference(@file_number)
+        ent.total_invoiced_value.should == BigDecimal('39.13')
+        invoice_vals = ent.commercial_invoices.collect {|i| i.invoice_value}
+        invoice_vals.should == [BigDecimal('19.10'),BigDecimal('20.03')]
+      end
+      it 'invoice value - same invoices' do
+        ['19.10','20.03'].each_with_index {|b,i| 
+          @invoices[i][:line_val]=b
+          @invoices[i][:seq]=1
+        }
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        ent = Entry.find_by_broker_reference(@file_number)
+        ent.total_invoiced_value.should == BigDecimal('39.13')
+        ent.should have(1).commercial_invoices
+        ent.commercial_invoices.first.invoice_value.should == BigDecimal('39.13')
+      end
+      it 'duty amount' do
+        ['9.10','10.10'].each_with_index {|b,i| @invoices[i][:duty]=b}
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).total_duty.should == BigDecimal('19.20')
+      end
       it 'units' do
         ['50.12','18.15'].each_with_index {|b,i| @invoices[i][:cq]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call

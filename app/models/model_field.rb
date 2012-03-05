@@ -305,7 +305,16 @@ class ModelField
     id_counter = rank_start
     r = []
     (1..3).each do |i|
-      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}"]
+      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}",{
+        :export_lambda => lambda {|t| 
+          h = case i
+            when 1 then t.hts_1
+            when 2 then t.hts_2
+            when 3 then t.hts_3
+          end
+          h.blank? ? "" : h.hts_format
+        }
+      }]
       id_counter += 1
       r << [id_counter,"#{uid_prefix}_hts_#{i}_schedb".to_sym,"schedule_b_#{i}".to_sym,"Schedule B Code #{i}"] if us && us.import_location #make sure us exists so test fixtures pass
       id_counter += 1
@@ -704,10 +713,11 @@ class ModelField
       [71,:ent_pars_reject_date,:pars_reject_date,"PARS Reject Date",{:data_type=>:datetime}],
       [72,:ent_cadex_accept_date,:cadex_accept_date,"CADEX Accept Date",{:data_type=>:datetime}],
       [73,:ent_cadex_sent_date,:cadex_sent_date,"CADEX Sent Date",{:data_type=>:datetime}],
-      [74,:ent_us_exit_port_code,:us_exit_port_code,"US Exit Port Code (CA)",{:data_type=>:string}],
+      [74,:ent_us_exit_port_code,:us_exit_port_code,"US Exit Port Code",{:data_type=>:string}],
       [75,:ent_origin_state_code,:origin_state_codes,"Origin State Codes",{:data_type=>:string}],
       [76,:ent_export_state_code,:export_state_codes,"Export State Codes",{:data_type=>:string}],
-      [77,:ent_recon_flags,:recon_flags,"Recon Flags",{:data_type=>:string}]
+      [77,:ent_recon_flags,:recon_flags,"Recon Flags",{:data_type=>:string}],
+      [78,:ent_ca_entry_type,:entry_type,"Entry Type (CA)",{:data_type=>:string}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -720,7 +730,8 @@ class ModelField
       [7,:ci_gross_weight,:gross_weight,"Gross Weight",{:data_type=>:integer}],
       [8,:ci_total_charges,:total_charges,"Charges",{:data_type=>:decimal,:currency=>:usd}],
       [9,:ci_invoice_date,:invoice_date,"Invoice Date",{:data_type=>:date}],
-      [10,:ci_mfid,:mfid,"MFID",{:data_type=>:string}]
+      [10,:ci_mfid,:mfid,"MID",{:data_type=>:string}],
+      [11,:ci_exchange_rate,:exchange_rate,"Exchange Rate",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
       [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
@@ -739,7 +750,7 @@ class ModelField
       [17,:ent_unit_price,:unit_price,"Unit Price",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
-      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+      [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
       [2,:cit_duty_amount,:duty_amount,"Duty",{:data_type=>:decimal}],
       [3,:cit_entered_value,:entered_value,"Entered Value",{:data_type=>:decimal}],
       [4,:cit_spi_primary,:spi_primary,"SPI - Primary",{:data_type=>:string}],
@@ -873,7 +884,8 @@ class ModelField
         :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
         :data_type => :integer
       }],
-      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}]
+      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}],
+      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime}]
     ]
     add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")

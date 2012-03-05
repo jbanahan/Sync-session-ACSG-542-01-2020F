@@ -44,12 +44,6 @@ describe ImportedFilesController do
       response.should be_redirect
       flash[:errors].should == [ "You must include a \"To\" address." ]
     end
-    it 'should copy me, if checked' do
-      @params[:cc] = 'yes'
-      @file.should_receive(:delay).and_return(@file)
-      @file.should_receive(:email_updated_file).with(@u,@to_address,@u.email,@subject,@body,{})
-      post :email_file, @params
-    end
     it 'should not allow if you cannot view the file' do
       @file.should_not_receive(:email_updated_file)
       @file.should_receive(:can_view?).with(@u).and_return(false)

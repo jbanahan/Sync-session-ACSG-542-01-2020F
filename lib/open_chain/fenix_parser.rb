@@ -45,7 +45,9 @@ module OpenChain
         process_invoice_line x
       end
       detail_pos = accumulated_string(:po_number)
+      @entry.total_invoiced_value = @total_invoice_val
       @entry.total_units = @total_units
+      @entry.total_duty = @total_duty
       @entry.po_numbers = detail_pos unless detail_pos.blank?
       @entry.master_bills_of_lading = accumulated_string(:bol)
       @entry.container_numbers = accumulated_string(:cont)
@@ -54,6 +56,11 @@ module OpenChain
       @entry.export_country_codes = accumulated_string(:exp_country)
       @entry.export_state_codes = accumulated_string(:exp_state)
       @entry.vendor_names = accumulated_string(:vend)
+
+      @commercial_invoices.each do |inv_num, inv|
+        inv.invoice_value = @ci_invoice_val[inv_num]
+      end
+
       @entry.save!
       #write time to process without reprocessing hooks
       @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
@@ -104,6 +111,8 @@ module OpenChain
       @commercial_invoices[line[15]] ||= @entry.commercial_invoices.build
       @ci_line_count ||= {}
       @ci_line_count[line[15]] ||= 0
+      @ci_invoice_val ||= {}
+      @ci_invoice_val[line[15]] ||= BigDecimal('0.00')
       ci = @commercial_invoices[line[15]]
       ci.invoice_number = str_val(line[16])
       ci.invoice_date = parse_date(line[18])
@@ -126,6 +135,11 @@ module OpenChain
       @total_units += inv_ln.units if inv_ln.units
       inv_ln.unit_of_measure = str_val(line[38])
       inv_ln.value = dec_val(line[40])
+      unless inv_ln.value.nil?
+        @ci_invoice_val[line[15]] += inv_ln.value 
+        @total_invoice_val ||= BigDecimal('0.00')
+        @total_invoice_val += inv_ln.value
+      end
       accumulate_string :po_number, inv_ln.po_number unless inv_ln.po_number.blank?
       accumulate_string :bol, str_val(line[13])
       accumulate_string :cont, str_val(line[8])
@@ -150,6 +164,8 @@ module OpenChain
       t.value_for_duty_code = str_val(line[33])
       t.entered_value = dec_val(line[45])
       t.duty_amount = dec_val(line[47])
+      @total_duty ||= BigDecimal('0.00')
+      @total_duty += t.duty_amount if t.duty_amount
       t.gst_rate_code = str_val(line[48])
       t.gst_amount = dec_val(line[49])
       t.sima_amount = dec_val(line[50])

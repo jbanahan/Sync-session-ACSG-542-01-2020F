@@ -83,12 +83,11 @@ class ImportedFilesController < ApplicationController
         error_redirect "You must include a \"To\" address." 
         return
       end
-      cc_address = params[:cc] ? current_user.email : ""
       subject = params[:subject].blank? ? "[chain.io] #{@file.core_module.label} data." : params[:subject]
       body = params[:body].blank? ? "#{current_user.full_name} has sent you the attached file from chain.io." : params[:body]
       opts = {}
       opts[:extra_country_ids] = params[:extra_countries] unless params[:extra_countries].blank?
-      f.delay.email_updated_file current_user, params[:to], cc_address, subject, body, opts
+      f.delay.email_updated_file current_user, params[:to], "", subject, body, opts
       add_flash :notices, "The file will be processed and sent shortly."
       redirect_to f
     }

@@ -12,11 +12,11 @@ class CustomValue < ActiveRecord::Base
   default_scope includes(:custom_definition)
 
   def self.cached_find_unique custom_definition_id, customizable
-    c = CACHE.get unique_cache_key(custom_definition_id, customizable.id, customizable.class)
-    if c.nil?
+    #c = CACHE.get unique_cache_key(custom_definition_id, customizable.id, customizable.class)
+    #if c.nil?
       c = customizable.custom_values.where(:custom_definition_id=>custom_definition_id).first
-      c.set_cache unless c.nil?
-    end
+     # c.set_cache unless c.nil?
+    #end
     return c
   end
 
@@ -34,10 +34,12 @@ class CustomValue < ActiveRecord::Base
   end
   
   def set_cache
+=begin
     if !self.id.nil? && !self.custom_definition_id.nil? && (!self.customizable_id.nil? && !self.customizable_type.nil?)
       to_set = self.destroyed? ? nil : self
       CACHE.set CustomValue.unique_cache_key(self.custom_definition_id,self.customizable_id,self.customizable_type), to_set unless self.id.nil?
     end
+=end
   end
 
   def touch_parents_changed_at #overriden to find core module differently

@@ -19,7 +19,6 @@ Factory.define :user do |f|
   f.password_confirmation { |u| u.password }  
   f.sequence(:email) { |n| "foo#{n}@example.com" }  
   f.association :company
-  f.tos_accept Time.now
 end  
 Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
