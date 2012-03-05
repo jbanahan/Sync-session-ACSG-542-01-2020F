@@ -31,6 +31,13 @@ Spork.prefork do
     # examples within a transaction, remove the following line or assign false
     # instead of true.
     config.use_transactional_fixtures = true
+    config.before(:all) do
+      DeferredGarbageCollection.start
+    end
+
+    config.after(:all) do
+      DeferredGarbageCollection.reconsider
+    end
   end
 end
 
@@ -39,3 +46,4 @@ Spork.each_run do
   Dir[Rails.root.join("lib/**/*.rb")].each {|f| load f}
   ModelField.reload
 end
+
