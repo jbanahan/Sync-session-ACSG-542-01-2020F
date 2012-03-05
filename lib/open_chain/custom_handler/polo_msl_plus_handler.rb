@@ -2,7 +2,14 @@ require 'open_chain/xl_client'
 module OpenChain
   module CustomHandler
     class PoloMslPlusHandler
-      
+      CUSTOM_DEFINITIONS = {
+        'Board Number' => :board,
+        'Season' => :season,
+        'Fiber Content %s' => :fiber,
+        'GCC Description' => :gcc,
+        'MSL+ HTS Description' => :msl_hts
+      }
+
       def initialize(custom_file)
         @custom_file = custom_file
       end
@@ -15,6 +22,12 @@ module OpenChain
         errors = []
         @custom_file.update_attributes(:module_type=>CoreModule::PRODUCT.class_name)
         @custom_file.custom_file_records.delete_all #not worrying about callbacks here
+
+        cdefs = {}
+        CUSTOM_DEFINITIONS.each do |label,sym|
+          cdefs[sym] = CustomDefinition.find_or_create_by_module_type_and_label('Product',label,:data_type=>'string')
+        end
+        
         x = OpenChain::XLClient.new(@custom_file.attached.path)
         last_row_number = x.last_row_number 0
         (4..last_row_number).each do |n|
@@ -46,11 +59,9 @@ module OpenChain
               p = Product.find_or_create_by_unique_identifier(cell_map[:style].strip)
               p.name = cell_map[:name] if p.name.blank?
               p.save!
-              set_custom_value p, 'Board Number', cell_map[:board]
-              set_custom_value p, 'Season', cell_map[:season]
-              set_custom_value p, 'Fiber Content %s', cell_map[:fiber]
-              set_custom_value p, 'GCC Description', cell_map[:gcc]
-              set_custom_value p, 'MSL+ HTS Description', cell_map[:msl_hts]
+              cdefs.each do |sym,cd|
+                p.update_custom_value! cd, cell_map[sym] if p.get_custom_value(cd).value.blank?
+              end
               @custom_file.custom_file_records.create!(:linked_object=>p)
               p.create_snapshot user
             end
@@ -119,26 +130,6 @@ module OpenChain
           end
         end
         false
-      end
-      def set_custom_value object, field_label, value
-        klass = object.class.to_s
-        @defs ||= {}
-        if @defs[klass].nil?
-          @defs[klass] = CustomDefinition.cached_find_by_module_type klass
-        end
-        cd = nil
-        @defs[klass].each do |d|
-          if d.label == field_label
-            cd = d
-            break
-          end
-        end
-        raise "Custom definition could not be found for label \"#{field_label}\"" if cd.nil?
-        cv = object.get_custom_value(cd)
-        if cv.value.blank?
-          cv.value = value
-          cv.save!
-        end
       end
     end
   end

@@ -61,10 +61,13 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
           sym_label = {:board=>"Board Number",:season=>"Season",:fiber=>"Fiber Content %s",:gcc=>"GCC Description",:msl_hts=>"MSL+ HTS Description"}
           sym_label.each {|k,v| p.get_custom_value(@cd_hash[v]).value.should == d[k]}
         end
-      end
-      it 'should set core_module in custom_file' do
-        OpenChain::CustomHandler::PoloMslPlusHandler.new(@cf).process(@u)
         CustomFile.find(@cf.id).module_type.should == "Product"
+        records = @cf.custom_file_records
+        records.size.should == 2
+        p = Product.all
+        records.each do |r|
+          p.should include(r.linked_object)
+        end
       end
       it 'should update fields in existing style that are blank' do
         p = Factory(:product,:unique_identifier=>@data[0][:style])
@@ -83,15 +86,6 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
         p.name.should == 'something else'
         p.get_custom_value(@cd_hash["Board Number"]).value.should == 'another board'
         p.get_custom_value(@cd_hash["Season"]).value.should == @data[0][:season]
-      end
-      it 'should write custom file records' do
-        OpenChain::CustomHandler::PoloMslPlusHandler.new(@cf).process(@u)
-        records = @cf.custom_file_records
-        records.size.should == 2
-        p = Product.all
-        records.each do |r|
-          p.should include(r.linked_object)
-        end
       end
       it 'should clear old custom file records' do
         o = Factory(:order)
