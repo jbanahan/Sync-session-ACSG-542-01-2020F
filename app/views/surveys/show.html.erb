@@ -1,0 +1,16 @@
+<%content_for :action_bar do%>
+  <% unless @survey.locked? %>
+    <button class='btn_link' link_to='<%=edit_survey_path @survey%>' key_map='e'>Edit</button>
+  <% end%>
+<%end%>
+<h1><%=@survey.name%></h1>
+
+<h2>Questions</h2>
+<table class='detail_table'>
+  <thead><tr><th>Question</th></tr></thead>
+  <tbody>
+    <%@survey.questions.each do |q|%>
+      <tr><td><%=q.content%></td></tr>
+    <%end%>
+  </tbody>
+</table>

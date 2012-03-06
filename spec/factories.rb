@@ -155,3 +155,15 @@ Factory.define :email_attachment do |f|
   f.email "ea@example.com"
   f.after_create { |ea| ea.attachment = Factory(:attachment, :attachable => ea); ea.save }
 end
+Factory.define :survey do |f|
+  f.association :company
+  f.association :created_by, :factory=>:user
+end
+Factory.define :question do |f|
+  f.association :survey
+  f.content "My question content"
+end
+Factory.define :survey_response do |f|
+  f.association :user
+  f.association :survey
+end

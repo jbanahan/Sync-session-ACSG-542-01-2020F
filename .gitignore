@@ -11,3 +11,4 @@ coverage/*
 coverage.data
 coverage/*
 .rvmrc*
+.autotest*

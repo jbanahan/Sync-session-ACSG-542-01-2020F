@@ -61,6 +61,12 @@ class Company < ActiveRecord::Base
 
 
   #permissions
+  def view_surveys?
+    true
+  end
+  def edit_surveys?
+    true
+  end
   def view_broker_invoices?
     return master_setup.broker_invoice_enabled && (self.master? || self.importer?)
   end

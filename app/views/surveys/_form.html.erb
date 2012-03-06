@@ -1,0 +1,58 @@
+<% content_for :javascript do%>
+  var OCSurvey = (function() {
+    return {
+      addQuestion: function(id,content,choices) {
+        var mid = id ? id : new Date().getTime();
+        var h = "<div class='question_box' id='q-"+mid+"'>";
+        if(id) {
+          h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][id]' value='"+mid+"' />";
+        }
+        h += "Question Body:<br/><textarea class='q_area' name='survey[questions_attributes]["+mid+"][content]'>"+content+"</textarea><br/>";
+        h += "Possible Answers: (put one answer on each line)<br/><textarea class='q_area' name='survey[questions_attributes]["+mid+"][choices]'>"+choices+"</textarea>";
+        h += "<div style='text-align:right;'><a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>"
+        h += "</div>";
+        $("#questions").append(h);
+      }
+    }
+  })();
+  $(function() {
+    <%@survey.questions.each do |q|%>
+    OCSurvey.addQuestion(<%=q.id%>,"<%=q.content.gsub("\n",'\n').gsub("\r","")%>","<%=q.choices.gsub("\n",'\n').gsub("\r",'')%>");
+    <%end%>
+    <%if @survey.questions.empty?%>
+    OCSurvey.addQuestion(null,"Your first question goes here...","");
+    <%end%>
+    $('#btn_add_q').click(function() {
+      OCSurvey.addQuestion(null,"","");
+    });
+    $("a.del_ques").live('click',function(evt) {
+      evt.preventDefault();
+      var qid = $(this).attr('qid');
+      var qb = $("#q-"+qid);
+      qb.append("<input type='hidden' name='survey[questions_attributes]["+qid+"][_destroy]' value='1' />");
+      qb.slideUp('fast');
+    });
+  });
+<% end %>
+<style>
+.question_box {
+  width: 98%;
+}
+.q_area {
+  width: 100%;
+}
+</style>
+<%content_for :action_bar do %>
+<button class='form_to' form_id="frm_svy">Save</button>
+<button class='btn_link' link_to='<%=surveys_path%>'>Back</button>
+<% end %>
+<%form_for @survey, :html=>{ :id=>'frm_svy' } do |f|%>
+  Name: <%=f.text_field :name%>
+  <h2>Email Setup</h2>
+  <%=f.text_field :email_subject%><br/>
+  <%=f.text_area :email_body%>
+  <hr />
+  <div id='questions'>
+  </div>
+<%end%>
+<button id='btn_add_q'>Add Question</button>

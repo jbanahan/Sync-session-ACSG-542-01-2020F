@@ -1,0 +1,8 @@
+<%@surveys.each do |s|%>
+<p><%=link_to "view", s%>
+<%if current_user.view_surveys? && !s.locked?%>
+  | <%=link_to "edit", edit_survey_path(s)%>
+<%end%>
+ - <%=s.name%>
+</p>
+<%end%>
