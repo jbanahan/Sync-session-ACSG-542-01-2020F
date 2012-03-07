@@ -1,6 +1,6 @@
 <h1>Surveys</h1>
 <%@survey_responses.each do |s|%>
-  <p><% link_to s.survey.name, s%></p>
+  <p><%= link_to s.survey.name, s%></p>
 <%end%>
 <%if @survey_responses.empty?%>
   <p><em>You do not have any surveys assigned.</em></p>

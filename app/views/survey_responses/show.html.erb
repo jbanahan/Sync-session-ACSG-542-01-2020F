@@ -1,1 +1,27 @@
-<h1><%=@sr.survey.name%></h1>
+<% content_for :action_bar do %>
+  <button class='form_to' form_id="frm_sr">Save</button>
+<% end %>
+
+<%form_for @sr, :html=>{:id=>'frm_sr'} do |f|%>
+  <h1><%=@sr.survey.name%></h1>
+  <%f.fields_for :answers do |a|%>
+    <%q = a.object.question%>
+    <div class='question'>
+      <h3><%=q.content%></h3>
+      <p>Answer:&nbsp;
+        <% if @respond_mode %>
+          <%=a.select :choice, q.choices.lines, {:include_blank=>true}%>
+        <% else %>
+          <%=a.object.choice%>
+        <% end %>
+      </p>
+      <p>
+      <% if @rate_mode %>
+        Rating: <%=a.select :rating, ["Needs Improvement","Accepted"], {:include_blank=>true} %>
+      <% elsif !a.object.rating.blank? %>
+        Rated: <%=a.object.rating%>
+      <% end %>
+      </p>
+    </div>
+  <%end%>
+<%end%>
