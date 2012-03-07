@@ -69,14 +69,6 @@ module OpenChain
         iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR']
         countries = []
         iso_codes.each {|c| countries << Country.where(:iso_code=>c).first}
-        fiber_cd = CustomDefinition.where(:label => "Fiber Content %s").first
-        raise "Cannot find custom field with description \"Fiber Content %s\"" unless fiber_cd
-        width_cd = CustomDefinition.where(:label=>"Width (cm)").first
-        raise "Cannot find custom field with description \"Width (cm)\"" unless width_cd
-        length_cd = CustomDefinition.where(:label=>"Length (cm)").first
-        raise "Cannot find custom field with description \"Length (cm)\"" unless length_cd
-        height_cd = CustomDefinition.where(:label=>"Height (cm)").first
-        raise "Cannot find custom field with description \"Height (cm)\"" unless height_cd
         last_row_number = x.last_row_number 0
         (4..last_row_number).each do |n|
           style = x.get_cell(0,n,11)['cell']['value']
@@ -84,11 +76,6 @@ module OpenChain
           p = Product.where(:unique_identifier=>style.strip).first
           next unless p #skip if product not found
           x.set_cell(0,n,29,mp1_value?(p) ? 'YES' : '')
-          x.set_cell(0,n,44,p.name)
-          x.set_cell(0,n,45,p.get_custom_value(fiber_cd).value)
-          x.set_cell(0,n,119,p.get_custom_value(height_cd).value)
-          x.set_cell(0,n,120,p.get_custom_value(length_cd).value)
-          x.set_cell(0,n,121,p.get_custom_value(width_cd).value)
           countries.each_with_index do |c,i|
             classification = p.classifications.where(:country_id=>c.id).first
             next unless classification

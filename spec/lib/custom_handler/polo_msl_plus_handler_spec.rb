@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
         gcc_desc = 'gcc'
         iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR']
         countries = {}
-        expected_writes = [[29,'YES'],[44,name],[45,fiber],[119,height],[120,length],[121,width]]
+        expected_writes = [[29,'YES']]
         hts_1_prefix = '1654611'
         hts_2_prefix = '5681351'
         hts_3_prefix = '5684888'
