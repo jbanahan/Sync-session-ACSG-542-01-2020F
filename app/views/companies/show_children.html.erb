@@ -1,0 +1,31 @@
+<% content_for :javascript do %>
+$(function() {
+  OpenChain.link_selects("#companies")
+  $("#frm_cmp").submit(function() {
+    $("#selected_companies").find("option").each(function(idx) {
+      $("#frm_cmp").append("<input type='hidden' name='selected["+idx+"]' value='"+$(this).val()+"'/>");
+    });
+    return true;
+  });
+});
+<% end %>
+<% content_for :action_bar do %>
+  <button class='form_to' form_id="frm_cmp">Save</button>
+  <button class='btn_link' link_to='<%=company_path(@company)%>'>Back</button>
+<% end %>
+<h1>Companies linked to <%=@company.name%></h1>
+<%form_for @company, :url=>update_children_company_path(@company), :html=>{:id=>'frm_cmp', :method=>"post"} do |f|%>
+  <table id='companies' class='detail_table' style='width:0%'>
+    <thead><tr><th>Not Linked</th><th>Linked</th></thead>
+    <tbody><tr><td>
+      <select size='15' multiple='multiple' class='unselected'>
+      <%=options_from_collection_for_select @company.unlinked_companies.order('companies.name ASC'), :id, :name%>
+      </select>
+    </td><td>
+      <select size='15' multiple='multiple' class='selected' id='selected_companies'>
+      <%=options_from_collection_for_select @company.linked_companies.order('companies.name ASC'), :id, :name%>
+      </select>
+    </td></tr>
+    <tr><td><a href='#' class='select'>Link</a></td><td><a href='#' class='unselect'>Remove</a></td></tr>
+  </table>
+<%end%>

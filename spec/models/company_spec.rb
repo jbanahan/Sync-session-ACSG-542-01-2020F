@@ -1,6 +1,26 @@
 require 'spec_helper'
 
 describe Company do
+  describe 'linked_companies' do
+    it 'should create and retrieve child companies' do
+      parent = Factory(:company)
+      child = Factory(:company)
+      parent.linked_companies.push child
+      parent = Company.find parent.id
+      parent.linked_companies.should have(1).company
+      parent.linked_companies.first.should == child
+    end
+  end
+  describe 'unlinked_companies' do
+    it 'should retrieve companies that are NOT linked to this one' do
+      c = Factory(:company)
+      linked_c = Factory(:company)
+      c.linked_companies << linked_c
+      unlinked_c = Factory(:company)
+      c.unlinked_companies.should include(unlinked_c) #can't check equals because initializer creates extra "My Company" company
+      c.unlinked_companies.should_not include(linked_c)
+    end
+  end
   context 'security' do
     before :each do
       MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)
