@@ -34,5 +34,23 @@ describe ModelField do
         ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u).should be_false
       end
     end
+    context "product last_changed_by" do
+      it "should apply search criterion properly" do
+        c = Factory(:company,:master=>true)
+        p = Factory(:product)
+        p2 = Factory(:product)
+        u1 = Factory(:user,:username=>'abcdef',:company=>c)
+        u2 = Factory(:user,:username=>'ghijkl',:company=>c)
+        p.create_snapshot u1
+        p.create_snapshot u2
+        p2.create_snapshot u1
+        ss = Factory(:search_setup,:module_type=>'Product',:user=>u1)
+        ss.search_criterions.create!(:model_field_uid=>'prod_last_changed_by',
+          :operator=>'sw',:value=>'ghi')
+        found = ss.search.to_a
+        found.should have(1).product
+        found.first.should == p
+      end
+    end
   end
 end

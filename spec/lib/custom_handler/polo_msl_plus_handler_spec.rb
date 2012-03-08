@@ -122,16 +122,16 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
         gcc_desc = 'gcc'
         iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR']
         countries = {}
-        expected_writes = [[29,'YES'],[44,name],[45,fiber],[119,height],[120,length],[121,width]]
+        expected_writes = [[29,'YES']]
         hts_1_prefix = '1654611'
         hts_2_prefix = '5681351'
         hts_3_prefix = '5684888'
         iso_codes.each_with_index do |c,i| 
           countries[c] = {:country=>Factory(:country,:iso_code=>c),
             :hts_1=>"#{hts_1_prefix}#{i}",:hts_2=>"#{hts_2_prefix}#{i}",:hts_3=>"#{hts_3_prefix}#{i}"}
-          expected_writes << [35+i,"#{hts_1_prefix}#{i}"]
-          expected_writes << [48+i,"#{hts_2_prefix}#{i}"]
-          expected_writes << [61+i,"#{hts_3_prefix}#{i}"]
+          expected_writes << [35+i,"#{hts_1_prefix}#{i}".hts_format]
+          expected_writes << [48+i,"#{hts_2_prefix}#{i}".hts_format]
+          expected_writes << [61+i,"#{hts_3_prefix}#{i}".hts_format]
         end
         OfficialTariff.create!(:country_id=>countries['TW'][:country].id,:hts_code=>countries['TW'][:hts_1],:import_regulations=>'a MP1 b')
         p = Factory(:product,:unique_identifier=>style,:name=>name)

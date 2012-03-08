@@ -528,12 +528,11 @@ class ModelField
     [rank,"#{uid_prefix}_last_changed_by".to_sym,:username,"Last Changed By", {
       :import_lambda => lambda {|a,b| return "Last Changed By cannot be set by import, ignored."},
       :export_lambda => lambda {|obj| 
-        snap = obj.last_snapshot
-        snap.blank? ? "" : snap.user.username
+        obj.last_updated_by.blank? ? "" : obj.last_updated_by.username
       },
-      :join_statement =>"LEFT OUTER JOIN (SELECT recordable_id, id, user_id FROM entity_snapshots where id IN (SELECT MAX(id) FROM entity_snapshots WHERE entity_snapshots.recordable_type = '#{base_class}' GROUP BY recordable_type, recordable_id)) #{uid_prefix}_es on #{uid_prefix}_es.recordable_id = #{table_name}.id LEFT OUTER JOIN users #{uid_prefix}_es_u on #{uid_prefix}_es.user_id = #{uid_prefix}_es_u.id",
-      :join_alias => "#{uid_prefix}_es_u",
-      :qualified_field_name => "ifnull(#{uid_prefix}_es_u.username,'')",
+      :join_statement =>"LEFT OUTER JOIN users as #{uid_prefix}_lupdby on #{uid_prefix}_lupdby.id = #{table_name}.last_updated_by_id",
+      :join_alias => "#{uid_prefix}_lupdby",
+      :qualified_field_name => "ifnull(#{uid_prefix}_lupdby.username,'')",
       :data_type=>:string,
       :history_ignore => true
     }]
