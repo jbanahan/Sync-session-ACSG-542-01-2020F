@@ -9,6 +9,7 @@ class Product < ActiveRecord::Base
   belongs_to :division
   belongs_to :status_rule
   belongs_to :entity_type
+  belongs_to :last_updated_by, :class_name=>"User"
   validates	 :unique_identifier, :presence => true
   validates_uniqueness_of :unique_identifier
 

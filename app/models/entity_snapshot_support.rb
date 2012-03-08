@@ -8,6 +8,7 @@ module EntitySnapshotSupport
   end
 
   def create_snapshot user=User.current
+    self.update_attributes(:last_updated_by_id=>user.id) if self.respond_to?(:last_updated_by_id)
     EntitySnapshot.create_from_entity self, user
   end
 end
