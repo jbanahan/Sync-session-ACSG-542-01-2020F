@@ -60,7 +60,9 @@ module OpenChain
               p.name = cell_map[:name] if p.name.blank?
               p.save!
               cdefs.each do |sym,cd|
-                p.update_custom_value! cd, cell_map[sym] if p.get_custom_value(cd).value.blank?
+                cv = p.get_custom_value cd
+                cv.value = cell_map[sym] if cv.value.blank?
+                cv.save!
               end
               @custom_file.custom_file_records.create!(:linked_object=>p)
               p.create_snapshot user
