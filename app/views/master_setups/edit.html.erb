@@ -6,10 +6,6 @@ $(function() {
   $("#btn_cancel").click(function() {
     window.location = '<%=settings_path%>';
   });
-  $(".upgrade_count").click(function(evt) {
-    evt.preventDefault();
-    $(this).next('.upgrade_list').slideDown();
-  });
   $("#mod_upgrade").dialog({autoOpen:false,modal:true,buttons:{
     "OK":function() {$("#frm_upgrade").submit();},
     "Cancel":function() {$("#mod_upgrade").dialog('close');}
@@ -71,10 +67,9 @@ $(function() {
       <td><%=ii.version%></td>
       <td><%=ii.last_check_in%></td>
       <td>
-        <a href='#' class='upgrade_count'><%=pluralize ii.upgrade_logs.count, "log"%></a>
-        <div class='upgrade_list' style='display:none;'>
+        <div class='upgrade_list'>
           <%ii.upgrade_logs.order("started_at DESC").each do |u|%>
-            <%=link_to u.started_at.to_s, u%><br />
+            <%=link_to u.started_at.to_s, u%><%= " FAILED" if !u.log || !u.log.include?("Upgrade complete") %><br />
           <%end%>
         </div>
       </td>
