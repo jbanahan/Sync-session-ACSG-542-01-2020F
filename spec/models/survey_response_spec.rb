@@ -20,4 +20,26 @@ describe SurveyResponse do
     a.choice.should == '123'
     a.rating.should == 'NI'
   end
+  pending "describe email_invite"
+  it "should protect date attributes" do
+    sr = Factory(:survey_response)
+    d = 1.day.ago
+    d2 = 2.days.ago
+    sr.email_sent_date = d
+    sr.email_opened_date = d
+    sr.response_opened_date = d
+    sr.submitted_date = d
+    sr.accepted_date = d
+
+    sr.update_attributes(:updated_at=>d2,:email_sent_date=>d2,:email_opened_date=>d2,
+      :response_opened_date=>d2,:submitted_date=>d2,:accepted_date=>d2)
+
+    found = SurveyResponse.find sr.id
+    found.email_sent_date.should == d
+    found.email_opened_date.should == d
+    found.response_opened_date.should == d
+    found.submitted_date.should == d
+    found.accepted_date.should == d
+    found.updated_at.should == d2 #this one isn't protected
+  end
 end

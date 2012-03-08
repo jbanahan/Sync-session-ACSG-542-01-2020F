@@ -85,7 +85,7 @@ describe SurveyResponsesController do
       a.choice.should be_nil
       a.rating.should == "x"
     end
-  end
+    it "should not update submitted date if survey_response.user != current_user"  end
   describe 'index' do
     before :each do
       activate_authlogic

@@ -6,7 +6,7 @@ class CreateSurveyResponses < ActiveRecord::Migration
       t.datetime :email_sent_date
       t.datetime :email_opened_date
       t.datetime :response_opened_date
-      t.datetime :submititted_date
+      t.datetime :submitted_date
       t.datetime :accepted_date
 
       t.timestamps
