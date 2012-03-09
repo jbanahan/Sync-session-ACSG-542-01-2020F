@@ -1,5 +1,49 @@
 <% content_for :action_bar do %>
   <button class='form_to' form_id="frm_sr">Save</button>
+  <% if @sr.user == current_user && @sr.submitted_date.nil? %>
+    <button id='btn_submit' style='display:none'>Submit</button>
+  <% end %>
+  <button class='btn_link' link_to='<%=request.referrer%>'>Back</button>
+  <div id='answr_trk'>
+    
+  </div>
+<% end %>
+
+<% content_for :javascript do %>
+var OCSR = (function() {
+  return {
+    updateResponseTrack:function() {
+      var selects = $("select.resp");
+      var total = selects.size();
+      var answered = 0;
+      selects.each(function(i,e) {
+        answered = answered + ($(e).val().length > 0 ? 1 : 0);
+      });
+      $("#answr_trk").html(answered+" of "+total+" questions answered.");
+      if(answered==total) {
+        $("#btn_submit").show();
+      } else {
+        $("#btn_submit").hide();
+      }
+    }
+  }
+})();
+$(function() {
+  $("#s_confirm").dialog({autoOpen:false,title:"Confirm Submit",buttons:{
+    "Continue":function() {
+      $("#frm_sr").append("<input type='hidden' name='do_submit' value='1' />");
+      $("#frm_sr").submit();
+    },
+    "Cancel":function() {$("#s_confirm").dialog('close');}}
+  });
+  $("#btn_submit").click(function() {
+    $("#s_confirm").dialog('open');
+  });
+  $("select.resp").change(function() {OCSR.updateResponseTrack();});
+});
+<%if @respond_mode%>
+$(document).ready(function() {OCSR.updateResponseTrack();});
+<%end%>
 <% end %>
 
 <%form_for @sr, :html=>{:id=>'frm_sr'} do |f|%>
@@ -10,7 +54,7 @@
       <h3><%=q.content%></h3>
       <p>Answer:&nbsp;
         <% if @respond_mode %>
-          <%=a.select :choice, q.choices.lines, {:include_blank=>true}%>
+          <%=a.select :choice, q.choices.lines, {:include_blank=>true},:class=>'resp'%>
         <% else %>
           <%=a.object.choice%>
         <% end %>
@@ -25,3 +69,9 @@
     </div>
   <%end%>
 <%end%>
+
+<div id='s_confirm' style='display:none;'>
+  <p>Submitting this survey will lock all answers notify the survey owner.</p>
+  <p>You will <span style='color:red'>NOT</span> be able to change your answers after clicking the Continue button below.</p>
+  <p>Please click Continue to finish submitting or Cancel to go back..</p>
+</div>

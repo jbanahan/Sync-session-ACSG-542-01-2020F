@@ -19,7 +19,6 @@ class SurveysController < ApplicationController
   def new
     if current_user.edit_surveys?
       @survey = Survey.new(:company=>current_user.company)
-      @survey.questions.build
     else 
       error_redirect "You do not have permission to edit surveys."
     end

@@ -18,7 +18,10 @@ class UsersController < ApplicationController
           if current_user.company.master?
             companies = Company.all
           else
-            companies = [current_user.company,Company.where(:master=>true).first]
+            companies = current_user.company.linked_companies
+            companies << current_user.company
+            master = Company.where(:master=>true).first
+            companies << master unless companies.includes?(master)
           end
           render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
         }

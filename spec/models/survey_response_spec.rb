@@ -35,11 +35,11 @@ describe SurveyResponse do
       :response_opened_date=>d2,:submitted_date=>d2,:accepted_date=>d2)
 
     found = SurveyResponse.find sr.id
-    found.email_sent_date.should == d
-    found.email_opened_date.should == d
-    found.response_opened_date.should == d
-    found.submitted_date.should == d
-    found.accepted_date.should == d
-    found.updated_at.should == d2 #this one isn't protected
+    found.email_sent_date.to_i.should == d.to_i
+    found.email_opened_date.to_i.should == d.to_i
+    found.response_opened_date.to_i.should == d.to_i
+    found.submitted_date.to_i.should == d.to_i
+    found.accepted_date.to_i.should == d.to_i
+    found.updated_at.to_i.should == d2.to_i #this one isn't protected
   end
 end

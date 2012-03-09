@@ -1,3 +1,6 @@
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=new_survey_path%>'>New</button>
+<% end%>
 <%@surveys.each do |s|%>
 <p><%=link_to "view", s%>
 <%if current_user.view_surveys? && !s.locked?%>

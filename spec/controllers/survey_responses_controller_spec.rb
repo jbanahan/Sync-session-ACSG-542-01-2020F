@@ -7,19 +7,34 @@ describe SurveyResponsesController do
       @u = Factory(:user)
       UserSession.create! @u
     end
-    it 'should redirect to show_responder if current_user == survey_response.user' do
+    it 'should be respond mode if current_user == survey_response.user and not submitted' do
       sr = Factory(:survey_response,:user=>@u)
       get :show, :id=>sr.id
       assigns(:sr).should == sr
       assigns(:rate_mode).should be_false
       assigns(:respond_mode).should be_true
     end
-    it 'should redirect to show_rater if current_user.edit_surveys? && current_user.company == survey_response.survey.company' do
+    it 'should not be respond mode if submitted' do
+      sr = Factory(:survey_response,:user=>@u,:submitted_date=>1.day.ago)
+      get :show, :id=>sr.id
+      assigns(:sr).should == sr
+      assigns(:rate_mode).should be_false
+      assigns(:respond_mode).should be_false
+    end
+    it 'should be rate mode if current_user.edit_surveys? && current_user.company == survey_response.survey.company and survey_response.submitted_date' do
+      @u.update_attributes(:survey_edit=>true)
+      sr = Factory(:survey_response,:survey=>Factory(:survey,:company=>@u.company),:submitted_date=>1.day.ago)
+      get :show, :id=>sr.id
+      assigns(:sr).should == sr
+      assigns(:rate_mode).should be_true
+      assigns(:respond_mode).should be_false
+    end
+    it 'should not be rate mode if not submitted' do
       @u.update_attributes(:survey_edit=>true)
       sr = Factory(:survey_response,:survey=>Factory(:survey,:company=>@u.company))
       get :show, :id=>sr.id
       assigns(:sr).should == sr
-      assigns(:rate_mode).should be_true
+      assigns(:rate_mode).should be_false
       assigns(:respond_mode).should be_false
     end
     it "should not display if it doesn't pass the other tests" do
@@ -85,7 +100,17 @@ describe SurveyResponsesController do
       a.choice.should be_nil
       a.rating.should == "x"
     end
-    it "should not update submitted date if survey_response.user != current_user"  end
+    it "should not update submitted date if survey_response.user != current_user" do
+      UserSession.create! @survey_user
+      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
+      SurveyResponse.find(@sr.id).submitted_date.should be_nil 
+    end
+    it "should update submitted date if flag set and survey_response.user == current_user" do
+      UserSession.create! @response_user
+      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
+      SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
+    end
+  end
   describe 'index' do
     before :each do
       activate_authlogic
@@ -100,5 +125,4 @@ describe SurveyResponsesController do
       assigns(:survey_responses).to_a.should == [to_find]
     end
   end
-  pending "commit"
 end

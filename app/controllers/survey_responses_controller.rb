@@ -1,13 +1,18 @@
 class SurveyResponsesController < ApplicationController
   def show
     @sr = SurveyResponse.find params[:id]
-    if @sr.user_id == current_user.id
-      @sr.update_attributes(:response_opened_date=>0.seconds.ago) if @sr.response_opened_date.nil?
-      @respond_mode = true unless @sr.submitted_date
-    elsif current_user.edit_surveys? && @sr.survey.company_id == current_user.company_id
-      @rate_mode = true
-    else
+    if @sr.user_id != current_user.id && (@sr.survey.company_id!=current_user.company_id || !current_user.edit_surveys?)
       error_redirect "You do not have permission to work with this survey."
+      return
+    end
+    if @sr.user_id == current_user.id
+      if @sr.response_opened_date.nil?
+        @sr.response_opened_date = 0.seconds.ago 
+        @sr.save
+      end
+      @respond_mode = true unless @sr.submitted_date
+    elsif @sr.submitted_date && current_user.edit_surveys? && @sr.survey.company_id == current_user.company_id
+      @rate_mode = true
     end
   end
   
@@ -32,6 +37,9 @@ class SurveyResponsesController < ApplicationController
           v.delete "choice"
         end
       end
+    end
+    if sr.user==current_user
+      sr.submitted_date = 0.seconds.ago if params[:do_submit]
     end
     sr.update_attributes params[:survey_response]
     add_flash :notices, "Response saved successfully."

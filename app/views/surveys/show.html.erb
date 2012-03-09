@@ -14,3 +14,13 @@
     <%end%>
   </tbody>
 </table>
+
+<h2>Responses</h2>
+<table class='detail_table'>
+  <thead><tr><th>Company</th><th>Responder</th><th>Submitted</th></tr></thead>
+  <tbody>
+    <%@survey.survey_responses.each do |sr| %>
+      <tr><td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.submitted_date%></td></tr>
+    <% end%>
+  </tbody>
+</table>
