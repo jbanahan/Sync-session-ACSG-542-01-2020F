@@ -6,7 +6,7 @@ class UsersController < ApplicationController
       respond_to do |format|
         format.html {
           if current_user.admin?
-              @users = User.where(["company_id = ?",params[:company_id]])
+              @users = User.where(["company_id = ?",params[:company_id]]).order(:username)
               @company = Company.find(params[:company_id])
               render :layout => 'one_col' # index.html.erb
           else
