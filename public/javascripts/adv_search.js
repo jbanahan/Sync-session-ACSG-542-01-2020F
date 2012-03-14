@@ -524,14 +524,47 @@ function make_columns(amf,available_obj,used_obj,list_type,list) {
   }
   used_obj.html(h);
 }
-var hiddenColumns = new Array();
+
 function updateShowAllColumnsLink() {
   var div_show_all_columns = $('#show_all_columns');
   div_show_all_columns.children("p:first").remove();
-  if (0 == hiddenColumns.length) {
+  hiddenColumnsCookie = $.cookie("hiddenColumns");
+  if (null == hiddenColumnsCookie) {
     div_show_all_columns.append("<p>Click Headings To Hide Columns</p>")
     div_show_all_columns.children("p:first").css("margin-bottom", "0pt");
   } else {
     div_show_all_columns.append("<p><a href='#' id='show_all_columns'>Show all columns</a>");
   }
+}
+
+function hideColumn(col) {
+  hiddenColumnsCookie = $.cookie("hiddenColumns");
+  if (hiddenColumnsCookie == null) {
+    $.cookie("hiddenColumns", col);
+  } else {
+    hiddenColumnsCookie += ";" + col;
+    $.cookie("hiddenColumns", hiddenColumnsCookie);
+  }
+  $('td:nth-child(' + col + '),th:nth-child(' + col + ')').fadeOut();
+  updateShowAllColumnsLink();
+}
+
+function processHiddenColumns(showAllColumns) {
+  hiddenColumnsCookie = $.cookie("hiddenColumns");
+  if (hiddenColumnsCookie != null) {
+    var cols = hiddenColumnsCookie.split(";");
+
+    for (var i=0; i < cols.length; ++i) {
+      if (true == showAllColumns) {
+        $('td:nth-child(' + cols[i] + '),th:nth-child(' + cols[i] + ')').fadeIn();
+      } else {
+       $('td:nth-child(' + cols[i] + '),th:nth-child(' + cols[i] + ')').fadeOut();
+      }
+    };
+
+    if (true == showAllColumns) {
+      $.cookie("hiddenColumns", null);
+    }
+  }
+  updateShowAllColumnsLink();
 }

@@ -7,23 +7,17 @@
       <% end %>
     <% end%>
 
-    updateShowAllColumnsLink();
+    processHiddenColumns(false);
     $('table#result_table thead tr th').click(function() {
       if ($(this).children(0).is("input") || $(this).text() == "Actions") {
         return false;
       }
 
       var col = $(this).prevAll().length + 1;
-      hiddenColumns.push(col);
-      updateShowAllColumnsLink();
-       $('td:nth-child(' + col + '),th:nth-child(' + col + ')').fadeOut();
+      hideColumn(col);
     });
     $('#show_all_columns').click(function() {
-      $.each(hiddenColumns, function(index, column) {
-        $('td:nth-child(' + column + '),th:nth-child(' + column + ')').fadeIn();
-      });
-      hiddenColumns.splice(0, hiddenColumns.length);
-      updateShowAllColumnsLink();
+      processHiddenColumns(true);
     });
   });
 <% end %>
