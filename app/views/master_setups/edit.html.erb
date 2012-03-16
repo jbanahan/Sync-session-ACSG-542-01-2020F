@@ -44,7 +44,7 @@ $(function() {
 <%end%>
 
 <h2>Delayed Job</h2>
-<p><%= "#{Delayed::Job.count(:conditions => 'last_error is null')} jobs not run/#{Delayed::Job.count(:conditions => 'last_error is not null')} jobs with errors" %></p>
+<p><%= "#{Delayed::Job.count(:conditions => 'run_at is null')} jobs not run/#{Delayed::Job.count(:conditions => 'last_error is not null')} jobs with errors" %></p>
 <table class='detail_table'>
   <thead>
     <tr><th>ID</th><th>Priority</th><th>Attempts</th><th>Handler</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th></tr>
