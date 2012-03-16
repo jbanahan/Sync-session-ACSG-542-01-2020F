@@ -3,6 +3,8 @@ class Survey < ActiveRecord::Base
   belongs_to :company
   has_many :questions, :inverse_of=>:survey
   has_many :survey_responses, :inverse_of=>:survey
+  has_many :assigned_users, :through=>:survey_responses, :source=>:user
+  has_many :answers, :through=>:survey_responses
   
   validate :lock_check
 
@@ -11,6 +13,10 @@ class Survey < ActiveRecord::Base
 
   def locked?
     self.survey_responses.count!=0
+  end
+  
+  def can_edit? user
+    user.edit_surveys? && user.company_id == self.company_id
   end
 
   # generates a survey response in the target_user's account

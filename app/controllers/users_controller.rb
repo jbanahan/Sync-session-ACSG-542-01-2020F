@@ -18,7 +18,7 @@ class UsersController < ApplicationController
           if current_user.company.master?
             companies = Company.all
           else
-            companies = current_user.company.linked_companies
+            companies = current_user.company.linked_companies.to_a
             companies << current_user.company
             master = Company.where(:master=>true).first
             companies << master unless companies.includes?(master)

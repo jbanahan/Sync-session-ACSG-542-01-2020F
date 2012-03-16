@@ -167,3 +167,7 @@ Factory.define :survey_response do |f|
   f.association :user
   f.association :survey
 end
+Factory.define :answer do |f|
+  f.association :question
+  f.association :survey_response
+end

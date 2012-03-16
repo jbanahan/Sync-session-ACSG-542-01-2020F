@@ -1,7 +1,12 @@
 <h1>Surveys</h1>
+<table class='detail_table'>
+  <thead><tr><th>Survey</th><th>Status</th></tr></thead>
+  <tbody>
 <%@survey_responses.each do |s|%>
-  <p><%= link_to s.survey.name, s%></p>
+  <tr><td><%= link_to s.survey.name, s%></td><td><%=s.status%></td></tr>
 <%end%>
+  </tbody>
+</table>
 <%if @survey_responses.empty?%>
   <p><em>You do not have any surveys assigned.</em></p>
 <%end%>

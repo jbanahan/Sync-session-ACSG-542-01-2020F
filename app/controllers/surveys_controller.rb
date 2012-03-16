@@ -24,13 +24,9 @@ class SurveysController < ApplicationController
     end
   end
   def edit
-    if !current_user.edit_surveys?
-      error_redirect "You do not have permission to edit surveys."
-      return
-    end
     s = Survey.find params[:id]
-    if s.company_id != current_user.company_id
-      error_redirect "You cannot edit a survey created by a different company."
+    if !s.can_edit? current_user
+      error_redirect "You cannot edit this survey."
       return
     elsif s.locked?
       error_redirect "You cannot edit a survey that has already been sent."
@@ -39,13 +35,9 @@ class SurveysController < ApplicationController
     @survey = s
   end
   def update
-    if !current_user.edit_surveys?
-      error_redirect "You do not have permission to edit surveys."
-      return
-    end
     s = Survey.find params[:id]
-    if s.company_id != current_user.company_id
-      error_redirect "You cannot edit a survey created by a different company."
+    if !s.can_edit? current_user
+      error_redirect "You cannot edit this survey."
       return
     elsif s.locked?
       error_redirect "You cannot edit a survey that has already been sent."
@@ -78,13 +70,9 @@ class SurveysController < ApplicationController
     end
   end
   def destroy
-    if !current_user.edit_surveys?
-      error_redirect "You do not have permission to delete surveys."
-      return
-    end
     s = Survey.find params[:id]
-    if s.company_id != current_user.company_id
-      error_redirect "You cannot delete a survey created by a different company."
+    if !s.can_edit? current_user
+      error_redirect "You cannot delete this survey."
       return
     elsif s.locked?
       error_redirect "You cannot delete a survey that has already been sent."
@@ -98,5 +86,31 @@ class SurveysController < ApplicationController
       errors_to_flash s, :now=>true
       redirect_to request.referrer
     end
+  end
+  def show_assign
+    s = Survey.find params[:id]
+    if !s.can_edit? current_user
+      error_redirect "You cannot assign users to this survey."
+      return
+    end
+    @survey = s
+  end
+  def assign
+    s = Survey.find params[:id]
+    if !s.can_edit? current_user
+      error_redirect "You cannot assign users to this survey."
+      return
+    end
+    cnt = 0
+    params[:assign].values.each do |uid|
+      if SurveyResponse.find_by_survey_id_and_user_id(s.id,uid)
+        add_flash :notices, "Survey already exists for #{User.find(uid).full_name}, skipping."
+      else
+        s.generate_response! User.find uid
+        cnt += 1
+      end
+    end
+    add_flash :notices, "#{help.pluralize cnt, "user"} assigned successfully."
+    redirect_to s
   end
 end

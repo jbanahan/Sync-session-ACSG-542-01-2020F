@@ -42,4 +42,35 @@ describe SurveyResponse do
     found.accepted_date.to_i.should == d.to_i
     found.updated_at.to_i.should == d2.to_i #this one isn't protected
   end
+  describe "status" do
+    before :each do
+      s = Factory(:survey)
+      q1 = Factory(:question,:survey=>s)
+      q2 = Factory(:question,:survey=>s)
+      u = Factory(:user)
+      @sr = s.generate_response! u
+    end
+    it "should have Incomplete status" do
+      @sr.status.should == "Incomplete"
+    end
+    it "should have Not Rated" do
+      @sr.submitted_date = 0.seconds.ago
+      @sr.save!
+      @sr.status.should == "Not Rated"
+    end
+    it "should have Needs Improvement status" do
+      # if any responses are NI then whole status is NI
+      @sr.submitted_date = 0.seconds.ago
+      @sr.answers.first.update_attributes(:rating=>"Needs Improvement")
+      @sr.save!
+      @sr.status.should == "Needs Improvement"
+    end
+    it "should have Accepted status" do
+      # if all ratings are accepted then whole status Accepted
+      @sr.submitted_date = 0.seconds.ago
+      @sr.answers.each {|a| a.update_attributes(:rating=>"Accepted")}
+      @sr.save!
+      @sr.status.should == "Accepted"
+    end
+  end
 end

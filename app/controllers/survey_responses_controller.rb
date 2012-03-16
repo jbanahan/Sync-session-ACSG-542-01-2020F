@@ -22,19 +22,20 @@ class SurveyResponsesController < ApplicationController
       error_redirect "You do not have permission to work with this survey."
       return
     end
-    if sr.survey.company_id!=current_user.company_id
-      #remove ratings if not survey owner company
-      if params[:survey_response][:answers_attributes]
-        params[:survey_response][:answers_attributes].values.each do |v|
-          v.delete "rating"
-        end
-      end
-    end
-    if sr.user!=current_user
-      #remove choices if current_user!=sr.user 
-      if params[:survey_response][:answers_attributes]
-        params[:survey_response][:answers_attributes].values.each do |v|
-          v.delete "choice"
+    if params[:survey_response][:answers_attributes]
+      params[:survey_response][:answers_attributes].values.each do |v|
+        
+        #remove ratings if not survey owner company
+        v.delete "rating" if sr.survey.company_id!=current_user.company_id
+        
+        #remove choices if current_user!=sr.user 
+        v.delete "choice" if sr.user!=current_user
+
+        aca = v[:answer_comments_attributes]
+        if aca
+          aca.each do |k,cv|
+            aca.delete k unless cv[:user_id].to_s==current_user.id.to_s
+          end
         end
       end
     end

@@ -29,6 +29,7 @@ class User < ActiveRecord::Base
   has_many   :imported_files
   has_many   :instant_classification_results, :foreign_key => :run_by_id
   has_many   :report_results, :foreign_key => :run_by_id
+  has_many   :survey_responses
   
   validates  :company, :presence => true
   

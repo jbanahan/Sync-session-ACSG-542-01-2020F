@@ -100,6 +100,24 @@ describe SurveyResponsesController do
       a.choice.should be_nil
       a.rating.should == "x"
     end
+    it "should add comments" do
+      UserSession.create! @response_user
+      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
+        "answer_comments_attributes"=>{"1"=>{"user_id"=>@response_user.id,"content"=>"abc"}}}}}
+      response.should redirect_to survey_response_path @sr
+      flash[:notices].should have(1).message
+      ac = SurveyResponse.find(@sr.id).answers.first.answer_comments.first
+      ac.content.should == "abc"
+      ac.user.should == @response_user
+    end
+    it "should not add comments if comment.user != current_user" do
+      UserSession.create! @response_user
+      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
+        "answer_comments_attributes"=>{"1"=>{"user_id"=>@survey_user.id,"content"=>"abc"}}}}}
+      response.should redirect_to survey_response_path @sr
+      flash[:notices].should have(1).message
+      SurveyResponse.find(@sr.id).answers.first.answer_comments.should be_empty
+    end
     it "should not update submitted date if survey_response.user != current_user" do
       UserSession.create! @survey_user
       post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"

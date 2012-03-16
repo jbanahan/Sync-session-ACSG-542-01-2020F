@@ -119,11 +119,12 @@
           .buttonset()<%end%>;
        <% end %>
     <% if current_user.view_entries?%>
-      $("#btn_entries").button().click(function() {window.location = '<%=entries_path%>?force_search=true';})
+      $("#btn_entries").button().click(function() {window.location = '<%=entries_path%>?force_search=true';});
     <% end %>
     <% if current_user.view_broker_invoices?%>
-      $("#btn_invoices").button().click(function() {window.location = '<%=broker_invoices_path%>?force_search=true';})
+      $("#btn_invoices").button().click(function() {window.location = '<%=broker_invoices_path%>?force_search=true';});
     <% end %>
+    $("#btn_survey_resp").button().click(function() {window.location = '<%=survey_responses_path%>';});
   });
   <% end %>
   <%= yield :javascript%>
@@ -192,6 +193,9 @@
       <%end%>
       <%if current_user.view_broker_invoices?%>
         <button id='btn_invoices' title='Search for invoices'>Invoices</button>
+      <%end%>
+      <%if !current_user.survey_responses.blank?%>
+        <button id='btn_survey_resp' title='Surveys'>Surveys</button>
       <%end%>
     </div> <!--close linkbar-->
   <% end %>

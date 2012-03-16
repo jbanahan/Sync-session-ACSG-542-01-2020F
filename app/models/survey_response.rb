@@ -9,4 +9,18 @@ class SurveyResponse < ActiveRecord::Base
   validates_presence_of :user
 
   accepts_nested_attributes_for :answers, :allow_destroy=>false
+
+  after_save :update_status
+
+  private
+  def update_status
+    s = "Incomplete"
+    s = "Not Rated" if self.submitted_date
+    s = "Needs Improvement" if self.submitted_date && !self.answers.where(:rating=>"Needs Improvement").empty?
+    s = "Accepted" if s!="Needs Improvement" && self.submitted_date && self.answers.where(:rating=>"Accepted").count == self.answers.count
+    if s!=self.status
+      self.status = s
+      self.save
+    end
+  end
 end

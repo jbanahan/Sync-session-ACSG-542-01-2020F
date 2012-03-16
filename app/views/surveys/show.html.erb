@@ -2,25 +2,31 @@
   <% unless @survey.locked? %>
     <button class='btn_link' link_to='<%=edit_survey_path @survey%>' key_map='e'>Edit</button>
   <% end%>
+  <button class='btn_link' link_to='<%=show_assign_survey_path @survey%>' key_map='a'>Assign</button>
 <%end%>
 <h1><%=@survey.name%></h1>
 
 <h2>Questions</h2>
 <table class='detail_table'>
-  <thead><tr><th>Question</th></tr></thead>
+  <thead><tr><th>Question</th><th>Answered</th><th>Accepted</th><th>Needs Improvement</th></tr></thead>
   <tbody>
     <%@survey.questions.each do |q|%>
-      <tr><td><%=q.content%></td></tr>
+      <tr>
+        <td><%=q.content%></td>
+        <td><%=@survey.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").count%></td>
+        <td><%=@survey.answers.where(:question_id=>q.id).where(:rating=>"Accepted").where("survey_responses.submitted_date is not null").count%></td>
+        <td><%=@survey.answers.where(:question_id=>q.id).where(:rating=>"Needs Improvement").where("survey_responses.submitted_date is not null").count%></td>
+      </tr>
     <%end%>
   </tbody>
 </table>
 
 <h2>Responses</h2>
 <table class='detail_table'>
-  <thead><tr><th>Company</th><th>Responder</th><th>Submitted</th></tr></thead>
+  <thead><tr><th>Company</th><th>Responder</th><th>Status</th><th>Submitted</th></tr></thead>
   <tbody>
     <%@survey.survey_responses.each do |sr| %>
-      <tr><td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.submitted_date%></td></tr>
+      <tr><td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.status%></td><td><%=sr.submitted_date%></td></tr>
     <% end%>
   </tbody>
 </table>

@@ -279,7 +279,12 @@ OpenChain::Application.routes.draw do
     end 
   end
   
-  resources :surveys
+  resources :surveys do
+    member do 
+      get 'show_assign'
+      post 'assign'
+    end
+  end
   resources :survey_responses
   resources :error_log_entries, :only => [:index, :show]
   root :to => "dashboard_widgets#index"

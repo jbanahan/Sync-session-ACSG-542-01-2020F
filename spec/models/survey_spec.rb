@@ -32,4 +32,34 @@ describe Survey do
       sr.answers.should have(2).answers
     end
   end
+  describe "assigned_users" do
+    it "should return all assigned users" do
+      u1 = Factory(:user)
+      u2 = Factory(:user)
+      u3 = Factory(:user)
+      s = Factory(:survey)
+      s.generate_response! u1
+      s.generate_response! u2
+      #no response for user 3
+
+      s.assigned_users.should == [u1,u2]
+    end
+  end
+  describe "can_edit?" do
+    before :each do 
+      @s = Factory(:survey)
+    end
+    it "should allow editing if user has permission and is from survey's company" do
+      u = Factory(:user,:company=>@s.company,:survey_edit=>true)
+      @s.can_edit?(u).should be_true
+    end
+    it "should not allow editing if user doesn't have permission" do
+      u = Factory(:user,:company=>@s.company)
+      @s.can_edit?(u).should be_false
+    end
+    it "should not allow editing if user isn't from survey's company" do
+      u = Factory(:user,:survey_edit=>true)
+      @s.can_edit?(u).should be_false
+    end
+  end
 end
