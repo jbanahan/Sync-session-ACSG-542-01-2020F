@@ -31,6 +31,12 @@ describe Entry do
         found.should have(1).entry
         found.first.should == @entry
       end
+      it "should allow linked company for non master" do
+        importer2 = Factory(:company,:importer=>true)
+        @importer.linked_companies << importer2
+        e2 = Factory(:entry,:importer_id=>@importer.id)
+        Entry.search_secure(@importer_user,Entry).all.should == [@entry,e2]
+      end
       it 'should allow all for master' do
         u = Factory(:user,:entry_view=>true)
         u.company.update_attributes(:master=>true)
@@ -44,6 +50,15 @@ describe Entry do
       @entry.can_edit?(@importer_user).should be_false #hard coded to false
       @entry.can_attach?(@importer_user).should be_true
       @entry.can_comment?(@importer_user).should be_true
+    end
+    it 'should allow importer from parent company to view/edit/comment/attach' do
+      @parent_company = Factory(:company,:importer=>true)
+      @parent_user = Factory(:user,:company=>@parent_company,:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
+      @parent_company.linked_companies << @importer
+      @entry.can_view?(@parent_user).should be_true
+      @entry.can_edit?(@parent_user).should be_false #hard coded to false
+      @entry.can_attach?(@parent_user).should be_true
+      @entry.can_comment?(@parent_user).should be_true
     end
     it 'should not allow a user from a different company with overall permission to view/edit/comment/attach' do
       u = Factory(:user,:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)

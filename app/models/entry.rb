@@ -34,11 +34,11 @@ class Entry < ActiveRecord::Base
   end
 
   def self.search_secure user, base_object
-    user.company.master? ?  base_object.where("1=1") : base_object.where(:importer_id=>user.company_id)
+    user.company.master? ?  base_object.where("1=1") : base_object.where("entries.importer_id = ? or entries.importer_id IN (select child_id from linked_companies where parent_id = ?)",user.company_id,user.company_id)
   end
 
   private
   def company_permission? user
-    self.importer_id==user.company_id || user.company.master?
+    self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)
   end
 end

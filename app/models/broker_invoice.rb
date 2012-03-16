@@ -5,10 +5,10 @@ class BrokerInvoice < ActiveRecord::Base
   has_many :broker_invoice_lines, :dependent => :destroy
 
   def can_view? user
-    user.view_broker_invoices? && (user.company.master? || (self.entry && self.entry.importer_id==user.company_id))
+    user.view_broker_invoices? && (user.company.master? || (self.entry && ( self.entry.importer_id==user.company_id || user.company.linked_companies.include?(self.entry.importer))))
   end
 
   def self.search_secure user, base_object
-    return user.company.master? ? base_object.where("1=1") : base_object.includes(:entry).where("entries.importer_id = ?", user.company_id)
+    Entry.search_secure user, base_object.includes(:entry)
   end
 end
