@@ -106,6 +106,25 @@ class CompaniesController < ApplicationController
     }
   end
 
+  def show_children
+    if !current_user.admin? || !current_user.company.master?
+      error_redirect "You do not have permission to work with linked companies."
+      return
+    end
+    @company = Company.find params[:id]
+  end
+  
+  def update_children
+    if !current_user.admin? || !current_user.company.master?
+      error_redirect "You do not have permission to work with linked companies."
+      return
+    end
+    c = Company.find params[:id]
+    c.linked_company_ids = params[:selected].values
+    add_flash :notices, "Linked companies saved successfully."
+    redirect_to show_children_company_path c
+  end
+
   private 
   def secure
     Company.find_can_view(current_user)

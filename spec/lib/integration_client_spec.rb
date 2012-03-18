@@ -35,6 +35,7 @@ describe OpenChain::IntegrationClient do
     OpenChain::IntegrationClient.messages(@queue)
   end
   it 'should not processes if not the schedule server' do
+    AWS::SQS::QueueCollection.any_instance.should_receive(:create).with(@system_code).and_return(@queue)
     AWS::SQS::Queue.any_instance.should_not_receive(:visible_messages)
     ScheduleServer.should_receive(:active_schedule_server?).and_return(false)
     OpenChain::IntegrationClient.go MasterSetup.get.system_code, true, 0

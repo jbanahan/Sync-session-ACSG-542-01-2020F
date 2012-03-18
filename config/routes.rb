@@ -224,6 +224,10 @@ OpenChain::Application.routes.draw do
   resources :users, :only => [:index]
 
   resources :companies do
+    member do
+      get 'show_children'
+      post 'update_children'
+    end
 		resources :addresses
 		resources :divisions
     resources :power_of_attorneys, :only => [:index, :new, :create, :destroy] do
@@ -275,6 +279,13 @@ OpenChain::Application.routes.draw do
     end 
   end
   
+  resources :surveys do
+    member do 
+      get 'show_assign'
+      post 'assign'
+    end
+  end
+  resources :survey_responses
   resources :error_log_entries, :only => [:index, :show]
   root :to => "dashboard_widgets#index"
 end

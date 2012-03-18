@@ -18,6 +18,8 @@ class Company < ActiveRecord::Base
 	has_many	:products, :through => :divisions, :dependent => :destroy
 	has_many  :histories, :dependent => :destroy
   has_many  :power_of_attorneys, :dependent => :destroy
+
+  has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
 	
 	def self.find_carriers
 		return Company.where(["carrier = ?",true])
@@ -39,6 +41,11 @@ class Company < ActiveRecord::Base
 	  end
 	end
 	
+  # find all companies that aren't children of this one through the linked_companies relationship
+  def unlinked_companies
+    Company.select("distinct companies.*").joins("LEFT OUTER JOIN (select child_id as cid FROM linked_companies where parent_id = #{self.id}) as lk on companies.id = lk.cid").where("lk.cid IS NULL").where("NOT companies.id = ?",self.id)
+  end
+
 	def can_edit?(user)
 	  return user.admin?
 	end
@@ -61,6 +68,12 @@ class Company < ActiveRecord::Base
 
 
   #permissions
+  def view_surveys?
+    true
+  end
+  def edit_surveys?
+    true
+  end
   def view_broker_invoices?
     return master_setup.broker_invoice_enabled && (self.master? || self.importer?)
   end

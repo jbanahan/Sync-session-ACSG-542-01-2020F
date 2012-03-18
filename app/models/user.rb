@@ -13,6 +13,7 @@ class User < ActiveRecord::Base
     :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
     :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
     :entry_view, :entry_comment, :entry_attach,
+    :survey_view, :survey_edit,
     :broker_invoice_view,
     :classification_view, :classification_edit
   
@@ -28,6 +29,7 @@ class User < ActiveRecord::Base
   has_many   :imported_files
   has_many   :instant_classification_results, :foreign_key => :run_by_id
   has_many   :report_results, :foreign_key => :run_by_id
+  has_many   :survey_responses
   
   validates  :company, :presence => true
   
@@ -130,6 +132,12 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_surveys?
+    return self.survey_view?
+  end
+  def edit_surveys?
+    return self.survey_edit?
+  end
   def view_broker_invoices?
     return self.broker_invoice_view && self.company.view_broker_invoices?
   end

@@ -141,6 +141,14 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
           <td class='hover'><span class='light_text'>n/a</span></td>
         </tr>
       <% end %>
+        <tr class='permission_row'>
+          <td class='hover label_cell'><div class='label'>Survey</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
+          <td class='hover'><%= permission_box @user, 'view_surveys?', :survey_view, f %></td>
+          <td class='hover'><%= permission_box @user, 'edit_surveys?', :survey_edit, f %></td>
+          <td class='hover'><span class='light_text'>n/a</span></td>
+          <td class='hover'><span class='light_text'>n/a</span></td>
+          <td class='hover'><span class='light_text'>n/a</span></td>
+        </tr>
     </tbody>
   </table>
   <% end %>

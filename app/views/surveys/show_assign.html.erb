@@ -1,0 +1,58 @@
+<%content_for :action_bar do %>
+  <button id='btn_submit' style='display:none;'>Assign</button>
+  <button class='btn_link' link_to='<%=survey_path @survey%>'>Cancel</button>
+<%end%>
+<%content_for :javascript do%>
+$(function() {
+  $("#assign_lst").change(function() {
+    if($("#assign_lst").find(":selected").size()>0) {
+      $("#btn_submit").slideDown('fast');
+    } else {
+      $("#btn_submit").slideUp('fast');
+    }
+  });
+  $("#btn_submit").click(function() {
+    var h = "";
+    $("#assign_lst").find(":selected").each(function (idx,opt) {
+      h += "<input type='hidden' name='assign["+idx+"]' value='"+$(opt).val()+"'>";
+    });
+    $("#frm_as").html(h).submit();
+  });
+});
+<%end%>
+<%au = @survey.assigned_users.to_a%>
+<h1>Assign User To <%=@survey.name%></h1>
+
+<p><em><b>Be careful</b>, when you assign a user... </em>
+<ul>
+  <li style='color:red;'>you won't be able to edit the survey anymore.</li>
+  <li>he or she will receive an email notification.</li>
+  <li>he or she will be permanently assigned to this survey.</li>
+</ul>
+</p>
+
+<h3>Select Users To Assign</h3>
+<% visible_companies = [current_user.company] %>
+<% visible_companies += current_user.company.linked_companies.to_a %>
+<% visible_companies << Company.where(:master=>true).first unless visible_companies.include? Company.where(:master=>true).first %>
+<select id='assign_lst' name='to_assign' multiple='multiple' size='10'>
+  <%visible_companies.each do |c|%>
+    <optgroup label='<%=c.name%>'>
+      <%c.users.each do |u|%>
+        <%unless au.include? u%>
+          <option value='<%=u.id%>'><%=u.full_name%></option>
+        <%end%>
+      <%end%>
+    </optgroup>
+  <%end%>
+</select>
+<% form_for @survey, :url=>assign_survey_path(@survey), :html=>{:method=>"POST",:id=>"frm_as"} do |f| %>
+<% end %>
+
+<h3>Already Assigned Users</h3>
+<ul>
+  <%au.each do |u|%>
+    <li><%=u.full_name%> (<%=u.company.name%>)</li>
+  <%end%>
+</ul>
+

@@ -25,6 +25,12 @@ describe BrokerInvoice do
         found = BrokerInvoice.search_secure(u,BrokerInvoice)
         found.should have(2).invoices
       end
+      it 'should allow for linked company' do
+        child = Factory(:company,:importer=>true)
+        i3 = Factory(:broker_invoice,:entry=>Factory(:entry,:importer_id=>child.id))
+        @importer.linked_companies << child
+        BrokerInvoice.search_secure(@importer_user,BrokerInvoice).all.should == [@inv,i3]
+      end
     end
     it 'should be visible for importer' do
       @inv.can_view?(@importer_user).should be_true 
@@ -32,6 +38,12 @@ describe BrokerInvoice do
     it 'should not be visible for another importer' do
       u = Factory(:user,:company_id=>Factory(:company,:importer=>true).id,:broker_invoice_view=>true)
       @inv.can_view?(u).should be_false
+    end
+    it 'should be visible for parent importer' do
+      parent = Factory(:company,:importer=>true)
+      parent.linked_companies << @importer
+      u = Factory(:user,:company_id=>parent.id,:broker_invoice_view=>true)
+      @inv.can_view?(u).should be_true
     end
     it 'should not be visible without permission' do
       u = Factory(:user,:broker_invoice_view=>false)

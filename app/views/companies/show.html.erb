@@ -44,6 +44,9 @@ $(function() {
     <% elsif @company.locked %>
       <button id='btn_unlock'>Unlock</button>
     <%end%>
+    <% if current_user.company.master? %>
+      <button class='btn_link' link_to='<%=show_children_company_path(@company)%>'>Linked Companies</button>
+    <% end %>
   <%end%>
   <button id='btn_poas'>POAs</button>
   <button class='btn_link' link_to='<%=companies_path%>' key_map='b'>Back</button>

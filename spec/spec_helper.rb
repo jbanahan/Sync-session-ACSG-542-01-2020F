@@ -43,6 +43,7 @@ end
 
 Spork.each_run do
   # Requires everything in lib
+  load "#{Rails.root}/config/routes.rb"
   Dir[Rails.root.join("lib/**/*.rb")].each {|f| load f}
   ModelField.reload
 end

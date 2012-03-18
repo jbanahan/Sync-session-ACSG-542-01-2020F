@@ -373,24 +373,6 @@ var OpenChain = (function() {
       handler(table,row);
     }
   }
-/*
-  var initInfiniteScroll = function() {
-    if($('div.pagination').length) {
-      $(".pagination_wrapper").infinitescroll({
-        navSelector: 'div.pagination',
-        nextSelector: 'div.pagination a:first',
-        itemSelector: '.pagination_item',
-        loading: {
-          img: '/images/ajax-loader.gif',
-          msgText: 'Checking for more items.', 
-          finishedMsg: "You've reached the end of the results.",
-          selector:'div.pagination_loading'
-        },
-        bufferPx: 100
-      });
-    }
-  }
-*/
   return {
     //public stuff
     setAuthToken: function(t) {
@@ -591,6 +573,21 @@ var OpenChain = (function() {
     },
     disableMessagePolling: function() {
       clearInterval(pollingId) 
+    },
+    link_selects: function(wrapTableSelector) {
+      var tbl, s_unselected, s_selected, l_unsel, l_sel;
+      tbl = $(wrapTableSelector);
+      s_unselected = tbl.find("select.unselected");
+      s_selected = tbl.find("select.selected");
+      tbl.find("a.unselect").click(function(evt) {
+        evt.preventDefault();
+        s_unselected.append(s_selected.find(":selected"));
+      });
+      tbl.find("a.select").click(function(evt) {
+        evt.preventDefault();
+        s_selected.append(s_unselected.find(":selected"));
+      });
+      
     },
     init: function(user_id) {
       initLinkButtons();
