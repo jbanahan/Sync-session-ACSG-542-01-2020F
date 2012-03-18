@@ -20,7 +20,6 @@ describe SurveyResponse do
     a.choice.should == '123'
     a.rating.should == 'NI'
   end
-  pending "describe email_invite"
   it "should protect date attributes" do
     sr = Factory(:survey_response)
     d = 1.day.ago
