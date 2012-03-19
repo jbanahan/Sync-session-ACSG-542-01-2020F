@@ -34,6 +34,18 @@ describe ModelField do
         ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u).should be_false
       end
     end
+    context "duty due date" do
+      it "should allow duty due date if user is broker company" do
+        u = Factory(:user,:company=>Factory(:company,:broker=>true))
+        ModelField.find_by_uid(:ent_duty_due_date).can_view?(u).should be_true
+        ModelField.find_by_uid(:bi_duty_due_date).can_view?(u).should be_true
+      end
+      it "should not allow duty due date if user is not a broker" do
+        u = Factory(:user)
+        ModelField.find_by_uid(:ent_duty_due_date).can_view?(u).should be_false
+        ModelField.find_by_uid(:bi_duty_due_date).can_view?(u).should be_false
+      end
+    end
     context "product last_changed_by" do
       it "should apply search criterion properly" do
         c = Factory(:company,:master=>true)

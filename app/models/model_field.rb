@@ -537,13 +537,15 @@ class ModelField
       :history_ignore => true
     }]
   end
-  def self.make_broker_invoice_entry_field sequence_number, mf_uid,field_reference,label,data_type,ent_exp_lambda
-      [sequence_number,mf_uid,field_reference,label,{:data_type=>data_type,
+  def self.make_broker_invoice_entry_field sequence_number, mf_uid,field_reference,label,data_type,ent_exp_lambda,can_view_lambda=nil
+    h = {:data_type=>data_type,
         :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
         :export_lambda => lambda {|inv| inv.entry.blank? ? "" : ent_exp_lambda.call(inv.entry)},
         :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
         :join_alias => "bi_entry"
-      }]
+      }
+    h[:can_view_lambda]=can_view_lambda unless can_view_lambda.nil?
+    [sequence_number,mf_uid,field_reference,label,h]
   end
 
   def self.add_custom_fields(core_module,base_class,parameters={})
@@ -628,7 +630,7 @@ class ModelField
       [18,:ent_hbols,:house_bills_of_lading,"House Bills",{:data_type=>:text}],
       [19,:ent_sbols,:sub_house_bills_of_lading,"Sub House Bills",{:data_type=>:text}],
       [20,:ent_it_numbers,:it_numbers,"IT Numbers",{:data_type=>:text}],
-      [21,:ent_duty_due_date,:duty_due_date,"Duty Due Date",{:data_type=>:date}],
+      [21,:ent_duty_due_date,:duty_due_date,"Duty Due Date",{:data_type=>:date,:can_view_lambda=>lambda {|u| u.company.broker?}}],
       [22,:ent_carrier_code,:carrier_code,"Carrier Code",{:data_type=>:string}],
       [23,:ent_total_packages,:total_packages,"Total Packages",{:data_type=>:integer}],
       [24,:ent_total_fees,:total_fees,"Total Fees",{:data_type=>:decimal,:currency=>:usd}],
@@ -804,7 +806,7 @@ class ModelField
       make_broker_invoice_entry_field(16,:bi_hbols,:house_bills_of_lading,"House Bills",:text,lambda {|entry| entry.house_bills_of_lading}),
       make_broker_invoice_entry_field(17,:bi_sbols,:sub_house_bills_of_lading,"Sub House Bills",:text,lambda {|entry| entry.sub_house_bills_of_lading}),
       make_broker_invoice_entry_field(18,:bi_it_numbers,:it_numbers,"IT Numbers",:text,lambda {|entry| entry.it_numbers}),
-      make_broker_invoice_entry_field(19,:bi_duty_due_date,:duty_due_date,"Duty Due Date",:date,lambda {|entry| entry.duty_due_date}),
+      make_broker_invoice_entry_field(19,:bi_duty_due_date,:duty_due_date,"Duty Due Date",:date,lambda {|entry| entry.duty_due_date},lambda {|u| u.company.broker?}),
       make_broker_invoice_entry_field(20,:bi_carrier_code,:carrier_code,"Carrier Code",:string,lambda {|entry| entry.carrier_code}),
       make_broker_invoice_entry_field(21,:bi_total_packages,:total_packages,"Total Packages",:integer,lambda {|entry| entry.total_packages}),
       make_broker_invoice_entry_field(22,:bi_total_fees,:total_fees,"Total Fees",:decimal,lambda {|entry| entry.total_fees}),
