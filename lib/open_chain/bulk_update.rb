@@ -49,6 +49,7 @@ module OpenChain
     end
 
     def self.go params, current_user
+      User.current = current_user if User.current.nil? #set this in case we're not in a web environment (like delayed_job)
       good_count = nil
       msgs = []
       error_count = 0

@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe OpenChain::BulkUpdateClassification do
+  describe "go" do
+    before :each do
+      ModelField.reload #cleanup from other broken tests
+    end
+    it "should update an existing classification with primary keys" do
+      u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
+      p = Factory(:product)
+      c = Factory(:country)
+      OpenChain::BulkUpdateClassification.go({"pk"=>{ "1"=>p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>c.id.to_s}}}},u)
+      Product.find(p.id).classifications.should have(1).item
+    end
+    it "should update using serializable version of method"
+
+  end
   describe 'build_common_classifications' do
     before :each do
       @products = 2.times.collect {Factory(:product)}
