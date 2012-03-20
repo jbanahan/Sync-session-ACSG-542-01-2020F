@@ -189,6 +189,22 @@ describe OpenChain::FenixParser do
     Entry.find_by_broker_reference(@file_number).us_exit_port_code.should == '0444'
   end
 
+  context 'importer company' do
+    it "should create importer" do
+      OpenChain::FenixParser.parse @entry_lambda.call
+      ent = Entry.find_by_broker_reference @file_number
+      imp = ent.importer
+      imp.name.should == @importer_tax_id
+      imp.fenix_customer_number.should == @importer_tax_id
+      imp.should be_importer
+    end
+    it "should link to existing importer" do
+      imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true)
+      OpenChain::FenixParser.parse @entry_lambda.call
+      ent = Entry.find_by_broker_reference @file_number
+      ent.importer.should == imp
+    end
+  end
   context 'multi line' do
     before :each do
       @invoices = [

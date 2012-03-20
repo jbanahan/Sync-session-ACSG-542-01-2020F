@@ -70,15 +70,17 @@ module OpenChain
 
     def process_header line
       file_number = line[1]
+      tax_id = str_val line[3]
       @entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
-      @entry = Entry.new(:broker_reference=>file_number,:source_system=>SOURCE_CODE) if @entry.nil?
-      
+      if @entry.nil?
+        @entry = Entry.new(:broker_reference=>file_number,:source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id) 
+      end 
       #clear commercial invoices
       @entry.commercial_invoices.destroy_all
 
       @entry.entry_number = str_val(line[0])
       @entry.import_country = Country.find_by_iso_code('CA')
-      @entry.importer_tax_id = str_val(line[3])
+      @entry.importer_tax_id = tax_id
       @entry.cargo_control_number = str_val(line[12])
       @entry.ship_terms = str_val(line[17].upcase)
       @entry.direct_shipment_date = parse_date(line[42])
@@ -207,6 +209,11 @@ module OpenChain
     def accumulated_string string_code
       return "" unless @accumulated_strings && @accumulated_strings[string_code]
       @accumulated_strings[string_code].to_a.join("\n ")
+    end
+    def importer tax_id
+      imp = Company.find_by_fenix_customer_number tax_id
+      imp = Company.create!(:name=>tax_id,:fenix_customer_number=>tax_id,:importer=>true) if imp.nil?
+      imp
     end
   end
 end
