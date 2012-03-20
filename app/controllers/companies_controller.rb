@@ -6,14 +6,20 @@ class CompaniesController < ApplicationController
     'v_bool' => {:field => 'vendor', :label => 'Is A Vendor'},
     'car_bool' => {:field => 'carrier', :label => 'Is A Carrier'},
     'cus_bool' => {:field => 'customer', :label => 'Is A Customer'},
-    'l_bool' => {:field => 'locked', :label => 'Is Locked'},
+    'imp_bool' => {:field => 'importer', :label => 'Is An Importer'},
+    'l_bool' => {:field => 'locked', :label => 'Is Locked'}
   }
   def index
     sp = SEARCH_PARAMS
     if MasterSetup.get.custom_feature? 'alliance'
-      sp = SEARCH_PARAMS.clone
+      sp = sp.clone
       sp['a_cust'] = {:field=>'alliance_customer_number', :label=>"Alliance Customer Number"}
       @include_alliance = true
+    end
+    if MasterSetup.get.custom_feature? 'fenix'
+      sp = sp.clone
+      sp['a_cust_f'] = {:field=>'fenix_customer_number', :label=>"Fenix Customer Number"}
+      @include_fenix = true
     end
     s = build_search(sp,'c_name','c_name')
     respond_to do |format|
