@@ -50,8 +50,7 @@ def execute_scheduler
     job_wrapper "Search Schedule" do
       if Rails.env == "production"
         logger.info "#{Time.now}: Rebuilding search schedule jobs "
-        SearchSchedule.unschedule_jobs scheduler, logger
-        SearchSchedule.schedule_jobs(scheduler, logger) if ScheduleServer.active_schedule_server?
+        SearchSchedule.all.each {|ss| ss.delay.run_if_needed logger}
       else
         logger.info "Skipping scheduled job rebuild: Not production"
       end

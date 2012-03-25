@@ -83,57 +83,6 @@ class SearchScheduleTest < ActiveSupport::TestCase
     assert mail[:to].to_s==schedule.email_addresses, "Email to should have been \"#{schedule.email_addresses}\", was \"#{mail[:to]}\""
   end
 
-  test "reset_schedule" do
-    scheduler = Rufus::Scheduler.start_new 
-    scheduler.stop #so we don't actually run anything
-
-    u = User.first
-    search1 = u.search_setups.create!(:name=>"reset_schedule",:module_type=>"Product")
-    ss1 = search1.search_schedules.create!(:run_monday=>true,:run_hour=>5)
-    search2 = u.search_setups.create!(:name=>"reset_schedule2",:module_type=>"Product")
-    ss2 = search2.search_schedules.create!(:run_tuesday=>true,:run_hour=>2)
-    
-    SearchSchedule.unschedule_jobs scheduler
-    SearchSchedule.schedule_jobs scheduler
-    
-    jobs = scheduler.find_by_tag(SearchSchedule::RUFUS_TAG)
-    assert jobs.length==2, "Should have found 2 jobs, found #{jobs.length}"
-
-    assert ss2.destroy, "Destroy failed"
-
-    jobs = scheduler.find_by_tag(SearchSchedule::RUFUS_TAG)
-    assert jobs.length==2, "Should still find 2 jobs before resetting, found #{jobs.length}"
-
-    SearchSchedule.unschedule_jobs scheduler
-    SearchSchedule.schedule_jobs scheduler
-    jobs = scheduler.find_by_tag(SearchSchedule::RUFUS_TAG)
-    assert jobs.length==1, "Should find 1 job after resetting, found #{jobs.length}"
-  end
-
-  test "schedule" do
-    scheduler = Rufus::Scheduler.start_new 
-    scheduler.stop #so we don't actually run anything
-    u = User.new(:username=>"cronstr",:password=>"abc123",:password_confirmation=>"abc123",
-        :company_id=>companies(:vendor).id,:email=>"unittest@aspect9.com")
-    u.time_zone = "Hawaii" #important to the test
-    u.save!
-    search = u.search_setups.create!(:name=>"cronstr",:module_type=>"Product")
-    sched = search.search_schedules.create!(:run_hour=>3)
-
-    
-    sched.schedule scheduler
-    assert scheduler.all_jobs.length==0, "Schedule with no days should not add a job, #{scheduler.all_jobs.length} jobs found."
-
-    
-    sched.update_attributes(:run_monday=>true,:run_wednesday=>true)
-    sched.schedule scheduler
-
-    jobs = scheduler.find_by_tag SearchSchedule::RUFUS_TAG
-    assert jobs.length==1, "Should have one scheduled job under the RUFUS_TAG, had: #{jobs.length}"
-    expected_cron = "0 3 * * 1,3 #{ActiveSupport::TimeZone::MAPPING[u.time_zone]}"
-    assert jobs.first.t==expected_cron, "Should have had cron setting of #{expected_cron}, had \"#{jobs.first.t}\"" 
-  end
-
 
   test "is_running? - never finished" do 
     s = SearchSchedule.new(:last_start_time => 3.minutes.ago)

@@ -97,6 +97,9 @@ Factory.define :search_setup do |s|
   s.module_type  'Product'
   s.association :user
 end
+Factory.define :search_schedule do |s|
+  s.association :search_setup
+end
 Factory.define :custom_definition do |c|
   c.sequence(:label)
   c.data_type "string"

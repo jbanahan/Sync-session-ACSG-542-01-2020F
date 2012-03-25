@@ -3,27 +3,26 @@ class SearchSchedule < ActiveRecord::Base
 
   belongs_to :search_setup
 
-  def self.unschedule_jobs scheduler, log=nil
-    log.info "#{Time.now}: Clearing Scheduled Jobs" if log
-    #unschedule all jobs
-    jobs = scheduler.find_by_tag(RUFUS_TAG) 
-    log.info "#{Time.now}: #{jobs.length} jobs to be removed." if log
-    jobs.each {|job| 
-      log.info "#{Time.now}: Removing job #{job.job_id}" if log
-      scheduler.unschedule job.job_id
-    }
+  # get the next time in UTC that this schedule should be executed
+  def next_run_time
+    return Time.now.utc+1.day unless run_day_set? && !self.run_hour.nil?
+    tz_str = self.search_setup.user.time_zone
+    tz_str = "Eastern Time (US & Canada)" if tz_str.blank?
+    tz = ActiveSupport::TimeZone[tz_str]
+    base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
+    local_base_time = base_time.in_time_zone(tz_str)
+    next_time_local = tz.local(local_base_time.year,local_base_time.month,local_base_time.day,self.run_hour)
+    while next_time_local < Time.now || !run_day?(next_time_local)
+      next_time_local += 1.day
+    end
+    next_time_local.utc
   end
-
-  #load all SearchSchedules within the given scheduler
-  def self.schedule_jobs scheduler, log=nil
-    begin
-    #schedule all
-    SearchSchedule.all.each {|ss| ss.schedule scheduler, log}
-    rescue Exception => e
-      if log
-        log.error e.message
-      else
-        raise e
+  #run the job if it should be run (next scheduled time < now & not already run by another thread)
+  def run_if_needed log=nil
+    if self.next_run_time < Time.now.utc
+      update_count = SearchSchedule.where(:id=>self.id,:last_start_time=>self.last_start_time).update_all(["last_start_time = ?",Time.now])
+      if update_count == 1
+        self.run log
       end
     end
   end
@@ -41,24 +40,10 @@ class SearchSchedule < ActiveRecord::Base
     t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
     send_email srch_setup.name, t, attachment_name, log
     send_ftp srch_setup.name, t, attachment_name, log
+    self.update_attributes(:last_finish_time)
     log.info "#{Time.now}: Search schedule #{self.id} complete." if log
   end
 
-  def schedule(scheduler, log=nil)
-    begin
-      cs = cron_string
-      log.info "#{Time.now}: Attempting to schedule job for Schedule #{self.id}, with cron \"#{cs}" if log
-      scheduler.cron cs, {:tags=> RUFUS_TAG} { SearchSchedule.find(self.id).run log } if any_days_scheduled? && self.run_hour
-      log.info "#{Time.now}: Scheduled job for Schedule #{self.id}, with cron \"#{cs}\"" if log
-    rescue StandardError => e
-      e.log_me ["Scheduler error"]
-      if log
-        log.error e
-      else
-        raise e
-      end
-    end
-  end
   
   def is_running?
     if self.last_start_time.nil?
@@ -121,11 +106,6 @@ class SearchSchedule < ActiveRecord::Base
     end
   end
   
-  def cron_string
-    return nil unless any_days_scheduled?
-    tz = search_setup.user.time_zone.nil? ? "America/New_York" : ActiveSupport::TimeZone::MAPPING[search_setup.user.time_zone]
-    "0 #{run_hour} * * #{make_days_of_week} #{tz}"
-  end
 
   def any_days_scheduled?
     self.run_sunday || 
@@ -156,6 +136,35 @@ class SearchSchedule < ActiveRecord::Base
       # Finally, replace all non alphanumeric, underscore
       # or periods with underscore
       name.gsub! /[^\w\.\-]/, '_'
+    end
+  end
+
+  def run_day_set?
+    self.run_sunday? || 
+    self.run_monday? ||
+    self.run_tuesday? || 
+    self.run_wednesday? ||
+    self.run_thursday? ||
+    self.run_friday? ||
+    self.run_saturday
+  end
+  #is the day of week for the given time a day that we should run the schedule
+  def run_day? t
+    case t.wday
+    when 0
+      return self.run_sunday?
+    when 1
+      return self.run_monday?
+    when 2
+      return self.run_tuesday?
+    when 3
+      return self.run_wednesday?
+    when 4
+      return self.run_thursday?
+    when 5
+      return self.run_friday?
+    when 6
+      return self.run_saturday?
     end
   end
 
