@@ -72,4 +72,25 @@ describe SurveyResponse do
       @sr.status.should == "Accepted"
     end
   end
+  describe "can_view?" do
+    before :each do 
+      @survey = Factory(:survey)
+      @response_user = Factory(:user)
+      @sr = @survey.generate_response! @response_user
+    end
+    it "should pass if user is response user" do
+      @sr.can_view?(@response_user).should be_true
+    end
+    it "should pass if user is from the survey company and can edit surveys" do
+      u = Factory(:user,:company=>@survey.company,:survey_edit=>true)
+      @sr.can_view?(u).should be_true
+    end
+    it "should fail if user is from the survey company and cannot edit surveys" do
+      u = Factory(:user,:company=>@survey.company,:survey_edit=>false)
+      @sr.can_view?(u).should be_false
+    end
+    it "should fail if user is not from the survey company and is not the response user" do
+      @sr.can_view?(Factory(:user))
+    end
+  end
 end

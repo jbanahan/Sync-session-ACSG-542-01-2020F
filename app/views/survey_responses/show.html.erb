@@ -52,7 +52,7 @@ textarea {
   height: 10em;
 }
 </style>
-<%form_for @sr, :html=>{:id=>'frm_sr'} do |f|%>
+<%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
   <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%></h1>
   <%f.fields_for :answers do |a|%>
     <%q = a.object.question%>
@@ -83,6 +83,16 @@ textarea {
         <%=acf.hidden_field :user_id%>
         <%=acf.text_area :content%>
       <% end %>
+      <b>Attachments</b><br />
+      <ul>
+      <% a.object.attachments.each do |att|%>
+        <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
+      <% end %>
+      </ul>
+      <%a.fields_for :attachments, a.object.attachments.build do |attf|%>
+        <%=attf.hidden_field :attachable_type%>
+        <%=attf.file_field :attached%>
+      <%end%>
     </div>
   <%end%>
 <%end%>

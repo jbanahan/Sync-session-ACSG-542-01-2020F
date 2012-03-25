@@ -12,6 +12,12 @@ class SurveyResponse < ActiveRecord::Base
 
   after_save :update_status
 
+  def can_view? user
+    return true if user.id==self.user_id
+    return true if self.survey.company_id == user.company_id && user.edit_surveys?
+    false
+  end
+
   private
   def update_status
     s = "Incomplete"
