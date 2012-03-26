@@ -12,7 +12,7 @@ class SearchSchedule < ActiveRecord::Base
     base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
     local_base_time = base_time.in_time_zone(tz_str)
     next_time_local = tz.local(local_base_time.year,local_base_time.month,local_base_time.day,self.run_hour)
-    while next_time_local < Time.now || !run_day?(next_time_local)
+    while next_time_local < local_base_time || !run_day?(next_time_local)
       next_time_local += 1.day
     end
     next_time_local.utc
