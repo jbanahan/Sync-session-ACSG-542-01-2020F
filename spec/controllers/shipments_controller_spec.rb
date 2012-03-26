@@ -18,18 +18,15 @@ describe ShipmentsController do
       @existing_ci_line = Factory(:commercial_invoice_line)
       @piece_set = PieceSet.create!(:order_line_id=>@order_line_2.id,:shipment_line_id=>@shipment_line_2.id,
         :commercial_invoice_line_id=>@existing_ci_line.id,:quantity=>8)
+      @u = Factory(:user,:shipment_edit=>true,:company=>Factory(:company,:master=>true))
+      UserSession.create! @u
     end
     describe 'make_invoice' do
-      before :each do
-        @u = Factory(:user,:shipment_edit=>true,:company=>Factory(:company,:master=>true))
-        UserSession.create! @u
-      end
       it "should not display if user cannot edit shipment" do
         Shipment.any_instance.stub(:can_edit?).and_return(false)
         get :make_invoice, :id=>@shipment.id
         response.should redirect_to request.referrer
       end
-      it "should display if user can edit shipment"
       it "should separate lines based on if they are already on an invoice" do
         Shipment.any_instance.stub(:can_edit?).and_return(true)
         get :make_invoice, :id=>@shipment.id
@@ -39,9 +36,19 @@ describe ShipmentsController do
       end
     end
     describe 'generate_invoice' do
-      it "should not run if user cannot edit shipment"
-      it "should run if user can edit shipment"
-      it "should only process lines that aren't already on an invoice"
+      it "should not run if user cannot edit shipment" do
+        Shipment.any_instance.stub(:can_edit?).and_return(false)
+        put :generate_invoice, :id=>@shipment.id
+        response.should redirect_to request.referrer
+      end
+      it "should only process lines that aren't already on an invoice" do
+        Shipment.any_instance.stub(:can_edit?).and_return(true)
+        Shipment.any_instance.should_receive(:generate_commercial_invoice!).with({:invoice_number=>"INVNUM",:invoice_date=>"2012-03-03"}, [@shipment_line_1])
+        #should not process shipment line 2 because it is on a shipment already.  Screen won't allow it, but we should have the same check in the controller
+        put :generate_invoice, :id=>@shipment.id, :inv_num=>"INVNUM", :inv_date=>"2012-03-03", :shpln=>{"1"=>@shipment_line_1.id.to_s,"2"=>@shipment_line_2.id.to_s}
+        response.should redirect_to @shipment
+        flash[:notices].should == ["Commercial Invoice created successfully."]
+      end
     end
   end
 end

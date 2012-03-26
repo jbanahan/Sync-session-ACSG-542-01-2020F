@@ -114,6 +114,20 @@ class ShipmentsController < ApplicationController
   end
   # generate a commercial invoice based on the given shipment lines and additional parameters
   def generate_invoice
-
+    s = Shipment.find params[:id]
+    action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
+      header_hash = {:invoice_number=>params[:inv_num],:invoice_date=>params[:inv_date]}
+      ship_lines = s.shipment_lines.where("shipment_lines.id IN (?)",params[:shpln].values.to_a).all
+      ship_lines.delete_if {|sl| !sl.commercial_invoice_lines.empty?}
+      begin
+        s.generate_commercial_invoice! header_hash, ship_lines
+        add_flash :notices, "Commercial Invoice created successfully."
+        redirect_to s
+      rescue
+        $!.log_me ["User: #{current_user.username}","Referrer: #{request.referrer}", "Params: #{params}"]
+        add_flash :errors, "Invoice generation failed: #{$!.message}"
+        redirect_to request.referrer
+      end
+    }
   end
 end
