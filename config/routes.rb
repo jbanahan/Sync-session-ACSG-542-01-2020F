@@ -150,6 +150,8 @@ OpenChain::Application.routes.draw do
     end
     member do
       get 'history'
+      get 'make_invoice'
+      put 'generate_invoice'
     end
     resources :shipment_lines do
       post :create_multiple, :on => :collection

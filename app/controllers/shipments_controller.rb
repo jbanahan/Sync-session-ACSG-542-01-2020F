@@ -95,4 +95,25 @@ class ShipmentsController < ApplicationController
        end
     }
   end
+  
+  # show the screen to generate a new commercial invoice
+  def make_invoice
+    s = Shipment.find(params[:id])
+    action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
+      @shipment = s
+      @available_lines = []
+      @used_lines = []
+      @shipment.shipment_lines.each do |sl|
+        if sl.commercial_invoice_lines.empty?
+          @available_lines << sl
+        else
+          @used_lines << sl
+        end
+      end
+    }
+  end
+  # generate a commercial invoice based on the given shipment lines and additional parameters
+  def generate_invoice
+
+  end
 end

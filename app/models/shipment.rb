@@ -22,6 +22,31 @@ class Shipment < ActiveRecord::Base
 	def self.modes 
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
 	end
+
+  #create a commercial invoice for the given lines
+  def generate_commercial_invoice! header_attributes, shp_lines
+    ci = CommercialInvoice.new header_attributes
+    ci_line_map = {}
+    line_counter = 1
+    shp_lines.each do |sl|
+      o_line = sl.order_lines.first
+      c_line = ci.commercial_invoice_lines.build(:part_number=>sl.product.unique_identifier,
+        :unit_price=>o_line.price_per_unit,
+        :po_number=>o_line.order.order_number,
+        :quantity=>sl.quantity,
+        :value => sl.quantity * o_line.price_per_unit,
+        :vendor_name => o_line.order.vendor.name,
+        :line_number => line_counter
+      )
+      line_counter += 1
+      ci_line_map[c_line] = [sl,o_line]
+    end
+    ci.save!
+    ci_line_map.each do |c_line,matches|
+      PieceSet.where(:shipment_line_id=>matches.first.id,:order_line_id=>matches.last.id).update_all(:commercial_invoice_line_id=>c_line.id)
+    end
+    ci
+  end
 	
 
 	def can_view?(user)
