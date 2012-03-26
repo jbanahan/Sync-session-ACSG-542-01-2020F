@@ -40,6 +40,7 @@ describe SearchSchedule do
     it "should identify next run time with EST time zone" do
       tz_str = "Eastern Time (US & Canada)"
       @u.time_zone = tz_str
+      @ss.last_start_time = Time.now
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       now = Time.now.utc
       @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)
@@ -47,18 +48,21 @@ describe SearchSchedule do
     it "should identify next run time with CST time zone" do
       tz_str = "Central Time (US & Canada)"
       @u.time_zone = tz_str
+      @ss.last_start_time = Time.now
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       now = Time.now.utc
       @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)
     end
     it "should default to EST if user doesn't have time zone set" do
       tz_str = "Eastern Time (US & Canada)"
+      @ss.last_start_time = Time.now
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       now = Time.now.utc
       @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)
     end
     it "should skip today's run if today isn't a run day" do
       tz_str = "Eastern Time (US & Canada)"
+      @ss.last_start_time = Time.now
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       now = Time.now.utc
       case now.wday
@@ -82,7 +86,7 @@ describe SearchSchedule do
     it "should use created_at if last_started_at is nil" do
       tz_str = "Eastern Time (US & Canada)"
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
-      @ss.created_at = 1.week.ago
+      @ss.created_at = Time.now 
       @ss.last_start_time = nil
       now = Time.now.utc
       @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)
