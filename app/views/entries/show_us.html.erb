@@ -145,53 +145,7 @@
 <% end%>
 <%@entry.commercial_invoices.each do |ci|%>
   <a name='ci_<%=ci.id%>'></a>
-  <table class='ent_columns'>
-    <tbody>
-      <tr><td colspan='2'><h3><%=field_label :ci_invoice_number, false%> - <%=field_value(ci,:ci_invoice_number)%></h3></td></tr>
-      <tr>
-        <td style='width:50%;'>
-          <table>
-            <%[:ci_vendor_name,:ci_mfid,:ci_invoice_date,:ci_gross_weight,:ci_country_origin_code].each do |f|%>
-              <%=field_view_row ci,f,false%>
-            <%end%>
-          </table>
-        </td>
-        <td style='width:50%;'>
-          <table>
-            <%[:ci_invoice_value,:ci_total_charges,:ci_invoice_value_foreign,:ci_currency].each do |f|%>
-              <%=field_view_row ci,f,false%>
-            <%end%>
-          </table>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_related_parties,:cil_volume]%>
-  <table class='detail_table'>
-    <thead><tr>
-      <%fields.each do |f|%>
-        <th><%=field_label f, false%></th>
-      <%end%>
-    </tr></thead>
-    <tbody>
-      <%ci.commercial_invoice_lines.each do |line|%>
-        <tr class='hover ci_line'>
-          <%fields.each_with_index do |f,i|%>
-            <td <%="rowspan='2'" if i==0%> <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
-          <%end%>
-        </tr>
-        <% if line.commercial_invoice_tariffs.count > 0%>
-          <tr>
-            <td colspan='8' style='font-size:111%;'>
-              <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_spi_primary,:cit_spi_secondary,
-                :cit_classification_qty_1,:cit_classification_uom_1,:cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3,
-                :cit_gross_weight,:cit_tariff_description], :lines=>line.commercial_invoice_tariffs}%>
-            </td>
-          </tr>
-        <% end %>
-      <%end%>
-    </tbody>
-  </table>
+  <%=render :partial=>"commercial_invoices/show", :locals=>{:ci=>ci}%>
   <hr />
 <%end%>
 <%if show_broker_invoices%>
