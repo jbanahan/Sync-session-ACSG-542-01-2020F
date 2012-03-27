@@ -1,4 +1,4 @@
-<div id='<%= address_id %>'>
+<div <%=local_assigns.has_key?(:address_id) ? "id='#{address_id}'" : ""%>>
 <% unless ad.nil? %>
 <b><%= ad.name %></b><br />
 <% unless ad.line_1.blank? %><%= ad.line_1 %><br /><% end %>

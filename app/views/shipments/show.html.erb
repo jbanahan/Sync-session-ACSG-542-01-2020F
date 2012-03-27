@@ -62,16 +62,16 @@ $(function() {
 </div>
 <table class='detail_table'>
   <thead>
-    <tr><th><%=field_label(:shpln_line_number)%></th>
-    <th><%=field_label(:prod_name)%></th>
-    <th><%=field_label(:shpln_shipped_qty)%></th>
-    <th><%=field_label(:ordln_line_number)%></th>
+    <tr><th><%=field_label(:shpln_line_number,false)%></th>
+    <th><%=field_label(:prod_name,false)%></th>
+    <th><%=field_label(:shpln_shipped_qty,false)%></th>
+    <th><%=field_label(:ordln_line_number,false)%></th>
     <th><a href='#' id='lnk_all_details'>All Details</a></th>
   </thead>
   <tbody>
     <%@shipment.shipment_lines.order("line_number ASC").each do |line|%>
     <tr class='hover shp_line'>
-      <td><%= @shipment.can_edit?(current_user) & !@shipment.locked? ? (link_to line.line_number, edit_shipment_shipment_line_path(@shipment,line)) : line.line_number %></td>
+      <td><%= @shipment.can_edit?(current_user) && !line.locked? ? (link_to line.line_number, edit_shipment_shipment_line_path(@shipment,line)) : line.line_number %></td>
       <td><%=link_to line.product.name.nil? ? line.product.unique_identifier : line.product.name, line.product%></td>
       <td><%=line.quantity%></td>
       <td>
@@ -82,16 +82,20 @@ $(function() {
       <td>
         <%if has_custom_fields(line) %><a href='#' class='lnk_detail'>Details</a><%end%>
         <%if has_custom_fields(line) && @shipment.can_edit?(current_user)%>
-        &nbsp;|&nbsp;
         <%end%>
-        <%if @shipment.can_edit?(current_user)%>
-        <%=link_to "Delete", shipment_shipment_line_path(@shipment,line), :confirm=>'Are you sure you want to delete this line?', :method=>:delete %>
+        <%if @shipment.can_edit?(current_user) && !line.locked?%>
+          |&nbsp;<%=link_to "Delete", shipment_shipment_line_path(@shipment,line), :confirm=>'Are you sure you want to delete this line?', :method=>:delete %>
         <%end%>
       </td>
     </tr>
     <tr class='shp_line_detail' style='display:none;'>
       <td colspan='5' style="padding-left:1em;">
-      <%=show_custom_fields line%>
+        <table>
+        <%=show_custom_fields line, {:show_prefix=>false,:table=>true}%>
+        <%line.commercial_invoice_lines.collect {|invln| invln.commercial_invoice}.uniq.compact.each do |inv|%>
+          <%=field_row field_label(:ci_invoice_number,false), link_to(field_value(inv,:ci_invoice_number),inv)%>
+        <%end%>
+        </table>
       </td>
     </tr>
     <%end%>

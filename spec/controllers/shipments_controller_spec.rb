@@ -43,7 +43,7 @@ describe ShipmentsController do
       end
       it "should only process lines that aren't already on an invoice" do
         Shipment.any_instance.stub(:can_edit?).and_return(true)
-        Shipment.any_instance.should_receive(:generate_commercial_invoice!).with({:invoice_number=>"INVNUM",:invoice_date=>"2012-03-03"}, [@shipment_line_1])
+        CommercialInvoiceMap.should_receive(:generate_invoice!).with(@u, [@shipment_line_1], {:invoice_number=>"INVNUM",:invoice_date=>"2012-03-03"})
         #should not process shipment line 2 because it is on a shipment already.  Screen won't allow it, but we should have the same check in the controller
         put :generate_invoice, :id=>@shipment.id, :inv_num=>"INVNUM", :inv_date=>"2012-03-03", :shpln=>{"1"=>@shipment_line_1.id.to_s,"2"=>@shipment_line_2.id.to_s}
         response.should redirect_to @shipment

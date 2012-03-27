@@ -1,45 +1,35 @@
 require 'spec_helper'
 
 describe Shipment do
-  describe 'generate_commercial_invoice!' do
-    it 'should create commercial_invoice for given shipment lines' do
-      vendor = Factory(:company,:vendor=>true)
-      s_line = Factory(:shipment_line,:quantity=>3,:shipment=>Factory(:shipment,:vendor=>vendor))
-      shipment = s_line.shipment
-      o_line = Factory(:order_line,:order=>Factory(:order,:vendor=>vendor),:product=>s_line.product,:quantity=>5,:price_per_unit=>10.4)
-      PieceSet.create!(:shipment_line_id=>s_line.id,
-        :order_line_id=>o_line.id,:quantity=>3)
-      s_line_2 = Factory(:shipment_line,:shipment=>shipment,:quantity=>15)
-      o_line_2 = Factory(:order_line,:product=>s_line_2.product,:quantity=>30,:price_per_unit=>3)
-      PieceSet.create!(:shipment_line_id=>s_line_2.id,
-        :order_line_id=>o_line_2.id,:quantity=>15)
-      inv_date = Time.now
-      inv_headers = {:invoice_number=>"INVN",:invoice_date=>inv_date}
-      invoice = Shipment.find(shipment.id).generate_commercial_invoice! inv_headers, [s_line,s_line_2]
-      invoice.id.should_not be_blank #saved in database
-      invoice.invoice_number.should == "INVN"
-      invoice.invoice_date.should == inv_date
-      invoice.should have(2).commercial_invoice_lines
-      c_line = invoice.commercial_invoice_lines.first
-      c_line.should have(1).piece_sets
-      ps = c_line.piece_sets.first
-      ps.shipment_line.should == s_line
-      c_line.part_number.should == s_line.product.unique_identifier
-      c_line.unit_price.should == o_line.price_per_unit
-      c_line.po_number.should == o_line.order.order_number.to_s
-      c_line.quantity.should == s_line.quantity
-      c_line.value.should == c_line.unit_price * c_line.quantity
-      c_line.vendor_name.should == o_line.order.vendor.name
-      ps.order_line.should == o_line
-      c_line.line_number.should == 1
-      invoice.commercial_invoice_lines.last.shipment_lines.first.should == s_line_2
+  describe "commercial_invoices" do
+    it "should find linked invoices" do
+      sl_1 = Factory(:shipment_line,:quantity=>10)
+      ol_1 = Factory(:order_line,:product=>sl_1.product,:order=>Factory(:order,:vendor=>sl_1.shipment.vendor),:quantity=>10,:price_per_unit=>3)
+      cl_1 = Factory(:commercial_invoice_line,:commercial_invoice=>Factory(:commercial_invoice,:invoice_number=>"IN1"),:quantity=>10)
+      sl_2 = Factory(:shipment_line,:quantity=>11,:shipment=>sl_1.shipment,:product=>sl_1.product)
+      ol_2 = Factory(:order_line,:product=>sl_2.product,:order=>Factory(:order,:vendor=>sl_2.shipment.vendor),:quantity=>11,:price_per_unit=>2)
+      cl_2 = Factory(:commercial_invoice_line,:commercial_invoice=>Factory(:commercial_invoice,:invoice_number=>"IN2"),:quantity=>11)
+      PieceSet.create!(:shipment_line_id=>sl_1.id,:order_line_id=>ol_1.id,:commercial_invoice_line_id=>cl_1.id,:quantity=>10)
+      PieceSet.create!(:shipment_line_id=>sl_2.id,:order_line_id=>ol_2.id,:commercial_invoice_line_id=>cl_2.id,:quantity=>11)
 
+      s = Shipment.find(sl_1.shipment.id)
+
+      s.commercial_invoices.collect {|ci| ci.invoice_number}.should == ["IN1","IN2"]
     end
-    it "should create errors in invoice if lines aren't all from this shipment"
-    it "should create errors in if lines aren't all linked to order lines"
-    it "should create error if shipment doesn't have ship from"
-    it "should create error if shipment doesn't have ship to"
-    it "should use reference number as invoice number if invoice number is empty"
+    it "should only return unique invoices" do
+      sl_1 = Factory(:shipment_line,:quantity=>10)
+      ol_1 = Factory(:order_line,:product=>sl_1.product,:order=>Factory(:order,:vendor=>sl_1.shipment.vendor),:quantity=>10,:price_per_unit=>3)
+      cl_1 = Factory(:commercial_invoice_line,:commercial_invoice=>Factory(:commercial_invoice,:invoice_number=>"IN1"),:quantity=>10)
+      sl_2 = Factory(:shipment_line,:quantity=>11,:shipment=>sl_1.shipment,:product=>sl_1.product)
+      ol_2 = Factory(:order_line,:product=>sl_2.product,:order=>Factory(:order,:vendor=>sl_2.shipment.vendor),:quantity=>11,:price_per_unit=>2)
+      cl_2 = Factory(:commercial_invoice_line,:commercial_invoice=>cl_1.commercial_invoice,:quantity=>11)
+      PieceSet.create!(:shipment_line_id=>sl_1.id,:order_line_id=>ol_1.id,:commercial_invoice_line_id=>cl_1.id,:quantity=>10)
+      PieceSet.create!(:shipment_line_id=>sl_2.id,:order_line_id=>ol_2.id,:commercial_invoice_line_id=>cl_2.id,:quantity=>11)
+
+      ci = Shipment.find(sl_1.shipment.id).commercial_invoices
+      ci.should have(1).invoice
+      ci.first.invoice_number == "IN1"
+    end
   end
   describe 'linkable attachments' do
     it 'should have linkable attachments' do

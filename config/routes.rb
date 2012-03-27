@@ -1,5 +1,6 @@
 OpenChain::Application.routes.draw do
   resources :entries, :only => [:index,:show]
+  resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
 
   resources :linkable_attachment_import_rules

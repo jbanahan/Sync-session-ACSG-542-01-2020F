@@ -21,6 +21,12 @@ class ShipmentLine < ActiveRecord::Base
     raise "Multiple shipment lines found for shipment #{self.shipment_id} and line #{self.line_number}" if r.size > 1
     r.empty? ? nil : r.first
   end
+
+  # override the locked? method from LinesSupport to lock lines included on Commercial Invoices
+  def locked?
+    (self.shipment && self.shipment.locked?) || !self.commercial_invoice_lines.blank?
+  end
+  
   private
   def parent_obj #supporting method for LinesSupport
     self.shipment
@@ -29,4 +35,5 @@ class ShipmentLine < ActiveRecord::Base
   def parent_id_where #supporting method for LinesSupport
     return :shipment_id => self.shipment.id
   end
+  
 end

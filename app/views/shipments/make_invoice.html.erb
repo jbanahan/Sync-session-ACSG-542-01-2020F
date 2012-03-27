@@ -1,5 +1,5 @@
 <% content_for :action_bar do %>
-  <button class='form_to' form_id="frm_ci" action_key="g">Generate</button>
+  <button class='form_to' form_id="frm_ci" key_map="g">Generate</button>
 <% end %>
 <h1>Make Commercial Invoice</h1>
 <%=form_for @shipment, :url=>generate_invoice_shipment_path(@shipment), :html=>{:method=>"PUT",:id=>'frm_ci'} do |f|%>

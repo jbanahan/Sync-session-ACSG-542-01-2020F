@@ -120,7 +120,7 @@ class ShipmentsController < ApplicationController
       ship_lines = s.shipment_lines.where("shipment_lines.id IN (?)",params[:shpln].values.to_a).all
       ship_lines.delete_if {|sl| !sl.commercial_invoice_lines.empty?}
       begin
-        s.generate_commercial_invoice! header_hash, ship_lines
+        CommercialInvoiceMap.generate_invoice! current_user, ship_lines, header_hash
         add_flash :notices, "Commercial Invoice created successfully."
         redirect_to s
       rescue
