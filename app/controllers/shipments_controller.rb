@@ -116,11 +116,12 @@ class ShipmentsController < ApplicationController
   def generate_invoice
     s = Shipment.find params[:id]
     action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
-      header_hash = {:invoice_number=>params[:inv_num],:invoice_date=>params[:inv_date]}
+      field_hash = params[:extra_fields]
+      field_hash ||= {}
       ship_lines = s.shipment_lines.where("shipment_lines.id IN (?)",params[:shpln].values.to_a).all
       ship_lines.delete_if {|sl| !sl.commercial_invoice_lines.empty?}
       begin
-        CommercialInvoiceMap.generate_invoice! current_user, ship_lines, header_hash
+        CommercialInvoiceMap.generate_invoice! current_user, ship_lines, field_hash
         add_flash :notices, "Commercial Invoice created successfully."
         redirect_to s
       rescue

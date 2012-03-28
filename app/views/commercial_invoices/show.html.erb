@@ -28,9 +28,17 @@
           <td>
           <% case f%>
           <% when :cil_part_number%>
-            <%=link_to field_value(cil,f), cil.order_lines.first.product%>
+            <% if cil.part_number.blank?%>
+              <%=link_to cil.shipment_lines.first.product.unique_identifier, cil.shipment_lines.first.product%>
+            <% else %>
+              <%=link_to field_value(cil,f), cil.shipment_lines.first.product%>
+            <% end %>
           <% when :cil_po_number%>
-            <%=link_to field_value(cil,f), cil.order_lines.first.order%>
+            <% if !cil.order_lines.blank? %>
+                <%=link_to cil.order_lines.first.order.order_number, cil.order_lines.first.order%>
+            <% elsif !cil.po_number.blank?%>
+                <%=field_value cil, f%>
+            <% end %>
           <% else %>
             <%=field_value cil, f%>
           <%end%>
@@ -43,6 +51,6 @@
 <br />
 <br />
 <table>
-<%=field_row "Total Value", @ci.commercial_invoice_lines.inject(0) {|a,n| a+n.value}%>
-<%=field_row "Total Units", @ci.commercial_invoice_lines.inject(0) {|a,n| a+n.quantity}%>
+<%=field_row "Total Value", @ci.commercial_invoice_lines.inject(0) {|a,n| a+( n.value ? n.value : 0 )}%>
+<%=field_row "Total Units", @ci.commercial_invoice_lines.inject(0) {|a,n| a+( n.quantity ? n.quantity : 0)}%>
 </table>

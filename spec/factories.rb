@@ -8,10 +8,15 @@ Factory.sequence :iso do |n|
   r = "#{@iso_seq_1}#{@iso_seq_2}"
   @iso_seq_1 = @iso_seq_1.succ
   @iso_seq_2 = @iso_seq_2.succ
-  r
+  r[0,2]
 end
 Factory.define :company do |c|
   c.sequence(:name) { |n| "cname#{n}"}
+end
+Factory.define :address do |a|
+  a.name "MYaddr"
+  a.association :country
+  a.association :company
 end
 Factory.define :user do |f|  
   f.sequence(:username) { |n| "foo#{n}" }   
@@ -173,4 +178,8 @@ end
 Factory.define :answer do |f|
   f.association :question
   f.association :survey_response
+end
+Factory.define :commercial_invoice_map do |f|
+  f.source_mfid "prod_uid"
+  f.destination_mfid "cil_part_number"
 end

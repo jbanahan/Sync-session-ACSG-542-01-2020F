@@ -15,7 +15,7 @@ describe CommercialInvoiceMap do
         :price_per_unit=>3,
         :order=>Factory(:order,:vendor=>@s_line.shipment.vendor,:order_date=>Date.new(2010,3,6))
         )
-      PieceSet.create!(:shipment_line_id=>@s_line.id,:order_line_id=>@o_line.id,:quantity=>20)
+      @piece_set = PieceSet.create!(:shipment_line_id=>@s_line.id,:order_line_id=>@o_line.id,:quantity=>20)
     end
     it "should create invoice just based on shipment fields" do
       {:shp_ref=>:ci_invoice_number,
@@ -30,6 +30,7 @@ describe CommercialInvoiceMap do
       ci.commercial_invoice_lines.should have(1).item
       c_line = ci.commercial_invoice_lines.first
       c_line.country_origin_code.should == "CA"
+      c_line.shipment_lines.first.should == @s_line
     end
     it "should set header values from passed in hash" do
       {:shp_ref=>:ci_invoice_number}.each do |src,dest|
@@ -70,8 +71,42 @@ describe CommercialInvoiceMap do
       line.unit_price.should == @o_line.price_per_unit
       line.quantity.should == @s_line.quantity
       line.part_number.should == @o_line.product.unique_identifier
+      line.order_lines.first.should == @o_line
+      line.shipment_lines.first.should == @s_line
     end
-    it "should set tariff based on ship to country"
+    it "should set value based on unit price & units if set" do
+      {:shp_ref=>:ci_invoice_number,
+        :ord_ord_date => :ci_invoice_date,
+        :ord_ven_name => :ci_vendor_name,
+        :ordln_ppu => :ent_unit_price,
+        :shpln_shipped_qty => :cil_units,
+        :prod_uid => :cil_part_number
+      }.each do |src,dest|
+        CommercialInvoiceMap.create!(:source_mfid=>src, :destination_mfid=>dest)
+      end
+      ci = CommercialInvoiceMap.generate_invoice! Factory(:user), [@s_line]
+      ci.commercial_invoice_lines.first.value.should == @s_line.quantity * @o_line.price_per_unit
+    end
+    it "should set tariff based on ship to country" do
+      {:shp_ref=>:ci_invoice_number,
+        :ord_ord_date => :ci_invoice_date,
+        :ord_ven_name => :ci_vendor_name,
+        :ordln_ppu => :ent_unit_price,
+        :shpln_shipped_qty => :cil_units,
+        :prod_uid => :cil_part_number
+      }.each do |src,dest|
+        CommercialInvoiceMap.create!(:source_mfid=>src, :destination_mfid=>dest)
+      end
+      shipment = @s_line.shipment
+      vendor = shipment.vendor
+      c = Factory(:country)
+      address = Factory(:address,:country=>c,:shipping=>true,:company=>vendor)
+      shipment.update_attributes(:ship_to_id=>address.id)
+      product = @s_line.product
+      tar = Factory(:tariff_record,:hts_1=>"123456789",:classification=>Factory(:classification,:country=>c,:product=>product))
+      ci = CommercialInvoiceMap.generate_invoice! User.new, [@s_line]
+      ci.commercial_invoice_lines.first.commercial_invoice_tariffs.first.hts_code.should == "123456789"
+    end
     it "should raise exception if all lines aren't from the same shipment" do
       s_line = Factory(:shipment_line)
       s_line2 = Factory(:shipment_line)

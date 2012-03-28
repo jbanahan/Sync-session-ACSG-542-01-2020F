@@ -25,6 +25,9 @@ $(function() {
   <button class='btn_link' link_to='<%=shipments_path%>' key_map='b'>Back To Search</button>
   <button class='btn_link' link_to='<%=history_shipment_path(@shipment)%>' key_map='h'>History</button>
   <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "shipments"} %>
+  <% if current_user.edit_commercial_invoices? && CommercialInvoiceMap.count > 0%>
+    <button class='btn_link' link_to='<%=make_invoice_shipment_path(@shipment)%>'>Make Commercial Invoice</button>
+  <%end%>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:shipment_id => @shipment.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
 
