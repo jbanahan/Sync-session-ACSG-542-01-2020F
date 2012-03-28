@@ -39,7 +39,7 @@
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_merch_desc,:ent_mbols,:ent_hbols].each do |f|%>
+          <%[:ent_release_cert_message,:ent_fda_message,:ent_merch_desc,:ent_mbols,:ent_hbols].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
@@ -68,7 +68,7 @@
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_duty_due_date,:ent_liq_date].each do |f|%>
+          <%[:ent_fda_transmit_date,:ent_fda_review_date,:ent_fda_release_date,:ent_duty_due_date,:ent_liq_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>

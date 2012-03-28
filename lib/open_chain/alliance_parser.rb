@@ -12,7 +12,10 @@ module OpenChain
       '00044'=>:liquidation_date,
       '00042'=>:duty_due_date,
       '00001'=>:export_date,
-      '00004'=>:file_logged_date
+      '00004'=>:file_logged_date,
+      '00020'=>:fda_release_date,
+      '93002'=>:fda_review_date,
+      '00108'=>:fda_transmit_date
     }
 
     # process all files in the archive for a given date.  Use this to reprocess old files
@@ -153,8 +156,10 @@ module OpenChain
 
     # header continuation
     def process_sh01 r
+      @entry.release_cert_message = r[4,33].strip
       @entry.total_fees = parse_currency r[85,12]
       @entry.total_duty = parse_currency r[49,12]
+      @entry.fda_message = r[217,33].strip
       @entry.total_duty_direct = parse_currency r[357,12]
       @entry.entered_value = parse_currency r[384,13]
       accumulate_string :recon, "NAFTA" if r[397]!="N"

@@ -724,7 +724,12 @@ class ModelField
       [76,:ent_export_state_code,:export_state_codes,"Export State Codes",{:data_type=>:string}],
       [77,:ent_recon_flags,:recon_flags,"Recon Flags",{:data_type=>:string}],
       [78,:ent_ca_entry_type,:entry_type,"Entry Type (CA)",{:data_type=>:string}],
-      [79, :ent_broker_invoice_total, :broker_invoice_total, "Total Broker Invoice", {:data_type=>:decimal, :currency=>:usd, :can_view_lambda=>lambda {|u| u.view_broker_invoices?}}]
+      [79, :ent_broker_invoice_total, :broker_invoice_total, "Total Broker Invoice", {:data_type=>:decimal, :currency=>:usd, :can_view_lambda=>lambda {|u| u.view_broker_invoices?}}],
+      [80,:ent_release_cert_message,:release_cert_message, "Release Certification Message", {:data_type=>:string}],
+      [81,:ent_fda_message,:fda_message,"FDA Message",{:data_type=>:string}],
+      [82,:ent_fda_transmit_date,:fda_transmit_date,"FDA Transmit Date",{:data_type=>:datetime}],
+      [83,:ent_fda_review_date,:fda_review_date,"FDA Review Date",{:data_type=>:datetime}],
+      [84,:ent_fda_release_date,:fda_release_date,"FDA Release Date",{:data_type=>:datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
