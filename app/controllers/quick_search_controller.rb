@@ -5,7 +5,7 @@ class QuickSearchController < ApplicationController
     @module_field_map = {
       CoreModule::ORDER=>[:ord_ord_num],
       CoreModule::PRODUCT=>[:prod_uid,:prod_name],
-      CoreModule::ENTRY=>[:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols],
+      CoreModule::ENTRY=>[:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums],
       CoreModule::BROKER_INVOICE=>[:bi_brok_ref],
       CoreModule::SHIPMENT=>[:shp_ref],
       CoreModule::SALE=>[:sale_order_number],
