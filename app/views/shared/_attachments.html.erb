@@ -9,7 +9,7 @@ $(function() {
   <button id='btn_add_attachment'>Add Attachment</button>
 <%end%>
 <% end %>
-<div class='attachments_box'>
+<div class='attachments_box_<%=local_assigns.has_key?(:width) ? width : "narrow"%>'>
   <% unless attachable.attachments.blank?%>
   <div class='attachment_heading'>Attachments</div>
   <% end %>

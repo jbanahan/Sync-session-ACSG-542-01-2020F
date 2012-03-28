@@ -395,10 +395,13 @@ p {
   width: 14.7em;
 }
 /* Attachment Box */
-.attachments_box {
+.attachments_box_narrow {
   width: 38%;
   float: right;
   margin-right: 2%;
+  margin-bottom: 10px;
+}
+.attachments_box_wide {
   margin-bottom: 10px;
 }
 .attachment_heading {
