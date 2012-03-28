@@ -1,0 +1,58 @@
+<%content_for :javascript do%>
+var OCM = (function() {
+  return {
+    addInputPair: function(src,dest) {
+      var m = new Date().getTime();
+      var h = "<tr class='pair_row'><td><select id='src_"+m+"' name='map["+m+"][src]'>";
+      <%[CoreModule::PRODUCT,CoreModule::ORDER,CoreModule::ORDER_LINE,
+        CoreModule::SHIPMENT,CoreModule::SHIPMENT_LINE].each do |cm|%>
+        <%cm.model_fields.values.each do |mf|%>
+          h += "<option value='<%=mf.uid%>'><%=mf.label true%></option>";
+        <%end%>
+      <%end%>
+      h += "</select></td><td><select id='dest_"+m+"' name='map["+m+"][dest]'>";
+      <%[CoreModule::COMMERCIAL_INVOICE,CoreModule::COMMERCIAL_INVOICE_LINE,
+        CoreModule::COMMERCIAL_INVOICE_TARIFF].each do |cm|%>
+        <%cm.model_fields.values.each do |mf|%>
+          h += "<option value='<%=mf.uid%>'><%=mf.label true%></option>";
+        <%end%>
+      <%end%>
+      h += "</select></td><td><a href='#' class='d_lnk'><img src='/images/x.png' alt='delete' /></a></tr>";
+      $("#mp_tbl").append(h);
+      if(src && dest) {
+        $("#src_"+m).val(src);
+        $("#dest_"+m).val(dest);
+      }
+    },
+    deletePair: function(sourceLink) {
+      $(sourceLink).parents("tr.pair_row").remove();
+    }
+  }
+})(); 
+$(function() {
+  <%@maps.each do |m|%>
+  OCM.addInputPair("<%=m.source_mfid%>","<%=m.destination_mfid%>");
+  <%end%>
+  $("#add_lnk").click(function(ev) {
+    ev.preventDefault();
+    OCM.addInputPair();
+  });
+  $(".d_lnk").live('click',function(ev) {
+    ev.preventDefault();
+    OCM.deletePair(this);
+  })
+});
+<%end%>
+<%content_for :action_bar do%>
+  <button class='form_to' form_id='frm_mp' key_map='s'>Save</button>
+  <button class='btn_link' link_to="<%=request.referrer%>" key_map='b'>Back</button>
+<%end%>
+<h1>Commercial Invoice Mapping</h1>
+<p>Add mapping records from the Order, Shipment, and Product modules to the Commercial Invoice.</p>
+<p>These records are used by the "Make Commerical Invoice" button on the Shipment screen.</p>
+<%=form_tag update_all_commercial_invoice_maps_path, :method=>:post, :id=>"frm_mp" do -%>
+  <table id='mp_tbl'>
+
+  </table>
+<%end -%>
+<a href='#' id='add_lnk'>Add Row</a>

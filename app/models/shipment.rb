@@ -19,10 +19,13 @@ class Shipment < ActiveRecord::Base
     return f.empty? ? nil : f.first
   end
 
+  #get unique linked commercial invoices
+  def commercial_invoices
+    CommercialInvoice.select("DISTINCT commercial_invoices.*").joins(:commercial_invoice_lines=>[:piece_sets=>[:shipment_line]]).where("shipment_lines.shipment_id = ?",self.id)
+  end 
 	def self.modes 
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
 	end
-	
 
 	def can_view?(user)
 	  return user.view_shipments? && (user.company.master? || (user.company.vendor? && user.company == self.vendor) || (user.company.carrier? && user.company == self.carrier))

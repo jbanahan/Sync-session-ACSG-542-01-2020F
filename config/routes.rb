@@ -1,6 +1,10 @@
 OpenChain::Application.routes.draw do
   resources :entries, :only => [:index,:show]
+  resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
+  resources :commercial_invoice_maps, :only=>[:index] do
+    post 'update_all', :on=>:collection
+  end
 
   resources :linkable_attachment_import_rules
   resources :tariff_sets, :only => [:index] do
@@ -150,6 +154,8 @@ OpenChain::Application.routes.draw do
     end
     member do
       get 'history'
+      get 'make_invoice'
+      put 'generate_invoice'
     end
     resources :shipment_lines do
       post :create_multiple, :on => :collection

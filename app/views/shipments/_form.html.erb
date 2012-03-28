@@ -49,7 +49,7 @@ $(function() {
       @shipment.vendor = current_user.company %>
       <%= f.hidden_field :vendor_id %><%= @shipment.vendor.name %>
   <% else %>
-    <%= f.collection_select :vendor_id, Company.find_vendors.not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %>
+    <%= f.collection_select :vendor_id, Company.find_vendors.order("companies.name ASC").not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %>
   <% end %>  
 </div>
 <table class='detail_table'>

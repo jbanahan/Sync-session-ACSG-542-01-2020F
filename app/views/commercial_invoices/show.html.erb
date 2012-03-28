@@ -1,0 +1,56 @@
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=request.referrer%>' key_map='b'>Back</button>
+<%end%>
+<h1 style='text-align:center;'>Commercial Invoice</h1>
+<table>
+  <%[:ci_invoice_number,:ci_vendor_name,:ci_currency,:ci_gross_weight].each do |f|%>
+  <%=field_view_row @ci, f, false%>
+  <%end%>
+</table>
+<%if @shipment%>
+    <h3>Ship From</h3>
+    <%=render :partial=>'addresses/display', :locals=>{:ad=>@shipment.ship_from}%>
+    <h3>Ship To</h3>
+    <%=render :partial=>'addresses/display', :locals=>{:ad=>@shipment.ship_to}%>
+<%end%>
+<table class='detail_table'>
+  <thead><tr>
+    <%flds = [:cil_line_number,:cil_part_number,:cil_po_number,
+    :cil_country_origin_code,:ent_state_export_code,:cil_units,:cil_uom,:ent_unit_price,
+    :cil_value].each do |f|%>
+      <th><%=field_label f, false%></th>
+    <%end%>
+  </thead>
+  <tbody>
+    <%@ci.commercial_invoice_lines.each do |cil|%>
+      <tr class='hover'>
+        <%flds.each do |f|%>
+          <td>
+          <% case f%>
+          <% when :cil_part_number%>
+            <% if cil.part_number.blank?%>
+              <%=link_to cil.shipment_lines.first.product.unique_identifier, cil.shipment_lines.first.product%>
+            <% else %>
+              <%=link_to field_value(cil,f), cil.shipment_lines.first.product%>
+            <% end %>
+          <% when :cil_po_number%>
+            <% if !cil.order_lines.blank? %>
+                <%=link_to cil.order_lines.first.order.order_number, cil.order_lines.first.order%>
+            <% elsif !cil.po_number.blank?%>
+                <%=field_value cil, f%>
+            <% end %>
+          <% else %>
+            <%=field_value cil, f%>
+          <%end%>
+          </td>
+        <%end%>
+      </tr>
+    <%end%>
+  </tbody>
+</table>
+<br />
+<br />
+<table>
+<%=field_row "Total Value", @ci.commercial_invoice_lines.inject(0) {|a,n| a+( n.value ? n.value : 0 )}%>
+<%=field_row "Total Units", @ci.commercial_invoice_lines.inject(0) {|a,n| a+( n.quantity ? n.quantity : 0)}%>
+</table>

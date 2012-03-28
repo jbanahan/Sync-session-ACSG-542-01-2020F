@@ -1,0 +1,64 @@
+<% content_for :javascript do%>
+$(function() {
+  $("input.shpln_chk").change(function() {
+    if($("input.shpln_chk:checked").size() > 0) {
+      $("#btn_generate").fadeIn('fast');
+    } else {
+      $("#btn_generate").hide();
+    }
+  });
+});
+<%end%>
+<% content_for :action_bar do %>
+  <button class='form_to' form_id="frm_ci" key_map="g" id='btn_generate' style='display:none;'>Generate</button>
+  <button class='btn_link' link_to="<%=request.referrer%>" key_map="b">Back</button>
+<% end %>
+<h1>Make Commercial Invoice</h1>
+<%=form_for @shipment, :url=>generate_invoice_shipment_path(@shipment), :html=>{:method=>"PUT",:id=>'frm_ci'} do |f|%>
+  <table>
+  <%=field_row ModelField.find_by_uid(:ci_invoice_number).label(false), model_text_field_tag("extra_fields[ci_invoice_number]",:ci_invoice_number,"")%>
+  <%=field_row ModelField.find_by_uid(:ci_invoice_date).label(false), model_text_field_tag("extra_fields[ci_invoice_date]",:ci_invoice_date,"")%>
+  </table>
+  <h2>Available Lines</h2>
+  <%fields_to_show = [:shpln_line_number,:shpln_puid,:shpln_shipped_qty]%>
+  <table class='detail_table'> 
+    <thead><tr><th>&nbsp;</th>
+    <%fields_to_show.each do |uid|%>
+      <th><%=ModelField.find_by_uid(uid).label%></th>
+    <%end%>
+    </tr>
+    </thead>
+    <tbody>
+    <%@available_lines.each do |sl|%>
+      <tr class='hover'>
+        <td><input type='checkbox' class='shpln_chk' name='shpln[<%=sl.id%>]' value="<%=sl.id%>" /></td>
+        <%fields_to_show.each do |uid|%>
+          <td><%=ModelField.find_by_uid(uid).process_export sl, current_user%></td>
+        <%end%>
+      </tr>
+    <%end%>
+    </tbody>
+  </table>
+  <% unless @used_lines.empty? %>
+    <h2>Lines Already Used On Another Invoice</h2>
+    <table class='detail_table'> 
+      <thead><tr>
+      <%fields_to_show.each do |uid|%>
+        <th><%=ModelField.find_by_uid(uid).label%></th>
+      <%end%>
+      <th><%=ModelField.find_by_uid(:ci_invoice_number).label%></th>
+      </tr>
+      </thead>
+      <tbody>
+      <%@used_lines.each do |sl|%>
+        <tr class='hover'>
+          <%fields_to_show.each do |uid|%>
+            <td><%=ModelField.find_by_uid(uid).process_export sl, current_user%></td>
+          <%end%>
+          <td><%=ModelField.find_by_uid(:ci_invoice_number).process_export sl.commercial_invoice_lines.first.commercial_invoice, current_user%></td>
+        </tr>
+      <%end%>
+      </tbody>
+    </table>
+  <% end %>
+<%end%>

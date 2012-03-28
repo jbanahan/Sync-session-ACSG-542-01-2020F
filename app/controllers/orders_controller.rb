@@ -56,7 +56,7 @@ class OrdersController < ApplicationController
       action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
         @order = o
         @divisions = Division.all
-        @vendors = Company.find_vendors.not_locked
+        @vendors = Company.find_vendors.order("companies.name ASC").not_locked
       }
     end
 

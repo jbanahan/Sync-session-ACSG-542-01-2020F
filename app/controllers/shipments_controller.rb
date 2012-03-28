@@ -95,4 +95,40 @@ class ShipmentsController < ApplicationController
        end
     }
   end
+  
+  # show the screen to generate a new commercial invoice
+  def make_invoice
+    s = Shipment.find(params[:id])
+    action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
+      @shipment = s
+      @available_lines = []
+      @used_lines = []
+      @shipment.shipment_lines.each do |sl|
+        if sl.commercial_invoice_lines.empty?
+          @available_lines << sl
+        else
+          @used_lines << sl
+        end
+      end
+    }
+  end
+  # generate a commercial invoice based on the given shipment lines and additional parameters
+  def generate_invoice
+    s = Shipment.find params[:id]
+    action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
+      field_hash = params[:extra_fields]
+      field_hash ||= {}
+      ship_lines = s.shipment_lines.where("shipment_lines.id IN (?)",params[:shpln].values.to_a).all
+      ship_lines.delete_if {|sl| !sl.commercial_invoice_lines.empty?}
+      begin
+        CommercialInvoiceMap.generate_invoice! current_user, ship_lines, field_hash
+        add_flash :notices, "Commercial Invoice created successfully."
+        redirect_to s
+      rescue
+        $!.log_me ["User: #{current_user.username}","Referrer: #{request.referrer}", "Params: #{params}"]
+        add_flash :errors, "Invoice generation failed: #{$!.message}"
+        redirect_to request.referrer
+      end
+    }
+  end
 end

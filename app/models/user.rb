@@ -15,7 +15,8 @@ class User < ActiveRecord::Base
     :entry_view, :entry_comment, :entry_attach,
     :survey_view, :survey_edit,
     :broker_invoice_view,
-    :classification_view, :classification_edit
+    :classification_view, :classification_edit,
+    :commercial_invoice_view, :commercial_invoice_edit
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -127,22 +128,34 @@ class User < ActiveRecord::Base
       return self.view_broker_invoices?
     when CoreModule::BROKER_INVOICE_LINE
       return self.view_broker_invoices?
+    when CoreModule::COMMERCIAL_INVOICE
+      return self.view_commercial_invoices?
+    when CoreModule::COMMERCIAL_INVOICE_LINE
+      return self.view_commercial_invoices?
+    when CoreModule::COMMERCIAL_INVOICE_TARIFF
+      return self.view_commercial_invoices?
     end
     return false
   end
   
   #permissions
+  def view_commercial_invoices?
+    self.commercial_invoice_view? && MasterSetup.get.entry_enabled?
+  end
+  def edit_commercial_invoices?
+    self.commercial_invoice_edit? && MasterSetup.get.entry_enabled?
+  end
   def view_surveys?
-    return self.survey_view?
+    self.survey_view?
   end
   def edit_surveys?
-    return self.survey_edit?
+    self.survey_edit?
   end
   def view_broker_invoices?
-    return self.broker_invoice_view && self.company.view_broker_invoices?
+    self.broker_invoice_view && self.company.view_broker_invoices?
   end
   def view_entries?
-    return self.entry_view? && self.company.view_entries?
+    self.entry_view? && self.company.view_entries?
   end
   def comment_entries?
     self.entry_comment? && self.company.view_entries?
@@ -154,117 +167,117 @@ class User < ActiveRecord::Base
     false
   end
   def view_orders?
-    return self.order_view? && self.company.view_orders? 
+    self.order_view? && self.company.view_orders? 
   end
   def add_orders?
-    return self.order_edit? && self.company.add_orders?
+    self.order_edit? && self.company.add_orders?
   end
   def edit_orders?
-    return self.order_edit? && self.company.edit_orders?
+    self.order_edit? && self.company.edit_orders?
   end
   def delete_orders?
-    return self.order_delete? && self.company.delete_orders?
+    self.order_delete? && self.company.delete_orders?
   end
   def attach_orders?
-    return self.order_attach? && self.company.attach_orders?
+    self.order_attach? && self.company.attach_orders?
   end
   def comment_orders?
-    return self.order_comment? && self.company.comment_orders?
+    self.order_comment? && self.company.comment_orders?
   end
   
   def view_products?
-    return self.product_view? && self.company.view_products? 
+    self.product_view? && self.company.view_products? 
   end
   def add_products?
-    return self.product_edit? && self.company.add_products?
+    self.product_edit? && self.company.add_products?
   end
   def edit_products?
-    return self.product_edit? && self.company.edit_products?
+    self.product_edit? && self.company.edit_products?
   end
   def create_products?
-    return add_products?
+    add_products?
   end
   def delete_products?
-    return self.product_delete? && self.company.delete_products?
+    self.product_delete? && self.company.delete_products?
   end
   def attach_products?
-    return self.product_attach? && self.company.attach_products?
+    self.product_attach? && self.company.attach_products?
   end
   def comment_products?
-    return self.product_comment? && self.company.comment_products?
+    self.product_comment? && self.company.comment_products?
   end
   
   def view_sales_orders?
-    return self.sales_order_view? && self.company.view_sales_orders? 
+    self.sales_order_view? && self.company.view_sales_orders? 
   end
   def add_sales_orders?
-    return self.sales_order_edit? && self.company.add_sales_orders?
+    self.sales_order_edit? && self.company.add_sales_orders?
   end
   def edit_sales_orders?
-    return self.sales_order_edit? && self.company.edit_sales_orders?
+    self.sales_order_edit? && self.company.edit_sales_orders?
   end
   def delete_sales_orders?
-    return self.sales_order_delete? && self.company.delete_sales_orders?
+    self.sales_order_delete? && self.company.delete_sales_orders?
   end
   def attach_sales_orders?
-    return self.sales_order_attach? && self.company.attach_sales_orders?
+    self.sales_order_attach? && self.company.attach_sales_orders?
   end
   def comment_sales_orders?
-    return self.sales_order_comment? && self.company.comment_sales_orders?
+    self.sales_order_comment? && self.company.comment_sales_orders?
   end
 
   
   def view_shipments?
-    return self.shipment_view && self.company.view_shipments?
+    self.shipment_view && self.company.view_shipments?
   end
   def add_shipments?
-    return self.shipment_edit? && self.company.add_shipments?
+    self.shipment_edit? && self.company.add_shipments?
   end
   def edit_shipments?
-    return self.shipment_edit? && self.company.edit_shipments?
+    self.shipment_edit? && self.company.edit_shipments?
   end
   def delete_shipments?
-    return self.shipment_delete? && self.company.delete_shipments?
+    self.shipment_delete? && self.company.delete_shipments?
   end
   def comment_shipments?
-    return self.shipment_comment? && self.company.comment_shipments?
+    self.shipment_comment? && self.company.comment_shipments?
   end
   def attach_shipments?
-    return self.shipment_attach? && self.company.attach_shipments?
+    self.shipment_attach? && self.company.attach_shipments?
   end
   
   def view_deliveries?
-    return self.delivery_view? && self.company.view_deliveries?
+    self.delivery_view? && self.company.view_deliveries?
   end
   def add_deliveries?
-    return self.delivery_edit? && self.company.add_deliveries?
+    self.delivery_edit? && self.company.add_deliveries?
   end
   def edit_deliveries?
-    return self.delivery_edit? && self.company.edit_deliveries?
+    self.delivery_edit? && self.company.edit_deliveries?
   end
   def delete_deliveries?
-    return self.delivery_delete? && self.company.delete_deliveries?
+    self.delivery_delete? && self.company.delete_deliveries?
   end
   def comment_deliveries?
-    return self.delivery_comment? && self.company.comment_deliveries?
+    self.delivery_comment? && self.company.comment_deliveries?
   end
   def attach_deliveries?
-    return self.delivery_attach? && self.company.attach_deliveries?
+    self.delivery_attach? && self.company.attach_deliveries?
   end
 
   def add_classifications?
-    return self.classification_edit? && self.company.add_classifications?
+    self.classification_edit? && self.company.add_classifications?
   end
   def edit_classifications?
-    return add_classifications?
+    add_classifications?
   end
   
   def edit_milestone_plans?
-    return self.admin?
+    self.admin?
   end
   
   def edit_status_rules?
-    return self.admin?
+    self.admin?
   end
 
 

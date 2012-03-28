@@ -77,5 +77,16 @@ describe Company do
         c.view_broker_invoices?.should be_false
       end
     end
+    context 'commercial invoices' do
+      it 'should allow if entry is enabled' do
+        Company.new.should be_view_commercial_invoices
+        Company.new.should be_edit_commercial_invoices
+      end
+      it 'should not allow if entry is disabled' do
+        MasterSetup.get.update_attributes(:entry_enabled=>false)
+        Company.new.should_not be_view_commercial_invoices
+        Company.new.should_not be_edit_commercial_invoices
+      end
+    end
   end
 end
