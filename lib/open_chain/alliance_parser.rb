@@ -104,6 +104,7 @@ module OpenChain
             @entry.po_numbers = accumulated_string :po_numbers
             @entry.container_numbers = accumulated_string :container_numbers
             @entry.container_sizes = accumulated_string :container_sizes
+            @entry.charge_codes = accumulated_string :charge_codes
             @entry.broker_invoice_total = @entry.broker_invoices.inject(0) { |sum, bi| sum += (bi.invoice_total || 0) }
             set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
             set_importer_id
@@ -303,6 +304,7 @@ module OpenChain
     def process_il00 r
       line = @invoice.broker_invoice_lines.build
       line.charge_code = r[4,4].strip
+      accumulate_string :charge_codes, line.charge_code
       line.charge_description = r[8,35].strip
       line.charge_amount = parse_currency r[43,11]
       line.vendor_name = r[54,30].strip

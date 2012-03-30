@@ -729,7 +729,8 @@ class ModelField
       [81,:ent_fda_message,:fda_message,"FDA Message",{:data_type=>:string}],
       [82,:ent_fda_transmit_date,:fda_transmit_date,"FDA Transmit Date",{:data_type=>:datetime}],
       [83,:ent_fda_review_date,:fda_review_date,"FDA Review Date",{:data_type=>:datetime}],
-      [84,:ent_fda_release_date,:fda_release_date,"FDA Release Date",{:data_type=>:datetime}]
+      [84,:ent_fda_release_date,:fda_release_date,"FDA Release Date",{:data_type=>:datetime}],
+      [85,:ent_charge_codes,:charge_codes,"Charge Codes Used",{:data_type=>:string, :can_view_lambda=>lambda {|u| u.view_broker_invoices?}}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

@@ -572,6 +572,12 @@ describe OpenChain::AllianceParser do
     inv.suffix.should == @inv_suffix
     inv.invoice_total.should == @inv_total
   end
+  it 'should include all charge codes in entry header charge codes field' do
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
+    codes_expected = @invoice_lines.collect {|src| src[:code]}
+    Entry.first.charge_codes.lines.collect {|x| x.strip}.should == codes_expected
+  end
+
   it 'should add invoice with different suffix' do
     @inv_total = BigDecimal("10.00")
     entry = @make_entry_lambda.call
