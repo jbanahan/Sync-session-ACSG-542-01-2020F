@@ -129,9 +129,15 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
         iso_codes.each_with_index do |c,i| 
           countries[c] = {:country=>Factory(:country,:iso_code=>c),
             :hts_1=>"#{hts_1_prefix}#{i}",:hts_2=>"#{hts_2_prefix}#{i}",:hts_3=>"#{hts_3_prefix}#{i}"}
-          expected_writes << [35+i,"#{hts_1_prefix}#{i}".hts_format]
-          expected_writes << [48+i,"#{hts_2_prefix}#{i}".hts_format]
-          expected_writes << [61+i,"#{hts_3_prefix}#{i}".hts_format]
+          if c=="TW"
+            expected_writes << [35+i,"#{hts_1_prefix}#{i}"]
+            expected_writes << [48+i,"#{hts_2_prefix}#{i}"]
+            expected_writes << [61+i,"#{hts_3_prefix}#{i}"]
+          else
+            expected_writes << [35+i,"#{hts_1_prefix}#{i}".hts_format]
+            expected_writes << [48+i,"#{hts_2_prefix}#{i}".hts_format]
+            expected_writes << [61+i,"#{hts_3_prefix}#{i}".hts_format]
+          end
         end
         OfficialTariff.create!(:country_id=>countries['TW'][:country].id,:hts_code=>countries['TW'][:hts_1],:import_regulations=>'a MP1 b')
         p = Factory(:product,:unique_identifier=>style,:name=>name)
