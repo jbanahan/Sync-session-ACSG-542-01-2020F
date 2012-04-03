@@ -43,12 +43,26 @@ class SurveyResponsesController < ApplicationController
       sr.submitted_date = 0.seconds.ago if params[:do_submit]
     end
     sr.update_attributes params[:survey_response]
+    sr.survey_response_logs.create!(:message=>"Resposne updated.")
     add_flash :notices, "Response saved successfully."
     redirect_to sr
   end
 
   def index
     @survey_responses = SurveyResponse.where(:user_id=>current_user.id)
+  end
+  
+  #send user invite
+  def invite
+    sr = SurveyResponse.find params[:id]
+    if sr.survey.company_id!=current_user.company_id
+      error_redirect "You do not have permission to send invites for this survey."
+      return
+    else
+      sr.invite_user!
+      add_flash :notices, "Invite will be resent to the user at #{sr.user.email}"
+      redirect_to sr
+    end
   end
 
 end

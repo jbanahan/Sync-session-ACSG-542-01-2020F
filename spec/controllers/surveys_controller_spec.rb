@@ -172,7 +172,13 @@ describe SurveysController do
   end
   describe "assign" do
     before :each do 
+      @dj_state = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
       @s = Factory(:survey)
+      SurveyResponse.any_instance.stub(:invite_user!) #don't want to deal with this except in the notify test
+    end
+    after :each do
+      Delayed::Worker.delay_jobs = @dj_state
     end
     it "should assign if user can edit survey" do
       u2 = Factory(:user)
@@ -183,6 +189,14 @@ describe SurveysController do
       flash[:notices].should have(1).message
       SurveyResponse.find_by_survey_id_and_user_id(@s.id,u2.id).should_not be_nil
       SurveyResponse.find_by_survey_id_and_user_id(@s.id,u3.id).should_not be_nil
+    end
+    it "should notify user when assigned" do
+      u2 = Factory(:user)
+      Survey.any_instance.stub(:can_edit?).and_return(true)
+      sr = stub(:survey_response)
+      sr.should_receive(:invite_user!)
+      Survey.any_instance.should_receive(:generate_response!).and_return(sr)
+      post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s}
     end
     it "should not assign if user cannot edit survey" do
       u2 = Factory(:user)

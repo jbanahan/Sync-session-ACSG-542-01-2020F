@@ -172,6 +172,16 @@ EOS
     end
   end
 
+  #send survey response invite
+  def send_survey_invite survey_response
+    survey = survey_response.survey
+    @body_textile = survey.email_body
+    @link_addr = "http://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
+    mail(:to=>survey_response.user.email,:subject=>survey.email_subject) do |format|
+      format.html
+    end
+  end
+
   private
   def sanitize_filename(filename)
     filename.strip.tap do |name|

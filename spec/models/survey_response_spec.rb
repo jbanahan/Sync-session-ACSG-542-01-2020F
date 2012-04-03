@@ -93,4 +93,24 @@ describe SurveyResponse do
       @sr.can_view?(Factory(:user))
     end
   end
+  describe "notify user" do
+    before :each do
+      MasterSetup.get.update_attributes(:request_host=>"a.b.c")
+      @survey = Factory(:question).survey
+      @survey.update_attributes(:email_subject=>"TEST SUBJ",:email_body=>"EMLBDY")
+      @u = Factory(:user)
+      @response = @survey.generate_response! @u
+      @response.invite_user!
+    end
+    it "should log that notification was sent" do
+      @response.survey_response_logs.collect{ |log| log.message}.should include "Invite sent to #{@u.email}"
+    end
+    it "should email user with survey email, body, and link" do
+      last_delivery = ActionMailer::Base.deliveries.last
+      last_delivery.to.should == [@u.email]
+      last_delivery.subject.should == @survey.email_subject
+      last_delivery.body.raw_source.should include @survey.email_body
+      last_delivery.body.raw_source.should include "<a href='http://a.b.c/survey_responses/#{@response.id}'>http://a.b.c/survey_responses/#{@response.id}</a>"
+    end
+  end
 end

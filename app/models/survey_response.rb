@@ -4,6 +4,7 @@ class SurveyResponse < ActiveRecord::Base
   belongs_to :survey
   has_many :answers, :inverse_of=>:survey_response
   has_many :questions, :through=>:survey
+  has_many :survey_response_logs, :dependent=>:destroy
 
   validates_presence_of :survey
   validates_presence_of :user
@@ -16,6 +17,12 @@ class SurveyResponse < ActiveRecord::Base
     return true if user.id==self.user_id
     return true if self.survey.company_id == user.company_id && user.edit_surveys?
     false
+  end
+
+  #send email invite to user
+  def invite_user!
+    OpenMailer.send_survey_invite(self).deliver!
+    self.survey_response_logs.create(:message=>"Invite sent to #{self.user.email}")
   end
 
   private

@@ -3,6 +3,10 @@
   <% if @sr.user == current_user && @sr.submitted_date.nil? %>
     <button id='btn_submit' style='display:none'>Submit</button>
   <% end %>
+  <% if @sr.survey.company_id == current_user.company_id%>
+    <button class='btn_link' link_to='<%=invite_survey_response_path(@sr)%>'>Resend Invite Email</button>
+  <%end%>
+  <button class='btn_link' link_to='<%=survey_response_survey_response_logs_path(@sr)%>'>Logs</button>
   <button class='btn_link' link_to='<%=request.referrer%>'>Back</button>
   <div id='answr_trk'>
     

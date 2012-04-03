@@ -61,7 +61,7 @@ describe SurveyResponsesController do
       assigns(:respond_mode).should be_false
     end
   end
-  describe 'update' do
+  context 'authenticated' do
     before :each do
       activate_authlogic
       @survey_user = Factory(:user)
@@ -71,62 +71,78 @@ describe SurveyResponsesController do
       @sr = Factory(:survey_response,:user=>@response_user,:survey=>@survey)
       @sr.answers.create!(:question=>@survey.questions.first)
     end
-    it "should not change ratings if user is not from survey company" do
-      UserSession.create! @response_user
-      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
-      response.should redirect_to survey_response_path(@sr)
-      flash[:notices].should have(1).message
-      answers = SurveyResponse.find(@sr.id).answers
-      answers.should have(1).answer
-      a = answers.first
-      a.choice.should == "a"
-      a.rating.should be_nil
+    describe 'update' do
+      it "should not change ratings if user is not from survey company" do
+        UserSession.create! @response_user
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
+        response.should redirect_to survey_response_path(@sr)
+        flash[:notices].should have(1).message
+        answers = SurveyResponse.find(@sr.id).answers
+        answers.should have(1).answer
+        a = answers.first
+        a.choice.should == "a"
+        a.rating.should be_nil
+      end
+      it "should not save if user is not from survey company or the user assigned to the response" do
+        UserSession.create! Factory(:user)
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
+        response.should redirect_to root_path
+        flash[:errors].should have(1).msg
+        SurveyResponse.find(@sr.id).answers.first.choice.should be_nil
+      end
+      it "should not change choices if survey_response.user != current_user" do
+        UserSession.create! @survey_user
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
+        response.should redirect_to survey_response_path(@sr)
+        flash[:notices].should have(1).message
+        answers = SurveyResponse.find(@sr.id).answers
+        answers.should have(1).answer
+        a = answers.first
+        a.choice.should be_nil
+        a.rating.should == "x"
+      end
+      it "should add comments" do
+        UserSession.create! @response_user
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
+          "answer_comments_attributes"=>{"1"=>{"user_id"=>@response_user.id,"content"=>"abc"}}}}}
+        response.should redirect_to survey_response_path @sr
+        flash[:notices].should have(1).message
+        ac = SurveyResponse.find(@sr.id).answers.first.answer_comments.first
+        ac.content.should == "abc"
+        ac.user.should == @response_user
+      end
+      it "should not add comments if comment.user != current_user" do
+        UserSession.create! @response_user
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
+          "answer_comments_attributes"=>{"1"=>{"user_id"=>@survey_user.id,"content"=>"abc"}}}}}
+        response.should redirect_to survey_response_path @sr
+        flash[:notices].should have(1).message
+        SurveyResponse.find(@sr.id).answers.first.answer_comments.should be_empty
+      end
+      it "should not update submitted date if survey_response.user != current_user" do
+        UserSession.create! @survey_user
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
+        SurveyResponse.find(@sr.id).submitted_date.should be_nil 
+      end
+      it "should update submitted date if flag set and survey_response.user == current_user" do
+        UserSession.create! @response_user
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
+        SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
+      end
     end
-    it "should not save if user is not from survey company or the user assigned to the response" do
-      UserSession.create! Factory(:user)
-      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
-      response.should redirect_to root_path
-      flash[:errors].should have(1).msg
-      SurveyResponse.find(@sr.id).answers.first.choice.should be_nil
-    end
-    it "should not change choices if survey_response.user != current_user" do
-      UserSession.create! @survey_user
-      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
-      response.should redirect_to survey_response_path(@sr)
-      flash[:notices].should have(1).message
-      answers = SurveyResponse.find(@sr.id).answers
-      answers.should have(1).answer
-      a = answers.first
-      a.choice.should be_nil
-      a.rating.should == "x"
-    end
-    it "should add comments" do
-      UserSession.create! @response_user
-      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
-        "answer_comments_attributes"=>{"1"=>{"user_id"=>@response_user.id,"content"=>"abc"}}}}}
-      response.should redirect_to survey_response_path @sr
-      flash[:notices].should have(1).message
-      ac = SurveyResponse.find(@sr.id).answers.first.answer_comments.first
-      ac.content.should == "abc"
-      ac.user.should == @response_user
-    end
-    it "should not add comments if comment.user != current_user" do
-      UserSession.create! @response_user
-      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
-        "answer_comments_attributes"=>{"1"=>{"user_id"=>@survey_user.id,"content"=>"abc"}}}}}
-      response.should redirect_to survey_response_path @sr
-      flash[:notices].should have(1).message
-      SurveyResponse.find(@sr.id).answers.first.answer_comments.should be_empty
-    end
-    it "should not update submitted date if survey_response.user != current_user" do
-      UserSession.create! @survey_user
-      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
-      SurveyResponse.find(@sr.id).submitted_date.should be_nil 
-    end
-    it "should update submitted date if flag set and survey_response.user == current_user" do
-      UserSession.create! @response_user
-      post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
-      SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
+    describe 'invite' do
+      it "should allow survey company to send invite" do
+        UserSession.create! @survey_user
+        SurveyResponse.any_instance.should_receive(:invite_user!)
+        get :invite, :id=>@sr.id
+        response.should redirect_to @sr
+      end
+      it "should not allow another user to send invite" do
+        UserSession.create! @response_user
+        SurveyResponse.any_instance.should_not_receive(:invite_user!)
+        get :invite, :id=>@sr.id
+        response.should redirect_to request.referrer
+      end
     end
   end
   describe 'index' do

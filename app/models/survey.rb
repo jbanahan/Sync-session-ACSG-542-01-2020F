@@ -25,6 +25,7 @@ class Survey < ActiveRecord::Base
     self.questions.each do |q|
       sr.answers.create!(:question=>q)
     end
+    sr.survey_response_logs.create(:message=>"Survey assigned to #{target_user.full_name}")
     sr
   end
 

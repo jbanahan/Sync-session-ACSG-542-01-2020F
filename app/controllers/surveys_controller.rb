@@ -18,7 +18,7 @@ class SurveysController < ApplicationController
   end
   def new
     if current_user.edit_surveys?
-      @survey = Survey.new(:company=>current_user.company)
+      @survey = Survey.new(:company=>current_user.company,:email_subject=>"Email Subject",:email_body=>"h1. Survey Introduction Email\n\nSample Body")
     else 
       error_redirect "You do not have permission to edit surveys."
     end
@@ -106,7 +106,7 @@ class SurveysController < ApplicationController
       if SurveyResponse.find_by_survey_id_and_user_id(s.id,uid)
         add_flash :notices, "Survey already exists for #{User.find(uid).full_name}, skipping."
       else
-        s.generate_response! User.find uid
+        s.generate_response!(User.find(uid)).delay.invite_user!
         cnt += 1
       end
     end

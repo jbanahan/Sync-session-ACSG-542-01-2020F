@@ -21,6 +21,7 @@ gem 'dalli', '1.1.4'
 gem 'ffi', '~> 1.0.9'
 gem 'ffi-rzmq', '~> 0.8.0'
 gem 'postmark-rails', '0.4.1'
+gem 'RedCloth', '4.2.9'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', '2.5.2', :group=>[:development,:test]
 group :test do

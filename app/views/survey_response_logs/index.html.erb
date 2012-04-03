@@ -1,0 +1,15 @@
+<%content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=request.referrer%>'>Back</button>
+<%end%>
+<h1>Survey Log</h1>
+
+<table>
+  <%=field_row "Assigned To", @sr.user.full_name%>
+  <%=field_row "Status", @sr.status%>
+</table>
+
+<ul>
+  <%@logs.each do |log|%>
+    <li><%=log.message%> <em>(<%=log.updated_at%>)</em>
+  <%end%>
+</ul>

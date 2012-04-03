@@ -73,6 +73,7 @@ OpenChain::Application.routes.draw do
     post 'send_email', :on => :member
   end
 
+  match "/textile/preview" => "textile#preview"
   match "/tracker" => "public_shipments#index"
 	match "/index.html" => "dashboard_widgets#index"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
@@ -291,7 +292,10 @@ OpenChain::Application.routes.draw do
       post 'assign'
     end
   end
-  resources :survey_responses
+  resources :survey_responses do
+    get 'invite', :on=>:member
+    resources :survey_response_logs, :only=>[:index]
+  end
   resources :error_log_entries, :only => [:index, :show]
   root :to => "dashboard_widgets#index"
 end
