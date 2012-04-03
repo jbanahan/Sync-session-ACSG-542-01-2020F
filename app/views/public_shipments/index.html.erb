@@ -1,10 +1,16 @@
 <%=render :partial=>'shared/tracker' %>
 <h1>Shipment Results</h1>
 <% @result.each_with_index do |r,i| %>
+  <%if i>4%>
+    <div class='error'>More than 5 results found, please use a more specific search term.</div>
+    <%break%>
+  <%end%>
   <%if @result.size>1%><h2>Result <%=i+1%></h2><%end%>
+  <%r_class = r.class.to_s%>
   <table>
-  <%CoreModule::SHIPMENT.model_fields.each do |k,mf|%>
-    <%if mf.public?%>
+  <%PublicField.all.each do |pf|%>
+    <%mf = ModelField.find_by_uid pf.model_field_uid%>
+    <%if mf && mf.core_module.class_name == r_class%>
       <%=field_row mf.label, mf.process_export(r,nil,true)%>
     <%end%>
   <%end%>

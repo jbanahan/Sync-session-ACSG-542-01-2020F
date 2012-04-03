@@ -1,7 +1,8 @@
 <%=form_tag "/tracker", :method=>"get" do%>
 <select name='f'>
-<%CoreModule::SHIPMENT.model_fields.each do |k,mf|%>
-  <% if mf.public_searchable?%>
+<%PublicField.where(:searchable=>true).each do |pf|%>
+  <% mf = ModelField.find_by_uid pf.model_field_uid%>
+  <% if mf %>
     <option value='<%=mf.uid%>' <%=@field && @field==mf.uid ? "selected='true'" : ""%>><%=mf.label%></option>
   <% end%>
 <%end%>
