@@ -52,24 +52,16 @@ describe SurveyResponse do
     it "should have Incomplete status" do
       @sr.status.should == "Incomplete"
     end
-    it "should have Not Rated" do
+    it "should have Needs Rating" do
       @sr.submitted_date = 0.seconds.ago
       @sr.save!
-      @sr.status.should == "Not Rated"
+      @sr.status.should == "Needs Rating"
     end
-    it "should have Needs Improvement status" do
-      # if any responses are NI then whole status is NI
+    it "should have Rated status" do
       @sr.submitted_date = 0.seconds.ago
-      @sr.answers.first.update_attributes(:rating=>"Needs Improvement")
+      @sr.rating = "x"
       @sr.save!
-      @sr.status.should == "Needs Improvement"
-    end
-    it "should have Accepted status" do
-      # if all ratings are accepted then whole status Accepted
-      @sr.submitted_date = 0.seconds.ago
-      @sr.answers.each {|a| a.update_attributes(:rating=>"Accepted")}
-      @sr.save!
-      @sr.status.should == "Accepted"
+      @sr.status.should == "Rated"
     end
   end
   describe "can_view?" do

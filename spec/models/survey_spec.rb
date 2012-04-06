@@ -69,4 +69,13 @@ describe Survey do
       @s.can_edit?(u).should be_false
     end
   end
+  describe :rating_values do
+    it "should return empty array if no values" do
+      Survey.new.rating_values.should == []
+    end
+    it "should return values, one per line" do
+      vals = "a\nb"
+      Survey.new(:ratings_list=>vals).rating_values.should == ["a","b"]
+    end
+  end
 end

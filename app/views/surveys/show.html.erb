@@ -1,3 +1,39 @@
+<%content_for :head_tags do%>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<%end%>
+<%content_for :javascript do%>
+ // Load the Visualization API and the piechart package.
+      google.load('visualization', '1.0', {'packages':['corechart']});
+
+
+      // Callback that creates and populates a data table,
+      // instantiates the pie chart, passes in the data and
+      // draws it.
+      var dc = function drawChart() {
+
+        // Create the data table.
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Rating');
+        data.addColumn('number', 'Count');
+        data.addRows([
+          <%@survey.rating_values.each_with_index do |rv,i|%>
+            ['<%=rv%>',<%=@survey.survey_responses.where(:rating=>rv).count%>],
+          <%end%>
+          ['Not Rated',<%=@survey.survey_responses.where("rating is null OR length(rating)=0").count%>]
+        ]);
+
+        // Set chart options
+        var options = {'title':'Surveys by Rating',
+                       'width':400,
+                       'height':300};
+
+        // Instantiate and draw our chart, passing in some options.
+        var chart = new google.visualization.PieChart(document.getElementById('resp_chart'));
+        chart.draw(data, options);
+      }
+      // Set a callback to run when the Google Visualization API is loaded.
+      google.setOnLoadCallback(dc);
+<%end%>
 <%content_for :action_bar do%>
   <% unless @survey.locked? %>
     <button class='btn_link' link_to='<%=edit_survey_path @survey%>' key_map='e'>Edit</button>
@@ -6,27 +42,36 @@
 <%end%>
 <h1><%=@survey.name%></h1>
 
+<h2>Responses</h2>
+<div id='resp_chart'></div>
+<table class='detail_table'>
+  <thead><tr><th>Company</th><th>Responder</th><th>Status</th><th>Rating</th><th>Submitted</th></tr></thead>
+  <tbody>
+    <%@survey.survey_responses.each do |sr| %>
+      <tr><td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.status%></td>
+      <td><%=sr.rating%></td>
+      <td><%=sr.submitted_date%></td></tr>
+    <% end%>
+  </tbody>
+</table>
+
 <h2>Questions</h2>
 <table class='detail_table'>
-  <thead><tr><th>Question</th><th>Answered</th><th>Accepted</th><th>Needs Improvement</th></tr></thead>
+  <thead><tr><th>Question</th><th>Answered</th>
+  <%@survey.rating_values.each do |rv|%>
+    <th><%=rv%></th>
+  <%end%>
+  </tr></thead>
   <tbody>
     <%@survey.questions.each do |q|%>
-      <tr>
+      <tr class='hover'>
         <td><%=q.content%></td>
         <td><%=@survey.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").count%></td>
-        <td><%=@survey.answers.where(:question_id=>q.id).where(:rating=>"Accepted").where("survey_responses.submitted_date is not null").count%></td>
-        <td><%=@survey.answers.where(:question_id=>q.id).where(:rating=>"Needs Improvement").where("survey_responses.submitted_date is not null").count%></td>
+        <%@survey.rating_values.each do |rv|%>
+          <td><%=@survey.answers.where(:question_id=>q.id,:rating=>rv).count%></td>
+        <%end%>
       </tr>
     <%end%>
   </tbody>
 </table>
 
-<h2>Responses</h2>
-<table class='detail_table'>
-  <thead><tr><th>Company</th><th>Responder</th><th>Status</th><th>Submitted</th></tr></thead>
-  <tbody>
-    <%@survey.survey_responses.each do |sr| %>
-      <tr><td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.status%></td><td><%=sr.submitted_date%></td></tr>
-    <% end%>
-  </tbody>
-</table>

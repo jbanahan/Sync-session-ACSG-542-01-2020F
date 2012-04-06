@@ -55,14 +55,31 @@ textarea {
   width: 100%;
   height: 10em;
 }
+.q_head {
+  font-size: 80%;
+  background-color: #ccc;
+  color: black;
+  text-align: center;
+  margin: 10px 0 0 0;
+}
+.q_subhead {
+  font-weight: bold;
+  font-size: 80%;
+}
 </style>
 <%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
   <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%></h1>
+  <table>
+  <%=field_row "Overall Rating", ( @rate_mode ? f.select(:rating, @sr.survey.rating_values, {:include_blank=>true}) : @sr.rating ) %>
+  </table>
+  <%q_idx = 1%>
   <%f.fields_for :answers do |a|%>
     <%q = a.object.question%>
     <div class='question'>
-      <h3><%=q.content%></h3>
-      <p>Answer:&nbsp;
+      <div class='q_head'>Question #<%=q_idx%></div>
+      <%q_idx += 1%>
+      <div class='q_content'><%=q.content%></div>
+      <p><span class='q_subhead'>Answer:</span>
         <% if @respond_mode %>
           <%=a.select :choice, q.choices.lines, {:include_blank=>true},:class=>'resp'%>
         <% else %>
@@ -71,12 +88,12 @@ textarea {
       </p>
       <p>
       <% if @rate_mode %>
-        Rating: <%=a.select :rating, ["Needs Improvement","Accepted"], {:include_blank=>true} %>
+        Rating: <%=a.select :rating, @sr.survey.rating_values, {:include_blank=>true} %>
       <% elsif !a.object.rating.blank? %>
         Rated: <%=a.object.rating%>
       <% end %>
       </p>
-      <b>Comments</b><br />
+      <div class='q_subhead'>Comments</div>
       <% a.object.answer_comments.each do |ac|%>
         <em><%=ac.user.full_name%> - <%=ac.created_at%></em><br/>
         <pre>
@@ -87,7 +104,6 @@ textarea {
         <%=acf.hidden_field :user_id%>
         <%=acf.text_area :content%>
       <% end %>
-      <b>Attachments</b><br />
       <ul>
       <% a.object.attachments.each do |att|%>
         <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
@@ -95,7 +111,7 @@ textarea {
       </ul>
       <%a.fields_for :attachments, a.object.attachments.build do |attf|%>
         <%=attf.hidden_field :attachable_type%>
-        <%=attf.file_field :attached%>
+        <span class='q_subhead'>Attach File: </span><%=attf.file_field :attached%>
       <%end%>
     </div>
   <%end%>

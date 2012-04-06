@@ -11,7 +11,7 @@ class SurveyResponse < ActiveRecord::Base
 
   accepts_nested_attributes_for :answers, :allow_destroy=>false
 
-  after_save :update_status
+  before_save :update_status
 
   def can_view? user
     return true if user.id==self.user_id
@@ -28,12 +28,9 @@ class SurveyResponse < ActiveRecord::Base
   private
   def update_status
     s = "Incomplete"
-    s = "Not Rated" if self.submitted_date
-    s = "Needs Improvement" if self.submitted_date && !self.answers.where(:rating=>"Needs Improvement").empty?
-    s = "Accepted" if s!="Needs Improvement" && self.submitted_date && self.answers.where(:rating=>"Accepted").count == self.answers.count
-    if s!=self.status
-      self.status = s
-      self.save
+    if self.submitted_date
+      s = self.rating.blank? ? "Needs Rating" : "Rated"
     end
+    self.status = s
   end
 end

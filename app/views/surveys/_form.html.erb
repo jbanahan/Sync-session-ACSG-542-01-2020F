@@ -67,7 +67,11 @@
 <button class='btn_link' link_to='<%=surveys_path%>'>Back</button>
 <% end %>
 <%form_for @survey, :html=>{ :id=>'frm_svy' } do |f|%>
-  Survey Name: <%=f.text_field :name%>
+  <table>
+    <%=field_row "Survey Name", f.text_field(:name)%>
+    <%=field_row "Rating Options", f.text_area(:ratings_list)%>
+    <tr><td></td><td>One rating per line</td></tr> 
+  </table>
   <h2 id='email_head'>Email Setup</h2>
   <div id='email_cont'>
     <div id='email_preview'>

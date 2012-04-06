@@ -19,6 +19,13 @@ class Survey < ActiveRecord::Base
     user.edit_surveys? && user.company_id == self.company_id
   end
 
+  # get an array of potential values to be used when rating surveys
+  def rating_values
+    r = []
+    self.ratings_list.lines {|x| r << x.strip unless x.blank?} unless self.ratings_list.blank?
+    r
+  end
+
   # generates a survey response in the target_user's account
   def generate_response! target_user
     sr = self.survey_responses.create!(:user=>target_user)

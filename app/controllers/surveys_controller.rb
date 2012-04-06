@@ -18,7 +18,7 @@ class SurveysController < ApplicationController
   end
   def new
     if current_user.edit_surveys?
-      @survey = Survey.new(:company=>current_user.company,:email_subject=>"Email Subject",:email_body=>"h1. Survey Introduction Email\n\nSample Body")
+      @survey = Survey.new(:company=>current_user.company,:email_subject=>"Email Subject",:email_body=>"h1. Survey Introduction Email\n\nSample Body",:ratings_list=>"Pass\nFail")
     else 
       error_redirect "You do not have permission to edit surveys."
     end
