@@ -366,6 +366,20 @@ var OpenChain = (function() {
     });
   }
 
+  var showPreviewDialog = function(html,dialogTitle) {
+    var dt = dialogTitle ? dialogTitle : "Preview";
+    $("body").append("<div id='pt_preview' style='display:none;'>"+html+"</div>");
+    $("#pt_loading").dialog('close');
+    $("#pt_preview").dialog({autoOpen:true,
+      title:dt,
+      width:"auto",
+      modal:true,
+      buttons:{"OK":function() {
+        $("#pt_preview").dialog('close'); 
+        $("pt_preview").remove();
+       }}});
+    $("#pt_loading").remove();
+  }
   var dropTableHandlers = new Object();
   var handleRowDrop = function(table,row) {
     var handler = dropTableHandlers[$(table).attr('id')];
@@ -588,6 +602,26 @@ var OpenChain = (function() {
         s_selected.append(s_unselected.find(":selected"));
       });
       
+    },
+    previewTextile: function(sourceSelector,dialogTitle,preHtml,postHtml) {
+      $("body").append("<div id='pt_loading' style='display:none;'>Loading preview.</div>");
+      $("#pt_loading").dialog({modal:true,title:"Preview Loading",width:"auto",autoOpen:true});
+      $.ajax({url:"/textile/preview",type:'POST',data:{c:$(sourceSelector).val()},
+        success:function(data) { 
+          var h = "";
+          if(preHtml) {
+            h += preHtml;
+          }
+          h += data;
+          if(postHtml) {
+            h += postHtml;
+          }
+          showPreviewDialog(h,dialogTitle);
+        },
+        error:function() {
+          showPreviewDialog("There was an error on the server an the preview failed.  Please try again.","ERROR");
+        }
+      });
     },
     init: function(user_id) {
       initLinkButtons();

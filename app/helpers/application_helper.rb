@@ -158,7 +158,7 @@ module ApplicationHelper
   end
   
   def field_row(label, field, never_hide=false, model_field=nil) 
-    content_tag(:tr, content_tag(:td, label+": ", :class => 'label_cell')+content_tag(:td, field, :style=>"#{model_field && [:decimal,:integer].include?(model_field.data_type) ? "text-align:right;" : ""}"), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
+    content_tag(:tr, content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')+content_tag(:td, field, :style=>"#{model_field && [:decimal,:integer].include?(model_field.data_type) ? "text-align:right;" : ""}"), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
   
   def model_field_label(model_field_uid) 

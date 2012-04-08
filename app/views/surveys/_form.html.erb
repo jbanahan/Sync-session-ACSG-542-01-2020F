@@ -12,13 +12,6 @@
         h += "<div style='text-align:right;'><a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>"
         h += "</div>";
         $("#questions").append(h);
-      },
-      previewEmail: function() {
-        $("#subject_preview").html("<b>"+$("#eml_sub").val()+"</b><hr/>");
-        $("#body_preview").html("preview loading...");
-        $.post("/textile/preview",{c:$("#email_body").val()},function(data) {
-          $("#body_preview").html(data);
-        });
       }
     }
   })();
@@ -34,7 +27,9 @@
     });
     $("#preview_link").click(function(evt) {
       evt.preventDefault();
-      OCSurvey.previewEmail();
+      var preHtml = "<b>"+$("#eml_sub").val()+"</b><hr/>";
+      var postHtml = "<div>To view the survey follow this link: [link here]</div>";
+      OpenChain.previewTextile("#email_body","Email Preview",preHtml,postHtml);
     });
     $("a.del_ques").live('click',function(evt) {
       evt.preventDefault();
@@ -43,7 +38,6 @@
       qb.append("<input type='hidden' name='survey[questions_attributes]["+qid+"][_destroy]' value='1' />");
       qb.slideUp('fast');
     });
-    OCSurvey.previewEmail();
   });
 <% end %>
 <style>
@@ -53,14 +47,6 @@
 .q_area {
   width: 100%;
 }
-#email_preview {
-  width: 45%;
-  float: right;
-}
-#email_edit {
-  width: 50%;
-}
-#email_head {width:100%; text-align: center; margin-bottom: 10px;}
 </style>
 <%content_for :action_bar do %>
 <button class='form_to' form_id="frm_svy">Save</button>
@@ -70,23 +56,14 @@
   <table>
     <%=field_row "Survey Name", f.text_field(:name)%>
     <%=field_row "Rating Options", f.text_area(:ratings_list)%>
-    <tr><td></td><td>One rating per line</td></tr> 
+    <%=field_row "", "One rating per line."%>
   </table>
   <h2 id='email_head'>Email Setup</h2>
-  <div id='email_cont'>
-    <div id='email_preview'>
-      <div id='subject_preview'></div>
-      <div id='body_preview'></div>
-      <div>To view the survey follow this link: [link here]</div>
-    </div>
-    <div id='email_edit'>
-      Subject: <%=f.text_field :email_subject, :id=>"eml_sub"%><br/>
-      Body:<br />
-      <%=f.text_area :email_body, :id=>"email_body"%>
-    </div>
-    <a href='#' id='preview_link'>Update Preview</a> | <a href="http://redcloth.org/hobix.com/textile/quick.html" target="_blank">Formatting Guide</a><br />
-    <div style="display: block; clear: both;"></div>
-  </div>
+  <table>
+    <%=field_row "Subject", f.text_field(:email_subject, :id=>"eml_sub")%>
+    <%=field_row "Body", f.text_area(:email_body, :id=>"email_body")%>
+    <%=field_row "", "<a href='#' id='preview_link'>Preview</a> | <a href='http://redcloth.org/hobix.com/textile/quick.html' target='_blank'>Formatting Guide</a>".html_safe%>
+  </table>
   <hr />
   <div id='questions'>
   </div>
