@@ -17,7 +17,7 @@
   <link rel="shortcut icon" href="/favicon.ico" />
   <%= stylesheet_link_tag :all, :media=>"all" %>
   <link rel="stylesheet" type="text/css" href="/print_css/print.css" media="print" />
-  <%= javascript_include_tag "jquery-1.4.4.min.js", "rails.js", "jquery-ui-1.8.7.custom.min.js", "jquery.validate.js", "jquery.tools.min.js", "jquery.hotkeys.js", "jquery.jstepper.min.js", "jquery.tablednd_0_5.js", "jquery.cookie.js", "application.js", "adv_search.js" %>
+  <%= javascript_include_tag "jquery-1.4.4.min.js", "rails.js", "jquery-ui-1.8.7.custom.min.js", "jquery.validate.js", "jquery.tools.min.js", "jquery.hotkeys.js", "jquery.jstepper.min.js", "jquery.tablednd_0_5.js", "jquery.cookie.js","jquery.dropdownPlain.js", "application.js", "adv_search.js" %>
   <%= csrf_meta_tag %>
   <%= yield :head_tags%>
   <script type='text/javascript'>
@@ -137,6 +137,108 @@
 <% if @run_as_user %>
   <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
 <% end %>
+<% if current_user && !no_buttons %>
+  <ul id='nb_r' class='dropdown'>
+    <li><%=link_to current_user.full_name, company_user_path(current_user.company, current_user)%></li>
+    <li><a href='#' class='click_sink'>Menu</a>
+      <ul class='sub_menu' id='tools_menu'>
+        <li><a href='/messages'>Messages</a></li>
+        <li><a href='/tools'>Tools</a></li>
+        <li><a href='/logout'>Log Out</a></li>
+      </ul>
+    </li>
+  </ul>
+  <ul id='nb_l' class='dropdown'>
+    <li><a href='/'>Dashboard</a></li>
+    <%if current_user.view_products?%>
+      <li><a href='#' class='click_sink'>Products</a>
+        <ul class='sub_menu'>
+          <li><a href='/products?force_search=true'>Search</a></li>
+          <%if current_user.add_products?%>
+            <li><a href='/products/new'>Add</a></li>
+          <%end%>
+        </ul>
+      </li>
+    <%end%>
+    <%if current_user.view_orders?%>
+      <li><a href='#' class='click_sink'>Orders</a>
+        <ul class='sub_menu'>
+          <li><a href='/orders?force_search=true'>Search</a></li>
+          <%if current_user.add_orders?%>
+            <li><a href='/orders/new'>Add</a></li>
+          <%end%>
+        </ul>
+      </li>
+    <%end%>
+    <%if current_user.view_shipments?%>
+      <li><a href='#' class='click_sink'>Shipments</a>
+        <ul class='sub_menu'>
+          <li><a href='/shipments?force_search=true'>Search</a></li>
+          <%if current_user.add_shipments?%>
+            <li><a href='/shipments/new'>Add</a></li>
+          <%end%>
+        </ul>
+      </li>
+    <%end%>
+    <%if current_user.view_sales_orders?%>
+      <li><a href='#' class='click_sink'>Sales</a>
+        <ul class='sub_menu'>
+          <li><a href='/sales_orders?force_search=true'>Search</a></li>
+          <%if current_user.add_sales_orders?%>
+            <li><a href='/sales_orders/new'>Add</a></li>
+          <%end%>
+        </ul>
+      </li>
+    <%end%>
+    <%if current_user.view_deliveries?%>
+      <li><a href='#' class='click_sink'>Deliveries</a>
+        <ul class='sub_menu'>
+          <li><a href='/deliveries?force_search=true'>Search</a></li>
+          <%if current_user.add_deliveries?%>
+            <li><a href='/deliveries/new'>Add</a></li>
+          <%end%>
+        </ul>
+      </li>
+    <%end%>
+    <%if current_user.view_entries?%>
+      <li><a href='#' class='click_sink'>Entries</a>
+        <ul class='sub_menu'>
+          <li><a href='/entries?force_search=true'>Search</a></li>
+        </ul>
+      </li>
+    <%end%>
+    <%if current_user.view_broker_invoices?%>
+      <li><a href='#' class='click_sink'>Invoices</a>
+        <ul class='sub_menu'>
+          <li><a href='/broker_invoices?force_search=true'>Search</a></li>
+        </ul>
+      </li>
+    <%end%>
+    <%if !current_user.survey_responses.blank?%>
+      <li><a href='/survey_responses'>Surveys</a>
+    <%end%>
+  </ul>
+  <div id='nav_bar'>&nbsp;
+  </div>
+<%end%>
+<% unless no_buttons %>
+  <% if has_messages || !ms.system_message.blank?%>
+    <div id='notice' class='notices' style='display:none;'>
+      <div id='notice_hide'>
+        <a href="#" id="lnk_hide_notice"><%=image_tag 'x.png', :title=>"close"%></a>
+      </div>
+      <% [:errors,:notices].each do |type| %>
+        <% ary = flash[type].nil? ? [] : flash[type] %>
+        <% ary.each do |m| %>
+          <div class='<%=type%>_message base_msg'><%=m%></div>
+        <% end %>
+      <% end %>
+      <% if ms.system_message %>
+        <div class='system_message base_msg'><%=ms.system_message%></div>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
 <div id="header">
   <div id="top_box">
     <% if !current_user || no_buttons %>
@@ -145,76 +247,10 @@
     <% if current_user %>
       <% unless no_buttons %>
         <div id="corner_links">
-            <%= link_to current_user.full_name, company_user_path(current_user.company, current_user), {:title=>"Edit Your Account",:class=>"tiplink"} %> | 
-            <%= link_to 'Messages', messages_path %> <%=link_to(image_tag('envelope.png',{:alt=>'Messages',:style=>"vertical-align:bottom; display:#{Message.unread_message_count(current_user.id)==0 ? "none" : "inline"};",:id=>'message_envelope'}), messages_path)%> |
-            <%= link_to 'Tools', tools_path%> | 
-            <%= link_to "Help / Feedback", current_user.zendesk_url, :target=>"chainio_support" %> |
-            <%= link_to 'Logout', logout_path %>
             <div style='text-align:right;'><form action='/quick_search' method='GET'><input type='text' name='v' size='10'/><input type='submit' value='Search' id='quick_search_button' /></form></div>
         </div>
       <% end %>
       <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
     <% end%>
   </div> <!--close top box-->
-  <% if current_user%>
-    <div id="linkbar">
-      <%if current_user.view_products?%>
-        <button id='btn_products' title='Search for products'>Products</button>
-        <%if current_user.add_products?%>
-          <button id='btn_new_product'>New Product</button>
-        <%end%>
-      <%end%>
-      <%if current_user.view_orders?%>
-        <button id='btn_orders' title='Search for orders'>Orders</button>
-        <%if current_user.add_orders? %>
-          <button id='btn_new_order'>New Order</button>
-        <%end%>
-      <%end%>
-      <%if current_user.view_shipments?%>
-        <button id='btn_shipments' title='Search for shipments'>Shipments</button>
-        <%if current_user.add_shipments?%>
-          <button id='btn_new_shipment'>New Shipment</button>
-        <%end%>
-      <%end%>
-      <%if current_user.view_sales_orders?%>
-        <button id='btn_sales' title='Search for sales'>Sales</button>
-        <%if current_user.add_sales_orders?%>
-          <button id='btn_new_sale'>New Sale</button>
-        <%end%>
-      <%end%>
-      <%if current_user.view_deliveries?%>
-        <button id='btn_deliveries' title='Search for deliveries'>Deliveries</button>
-        <%if current_user.add_deliveries?%>
-          <button id='btn_new_delivery'>New Delivery</button>
-        <%end%>
-      <%end%>      
-      <%if current_user.view_entries?%>
-        <button id='btn_entries' title='Search for entries'>Entries</button>
-      <%end%>
-      <%if current_user.view_broker_invoices?%>
-        <button id='btn_invoices' title='Search for invoices'>Invoices</button>
-      <%end%>
-      <%if !current_user.survey_responses.blank?%>
-        <button id='btn_survey_resp' title='Surveys'>Surveys</button>
-      <%end%>
-    </div> <!--close linkbar-->
-  <% end %>
 </div>
-<% unless no_buttons %>
-  <% if has_messages || !ms.system_message.blank?%>
-    <div id='notice' class='notices' style='display:none;'>
-      <div id='notice_hide'>
-        <a href="#" id="lnk_hide_notice">Hide</a>
-      </div>
-      <% [:errors,:notices].each do |type| %>
-        <% ary = flash[type].nil? ? [] : flash[type] %>
-        <% ary.each do |m| %>
-          <div class='<%=type%>_message'><%=m%></div>
-        <% end %>
-      <% end %>
-      <% unless ms.system_message.blank? %>
-        <div class='system_message'><%=ms.system_message%></div>
-      <% end %>
-    </div>
-  <% end %>
-<% end %>

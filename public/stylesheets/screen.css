@@ -214,21 +214,28 @@ p {
   margin-top: .5em;
 }
 .notices {
+  z-index: 500;
+  position: absolute;
+  right: 0;
+  top: 0;
   background-color: white;
-  border: 1px solid black;
-  margin: 0 0 1em 0;
+  border-left: 1px solid black;
+  border-bottom: 1px solid black;
   color: green;
-  padding: 1em;
+  padding: 0 0 10px 10px;
 }
 #notice_hide {
 	text-align: right;
-  float: right;
-  margin-right: 1em;
-  padding-right: 1em;
+  position: relative;
+  right: 0;
+}
+.base_msg {
+  padding-right: 20px;
 }
 .errors_message {
     color: red;
 }
+
 .system_message {
   color: #993300;
 }
@@ -635,4 +642,97 @@ width:60%;
 #show_all_columns {
   float: right;
   margin-right: 5%;
+}
+
+/* DROP DOWNS */
+#nav_bar {
+  background-color: black;
+  padding: 1px 0;
+  margin: 0;
+  width: 100%;
+  height: 22px;
+}  
+
+#nb_r {
+  position: absolute;
+  right: 0;
+}
+#nb_l {
+  position: absolute;
+  left: 0;
+}
+#tools_menu {
+  width: 200px;
+  left: -200px;
+}
+
+/* 
+  LEVEL ONE
+*/
+.dropdown {
+  font-size: 12px;
+}
+ul.dropdown                         { 
+  list-style: none;
+  padding: 0;
+  background-color: black;
+  color: white;
+  margin: 0;
+}
+ul.dropdown li                      { 
+  font-weight: bold; 
+  float: left; 
+  zoom: 1;
+  background-color: black;
+  color: white;
+}
+ul.dropdown li a                    { 
+  display: block; 
+  padding: 4px 8px;
+  border-right: 1px solid #333;
+  text-decoration: none;
+  color: white;
+  font-weight: normal;
+}
+ul.dropdown li:last-child a         { border-right: none; } /* Doesn't work in IE */
+ul.dropdown li.hover,
+ul.dropdown li:hover                { position: relative; }
+
+
+/* 
+  LEVEL TWO
+*/
+ul.dropdown ul            { 
+  /*width: 220px; */
+  visibility: hidden; 
+  position: absolute; 
+  top: 100%; 
+  left: -40px; 
+  /*margin-left: -40px;*/
+  list-style: none;
+}
+ul.dropdown ul li           { 
+  font-weight: normal; 
+  border-bottom: 1px solid #ccc; 
+  float: none; 
+}
+                    
+                                    /* IE 6 & 7 Needs Inline Block */
+ul.dropdown ul li a         { 
+  border-right: none; 
+  width: 100%; 
+  display: inline-block; 
+} 
+
+
+/* 
+  LEVEL THREE
+*/
+ul.dropdown ul ul           { left: 100%; top: 0; 
+  list-style: none;
+}
+ul.dropdown li:hover > ul       { visibility: visible; }
+
+.sub_menu li a{
+  color: white;
 }

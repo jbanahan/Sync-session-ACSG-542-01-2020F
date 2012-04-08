@@ -603,12 +603,13 @@ var OpenChain = (function() {
   };
 })();
 $( function() {
+    $("a.click_sink").live('click',function(evt) {evt.preventDefault();});
     OpenChain.init(OpenChain.user_id);
     $(".decimal").jStepper();
     $(".integer").jStepper({allowDecimals:false});
     $("#lnk_hide_notice").click(function(ev) {
       ev.preventDefault();
-      $('#notice').slideUp('slow');
+      $('#notice').hide();
     });
     $(".btn_cancel_mod").click( function() {
         $.modal.close();
