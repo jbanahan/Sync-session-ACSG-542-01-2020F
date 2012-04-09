@@ -16,7 +16,8 @@ class User < ActiveRecord::Base
     :survey_view, :survey_edit,
     :broker_invoice_view,
     :classification_view, :classification_edit,
-    :commercial_invoice_view, :commercial_invoice_edit
+    :commercial_invoice_view, :commercial_invoice_edit,
+    :support_agent
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -31,6 +32,8 @@ class User < ActiveRecord::Base
   has_many   :instant_classification_results, :foreign_key => :run_by_id
   has_many   :report_results, :foreign_key => :run_by_id
   has_many   :survey_responses
+  has_many   :support_tickets, :foreign_key => :requestor_id
+  has_many   :support_tickets_assigned, :foreign_key => :agent_id
   
   validates  :company, :presence => true
   

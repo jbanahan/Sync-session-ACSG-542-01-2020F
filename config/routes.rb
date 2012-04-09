@@ -6,6 +6,8 @@ OpenChain::Application.routes.draw do
     post 'update_all', :on=>:collection
   end
 
+  resources :support_tickets
+
   resources :linkable_attachment_import_rules
   resources :tariff_sets, :only => [:index] do
     member do

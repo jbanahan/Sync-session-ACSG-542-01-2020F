@@ -183,3 +183,6 @@ Factory.define :commercial_invoice_map do |f|
   f.source_mfid "prod_uid"
   f.destination_mfid "cil_part_number"
 end
+Factory.define :support_ticket do |f|
+  f.association :requestor, :factory => :user
+end

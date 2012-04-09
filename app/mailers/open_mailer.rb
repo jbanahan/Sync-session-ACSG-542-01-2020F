@@ -182,6 +182,22 @@ EOS
     end
   end
 
+
+  def send_support_ticket_to_agent support_ticket
+    to = support_ticket.agent ? support_ticket.agent.email : "support@vandegriftinc.com"
+    @ticket = support_ticket
+    mail(:to=>to,:subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
+      format.html
+    end
+  end
+
+  def send_support_ticket_to_requestor support_ticket
+    @ticket = support_ticket
+    mail(:to=>support_ticket.requestor.email,:subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
+      format.html
+    end
+  end
+
   private
   def sanitize_filename(filename)
     filename.strip.tap do |name|

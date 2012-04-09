@@ -1,0 +1,18 @@
+<h1>Support Ticket #<%=@ticket.id%> Updated</h1>
+
+<b>Original Request:</b>
+<div>
+  <%=RedCloth.new(@ticket.body).to_html.html_safe%>
+</div>
+<b>Status:</b> <%=@ticket.state%>
+<b>Comments:</b>
+<%@ticket.support_ticket_comments.each do |c|%>
+<div> 
+  <em><%=c.user.full_name%> (<%=c.created_at%>)</em><br/>
+  <%=RedCloth.new(c.body).to_html.html_safe%>
+</div>
+<%end%>
+
+<hr />
+Follow this link to add comments: <a href='http://<%=MasterSetup.get.request_host%>/support_tickets/<%=@ticket.id%>'>http://<%=MasterSetup.get.request_host%>/support_tickets/<%=@ticket.id%></a>
+
