@@ -23,109 +23,7 @@
   <script type='text/javascript'>
   OpenChain.setAuthToken('<%=form_authenticity_token%>');
   <% if current_user %>
-  OpenChain.user_id = <%=current_user.id%>;
-  $(function() {
-    <% if current_user.view_orders?%>
-    $( "#btn_orders" )
-      .button()
-      .click(function() {
-        window.location = '<%=orders_path%>?force_search=true';
-      })<% if current_user.add_orders? %>
-      .next()
-        .button( {
-          text: false,
-          icons: {
-            primary: "ui-icon-plus"
-          }
-        })
-        .click(function() {
-          window.location = '<%=new_order_path%>';
-        })
-        .parent()
-          .buttonset()<%end%>;
-    <%end%>
-    <% if current_user.view_shipments?%>
-    $( "#btn_shipments" )
-      .button()
-      .click(function() {
-        window.location = '<%=shipments_path%>?force_search=true';
-      })<%if current_user.add_shipments?%>
-      .next()
-        .button( {
-          text: false,
-          icons: {
-            primary: "ui-icon-plus"
-          }
-        })
-        .click(function() {
-          window.location = '<%=new_shipment_path%>';
-        })
-        .parent()
-          .buttonset()<%end%>;<%end%>
-     <%if current_user.view_products?%>
-    $( "#btn_products" )
-      .button()
-      .click(function() {
-        window.location = '<%=products_path%>?force_search=true';
-      })<%if current_user.add_products?%>
-      .next()
-        .button( {
-          text: false,
-          icons: {
-            primary: "ui-icon-plus"
-          }
-        })
-        .click(function() {
-          window.location = '<%=new_product_path%>';
-        })
-        .parent()
-          .buttonset()<%end%>;<%end%>
-      <%if current_user.view_sales_orders?%>
-  $( "#btn_sales" )
-      .button()
-      .click(function() {
-        window.location = '<%=sales_orders_path%>?force_search=true';
-      })<%if current_user.add_sales_orders?%>
-      .next()
-        .button( {
-          text: false,
-          icons: {
-            primary: "ui-icon-plus"
-          }
-        })
-        .click(function() {
-          window.location = '<%=new_sales_order_path%>';
-        })
-        .parent()
-          .buttonset()<%end%>;
-      <% end %>
-      <% if current_user.view_deliveries?%>
-  $( "#btn_deliveries" )
-      .button()
-      .click(function() {
-        window.location = '<%=deliveries_path%>?force_search=true';
-      })<%if current_user.add_deliveries?%>
-      .next()
-        .button( {
-          text: false,
-          icons: {
-            primary: "ui-icon-plus"
-          }
-        })
-        .click(function() {
-          window.location = '<%=new_delivery_path%>';
-        })
-        .parent()
-          .buttonset()<%end%>;
-       <% end %>
-    <% if current_user.view_entries?%>
-      $("#btn_entries").button().click(function() {window.location = '<%=entries_path%>?force_search=true';});
-    <% end %>
-    <% if current_user.view_broker_invoices?%>
-      $("#btn_invoices").button().click(function() {window.location = '<%=broker_invoices_path%>?force_search=true';});
-    <% end %>
-    $("#btn_survey_resp").button().click(function() {window.location = '<%=survey_responses_path%>';});
-  });
+    OpenChain.user_id = <%=current_user.id%>;
   <% end %>
   <%= yield :javascript%>
   <% if Rails.env=='development' || current_user.nil?%>
@@ -140,6 +38,7 @@
 <% if current_user && !no_buttons %>
   <ul id='nb_r' class='dropdown'>
     <li><%=link_to current_user.full_name, company_user_path(current_user.company, current_user)%></li>
+    <li id='message_envelope' style='display:none;'><%=link_to image_tag('envelope.png'), "/messages"%></li>
     <li><a href='#' class='click_sink'>Menu</a>
       <ul class='sub_menu' id='tools_menu'>
         <li><a href='/messages'>Messages</a></li>
