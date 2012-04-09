@@ -81,7 +81,7 @@ describe SearchSchedule do
       when 6
         @ss.run_saturday = false
       end
-      @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)+1.day
+      @ss.next_run_time.should == Time.utc(now.year,now.month,now.day+(now.day!=Time.now.in_time_zone(tz_str).day ? -1 : 0),now.hour+1)+1.day
     end
     it "should use created_at if last_started_at is nil" do
       tz_str = "Eastern Time (US & Canada)"
