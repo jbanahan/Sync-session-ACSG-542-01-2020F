@@ -1,20 +1,27 @@
+<%=content_for :action_bar do %>
+  <button class='btn_link' link_to='<%=new_support_ticket_path%>'>New Ticket</button>
+<%end%>
 <h1>Support Tickets</h1>
 
-<table class='detail_table'>
-  <thead><tr><th>Number</th><th>Created</th><th>Body</th><th>Status</th></thead>
-  <tbody>
-    <%@tickets.each do |tick|%>
-      <tr class='hover'><td><%=link_to tick.id, tick%></td><td><%=tick.created_at%></td><td><%=tick.body%></td><td><%=tick.state%></tr>
-    <%end%>
-  </tbody>
-</table>
-<% if @assigned && !@assigned.empty%>
-  <h2>Assigned To You</h2>
+<% if @tickets.empty? %>
+  <p>You don't have any support tickets.  Click the &quot;New Tickets&quot; button to create a support request.</p>
+<% else %>
   <table class='detail_table'>
-    <thead><tr><th>Number</th><th>User</th><th>Created</th><th>Body</th><th>Status</th></thead>
+    <thead><tr><th>Number</th><th>Created</th><th>Short Description</th><th>Status</th></thead>
     <tbody>
       <%@tickets.each do |tick|%>
-      <tr class='hover'><td><%=link_to tick.id, tick%></td><%=tick.requestor.full_name%></td><td><%=tick.created_at%></td><td><%=tick.body%></td><td><%=tick.state%></tr>
+        <tr class='hover'><td><%=link_to tick.id, tick%></td><td><%=tick.created_at%></td><td><%=tick.subject%></td><td><%=tick.state%></tr>
+      <%end%>
+    </tbody>
+  </table>
+<% end %>
+<% if @assigned && !@assigned.empty?%>
+  <h2>Assigned To You</h2>
+  <table class='detail_table'>
+    <thead><tr><th>Number</th><th>User</th><th>Created</th><th>Short Description</th><th>Status</th></thead>
+    <tbody>
+      <%@tickets.each do |tick|%>
+      <tr class='hover'><td><%=link_to tick.id, tick%></td><td><%=tick.requestor.full_name%></td><td><%=tick.created_at%></td><td><%=tick.subject%></td><td><%=tick.state%></tr>
       <%end%>
     </tbody>
   </table>

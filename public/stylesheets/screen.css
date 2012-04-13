@@ -733,6 +733,9 @@ ul.dropdown ul ul           { left: 100%; top: 0;
 }
 ul.dropdown li:hover > ul       { visibility: visible; }
 
+.sub_menu {
+  z-index: 400;
+}
 .sub_menu li a{
   color: white;
 }

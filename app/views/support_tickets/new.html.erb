@@ -1,0 +1,30 @@
+<%content_for :action_bar do %>
+  <button class="form_to" form_id='frm_t' key_map='s'>Submit Ticket</button>
+<%end%>
+<%content_for :javascript do %>
+  $(function() {
+    if($("#sel_requestor").length>0) {
+      OpenChain.loadUserList($("#sel_requestor"),"<%=@ticket.requestor_id%>");
+    }
+  });
+<%end%>
+<h1>New Ticket</h1>
+
+<%form_for @ticket, :html=>{:id=>"frm_t"} do |f| %>
+<%=f.hidden_field :last_saved_by_id%>
+<%=f.hidden_field :requestor_id%>
+<%if !current_user.support_agent?%>
+  <%=f.hidden_field :state%>
+<%end%>
+<table>
+  <%=field_row "User", current_user.support_agent? ? f.select(:requestor_id, ["Loading..."], {}, :id=>"sel_requestor") : @ticket.requestor.full_name %>
+  <%if current_user.support_agent?%>
+    <%=field_row "Agent Assigned", f.collection_select(:agent_id, User.where(:support_agent=>true), :id, :full_name, {:include_blank=>:true})%>
+  <%end%>
+  <%=field_row "Short Description", f.text_field(:subject, :size=>100)%>
+  <%=field_row "", content_tag(:em,"The short descripton is required and will be the subject line on your email notifications about this ticket.")%>
+  <%=field_row "State", current_user.support_agent? ? f.select(:state, ["Open","Closed"]) : @ticket.state%>
+</table>
+<b>More Information</b>
+<%=f.text_area :body, :style=>"width:90%;"%>
+<%end%>

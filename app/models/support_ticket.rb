@@ -6,15 +6,16 @@ class SupportTicket < ActiveRecord::Base
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
   after_save :send_notification_callback
   validates_presence_of :requestor
+  validates :subject, :length=>{:minimum=>10,:too_short=>"Short description must be at least 10 characters."}
 
   accepts_nested_attributes_for :support_ticket_comments, :reject_if => lambda { |q|
-    ( q[:body].blank? && q[:attachments][:attached].blank? ) || q[:user_id].blank? 
+    ( q[:body].blank? && ( q[:attachments].blank? || q[:attachments][:attached].blank? ) ) || q[:user_id].blank? 
   }
   accepts_nested_attributes_for :attachments, :reject_if => lambda {|q|
     q[:attached].blank?
   }
 
-  scope :open, where("state is null or ( NOT state = ? )","closed")
+  scope :open, where(" NOT state = ? ","closed")
   
   def can_view? user
     self.requestor == user || user.admin? || user.support_agent? || user.sys_admin?
