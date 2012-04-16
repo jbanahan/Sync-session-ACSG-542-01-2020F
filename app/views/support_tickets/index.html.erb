@@ -20,8 +20,30 @@
   <table class='detail_table'>
     <thead><tr><th>Number</th><th>User</th><th>Created</th><th>Short Description</th><th>Status</th></thead>
     <tbody>
-      <%@tickets.each do |tick|%>
+      <%@assigned.each do |tick|%>
       <tr class='hover'><td><%=link_to tick.id, tick%></td><td><%=tick.requestor.full_name%></td><td><%=tick.created_at%></td><td><%=tick.subject%></td><td><%=tick.state%></tr>
+      <%end%>
+    </tbody>
+  </table>
+<% end %>
+<% if @unassigned && !@unassigned.empty?%>
+  <h2>Not Assigned To Anyone</h2>
+  <table class='detail_table'>
+    <thead><tr><th>Number</th><th>User</th><th>Created</th><th>Short Description</th><th>Status</th></thead>
+    <tbody>
+      <%@unassigned.each do |tick|%>
+      <tr class='hover'><td><%=link_to tick.id, tick%></td><td><%=tick.requestor.full_name%></td><td><%=tick.created_at%></td><td><%=tick.subject%></td><td><%=tick.state%></tr>
+      <%end%>
+    </tbody>
+  </table>
+<% end %>
+<% if @open_assigned_to_others && !@open_assigned_to_others.empty?%>
+  <h2>Open and Assigned To Someone Else</h2>
+  <table class='detail_table'>
+    <thead><tr><th>Number</th><th>User</th><th>Assigned To</th><th>Created</th><th>Short Description</th><th>Status</th></thead>
+    <tbody>
+      <%@open_assigned_to_others.each do |tick|%>
+      <tr class='hover'><td><%=link_to tick.id, tick%></td><td><%=tick.requestor.full_name%></td><td><%=tick.agent.full_name%></td><td><%=tick.created_at%></td><td><%=tick.subject%></td><td><%=tick.state%></tr>
       <%end%>
     </tbody>
   </table>

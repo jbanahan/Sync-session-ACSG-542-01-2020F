@@ -5,12 +5,14 @@ class SupportTicketsController < ApplicationController
     if current_user.support_agent?
       @assigned = SupportTicket.open.where(:agent_id=>current_user.id)
       @unassigned = SupportTicket.open.where(:agent_id=>nil)
+      @open_assigned_to_others = SupportTicket.open.where("agent_id != ?",current_user.id)
     end
   end
   
   def new
     @ticket = current_user.support_agent? ? SupportTicket.new(:agent=>current_user) : SupportTicket.new(:requestor=>current_user) 
     @ticket.last_saved_by = current_user
+    @ticket.email_notifications = true
     @ticket.state = "Open"
   end
 
@@ -33,7 +35,9 @@ class SupportTicketsController < ApplicationController
 
   def update
     t = SupportTicket.find params[:id]
-    t.update_attributes(params[:support_ticket])
+    p = params[:support_ticket].clone
+    p[:last_saved_by_id] = current_user.id
+    t.update_attributes(p)
     if t.errors.blank?
       add_flash :notices, "Ticket saved successfully, a support agent has been notified."
       redirect_to support_tickets_path

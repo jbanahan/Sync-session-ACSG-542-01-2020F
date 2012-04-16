@@ -6,25 +6,40 @@
     if($("#sel_requestor").length>0) {
       OpenChain.loadUserList($("#sel_requestor"),"<%=@ticket.requestor_id%>");
     }
+    $("#preview_link").click(function(evt) {
+      evt.preventDefault();
+      OpenChain.previewTextile("#txt_bod","Body Preview");
+    });
   });
 <%end%>
 <h1>New Ticket</h1>
 
-<%form_for @ticket, :html=>{:id=>"frm_t"} do |f| %>
-<%=f.hidden_field :last_saved_by_id%>
-<%=f.hidden_field :requestor_id%>
-<%if !current_user.support_agent?%>
-  <%=f.hidden_field :state%>
-<%end%>
-<table>
-  <%=field_row "User", current_user.support_agent? ? f.select(:requestor_id, ["Loading..."], {}, :id=>"sel_requestor") : @ticket.requestor.full_name %>
-  <%if current_user.support_agent?%>
-    <%=field_row "Agent Assigned", f.collection_select(:agent_id, User.where(:support_agent=>true), :id, :full_name, {:include_blank=>:true})%>
+<%form_for @ticket, :html=>{:id=>"frm_t",:multipart=>true} do |f| %>
+  <%=f.hidden_field :last_saved_by_id%>
+  <%=f.hidden_field :requestor_id%>
+  <%if !current_user.support_agent?%>
+    <%=f.hidden_field :state%>
   <%end%>
-  <%=field_row "Short Description", f.text_field(:subject, :size=>100)%>
-  <%=field_row "", content_tag(:em,"The short descripton is required and will be the subject line on your email notifications about this ticket.")%>
-  <%=field_row "State", current_user.support_agent? ? f.select(:state, ["Open","Closed"]) : @ticket.state%>
-</table>
-<b>More Information</b>
-<%=f.text_area :body, :style=>"width:90%;"%>
+  <table>
+    <%=field_row "User", current_user.support_agent? ? f.select(:requestor_id, ["Loading..."], {}, :id=>"sel_requestor") : @ticket.requestor.full_name %>
+    <%if current_user.support_agent?%>
+      <%=field_row "Agent Assigned", f.collection_select(:agent_id, User.where(:support_agent=>true), :id, :full_name, {:include_blank=>:true})%>
+    <%end%>
+    <%=field_row "Short Description", f.text_field(:subject, :size=>100)%>
+    <%=field_row "", content_tag(:em,"The short descripton is required and will be the subject line on your email notifications about this ticket.")%>
+    <%=field_row "State", current_user.support_agent? ? f.select(:state, ["Open","Closed"]) : @ticket.state%>
+    <%=field_row "Email Updates To Me", f.check_box(:email_notifications)%>
+  </table>
+  <div>
+    <b>More Information</b>
+    <%=f.text_area :body, :style=>"width:90%;", :id=>'txt_bod'%><br />
+    <div>
+      <a href='#' id='preview_link'>Preview</a> | <a href='http://redcloth.org/hobix.com/textile/quick.html' target='_blank'>Formatting Guide</a>
+    </div>
+    <%f.fields_for :attachments, f.object.attachments.build do |attf|%>
+      <%=attf.hidden_field :attachable_type%>
+      <b>Attach File: </b><%=attf.file_field :attached%>
+    <%end%>
+  </div>
 <%end%>
+

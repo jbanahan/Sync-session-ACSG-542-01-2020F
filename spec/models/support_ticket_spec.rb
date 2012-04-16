@@ -55,18 +55,21 @@ describe SupportTicket do
       Delayed::Worker.delay_jobs = false
       @requestor = Factory(:user)
       @agent = Factory(:user,:support_agent=>true)
-      @st = SupportTicket.new(:requestor=>@requestor,:agent=>@agent,:email_notifications=>true)
+      @st = Factory(:support_ticket,:requestor=>@requestor,:agent=>@agent,:email_notifications=>true)
+      @mock_email = mock(:email)
     end
     after :each do
       Delayed::Worker.delay_jobs = @dj_state
     end
     it "should notify agent when requestor is_last_saved_by" do
-      OpenMailer.should_receive(:send_support_ticket_to_agent).with(@st)
+      @mock_email.should_receive(:deliver)
+      OpenMailer.should_receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
       @st.last_saved_by = @requestor
       @st.send_notification
     end
     it "should notify requestor when agent is last_saved_by" do
-      OpenMailer.should_receive(:send_support_ticket_to_requestor).with(@st)
+      @mock_email.should_receive(:deliver)
+      OpenMailer.should_receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
       @st.last_saved_by = @agent
       @st.send_notification
     end
@@ -77,16 +80,19 @@ describe SupportTicket do
       @st.send_notification
     end
     it "should notify both when last_saved_by is not agent or requestor" do
-      OpenMailer.should_receive(:send_support_ticket_to_agent).with(@st)
-      OpenMailer.should_receive(:send_support_ticket_to_requestor).with(@st)
+      @mock_email.should_receive(:deliver).twice
+      OpenMailer.should_receive(:send_support_ticket_to_agent).with(@st).and_return(@mock_email)
+      OpenMailer.should_receive(:send_support_ticket_to_requestor).with(@st).and_return(@mock_email)
       @st.last_saved_by = Factory(:user)
       @st.send_notification
     end
-    it "should call send_notification after save" do
+    it "should call send_notification after save if last_saved_by is set" do
+      @st.last_saved_by = @agent
       @st.should_receive(:send_notification)
       @st.save!
     end
-    it "should delay send_notification after save" do
+    it "should delay send_notification after save if last_saved_by is set" do
+      @st.last_saved_by = @agent
       @st.should_receive(:delay).and_return(@st)
       @st.should_receive(:send_notification)
       @st.save!

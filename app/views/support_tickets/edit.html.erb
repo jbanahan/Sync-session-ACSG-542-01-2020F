@@ -6,15 +6,18 @@
     if($("#sel_requestor").length>0) {
       OpenChain.loadUserList($("#sel_requestor"),"<%=@ticket.requestor_id%>");
     }
+    $("#preview_link").click(function(evt) {
+      evt.preventDefault();
+      OpenChain.previewTextile("#tx_entr","Comment Preview");
+    });
   });
 <%end%>
 <style>
   .support_comment_body {margin-left: 10px; border-left: 1px solid #ccc; padding-left:5px;}
 </style>
-<h1>New Ticket</h1>
+<h1>Ticket #<%=@ticket.id%></h1>
 
-<%form_for @ticket, :html=>{:id=>"frm_t"} do |f| %>
-  <%f.hidden_field :last_saved_by_id%>
+<%form_for @ticket, :html=>{:id=>"frm_t",:multipart=>true} do |f| %>
   <table>
     <%=field_row "User", current_user.support_agent? ? f.select(:requestor_id, ["Loading..."], {}, :id=>"sel_requestor") : @ticket.requestor.full_name %>
     <%if current_user.support_agent?%>
@@ -22,17 +25,35 @@
     <%end%>
     <%=field_row "Short Description", @ticket.subject%>
     <%=field_row "State", current_user.support_agent? ? f.select(:state, ["Open","Closed"]) : @ticket.state%>
+    <%=field_row "Email Updates To Me", @ticket.requestor==current_user ? f.check_box(:email_notifications) : @ticket.email_notifications?%>
     <%=field_row "More Information", RedCloth.new(@ticket.body).to_html.html_safe%>
+    <%attach_html = ""%>
+    <%@ticket.attachments.each {|att| attach_html << "<a href='#{download_attachment_path(att)}'>#{att.attached_file_name}</a><br />"}%>
+    <%=field_row "Original Attachments", attach_html.html_safe%>
   </table>
   <h3>Comments</h3>
   <%@ticket.support_ticket_comments.each do |stc|%>
     <div><em><%=stc.user.full_name%> - <%=stc.created_at%></em></div>
     <div class='support_comment_body'>
-      <%=RedCloth.new(stc.body).to_html.html_safe%>
+      <div>
+        <%=RedCloth.new(stc.body).to_html.html_safe%>
+      </div>
+      <div>
+        <%stc.attachments.each do |sta|%>
+          <%=link_to sta.attached_file_name, download_attachment_path(sta)%><br />
+        <%end%>
+      </div>
     </div>
   <%end%>
   <%f.fields_for :support_ticket_comments, @ticket.support_ticket_comments.build(:user=>current_user) do |stcf|%>
     <%=stcf.hidden_field :user_id%>
-    <%=stcf.text_area :body, :style=>"width:90%;"%>
+    <%=stcf.text_area :body, :style=>"width:90%;", :id=>'tx_entr'%><br />
+    <div>
+      <a href='#' id='preview_link'>Preview</a> | <a href='http://redcloth.org/hobix.com/textile/quick.html' target='_blank'>Formatting Guide</a>
+    </div>
+    <%stcf.fields_for :attachments, stcf.object.attachments.build do |attf|%>
+      <%=attf.hidden_field :attachable_type%>
+      <b>Attach File: </b><%=attf.file_field :attached%>
+    <%end%>
   <%end%>
 <%end%>

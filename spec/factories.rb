@@ -185,4 +185,5 @@ Factory.define :commercial_invoice_map do |f|
 end
 Factory.define :support_ticket do |f|
   f.association :requestor, :factory => :user
+  f.subject "at least 10 characters"
 end

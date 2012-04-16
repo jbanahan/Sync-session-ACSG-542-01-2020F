@@ -4,7 +4,9 @@
 <div>
   <%=RedCloth.new(@ticket.body).to_html.html_safe%>
 </div>
-<b>Status:</b> <%=@ticket.state%>
+<div>
+  <b>Status:</b> <%=@ticket.state%>
+</div>
 <b>Comments:</b>
 <%@ticket.support_ticket_comments.each do |c|%>
 <div> 

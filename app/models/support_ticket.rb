@@ -15,7 +15,7 @@ class SupportTicket < ActiveRecord::Base
     q[:attached].blank?
   }
 
-  scope :open, where(" NOT state = ? ","closed")
+  scope :open, where(" NOT state <=> ? ","closed")
   
   def can_view? user
     self.requestor == user || user.admin? || user.support_agent? || user.sys_admin?
@@ -27,18 +27,19 @@ class SupportTicket < ActiveRecord::Base
 
   #send notification email to appropriate party based on last_saved_by
   def send_notification
+    return if self.last_saved_by.nil?
     if self.requestor == self.last_saved_by  
-      OpenMailer.send_support_ticket_to_agent self
+      OpenMailer.send_support_ticket_to_agent(self).deliver
     elsif self.agent == self.last_saved_by
-      OpenMailer.send_support_ticket_to_requestor self if self.email_notifications?
+      OpenMailer.send_support_ticket_to_requestor(self).deliver if self.email_notifications?
     else
-      OpenMailer.send_support_ticket_to_agent self
-      OpenMailer.send_support_ticket_to_requestor self if self.email_notifications?
+      OpenMailer.send_support_ticket_to_agent(self).deliver
+      OpenMailer.send_support_ticket_to_requestor(self).deliver if self.email_notifications?
     end
   end
 
   private
   def send_notification_callback
-    self.delay.send_notification
+    self.delay.send_notification if self.last_saved_by
   end
 end

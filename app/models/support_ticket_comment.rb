@@ -6,4 +6,8 @@ class SupportTicketComment < ActiveRecord::Base
   accepts_nested_attributes_for :attachments, :reject_if => lambda {|q|
     q[:attached].blank?
   }
+
+  def can_view? user
+    !self.support_ticket.nil? && self.support_ticket.can_view?(user)
+  end
 end

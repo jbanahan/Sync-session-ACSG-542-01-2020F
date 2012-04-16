@@ -9,7 +9,6 @@ class Attachment < ActiveRecord::Base
   
   belongs_to :uploaded_by, :class_name => "User"
   belongs_to :attachable, :polymorphic => true
-  validates :attachable, :presence => true
   
   def web_preview?
     return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image")
