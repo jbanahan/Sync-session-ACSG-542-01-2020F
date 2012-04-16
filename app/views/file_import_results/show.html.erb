@@ -18,6 +18,9 @@ $(function() {
       });
     }
   }); 
+  $("a.failed_rec").each(function(idx) {
+    $(this).click();
+  });
 });
 <% end %>
 <% content_for :action_bar do%>
@@ -34,7 +37,7 @@ $(function() {
     <th>Row</th><th>Status</th>
   </tr></thead>
   <%@change_records.each do |r|%>
-    <tr class='hover'><td><a href='#' class='toggle_record' cr_id='<%=r.id%>'><%=r.record_sequence_number%></a></td><td class='<%=r.failed? ? "error" : ""%>'><%=r.failed? ? "Error" : "Success"%></td></tr>
+    <tr class='hover'><td><a href='#' class='toggle_record <%if r.failed?%>failed_rec<%end%>' cr_id='<%=r.id%>'><%=r.record_sequence_number%></a></td><td class='<%=r.failed? ? "error" : ""%>'><%=r.failed? ? "Error" : "Success"%></td></tr>
     <tr style='display:none;'><td colspan='2' style='padding-left:2em;'><%=image_tag "ajax-loader.gif"%> Loading...</td></tr>
   <%end%>
 </table>
