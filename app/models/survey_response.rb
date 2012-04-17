@@ -12,6 +12,7 @@ class SurveyResponse < ActiveRecord::Base
   accepts_nested_attributes_for :answers, :allow_destroy=>false
 
   before_save :update_status
+  after_commit :send_notification
 
   def can_view? user
     return true if user.id==self.user_id
@@ -23,6 +24,14 @@ class SurveyResponse < ActiveRecord::Base
   def invite_user!
     OpenMailer.send_survey_invite(self).deliver!
     self.survey_response_logs.create(:message=>"Invite sent to #{self.user.email}")
+  end
+
+  def notify_subscribers
+    OpenMailer.send_survey_update(self).deliver!
+  end
+
+  def send_notification
+    self.delay.notify_subscribers if self.submitted_date
   end
 
   private

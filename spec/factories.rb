@@ -187,3 +187,7 @@ Factory.define :support_ticket do |f|
   f.association :requestor, :factory => :user
   f.subject "at least 10 characters"
 end
+Factory.define :survey_subscription do |f|
+  f.association :survey
+  f.association :user
+end

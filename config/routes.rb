@@ -291,6 +291,7 @@ OpenChain::Application.routes.draw do
   resources :surveys do
     member do 
       get 'show_assign'
+      get 'toggle_subscription'
       post 'assign'
     end
   end

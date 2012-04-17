@@ -182,6 +182,14 @@ EOS
     end
   end
 
+  #send survey update notification
+  def send_survey_update survey_response
+    @link_addr = "http://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
+    to = survey_response.survey.survey_subscriptions.map {|ss| ss.user.email}.join(',')
+    mail(:to=>to, :subject=>"Survey updated") do |format|
+      format.html
+    end
+  end
 
   def send_support_ticket_to_agent support_ticket
     to = support_ticket.agent ? support_ticket.agent.email : "support@vandegriftinc.com"
