@@ -40,4 +40,11 @@ describe Answer do
     a = Factory(:answer)
     a.attachments.create!(:attached_file_name=>"x.png")
   end
+  it "should update parent response when answer is updated" do
+    a = Factory(:answer)
+    a.survey_response.update_attributes(:updated_at=>1.week.ago)
+    a.choice = "X"
+    a.save!
+    SurveyResponse.find(a.survey_response_id).updated_at.should > 1.second.ago
+  end
 end

@@ -1,6 +1,6 @@
 class AnswerComment < ActiveRecord::Base
   belongs_to :user
-  belongs_to :answer
+  belongs_to :answer, :touch=>true
   
   validates_presence_of :user
   validates_presence_of :answer

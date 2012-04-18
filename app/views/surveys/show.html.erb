@@ -2,37 +2,40 @@
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <%end%>
 <%content_for :javascript do%>
- // Load the Visualization API and the piechart package.
-      google.load('visualization', '1.0', {'packages':['corechart']});
+  google.load('visualization', '1.0', {'packages':['corechart']});
+  var respC = function drawChart() {
 
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Rating');
+    data.addColumn('number', 'Count');
+    data.addRows([
+      <%@survey.rating_values.each_with_index do |rv,i|%>
+        ['<%=rv%>',<%=@survey.survey_responses.where(:rating=>rv).count%>],
+      <%end%>
+      ['Not Rated',<%=@survey.survey_responses.where("rating is null OR length(rating)=0").count%>]
+    ]);
 
-      // Callback that creates and populates a data table,
-      // instantiates the pie chart, passes in the data and
-      // draws it.
-      var dc = function drawChart() {
-
-        // Create the data table.
-        var data = new google.visualization.DataTable();
-        data.addColumn('string', 'Rating');
-        data.addColumn('number', 'Count');
-        data.addRows([
-          <%@survey.rating_values.each_with_index do |rv,i|%>
-            ['<%=rv%>',<%=@survey.survey_responses.where(:rating=>rv).count%>],
-          <%end%>
-          ['Not Rated',<%=@survey.survey_responses.where("rating is null OR length(rating)=0").count%>]
-        ]);
-
-        // Set chart options
-        var options = {'title':'Surveys by Rating',
-                       'width':400,
-                       'height':300};
-
-        // Instantiate and draw our chart, passing in some options.
-        var chart = new google.visualization.PieChart(document.getElementById('resp_chart'));
-        chart.draw(data, options);
-      }
-      // Set a callback to run when the Google Visualization API is loaded.
-      google.setOnLoadCallback(dc);
+    var options = {'title':'Surveys by Rating',
+                   'height':300};
+    var chart = new google.visualization.PieChart(document.getElementById('resp_chart'));
+    chart.draw(data, options);
+  }
+  google.setOnLoadCallback(respC);
+  var statC = function drawchart() {
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Status');
+    data.addColumn('number', 'Count');
+    data.addRows([
+      <%["Incomplete","Needs Rating","Rated"].each do |st|%>
+      ['<%=st%>',<%=@survey.survey_responses.where(:status=>st).count%>]<%=st=="Rated" ? "" : ","%>
+      <%end%>
+    ]);
+    var options = {'title':'Surveys by Status',
+                   'height':300};
+    var chart = new google.visualization.PieChart(document.getElementById('stat_chart'));
+    chart.draw(data, options);
+  }
+  google.setOnLoadCallback(statC);
 <%end%>
 <%content_for :action_bar do%>
   <% unless @survey.locked? %>
@@ -47,14 +50,19 @@
 <%end%>
 <h1><%=@survey.name%></h1>
 
-<div id='resp_chart' style='text-align:center;'></div>
+<div id='stat_chart' style='text-align:center; width:45%; margin:0; float:right;'></div>
+<div id='resp_chart' style='text-align:center; width:45%; margin:0;'></div>
+<div style='clear:both'></div>
 <table class='detail_table'>
-  <thead><tr><th>Company</th><th>Responder</th><th>Status</th><th>Rating</th><th>Submitted</th></tr></thead>
+  <thead><tr><th>Company</th><th>Responder</th><th>Status</th><th>Rating</th><th>Submitted</th><th>Last Updated</th></tr></thead>
   <tbody>
     <%@survey.survey_responses.each do |sr| %>
-      <tr><td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.status%></td>
-      <td><%=sr.rating%></td>
-      <td><%=sr.submitted_date%></td></tr>
+      <tr>
+        <td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.status%></td>
+        <td><%=sr.rating%></td>
+        <td><%=sr.submitted_date%></td>
+        <td><%=sr.updated_at%></td>
+      </tr>
     <% end%>
   </tbody>
 </table>

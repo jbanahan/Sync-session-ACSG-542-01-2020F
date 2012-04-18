@@ -7,7 +7,7 @@
     <button class='btn_link' link_to='<%=invite_survey_response_path(@sr)%>'>Resend Invite Email</button>
   <%end%>
   <button class='btn_link' link_to='<%=survey_response_survey_response_logs_path(@sr)%>'>Logs</button>
-  <button class='btn_link' link_to='<%=request.referrer%>'>Back</button>
+  <button class='btn_link' link_to='<%=@sr.user == current_user ? survey_responses_path : survey_path(@sr.survey)%>'>Back</button>
   <div id='answr_trk'>
     
   </div>
