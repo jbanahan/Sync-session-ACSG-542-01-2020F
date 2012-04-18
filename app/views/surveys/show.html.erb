@@ -39,6 +39,11 @@
     <button class='btn_link' link_to='<%=edit_survey_path @survey%>' key_map='e'>Edit</button>
   <% end%>
   <button class='btn_link' link_to='<%=show_assign_survey_path @survey%>' key_map='a'>Assign</button>
+  <% if current_user.view_surveys? && @survey.company_id == current_user.company_id %>
+    <button class='btn_link' link_to='<%=toggle_subscription_survey_path @survey%>' key_map='t'>
+      <%= @survey.survey_subscriptions.where(:user_id => current_user).empty? ? "Subscribe" : "Unsubscribe" %>
+    </button>
+  <% end %>
 <%end%>
 <h1><%=@survey.name%></h1>
 

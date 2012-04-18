@@ -113,4 +113,16 @@ class SurveysController < ApplicationController
     add_flash :notices, "#{help.pluralize cnt, "user"} assigned successfully."
     redirect_to s
   end
+  def toggle_subscription
+    @survey = Survey.find params[:id]
+    if current_user.view_surveys? && @survey.company_id == current_user.company_id
+      existing = SurveySubscription.find_by_survey_id_and_user_id(@survey.id, current_user.id)
+      if existing
+        existing.destroy
+      else
+        SurveySubscription.create!(:survey_id => @survey.id, :user_id => current_user.id)
+      end
+    end
+    redirect_to request.referrer
+  end
 end

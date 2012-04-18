@@ -217,4 +217,41 @@ describe SurveysController do
       SurveyResponse.where(:user_id=>u2.id,:survey_id=>@s.id).count.should == 1
     end
   end
+  describe "toggle subscription" do
+    before :each do 
+      @dj_state = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
+      @s = Factory(:survey, :company_id => @u.company_id)
+    end
+    after :each do
+      Delayed::Worker.delay_jobs = @dj_state
+    end
+    it "should not create subscription if user cannot see surveys" do
+      @u = Factory(:user,:survey_view => false)
+      UserSession.create! @u
+      lambda do
+        @u.survey_view = false
+        get :toggle_subscription, :id => @s.id
+      end.should change(SurveySubscription, :count).by(0)
+    end
+    it "should not create subscription if user and survey companies differ" do
+      lambda do
+        @s.update_attributes(:company_id => @u.company_id + 1)
+        @u.survey_view = false
+        get :toggle_subscription, :id => @s.id
+      end.should change(SurveySubscription, :count).by(0)
+    end
+    it "should create subscription if user can view" do
+      lambda do
+        get :toggle_subscription, :id => @s.id
+      end.should change(SurveySubscription, :count).by(1)
+    end
+    it "should destroy existing subscription" do
+      subscription = Factory(:survey_subscription, :survey_id => @s.id, :user_id => @u.id)
+      lambda do
+        @s.update_attributes(:company_id => @u.company_id)
+        get :toggle_subscription, :id => @s.id
+      end.should change(SurveySubscription, :count).by(-1)
+    end
+  end
 end

@@ -5,6 +5,7 @@ class Survey < ActiveRecord::Base
   has_many :survey_responses, :inverse_of=>:survey
   has_many :assigned_users, :through=>:survey_responses, :source=>:user
   has_many :answers, :through=>:survey_responses
+  has_many :survey_subscriptions, :dependent => :destroy
   
   validate :lock_check
 
