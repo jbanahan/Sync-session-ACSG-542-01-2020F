@@ -77,7 +77,7 @@
   <tbody>
     <%@survey.questions.each do |q|%>
       <tr class='hover'>
-        <td><%=q.content%></td>
+        <td><%=RedCloth.new(q.content).to_html.html_safe%></td>
         <td><%=@survey.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").count%></td>
         <%@survey.rating_values.each do |rv|%>
           <td><%=@survey.answers.where(:question_id=>q.id,:rating=>rv).count%></td>

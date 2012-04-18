@@ -376,7 +376,7 @@ var OpenChain = (function() {
       modal:true,
       buttons:{"OK":function() {
         $("#pt_preview").dialog('close'); 
-        $("pt_preview").remove();
+        $("#pt_preview").remove();
        }}});
     $("#pt_loading").remove();
   }

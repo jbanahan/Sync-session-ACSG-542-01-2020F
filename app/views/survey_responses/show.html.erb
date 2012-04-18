@@ -78,7 +78,7 @@ textarea {
     <div class='question'>
       <div class='q_head'>Question #<%=q_idx%></div>
       <%q_idx += 1%>
-      <div class='q_content'><%=q.content%></div>
+      <div class='q_content'><%=RedCloth.new(q.content).to_html.html_safe%></div>
       <p><span class='q_subhead'>Answer:</span>
         <% if @respond_mode %>
           <%=a.select :choice, q.choices.lines, {:include_blank=>true},:class=>'resp'%>

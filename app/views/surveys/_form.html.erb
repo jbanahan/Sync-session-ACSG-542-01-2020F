@@ -7,7 +7,8 @@
         if(id) {
           h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][id]' value='"+mid+"' />";
         }
-        h += "Question Body:<br/><textarea class='q_area' name='survey[questions_attributes]["+mid+"][content]'>"+content+"</textarea><br/>";
+        h += "Question Body:<br/><textarea id='q_"+mid+"' class='q_area' name='survey[questions_attributes]["+mid+"][content]'>"+content+"</textarea><br/>";
+        h += "<a href='#' class='q_preview' qid='"+mid+"'>Preview</a><br />";
         h += "Possible Answers: (put one answer on each line)<br/><textarea class='q_area' name='survey[questions_attributes]["+mid+"][choices]'>"+choices+"</textarea>";
         h += "<div style='text-align:right;'><a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>"
         h += "</div>";
@@ -30,6 +31,11 @@
       var preHtml = "<b>"+$("#eml_sub").val()+"</b><hr/>";
       var postHtml = "<div>To view the survey follow this link: [link here]</div>";
       OpenChain.previewTextile("#email_body","Email Preview",preHtml,postHtml);
+    });
+    $(".q_preview").live('click',function(evt) {
+      evt.preventDefault();
+      var qid = $(this).attr('qid');
+      OpenChain.previewTextile("#q_"+qid,"Question Preview");
     });
     $("a.del_ques").live('click',function(evt) {
       evt.preventDefault();
