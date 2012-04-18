@@ -214,7 +214,7 @@ p {
   margin-top: .5em;
 }
 .notices {
-  z-index: 500;
+  z-index: 5000;
   position: absolute;
   right: 0;
   top: 0;
@@ -656,10 +656,12 @@ width:60%;
 #nb_r {
   position: absolute;
   right: 0;
+  z-index: 1000;
 }
 #nb_l {
   position: absolute;
   left: 0;
+  z-index: 1000;
 }
 #tools_menu {
   width: 200px;
@@ -734,7 +736,7 @@ ul.dropdown ul ul           { left: 100%; top: 0;
 ul.dropdown li:hover > ul       { visibility: visible; }
 
 .sub_menu {
-  z-index: 400;
+  z-index: 800;
 }
 .sub_menu li a{
   color: white;
