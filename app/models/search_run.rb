@@ -5,6 +5,7 @@ class SearchRun < ActiveRecord::Base
   belongs_to :search_setup
   belongs_to :imported_file
   belongs_to :custom_file
+  has_many :search_criterions, :dependent=>:destroy
 
   def self.find_last_run user, core_module
     SearchRun.

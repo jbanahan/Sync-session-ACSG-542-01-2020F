@@ -15,7 +15,9 @@ class CustomFeaturesController < ApplicationController
       @file = f
       @search_run = @file.search_runs.find_or_create_by_user_id(current_user.id)
       @search_run.update_attributes(:last_accessed=>Time.now)
-      @products = @file.linked_products.paginate(:per_page=>20,:page => params[:page])
+      @products = @file.linked_products.where("1=1")
+      @search_run.search_criterions.each {|sc| @products = sc.apply @products}
+      @products = @products.paginate(:per_page=>20,:page => params[:page])
       fields = ['prod_uid',
         CustomDefinition.find_by_label("Board Number").model_field_uid,
         CustomDefinition.find_by_label("GCC Description").model_field_uid,
@@ -39,6 +41,20 @@ class CustomFeaturesController < ApplicationController
       hts1_column.model_field= hts1_model_field
       @columns.insert -2, hts1_column
       @bulk_actions = CoreModule::PRODUCT.bulk_actions current_user
+    }
+  end
+  def msl_plus_filter
+    f = CustomFile.find params[:id]
+    action_secure(f.can_view?(current_user),f,{:verb=>"filter",:module_name=>"MSL+ File",:lock_check=>false}) {
+      @file = f
+      @search_run = @file.search_runs.find_or_create_by_user_id(current_user.id)
+      search_params = (params[:search_run] && params[:search_run][:search_criterions_attributes]) ? params[:search_run][:search_criterions_attributes] : {}
+      @search_run.search_criterions.destroy_all
+      search_params.each do |k,p|
+        p.delete "_destroy"
+        @search_run.search_criterions.create(p)
+      end
+      redirect_to "/custom_features/msl_plus/#{f.id}"
     }
   end
   def msl_plus_upload

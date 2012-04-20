@@ -112,6 +112,7 @@ OpenChain::Application.routes.draw do
   match "/custom_features/msl_plus/upload" => "custom_features#msl_plus_upload", :via => :post
   match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_show_email", :via => :get
   match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_send_email", :via => :post
+  match "/custom_features/msl_plus/:id/filter" => "custom_features#msl_plus_filter", :via=>:post
 
 
   #reports
@@ -268,6 +269,7 @@ OpenChain::Application.routes.draw do
       get 'download'
       post 'download_items'
       get 'process'
+      post 'filter'
     end
   end
 

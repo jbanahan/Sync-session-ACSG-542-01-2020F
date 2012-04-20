@@ -20,6 +20,7 @@ class ImportedFile < ActiveRecord::Base
   has_many :search_runs
   has_many :file_import_results, :dependent=>:destroy
   has_many :search_columns
+  has_many :search_criterions, :dependent=>:destroy
 
   before_validation :set_module_type
   validates_presence_of :starting_row
