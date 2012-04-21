@@ -191,3 +191,10 @@ Factory.define :survey_subscription do |f|
   f.association :survey
   f.association :user
 end
+Factory.define :ftp_session do |f|
+  f.username "foo"
+  f.server "foo.example.com"
+  f.file_name "bar.txt"
+  f.log "test log"
+  f.data "sample data"
+end

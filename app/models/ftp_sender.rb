@@ -14,11 +14,19 @@ class FtpSender
       f.login(username,password)
       f.passive = my_opts[:passive]
       f.chdir(my_opts[:folder]) if my_opts[:folder]
+      data = nil
       if my_opts[:binary]
+        data = File.open(file, "rb") {|f| f.read}
         f.putbinaryfile file, remote_name
       else
         f.puttextfile file, remote_name
+        data = File.open(file, "r") {|f| f.read}
       end
+      FtpSession.create!(:username => username,
+                          :server => server,
+                          :file_name => File.basename(file),
+                          :log => "Uploading file",
+                          :data => File.open(file, "rb") { |f| f.read })
     end
   end
 
