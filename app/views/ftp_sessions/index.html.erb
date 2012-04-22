@@ -1,0 +1,18 @@
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'c_username'%></th>
+    <th><%=sortable_search_heading 'c_server'%></th>
+    <th><%=sortable_search_heading 'c_filename'%></th>
+    <th><%=sortable_search_heading 'd_createdat'%></th>
+  </thead>
+
+<% @ftp_sessions.each do |ftp_session| %>
+  <tr class='hover'>
+    <td><%= link_to ftp_session.username, ftp_session %></td>
+    <td><%= ftp_session.server %></td>
+    <td><%= ftp_session.file_name %></td>
+    <td><%= ftp_session.created_at %></td>
+  </tr>
+<% end %>
+</table>

@@ -1,0 +1,12 @@
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%= download_ftp_session_path(@ftp_session) %>'>Download</button>
+  <button class='btn_link' link_to='<%= ftp_sessions_path %>' key_map='b'>Back</button>
+<% end %>
+
+<table>
+  <%= field_row "Username", @ftp_session.username %>
+  <%= field_row "Server", @ftp_session.server %>
+  <%= field_row "File Name", @ftp_session.file_name %>
+  <%= field_row "Log", @ftp_session.log %>
+  <%= field_row "Created At", @ftp_session.created_at %>
+</table>

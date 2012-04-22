@@ -1,4 +1,10 @@
 OpenChain::Application.routes.draw do
+  resources :ftp_sessions, :only => [:index, :show] do
+    member do
+      get 'download'
+    end
+  end
+
   resources :entries, :only => [:index,:show]
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
