@@ -44,10 +44,11 @@ class ImportedFilesController < ApplicationController
       s.last_accessed = Time.now
       s.save
       @search_run = s
+      @filters = @imported_file.search_criterions
       @file_import_result = @imported_file.last_file_import_finished
       page = params[:page]
       page = (s.position/20)+1 if !page && s.position
-      @changed_objects = @file_import_result.changed_objects.paginate(:per_page=>20,:page => page) if @file_import_result
+      @changed_objects = @file_import_result.changed_objects(@filters).paginate(:per_page=>20,:page => page) if @file_import_result
       idx = 0
       @columns = @imported_file.search_columns
       if @columns.blank?
@@ -106,6 +107,19 @@ class ImportedFilesController < ApplicationController
             :type => @imported_file.attached_content_type,
             :disposition => 'attachment'  
       end
+    }
+  end
+
+  def filter
+    f = ImportedFile.find params[:id]
+    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"filter",:module_name=>"uploaded file"}) {
+      search_params = (params[:imported_file] && params[:imported_file][:search_criterions_attributes]) ? params[:imported_file][:search_criterions_attributes] : {}
+      f.search_criterions.destroy_all
+      search_params.each do |k,p|
+        p.delete "_destroy"
+        f.search_criterions.create(p)
+      end
+      redirect_to f
     }
   end
 

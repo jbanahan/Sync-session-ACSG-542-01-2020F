@@ -82,6 +82,10 @@
     <button class='btn_link' link_to='<%=file_import_result_path(@file_import_result)%>'>Log</button>
   <%end%>
 <% end %>
+<%if @file_import_result%>
+  <%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@imported_file,
+    :model_fields=>@imported_file.core_module.model_fields_including_children.values,:wrapper=>'filters',:parent_hash_name=>'imported_file'}%>
+<%end%>
 <table>
   <tr>
     <td width='50%' style='vertical-align:top;'>
@@ -107,6 +111,12 @@
   </tr>
 </table>
 <% if @file_import_result %>
+  <h3>Parameters</h3>
+  <%=form_for @imported_file, :url=>{:action=>:filter}, :html=>{:method=>:post} do |f|%>
+    <div id='filters'>
+    </div>
+    <%=f.submit "Update Parameters"%>
+  <%end%>
   <%= render :partial=>'shared/search_results', :locals=>{:bulk_actions=>@bulk_actions, :module_chain=>@imported_file.core_module.default_module_chain,
     :columns=>@columns, :criterions=>[], :objects=>@changed_objects, :item_count=>@search_run.total_objects, :search_run_id=>@search_run.id} %>
 <% end %>

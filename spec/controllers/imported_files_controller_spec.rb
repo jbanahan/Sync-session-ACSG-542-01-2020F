@@ -7,6 +7,51 @@ describe ImportedFilesController do
     activate_authlogic
     UserSession.create! @u
   end
+  describe 'show' do
+    it 'should apply search filters' do
+      fir = Factory(:file_import_result, :imported_file=>Factory(:imported_file, :user=>@u))
+      f = fir.imported_file
+      sc = f.search_criterions.create!(:operator=>"eq",:value=>"x",:model_field_uid=>"prod_uid") 
+      FileImportResult.any_instance.should_receive(:changed_objects).with(duck_type(:all)).and_return(Product.where("1=1"))
+      get :show, :id=>f.id
+      response.should be_success
+      assigns(:filters).should have(1).item
+      assigns(:filters).first.should == sc
+    end
+  end
+  describe 'filter' do
+    before :each do 
+      @imported_file = Factory(:imported_file,:user=>@u,:module_type=>"Product")
+    end
+    it 'should save filters' do
+      p = {"id"=>@imported_file.id,"imported_file"=>{"search_criterions_attributes"=>{"0"=>{"model_field_uid"=>"prod_uid","operator"=>"eq","value"=>"x"}}}}
+      post :filter, p
+      f = ImportedFile.find @imported_file.id
+      f.should have(1).search_criterions
+      sc = f.search_criterions.first
+      sc.model_field_uid.should == "prod_uid"
+      sc.operator.should == "eq"
+      sc.value.should == "x"
+    end
+    it 'should not save other attributes' do
+      p = {"id"=>@imported_file.id,"imported_file"=>{"module_type"=>"ABC","search_criterions_attributes"=>{"0"=>{"model_field_uid"=>"prod_uid","operator"=>"eq","value"=>"x"}}}}
+      post :filter, p
+      f = ImportedFile.find @imported_file.id
+      f.module_type.should == "Product"
+    end
+    it 'should replace filters' do
+      @imported_file.search_criterions.create!(:model_field_uid=>"prod_name",:operator=>"sw",:value=>"q")
+      p = {"id"=>@imported_file.id,"imported_file"=>{"search_criterions_attributes"=>{"0"=>{"model_field_uid"=>"prod_uid","operator"=>"eq","value"=>"x"}}}}
+      post :filter, p
+      f = ImportedFile.find @imported_file.id
+      f.should have(1).search_criterions
+      sc = f.search_criterions.first
+      sc.model_field_uid.should == "prod_uid"
+      sc.operator.should == "eq"
+      sc.value.should == "x"
+    end
+    
+  end
   describe 'show_email_file' do
     it 'should run sucessfully' do
       f = Factory(:imported_file, :user=>@u)

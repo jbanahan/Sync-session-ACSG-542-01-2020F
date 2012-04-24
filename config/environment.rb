@@ -3,6 +3,8 @@ require File.expand_path('../application', __FILE__)
 require 'open_chain/test_extensions'
 require 'open_chain/cache_wrapper'
 
+GC::Profiler.enable
+
 # Initialize the rails application
 AWS_CREDENTIALS = YAML::load_file 'config/s3.yml'
 FOG_S3 = {:aws_access_key_id=>AWS_CREDENTIALS['access_key_id'],
