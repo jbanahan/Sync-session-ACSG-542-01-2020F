@@ -1,4 +1,5 @@
 OpenChain::Application.routes.draw do
+  resources :delayed_jobs, :only => [:destroy]
   resources :ftp_sessions, :only => [:index, :show] do
     member do
       get 'download'
