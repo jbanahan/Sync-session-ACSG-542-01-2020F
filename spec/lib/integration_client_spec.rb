@@ -1,7 +1,6 @@
 require 'spec_helper'
 require 'open_chain/integration_client'
 require 'open_chain/s3'
-require 'ffi-rzmq'
 
 describe OpenChain::IntegrationClient do
   before :each do
