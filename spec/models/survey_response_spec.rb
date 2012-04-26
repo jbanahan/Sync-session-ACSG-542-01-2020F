@@ -97,6 +97,10 @@ describe SurveyResponse do
     it "should log that notification was sent" do
       @response.survey_response_logs.collect{ |log| log.message}.should include "Invite sent to #{@u.email}"
     end
+    it "should update email_sent_date if not set" do
+      @response.reload
+      @response.email_sent_date.should > 1.second.ago
+    end
     it "should email user with survey email, body, and link" do
       last_delivery = ActionMailer::Base.deliveries.last
       last_delivery.to.should == [@u.email]

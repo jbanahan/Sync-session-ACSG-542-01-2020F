@@ -23,6 +23,10 @@ class SurveyResponse < ActiveRecord::Base
   #send email invite to user
   def invite_user!
     OpenMailer.send_survey_invite(self).deliver!
+    unless self.email_sent_date #only set it the first time
+      self.email_sent_date=0.seconds.ago
+      self.save
+    end
     self.survey_response_logs.create(:message=>"Invite sent to #{self.user.email}")
   end
 

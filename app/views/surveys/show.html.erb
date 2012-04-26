@@ -54,12 +54,13 @@
 <div id='resp_chart' style='text-align:center; width:45%; margin:0;'></div>
 <div style='clear:both'></div>
 <table class='detail_table'>
-  <thead><tr><th>Company</th><th>Responder</th><th>Status</th><th>Rating</th><th>Opened</th><th>Submitted</th><th>Last Updated</th></tr></thead>
+  <thead><tr><th>Company</th><th>Responder</th><th>Status</th><th>Rating</th><th>Invited</th><th>Opened</th><th>Submitted</th><th>Last Updated</th></tr></thead>
   <tbody>
     <%@survey.survey_responses.each do |sr| %>
       <tr>
         <td><%=link_to sr.user.company.name, sr%></td><td><%=sr.user.full_name%></td><td><%=sr.status%></td>
         <td><%=sr.rating%></td>
+        <td><%=sr.email_sent_date%></td>
         <td><%=sr.response_opened_date%></td>
         <td><%=sr.submitted_date%></td>
         <td><%=sr.updated_at%></td>
