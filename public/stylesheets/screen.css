@@ -17,6 +17,9 @@ img {
 .error, .exception_value {
     color: red;
 }
+.required_empty {
+  background-color: #D78888
+}
 .indent {
   margin-left: 1em;
 }

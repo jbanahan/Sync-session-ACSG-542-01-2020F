@@ -174,6 +174,11 @@ end
 Factory.define :survey_response do |f|
   f.association :user
   f.association :survey
+  f.name 'joe smith'
+  f.address 'xyz'
+  f.phone '1234567890'
+  f.fax '1234567890'
+  f.email 'a@b.com'
 end
 Factory.define :answer do |f|
   f.association :question

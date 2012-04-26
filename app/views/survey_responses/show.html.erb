@@ -15,6 +15,8 @@
 
 <% content_for :javascript do %>
 var OCSR = (function() {
+  var contactGood = false;
+  var respTrackGood = false;
   return {
     updateResponseTrack:function() {
       var selects = $("select.resp");
@@ -24,7 +26,27 @@ var OCSR = (function() {
         answered = answered + ($(e).val().length > 0 ? 1 : 0);
       });
       $("#answr_trk").html(answered+" of "+total+" questions answered.");
-      if(answered==total) {
+      respTrackGood = (answered==total);
+      OCSR.setSubmit();
+    },
+    contactCheck:function() {
+      var pass = true;
+      $(".creq").each(function() {
+        var lPass = $(this).val().length > 0;
+        if(pass) {
+          pass = lPass;
+        }
+        if(!lPass) {
+          $(this).addClass('required_empty');
+        } else {
+          $(this).removeClass('required_empty');
+        }
+      });
+      contactGood = pass;
+      OCSR.setSubmit();
+    },
+    setSubmit: function() {
+      if(contactGood && respTrackGood) {
         $("#btn_submit").show();
       } else {
         $("#btn_submit").hide();
@@ -44,9 +66,14 @@ $(function() {
     $("#s_confirm").dialog('open');
   });
   $("select.resp").change(function() {OCSR.updateResponseTrack();});
+  $(".creq").keyup(function() {OCSR.contactCheck();});
 });
 <%if @respond_mode%>
-$(document).ready(function() {OCSR.updateResponseTrack();});
+$(document).ready(function() {
+  OCSR.updateResponseTrack();
+  OCSR.contactCheck();
+  OCSR.setSubmit();
+});
 <%end%>
 <% end %>
 
@@ -68,9 +95,17 @@ textarea {
 }
 </style>
 <%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
-  <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%></h1>
-  <table>
-  <%=field_row "Overall Rating", ( @rate_mode ? f.select(:rating, @sr.survey.rating_values, {:include_blank=>true}) : @sr.rating ) %>
+  <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> <%=( @rate_mode ? f.select(:rating, @sr.survey.rating_values, {:include_blank=>true}) : @sr.rating ) %></h1>
+  <div id='contact'>
+    <div class='q_head'>Contact Information</div>
+    <table>
+      <%=field_row "Name", @rate_mode ? @sr.name : f.text_field(:name,:class=>:creq)%>
+      <%=field_row "Address", @rate_mode ? @sr.address : f.text_area(:address,:class=>:creq)%>
+      <%=field_row "Phone", @rate_mode ? @sr.phone : f.text_field(:phone,:class=>:creq)%>
+      <%=field_row "Email", @rate_mode ? @sr.email : f.text_field(:email,:class=>:creq)%>
+      <%=field_row "Fax", @rate_mode ? @sr.fax : f.text_field(:fax)%>
+    </table>
+  </div>
   </table>
   <%q_idx = 1%>
   <%f.fields_for :answers do |a|%>
