@@ -75,7 +75,7 @@ describe SearchSchedule do
       when 3
         @ss.run_wednesday = false
       when 4
-        @ss.run_thurday = false
+        @ss.run_thursday = false
       when 5
         @ss.run_friday = false
       when 6
