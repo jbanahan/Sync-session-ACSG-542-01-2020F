@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'ruby-debug'
 
 describe SurveysController do
   before :each do
@@ -99,6 +100,13 @@ describe SurveysController do
       response.should redirect_to edit_survey_path(@s)
       flash[:notices].first.should == "Survey saved."
       Survey.find(@s.id).name.should == 'abcdef'
+    end
+    it "should clear warnings" do
+      q = @s.questions.create!(:content=>"ABC def 123",:choices=>"a\nb",:warning=>true)
+      post :update, {:id=>@s.id, :survey=>{:name=>'abcdef',:questions_attributes=>{q.id=>{:id=>q.id,:content=>"ABC def 123"}}}}
+      response.should redirect_to edit_survey_path(@s)
+      flash[:notices].first.should == "Survey saved."
+      Question.find(q.id).should_not be_warning
     end
   end
   describe "create" do

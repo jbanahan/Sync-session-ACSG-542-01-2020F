@@ -35,6 +35,12 @@ class SurveysController < ApplicationController
     @survey = s
   end
   def update
+    #inject false warnings where not submitted
+    if params[:survey] && params[:survey][:questions_attributes]
+      params[:survey][:questions_attributes].each do |k,v|
+        v[:warning]="" unless v[:warning]
+      end
+    end
     s = Survey.find params[:id]
     if !s.can_edit? current_user
       error_redirect "You cannot edit this survey."

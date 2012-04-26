@@ -93,6 +93,11 @@ textarea {
   font-weight: bold;
   font-size: 80%;
 }
+.c_warn {
+  width: 80%;
+  border: 2px solid #FF9900;
+  background-color: #FFFF66;
+}
 </style>
 <%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
   <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> <%=( @rate_mode ? f.select(:rating, @sr.survey.rating_values, {:include_blank=>true}) : @sr.rating ) %></h1>
@@ -128,6 +133,9 @@ textarea {
         Rated: <%=a.object.rating%>
       <% end %>
       </p>
+      <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
+        <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
+      <%end%>
       <div class='q_subhead'>Comments</div>
       <% a.object.answer_comments.each do |ac|%>
         <em><%=ac.user.full_name%> - <%=ac.created_at%></em><br/>

@@ -638,7 +638,7 @@ var OpenChain = (function() {
 })();
 var OCSurvey = (function() {
   return {
-    addQuestion: function(id,content,choices) {
+    addQuestion: function(id,content,choices,warning) {
       var mid = id ? id : new Date().getTime();
       var h = "<div class='question_box' id='q-"+mid+"'>";
       if(id) {
@@ -647,13 +647,14 @@ var OCSurvey = (function() {
       h += "Question Body:<br/><textarea id='q_"+mid+"' class='q_area' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
       h += "<a href='#' class='q_preview' qid='"+mid+"'>Preview</a><br />";
       h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
+      h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Warn If Empty</div>"
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";
       h += "</div>";
       $("#questions").append(h);
     },
     copyQuestion: function(id) {
       var mid = new Date().getTime();
-      OCSurvey.addQuestion(mid,$("#q_"+id).val(),$("#qc_"+id).val());
+      OCSurvey.addQuestion(mid,$("#q_"+id).val(),$("#qc_"+id).val(),$("#qw_"+id));
       $(window).scrollTop($("#q-"+mid).offset().top)
     }
   }
