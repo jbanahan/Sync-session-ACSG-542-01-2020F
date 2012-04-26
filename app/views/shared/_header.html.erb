@@ -114,8 +114,15 @@
         </ul>
       </li>
     <%end%>
-    <%if !current_user.survey_responses.blank?%>
-      <li><a href='/survey_responses'>Surveys</a>
+    <%if !current_user.survey_responses.blank? || current_user.view_surveys?%>
+      <li><a href='#' class='click_sink'>Surveys</a>
+        <ul class='sub_menu'>
+          <li><a href='/survey_responses'>View</a></li>
+          <%if current_user.view_surveys? %>
+            <li><%=link_to('Manage', surveys_path)%></li>
+          <%end%>
+        </ul>
+      </li>
     <%end%>
   </ul>
   <div id='nav_bar'>&nbsp;

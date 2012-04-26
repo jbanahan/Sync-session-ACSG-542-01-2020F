@@ -11,9 +11,6 @@
 <% if current_user.admin? %>
   <%=field_row link_to('Settings', settings_path), "Work with administrative system settings." %>
 <%end%>
-<% if current_user.edit_surveys? || current_user.view_surveys? %>
-  <%=field_row link_to('Surveys', surveys_path), "Work with surveys." %>
-<% end %>
 <%=field_row link_to("Tariff Database", official_tariffs_path), "Search the tariffs for your subscribed countries."%>
 <%if !current_user.imported_files.blank?%>
   <%=field_row link_to("Uploads", imported_files_path), "Work with the files that you have previously uploaded." %>
