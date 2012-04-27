@@ -49,7 +49,7 @@ $(function() {
   <thead>
     <tr><th>ID</th><th>Priority</th><th>Attempts</th><th>Handler</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Action</th></tr>
   </thead>
-  <% Delayed::Job.all.each do |dj| %>
+  <% Delayed::Job.all(:order => "created_at ASC").slice(0..99).each do |dj| %>
     <tr>
       <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><textarea width='15'><%=dj.handler%></textarea></td>
       <td><%=dj.last_error%></td><td><%=dj.run_at%></td><td><%=dj.locked_at%></td><td><%=dj.failed_at%></td><td><%=dj.locked_by%></td>
