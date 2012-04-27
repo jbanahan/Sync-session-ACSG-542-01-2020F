@@ -28,7 +28,7 @@ module OpenChain
       cr = change_record.nil? ? ChangeRecord.new : change_record #use a junk change record to make the rest of the coding easire if nil was passed
       if !c_line.piece_sets.where("shipment_line_id is not null").blank?
         cr.add_message "Line is already linked to shipments, skipped.", true #true sets change record failure flag
-        return
+        return r
       end
       po_search = SearchCriterion.new(:model_field_uid=>"*cf_#{po_custom_def.id}",:operator=>"eq",:value=>c_line.po_number)
       delivery_date_search = SearchCriterion.new(:model_field_uid=>"*cf_#{delivery_custom_def.id}",:operator=>"lt",:value=>entry.arrival_date+30.days)
@@ -62,8 +62,8 @@ module OpenChain
         [(total_units==0),"Cannot make line because linked shipment quantity is 0."],
         [(tariff.entered_value==0),"Cannot make line because entered value is 0."],
         [(tariff.entered_value.nil?),"Cannot make line because entered value is empty."],
-        [(tariff.duty_amount.nil?),"Cannot make line because duty amount is empty."],
-        [DOZENS_LABELS.include?(tariff.classification_uom_1.upcase.strip) && !((tariff.classification_qty_1*12)-total_units).between?(0,11),"Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units})."],
+        #[(tariff.duty_amount.nil?),"Cannot make line because duty amount is empty."],
+        [DOZENS_LABELS.include?(tariff.classification_uom_1.upcase.strip) && !((tariff.classification_qty_1*12)-total_units).between?(-10,10) && !(total_units < 12 && tariff.classification_qty_1==1),"Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units})."],
         [(!DOZENS_LABELS.include?(tariff.classification_uom_1.upcase.strip)) && total_units!=tariff.classification_qty_1, "Entry quantity (#{tariff.classification_qty_1} #{tariff.classification_uom_1}) does not match receipt quantity (#{total_units})."]
       ].each do |x|
         if x[0]
