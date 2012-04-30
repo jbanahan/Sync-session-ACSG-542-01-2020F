@@ -68,6 +68,7 @@ describe OpenChain::UnderArmourReceivingParser do
     line.get_custom_value(CustomDefinition.find_by_label('PO Number')).value.should == '450016177'
     line.get_custom_value(CustomDefinition.find_by_label('Size')).value.should == 'LG'
   end
+  pending "should strip .0 from size"
   it 'should parse multi-line shipment' do
     @xl_client.should_receive(:last_row_number).with(0).and_return(2)
     @make_line_lambda.call(1,@line_array)

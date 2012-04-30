@@ -250,6 +250,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       d.duty_per_unit.should == BigDecimal("1.44") #unit price * rate
       d.compute_code.should == "7" #hard code
       d.ocean.should == true #mode 10 or 11
+      d.total_mpf.should == @entry.mpf
       PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).should have(1).result
     end
     it "should make multiple links for multiple shipment lines" do
