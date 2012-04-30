@@ -247,6 +247,13 @@ var OpenChain = (function() {
 
   var pollingId;
   var pollForMessages = function(user_id) {
+    $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
+      if(data>0) {
+        $('#message_envelope').show();
+      } else {
+        $('#message_envelope').hide();
+      }
+    });
     return setInterval(function() {
         $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
           if(data>0) {
