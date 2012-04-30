@@ -10,7 +10,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
   end
   describe "process_entries" do
     before :each do
-      @c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345',:quantity=>10)
       @entry = @c_line.commercial_invoice.entry
       @entry.update_attributes(:arrival_date=>0.days.ago)
       @c_tar = @c_line.commercial_invoice_tariffs.create!(
@@ -31,6 +31,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       ps.shipment_line.should == @s_line
       ps.commercial_invoice_line.should == @c_line
       ps.drawback_import_line.should_not be_nil
+      ps.quantity.should == @s_line.quantity
     end
     it 'should write change recod for good link' do
       OpenChain::UnderArmourDrawbackProcessor.process_entries [@entry]
@@ -54,17 +55,10 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       cr.should be_failed
       cr.messages.should include("Line wasn't matched to any shipments.")
     end
-    it "should write failure message if no import line generated" do
-      @s_line.update_attributes(:quantity=>999)
-      OpenChain::UnderArmourDrawbackProcessor.process_entries [@entry]
-      cr = ChangeRecord.first
-      cr.should be_failed
-      cr.messages.should include("Entry quantity (10.0 PCS) does not match receipt quantity (999.0).")
-    end
   end
   describe "link_commercial_invoice_line" do
     it 'should match one entry to one shipment line by po / style' do
-      c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
       c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
       s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       s_line.shipment.update_custom_value! @cd_del, 0.days.ago
@@ -75,12 +69,12 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       found.should have(1).piece_set
       found.first.quantity.should == s_line.quantity
       cr.should_not be_failed
-      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}"]
+      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: 10.0"]
       r.should have(1).shipment_line
       r.first.should == s_line
     end
     it 'should match one entry to two shipment lines by po / style' do
-      c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      c_line = Factory(:commercial_invoice_line,:quantity=>30,:part_number=>@product.unique_identifier,:po_number=>'12345')
       c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
       s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       s_line2 = Factory(:shipment_line,:quantity=>20,:product=>@product)
@@ -96,12 +90,12 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       found.where(:shipment_line_id=>s_line.id).first.quantity.should == 10
       found.where(:shipment_line_id=>s_line2.id).first.quantity.should == 20
       cr.should_not be_failed
-      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}","Matched to Shipment: #{s_line2.shipment.reference}, Line: #{s_line2.line_number}"]
+      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: 10.0","Matched to Shipment: #{s_line2.shipment.reference}, Line: #{s_line2.line_number}, Quantity: 20.0"]
     end
     it 'should not match to a shipment that is already on another piece set matched to a ci_line' do
-      c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      c_line = Factory(:commercial_invoice_line,:quantity=>30,:part_number=>@product.unique_identifier,:po_number=>'12345')
       c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
-      c_line_used = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      c_line_used = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
       c_line_used.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
       s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       s_line_used = Factory(:shipment_line,:quantity=>20,:product=>@product)
@@ -118,27 +112,73 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       found.first.shipment_line.should == s_line
       found.first.quantity.should == 10
       cr.should_not be_failed
-      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}"]
+      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: 10.0"]
     end
-    it 'should not make additional matches for commercial invoice lines that are already matched to at least one shipment' do
-      c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+    it "should create partial piece sets if quantities are not aligned" do
+      c_line = Factory(:commercial_invoice_line,:quantity=>8,:part_number=>@product.unique_identifier,:po_number=>'12345')
       c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
       s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
-      s_line_used = Factory(:shipment_line,:quantity=>20,:product=>@product)
+      s_line.shipment.update_custom_value! @cd_del, 0.days.ago
+      s_line.update_custom_value! @cd_po, c_line.po_number
+      cr = ChangeRecord.new
+      r = OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line c_line, cr
+      r.should have(1).shipment_line
+      found = PieceSet.where(:commercial_invoice_line_id=>c_line.id)
+      found.size.should == 1
+      found.first.shipment_line.should == s_line
+      found.first.quantity.should == 8
+      cr.should_not be_failed
+      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: 8.0"]
+    end
+    it "should allocate shipment remainders to another invoice line if left over" do
+      c_line = Factory(:commercial_invoice_line,:quantity=>8,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
+      c_line_2 = Factory(:commercial_invoice_line,:quantity=>8,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      c_line_2.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
+      s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
+      s_line.shipment.update_custom_value! @cd_del, 0.days.ago
+      s_line.update_custom_value! @cd_po, c_line.po_number
+      cr = ChangeRecord.new
+      r = OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line c_line, cr
+      r.should have(1).shipment_line
+      found = PieceSet.where(:commercial_invoice_line_id=>c_line.id)
+      found.size.should == 1
+      found.first.shipment_line.should == s_line
+      found.first.quantity.should == 8
+      cr.should_not be_failed
+      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: 8.0"]
+      cr = ChangeRecord.new
+      r = OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line c_line_2, cr
+      found = PieceSet.where(:commercial_invoice_line_id=>c_line_2.id)
+      found.size.should == 1
+      found.first.shipment_line.should == s_line
+      found.first.quantity.should == 2
+      cr.should_not be_failed
+      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: 2.0"]
+    end
+    it "should consider previous matches to determine how much invoice quantity is available to match" do
+      c_line = Factory(:commercial_invoice_line,:quantity=>8,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
+      s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
+      s_line_used = Factory(:shipment_line,:quantity=>6,:product=>@product)
       [s_line,s_line_used].each do |s|
         s.shipment.update_custom_value! @cd_del, 0.days.ago
         s.update_custom_value! @cd_po, c_line.po_number
       end
-      PieceSet.create!(:commercial_invoice_line_id=>c_line.id,:shipment_line_id=>s_line_used.id,:quantity=>20)
       cr = ChangeRecord.new
-      OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line c_line, cr
-      PieceSet.count.should == 1
-      cr.should be_failed
-      cr.change_record_messages.collect {|r| r.message}.should == ["Line is already linked to shipments, skipped."]
+      PieceSet.create!(:commercial_invoice_line_id=>c_line.id,:shipment_line_id=>s_line_used.id,:quantity=>6)
+      r = OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line c_line, cr
+      r.should have(1).shipment_line
+      found = PieceSet.where(:commercial_invoice_line_id=>c_line.id,:shipment_line_id=>s_line)
+      found.size.should == 1
+      found.first.shipment_line.should == s_line
+      found.first.quantity.should == 2
+      cr.should_not be_failed
+      cr.change_record_messages.collect {|r| r.message}.should == ["Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: 2.0"]
     end
     context 'timing' do
       it 'should not match to a shipment received in the past' do
-        c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+        c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
         c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
         s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
         s_line.shipment.update_custom_value! @cd_del, 10.days.ago
@@ -147,7 +187,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
         PieceSet.where(:commercial_invoice_line_id=>c_line.id).where(:shipment_line_id=>s_line.id).should be_empty
       end
       it 'should not match to a shipment received more than 30 days in the future' do
-        c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+        c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
         c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
         s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
         s_line.shipment.update_custom_value! @cd_del, 31.days.from_now
@@ -159,7 +199,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
   end
   describe "make_drawback_import_lines" do
     before :each do
-      @c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
       @c_line.commercial_invoice.entry.update_attributes(
         :entry_number=>"12345678901",
         :arrival_date=>0.days.ago,
@@ -200,7 +240,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       d.box_37_duty.should == @entry.total_duty
       d.box_40_duty.should == @entry.total_duty_direct
       d.country_of_origin_code.should == @s_line.get_custom_value(@cd_coo).value
-      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cd_size).value}"
+      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cd_size).value}+#{@s_line.get_custom_value(@cd_coo).value}"
       d.hts_code.should == @c_tar.hts_code
       d.description.should == @entry.merchandise_description 
       d.unit_of_measure.should == "EA" #hard code to eaches
@@ -212,7 +252,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       d.ocean.should == true #mode 10 or 11
       PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).should have(1).result
     end
-    it "should make multiple lines for multiple shipment links" do
+    it "should make multiple links for multiple shipment lines" do
 
       s_line2 = Factory(:shipment_line,:quantity=>2,:product=>@product)
       s2 = s_line2.shipment
@@ -221,7 +261,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       s_line2.update_custom_value! @cd_po, @c_line.po_number
       s_line2.update_custom_value! @cd_size, "SM"
 
-      @c_tar.update_attributes(:classification_qty_1=>12)
+      @c_line.update_attributes(:quantity=>12)
       
       OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
       cr = ChangeRecord.new
@@ -257,7 +297,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       r.first.should_not be_ocean
     end
     it "should write error if no matches found" do
-      @c_line = Factory(:commercial_invoice_line,:quantity=>nil,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
       cr = ChangeRecord.new
       r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
       r.should be_blank
@@ -265,24 +305,6 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       cr.messages.first.should == "Line does not have any unallocated shipment matches."
     end
     context "quantity validation" do
-      it "should not make line if shp qty is 0" do
-        @s_line.update_attributes(:quantity=>0)
-        cr = ChangeRecord.new
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
-        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
-        r.should be_blank
-        cr.should be_failed
-        cr.messages.first.should == "Cannot make line because linked shipment quantity is 0."
-      end
-      it "should not make line if shp qty is nil" do
-        @s_line.update_attributes(:quantity=>nil)
-        cr = ChangeRecord.new
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
-        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
-        r.should be_blank
-        cr.should be_failed
-        cr.messages.first.should == "Cannot make line because linked shipment quantity is 0."
-      end
       it "should not make line if entered value is 0" do
         @c_tar.update_attributes(:entered_value=>0)
         cr = ChangeRecord.new
@@ -309,53 +331,6 @@ describe OpenChain::UnderArmourDrawbackProcessor do
         r.should be_blank
         cr.should be_failed
         cr.messages.first.should == "Cannot make line because duty amount is empty."
-      end
-      it "should not make line if shp qty is not equal to tariff qty and tariff uom is not DOZ" do
-        @c_tar.update_attributes(:classification_qty_1=>20)
-        cr = ChangeRecord.new
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
-        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
-        r.should be_blank
-        cr.should be_failed
-        cr.messages.first.should == "Entry quantity (20.0 #{@c_tar.classification_uom_1}) does not match receipt quantity (10.0)."
-      end
-      it "should make line if shp qty is 12x tariff quty and tariff uom is DOZ" do
-        @c_tar.update_attributes(:classification_qty_1=>12,:classification_uom_1=>"DOZ")
-        @s_line.update_attributes(:quantity=>144)
-        cr = ChangeRecord.new
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
-        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
-        r.should have(1).result
-        cr.should_not be_failed
-      end
-      it "should make line if shp qty is within 12 less of tariff qty * 12 and uom is DOZ" do
-        @c_tar.update_attributes(:classification_qty_1=>12,:classification_uom_1=>"DOZ")
-        @s_line.update_attributes(:quantity=>140)
-        cr = ChangeRecord.new
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
-        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
-        r.should have(1).result
-        cr.should_not be_failed
-        PieceSet.first.quantity.should == 140
-      end
-      it "should apply DOZ logic if uom is DPR (dozen pairs)" do
-        @c_tar.update_attributes(:classification_qty_1=>12,:classification_uom_1=>"DPR")
-        @s_line.update_attributes(:quantity=>140)
-        cr = ChangeRecord.new
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
-        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
-        r.should have(1).result
-        cr.should_not be_failed
-        PieceSet.first.quantity.should == 140
-      end
-      it "should not make line if shp qty is equal to tariff qty and tariff uom is DOZ" do
-        @c_tar.update_attributes(:classification_uom_1=>"DOZ")
-        cr = ChangeRecord.new
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
-        r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
-        r.should be_blank
-        cr.should be_failed
-        cr.messages.first.should == "Entry quantity (10.0 #{@c_tar.classification_uom_1}) does not match receipt quantity (10.0)."
       end
     end
   end

@@ -1,5 +1,6 @@
 module OpenChain
   class OhlDrawbackParser
+    DOZENS_INDICATORS = ["DOZ",'DPR']
     SOURCE_CODE = 'OHL Drawback'
     # parse an OHL Drawback File (sample in spec/support/bin folder)
     def self.parse file_path
@@ -52,6 +53,7 @@ module OpenChain
       line = @invoice.commercial_invoice_lines.build(:line_number=>@line_number)
       line.part_number = row[17]
       line.po_number = row[15]
+      line.quantity = DOZENS_INDICATORS.include?(row[21]) ? row[20]*12 : row[20]
       t = line.commercial_invoice_tariffs.build
       t.duty_amount = row[19]
       t.classification_qty_1 = row[20]

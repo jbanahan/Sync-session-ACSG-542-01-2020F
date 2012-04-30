@@ -38,9 +38,11 @@ describe OpenChain::OhlDrawbackParser do
     first_line = lines.first
     first_line.part_number.should == '1216859-001'
     first_line.po_number.should == '4500178680'
+    first_line.quantity.should == 5724 #convert dozens
     last_line = lines.last
     last_line.part_number.should == '1217342-100'
     last_line.po_number.should == '4500187813'
+    last_line.quantity.should == 111
   end
   it 'should map hts fields' do
     lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
