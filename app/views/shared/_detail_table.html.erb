@@ -1,14 +1,18 @@
 <table class='detail_table'>
   <thead><tr>
     <%fields.each do |f|%>
-      <th><%=field_label f, false%></th>
+      <%if ModelField.find_by_uid(f).can_view? current_user%>
+        <th><%=field_label f, false%></th>
+      <%end%>
     <%end%>
   </tr></thead>
   <tbody>
     <%lines.each do |line|%>
       <tr class='hover'>
         <%fields.each do |f|%>
-          <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
+          <%if ModelField.find_by_uid(f).can_view? current_user%>
+            <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
+          <%end%>
         <%end%>
       </tr>
     <%end%>
