@@ -83,14 +83,14 @@ module OpenChain
       CUSTOM_DEFINITIONS.each do |k,v|
         base = (k=='Delivery Date' ? @shipment : line)
         cv = base.get_custom_value @custom_definitions[k]
-        cv.value = k=='PO Number' ? trim_numeric(row[v[2]]) : row[v[2]]
+        cv.value = k!='Delivery Date' ? trim_numeric(row[v[2]]) : row[v[2]]
         cv.save!
       end
     end
 
     def row_uid row
       # style-color-size-po
-      "#{row[8]}-#{row[10]}-#{row[4]}"
+      "#{row[8]}-#{row[10]}-#{trim_numeric row[4]}"
     end
 
     def product row

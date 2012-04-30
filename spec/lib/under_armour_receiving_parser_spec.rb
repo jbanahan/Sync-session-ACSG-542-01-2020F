@@ -68,7 +68,13 @@ describe OpenChain::UnderArmourReceivingParser do
     line.get_custom_value(CustomDefinition.find_by_label('PO Number')).value.should == '450016177'
     line.get_custom_value(CustomDefinition.find_by_label('Size')).value.should == 'LG'
   end
-  pending "should strip .0 from size"
+  it "should strip .0 from size" do
+    @line_array[10][1] = "6.0"
+    @xl_client.should_receive(:last_row_number).with(0).and_return(1)
+    @make_line_lambda.call(1,@line_array)
+    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    Shipment.first.shipment_lines.first.get_custom_value(CustomDefinition.find_by_label('Size')).value.should == "6"
+  end
   it 'should parse multi-line shipment' do
     @xl_client.should_receive(:last_row_number).with(0).and_return(2)
     @make_line_lambda.call(1,@line_array)

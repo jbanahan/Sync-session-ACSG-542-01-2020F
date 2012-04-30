@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe DrawbackImportLine do
+  describe "not_in_duty_calc_file" do
+    it "should find line not linked" do
+      d1 = Factory(:drawback_import_line) 
+      d2 = Factory(:drawback_import_line) 
+      dcl = DutyCalcImportFileLine.create!(:drawback_import_line_id=>d2.id)
+
+      DrawbackImportLine.not_in_duty_calc_file.all.should == [d1]
+    end
+  end
   describe "duty_calc_line" do
     it "should generate line" do
       d = DrawbackImportLine.create!(
