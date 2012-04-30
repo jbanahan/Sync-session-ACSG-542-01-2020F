@@ -22,15 +22,11 @@ gem 'RedCloth', '4.2.9'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', '2.5.2', :group=>[:development,:test]
 group :test do
-  gem 'spork', '0.9.0'
-#  gem 'ruby-prof' - put this back after we go to Ruby 3.1 (see Rails commit 25288)
-  gem 'linecache19', '0.5.13'
-  gem 'ruby-debug-base19', '0.11.26'
-  gem 'ruby-debug19', :require => 'ruby-debug'
+  gem 'spork'
+  gem 'debugger'
 end
 group :development do
-  gem 'linecache19', '0.5.13'
-  gem 'ruby-debug-base19', '0.11.26'
-  gem 'ruby-debug19', :require => 'ruby-debug'
+  gem 'spork'
+  gem 'debugger'
 end
 gem 'newrelic_rpm'
