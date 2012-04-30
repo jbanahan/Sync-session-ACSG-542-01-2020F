@@ -26,7 +26,7 @@ module OpenChain
       r = []
       entry = c_line.commercial_invoice.entry
       cr = change_record.nil? ? ChangeRecord.new : change_record #use a junk change record to make the rest of the coding easier if nil was passed
-      unallocated_quantity = c_line.quantity - c_line.piece_sets.where("shipment_line_id is not null").sum("piece_sets.quantity")
+      unallocated_quantity = (c_line.quantity.nil? ? 0 : c_line.quantity) - c_line.piece_sets.where("shipment_line_id is not null").sum("piece_sets.quantity")
       if unallocated_quantity <= 0
         cr.add_message("Commercial Invoice Line is fully allocated to shipments.")
       else
