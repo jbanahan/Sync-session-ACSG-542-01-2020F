@@ -1,0 +1,17 @@
+#!/bin/bash
+if [ -z "$1" ]; then
+  echo usage: $0 tag_name branch_name
+  exit
+elif [ -z "$2" ]; then
+  echo usage: $0 tag_name branch_name
+  exit
+fi
+
+TAG=$1
+BRANCH=$2
+
+echo $TAG > config/version.txt
+git commit -a -m $TAG
+git tag $TAG
+git push origin $BRANCH
+git push --tags
