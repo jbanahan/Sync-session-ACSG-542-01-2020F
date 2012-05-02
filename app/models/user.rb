@@ -17,7 +17,8 @@ class User < ActiveRecord::Base
     :broker_invoice_view,
     :classification_view, :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
-    :support_agent
+    :support_agent,
+    :password_reset
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"

@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
     before_filter :set_user_time_zone
     before_filter :log_request
     before_filter :set_cursor_position
+    before_filter :force_reset
 
     helper_method :current_user
     helper_method :master_company
@@ -331,6 +332,10 @@ class ApplicationController < ActionController::Base
     return unless sr
     sr.position = cp.to_i
     sr.save
+  end
+
+  def force_reset
+    redirect_to(forced_password_reset_path(current_user)) if logged_in? && current_user.password_reset
   end
 
   def render_search_results no_results = false

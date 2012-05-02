@@ -1,7 +1,8 @@
 class PasswordResetsController < ApplicationController
-  before_filter :ensure_logged_out
+  before_filter :ensure_logged_out, :except => [:forced]
   before_filter :load_user_using_perishable_token, :only => [:edit, :update]
   skip_before_filter :require_user
+  skip_before_filter :force_reset, :only => [:update, :forced]
   
   def new
   end
@@ -26,6 +27,7 @@ class PasswordResetsController < ApplicationController
     @user.password = params[:user][:password]
     @user.password_confirmation = params[:user][:password_confirmation]
     if @user.save
+      @user.update_attributes(:password_reset => false)
       flash[:notice] = "Password successfully updated"
       redirect_to root_url
     else
@@ -33,12 +35,23 @@ class PasswordResetsController < ApplicationController
     end
   end
 
+  def forced
+    @no_buttons = true
+    @user = current_user
+    respond_to do |format|
+      format.html { render :edit }
+    end
+  end
+
   private
   def load_user_using_perishable_token
-    @user = User.find_using_perishable_token(params[:id])
     unless @user
-      add_flash :errors, "We're sorry, but we could not locate your account."
-      redirect_to new_user_session_path
+      @user = User.find_using_perishable_token(params[:id])
+      @user = User.find_by_id(params[:id]) unless @user
+      unless @user
+        add_flash :errors, "We're sorry, but we could not locate your account."
+        redirect_to new_user_session_path
+      end
     end
   end
   def ensure_logged_out
