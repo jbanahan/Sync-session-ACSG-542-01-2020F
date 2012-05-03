@@ -16,7 +16,7 @@ describe ReportsController do
       end
       it 'should run the report' do
         post :run_containers_released, {'arrival_date_start'=>'2012-01-01','arrival_date_end'=>'2012-01-02','customer_numbers'=>"A\nB"}
-        response.should redirect_to('/reports')
+        response.should redirect_to('/report_results')
         ReportResult.all.should have(1).item
         rr = ReportResult.first
         rr.name.should == "Container Release Status"
@@ -35,7 +35,7 @@ describe ReportsController do
       it 'should execute the report' do
         ReportResult.stub(:execute_report) #don't really run the report
         post :run_stale_tariffs
-        response.should redirect_to('/reports')
+        response.should redirect_to('/report_results')
         flash[:notices].should include("Your report has been scheduled. You'll receive a system message when it finishes.")
 
         found = ReportResult.find_by_name 'Stale Tariffs'
@@ -76,7 +76,7 @@ describe ReportsController do
         new_ts = TariffSet.last
 
         post :run_tariff_comparison, {'old_tariff_set_id'=>old_ts.id.to_s,'new_tariff_set_id'=>new_ts.id.to_s}
-        response.should redirect_to('/reports')
+        response.should redirect_to('/report_results')
         flash[:notices].should include("Your report has been scheduled. You'll receive a system message when it finishes.")
 
         found = ReportResult.find_by_name 'Tariff Comparison'
