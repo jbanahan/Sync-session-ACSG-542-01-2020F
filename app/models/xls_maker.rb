@@ -1,5 +1,11 @@
 class XlsMaker
   require 'spreadsheet'
+  
+  HEADER_FORMAT = Spreadsheet::Format.new :weight => :bold,
+                                          :color => :orange,
+                                          :pattern_fg_color => :navy,
+                                          :pattern => 1
+
   def make_from_search(current_search, results)
     cols = current_search.search_columns.order("rank ASC")
     wb = prep_workbook cols
@@ -30,10 +36,7 @@ class XlsMaker
     @date_format = Spreadsheet::Format.new(:number_format => 'YYYY-MM-DD')
     cols.each do |c|
       mf = ModelField.find_by_uid c.model_field_uid
-      sheet.row(0).default_format = Spreadsheet::Format.new :weight => :bold,
-                                                            :color => :orange,
-                                                            :pattern_fg_color => :navy,
-                                                            :pattern => 1
+      sheet.row(0).default_format = HEADER_FORMAT
       sheet.row(0).push(mf.nil? ? "" : mf.label)
     end
     wb

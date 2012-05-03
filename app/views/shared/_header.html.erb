@@ -42,8 +42,12 @@
     <li><a href='#' class='click_sink'>Menu</a>
       <ul class='sub_menu' id='tools_menu'>
         <li><a href='/messages'>Messages</a></li>
+        <li><a href='/report_results'>Reports</a></li>
         <li><a href='/support_tickets'>Support</a></li>
         <li><a href='/tools'>Tools</a></li>
+        <%if !current_user.imported_files.blank?%>
+          <li><a href='/imported_files'>Uploads</a></li>
+        <%end%>
         <li><a href='/logout'>Log Out</a></li>
       </ul>
     </li>
