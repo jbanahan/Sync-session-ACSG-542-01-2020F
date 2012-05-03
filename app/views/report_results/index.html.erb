@@ -7,6 +7,25 @@
     <% end %>
   <% end %>
 <% end %>
+<h2>Run A New Report</h2>
+<table class='detail_table'>
+  <%if current_user.company.master?%>
+    <tr class='hover'><td><%=link_to "Stale Tariffs", reports_show_stale_tariffs_path%></td>
+    <td>Shows all products with tariff numbers that are no longer valid.</td></tr>
+
+    <tr class='hover'><td><%=link_to "Tariff Comparison", reports_show_tariff_comparison_path%></td>
+    <td>Compares two tariff files for the same country and shows you the HTS numbers that were added, removed, or changed.</td></tr>
+
+    <% if current_user.admin? %>
+    <tr class='hover'><td><%=link_to "POA Expiration", reports_show_poa_expirations_path%></td>
+    <td>Shows all companies with Power of Attorneys expiring by a given date.</td></tr>
+    <% end %>
+  <%end%>
+  <%if current_user.view_entries?%>
+    <tr class='hover'><td><%=link_to "Containers Released", reports_show_containers_released_path%></td>
+    <td>Shows all containers released in a date range.</td></tr>
+  <%end%>
+</table>
 <h2>Report Results</h2>
 <table class='detail_table'>
   <thead><tr><th>&nbsp;</th><th>Name</th><th>Run At</th><%if params[:show_all]%><th>Run By</th><%end%><th>Status</th></tr></thead>

@@ -2,12 +2,28 @@ require 'open_chain/report'
 class ReportsController < ApplicationController
   
   def index
-    
+    redirect_to report_results_path
   end
 
   # show the user a message if their report download has been delayed
   def show_big_search_message
     
+  end
+
+  def show_containers_released
+    
+  end
+
+  def run_containers_released
+    settings = {}
+    settings['arrival_date_start'] = params[:arrival_date_start] unless params[:arrival_date_start].blank?
+    settings['arrival_date_end'] = params[:arrival_date_end] unless params[:arrival_date_end].blank?
+    customer_numbers = []
+    params[:customer_numbers].lines {|l| customer_numbers << l.strip unless l.strip.blank?} unless params[:customer_numbers].blank?
+    settings['customer_numbers'] = customer_numbers unless customer_numbers.blank?
+    fs = ["Arrival date between #{settings['arrival_date_start'].blank? ? "ANY" : settings['arrival_date_start']} and #{settings['arrival_date_end'].blank? ? "ANY" : settings['arrival_date_end']}"]
+    fs << "Only customer numbers #{customer_numbers.join(", ")}" unless customer_numbers.blank?
+    run_report "Container Release Status", OpenChain::Report::ContainersReleased, settings, fs
   end
   
   def show_tariff_comparison
@@ -63,7 +79,7 @@ class ReportsController < ApplicationController
       $!.log_me ["Running #{klass.to_s} report.","Params: #{params.to_s}"]
       add_flash :errors, "There was an error running your report: #{$!.message}"
     end
-    redirect_to '/reports'
+    redirect_to report_results_path
   end
 
 end

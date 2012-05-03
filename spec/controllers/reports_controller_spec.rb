@@ -8,6 +8,22 @@ describe ReportsController do
     UserSession.create @u
   end
 
+  describe 'containers released report' do
+    context 'show' do
+      it 'should render the page' do
+        get :show_containers_released
+        response.should be_success
+      end
+      it 'should run the report' do
+        post :run_containers_released, {'arrival_date_start'=>'2012-01-01','arrival_date_end'=>'2012-01-02','customer_numbers'=>"A\nB"}
+        response.should redirect_to('/reports')
+        ReportResult.all.should have(1).item
+        rr = ReportResult.first
+        rr.name.should == "Container Release Status"
+        flash[:notices].should include("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
   describe 'stale tariffs report' do
     context 'show' do
       it 'should render the page' do

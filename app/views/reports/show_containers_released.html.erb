@@ -1,0 +1,26 @@
+<%content_for :javascript do%>
+  $(function() {
+    $('#btn_run').click(function() {
+      if($('#arrival_date_start').val() == "" && $('#arrival_date_end').val() == "") {
+        window.alert("Please choose either a start or end date for the Arrival Date range.");
+        return;
+      }
+      $('#frm_run').submit();
+    });
+  });
+<%end%>
+<%content_for :action_bar do%>
+  <button id='btn_run'>Run Report</button>
+  <button class='btn_link' link_to='/reports'>Back</button>
+<%end%>
+
+<h2>Container Release Status Report</h2>
+<p>Shows all containers released within the given date range.</p>
+<%=form_tag(reports_run_containers_released_path, :method=>'post', :id=>'frm_run') do -%>
+  <p>Arrival Date Between <%=text_field_tag(:arrival_date_start, Date.today, 'class'=>'isdate')%> and <%=text_field_tag(:arrival_date_end, Date.today, 'class'=>'isdate')%></p> 
+  <%if current_user.company.broker?%>
+    <p>Customer Number(s) - one per line<br />
+      <%=text_area_tag :customer_numbers%>
+    </p>
+  <%end%>
+<%end%>
