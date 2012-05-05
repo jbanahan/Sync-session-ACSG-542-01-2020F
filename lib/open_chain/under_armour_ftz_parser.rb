@@ -1,4 +1,5 @@
 require 'open_chain/xl_client'
+require 'open_chain/under_armour_receiving_parser'
 module OpenChain
   class UnderArmourFtzParser
     IMPORTER_NAME = "UNDER ARMOUR INC."
