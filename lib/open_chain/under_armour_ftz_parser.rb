@@ -55,15 +55,18 @@ module OpenChain
 
     def process_shipment rows
       process_shipment_header rows.first
-      rows.each {|r| process_shipment_line r}
       @shipment.save!
+      rows.each_with_index do |r,i| 
+        line = process_shipment_line r
+        line.save!
+        puts "Saving shipment line #{i}" if i.modulo(100)==0
+      end
       process_shipment_custom_values rows
     end
 
     def process_shipment_header row
       v = Company.find_or_create_by_system_code_and_vendor(GENERIC_UA_VENDOR_NAME,true,:name=>GENERIC_UA_VENDOR_NAME)
-      @shipment = Shipment.find_by_reference_and_vendor_id row[1], v
-      @shipment ||= Shipment.new(:reference=>row[1], :vendor=>v) 
+      @shipment = Shipment.find_or_create_by_reference_and_vendor_id row[1], v
     end
 
     def process_shipment_line row
@@ -76,6 +79,7 @@ module OpenChain
         @shipment_row += 1
       end
       sd.quantity = row[5]
+      sd
     end
 
     def shipment_row_uid row
@@ -90,7 +94,7 @@ module OpenChain
       cv = @shipment.get_custom_value @cd_del 
       cv.value = @other_data[:entry_date]
       cv.save!
-      rows.each do |r|
+      rows.each_with_index do |r,i|
         sd = @shipment_lines[shipment_row_uid(r)]
         v = sd.get_custom_value @cd_po
         v.value = numeric_to_string r[2]
@@ -101,6 +105,7 @@ module OpenChain
         v = sd.get_custom_value @cd_co
         v.value = r[6]
         v.save!
+        puts "Saving custom values for line #{i}" if i.modulo(100)==0
       end
     end
 
@@ -115,7 +120,11 @@ module OpenChain
 
     def process_entry rows
       process_entry_header rows.first
-      rows.each {|r| process_entry_detail r}
+      puts "Saving Entry Header #{@entry.entry_number}"
+      rows.each_with_index do |r|
+        line = process_entry_detail r
+        puts "Saving Entry Line: #{@entry_line_number}" if @entry_line_number.modulo(100)==0
+      end
       @entry.save!
     end
 
@@ -135,8 +144,8 @@ module OpenChain
       @entry.mpf = @other_data[:mpf]
     end
     def process_entry_detail row
-      @line_number ||= 1
-      line = @invoice.commercial_invoice_lines.build(:line_number=>@line_number)
+      @entry_line_number ||= 1
+      line = @invoice.commercial_invoice_lines.build(:line_number=>@entry_line_number)
       line.part_number = row[3].strip
       line.po_number = numeric_to_string row[2]
       line.quantity = row[5]
@@ -146,6 +155,7 @@ module OpenChain
       tar.classification_uom_1 = "EA"
       tar.hts_code = numeric_to_string row[7]
       tar.entered_value = row[8]
+      line
     end
 
     def numeric_to_string n
