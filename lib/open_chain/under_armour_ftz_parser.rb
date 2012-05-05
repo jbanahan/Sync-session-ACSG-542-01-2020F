@@ -65,8 +65,8 @@ module OpenChain
     end
 
     def process_shipment_header row
-      v = Company.find_or_create_by_system_code_and_vendor(GENERIC_UA_VENDOR_NAME,true,:name=>GENERIC_UA_VENDOR_NAME)
-      @shipment = Shipment.find_or_create_by_reference_and_vendor_id row[1], v
+      v = Company.find_or_create_by_system_code_and_vendor(GENERIC_UA_VENDOR_NAME,true,:name=>GENERIC_UA_VENDOR_NAME,:system_code=>GENERIC_UA_VENDOR_NAME)
+      @shipment = Shipment.find_or_create_by_reference_and_vendor_id row[1], v.id
     end
 
     def process_shipment_line row
@@ -120,12 +120,13 @@ module OpenChain
 
     def process_entry rows
       process_entry_header rows.first
-      puts "Saving Entry Header #{@entry.entry_number}"
-      rows.each_with_index do |r|
-        line = process_entry_detail r
-        puts "Saving Entry Line: #{@entry_line_number}" if @entry_line_number.modulo(100)==0
-      end
       @entry.save!
+      puts "Saving Entry Header #{@entry.entry_number}"
+      rows.each_with_index do |r,i|
+        line = process_entry_detail r
+        line.save!
+        puts "Saving Entry Line: #{@entry_line_number}" if i.modulo(100)==0
+      end
     end
 
     def process_entry_header row
