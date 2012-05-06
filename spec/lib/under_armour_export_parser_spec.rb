@@ -10,7 +10,14 @@ describe OpenChain::UnderArmourExportParser do
     ]
   end
   describe :parse_csv_file do
-    it "should parse multi line csv ignoring headers"
+    it "should parse multi line csv ignoring headers" do
+      content = @lines.join("\n")
+      t = Tempfile.new("xyz")
+      t << content
+      t.flush
+      OpenChain::UnderArmourExportParser.parse_csv_file t.path
+      DutyCalcExportFileLine.all.should have(2).items
+    end
   end
 
   describe :parse_csv_line do

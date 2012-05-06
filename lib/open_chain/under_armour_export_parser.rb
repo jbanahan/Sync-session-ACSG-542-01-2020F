@@ -1,7 +1,12 @@
 module OpenChain
   class UnderArmourExportParser
-    def self.parse_csv_file file
-
+    def self.parse_csv_file file_path
+      count = 0
+      File.new(file_path).lines do |line|
+        parse_csv_line line unless count == 0
+        puts "Processed Line #{count}" if count.modulo(100)==0
+        count += 1
+      end
     end
 
     # parses line and returns a saved DutyCalcExportFileLine
