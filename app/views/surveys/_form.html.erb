@@ -7,7 +7,9 @@
     OCSurvey.addQuestion(null,"Your first question goes here...","");
     <%end%>
     $('#btn_add_q').click(function() {
-      OCSurvey.addQuestion(null,"","");
+      var mid = new Date().getTime();
+      OCSurvey.addQuestion(mid,"","");
+      $('html, body').animate({scrollTop: $("#q-"+mid).offset().top}, 'slow');
     });
     $("#preview_link").click(function(evt) {
       evt.preventDefault();

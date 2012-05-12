@@ -19,14 +19,25 @@ var OCSR = (function() {
   var respTrackGood = false;
   return {
     updateResponseTrack:function() {
-      var selects = $("select.resp");
-      var total = selects.size();
-      var answered = 0;
-      selects.each(function(i,e) {
-        answered = answered + ($(e).val().length > 0 ? 1 : 0);
+      var quests = $("div.question");
+      var q_cnt = quests.length;
+      var g_cnt = 0;
+      quests.each(function(i,e) {
+        var q = $(e);
+        var pass = false;
+        if(q.attr('answered')=='y') {
+          g_cnt++;
+        } else {
+          $(e).children(".a_opt, .a_fil").each(function(j,x) {
+            if(!pass && $(x).val().length > 0) {
+              pass = true;
+              g_cnt++;
+            }
+          });
+        }
       });
-      $("#answr_trk").html(answered+" of "+total+" questions answered.");
-      respTrackGood = (answered==total);
+      $("#answr_trk").html(g_cnt+" of "+q_cnt+" questions answered.");
+      respTrackGood = (g_cnt==q_cnt);
       OCSR.setSubmit();
     },
     contactCheck:function() {
@@ -67,6 +78,8 @@ $(function() {
   });
   $("select.resp").change(function() {OCSR.updateResponseTrack();});
   $(".creq").keyup(function() {OCSR.contactCheck();});
+  $(".a_opt").keyup(function() {OCSR.updateResponseTrack();});
+  $(".a_fil").change(function() {OCSR.updateResponseTrack();});
 });
 <%if @respond_mode%>
 $(document).ready(function() {
@@ -95,8 +108,17 @@ textarea {
 }
 .c_warn {
   width: 80%;
+  margin-top: 4px;
   border: 2px solid #FF9900;
   background-color: #FFFF66;
+}
+.comm {
+  border-left: 2px solid #1eb816;
+  margin: 2px;
+  padding-left: 5px;
+}
+.comm pre {
+  background: none;
 }
 </style>
 <%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
@@ -115,12 +137,15 @@ textarea {
   <%q_idx = 1%>
   <%f.fields_for :answers do |a|%>
     <%q = a.object.question%>
-    <div class='question'>
+    <div class='question' answered='<%=a.object.answered? ? "y" : "n"%>'>
       <div class='q_head'>Question #<%=q_idx%></div>
+      <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
+        <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
+      <%end%>
       <%q_idx += 1%>
       <div class='q_content'><%=RedCloth.new(q.content).to_html.html_safe%></div>
       <p><span class='q_subhead'>Answer:</span>
-        <% if @respond_mode %>
+        <% if @respond_mode && !q.choices.blank? %>
           <%=a.select :choice, q.choices.lines, {:include_blank=>true},:class=>'resp'%>
         <% else %>
           <%=a.object.choice%>
@@ -133,28 +158,28 @@ textarea {
         Rated: <%=a.object.rating%>
       <% end %>
       </p>
-      <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
-        <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
-      <%end%>
       <div class='q_subhead'>Comments</div>
       <% a.object.answer_comments.each do |ac|%>
-        <em><%=ac.user.full_name%> - <%=ac.created_at%></em><br/>
-        <pre>
-<%=ac.content%>
-        </pre>
+        <div class='comm'>
+          <em><%=ac.user.full_name%> - <%=ac.created_at%></em><br/>
+          <pre>
+  <%=ac.content%>
+          </pre>
+        </div>
       <% end %>
       <%a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
         <%=acf.hidden_field :user_id%>
-        <%=acf.text_area :content%>
+        <%=acf.text_area :content, :class=>'a_opt'%>
       <% end %>
       <ul>
       <% a.object.attachments.each do |att|%>
         <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
       <% end %>
       </ul>
-      <%a.fields_for :attachments, a.object.attachments.build do |attf|%>
+      <%a.fields_for :attachments, a.object.attachments.build(:uploaded_by_id=>current_user.id) do |attf|%>
         <%=attf.hidden_field :attachable_type%>
-        <span class='q_subhead'>Attach File: </span><%=attf.file_field :attached%>
+        <%=attf.hidden_field :uploaded_by_id%>
+        <span class='q_subhead'>Attach File: </span><%=attf.file_field :attached, :class=>'a_fil'%>
       <%end%>
     </div>
   <%end%>

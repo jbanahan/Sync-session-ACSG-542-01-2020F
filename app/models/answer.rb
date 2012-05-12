@@ -14,6 +14,11 @@ class Answer < ActiveRecord::Base
     q[:attached].blank?
   }
 
+  # does the question have a multiple choice, comment or attachment associated with the survey response user
+  def answered?
+    !self.choice.blank? || !self.answer_comments.where(:user_id=>survey_response.user_id).blank? || !self.attachments.where(:uploaded_by_id=>survey_response.user_id).blank? 
+  end
+
   def can_view? user
     self.survey_response && self.survey_response.can_view?(user)
   end
