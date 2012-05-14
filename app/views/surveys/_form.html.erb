@@ -1,7 +1,7 @@
 <% content_for :javascript do%>
   $(function() {
     <%@survey.questions.each do |q|%>
-    OCSurvey.addQuestion(<%=q.id%>,"<%=q.content.gsub("\n",'\n').gsub("\r","")%>","<%=q.choices.gsub("\n",'\n').gsub("\r",'')%>","<%=q.warning?%>");
+    OCSurvey.addQuestion(<%=q.id%>,"<%=q.content.gsub("\n",'\n').gsub("\r","")%>","<%=q.choices.gsub("\n",'\n').gsub("\r",'')%>",<%=q.warning?%>);
     <%end%>
     <%if @survey.questions.empty?%>
     OCSurvey.addQuestion(null,"Your first question goes here...","");
