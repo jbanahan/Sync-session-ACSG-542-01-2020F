@@ -29,7 +29,7 @@ module OpenChain
         retry if retry_count < 3
         puts $!
         puts $!.backtrace
-        r = {'errors'=>["Communications error: #{$!.message}"]}
+        r = {'errors'=>["Communications error: #{$!.message}", "Command: #{command.to_s}"]}
       end
       r
     end
