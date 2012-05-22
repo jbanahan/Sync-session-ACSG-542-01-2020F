@@ -51,8 +51,10 @@ class CustomFeaturesController < ApplicationController
       search_params = (params[:search_run] && params[:search_run][:search_criterions_attributes]) ? params[:search_run][:search_criterions_attributes] : {}
       @search_run.search_criterions.destroy_all
       search_params.each do |k,p|
-        p.delete "_destroy"
-        @search_run.search_criterions.create(p)
+        if p[:_destroy] != "true"
+          p.delete "_destroy"
+          @search_run.search_criterions.create(p)
+        end
       end
       redirect_to "/custom_features/msl_plus/#{f.id}"
     }

@@ -1,6 +1,34 @@
 require 'spec_helper'
 
 describe Answer do
+  describe :answered? do
+    it 'should not be answered as default' do
+      Factory(:answer).should_not be_answered
+    end
+    it 'should be answered if choice is set' do
+      Factory(:answer,:choice=>'x').should be_answered
+    end
+    it 'should be answered if comment assigned to survey response user is set' do
+      a = Factory(:answer)
+      a.answer_comments.create!(:user_id=>a.survey_response.user_id,:content=>'1234567890')
+      a.should be_answered
+    end
+    it 'should be answered if attachment assigned to survey response user is set' do
+      a = Factory(:answer)
+      a.attachments.create!(:uploaded_by_id=>a.survey_response.user_id)
+      a.should be_answered
+    end
+    it 'should not be answered if only comment is from a different user' do
+      a = Factory(:answer)
+      a.answer_comments.create!(:user_id=>Factory(:user).id,:content=>'1234567890')
+      a.should_not be_answered
+    end
+    it 'should not be answered if only attachment is from a different user' do
+      a = Factory(:answer)
+      a.attachments.create!(:uploaded_by_id=>Factory(:user).id)
+      a.should_not be_answered
+    end
+  end
   describe "can view" do
     before :each do
       @answer = Factory(:answer)

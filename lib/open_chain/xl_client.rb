@@ -15,6 +15,8 @@ module OpenChain
       command['session'] = @session_id
       json = command.to_json 
       r = {'errors'=>'Client error: did not successfully receive server response.'}
+      retry_count = 0
+      response_body = "no response"
       begin
         req = Net::HTTP::Post.new(@uri.path)
         req.body = json
@@ -22,11 +24,14 @@ module OpenChain
           http.read_timeout = 600
           http.request req
         end
-        r = JSON.parse res.body
+        response_body = res.body
+        r = JSON.parse response_body
       rescue
+        retry_count += 1
+        retry if retry_count < 3
         puts $!
         puts $!.backtrace
-        r = {'errors'=>["Communications error: #{$!.message}"]}
+        r = {'errors'=>["Communications error: #{$!.message}", "Command: #{command.to_s}", "Response Body: #{response_body}", "Retry Count: #{retry_count}"]}
       end
       r
     end
