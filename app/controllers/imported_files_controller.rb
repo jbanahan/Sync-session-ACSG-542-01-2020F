@@ -116,8 +116,10 @@ class ImportedFilesController < ApplicationController
       search_params = (params[:imported_file] && params[:imported_file][:search_criterions_attributes]) ? params[:imported_file][:search_criterions_attributes] : {}
       f.search_criterions.destroy_all
       search_params.each do |k,p|
-        p.delete "_destroy"
-        f.search_criterions.create(p)
+        if p[:_destroy] != "true"
+          p.delete "_destroy"
+          f.search_criterions.create(p) 
+        end
       end
       redirect_to f
     }

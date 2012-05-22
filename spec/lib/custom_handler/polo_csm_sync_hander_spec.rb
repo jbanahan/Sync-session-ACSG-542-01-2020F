@@ -1,0 +1,48 @@
+require 'spec_helper'
+
+describe OpenChain::CustomHandler::PoloCsmSyncHandler do
+  before :each do
+    @xlc = mock('xl_client')
+    @cf = mock('custom_file')
+    @att = mock('attached')
+    @att.should_receive(:path).and_return('/path/to')
+    @cf.should_receive(:attached).and_return(@att)
+    OpenChain::XLClient.should_receive(:new).with('/path/to').and_return(@xlc)
+    @csm = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Number",:data_type=>'string')
+  end
+  it "should update lines that match" do
+    p = Factory(:product)
+    p2 = Factory(:product)
+    Product.any_instance.stub(:can_edit?).and_return(true)
+    @xlc.should_receive(:last_row_number).and_return(2)
+    @xlc.should_receive(:get_cell).with(0,1,9).and_return({'cell'=>{'value'=>p.unique_identifier}})
+    @xlc.should_receive(:get_cell).with(0,1,5).and_return({'cell'=>{'value'=>'csm1'}})
+    @xlc.should_receive(:set_cell).with(0,1,16,'matched')
+    @xlc.should_receive(:get_cell).with(0,2,9).and_return({'cell'=>{'value'=>p2.unique_identifier}})
+    @xlc.should_receive(:get_cell).with(0,2,5).and_return({'cell'=>{'value'=>'csm2'}})
+    @xlc.should_receive(:set_cell).with(0,2,16,'matched')
+    @xlc.should_receive(:save)
+    OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)
+    p.get_custom_value(@csm).value.should == 'csm1'
+    p2.get_custom_value(@csm).value.should == 'csm2'
+    p.should have(1).entity_snapshots
+  end
+  it "should not update lines that don't match" do
+    @xlc.should_receive(:last_row_number).and_return(2)
+    @xlc.should_receive(:get_cell).with(0,1,9).and_return({'cell'=>{'value'=>'abc'}})
+    @xlc.should_receive(:set_cell).with(0,1,16,'not matched')
+    @xlc.should_receive(:get_cell).with(0,2,9).and_return({'cell'=>{'value'=>'def'}})
+    @xlc.should_receive(:set_cell).with(0,2,16,'not matched')
+    @xlc.should_receive(:save)
+    OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)
+  end
+  context :security do
+    it "should not allow users who can't edit products" do
+      p = Factory(:product)
+      Product.any_instance.stub(:can_edit?).and_return(false)
+      @xlc.should_receive(:last_row_number).and_return(2)
+      @xlc.should_receive(:get_cell).with(0,1,9).and_return({'cell'=>{'value'=>p.unique_identifier}})
+      lambda {OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)}.should raise_error "User does not have permission to edit product #{p.unique_identifier}"
+    end
+  end
+end
