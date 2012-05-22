@@ -61,14 +61,14 @@
     <tr>
       <td style="width:33%;">
         <table>
-          <%[:ent_export_date,:ent_filed_date,:ent_arrival_date,:ent_release_date].each do |f|%>
+          <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_filed_date,:ent_arrival_date,:ent_release_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_fda_transmit_date,:ent_fda_review_date,:ent_fda_release_date,:ent_duty_due_date,:ent_liq_date].each do |f|%>
+          <%[:ent_fda_transmit_date,:ent_fda_review_date,:ent_fda_release_date,:ent_trucker_called_date,:ent_free_date,:ent_duty_due_date,:ent_liq_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>

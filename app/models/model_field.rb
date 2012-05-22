@@ -730,7 +730,12 @@ class ModelField
       [82,:ent_fda_transmit_date,:fda_transmit_date,"FDA Transmit Date",{:data_type=>:datetime}],
       [83,:ent_fda_review_date,:fda_review_date,"FDA Review Date",{:data_type=>:datetime}],
       [84,:ent_fda_release_date,:fda_release_date,"FDA Release Date",{:data_type=>:datetime}],
-      [85,:ent_charge_codes,:charge_codes,"Charge Codes Used",{:data_type=>:string, :can_view_lambda=>lambda {|u| u.view_broker_invoices?}}]
+      [85,:ent_charge_codes,:charge_codes,"Charge Codes Used",{:data_type=>:string, :can_view_lambda=>lambda {|u| u.view_broker_invoices?}}],
+      [86,:ent_isf_sent_date,:isf_sent_date,"ISF Sent Date",{:data_type=>:datetime}],
+      [87,:ent_isf_accepted_date,:isf_accepted_date,"ISF Accepted Date",{:data_type=>:datetime}],
+      [88,:ent_docs_received_date,:docs_received_date,"Docs Received Date",{:data_type=>:date}],
+      [89,:ent_trucker_called_date,:trucker_called_date,"Trucker Called Date",{:data_type=>:datetime}],
+      [90,:ent_free_date,:free_date,"Free Date",{:data_type=>:date}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

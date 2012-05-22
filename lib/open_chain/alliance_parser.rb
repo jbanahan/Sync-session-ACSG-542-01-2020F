@@ -15,7 +15,12 @@ module OpenChain
       '00004'=>:file_logged_date,
       '00020'=>:fda_release_date,
       '93002'=>:fda_review_date,
-      '00108'=>:fda_transmit_date
+      '00108'=>:fda_transmit_date,
+      '92007'=>:isf_sent_date,
+      '92008'=>:isf_accepted_date,
+      '00003'=>:docs_received_date,
+      '00024'=>:trucker_called_date,
+      '00052'=>:free_date
     }
 
     # process all files in the archive for a given date.  Use this to reprocess old files
