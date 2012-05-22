@@ -20,7 +20,8 @@ module OpenChain
       '92008'=>:isf_accepted_date,
       '00003'=>:docs_received_date,
       '00024'=>:trucker_called_date,
-      '00052'=>:free_date
+      '00052'=>:free_date,
+      '00085'=>:edi_received_date
     }
 
     # process all files in the archive for a given date.  Use this to reprocess old files
