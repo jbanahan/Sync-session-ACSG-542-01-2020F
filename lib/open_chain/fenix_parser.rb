@@ -3,7 +3,7 @@ module OpenChain
     SOURCE_CODE = 'Fenix'
 
     # take the text from a Fenix CSV output file a create entries
-    def self.parse file_content
+    def self.parse file_content, s3_bucket = nil, s3_path = nil
       begin
         entry_lines = []
         current_file_number = ""
@@ -11,13 +11,13 @@ module OpenChain
           next unless line.size > 10
           file_number = line[1]
           if !entry_lines.empty? && file_number!=current_file_number
-            FenixParser.new.parse_entry entry_lines
+            FenixParser.new.parse_entry entry_lines, s3_bucket, s3_path
             entry_lines = []
           end
           current_file_number = file_number
           entry_lines << line
         end
-        FenixParser.new.parse_entry entry_lines unless entry_lines.empty?
+        FenixParser.new.parse_entry entry_lines, s3_bucket, s3_path unless entry_lines.empty?
       rescue
         puts $!
         puts $!.backtrace
@@ -31,11 +31,11 @@ module OpenChain
     # process all files in the archive for a given date.  Use this to reprocess old files
     def self.process_day date
       OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_fenix") do |key|
-        parse OpenChain::S3.get_data(OpenChain::S3.integration_bucket_name, key)
+        parse OpenChain::S3.get_data(OpenChain::S3.integration_bucket_name, key), OpenChain::S3.integration_bucket_name, key
       end
     end
 
-    def parse_entry lines
+    def parse_entry lines, s3_bucket = nil, s3_path = nil
       start_time = Time.now
       @total_units = BigDecimal('0.00')
       #get header info from first line
@@ -45,6 +45,8 @@ module OpenChain
         process_invoice_line x
       end
       detail_pos = accumulated_string(:po_number)
+      @entry.last_file_bucket = s3_bucket
+      @entry.last_file_path = s3_path
       @entry.total_invoiced_value = @total_invoice_val
       @entry.total_units = @total_units
       @entry.total_duty = @total_duty

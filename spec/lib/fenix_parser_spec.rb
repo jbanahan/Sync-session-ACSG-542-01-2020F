@@ -66,8 +66,10 @@ describe OpenChain::FenixParser do
     }
   end
   it 'should save an entry with one line' do
-    OpenChain::FenixParser.parse @entry_lambda.call
+    OpenChain::FenixParser.parse @entry_lambda.call, 'bucket', 'key'
     ent = Entry.find_by_broker_reference @file_number
+    ent.last_file_bucket.should == 'bucket'
+    ent.last_file_path.should == 'key'
     ent.import_country.should == Country.find_by_iso_code('CA')
     ent.entry_number.should == @barcode
     ent.importer_tax_id.should == @importer_tax_id

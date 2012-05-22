@@ -248,6 +248,13 @@ describe OpenChain::AllianceParser do
     company.name.should == @customer_name
     ent.importer.should == company
   end
+  
+  it "should write bucket_name & key" do
+    OpenChain::AllianceParser.parse @make_entry_lambda.call, 'a', 'b'
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.last_file_bucket.should == 'a'
+    ent.last_file_path.should == 'b'
+  end
 
   it 'should create entry' do
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
@@ -633,8 +640,8 @@ describe OpenChain::AllianceParser do
       OpenChain::S3.should_receive(:integration_keys).with(d,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance").and_yield("a").and_yield("b")
       OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
       OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
-      OpenChain::AllianceParser.should_receive(:parse).with("x")
-      OpenChain::AllianceParser.should_receive(:parse).with("y")
+      OpenChain::AllianceParser.should_receive(:parse).with("x",OpenChain::S3.integration_bucket_name,"a")
+      OpenChain::AllianceParser.should_receive(:parse).with("y",OpenChain::S3.integration_bucket_name,"b")
       OpenChain::AllianceParser.process_day d
     end
   end

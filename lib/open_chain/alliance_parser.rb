@@ -21,23 +21,23 @@ module OpenChain
     # process all files in the archive for a given date.  Use this to reprocess old files
     def self.process_day date
       OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance") do |key|
-        parse OpenChain::S3.get_data(OpenChain::S3.integration_bucket_name, key)
+        parse OpenChain::S3.get_data(OpenChain::S3.integration_bucket_name, key), OpenChain::S3.integration_bucket_name, key
       end
     end
 
     # take the text inside an internet tracking file from alliance and create/update the entry
-    def self.parse file_content
+    def self.parse file_content, bucket_name = nil, s3_key = nil
       begin
         entry_lines = []
         file_content.lines.each do |line|
           prefix = line[0,4]
           if !entry_lines.empty? && prefix=="SH00"
-            AllianceParser.new.parse_entry entry_lines 
+            AllianceParser.new.parse_entry entry_lines, bucket_name, s3_key
             entry_lines = []
           end
           entry_lines << line
         end
-        AllianceParser.new.parse_entry entry_lines if !entry_lines.empty?
+        AllianceParser.new.parse_entry entry_lines, bucket_name, s3_key if !entry_lines.empty?
       rescue
         puts $!
         puts $!.backtrace
@@ -48,7 +48,7 @@ module OpenChain
       end
     end
 
-    def parse_entry rows
+    def parse_entry rows, bucket_name = nil, s3_key = nil
       Entry.transaction do 
         start_time = Time.now
         rows.each do |r|
@@ -88,6 +88,8 @@ module OpenChain
           end
         end
         if !@skip_entry
+            @entry.last_file_bucket = bucket_name
+            @entry.last_file_path = s3_key
             @entry.import_country = Country.find_by_iso_code('US')
             @entry.it_numbers = accumulated_string :it_number 
             @entry.master_bills_of_lading = accumulated_string :mbol 
