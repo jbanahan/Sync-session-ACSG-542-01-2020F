@@ -4,5 +4,8 @@
 <% else %>
 <% end%>
 <%if enabled_features.include? 'MSL+'%>
-  <%=link_to "MSL+ Upload", '/custom_features/msl_plus'%>
+  <%=link_to "MSL+ Upload", '/custom_features/msl_plus'%><br />
+<%end%>
+<%if enabled_features.include? 'CSM Sync'%>
+  <%=link_to "CSM Sync", '/custom_features/csm_sync'%><br />
 <%end%>

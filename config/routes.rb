@@ -120,7 +120,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_show_email", :via => :get
   match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_send_email", :via => :post
   match "/custom_features/msl_plus/:id/filter" => "custom_features#msl_plus_filter", :via=>:post
-
+  match "/custom_features/csm_sync" => "custom_features#csm_sync_index", :via=>:get
+  match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
+  match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get
 
   #reports
   match "/reports" => "reports#index", :via => :get

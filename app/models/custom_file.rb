@@ -1,4 +1,6 @@
 require 'open_chain/custom_handler/polo_msl_plus_handler'
+require 'open_chain/custom_handler/polo_csm_sync_handler'
+
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
   has_many :linked_products, :through=> :custom_file_records, :source=> :linked_object, :source_type=> 'Product'
@@ -38,6 +40,9 @@ class CustomFile < ActiveRecord::Base
     OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', handler.make_updated_file(current_user), self.attached_file_name).deliver!
   end
 
+  def secure_url(expires_in=10.seconds)
+    AWS::S3.new(AWS_CREDENTIALS).buckets[attached.options.fog_directory].objects[attached.path].url_for(:read,:expires=>expires_in,:secure=>true).to_s
+  end
   private
   def no_post
     false
