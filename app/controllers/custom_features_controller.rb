@@ -1,8 +1,37 @@
 class CustomFeaturesController < ApplicationController
   MSL_PLUS = 'OpenChain::CustomHandler::PoloMslPlusHandler'
+  CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   def index
     render :layout=>'one_col'
   end
+  def csm_sync_index
+    action_secure(current_user.edit_products?,Product,{:verb=>"view",:module_name=>"CSM Sync Files",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>CSM_SYNC).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+  def csm_sync_upload
+    f = CustomFile.new(:file_type=>CSM_SYNC,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(current_user.edit_products?,Product,{:verb=>"upload",:module_name=>"CSM Sync Files",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/csm_sync'
+    }
+  end
+
+  def csm_sync_download
+    f = CustomFile.find params[:id] 
+    action_secure(current_user.edit_products?,Product,{:verb=>"download",:module_name=>"CSM Sync Files",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+  
   def msl_plus_index
     action_secure(current_user.edit_products?,Product,{:verb=>"view",:module_name=>"MSL+ Uploads",:lock_check=>false}) {
       @files = CustomFile.where(:file_type=>MSL_PLUS).order('created_at DESC').paginate(:per_page=>20,:page => params[:page])
