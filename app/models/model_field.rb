@@ -749,7 +749,7 @@ class ModelField
       [88,:ent_docs_received_date,:docs_received_date,"Docs Received Date",{:data_type=>:date}],
       [89,:ent_trucker_called_date,:trucker_called_date,"Trucker Called Date",{:data_type=>:datetime}],
       [90,:ent_free_date,:free_date,"Free Date",{:data_type=>:date}],
-      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}],
+      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
