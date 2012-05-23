@@ -246,6 +246,7 @@ module OpenChain
       @c_line.vendor_name = r[83,35].strip
       @c_line.volume = parse_currency r[118,11] #not really currency, but 2 decimals, so it's ok
       @c_line.unit_price = @c_line.value / @c_line.quantity if @c_line.value > 0 && @c_line.quantity > 0
+      @c_line.department = r[147,6].strip
       @c_line.computed_value = parse_currency r[260,13]
       @c_line.computed_adjustments = parse_currency r[299,13]
       @c_line.computed_net_value = parse_currency r[312,13]

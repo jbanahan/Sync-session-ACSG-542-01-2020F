@@ -749,7 +749,7 @@ class ModelField
       [88,:ent_docs_received_date,:docs_received_date,"Docs Received Date",{:data_type=>:date}],
       [89,:ent_trucker_called_date,:trucker_called_date,"Trucker Called Date",{:data_type=>:datetime}],
       [90,:ent_free_date,:free_date,"Free Date",{:data_type=>:date}],
-      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}]
+      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}],
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -777,9 +777,13 @@ class ModelField
       [12,:cil_country_export_code,:country_export_code,"Country Export Code",{:data_type=>:string}],
       [13,:cil_related_parties,:related_parties,"Related Parties",{:data_type=>:boolean}],
       [14,:cil_volume,:volume,"Volume",{:data_type=>:decimal}],
+      #The next 3 lines have the wrong prefix because they were accidentally deployed to production this way and may be used on
+      #reports.  It only hurts readability, so don't change them.
       [15,:ent_state_export_code,:state_export_code,"State Export Code",{:data_type=>:string}],
       [16,:ent_state_origin_code,:state_origin_code,"State Origin Code",{:data_type=>:string}],
-      [17,:ent_unit_price,:unit_price,"Unit Price",{:data_type=>:decimal}]
+      [17,:ent_unit_price,:unit_price,"Unit Price",{:data_type=>:decimal}],
+
+      [18,:cil_department,:department,"Department",{:data_type=>:string}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
       [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
