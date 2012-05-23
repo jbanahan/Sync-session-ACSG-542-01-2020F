@@ -16,6 +16,22 @@ describe User do
         User.new(:survey_edit=>false).edit_surveys?.should be_false
       end
     end
+    context "entry" do 
+      before :each do
+        @company = Factory(:company,:broker=>true)
+      end
+      it "should allow user to edit entry if permission is set and company is not broker" do
+        Factory(:user,:entry_edit=>true,:company=>@company).should be_edit_entries
+      end
+      it "should not allow user to edit entry if permission is not set" do
+        User.new(:company=>@company).should_not be_edit_entries
+      end
+      it "should not allow user to edit entry if company is not broker" do
+        @company.update_attributes(:broker=>false)
+        User.new(:entry_edit=>true,:company=>@company).should_not be_edit_entries
+      end
+    end
+
     context "commercial invoice" do
       context "entry enabled" do
         before :each do

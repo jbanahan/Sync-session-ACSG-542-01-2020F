@@ -30,7 +30,7 @@ class Entry < ActiveRecord::Base
   end
 
   def can_edit? user
-    user.edit_entries?
+    user.edit_entries? && user.company.broker?
   end
 
   def self.search_secure user, base_object
