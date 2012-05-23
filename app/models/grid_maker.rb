@@ -66,7 +66,7 @@ class GridMaker
       val = mf.process_export(obj,@user)
       if obj.nil? && ["null","nq"].include?(c.operator)
         #ok, just continue to testing the next criterion
-      elsif obj.nil? || !c.passes?(val)
+      elsif obj.nil? || !c.test?(obj)
         return false
       end
     end

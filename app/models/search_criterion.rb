@@ -25,9 +25,10 @@ class SearchCriterion < ActiveRecord::Base
     "*cf_#{custom_definition.id}"
   end
 
-  #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_export expects)
-  def test? obj, user
-    passes?(ModelField.find_by_uid(self.model_field_uid).process_export(obj,user))
+  #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)
+  def test? obj, user=nil
+    mf = ModelField.find_by_uid(self.model_field_uid)
+    passes?(mf.process_query_parameter(obj))
   end
   #does the given value pass the criterion test
   def passes?(value_to_test)

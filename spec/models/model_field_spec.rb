@@ -21,6 +21,34 @@ describe ModelField do
     end
   end
   context "special cases" do
+    context "hts formatting" do
+      it "should handle query parameters for hts formatting" do
+        tr = TariffRecord.new(:hts_1=>"1234567890",:hts_2=>"0987654321",:hts_3=>"123456")
+        [:hts_hts_1,:hts_hts_2,:hts_hts_3].each do |mfuid|
+          mf = ModelField.find_by_uid mfuid
+          export = mf.process_export tr, nil, true
+          exp_for_qry = mf.process_query_parameter tr
+          case mfuid
+            when :hts_hts_1
+              export.should == "1234.56.7890"
+              exp_for_qry.should == "1234567890"
+            when :hts_hts_2
+              export.should == "0987.65.4321"
+              exp_for_qry.should == "0987654321"
+            when :hts_hts_3
+              export.should == "1234.56"
+              exp_for_qry.should == "123456"
+            else
+              fail "Should have hit one of the tests"
+          end
+        end
+      end
+    end
+    describe :process_query_parameter do
+      p = Product.new(:unique_identifier=>"abc")
+      ModelField.find_by_uid(:prod_uid).process_query_parameter(p).should == "abc"
+    end
+
     context "broker_invoice_total" do
       before :each do
         MasterSetup.get.update_attributes(:broker_invoice_enabled=>true)

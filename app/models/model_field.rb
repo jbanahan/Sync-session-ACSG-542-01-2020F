@@ -39,6 +39,7 @@ class ModelField
     @entity_type_field = o[:entity_type_field]
     @history_ignore = o[:history_ignore]
     @currency = o[:currency]
+    @query_parameter_lambda = o[:query_parameter_lambda]
   end
 
   # returns true if the given user should be allowed to view this field
@@ -90,6 +91,11 @@ class ModelField
     #code to process when importing a field
   def process_import(obj,data)
     @import_lambda.call(obj,data)
+  end
+
+  #get the unformatted value that can be used for SearchCriterions
+  def process_query_parameter obj
+    @query_parameter_lambda.nil? ? process_export(obj, nil, true) : @query_parameter_lambda.call(obj)
   end
 
   #show the value for the given field or "HIDDEN" if the user does not have field level permission
@@ -318,6 +324,13 @@ class ModelField
             when 3 then t.hts_3
           end
           h.blank? ? "" : h.hts_format
+        }, 
+        :query_parameter_lambda => lambda {|t|
+          case i
+            when 1 then t.hts_1
+            when 2 then t.hts_2
+            when 3 then t.hts_3
+          end
         }
       }]
       id_counter += 1
