@@ -48,6 +48,12 @@ Factory.define :linkable_attachment do |t|
   t.model_field_uid 'mfuid'
   t.value 'val'
 end
+Factory.define :linked_attachment do |t|
+  t.association :linkable_attachment
+  t.after_build do |la|
+    la.attachable = Factory(:product)
+  end
+end
 Factory.define :order do |o|
   o.sequence(:order_number)
   o.association :vendor, :factory => :company

@@ -137,6 +137,10 @@ OpenChain::Application.routes.draw do
   match "/reports/big_search" => "reports#show_big_search_message", :via=>:get
   match "/reports/show_containers_released" => "reports#show_containers_released", :via=>:get
   match "/reports/run_containers_released" => "reports#run_containers_released", :via=>:post
+  match "/reports/show_attachments_not_matched" => "reports#show_attachments_not_matched", :via=>:get
+  match "/reports/run_attachments_not_matched" => "reports#run_attachments_not_matched", :via=>:post
+  match "/reports/show_products_without_attachments" => "reports#show_products_without_attachments", :via=>:get
+  match "/reports/run_products_without_attachments" => "reports#run_products_without_attachments", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member

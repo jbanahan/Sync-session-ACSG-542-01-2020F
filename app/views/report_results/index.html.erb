@@ -25,7 +25,15 @@
     <tr class='hover'><td><%=link_to "Containers Released", reports_show_containers_released_path%></td>
     <td>Shows all containers released in a date range.</td></tr>
   <%end%>
-</table>
+  <%if current_user.company.master? && !LinkableAttachment.where("1=1").empty? %>
+    <tr class='hover'><td><%=link_to "Attachments Not Matched", reports_show_attachments_not_matched_path%></td>
+    <td>Shows all uploaded attachments not matched to items.</td</tr>
+  <%end%>
+  <%if current_user.company.master? && (!LinkedAttachment.where("attachable_type = \"Product\"").empty? || !Attachment.where("attachable_type = \"Product\"").empty?)%>
+    <tr class='hover'><td><%=link_to "Products Without Attachments", reports_show_products_without_attachments_path%></td>
+    <td>Shows all products without attachments.</td</tr>
+  <%end%>
+  </table>
 <h2>Report Results</h2>
 <table class='detail_table'>
   <thead><tr><th>&nbsp;</th><th>Name</th><th>Run At</th><%if params[:show_all]%><th>Run By</th><%end%><th>Status</th></tr></thead>

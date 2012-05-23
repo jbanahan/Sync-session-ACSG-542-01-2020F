@@ -10,10 +10,20 @@ class ReportsController < ApplicationController
     
   end
 
-  def show_containers_released
-    
+  def show_products_without_attachments
+  end
+  def run_products_without_attachments
+    run_report "Products Without Attachments", OpenChain::Report::ProductsWithoutAttachments, {}, []
   end
 
+  def show_attachments_not_matched
+  end
+  def run_attachments_not_matched
+    run_report "Attachments Not Matched", OpenChain::Report::AttachmentsNotMatched, {}, []
+  end
+
+  def show_containers_released
+  end
   def run_containers_released
     settings = {}
     settings['arrival_date_start'] = params[:arrival_date_start] unless params[:arrival_date_start].blank?
