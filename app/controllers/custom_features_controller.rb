@@ -47,7 +47,7 @@ class CustomFeaturesController < ApplicationController
       @products = @file.linked_products.where("1=1")
       @search_run.search_criterions.each {|sc| @products = sc.apply @products}
       @products = @products.paginate(:per_page=>20,:page => params[:page])
-      fields = ['prod_uid',
+      fields = ['prod_uid','class_cntry_iso','hts_hts_1',
         CustomDefinition.find_by_label("Board Number").model_field_uid,
         CustomDefinition.find_by_label("GCC Description").model_field_uid,
         CustomDefinition.find_by_label("MSL+ HTS Description").model_field_uid,

@@ -152,16 +152,13 @@
 <% end %>
 <div id="header">
   <div id="top_box">
-    <% if !current_user || no_buttons %>
-      <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
-    <% end %>
     <% if current_user %>
       <% unless no_buttons %>
         <div id="corner_links">
             <div style='text-align:right;'><form action='/quick_search' method='GET'><input type='text' name='v' size='10'/><input type='submit' value='Search' id='quick_search_button' /></form></div>
         </div>
       <% end %>
-      <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
     <% end%>
+    <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
   </div> <!--close top box-->
 </div>

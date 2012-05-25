@@ -39,7 +39,7 @@ class PasswordResetsController < ApplicationController
     @no_buttons = true
     @user = current_user
     respond_to do |format|
-      format.html { render :edit }
+      format.html { render :action=>:edit }
     end
   end
 
