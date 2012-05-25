@@ -50,7 +50,11 @@ OpenChain::Application.routes.draw do
   resources :field_labels, :only=>[:index] do
     post 'save', :on=>:collection
   end
-  resources :password_resets, :only => [:new, :edit, :create, :update]
+  resources :password_resets, :only => [:new, :edit, :create, :update] do
+    member do
+      get 'forced'
+    end
+  end
   resources :dashboard_widgets, :only => [:index] do
     collection do
       get 'edit'

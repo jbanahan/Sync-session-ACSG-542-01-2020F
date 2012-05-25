@@ -63,6 +63,7 @@ class UsersController < ApplicationController
         @user = User.new(params[:user])
         set_admin_params(@user,params)
         set_debug_expiration(@user)
+        set_password_reset(@user)
         @company = @user.company
         respond_to do |format|
             if @user.save
@@ -87,6 +88,7 @@ class UsersController < ApplicationController
         @company = @user.company
         set_admin_params(@user,params)
         set_debug_expiration(@user)
+        set_password_reset(@user)
         respond_to do |format|
             if @user.update_attributes(params[:user])
                 add_flash :notices, "Account updated successfully."
@@ -144,6 +146,11 @@ class UsersController < ApplicationController
   def set_debug_expiration(u)
     if current_user.sys_admin? && !params[:debug_expiration_hours].blank?
       u.debug_expires = params[:debug_expiration_hours].to_i.hours.from_now
+    end
+  end
+  def set_password_reset(u)
+    if current_user.sys_admin?
+      u.password_reset = params[:password_reset] == 'true' ? true : false
     end
   end
   def set_admin_params(u,p)
