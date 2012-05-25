@@ -805,7 +805,8 @@ class ModelField
       [21,:ent_gst_amount,:gst_amount,"GST Amount",{:data_type=>:decimal}],
       [22,:ent_sima_amount,:sima_amount,"SIMA Amount",{:data_type=>:decimal}],
       [23,:ent_excise_amount,:excise_amount,"Excise Amount",{:data_type=>:decimal}],
-      [24,:ent_excise_rate_code,:excise_rate_code,"Excise Rate Code",{:data_type=>:string}]
+      [24,:ent_excise_rate_code,:excise_rate_code,"Excise Rate Code",{:data_type=>:string}],
+      [25,:cit_duty_rate,:duty_rate,"Duty Rate",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::BROKER_INVOICE, [
       make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),

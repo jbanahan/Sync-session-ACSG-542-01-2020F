@@ -124,7 +124,7 @@ describe OpenChain::AllianceParser do
         {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',
           :po_number=>'abcdefg',:part_number=>'1291010', :department=>"123456",
           :mid=>'faljdsiadfl',:charges=>BigDecimal('120301.20'),:related_parties=>true,:volume=>BigDecimal('12391.21',2),:computed_value=>BigDecimal('123.45',2),
-          :value=>BigDecimal('3219.23',2),:computed_adjustments=>BigDecimal('3010.32',2),:computed_net_value=>BigDecimal('301.21',2),:computed_duty_percentage=>BigDecimal('0.81',2),
+          :value=>BigDecimal('3219.23',2),:computed_adjustments=>BigDecimal('3010.32',2),:computed_net_value=>BigDecimal('301.21',2),
           :related_parties => true, :mpf=>BigDecimal('27.01',2), :hmf=>BigDecimal('23.12',2), :cotton_fee=>BigDecimal('15.22',2),
           :tariff=>[{
             :duty_total=>BigDecimal("21.10",2),:entered_value=>BigDecimal('19311.12',2),:spi_primary=>'A',:spi_secondary=>'B',:hts_code=>'6504212121',
@@ -163,7 +163,7 @@ describe OpenChain::AllianceParser do
         rows << ci00
         ci[:lines].each do |line|
           [:mid,:po_number,:department].each {|k| line[k]='' unless line[k]}
-          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(18)}#{line[:department].ljust(6)}#{"".ljust(27)}#{line[:po_number].ljust(35)}#{"".ljust(45)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{convert_cur.call(line[:computed_duty_percentage],8)}"
+          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(18)}#{line[:department].ljust(6)}#{"".ljust(27)}#{line[:po_number].ljust(35)}#{"".ljust(45)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{"".ljust(8)}"
           if line[:tariff]
             line[:tariff].each do |t|
               t_row = "CT00#{convert_cur.call(t[:duty_total],12)}#{convert_cur.call(t[:entered_value],13)}#{t[:spi_primary].ljust(2)}#{t[:spi_secondary].ljust(1)}#{t[:hts_code].ljust(10)}"
@@ -350,7 +350,6 @@ describe OpenChain::AllianceParser do
         ci_line.computed_value.should == line[:computed_value] if line[:computed_value]
         ci_line.computed_adjustments.should == line[:computed_adjustments] if line[:computed_adjustments]
         ci_line.computed_net_value.should == line[:computed_net_value] if line[:computed_net_value]
-        ci_line.computed_duty_percentage.should == line[:computed_duty_percentage] if line[:computed_duty_percentage]
         ci_line.mpf.should == line[:mpf]
         ci_line.hmf.should == line[:hmf]
         ci_line.department.should == line[:department]
@@ -363,6 +362,7 @@ describe OpenChain::AllianceParser do
             t = found.first
             t.duty_amount.should == t_line[:duty_total]
             t.entered_value.should == t_line[:entered_value]
+            t.duty_rate.should == ( t_line[:duty_total]/t_line[:entered_value] ).round(3)
             t.spi_primary.should == t_line[:spi_primary]
             t.spi_secondary.should == t_line[:spi_secondary]
             t.hts_code.should == t_line[:hts_code]

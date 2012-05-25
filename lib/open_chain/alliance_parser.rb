@@ -250,7 +250,6 @@ module OpenChain
       @c_line.computed_value = parse_currency r[260,13]
       @c_line.computed_adjustments = parse_currency r[299,13]
       @c_line.computed_net_value = parse_currency r[312,13]
-      @c_line.computed_duty_percentage = parse_currency r[325,8]
       accumulate_string :export_country_codes, @c_line.country_export_code
       accumulate_string :origin_country_codes, @c_line.country_origin_code
       accumulate_string :vendor_names, @c_line.vendor_name 
@@ -275,6 +274,7 @@ module OpenChain
       @ct.hts_code = r[32,10].strip.ljust(10,"0")
       @ct.duty_amount = parse_currency r[4,12]
       @ct.entered_value = parse_currency r[16,13]
+      @ct.duty_rate = @ct.entered_value > 0 ? @ct.duty_amount / @ct.entered_value : 0
       @ct.spi_primary = r[29,2].strip
       @ct.spi_secondary = r[31].strip
       @ct.classification_qty_1 = parse_currency r[42,12]

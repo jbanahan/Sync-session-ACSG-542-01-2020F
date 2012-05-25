@@ -183,7 +183,7 @@
         <% if line.commercial_invoice_tariffs.count > 0%>
           <tr>
             <td colspan='8' style='font-size:111%;'>
-              <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_spi_primary,:cit_spi_secondary,
+              <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:cit_spi_secondary,
                 :cit_classification_qty_1,:cit_classification_uom_1,:cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3,
                 :cit_gross_weight,:cit_tariff_description], :lines=>line.commercial_invoice_tariffs}%>
             </td>
