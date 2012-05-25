@@ -28,7 +28,7 @@ describe User do
       end
       it "should not allow user to edit entry if company is not broker" do
         @company.update_attributes(:broker=>false)
-        User.new(:entry_edit=>true,:company=>@company).should_not be_edit_entries
+        User.new(:entry_edit=>true,:company_id=>@company.id).should_not be_edit_entries
       end
     end
 
