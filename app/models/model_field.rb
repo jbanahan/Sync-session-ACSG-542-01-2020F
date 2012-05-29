@@ -938,7 +938,8 @@ class ModelField
         :join_alias => "class_comp_cnt",
         :qualified_field_name => "ifnull(class_comp_cnt.comp_count,0)",
         :data_type => :integer
-      }]
+      }],
+      [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime}]
     ]
     add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
 
