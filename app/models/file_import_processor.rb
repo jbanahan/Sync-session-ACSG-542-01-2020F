@@ -26,6 +26,7 @@ class FileImportProcessor
   def process_file
     begin
       fire_start
+      fire_row_count self.row_count
       processed_row = false
       r = @import_file.starting_row - 1
       get_rows do |row|
@@ -220,6 +221,9 @@ class FileImportProcessor
 
   class CSVImportProcessor < FileImportProcessor
 
+    def row_count 
+      @data.lines.count - (@import_file.starting_row - 1)
+    end
     def get_rows &block
       r = 0
       start_row = @import_file.starting_row - 1
@@ -231,6 +235,9 @@ class FileImportProcessor
   end
 
   class SpreadsheetImportProcessor < FileImportProcessor
+    def row_count
+      s = @data.worksheet(0).row_count - (@import_file.starting_row - 1)
+    end
     def get_rows &block
       @data
       s = @data.worksheet 0
@@ -306,6 +313,9 @@ class FileImportProcessor
     fire_event :process_start, Time.now
   end
 
+  def fire_row_count count
+    fire_event :process_row_count, count
+  end
   def fire_row row_number, obj, messages, failed=false
     @listeners.each {|ls| ls.process_row row_number, obj, messages, failed if ls.respond_to?('process_row')}
   end

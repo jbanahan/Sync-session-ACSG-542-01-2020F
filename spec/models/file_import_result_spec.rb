@@ -2,6 +2,20 @@ require 'spec_helper'
 
 describe FileImportResult do
 
+  describe :time_to_process do
+    it "should return nil if no started_at" do
+      FileImportResult.new(:finished_at=>0.seconds.ago).time_to_process.should be_nil
+    end
+    it "should return nil if no finished_at" do
+      FileImportResult.new(:started_at=>0.seconds.ago).time_to_process.should be_nil
+    end
+    it "should return minutes" do
+      FileImportResult.new(:started_at=>3.minutes.ago,:finished_at=>0.minutes.ago).time_to_process.should == 3
+    end
+    it "should return 1 minute even if rounding to zero" do
+      FileImportResult.new(:started_at=>2.seconds.ago,:finished_at=>0.seconds.ago).time_to_process.should == 1
+    end
+  end
   it 'should only find unique changed objects' do
     i_file = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
     fir = i_file.file_import_results.create!

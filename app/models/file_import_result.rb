@@ -15,6 +15,14 @@ class FileImportResult < ActiveRecord::Base
     r
   end
 
+  # return the total minutes to process the file or nil if the file does not have a start_at and finish_at value
+  # returns 1 (never 0) if the time is less than one minute
+  def time_to_process
+    return nil unless self.started_at && self.finished_at
+    seconds = self.finished_at - self.started_at
+    minutes = (seconds/60).round
+    minutes == 0 ? 1 : minutes
+  end
   def error_count
     self.change_records.where(:failed=>true).count
   end

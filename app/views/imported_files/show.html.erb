@@ -86,24 +86,33 @@
   <%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@imported_file,
     :model_fields=>@imported_file.core_module.model_fields_including_children.values,:wrapper=>'filters',:parent_hash_name=>'imported_file'}%>
 <%end%>
-<table>
+<table class='detail_table'>
   <tr>
     <td width='50%' style='vertical-align:top;'>
       <table>
         <%=field_row "File Name", @imported_file.attached_file_name %>
         <%=field_row "Uploaded At", @imported_file.created_at %>
         <%=field_row "Uploaded By", @imported_file.user ? @imported_file.user.full_name : ""%>
+        <% if @file_import_result && @file_import_result.finished_at%>
+          <%=field_row "File Rows", @file_import_result.change_records.size %>
+          <%=field_row "Records", @file_import_result.changed_object_count %>
+          <% error_count = @file_import_result.error_count%>
+          <% if error_count>0%>
+            <%=field_row "Errors", link_to(pluralize(error_count,"error"), @file_import_result, :class=>"error")%>
+          <%end%>
+        <%end%>
       </table>
     </td>
     <td width='50%' style='vertical-align:top;'>
       <table>
-        <%=field_row "Last Processed", @file_import_result.nil? ? "Never" : (@file_import_result.finished_at.nil? ? "Processing" : @file_import_result.finished_at) %>
-        <%=field_row "File Rows", @file_import_result.nil? ? "" : @file_import_result.change_records.size %>
-        <%=field_row "Records", @file_import_result.nil? ? "" : @file_import_result.changed_object_count %>
-        <% if @file_import_result%>
-          <% error_count = @file_import_result.error_count%>
-          <% if error_count>0%>
-            <%=field_row "Errors", link_to(pluralize(error_count,"error"), @file_import_result, :class=>"error")%>
+        <%if @file_import_result%>
+          <%=field_row "Last Processed", (@file_import_result.finished_at.nil? ? "Processing" : @file_import_result.finished_at) %>
+          <%=field_row "Processing Started", @file_import_result.started_at%>
+          <% if @file_import_result.finished_at%>
+            <%=field_row "Processing Completed", @file_import_result.finished_at%>
+            <%=field_row "Time To Process", pluralize(@file_import_result.time_to_process,"minute")%>
+          <%else%>
+            <%=field_row "Progress", "#{@file_import_result.rows_processed} of #{@file_import_result.expected_rows} rows"%>
           <%end%>
         <%end%>
       </table>

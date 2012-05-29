@@ -234,14 +234,18 @@ class ImportedFile < ActiveRecord::Base
       @fr = @imported_file.file_import_results.build(:run_by=>User.find(user_id))
     end
 
+    def process_row_count count
+      @fr.update_attributes(:expected_rows=>(count - @imported_file.starting_row - 1))
+    end
     def process_row row_number, object, messages, failed=false
       cr = ChangeRecord.create(:record_sequence_number=>row_number,:recordable=>object,:failed=>failed,:file_import_result_id=>@fr.id)
       unless messages.blank?
         msg_sql = []
         messages.each {|m| msg_sql << "(#{cr.id}, '#{m.gsub(/\\/, '\&\&').gsub(/'/, "''")}')" }
-        sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")}"
+        sql = "INSERT INTO change_record_messages (`change_record_id`,`message`) VALUES #{msg_sql.join(", ")};"
         begin
           ActiveRecord::Base.connection.execute sql
+          ActiveRecord::Base.connection.execute "UPDATE file_import_results SET rows_processed = #{row_number - (@imported_file.starting_row - 1)} WHERE ID = #{@fr.id};"
         rescue
           $!.log_me
         end
