@@ -56,6 +56,18 @@ var OCSR = (function() {
       contactGood = pass;
       OCSR.setSubmit();
     },
+    addAttachment: function(link,uploadedById,answerIndex) {
+      var prefix,h,mid;
+      mid = new Date().getTime();
+      prefix = "survey_response[answers_attributes]["+answerIndex+"][attachments_attributes]["+mid+"]"; 
+      h = "<div class='a_line'>";
+      h += "<input type='hidden' name='"+prefix+"[attachable_type]' value='Answer'/>";
+      h += "<input type='hidden' name='"+prefix+"[uploaded_by_id]' value='"+uploadedById+"'/>";
+      h += "<input type='file' class='a_fil' name='"+prefix+"[attached]'>";
+      h += " - <a href='#' class='a_rem'>Remove</a>";
+      h += "</div>";
+      link.before(h);
+    },
     setSubmit: function() {
       if(contactGood && respTrackGood) {
         $("#btn_submit").show();
@@ -80,6 +92,17 @@ $(function() {
   $(".creq").keyup(function() {OCSR.contactCheck();});
   $(".a_opt").keyup(function() {OCSR.updateResponseTrack();});
   $(".a_fil").change(function() {OCSR.updateResponseTrack();});
+  $(".add_attach").click(function(evt) {
+    var t = $(this);
+    evt.preventDefault();
+    OCSR.addAttachment(t,t.attr('uploaded_by_id'),t.attr('answer_index'));
+  });
+  $(".a_rem").live('click',function(evt) {
+    evt.preventDefault();
+    var found = $(this).parent("div.a_line");
+    found.fadeOut();
+    found.remove();
+  });
 });
 <%if @respond_mode%>
 $(document).ready(function() {
@@ -135,53 +158,53 @@ textarea {
   </div>
   </table>
   <%q_idx = 1%>
-  <%f.fields_for :answers do |a|%>
-    <%q = a.object.question%>
-    <div class='question' answered='<%=a.object.answered? ? "y" : "n"%>'>
-      <div class='q_head'>Question #<%=q_idx%></div>
-      <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
-        <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
-      <%end%>
-      <%q_idx += 1%>
-      <div class='q_content'><%=RedCloth.new(q.content).to_html.html_safe%></div>
-      <p><span class='q_subhead'>Answer:</span>
-        <% if @respond_mode && !q.choices.blank? %>
-          <%=a.select :choice, q.choices.lines, {:include_blank=>true},:class=>'resp'%>
-        <% else %>
-          <%=a.object.choice%>
+  <%@sr.answers.each_with_index do |ans,a_idx|%>
+    <%f.fields_for :answers, ans do |a|%>
+      <%q = a.object.question%>
+      <div class='question' answered='<%=a.object.answered? ? "y" : "n"%>'>
+        <div class='q_head'>Question #<%=q_idx%></div>
+        <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
+          <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
+        <%end%>
+        <%q_idx += 1%>
+        <div class='q_content'><%=RedCloth.new(q.content).to_html.html_safe%></div>
+        <p><span class='q_subhead'>Answer:</span>
+          <% if @respond_mode && !q.choices.blank? %>
+            <%=a.select :choice, q.choices.lines, {:include_blank=>true},:class=>'resp'%>
+          <% else %>
+            <%=a.object.choice%>
+          <% end %>
+        </p>
+        <p>
+        <% if @rate_mode %>
+          Rating: <%=a.select :rating, @sr.survey.rating_values, {:include_blank=>true} %>
+        <% elsif !a.object.rating.blank? %>
+          Rated: <%=a.object.rating%>
         <% end %>
-      </p>
-      <p>
-      <% if @rate_mode %>
-        Rating: <%=a.select :rating, @sr.survey.rating_values, {:include_blank=>true} %>
-      <% elsif !a.object.rating.blank? %>
-        Rated: <%=a.object.rating%>
-      <% end %>
-      </p>
-      <div class='q_subhead'>Comments</div>
-      <% a.object.answer_comments.each do |ac|%>
-        <div class='comm'>
-          <em><%=ac.user.full_name%> - <%=ac.created_at%></em><br/>
-          <pre>
-  <%=ac.content%>
-          </pre>
+        </p>
+        <div class='q_subhead'>Comments</div>
+        <% a.object.answer_comments.each do |ac|%>
+          <div class='comm'>
+            <em><%=ac.user.full_name%> - <%=ac.created_at%></em><br/>
+            <pre>
+    <%=ac.content%>
+            </pre>
+          </div>
+        <% end %>
+        <%a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
+          <%=acf.hidden_field :user_id%>
+          <%=acf.text_area :content, :class=>'a_opt'%>
+        <% end %>
+        <ul>
+        <% a.object.attachments.each do |att|%>
+          <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
+        <% end %>
+        </ul>
+        <div class='attach_box' id='attach_box_<%=a.object.id%>'>
+          <a href='#' class='add_attach' uploaded_by_id='<%=current_user.id%>' answer_index='<%=a_idx%>'>Attach File</a>
         </div>
-      <% end %>
-      <%a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
-        <%=acf.hidden_field :user_id%>
-        <%=acf.text_area :content, :class=>'a_opt'%>
-      <% end %>
-      <ul>
-      <% a.object.attachments.each do |att|%>
-        <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
-      <% end %>
-      </ul>
-      <%a.fields_for :attachments, a.object.attachments.build(:uploaded_by_id=>current_user.id) do |attf|%>
-        <%=attf.hidden_field :attachable_type%>
-        <%=attf.hidden_field :uploaded_by_id%>
-        <span class='q_subhead'>Attach File: </span><%=attf.file_field :attached, :class=>'a_fil'%>
-      <%end%>
-    </div>
+      </div>
+    <%end%>
   <%end%>
 <%end%>
 
