@@ -72,6 +72,7 @@ class FileImportProcessor
         columns.each do |col|
           mf = col.find_model_field
           r = row[col.rank + @import_file.starting_column - 1]
+          r = r.value if r.respond_to? :value #get real value for Excel formulas
           r = r.strip if r.is_a? String
           data_map[mf.core_module][mf.uid]=r unless mf.uid==:_blank
         end

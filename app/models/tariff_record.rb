@@ -7,7 +7,7 @@ class TariffRecord < ActiveRecord::Base
   attr_accessor :hts_1_matches, :hts_2_matches, :hts_3_matches, 
     :view_sequence #used to identified records generated from the screen so we can apply custom fields to the right record
   
-  belongs_to :classification
+  belongs_to :classification, :touch=>true
 
   validates :line_number, :uniqueness => {:scope => :classification_id}
 
