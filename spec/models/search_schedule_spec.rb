@@ -29,7 +29,6 @@ describe SearchSchedule do
     end
   end
   describe "next_run_time" do
-    #these tests will fail after 11pm local time... trying to figure out how to fix that without getting too crazy
     before :each do
       @u = User.new
       @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u),:run_monday=>true,
@@ -91,7 +90,7 @@ describe SearchSchedule do
       now = Time.now.utc
       @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)
     end
-    it "should return a time in the future if none of the run days are set"do
+    it "should return a time in the future if none of the run days or day of month are set"do
       @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u),:last_start_time=>1.year.ago,:run_hour => 23)
       @ss.next_run_time.should > Time.now
     end
@@ -99,6 +98,20 @@ describe SearchSchedule do
       tz_str = "Eastern Time (US & Canada)"
       @ss.run_hour = nil
       @ss.next_run_time.should > Time.now
+    end
+    context "day of month" do
+      it "should return future if day of month is set to future" do
+        tz_str = "Eastern Time (US & Canada)"
+        now = Time.now.in_time_zone(tz_str)
+        target_hour = now.hour + 1
+        target_day = (now + 1.week).day
+        @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u),:last_start_time=>1.second.ago)
+        @ss.day_of_month = target_day
+        @ss.run_hour = target_hour
+        @ss.next_run_time.hour.should == now.utc.hour + 1
+        @ss.next_run_time.day.should == target_day
+        @ss.next_run_time.should > Time.now 
+      end
     end
   end
 end

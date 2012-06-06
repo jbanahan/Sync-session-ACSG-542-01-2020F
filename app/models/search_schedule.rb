@@ -5,7 +5,7 @@ class SearchSchedule < ActiveRecord::Base
 
   # get the next time in UTC that this schedule should be executed
   def next_run_time
-    return Time.now.utc+1.day unless run_day_set? && !self.run_hour.nil?
+    return Time.now.utc+1.day unless (self.day_of_month || run_day_set?) && !self.run_hour.nil?
     tz_str = self.search_setup.user.time_zone
     tz_str = "Eastern Time (US & Canada)" if tz_str.blank?
     tz = ActiveSupport::TimeZone[tz_str]
@@ -150,6 +150,9 @@ class SearchSchedule < ActiveRecord::Base
   end
   #is the day of week for the given time a day that we should run the schedule
   def run_day? t
+    if self.day_of_month
+      return self.day_of_month == t.day
+    end
     case t.wday
     when 0
       return self.run_sunday?

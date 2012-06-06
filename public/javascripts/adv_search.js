@@ -280,6 +280,13 @@ var OCSearch = (function() {
       if(value) {
         row.find(".srch_crit_value").val(value);
       }
+    },
+    setDayCheckboxes: function() {
+      if($("#sd_dom").val().length>0) {
+        $(".day_chk").parents("tr").hide();
+      } else {
+        $(".day_chk").parents("tr").show();
+      }
     }
   };
 })();
@@ -297,12 +304,16 @@ function applyScheduleHooks() {
     writeScheduleInterface(r);
     $("#mod_schedule").dialog('open');
   });
+  $("#sd_dom").change(function() {
+    OCSearch.setDayCheckboxes();
+  });
 }
 function newSchedule() {
   var rv = new Object();
   rv.key = "";
   rv.email = "";
   rv.hour = "0";
+  rv.dom = "";
   rv.mon = false;
   rv.tue = false;
   rv.wed = false;
@@ -330,6 +341,7 @@ function readScheduleContainer(c) {
   rv.key = c.children(".sch_key").val();
   rv.email = c.children(".sch_email").val();
   rv.hour = c.children(".sch_hr").val();
+  rv.dom = c.children(".sch_dom").val(); 
   rv.mon = getDay(c,"mon");
   rv.tue = getDay(c,"tue");
   rv.wed = getDay(c,"wed");
@@ -346,7 +358,7 @@ function readScheduleContainer(c) {
   return rv;
 }
 function writeScheduleContainer(container,rv) {
-  if((rv.mon || rv.tue || rv.wed || rv.thu || rv.fri || rv.sat || rv.sun) && 
+  if((rv.mon || rv.tue || rv.wed || rv.thu || rv.fri || rv.sat || rv.sun || rv.dom) && 
       rv.email || rv.ftpsvr) {
     var id = new Date().getTime();
     var ssa = "search_setup[search_schedules_attributes]["+id+"]";
@@ -362,8 +374,10 @@ function writeScheduleContainer(container,rv) {
       //trim trailing comma
       r = r.substr(0,r.length-2);
     }
+    r += rv.dom ? "Day "+rv.dom+" of the month " : "";
     var ftp_lbl = (rv.ftpsvr && rv.ftpsvr.length > 0) ? "FTP: "+rv.ftpsvr : "";
     r += " at "+rv.hour+":00 to "+rv.email+" "+ftp_lbl+" - <a href='#' class='sched_edit'>Edit</a> | <a href='#' class='sched_remove'>Remove</a>";
+    r += "<input class='sch_dom' name='"+ssa+"[day_of_month]' type='hidden' value='"+rv.dom+"'/>";
     r += "<input class='sch_mon' name='"+ssa+"[run_monday]' type='hidden' value='"+rv.mon+"'/>";
     r += "<input class='sch_tue' name='"+ssa+"[run_tuesday]' type='hidden' value='"+rv.tue+"'/>";
     r += "<input class='sch_wed' name='"+ssa+"[run_wednesday]' type='hidden' value='"+rv.wed+"'/>";
@@ -397,6 +411,7 @@ function readScheduleInterface() {
   var rv = new Object();
   rv.email = $("#sd_email").val();
   rv.hour = $("#sd_hr").val();
+  rv.dom = $("#sd_dom").val();
   rv.mon = $("#sd_mon:checked").length>0;
   rv.tue = $("#sd_tue:checked").length>0;
   rv.wed = $("#sd_wed:checked").length>0;
@@ -418,6 +433,7 @@ function writeScheduleInterface(s) {
   $("#sd_id").val(s.id);
   $("#sd_email").val(s.email);
   $("#sd_hr").val(s.hour);
+  $("#sd_dom").val(s.dom);
   $("#sd_mon").attr('checked',s.mon);
   $("#sd_tue").attr('checked',s.tue);
   $("#sd_wed").attr('checked',s.wed);
@@ -430,6 +446,7 @@ function writeScheduleInterface(s) {
   $("#sd_ftppass").val(s.ftppass);
   $("#sd_ftpfldr").val(s.ftpfldr);
   $("#sd_frmt").val(s.frmt);
+  OCSearch.setDayCheckboxes();
 }
 function submitForm() {
   var coluids = []
