@@ -14,6 +14,11 @@ class SurveyResponse < ActiveRecord::Base
   before_save :update_status
   after_commit :send_notification
 
+  # does the survey response or any of its questions have ratings
+  def rated?
+    !self.rating.blank? || !self.answers.where("rating is not null AND length(rating) > 0").empty?
+  end
+
   def can_view? user
     return true if user.id==self.user_id
     return true if self.survey.company_id == user.company_id && user.edit_surveys?

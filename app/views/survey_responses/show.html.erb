@@ -3,6 +3,9 @@
   <% if @sr.user == current_user && @sr.submitted_date.nil? %>
     <button id='btn_submit' style='display:none'>Submit</button>
   <% end %>
+  <% if @sr.rated? %>
+    <button id='btn_filter'>Filter</button>
+  <% end %>
   <% if @sr.survey.company_id == current_user.company_id%>
     <button class='btn_link' link_to='<%=invite_survey_response_path(@sr)%>'>Resend Invite Email</button>
   <%end%>
@@ -74,6 +77,23 @@ var OCSR = (function() {
       } else {
         $("#btn_submit").hide();
       }
+    },
+    filter: function() {
+      var warnMsg = "Showing responses for: ";
+      $("div.question").hide();
+      $("input.r_filter:checked").each(function() {
+        var val =$(this).val();
+        var warnLbl = val.length > 0 ? val : "Not Rated";
+        $("div.question[rating='"+val+"']").slideDown();
+        warnMsg += warnLbl+", ";
+      });
+      if(warnMsg=="Showing responses for: ") {
+        $("#filter_warn").hide();
+      } else {
+        warnMsg = warnMsg.substr(0,warnMsg.length-2);
+        $("#filter_warn").html(warnMsg);
+        $("#filter_warn").show();
+      }
     }
   }
 })();
@@ -87,6 +107,15 @@ $(function() {
   });
   $("#btn_submit").click(function() {
     $("#s_confirm").dialog('open');
+  });
+  $("#s_rating_filter").dialog({autoOpen:false,title:"Filter Ratings",buttons:{
+    "Filter":function() {
+      OCSR.filter();
+      $("#s_rating_filter").dialog('close');
+    }
+  }});
+  $("#btn_filter").click(function() {
+    $("#s_rating_filter").dialog('open');
   });
   $("select.resp").change(function() {OCSR.updateResponseTrack();});
   $(".creq").keyup(function() {OCSR.contactCheck();});
@@ -144,6 +173,7 @@ textarea {
   background: none;
 }
 </style>
+<div id='filter_warn' class='c_warn' style='display:none;'></div>
 <%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
   <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> <%=( @rate_mode ? f.select(:rating, @sr.survey.rating_values, {:include_blank=>true}) : @sr.rating ) %></h1>
   <div id='contact'>
@@ -161,7 +191,7 @@ textarea {
   <%@sr.answers.each_with_index do |ans,a_idx|%>
     <%f.fields_for :answers, ans do |a|%>
       <%q = a.object.question%>
-      <div class='question' answered='<%=a.object.answered? ? "y" : "n"%>'>
+      <div class='question' answered='<%=a.object.answered? ? "y" : "n"%>' rating='<%=a.object.rating%>'>
         <div class='q_head'>Question #<%=q_idx%></div>
         <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
           <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
@@ -212,4 +242,12 @@ textarea {
   <p>Submitting this survey will lock all answers notify the survey owner.</p>
   <p>You will <span style='color:red'>NOT</span> be able to change your answers after clicking the Continue button below.</p>
   <p>Please click Continue to finish submitting or Cancel to go back..</p>
+</div>
+
+<div id='s_rating_filter' style='display:none;'>
+  <div>Select the ratings you want to see.</div>
+  <%@sr.survey.rating_values.each do |rv|%>
+    <input type='checkbox' value='<%=rv%>' class='r_filter' /> <%=rv%><br />
+  <%end%>
+    <input type='checkbox' value='' class='r_filter' /> Show Not Rated
 </div>

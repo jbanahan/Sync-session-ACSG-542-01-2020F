@@ -1,6 +1,17 @@
 require 'spec_helper'
 
 describe SurveyResponse do
+  describe :rated? do
+    it "should return true if there is a master rating" do
+      Factory(:survey_response,:rating=>'abc').should be_rated
+    end
+    it "should return false if there is no master rating or answers with ratings" do
+      Factory(:survey_response,:rating=>nil).should_not be_rated
+    end
+    it "should return true if any answers have ratings" do
+      Factory(:answer,:rating=>'abc').survey_response.should be_rated
+    end
+  end
   it "should require survey" do
     sr = SurveyResponse.new(:user=>Factory(:user))
     sr.save.should be_false
