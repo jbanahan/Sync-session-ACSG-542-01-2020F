@@ -314,6 +314,7 @@ OpenChain::Application.routes.draw do
       get 'show_assign'
       get 'toggle_subscription'
       post 'assign'
+      get 'copy'
     end
   end
   resources :survey_responses do

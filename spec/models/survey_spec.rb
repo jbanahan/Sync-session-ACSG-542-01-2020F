@@ -1,6 +1,43 @@
 require 'spec_helper'
 
 describe Survey do
+  describe :copy! do
+    before :each do 
+      @survey = Factory(:survey,:name=>"my name",:email_subject=>"emlsubj",:email_body=>"emlbod",:ratings_list=>"rat")
+    end
+    it 'should copy all questions with new ids' do
+      q1 = Factory(:question,:rank=>1,:survey_id=>@survey.id,:content=>'my question content 1',:choices=>"x",:warning=>true)
+      q2 = Factory(:question,:rank=>2,:survey_id=>@survey.id,:content=>'my question content 2')
+      q3 = Factory(:question,:rank=>3,:survey_id=>@survey.id,:content=>'my question content 3')
+      new_survey = @survey.copy!
+      new_survey.id.should > 0
+      new_survey.id.should_not == @survey.id
+      new_survey.company_id.should == @survey.company_id
+      new_survey.name.should == @survey.name
+      new_survey.email_subject.should == @survey.email_subject
+      new_survey.email_body.should == @survey.email_body
+      new_survey.ratings_list.should == @survey.ratings_list
+      new_survey.should have(3).questions
+      n1 = new_survey.questions.where(:rank=>1).first
+      n1.content.should == q1.content
+      n1.choices.should == q1.choices
+      n1.warning.should == q1.warning
+      new_survey.questions.where(:rank=>2).first.content.should == q2.content
+      new_survey.questions.where(:rank=>3).first.content.should == q3.content
+    end
+    it 'should not copy subscriptions' do
+      @survey.survey_subscriptions.create!(:user_id=>Factory(:user).id)
+      @survey.copy!.survey_subscriptions.should be_blank
+    end
+    it 'should not copy assigned users' do
+      @survey.generate_response! Factory(:user)
+      @survey.copy!.assigned_users.should be_blank
+    end
+    it 'should not copy responses' do
+      @survey.generate_response! Factory(:user)
+      @survey.copy!.survey_responses.should be_blank
+    end
+  end
   it 'should link to user' do
     u = Factory(:user)
     s = Factory(:survey,:created_by_id=>u.id)
