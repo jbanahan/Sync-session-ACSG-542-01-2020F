@@ -26,7 +26,8 @@ class CriterionOperator
     new("adf","_fn_ >= DATE_ADD(CURDATE(), INTERVAL ? DAY)","After _ Days From Now"),
     new("bdf","_fn_ < DATE_ADD(CURDATE(), INTERVAL ? DAY)","Before _ Days From Now"),
     new("nq","(_fn_ IS NULL OR NOT _fn_ = ?)","Not Equal To"),
-    new("in","(_fn_ IN (?))","One Of")
+    new("in","(_fn_ IN (?))","One Of"),
+    new("pm","(_fn_ >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -? MONTH) ,\"%Y-%m-01\") as DATE) and _fn_ < NOW() and NOT (MONTH(_fn_) = MONTH(NOW()) AND YEAR(_fn_) = YEAR(NOW())))","Previous _ Months")
   ]
   
   def self.find_by_key(key)

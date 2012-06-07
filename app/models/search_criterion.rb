@@ -35,7 +35,7 @@ class SearchCriterion < ActiveRecord::Base
     mf = find_model_field
     d = mf.data_type
 
-    nil_fails_operators = ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf"] #all of these operators should return false if value_to_test is nil
+    nil_fails_operators = ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf","pm"] #all of these operators should return false if value_to_test is nil
     return false if value_to_test.nil? && nil_fails_operators.include?(self.operator)
 
     return value_to_test.blank? if self.operator == "null" 
@@ -77,6 +77,10 @@ class SearchCriterion < ActiveRecord::Base
         return vt < self_val.days.from_now.to_date
       elsif self.operator == "nq"
         return vt.nil?  || vt!=self_val
+      elsif self.operator == "pm"
+        base_date = self_val.months.ago
+        base_date = Date.new(base_date.year,base_date.month,1)
+        return (vt < Time.now.to_date) && (vt >= base_date) && !(vt.month == 0.seconds.ago.month && vt.year == 0.seconds.ago.year)
       end
     elsif d == :boolean
       self_val = ["t","true","yes","y"].include?(self.value.downcase)

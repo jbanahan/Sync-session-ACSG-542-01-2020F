@@ -4,6 +4,82 @@ describe SearchCriterion do
   before :each do 
     @product = Factory(:product)
   end
+  context "previous _ months" do
+    describe :passes? do
+      before :each do
+        @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
+      end
+      it "should find something from the last month with val = 1" do
+        @sc.passes?(1.month.ago).should be_true
+      end
+      it "should not find something from this month" do
+        @sc.passes?(1.second.ago).should be_false
+      end
+      it "should find something from last month with val = 2" do
+        @sc.value = 2
+        @sc.passes?(1.month.ago).should be_true
+      end
+      it "should find something from 2 months ago with val = 2" do
+        @sc.value = 2
+        @sc.passes?(2.months.ago).should be_true
+      end
+      it "should not find something from 2 months ago with val = 1" do
+        @sc.value = 1
+        @sc.passes?(2.months.ago).should be_false
+      end
+      it "should not find a date in the future" do
+        @sc.passes?(1.month.from_now).should be_false
+      end
+      it "should be false for nil" do
+        @sc.passes?(nil).should be_false
+      end
+    end
+    describe :apply do
+      context :custom_field do
+        it "should find something created last month with val = 1" do
+          @definition = Factory(:custom_definition,:data_type=>'date')
+          @product.update_custom_value! @definition, 1.month.ago
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"pm",:value=>1)
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+      end
+      context :normal_field do
+        it "should find something created last month with val = 1" do
+          @product.update_attributes(:created_at=>1.month.ago)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+        it "should not find something created in the future" do
+          @product.update_attributes(:created_at=>1.month.from_now)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
+          v = sc.apply(Product.where("1=1"))
+          v.all.should_not include @product
+        end
+        it "should not find something created this month with val = 1" do
+          @product.update_attributes(:created_at=>0.seconds.ago)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
+          sc.apply(Product.where("1=1")).all.should_not include @product
+        end
+        it "should not find something created two months ago with val = 1" do
+          @product.update_attributes(:created_at=>2.months.ago)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
+          sc.apply(Product.where("1=1")).all.should_not include @product
+        end
+        it "should find something created last month with val = 2" do
+          @product.update_attributes(:created_at=>1.month.ago)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
+          sc.apply(Product.where("1=1")).all.should include @product
+        end
+        it "should find something created two months ago with val 2" do
+          @product.update_attributes(:created_at=>2.months.ago)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
+          sc.apply(Product.where("1=1")).all.should include @product
+        end
+      end
+    end
+  end
   context 'boolean custom field' do
     before :each do
       @definition = Factory(:custom_definition,:data_type=>'boolean')

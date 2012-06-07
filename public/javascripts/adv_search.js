@@ -141,6 +141,7 @@ var OCSearch = (function() {
         h += "<option value='ada'>After _ Days Ago</option>";
         h += "<option value='bdf'>Before _ Days From Now</option>";
         h += "<option value='adf'>After _ Days From Now</option>";
+        h += "<option value='pm'>Previous _ Months</option>";
       }
       if(dt=="integer" || dt=="decimal" || dt=="fixnum") {
         h += "<option value='eq'>Equals</option>";
@@ -180,6 +181,7 @@ var OCSearch = (function() {
       adf:relDateVal,
       bda:relDateVal,
       bdf:relDateVal,
+      pm:relDateVal,
       'null':function(f) {f.hide();},
       'notnull':function(f) {f.hide()}
     }
