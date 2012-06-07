@@ -109,7 +109,7 @@ describe SearchSchedule do
         @ss.day_of_month = target_day
         @ss.run_hour = target_hour
         @ss.next_run_time.hour.should == now.utc.hour + 1
-        @ss.next_run_time.day.should == target_day
+        @ss.next_run_time.in_time_zone(tz_str).day.should == target_day
         @ss.next_run_time.should > Time.now 
       end
     end
