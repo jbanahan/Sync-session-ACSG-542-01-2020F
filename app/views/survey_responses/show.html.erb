@@ -175,7 +175,12 @@ textarea {
 </style>
 <div id='filter_warn' class='c_warn' style='display:none;'></div>
 <%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
-  <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> <%=( @rate_mode ? f.select(:rating, @sr.survey.rating_values, {:include_blank=>true}) : @sr.rating ) %></h1>
+  <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> </h1>
+  <%if @rate_mode %> 
+    <%=f.select(:rating, @sr.survey.rating_values, {:include_blank=>true})%>
+  <%elsif @sr.rating %>
+    <h2>Rating: <%=@sr.rating%></h2>
+  <%end%>
   <div id='contact'>
     <div class='q_head'>Contact Information</div>
     <table>
