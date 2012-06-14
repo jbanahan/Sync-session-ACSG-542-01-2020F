@@ -12,6 +12,15 @@ class Survey < ActiveRecord::Base
   accepts_nested_attributes_for :questions, :allow_destroy => true,
     :reject_if => lambda {|q| q[:content].blank? && q[:_destroy].blank?}
 
+  #copies and saves a new survey
+  #only copies survey & questions; not subscribers, assigned users, or responses
+  def copy!
+    s = Survey.create!(:company_id=>self.company_id,:name=>self.name,:email_subject=>self.email_subject,:email_body=>self.email_body,:ratings_list=>self.ratings_list)
+    self.questions.each do |q|
+      s.questions.create!(:rank=>q.rank,:content=>q.content,:choices=>q.choices,:warning=>q.warning)
+    end
+    s
+  end
   def locked?
     self.survey_responses.count!=0
   end

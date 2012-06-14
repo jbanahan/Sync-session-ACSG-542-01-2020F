@@ -34,6 +34,14 @@ class SurveysController < ApplicationController
     end
     @survey = s
   end
+  def copy
+    s = Survey.find params[:id]
+    if !s.can_edit? current_user
+      error_redirect "You cannot copy this survey"
+    else
+      redirect_to edit_survey_path(s.copy!)
+    end
+  end
   def update
     #inject false warnings where not submitted
     if params[:survey] && params[:survey][:questions_attributes]

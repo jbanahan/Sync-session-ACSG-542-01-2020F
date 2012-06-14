@@ -2,6 +2,12 @@
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <%end%>
 <%content_for :javascript do%>
+  $(function() {
+    $("#mod_copy").dialog({autoOpen:false,title:"Confirm Copy",buttons:{
+      "OK":function() {window.location="/surveys/<%=@survey.id%>/copy"},"Cancel":function() {$("#mod_copy").dialog('close');}
+    }}); 
+    $("#btn_cpy").click(function() {$("#mod_copy").dialog('open');});
+  });
   google.load('visualization', '1.0', {'packages':['corechart']});
   var respC = function drawChart() {
 
@@ -47,6 +53,9 @@
       <%= @survey.survey_subscriptions.where(:user_id => current_user).empty? ? "Subscribe" : "Unsubscribe" %>
     </button>
   <% end %>
+  <% if @survey.can_edit?(current_user)%>
+    <button id='btn_cpy'>Copy Survey</button>
+  <% end %>
 <%end%>
 <h1><%=@survey.name%></h1>
 
@@ -89,3 +98,7 @@
   </tbody>
 </table>
 
+<div id='mod_copy' style='display:none;'>
+  <p><em>Are you sure you want to make a new version of this survey?</em></p>
+  <p>If you are trying to issue the survey to a user, use the Assign button instead.</p>
+</div>

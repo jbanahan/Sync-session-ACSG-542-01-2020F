@@ -36,7 +36,7 @@ class SurveyResponse < ActiveRecord::Base
   end
 
   def notify_subscribers
-    OpenMailer.send_survey_update(self).deliver!
+    OpenMailer.send_survey_subscription_update(self).deliver! unless self.survey.survey_subscriptions.blank?
   end
 
   def send_notification
