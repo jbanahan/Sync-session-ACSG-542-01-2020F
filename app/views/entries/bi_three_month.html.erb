@@ -1,0 +1,106 @@
+<%content_for :head_tags do%>
+  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<%end%>
+<%content_for :javascript do%>
+  google.load('visualization', '1.0', {'packages':['corechart','table']});
+  var entrySummCharts = function drawChart() { 
+    var currencyFormat = new google.visualization.NumberFormat(
+      {negativeColor: 'red', pattern:'$#,###;($#,###)'});
+    var data = new google.visualization.DataTable();
+    data.addColumn('string', 'Port Code');
+    data.addColumn('string', 'Month');
+    data.addColumn('number', 'Entry Count');
+    data.addColumn('number', 'Entered Value');
+    data.addColumn('number', 'Total Duty');
+    data.addRows([
+      <%te_size = @total_entries.size%>
+      <%@total_entries.each_with_index do |row,i|%>
+      ['<%=row[0]%>', '<%=row[1]%>', <%=row[2]%>, <%=row[3]%>, <%=row[4]%> ]<%=i==te_size-1 ? "" : ","%>
+      <%end%>
+    ]);
+
+    var monthGroupedData = google.visualization.data.group(
+      data, [1],
+      [
+        {'column': 2, 'aggregation': google.visualization.data.sum, 'type': 'number'},
+        {'column': 3, 'aggregation': google.visualization.data.sum, 'type': 'number'},
+        {'column': 4, 'aggregation': google.visualization.data.sum, 'type': 'number'},
+      ]);
+    currencyFormat.format(monthGroupedData, 2); 
+    currencyFormat.format(monthGroupedData, 3); 
+
+    var portGroupedData = google.visualization.data.group(
+      data, [0],
+      [
+        {'column': 2, 'aggregation': google.visualization.data.sum, 'type': 'number'},
+        {'column': 3, 'aggregation': google.visualization.data.sum, 'type': 'number'},
+        {'column': 4, 'aggregation': google.visualization.data.sum, 'type': 'number'},
+      ]);
+    currencyFormat.format(portGroupedData, 2); 
+    currencyFormat.format(portGroupedData, 3); 
+
+    var entSummView = new google.visualization.DataView(monthGroupedData);
+    entSummView.setColumns([0,1]);
+    new google.visualization.ColumnChart(document.getElementById('ent_summ_chart')).draw(
+      entSummView,
+      {title:"Entry Summary",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'}}
+    );
+    
+    var entEnteredValView = new google.visualization.DataView(monthGroupedData);
+    entEnteredValView.setColumns([0,2]);
+    new google.visualization.ColumnChart(document.getElementById('ent_entered_val_chart')).draw(
+      entEnteredValView,
+      {title:"Entered Value",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###"}}
+    );
+
+    var entDutyValView = new google.visualization.DataView(monthGroupedData);
+    entDutyValView.setColumns([0,3]);
+    new google.visualization.ColumnChart(document.getElementById('ent_duty_val_chart')).draw(
+      entDutyValView,
+      {title:"Duty Values",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###"}}
+    );
+    new google.visualization.Table(document.getElementById('ent_summ_tbl')).draw(
+      monthGroupedData,
+      {allowHtml:true}
+    );
+
+    var portSummView = new google.visualization.DataView(portGroupedData);
+    portSummView.setColumns([0,1]);
+    new google.visualization.PieChart(document.getElementById('port_summ_chart')).draw(
+      portSummView,
+      {title:"Entry Count"}
+    );
+    
+    var portEnteredValView = new google.visualization.DataView(portGroupedData);
+    portEnteredValView.setColumns([0,2]);
+    new google.visualization.PieChart(document.getElementById('port_entered_val_chart')).draw(
+      portEnteredValView,
+      {title:"Entered Value"}
+    );
+
+    var portDutyValView = new google.visualization.DataView(portGroupedData);
+    portDutyValView.setColumns([0,3]);
+    new google.visualization.PieChart(document.getElementById('port_duty_val_chart')).draw(
+      portDutyValView,
+      {title:"Duty Values"}
+    );
+    new google.visualization.Table(document.getElementById('port_summ_tbl')).draw(
+      portGroupedData,
+      {allowHtml:true}
+    );
+  }
+  google.setOnLoadCallback(entrySummCharts);
+<%end%>
+<%=render :partial=>'bi_nav', :locals=>{:selected_search=>@selected_search}%>
+<table class='detail_table'>
+  <thead><tr><th width="50%" style='text-align:center;'>By Month</th><th width="50%" style='text-align:center;'>By Port</th></tr></thead>
+  <tbody>
+    <tr><td><div id='ent_summ_chart'></div></td><td><div id='port_summ_chart'></div></td></tr>
+    <tr><td><div id='ent_entered_val_chart'></div></td><td><div id='port_entered_val_chart'></div></td></tr>
+    <tr><td><div id='ent_duty_val_chart'></div></td><td><div id='port_duty_val_chart'></div></td></tr>
+  </tbody>
+</table>
+<h2>Entries By Month</h2>
+<div id='ent_summ_tbl' style='width:95%'></div>
+<h2>Entries By Port</h2>
+<div id='port_summ_tbl' style='width:95%'></div>

@@ -34,7 +34,12 @@ class Entry < ActiveRecord::Base
   end
 
   def self.search_secure user, base_object
-    user.company.master? ?  base_object.where("1=1") : base_object.where("entries.importer_id = ? or entries.importer_id IN (select child_id from linked_companies where parent_id = ?)",user.company_id,user.company_id)
+    base_object.where(Entry.search_where(user))
+  end
+
+  # where clause for search secure
+  def self.search_where user
+    user.company.master? ?  "1=1" : "entries.importer_id = #{user.company_id} or entries.importer_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
   end
 
   #get the S3 path for the last file used to update this entry (if one exists)

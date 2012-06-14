@@ -6,7 +6,11 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  match "/entries/bi" => "entries#bi_three_month", :via=>:get
+  match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
+  match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
   resources :entries, :only => [:index,:show]
+  
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
   resources :commercial_invoice_maps, :only=>[:index] do

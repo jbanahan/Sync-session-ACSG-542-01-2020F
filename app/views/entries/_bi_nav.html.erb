@@ -1,0 +1,15 @@
+<%content_for :javascript do%>
+  $(function() {
+    $("#sel_searches").change(function() {
+      window.location = $(this).val();
+    });
+  });
+<%end%>
+<div>
+  <select id='sel_searches'>
+    <option value='/entries/bi/three_month?country=US' <%=selected_search=="/entries/bi/three_month?country=US" ? "selected='selected'" : ""%>>Entry Snapshot (US)</option>
+    <option value='/entries/bi/three_month?country=CA' <%=selected_search=="/entries/bi/three_month?country=CA" ? "selected='selected'" : ""%>>Entry Snapshot (Canada)</option>
+    <option value='/entries/bi/three_month_hts?country=US' <%=selected_search=="/entries/bi/three_month_hts?country=US" ? "selected='selected'" : ""%>>HTS Snapshot (US)</option>
+    <option value='/entries/bi/three_month_hts?country=CA' <%=selected_search=="/entries/bi/three_month_hts?country=CA" ? "selected='selected'" : ""%>>HTS Snapshot (Canada)</option>
+  </select>
+</div>

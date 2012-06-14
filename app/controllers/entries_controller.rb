@@ -17,4 +17,35 @@ class EntriesController < ApplicationController
       end
     }
   end
+
+  # business intelligence view
+  def bi_three_month
+    if current_user.view_entries? 
+      @selected_search = "/entries/bi/three_month?country=#{params[:country]=="CA" ? "CA" : "US"}"
+      date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
+      country_iso = params[:country]=="CA" ? "CA" : "US"
+      where_clause = "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
+      where_clause << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and " << Entry.search_where(current_user)
+      qry = "SELECT entries.entry_port_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Entries\", sum(entries.entered_value) as \"Entered Value\", sum(entries.total_duty) as \"Total Duty\" FROM entries "+where_clause+" group by DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), entries.entry_port_code;"
+      @total_entries = Entry.connection.execute qry
+      render :layout=>'one_col' 
+    else
+      error_redirect "You do not have permission to view entries."
+    end
+  end
+  def bi_three_month_hts
+    if current_user.view_entries? 
+      @selected_search = "/entries/bi/three_month_hts?country=#{params[:country]=="CA" ? "CA" : "US"}"
+      date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
+      country_iso = params[:country]=="CA" ? "CA" : "US"
+      qry = "select commercial_invoice_tariffs.hts_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Lines\", sum(commercial_invoice_tariffs.entered_value), sum(commercial_invoice_tariffs.duty_amount) from entries inner join commercial_invoices on entries.id = commercial_invoices.entry_id inner join commercial_invoice_lines on commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id inner join commercial_invoice_tariffs on commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id "
+      qry << "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
+      qry << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and " << Entry.search_where(current_user)
+      qry << " GROUP BY DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), commercial_invoice_tariffs.hts_code"
+      @total_entries = Entry.connection.execute qry
+      render :layout=>'one_col' 
+    else
+      error_redirect "You do not have permission to view entries."
+    end
+  end
 end

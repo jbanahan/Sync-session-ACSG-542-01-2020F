@@ -36,7 +36,7 @@ $(function() {
   <%=field_row "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
   <%=field_row "Custom Features", f.text_area(:custom_features)%>
   <% ss = ScheduleServer.first %>
-  <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})"%>
+  <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})" unless ss.nil?%>
   <%=field_row "Target Version", @ms.target_version%>
   <%=field_row "Server With Migration Lock", @ms.migration_host%>
   <%=field_row "Request Host (with port)", f.text_field(:request_host) %>
