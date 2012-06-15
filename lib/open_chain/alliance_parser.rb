@@ -19,6 +19,7 @@ module OpenChain
       '92007'=>:isf_sent_date,
       '92008'=>:isf_accepted_date,
       '00003'=>:docs_received_date,
+      '00098'=>:docs_received_date, #both 00003 and 00098 are docs received for different customers
       '00024'=>:trucker_called_date,
       '00052'=>:free_date,
       '00085'=>:edi_received_date

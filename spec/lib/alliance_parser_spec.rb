@@ -25,6 +25,8 @@ describe OpenChain::AllianceParser do
     @fda_release_str = "201203170614"
     @fda_review_str = "201203151621"
     @fda_transmit_str = "201203141421"
+    @docs_rec_str = "201204141421"
+    @docs_rec2_str = @docs_rec_str #this will be an override tested later
     @total_packages = 88
     @total_fees = BigDecimal("999.88",2)
     @total_duty = BigDecimal("55.27",2)
@@ -73,6 +75,8 @@ describe OpenChain::AllianceParser do
       r << "SD0000020#{@fda_release_str}201203230637F&D Rel Food & Drug Release                                         "
       r << "SD0093002#{@fda_review_str}201203181105FDA Rev FDA Review                                                  "
       r << "SD0000108#{@fda_transmit_str}201203161906FDA Cus FDA to Customs                                              "
+      r << "SD0000003#{@docs_rec_str}                                                                                "
+      r << "SD0000098#{@docs_rec2_str}                                                                                "
       r << "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       r << "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       r << "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
@@ -281,6 +285,7 @@ describe OpenChain::AllianceParser do
     ent.fda_release_date.should == @est.parse(@fda_release_str)
     ent.fda_review_date.should == @est.parse(@fda_review_str)
     ent.fda_transmit_date.should == @est.parse(@fda_transmit_str)
+    ent.docs_received_date.should == @est.parse(@docs_rec_str)
     ent.release_cert_message.should == @release_cert_message
     ent.fda_message == @fda_message
     ent.duty_due_date.strftime("%Y%m%d").should == @duty_due_date_str
@@ -400,6 +405,12 @@ describe OpenChain::AllianceParser do
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
+  end
+
+  it 'code 00098 should override 00003 if it comes second in file' do
+    @docs_rec2_str = "201206131121"
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    Entry.find_by_broker_reference(@ref_num).docs_received_date.should == @est.parse(@docs_rec2_str)
   end
 
   it 'should only update entries with Alliance as source' do
