@@ -562,7 +562,7 @@ function hideColumn(col) {
     hiddenColumnsCookie += ";" + col;
     $.cookie("hiddenColumns", hiddenColumnsCookie);
   }
-  $('td:nth-child(' + col + '),th:nth-child(' + col + ')').fadeOut();
+  $('#result_table td:nth-child(' + col + '),th:nth-child(' + col + ')').fadeOut();
   updateShowAllColumnsLink();
 }
 
@@ -573,9 +573,9 @@ function processHiddenColumns(showAllColumns) {
 
     for (var i=0; i < cols.length; ++i) {
       if (true == showAllColumns) {
-        $('td:nth-child(' + cols[i] + '),th:nth-child(' + cols[i] + ')').fadeIn();
+        $('#result_table td:nth-child(' + cols[i] + '),th:nth-child(' + cols[i] + ')').fadeIn();
       } else {
-       $('td:nth-child(' + cols[i] + '),th:nth-child(' + cols[i] + ')').fadeOut();
+       $('#result_table td:nth-child(' + cols[i] + '),th:nth-child(' + cols[i] + ')').fadeOut();
       }
     };
 
