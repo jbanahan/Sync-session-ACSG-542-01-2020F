@@ -103,6 +103,7 @@ describe OpenChain::FenixParser do
     ent.total_duty.should == @duty_amount
     ent.time_to_process.should be > 0
     ent.source_system.should == OpenChain::FenixParser::SOURCE_CODE
+    ent.entered_value.should == @entered_value
 
     #commercial invoice header
     ent.commercial_invoices.should have(1).invoice
@@ -227,13 +228,20 @@ describe OpenChain::FenixParser do
           @comm_qty = inv[:cq] if inv[:cq]
           @line_value = inv[:line_val] if inv[:line_val]
           @duty_amount = inv[:duty] if inv[:duty]
+          @entered_value = inv[:entered_value] if inv[:entered_value]
           data += @entry_lambda.call+"\r\n"
         end
         data.strip
       }  
       
     end
-    it 'should save an entry with multiple invoices' do
+    it 'should total entered value' do
+      @invoices[0][:entered_value]=1
+      @invoices[1][:entered_value]=2
+      OpenChain::FenixParser.parse @multi_line_lambda.call
+      Entry.find_by_broker_reference(@file_number).entered_value.should == 3
+    end
+    it 'should save an entry with multiple invoices' do 
       OpenChain::FenixParser.parse @multi_line_lambda.call
       entries = Entry.where(:broker_reference=>@file_number)
       entries.should have(1).entry

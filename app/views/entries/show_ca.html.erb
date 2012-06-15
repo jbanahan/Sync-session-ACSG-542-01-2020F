@@ -34,7 +34,7 @@
         <table>
           <%[:ent_entry_num,:ent_brok_ref,:ent_importer_tax_id,:ent_cargo_control_number,
           :ent_ca_entry_type,:ent_po_numbers,:ent_mbols,:ent_container_nums,
-          :ent_vendor_names,:ent_total_units,:ent_total_invoiced_value,:ent_total_duty].each do |f|%>
+          :ent_vendor_names,:ent_total_units,:ent_total_invoiced_value,:ent_entered_value,:ent_total_duty].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>

@@ -38,6 +38,7 @@ module OpenChain
     def parse_entry lines, s3_bucket = nil, s3_path = nil
       start_time = Time.now
       @total_units = BigDecimal('0.00')
+      @total_entered_value = BigDecimal('0.00')
       #get header info from first line
       process_header lines.first
       lines.each do |x| 
@@ -58,6 +59,7 @@ module OpenChain
       @entry.export_country_codes = accumulated_string(:exp_country)
       @entry.export_state_codes = accumulated_string(:exp_state)
       @entry.vendor_names = accumulated_string(:vend)
+      @entry.entered_value = @total_entered_value
 
       @commercial_invoices.each do |inv_num, inv|
         inv.invoice_value = @ci_invoice_val[inv_num]
@@ -167,6 +169,7 @@ module OpenChain
       t.classification_uom_1 = str_val(line[32]) 
       t.value_for_duty_code = str_val(line[33])
       t.entered_value = dec_val(line[45])
+      @total_entered_value += t.entered_value if t.entered_value
       t.duty_amount = dec_val(line[47])
       @total_duty ||= BigDecimal('0.00')
       @total_duty += t.duty_amount if t.duty_amount
