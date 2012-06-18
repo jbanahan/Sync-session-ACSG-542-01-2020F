@@ -53,12 +53,12 @@ describe ImportedFile do
         @xlc.should_receive(:set_cell).with(0,2,0,p3.name)
         @imported_file.make_updated_file
       end
-      it 'should clear non-key fields when product missing' do
+      it 'should not clear fields when product missing' do
         missing_value = "missing val"
         ["prod_name","prod_uid"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
         @xlc.should_receive(:last_row_number).and_return(0)
         @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname1","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>missing_value,"datatype"=>"string"}}])
-        @xlc.should_receive(:set_cell).with(0,0,0,"")
+        @xlc.should_not_receive(:set_cell).with(0,0,0,"")
         @imported_file.make_updated_file
       end
       it 'should update custom values' do
@@ -120,16 +120,6 @@ describe ImportedFile do
                                                             {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
                                                             {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
         @xlc.should_receive(:set_cell).with(0,0,3,"1234567890".hts_format)
-        @imported_file.make_updated_file
-      end
-      it 'should handle products alone, even with child fields' do
-        ["prod_uid","class_cntry_iso","hts_line_number","hts_hts_1"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
-        @xlc.should_receive(:last_row_number).and_return(0)
-        @xlc.should_receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>'X',"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>'US',"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>'1',"datatype"=>"number"}},
-                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        @xlc.should_receive(:set_cell).with(0,0,3,"")
         @imported_file.make_updated_file
       end
       it 'should add extra countries' do
