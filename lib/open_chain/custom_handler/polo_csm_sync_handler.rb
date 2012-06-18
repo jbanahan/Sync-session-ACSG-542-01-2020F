@@ -13,15 +13,14 @@ module OpenChain
         last_row = xlc.last_row_number(0)
         (1..last_row).each do |n|
           matched = 'not matched'
-          style = xlc.get_cell(0, n, 9)['cell']['value']
+          style = xlc.get_cell(0, n, 8)['cell']['value']
           next if style.blank?
           style.strip!
           style = style[0,style.size-2] if style.end_with? '.0' #fix accidental numerics
           p = Product.find_by_unique_identifier style
           if !p.blank?
             raise "User does not have permission to edit product #{p.unique_identifier}" unless p.can_edit? user
-            csm_number = xlc.get_cell(0, n, 5)['cell']['value']
-            csm_number = csm_number[0,csm_number.size-2] if csm_number.end_with? '.0' #fix accidental numerics
+            csm_number = string_val(xlc,0,n,2) + string_val(xlc,0,n,3) + string_val(xlc,0,n,4)
             p.update_custom_value! @csm_cd, csm_number
             p.create_snapshot user
             matched = 'matched'
@@ -30,6 +29,13 @@ module OpenChain
         end
         xlc.save
         user.messages.create(:subject=>"CSM Sync Complete",:body=>"Your CSM Sync job has completed.  You can download the updated file <a href='/custom_features/csm_sync'>here</a>.")
+      end
+      private
+      def string_val xlc, sheet, row, cell
+        r = xlc.get_cell(sheet,row,cell)['cell']['value']
+        return r if r.nil?
+        r = r[0,r.size-2] if r.end_with? '.0' #fix numerics
+        r
       end
     end
   end
