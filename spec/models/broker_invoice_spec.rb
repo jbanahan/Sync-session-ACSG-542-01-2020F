@@ -59,5 +59,30 @@ describe BrokerInvoice do
       u.company.update_attributes(:master=>true)
       @inv.can_view?(u).should be_true
     end
+    it "should be editable with permission and view permission" do
+      @inv.stub(:can_view?).and_return(true)
+      u = User.new
+      u.stub(:edit_broker_invoices?).and_return true
+      @inv.can_edit?(u).should be_true
+    end
+    it "should not be editable without view permission" do
+      @inv.stub(:can_view?).and_return(false)
+      u = User.new
+      u.stub(:edit_broker_invoices?).and_return true
+      @inv.can_edit?(u).should be_false
+    end
+    it "should not be editable without edit permission" do
+      @inv.stub(:can_view?).and_return(true)
+      u = User.new
+      u.stub(:edit_broker_invoices?).and_return false
+      @inv.can_edit?(u).should be_false
+    end
+    it "should not be editable if locked" do
+      @inv.stub(:can_view?).and_return(true)
+      u = User.new
+      u.stub(:edit_broker_invoices?).and_return true
+      @inv.locked = true
+      @inv.can_edit?(u).should be_false
+    end
   end
 end

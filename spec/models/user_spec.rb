@@ -2,6 +2,38 @@ require 'spec_helper'
 
 describe User do
   context "permissions" do
+    context "broker invoice" do
+      context "with company permission" do
+        before :each do 
+          Company.any_instance.stub(:edit_broker_invoices?).and_return(true)
+          Company.any_instance.stub(:view_broker_invoices?).and_return(true)
+        end
+        it "should allow view if permission is set" do
+          Factory(:user,:broker_invoice_view=>true).view_broker_invoices?.should be_true
+        end
+        it "should allow edit if permission is set" do
+          Factory(:user,:broker_invoice_edit=>true).edit_broker_invoices?.should be_true
+        end
+        it "should not allow view without permission" do
+          Factory(:user,:broker_invoice_view=>false).view_broker_invoices?.should be_false
+        end
+        it "should not allow edit without permission" do
+          Factory(:user,:broker_invoice_edit=>false).edit_broker_invoices?.should be_false
+        end
+      end
+      context "without company permission" do
+        before :each do
+          Company.any_instance.stub(:edit_broker_invoices?).and_return(false)
+          Company.any_instance.stub(:view_broker_invoices?).and_return(false)
+        end
+        it "should not allow view even if permission is set" do
+          Factory(:user,:broker_invoice_view=>true).view_broker_invoices?.should be_false
+        end
+        it "should not allow edit even if permission is set" do
+          Factory(:user,:broker_invoice_edit=>true).edit_broker_invoices?.should be_false
+        end
+      end
+    end
     context "survey" do
       it "should pass view_surveys?" do
         User.new(:survey_view=>true).view_surveys?.should be_true

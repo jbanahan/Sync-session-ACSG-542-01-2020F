@@ -7,6 +7,10 @@ class BrokerInvoice < ActiveRecord::Base
   def can_view? user
     user.view_broker_invoices? && (user.company.master? || (self.entry && ( self.entry.importer_id==user.company_id || user.company.linked_companies.include?(self.entry.importer))))
   end
+  
+  def can_edit? user
+    !self.locked? && can_view?(user) && user.edit_broker_invoices?
+  end
 
   def self.search_secure user, base_object
     Entry.search_secure user, base_object.includes(:entry)
