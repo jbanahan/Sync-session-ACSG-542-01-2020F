@@ -99,7 +99,7 @@ class SearchSetup < ActiveRecord::Base
   #
   # If a true parameter is provided, everything in the tree will be saved to the database.
   def deep_copy(new_name, save_obj=false) 
-    ss = SearchSetup.new(:name => new_name, :module_type => self.module_type, :user => self.user, :simple => self.simple, :download_format => self.download_format)
+    ss = SearchSetup.new(:name => new_name, :module_type => self.module_type, :user => self.user, :simple => self.simple, :download_format => self.download_format, :include_links=>self.include_links)
     ss.save if save_obj
     self.search_criterions.each do |sc|
       new_sc = ss.search_criterions.build(:operator => sc.operator, :value => sc.value,  

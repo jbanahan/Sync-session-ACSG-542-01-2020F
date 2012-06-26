@@ -189,6 +189,7 @@ $(function() {
       <div id='setup_cont'>
         Name: <%=f.text_field :name, "id"=>"current_name" %><br />
         Download Format: <%=f.select :download_format, ["xls","csv"] %><br />
+        Include Links In Download: <%=f.check_box :include_links %><br />
         <%=f.hidden_field :module_type %>
       </div>
       <div id='params_cont'>
