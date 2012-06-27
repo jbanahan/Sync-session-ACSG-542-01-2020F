@@ -668,6 +668,20 @@ var OCSurvey = (function() {
     }
   }
 })();
+var OCInvoice = (function() {
+  return {
+    addInvoiceLine: function(parentTable) {
+      var mt = new Date().getTime();
+      var namePre = "broker_invoice[broker_invoice_lines_attributes]["+mt+"]"; 
+      var h = "<tr><td><input type='text' size='5' class='inv_det_fld' name='"+namePre+"[charge_code]'/></td>";
+      h+="<td><input type='text' size='30' class='inv_det_fld' name='"+namePre+"[charge_description]'/></td>";
+      h+= "<td><input type='text' size='30' class='inv_det_fld decimal' name='"+namePre+"[charge_amount]'/></td>";
+      h+= "<td><a href='#' class='inv_det_del'><img src='/images/x.png' alt='delete'/></a></td></tr>";
+      $(parentTable+" tbody").append(h);
+      $(".decimal").jStepper();
+    }
+  }
+})();
 $( function() {
     $("a.click_sink").live('click',function(evt) {evt.preventDefault();});
     OpenChain.init(OpenChain.user_id);

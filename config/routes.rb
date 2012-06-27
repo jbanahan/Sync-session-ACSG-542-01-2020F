@@ -9,7 +9,9 @@ OpenChain::Application.routes.draw do
   match "/entries/bi" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
-  resources :entries, :only => [:index,:show]
+  resources :entries, :only => [:index,:show] do
+    resources :broker_invoices, :only=>[:create]
+  end
   
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
@@ -326,5 +328,6 @@ OpenChain::Application.routes.draw do
     resources :survey_response_logs, :only=>[:index]
   end
   resources :error_log_entries, :only => [:index, :show]
+  resources :charge_codes, :only => [:index, :update, :create, :destroy]
   root :to => "dashboard_widgets#index"
 end

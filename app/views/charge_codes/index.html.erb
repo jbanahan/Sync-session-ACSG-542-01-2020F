@@ -1,0 +1,49 @@
+<%content_for :javascript do%>
+  $(function() {
+    $("#mod_add_code").dialog({autoOpen:false,buttons:{'Save':function() {$("#frm_new").submit();},'Cancel':function() {$("#mod_add_code").dialog('close');}}});
+    $("#btn_add").click(function() {$("#mod_add_code").dialog('open');});
+
+    $("#mod_update_code").dialog({autoOpen:false,buttons:{'Save':function() {$("#frm_upd").submit();},'Cancel':function() {$("#mod_update_code").dialog('close');}}});
+    $("a.edit_lnk").click(function() {
+      $("#frm_upd").attr('action',"/charge_codes/"+$(this).attr('code_id'));
+      $("#upd_code").val($(this).attr('code_code'));
+      $("#upd_desc").val($(this).attr('code_desc'));
+      $("#upd_hst").attr('selected',($(this).attr('code_hst')=="true" ? 'selected' : ''));
+      $("#mod_update_code").dialog('open');
+    });
+  });
+<%end%>
+<%content_for :action_bar do%>
+  <button id='btn_add'>Add</button>
+<%end%>
+<h2>Charge Codes</h2>
+<table class='detail_table'>
+  <thead><tr><th>&nbsp;</th><th>Code</th><th>Description</th><th>HST Applies</th></tr></thead>
+  <tbody>
+<%@charge_codes.each do |c|%>
+    <tr><td><a href='#' class='edit_lnk' code_id='<%=c.id%>' code_code='<%=c.code%>' code_desc='<%=c.description%>' code_hst='<%=c.apply_hst? ? "true" : "false"%>'>Edit</a></td><td><%=c.code%></td><td><%=c.description%></td><td><%=c.apply_hst?%></td></tr>
+<%end%>
+  </tbody>
+</table>
+
+<div id='mod_add_code' style='display:none;'>
+  <%form_for ChargeCode.new, :html=>{:id=>'frm_new'} do |f|%>
+    <table>
+      <%=field_row "Code", f.text_field(:code)%>
+      <%=field_row "Description", f.text_field(:description)%>
+      <%=field_row "HST?", f.check_box(:apply_hst)%>
+    </table>
+  <%end%>
+</div>
+
+<%if !@charge_codes.empty?%>
+  <div id='mod_update_code' style='display:none;'>
+    <%form_for @charge_codes.first, :html=>{:id=>'frm_upd'} do |f|%>
+      <table>
+        <%=field_row "Code", f.text_field(:code,:id=>'upd_code')%>
+        <%=field_row "Description", f.text_field(:description,:id=>'upd_desc')%>
+        <%=field_row "HST?", f.check_box(:apply_hst,:id=>'upd_hst')%>
+      </table>
+    <%end%>
+  </div>
+<%end%>

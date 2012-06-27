@@ -1,14 +1,23 @@
 require 'spec_helper'
 
 describe BrokerInvoice do
-  before :each do
-    MasterSetup.get.update_attributes(:broker_invoice_enabled=>true)
-    @importer = Factory(:company,:importer=>true)
-    @importer_user = Factory(:user,:company_id=>@importer.id,:broker_invoice_view=>true)
-    @entry = Factory(:entry,:importer_id=>@importer.id)
-    @inv = Factory(:broker_invoice,:entry_id=>@entry.id)
+  context 'currency' do
+    it "should default currency to USD" do
+      bi = BrokerInvoice.create!
+      bi.currency.should == "USD"
+    end
+    it "should leave existing currency alone" do
+      BrokerInvoice.create!(:currency=>"CAD").currency.should == "CAD"
+    end
   end
   context 'security' do
+    before :each do
+      MasterSetup.get.update_attributes(:broker_invoice_enabled=>true)
+      @importer = Factory(:company,:importer=>true)
+      @importer_user = Factory(:user,:company_id=>@importer.id,:broker_invoice_view=>true)
+      @entry = Factory(:entry,:importer_id=>@importer.id)
+      @inv = Factory(:broker_invoice,:entry_id=>@entry.id)
+    end
     context 'search secure' do
       before :each do
         entry_2 = Factory(:entry,:importer_id=>Factory(:company,:importer=>true).id)
