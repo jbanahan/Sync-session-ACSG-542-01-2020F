@@ -18,14 +18,16 @@ class BrokerInvoicesController < ApplicationController
     elsif !current_user.edit_broker_invoices?
       error_redirect "You do not have permission to edit invoices."
     else
-      bi = ent.broker_invoices.create(params[:broker_invoice])
+      bi = ent.broker_invoices.build(params[:broker_invoice])
       if bi.broker_invoice_lines.empty?
-        bi.destroy
         add_flash :errors, "Cannot create invoice without lines."
-      elsif !bi.errors.empty?
-        errors_to_flash bi
       else
-        bi.update_attributes(:invoice_total=>bi.broker_invoice_lines.sum('charge_amount'))
+        begin
+          bi.complete!
+          add_flash :notices, "Invoice created successfully."
+        rescue
+          errors_to_flash bi
+        end
       end
       redirect_to ent
     end

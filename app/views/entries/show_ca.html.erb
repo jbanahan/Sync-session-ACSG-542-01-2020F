@@ -8,10 +8,19 @@
       ev.preventDefault();
       $(this).parents('tr').fadeOut('slow').remove();
     });
-    OCInvoice.addInvoiceLine("#inv_det");
+    OCInvoice.init();
+    var cCodes = [
+      {code:'',desc:''},
+      <%=ChargeCode.order('code ASC').collect {|cc| "{code:'#{cc.code}',desc:'#{cc.description}'}"}.join(',')%>
+    ];
+    OCInvoice.addInvoiceLine("#inv_det",cCodes);
     $('.inv_det_fld').live('change',function() {
-      if($(this).parents("tr").is(":last-child") && $(this).val().length > 0) {
-        OCInvoice.addInvoiceLine("#inv_det");
+      var v = $(this).val();
+      if(v==undefined) {
+        v = $(this).children(':selected').val();
+      }
+      if($(this).parents("tr").is(":last-child") && v && v.length > 0) {
+        OCInvoice.addInvoiceLine("#inv_det",cCodes);
       }
     });
   });

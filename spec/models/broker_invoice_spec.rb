@@ -1,6 +1,56 @@
 require 'spec_helper'
 
 describe BrokerInvoice do
+
+  describe :complete do
+    before :each do
+      @with_hst_code = Factory(:charge_code,:apply_hst=>true)
+    end
+    it "should apply HST and save" do
+      bi = BrokerInvoice.new
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10)
+      bi.complete!
+      bi.id.should > 0
+
+      found = BrokerInvoice.find bi.id
+      found.invoice_total.should == 11.3
+      found.should have(2).broker_invoice_lines
+      found.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 1.3
+    end
+    it "should create HST charge code if it doesn't exist" do
+      bi = BrokerInvoice.new
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10)
+      bi.complete!
+      cc = ChargeCode.find_by_code "HST"
+      cc.description.should == "HST (ON)"
+      cc.should_not be_apply_hst
+    end
+    it "should recalculate HST if it already exists" do
+      bi = Factory(:broker_invoice)
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10)
+      bi.complete!
+      bi.broker_invoice_lines.find_by_charge_code(@with_hst_code.code).update_attributes(:charge_amount=>20)
+      bi.reload
+      bi.complete!
+      bi.invoice_total.should == 22.6
+      bi.should have(2).broker_invoice_lines
+      bi.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 2.6
+    end
+  end
+  describe :hst_amount do
+    it "should calculate HST based on existing charge codes" do
+      with_hst_code_1 = Factory(:charge_code,:apply_hst=>true)
+      with_hst_code_2 = Factory(:charge_code,:apply_hst=>true)
+      without_hst = Factory(:charge_code,:apply_hst=>false)
+
+      bi = BrokerInvoice.new
+      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_1.code,:charge_description=>with_hst_code_1.description,:charge_amount=>10)
+      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_2.code,:charge_description=>with_hst_code_2.description,:charge_amount=>20)
+      bi.broker_invoice_lines.build(:charge_code=>without_hst.code,:charge_description=>with_hst_code_1.description,:charge_amount=>10)
+
+      bi.hst_amount.should == 3.9
+    end
+  end
   context 'currency' do
     it "should default currency to USD" do
       bi = BrokerInvoice.create!
