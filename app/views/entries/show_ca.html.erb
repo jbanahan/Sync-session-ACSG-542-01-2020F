@@ -1,3 +1,30 @@
+<%content_for :javascript do %>
+  $(function() {
+    $('#lnk_add_inv').click(function(ev) {
+      ev.preventDefault();
+      $('#frm_new_bi').slideDown('slow');
+    });
+    $(".inv_det_del").live('click',function(ev) {
+      ev.preventDefault();
+      $(this).parents('tr').fadeOut('slow').remove();
+    });
+    OCInvoice.init();
+    var cCodes = [
+      {code:'',desc:''},
+      <%=ChargeCode.order('code ASC').collect {|cc| "{code:'#{cc.code}',desc:'#{cc.description}'}"}.join(',')%>
+    ];
+    OCInvoice.addInvoiceLine("#inv_det",cCodes);
+    $('.inv_det_fld').live('change',function() {
+      var v = $(this).val();
+      if(v==undefined) {
+        v = $(this).children(':selected').val();
+      }
+      if($(this).parents("tr").is(":last-child") && v && v.length > 0) {
+        OCInvoice.addInvoiceLine("#inv_det",cCodes);
+      }
+    });
+  });
+<%end%>
 <style>
 .ent_columns {
   width:99%;
@@ -20,7 +47,7 @@
   border-top: 1px solid #333;
 }
 </style>
-<%show_broker_invoices = current_user.view_broker_invoices? && !@entry.broker_invoices.blank?%>
+<%show_broker_invoices = current_user.view_broker_invoices?%>
 <a name='ent_header'></a>
 <div class='quick_jump'><span class='qj_label'>Jump To:</span>
   <a href='#c_invoices'>Commercial Invoices</a>
@@ -174,7 +201,7 @@
           <tr>
             <td style='width:50%;'>
               <table>
-                <%[:bi_suffix,:bi_invoice_total].each do |f|%>
+                <%[:bi_suffix,:bi_invoice_total,:bi_currency].each do |f|%>
                   <%=field_view_row bi,f,false%>
                 <%end%>
               </table>
@@ -191,6 +218,26 @@
       </table>
       <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type],:lines=>bi.broker_invoice_lines}%>
     <% end %>
+  <%end%>
+  <% if current_user.edit_broker_invoices?%>
+    <a href='#' id='lnk_add_inv'>Add Invoice</a>
+    <%form_for [@entry, @entry.broker_invoices.build], :html=>{:id=>'frm_new_bi',:style=>'display:none;'} do |f|%>
+      <h3>New Invoice</h3>
+      <table>
+        <%=field_row field_label(:bi_suffix), f.text_field(:suffix, "class" => "focus_first") %>
+        <%=field_row field_label(:bi_currency), f.text_field(:currency)%>
+        <%=field_row field_label(:bi_invoice_date), f.text_field(:invoice_date, :class=>'isdate')%>
+      </table>
+      <table class='detail_table' id='inv_det'>
+        <thead><tr>
+          <%[:bi_line_charge_code, :bi_line_charge_description,:bi_line_charge_amount].each do |fl|%>
+            <th><%=field_label fl%></th>
+          <%end%>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+      <%=f.submit "Save"%>
+    <%end%>
   <%end%>
 <%end%>
 <%=render :partial => 'shared/attachments', :locals => {:attachable => @entry, :width=>"wide"} %>

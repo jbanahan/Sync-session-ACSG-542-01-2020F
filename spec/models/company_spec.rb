@@ -76,6 +76,12 @@ describe Company do
         c = Factory(:company,:importer=>false,:master=>false)
         c.view_broker_invoices?.should be_false
       end
+      it "should allow edit for master" do
+        Company.new(:master=>true).edit_broker_invoices?.should be_true
+      end
+      it "should not allow edit for non-master" do
+        Company.new(:master=>false).edit_broker_invoices?.should be_false
+      end
     end
     context 'commercial invoices' do
       it 'should allow if entry is enabled' do

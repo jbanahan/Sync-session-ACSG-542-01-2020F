@@ -212,3 +212,8 @@ end
 Factory.define :duty_calc_export_file_line do |f|
 
 end
+Factory.define :charge_code do |f|
+  f.sequence :code
+  f.description "cc description"
+end
+
