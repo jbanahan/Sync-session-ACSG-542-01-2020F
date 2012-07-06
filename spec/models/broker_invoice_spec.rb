@@ -36,6 +36,14 @@ describe BrokerInvoice do
       bi.should have(2).broker_invoice_lines
       bi.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 2.6
     end
+    it "should not create HST if it doesn't apply to any charges" do
+      bi = Factory(:broker_invoice)
+      bi.broker_invoice_lines.build(:charge_code=>"NOTHST",:charge_description=>"H",:charge_amount=>100)
+      bi.complete!
+      bi.reload
+      bi.invoice_total.should == 100
+      bi.should have(1).broker_invoice_lines
+    end
   end
   describe :hst_amount do
     it "should calculate HST based on existing charge codes" do

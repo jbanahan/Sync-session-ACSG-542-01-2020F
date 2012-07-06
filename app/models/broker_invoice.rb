@@ -21,7 +21,7 @@ class BrokerInvoice < ActiveRecord::Base
       hst_charge.destroy?
     elsif hst_charge
       hst_charge.charge_amount = hst_amount
-    else
+    elsif hst_amount > 0
       self.broker_invoice_lines.build(:charge_code=>hst_code.code,:charge_description=>hst_code.description,:charge_amount=>hst_amount)
     end
     self.invoice_total = self.broker_invoice_lines.inject(0) {|sum,line| sum + line.charge_amount}
