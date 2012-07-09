@@ -62,7 +62,9 @@ module OpenChain
 
     private
     def self.process_remote_file command
-      t = OpenChain::S3.download_to_tempfile(OpenChain::S3.integration_bucket_name,command['remote_path'])
+      bucket = OpenChain::S3.integration_bucket_name
+      remote_path = command['remote_path']
+      t = OpenChain::S3.download_to_tempfile(bucket,remote_path)
       status_msg = 'Unknown error'
       response_type = 'error'
       begin
@@ -71,11 +73,11 @@ module OpenChain
         def t.original_filename; @fn; end
         t.original_filename= fname.to_s
         if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
-          OpenChain::AllianceParser.parse IO.read t.path
+          OpenChain::AllianceParser.parse IO.read(t.path), bucket, remote_path 
           status_msg = 'success'
           response_type = 'remote_file'
         elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
-          OpenChain::FenixParser.parse IO.read t.path
+          OpenChain::FenixParser.parse IO.read(t.path), bucket, remote_path
           status_msg = 'success'
           response_type = 'remote_file'
         elsif linkable = LinkableAttachmentImportRule.import(t, fname.to_s, dir.to_s)
