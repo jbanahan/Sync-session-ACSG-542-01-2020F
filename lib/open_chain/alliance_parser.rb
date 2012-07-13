@@ -1,4 +1,5 @@
 require 'bigdecimal'
+require 'open_chain/alliance_imaging_client'
 module OpenChain
   class AllianceParser
     SOURCE_CODE = 'Alliance'
@@ -122,6 +123,7 @@ module OpenChain
             #set time to process in milliseconds without calling callbacks
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
+            OpenChain::AllianceImagingClient.request_images @entry.broker_reference
         end
         @skip_entry = false
       end
