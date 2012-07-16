@@ -1,5 +1,3 @@
-require 'open_chain/central_data'
-
 class MasterSetupsController < ApplicationController
   def index
     redirect_to edit_master_setup_path MasterSetup.get
