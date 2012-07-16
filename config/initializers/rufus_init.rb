@@ -77,8 +77,10 @@ def execute_scheduler
     end
   end
   
-  scheduler.every("5m") do
-    OpenChain::AllianceImagingClient.delay.consume_images
+  if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
+    scheduler.every("5m") do
+      OpenChain::AllianceImagingClient.delay.consume_images
+    end
   end
 
 end
