@@ -80,6 +80,13 @@ module OpenChain
           OpenChain::FenixParser.parse IO.read(t.path), bucket, remote_path
           status_msg = 'success'
           response_type = 'remote_file'
+        elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
+          cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
+          cf.attached = t
+          cf.save!
+          cf.delay.process(cf.uploaded_by)
+          status_msg = 'success'
+          response_type = 'remote_file'
         elsif linkable = LinkableAttachmentImportRule.import(t, fname.to_s, dir.to_s)
           if linkable.errors.blank?
             status_msg = 'success'

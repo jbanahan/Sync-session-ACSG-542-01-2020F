@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::AllianceParser do
   before :each do
+    OpenChain::AllianceImagingClient.stub(:request_images)
     @ref_num ='36469000' 
     @filer_code = '316'
     @entry_ext = '12345678'
