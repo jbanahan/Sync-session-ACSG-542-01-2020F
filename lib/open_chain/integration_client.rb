@@ -63,45 +63,37 @@ module OpenChain
     private
     def self.process_remote_file command
       bucket = OpenChain::S3.integration_bucket_name
+      dir, fname = Pathname.new(command['path']).split
       remote_path = command['remote_path']
-      t = OpenChain::S3.download_to_tempfile(bucket,remote_path)
       status_msg = 'Unknown error'
       response_type = 'error'
-      begin
-        dir, fname = Pathname.new(command['path']).split
-        def t.original_filename=(fn); @fn = fn; end
-        def t.original_filename; @fn; end
-        t.original_filename= fname.to_s
-        if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
-          OpenChain::AllianceParser.parse IO.read(t.path), bucket, remote_path 
+      if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
+        OpenChain::AllianceParser.delay.process_from_s3 bucket, remote_path 
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
+        OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
+        cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
+        cf.attached = get_tempfile(bucket,remote_path,command['path'])
+        cf.save!
+        cf.delay.process(cf.uploaded_by)
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif linkable = LinkableAttachmentImportRule.import(get_tempfile(bucket,remote_path,command['path']), fname.to_s, dir.to_s)
+        if linkable.errors.blank?
           status_msg = 'success'
           response_type = 'remote_file'
-        elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
-          OpenChain::FenixParser.parse IO.read(t.path), bucket, remote_path
-          status_msg = 'success'
-          response_type = 'remote_file'
-        elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
-          cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
-          cf.attached = t
-          cf.save!
-          cf.delay.process(cf.uploaded_by)
-          status_msg = 'success'
-          response_type = 'remote_file'
-        elsif linkable = LinkableAttachmentImportRule.import(t, fname.to_s, dir.to_s)
-          if linkable.errors.blank?
-            status_msg = 'success'
-            response_type = 'remote_file'
-          else
-            status_msg = linkable.errors.full_messages.join("\n")
-          end
-        elsif command['path'].include? '/to_chain/'
-          status_msg = process_imported_file command, t
-          response_type = 'remote_file' if status_msg == 'success'
         else
-          status_msg = "Can't figure out what to do for path #{command['path']}"
+          status_msg = linkable.errors.full_messages.join("\n")
         end
-      ensure
-        t.unlink
+      elsif command['path'].include? '/to_chain/'
+        status_msg = process_imported_file command, get_tempfile(bucket,remote_path,command['path'])
+        response_type = 'remote_file' if status_msg == 'success'
+      else
+        status_msg = "Can't figure out what to do for path #{command['path']}"
       end
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     end
@@ -123,6 +115,15 @@ module OpenChain
       raise "Imported file could not be save: #{imp.errors.full_messages.join("\n")}" unless imp.errors.blank?
       imp.process user, {:defer=>true}
       return "success"
+    end
+
+    def self.get_tempfile bucket, remote_path, original_path
+      t = OpenChain::S3.download_to_tempfile(bucket,remote_path)
+      dir, fname = Pathname.new(original_path).split
+      def t.original_filename=(fn); @fn = fn; end
+      def t.original_filename; @fn; end
+      t.original_filename= fname.to_s
+      t
     end
   end
 end
