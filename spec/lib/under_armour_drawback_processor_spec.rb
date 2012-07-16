@@ -186,15 +186,6 @@ describe OpenChain::UnderArmourDrawbackProcessor do
         OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line c_line
         PieceSet.where(:commercial_invoice_line_id=>c_line.id).where(:shipment_line_id=>s_line.id).should be_empty
       end
-      it 'should not match to a shipment received more than 30 days in the future' do
-        c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
-        c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
-        s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
-        s_line.shipment.update_custom_value! @cd_del, 31.days.from_now
-        s_line.update_custom_value! @cd_po, c_line.po_number
-        OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line c_line
-        PieceSet.where(:commercial_invoice_line_id=>c_line.id).where(:shipment_line_id=>s_line.id).should be_empty
-      end
     end
   end
   describe "make_drawback_import_lines" do
