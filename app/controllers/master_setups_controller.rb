@@ -38,16 +38,11 @@ class MasterSetupsController < ApplicationController
 
   def upgrade
     sys_admin_secure("Only system administrators can run upgrades.") {
-      m = MasterSetup.get
-      v = OpenChain::CentralData::Version.get params[:name]
-      if v.nil?
-        add_flash :errors, "You must specify a valid version name to upgrade to."
-      elsif v.upgrade_password!=params[:upgrade_password]
-        add_flash :errors, "Upgrade password was incorrect."
+      if params[:name].blank?
+        add_flash :errors, "You must specify a version name for the upgrade."
       else
-        m.target_version = v.name
-        m.save
-        add_flash :notices, "Upgrade to version #{v.name} initiated."
+        MasterSetup.get.update_attributes(:target_version=>params[:name])
+        add_flash :notices, "Upgrade to version #{params[:name]} initiated."
       end
       redirect_to edit_master_setup_path m
     }

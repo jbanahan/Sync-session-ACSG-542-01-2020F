@@ -83,7 +83,6 @@ $(function() {
   <%=form_tag '/master_setups/upgrade', :id=>:frm_upgrade do |f| %>
     <table>
       <%=field_row "Version", text_field_tag(:name) %>
-      <%=field_row "Upgrade Password", password_field_tag(:upgrade_password)%>
     </table>
   <%end%>
 </div>
