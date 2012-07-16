@@ -29,7 +29,7 @@ module OpenChain
     # process all files in the archive for a given date.  Use this to reprocess old files
     def self.process_day date
       OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance") do |key|
-        pprocess_from_s3 OpenChain::S3.integration_bucket_name, key
+        process_from_s3 OpenChain::S3.integration_bucket_name, key
       end
     end
 
