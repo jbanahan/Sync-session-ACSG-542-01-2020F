@@ -7,6 +7,9 @@
     <div>
       <% d = s.diff_vs_previous %>
       <h2><%=s.user.full_name%> - <%=s.created_at %></h2>
+      <%unless s.imported_file.nil?  %>
+        <p>Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %></p> 
+      <%end  %>
       <div style='margin-left:1em;'>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>d}%>
       </div>

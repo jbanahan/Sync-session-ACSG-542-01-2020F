@@ -7,8 +7,8 @@ module EntitySnapshotSupport
     self.entity_snapshots.order("entity_snapshots.id DESC").first
   end
 
-  def create_snapshot user=User.current
+  def create_snapshot user=User.current, imported_file=nil
     self.update_attributes(:last_updated_by_id=>user.id) if self.respond_to?(:last_updated_by_id)
-    EntitySnapshot.create_from_entity self, user
+    EntitySnapshot.create_from_entity self, user, imported_file
   end
 end
