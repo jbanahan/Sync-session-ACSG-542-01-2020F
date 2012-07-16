@@ -749,7 +749,14 @@ class ModelField
       [88,:ent_docs_received_date,:docs_received_date,"Docs Received Date",{:data_type=>:date}],
       [89,:ent_trucker_called_date,:trucker_called_date,"Trucker Called Date",{:data_type=>:datetime}],
       [90,:ent_free_date,:free_date,"Free Date",{:data_type=>:date}],
-      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}]
+      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}],
+      [92,:ent_ci_line_count,:ci_line_count, "Commercial Invoice Line Count",{
+        :import_lambda=>lambda {|obj,data| "Commercial Invoice Line Count ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.commercial_invoice_lines.count},
+        :qualified_field_name=>"(select count(*) from commercial_invoice_lines cil inner join commercial_invoices ci on ci.id = cil.commercial_invoice_id where ci.entry_id = entries.id)",
+        :data_type=>:integer
+        }
+      ]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
