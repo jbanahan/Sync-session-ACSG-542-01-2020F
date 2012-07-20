@@ -42,7 +42,7 @@ class MasterSetupsController < ApplicationController
         MasterSetup.get.update_attributes(:target_version=>params[:name])
         add_flash :notices, "Upgrade to version #{params[:name]} initiated."
       end
-      redirect_to edit_master_setup_path m
+      redirect_to edit_master_setup_path MasterSetup.get 
     }
   end
 
