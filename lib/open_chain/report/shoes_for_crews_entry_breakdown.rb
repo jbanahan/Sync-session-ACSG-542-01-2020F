@@ -7,7 +7,7 @@ module OpenChain
 
         row_cursor = 1
         bill_columns = []
-        entries = Entry.where(:customer_number=>"SHOES").where("export_date between '2011-01-01' and '2012-01-01'").order("export_date ASC")
+        entries = Entry.where(:customer_number=>"SHOES").where("export_date > '2012-01-01'").order("export_date ASC")
         entries.each do |e|
           charge_totals = {}
           e.broker_invoice_lines.each do |line|
