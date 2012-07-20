@@ -17,7 +17,12 @@ module CoreObjectSupport
     r = []
     r += self.attachments.to_a
     self.linkable_attachments.each {|linkable| r << linkable.attachment}
-    r
+    r.sort do |a,b|
+      v = a.attachment_type <=> b.attachment_type
+      v = a.attached_file_name <=> b.attached_file_name if v==0
+      v = a.id <=> b.id if v==0
+      v
+    end
   end
 
   def process_linked_attachments

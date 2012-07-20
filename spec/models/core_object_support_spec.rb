@@ -18,4 +18,18 @@ describe CoreObjectSupport do
       lambda {Factory(:product).view_url}.should raise_error
     end
   end
+  describe :all_attachments do
+    it "should sort by attachment type then attached file name then id" do
+      p = Factory(:product)
+      third = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
+      second = p.attachments.create!(:attachment_type=>"A",:attached_file_name=>"R")
+      first = p.attachments.create!(:attachment_type=>"A",:attached_file_name=>"Q")
+      fourth = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
+      r = p.all_attachments
+      r[0].should == first
+      r[1].should == second
+      r[2].should == third
+      r[3].should == fourth
+    end
+  end
 end
