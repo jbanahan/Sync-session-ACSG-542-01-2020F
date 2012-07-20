@@ -12,7 +12,7 @@ class QuickSearchController < ApplicationController
       CoreModule::DELIVERY=>[:del_ref]
     }
     @module_field_map.delete_if {|k,v| !k.view?(current_user)}
-    @value = params[:v]
+    @value = params[:v].strip
     render :layout=>'one_col'
   end
 
