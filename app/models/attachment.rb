@@ -11,7 +11,7 @@ class Attachment < ActiveRecord::Base
   belongs_to :attachable, :polymorphic => true
   
   def web_preview?
-    return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image")
+    return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
   end
   
   def secure_url(expires_in=10.seconds)
