@@ -749,7 +749,14 @@ class ModelField
       [88,:ent_docs_received_date,:docs_received_date,"Docs Received Date",{:data_type=>:date}],
       [89,:ent_trucker_called_date,:trucker_called_date,"Trucker Called Date",{:data_type=>:datetime}],
       [90,:ent_free_date,:free_date,"Free Date",{:data_type=>:date}],
-      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}]
+      [91,:ent_edi_received_date,:edi_received_date,"EDI Received Date",{:data_type=>:date}],
+      [92,:ent_ci_line_count,:ci_line_count, "Commercial Invoice Line Count",{
+        :import_lambda=>lambda {|obj,data| "Commercial Invoice Line Count ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.commercial_invoice_lines.count},
+        :qualified_field_name=>"(select count(*) from commercial_invoice_lines cil inner join commercial_invoices ci on ci.id = cil.commercial_invoice_id where ci.entry_id = entries.id)",
+        :data_type=>:integer
+        }
+      ]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -864,7 +871,8 @@ class ModelField
       make_broker_invoice_entry_field(46,:bi_ent_cotton_fee,:cotton_fee,"Cotton Fee",:decimal,lambda {|entry| entry.cotton_fee}),
       make_broker_invoice_entry_field(47,:bi_ent_hmf,:hmf,"HMF",:decimal,lambda {|entry| entry.hmf}),
       make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decima,lambda {|entry| entry.mpf}),
-      make_broker_invoice_entry_field(49,:bi_ent_container_numbers,:container_numbers,"Container Numbers",:text,lambda {|entry| entry.container_numbers})
+      make_broker_invoice_entry_field(49,:bi_ent_container_numbers,:container_numbers,"Container Numbers",:text,lambda {|entry| entry.container_numbers}),
+      [50,:bi_currency,:currency,"Currency",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],

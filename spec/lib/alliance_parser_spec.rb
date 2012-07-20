@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::AllianceParser do
   before :each do
+    OpenChain::AllianceImagingClient.stub(:request_images)
     @ref_num ='36469000' 
     @filer_code = '316'
     @entry_ext = '12345678'
@@ -562,6 +563,7 @@ describe OpenChain::AllianceParser do
     ent = Entry.first
     ent.broker_invoices.should have(1).invoice
     inv = ent.broker_invoices.first
+    inv.currency.should == "USD" #default
     inv.suffix.should == @inv_suffix
     inv.invoice_date.should == Date.parse(@inv_invoice_date_str)
     inv.invoice_total.should == @inv_total

@@ -1,14 +1,15 @@
 class EntitySnapshot < ActiveRecord::Base
   belongs_to :recordable, :polymorphic=>true
   belongs_to :user
+  belongs_to :imported_file
 
   validates :recordable, :presence => true
   validates :user, :presence => true
 
-  def self.create_from_entity entity, user=User.current
+  def self.create_from_entity entity, user=User.current, imported_file=nil
     cm = CoreModule.find_by_class_name entity.class.to_s
     raise "CoreModule could not be found for class #{entity.class.to_s}." if cm.nil?
-    EntitySnapshot.create(:recordable=>entity,:user=>user,:snapshot=>cm.entity_json(entity))
+    EntitySnapshot.create(:recordable=>entity,:user=>user,:snapshot=>cm.entity_json(entity),:imported_file=>imported_file)
   end
 
   def snapshot_json

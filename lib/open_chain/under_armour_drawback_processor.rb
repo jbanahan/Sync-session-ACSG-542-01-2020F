@@ -31,9 +31,8 @@ module OpenChain
         cr.add_message("Commercial Invoice Line is fully allocated to shipments.")
       else
         po_search = SearchCriterion.new(:model_field_uid=>"*cf_#{po_custom_def.id}",:operator=>"eq",:value=>c_line.po_number)
-        delivery_date_search = SearchCriterion.new(:model_field_uid=>"*cf_#{delivery_custom_def.id}",:operator=>"lt",:value=>entry.arrival_date+30.days)
         no_past_search = SearchCriterion.new(:model_field_uid=>"*cf_#{delivery_custom_def.id}",:operator=>"gt",:value=>entry.arrival_date-1.day)
-        found = no_past_search.apply delivery_date_search.apply po_search.apply ShipmentLine.select("shipment_lines.*").joins(:shipment).joins(:product).where("products.unique_identifier = ?",c_line.part_number)
+        found = no_past_search.apply po_search.apply ShipmentLine.select("shipment_lines.*").joins(:shipment).joins(:product).where("products.unique_identifier = ?",c_line.part_number)
         found.each do |s_line|
           break if unallocated_quantity == 0
           shipment_line_unallocated = s_line.quantity - s_line.piece_sets.where("commercial_invoice_line_id is not null").sum("piece_sets.quantity")

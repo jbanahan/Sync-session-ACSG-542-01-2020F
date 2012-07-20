@@ -456,11 +456,13 @@ function submitForm() {
     coluids.push($(this).attr("value"));
   });
   var f = $("#frm_current_search");
-  var i;
+  var i,h;
   for(i=0;i<coluids.length;i++) {
-    var h = "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][rank]' value='"+i+"' />";
-    h = h + "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][model_field_uid]' value='"+coluids[i]+"' />";
-    f.append(h);
+    if(coluids[i].length>0) {
+      var h = "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][rank]' value='"+i+"' />";
+      h = h + "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][model_field_uid]' value='"+coluids[i]+"' />";
+      f.append(h);
+    }
   }
   var srt_uids = []
   $("#used_sorts option").each(function() {

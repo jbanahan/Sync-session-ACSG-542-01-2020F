@@ -14,7 +14,7 @@ class User < ActiveRecord::Base
     :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
     :entry_view, :entry_comment, :entry_attach, :entry_edit,
     :survey_view, :survey_edit,
-    :broker_invoice_view,
+    :broker_invoice_view, :broker_invoice_edit,
     :classification_view, :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
     :support_agent,
@@ -157,6 +157,9 @@ class User < ActiveRecord::Base
   end
   def view_broker_invoices?
     self.broker_invoice_view && self.company.view_broker_invoices?
+  end
+  def edit_broker_invoices?
+    self.broker_invoice_edit && self.company.edit_broker_invoices?
   end
   def view_entries?
     self.entry_view? && self.company.view_entries?

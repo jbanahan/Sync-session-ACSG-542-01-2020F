@@ -23,4 +23,11 @@ module CoreObjectSupport
   def process_linked_attachments
     LinkedAttachment.delay.create_from_attachable self unless LinkableAttachmentImportRule.count.zero?
   end
+
+  # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded spreadsheets)
+  def view_url
+    raise "Cannot generate view_url because MasterSetup.request_host not set." unless MasterSetup.get.request_host
+    raise "Cannot generate view_url because object id not set." unless self.id
+    "http://#{MasterSetup.get.request_host}/#{self.class.table_name}/#{self.id}"
+  end
 end

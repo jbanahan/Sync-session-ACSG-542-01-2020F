@@ -25,6 +25,13 @@ Factory.define :user do |f|
   f.sequence(:email) { |n| "foo#{n}@example.com" }  
   f.association :company
 end  
+Factory.define :master_user, :class=> User do |f|
+  f.sequence(:username) { |n| "foo#{n}" }   
+  f.password "foobar"  
+  f.password_confirmation { |u| u.password }  
+  f.sequence(:email) { |n| "foo#{n}@example.com" }  
+  f.association :company, :master=>true
+end
 Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
   c.sequence(:name) {|n| "Country #{n}"}
@@ -212,3 +219,8 @@ end
 Factory.define :duty_calc_export_file_line do |f|
 
 end
+Factory.define :charge_code do |f|
+  f.sequence :code
+  f.description "cc description"
+end
+

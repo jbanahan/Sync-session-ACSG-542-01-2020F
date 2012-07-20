@@ -3,6 +3,7 @@ require 'rufus/scheduler'
 require 'open_chain/delayed_job_manager'
 require 'open_chain/upgrade'
 require 'open_chain/integration_client'
+require 'open_chain/alliance_imaging_client'
 
 def job_wrapper job_name, &block
   begin
@@ -73,6 +74,12 @@ def execute_scheduler
     job_wrapper "Purges" do
       Message.purge_messages
       ReportResults.purge
+    end
+  end
+  
+  if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
+    scheduler.every("5m") do
+      OpenChain::AllianceImagingClient.delay.consume_images
     end
   end
 

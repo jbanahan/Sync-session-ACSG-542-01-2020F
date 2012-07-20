@@ -59,7 +59,9 @@ module OpenChain
         capture_and_log "touch tmp/upgrade_running.txt"
         get_source 
         migrate
-        @log.info "Migration complete"
+        log_me "Migration complete"
+        capture_and_log "rm tmp/upgrade_running.txt" 
+        log_me "Upgrade complete"
         @log_path
       rescue
         @log.error $!.message
@@ -75,41 +77,40 @@ module OpenChain
       @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
     def get_source 
-      @log.info "Fetching source"
+      log_me "Fetching source"
       capture_and_log 'git fetch'
-      @log.info "Fetch complete, checking out #{@target}"
+      log_me "Fetch complete, checking out #{@target}"
       capture_and_log "git checkout #{@target}"
-      @log.info "Source checked out"
-      @log.info "Running bundle install"
+      log_me "Source checked out"
+      log_me "Running bundle install"
       capture_and_log "bundle install --without=development test"
-      @log.info "Bundle complete, running migrations"
+      log_me "Bundle complete, running migrations"
     end
 
     def apply_upgrade
-      
-      @log.info "Touching stop.txt"
+      log_me "Touching stop.txt"
       capture_and_log "touch tmp/stop.txt"
-      @log.info "Stopping Delayed Job"
+      log_me "Stopping Delayed Job"
       DelayedJobManager.stop
       dj_count = 0
       while DelayedJobManager.running? && dj_count < 10
-        @log.info "Waiting for delayed job to stop"
+        log_me "Waiting for delayed job to stop"
         sleep 10
         dj_count += 1
       end
       raise UpgradeFailure.new("Delayed job should be stopped and is still running.") if DelayedJobManager.running?
-      @log.info "Delayed Job stopped"
+      log_me "Delayed Job stopped"
       migrate
-      @log.info "Migration complete"
-      @log.info "Touching restart.txt"
+      log_me "Migration complete"
+      log_me "Touching restart.txt"
       capture_and_log "touch tmp/restart.txt"
-      @log.info "Upgrade complete"
+      log_me "Upgrade complete"
     end
     
     def migrate
       c = 0
       while !MasterSetup.get_migration_lock && c<30 #5 minute wait
-        @log.info "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
+        log_me "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
         sleep 10
         c += 1
       end
@@ -120,9 +121,14 @@ module OpenChain
 
     def capture_and_log command
       stdout, stderr, status = Open3.capture3 command
-      @log.info stdout unless stdout.blank?
-      @log.info stderr unless stderr.blank?
+      log_me stdout unless stdout.blank?
+      log_me stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
+    end
+    
+    def log_me txt
+      @log.info txt
+      @upgrade_log.update_attributes(:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
   end
 

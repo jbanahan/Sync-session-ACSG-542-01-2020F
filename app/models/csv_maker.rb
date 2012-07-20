@@ -1,6 +1,13 @@
 class CsvMaker
   require 'csv'
 
+  attr_accessor :include_links
+
+  def initialize opts={}
+    inner_opts = {:include_links=>false}.merge(opts)
+    @include_links = inner_opts[:include_links]
+  end
+  
   def make_from_search(current_search, results)
     columns = current_search.search_columns.order("rank ASC")
     generate results, columns, current_search.search_criterions, current_search.module_chain, current_search.user
@@ -14,7 +21,10 @@ class CsvMaker
 
   def generate results, columns, criterions, module_chain, user
     CSV.generate(prep_opts(columns)) do |csv|
-      GridMaker.new(results,columns,criterions,module_chain,user).go {|row,obj| csv << row}
+      GridMaker.new(results,columns,criterions,module_chain,user).go do |row,obj| 
+        row << obj.view_url if self.include_links
+        csv << row
+      end
     end
   end
 
@@ -23,6 +33,7 @@ class CsvMaker
     columns.each do |c|
       opts[:headers] << model_field_label(c.model_field_uid)
     end
+    opts[:headers] << "Links" if self.include_links
     opts
   end
 

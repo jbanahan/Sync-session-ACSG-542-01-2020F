@@ -13,7 +13,7 @@ class SearchSetupsController < ApplicationController
     if search_setup.nil?
       error_redirect "Search wtih ID #{params[:id]} not found."
     else
-      search_setup.search_columns.destroy_all #clear, they will be reloaded
+      search_setup.search_columns.destroy_all if !params[:search_setup][:search_columns_attributes].blank? #clear, they will be reloaded
       search_setup.sort_criterions.destroy_all #clear, they will be reloaded
       search_setup.touch
       search_setup.update_attributes(params[:search_setup])

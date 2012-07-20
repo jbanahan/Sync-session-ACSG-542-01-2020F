@@ -1,4 +1,5 @@
 require 'bigdecimal'
+require 'open_chain/alliance_imaging_client'
 module OpenChain
   class AllianceParser
     SOURCE_CODE = 'Alliance'
@@ -28,8 +29,12 @@ module OpenChain
     # process all files in the archive for a given date.  Use this to reprocess old files
     def self.process_day date
       OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance") do |key|
-        parse OpenChain::S3.get_data(OpenChain::S3.integration_bucket_name, key), OpenChain::S3.integration_bucket_name, key
+        process_from_s3 OpenChain::S3.integration_bucket_name, key
       end
+    end
+
+    def self.process_from_s3 bucket, key
+        parse OpenChain::S3.get_data(bucket, key), bucket, key
     end
 
     # take the text inside an internet tracking file from alliance and create/update the entry
@@ -122,6 +127,7 @@ module OpenChain
             #set time to process in milliseconds without calling callbacks
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
+            OpenChain::AllianceImagingClient.request_images @entry.broker_reference
         end
         @skip_entry = false
       end
@@ -295,7 +301,7 @@ module OpenChain
     def process_ih00 r
       @invoice = nil
       @invoice = @entry.broker_invoices.where(:suffix=>r[4,2]).first if @entry.id  #existing entry, check for existing invoice
-      @invoice = @entry.broker_invoices.build(:suffix=>r[4,2]) unless @invoice
+      @invoice = @entry.broker_invoices.build(:suffix=>r[4,2],:currency=>"USD") unless @invoice
       @invoice.invoice_date = parse_date r[6,8] unless r[6,8] == "00000000"
       @invoice.invoice_total = parse_currency r[24,11]
       @invoice.customer_number = r[14,10].strip

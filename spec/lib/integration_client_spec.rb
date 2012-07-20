@@ -49,11 +49,27 @@ describe OpenChain::IntegrationClientCommandProcessor do
       @t.write 'abcdefg'
       @t.flush
       @success_hash = {'response_type'=>'remote_file','status'=>'success'}
-      OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+      @ws = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
+    end
+    after(:each) do
+      Delayed::Worker.delay_jobs = @ws
+    end
+    it 'should send data to CSM Sync custom handler if feature enabled and path contains _csm_sync' do
+      mu = Factory(:master_user,:username=>"rbjork")
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('CSM Sync').and_return(true)
+      CustomFile.any_instance.should_receive(:attached=).with(@t).and_return(@t)
+      OpenChain::CustomHandler::PoloCsmSyncHandler.any_instance.should_receive(:process)
+      cmd = {'request_type'=>'remote_file','path'=>'/_csm_sync/a.xls','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+      f = CustomFile.first
+      f.uploaded_by.should == User.find_by_username('rbjork')
+      f.file_type.should == CustomFeaturesController::CSM_SYNC
     end
     it 'should send data to Fenix parser if custom feature enabled and path contains _fenix' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
-      OpenChain::FenixParser.should_receive(:parse).with('abcdefg')
+      OpenChain::FenixParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end
@@ -63,7 +79,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
     it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
-      OpenChain::AllianceParser.should_receive(:parse).with('abcdefg')
+      OpenChain::AllianceParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end
