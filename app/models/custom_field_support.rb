@@ -23,9 +23,9 @@ module CustomFieldSupport
   #pre-loads all custom values for the object into memory.  
   #once this is called, the object will no longer hit the DB to get refreshed objects, so you shouldn't change the values through anything
   #except this object's returned CustomValue objects for the lifetime of this object
-  def load_custom_values
+  def load_custom_values custom_value_collection = CustomValue.where(:customizable_id=>self.id,:customizable_type=>self.class.to_s)
     @custom_value_cache = {}
-    CustomValue.where(:customizable_id=>self.id,:customizable_type=>self.class.to_s).each do |cv|
+    custom_value_collection.each do |cv|
       @custom_value_cache[cv.custom_definition_id] = cv
     end
     true

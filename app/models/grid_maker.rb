@@ -12,7 +12,7 @@ class GridMaker
     @objs = base_objects
     @fields = model_field_list
     #if we have more than 2 custom columns, then pre-cache the custom values
-    @pre_load_custom_values = (@fields.collect {|f| f.model_field.custom?}).size > 2 
+    @custom_ids = @fields.collect {|f| f.model_field.custom_id }.compact!
     @chain = module_chain
     @criteria = search_criterion_list
     @user = user
@@ -27,8 +27,20 @@ class GridMaker
 
   def recursive_go(cm,base_object_collection,row_objects,&block)
     child_modules = @chain.child_modules cm #all modules lower than this one in the chain
+    custom_value_hash = {}
+    unless @custom_ids.blank?
+      base_object_collection.collect {|bo| bo.id}.in_groups_of(50,false) do |ids|
+        vals = CustomValue.where("custom_values.customizable_id IN (?)",ids).
+          where("custom_values.customizable_type = ?",cm.class_name).
+          where("custom_values.custom_definition_id IN (?)",@custom_ids)
+        vals.each do |v| 
+          custom_value_hash[v.customizable_id] ||= []
+          custom_value_hash[v.customizable_id] << v
+        end
+      end
+    end 
     base_object_collection.each do |o| 
-      o.load_custom_values if @pre_load_custom_values && o.respond_to?('load_custom_values') 
+      o.load_custom_values custom_value_hash[o.id] if !custom_value_hash[o.id].blank? && o.respond_to?(:load_custom_values) && !@custom_ids.blank?
       row_objects[cm] = o #add myself to row_objects
       #there are lower level modules being used, recurse
       if (@used_modules & child_modules).length > 0 && cm.child_objects(child_modules.first,o).length > 0
