@@ -28,5 +28,6 @@ end
 group :development do
   gem 'spork'
   gem 'debugger'
+  gem 'sql-logging', '~> 3.0.8'
 end
 gem 'newrelic_rpm'

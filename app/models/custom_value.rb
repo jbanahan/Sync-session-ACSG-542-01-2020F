@@ -9,7 +9,7 @@ class CustomValue < ActiveRecord::Base
   after_commit :set_cache
   after_find :set_cache
   
-  default_scope includes(:custom_definition)
+  #default_scope includes(:custom_definition)
 
   def self.cached_find_unique custom_definition_id, customizable
     #c = CACHE.get unique_cache_key(custom_definition_id, customizable.id, customizable.class)
@@ -20,8 +20,8 @@ class CustomValue < ActiveRecord::Base
     return c
   end
 
-  def value
-    d = self.custom_definition
+  def value cached_custom_definition = nil
+    d = cached_custom_definition.nil? ? self.custom_definition : cached_custom_definition
     raise "Cannot get custom value without a custom definition" if d.nil?
     self.send "#{d.data_type}_value"
   end
