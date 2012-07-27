@@ -40,15 +40,15 @@ module OpenChain
               cell_map[:season] = v
             when 11
               cell_map[:style] = v
-            when 12
+            when 13
               cell_map[:board] = v
-            when 20
-              cell_map[:name] = v
             when 21
+              cell_map[:name] = v
+            when 22
               cell_map[:fiber] = v
-            when 28
+            when 29
               cell_map[:gcc] = v
-            when 47
+            when 48
               cell_map[:msl_hts] = v
             end
           end
@@ -94,9 +94,9 @@ module OpenChain
             next unless classification
             tr = classification.tariff_records.first
             next unless tr
-            x.set_cell(0,n,35+i,get_hts(c,tr.hts_1))
-            x.set_cell(0,n,52+i,get_hts(c,tr.hts_2))
-            x.set_cell(0,n,69+i,get_hts(c,tr.hts_3))
+            x.set_cell(0,n,36+i,get_hts(c,tr.hts_1))
+            x.set_cell(0,n,53+i,get_hts(c,tr.hts_2))
+            x.set_cell(0,n,70+i,get_hts(c,tr.hts_3))
           end
         end
         target = "#{MasterSetup.get.uuid}/updated_msl_plus_files/#{user.id}/#{Time.now.to_i}.#{@custom_file.attached_file_name.split('.').last}" 
