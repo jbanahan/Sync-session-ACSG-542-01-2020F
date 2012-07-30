@@ -23,6 +23,7 @@ describe OpenChain::AllianceParser do
     @liquidation_date_str = '201104021522'
     @duty_due_date_str = '20110601'
     @file_logged_date_str = '201004191623'
+    @first_entry_sent_str = '201006141227'
     @fda_release_str = "201203170614"
     @fda_review_str = "201203151621"
     @fda_transmit_str = "201203141421"
@@ -76,6 +77,7 @@ describe OpenChain::AllianceParser do
       r << "SD0000020#{@fda_release_str}201203230637F&D Rel Food & Drug Release                                         "
       r << "SD0093002#{@fda_review_str}201203181105FDA Rev FDA Review                                                  "
       r << "SD0000108#{@fda_transmit_str}201203161906FDA Cus FDA to Customs                                              "
+      r << "SD0099212#{@first_entry_sent_str}"
       r << "SD0000003#{@docs_rec_str}1826                                                                            "
       r << "SD0000098#{@docs_rec2_str}1826                                                                            "
       r << "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
@@ -286,6 +288,7 @@ describe OpenChain::AllianceParser do
     ent.fda_release_date.should == @est.parse(@fda_release_str)
     ent.fda_review_date.should == @est.parse(@fda_review_str)
     ent.fda_transmit_date.should == @est.parse(@fda_transmit_str)
+    ent.first_entry_sent_date.should == @est.parse(@first_entry_sent_str)
     ent.docs_received_date.strftime("%Y%m%d").should == @docs_rec_str
     ent.release_cert_message.should == @release_cert_message
     ent.fda_message == @fda_message

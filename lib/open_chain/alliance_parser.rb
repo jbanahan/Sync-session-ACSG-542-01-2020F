@@ -23,7 +23,8 @@ module OpenChain
       '00098'=>:docs_received_date, #both 00003 and 00098 are docs received for different customers
       '00024'=>:trucker_called_date,
       '00052'=>:free_date,
-      '00085'=>:edi_received_date
+      '00085'=>:edi_received_date,
+      '99212'=>:first_entry_sent_date
     }
 
     # process all files in the archive for a given date.  Use this to reprocess old files
