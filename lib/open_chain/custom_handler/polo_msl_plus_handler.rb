@@ -36,19 +36,19 @@ module OpenChain
           row.each do |c|
             v = c['cell']['value']
             case c['position']['column']
-            when  9
+            when  7
               cell_map[:season] = v
             when 11
               cell_map[:style] = v
-            when 12
+            when 13
               cell_map[:board] = v
-            when 20
-              cell_map[:name] = v
             when 21
+              cell_map[:name] = v
+            when 22
               cell_map[:fiber] = v
-            when 28
+            when 29
               cell_map[:gcc] = v
-            when 45
+            when 48
               cell_map[:msl_hts] = v
             end
           end
@@ -79,9 +79,9 @@ module OpenChain
 
       def make_updated_file user
         x = OpenChain::XLClient.new(@custom_file.attached.path)
-        iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR']
+        iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR','VN','TH']
         countries = []
-        iso_codes.each {|c| countries << Country.where(:iso_code=>c).first}
+        iso_codes.each {|c| countries << Country.find_by_iso_code(c)}
         last_row_number = x.last_row_number 0
         (4..last_row_number).each do |n|
           style = x.get_cell(0,n,11)['cell']['value']
@@ -94,9 +94,9 @@ module OpenChain
             next unless classification
             tr = classification.tariff_records.first
             next unless tr
-            x.set_cell(0,n,35+i,get_hts(c,tr.hts_1))
-            x.set_cell(0,n,48+i,get_hts(c,tr.hts_2))
-            x.set_cell(0,n,61+i,get_hts(c,tr.hts_3))
+            x.set_cell(0,n,36+i,get_hts(c,tr.hts_1))
+            x.set_cell(0,n,53+i,get_hts(c,tr.hts_2))
+            x.set_cell(0,n,70+i,get_hts(c,tr.hts_3))
           end
         end
         target = "#{MasterSetup.get.uuid}/updated_msl_plus_files/#{user.id}/#{Time.now.to_i}.#{@custom_file.attached_file_name.split('.').last}" 
