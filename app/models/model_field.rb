@@ -757,7 +757,9 @@ class ModelField
         :qualified_field_name=>"(select count(*) from commercial_invoice_lines cil inner join commercial_invoices ci on ci.id = cil.commercial_invoice_id where ci.entry_id = entries.id)",
         :data_type=>:integer
         }
-      ]
+      ],
+      [93,:ent_total_gst,:total_gst,"Total GST",{:data_type=>:decimal}],
+      [94,:ent_total_duty_gst,:total_duty_gst,"Total Duty & GST",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

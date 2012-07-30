@@ -43,6 +43,7 @@ module OpenChain
       start_time = Time.now
       @total_units = BigDecimal('0.00')
       @total_entered_value = BigDecimal('0.00')
+      @total_gst = BigDecimal('0.00')
       #get header info from first line
       process_header lines.first
       lines.each do |x| 
@@ -55,6 +56,8 @@ module OpenChain
       @entry.total_invoiced_value = @total_invoice_val
       @entry.total_units = @total_units
       @entry.total_duty = @total_duty
+      @entry.total_gst = @total_gst
+      @entry.total_duty_gst = @total_duty + @total_gst
       @entry.po_numbers = detail_pos unless detail_pos.blank?
       @entry.master_bills_of_lading = accumulated_string(:bol)
       @entry.container_numbers = accumulated_string(:cont)
@@ -179,6 +182,7 @@ module OpenChain
       @total_duty += t.duty_amount if t.duty_amount
       t.gst_rate_code = str_val(line[48])
       t.gst_amount = dec_val(line[49])
+      @total_gst += t.gst_amount if t.gst_amount
       t.sima_amount = dec_val(line[50])
       t.excise_rate_code = str_val(line[51])
       t.excise_amount = dec_val(line[52])

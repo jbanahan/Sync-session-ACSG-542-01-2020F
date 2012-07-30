@@ -229,6 +229,7 @@ describe OpenChain::FenixParser do
           @line_value = inv[:line_val] if inv[:line_val]
           @duty_amount = inv[:duty] if inv[:duty]
           @entered_value = inv[:entered_value] if inv[:entered_value]
+          @gst_amount = inv[:gst_amount] if inv[:gst_amount]
           data += @entry_lambda.call+"\r\n"
         end
         data.strip
@@ -240,6 +241,16 @@ describe OpenChain::FenixParser do
       @invoices[1][:entered_value]=2
       OpenChain::FenixParser.parse @multi_line_lambda.call
       Entry.find_by_broker_reference(@file_number).entered_value.should == 3
+    end
+    it 'should total GST' do
+      @invoices[0][:duty] = 2
+      @invoices[0][:gst_amount] = 4
+      @invoices[1][:duty] = 6 
+      @invoices[1][:gst_amount] = 5
+      OpenChain::FenixParser.parse @multi_line_lambda.call
+      ent = Entry.find_by_broker_reference(@file_number)
+      ent.total_gst.should == 9
+      ent.total_duty_gst.should == 17
     end
     it 'should save an entry with multiple invoices' do 
       OpenChain::FenixParser.parse @multi_line_lambda.call
