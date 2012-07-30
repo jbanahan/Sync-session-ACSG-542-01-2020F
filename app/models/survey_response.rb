@@ -25,6 +25,11 @@ class SurveyResponse < ActiveRecord::Base
     false
   end
 
+  #can the user view private comments for this survey
+  def can_view_private_comments? user
+    self.survey.company_id == user.company_id 
+  end
+
   #send email invite to user
   def invite_user!
     OpenMailer.send_survey_invite(self).deliver!
