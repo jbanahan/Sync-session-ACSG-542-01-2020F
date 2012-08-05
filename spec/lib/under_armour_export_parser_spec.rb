@@ -47,6 +47,19 @@ describe OpenChain::UnderArmourExportParser do
         d.nafta_duty_rate.should be_nil
         d.duty_calc_export_file.should be_nil
       end
+      
+      it "should raise exception if all part number components are not found" do
+        #this record is missing the size in the combined part number
+        bad_line = "3452168,85439724,1000382,001,MD,85439724-1000382-001-BD,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,A. ROY SPORTS,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,$14.55,$58.20,8838140040135440,"
+        lambda {OpenChain::UnderArmourExportParser.parse_csv_line bad_line}.should raise_error
+        DutyCalcExportFileLine.all.should be_empty
+      end
+      it "should raise exception if a part number component is empty" do
+        #this record has an empty color in the combined part number
+        bad_line = "3452168,85439724,1000382,001,MD,85439724-1000382--MD-BD,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,A. ROY SPORTS,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,$14.55,$58.20,8838140040135440,"
+        lambda {OpenChain::UnderArmourExportParser.parse_csv_line bad_line}.should raise_error
+        DutyCalcExportFileLine.all.should be_empty
+      end
     end
   end
 

@@ -65,6 +65,8 @@ module OpenChain
     end
     def self.get_part_number combined_string
       a = combined_string.split('-')
+      raise "Combined part number should have had 5 components and only had #{a.size}: #{combined_string}" unless a.size==5
+      a.each{|x| raise "Combined part number should not have any empty components: #{combined_string}" if x.blank?} 
       "#{a[1]}-#{a[2]}-#{a[3]}+#{a[4]}"
     end
   end
