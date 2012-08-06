@@ -8,18 +8,18 @@ describe BrokerInvoice do
     end
     it "should apply HST and save" do
       bi = BrokerInvoice.new
-      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10)
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10,:hst_percent=>0.15)
       bi.complete!
       bi.id.should > 0
 
       found = BrokerInvoice.find bi.id
-      found.invoice_total.should == 11.3
+      found.invoice_total.should == 11.5
       found.should have(2).broker_invoice_lines
-      found.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 1.3
+      found.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 1.5
     end
     it "should create HST charge code if it doesn't exist" do
       bi = BrokerInvoice.new
-      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10)
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10,:hst_percent=>0.20)
       bi.complete!
       cc = ChargeCode.find_by_code "HST"
       cc.description.should == "HST (ON)"
@@ -27,14 +27,14 @@ describe BrokerInvoice do
     end
     it "should recalculate HST if it already exists" do
       bi = Factory(:broker_invoice)
-      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10)
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10,:hst_percent=>0.20)
       bi.complete!
       bi.broker_invoice_lines.find_by_charge_code(@with_hst_code.code).update_attributes(:charge_amount=>20)
       bi.reload
       bi.complete!
-      bi.invoice_total.should == 22.6
+      bi.invoice_total.should == 24
       bi.should have(2).broker_invoice_lines
-      bi.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 2.6
+      bi.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 4.0
     end
     it "should not create HST if it doesn't apply to any charges" do
       bi = Factory(:broker_invoice)
@@ -52,11 +52,11 @@ describe BrokerInvoice do
       without_hst = Factory(:charge_code,:apply_hst=>false)
 
       bi = BrokerInvoice.new
-      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_1.code,:charge_description=>with_hst_code_1.description,:charge_amount=>10)
-      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_2.code,:charge_description=>with_hst_code_2.description,:charge_amount=>20)
+      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_1.code,:charge_description=>with_hst_code_1.description,:charge_amount=>10,:hst_percent=>0.05)
+      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_2.code,:charge_description=>with_hst_code_2.description,:charge_amount=>20,:hst_percent=>0.10)
       bi.broker_invoice_lines.build(:charge_code=>without_hst.code,:charge_description=>with_hst_code_1.description,:charge_amount=>10)
 
-      bi.hst_amount.should == 3.9
+      bi.hst_amount.should == 2.5
     end
   end
   context 'currency' do
