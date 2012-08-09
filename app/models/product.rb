@@ -146,7 +146,6 @@ class Product < ActiveRecord::Base
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
             matches.delete_if {|m| m.meta_data.auto_classify_ignore}
-            to_load.hts_1 = matches.first.hts_code if matches.length==1
             to_load.hts_1_matches = matches
           end
         end
@@ -155,7 +154,6 @@ class Product < ActiveRecord::Base
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
             matches.delete_if {|m| m.meta_data.auto_classify_ignore}
-            to_load.hts_2 = matches.first.hts_code if matches.length==1
             to_load.hts_2_matches = matches
           end
         end
@@ -164,7 +162,6 @@ class Product < ActiveRecord::Base
           unless official_tariff.nil?
             matches = official_tariff.find_matches to_classify.country
             matches.delete_if {|m| m.meta_data.auto_classify_ignore}
-            to_load.hts_3 = matches.first.hts_code if matches.length==1
             to_load.hts_3_matches = matches
           end
         end
