@@ -29,14 +29,7 @@ class BrokerInvoice < ActiveRecord::Base
   end
   #calculate HST by looking up all included charge codes and calculating HST amount at 13% fixed rate for Ontario
   def hst_amount
-    r = 0
-    self.broker_invoice_lines.each do |ln|
-      if ln.charge_code && ln.charge_amount
-        cc = ChargeCode.find_by_code ln.charge_code
-        r += (ln.charge_amount * BigDecimal("0.13")) if cc && cc.apply_hst?
-      end
-    end
-    r
+    self.broker_invoice_lines.each.inject(BigDecimal("0.00")) {|sum,line| sum + (line.hst_percent.blank? || line.charge_amount.blank? ? 0 : (line.hst_percent * line.charge_amount))}
   end
 
   def can_view? user

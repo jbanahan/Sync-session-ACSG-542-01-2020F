@@ -43,21 +43,21 @@
     entSummView.setColumns([0,1]);
     new google.visualization.ColumnChart(document.getElementById('ent_summ_chart')).draw(
       entSummView,
-      {title:"Entry Summary",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'}}
+      {title:"Entry Summary",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{minValue:0}}
     );
     
     var entEnteredValView = new google.visualization.DataView(monthGroupedData);
     entEnteredValView.setColumns([0,2]);
     new google.visualization.ColumnChart(document.getElementById('ent_entered_val_chart')).draw(
       entEnteredValView,
-      {title:"Entered Value",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###"}}
+      {title:"Entered Value",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###",minValue:0}}
     );
 
     var entDutyValView = new google.visualization.DataView(monthGroupedData);
     entDutyValView.setColumns([0,3]);
     new google.visualization.ColumnChart(document.getElementById('ent_duty_val_chart')).draw(
       entDutyValView,
-      {title:"Duty Values",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###"}}
+      {title:"Duty Values",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###",minValue:0}}
     );
     new google.visualization.Table(document.getElementById('ent_summ_tbl')).draw(
       monthGroupedData,

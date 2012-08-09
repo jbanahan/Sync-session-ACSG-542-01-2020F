@@ -11,7 +11,7 @@
     OCInvoice.init();
     var cCodes = [
       {code:'',desc:''},
-      <%=ChargeCode.order('code ASC').collect {|cc| "{code:'#{cc.code}',desc:'#{cc.description}'}"}.join(',')%>
+      <%=ChargeCode.order('code ASC').collect {|cc| "{code:'#{cc.code}',desc:'#{cc.description}',hst:'#{cc.apply_hst? ? "0.136" : "0.000" }'}"}.join(',')%>
     ];
     OCInvoice.addInvoiceLine("#inv_det",cCodes);
     $('.inv_det_fld').live('change',function() {
@@ -60,8 +60,8 @@
       <td style="width:33%;">
         <table>
           <%[:ent_entry_num,:ent_brok_ref,:ent_importer_tax_id,:ent_cargo_control_number,
-          :ent_ca_entry_type,:ent_po_numbers,:ent_mbols,:ent_container_nums,
-          :ent_vendor_names,:ent_total_units,:ent_total_invoiced_value,:ent_entered_value,:ent_total_duty].each do |f|%>
+          :ent_ca_entry_type,:ent_po_numbers,
+          :ent_vendor_names,:ent_total_units,:ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
@@ -75,7 +75,7 @@
       </td>
       <td style="width:34%;">
         <table>
-          <%[:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_entry_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_voyage].each do |f|%>
+          <%[:ent_mbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_entry_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_voyage].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
@@ -225,7 +225,7 @@
           </tr>
         </tbody>
       </table>
-      <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type],:lines=>bi.broker_invoice_lines}%>
+      <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type,:bi_line_hst_percent],:lines=>bi.broker_invoice_lines}%>
     <% end %>
   <%end%>
   <% if current_user.edit_broker_invoices?%>
@@ -239,7 +239,7 @@
       </table>
       <table class='detail_table' id='inv_det'>
         <thead><tr>
-          <%[:bi_line_charge_code, :bi_line_charge_description,:bi_line_charge_amount].each do |fl|%>
+          <%[:bi_line_charge_code, :bi_line_charge_description,:bi_line_charge_amount,:bi_line_hst_percent].each do |fl|%>
             <th><%=field_label fl%></th>
           <%end%>
         </tr></thead>

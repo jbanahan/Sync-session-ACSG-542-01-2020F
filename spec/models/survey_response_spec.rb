@@ -93,7 +93,24 @@ describe SurveyResponse do
       @sr.can_view?(u).should be_false
     end
     it "should fail if user is not from the survey company and is not the response user" do
-      @sr.can_view?(Factory(:user))
+      @sr.can_view?(Factory(:user)).should be_false
+    end
+  end
+  describe "can_view_private_comments?" do
+    before :each do 
+      @survey = Factory(:survey)
+      @response_user = Factory(:user)
+      @sr = @survey.generate_response! @response_user
+    end
+    it "should pass if the user is from the survey company" do
+      u = Factory(:user,:company=>@survey.company)
+      @sr.can_view_private_comments?(u).should be_true
+    end
+    it "should fail if the user is not from the survey company" do
+      @sr.can_view_private_comments?(Factory(:user)).should be_false
+    end
+    it "should fail if the user is the response_user and is not from the survey company" do
+      @sr.can_view_private_comments?(@response_user).should be_false
     end
   end
   describe "notify user" do

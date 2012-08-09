@@ -672,7 +672,10 @@ var OCInvoice = (function() {
   return {
     init: function() {
       $('.cc_fld').live('change',function() {
-        $(this).parents('tr').find('.desc_fld').val($(this).find('option:selected').attr('desc'));
+        var rw = $(this).parents('tr');
+        var sel = $(this).find('option:selected');
+        rw.find('.desc_fld').val(sel.attr('desc'));
+        rw.find('.hst_fld').val(sel.attr('hst'));
       });
     },
     addInvoiceLine: function(parentTable,chargeCodes) {
@@ -680,10 +683,11 @@ var OCInvoice = (function() {
       var namePre = "broker_invoice[broker_invoice_lines_attributes]["+mt+"]"; 
       var h = "<tr><td>";
       h+="<select class='inv_det_fld cc_fld' name='"+namePre+"[charge_code]'>";
-      $.each(chargeCodes,function(i,v) {h+="<option value='"+v.code+"' desc='"+v.desc+"'>"+v.code+"</option>";});
+      $.each(chargeCodes,function(i,v) {h+="<option value='"+v.code+"' desc='"+v.desc+"' hst='"+v.hst+"'>"+v.code+"</option>";});
       h+="</select></td>";
       h+="<td><input type='text' size='30' class='inv_det_fld desc_fld' name='"+namePre+"[charge_description]'/></td>";
       h+= "<td><input type='text' size='30' class='inv_det_fld decimal' name='"+namePre+"[charge_amount]'/></td>";
+      h+= "<td><input type='text' size='30' class='inv_det_fld decimal hst_fld' name='"+namePre+"[hst_percent]'/></td>";
       h+= "<td><a href='#' class='inv_det_del'><img src='/images/x.png' alt='delete'/></a></td></tr>";
       $(parentTable+" tbody").append(h);
       $(".decimal").jStepper();

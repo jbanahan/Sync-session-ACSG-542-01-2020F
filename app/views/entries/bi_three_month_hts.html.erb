@@ -43,21 +43,21 @@
     entSummView.setColumns([0,1]);
     new google.visualization.ColumnChart(document.getElementById('ent_summ_chart')).draw(
       entSummView,
-      {title:"Line Count",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'}}
+      {title:"Line Count",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{minValue:0}}
     );
     
     var entEnteredValView = new google.visualization.DataView(monthGroupedData);
     entEnteredValView.setColumns([0,2]);
     new google.visualization.ColumnChart(document.getElementById('ent_entered_val_chart')).draw(
       entEnteredValView,
-      {title:"Entered Value",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###"}}
+      {title:"Entered Value",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###",minValue:0}}
     );
 
     var entDutyValView = new google.visualization.DataView(monthGroupedData);
     entDutyValView.setColumns([0,3]);
     new google.visualization.ColumnChart(document.getElementById('ent_duty_val_chart')).draw(
       entDutyValView,
-      {title:"Duty Values",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###"}}
+      {title:"Duty Values",hAxis:{textStyle:{color:'black'},showTextEvery:1},legend:{position:'none'},vAxis:{format:"$#,###",minValue:0}}
     );
     new google.visualization.Table(document.getElementById('ent_summ_tbl')).draw(
       monthGroupedData,
@@ -93,7 +93,7 @@
 <%end%>
 <%=render :partial=>'bi_nav', :locals=>{:selected_search=>@selected_search}%>
 <table class='detail_table'>
-  <thead><tr><th width="50%" style='text-align:center;'>By Month</th><th width="50%" style='text-align:center;'>By Port</th></tr></thead>
+  <thead><tr><th width="50%" style='text-align:center;'>By Month</th><th width="50%" style='text-align:center;'>By Tariff</th></tr></thead>
   <tbody>
     <tr><td><div id='ent_summ_chart'></div></td><td><div id='hts_summ_chart'></div></td></tr>
     <tr><td><div id='ent_entered_val_chart'></div></td><td><div id='hts_entered_val_chart'></div></td></tr>

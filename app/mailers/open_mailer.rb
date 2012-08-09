@@ -114,10 +114,8 @@ EOS
 
   def send_message(message)
     @message = message
-    @messages_url = ''
-    if @message.user.host_with_port
-      @messages_url = messages_url(:host => @message.user.host_with_port)
-    end
+    host = @message.user.host_with_port ? @message.user.host_with_port : MasterSetup.get.request_host
+    @messages_url = messages_url(:host => host)
     
     mail(:to => message.user.email, :subject => "[chain.io] New Message - #{message.subject}") do |format|
       format.html

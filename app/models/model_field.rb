@@ -13,7 +13,7 @@ class ModelField
           return "#{FieldLabel.label_text uid} set to #{d}"
         },
           :export_lambda => lambda {|obj|
-            self.custom? ? obj.get_custom_value_by_id(@custom_id).value : obj.send("#{@field_name}")
+            self.custom? ? obj.get_custom_value_by_id(@custom_id).value(@custom_definition) : obj.send("#{@field_name}")
           },
           :entity_type_field => false,
           :history_ignore => false,
@@ -40,6 +40,7 @@ class ModelField
     @history_ignore = o[:history_ignore]
     @currency = o[:currency]
     @query_parameter_lambda = o[:query_parameter_lambda]
+    @custom_definition = CustomDefinition.find @custom_id if @custom_id
   end
 
   # returns true if the given user should be allowed to view this field
@@ -756,7 +757,10 @@ class ModelField
         :qualified_field_name=>"(select count(*) from commercial_invoice_lines cil inner join commercial_invoices ci on ci.id = cil.commercial_invoice_id where ci.entry_id = entries.id)",
         :data_type=>:integer
         }
-      ]
+      ],
+      [93,:ent_total_gst,:total_gst,"Total GST",{:data_type=>:decimal}],
+      [94,:ent_total_duty_gst,:total_duty_gst,"Total Duty & GST",{:data_type=>:decimal}],
+      [95,:ent_first_entry_sent_date,:first_entry_sent_date,"Entry",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -872,7 +876,8 @@ class ModelField
       make_broker_invoice_entry_field(47,:bi_ent_hmf,:hmf,"HMF",:decimal,lambda {|entry| entry.hmf}),
       make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decima,lambda {|entry| entry.mpf}),
       make_broker_invoice_entry_field(49,:bi_ent_container_numbers,:container_numbers,"Container Numbers",:text,lambda {|entry| entry.container_numbers}),
-      [50,:bi_currency,:currency,"Currency",{:data_type=>:decimal}]
+      [50,:bi_currency,:currency,"Currency",{:data_type=>:decimal}],
+      make_broker_invoice_entry_field(51,:bi_ent_importer_tax_id,:importer_tax_id,"Importer Tax ID",:text,lambda {|entry| entry.importer_tax_id})
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
@@ -880,7 +885,8 @@ class ModelField
       [3,:bi_line_charge_amount,:charge_amount,"Amount",{:data_type=>:decimal}],
       [4,:bi_line_vendor_name,:vendor_name,"Vendor",{:data_type=>:string}],
       [5,:bi_line_vendor_reference,:vendor_reference,"Vendor Reference",{:data_type=>:string}],
-      [6,:bi_line_charge_type,:charge_type,"Charge Type",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}]
+      [6,:bi_line_charge_type,:charge_type,"Charge Type",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [7,:bi_line_hst_percent,:hst_percent,"HST Percent",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::PRODUCT, [
       [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],

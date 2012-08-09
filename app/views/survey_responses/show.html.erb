@@ -219,8 +219,9 @@ textarea {
         </p>
         <div class='q_subhead'>Comments</div>
         <% a.object.answer_comments.each do |ac|%>
+          <% next if ac.private? && !@sr.can_view_private_comments?(current_user) -%>
           <div class='comm'>
-            <em><%=ac.user.full_name%> - <%=ac.created_at%></em><br/>
+            <em><%=ac.user.full_name%> - <%=ac.created_at%> <%=ac.private? ? " - PRIVATE" : ""%></em><br/>
             <pre>
     <%=ac.content%>
             </pre>
@@ -228,7 +229,8 @@ textarea {
         <% end %>
         <%a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
           <%=acf.hidden_field :user_id%>
-          <%=acf.text_area :content, :class=>'a_opt'%>
+          <%=acf.text_area :content, :class=>'a_opt'%><br />
+          <%if @sr.can_view_private_comments?(current_user)%><%=acf.check_box :private%> Private<%end%>
         <% end %>
         <ul>
         <% a.object.attachments.each do |att|%>
