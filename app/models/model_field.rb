@@ -937,7 +937,21 @@ class ModelField
         :data_type => :integer
       }],
       [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}],
-      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime}]
+      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime}],
+      [14,:prod_first_hts, :prod_first_hts, "First HTS Number", {
+        :import_lambda => lambda {|obj,data| "First HTS Number was ignored, must be set at the tariff level."},
+        :export_lambda => lambda {|obj| 
+          r = ""
+          cls = obj.classifications.sort_classification_rank.first
+          unless cls.nil?
+            t = cls.tariff_records.first
+            r = t.hts_1 unless t.nil?
+          end
+          r.nil? ? "" : r.hts_format
+        },
+        :qualified_field_name => "(select hts_1 from tariff_records fht inner join classifications fhc on fhc.id = fht.classification_id  where fhc.product_id = products.id and fhc.country_id = (SELECT id from countries ORDER BY ifnull(classification_rank,9999), iso_code ASC LIMIT 1) LIMIT 1)",
+        :data_type=>:string
+      }]
     ]
     add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")

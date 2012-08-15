@@ -275,7 +275,7 @@ class CoreModule
       :children => [CLASSIFICATION],
       :child_lambdas => {CLASSIFICATION => lambda {|p| p.classifications}},
       :child_joins => {CLASSIFICATION => "LEFT OUTER JOIN classifications ON products.id = classifications.product_id"},
-      :default_search_columns => [:prod_uid,:prod_name,:prod_ven_name],
+      :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts,:prod_ven_name],
       :bulk_actions_lambda => lambda {|current_user| 
         bulk_actions = {}
         bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products?

@@ -21,6 +21,26 @@ describe ModelField do
     end
   end
   context "special cases" do
+    context "first HTS code" do
+      before :each do
+        country_1 = Factory(:country,:classification_rank=>1)
+        country_2 = Factory(:country,:classification_rank=>2)
+        @p = Factory(:product)
+        class_1 = @p.classifications.create!(:country_id=>country_1.id)
+        class_2 = @p.classifications.create!(:country_id=>country_2.id)
+        t_1 = class_1.tariff_records.create!(:hts_1=>'1234567890')
+        t_2 = class_2.tariff_records.create!(:hts_2=>'9999999999')
+        @mf = ModelField.find_by_uid :prod_first_hts
+      end
+      it "process_export should match first hts code for first country" do
+        @mf.process_export(@p, nil, true).should == '1234.56.7890'
+      end
+      it "should match on search criterion" do
+        sc = SearchCriterion.new(:model_field_uid=>'prod_first_hts',:operator=>'sw',:value=>'123456')
+        r = sc.apply Product.where('1=1')
+        r.first.should == @p
+      end
+    end
     context "hts formatting" do
       it "should handle query parameters for hts formatting" do
         tr = TariffRecord.new(:hts_1=>"1234567890",:hts_2=>"0987654321",:hts_3=>"123456")
