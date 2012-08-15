@@ -13,7 +13,7 @@ class Company < ActiveRecord::Base
 	has_many  :carrier_deliveries, :class_name => "Delivery", :foreign_key => "carrier_id", :dependent => :destroy
 	has_many  :customer_sales_orders, :class_name => "SalesOrder", :foreign_key => "customer_id", :dependent => :destroy
 	has_many  :customer_deliveries, :class_name => "Delivery", :foreign_key => "customer_id", :dependent => :destroy
-	has_many  :users, :dependent => :destroy
+	has_many  :users, :dependent => :destroy, :order=>"first_name ASC, last_name ASC, username ASC"
 	has_many	:orders, :through => :divisions, :dependent => :destroy
 	has_many	:products, :through => :divisions, :dependent => :destroy
 	has_many  :histories, :dependent => :destroy

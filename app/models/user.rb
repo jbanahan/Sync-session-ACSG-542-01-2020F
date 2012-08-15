@@ -37,7 +37,7 @@ class User < ActiveRecord::Base
   has_many   :support_tickets_assigned, :foreign_key => :agent_id
   
   validates  :company, :presence => true
-  
+
   def self.find_not_locked(login) 
     u = User.where(:username => login).first
     unless u.nil? || u.company.locked

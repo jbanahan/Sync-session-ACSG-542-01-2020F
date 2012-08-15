@@ -443,16 +443,20 @@ var OpenChain = (function() {
     },
     loadUserList: function(destinationSelect,selectedId) {
       $.getJSON('/users.json',function(data) {
-        var i;
+        var i, company, j, u, selected;
         var h = "";
         for(i=0;i<data.length;i++) {
-          var company = data[i].company;
-          var j;
-          for(j=0;j<company.users.length;j++) {
-            var u = company.users[j];
-            var selected = (u.id==selectedId ? "selected=\'true\' " : "");
-            h += "<option value='"+u.id+"' "+selected+">"+company.name+" - "+u.full_name+"</option>";
+          company = data[i].company;
+          if(company.users.length==0) {
+            continue;
           }
+          h += "<optgroup label='"+company.name+"'>"
+          for(j=0;j<company.users.length;j++) {
+            u = company.users[j];
+            selected = (u.id==selectedId ? "selected=\'true\' " : "");
+            h += "<option value='"+u.id+"' "+selected+">"+u.full_name+"</option>";
+          }
+          h += "</optgroup>";
         }
         destinationSelect.html(h);
       });

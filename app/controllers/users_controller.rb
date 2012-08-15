@@ -16,9 +16,9 @@ class UsersController < ApplicationController
         format.json {
           companies = []
           if current_user.company.master?
-            companies = Company.all
+            companies = Company.select("DISTINCT companies.*").joins(:users)
           else
-            companies = current_user.company.linked_companies.to_a
+            companies = current_user.company.linked_companies.select("DISTINCT companies.*").joins(:users)
             companies << current_user.company
             master = Company.where(:master=>true).first
             companies << master unless companies.include?(master)
