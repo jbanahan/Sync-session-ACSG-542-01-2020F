@@ -40,67 +40,71 @@ module OpenChain
 
     # take the text inside an internet tracking file from alliance and create/update the entry
     def self.parse file_content, bucket_name = nil, s3_key = nil
-      begin
-        entry_lines = []
-        file_content.lines.each do |line|
-          prefix = line[0,4]
-          if !entry_lines.empty? && prefix=="SH00"
-            AllianceParser.new.parse_entry entry_lines, bucket_name, s3_key
-            entry_lines = []
-          end
-          entry_lines << line
+      current_line = 0
+      entry_lines = []
+      file_content.lines.each_with_index do |line,idx|
+        current_line = idx
+        prefix = line[0,4]
+        if !entry_lines.empty? && prefix=="SH00"
+          AllianceParser.new(file_content,current_line).parse_entry entry_lines, bucket_name, s3_key
+          entry_lines = []
         end
-        AllianceParser.new.parse_entry entry_lines, bucket_name, s3_key if !entry_lines.empty?
-      rescue
-        puts $!
-        puts $!.backtrace
-        tmp = Tempfile.new(['alliance_error','.txt'])
-        tmp << file_content
-        tmp.flush
-        $!.log_me ["Alliance parser failure."], [tmp.path]
+        entry_lines << line
       end
+      AllianceParser.new(file_content,current_line).parse_entry entry_lines, bucket_name, s3_key if !entry_lines.empty?
+    end
+
+    def initialize(file_content,starting_row=0)
+      @file_content = file_content
+      @starting_row = starting_row
     end
 
     def parse_entry rows, bucket_name = nil, s3_key = nil
-      Entry.transaction do 
-        start_time = Time.now
-        rows.each do |r|
-          break if @skip_entry
-          prefix = r[0,4]
-          case prefix
-            when "SH00"
-              process_sh00 r
-            when "SH01"
-              process_sh01 r
-            when "SH03"
-              process_sh03 r
-            when "SD00"
-              process_sd00 r
-            when "IH00"
-              process_ih00 r
-            when "IT00"
-              process_it00 r
-            when "IL00"
-              process_il00 r
-            when "SI00"
-              process_si00 r
-            when "SR00"
-              process_sr00 r
-            when "SU01"
-              process_su01 r
-            when "CI00"
-              process_ci00 r
-            when "CL00"
-              process_cl00 r
-            when "CT00"
-              process_ct00 r
-            when "CF00"
-              process_cf00 r
-            when "SC00"
-              process_sc00 r
+      current_row = @starting_row
+      row_content = nil
+      begin
+        Entry.transaction do 
+          start_time = Time.now
+          rows.each do |r|
+            row_content = r
+            current_row += 1
+            break if @skip_entry
+            prefix = r[0,4]
+            case prefix
+              when "SH00"
+                process_sh00 r
+              when "SH01"
+                process_sh01 r
+              when "SH03"
+                process_sh03 r
+              when "SD00"
+                process_sd00 r
+              when "IH00"
+                process_ih00 r
+              when "IT00"
+                process_it00 r
+              when "IL00"
+                process_il00 r
+              when "SI00"
+                process_si00 r
+              when "SR00"
+                process_sr00 r
+              when "SU01"
+                process_su01 r
+              when "CI00"
+                process_ci00 r
+              when "CL00"
+                process_cl00 r
+              when "CT00"
+                process_ct00 r
+              when "CF00"
+                process_cf00 r
+              when "SC00"
+                process_sc00 r
+            end
+            current_row += 1
           end
-        end
-        if !@skip_entry
+          if !@skip_entry
             @entry.last_file_bucket = bucket_name
             @entry.last_file_path = s3_key
             @entry.import_country = Country.find_by_iso_code('US')
@@ -124,13 +128,19 @@ module OpenChain
             set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
             set_importer_id
             @entry.save! if @entry
-            @commercial_invoices.each {|ci| ci.save!} if @commercial_invoices
-            #set time to process in milliseconds without calling callbacks
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
             OpenChain::AllianceImagingClient.request_images @entry.broker_reference
+          end
+          @skip_entry = false
         end
-        @skip_entry = false
+      rescue
+        puts $!
+        puts $!.backtrace
+        tmp = Tempfile.new(['alliance_error','.txt'])
+        tmp << @file_content
+        tmp.flush
+        $!.log_me ["Alliance parser failure, line #{current_row}.","Row: #{row_content}"], [tmp.path]
       end
     end
 
@@ -146,6 +156,7 @@ module OpenChain
         @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
         @entry.source_system = SOURCE_CODE
         @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
+        @entry.broker_invoices.destroy_all #clear all invoices and recreate as we go
         @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
         @entry.total_units = 0 #reset, then accumulate as we process invoice lines
         @entry.customer_number = r[14,10].strip
@@ -300,9 +311,7 @@ module OpenChain
 
     # invoice header
     def process_ih00 r
-      @invoice = nil
-      @invoice = @entry.broker_invoices.where(:suffix=>r[4,2]).first if @entry.id  #existing entry, check for existing invoice
-      @invoice = @entry.broker_invoices.build(:suffix=>r[4,2],:currency=>"USD") unless @invoice
+      @invoice = @entry.broker_invoices.build(:suffix=>r[4,2],:currency=>"USD")
       @invoice.invoice_date = parse_date r[6,8] unless r[6,8] == "00000000"
       @invoice.invoice_total = parse_currency r[24,11]
       @invoice.customer_number = r[14,10].strip
@@ -313,8 +322,6 @@ module OpenChain
       @invoice.bill_to_state = r[223,2].strip
       @invoice.bill_to_zip = r[225,9].strip
       @invoice.bill_to_country = Country.find_by_iso_code(r[234,2]) unless r[234,2].strip.blank?
-      @invoice.save! unless @invoice.id.blank? #save existing that are updated
-      @invoice.broker_invoice_lines.destroy_all
     end
 
     # invoice line
@@ -327,7 +334,6 @@ module OpenChain
       line.vendor_name = r[54,30].strip
       line.vendor_reference = r[84,15].strip
       line.charge_type = r[99,1]
-      line.save! unless @invoice.id.blank?
     end
 
     # invoice trailer
