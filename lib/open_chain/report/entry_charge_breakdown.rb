@@ -19,7 +19,7 @@ module OpenChain
             bill_columns << cd unless bill_columns.include?(cd)
             val = charge_totals[cd]
             val = BigDecimal("0.00") unless val
-            val = val.add(line.charge_amount,2)
+            val = val + line.charge_amount
             charge_totals[cd] = val
           end
 
@@ -27,7 +27,7 @@ module OpenChain
           row.push Spreadsheet::Link.new(e.view_url,val(e,:ent_entry_num,run_by))
           row.push "#{e.broker_reference}#{bi.suffix}"
           row.push val(bi,:bi_invoice_date,run_by)
-          row.push val(bi,:bi_invoice_total,run_by)
+          row.push bi.invoice_total.nil? ? BigDecimal("0.00").to_s.to_f : BigDecimal(bi.invoice_total,2).to_s.to_f
           row.push val(e,:ent_carrier_code,run_by)
           row.push val(e,:ent_export_date,run_by)
           row.push val(e,:ent_transport_mode_code,run_by)
@@ -44,7 +44,7 @@ module OpenChain
           row.push val(e,:ent_container_sizes,run_by)
           bill_columns.each do |cd|
             if charge_totals[cd]
-              row.push << charge_totals[cd].to_f
+              row.push << charge_totals[cd].to_s.to_f
             else
               row.push ""
             end
