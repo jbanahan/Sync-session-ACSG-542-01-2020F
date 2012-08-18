@@ -24,7 +24,7 @@ module OpenChain
           end
 
           row = sheet.row(row_cursor)
-          row.push Spreadsheet::Link.new(e.view_url,val(e,:ent_entry_num,run_by))
+          row.push val(e,:ent_entry_num,run_by)
           row.push "#{e.broker_reference}#{bi.suffix}"
           row.push val(bi,:bi_invoice_date,run_by)
           row.push bi.invoice_total.nil? ? BigDecimal("0.00").to_s.to_f : BigDecimal(bi.invoice_total,2).to_s.to_f
@@ -49,6 +49,7 @@ module OpenChain
               row.push ""
             end
           end
+          row.push e.view_url
           row_cursor += 1
         end
 

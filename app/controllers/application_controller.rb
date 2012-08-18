@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
     require 'newrelic_rpm'
 
     protect_from_forgery
+    before_filter :office_browser_detect
     before_filter :new_relic
     before_filter :require_user
     before_filter :set_user_time_zone
@@ -21,6 +22,15 @@ class ApplicationController < ActionController::Base
     helper_method :sortable_search_heading
     helper_method :master_setup
    
+
+    def office_browser_detect
+      is_office = request.headers['HTTP_USER_AGENT'].ends_with? 'ms-office)'
+      if is_office
+        render :text=>"<html><head><meta http-equiv='refresh' content='0;URL=\"#{request.full_path}\"'></head><body>Reloading outside of MS office</body></html>"
+        return false
+      end
+    end
+
     def log_request
       #prep for exception notification
       request.env["exception_notifier.exception_data"] = {
