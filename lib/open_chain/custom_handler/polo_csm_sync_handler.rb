@@ -9,6 +9,7 @@ module OpenChain
       end
 
       def process user
+        italy = Country.find_by_iso_code "IT"
         xlc = XLClient.new(@custom_file.attached.path)
         last_row = xlc.last_row_number(0)
         (1..last_row).each do |n|
@@ -23,7 +24,12 @@ module OpenChain
             csm_number = string_val(xlc,0,n,2) + string_val(xlc,0,n,3) + string_val(xlc,0,n,4)
             p.update_custom_value! @csm_cd, csm_number
             p.create_snapshot user
-            matched = 'matched'
+            matched = 'matched - no tariff'
+            italy_classification = p.classifications.find_by_country_id italy.id
+            if italy_classification
+              tr = italy_classification.tariff_records.first
+              matched = 'matched' if tr && !tr.hts_1.blank?
+            end
           end
           xlc.set_cell 0, n, 16, matched
         end
