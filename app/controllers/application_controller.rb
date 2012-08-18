@@ -26,7 +26,7 @@ class ApplicationController < ActionController::Base
     def office_browser_detect
       is_office = request.headers['HTTP_USER_AGENT'].ends_with? 'ms-office)'
       if is_office
-        render :text=>"<html><head><meta http-equiv='refresh' content='0;URL=\"#{request.full_path}\"'></head><body>Reloading outside of MS office</body></html>"
+        render :text=>"<html><head><meta http-equiv='refresh' content='0;URL=\"#{request.fullpath}\"'></head><body>Reloading outside of MS office</body></html>"
         return false
       end
     end
