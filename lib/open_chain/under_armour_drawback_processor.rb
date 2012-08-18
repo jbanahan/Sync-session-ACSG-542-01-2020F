@@ -77,7 +77,7 @@ module OpenChain
       piece_sets.each do |ps|
         ship_line = ps.shipment_line
         shipment = ship_line.shipment
-        country_origin = ship_line.get_custom_value(country_origin_custom_def).value
+        country_origin = !c_line.country_origin_code.blank? ? c_line.country_origin_code : ship_line.get_custom_value(country_origin_custom_def).value
         d = DrawbackImportLine.new(:entry_number=>entry.entry_number,
           :import_date=>entry.arrival_date,
           :received_date=>shipment.get_custom_value(delivery_custom_def).value,

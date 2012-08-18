@@ -190,7 +190,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
   end
   describe "make_drawback_import_lines" do
     before :each do
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345',:country_origin_code=>'CN')
       @c_line.commercial_invoice.entry.update_attributes(
         :entry_number=>"12345678901",
         :arrival_date=>0.days.ago,
@@ -212,7 +212,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       @s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       @shipment = @s_line.shipment
       @shipment.update_custom_value! @cd_del, 1.days.from_now
-      @s_line.update_custom_value! @cd_coo, 'CN'
+      @s_line.update_custom_value! @cd_coo, 'TW'
       @s_line.update_custom_value! @cd_po, @c_line.po_number
       @s_line.update_custom_value! @cd_size, "XXL"
     end
@@ -230,8 +230,8 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       d.port_code.should == @entry.entry_port_code
       d.box_37_duty.should == @entry.total_duty
       d.box_40_duty.should == @entry.total_duty_direct
-      d.country_of_origin_code.should == @s_line.get_custom_value(@cd_coo).value
-      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cd_size).value}+#{@s_line.get_custom_value(@cd_coo).value}"
+      d.country_of_origin_code.should == @c_line.country_origin_code
+      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cd_size).value}+#{@c_line.country_origin_code}"
       d.hts_code.should == @c_tar.hts_code
       d.description.should == @entry.merchandise_description 
       d.unit_of_measure.should == "EA" #hard code to eaches
@@ -270,6 +270,13 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       d2.rate.should == BigDecimal("0.1")
       d2.duty_per_unit.should == BigDecimal("1.20")
       d2.quantity.should == s_line2.quantity
+    end
+    it 'should use shipment country of origin if entry country of origin is blank' do
+      @c_line.update_attributes(:country_origin_code=>'')
+      OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line
+      cr = ChangeRecord.new
+      d = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines(@c_line, cr).first
+      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cd_size).value}+#{@s_line.get_custom_value(@cd_coo).value}"
     end
     it "should not make line where line has already been made" do
       OpenChain::UnderArmourDrawbackProcessor.new.link_commercial_invoice_line @c_line

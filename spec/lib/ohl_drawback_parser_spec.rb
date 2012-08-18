@@ -2,14 +2,17 @@ require 'spec_helper'
 
 describe OpenChain::OhlDrawbackParser do
   before :each do 
-    Factory(:country,:iso_code=>'US')
+    {'CN'=>'CHINA','TW'=>'TAIWAN','KH'=>'CAMBODIA','VN'=>'VIET NAM','US'=>'UNITED STATES'}.each do |k,v|
+      Factory(:country, :name=>v, :iso_code=>k)
+    end
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @sample_path = 'spec/support/bin/ohl_drawback_sample.xls'
     OpenChain::OhlDrawbackParser.parse @sample_path
   end
   it 'should create entries based on sample, skipping Mode = "-1"' do
-    Entry.all.should have(2).items
-    Entry.all.collect {|e| e.entry_number}.should == ['11350368418','11353554642']
+    entries = Entry.all
+    entries.should have(2).items
+    entries.collect {|e| e.entry_number}.should == ['11350368418','11353554642']
   end
   it 'should map header fields' do
     ent = Entry.find_by_entry_number '11350368418'
@@ -86,5 +89,27 @@ describe OpenChain::OhlDrawbackParser do
   end
   it 'should write time to process' do
     Entry.first.time_to_process.should > 0
+  end
+  context :country_of_origin do
+    it 'should map country of origin based on country name' do
+      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+      lines.find_by_part_number("1216024-290").country_origin_code.should == "KH"
+    end
+    it 'should override for CHINA(MAINLAND)' do
+      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+      lines.find_by_part_number("1216859-001").country_origin_code.should == "CN"
+    end
+    it 'should override for CHINA(TAIWAN)' do
+      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+      lines.find_by_part_number("1209308-660").country_origin_code.should == "TW"
+    end
+    it 'should override for VIETNAM' do
+      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+      lines.find_by_part_number("1209308-101").country_origin_code.should == "VN"
+    end
+    it 'should leave blank if country not found' do
+      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
+      lines.find_by_part_number("1216024-454").country_origin_code.should == ""
+    end
   end
 end

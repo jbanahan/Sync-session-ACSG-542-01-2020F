@@ -51,22 +51,40 @@ module OpenChain
     def process_details row
       @line_number ||= 1
       line = @invoice.commercial_invoice_lines.build(:line_number=>@line_number)
-      line.part_number = row[17]
-      line.po_number = row[15]
-      line.quantity = DOZENS_INDICATORS.include?(row[21]) ? row[20]*12 : row[20]
+      line.part_number = row[19]
+      line.po_number = row[17]
+      line.quantity = DOZENS_INDICATORS.include?(row[23]) ? row[22]*12 : row[22]
+      line.country_origin_code = get_country_of_origin row[12]
       t = line.commercial_invoice_tariffs.build
-      t.duty_amount = row[19]
-      t.classification_qty_1 = row[20]
-      t.classification_uom_1 = row[21]
-      t.hts_code = row[14].gsub('.','') if row[14]
-      t.entered_value = row[13]
-      @entry.total_duty_direct += row[18] unless row[18].nil?
+      t.duty_amount = row[21]
+      t.classification_qty_1 = row[22]
+      t.classification_uom_1 = row[23]
+      t.hts_code = row[16].gsub('.','') if row[16]
+      t.entered_value = row[15]
+      @entry.total_duty_direct += row[20] unless row[20].nil?
       @line_number += 1
     end
     
+    private
     #convert excel spreadsheet date column to US Eastern Date/Time
     def datetime v
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(v.strftime("%Y-%m-%d")) unless v.nil?
+    end
+
+    def get_country_of_origin val
+      r = ""
+      case val
+      when 'CHINA(MAINLAND)'
+        r = 'CN'
+      when 'CHINA(TAIWAN)'
+        r = 'TW'
+      when 'VIETNAM'
+        r = 'VN'
+      else
+        c = Country.find_by_name val 
+        r = c.iso_code unless c.nil? 
+      end
+      r
     end
   end
 end
