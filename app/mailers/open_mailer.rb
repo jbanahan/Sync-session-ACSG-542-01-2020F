@@ -158,11 +158,15 @@ EOS
     @error_message = error_message ? error_message : e.message
     @backtrace = backtrace ? backtrace : e.backtrace
     @backtrace = [] unless @backtrace
-    @additional_messages = additional_messages
+    @additional_messages = additional_messages.nil? ? [] : additional_messages
     attachment_files = []
     attachment_paths.each do |ap|
-      attachment_files << File.open(ap) if File.exists?(ap)
-    end
+      if save_large_attachment ap, 'bug@aspect9.com' 
+        @additional_messages << @body_text.html_safe
+      else
+        attachment_files << File.open(ap) 
+      end
+    end  
     mail(:to=>"bug@aspect9.com",
       :subject =>"[chain.io Exception] - #{@error_message}",
       :postmark_attachments => attachment_files) do |format|
