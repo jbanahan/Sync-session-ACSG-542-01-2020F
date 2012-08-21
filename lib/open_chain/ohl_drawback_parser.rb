@@ -51,17 +51,17 @@ module OpenChain
     def process_details row
       @line_number ||= 1
       line = @invoice.commercial_invoice_lines.build(:line_number=>@line_number)
-      line.part_number = row[19]
-      line.po_number = row[17]
-      line.quantity = DOZENS_INDICATORS.include?(row[23]) ? row[22]*12 : row[22]
-      line.country_origin_code = get_country_of_origin row[12]
+      line.part_number = row[20]
+      line.po_number = row[18]
+      line.quantity = DOZENS_INDICATORS.include?(row[24]) ? row[23]*12 : row[23]
+      line.country_origin_code = get_country_of_origin row[13]
       t = line.commercial_invoice_tariffs.build
-      t.duty_amount = row[21]
-      t.classification_qty_1 = row[22]
-      t.classification_uom_1 = row[23]
-      t.hts_code = row[16].gsub('.','') if row[16]
-      t.entered_value = row[15]
-      @entry.total_duty_direct += row[20] unless row[20].nil?
+      t.duty_amount = row[22]
+      t.classification_qty_1 = row[23]
+      t.classification_uom_1 = row[24]
+      t.hts_code = row[17].gsub('.','') if row[17]
+      t.entered_value = row[16]
+      @entry.total_duty_direct += row[21] unless row[21].nil?
       @line_number += 1
     end
     
@@ -72,19 +72,7 @@ module OpenChain
     end
 
     def get_country_of_origin val
-      r = ""
-      case val
-      when 'CHINA(MAINLAND)'
-        r = 'CN'
-      when 'CHINA(TAIWAN)'
-        r = 'TW'
-      when 'VIETNAM'
-        r = 'VN'
-      else
-        c = Country.find_by_name val 
-        r = c.iso_code unless c.nil? 
-      end
-      r
+      val.match(/^[A-Z][A-Z]$/) ? val : ""
     end
   end
 end

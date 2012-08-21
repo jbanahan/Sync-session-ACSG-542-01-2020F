@@ -91,23 +91,11 @@ describe OpenChain::OhlDrawbackParser do
     Entry.first.time_to_process.should > 0
   end
   context :country_of_origin do
-    it 'should map country of origin based on country name' do
+    it 'should map country of origin based on code' do
       lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
       lines.find_by_part_number("1216024-290").country_origin_code.should == "KH"
     end
-    it 'should override for CHINA(MAINLAND)' do
-      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
-      lines.find_by_part_number("1216859-001").country_origin_code.should == "CN"
-    end
-    it 'should override for CHINA(TAIWAN)' do
-      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
-      lines.find_by_part_number("1209308-660").country_origin_code.should == "TW"
-    end
-    it 'should override for VIETNAM' do
-      lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
-      lines.find_by_part_number("1209308-101").country_origin_code.should == "VN"
-    end
-    it 'should leave blank if country not found' do
+    it 'should leave blank if country not 2 letter found' do
       lines = Entry.find_by_entry_number('11353554642').commercial_invoices.first.commercial_invoice_lines
       lines.find_by_part_number("1216024-454").country_origin_code.should == ""
     end
