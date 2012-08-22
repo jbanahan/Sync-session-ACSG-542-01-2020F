@@ -3,25 +3,26 @@ module OpenChain
     def self.parse_csv_file file_path
       count = 0
       File.new(file_path).lines do |line|
-        parse_csv_line line unless count == 0
+        parse_csv_line line, (count+1) unless count == 0
         puts "Processed Line #{count}" if count.modulo(100)==0
         count += 1
       end
     end
 
     # parses line and returns a saved DutyCalcExportFileLine
-    def self.parse_csv_line line
+    def self.parse_csv_line line, row_num = nil
       d = DutyCalcExportFileLine.new
       CSV.parse(line) do |r|
-        d.export_date = Date.strptime(r[15],"%Y%m%d")
+        raise "Line #{row_num} had #{r.size} elements.  All lines must have 32 elements." unless r.size==32
+        d.export_date = Date.strptime(r[18],"%Y%m%d")
         d.ship_date = d.export_date
-        d.part_number = get_part_number r[5]
+        d.part_number = get_part_number r
         d.ref_1 = numeric_to_string r[1]
         d.ref_2 = numeric_to_string r[0]
-        d.destination_country = r[14]
-        d.quantity = r[8]
-        d.schedule_b_code = r[17].gsub(".","")
-        d.description = r[7]
+        d.destination_country = r[17]
+        d.quantity = r[7]
+        d.schedule_b_code = r[20].gsub(".","")
+        d.description = r[6]
         d.uom = "EA"
         d.exporter = "Under Armour"
         d.action_code = "E"
@@ -67,11 +68,16 @@ module OpenChain
     def self.numeric_to_string s
       s.to_s.ends_with?(".0") ? s.to_s[0,s.to_s.size-2] : s.to_s
     end
-    def self.get_part_number combined_string
-      a = combined_string.split('-')
-      raise "Combined part number should have had 5 components and only had #{a.size}: #{combined_string}" unless a.size==5
-      a.each{|x| raise "Combined part number should not have any empty components: #{combined_string}" if x.blank?} 
-      "#{a[1]}-#{a[2]}-#{a[3]}+#{a[4]}"
+    def self.get_part_number row
+      style = row[2]
+      color = row[3]
+      size = row[4]
+      coo = row[5]
+      while color.size < 3
+        color = "0"+color
+      end
+      [style,color,size,coo].each {|x| raise "Invalid item SKU #{style}-#{color}-#{size}+#{coo}" if x.blank?}
+      "#{style}-#{color}-#{size}+#{coo}"
     end
 
     class AafesParser
