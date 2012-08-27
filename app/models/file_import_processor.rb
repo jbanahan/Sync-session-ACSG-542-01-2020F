@@ -107,7 +107,11 @@ class FileImportProcessor
                 cv.value = data
               end
               messages << "#{cd.label} set to #{cv.value}"
-              cv.save! if save && !(orig_value.blank? && data.blank?) 
+              if save && !(orig_value.blank? && data.blank?) 
+                cv.save!
+              else
+                obj.custom_values.delete(cv)
+              end
             end
             object_map[mod] = obj
           end
