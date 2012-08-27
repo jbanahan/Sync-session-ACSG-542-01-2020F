@@ -56,9 +56,17 @@ class XlsMaker
   end
   
   def process_row sheet, row_number, row_data, base_object
-      row_data.each_with_index {|cell,col| 
-        sheet.row(row_number).push(cell.nil? ? "" : cell)
-        width = cell.nil? ? 8 : cell.to_s.size + 3
+      row_data.each_with_index do |cell_base,col| 
+        cell = nil
+        if cell_base.nil?
+          cell = ""
+        elsif cell_base.is_a?(BigDecimal)
+          cell = cell_base.to_s.to_f #fix BigDecimal bad decimal points bug #629
+        else
+          cell = cell_base
+        end
+        sheet.row(row_number).push(cell)
+        width = cell.to_s.size<8 ? 8 : cell.to_s.size + 3
         if cell.is_a? Date
           sheet.row(row_number).set_format(col,@date_format) 
           width = 13
@@ -68,7 +76,7 @@ class XlsMaker
           sheet.column(col).width = width
           @column_widths[col] = width
         end
-      }
+      end
       sheet.row(row_number).push(Spreadsheet::Link.new(base_object.view_url,"Web View")) if self.include_links
   end
 end
