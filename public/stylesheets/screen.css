@@ -265,10 +265,11 @@ p {
 }
 #two_col_action {
   width:12%;
+  right: 0;
   vertical-align: top;
   padding: 0;
   text-align: center;
-  margin: 10px 0 0 88% ;
+  margin: 10px 0 0 0;
   overflow-x: hidden;
   position: fixed;
 }
