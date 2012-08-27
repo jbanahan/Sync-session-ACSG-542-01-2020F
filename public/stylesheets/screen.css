@@ -268,9 +268,9 @@ p {
   vertical-align: top;
   padding: 0;
   text-align: center;
-  float: right;
-  margin: 10px 0 0 0;
+  margin: 10px 0 0 88% ;
   overflow-x: hidden;
+  position: fixed;
 }
 #two_col_action button, #two_col_action input {
   width: 98%;
