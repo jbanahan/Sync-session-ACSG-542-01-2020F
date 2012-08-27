@@ -15,6 +15,7 @@ module OpenChain
           e = bi.entry
           charge_totals = {}
           bi.broker_invoice_lines.each do |line|
+            next if line.charge_type == "D"
             cd = line.charge_description
             bill_columns << cd unless bill_columns.include?(cd)
             val = charge_totals[cd]
@@ -42,6 +43,10 @@ module OpenChain
           row.push val(e,:ent_unlading_port_name,run_by)
           row.push val(e,:ent_gross_weight,run_by)
           row.push val(e,:ent_container_sizes,run_by)
+          row.push val(e,:ent_total_duty,run_by)
+          row.push val(e,:ent_total_hmf,run_by)
+          row.push val(e,:ent_total_mpf,run_by)
+          row.push val(e,:ent_cotton_fee,run_by)
           bill_columns.each do |cd|
             if charge_totals[cd]
               row.push << charge_totals[cd].to_s.to_f
@@ -72,6 +77,10 @@ module OpenChain
         row.push "Port Unlading"
         row.push "Gross Weight"
         row.push "Container Size(s)"
+        row.push "Duty"
+        row.push "HMF"
+        row.push "MPF"
+        row.push "Cotton Fees"
         bill_columns.each {|cd| row.push cd}
 
         t = Tempfile.new(['entry_charge_breakdown','.xls'])
