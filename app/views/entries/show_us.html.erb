@@ -32,21 +32,21 @@
     <tr>
       <td style="width:33%;">
         <table>
-          <%[:ent_entry_num,:ent_brok_ref,:ent_customer_references].each do |f|%>
+          <%[:ent_entry_num,:ent_brok_ref,:ent_customer_references,:ent_mbols,:ent_hbols].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_release_cert_message,:ent_fda_message,:ent_merch_desc,:ent_mbols,:ent_hbols].each do |f|%>
+          <%[:ent_release_cert_message,:ent_fda_message,:ent_paperless_certification,:ent_paperless_release,:ent_census_warning,:ent_error_free_release].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
       </td>
       <td style="width:34%;">
         <table>
-          <%[:ent_cust_name,:ent_vendor_names,:ent_po_numbers].each do |f|%>
+          <%[:ent_cust_name,:ent_vendor_names,:ent_po_numbers,:ent_merch_desc].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>

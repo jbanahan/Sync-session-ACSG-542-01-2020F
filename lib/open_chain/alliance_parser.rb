@@ -179,6 +179,10 @@ module OpenChain
         @entry.vessel = r[270,20].strip
         @entry.voyage = r[290,10].strip
         @entry.gross_weight = r[318,12]
+        @entry.census_warning = parse_boolean r[497]
+        @entry.error_free_release = parse_boolean r[498]
+        @entry.paperless_certification = parse_boolean r[499]
+        @entry.paperless_release = parse_boolean r[500]
       end
     end
 
@@ -417,6 +421,9 @@ module OpenChain
     def accumulated_string string_code
       return "" unless @accumulated_strings && @accumulated_strings[string_code]
       @accumulated_strings[string_code].to_a.join("\n ")
+    end
+    def parse_boolean str
+      str=='Y'
     end
   end
 end

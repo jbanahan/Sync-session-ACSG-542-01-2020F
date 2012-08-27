@@ -760,7 +760,11 @@ class ModelField
       ],
       [93,:ent_total_gst,:total_gst,"Total GST",{:data_type=>:decimal}],
       [94,:ent_total_duty_gst,:total_duty_gst,"Total Duty & GST",{:data_type=>:decimal}],
-      [95,:ent_first_entry_sent_date,:first_entry_sent_date,"Entry",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}]
+      [95,:ent_first_entry_sent_date,:first_entry_sent_date,"Entry",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [96,:ent_paperless_release,:paperless_release,"Paperless Entry Summary",{:data_type=>:boolean}],
+      [97,:ent_census_warning,:census_warning,"Census Warning",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [98,:ent_error_free_release,:error_free_release,"Error Free Release",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [99,:ent_paperless_certification,:paperless_certification,"Paperless Release Cert",{:data_type=>:boolean}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

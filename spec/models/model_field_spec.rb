@@ -82,16 +82,30 @@ describe ModelField do
         ModelField.find_by_uid(:ent_broker_invoice_total).can_view?(u).should be_false
       end
     end
-    context "duty due date" do
+    context "broker security" do
+      before :each do
+        @broker_user = Factory(:user,:company=>Factory(:company,:broker=>true))
+        @non_broker_user = Factory(:user)
+      end
       it "should allow duty due date if user is broker company" do
-        u = Factory(:user,:company=>Factory(:company,:broker=>true))
+        u = @broker_user
         ModelField.find_by_uid(:ent_duty_due_date).can_view?(u).should be_true
         ModelField.find_by_uid(:bi_duty_due_date).can_view?(u).should be_true
       end
       it "should not allow duty due date if user is not a broker" do
-        u = Factory(:user)
+        u = @non_broker_user
         ModelField.find_by_uid(:ent_duty_due_date).can_view?(u).should be_false
         ModelField.find_by_uid(:bi_duty_due_date).can_view?(u).should be_false
+      end
+      it "should secure error_free_release" do
+        mf = ModelField.find_by_uid(:ent_error_free_release) 
+        mf.can_view?(@broker_user).should be_true
+        mf.can_view?(@non_broker_user).should be_false
+      end
+      it "should secure census warning" do
+        mf = ModelField.find_by_uid(:ent_census_warning) 
+        mf.can_view?(@broker_user).should be_true
+        mf.can_view?(@non_broker_user).should be_false
       end
     end
     context "product last_changed_by" do
