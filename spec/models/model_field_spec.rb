@@ -107,6 +107,11 @@ describe ModelField do
         mf.can_view?(@broker_user).should be_true
         mf.can_view?(@non_broker_user).should be_false
       end
+      it "should secure pdf count" do
+        mf = ModelField.find_by_uid(:ent_pdf_count)
+        mf.can_view?(@broker_user).should be_true
+        mf.can_view?(@non_broker_user).should be_false
+      end
     end
     context "product last_changed_by" do
       it "should apply search criterion properly" do
@@ -124,6 +129,41 @@ describe ModelField do
         found = ss.search.to_a
         found.should have(1).product
         found.first.should == p
+      end
+    end
+    context :ent_pdf_count do
+      before :each do
+        @with_pdf = Factory(:entry)
+        @with_pdf.attachments.create!(:attached_content_type=>"application/pdf")
+        @without_attachments = Factory(:entry)
+        @with_tif = Factory(:entry)
+        @with_tif.attachments.create!(:attached_content_type=>"image/tiff")
+        @with_tif_and_2_pdf = Factory(:entry)
+        @with_tif_and_2_pdf.attachments.create!(:attached_content_type=>"application/pdf")
+        @with_tif_and_2_pdf.attachments.create!(:attached_content_type=>"application/pdf")
+        @with_tif_and_2_pdf.attachments.create!(:attached_content_type=>"image/tiff")
+        @mf = ModelField.find_by_uid(:ent_pdf_count)
+        @u = Factory(:user,:company=>Factory(:company,:broker=>true))
+      end
+      it "should process_export" do
+        @mf.process_export(@with_pdf, @u).should == 1
+        @mf.process_export(@without_attachments, @u).should == 0
+        @mf.process_export(@with_tif, @u).should == 0
+        @mf.process_export(@with_tif_and_2_pdf, @u).should == 2
+      end
+      it "should search with greater than" do
+        sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'gt',:value=>0)
+        r = sc.apply(Entry.where("1=1")).to_a
+        r.should have(2).entries
+        r.should include(@with_pdf)
+        r.should include(@with_tif_and_2_pdf)
+      end
+      it "should search with equals" do
+        sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'eq',:value=>0)
+        r = sc.apply(Entry.where("1=1")).to_a
+        r.should have(2).entries
+        r.should include(@with_tif)
+        r.should include(@without_attachments)
       end
     end
   end

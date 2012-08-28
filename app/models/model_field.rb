@@ -764,7 +764,14 @@ class ModelField
       [96,:ent_paperless_release,:paperless_release,"Paperless Entry Summary",{:data_type=>:boolean}],
       [97,:ent_census_warning,:census_warning,"Census Warning",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
       [98,:ent_error_free_release,:error_free_release,"Error Free Release",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
-      [99,:ent_paperless_certification,:paperless_certification,"Paperless Release Cert",{:data_type=>:boolean}]
+      [99,:ent_paperless_certification,:paperless_certification,"Paperless Release Cert",{:data_type=>:boolean}],
+      [100,:ent_pdf_count,:pdf_count,"PDF Attachment Count", {
+        :import_lambda=>lambda {|obj,data| "PDF Attachment Count ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.attachments.where(:attached_content_type=>'application/pdf').count},
+        :qualified_field_name=>"(select count(*) from attachments where attachable_type = \"Entry\" and attachable_id = entries.id and attached_content_type=\"application/pdf\")",
+        :data_type=>:integer,
+        :can_view_lambda=> lambda {|u| u.company.broker?}
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
