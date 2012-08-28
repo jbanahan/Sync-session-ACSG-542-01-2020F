@@ -77,6 +77,8 @@ module OpenChain
                 process_sh01 r
               when "SH03"
                 process_sh03 r
+              when "SH04"
+                process_sh04 r
               when "SD00"
                 process_sd00 r
               when "IH00"
@@ -207,6 +209,10 @@ module OpenChain
       @entry.consignee_address_2 = r[323,35].strip
       @entry.consignee_city = r[358,35].strip
       @entry.consignee_state = r[393,2].strip
+    end
+
+    def process_sh04 r
+      @entry.destination_state = r[191,2].strip
     end
 
     # date

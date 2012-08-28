@@ -771,7 +771,8 @@ class ModelField
         :qualified_field_name=>"(select count(*) from attachments where attachable_type = \"Entry\" and attachable_id = entries.id and attached_content_type=\"application/pdf\")",
         :data_type=>:integer,
         :can_view_lambda=> lambda {|u| u.company.broker?}
-      }]
+      }],
+      [101,:ent_destination_state,:destination_state,"Destination State",{:data_type=>:string}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
