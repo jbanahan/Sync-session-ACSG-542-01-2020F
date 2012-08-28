@@ -81,6 +81,9 @@
   <% unless @file_import_result.nil?%>
     <button class='btn_link' link_to='<%=file_import_result_path(@file_import_result)%>'>Log</button>
   <%end%>
+  <% unless @imported_file.imported_file_downloads.empty? -%>
+    <button class='btn_link' link_to='<%= imported_file_imported_file_downloads_path(@imported_file) %>'>Download History</button>
+  <% end -%>
 <% end %>
 <%if @file_import_result%>
   <%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@imported_file,

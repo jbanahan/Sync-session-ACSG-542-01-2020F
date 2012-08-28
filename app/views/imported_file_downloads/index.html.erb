@@ -1,0 +1,40 @@
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th>
+        File Name
+      </th>
+      <th>
+        Downloaded
+      </th>
+      <th>
+        Downloaded By
+      </th>
+      <% if @f.core_module==CoreModule::PRODUCT -%>
+      <th>
+        Extra Countries
+      </th>
+      <% end -%>
+    </tr>
+  </thead>
+  <tbody>
+    <% @f.imported_file_downloads.each do |d| -%>
+    <tr class='hover'>
+      <td>
+        <%= link_to d.attached_file_name, imported_file_imported_file_download_path(@f,d) %>
+      </td>
+      <td>
+        <%= d.created_at %>
+      </td>
+      <td>
+        <%= d.user.full_name %>
+      </td>
+      <% if @f.core_module==CoreModule::PRODUCT -%>
+      <td>
+        <%= d.additional_countries %> 
+      </td>
+      <% end -%>
+    </tr>
+    <% end -%>
+  </tbody>
+</table>

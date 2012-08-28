@@ -30,6 +30,7 @@ class User < ActiveRecord::Base
   has_many   :debug_records, :dependent => :destroy
   has_many   :dashboard_widgets, :dependent => :destroy
   has_many   :imported_files
+  has_many   :imported_file_downloads
   has_many   :instant_classification_results, :foreign_key => :run_by_id
   has_many   :report_results, :foreign_key => :run_by_id
   has_many   :survey_responses

@@ -194,5 +194,4 @@ class ImportedFilesController < ApplicationController
       end
     }
   end
-
 end

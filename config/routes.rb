@@ -296,6 +296,7 @@ OpenChain::Application.routes.draw do
       get 'process'
       post 'filter'
     end
+    resources :imported_file_downloads, :only=>[:index,:show]
   end
 
   resources :search_setups do
