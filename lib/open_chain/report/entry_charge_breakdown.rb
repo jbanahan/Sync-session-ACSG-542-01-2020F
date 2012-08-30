@@ -41,6 +41,7 @@ module OpenChain
           row.push val(e,:ent_consignee_city,run_by)
           row.push val(e,:ent_consignee_state,run_by)
           row.push val(e,:ent_unlading_port_name,run_by)
+          row.push val(e,:ent_destination_state,run_by)
           row.push val(e,:ent_gross_weight,run_by)
           row.push val(e,:ent_container_sizes,run_by)
           row.push val(e,:ent_total_duty,run_by)
@@ -75,6 +76,7 @@ module OpenChain
         row.push "Consignee City"
         row.push "Consignee State"
         row.push "Port Unlading"
+        row.push "Destination State"
         row.push "Gross Weight"
         row.push "Container Size(s)"
         row.push "Duty"
