@@ -10,6 +10,9 @@ Factory.sequence :iso do |n|
   @iso_seq_2 = @iso_seq_2.succ
   r[0,2]
 end
+Factory.sequence :alpha_numeric do |n|
+  "ALPHA#{n}"
+end
 Factory.define :company do |c|
   c.sequence(:name) { |n| "cname#{n}"}
 end
@@ -25,12 +28,18 @@ Factory.define :user do |f|
   f.sequence(:email) { |n| "foo#{n}@example.com" }  
   f.association :company
 end  
-Factory.define :master_user, :class=> User do |f|
-  f.sequence(:username) { |n| "foo#{n}" }   
-  f.password "foobar"  
-  f.password_confirmation { |u| u.password }  
-  f.sequence(:email) { |n| "foo#{n}@example.com" }  
-  f.association :company, :master=>true
+Factory.define :master_user, :parent=>:user do |f|
+  f.after_create {|u| u.company.update_attributes(:master=>true)}
+end
+Factory.define :broker_user, :parent=>:user do |f|
+  f.entry_view true
+  f.broker_invoice_view true
+  f.after_create {|u| u.company.update_attributes(:broker=>true)}
+end
+Factory.define :importer_user, :parent=>:user do |f|
+  f.entry_view true
+  f.broker_invoice_view true
+  f.after_create {|u| u.company.update_attributes(:importer=>true)}
 end
 Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
@@ -157,6 +166,9 @@ Factory.define :broker_invoice do |f|
 end
 Factory.define :broker_invoice_line do |f|
   f.association :broker_invoice
+  f.charge_description {Factory.next :alpha_numeric}
+  f.charge_code {Factory.next :alpha_numeric}
+  f.charge_amount 1
 end
 Factory.define :port do |f|
   f.schedule_k_code '23456'

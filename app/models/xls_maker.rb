@@ -5,6 +5,7 @@ class XlsMaker
                                           :color => :orange,
                                           :pattern_fg_color => :navy,
                                           :pattern => 1
+  DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
 
   attr_accessor :include_links
 
@@ -42,7 +43,6 @@ class XlsMaker
   def prep_workbook cols
     wb = Spreadsheet::Workbook.new
     sheet = wb.create_worksheet :name=>"Results"
-    @date_format = Spreadsheet::Format.new(:number_format => 'YYYY-MM-DD')
     cols.each_with_index do |c,i|
       mf = ModelField.find_by_uid c.model_field_uid
       label = mf.nil? ? "" : mf.label
@@ -68,7 +68,7 @@ class XlsMaker
         sheet.row(row_number).push(cell)
         width = cell.to_s.size<8 ? 8 : cell.to_s.size + 3
         if cell.is_a? Date
-          sheet.row(row_number).set_format(col,@date_format) 
+          sheet.row(row_number).set_format(col,DATE_FORMAT) 
           width = 13
         end
         width = 23 if width > 23
