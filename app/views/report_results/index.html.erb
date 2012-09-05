@@ -7,7 +7,8 @@
     <% end %>
   <% end %>
 <% end %>
-<h2>Run A New Report</h2>
+<% if @show_basic -%>
+<h2>Run A Basic Report</h2>
 <table class='detail_table'>
   <%if current_user.company.master?%>
     <tr class='hover'><td><%=link_to "Stale Tariffs", reports_show_stale_tariffs_path%></td>
@@ -34,7 +35,39 @@
     <td>Shows all products without attachments.</td</tr>
   <%end%>
   </table>
-<h2>Report Results</h2>
+<% end -%>
+<% unless @customizable_reports.blank? -%>
+<h2>Create A Customizable Report</h2>
+<table class='detail_table'>
+  <% @customizable_reports.each do |cr| -%>
+    <tr class='hover'><td><%=link_to cr.template_name, new_custom_report_path(:type=>cr.name)%></td><td><%=cr.description%></td></tr>
+  <% end -%>
+</table>
+<% end -%>
+<% unless @current_custom_reports.blank? -%>
+<h2>Manage Customizable Reports</h2>
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th>
+        Name
+      </th>
+      <th>
+        Type
+      </th>
+      <th>
+        Created At
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @current_custom_reports.each do |cust| -%>
+      <tr><td><%=link_to cust.name, cust.becomes(CustomReport)%></td><td><%=cust.class.template_name%></td><td><%=cust.created_at%></td></tr>
+    <% end -%>
+  </tbody>
+</table>
+<% end -%>
+<h2>Report You've Run</h2>
 <table class='detail_table'>
   <thead><tr><th>&nbsp;</th><th>Name</th><th>Run At</th><%if params[:show_all]%><th>Run By</th><%end%><th>Status</th></tr></thead>
   <tbody>

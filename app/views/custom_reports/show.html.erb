@@ -1,0 +1,16 @@
+<%content_for :javascript do -%>
+$(function() {
+  $("#preview").click(function() {
+    $("#rpt_preview").html("Loading report preview...");
+    $.get('/custom_reports/<%=@report_obj.id%>/preview',function(data) {
+      $("#rpt_preview").html("<hr /><h2>Report Preview</h2><div>"+data+"</div>");
+    });
+  });
+});
+<%end-%>
+<%content_for :action_bar do -%>
+  <button id='preview'>Preview</button>
+  <button class='btn_link' link_to='<%=run_custom_report_path(@report_obj)%>'>Run</button>
+<%end-%>
+<%=render :partial=>'form'%>
+<div id='rpt_preview'></div>

@@ -1,0 +1,11 @@
+<%routing_obj=@report_obj.becomes(CustomReport)%>
+<%content_for :javascript do -%>
+$(function() {
+  OCSearch.init(0,0,"<%=url_for routing_obj%>","custom_report");
+});
+<%end%>
+<h1><%= @report_obj.class.template_name %></h1>
+<div>
+  <%= @report_obj.class.description %>
+</div>
+<%=render :partial=>'shared/search_panel', :locals=>{:routing_object=>routing_obj,:show=>true,:include_sorts=>false,:current_search=>@report_obj}%>

@@ -221,16 +221,165 @@ var OCSearch = (function() {
     });
     $(".search_row").find("a").dblclick(function(evt) {evt.stopPropagation();}) //prevent an accidental double-click on a link from bubbling up to the row
   }
+  var initSave = function(parentHash) {
+    $("#btn_setup_save").click(function() {
+      var coluids = []
+      $("#used_columns option").each(function () {
+        coluids.push($(this).attr("value"));
+      });
+      var f = $("#frm_current_search");
+      var i,h;
+      for(i=0;i<coluids.length;i++) {
+        if(coluids[i].length>0) {
+          var h = "<input type='hidden' name='"+parentHash+"[search_columns_attributes]["+i+"][rank]' value='"+i+"' />";
+          h = h + "<input type='hidden' name='"+parentHash+"[search_columns_attributes]["+i+"][model_field_uid]' value='"+coluids[i]+"' />";
+          f.append(h);
+        }
+      }
+      var srt_uids = []
+      $("#used_sorts option").each(function() {
+        srt_uids.push([$(this).attr("value"),$(this).attr("ord")]);
+      });
+      for(i=0;i<srt_uids.length;i++) {
+        var h = "<input type='hidden' name='"+parentHash+"[sort_criterions_attributes]["+i+"][rank]' value='"+i+"' />";
+        h = h + "<input type='hidden' name='"+parentHash+"[sort_criterions_attributes]["+i+"][model_field_uid]' value='"+srt_uids[i][0]+"' />";
+        h = h + "<input type='hidden' name='"+parentHash+"[sort_criterions_attributes]["+i+"][descending]' value='"+(srt_uids[i][1]=="a" ? "false" : "true")+"' />";
+        f.append(h);
+      }
+      f.submit();
+    });
+  }
+  var initColumnSelectors = function() {
+    $("#use_sort,#remove_sort").click(function(event) {
+      var id = $(event.target).attr("id");
+      var selectFrom = id == "use_sort" ? "#unused_sorts" : "#used_sorts";
+      var moveTo = id == "use_sort" ? "#used_sorts" : "#unused_sorts";
+      var selectedItems = $(selectFrom + " :selected").toArray();
+      if(id=="use_sort") {
+        $(selectFrom + " :selected").each(function() {
+          $(this).html($(this).html()+" [A > Z]");
+          $(this).attr('ord','a');
+        });
+      } else {
+        $(selectFrom + " :selected").each(function() {
+          $(this).html($(this).html().substring(0,$(this).html().length-11));
+        });
+      }
+      $(moveTo).append(selectedItems);
+      selectedItems.remove;
+    });
+    $("#used_sorts_up").click(function(ev) {
+      ev.preventDefault();
+      move_list_item('up',$("#used_sorts"));
+    });
+    $("#used_sorts_down").click(function(ev) {
+      ev.preventDefault();
+      move_list_item('down',$("#used_sorts"));
+    });
+    $("#used_sorts_reverse").click(function(ev) {
+      ev.preventDefault();
+      $("#used_sorts :selected").each(function() {
+        var ord = $(this).attr('ord');
+        $(this).attr('ord',ord=='a' ? 'd' : 'a');
+        var label = ord=='a' ? " [Z > A]" : " [A > Z]"
+        label = $(this).html().substring(0,$(this).html().length-11) + label;
+        $(this).html(label);
+      });
+    });
+   
+    $("#add_blank").click(function(ev) {
+      $("#used_columns").append("<option value='_blank'>[Blank]</option>");
+    });
+    $("#use_column,#remove_column").click(function(event) {
+      event.preventDefault();
+      var id = $(event.target).attr("id");
+      var selectFrom = id == "use_column" ? "#unused_columns" : "#used_columns";
+      var moveTo = id == "use_column" ? "#used_columns" : "#unused_columns";
+      var selectedItems = $(selectFrom + " :selected").toArray();
+      $(moveTo).append(selectedItems);
+      selectedItems.remove;
+    });
+    $("#used_columns_up").click(function(ev) {
+      ev.preventDefault();
+      move_list_item('up',$("#used_columns"));
+    });
+    $("#used_columns_down").click(function(ev) {
+      ev.preventDefault();
+      move_list_item('down',$("#used_columns"));
+    });
+  }
+
+  var initActionButtons = function(search_url,parentHash) {
+    if(search_url.length > 0) {
+      $("#mod_new_name").dialog({autoOpen:false,title:"Save As New",
+        buttons:{"Save":function() {
+          window.location = search_url+'/copy?new_name='+escape($("#txt_new_name").val());
+        },"Cancel":function() {$("#mod_new_name").dialog('close');}
+        }
+      });
+      $("#btn_setup_copy").click(function() {
+        $("#txt_new_name").val("Copy of "+$("#current_name").val());
+        $("#mod_new_name").dialog('open');
+      });
+      $("#btn_setup_delete").click(function() {
+        $("#mod_delete").dialog('open');
+      });
+      $("#mod_delete").dialog({autoOpen:false,width:"auto",buttons:{
+          "Yes":function() {
+            $("#real_delete_button").parents("form.button_to").submit();
+          },
+          "No":function() {
+            $("#mod_delete").dialog('close');
+          }
+      }});
+      $("#mod_give_to").dialog({autoOpen:false,width:'auto',title:"Give Copy",
+          buttons:{Give:function() {
+            var val = $("#give_user_list").val();
+            if(isNaN(val)) {
+              window.alert("You must select a user to give the report to.");
+            } else {
+              window.location = search_url+'/give?other_user_id='+val;
+            }
+          },Cancel:function() {$("#mod_give_to").dialog('close');}
+          }
+      });
+      $("#btn_give_to").click(function(evt) {  
+        OpenChain.loadUserList($("#give_user_list"),"");
+        $("#mod_give_to").dialog('open');
+      });
+    }
+    $("#mod_schedule").dialog({autoOpen:false,width:'auto',title:"Search Schedule",
+      buttons:{Update:function() {
+        var k = $("#sd_key").val();
+        if(k.length>0) {
+          var c = $('.sch_key[value="'+k+'"]').parents('.sch_data_cont');
+          removeSchedule(c)
+        }
+        writeScheduleContainer($("#sched_list"),readScheduleInterface(),parentHash);
+        $("#mod_schedule").dialog('close');
+      }}
+    });
+    $("#add_schedule").click(function(ev) {
+      ev.preventDefault();
+      writeScheduleInterface(newSchedule());
+      $("#mod_schedule").dialog('open');
+    });
+    applyScheduleHooks();
+  }
     
   return {
-    init: function(max_objects,search_run_id) {
+    init: function(max_objects,search_run_id,search_url,parentHash) {
+      $("#search_setup").tabs();
       maxObjects = max_objects;
       searchRunId = search_run_id;
+      initColumnSelectors();
+      initSave(parentHash);
       $("#frm_bulk").attr('action','');
       initBulkCheckboxes();
       initBulkSelectors();
       initSelectFullList();
       initRowDoubleClick();
+      initActionButtons(search_url,parentHash);
     },
     initSearchCriterions: function() {
       initSearchCrits();                      
@@ -359,11 +508,11 @@ function readScheduleContainer(c) {
   rv.frmt = c.children(".sch_frmt").val();
   return rv;
 }
-function writeScheduleContainer(container,rv) {
+function writeScheduleContainer(container,rv,parentHash) {
   if((rv.mon || rv.tue || rv.wed || rv.thu || rv.fri || rv.sat || rv.sun || rv.dom) && 
       rv.email || rv.ftpsvr) {
     var id = new Date().getTime();
-    var ssa = "search_setup[search_schedules_attributes]["+id+"]";
+    var ssa = parentHash+"[search_schedules_attributes]["+id+"]";
     var r = "<li class='sch_data_cont'>";
     r += rv.mon ? "Monday, " : "";
     r += rv.tue ? "Tuesday, " : "";
@@ -451,30 +600,6 @@ function writeScheduleInterface(s) {
   OCSearch.setDayCheckboxes();
 }
 function submitForm() {
-  var coluids = []
-  $("#used_columns option").each(function () {
-    coluids.push($(this).attr("value"));
-  });
-  var f = $("#frm_current_search");
-  var i,h;
-  for(i=0;i<coluids.length;i++) {
-    if(coluids[i].length>0) {
-      var h = "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][rank]' value='"+i+"' />";
-      h = h + "<input type='hidden' name='search_setup[search_columns_attributes]["+i+"][model_field_uid]' value='"+coluids[i]+"' />";
-      f.append(h);
-    }
-  }
-  var srt_uids = []
-  $("#used_sorts option").each(function() {
-    srt_uids.push([$(this).attr("value"),$(this).attr("ord")]);
-  });
-  for(i=0;i<srt_uids.length;i++) {
-    var h = "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][rank]' value='"+i+"' />";
-    h = h + "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][model_field_uid]' value='"+srt_uids[i][0]+"' />";
-    h = h + "<input type='hidden' name='search_setup[sort_criterions_attributes]["+i+"][descending]' value='"+(srt_uids[i][1]=="a" ? "false" : "true")+"' />";
-    f.append(h);
-  }
-  f.submit();
 }
 function move_list_item(direction,list) {
   var selectedItems = $("#"+list.attr("id")+" :selected");
@@ -487,63 +612,6 @@ function move_list_item(direction,list) {
       $(this).prev("option").before($(this));
     });
   }
-}
-function make_columns(amf,available_obj,used_obj,list_type,list) {
-  var used_columns = [];
-  var unused_columns = amf.slice(0);
-  var scs;
-  if(list_type=='search_columns') {
-    scs = list.search_setup.search_columns;
-  } else {
-    scs = list.search_setup.sort_criterions;
-  }
-  scs.sort(function(a,b) {
-    var i = a.rank-b.rank;
-    if(i!=0) { return i;}
-    if(a.model_field_uid<b.model_field_uid) {
-      return -1;
-    } else {
-      return 1;
-    }
-  });
-  for(i=0;i<scs.length;i++) {
-    var uid = scs[i].model_field_uid;
-    var new_unused = []
-    if(uid=="_blank") {
-      var blank_obj = new Object;
-      blank_obj.uid = "_blank";
-      blank_obj.label = "[Blank]";
-      used_columns.push(blank_obj);
-    } else {
-      for(j=0;j<unused_columns.length;j++) {
-        if(unused_columns[j].uid==uid) {
-          if(list_type=='sort_criterions') {
-            unused_columns[j].descending = scs[i].descending
-          }
-          used_columns.push(unused_columns[j]);
-        } else {
-          new_unused.push(unused_columns[j]);
-        }
-      }
-      unused_columns = new_unused;
-    }
-  }
-  h = "";
-  for(i=0;i<unused_columns.length;i++) {
-    h = h + "<option value='"+unused_columns[i].uid+"'>"+unused_columns[i].label+"</option>";
-  }
-  available_obj.html(h);
-  h = "";
-  for(i=0;i<used_columns.length;i++) {
-    var label = used_columns[i].label
-    var ord = '';
-    if(list_type=='sort_criterions') {
-      label = label + (used_columns[i].descending ? " [Z > A]" : " [A > Z]");
-      ord = "ord='"+(used_columns[i].descending ? "d" : "a")+"'"
-    }
-    h = h + "<option value='"+used_columns[i].uid+"' "+ord+">"+label+"</option>";
-  }
-  used_obj.html(h);
 }
 
 function updateShowAllColumnsLink() {

@@ -7,6 +7,12 @@ class ReportResultsController < ApplicationController
   end
   
   def index
+    @show_basic = current_user.company.master? || current_user.view_entries?
+    @customizable_reports = []
+    [CustomReportEntryInvoiceBreakdown].each do |rpt|
+      @customizable_reports << rpt if rpt.can_view?(current_user)
+    end
+    @current_custom_reports = current_user.custom_reports.order("name ASC").all
     r = (current_user.admin? && params[:show_all] && params[:show_all]=='true') ? ReportResult.where(true) : ReportResult.where(:run_by_id=>current_user.id)
     @report_results = r.order("run_at DESC").paginate(:per_page=>20,:page => params[:page])
   end

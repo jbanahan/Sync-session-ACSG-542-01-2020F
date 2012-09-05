@@ -40,6 +40,7 @@ class SearchSetupsController < ApplicationController
       other_user = User.find(params[:other_user_id])
       if current_user.company.master? || other_user.company_id==current_user.company_id || other_user.company.master?
         base.give_to other_user
+        add_flash :notices, "Report #{base.name} has been given to #{other_user.full_name}."
         redirect_to Kernel.const_get(base.module_type)
       else
         error_redirect "You do not have permission to give this search to user with ID #{params[:other_user_id]}."

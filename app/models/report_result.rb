@@ -5,6 +5,7 @@ class ReportResult < ActiveRecord::Base
   PURGE_WEEKS = 1 #purge all items older than this many weeks
 
   belongs_to :run_by, :class_name=>"User"
+  belongs_to :custom_report
   has_attached_file :report_data,
     :storage => :fog,
     :fog_credentials => FOG_S3,
@@ -34,7 +35,7 @@ class ReportResult < ActiveRecord::Base
     inner_opts = {:settings=>{},:friendly_settings=>[]}.merge(opts)
     rr = ReportResult.create!(:name=>report_name,:run_at=>0.seconds.ago,
       :friendly_settings_json=>inner_opts[:friendly_settings].to_json,:settings_json=>inner_opts[:settings].to_json,
-      :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id
+      :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id]
     )
     rr.delay(:priority=>100).execute_report
   end
@@ -61,7 +62,12 @@ class ReportResult < ActiveRecord::Base
     self.update_attributes(:status=>"Running")
     local_path = nil
     begin
-      local_file = eval(self.report_class).run_report run_by, ActiveSupport::JSON.decode(self.settings_json)
+      local_file = nil
+      if self.custom_report_id.nil?
+        local_file = eval(self.report_class).run_report run_by, ActiveSupport::JSON.decode(self.settings_json)
+      else
+        local_file = self.custom_report.run_report run_by
+      end
       self.report_data = local_file
       self.status = "Complete"
       self.save

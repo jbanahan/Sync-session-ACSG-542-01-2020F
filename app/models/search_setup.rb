@@ -1,12 +1,14 @@
+require 'open_chain/search_base'
 class SearchSetup < ActiveRecord::Base
-
+  
+  include OpenChain::SearchBase
 
   validates   :name, :presence => true
   validates   :user, :presence => true
   validates   :module_type, :presence => true
   
   has_many :search_criterions, :dependent => :destroy
-  has_many :sort_criterions, :dependent => :destroy
+  has_many :sort_criterions, :dependent => :destroy, :order=>"rank ASC"
   has_many :search_columns, :dependent => :destroy
   has_many :search_schedules, :dependent => :destroy
   has_many :imported_files 
@@ -43,10 +45,18 @@ class SearchSetup < ActiveRecord::Base
       first
   end
 
-  def sorted_columns
-    self.search_columns.order("rank ASC")
+  #get all column fields as ModelFields available for the user to add to the search
+  # this method is required for the OpenChain::SearchBase mixin
+  def column_fields_available user
+    core_module.model_fields_including_children.values.collect {|mf| mf if mf.can_view?(user)}.compact
   end
   
+  #get all model fields available to be used as sorts and not already in sort columns
+  def unused_sort_fields user
+    used = self.sort_criterions.collect {|sc| sc.model_field_uid}
+    ModelField.sort_by_label column_fields_available(user).collect {|mf| mf unless used.include? mf.uid.to_s}.compact
+  end
+
   def search
     private_search true
   end

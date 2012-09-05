@@ -1,6 +1,6 @@
 <% content_for :javascript do %>
   $(function() {
-    OCSearch.init(<%=item_count%>,<%=search_run_id%>);
+    OCSearch.init(<%=item_count%>,<%=search_run_id%>,"","search_setup");
     <% unless bulk_actions.blank?%>
       <% bulk_actions.each do |k,v| %>
         OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=send(v)%>');

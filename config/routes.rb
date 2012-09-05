@@ -155,6 +155,10 @@ OpenChain::Application.routes.draw do
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
   end
+  resources :custom_reports, :except=>[:index,:edit] do
+    get 'preview', :on => :member
+    get 'run', :on => :member
+  end
 
   resources :custom_definitions
 

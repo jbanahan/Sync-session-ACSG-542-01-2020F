@@ -4,7 +4,8 @@ class XlsMaker
   HEADER_FORMAT = Spreadsheet::Format.new :weight => :bold,
                                           :color => :orange,
                                           :pattern_fg_color => :navy,
-                                          :pattern => 1
+                                          :pattern => 1,
+                                          :name=>"Heading"
   DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
 
   attr_accessor :include_links

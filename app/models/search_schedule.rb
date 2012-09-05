@@ -2,6 +2,7 @@ class SearchSchedule < ActiveRecord::Base
   RUFUS_TAG = "search_schedule"  
 
   belongs_to :search_setup
+  belongs_to :custom_report
 
   # get the next time in UTC that this schedule should be executed
   def next_run_time
@@ -29,20 +30,10 @@ class SearchSchedule < ActiveRecord::Base
 
   def run log=nil
     log.info "#{Time.now}: Search schedule #{self.id} starting." if log
-    srch_setup = self.search_setup
-    if !srch_setup.user.active?
-      log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
-      return
-    end
-    cm = CoreModule.find_by_class_name srch_setup.module_type
-    extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
-    attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
-    t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
-    send_email srch_setup.name, t, attachment_name, log
-    send_ftp srch_setup.name, t, attachment_name, log
-    self.update_attributes(:last_finish_time)
-    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    run_search self.search_setup, log if self.search_setup
+    run_custom_report self.custom_report, log if self.custom_report
   end
+
 
   
   def is_running?
@@ -58,6 +49,30 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   private
+
+  def run_search srch_setup, log
+    if !srch_setup.user.active?
+      log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
+      return
+    end
+    cm = CoreModule.find_by_class_name srch_setup.module_type
+    extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
+    attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
+    t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
+    send_email srch_setup.name, t, attachment_name, log
+    send_ftp srch_setup.name, t, attachment_name, log
+    self.update_attributes(:last_finish_time)
+    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+  end
+
+  def run_custom_report rpt, log
+    t = rpt.xls_file rpt.user
+    attachment_name = "#{sanitize_filename(rpt.name)}.xls"
+    send_email rpt.name, t, attachment_name, log
+    send_ftp rpt.name, t, attachment_name, log
+    self.update_attributes(:last_finish_time)
+    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+  end
 
   def write_csv srch_setup
     t = Tempfile.open(["scheduled_search_run",".csv"])

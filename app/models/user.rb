@@ -26,6 +26,7 @@ class User < ActiveRecord::Base
   has_many   :histories, :dependent => :destroy
   has_many   :item_change_subscriptions, :dependent => :destroy
   has_many   :search_setups, :dependent => :destroy
+  has_many   :custom_reports, :dependent=> :destroy
   has_many   :messages, :dependent => :destroy
   has_many   :debug_records, :dependent => :destroy
   has_many   :dashboard_widgets, :dependent => :destroy

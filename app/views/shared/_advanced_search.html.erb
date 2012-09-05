@@ -1,6 +1,6 @@
 <%content_for :javascript do%>
 $(function() {
-  OCSearch.init(<%=@results.total_entries%>,<%=@current_search.search_run.id%>);
+  OCSearch.init(<%=@results.total_entries%>,<%=@current_search.search_run.id%>,"<%=url_for @current_search%>","search_setup");
   <% unless @bulk_actions.blank? %>
     <% @bulk_actions.each do |k,v| %>
       OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=send(v)%>');
@@ -23,73 +23,6 @@ $(function() {
     $("#main_search_cont").html("<h1>Loading Search Results</h1>");
     window.location.search="?sid="+myId;
   });
-  var all_model_fields;
-  $("#search_setup").tabs();
-  $.getJSON('<%=url_for :controller=>"model_fields", :action=>"find_by_module_type", :format=>"json"%>?include_basic=true&module_type=<%=@current_search.module_type%>', function(data) {
-    all_model_fields = data;
-    $.getJSON('<%=url_for @current_search%>.json', function(jr) {
-      make_columns(all_model_fields,$("#unused_columns"),$("#used_columns"),'search_columns',jr);
-      make_columns(all_model_fields,$("#unused_sorts"),$("#used_sorts"),'sort_criterions',jr);
-    });
-  });
-  
-  $("#use_sort,#remove_sort").click(function(event) {
-    var id = $(event.target).attr("id");
-    var selectFrom = id == "use_sort" ? "#unused_sorts" : "#used_sorts";
-    var moveTo = id == "use_sort" ? "#used_sorts" : "#unused_sorts";
-    var selectedItems = $(selectFrom + " :selected").toArray();
-    if(id=="use_sort") {
-      $(selectFrom + " :selected").each(function() {
-        $(this).html($(this).html()+" [A > Z]");
-        $(this).attr('ord','a');
-      });
-    } else {
-      $(selectFrom + " :selected").each(function() {
-        $(this).html($(this).html().substring(0,$(this).html().length-11));
-      });
-    }
-    $(moveTo).append(selectedItems);
-    selectedItems.remove;
-  });
-  $("#used_sorts_up").click(function(ev) {
-    ev.preventDefault();
-    move_list_item('up',$("#used_sorts"));
-  });
-  $("#used_sorts_down").click(function(ev) {
-    ev.preventDefault();
-    move_list_item('down',$("#used_sorts"));
-  });
-  $("#used_sorts_reverse").click(function(ev) {
-    ev.preventDefault();
-    $("#used_sorts :selected").each(function() {
-      var ord = $(this).attr('ord');
-      $(this).attr('ord',ord=='a' ? 'd' : 'a');
-      var label = ord=='a' ? " [Z > A]" : " [A > Z]"
-      label = $(this).html().substring(0,$(this).html().length-11) + label;
-      $(this).html(label);
-    });
-  });
- 
-  $("#add_blank").click(function(ev) {
-    $("#used_columns").append("<option value='_blank'>[Blank]</option>");
-  });
-  $("#use_column,#remove_column").click(function(event) {
-    event.preventDefault();
-    var id = $(event.target).attr("id");
-    var selectFrom = id == "use_column" ? "#unused_columns" : "#used_columns";
-    var moveTo = id == "use_column" ? "#used_columns" : "#unused_columns";
-    var selectedItems = $(selectFrom + " :selected").toArray();
-    $(moveTo).append(selectedItems);
-    selectedItems.remove;
-  });
-  $("#used_columns_up").click(function(ev) {
-    ev.preventDefault();
-    move_list_item('up',$("#used_columns"));
-  });
-  $("#used_columns_down").click(function(ev) {
-    ev.preventDefault();
-    move_list_item('down',$("#used_columns"));
-  });
   
   $("#show_srch_setup").click(function(ev) {
     ev.preventDefault();
@@ -98,62 +31,6 @@ $(function() {
   $("#hide_srch_setup").click(function(ev) {
     ev.preventDefault();
     OCSearch.hideSetup();
-  });
-  $("#btn_setup_save").click(function() {
-    submitForm();
-  });
-  $("#mod_new_name").dialog({autoOpen:false,title:"Save As New",
-    buttons:{"Save":function() {
-      window.location = '<%=url_for @current_search%>/copy?new_name='+escape($("#txt_new_name").val());
-    },"Cancel":function() {$("#mod_new_name").dialog('close');}
-    }
-  });
-  $("#btn_setup_copy").click(function() {
-    $("#txt_new_name").val("Copy of "+$("#current_name").val());
-    $("#mod_new_name").dialog('open');
-  });
-  $("#btn_setup_delete").click(function() {
-    $("#mod_delete").dialog('open');
-  });
-  $("#mod_delete").dialog({autoOpen:false,width:"auto",buttons:{
-      "Yes":function() {
-        $("#real_delete_button").parents("form.button_to").submit();
-      },
-      "No":function() {
-        $("#mod_delete").dialog('close');
-      }
-  }});
-  $("#mod_schedule").dialog({autoOpen:false,width:'auto',title:"Search Schedule",
-    buttons:{Update:function() {
-      var k = $("#sd_key").val();
-      if(k.length>0) {
-        var c = $('.sch_key[value="'+k+'"]').parents('.sch_data_cont');
-        removeSchedule(c)
-      }
-      writeScheduleContainer($("#sched_list"),readScheduleInterface());
-      $("#mod_schedule").dialog('close');
-    }}
-  });
-  $("#add_schedule").click(function(ev) {
-    ev.preventDefault();
-    writeScheduleInterface(newSchedule());
-    $("#mod_schedule").dialog('open');
-  });
-  applyScheduleHooks();
-  $("#mod_give_to").dialog({autoOpen:false,width:'auto',title:"Give Copy",
-      buttons:{Give:function() {
-        var val = $("#give_user_list").val();
-        if(isNaN(val)) {
-          window.alert("You must select a user to give the report to.");
-        } else {
-          window.location = '<%=url_for @current_search%>/give?other_user_id='+val;
-        }
-      },Cancel:function() {$("#mod_give_to").dialog('close');}
-      }
-  });
-  $("#btn_give_to").click(function(evt) {  
-    OpenChain.loadUserList($("#give_user_list"),"");
-    $("#mod_give_to").dialog('open');
   });
 
   processHiddenColumns(false);
@@ -170,146 +47,12 @@ $(function() {
   });
 });
 <%end%>
-<%render :partial=>'shared/search_criterions', :locals=>{:current_search=>@current_search,:model_fields=>@core_module.model_fields_including_children.values,:wrapper=>'params_cont',:parent_hash_name=>'search_setup'}%>
 <div id='main_search_cont'>
   <div id='search_select_box'>
     <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>
     &nbsp;<a href='#' id='show_srch_setup'>Show Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Hide Setup</a>
   </div>
-  <div id='search_setup_outer' style='display:none;'>
-    <div id='search_setup'>
-      <%=form_for(@current_search, :html=>{:id=>"frm_current_search"}) do |f| %>
-      <ul>
-          <li><a href="#setup_cont">Setup</a></li>
-          <li><a href="#params_cont">Parameters</a></li>
-          <li><a href="#sorts_cont">Sorts</a></li>
-          <li><a href="#col_cont" id='tab_col_cont'>Columns</a></li>
-          <li><a href="#sched_cont">Schedules</a></li>
-      </ul>
-      <div id='setup_cont'>
-        Name: <%=f.text_field :name, "id"=>"current_name" %><br />
-        Download Format: <%=f.select :download_format, ["xls","csv"] %><br />
-        Include Links In Download: <%=f.check_box :include_links %><br />
-        <%=f.hidden_field :module_type %>
-      </div>
-      <div id='params_cont'>
-      </div>
-      <div id='sorts_cont'>
-        <table class='detail_table' style='width:0px;'>
-          <thead><tr><th>Available</th><th>Selected</th></tr></thead>
-          <tbody>
-          <tr>
-            <td><select id='unused_sorts' size='10' multiple='multiple'><option value=''>Loading...</option></select></td>
-            <td><select id='used_sorts' size='10' multiple='multiple'><option value=''>Loading...</option></select></td>
-            <td style='vertical-align:middle;'><a href='#' id='used_sorts_up'>Up</a><br /><a href='#' id='used_sorts_down'>Down</a><br/><a href='#' id='used_sorts_reverse'>Sort Order</a></td>
-          </tr>
-          <tr>
-            <td><a href='#' id='use_sort'>Add</a></td>
-            <td><a href='#' id='remove_sort'>Remove</a></td>  
-          </tr>
-          </tbody>
-        </table>
-      </div>
-      <div id='col_cont'>
-        <table class='detail_table' style='width:0px;'>
-          <thead><tr><th>Available</th><th>Selected</th></tr></thead>
-          <tbody>
-            <tr>
-              <td><select id='unused_columns' size='10' multiple='multiple'><option value=''>Loading...</option></select></td>
-              <td><select id='used_columns' size='10' multiple='multiple'><option value=''>Loading...</option></select></td>
-              <td><a href='#' id='used_columns_up'>Up</a><br /><a href='#' id='used_columns_down'>Down</a></td>
-            </tr>
-            <tr>
-              <td><a href='#' id='use_column'>Add</a>, <a href='#' id='add_blank' title='Click here to add an empty column to your layout.'>Add Blank</a></td>
-              <td><a href='#' id='remove_column'>Remove</a></td>  
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div id='sched_cont'>
-        <ul id='sched_list'>
-      <%@current_search.search_schedules.each do |ss| %>
-        <%ssa = "search_setup[search_schedules_attributes][#{ss.id}]"%>
-        <li class='sch_data_cont'>
-          <input class='sch_key' name='ignore_key' type='hidden' value='<%=ss.id%>' />
-          <input class='sch_id' name='<%=ssa%>[id]' type='hidden' value='<%=ss.id%>'/>
-          <input class='sch_dom' name='<%=ssa%>[day_of_month]' type='hidden' value='<%=ss.day_of_month%>'/>
-          <input class='sch_mon' name='<%=ssa%>[run_monday]' type='hidden' value='<%=ss.run_monday%>'/>
-          <input class='sch_tue' name='<%=ssa%>[run_tuesday]' type='hidden' value='<%=ss.run_tuesday%>'/>
-          <input class='sch_wed' name='<%=ssa%>[run_wednesday]' type='hidden' value='<%=ss.run_wednesday%>'/>
-          <input class='sch_thu' name='<%=ssa%>[run_thursday]' type='hidden' value='<%=ss.run_thursday%>'/>
-          <input class='sch_fri' name='<%=ssa%>[run_friday]' type='hidden' value='<%=ss.run_friday%>'/>
-          <input class='sch_sat' name='<%=ssa%>[run_saturday]' type='hidden' value='<%=ss.run_saturday%>'/>
-          <input class='sch_sun' name='<%=ssa%>[run_sunday]' type='hidden' value='<%=ss.run_sunday%>'/>
-          <input class='sch_hr' name='<%=ssa%>[run_hour]' type='hidden' value='<%=ss.run_hour%>'/>
-          <input class='sch_email' name='<%=ssa%>[email_addresses]' type='hidden' value='<%=ss.email_addresses%>'/>
-          <input class='sch_frmt' name='<%=ssa%>[download_format]' type='hidden' value='<%=ss.download_format%>'/>
-          <input class='sch_destroy' name='<%=ssa%>[_destroy]' type='hidden' value='' />
-          <%=comma_list {|list| 
-            list << "Monday" if ss.run_monday
-            list << "Tuesday" if ss.run_tuesday
-            list << "Wednesday" if ss.run_wednesday
-            list << "Thursday" if ss.run_thursday
-            list << "Friday" if ss.run_friday
-            list << "Saturday" if ss.run_saturday
-            list << "Sunday" if ss.run_sunday
-          }
-          %>
-          <%=ss.day_of_month ? "Day #{ss.day_of_month} of the month " : "" %>
-          at <%=ss.run_hour%>:00 to <%=ss.email_addresses%> <%=ss.ftp_server.blank? ? "" : "FTP: #{ss.ftp_server}" %> - <a href='#' class='sched_edit'>Edit</a> | <a href='#' class='sched_remove'>Remove</a>
-        </li>
-      <%end%>
-        </ul>
-        <a href='#' id='add_schedule'>Add Schedule</a>
-      </div>
-      <% end %>
-    </div>  
-    <div style='text-align:right;'>
-      <button id='btn_setup_save' title='Save Search'>Save</button>&nbsp;
-      <button id='btn_give_to' title='Give a copy of this search to another user'>Give</button>
-      <button id='btn_setup_copy' title='Make a new copy of this search for yourself'>Copy / New</button>&nbsp;
-      <button id='btn_setup_delete' title='Delete this search'>Delete</button>
-    </div>
-    <div id='mod_new_name' style='display:none;'>Enter a name for your new search:<br /><input id='txt_new_name' /></div>
-    <div style='display:none'> <!--hide the real button, because we want to keep everything on the same row-->
-      <%= button_to "Delete", @current_search, :method => :delete, :id=>"real_delete_button" %>
-    </div>
-    <div id='mod_give_to' style='display:none;'>Pick a user to give a copy of the report to:<br />
-      <select id='give_user_list'><option value=''>Loading...</option></select>
-    </div>
-    <div id='mod_delete' style='display:none;'>Are you sure you want to delete this search?</div>
-    <div id='mod_schedule' style='display:none;'>
-      <input type='hidden' id='sd_id' value='' />
-      <input type='hidden' id='sd_key' value='' />
-      <table>
-  <% 
-  hrs_opts = {"midnight"=>"0"}
-  (1..23).each {|n| hrs_opts["#{n}:00"]=n}
-  %>
-        <%=field_row "Email Addresses",
-          text_field_tag("eml","",{:id=>"sd_email",:class=>'dialogtip',:title=>"Like: joe@sample.com,max@aspect9.com"})+"<br /><span style='font-size:75%;'>Separate with commas.</span>".html_safe%>
-        <% if current_user.admin? %>
-          <%=field_row "FTP Server", text_field_tag("ftpsvr","",{:id=>"sd_ftpsvr",:class=>"dialogtip",:title=>"FTP Server address where files will be sent."}) %>
-          <%=field_row "FTP User", text_field_tag("ftpusr","",{:id=>"sd_ftpusr"}) %>
-          <%=field_row "FTP Password", password_field_tag("ftppass","",{:id=>"sd_ftppass",:class=>"dialogtip",:title=>"Note: FTP passwords are stored unencrypted in the database. Aspect 9 employees are able to view these passwords."}) %>
-          <%=field_row "FTP Subfolder", text_field_tag("ftpfldr","",{:id=>"sd_ftpfldr",:class=>"dialogtip",:title=>"Subfolder on FTP server (optional)"}) %>
-        <% end %>
-        <%=field_row "File Format", select_tag("frmt",options_for_select(["csv","xls"]),{:id=>"sd_frmt"}) %>
-        <%=field_row "Hour of Day (Your Timezone)", select_tag("hr",options_for_select(hrs_opts),{:id=>"sd_hr"}) %>
-        <%days_opts = {"Any"=>""}%>
-        <%(1..31).each {|x| days_opts[x]=x}%>
-        <%=field_row "Day of Month", select_tag("dom",options_for_select(days_opts),{:id=>"sd_dom"}) %>
-        <%=field_row "Monday", check_box_tag("mon","1",false,{:id=>"sd_mon",:class=>'day_chk'}) %>
-        <%=field_row "Tuesday", check_box_tag("tue","1",false,{:id=>"sd_tue",:class=>'day_chk'}) %>
-        <%=field_row "Wednesday", check_box_tag("wed","1",false,{:id=>"sd_wed",:class=>'day_chk'}) %>
-        <%=field_row "Thursday", check_box_tag("thu","1",false,{:id=>"sd_thu",:class=>'day_chk'}) %>
-        <%=field_row "Friday", check_box_tag("fri","1",false,{:id=>"sd_fri",:class=>'day_chk'}) %>
-        <%=field_row "Saturday", check_box_tag("sat","1",false,{:id=>"sd_sat",:class=>'day_chk'}) %>
-        <%=field_row "Sunday", check_box_tag("wed","1",false,{:id=>"sd_sun",:class=>'day_chk'}) %>
-      </table>
-    </div>
-  </div>
-
+  <%=render :partial=>'shared/search_panel', :locals=>{:show=>false,:include_sorts=>true,:current_search=>@current_search}%>
   <div id='bulk_message'></div>
   <div id='show_all_columns'><p>Click Headings To Hide Columns</p></div>
   <table class='detail_table' id='result_table'>

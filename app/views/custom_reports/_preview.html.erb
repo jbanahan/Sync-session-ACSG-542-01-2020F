@@ -1,0 +1,10 @@
+<%results = @rpt.to_arrays current_user, 10 -%>
+<table class='detail_table'>
+  <%results.each do |row| -%>
+    <tr class='hover'>
+      <% row.each do |c| -%>
+        <td><%=c%></td>
+      <% end -%>
+    </tr>
+  <%end -%>
+</table>
