@@ -4,6 +4,7 @@ class Entry < ActiveRecord::Base
   has_many :broker_invoice_lines, :through => :broker_invoices
   has_many :commercial_invoices, :dependent => :destroy
   has_many :commercial_invoice_lines, :through => :commercial_invoices
+  has_many :commercial_invoice_tariffs, :through => :commercial_invoice_lines
 
   belongs_to :importer, :class_name=>"Company"
   belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'

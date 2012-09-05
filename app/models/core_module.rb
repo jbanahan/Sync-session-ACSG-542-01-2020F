@@ -150,15 +150,18 @@ class CoreModule
   end
   
   #hash of model_fields keyed by UID
-  def model_fields
+  def model_fields user=nil
     ModelField.reload_if_stale
-    ModelField::MODEL_FIELDS[@class_name.to_sym]
+    r = ModelField::MODEL_FIELDS[@class_name.to_sym]
+    r = r.clone
+    r.delete_if {|k,mf| !mf.can_view?(user)} if user
+    r
   end
   
   #hash of model_fields for core_module and any core_modules referenced as children
   #and their children recursively
-  def model_fields_including_children
-    r = model_fields
+  def model_fields_including_children user=nil
+    r = model_fields user
     @children.each do |c|
       r = r.merge c.model_fields_including_children
     end

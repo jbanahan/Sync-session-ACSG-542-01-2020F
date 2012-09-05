@@ -88,6 +88,7 @@ class CustomReport < ActiveRecord::Base
     end
     def arrays
       r_val = []
+      return r_val if data.empty?
       (0..data.keys.sort.last).each do |row_num|
         row = []
         if self.data[row_num]
