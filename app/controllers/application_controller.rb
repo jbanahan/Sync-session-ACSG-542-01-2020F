@@ -369,7 +369,12 @@ class ApplicationController < ActionController::Base
         }
         format.csv {
           @results = @results.where("1=1") unless no_results
-          render_csv("#{@core_module.label}.csv")
+          if @results.length < 100
+            render_csv("#{@core_module.label}.csv")
+          else
+            ReportResult.run_report! @current_search.name, current_user, 'OpenChain::Report::CSVSearch', :settings=>{ 'search_setup_id'=>@current_search.id }
+            redirect_to '/reports/big_search'
+          end
         }
         format.json {
           @results = @results.paginate(:per_page => 20, :page => params[:page])
