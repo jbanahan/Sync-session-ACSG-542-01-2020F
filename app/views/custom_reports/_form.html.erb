@@ -8,4 +8,4 @@ $(function() {
 <div>
   <%= @report_obj.class.description %>
 </div>
-<%=render :partial=>'shared/search_panel', :locals=>{:routing_object=>routing_obj,:show=>true,:include_sorts=>false,:current_search=>@report_obj}%>
+<%=render :partial=>'shared/search_panel', :locals=>{:routing_object=>routing_obj,:show=>true,:include_sorts=>false,:current_search=>@report_obj,:parent_hash_name=>'custom_report'}%>

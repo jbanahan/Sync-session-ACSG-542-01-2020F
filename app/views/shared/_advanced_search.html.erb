@@ -52,7 +52,7 @@ $(function() {
     <%=select_tag "sel_searches",  options_from_collection_for_select(@saved_searches, 'id', 'name', @current_search.id)%>
     &nbsp;<a href='#' id='show_srch_setup'>Show Setup</a><a href='#' id='hide_srch_setup' style='display:none;'>Hide Setup</a>
   </div>
-  <%=render :partial=>'shared/search_panel', :locals=>{:show=>false,:include_sorts=>true,:current_search=>@current_search}%>
+  <%=render :partial=>'shared/search_panel', :locals=>{:show=>false,:include_sorts=>true,:current_search=>@current_search,:parent_hash_name=>'search_setup'}%>
   <div id='bulk_message'></div>
   <div id='show_all_columns'><p>Click Headings To Hide Columns</p></div>
   <table class='detail_table' id='result_table'>
