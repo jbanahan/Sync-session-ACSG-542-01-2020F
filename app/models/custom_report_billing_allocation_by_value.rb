@@ -39,6 +39,7 @@ class CustomReportBillingAllocationByValue < CustomReport
     
     bill_columns = []
     invoices = BrokerInvoice.where("1=1").includes(:entry=>[:commercial_invoice_lines])
+    invoices = BrokerInvoice.search_secure run_by, invoices
     search_criterions.each {|sc| invoices = sc.apply(invoices)}
     invoices.each do |bi|
       charge_totals = {}
@@ -55,13 +56,24 @@ class CustomReportBillingAllocationByValue < CustomReport
       entry = bi.entry
       ci_lines = entry.commercial_invoice_lines
       total_value = entry.commercial_invoice_lines.inject(BigDecimal.new(0,5)) {|r,cil| cil.value.blank? ? r : r+BigDecimal.new(cil.value,5)}
+      use_hts_value = false
       if total_value == 0
-
+        use_hts_value = true
+        total_value = entry.commercial_invoice_lines.inject(BigDecimal.new(0,5)) do |r,cil|
+          add = 0
+          t = cil.commercial_invoice_tariffs.first
+          if !t.blank? && !t.entered_value.blank?
+            add = t.entered_value
+          end
+          r + BigDecimal.new(add,5)
+        end
       end
       running_totals = {} 
       line_count = ci_lines.size
       ci_lines.each_with_index do |line,i|
+        break if row_limit && row_cursor>row_limit
         line_value = line.value
+        line_value = line.commercial_invoice_tariffs.first.nil? ? 0 : line.commercial_invoice_tariffs.first.entered_value if use_hts_value
         if self.include_links?
           write_hyperlink row_cursor, col_cursor, entry.view_url,"Web View"
           col_cursor += 1

@@ -145,20 +145,55 @@ describe CustomReportBillingAllocationByValue do
       @bi.broker_invoice_lines.create!(:charge_type=>"D",:charge_description=>"CD2",:charge_amount=>7)
       arrays = @klass.new.to_arrays @u
       arrays.first.should have(4).columns
-      arrays.first.last.should == "CD1"
+      arrays.first.last.should == "C1"
       arrays[1].should have(4).columns
       arrays[1].last.should == 10 
     end
     it "should use tariff quantity if value is nil or 0" do
       @cil_1_1.update_attributes(:value=>0)
+      @cil_1_1.commercial_invoice_tariffs.create!(:entered_value=>60)
       @cil_1_2.update_attributes(:value=>0)
-      fail
+      @cil_1_2.commercial_invoice_tariffs.create!(:entered_value=>40)
+      @cil_1_2.commercial_invoice_tariffs.create!(:entered_value=>20)
+      arrays = @klass.new.to_arrays @u
+      arrays.should have(3).rows
+      arrays[1][3].should == 30
+      arrays[2][3].should == 20 #use the first tariff row
     end
-    it "should secure entries for importers"
-    it "should only use first tariff line if multiple exist for the same commercial invoice line"
-    it "should accumulate multiple broker invoice lines with the same charge description"
-    it "should truncate on row limit"
-    it "should truncate ISF charges"
-    it "should truncate ISF heading" 
+    it "should secure entries for importers" do
+      imp_user = Factory(:importer_user)
+      @e2 = Entry.create!(:broker_reference=>'8888',:importer_id=>imp_user.company_id)
+      @e2.broker_invoices.
+        create!(:invoice_date=>0.seconds.ago,:invoice_total=>20).
+        broker_invoice_lines.create!(:charge_description=>"CDX",:charge_amount=>20)
+      @e2.commercial_invoices.create!(:invoice_number=>"X").
+        commercial_invoice_lines.create!(:value=>100)
+      arrays = @klass.new.to_arrays imp_user #should not include entry from before(:each)
+      arrays.should have(2).rows
+      arrays[0][3].should == "CDX"
+      arrays[1][3].should == 20
+    end
+    it "should accumulate multiple broker invoice lines with the same charge description" do
+      @bi.broker_invoice_lines.create(:charge_description=>@bil_1.charge_description,:charge_amount=>10)
+      arrays = @klass.new.to_arrays @u
+      arrays.should have(3).rows
+      arrays[1][3].should == 12
+      arrays[2][3].should == 48
+    end
+    it "should truncate on row limit" do
+      arrays = @klass.new.to_arrays @u, 1
+      arrays.should have(2).rows
+      arrays[1][3].should == 10
+    end
+    it "should truncate ISF charges" do
+      @bil_1.update_attributes(:charge_description=>"ISF #12312391219")
+      @bi.broker_invoice_lines.create(:charge_description=>"ISF #8855858",:charge_amount=>10)
+      arrays = @klass.new.to_arrays @u
+      arrays.should have(3).rows
+      arrays.first.should have(4).columns
+      arrays.first.last.should == "ISF"
+      arrays[1][3].should == 12
+      arrays[2][3].should == 48
+    end
   end
 end

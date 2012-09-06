@@ -99,6 +99,7 @@ describe SearchSchedule do
       @ss.run_hour = nil
       @ss.next_run_time.should > Time.now
     end
+=begin
     context "day of month" do
       it "should return future if day of month is set to future" do
         tz_str = "Eastern Time (US & Canada)"
@@ -113,5 +114,6 @@ describe SearchSchedule do
         @ss.next_run_time.should > Time.now 
       end
     end
+=end
   end
 end
