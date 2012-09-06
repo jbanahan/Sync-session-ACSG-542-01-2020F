@@ -6,11 +6,23 @@ $(function() {
       $("#rpt_preview").html("<hr /><h2>Report Preview</h2><div>"+data+"</div>");
     });
   });
+  var swap_buttons = function() {
+    $("#conditional_buttons").hide();
+    $("#must_save").show();
+  }
+  $("#search_setup select, #search_setup input").live('blur',swap_buttons);
+  $("#search_setup a").live('click',swap_buttons);
 });
 <%end-%>
 <%content_for :action_bar do -%>
-  <button id='preview'>Preview</button>
-  <button class='btn_link' link_to='<%=run_custom_report_path(@report_obj)%>'>Run</button>
+  <div id='conditional_buttons'>
+    <button id='preview'>Preview</button>
+    <button class='btn_link' link_to='<%=run_custom_report_path(@report_obj)%>'>Run</button>
+  </div>
+  <div id='must_save' style='display:none; width:95%; border:1px dotted black; margin: 5px auto;'>
+    You must click Save to run or preview this report.
+  </div>
+  <button class='btn_link' link_to='<%=request.referrer%>'>Back</button>
 <%end-%>
 <%=render :partial=>'form'%>
 <div id='rpt_preview'></div>
