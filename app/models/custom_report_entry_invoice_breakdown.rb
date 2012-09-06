@@ -11,7 +11,7 @@ class CustomReportEntryInvoiceBreakdown < CustomReport
 
   #ModelFields available to be included on report as columns
   def self.column_fields_available user
-    CoreModule::BROKER_INVOICE.model_fields.values.collect {|mf| mf if mf.can_view?(user)}.compact
+    CoreModule::BROKER_INVOICE.model_fields(user).values
   end
 
 

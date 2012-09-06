@@ -28,7 +28,7 @@ class CustomReport < ActiveRecord::Base
     self.class.column_fields_available user
   end
 
-  def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),"xls"] )
+  def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),".xls"] )
     @listener = XlsListener.new 
     run run_by
     @listener.workbook.write file.path
@@ -40,7 +40,7 @@ class CustomReport < ActiveRecord::Base
     xls_file run_by
   end
 
-  def csv_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),"csv"])
+  def csv_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),".csv"])
     @listener = ArraysListener.new
     run run_by
     a = @listener.arrays
@@ -88,6 +88,7 @@ class CustomReport < ActiveRecord::Base
     end
     def arrays
       r_val = []
+      return r_val if data.empty?
       (0..data.keys.sort.last).each do |row_num|
         row = []
         if self.data[row_num]
