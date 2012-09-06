@@ -15,7 +15,6 @@ class SearchSetupsController < ApplicationController
     else
       search_setup.search_columns.destroy_all if !params[:search_setup][:search_columns_attributes].blank? #clear, they will be reloaded
       search_setup.sort_criterions.destroy_all #clear, they will be reloaded
-      search_setup.touch
       search_setup.update_attributes(params[:search_setup])
       redirect_to Kernel.const_get(search_setup.module_type)
     end
@@ -28,7 +27,7 @@ class SearchSetupsController < ApplicationController
     else
       new_name = params[:new_name]
       new_name = "Copy of #{base.name}" if new_name.empty?
-      base.deep_copy(new_name,true).touch
+      base.deep_copy(new_name).touch
       redirect_to Kernel.const_get(base.module_type)
     end
   end

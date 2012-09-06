@@ -24,6 +24,34 @@ class CustomReportsController < ApplicationController
     end
   end
 
+  def copy
+    base = CustomReport.for_user(current_user).find(params[:id])
+    if base.nil?
+      error_redirect "Report with ID #{params[:id]} not found."
+    else
+      new_name = params[:new_name]
+      new_name = "Copy of #{base.name}" if new_name.empty?
+      c = base.deep_copy(new_name)
+      add_flash :notices, "Report copied successfully."
+      redirect_to custom_report_path(c)
+    end
+  end
+  def give
+    base = CustomReport.for_user(current_user).find(params[:id])
+    if base.nil?
+      error_redirect "Report with ID #{params[:id]} not found."
+    else
+      other_user = User.find(params[:other_user_id])
+      if current_user.company.master? || other_user.company_id==current_user.company_id || other_user.company.master?
+        base.give_to other_user
+        add_flash :notices, "Report #{base.name} has been given to #{other_user.full_name}."
+        redirect_to custom_report_path(base)
+      else
+        error_redirect "You do not have permission to give this report to user with ID #{params[:other_user_id]}."
+      end
+    end
+  end
+
   def update
     rpt = CustomReport.find params[:id]
     if rpt.user_id != current_user.id

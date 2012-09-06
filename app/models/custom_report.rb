@@ -22,6 +22,8 @@ class CustomReport < ActiveRecord::Base
       a[:ftp_server].blank? && 
       a[:_destroy].blank?
     }
+  
+  scope :for_user, lambda {|u| where(:user_id => u)} 
 
   def column_fields_available user
     #expects subclass to implement static version of this method

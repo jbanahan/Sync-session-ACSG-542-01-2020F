@@ -97,42 +97,7 @@ class SearchSetup < ActiveRecord::Base
     ss
   end
   
-  # Makes a deep copy of the search and assigns it to the given user
-  def give_to other_user
-    ss = deep_copy self.name+" (From #{self.user.full_name})", true
-    ss.user = other_user
-    ss.save
-  end
 
-  # Returns a copy of the SearchSetup with matching columns, search & sort criterions 
-  # all built.
-  #
-  # If a true parameter is provided, everything in the tree will be saved to the database.
-  def deep_copy(new_name, save_obj=false) 
-    ss = SearchSetup.new(:name => new_name, :module_type => self.module_type, :user => self.user, :simple => self.simple, :download_format => self.download_format, :include_links=>self.include_links)
-    ss.save if save_obj
-    self.search_criterions.each do |sc|
-      new_sc = ss.search_criterions.build(:operator => sc.operator, :value => sc.value,  
-        :status_rule_id => sc.status_rule_id, :model_field_uid => sc.model_field_uid, :search_setup_id => sc.search_setup_id,
-        :custom_definition_id => sc.custom_definition_id      
-      )
-      new_sc.save if save_obj
-    end
-    self.search_columns.each do |sc|
-      new_sc = ss.search_columns.build(:search_setup_id=>sc.search_setup_id, :rank=>sc.rank, 
-        :model_field_uid=>sc.model_field_uid, :custom_definition_id=>sc.custom_definition_id
-      )
-      new_sc.save if save_obj
-    end
-    self.sort_criterions.each do |sc|
-      new_sc = ss.sort_criterions.build(:search_setup_id=>sc.search_setup_id, :rank=>sc.rank,
-        :model_field_uid => sc.model_field_uid, :custom_definition_id => sc.custom_definition_id,
-        :descending => sc.descending
-      )
-      new_sc.save if save_obj
-    end
-    ss
-  end
 
   def core_module
     CoreModule.find_by_class_name self.module_type
