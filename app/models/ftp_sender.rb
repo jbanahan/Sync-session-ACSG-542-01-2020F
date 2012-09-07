@@ -4,14 +4,15 @@ class FtpSender
 #THIS CLASS IS NOT UNIT TESTED.  THOUGHTS ON BEST WAY TO UNIT TEST ARE WELCOME!
 
   #send a file via FTP
-  #opts = :binary (defaults to false) 
+  #opts = :binary (defaults to true) 
   #  :folder (defaults to nil)
   #  :remote_file_name (defaults to local file name)
+  #  :passive (defaults to true)
   def self.send_file server, username, password, file, opts = {}
     log = ["Attempting to send FTP file to #{server} with username #{username}."]
     begin
-      my_opts = {:binary=>true,:passive=>true}.merge opts
-      remote_name = my_opts[:remote_file_name].nil? ? File.basename(file) : my_opts[:remote_file_name]
+      my_opts = {:binary=>true,:passive=>true,:remote_file_name=>File.basename(file)}.merge opts
+      remote_name = my_opts[:remote_file_name]
       Net::FTP.open(server) do |f|
         log << "Opened connection to #{server}"
         f.login(username,password)
