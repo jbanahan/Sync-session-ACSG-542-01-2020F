@@ -17,6 +17,26 @@ describe BrokerInvoice do
       found.should have(2).broker_invoice_lines
       found.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 1.5
     end
+    it "should apply negative HST" do #ticket 643
+      bi = BrokerInvoice.new
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>-10,:hst_percent=>0.15)
+      bi.complete!
+      
+      found = BrokerInvoice.find bi.id
+      found.invoice_total.should == -11.5
+      found.should have(2).broker_invoice_lines
+      found.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == -1.5
+    end
+    it "should correctly apply mixed credits and debits with hst" do
+      bi = BrokerInvoice.new
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10,:hst_percent=>0.1)
+      bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>-3,:hst_percent=>0.1)
+      bi.complete!
+      found = BrokerInvoice.find bi.id
+      found.invoice_total.should == 7.70
+      found.should have(3).broker_invoice_lines
+      found.broker_invoice_lines.where(:charge_code=>"HST").first.charge_amount.should == 0.70
+    end
     it "should create HST charge code if it doesn't exist" do
       bi = BrokerInvoice.new
       bi.broker_invoice_lines.build(:charge_code=>@with_hst_code.code,:charge_description=>@with_hst_code.description,:charge_amount=>10,:hst_percent=>0.20)
