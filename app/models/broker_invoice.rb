@@ -18,7 +18,7 @@ class BrokerInvoice < ActiveRecord::Base
     self.broker_invoice_lines.each {|line| hst_charge = line if line.charge_code == hst_code.code}
     hst_amount = self.hst_amount
     if hst_amount == 0 && hst_charge
-      hst_charge.destroy?
+      hst_charge.destroy
     elsif hst_charge
       hst_charge.charge_amount = hst_amount
     elsif hst_amount > 0

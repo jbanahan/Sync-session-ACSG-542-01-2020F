@@ -8,6 +8,7 @@ class TariffRecord < ActiveRecord::Base
     :view_sequence #used to identified records generated from the screen so we can apply custom fields to the right record
   
   belongs_to :classification, :touch=>true
+  has_one :product, :through=>:classification
 
   validates :line_number, :uniqueness => {:scope => :classification_id}
 

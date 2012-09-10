@@ -24,6 +24,7 @@ class Product < ActiveRecord::Base
   def locked?
     !self.vendor.nil? && self.vendor.locked?
   end
+  
 
   dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
 

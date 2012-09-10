@@ -10,8 +10,12 @@ module CoreObjectSupport
     base.instance_eval("has_many   :linkable_attachments, :through => :linked_attachments")
     base.instance_eval("has_many   :item_change_subscriptions, :dependent => :destroy")
     base.instance_eval("has_many   :change_records, :as => :recordable")
+    base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy")
     base.instance_eval("after_save :process_linked_attachments")
+
+    base.instance_eval("scope :need_sync, lambda {|trading_partner| joins(\"LEFT OUTER JOIN sync_records ON sync_records.syncable_type = '\#{self.name}' and sync_records.syncable_id = \#{self.table_name}.id and sync_records.trading_partner = '\#{trading_partner}'\").where(\"sync_records.id is NULL OR sync_records.sent_at is NULL or sync_records.confirmed_at is NULL or sync_records.sent_at > sync_records.confirmed_at or \#{self.table_name}.changed_at > sync_records.sent_at \")}")
   end
+
 
   def all_attachments
     r = []
