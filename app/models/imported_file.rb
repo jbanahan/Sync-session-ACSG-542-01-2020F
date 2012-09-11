@@ -165,14 +165,14 @@ class ImportedFile < ActiveRecord::Base
       self.errors[:base] << "There was an error processing the file: #{e.message}"
       e.log_me ["Imported File ID: #{self.id}"]
     end
-    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
+    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
     return self.errors.size == 0
   end
   
   def preview(user,options={})
     @a_data = options[:attachment_data] if !options[:attachment_data].nil?
     msgs = FileImportProcessor.preview self
-    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0
+    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
     msgs
   end
   
