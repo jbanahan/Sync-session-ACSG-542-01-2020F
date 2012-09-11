@@ -1,6 +1,27 @@
 <%content_for :action_bar do %>
   <button class='btn_link' link_to='<%=url_for(@base_object)%>' key_map='b'>Back</button>
 <%end%>
+<%unless @base_object.sync_records.empty? -%>
+<h1>System Sync</h1>
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th>System</th><th>Record Sent</th><th>Confirmation Received</th><th>Confirmation File Name</th><th>Failure Message</th>
+    </tr>
+  </thead>
+  <tbody>
+    <%@base_object.sync_records.each do |sr|-%>
+    <tr class='hover' style='<%=sr.problem? ? 'color:red;' : ''%>'>
+      <td><%=sr.trading_partner%></td>
+      <td><%=sr.sent_at%></td>
+      <td><%=sr.confirmed_at%></td>
+      <td><%=sr.confirmation_file_name%></td>
+      <td><%=sr.failure_message%></td>
+    </tr>
+    <%end-%>
+  </tbody>
+</table>
+<%end-%>
 <h1>History: <%=CoreModule.find_by_object(@base_object).unique_id_field.process_export(@base_object,current_user)%></h1>
 <div>
   <%@snapshots.each do |s| %>
