@@ -136,7 +136,7 @@ module OpenChain
         country_iso=="TW" ? h : h.hts_format
       end
       def mp1_value tariff_record, country_iso
-        return "" unless country_iso = 'TW'
+        return "" unless country_iso == 'TW'
         found = OfficialTariff.
           where("hts_code IN (?)",[tariff_record.hts_1,tariff_record.hts_2,tariff_record.hts_3].compact).
           where("country_id = (SELECT ID from countries where iso_code = \"TW\")").
