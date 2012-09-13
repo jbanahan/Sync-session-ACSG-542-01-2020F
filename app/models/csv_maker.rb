@@ -23,6 +23,7 @@ class CsvMaker
     CSV.generate(prep_opts(columns)) do |csv|
       GridMaker.new(results,columns,criterions,module_chain,user).go do |row,obj| 
         row << obj.view_url if self.include_links
+        row.each_with_index {|v,i| row[i] = v.gsub(/\n/,' ') if v.respond_to?(:gsub)}
         csv << row
       end
     end
