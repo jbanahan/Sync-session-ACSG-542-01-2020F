@@ -181,6 +181,13 @@ module OpenChain
         @entry.vessel = r[270,20].strip
         @entry.voyage = r[290,10].strip
         @entry.gross_weight = r[318,12]
+        @entry.liquidation_type_code = r[364,2]
+        @entry.liquidation_type = r[366,35].strip
+        @entry.liquidation_action_code = r[401,2]
+        @entry.liquidation_action_description = r[403,35].strip
+        @entry.liquidation_extension_code = r[438,2]
+        @entry.liquidation_extension_description = r[440,35].strip
+        @entry.liquidation_extension_count = r[475]
         @entry.census_warning = parse_boolean r[497]
         @entry.error_free_release = parse_boolean r[498]
         @entry.paperless_certification = parse_boolean r[499]
@@ -191,8 +198,14 @@ module OpenChain
     # header continuation
     def process_sh01 r
       @entry.release_cert_message = r[4,33].strip
-      @entry.total_fees = parse_currency r[85,12]
       @entry.total_duty = parse_currency r[49,12]
+      @entry.liquidation_duty = parse_currency r[61,12]
+      @entry.total_fees = parse_currency r[85,12]
+      @entry.liquidation_fees = parse_currency r[97,12]
+      @entry.liquidation_tax = parse_currency r[133,12]
+      @entry.liquidation_ada = parse_currency r[169,12]
+      @entry.liquidation_cvd = parse_currency r[205,12]
+      @entry.liquidation_total = @entry.liquidation_duty + @entry.liquidation_fees + @entry.liquidation_tax + @entry.liquidation_ada + @entry.liquidation_cvd
       @entry.fda_message = r[217,33].strip
       @entry.total_duty_direct = parse_currency r[357,12]
       @entry.entered_value = parse_currency r[384,13]

@@ -48,6 +48,24 @@ class Entry < ActiveRecord::Base
     return nil if self.last_file_bucket.blank? || self.last_file_path.blank?
     AWS::S3.new(AWS_CREDENTIALS).buckets[self.last_file_bucket].objects[self.last_file_path].url_for(:read,:expires=>expires_in,:secure=>true).to_s
   end
+
+  #has liquidation fields
+  def liquidation_data?
+    self.liquidation_date ||
+    self.liquidation_duty > 0 ||
+    self.liquidation_fees > 0 ||
+    self.liquidation_tax > 0 ||
+    self.liquidation_ada > 0 ||
+    self.liquidation_cvd > 0 ||
+    self.liquidation_total > 0 ||
+    self.liquidation_extension_count > 0 ||
+    !self.liquidation_extension_description.blank? ||
+    self.liquidation_extension_code != '00' ||
+    !self.liquidation_action_description.blank? ||
+    self.liquidation_action_code != '00' ||
+    !self.liquidation_type.blank? ||
+    self.liquidation_type_code != '00' 
+  end
   private
   def company_permission? user
     self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)
