@@ -52,13 +52,13 @@ class Entry < ActiveRecord::Base
   #has liquidation fields
   def liquidation_data?
     self.liquidation_date ||
-    self.liquidation_duty > 0 ||
-    self.liquidation_fees > 0 ||
-    self.liquidation_tax > 0 ||
-    self.liquidation_ada > 0 ||
-    self.liquidation_cvd > 0 ||
-    self.liquidation_total > 0 ||
-    self.liquidation_extension_count > 0 ||
+    (self.liquidation_duty && self.liquidation_duty > 0) ||
+    (self.liquidation_fees && self.liquidation_fees > 0) ||
+    (self.liquidation_tax && self.liquidation_tax > 0) ||
+    (self.liquidation_ada && self.liquidation_ada > 0) ||
+    (self.liquidation_cvd && self.liquidation_cvd > 0) ||
+    (self.liquidation_total && self.liquidation_total > 0) ||
+    (self.liquidation_extension_count && self.liquidation_extension_count > 0) ||
     !self.liquidation_extension_description.blank? ||
     self.liquidation_extension_code != '00' ||
     !self.liquidation_action_description.blank? ||
