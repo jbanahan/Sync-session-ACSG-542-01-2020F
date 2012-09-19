@@ -338,6 +338,7 @@ OpenChain::Application.routes.draw do
     get 'invite', :on=>:member
     resources :survey_response_logs, :only=>[:index]
   end
+  resources :drawback_upload_files, :only=>[:index,:create]
   resources :error_log_entries, :only => [:index, :show]
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
   root :to => "dashboard_widgets#index"

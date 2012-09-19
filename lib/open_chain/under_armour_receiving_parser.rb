@@ -4,11 +4,31 @@ module OpenChain
 
     #These custom definitions will be automatically created in if they don't already exist
     CUSTOM_DEFINITIONS = {
-      'Country of Origin'=>['string','ShipmentLine',2],
-      'PO Number'=>['string','ShipmentLine',4],
-      'Size'=>['string','ShipmentLine',10],
-      'Delivery Date'=>['date','Shipment',6]
+      'Country of Origin'=>['string','ShipmentLine',3],
+      'PO Number'=>['string','ShipmentLine',5],
+      'Size'=>['string','ShipmentLine',11],
+      'Delivery Date'=>['date','Shipment',7]
     }
+
+    def self.validate_s3 s3_path
+      r = []
+      headings = {0=>'Vendor',2=>'Stock Category',3=>'Country',5=>'PO Number',6=>'IBD Number',7=>'Delivery Date',8=>'AGI Date',9=>'Material',11=>'Grid Value',12=>'Plant',
+      14=>'Company Code',16=>'PO Doc Type',17=>'Delivery Qty',18=>'AFS Net Price',19=>'Delivery Value'}
+      client = OpenChain::XLClient.new s3_path
+      row = client.get_row 0, 0 
+      val_hash = {}
+      row.each do |cell|
+        val_hash[cell['position']['column']] = cell['cell']['value']
+      end
+      headings.each do |k,v|
+        if val_hash[k].blank?
+          r << "Heading at position #{k} should be #{v} and was blank."
+        elsif val_hash[k]!=v
+          r << "Heading at position #{k} should be #{v} and was #{val_hash[k]}."
+        end
+      end
+      r
+    end
 
     # parse file from s3
     def self.parse_s3 s3_path, first_row=1
@@ -23,7 +43,7 @@ module OpenChain
         row.each do |cell|
           val_hash[cell['position']['column']] = cell['cell']['value']
         end
-        ibd_number = val_hash[5]
+        ibd_number = val_hash[6]
         raise "Row #{row_num} does not have IBD number." unless ibd_number
         if ibd_number != last_ibd_number && !val_set.empty?
           UnderArmourReceivingParser.new val_set, product_cache
@@ -58,7 +78,7 @@ module OpenChain
     end
     def process_header row
       sys_code = trim_numeric row[0]
-      ref = trim_numeric row[5]
+      ref = trim_numeric row[6]
       vendor = Company.find_or_create_by_system_code_and_vendor(sys_code,true,:name=>row[1])
       @shipment = Shipment.find_by_reference_and_vendor_id ref, vendor.id
       @shipment = Shipment.new(:reference=>ref,:vendor=>vendor) unless @shipment
@@ -74,7 +94,7 @@ module OpenChain
         @shipment_lines[p] = sd
         @row_num += 1
       end
-      sd.quantity = row[14]
+      sd.quantity = row[17]
     end
 
     def process_custom_values row, index
@@ -90,11 +110,11 @@ module OpenChain
 
     def row_uid row
       # style-color-size-po
-      "#{row[8]}-#{row[10]}-#{trim_numeric row[4]}"
+      "#{row[9]}-#{row[11]}-#{trim_numeric row[5]}"
     end
 
     def product row
-      uid = row[8]
+      uid = row[9]
       p = @product_cache[uid]
       if p.blank?
         p = Product.find_or_create_by_unique_identifier(uid,:vendor_id=>@shipment.vendor_id)

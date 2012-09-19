@@ -68,6 +68,12 @@ class Company < ActiveRecord::Base
 
 
   #permissions
+  def view_drawback?
+    master_setup.drawback_enabled?
+  end
+  def edit_drawback?
+    master_setup.drawback_enabled?
+  end
   def view_surveys?
     true
   end

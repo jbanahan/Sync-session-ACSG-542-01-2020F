@@ -1,0 +1,8 @@
+<h1>Drawback</h1>
+
+<%if MasterSetup.get.custom_feature?("UA Drawback")-%>
+  <h2>DH Inbound Files (last 10)</h2>
+  <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS}%>
+  <h2>OHL Entry Files (last 10)</h2>
+  <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_OHL_ENTRY}%>
+<%end-%>

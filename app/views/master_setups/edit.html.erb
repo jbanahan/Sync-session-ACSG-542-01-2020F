@@ -34,6 +34,7 @@ $(function() {
   <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
   <%=field_row "Entry Enabled", f.check_box(:entry_enabled)%>
   <%=field_row "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
+  <%=field_row "Drawback Enabled", f.check_box(:drawback_enabled)%>
   <%=field_row "Custom Features", f.text_area(:custom_features)%>
   <% ss = ScheduleServer.first %>
   <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})" unless ss.nil?%>

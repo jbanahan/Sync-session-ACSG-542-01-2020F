@@ -12,7 +12,7 @@ class User < ActiveRecord::Base
     :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
     :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
     :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
-    :entry_view, :entry_comment, :entry_attach, :entry_edit,
+    :entry_view, :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
     :survey_view, :survey_edit,
     :broker_invoice_view, :broker_invoice_edit,
     :classification_view, :classification_edit,
@@ -84,15 +84,6 @@ class User < ActiveRecord::Base
     return n
   end
   
-  def zendesk_url
-    timestamp = Time.now.utc.to_i.to_s
-    token = "MrpSvPXafsfZKuQzYAvpCTjbhe5WDVvPwmfzAneyTcTvVsHc"
-    base_url = "http://support.chain.io/access/remote"
-    hash_base = self.full_name << self.email << token << timestamp
-    hash = Digest::MD5.hexdigest(hash_base)
-    "#{base_url}?#{{:email=>self.email,:name=>self.full_name,:timestamp=>timestamp,:hash=>hash}.to_query}"
-  end
-
   def can_view?(user)
     return user.admin? || self==user
   end
@@ -145,6 +136,12 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_drawback?
+    self.drawback_view? && MasterSetup.get.drawback_enabled?
+  end
+  def edit_drawback?
+    self.drawback_edit? && MasterSetup.get.drawback_enabled?
+  end
   def view_commercial_invoices?
     self.commercial_invoice_view? && MasterSetup.get.entry_enabled?
   end
