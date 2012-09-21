@@ -32,6 +32,7 @@ module OpenChain
         s.update_custom_value! custom_def_hash['dd'], Date.new(dd_sp.last.to_i,dd_sp.first.to_i,dd_sp[1].to_i)
         s.shipment_lines.destroy_all
         rows.each do |r|
+          next if r[8].blank?
           sl = s.shipment_lines.create!(:product_id=>Product.find_or_create_by_unique_identifier(r[8]).id,:quantity=>r[12])
           sl.update_custom_value! custom_def_hash['po'], r[7]
           sl.update_custom_value! custom_def_hash['cl'], r[9]
