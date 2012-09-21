@@ -2,6 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::UnderArmourReceivingParser do
   before :each do
+    @importer = Factory(:company,:importer=>true)
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @xl_client = mock('xl_client')
     @s3_path = 'abc'
@@ -59,6 +60,7 @@ describe OpenChain::UnderArmourReceivingParser do
     s = Shipment.find_by_reference '180075781'
     s.should have(1).shipment_lines
     s.vendor.should == vendors.first
+    s.importer.should == @importer
     s.get_custom_value(CustomDefinition.find_by_label('Delivery Date')).value.should == Date.new(2010,10,1)
     line = s.shipment_lines.first
     line.line_number.should == 1

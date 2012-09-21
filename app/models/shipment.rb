@@ -4,6 +4,7 @@ class Shipment < ActiveRecord::Base
 	belongs_to  :vendor,  :class_name => "Company"
 	belongs_to	:ship_from,	:class_name => "Address"
 	belongs_to	:ship_to,	:class_name => "Address"
+  belongs_to :importer, :class_name=>"Company"
 	
 	has_many   :shipment_lines, :dependent => :destroy
   has_many   :piece_sets, :through=>:shipment_lines

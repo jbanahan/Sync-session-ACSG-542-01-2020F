@@ -1,5 +1,6 @@
 class DutyCalcImportFile < ActiveRecord::Base
   has_many :duty_calc_import_file_lines, :dependent=>:destroy
+  belongs_to :importer, :class_name=>"Company"
 
 
   def self.generate_file user, f=Tempfile.new(['duty_calc_import_','.csv'])
