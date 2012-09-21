@@ -41,7 +41,7 @@ describe OpenChain::JCrewDrawbackProcessor do
     OpenChain::JCrewDrawbackProcessor.process_entries [@entry]
     d = DrawbackImportLine.first
     d.entry_number.should == @entry.entry_number
-    d.import_date.should == @entry.arrival_date
+    d.import_date.should == @entry.arrival_date.to_date
     d.received_date.should == @shipment.get_custom_value(@cd_del).value
     d.port_code.should == @entry.entry_port_code
     d.box_37_duty.should == @entry.total_duty
