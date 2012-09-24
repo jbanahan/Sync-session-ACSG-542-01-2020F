@@ -1,7 +1,21 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::JCrewShipmentParser do
-  describe :parse_merged_entry_date do
+  describe :parse_merged_entry_file do
+    before :each do
+      @tmp = Tempfile.new('a')
+      @tmp << 'abc'
+      @tmp.flush
+    end
+    after :each do
+      @tmp.unlink
+    end
+    it "should receive entry data" do
+      OpenChain::CustomHandler::JCrewShipmentParser.should_receive(:parse_merged_entry_data).with('abc').and_return('xyz')
+      OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file(@tmp.path).should == 'xyz'
+    end
+  end
+  describe :parse_merged_entry_data do
     before :each do
       @importer = Factory(:company,:importer=>true,:alliance_customer_number=>"JCREW")
       @importer_0000 = Factory(:company,:importer=>true,:alliance_customer_number=>"J0000")

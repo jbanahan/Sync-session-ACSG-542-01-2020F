@@ -1,6 +1,9 @@
 module OpenChain
   module CustomHandler
     class JCrewShipmentParser
+      def self.parse_merged_entry_file file_path
+        parse_merged_entry_data IO.read file_path
+      end
       def self.parse_merged_entry_data file_data
         importer_hash = {'JCREW'=>Company.find_by_alliance_customer_number('JCREW'),'J0000'=>Company.find_by_alliance_customer_number('J0000')}
         custom_def_hash = {'dd'=>CustomDefinition.find_or_create_by_label_and_module_type('Delivery Date','Shipment',:data_type=>'date'),

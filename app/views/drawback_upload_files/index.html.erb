@@ -22,3 +22,10 @@
   <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_FMI_EXPORTS}%>
   <hr />
 <%end-%>
+<%if MasterSetup.get.custom_feature?("J Crew Drawback")-%>
+  <h2>J Crew</h2>
+  <h3>PO Correlation File (last 10)</h3>
+  <p><em>.csv file from Frank Genus @ J Crew</em></p>
+  <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS}%>
+  <hr />
+<%end-%>

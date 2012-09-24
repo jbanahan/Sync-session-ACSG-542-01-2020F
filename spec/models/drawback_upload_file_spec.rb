@@ -55,5 +55,10 @@ describe DrawbackUploadFile do
       OpenChain::UnderArmourExportParser.should_receive(:parse_fmi_csv_file).with('tmppath').and_return('abc')
       d.process(@user).should == 'abc'
     end
+    it "should route J Crew shipment file" do
+      d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS)
+      OpenChain::CustomHandler::JCrewShipmentParser.should_receive(:parse_merged_entry_file).with('tmppath').and_return('abc')
+      d.process(@user).should == 'abc'
+    end
   end
 end
