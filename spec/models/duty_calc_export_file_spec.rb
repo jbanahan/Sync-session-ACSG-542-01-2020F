@@ -10,6 +10,7 @@ describe DutyCalcExportFile do
     it "should output csv for all lines" do
       d, t = DutyCalcExportFile.generate_csv @importer
       d.should have(2).duty_calc_export_file_lines
+      d.importer.should == @importer
       CSV.read(t.path).should have(2).rows
       
     end

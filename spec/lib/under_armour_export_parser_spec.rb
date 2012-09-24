@@ -111,9 +111,10 @@ describe OpenChain::UnderArmourExportParser do
         line = "3452168,85439724,1005492,1,,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
         lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
       end
-      it 'should raise exception if COO is empty' do
-        line = "3452168,85439724,1005492,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
-        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
+      it 'should skip line if COO is empty' do
+        line = "3452168,85439724,1000382,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
+        OpenChain::UnderArmourExportParser.parse_csv_line line
+        DutyCalcExportFileLine.count.should == 0
       end
       it 'should raise exception if row does not have 32 elements' do
         line = "3452168,85439724,1005492,1,LG,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"

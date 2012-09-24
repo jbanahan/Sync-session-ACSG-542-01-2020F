@@ -14,7 +14,7 @@ class DutyCalcExportFile < ActiveRecord::Base
     f = nil
     DutyCalcExportFile.transaction do
       f = file.nil? ? Tempfile.new(["dcef",".csv"]) : file
-      d = DutyCalcExportFile.create!
+      d = DutyCalcExportFile.create!(:importer_id=>importer.id)
       d.connection.execute "UPDATE duty_calc_export_file_lines SET duty_calc_export_file_id = #{d.id} WHERE duty_calc_export_file_id is null and importer_id = #{importer.id};"
       d.reload
       d.duty_calc_export_file_lines.each do |line|

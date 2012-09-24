@@ -5,7 +5,6 @@ module OpenChain
       count = 0
       File.new(file_path).lines do |line|
         parse_csv_line line, (count+1), importer unless count == 0
-        puts "Processed Line #{count}" if count.modulo(100)==0
         count += 1
       end
     end
@@ -15,6 +14,7 @@ module OpenChain
       d = DutyCalcExportFileLine.new
       CSV.parse(line) do |r|
         raise "Line #{row_num} had #{r.size} elements.  All lines must have 32 elements." unless r.size==32
+        return nil if missing_country_of_origin?(r)
         d.export_date = Date.strptime(r[18],"%Y%m%d")
         d.ship_date = d.export_date
         d.part_number = get_part_number r
@@ -38,7 +38,6 @@ module OpenChain
       importer = Company.where(:importer=>true).first
       File.new(file_path).lines do |line|
         parse_fmi_csv_line line unless count == 0
-        puts "Processed Line #{count}" if count.modulo(100)==0
         count += 1
       end
     end
@@ -83,6 +82,9 @@ module OpenChain
       [style,color,size,coo].each {|x| raise "Invalid item SKU #{style}-#{color}-#{size}+#{coo}" if x.blank?}
       "#{style}-#{color}-#{size}+#{coo}"
     end
+    def self.missing_country_of_origin? row
+      row[5].blank?
+    end
 
     class AafesParser
       def initialize file_path
@@ -96,7 +98,6 @@ module OpenChain
         CSV.foreach(@file_path) do |line|
           m = parse_line line unless count == 0
           msgs << m unless m.nil?
-          puts "Processed Line #{count}" if count.modulo(100)==0
           count += 1
         end
         msgs

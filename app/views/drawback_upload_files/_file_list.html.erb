@@ -12,7 +12,11 @@
   <%=form_for wm, :html=>{:multipart=>true} do |f| %>
     <%=f.hidden_field :processor%>
     <%= f.fields_for(:attachment) do |a| %>
-      <%=a.file_field :attached %>
+      <% if local_assigns.has_key?(:accept) -%>
+        <%=a.file_field :attached, :accept=>accept %>
+      <% else -%>
+        <%=a.file_field :attached %>
+      <% end -%>
     <%end%>
     <%=f.submit 'Upload'%>
   <%end-%>
