@@ -12,6 +12,10 @@ module CustomFieldSupport
     get_custom_value_by_id custom_definition.id
   end
 
+  def get_custom_value_by_label label
+    get_custom_value CustomDefinition.find_by_label(label)
+  end
+
   #pre-loads all custom values for the object into memory.  
   #once this is called, the object will no longer hit the DB to get refreshed objects, so you shouldn't change the values through anything
   #except this object's returned CustomValue objects for the lifetime of this object
