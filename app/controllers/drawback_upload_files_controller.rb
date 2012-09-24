@@ -1,6 +1,10 @@
 class DrawbackUploadFilesController < ApplicationController
   def index 
-    unless current_user.view_drawback?
+    if current_user.view_drawback?
+      @export_lines_not_in_duty_calc = DutyCalcExportFileLine.where("duty_calc_export_file_id IS NULL")
+      @import_lines_not_in_duty_calc = DrawbackImportLine.not_in_duty_calc_file
+      render :layout=>'one_col'
+    else
       add_flash :errors, "You cannot view this page because you do not have permission to view Drawback."
       redirect_to request.referrer
     end

@@ -1,5 +1,6 @@
+require 'open_chain/drawback_processor'
 module OpenChain
-  class UnderArmourDrawbackProcessor < DrawbackProcessor
+  class UnderArmourDrawbackProcessor < OpenChain::DrawbackProcessor
 
     def find_shipment_lines commercial_invoice_line
       entry = commercial_invoice_line.entry

@@ -1,16 +1,17 @@
 module OpenChain
   class UnderArmourExportParser
     def self.parse_csv_file file_path
+      importer = Company.where(:importer=>true).first
       count = 0
       File.new(file_path).lines do |line|
-        parse_csv_line line, (count+1) unless count == 0
+        parse_csv_line line, (count+1), importer unless count == 0
         puts "Processed Line #{count}" if count.modulo(100)==0
         count += 1
       end
     end
 
     # parses line and returns a saved DutyCalcExportFileLine
-    def self.parse_csv_line line, row_num = nil
+    def self.parse_csv_line line, row_num = nil, importer = Company.where(:importer=>true).first
       d = DutyCalcExportFileLine.new
       CSV.parse(line) do |r|
         raise "Line #{row_num} had #{r.size} elements.  All lines must have 32 elements." unless r.size==32
@@ -26,6 +27,7 @@ module OpenChain
         d.uom = "EA"
         d.exporter = "Under Armour"
         d.action_code = "E"
+        d.importer = importer
       end
       d.save!
       d
@@ -33,6 +35,7 @@ module OpenChain
 
     def self.parse_fmi_csv_file file_path
       count = 0
+      importer = Company.where(:importer=>true).first
       File.new(file_path).lines do |line|
         parse_fmi_csv_line line unless count == 0
         puts "Processed Line #{count}" if count.modulo(100)==0
@@ -41,7 +44,7 @@ module OpenChain
     end
 
     # parses line from FMI outbound format
-    def self.parse_fmi_csv_line line
+    def self.parse_fmi_csv_line line, importer = Company.where(:importer=>true).first
       d = DutyCalcExportFileLine.new
       CSV.parse(line) do |r|
         d.export_date = Date.strptime(r[4],"%m/%d/%Y")
@@ -55,6 +58,7 @@ module OpenChain
         d.uom = "EA"
         d.exporter = "Under Armour"
         d.action_code = "E"
+        d.importer = importer
       end
       d.save!
       d
@@ -83,6 +87,7 @@ module OpenChain
     class AafesParser
       def initialize file_path
         @file_path = file_path
+        @importer = Company.where(:importer=>true).first
       end
 
       def go
@@ -105,7 +110,8 @@ module OpenChain
         coo = find_country_of_origin style_color, export_date
         return "Could not find country of origin for #{style_color} #{export_date}." if coo.blank?
         DutyCalcExportFileLine.create!(:export_date=>export_date,:ship_date=>export_date,:ref_1=>line[3],:ref_2=>line[4],:ref_3=>"AAFES - NOT FOR ABI",
-          :destination_country=>line[12], :quantity=>line[18],:description=>line[15],:uom=>'EA',:action_code=>'E',:part_number=>"#{style_color}-#{line[1]}+#{coo}")
+          :destination_country=>line[12], :quantity=>line[18],:description=>line[15],:uom=>'EA',:action_code=>'E',:part_number=>"#{style_color}-#{line[1]}+#{coo}",
+          :importer_id=>@importer.id)
         nil
       end
 

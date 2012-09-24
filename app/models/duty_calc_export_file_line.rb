@@ -1,4 +1,5 @@
 class DutyCalcExportFileLine < ActiveRecord::Base
+  belongs_to :importer, :class_name=>"Company"
   belongs_to :duty_calc_export_file, :inverse_of=>:duty_calc_export_file_lines
 
 

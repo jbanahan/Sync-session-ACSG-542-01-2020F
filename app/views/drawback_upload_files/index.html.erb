@@ -1,8 +1,20 @@
 <h1>Drawback</h1>
 
+<p>
+  Import Lines Not Sent To Duty Calc: <%=@import_lines_not_in_duty_calc.count%>
+</p>
+<p>
+  Export Lines Not Sent To Duty Calc: <%=@export_lines_not_in_duty_calc.count%>
+</p>
 <%if MasterSetup.get.custom_feature?("UA Drawback")-%>
-  <h2>DH Inbound Files (last 10)</h2>
+  <h2>Under Armour</h2>
+  <h3>DH Inbound Files (last 10)</h3>
   <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS}%>
-  <h2>OHL Entry Files (last 10)</h2>
+  <h3>OHL Entry Files (last 10)</h3>
   <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_OHL_ENTRY}%>
+  <h3>DH Outbound Files (last 10)</h3>
+  <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS}%>
+  <h3>FMI Outbound Files (last 10)</h3>
+  <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_FMI_EXPORTS}%>
+  <hr />
 <%end-%>
