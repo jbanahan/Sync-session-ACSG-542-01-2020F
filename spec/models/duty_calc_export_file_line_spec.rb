@@ -12,7 +12,7 @@ describe DutyCalcExportFileLine do
       )
       a = line.make_line_array
       [:export_date,:ship_date,:part_number,:carrier,:ref_1,:ref_2,:ref_3,
-      :ref_4,:destination_country,:quantity,:schedule_b_code,:hts_code,:description,
+      :ref_4,:destination_country,:quantity,:schedule_b_code,:description,
       :uom,:exporter,:status,:action_code,:nafta_duty,:nafta_us_equiv_duty,:nafta_duty_rate
       ].each_with_index do |v,i|
         a[i].should == (line[v].respond_to?(:strftime) ? line[v].strftime("%m/%d/%Y") : line[v].to_s)

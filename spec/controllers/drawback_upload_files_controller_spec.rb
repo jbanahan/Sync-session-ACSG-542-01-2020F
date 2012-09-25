@@ -59,7 +59,7 @@ describe DrawbackUploadFilesController do
         response.should be_redirect
         flash[:errors].should be_nil
         flash[:notices].should have(1).message
-        DrawbackUploadFile.first.start_at.should > 3.seconds.ago
+        DrawbackUploadFile.first.start_at.should_not be_nil
       end
     end
     it "should delay process job" do
