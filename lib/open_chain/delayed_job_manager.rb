@@ -47,7 +47,7 @@ class DelayedJobManager
     begin
       c = Delayed::Job.count
       oldest = Delayed::Job.find(:first, :order => 'created_at ASC')
-      raise "Delayed Job Queue Too Big: #{c} Items" if c > max_messages and oldest.created_at < 15.minutes.ago 
+      raise "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: #{c} Items" if c > max_messages and oldest.created_at < 15.minutes.ago 
     rescue
       @@dont_send_until = 30.minutes.from_now
       $!.log_me [], [], true #don't delay the send since we know that the queue is backed up
