@@ -1,110 +1,27 @@
+require 'open_chain/drawback_processor'
 module OpenChain
-  class UnderArmourDrawbackProcessor
-    
-    DOZENS_LABELS = ["DOZ","DPR"]
-    # Link entries to shipments and create drawback import lines, writing change records for each commercial invoice line
-    def self.process_entries entries
-      processor = UnderArmourDrawbackProcessor.new
-      entries.each do |entry|
-        entry.commercial_invoice_lines.each do |ci|
-          cr = ci.change_records.build
-          linked = processor.link_commercial_invoice_line ci, cr
-          if linked.empty?
-            cr.add_message "Line wasn't matched to any shipments.", true
-          else
-            processor.make_drawback_import_lines ci, cr 
-          end
-          cr.save!
-        end
-      end
+  class UnderArmourDrawbackProcessor < OpenChain::DrawbackProcessor
+
+    def find_shipment_lines commercial_invoice_line
+      entry = commercial_invoice_line.entry
+      po_search = SearchCriterion.new(:model_field_uid=>"*cf_#{po_custom_def.id}",:operator=>"eq",:value=>commercial_invoice_line.po_number)
+      no_past_search = SearchCriterion.new(:model_field_uid=>"*cf_#{delivery_custom_def.id}",:operator=>"gt",:value=>entry.arrival_date-1.day)
+      no_past_search.apply po_search.apply ShipmentLine.select("shipment_lines.*").joins(:shipment).joins(:product).where("products.unique_identifier = ?",commercial_invoice_line.part_number).
+        where("shipments.importer_id = ? OR shipments.importer_id IN (SELECT parent_id FROM linked_companies WHERE child_id = ?)",entry.importer_id,entry.importer_id)
     end
-    # Links a commercial invoice line to shipment lines if the commercial invoice line is not already linked and shipment line is not already linked
-    # Takes an optional change record which should ve linked to the commercial invoice line. If it is not null, then messages will be added (but not saved) and the
-    # failure flag will be set if no matches are made
-    # Returns an array of ShipmentLines that were matched
-    def link_commercial_invoice_line c_line, change_record=nil
-      r = []
-      entry = c_line.commercial_invoice.entry
-      cr = change_record.nil? ? ChangeRecord.new : change_record #use a junk change record to make the rest of the coding easier if nil was passed
-      unallocated_quantity = (c_line.quantity.nil? ? 0 : c_line.quantity) - c_line.piece_sets.where("shipment_line_id is not null").sum("piece_sets.quantity")
-      if unallocated_quantity <= 0
-        cr.add_message("Commercial Invoice Line is fully allocated to shipments.")
-      else
-        po_search = SearchCriterion.new(:model_field_uid=>"*cf_#{po_custom_def.id}",:operator=>"eq",:value=>c_line.po_number)
-        no_past_search = SearchCriterion.new(:model_field_uid=>"*cf_#{delivery_custom_def.id}",:operator=>"gt",:value=>entry.arrival_date-1.day)
-        found = no_past_search.apply po_search.apply ShipmentLine.select("shipment_lines.*").joins(:shipment).joins(:product).where("products.unique_identifier = ?",c_line.part_number)
-        found.each do |s_line|
-          break if unallocated_quantity == 0
-          shipment_line_unallocated = s_line.quantity - s_line.piece_sets.where("commercial_invoice_line_id is not null").sum("piece_sets.quantity")
-          next if shipment_line_unallocated <= 0
-          if shipment_line_unallocated >= unallocated_quantity
-            c_line.piece_sets.create!(:shipment_line_id=>s_line.id,:quantity=>unallocated_quantity)
-            cr.add_message("Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: #{unallocated_quantity}")
-            r << s_line
-            break
-          else
-            c_line.piece_sets.create!(:shipment_line_id=>s_line.id,:quantity=>shipment_line_unallocated)
-            cr.add_message("Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: #{shipment_line_unallocated}")
-            unallocated_quantity -= shipment_line_unallocated
-            r << s_line
-          end
-        end
-      end
-      r
+    
+    def get_part_number(shipment_line, commerical_invoice_line)
+      "#{shipment_line.product.unique_identifier}-#{shipment_line.get_custom_value(size_custom_def).value}+#{get_country_of_origin(shipment_line,commerical_invoice_line)}"
     end
 
-    # Makes drawback import lines for all commerical invoice line / shipment line pairs already connected to the given commercial invoice line
-    def make_drawback_import_lines c_line, change_record=nil
-      cr = change_record.nil? ? ChangeRecord.new : change_record
-      r = [] 
-      piece_sets = c_line.piece_sets.where("shipment_line_id is not null and drawback_import_line_id is null")
-      if piece_sets.blank?
-        cr.add_message "Line does not have any unallocated shipment matches.", true
-        return r
-      end
-      entry = c_line.commercial_invoice.entry
-      tariff = c_line.commercial_invoice_tariffs.first #Under Armour will only have one
-      [
-        [(tariff.entered_value==0),"Cannot make line because entered value is 0."],
-        [(tariff.entered_value.nil?),"Cannot make line because entered value is empty."],
-        [(tariff.duty_amount.nil?),"Cannot make line because duty amount is empty."],
-      ].each do |x|
-        if x[0]
-          cr.add_message x[1], true
-          return r
-        end
-      end
-      piece_sets.each do |ps|
-        ship_line = ps.shipment_line
-        shipment = ship_line.shipment
-        country_origin = !c_line.country_origin_code.blank? ? c_line.country_origin_code : ship_line.get_custom_value(country_origin_custom_def).value
-        d = DrawbackImportLine.new(:entry_number=>entry.entry_number,
-          :import_date=>entry.arrival_date,
-          :received_date=>shipment.get_custom_value(delivery_custom_def).value,
-          :port_code=>entry.entry_port_code,
-          :box_37_duty => entry.total_duty,
-          :box_40_duty => entry.total_duty_direct,
-          :country_of_origin_code => country_origin,
-          :product_id => ship_line.product_id,
-          :part_number=>"#{ship_line.product.unique_identifier}-#{ship_line.get_custom_value(size_custom_def).value}+#{country_origin}",
-          :hts_code=>tariff.hts_code,
-          :description=>entry.merchandise_description,
-          :unit_of_measure=>"EA",
-          :quantity=>ps.quantity,
-          :unit_price => tariff.entered_value / c_line.quantity,
-          :rate => tariff.duty_amount / tariff.entered_value,
-          :compute_code => "7",
-          :ocean => entry.ocean?,
-          :total_mpf => entry.mpf
-        )
-        d.duty_per_unit = d.unit_price * d.rate
-        d.save!
-        ps.update_attributes(:drawback_import_line_id=>d.id)
-        cr.add_message "Drawback Import Line created successfully. (DB ID: #{d.id})"
-        r << d
-      end
-      r
+    def get_country_of_origin(shipment_line, commercial_invoice_line) 
+      !commercial_invoice_line.country_origin_code.blank? ? commercial_invoice_line.country_origin_code : shipment_line.get_custom_value(country_origin_custom_def).value
     end
+
+    def get_received_date(shipment)
+      shipment.get_custom_value(delivery_custom_def).value
+    end
+
     private
     def po_custom_def
       @po_custom_def ||= CustomDefinition.find_by_label_and_module_type 'PO Number', 'ShipmentLine'

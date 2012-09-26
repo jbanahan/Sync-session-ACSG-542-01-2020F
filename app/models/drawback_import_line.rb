@@ -1,6 +1,7 @@
 class DrawbackImportLine < ActiveRecord::Base
   include LinesSupport
 
+  belongs_to :importer, :class_name=>"Company"
   has_many :duty_calc_import_file_lines, :dependent=>:destroy
 
   scope :not_in_duty_calc_file, lambda { joins("left outer join duty_calc_import_file_lines on drawback_import_lines.id = duty_calc_import_file_lines.drawback_import_line_id").where("duty_calc_import_file_lines.id is null") }

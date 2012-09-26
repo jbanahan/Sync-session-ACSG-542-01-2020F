@@ -1,0 +1,23 @@
+<table class='detail_table'>
+  <thead><tr><th>File</th><th>Started At</th><th>Finished At</th></tr></thead>
+  <tbody>
+    <%DrawbackUploadFile.where(:processor=>processor).order("created_at DESC").limit(10).each do |d|-%>
+      <tr class='hover'><td><%=d.attachment.attached_file_name%></td><td><%=d.start_at%></td><td><%=d.finish_at%></td></tr>
+    <%end-%>
+  </tbody>
+</table>
+<% if current_user.edit_drawback? -%>
+  <% wm =  DrawbackUploadFile.new(:processor=>processor) -%>
+  <% wm.build_attachment -%>
+  <%=form_for wm, :html=>{:multipart=>true} do |f| %>
+    <%=f.hidden_field :processor%>
+    <%= f.fields_for(:attachment) do |a| %>
+      <% if local_assigns.has_key?(:accept) -%>
+        <%=a.file_field :attached, :accept=>accept %>
+      <% else -%>
+        <%=a.file_field :attached %>
+      <% end -%>
+    <%end%>
+    <%=f.submit 'Upload'%>
+  <%end-%>
+<%end-%>

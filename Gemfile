@@ -19,6 +19,7 @@ gem 'delayed_job', '2.1.4'
 gem 'dalli', '1.1.4'
 gem 'postmark-rails', '0.4.1'
 gem 'RedCloth', '4.2.9'
+gem 'rubyzip'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', '2.5.2', :group=>[:development,:test]
 group :test do

@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe OpenChain::UnderArmourExportParser do
   
+  before :each do 
+    #UNDER ARMOUR IS DESIGNED TO RUN IN THEIR OWN DATABASE AND USES THE FIRST IMPORTER IN THE DB
+    @importer = Factory(:company,:importer=>true) 
+  end
   context "AAFES Exports" do
     before :each do
       DrawbackImportLine.create!(:part_number=>"1000375-609-LG+CN",:import_date=>"2011-10-01",:quantity=>10,:product_id=>Factory(:product,:unique_identifier=>'1000375-609').id)
@@ -34,6 +38,7 @@ describe OpenChain::UnderArmourExportParser do
       line.uom.should == "EA"
       line.action_code.should == 'E'
       line.duty_calc_export_file_id.should be_nil
+      line.importer.should == @importer
     end
     it "should pick country of origin for most recent import prior to export if multiple are found" do
       DutyCalcExportFileLine.find_by_part_number('1000377-001-XXL+MY').should_not be_nil
@@ -91,6 +96,7 @@ describe OpenChain::UnderArmourExportParser do
         d.nafta_us_equiv_duty.should be_nil
         d.nafta_duty_rate.should be_nil
         d.duty_calc_export_file.should be_nil
+        d.importer.should == @importer
       end
       
       it 'should raise exception if style is empty' do
@@ -105,9 +111,10 @@ describe OpenChain::UnderArmourExportParser do
         line = "3452168,85439724,1005492,1,,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
         lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
       end
-      it 'should raise exception if COO is empty' do
-        line = "3452168,85439724,1005492,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
-        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
+      it 'should skip line if COO is empty' do
+        line = "3452168,85439724,1000382,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
+        OpenChain::UnderArmourExportParser.parse_csv_line line
+        DutyCalcExportFileLine.count.should == 0
       end
       it 'should raise exception if row does not have 32 elements' do
         line = "3452168,85439724,1005492,1,LG,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
@@ -158,6 +165,7 @@ describe OpenChain::UnderArmourExportParser do
         d.nafta_us_equiv_duty.should be_nil
         d.nafta_duty_rate.should be_nil
         d.duty_calc_export_file.should be_nil
+        d.importer.should == @importer
       end
     end
   end

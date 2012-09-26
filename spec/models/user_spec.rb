@@ -2,6 +2,28 @@ require 'spec_helper'
 
 describe User do
   context "permissions" do
+    context "drawback" do
+      before :each do
+        MasterSetup.get.update_attributes(:drawback_enabled=>true)
+      end
+      it "should allow user to view if permission is set and drawback enabled" do
+        Factory(:user,:drawback_view=>true).view_drawback?.should be_true
+      end
+      it "should allow user to edit if permission is set and drawback enabled" do
+        Factory(:user,:drawback_edit=>true).edit_drawback?.should be_true
+      end
+      it "should not allow view/edit if drawback not enabled" do
+        MasterSetup.get.update_attributes(:drawback_enabled=>false)
+        u = Factory(:user,:drawback_view=>true,:drawback_edit=>true)
+        u.view_drawback?.should be_false
+        u.edit_drawback?.should be_false
+      end
+      it "should now allow if permissions not set" do
+        u = Factory(:user)
+        u.view_drawback?.should be_false
+        u.edit_drawback?.should be_false
+      end
+    end
     context "broker invoice" do
       context "with company permission" do
         before :each do 

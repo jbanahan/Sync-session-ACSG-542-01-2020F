@@ -61,14 +61,14 @@
     <tr>
       <td style="width:33%;">
         <table>
-          <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_entry_sent_date,:ent_filed_date,:ent_arrival_date,:ent_release_date].each do |f|%>
+          <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_arrival_date,:ent_release_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_fda_transmit_date,:ent_fda_review_date,:ent_fda_release_date,:ent_trucker_called_date,:ent_free_date,:ent_duty_due_date,:ent_liq_date].each do |f|%>
+          <%[:ent_fda_transmit_date,:ent_fda_review_date,:ent_fda_release_date,:ent_trucker_called_date,:ent_free_date,:ent_duty_due_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
@@ -115,6 +115,30 @@
   </tbody>
 </table>
 <hr />
+<% if @entry.liquidation_data? -%>
+<table class='ent_columns'>
+  <tbody>
+    <tr>
+      <td style="width:50%;">
+        <table>
+          <%[:ent_liq_date,:ent_liquidation_total,:ent_liquidation_duty,:ent_liquidation_fees,:ent_liquidation_tax,:ent_liquidation_ada,:ent_liquidation_cvd
+          ].each do |f|%>
+            <%=field_view_row @entry, f %>
+          <%end%>
+        </table>
+      </td>
+      <td style="width:50%;">
+        <table>
+          <%[:ent_liquidation_type,:ent_liquidation_type_code,:ent_liquidation_action_description,:ent_liquidation_action_code,:ent_liquidation_extension_description,:ent_liquidation_extension_code,:ent_liquidation_extension_count].each do |f|%>
+            <%=field_view_row @entry, f %>
+          <%end%>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr />
+<%end-%>
 <a name='c_invoices'></a>
 <div class='quick_jump'><span class='qj_label'>Jump To:</span>
   <a href='#ent_header'>Top</a> 

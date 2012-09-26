@@ -1,5 +1,6 @@
 module OpenChain
   class OhlDrawbackParser
+    attr_reader :entry
     DOZENS_INDICATORS = ["DOZ",'DPR']
     SOURCE_CODE = 'OHL Drawback'
     # parse an OHL Drawback File (sample in spec/support/bin folder)
@@ -7,17 +8,18 @@ module OpenChain
       sheet = Spreadsheet.open(file_path).worksheet(0) #always first sheet in workbook
       rows = []
       last_entry_num = nil
+      entries = []
       sheet.each 1 do |row| #start at row 1, skipping headers
         entry_num = row[1]
         if entry_num != last_entry_num && !rows.blank?
-          OhlDrawbackParser.new rows
+          entries << OhlDrawbackParser.new(rows).entry
           rows = []
         end
         rows << row
         last_entry_num = entry_num
       end
-      OhlDrawbackParser.new rows unless rows.blank?
-      true #return true so we don't return the last parser used
+      entries << OhlDrawbackParser.new(rows).entry unless rows.blank?
+      entries
     end
 
     # constructor, don't use, instead use static parse method
@@ -29,6 +31,7 @@ module OpenChain
       @entry.save!
       #set time to process in milliseconds without calling callbacks
       @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
+      @entry
     end
 
     private 

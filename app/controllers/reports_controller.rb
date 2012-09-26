@@ -5,6 +5,12 @@ class ReportsController < ApplicationController
     redirect_to report_results_path
   end
 
+  def show_product_sync_problems
+
+  end
+  def run_product_sync_problems
+    run_report "Product Sync Problems", OpenChain::Report::ProductSyncProblems, {}, []
+  end
   # show the user a message if their report download has been delayed
   def show_big_search_message
     

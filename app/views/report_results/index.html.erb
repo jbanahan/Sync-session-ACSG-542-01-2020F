@@ -34,6 +34,10 @@
     <tr class='hover'><td><%=link_to "Products Without Attachments", reports_show_products_without_attachments_path%></td>
     <td>Shows all products without attachments.</td</tr>
   <%end%>
+  <%if current_user.company.master? && SyncRecord.count > 0-%>
+    <tr class='hover'><td><%=link_to "Product Sync Problems", reports_show_product_sync_problems_path%></td>
+    <td>Shows all products out of sync with remote systems.</td</tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

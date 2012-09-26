@@ -62,11 +62,23 @@ describe OpenChain::AllianceParser do
     @census_warning = 'Y'
     @paperless_cert = 'Y'
     @destination_state = 'PA'
+    @liq_type_code = '01'
+    @liq_type = 'LIQTYPE'
+    @liq_action_code = '22'
+    @liq_action = 'LIQACT'
+    @liq_ext_code = '33'
+    @liq_ext = 'XX'
+    @liq_ext_ct = 3
+    @liq_duty = 10.01
+    @liq_fees = 11.15
+    @liq_tax = 6.22
+    @liq_ada = 12.12
+    @liq_cvd = 0.10
     convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
     @make_entry_lambda = lambda {
       r = []
-      r << "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N01No Change                          00change liquidation                 00                                   0LQ090419ESP       N05#{@census_warning}#{@error_free}#{@paperless_cert}#{@paperless}YVFEDI     "
-      r << "SH01#{@release_cert_message.ljust(33)}#{"".ljust(12)}#{convert_cur.call(@total_duty,12)}#{"".ljust(24)}#{convert_cur.call(@total_fees,12)}#{"".ljust(120)}#{@fda_message.ljust(33)}#{"".ljust(107)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}"
+      r << "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N#{@liq_type_code.ljust(2)}#{@liq_type.ljust(35)}#{@liq_action_code.ljust(2)}#{@liq_action.ljust(35)}#{@liq_ext_code.ljust(2)}#{@liq_ext.ljust(35)}#{@liq_ext_ct}LQ090419ESP       N05#{@census_warning}#{@error_free}#{@paperless_cert}#{@paperless}YVFEDI     "
+      r << "SH01#{@release_cert_message.ljust(33)}#{"".ljust(12)}#{convert_cur.call(@total_duty,12)}#{convert_cur.call(@liq_duty,12)}#{"".ljust(12)}#{convert_cur.call(@total_fees,12)}#{convert_cur.call(@liq_fees,12)}#{"".ljust(24)}#{convert_cur.call(@liq_tax,12)}#{"".ljust(24)}#{convert_cur.call(@liq_ada,12)}#{"".ljust(24)}#{convert_cur.call(@liq_cvd,12)}#{@fda_message.ljust(33)}#{"".ljust(107)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}"
       r << "SH03#{"".ljust(285)}#{@consignee_address_1.ljust(35)}#{@consignee_address_2.ljust(35)}#{@consignee_city.ljust(35)}#{@consignee_state.ljust(2)}"
       r << "SH04DAS DISTRIBUTORS INC               DAS DISTRIBUTORS INC               724 LAWN RD                                                           PALMYRA                     PA17078    20110808#{@destination_state}                XQPIOTRA1932TIL            20110808   Vandegrift Forwarding Co. Inc.     0000000550900000000000000000000000000                                                                                                                                                                                    "
       r << "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
@@ -330,6 +342,19 @@ describe OpenChain::AllianceParser do
     ent.should be_error_free_release
     ent.should be_paperless_certification
     ent.destination_state.should == @destination_state
+    ent.liquidation_type_code.should == @liq_type_code
+    ent.liquidation_type.should == @liq_type
+    ent.liquidation_action_code.should == @liq_action_code
+    ent.liquidation_action_description.should == @liq_action
+    ent.liquidation_extension_code.should == @liq_ext_code
+    ent.liquidation_extension_description.should == @liq_ext
+    ent.liquidation_extension_count.should == @liq_ext_ct
+    ent.liquidation_duty.should == @liq_duty
+    ent.liquidation_fees.should == @liq_fees
+    ent.liquidation_tax.should == @liq_tax
+    ent.liquidation_ada.should == @liq_ada
+    ent.liquidation_cvd.should == @liq_cvd
+    ent.liquidation_total.should == (@liq_duty+@liq_fees+@liq_tax+@liq_ada+@liq_cvd)
     ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
 
     expected_invoiced_value = BigDecimal("0",2)

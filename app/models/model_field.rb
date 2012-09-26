@@ -760,7 +760,7 @@ class ModelField
       ],
       [93,:ent_total_gst,:total_gst,"Total GST",{:data_type=>:decimal}],
       [94,:ent_total_duty_gst,:total_duty_gst,"Total Duty & GST",{:data_type=>:decimal}],
-      [95,:ent_first_entry_sent_date,:first_entry_sent_date,"Entry",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [95,:ent_first_entry_sent_date,:first_entry_sent_date,"First Summary Sent Date",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
       [96,:ent_paperless_release,:paperless_release,"Paperless Entry Summary",{:data_type=>:boolean}],
       [97,:ent_census_warning,:census_warning,"Census Warning",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
       [98,:ent_error_free_release,:error_free_release,"Error Free Release",{:data_type=>:boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
@@ -772,7 +772,20 @@ class ModelField
         :data_type=>:integer,
         :can_view_lambda=> lambda {|u| u.company.broker?}
       }],
-      [101,:ent_destination_state,:destination_state,"Destination State",{:data_type=>:string}]
+      [101,:ent_destination_state,:destination_state,"Destination State",{:data_type=>:string}],
+      [102,:ent_liquidation_duty,:liquidation_duty,"Liquidated - Duty",{:data_type=>:decimal}],
+      [103,:ent_liquidation_fees,:liquidation_fees,"Liquidated - Fees",{:data_type=>:decimal}],
+      [104,:ent_liquidation_tax,:liquidation_tax,"Liquidated - Tax",{:data_type=>:decimal}],
+      [105,:ent_liquidation_ada,:liquidation_ada,"Liquidated - ADA",{:data_type=>:decimal}],
+      [106,:ent_liquidation_cvd,:liquidation_cvd,"Liquidated - CVD",{:data_type=>:decimal}],
+      [107,:ent_liquidation_total,:liquidation_total,"Liquidated - Total",{:data_type=>:decimal}],
+      [108,:ent_liquidation_extension_count,:liquidation_extension_count,"Liquidated - # of Extensions",{:data_type=>:integer}],
+      [109,:ent_liquidation_extension_description,:liquidation_extension_description,"Liquidated - Extension",{:data_type=>:string}],
+      [110,:ent_liquidation_extension_code,:liquidation_extension_code,"Liquidated - Extension Code",{:data_type=>:string}],
+      [111,:ent_liquidation_action_description,:liquidation_action_description,"Liquidated - Action",{:data_type=>:string}],
+      [112,:ent_liquidation_action_code,:liquidation_action_code,"Liquidated - Action Code",{:data_type=>:string}],
+      [113,:ent_liquidation_type,:liquidation_type,"Liquidated - Type",{:data_type=>:string}],
+      [114,:ent_liquidation_type_code,:liquidation_type_code,"Liquidated - Type Code",{:data_type=>:string}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

@@ -151,6 +151,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_attachments_not_matched" => "reports#run_attachments_not_matched", :via=>:post
   match "/reports/show_products_without_attachments" => "reports#show_products_without_attachments", :via=>:get
   match "/reports/run_products_without_attachments" => "reports#run_products_without_attachments", :via=>:post
+  match "/reports/show_product_sync_problems" => "reports#show_product_sync_problems", :via=>:get
+  match "/reports/run_product_sync_problems" => "reports#run_product_sync_problems", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
@@ -336,6 +338,7 @@ OpenChain::Application.routes.draw do
     get 'invite', :on=>:member
     resources :survey_response_logs, :only=>[:index]
   end
+  resources :drawback_upload_files, :only=>[:index,:create]
   resources :error_log_entries, :only => [:index, :show]
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
   root :to => "dashboard_widgets#index"
