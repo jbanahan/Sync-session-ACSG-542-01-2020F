@@ -1,0 +1,75 @@
+<%content_for :action_bar do -%>
+  <%pms = params.clone-%>
+  <%pms[:mode]='detail'-%>
+  <button class='btn_link' link_to='<%=entry_path(@entry,pms)%>'>Detail Mode</button>
+<%end-%>
+<style>
+.ent_columns {
+  width:99%;
+}
+.ent_columns tbody {
+  vertical-align:top;
+}
+.ent_columns .label_cell {
+  width:0;
+}
+.ci_line td {
+  border-top: 1px solid #333;
+}
+</style>
+<a name='ent_header'></a>
+<!-- Main header -->
+<table class='ent_columns'>
+  <tbody>
+    <tr>
+      <td style="width:33%;">
+        <table>
+          <%[:ent_entry_num,:ent_brok_ref,:ent_customer_references,:ent_mbols,:ent_hbols,:ent_export_date,:ent_isf_accepted_date,:ent_arrival_date,:ent_release_date].each do |f|%>
+            <%=field_view_row @entry, f %>
+          <%end%>
+        </table>
+      </td>
+      <td style="width:33%;">
+        <table>
+          <%[:ent_release_cert_message,:ent_cust_name,:ent_po_numbers,:ent_merch_desc,:ent_entry_port_name,:ent_vessel,:ent_voyage,:ent_ult_con_name,:ent_transport_mode_code,:ent_carrier_code].each do |f|%>
+            <%=field_view_row @entry, f %>
+          <%end%>
+        </table>
+      </td>
+      <td style="width:34%;">
+        <table>
+          <%[:ent_total_fees,:ent_total_duty,:ent_entered_value,:ent_total_invoiced_value,:ent_total_units,:ent_total_units_uoms].each do |f|%>
+            <%=field_view_row @entry, f %>
+          <%end%>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<%ci_line_count = @entry.commercial_invoice_lines.count  %>
+<%if @entry.commercial_invoices.count >0%>
+  <h1>Commercial Invoices</h1>
+  <%ci_summary_fields = [:ci_invoice_number,:ci_vendor_name,:ci_invoice_value,:ci_gross_weight]%>
+  <table class='detail_table'>
+    <thead><tr>
+      <%ci_summary_fields.each do |f|%>
+        <th><%=field_label f, false%></th>
+      <%end%>
+    </tr></thead>
+    <tbody>
+      <%@entry.commercial_invoices.each do |ci|%>
+        <tr class='hover'>
+          <%ci_summary_fields.each do |f|%>
+            <%if ci_line_count < 200%>
+              <td><%=f==:ci_invoice_number ? link_to(field_value(ci,f),"#ci_#{ci.id}") : field_value(ci, f)%></td>
+            <%else  %>
+              <td><%=field_value(ci, f)%></td>
+            <%end  %>
+          <%end%>
+        </tr>
+      <%end%>
+    </tbody>
+  </table>
+  <hr />
+<% end%>
+<%=render :partial => 'shared/attachments', :locals => {:attachable => @entry, :width=>"wide"} %>

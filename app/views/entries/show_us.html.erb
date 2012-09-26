@@ -1,3 +1,8 @@
+<%content_for :action_bar do -%>
+  <%pms = params.clone-%>
+  <%pms[:mode]='simple'-%>
+  <button class='btn_link' link_to='<%=entry_path(@entry,pms)%>'>Simple Mode</button>
+<%end-%>
 <style>
 .ent_columns {
   width:99%;
@@ -22,7 +27,7 @@
 </style>
 <%show_broker_invoices = current_user.view_broker_invoices? && !@entry.broker_invoices.blank?%>
 <a name='ent_header'></a>
-<div class='quick_jump'><span class='qj_label'>Jump To:</span>
+<div class='quick_jump'>
   <a href='#c_invoices'>Commercial Invoices</a>
   <%if show_broker_invoices%> | <a href='#b_invoices'>Broker Invoices</a><%end%>
 </div>
@@ -150,7 +155,7 @@
 <hr />
 <%end-%>
 <a name='c_invoices'></a>
-<div class='quick_jump'><span class='qj_label'>Jump To:</span>
+<div class='quick_jump'>
   <a href='#ent_header'>Top</a> 
   <% if show_broker_invoices %>
     | <a href='#b_invoices'>Broker Invoices</a>
@@ -239,7 +244,7 @@
 <%end%>
 <%if show_broker_invoices%>
   <a name='b_invoices'></a>
-  <div class='quick_jump'><span class='qj_label'>Jump To:</span>
+  <div class='quick_jump'>
     <a href='#ent_header'>Top</a> |
     <a href='#c_invoices'>Commercial Invoices</a>
   </div>

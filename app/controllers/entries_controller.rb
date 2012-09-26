@@ -9,11 +9,17 @@ class EntriesController < ApplicationController
   def show
     e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first
     action_secure(e.can_view?(current_user),e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
+      current_user.update_attributes(:simple_entry_mode=>false) if params[:mode]=='detail' && current_user.simple_entry_mode?
+      current_user.update_attributes(:simple_entry_mode=>true) if params[:mode]=='simple' && !current_user.simple_entry_mode?
+      if current_user.simple_entry_mode.nil?
+        add_flash :notices, "Try simple mode by clicking on the button at the bottom of this screen." 
+        current_user.update_attributes(:simple_entry_mode=>false)
+      end
       @entry = e
       if e.import_country && e.import_country.iso_code == 'CA'
         render :action=>'show_ca', :layout=>'one_col'
       else
-        render :action=>'show_us', :layout=>'one_col'
+        render :action=>(current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), :layout=>'one_col'
       end
     }
   end
