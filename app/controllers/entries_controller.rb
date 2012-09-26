@@ -7,7 +7,7 @@ class EntriesController < ApplicationController
     advanced_search CoreModule::ENTRY
   end
   def show
-    e = Entry.find(params[:id])
+    e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first
     action_secure(e.can_view?(current_user),e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
       @entry = e
       if e.import_country && e.import_country.iso_code == 'CA'

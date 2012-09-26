@@ -74,6 +74,7 @@ describe OpenChain::AllianceParser do
     @liq_tax = 6.22
     @liq_ada = 12.12
     @liq_cvd = 0.10
+    @comments = [{:text=>"Entry Summary queued to send",:date=>'201104211824',:user=>'BDEVITO'}]
     convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
     @make_entry_lambda = lambda {
       r = []
@@ -101,6 +102,11 @@ describe OpenChain::AllianceParser do
       r << "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       r << "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       r << "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
+      unless @comments.blank?
+        @comments.each do |c|
+          r << "SN00#{c[:text].ljust(60)}#{c[:date]}   #{c[:user].ljust(12)}"
+        end
+      end
       unless @customer_references.blank?
         @customer_references.split("\n").each do |cr|
           r << "SR00#{cr.ljust(35)}"
@@ -445,6 +451,17 @@ describe OpenChain::AllianceParser do
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
+  end
+
+  it "should write a comment" do
+    @comments.size.should == 1
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    comments = Entry.find_by_broker_reference(@ref_num).entry_comments
+    comments.should have(1).comment
+    comm = comments.first
+    comm.username.should == @comments.first[:user]
+    comm.body.should == @comments.first[:text]
+    comm.generated_at.should == @est.parse(@comments.first[:date])
   end
 
   it 'code 00098 should override 00003 if it comes second in file' do

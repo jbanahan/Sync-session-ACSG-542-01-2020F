@@ -115,7 +115,17 @@
   </tbody>
 </table>
 <hr />
+<% if current_user.company.broker? && !@entry.entry_comments.empty?-%>
+<h2>Notes</h2>
+<table class='detail_table'>
+  <%@entry.entry_comments.order("generated_at ASC").each do |c|-%>
+  <tr class='hover'><td><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
+  <%end-%>
+</table>
+<hr />
+<%end-%>
 <% if @entry.liquidation_data? -%>
+<h2>Liquidation</h2>
 <table class='ent_columns'>
   <tbody>
     <tr>

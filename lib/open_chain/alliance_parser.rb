@@ -103,6 +103,8 @@ module OpenChain
                 process_cf00 r
               when "SC00"
                 process_sc00 r
+              when "SN00" 
+                process_sn00 r
             end
             current_row += 1
           end
@@ -159,6 +161,7 @@ module OpenChain
         @entry.source_system = SOURCE_CODE
         @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
         @entry.broker_invoices.destroy_all #clear all invoices and recreate as we go
+        @entry.entry_comments.destroy_all
         @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
         @entry.total_units = 0 #reset, then accumulate as we process invoice lines
         @entry.customer_number = r[14,10].strip
@@ -384,6 +387,11 @@ module OpenChain
       cont_size_desc = r.size>283 ? r[283,40].strip : ""
       accumulate_string :container_sizes, (cont_size_desc.blank? ? cont_size_num : "#{cont_size_num}-#{cont_size_desc}")
       accumulate_string :fcl_lcl, r[271] unless r[271].blank?
+    end
+    
+    #comments
+    def process_sn00 r
+      @entry.entry_comments.build(:body=>r[4,60].strip,:username=>r[79,12].strip,:generated_at=>parse_date_time(r[64,12]))
     end
 
     # make port code nil if all zeros
