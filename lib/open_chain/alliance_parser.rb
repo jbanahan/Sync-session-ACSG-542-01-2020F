@@ -31,6 +31,13 @@ module OpenChain
       '00121'=>:daily_statement_approved_date
     }
 
+    def self.process_past_days number_of_days, opts={:imaging=>false}
+      number_of_days.times {|i| process_day i.days.ago, opts}
+      if opts[:user_id]
+        u = User.find opts[:user_id]
+        u.messages.create(:subject=>"Alliance reprocessing complete.",:body=>"#{number_of_days} days have been reprocessed for Alliance")
+      end
+    end
     # process all files in the archive for a given date.  Use this to reprocess old files. By default it skips the call to the imaging server
     def self.process_day date, opts={:imaging=>false}
       OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance") do |key|

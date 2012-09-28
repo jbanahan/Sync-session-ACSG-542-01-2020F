@@ -2,6 +2,13 @@ module OpenChain
   class FenixParser
     SOURCE_CODE = 'Fenix'
 
+    def self.process_past_days number_of_days, opts={}
+      number_of_days.times {|i| process_day (number_of_days-i).days.ago}
+      if opts[:user_id]
+        u = User.find opts[:user_id]
+        u.messages.create(:subject=>"Fenix reprocessing complete.",:body=>"#{number_of_days} days have been reprocessed for Fenix")
+      end
+    end
     # take the text from a Fenix CSV output file a create entries
     def self.parse file_content, s3_bucket = nil, s3_path = nil
       begin
@@ -31,7 +38,7 @@ module OpenChain
     # process all files in the archive for a given date.  Use this to reprocess old files
     def self.process_day date
       OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_fenix") do |key|
-        pprocess_from_s3 OpenChain::S3.integration_bucket_name, key
+        process_from_s3 OpenChain::S3.integration_bucket_name, key
       end
     end
 

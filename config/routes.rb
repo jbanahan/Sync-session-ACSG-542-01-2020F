@@ -10,6 +10,7 @@ OpenChain::Application.routes.draw do
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
   resources :entries, :only => [:index,:show] do
+    get 'reprocess', :on=>:collection
     resources :broker_invoices, :only=>[:create]
   end
   

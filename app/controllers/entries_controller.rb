@@ -59,6 +59,22 @@ class EntriesController < ApplicationController
     end
   end
 
+  def reprocess
+    sys_admin_secure {
+      imaging = params[:imaging]=='true'
+      days = params[:days].to_i
+      case params[:parser]
+      when 'alliance'
+        OpenChain::AllianceParser.delay.process_past_days days, {:imaging=>imaging, :user_id=>current_user.id}
+        add_flash :notices, "Prcessing the past #{days} days for Alliance. (Imaging = #{imaging})"
+      when 'fenix'
+        OpenChain::FenixParser.delay.process_past_days days, {:user_id=>current_user.id}
+        add_flash :notices, "Prcessing the past #{days} days for Fenix."
+      end
+      redirect_to request.referrer
+    }
+  end
+
   private
   def build_bi_company_filter_clause companies
     r = "(1=1)"
