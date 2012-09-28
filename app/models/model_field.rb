@@ -916,7 +916,17 @@ class ModelField
       make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decima,lambda {|entry| entry.mpf}),
       make_broker_invoice_entry_field(49,:bi_ent_container_numbers,:container_numbers,"Container Numbers",:text,lambda {|entry| entry.container_numbers}),
       [50,:bi_currency,:currency,"Currency",{:data_type=>:decimal}],
-      make_broker_invoice_entry_field(51,:bi_ent_importer_tax_id,:importer_tax_id,"Importer Tax ID",:text,lambda {|entry| entry.importer_tax_id})
+      make_broker_invoice_entry_field(51,:bi_ent_importer_tax_id,:importer_tax_id,"Importer Tax ID",:string,lambda {|entry| entry.importer_tax_id}),
+      make_broker_invoice_entry_field(52,:bi_destination_state,:destination_state,"Destination State",:string,lambda {|entry| entry.destination_state}),
+      make_broker_invoice_entry_field(53,:bi_container_sizes,:container_sizes,"Container Sizes",:string,lambda {|entry| entry.container_sizes}),
+      [54,:bi_lading_port_name,:name,"Port of Lading Name",{
+        :data_type=>:string,
+        :import_lambda => lambda {|inv,data| "Port of Lading cannot be set via invoice upload."},
+        :export_lambda => lambda {|inv| (inv.entry.blank? || inv.entry.lading_port.blank?) ? "" : inv.entry.lading_port.name},
+        :qualified_field_name => "(SELECT name from ports where schedule_k_code = bi_entry.lading_port_code)",
+        :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
+        :join_alias => "bi_entry"
+      }]
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
