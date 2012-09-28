@@ -13,7 +13,7 @@ $(function() {
   <%end%>
   <%=field_row field_label(:prod_name), model_text_field(form_obj,:name,:prod_name) %>
   <%
-    entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name)
+    entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name).order('name ASC')
     if entity_types.size > 0
   %>
     <%=field_row field_label(:prod_ent_type), form_obj.collection_select(:entity_type_id, entity_types,:id,:name, {:include_blank=>true}, {:class=>"entity_type"}), true%>
