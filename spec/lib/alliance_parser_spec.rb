@@ -74,12 +74,20 @@ describe OpenChain::AllianceParser do
     @liq_tax = 6.22
     @liq_ada = 12.12
     @liq_cvd = 0.10
+    @daily_stmt_number = '123456'
+    @daily_stmt_due_str = '20120407'
+    @daily_stmt_approved_str = '20120408'
+    @monthly_stmt_number = '654321'
+    @monthly_stmt_due_str = '20120516'
+    @monthly_stmt_received_str = '20120517'
+    @monthly_stmt_paid_str = '20120519'
+    @pay_type = '7'
     @comments = [{:text=>"Entry Summary queued to send",:date=>'201104211824',:user=>'BDEVITO'}]
     convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
     @make_entry_lambda = lambda {
       r = []
-      r << "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG047091068823N   N#{@liq_type_code.ljust(2)}#{@liq_type.ljust(35)}#{@liq_action_code.ljust(2)}#{@liq_action.ljust(35)}#{@liq_ext_code.ljust(2)}#{@liq_ext.ljust(35)}#{@liq_ext_ct}LQ090419ESP       N05#{@census_warning}#{@error_free}#{@paperless_cert}#{@paperless}YVFEDI     "
-      r << "SH01#{@release_cert_message.ljust(33)}#{"".ljust(12)}#{convert_cur.call(@total_duty,12)}#{convert_cur.call(@liq_duty,12)}#{"".ljust(12)}#{convert_cur.call(@total_fees,12)}#{convert_cur.call(@liq_fees,12)}#{"".ljust(24)}#{convert_cur.call(@liq_tax,12)}#{"".ljust(24)}#{convert_cur.call(@liq_ada,12)}#{"".ljust(24)}#{convert_cur.call(@liq_cvd,12)}#{@fda_message.ljust(33)}#{"".ljust(107)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}"
+      r << "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG#{@daily_stmt_number.ljust(11)}#{@pay_type}N   N#{@liq_type_code.ljust(2)}#{@liq_type.ljust(35)}#{@liq_action_code.ljust(2)}#{@liq_action.ljust(35)}#{@liq_ext_code.ljust(2)}#{@liq_ext.ljust(35)}#{@liq_ext_ct}LQ090419ESP       N05#{@census_warning}#{@error_free}#{@paperless_cert}#{@paperless}YVFEDI     "
+      r << "SH01#{@release_cert_message.ljust(33)}#{"".ljust(12)}#{convert_cur.call(@total_duty,12)}#{convert_cur.call(@liq_duty,12)}#{"".ljust(12)}#{convert_cur.call(@total_fees,12)}#{convert_cur.call(@liq_fees,12)}#{"".ljust(24)}#{convert_cur.call(@liq_tax,12)}#{"".ljust(24)}#{convert_cur.call(@liq_ada,12)}#{"".ljust(24)}#{convert_cur.call(@liq_cvd,12)}#{@fda_message.ljust(33)}#{"".ljust(107)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}#{"".ljust(12)}#{@monthly_stmt_number.ljust(11)}#{"".ljust(13)}#{"".ljust(2)}#{@monthly_stmt_due_str}"
       r << "SH03#{"".ljust(285)}#{@consignee_address_1.ljust(35)}#{@consignee_address_2.ljust(35)}#{@consignee_city.ljust(35)}#{@consignee_state.ljust(2)}"
       r << "SH04DAS DISTRIBUTORS INC               DAS DISTRIBUTORS INC               724 LAWN RD                                                           PALMYRA                     PA17078    20110808#{@destination_state}                XQPIOTRA1932TIL            20110808   Vandegrift Forwarding Co. Inc.     0000000550900000000000000000000000000                                                                                                                                                                                    "
       r << "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
@@ -99,6 +107,10 @@ describe OpenChain::AllianceParser do
       r << "SD0099212#{@first_entry_sent_str}"
       r << "SD0000003#{@docs_rec_str}1826                                                                            "
       r << "SD0000098#{@docs_rec2_str}1826                                                                            "
+      r << "SD0000048#{@daily_stmt_due_str}1826                                                                            "
+      r << "SD0000121#{@daily_stmt_approved_str}1826                                                                            "
+      r << "SD0099310#{@monthly_stmt_received_str}1826                                                                            "
+      r << "SD0099311#{@monthly_stmt_paid_str}1826                                                                            "
       r << "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       r << "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       r << "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
@@ -361,6 +373,14 @@ describe OpenChain::AllianceParser do
     ent.liquidation_ada.should == @liq_ada
     ent.liquidation_cvd.should == @liq_cvd
     ent.liquidation_total.should == (@liq_duty+@liq_fees+@liq_tax+@liq_ada+@liq_cvd)
+    ent.daily_statement_number.should == @daily_stmt_number
+    ent.daily_statement_due_date.strftime("%Y%m%d").should == @daily_stmt_due_str
+    ent.daily_statement_approved_date.strftime("%Y%m%d").should == @daily_stmt_approved_str
+    ent.monthly_statement_due_date.strftime("%Y%m%d").should == @monthly_stmt_due_str
+    ent.monthly_statement_received_date.strftime("%Y%m%d").should == @monthly_stmt_received_str
+    ent.monthly_statement_paid_date.strftime("%Y%m%d").should == @monthly_stmt_paid_str
+    ent.monthly_statement_number.should == @monthly_stmt_number
+
     ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
 
     expected_invoiced_value = BigDecimal("0",2)

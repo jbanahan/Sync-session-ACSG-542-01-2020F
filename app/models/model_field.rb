@@ -785,7 +785,21 @@ class ModelField
       [111,:ent_liquidation_action_description,:liquidation_action_description,"Liquidated - Action",{:data_type=>:string}],
       [112,:ent_liquidation_action_code,:liquidation_action_code,"Liquidated - Action Code",{:data_type=>:string}],
       [113,:ent_liquidation_type,:liquidation_type,"Liquidated - Type",{:data_type=>:string}],
-      [114,:ent_liquidation_type_code,:liquidation_type_code,"Liquidated - Type Code",{:data_type=>:string}]
+      [114,:ent_liquidation_type_code,:liquidation_type_code,"Liquidated - Type Code",{:data_type=>:string}],
+      [115,:ent_daily_statement_number,:daily_statement_number,"Daily Statement Number",{:data_type=>:string}],
+      [116,:ent_daily_statement_due_date,:daily_statement_due_date,"Daily Statement Due",{:data_type=>:date}],
+      [117,:ent_daily_statement_approved_date,:daily_statement_approved_date,"Daily Statement Approved Date",{:data_type=>:date}],
+      [118,:ent_monthly_statement_number,:monthly_statement_number,"PMS #",{:data_type=>:string}],
+      [119,:ent_monthly_statement_due_date,:monthly_statement_due_date,"PMS Due Date",{:data_type=>:date}],
+      [120,:ent_monthly_statement_received_date,:monthly_statement_received_date,"PMS Received Date",{:data_type=>:date}],
+      [121,:ent_monthly_statement_paid_date,:monthly_statement_paid_date,"PMS Paid Date",{:data_type=>:date}],
+      [122,:ent_pay_type,:pay_type,"Pay Type",{:data_type=>:integer}],
+      [123,:ent_statement_month,:statement_month,"PMS Month",{
+        :import_lambda=>lambda {|obj,data| "PMS Month ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.monthly_statement_due_date ? obj.monthly_statement_due_date.month : nil},
+        :qualified_field_name=>"month(monthly_statement_due_date) as statement_month",
+        :data_type=>:integer
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

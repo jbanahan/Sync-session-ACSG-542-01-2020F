@@ -24,7 +24,11 @@ module OpenChain
       '00024'=>:trucker_called_date,
       '00052'=>:free_date,
       '00085'=>:edi_received_date,
-      '99212'=>:first_entry_sent_date
+      '99212'=>:first_entry_sent_date,
+      '99310'=>:monthly_statement_received_date,
+      '99311'=>:monthly_statement_paid_date,
+      '00048'=>:daily_statement_due_date,
+      '00121'=>:daily_statement_approved_date
     }
 
     # process all files in the archive for a given date.  Use this to reprocess old files
@@ -184,6 +188,8 @@ module OpenChain
         @entry.vessel = r[270,20].strip
         @entry.voyage = r[290,10].strip
         @entry.gross_weight = r[318,12]
+        @entry.daily_statement_number = r[347,11].strip
+        @entry.pay_type = r[358] 
         @entry.liquidation_type_code = r[364,2]
         @entry.liquidation_type = r[366,35].strip
         @entry.liquidation_action_code = r[401,2]
@@ -216,6 +222,8 @@ module OpenChain
       accumulate_string :recon, "VALUE" if r[398]!="N"
       accumulate_string :recon, "CLASS" if r[399]!="N"
       accumulate_string :recon, "9802" if r[400]!="N"
+      @entry.monthly_statement_number = r[413,11].strip
+      @entry.monthly_statement_due_date = parse_date r[439,8]
       @entry.recon_flags = accumulated_string(:recon)
     end
 

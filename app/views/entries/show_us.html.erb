@@ -154,6 +154,28 @@
 </table>
 <hr />
 <%end-%>
+<h2>Statement</h2>
+<table class='ent_columns'>
+  <tbody>
+    <tr>
+      <td style="width:50%;">
+        <table>
+          <%[:ent_pay_type,:ent_daily_statement_number,:ent_daily_statement_due_date,:ent_daily_statement_approved_date].each do |f|%>
+            <%=field_view_row @entry, f %>
+          <%end%>
+        </table>
+      </td>
+      <td style="width:50%;">
+        <table>
+          <%[:ent_statement_month,:ent_monthly_statement_number,:ent_monthly_statement_due_date,:ent_monthly_statement_received_date,:ent_monthly_statement_paid_date].each do |f|%>
+            <%=field_view_row @entry, f %>
+          <%end%>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr />
 <a name='c_invoices'></a>
 <div class='quick_jump'>
   <a href='#ent_header'>Top</a> 
