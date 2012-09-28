@@ -31,31 +31,31 @@ module OpenChain
       '00121'=>:daily_statement_approved_date
     }
 
-    # process all files in the archive for a given date.  Use this to reprocess old files
-    def self.process_day date
+    # process all files in the archive for a given date.  Use this to reprocess old files. By default it skips the call to the imaging server
+    def self.process_day date, opts={:imaging=>false}
       OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance") do |key|
         process_from_s3 OpenChain::S3.integration_bucket_name, key
       end
     end
 
-    def self.process_from_s3 bucket, key
-        parse OpenChain::S3.get_data(bucket, key), bucket, key
+    def self.process_from_s3 bucket, key, opts={}
+      parse OpenChain::S3.get_data(bucket, key), {:bucket=>bucket, :key=>key}.merge(opts)
     end
 
     # take the text inside an internet tracking file from alliance and create/update the entry
-    def self.parse file_content, bucket_name = nil, s3_key = nil
+    def self.parse file_content, opts={}
       current_line = 0
       entry_lines = []
       file_content.lines.each_with_index do |line,idx|
         current_line = idx
         prefix = line[0,4]
         if !entry_lines.empty? && prefix=="SH00"
-          AllianceParser.new(file_content,current_line).parse_entry entry_lines, bucket_name, s3_key
+          AllianceParser.new(file_content,current_line).parse_entry entry_lines, opts
           entry_lines = []
         end
         entry_lines << line
       end
-      AllianceParser.new(file_content,current_line).parse_entry entry_lines, bucket_name, s3_key if !entry_lines.empty?
+      AllianceParser.new(file_content,current_line).parse_entry entry_lines, opts if !entry_lines.empty?
     end
 
     def initialize(file_content,starting_row=0)
@@ -63,7 +63,10 @@ module OpenChain
       @starting_row = starting_row
     end
 
-    def parse_entry rows, bucket_name = nil, s3_key = nil
+    def parse_entry rows, opts={}
+      inner_opts = {:imaging=>true}.merge(opts)
+      bucket_name = inner_opts[:bucket]
+      s3_key = inner_opts[:key]
       current_row = @starting_row
       row_content = nil
       begin
@@ -138,7 +141,7 @@ module OpenChain
             @entry.save! if @entry
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
-            OpenChain::AllianceImagingClient.request_images @entry.broker_reference
+            OpenChain::AllianceImagingClient.request_images @entry.broker_reference if opts[:imaging]
           end
           @skip_entry = false
         end
