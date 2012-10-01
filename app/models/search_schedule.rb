@@ -4,10 +4,14 @@ class SearchSchedule < ActiveRecord::Base
   belongs_to :search_setup
   belongs_to :custom_report
 
+  def user
+   return self.search_setup.user if self.search_setup
+   return self.custom_report.user if self.custom_report
+  end
   # get the next time in UTC that this schedule should be executed
   def next_run_time
     return Time.now.utc+1.day unless (self.day_of_month || run_day_set?) && !self.run_hour.nil?
-    tz_str = self.search_setup.user.time_zone
+    tz_str = user.time_zone
     tz_str = "Eastern Time (US & Canada)" if tz_str.blank?
     tz = ActiveSupport::TimeZone[tz_str]
     base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
@@ -108,9 +112,9 @@ class SearchSchedule < ActiveRecord::Base
       rescue IOError => e
         #do email & internal message here
         log.error e.message if log
-        user = self.search_setup.user
-        OpenMailer.send_search_fail(user.email,self.search_setup.name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver
-        user.messages.create(:subject=>"Search Transmission Failure",:body=>"Search Name: #{self.search_setup.name}\r"+
+        search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
+        OpenMailer.send_search_fail(user.email,search_name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver
+        user.messages.create(:subject=>"Search Transmission Failure",:body=>"Search Name: #{search_name}\r"+
           "Server Name: #{self.ftp_server}\r"+
           "Account: #{self.ftp_username}\r"+
           "Subfolder: #{self.ftp_subfolder}\r"+
