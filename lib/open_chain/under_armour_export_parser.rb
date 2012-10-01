@@ -3,8 +3,10 @@ module OpenChain
     def self.parse_csv_file file_path
       importer = Company.where(:importer=>true).first
       count = 0
-      File.new(file_path).lines do |line|
-        parse_csv_line line, (count+1), importer unless count == 0
+      f = File.new(file_path)
+      f.lines do |line|
+        ln = line.encode(Encoding.find("US-ASCII"),:undef=>:replace, :replace=>' ', :fallback=>' ')
+        parse_csv_line ln, (count+1), importer unless count == 0
         count += 1
       end
     end

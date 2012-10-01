@@ -61,6 +61,11 @@ describe OpenChain::UnderArmourExportParser do
       ]
     end
     describe :parse_csv_file do
+      it "should handle non-ascii characters" do
+        OpenChain::UnderArmourExportParser.parse_csv_file 'spec/support/bin/ua_outbound_unicode.csv' 
+        DutyCalcExportFileLine.all.should have(1).item
+        DutyCalcExportFileLine.first.description.should == 'UA PERFECT CAPRI-BLK/BLK Qu bec' 
+      end
       it "should parse multi line csv ignoring headers" do
         content = @lines.join("\n")
         t = Tempfile.new("xyz")

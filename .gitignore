@@ -3,6 +3,7 @@ tmp/*
 db/*.sqlite3
 db/development_structure.sql
 config/database.yml
+spec/support/tmp/*
 .project
 .bundle/*
 2.2
