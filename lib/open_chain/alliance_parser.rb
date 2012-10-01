@@ -148,7 +148,7 @@ module OpenChain
             @entry.save! if @entry
             #set time to process in milliseconds without calling callbacks
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
-            OpenChain::AllianceImagingClient.request_images @entry.broker_reference if opts[:imaging]
+            OpenChain::AllianceImagingClient.request_images @entry.broker_reference if inner_opts[:imaging]
           end
           @skip_entry = false
         end
