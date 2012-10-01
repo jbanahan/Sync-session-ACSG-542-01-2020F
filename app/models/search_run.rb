@@ -25,13 +25,17 @@ class SearchRun < ActiveRecord::Base
   end
 
   def all_objects
+    return @changed_objects unless @changed_objects.blank?
+    r = []
     if !self.search_setup.nil?
-      return self.search_setup.search.readonly(false)
+      r = self.search_setup.search.readonly(false) 
+    elsif !self.imported_file.nil? 
+      fir = self.imported_file.last_file_import_finished
+      r = fir.changed_objects unless fir.nil?
+    elsif !self.custom_file.nil?
+      r = self.custom_file.custom_file_records.collect {|cfr| cfr.linked_object}
     end
-    return @changed_objects unless @changed_objects.nil?
-    fir = self.imported_file.last_file_import_finished
-    return [] if fir.nil?
-    @changed_objects = fir.changed_objects
+    @changed_objects = r
     return @changed_objects
   end
 
