@@ -4,6 +4,7 @@ require 'open_chain/delayed_job_manager'
 require 'open_chain/upgrade'
 require 'open_chain/integration_client'
 require 'open_chain/alliance_imaging_client'
+require 'open_chain/feed_monitor'
 
 def job_wrapper job_name, &block
   begin
@@ -62,6 +63,13 @@ def execute_scheduler
   if Rails.env == 'production'
     scheduler.in '1s' do
      OpenChain::IntegrationClient.go MasterSetup.get.system_code
+    end
+  end
+
+  #make sure we're receiving files as expected
+  if Rails.env == 'production'
+    scheduler.every '30m' do
+      OpenChain::FeedMonitor.monitor
     end
   end
 
