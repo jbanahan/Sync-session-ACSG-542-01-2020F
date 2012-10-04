@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/polo_csm_sync_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
-  has_many :linked_products, :through=> :custom_file_records, :source=> :linked_object, :source_type=> 'Product'
+  has_many :linked_products, :through=> :custom_file_records, :source=> :linked_object, :source_type=> 'Product', :uniq=>true
   has_many :linked_objects, :through => :custom_file_records
   has_many :search_runs
   belongs_to :uploaded_by, :class_name=>'User'
