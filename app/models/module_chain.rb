@@ -26,6 +26,10 @@ class ModuleChain
     @list.first
   end
   
+  #returns true if the given module is the first one in the chain
+  def top? cm
+    @list.first == cm
+  end
   #returns the immediate parent module in the chain (or nil if you're at the top of the chain)
   def parent cm
     idx = @list.index cm

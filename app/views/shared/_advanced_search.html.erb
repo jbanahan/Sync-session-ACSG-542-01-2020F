@@ -66,18 +66,26 @@ $(function() {
     <tbody class='pagination_wrapper'>
       <% cursor = @results.per_page * (@results.current_page-1) #because will_paginate's first page is 1, not 0 %>
       <% last_object = nil %>
-      <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain,current_user).go do |row,obj| %>
+      <% detail_cursor = 0 %>
+      <% GridMaker.new(@results,@current_search.search_columns.order("rank ASC"),@current_search.search_criterions,@current_search.module_chain,current_user,21).go do |row,obj| %>
         <tr class='hover pagination_item search_row <%=((!last_object.nil? && obj!=last_object)) || (last_object.nil? && @results.current_page>1) ? "search_row_break" : ""%>'>
           <% if !@bulk_actions.blank? %><td><%=obj!=last_object ? "<input type='checkbox' id='sel_row_#{obj.id}' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
           <td>
             <% if obj!=last_object %>
               <%=render :partial=>'shared/search_links', :locals=>{:obj=>obj,:cursor=>cursor}%> 
               <%cursor += 1%>
+              <%detail_cursor = 0-%>
+            <% else %>
+              <%detail_cursor += 1-%>
             <% end %>
           </td>
-          <% row.each do |r| %>
-          <td><%=r.blank? ? (!r.nil? && r.is_a?(FalseClass) ? "false" : "&nbsp;".html_safe) : r%></td>
-          <% end %>
+          <% if detail_cursor==20 -%>
+            <td colspan='<%=@current_search.search_columns.size%>'>This record had more than 20 details.  To see the full result, use the Download button.</td>
+          <% else -%>
+            <% row.each do |r| %>
+              <td><%=r.blank? ? (!r.nil? && r.is_a?(FalseClass) ? "false" : "&nbsp;".html_safe) : r%></td>
+            <% end %>
+          <% end -%>
         </tr>
         <%last_object = obj%>
       <% end %>

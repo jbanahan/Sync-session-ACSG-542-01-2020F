@@ -8,7 +8,7 @@ class GridMaker
     r
   end
 
-  def initialize(base_objects,model_field_list,search_criterion_list,module_chain,user)
+  def initialize(base_objects,model_field_list,search_criterion_list,module_chain,user,max_detail_records=nil)
     @objs = base_objects
     @fields = model_field_list
     #if we have more than 2 custom columns, then pre-cache the custom values
@@ -18,10 +18,12 @@ class GridMaker
     @criteria.each {|sc| @custom_ids << sc.model_field.custom_id}
     @custom_ids.compact!
     @user = user
+    @max_details = max_detail_records
     load_used_modules
   end
 
   def go(&block)
+    @detail_cursor = 0
     recursive_go @chain.first, @objs, {}, &block
   end
 
@@ -44,15 +46,17 @@ class GridMaker
       end
     end 
     base_object_collection.each do |o| 
+      @detail_cursor = 0 if @chain.top?(cm)
+      break if @max_details && @detail_cursor >= @max_details
       if o.respond_to?(:inject_custom_value) && !custom_value_hash[o.id].blank?
         custom_value_hash[o.id].each {|cv| o.inject_custom_value cv}
       end
-#      o.load_custom_values custom_value_hash[o.id] if !custom_value_hash[o.id].blank? && o.respond_to?(:load_custom_values) && !@custom_ids.blank?
       row_objects[cm] = o #add myself to row_objects
       #there are lower level modules being used, recurse
       if (@used_modules & child_modules).length > 0 && cm.child_objects(child_modules.first,o).length > 0
         recursive_go child_modules.first, cm.child_objects(child_modules.first, o), row_objects, &block
       else #we're at the bottom of the chain, make the row
+        @detail_cursor += 1 
         make_row row_objects, &block
       end
       row_objects[cm] = nil #remove myself from row objects

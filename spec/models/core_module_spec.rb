@@ -5,6 +5,17 @@ describe CoreModule do
   it 'should return class by calling klass' do
     CoreModule::PRODUCT.klass.should be Product
   end
+  describe 'top?' do
+    it "should return true for top of chain" do
+      CoreModule::PRODUCT.default_module_chain.top?(CoreModule::PRODUCT).should be_true
+    end
+    it "should return false for item with parent in chain" do
+      CoreModule::PRODUCT.default_module_chain.top?(CoreModule::CLASSIFICATION).should be_false
+    end
+    it "should return false for item not in chain" do
+      CoreModule::PRODUCT.default_module_chain.top?(CoreModule::SHIPMENT).should be_false
+    end
+  end
   describe 'key_columns' do
     it 'should return for entry' do
       uids = CoreModule::ENTRY.key_model_field_uids
