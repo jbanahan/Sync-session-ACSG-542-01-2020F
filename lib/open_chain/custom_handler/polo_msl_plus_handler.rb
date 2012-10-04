@@ -119,7 +119,7 @@ module OpenChain
           hts_recs.each do |h|
             ot = @tw_tariff_hash[h]
             ot = OfficialTariff.where(:hts_code=>h,:country_id=>@tw.id).first unless ot
-            return true if ot && ot.import_regulations.include?("MP1")
+            return true if ot && ot.import_regulations && ot.import_regulations.include?("MP1")
           end
         end
         false
