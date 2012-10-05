@@ -105,9 +105,7 @@ class SearchRun < ActiveRecord::Base
       get_object_from_cache target
     else
       if @changed_objects.nil?
-        fir = self.imported_file.last_file_import_finished
-        return nil if fir.nil?
-        @changed_objects = fir.changed_objects
+        @changed_objects = all_objects
       end
       return target < @changed_objects.size ? @changed_objects[target] : nil
     end
