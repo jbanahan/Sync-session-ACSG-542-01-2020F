@@ -1,6 +1,6 @@
 <% content_for :javascript do %>
 $(function() {
-   setupShippingAddress('Master Company',$('#delivery_ship_from_id'),$('#ship_from_ad'),<%=Company.find_master.id%><%=@delivery.ship_from_id.nil? ? '' : ",#{@delivery.ship_from_id}"%>);
+   setupShippingAddress('Master Company',$('#delivery_ship_from_id'),$('#ship_from_ad'),<%=Company.find_by_master(true).id%><%=@delivery.ship_from_id.nil? ? '' : ",#{@delivery.ship_from_id}"%>);
    setupShippingAddress('Customer',$('#delivery_ship_to_id'),$('#ship_to_ad'),<%=@delivery.customer.nil? ? "'not set'": @delivery.customer.id%><%=@delivery.ship_to_id.nil? ? '' : ",#{@delivery.ship_to_id}"%>);
    getAddress($('#ship_to_ad'),$("#delivery_ship_to_id").val());
    $("#delivery_customer_id").change(function() {
@@ -49,7 +49,7 @@ $(function() {
       @delivery.customer = current_user.company %>
       <%= f.hidden_field :customer_id %><%= @delivery.customer.name %>
   <% else %>
-    <%= f.collection_select :customer_id, Company.find_customers.not_locked, :id, :name, options ={:prompt => "-Select a customer"} %>
+    <%= f.collection_select :customer_id, Company.customers.not_locked, :id, :name, options ={:prompt => "-Select a customer"} %>
   <% end %>  
 </div>
 <table class='detail_table'>
@@ -69,7 +69,7 @@ $(function() {
     <td colspan='2'>
       <table>
         <% @delivery.carrier = current_user.company if current_user.company.carrier %>
-        <%=field_row field_label(:del_car_name), (current_user.company.carrier ? f.hidden_field(:carrier_id)+@delivery.carrier.name : f.collection_select(:carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "-Select a carrier"}) ) %>
+        <%=field_row field_label(:del_car_name), (current_user.company.carrier ? f.hidden_field(:carrier_id)+@delivery.carrier.name : f.collection_select(:carrier_id, Company.carriers.not_locked, :id, :name, options ={:prompt => "-Select a carrier"}) ) %>
         <%=field_row field_label(:del_mode), f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
         <%=show_custom_fields @delivery, {:table=>true, :form => true}%>
       </table>

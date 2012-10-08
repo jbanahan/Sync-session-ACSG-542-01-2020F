@@ -35,7 +35,7 @@ class ProductsController < ApplicationController
   # GET /products/new.xml
   def new
     p = Product.new
-    action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product",:lock_check=>false}) {
+    action_secure(current_user.add_products?,p,{:verb => "create",:module_name=>"product",:lock_check=>false}) {
       @product = p
       respond_to do |format|
           format.html # new.html.erb
@@ -56,7 +56,7 @@ class ProductsController < ApplicationController
   # POST /products.xml
   def create
     p = Product.new(params[:product])
-    action_secure(current_user.company.master,p,{:verb => "create",:module_name=>"product"}) {
+    action_secure(current_user.add_products?,p,{:verb => "create",:module_name=>"product"}) {
       succeed = lambda { |p|
         respond_to do |format|
           add_flash :notices, "Product created successfully."
@@ -75,6 +75,10 @@ class ProductsController < ApplicationController
       before_validate = lambda { |p|
         save_classification_custom_fields(p,params[:product])
         update_status p
+        if current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
+          p.errors[:base] << "You do not have permission to set importer to company #{p.importer_id}"
+          raise OpenChain::ValidationLogicError
+        end
       }
       validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
     }  
@@ -96,6 +100,10 @@ class ProductsController < ApplicationController
       before_validate = lambda {|p|
         save_classification_custom_fields p,params[:product]
         update_status p
+        if current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
+          p.errors[:base] << "You do not have permission to set importer to company #{p.importer_id}"
+          raise OpenChain::ValidationLogicError
+        end
       }
       validate_and_save_module(p,params[:product],succeed, failure,:before_validate=>before_validate)
     }

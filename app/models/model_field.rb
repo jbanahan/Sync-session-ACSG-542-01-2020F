@@ -160,119 +160,55 @@ class ModelField
     r << n
     r
   end
-  def self.make_carrier_arrays(rank_start,uid_prefix,table_name)
+  def self.make_company_arrays(rank_start,uid_prefix,table_name,short_prefix,description,association_name)
     r = [
-      [rank_start,"#{uid_prefix}_car_id".to_sym,:carrier_id,"Carrier ID",{:history_ignore=>true}]
+      [rank_start,"#{uid_prefix}_#{short_prefix}_id".to_sym,"#{association_name}_id".to_sym,"#{description} ID",{:history_ignore=>true}]
     ]
-    r << [rank_start+1,"#{uid_prefix}_car_name".to_sym, :name,"Carrier Name",{
+    r << [rank_start+1,"#{uid_prefix}_#{short_prefix}_name".to_sym, :name,"#{description} Name",{
       :import_lambda => lambda {|obj,data|
-        carrier = Company.where(:name => data).where(:carrier => true).first
-        unless carrier.nil?
-          obj.carrier = carrier
-          return "Carrier set to #{carrier.name}"
+        comp = Company.where(:name => data).where(association_name.to_sym => true).first
+        unless comp.nil?
+          obj.send("#{association_name}=".to_sym,comp)
+          return "#{description} set to #{comp.name}"
         else
-          carrier = Company.create(:name=>data,:carrier=>true)
-          obj.carrier = carrier
-          return "Carrier auto-created with name \"#{data}\""
+          comp = Company.create(:name=>data,association_name.to_sym=>true)
+          obj.send("#{association_name}=".to_sym,comp)
+          return "#{description} auto-created with name \"#{data}\""
         end
       },
-      :export_lambda => lambda {|obj| obj.carrier.nil? ? "" : obj.carrier.name},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp.id = #{table_name}.carrier_id",
-      :join_alias => "#{table_name}_car_comp",
+      :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).name},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_#{short_prefix}_comp on #{table_name}_#{short_prefix}_comp.id = #{table_name}.#{association_name}_id",
+      :join_alias => "#{table_name}_#{short_prefix}_comp",
       :data_type => :string
     }]
-    r << [rank_start+2,"#{uid_prefix}_car_syscode".to_sym,:system_code,"Carrier System Code", {
+    r << [rank_start+2,"#{uid_prefix}_#{short_prefix}_syscode".to_sym,:system_code,"#{description} System Code", {
       :import_lambda => lambda {|obj,data|
-        carrier = Company.where(:system_code=>data,:carrier=>true).first
-        obj.carrier = carrier
-        unless carrier.nil?
-          return "Carrier set to #{carrier.name}"
+        comp = Company.where(:system_code=>data,association_name.to_sym=>true).first
+        unless comp.nil?
+          obj.send("#{association_name}=".to_sym,comp)
+          return "#{description} set to #{comp.name}"
         else
-          return "Carrier not found with code \"#{data}\""
+          return "#{description} not found with code \"#{data}\""
         end
       },
-      :export_lambda => lambda {|o| o.carrier.nil? ? "" : o.carrier.system_code},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_car_comp on #{table_name}_car_comp.id = #{table_name}.carrier_id",
-      :join_alias => "#{table_name}_car_comp",
+      :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).system_code},
+      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_#{short_prefix}_comp on #{table_name}_#{short_prefix}_comp.id = #{table_name}.#{association_name}_id",
+      :join_alias => "#{table_name}_#{short_prefix}_comp",
       :data_type=>:string
     }]
     r
+  end
+  def self.make_carrier_arrays(rank_start,uid_prefix,table_name)
+    make_company_arrays rank_start, uid_prefix, table_name, "car", "Carrier", "carrier"
   end
   def self.make_customer_arrays(rank_start,uid_prefix,table_name) 
-    r = [
-      [rank_start,"#{uid_prefix}_cust_id".to_sym,:customer_id,"Customer ID",{:history_ignore=>true}]
-    ]
-    r << [rank_start+1,"#{uid_prefix}_cust_name".to_sym, :name,"Customer Name", {
-      :import_lambda => lambda {|detail,data|
-        c = Company.where(:name => data).where(:customer => true).first
-        unless c.nil?
-          detail.customer = c
-          return "Customer set to #{c.name}"
-        else
-          customer = Company.create(:name=>data,:customer=>true)
-          detail.customer = customer
-          return "Customer auto-created with name \"#{data}\""
-        end
-      },
-      :export_lambda => lambda {|detail| detail.customer.nil? ? "" : detail.customer.name},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_cust_comp on #{table_name}_cust_comp.id = #{table_name}.customer_id",
-      :join_alias => "#{table_name}_cust_comp",
-      :data_type=>:string
-    }]
-    r << [rank_start+2,"#{uid_prefix}_cust_syscode".to_sym,:system_code,"Customer System Code", {
-      :import_lambda => lambda {|o,data|
-        customer = Company.where(:system_code=>data,:customer=>true).first
-        o.customer = customer
-        unless customer.nil?
-          return "Customer set to #{customer.name}"
-        else
-          return "Customer not found with code \"#{data}\""
-        end
-      },
-      :export_lambda => lambda {|o| o.customer.nil? ? "" : o.customer.system_code},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_cust_comp on #{table_name}_cust_comp.id = #{table_name}.customer_id",
-      :join_alias => "#{table_name}_car_comp",
-      :data_type=>:string
-    }]
-    r
+    make_company_arrays rank_start, uid_prefix, table_name, "cust", "Customer", "customer"
   end
   def self.make_vendor_arrays(rank_start,uid_prefix,table_name) 
-    r = [
-      [rank_start,"#{uid_prefix}_ven_id".to_sym,:vendor_id,"Vendor ID",{:history_ignore=>true}]
-    ]
-    r << [rank_start+1,"#{uid_prefix}_ven_name".to_sym, :name,"Vendor Name", {
-      :import_lambda => lambda {|detail,data|
-        vendor = Company.where(:name => data).where(:vendor => true).first
-        unless vendor.nil?
-          detail.vendor = vendor
-          return "Vendor set to #{vendor.name}"
-        else
-          vendor = Company.create(:name=>data,:vendor=>true)
-          detail.vendor = vendor
-          return "Vendor auto-created with name \"#{data}\""
-        end
-      },
-      :export_lambda => lambda {|detail| detail.vendor.nil? ? "" : detail.vendor.name},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_vend_comp on #{table_name}_vend_comp.id = #{table_name}.vendor_id",
-      :join_alias => "#{table_name}_vend_comp",
-      :data_type=>:string
-    }]
-    r << [rank_start+2,"#{uid_prefix}_ven_syscode".to_sym,:system_code,"Vendor System Code", {
-      :import_lambda => lambda {|o,data|
-        vendor = Company.where(:system_code=>data,:vendor=>true).first
-        unless vendor.nil?
-          o.vendor = vendor
-          return "Vendor set to #{vendor.name}"
-        else
-          return "Vendor not found with code \"#{data}\""
-        end
-      },
-      :export_lambda => lambda {|o| o.vendor.nil? ? "" : o.vendor.system_code},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_ven_comp on #{table_name}_ven_comp.id = #{table_name}.vendor_id",
-      :join_alias => "#{table_name}_ven_comp",
-      :data_type => :string
-    }]
-    r
+    make_company_arrays rank_start, uid_prefix, table_name, "ven", "Vendor", "vendor"
+  end
+  def self.make_importer_arrays(rank_start,uid_prefix,table_name)
+    make_company_arrays rank_start, uid_prefix, table_name, "imp", "Importer", "importer"
   end
 
   #Don't use this.  Use make_ship_from_arrays or make_ship_to_arrays
@@ -1006,6 +942,7 @@ class ModelField
     add_fields CoreModule::PRODUCT, make_vendor_arrays(5,"prod","products")
     add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
     add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
+    add_fields CoreModule::PRODUCT, make_importer_arrays(250,"prod","products")
     
     add_fields CoreModule::CLASSIFICATION, [
       [1,:class_comp_cnt, :comp_count, "Component Count", {

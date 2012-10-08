@@ -143,6 +143,7 @@ class SearchSetup < ActiveRecord::Base
     end
     if cm==CoreModule::PRODUCT
       messages << "You do not have permission to edit Products." unless self.user.edit_products?
+      messages << "Only users from the master company can upload products." unless self.user.company.master?
       messages << "#{label "prod_uid"} field is required to upload Products." unless has_column "prod_uid"
 
       if contains_module CoreModule::CLASSIFICATION

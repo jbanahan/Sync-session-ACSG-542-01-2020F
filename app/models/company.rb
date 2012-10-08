@@ -21,17 +21,12 @@ class Company < ActiveRecord::Base
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
 	
-	def self.find_carriers
-		return Company.where(["carrier = ?",true])
-	end
-	
-	def self.find_vendors
-	  return Company.where(["vendor = ?",true])
-	end
-	
-	def self.find_customers
-	  return Company.where(["customer = ?",true])
-	end
+  scope :carriers, where(:carrier=>true)
+  scope :vendors, where(:vendor=>true)
+  scope :customers, where(:customer=>true)
+  scope :importers, where(:importer=>true)
+  scope :by_name, order("companies.name ASC")
+
 	
 	def self.find_can_view(user)
 	  if user.company.master
@@ -124,13 +119,13 @@ class Company < ActiveRecord::Base
   end
   
   def view_products?
-    return (self.master? || self.vendor? || self.carrier?)
+    true
   end
   def add_products?
-    return self.master? 
+    return self.master? || self.importer? 
   end
   def edit_products?
-    return self.master?
+    return self.master? || self.importer?
   end
   def create_products?
     return add_products?
@@ -139,10 +134,10 @@ class Company < ActiveRecord::Base
     return self.master?
   end
   def attach_products?
-    return (self.master? || self.vendor? || self.carrier?)
+    view_products?
   end
   def comment_products?
-    return (self.master? || self.vendor? || self.carrier?)
+    view_products?
   end
   
   def view_sales_orders?
@@ -204,7 +199,7 @@ class Company < ActiveRecord::Base
   end
 
   def add_classifications?
-    return master_setup.classification_enabled && self.master?
+    return master_setup.classification_enabled && edit_products? 
   end
   def edit_classifications?
     return add_classifications?

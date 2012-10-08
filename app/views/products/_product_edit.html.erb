@@ -9,9 +9,17 @@ $(function() {
 <table id='product_header'>
   <%unless hide_no_bulk_fields%>
     <%=field_row field_label(:prod_uid), model_text_field(form_obj,:unique_identifier,:prod_uid)%>
-    <%=field_row field_label(:prod_ven_name), form_obj.collection_select(:vendor_id, Company.find_vendors.not_locked.order('companies.name ASC'), :id, :name, {:prompt => "Select a vendor"}) %>
+    <%=field_row field_label(:prod_ven_name), form_obj.collection_select(:vendor_id, Company.vendors.not_locked.order('companies.name ASC'), :id, :name, {:prompt => "Select a vendor"}) %>
   <%end%>
   <%=field_row field_label(:prod_name), model_text_field(form_obj,:name,:prod_name) %>
+  <%imps = []-%>
+  <%if current_user.company.master? -%>
+    <%imps = Company.importers.not_locked.by_name-%>
+  <%else -%>
+    <%imps << current_user.company if current_user.company.importer?%>
+    <%imps = imps + current_user.company.linked_companies.importers.not_locked.by_name.to_a -%>
+  <%end-%>
+  <%=field_row field_label(:prod_imp_name), form_obj.collection_select(:importer_id, imps, :id, :name, {:prompt => "Select an importer"}) %>
   <%
     entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name).order('name ASC')
     if entity_types.size > 0

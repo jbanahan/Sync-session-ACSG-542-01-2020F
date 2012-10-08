@@ -1,6 +1,6 @@
 <% content_for :javascript do %>
 $(function() {
-	setupShippingAddress('Master Company',$('#shipment_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@shipment.ship_to_id.nil? ? '' : ",#{@shipment.ship_to_id}"%>);
+	setupShippingAddress('Master Company',$('#shipment_ship_to_id'),$('#ship_to_ad'),<%=Company.find_by_master(true).id%><%=@shipment.ship_to_id.nil? ? '' : ",#{@shipment.ship_to_id}"%>);
 	setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),<%=@shipment.vendor.nil? ? "'not set'": @shipment.vendor.id%><%=@shipment.ship_from_id.nil? ? '' : ",#{@shipment.ship_from_id}"%>);
   getAddress($('#ship_from_ad'),$("#shipment_ship_from_id").val());
   $("#shipment_vendor_id").change(function() {
@@ -49,7 +49,7 @@ $(function() {
       @shipment.vendor = current_user.company %>
       <%= f.hidden_field :vendor_id %><%= @shipment.vendor.name %>
   <% else %>
-    <%= f.collection_select :vendor_id, Company.find_vendors.order("companies.name ASC").not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %>
+    <%= f.collection_select :vendor_id, Company.vendors.order("companies.name ASC").not_locked, :id, :name, options ={:prompt => "-Select a vendor"} %>
   <% end %>  
 </div>
 <table class='detail_table'>
@@ -78,7 +78,7 @@ $(function() {
             @shipment.carrier = current_user.company %>
         <%=field_row field_label(:shp_car_name), f.hidden_field(:carrier_id)+@shipment.carrier.name %>
         <% else %>
-        <%=field_row field_label(:shp_car_name), f.collection_select(:carrier_id, Company.find_carriers.not_locked, :id, :name, options ={:prompt => "Select a carrier"}) %>
+        <%=field_row field_label(:shp_car_name), f.collection_select(:carrier_id, Company.carriers.not_locked, :id, :name, options ={:prompt => "Select a carrier"}) %>
         <% end %>
         <%= field_row field_label(:shp_mode), f.select(:mode, options_for_select(Shipment.modes), options = {:prompt => "-Select a mode"}) %>
 				<%=show_custom_fields @shipment, {:table=>true,:form => true}%>

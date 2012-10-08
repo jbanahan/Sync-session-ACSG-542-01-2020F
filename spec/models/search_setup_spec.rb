@@ -17,6 +17,13 @@ describe SearchSetup do
       msgs.should have(1).item
       msgs.first.should == "Upload functionality is not available for Invoices."
     end
+    it "should reject PRODUCT for non-master" do
+      u = Factory(:importer_user,:product_edit=>true,:product_view=>true)
+      ss = Factory(:search_setup,:module_type=>"Product",:user=>u)
+      msgs = []
+      ss.uploadable?(msgs).should be_false
+      msgs.first.include?("Only users from the master company can upload products.").should be_true
+    end
   end
   describe :give_to do
     before :each do

@@ -42,7 +42,7 @@ class OrdersController < ApplicationController
       action_secure(current_user.company.master,o,{:lock_check=>false,:verb=>"create", :module_name=>"order"}) {
         @order = o
         @divisions = Division.all
-        @vendors = Company.find_vendors.not_locked
+        @vendors = Company.vendors.not_locked
         respond_to do |format|
             format.html # new.html.erb
             format.xml  { render :xml => @order }
@@ -56,7 +56,7 @@ class OrdersController < ApplicationController
       action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
         @order = o
         @divisions = Division.all
-        @vendors = Company.find_vendors.order("companies.name ASC").not_locked
+        @vendors = Company.vendors.order("companies.name ASC").not_locked
       }
     end
 
@@ -74,7 +74,7 @@ class OrdersController < ApplicationController
           @order = Order.new(params[:order])
           set_custom_fields(@order) {|cv| @order.inject_custom_value cv}
           @divisions = Division.all
-          @vendors = Company.find_vendors.not_locked
+          @vendors = Company.vendors.not_locked
           render :action=>"new"
         }
         validate_and_save_module(o,params[:order],success,failure)
@@ -94,7 +94,7 @@ class OrdersController < ApplicationController
           errors_to_flash ord, :now=>true
           @order = ord
           @divisions = Division.all
-          @vendors = Company.find_vendors.not_locked
+          @vendors = Company.vendors.not_locked
           render :action=>"edit"
         }
         validate_and_save_module o, params[:order], succeed, failure

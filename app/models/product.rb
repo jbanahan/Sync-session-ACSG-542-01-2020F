@@ -6,6 +6,7 @@ class Product < ActiveRecord::Base
   CORE_MODULE = CoreModule::PRODUCT
 
   belongs_to :vendor, :class_name => "Company"
+  belongs_to :importer, :class_name => "Company"
   belongs_to :division
   belongs_to :status_rule
   belongs_to :entity_type
@@ -30,15 +31,15 @@ class Product < ActiveRecord::Base
 
 
   def can_view?(user)
-    return user.company.master || (user.company.vendor && user.company == self.vendor)
+    return user.view_products? && company_permission?(user)
   end
 
   def can_edit?(user)
-    return user.edit_products?
+    return user.edit_products? && company_permission?(user)
   end
 
   def can_create?(user)
-    return user.create_products?
+    return user.create_products? && company_permission?(user)
   end
 
   def can_classify?(user)
@@ -60,13 +61,7 @@ class Product < ActiveRecord::Base
   end
 
   def self.find_can_view(user)
-    if user.company.master
-    return Product.all
-    elsif user.company.vendor
-      return Product.where("vendor_id = ?",user.company.id)
-    else
-    return []
-    end
+    search_secure user, Product.where("1=1")
   end
 
   def has_orders?
@@ -123,12 +118,18 @@ class Product < ActiveRecord::Base
   end
 
 	def self.search_secure user, base_object
+    base_object.where(search_where(user))
+  end
+  # where clause for search secure
+  def self.search_where user
     if user.company.master
-      return base_object.where("1=1")
+      return "1=1"
+    elsif user.company.importer
+      "products.importer_id = #{user.company_id} or products.importer_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
     elsif user.company.vendor
-      return base_object.where(:vendor_id => user.company)
+      "products.vendor_id = #{user.company_id}"
     else
-      return base_object.where("1=0")
+      "1=0"
     end
   end
 
@@ -204,5 +205,8 @@ class Product < ActiveRecord::Base
     ensure
       User.current = original_user #put the user back to what it was
     end
+  end
+  def company_permission? user
+    self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)
   end
 end

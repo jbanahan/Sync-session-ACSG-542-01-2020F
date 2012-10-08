@@ -1,6 +1,6 @@
 <% content_for :javascript do %>
   $(function() {
-    setupShippingAddress('Master Company',$('#order_ship_to_id'),$('#ship_to_ad'),<%=Company.find_master.id%><%=@order.ship_to_id.nil? ? '' : ",#{@order.ship_to_id}"%>);
+    setupShippingAddress('Master Company',$('#order_ship_to_id'),$('#ship_to_ad'),<%=Company.find_by_master(true).id%><%=@order.ship_to_id.nil? ? '' : ",#{@order.ship_to_id}"%>);
     $("#btn_save").click(function() {
       $("#frm_ord").submit();
     });

@@ -1,10 +1,13 @@
   <table>
     <%=field_view_row product, :prod_status_name%>
     <%=field_view_row product, :prod_uid%>
+    <% if product.importer_id -%>
+      <%=field_view_row product, :prod_imp_name%>
+    <% end -%>
     <%=field_view_row product, :prod_name%>
-    <% if product.entity_type_id %>
+    <% if product.entity_type_id -%>
       <%=field_view_row product, :prod_ent_type%>
-    <% end %>
+    <% end -%>
     <%=field_view_row product, :prod_uom%>
     <%=field_view_row product, :prod_ven_name%>
     <%=field_view_row product, :prod_div_name%>

@@ -1,6 +1,31 @@
 require 'spec_helper'
 
 describe Company do
+  context "role scopes" do
+    before :each do 
+      @dont_find = Factory(:company)
+    end
+    it "should find carriers" do
+      c1 = Factory(:company,:carrier=>true)
+      c2 = Factory(:company,:carrier=>true)
+      Company.carriers.should == [c1,c2]
+    end
+    it "should find importers" do
+      c1 = Factory(:company,:importer=>true)
+      c2 = Factory(:company,:importer=>true)
+      Company.importers.should == [c1,c2]
+    end
+    it "should find customers" do
+      c1 = Factory(:company,:customer=>true)
+      c2 = Factory(:company,:customer=>true)
+      Company.customers.should == [c1,c2]
+    end
+    it "should find vendors" do
+      c1 = Factory(:company,:vendor=>true)
+      c2 = Factory(:company,:vendor=>true)
+      Company.vendors.should == [c1,c2]
+    end
+  end
   describe 'linked_companies' do
     it 'should create and retrieve child companies' do
       parent = Factory(:company)
