@@ -2,14 +2,8 @@
 $(function() {
   $("#btn_save").click(function() {$("#frm_bu").submit();});
   $("#btn_cancel").click(function() {window.location='<%=products_path%>';});
-  $("#btn_auto_classify").click(function() {
-    OpenChain.autoClassify($("#frm_bu"),'<%=bulk_auto_classify_products_path%>');
-  });
   OpenChain.addClickMap('s','Save','btn_save');
   OpenChain.addClickMap('c','Cancel','btn_cancel');
-  <% if Country.import_locations.size > 1 && !OfficialTariff.first.nil? %>
-    OpenChain.addClickMap('a','Auto Classify','btn_auto_classify');
-  <% end %>
   OpenChain.activateHotKeys();
   OpenChain.initClassifyPage();
 });
@@ -17,9 +11,6 @@ $(function() {
 <%content_for :action_bar do%>
   <button id='btn_save'>Save</button>
   <button id='btn_cancel'>Cancel</button>
-  <% if Country.import_locations.size > 1 && !OfficialTariff.first.nil? %>
-    <button id='btn_auto_classify'>Auto Classify</button>
-  <% end %>
 <%end%>
 <div class='bulk_header_inner'>
   Changes will be applied to <strong><%=pluralize (@search_run ? @search_run.total_objects : @pks.size), CoreModule::PRODUCT.label.downcase%></strong>.<br />

@@ -11,6 +11,18 @@ class OfficialTariff < ActiveRecord::Base
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
   
+  #get hash of auto-classification results keyed by country object
+  def self.auto_classify base_hts
+    return {} if base_hts.blank? || base_hts.strip.size < 6 #only works on 6 digit or longer
+    to_test = base_hts[0,6]
+    r = {}
+    OfficialTariff.joins(:country).where("hts_code like ?","#{to_test}%").where("countries.import_location = ?",true).order("official_tariffs.hts_code ASC").each do |ot|
+      r[ot.country] ||= []
+      r[ot.country] << ot
+    end
+    r
+  end
+
   #address for external link to certain countries' binding ruling databases
   def binding_ruling_url
     return nil if self.country.nil? || self.hts_code.nil?

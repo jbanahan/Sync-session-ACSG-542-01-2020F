@@ -78,6 +78,7 @@ OpenChain::Application.routes.draw do
   resources :upgrade_logs, :only=>[:show]
   resources :attachment_types
 
+  match "/official_tariffs/auto_classify/:hts" => "official_tariffs#auto_classify"
   resources :official_tariffs, :only=>[:index,:show] do
     get 'find', :on => :collection
     get 'find_schedule_b', :on => :collection

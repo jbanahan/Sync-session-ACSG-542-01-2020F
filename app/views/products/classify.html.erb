@@ -14,13 +14,11 @@ $(function() {
     $("#frm_p").submit();
   });
   $("#btn_cancel").click(function() {window.location='<%=product_path(@product)%>';});
-  $("#btn_auto_classify").click(function() {OpenChain.autoClassify($("#frm_p"),'<%=auto_classify_product_path(@product)%>');});
 
   OpenChain.addClickMap('s',"Save","btn_save");
   OpenChain.addClickMap('n',"Next","btn_edit_next");
   OpenChain.addClickMap('p',"Previous","btn_edit_previous");
   OpenChain.addClickMap('c',"Cancel","btn_cancel");
-  OpenChain.addClickMap('a',"Auto-Classify","btn_auto_classify");
   OpenChain.addKeyMap('j',"Jump To Classification Section",function() {window.location.hash=""; window.location.hash="classifications";});
   OpenChain.activateHotKeys();
 
@@ -30,11 +28,6 @@ $(function() {
 <%end%>
 <%content_for :action_bar do %>
   <button id='btn_save'>Save</button>
-
-  <% if Country.import_locations.size > 1 && !OfficialTariff.first.nil? %>
-    <button id='btn_auto_classify'>Auto Classify</button>
-  <% end %>
-
   <button id='btn_cancel'>Cancel</button>
   <button id='btn_edit_next'>Next</button>
   <button id='btn_edit_previous'>Previous</button>

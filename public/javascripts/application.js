@@ -396,6 +396,33 @@ var OpenChain = (function() {
   }
   return {
     //public stuff
+    ajaxAutoClassify: function(column,baseCountry,hts) {
+      var loadingMessage = "Loading Auto-Classification";
+      $("div.auto_class_results.class_col_"+column).not(".cntry_"+baseCountry).html(loadingMessage);
+      $.get('/official_tariffs/auto_classify/'+hts.replace(/\./g,''),function(data) {
+        var i,j,d,iso,hts,html;
+        for(i=0;i<data.length;i++) {
+          d = data[i];
+          iso = d['iso'];
+          if(iso==baseCountry) {
+            continue;
+          }
+          html = "";
+          for(j=0;j<d['hts'].length;j++) {
+            hts = d['hts'][j];
+            html += "<a href='#' class='hts_option'>"+hts.code+"</a>";
+            html += "&nbsp;[<a href='#' class='lnk_tariff_popup' iso='"+iso+"' hts='"+hts.code+"'>info</a>]";
+            html += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />";
+          }
+          $("div.auto_class_results.class_col_"+column+".cntry_"+iso).html(html);
+        }
+        $("div.auto_class_results.class_col_"+column).not(".cntry_"+baseCountry).each(function() {
+          if($(this).html()==loadingMessage) {
+            $(this).html("No auto-classifications were found.");
+          }
+        });
+      });
+    },
     setAuthToken: function(t) {
       authToken = t;
     },
@@ -511,11 +538,25 @@ var OpenChain = (function() {
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
-      $(".hts_option").click(function(ev) {
+      $("a.hts_option").live('click',function(ev) {
         ev.preventDefault();
-        $(this).prevAll("input.hts_field").val($(this).html());
+        $(this).parents(".hts_cell").find("input.hts_field").val($(this).html());
       });
-      $(".sched_b_option").live('click',function(ev) {
+      $("a.auto_class").live('click',function(ev) {
+        ev.preventDefault();
+        var found = false;
+        $(this).parents(".tf_row").find("input.hts_field").each(function() {
+          var inp = $(this);
+          if(inp.val().length > 0) {
+            found = true;
+            OpenChain.ajaxAutoClassify(inp.attr('col'),inp.attr('country_iso'),inp.val());
+          }
+        });
+        if(!found) {
+          window.alert("You must enter at least one HTS number in order to Auto-Classify.");
+        }
+      });
+      $("a.sched_b_option").live('click',function(ev) {
         ev.preventDefault();
         $(this).closest("td").find("input.sched_b_field").val($(this).html());
       });
@@ -543,40 +584,6 @@ var OpenChain = (function() {
       $(".sched_b_field").each(function() {validateScheduleBValue($(this));});
       $(".hts_field").live('blur',function() {validateHTSValue($(this).attr('country'),$(this))});
       $(".hts_field").each(function() {validateHTSValue($(this).attr('country'),$(this))});
-    },
-    autoClassify: function(form_obj,action_path) {
-      var c_count = function() {
-        var c = 0;
-        $(".classification_box").each(function() {
-          var found = false;
-          $(this).find(".hts_field").each(function() {
-            if($(this).val().length>5) {
-              found = true;
-            }
-          });
-          if(found) { 
-            c++; 
-            cid = $(this).find(".hdn_country_id").val();  
-            $("#sel_pick_country").append("<option value='"+cid+"'>"+$(this).find(".class_ctry_name").html()+"</option>");
-          }
-        });
-        return c;
-      }();
-      var completeAutoClassify = function(form_obj,action_path,country_id) {
-        form_obj.append("<input type='hidden' name='base_country_id' value='"+country_id+"' />");
-        form_obj.attr("action",action_path).submit();
-      }
-      switch(c_count) {
-        case 0: 
-          window.alert("Please enter HTS info for at least one country before auto-classifying."); 
-          return;
-        case 1:
-          completeAutoClassify(form_obj,action_path,$("#sel_pick_country").children("option:first").val());
-          break;
-        default:
-          $("#mod_pick_country").dialog({title:"Select Country",
-            buttons:{"OK":function() {completeAutoClassify(form_obj,action_path,$("#sel_pick_country").val());}}});
-      }
     },
     add_tf_row: function(link,parent_index,country_id) {
       my_index = new Date().getTime();
@@ -826,7 +833,8 @@ $( function() {
       evt.preventDefault();
       var hts = $(this).attr('hts');
       var c_id = $(this).attr('country');
-      tariffPopUp(hts,c_id);
+      var c_iso = $(this).attr('iso')
+      tariffPopUp(hts,c_id,c_iso);
     });
 });
 $(document).ready( function() {
@@ -1141,7 +1149,7 @@ function openPackOrder(id) {
     $(".decimal").jStepper();
   });
 }
-function tariffPopUp(htsNumber,country_id) {
+function tariffPopUp(htsNumber,country_id,country_iso) {
   var mod = $("#mod_tariff_popup");
   if(mod.length==0) {
     $("body").append("<div id='mod_tariff_popup'><div id='tariff_popup_content'></div></div>");
@@ -1153,8 +1161,14 @@ function tariffPopUp(htsNumber,country_id) {
   var c = $("#tariff_popup_content");
   c.html("Loading tariff information...");
   mod.dialog('open');
+  var u = '/official_tariffs/find?hts='+htsNumber;
+  if(country_id) {
+    u += "&cid="+country_id;
+  } else if (country_iso) {
+    u += "&ciso="+country_iso;
+  }
   $.ajax({
-    url:'/official_tariffs/find?hts='+htsNumber+'&cid='+country_id,
+    url:u,
     dataType:'json',
     error: function(req,msg,obj) {
       c.html("We're sorry, an error occurred while trying to load this information.");

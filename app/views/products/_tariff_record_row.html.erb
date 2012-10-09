@@ -1,7 +1,12 @@
-<%is_us = f.object.classification.country.iso_code=='US'%>
+<%iso = f.object.classification.country.iso_code-%>
+<%is_us = iso=='US'-%>
 <div class='tf_row'>
 <input type='hidden' name='product[classifications_attributes][<%=classification_count%>][tariff_records_attributes][<%=tariff_count%>][view_sequence]' value='<%=tariff_view_sequence%>' />
-    <div class='tr_close'><%= f.hidden_field :_destroy, "class" => "tf_destroy"%><%=link_to image_tag('x.png'), '#', :class=>'tf_remove'%></div>
+<div class='tr_close'>
+  <a href='#' class='auto_class'>Auto-Classify</a> | 
+  <%= f.hidden_field :_destroy, "class" => "tf_destroy"%>
+  <%=link_to "Delete", '#', :class=>'tf_remove'%>
+</div>
   <table>
     <%=field_row field_label(:hts_line_number,false), model_text_field(f,:line_number, :hts_line_number, {:class=>'tf_line_number'})%> 
     <%=show_custom_fields f.object, {:form=>true, :show_prefix=>false, :table=>true, :parent_name=>"tariff_custom[#{tariff_view_sequence}]"} %>
@@ -16,62 +21,20 @@
     </thead>
     <tbody>
       <tr>
-        <td><%= f.text_field :hts_1, :class=>"hts_field", :country=>country_id, :col=>1%>
-          <%unless f.object.hts_1_matches.blank? %>
-            <%f.object.hts_1_matches.each do |ot|%>
-              <br /><a href='#' class='hts_option'><%=ot.hts_code%></a>&nbsp;[<%=tariff_more_info ot.hts_code, ot.country_id %>]
-              <br /><%=ot.remaining_description%>
-              <%if ot.general_rate %>
-              <br />General Rate: <%=ot.general_rate%>
-              <%end%>
-              <%if ot.erga_omnes_rate %>
-                  <br />Erga Omnes Rate: <%=ot.erga_omnes_rate%>
-                  <%end%>
-              <%if ot.most_favored_nation_rate %>
-                  <br />MFN Rate: <%=ot.most_favored_nation_rate%>
-                  <%end%>
-              <%if ot.general_preferential_tariff_rate %>
-                  <br />GPT Rate: <%=ot.general_preferential_tariff_rate%>
-              <%end%>
-              <br />
-            <%end%>
-          <%end%>
+        <td class='hts_cell'>
+          <%= f.text_field :hts_1, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>1%>
+          <div class='tariff_result'></div>
+          <div class='auto_class_results class_col_1 cntry_<%=iso%>'></div>
         </td>
-        <td><%= f.text_field :hts_2, :class=>"hts_field",:country=>country_id, :col=>2%>
-          <%unless f.object.hts_2_matches.blank? %>
-            <%f.object.hts_2_matches.each do |ot|%>
-            <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.chapter%>
-            <br /><%=ot.remaining_description%>
-            <%if ot.general_rate %>
-            <br />General Rate: <%=ot.general_rate%>
-            <%end%>
-        <%if ot.erga_omnes_rate %>
-            <br />Erga Omnes Rate: <%=ot.erga_omnes_rate%>
-            <%end%>
-        <%if ot.most_favored_nation_rate %>
-            <br />MFN Rate: <%=ot.most_favored_nation_rate%>
-            <%end%>
-            <br />
-            <%end%>
-          <%end%>
+        <td class='hts_cell'>
+          <%= f.text_field :hts_2, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>2%>
+          <div class='tariff_result'></div>
+          <div class='auto_class_results class_col_2 cntry_<%=iso%>'></div>
         </td>
-        <td><%= f.text_field :hts_3, :class=>"hts_field",:country=>country_id, :col=>3%>
-          <%unless f.object.hts_3_matches.blank? %>
-            <%f.object.hts_3_matches.each do |ot|%>
-            <br /><a href='#' class='hts_option'><%=ot.hts_code%></a><br /><%=ot.chapter%>
-            <br /><%=ot.remaining_description%>
-            <%if ot.general_rate %>
-            <br />General Rate: <%=ot.general_rate%>
-            <%end%>
-        <%if ot.erga_omnes_rate %>
-            <br />Erga Omnes Rate: <%=ot.erga_omnes_rate%>
-            <%end%>
-        <%if ot.most_favored_nation_rate %>
-            <br />MFN Rate: <%=ot.most_favored_nation_rate%>
-            <%end%>
-            <br />
-            <%end%>
-          <%end%>
+        <td class='hts_cell'>
+          <%= f.text_field :hts_3, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>3%>
+          <div class='tariff_result'></div>
+          <div class='auto_class_results class_col_3 cntry_<%=iso%>'></div>
         </td>
       </tr>
      <%if f.object.has_schedule_b? || is_us %>
