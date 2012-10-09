@@ -1,23 +1,51 @@
 class CustomValue < ActiveRecord::Base
   include TouchesParentsChangedAt
+
+  BATCH_INSERT_POSITIONS = ['string_value','date_value','decimal_value',
+    'integer_value','boolean_value','text_value']
   
   belongs_to :custom_definition
   belongs_to :customizable, :polymorphic => true
   validates  :custom_definition, :presence => true
   validates  :customizable_id, :presence => true
   validates  :customizable_type, :presence => true
-  after_commit :set_cache
-  after_find :set_cache
-  
-  #default_scope includes(:custom_definition)
+
+  # Writes given array of custom values directly to database
+  def self.batch_write! values, touch_parent = false
+    CustomValue.transaction do
+      inserts = []
+      deletes = {}
+      to_touch = []
+      values.each do |cv|
+        cust_def_id = cv.custom_definition.id
+        customizable_id = cv.customizable.id
+        v = cv.value.nil? ? "null" : ActiveRecord::Base.sanitize(cv.value)
+        deletes[cust_def_id] ||= []
+        deletes[cust_def_id] << customizable_id
+        vals = Array.new(9,"null")
+        vals[BATCH_INSERT_POSITIONS.index(cv.sql_field_name)] = v 
+        vals[6] = ActiveRecord::Base.sanitize cv.customizable.class.name
+        vals[7] = customizable_id
+        vals[8] = cust_def_id
+        inserts << "(#{ vals.join(',') }, now(), now())"
+        to_touch << cv.customizable if touch_parent && !to_touch.include?(cv.customizable)
+      end
+      deletes.each do |def_id,customizables|
+        ActiveRecord::Base.connection.execute "DELETE FROM custom_values WHERE custom_definition_id = #{def_id} and customizable_id IN (#{customizables.join(", ")})"
+      end
+      if !inserts.empty?
+        sql = "INSERT INTO custom_values (#{BATCH_INSERT_POSITIONS.join(', ')}, customizable_type, customizable_id, custom_definition_id, updated_at, created_at) VALUES #{inserts.join(",")};"
+        ActiveRecord::Base.connection.execute sql
+      end
+      to_touch.each do |c|
+        cm = CoreModule.find_by_object c
+        cm.touch_parents_changed_at c unless cm.nil?
+      end
+    end
+  end
 
   def self.cached_find_unique custom_definition_id, customizable
-    #c = CACHE.get unique_cache_key(custom_definition_id, customizable.id, customizable.class)
-    #if c.nil?
-      c = customizable.custom_values.where(:custom_definition_id=>custom_definition_id).first
-     # c.set_cache unless c.nil?
-    #end
-    return c
+    customizable.custom_values.where(:custom_definition_id=>custom_definition_id).first
   end
 
   def value cached_custom_definition = nil
@@ -32,15 +60,12 @@ class CustomValue < ActiveRecord::Base
     v = [:date,:datetime].include?(d.data_type) ? parse_date(val) : val
     self.send "#{d.data_type}_value=", v
   end
-  
-  def set_cache
-=begin
-    if !self.id.nil? && !self.custom_definition_id.nil? && (!self.customizable_id.nil? && !self.customizable_type.nil?)
-      to_set = self.destroyed? ? nil : self
-      CACHE.set CustomValue.unique_cache_key(self.custom_definition_id,self.customizable_id,self.customizable_type), to_set unless self.id.nil?
-    end
-=end
+
+  def sql_field_name
+    raise "Cannot get sql field name without a custom definition" if self.custom_definition.nil?
+    "#{self.custom_definition.data_type}_value" 
   end
+  
 
   def touch_parents_changed_at #overriden to find core module differently
     ct = self.customizable_type
@@ -51,10 +76,8 @@ class CustomValue < ActiveRecord::Base
   end
 
 
+
   private
-  def self.unique_cache_key custom_definition_id, customizable_id, customizable_type
-    "CustomValue:u_c_k:#{custom_definition_id}:#{customizable_id}:#{customizable_type}"
-  end
   def parse_date d
     return d unless d.is_a?(String)
     if /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.match(d)
