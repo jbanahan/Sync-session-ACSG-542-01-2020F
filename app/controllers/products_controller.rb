@@ -136,31 +136,6 @@ class ProductsController < ApplicationController
     }
   end
   
-  def auto_classify
-    p = Product.find(params[:id])
-    action_secure(p.can_edit?(current_user) && current_user.edit_classifications?,p,{:verb => "classify for",:module_name=>"product"}) {
-      @product = p
-      p.transaction do
-        @product.update_attributes(params[:product])
-        save_classification_custom_fields(@product,params[:product])
-        update_status @product
-        base_country = Country.find_cached_by_id(params[:base_country_id])
-        @product.auto_classify(base_country)
-        add_flash :notices, "Auto-classification complete, select tariffs below."
-        render 'classify'
-      end
-    }
-  end
-
-  def bulk_auto_classify
-    @pks = params[:pk]
-    @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
-    @base_product = Product.new(params[:product])
-    base_country = Country.find_cached_by_id(params[:base_country_id])
-    @base_product.auto_classify base_country
-    add_flash :notices, "Auto-classification complete, select tariffs below."
-    render 'bulk_classify'
-  end
 
   def bulk_edit
     @pks = params[:pk]

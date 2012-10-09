@@ -224,15 +224,12 @@ OpenChain::Application.routes.draw do
       post 'bulk_update'
       post 'bulk_classify'
       post 'bulk_update_classifications'
-      post 'bulk_auto_classify'
       post 'bulk_instant_classify'
       post 'show_bulk_instant_classify'
     end
     member do
       get 'history'
       get 'classify'
-      post :auto_classify 
-      put  :auto_classify
       put :import_worksheet 
     end
     post :import_new_worksheet, :on=>:new

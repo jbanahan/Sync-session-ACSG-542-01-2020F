@@ -80,20 +80,6 @@ class Product < ActiveRecord::Base
     !self.sales_order_lines.empty? 
   end
 
-  #Classify for other countries based on the classifications that already exist for the base_country provided.
-  def auto_classify(base_country)
-    base_classification = nil
-    self.classifications.each {|c| base_classification = c if c.country==base_country}
-    Country.import_locations.each do |country|
-      unless base_country==country
-        c = nil
-        self.classifications.each {|pc| c = pc if pc.country==country}
-        c = self.classifications.build(:country_id => country.id) if c.nil?
-        load_tariff_record(base_country,base_classification,c)
-      end
-    end
-  end
-
   #Replace the current classifications with the given collection of classifications and writes this product with the new classifications to the database
   #Any classification in the existing product that doesn't have a matching one by country in the new set is left alone
   def replace_classifications new_classifications
@@ -137,38 +123,6 @@ class Product < ActiveRecord::Base
 
   def default_division
     self.division = Division.first if self.division.nil? && self.division_id.nil?
-  end
-
-  def load_tariff_record(base_country,base_classification,to_classify)
-    if to_classify.tariff_records.empty? #if the classification already has records, leave it alone
-      base_classification.tariff_records.each do |base_tariff|
-        to_load = to_classify.tariff_records.build
-        if !base_tariff.hts_1.blank? && base_tariff.hts_1.length > 5
-          official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_1).first
-          unless official_tariff.nil?
-            matches = official_tariff.find_matches to_classify.country
-            matches.delete_if {|m| m.meta_data.auto_classify_ignore}
-            to_load.hts_1_matches = matches
-          end
-        end
-        if !base_tariff.hts_2.blank? && base_tariff.hts_2.length > 5
-          official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_2).first
-          unless official_tariff.nil?
-            matches = official_tariff.find_matches to_classify.country
-            matches.delete_if {|m| m.meta_data.auto_classify_ignore}
-            to_load.hts_2_matches = matches
-          end
-        end
-        if !base_tariff.hts_3.blank? && base_tariff.hts_3.length > 5
-          official_tariff = OfficialTariff.where(:country_id=>base_country).where(:hts_code=>base_tariff.hts_3).first
-          unless official_tariff.nil?
-            matches = official_tariff.find_matches to_classify.country
-            matches.delete_if {|m| m.meta_data.auto_classify_ignore}
-            to_load.hts_3_matches = matches
-          end
-        end
-      end
-    end
   end
 
   def self.batch_bulk_update(user, parameters = {})
