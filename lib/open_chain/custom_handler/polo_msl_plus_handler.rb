@@ -56,16 +56,28 @@ module OpenChain
             errors << "Row #{n+1} skipped, missing style number."
           else
             Product.transaction do
+              make_snapshot = false
               p = Product.find_or_create_by_unique_identifier(cell_map[:style].strip)
-              p.name = cell_map[:name] if p.name.blank?
-              p.save!
+              if p.name.blank? 
+                p.name= cell_map[:name] 
+                p.save!
+                make_snapshot = true
+              end
+              values_to_update = []
               cdefs.each do |sym,cd|
                 cv = p.get_custom_value cd
-                cv.value = cell_map[sym] if cv.value.blank?
-                cv.save!
+                if cv.value.blank? 
+                  cv.value = cell_map[sym]
+                  values_to_update << cv
+                  make_snapshot = true
+                end
               end
+              CustomValue.batch_write! values_to_update, true unless values_to_update.empty?
               @custom_file.custom_file_records.create!(:linked_object=>p)
-              p.create_snapshot user
+              if make_snapshot
+                p = Product.find p.id #reload because of batch write
+                p.create_snapshot user
+              end
             end
           end
         end
