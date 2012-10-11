@@ -147,6 +147,7 @@ class ProductsController < ApplicationController
       [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
       params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?}
+      params.delete :utf8
       Product.delay.batch_bulk_update(current_user, params)
       redirect_to products_path
     }
