@@ -735,7 +735,9 @@ class ModelField
         :export_lambda=>lambda {|obj| obj.monthly_statement_due_date ? obj.monthly_statement_due_date.month : nil},
         :qualified_field_name=>"month(monthly_statement_due_date) as statement_month",
         :data_type=>:integer
-      }]
+      }],
+      [124,:ent_first_7501_print,:first_7501_print,"7501 Print Date - First",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [125,:ent_last_7501_print,:last_7501_print,"7501 Print Date - Last",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

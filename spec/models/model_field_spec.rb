@@ -112,6 +112,13 @@ describe ModelField do
         mf.can_view?(@broker_user).should be_true
         mf.can_view?(@non_broker_user).should be_false
       end
+      it "should secure first/last 7501 print" do
+        [:ent_first_7501_print,:ent_last_7501_print].each do |id|
+          mf = ModelField.find_by_uid(id)
+          mf.can_view?(@broker_user).should be_true
+          mf.can_view?(@non_broker_user).should be_false
+        end
+      end
     end
     context "product last_changed_by" do
       it "should apply search criterion properly" do

@@ -238,6 +238,16 @@ describe OpenChain::AllianceParser do
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @split_string = "\n "
   end
+  it 'should set 7501 print dates' do
+    first_7501 = '201104211627'
+    last_7501 = '201104221217'
+    @comments << {:text=>"Document Image created for F7501F   7501 Form.              ",:date=>first_7501,:user=>'BDEVITO'}
+    @comments << {:text=>"Document Image created for F7501F   7501 Form.              ",:date=>last_7501,:user=>'BDEVITO'}
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.first_7501_print.should == @est.parse(first_7501)
+    ent.last_7501_print.should == @est.parse(last_7501)
+  end
   it 'should aggregate containers' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
     ent = Entry.find_by_broker_reference @ref_num

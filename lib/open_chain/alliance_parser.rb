@@ -409,7 +409,13 @@ module OpenChain
     
     #comments
     def process_sn00 r
-      @entry.entry_comments.build(:body=>r[4,60].strip,:username=>r[79,12].strip,:generated_at=>parse_date_time(r[64,12]))
+      body = r[4,60].strip
+      generated_at = parse_date_time(r[64,12])
+      @entry.entry_comments.build(:body=>body,:username=>r[79,12].strip,:generated_at=>generated_at)
+      if body.include? "Document Image created for F7501F"
+        @entry.first_7501_print = generated_at if @entry.first_7501_print.nil? || generated_at < @entry.first_7501_print
+        @entry.last_7501_print = generated_at if @entry.last_7501_print.nil? || generated_at > @entry.last_7501_print
+      end
     end
 
     # make port code nil if all zeros
