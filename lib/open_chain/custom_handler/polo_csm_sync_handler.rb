@@ -8,12 +8,12 @@ module OpenChain
         @csm_cd = CustomDefinition.find_or_create_by_label("CSM Number",:module_type=>'Product',:data_type=>'string')
       end
 
-      def process user
+      def process user, first_row = 1
         italy = Country.find_by_iso_code "IT"
         xlc = XLClient.new(@custom_file.attached.path)
         last_row = xlc.last_row_number(0)
         begin
-          (1..last_row).each do |n|
+          (first_row..last_row).each do |n|
             matched = 'not matched'
             style = xlc.get_cell(0, n, 8)['cell']['value']
             next if style.blank?
