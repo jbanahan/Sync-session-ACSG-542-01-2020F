@@ -38,6 +38,7 @@ module OpenChain
         rescue
           xlc.save
           $!.log_me ["Custom File ID: #{@custom_file.id}","Last Row: #{last_row}"]
+          raise $! if $!.message.include?("User does not have permission to edit product")
         end
         user.messages.create(:subject=>"CSM Sync Complete",:body=>"Your CSM Sync job has completed.  You can download the updated file <a href='/custom_features/csm_sync'>here</a>.")
       end

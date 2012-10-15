@@ -48,6 +48,8 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     it "should not allow users who can't edit products" do
       p = Factory(:product)
       Product.any_instance.stub(:can_edit?).and_return(false)
+      @xlc.stub(:save)
+      @cf.stub(:id).and_return("1")
       @xlc.should_receive(:last_row_number).and_return(2)
       @xlc.should_receive(:get_cell).with(0,1,8).and_return({'cell'=>{'value'=>p.unique_identifier}})
       lambda {OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)}.should raise_error "User does not have permission to edit product #{p.unique_identifier}"
