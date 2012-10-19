@@ -12,6 +12,7 @@ class DutyCalcExportFileLine < ActiveRecord::Base
     ].each do |v|
       r << val(self[v])
     end
+    r[10] = val(self.hts_code) if r[10].blank? && !self.hts_code.blank?
     r
   end
 

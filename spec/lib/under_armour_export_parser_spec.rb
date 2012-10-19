@@ -62,7 +62,7 @@ describe OpenChain::UnderArmourExportParser do
     end
     describe :parse_csv_file do
       it "should handle non-ascii characters" do
-        OpenChain::UnderArmourExportParser.parse_csv_file 'spec/support/bin/ua_outbound_unicode.csv' 
+        OpenChain::UnderArmourExportParser.parse_csv_file 'spec/support/bin/ua_outbound_unicode.csv', @importer 
         DutyCalcExportFileLine.all.should have(1).item
         DutyCalcExportFileLine.first.description.should == 'UA PERFECT CAPRI-BLK/BLK Qu bec' 
       end
@@ -71,16 +71,15 @@ describe OpenChain::UnderArmourExportParser do
         t = Tempfile.new("xyz")
         t << content
         t.flush
-        OpenChain::UnderArmourExportParser.parse_csv_file t.path
+        OpenChain::UnderArmourExportParser.parse_csv_file t.path, @importer
         DutyCalcExportFileLine.all.should have(2).items
+        t.unlink
       end
     end
 
     describe :parse_csv_line do
       it "should parse a line into a DutyCalcExportFileLine" do
-        OpenChain::UnderArmourExportParser.parse_csv_line @lines[1]
-        DutyCalcExportFileLine.count.should == 1
-        d = DutyCalcExportFileLine.first
+        d = OpenChain::UnderArmourExportParser.parse_csv_line @lines[1].parse_csv, 0, @importer
         d.export_date.should == Date.new(2010,3,5)
         d.ship_date.should == Date.new(2010,3,5)
         d.part_number.should == "1000382-001-LG+BD"
@@ -105,24 +104,23 @@ describe OpenChain::UnderArmourExportParser do
       end
       
       it 'should raise exception if style is empty' do
-        line = "3452168,85439724,,1,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
-        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
+        line = "3452168,85439724,,1,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
+        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line, 0, @importer}.should raise_error
       end
       it 'should raise exception if color is empty' do
-        line = "3452168,85439724,1005492,,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
-        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
+        line = "3452168,85439724,1005492,,LG,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
+        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line, 0, @importer}.should raise_error
       end
       it 'should raise exception if size is empty' do
-        line = "3452168,85439724,1005492,1,,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
-        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
+        line = "3452168,85439724,1005492,1,,BD,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
+        lambda {OpenChain::UnderArmourExportParser.parse_csv_line line, 0, @importer}.should raise_error
       end
       it 'should skip line if COO is empty' do
-        line = "3452168,85439724,1000382,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
-        OpenChain::UnderArmourExportParser.parse_csv_line line
-        DutyCalcExportFileLine.count.should == 0
+        line = "3452168,85439724,1000382,1,LG,,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
+        OpenChain::UnderArmourExportParser.parse_csv_line(line, 0, @importer).should be_nil
       end
       it 'should raise exception if row does not have 32 elements' do
-        line = "3452168,85439724,1005492,1,LG,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55"
+        line = "3452168,85439724,1005492,1,LG,TECH TEE SS-BLK,4,A. ROY SPORTS,MONTREAL,QC,K9J 7Y8,CA,A. ROY SPORTS,MONTREAL,QC,H1B 2Y8,CA,20100305,20100305,6110.30.3060,5.53,16.5,49.99,8.85559E+15,,4.97086E+11,,FW12 H/F SMS,FIE,7.55".parse_csv
         lambda {OpenChain::UnderArmourExportParser.parse_csv_line line}.should raise_error
       end
     end

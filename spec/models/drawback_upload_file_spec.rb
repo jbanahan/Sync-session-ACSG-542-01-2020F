@@ -10,17 +10,18 @@ describe DrawbackUploadFile do
       @mock_attachment = mock("Attachment")
       @mock_attachment.stub(:attached_file_name).and_return("x")
       DrawbackUploadFile.any_instance.stub(:attachment).and_return(@mock_attachment) 
+      @importer = Factory(:company,:importer=>true)
     end
     it "should set finish_at" do
       d = DrawbackUploadFile.create!(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
-      OpenChain::UnderArmourExportParser.should_receive(:parse_csv_file).with('tmppath').and_return('abc')
+      OpenChain::UnderArmourExportParser.should_receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
       d.process @user
       d.reload
       d.finish_at.should > 2.seconds.ago
     end
     it "should write system message when processing is complete" do
       d = DrawbackUploadFile.create!(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
-      OpenChain::UnderArmourExportParser.should_receive(:parse_csv_file).with('tmppath').and_return('abc')
+      OpenChain::UnderArmourExportParser.should_receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
       d.process @user
       @user.reload
       @user.should have(1).messages
@@ -47,7 +48,8 @@ describe DrawbackUploadFile do
     end
     it "should route DDB Export file" do
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
-      OpenChain::UnderArmourExportParser.should_receive(:parse_csv_file).with('tmppath').and_return('abc')
+      imp = Factory(:company,:importer=>true)
+      OpenChain::UnderArmourExportParser.should_receive(:parse_csv_file).with('tmppath',Company.find_by_importer(true)).and_return('abc')
       d.process(@user).should == 'abc'
     end
     it "should route FMI Export file" do
@@ -58,6 +60,12 @@ describe DrawbackUploadFile do
     it "should route J Crew shipment file" do
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS)
       OpenChain::CustomHandler::JCrewShipmentParser.should_receive(:parse_merged_entry_file).with('tmppath').and_return('abc')
+      d.process(@user).should == 'abc'
+    end
+    it "should route Lands End Export file" do
+      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"LANDS")
+      d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_EXPORTS)
+      OpenChain::LandsEndExportParser.should_receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
       d.process(@user).should == 'abc'
     end
   end

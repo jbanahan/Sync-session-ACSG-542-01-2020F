@@ -18,5 +18,16 @@ describe DutyCalcExportFileLine do
         a[i].should == (line[v].respond_to?(:strftime) ? line[v].strftime("%m/%d/%Y") : line[v].to_s)
       end
     end
+    it "should fill in hts code if schedule b is missing" do
+      line = DutyCalcExportFileLine.new(:export_date=>1.day.ago,:ship_date=>2.days.ago,
+        :part_number => "123", :carrier=>"APLL", :ref_1=>"R1", :ref_2=>"R2",
+        :ref_3=>"R3", :ref_4=>"R4", :destination_country=>"CA", :quantity=>1.2,
+        :schedule_b_code=>"", :hts_code=>"4949494949", :description=>"DESC",
+        :uom=>"EA",:exporter=>"UA",:action_code=>"E", :nafta_duty=>1, 
+        :nafta_us_equiv_duty=>1.1, :nafta_duty_rate=>0.1
+      )
+      a = line.make_line_array
+      a[10].should == "4949494949"
+    end
   end
 end

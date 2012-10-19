@@ -1,37 +1,25 @@
+require 'open_chain/drawback_export_parser'
 module OpenChain
-  class UnderArmourExportParser
-    def self.parse_csv_file file_path
-      importer = Company.where(:importer=>true).first
-      count = 0
-      f = File.new(file_path)
-      f.lines do |line|
-        ln = line.encode(Encoding.find("US-ASCII"),:undef=>:replace, :replace=>' ', :fallback=>' ')
-        parse_csv_line ln, (count+1), importer unless count == 0
-        count += 1
-      end
-    end
+  class UnderArmourExportParser < DrawbackExportParser
 
-    # parses line and returns a saved DutyCalcExportFileLine
-    def self.parse_csv_line line, row_num = nil, importer = Company.where(:importer=>true).first
+    # parses line and returns a new DutyCalcExportFileLine
+    def self.parse_csv_line r, row_num, importer
       d = DutyCalcExportFileLine.new
-      CSV.parse(line) do |r|
-        raise "Line #{row_num} had #{r.size} elements.  All lines must have 32 elements." unless r.size==32
-        return nil if missing_country_of_origin?(r)
-        d.export_date = Date.strptime(r[18],"%Y%m%d")
-        d.ship_date = d.export_date
-        d.part_number = get_part_number r
-        d.ref_1 = numeric_to_string r[1]
-        d.ref_2 = numeric_to_string r[0]
-        d.destination_country = r[17]
-        d.quantity = r[7]
-        d.schedule_b_code = r[20].gsub(".","")
-        d.description = r[6]
-        d.uom = "EA"
-        d.exporter = "Under Armour"
-        d.action_code = "E"
-        d.importer = importer
-      end
-      d.save!
+      raise "Line #{row_num} had #{r.size} elements.  All lines must have 32 elements." unless r.size==32
+      return nil if missing_country_of_origin?(r)
+      d.export_date = Date.strptime(r[18],"%Y%m%d")
+      d.ship_date = d.export_date
+      d.part_number = get_part_number r
+      d.ref_1 = numeric_to_string r[1]
+      d.ref_2 = numeric_to_string r[0]
+      d.destination_country = r[17]
+      d.quantity = r[7]
+      d.schedule_b_code = r[20].gsub(".","")
+      d.description = r[6]
+      d.uom = "EA"
+      d.exporter = "Under Armour"
+      d.action_code = "E"
+      d.importer = importer
       d
     end
 

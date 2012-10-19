@@ -11,6 +11,7 @@ class DrawbackUploadFile < ActiveRecord::Base
   PROCESSOR_UA_FMI_EXPORTS = 'ua_fmi_exports'
   PROCESSOR_OHL_ENTRY = 'ohl_entry'
   PROCESSOR_JCREW_SHIPMENTS = 'j_crew_shipments'
+  PROCESSOR_LANDS_END_EXPORTS = 'lands_end_exports'
   has_one :attachment, :as=>:attachable
 
   accepts_nested_attributes_for :attachment, :reject_if => lambda {|q|
@@ -35,11 +36,13 @@ class DrawbackUploadFile < ActiveRecord::Base
     when PROCESSOR_OHL_ENTRY
       r = OpenChain::UnderArmourDrawbackProcessor.process_entries OpenChain::OhlDrawbackParser.parse tempfile.path
     when PROCESSOR_UA_DDB_EXPORTS
-      r = OpenChain::UnderArmourExportParser.parse_csv_file tempfile.path
+      r = OpenChain::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)
     when PROCESSOR_UA_FMI_EXPORTS
       r = OpenChain::UnderArmourExportParser.parse_fmi_csv_file tempfile.path
     when PROCESSOR_JCREW_SHIPMENTS
       r = OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path
+    when PROCESSOR_LANDS_END_EXPORTS
+      r = OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")
     else
       raise "Processor #{self.processor} not found."
     end
