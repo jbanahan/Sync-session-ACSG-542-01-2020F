@@ -17,6 +17,7 @@ module OpenChain
             matched = 'not matched'
             style = xlc.get_cell(0, n, 8)['cell']['value']
             next if style.blank?
+            style = style.to_s
             style.strip!
             style = style[0,style.size-2] if style.end_with? '.0' #fix accidental numerics
             p = Product.find_by_unique_identifier style
