@@ -2,6 +2,9 @@
   <%pms = params.clone-%>
   <%pms[:mode]='simple'-%>
   <button class='btn_link' link_to='<%=entry_path(@entry,pms)%>'>Simple Mode</button>
+  <%if current_user.company.master?-%>
+    <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
+  <%end-%>
 <%end-%>
 <style>
 .ent_columns {

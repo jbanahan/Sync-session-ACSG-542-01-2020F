@@ -1,9 +1,11 @@
+require 'open_chain/alliance_imaging_client'
 class EntriesController < ApplicationController
   def root_class
     Entry 
   end
 
   def index
+    @bulk_actions = CoreModule::ENTRY.bulk_actions current_user
     advanced_search CoreModule::ENTRY
   end
   def show
@@ -21,6 +23,31 @@ class EntriesController < ApplicationController
       else
         render :action=>(current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), :layout=>'one_col'
       end
+    }
+  end
+
+  #request that the images be reloaded from alliance for the given entry
+  def get_images
+    ent = Entry.find_by_id params[:id]
+    if ent.nil?
+      error_redirect "Entry with id #{params[:id]} not found."
+    elsif ent.source_system != 'Alliance'
+      error_redirect "Images cannot be requested for entries that are not from Alliance."
+    else
+      OpenChain::AllianceImagingClient.request_images ent.broker_reference
+      add_flash :notices, "Updated images for file #{ent.broker_reference} have been requested.  Please allow 10 minutes for them to appear."
+      redirect_to request.referrer
+    end
+  end
+
+  #request that the images be reloaded form alliance for a set of entries
+  def bulk_get_images
+    action_secure(current_user.company.master? && current_user.view_entries?,Entry.new,{:verb=>'manage',:module_name=>"entries"}) {
+      sr_id = params[:sr_id]
+      primary_keys = params[:pk]
+      OpenChain::AllianceImagingClient.delay.bulk_request_images sr_id, primary_keys
+      add_flash :notices, "Updated images have been requested.  Please allow 10 minutes for them to appear."
+      redirect_to request.referrer
     }
   end
 

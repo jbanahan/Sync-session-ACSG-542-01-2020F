@@ -2,19 +2,19 @@ module OpenChain
 
   class CoreModuleProcessor
 
-    def self.bulk_objects search_run_id, primary_keys, &block
+    def self.bulk_objects core_module, search_run_id, primary_keys, &block
       sr_id = search_run_id 
-      if !sr_id.blank? && sr_id.match(/^[0-9]*$/)
+      if !sr_id.blank? && sr_id.to_s.match(/^[0-9]*$/)
         sr = SearchRun.find sr_id
         good_count = sr.total_objects
         sr.all_objects.each do |o|
           yield good_count, o
         end
       else
-        pks = primary_keys 
+        pks = primary_keys.respond_to?(:values) ? primary_keys.values : primary_keys
         good_count = pks.size
-        pks.values.each do |key|
-          p = Product.find key
+        pks.each do |key|
+          p = core_module.klass.find key
           yield good_count, p  
         end
       end

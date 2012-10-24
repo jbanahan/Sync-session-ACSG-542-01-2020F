@@ -334,6 +334,11 @@ class CoreModule
     :default_search_columns => [:ent_brok_ref,:ent_entry_num,:ent_release_date],
     :unique_id_field_name=>:ent_brok_ref,
     :key_model_field_uids=>[:ent_brok_ref],
+    :bulk_actions_lambda => lambda {|current_user| 
+      bulk_actions = {}
+      bulk_actions["Update Images"] = "bulk_get_images_entries_path" if current_user.company.master? && current_user.view_entries?
+      bulk_actions
+    },
     :children => [COMMERCIAL_INVOICE],
     :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
     :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"}

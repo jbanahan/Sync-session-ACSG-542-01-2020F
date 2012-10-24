@@ -14,6 +14,9 @@ class Entry < ActiveRecord::Base
   belongs_to :us_exit_port, :class_name=>'Port', :foreign_key=>'us_exit_port_code', :primary_key=>'schedule_d_code'
   belongs_to :import_country, :class_name=>"Country"
 
+  def locked?
+    false
+  end
   # Return true if transport mode is 10 or 11
   def ocean?
     ['10','11'].include? self.transport_mode_code

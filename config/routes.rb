@@ -11,6 +11,8 @@ OpenChain::Application.routes.draw do
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get
   resources :entries, :only => [:index,:show] do
     get 'reprocess', :on=>:collection
+    post 'bulk_get_images', :on=>:collection
+    get 'get_images', :on=>:member
     resources :broker_invoices, :only=>[:create]
   end
   

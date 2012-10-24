@@ -1,9 +1,21 @@
 require 'open_chain/sqs'
-#not unit tested since it'll all be mocks
+require 'open_chain/field_logic'
+
 class OpenChain::AllianceImagingClient 
+
+  # takes request for either search results or a set of primary keys and requests images for all entries
+  def self.bulk_request_images search_run_id, primary_keys
+    OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::ENTRY,search_run_id,primary_keys) do |good_count, entry|
+      OpenChain::AllianceImagingClient.request_images entry.broker_reference if entry.source_system=='Alliance'
+    end
+  end
+  
+  #not unit tested since it'll all be mocks
   def self.request_images file_number
     OpenChain::SQS.send_json "https://queue.amazonaws.com/468302385899/alliance-img-req-#{get_env}", {"file_number"=>file_number}
   end
+  
+  #not unit tested since it'll all be mocks
   def self.consume_images
     OpenChain::SQS.retrieve_messages_as_hash "https://queue.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
       t = OpenChain::S3.download_to_tempfile hsh["s3_bucket"], hsh["s3_key"]

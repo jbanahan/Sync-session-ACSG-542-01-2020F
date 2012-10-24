@@ -131,7 +131,7 @@ class Product < ActiveRecord::Base
       User.current = user #needed because validate_and_save_module expects User.current to be set but it won't be if coming from Delayed_job.
       update_errors = []
       good_count = nil
-      OpenChain::CoreModuleProcessor.bulk_objects(parameters[:sr_id], parameters[:pk]) do |gc, p|
+      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT, parameters[:sr_id], parameters[:pk]) do |gc, p|
         good_count = gc if good_count.nil?
         if p.can_edit?(user)
           success = lambda {|o| }

@@ -53,7 +53,7 @@ module OpenChain
       good_count = nil
       msgs = []
       error_count = 0
-      OpenChain::CoreModuleProcessor.bulk_objects(params['sr_id'],params['pk']) do |gc, p|
+      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
         begin
           if p.can_classify?(current_user)
             Product.transaction do
@@ -102,7 +102,7 @@ module OpenChain
     def self.go params, current_user
       icr = InstantClassificationResult.create(:run_by_id=>current_user.id,:run_at=>0.seconds.ago)
       instant_classifications = InstantClassification.ranked #run this here to avoid calling inside the loop
-      OpenChain::CoreModuleProcessor.bulk_objects(params['sr_id'],params['pk']) do |gc, product|
+      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, product|
         result_record = icr.instant_classification_result_records.build(:product_id=>product.id)
         ic_to_use = InstantClassification.find_by_product product, current_user, instant_classifications
         if ic_to_use
