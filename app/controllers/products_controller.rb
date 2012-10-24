@@ -149,6 +149,7 @@ class ProductsController < ApplicationController
       params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?}
       params.delete :utf8
       Product.delay.batch_bulk_update(current_user, params)
+      add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       redirect_to products_path
     }
   end
