@@ -5,6 +5,7 @@ require 'open_chain/upgrade'
 require 'open_chain/integration_client'
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/feed_monitor'
+require 'open_chain/custom_handler/polo_ca_efocus_generator'
 
 def job_wrapper job_name, &block
   begin
@@ -88,6 +89,9 @@ def execute_scheduler
   if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
     scheduler.every("5m") do
       OpenChain::AllianceImagingClient.delay.consume_images
+    end
+    scheduler.every("30m") do
+      OpenChain::CustomHandler::PoloCaEfocusGenerator.delay.generate 
     end
   end
 

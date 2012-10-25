@@ -9,3 +9,6 @@
 <%if enabled_features.include? 'CSM Sync'%>
   <%=link_to "CSM Sync", '/custom_features/csm_sync'%><br />
 <%end%>
+<%if enabled_features.include?('Polo Canada') && OpenChain::CustomHandler::PoloCaEntryParser.new(nil).can_view?(current_user)-%>
+  <%=link_to "Polo Canada", '/custom_features/polo_canada'%><br />
+<%end-%>

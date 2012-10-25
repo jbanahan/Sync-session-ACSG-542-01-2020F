@@ -137,6 +137,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/csm_sync" => "custom_features#csm_sync_index", :via=>:get
   match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
   match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get
+  match "/custom_features/polo_canada" => "custom_features#polo_efocus_index", :via=>:get
+  match "/custom_features/polo_canada/upload" => "custom_features#polo_efocus_upload", :via => :post
+  match "/custom_features/polo_canada/:id/download" => "custom_features#polo_efocus_download", :via => :get
 
   #reports
   match "/reports" => "reports#index", :via => :get
