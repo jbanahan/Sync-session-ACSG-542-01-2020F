@@ -91,7 +91,7 @@ def execute_scheduler
       OpenChain::AllianceImagingClient.delay.consume_images
     end
     scheduler.every("30m") do
-      OpenChain::CustomHandler::PoloCaEfocusGenerator.delay.generate 
+      OpenChain::CustomHandler::PoloCaEfocusGenerator.new.delay.generate 
     end
   end
 
