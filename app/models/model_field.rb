@@ -733,11 +733,18 @@ class ModelField
       [123,:ent_statement_month,:statement_month,"PMS Month",{
         :import_lambda=>lambda {|obj,data| "PMS Month ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.monthly_statement_due_date ? obj.monthly_statement_due_date.month : nil},
-        :qualified_field_name=>"month(monthly_statement_due_date) as statement_month",
+        :qualified_field_name=>"month(monthly_statement_due_date)",
         :data_type=>:integer
       }],
       [124,:ent_first_7501_print,:first_7501_print,"7501 Print Date - First",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
-      [125,:ent_last_7501_print,:last_7501_print,"7501 Print Date - Last",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}]
+      [125,:ent_last_7501_print,:last_7501_print,"7501 Print Date - Last",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [126,:ent_duty_billed,:duty_billed,"Total Duty Billed",{
+        :import_lambda=>lambda {|obj,data| "Total Duty Billed ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.broker_invoice_lines.where(:charge_code=>'0001').sum(:charge_amount)},
+        :qualified_field_name=>"(select sum(charge_amount) from broker_invoice_lines inner join broker_invoices on broker_invoices.id = broker_invoice_lines.broker_invoice_id where broker_invoices.entry_id = entries.id and charge_code = '0001')",
+        :data_type=>:decimal,
+        :can_view_lambda=>lambda {|u| u.view_broker_invoices? && u.company.broker?}
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
