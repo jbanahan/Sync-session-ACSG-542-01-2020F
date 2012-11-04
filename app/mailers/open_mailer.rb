@@ -8,11 +8,14 @@ EOS
 
   default :from => "do-not-reply@chain.io"
 
-  # Subject can be set in your I18n file at config/locales/en.yml
-  # with the following lookup:
-  #
-  #   en.open_mailer.send_change.subject
-  #
+  #send a simple plain text email
+  def send_simple_text to, subject, body
+
+    @body_content = body
+    mail(:to=>to,:subject=>subject) do |format|
+      format.text
+    end
+  end
   def send_change(history,subscription,text_only)
     details = history.details_hash
     type = details[:type].nil? ? "Item" : details[:type]

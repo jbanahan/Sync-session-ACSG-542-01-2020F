@@ -93,6 +93,27 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       @e1.reload
       @e1.should have(1).sync_records
     end
+    context "bad port code" do
+      before :each do 
+        @e1.update_attributes(:entry_port_code=>'000')
+      end
+      it "should email ralphlauren-ca@vandegriftinc.com" do
+        @g.sync_xml
+        mail = ActionMailer::Base.deliveries.pop
+        mail.to.should == ['ralphlauren-ca@vandegriftinc.com']
+        mail.body.should include "Port code 000 is not set in the Ralph Lauren e-Focus XML Generator."
+        mail.body.should include OpenChain::CustomHandler::PoloCaEfocusGenerator::PORT_MAP.keys.first
+      end
+      it "should not generate file" do
+        @g.sync_xml.should == [] 
+      end
+      it "should generate sync record" do
+        #so we don't keep resending error emails
+        @g.sync_xml
+        @e1.reload
+        @e1.should have(1).sync_records
+      end
+    end
   end
 
   describe :generate_xml_file do
@@ -125,6 +146,11 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       e.elements['total-tax'].text.should == @e1.total_gst.to_s
       e.elements['total-invoice-value'].text.should == @e1.total_invoiced_value.to_s
       e.elements.to_a.should have(20).elements
+    end
+    it "should truncate house bills longer than 16 characters" do
+      @e1.house_bills_of_lading = "HB12345678901234567890"
+      @e1.master_bills_of_lading = "B"
+      get_entry_element.elements['master-bill'].elements['house-bill'].text.should == "HB12345678901234"
     end
     it "should write multiple house bills" do
       @e1.house_bills_of_lading = "HB1 HB2"
@@ -165,16 +191,16 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       get_entry_element.elements['country-export'].text.should == 'CN'
     end
     it "should map known unlading port codes" do
-      {'351'=>'CALCO','396'=>'CADOR','399'=>'CAYMX','440'=>'CASNI','496'=>'CATOR','497'=>'CAYYZ'}.each do |fen,ohl|
+      {'351'=>'CALCO','396'=>'CADOR','399'=>'CAYMX',
+        '440'=>'CASNI','496'=>'CATOR','497'=>'CAYYZ',
+        '395'=>'CAMTR','427'=>'CANIA','480'=>'CABRP',
+        '485'=>'CAYOW','495'=>'CATOR','809'=>'CAVAN',
+        '821'=>'CAYVR'}.each do |fen,ohl|
         @f.unlink if @f
         @f = Tempfile.new('pcefg')
         @e1.entry_port_code = fen
         get_entry_element.elements['port-unlading'].text.should == ohl
       end
-    end
-    it "should use ZZZZZ for unknown unlading port codes" do
-      @e1.entry_port_code = '777'
-        get_entry_element.elements['port-unlading'].text.should == 'ZZZZZ'
     end
   end
 

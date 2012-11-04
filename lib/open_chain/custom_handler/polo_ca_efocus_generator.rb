@@ -7,7 +7,9 @@ module OpenChain
 
       # key is fenix code, value is ohl code
       TRANSPORT_MODE_MAP = {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
-      PORT_MAP = {'351'=>'CALCO','396'=>'CADOR','399'=>'CAYMX','440'=>'CASNI','496'=>'CATOR','497'=>'CAYYZ'}
+      PORT_MAP = {'351'=>'CALCO','395'=>'CAMTR','396'=>'CADOR','399'=>'CAYMX','427'=>'CANIA',
+        '440'=>'CASNI','453'=>'CAWND','480'=>'CABRP','485'=>'CAYOW','495'=>'CATOR',
+        '496'=>'CATOR','497'=>'CAYYZ','809'=>'CAVAN','821'=>'CAYVR'}
       SYNC_CODE = 'polo_ca_efocus'
       
       #This is the master method that does all of the work
@@ -24,11 +26,26 @@ module OpenChain
           need_sync(SYNC_CODE).uniq
         entries.each do |ent|
           t = Tempfile.new(["PoloCaEfocus",".xml"])  
-          generate_xml_file ent, t
+          if !ent.entry_port_code.blank? && !PORT_MAP.keys.include?(ent.entry_port_code.strip)
+            body = <<endbody
+Port code #{ent.entry_port_code.strip} is not set in the Ralph Lauren e-Focus XML Generator.
+
+If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
+
+The program currently has the following Port Code - UN/LOCODE mappings:
+
+endbody
+            PORT_MAP.each do |k,v|
+              body << "#{k} - #{v}\n"
+            end
+            OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com','INVALID RALPH LAUREN CA PORT CODE',body).deliver!
+          else
+            generate_xml_file ent, t
+            files << t
+          end
           sr = ent.sync_records.find_by_trading_partner(SYNC_CODE)
           sr = ent.sync_records.build(:trading_partner=>SYNC_CODE) unless sr
           sr.update_attributes(:sent_at=>2.seconds.ago,:confirmed_at=>1.second.ago,:confirmation_file_name=>'n/a')
-          files << t
         end
         files
       end
@@ -65,13 +82,7 @@ module OpenChain
           entry.master_bills_of_lading.split(' ').each do |mb|
             el = ent.add_element('master-bill')
             el.add_element('number').text = mb
-            #since we don't have the right structure on the inbound, writing all house
-            #bills under each master bill
-            unless entry.house_bills_of_lading.blank?
-              entry.house_bills_of_lading.split(' ').each do |hb|
-                add_element el, 'house-bill', hb
-              end
-            end
+            add_house_bills el, entry.house_bills_of_lading
           end
         end
         output_file << doc.to_s
@@ -112,6 +123,16 @@ module OpenChain
         return nil if fenix_port_code.blank?
         r = PORT_MAP[fenix_port_code].blank? ? 'ZZZZZ' : PORT_MAP[fenix_port_code]
         add_element parent, 'port-unlading', r
+      end
+      def add_house_bills parent, hbol_numbers
+        #since we don't have the right structure on the inbound, writing all house
+        #bills under each master bill
+        unless hbol_numbers.blank?
+          hbol_numbers.split(' ').each do |hb|
+            h = hb.size > 16 ? hb[0,16] : hb
+            add_element parent, 'house-bill', h
+          end
+        end
       end
     end
   end

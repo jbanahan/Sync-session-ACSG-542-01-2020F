@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe OpenMailer do
+  context "simple text" do
+    it "should send message" do
+      OpenMailer.send_simple_text("test@vfitrack.net", "my subject", "my body\ngoes here").deliver!
+      mail = ActionMailer::Base.deliveries.pop
+      mail.to.should == ['test@vfitrack.net']
+      mail.subject.should == 'my subject'
+      mail.body.raw_source.strip.should == "my body\ngoes here"
+    end
+  end
   context "support tickets" do
     before :each do
       @requestor = Factory(:user)
