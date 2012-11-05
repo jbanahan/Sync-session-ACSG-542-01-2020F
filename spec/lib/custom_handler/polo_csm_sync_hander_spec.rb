@@ -7,7 +7,8 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     @cf = mock('custom_file')
     @att = mock('attached')
     @att.should_receive(:path).and_return('/path/to')
-    @cf.should_receive(:attached).and_return(@att)
+    @cf.stub(:attached).and_return(@att)
+    @cf.stub(:update_attributes)
     OpenChain::XLClient.should_receive(:new).with('/path/to').and_return(@xlc)
     @csm = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Number",:data_type=>'string')
   end

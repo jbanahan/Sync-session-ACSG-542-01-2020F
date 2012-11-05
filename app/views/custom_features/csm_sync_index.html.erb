@@ -8,10 +8,18 @@
 <% end %>
 <h2>Existing Files</h2>
 <table class='detail_table'>
-  <thead><tr><th>File Name</th><th>Uploaded By</th><th>Uploaded At</th></tr></thead>
+  <thead><tr><th>File Name</th><th>Uploaded By</th><th>Uploaded At</th><th>Start</th><th>Finish</th><th>Error</th></tr></thead>
   <tbody>
     <%@files.each do |f|%>
-      <tr><td><%=link_to f.attached_file_name, "/custom_features/csm_sync/#{f.id}/download"%></td><td><%=f.uploaded_by ? f.uploaded_by.full_name : ""%></td><td><%=f.created_at%></td></tr>
+    <tr>
+      <td><%=link_to f.attached_file_name, "/custom_features/csm_sync/#{f.id}/download"%></td>
+      <td><%=f.uploaded_by ? f.uploaded_by.full_name : ""%></td>
+      <td><%=f.created_at%></td>
+      <td><%=f.start_at%></td>
+      <td><%=f.finish_at%></td>
+      <td><%=f.error_message%></td>
+      <td><%=link_to 'Reprocess', "/custom_features/csm_sync/#{f.id}/reprocess"%></td>
+    </tr>
     <%end%>
   </tbody>
 </table>

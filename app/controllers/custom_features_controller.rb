@@ -38,7 +38,7 @@ class CustomFeaturesController < ApplicationController
     }
   end
   def csm_sync_upload
-    f = CustomFile.new(:file_type=>CSM_SYNC,:uploaded_by=>current_user,:attached=>params[:attached])
+    f = CustomFile.new(:file_type=>CSM_SYNC,:uploaded_by=>current_user,:attached=>params[:attached],:start_at=>0.seconds.ago)
     action_secure(current_user.edit_products?,Product,{:verb=>"upload",:module_name=>"CSM Sync Files",:lock_check=>false}) {
       if params[:attached].nil?
         add_flash :errors, "You must select a file to upload." 
@@ -47,6 +47,19 @@ class CustomFeaturesController < ApplicationController
         add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
       else
         errors_to_flash f
+      end
+      redirect_to '/custom_features/csm_sync'
+    }
+  end
+  
+  def csm_sync_reprocess 
+    f = CustomFile.find params[:id]
+    action_secure(current_user.edit_products?,Product,{:verb=>"upload",:module_name=>"CSM Sync Files",:lock_check=>false}) {
+      if f.start_at.blank? || f.start_at < 10.minutes.ago || f.error_message
+        f.delay.process current_user
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else 
+        add_flash :errors, "This file was last processed at #{f.start_at}.  You must wait 10 minutes to reprocess."
       end
       redirect_to '/custom_features/csm_sync'
     }

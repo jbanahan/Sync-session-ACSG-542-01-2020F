@@ -30,6 +30,39 @@ describe CustomFile do
       OpenChain::S3.get_data('chain-io',@f.attached.path).should == @data
     end
   end
+  context 'status logging' do
+    it "should write start and finish times" do
+      h = mock "handler"
+      h.stub(:process).and_return('x')
+      f = CustomFile.create!
+      f.stub(:handler).and_return(h)
+      f.process mock("user")
+      f.reload
+      f.start_at.should > 10.seconds.ago
+      f.finish_at.should > 10.seconds.ago
+    end
+    it "should write error" do
+      h = mock "handler" 
+      h.stub(:process).and_raise("BAD")
+      f = CustomFile.create!
+      f.stub(:handler).and_return(h)
+      lambda {f.process mock("user")}.should raise_error "BAD"
+      f.reload
+      f.start_at.should > 10.seconds.ago
+      f.finish_at.should be_nil
+      f.error_at.should > 10.seconds.ago
+      f.error_message.should == "BAD"
+    end
+    it "should clear error on good finish" do
+      h = mock "handler"
+      h.stub(:process).and_return('x')
+      f = CustomFile.create!(:error_message=>"ABC")
+      f.stub(:handler).and_return(h)
+      f.process mock("user")
+      f.reload
+      f.error_message.should be_nil
+    end
+  end
   context 'delegating to handler' do
     before :each do
       @u = Factory(:user)
