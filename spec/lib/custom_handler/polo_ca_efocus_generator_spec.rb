@@ -191,7 +191,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       get_entry_element.elements['country-export'].text.should == 'CN'
     end
     it "should map known unlading port codes" do
-      {'351'=>'CALCO','396'=>'CADOR','399'=>'CAYMX',
+      {'9'=>'CAHAL','351'=>'CALCO','396'=>'CADOR','399'=>'CAYMX',
         '440'=>'CASNI','496'=>'CATOR','497'=>'CAYYZ',
         '395'=>'CAMTR','427'=>'CANIA','480'=>'CABRP',
         '485'=>'CAYOW','495'=>'CATOR','809'=>'CAVAN',

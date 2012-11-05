@@ -7,7 +7,7 @@ module OpenChain
 
       # key is fenix code, value is ohl code
       TRANSPORT_MODE_MAP = {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
-      PORT_MAP = {'351'=>'CALCO','395'=>'CAMTR','396'=>'CADOR','399'=>'CAYMX','427'=>'CANIA',
+      PORT_MAP = {'9'=>'CAHAL','351'=>'CALCO','395'=>'CAMTR','396'=>'CADOR','399'=>'CAYMX','427'=>'CANIA',
         '440'=>'CASNI','453'=>'CAWND','480'=>'CABRP','485'=>'CAYOW','495'=>'CATOR',
         '496'=>'CATOR','497'=>'CAYYZ','809'=>'CAVAN','821'=>'CAYVR'}
       SYNC_CODE = 'polo_ca_efocus'
