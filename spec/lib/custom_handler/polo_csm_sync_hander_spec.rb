@@ -15,32 +15,39 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     p = Factory(:product)
     p.classifications.create!(:country_id=>@italy.id).tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
     p2 = Factory(:product)
+    p3 = Factory(:product)
+    p3.classifications.create!(:country_id=>Factory(:country,:iso_code=>'US').id).tariff_records.create!(:hts_1=>'1234567890',:line_number=>1)
     p1_csm = "ABC123XYZ"
     p2_csm = "DEF654GHI"
+    p3_csm = 'GHI123ABC'
     Product.any_instance.stub(:can_edit?).and_return(true)
-    @xlc.should_receive(:last_row_number).and_return(2)
+    @xlc.should_receive(:last_row_number).and_return(3)
     @xlc.should_receive(:get_cell).with(0,1,8).and_return({'cell'=>{'value'=>p.unique_identifier}})
     @xlc.should_receive(:get_cell).with(0,1,2).and_return({'cell'=>{'value'=>'ABC'}})
     @xlc.should_receive(:get_cell).with(0,1,3).and_return({'cell'=>{'value'=>'123'}})
     @xlc.should_receive(:get_cell).with(0,1,4).and_return({'cell'=>{'value'=>'XYZ'}})
-    @xlc.should_receive(:set_cell).with(0,1,16,'matched')
+    @xlc.should_receive(:set_cell).with(0,1,16,'Style Found with IT HTS')
     @xlc.should_receive(:get_cell).with(0,2,8).and_return({'cell'=>{'value'=>p2.unique_identifier}})
     @xlc.should_receive(:get_cell).with(0,2,2).and_return({'cell'=>{'value'=>'DEF'}})
     @xlc.should_receive(:get_cell).with(0,2,3).and_return({'cell'=>{'value'=>'654'}})
     @xlc.should_receive(:get_cell).with(0,2,4).and_return({'cell'=>{'value'=>'GHI'}})
-    @xlc.should_receive(:set_cell).with(0,2,16,'matched - no tariff')
+    @xlc.should_receive(:set_cell).with(0,2,16,'Style Found, No US / IT HTS')
+    @xlc.should_receive(:get_cell).with(0,3,8).and_return({'cell'=>{'value'=>p3.unique_identifier}})
+    @xlc.should_receive(:get_cell).with(0,3,2).and_return({'cell'=>{'value'=>'GHI'}})
+    @xlc.should_receive(:get_cell).with(0,3,3).and_return({'cell'=>{'value'=>'123'}})
+    @xlc.should_receive(:get_cell).with(0,3,4).and_return({'cell'=>{'value'=>'ABC'}})
+    @xlc.should_receive(:set_cell).with(0,3,16,'Style Found, No IT HTS')
     @xlc.should_receive(:save)
     OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)
     p.get_custom_value(@csm).value.should == p1_csm 
     p2.get_custom_value(@csm).value.should == p2_csm
+    p3.get_custom_value(@csm).value.should == p3_csm
     p.should have(1).entity_snapshots
   end
   it "should not update lines that don't match" do
-    @xlc.should_receive(:last_row_number).and_return(2)
+    @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_cell).with(0,1,8).and_return({'cell'=>{'value'=>'abc'}})
-    @xlc.should_receive(:set_cell).with(0,1,16,'not matched')
-    @xlc.should_receive(:get_cell).with(0,2,8).and_return({'cell'=>{'value'=>'def'}})
-    @xlc.should_receive(:set_cell).with(0,2,16,'not matched')
+    @xlc.should_receive(:set_cell).with(0,1,16,'Style Not Found')
     @xlc.should_receive(:save)
     OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)
   end
