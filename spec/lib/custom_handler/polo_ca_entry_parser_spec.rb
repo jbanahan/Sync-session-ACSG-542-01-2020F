@@ -17,11 +17,14 @@ describe OpenChain::CustomHandler::PoloCaEntryParser do
           end
           @xlc.should_receive(:get_row).with(0,line_number).and_return(r_val) 
         }
+        @starting_docs_received = 20.minutes.ago
         @line_array = [
           [0,'123456','string'],
           [1,'MBOL','string'],
           [2,'HBOL','string'],
-          [3,'CONT','string']
+          [3,'CONT','string'],
+          [4,10.minutes.ago,'datetime'],
+          [5,@starting_docs_received,'datetime']
         ]
         OpenChain::XLClient.should_receive(:new).with('/path/to').and_return(@xlc)
         @h = OpenChain::CustomHandler::PoloCaEntryParser.new(@cf)
@@ -30,7 +33,7 @@ describe OpenChain::CustomHandler::PoloCaEntryParser do
         User.any_instance.stub(:edit_entries?).and_return(true)
         @xlc.should_receive(:last_row_number).and_return(1)
         @make_line_lambda.call 1, @line_array
-        @h.should_receive(:parse_record).with({:brok_ref=>'123456',:mbol=>'MBOL',:hbol=>'HBOL',:cont=>'CONT'})
+        @h.should_receive(:parse_record).with({:brok_ref=>'123456',:mbol=>'MBOL',:hbol=>'HBOL',:cont=>'CONT',:docs_rec=>@starting_docs_received})
         @h.process(Factory(:master_user))
       end
       it 'should call parse record for multiple files' do
@@ -41,9 +44,11 @@ describe OpenChain::CustomHandler::PoloCaEntryParser do
         @line_array[1][1] = "MB2"
         @line_array[2][1] = "HB2"
         @line_array[3][1] = "C2"
+        new_docs_received = 4.minutes.ago
+        @line_array[5][1] = new_docs_received
         @make_line_lambda.call 2, @line_array
-        @h.should_receive(:parse_record).with({:brok_ref=>'123456',:mbol=>'MBOL',:hbol=>'HBOL',:cont=>'CONT'})
-        @h.should_receive(:parse_record).with({:brok_ref=>'654321',:mbol=>'MB2',:hbol=>'HB2',:cont=>'C2'})
+        @h.should_receive(:parse_record).with({:brok_ref=>'123456',:mbol=>'MBOL',:hbol=>'HBOL',:cont=>'CONT',:docs_rec=>@starting_docs_received})
+        @h.should_receive(:parse_record).with({:brok_ref=>'654321',:mbol=>'MB2',:hbol=>'HB2',:cont=>'C2',:docs_rec=>new_docs_received})
         @h.process(Factory(:master_user))
       end
     end
@@ -87,7 +92,7 @@ describe OpenChain::CustomHandler::PoloCaEntryParser do
   describe :parse_record do
     before :each do
       @ca = Factory(:country,:iso_code=>'CA')
-      @vals = {:brok_ref=>'12345',:mbol=>'MBOL',:hbol=>'HBOL',:cont=>'CONT'}
+      @vals = {:brok_ref=>'12345',:mbol=>'MBOL',:hbol=>'HBOL',:cont=>'CONT',:docs_rec=>1.minute.ago}
       @cf = Factory(:custom_file)
       @h = OpenChain::CustomHandler::PoloCaEntryParser.new(@cf)
     end
@@ -99,6 +104,7 @@ describe OpenChain::CustomHandler::PoloCaEntryParser do
       ent.container_numbers.should == 'CONT'
       ent.import_country.should == @ca
       ent.source_system.should == 'Fenix' #so it picks up the eventual fenix update
+      ent.docs_received_date.strftime("%Y%m%d").should == @vals[:docs_rec].strftime("%Y%m%d")
     end
     it 'should handle multiple containers' do
       @vals[:cont] = "C1, C2,  C3  "
