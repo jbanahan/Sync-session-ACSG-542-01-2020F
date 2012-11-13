@@ -15,7 +15,7 @@ module OpenChain
         entry_lines = []
         current_file_number = ""
         CSV.parse(file_content) do |line|
-          next unless line.size > 10
+          next if line.size < 10 || line[0]=='Barcode'
           file_number = line[1]
           if !entry_lines.empty? && file_number!=current_file_number
             FenixParser.new.parse_entry entry_lines, s3_bucket, s3_path
