@@ -1,7 +1,10 @@
 class Port < ActiveRecord::Base
 
-  validates :schedule_k_code, :format => {:with=>/^[0-9]{5}$/,:message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?} 
+  validates :schedule_k_code, :format => {:with=>/^[0-9]{5}$/,:message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?}
   validates :schedule_d_code, :format => {:with=>/^[0-9]{4}$/,:message=>"Schedule D code must be 4 digits.", :if=>:schedule_d_code?} 
+  validates :cbsa_port, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Port code must be 4 digits", :if=>:cbsa_port?}
+  validates :cbsa_sublocation, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Sublocation code must be 4 digits", :if=>:cbsa_sublocation?}
+  validates :unlocode, :format => {:with=>/^[A-Z]{5}$/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
 
   # loads schedule d ports from the US standard at http://www.census.gov/foreign-trade/schedules/d/dist3.txt
   def self.load_schedule_d data
@@ -31,4 +34,16 @@ class Port < ActiveRecord::Base
     end
   end
 
+  # load canadia port data from http://www.cbsa-asfc.gc.ca/codes/generic-eng.html, must be modified to make tab separated file
+  def self.load_cbsa_data data
+    Port.transaction do
+      data.lines do |row|
+        ary = row.split("\t")
+        p = Port.find_by_cbsa_port ary[0]
+        #do nothing if port is found
+        next if p
+        Port.create!(:name=>ary[2].strip,:cbsa_port=>ary[0].strip,:cbsa_sublocation=>ary[1].strip)
+      end
+    end
+  end
 end

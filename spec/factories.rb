@@ -31,6 +31,12 @@ end
 Factory.define :master_user, :parent=>:user do |f|
   f.after_create {|u| u.company.update_attributes(:master=>true)}
 end
+Factory.define :admin_user, :parent=>:master_user do |f|
+  f.after_create do |u| 
+    u.admin = true
+    u.save!
+  end
+end
 Factory.define :broker_user, :parent=>:user do |f|
   f.entry_view true
   f.broker_invoice_view true

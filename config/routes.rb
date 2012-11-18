@@ -346,5 +346,6 @@ OpenChain::Application.routes.draw do
   resources :drawback_upload_files, :only=>[:index,:create]
   resources :error_log_entries, :only => [:index, :show]
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
+  resources :ports, :only => [:index, :update, :create, :destroy]
   root :to => "dashboard_widgets#index"
 end
