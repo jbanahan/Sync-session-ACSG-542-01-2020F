@@ -35,13 +35,15 @@ class Port < ActiveRecord::Base
   end
 
   # load canadia port data from http://www.cbsa-asfc.gc.ca/codes/generic-eng.html, must be modified to make tab separated file
+  # you must clean up encoding issues before processing
   def self.load_cbsa_data data
     Port.transaction do
       data.lines do |row|
+        puts row
         ary = row.split("\t")
         p = Port.find_by_cbsa_port ary[0]
         #do nothing if port is found
-        next if p
+        next if p || ary[0].blank? || ary[1].blank? || ary[2].blank?
         Port.create!(:name=>ary[2].strip,:cbsa_port=>ary[0].strip,:cbsa_sublocation=>ary[1].strip)
       end
     end

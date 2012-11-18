@@ -1,8 +1,8 @@
 <%content_for :javascript do-%>
   $(function() {
-    $("#mod_add_port").dialog({autoOpen:false,buttons:{'Save':function() {$("#frm_new").submit();},'Cancel':function() {$("#mod_add_port").dialog('close');}}});
+    $("#mod_add_port").dialog({autoOpen:false,width:'auto',buttons:{'Save':function() {$("#frm_new").submit();},'Cancel':function() {$("#mod_add_port").dialog('close');}}});
     $("#btn_add").click(function() {$("#mod_add_port").dialog('open');});
-    $("#mod_update_port").dialog({autoOpen:false,buttons:{'Save':function() {$("#frm_upd").submit();},'Cancel':function() {$("#mod_update_port").dialog('close');}}});
+    $("#mod_update_port").dialog({autoOpen:false,width:'auto',buttons:{'Save':function() {$("#frm_upd").submit();},'Cancel':function() {$("#mod_update_port").dialog('close');}}});
     $("a.upd_lnk").click(function(evt) {
       evt.preventDefault();
       $("#frm_upd").attr('action','/ports/'+$(this).attr('pid'));
@@ -49,7 +49,7 @@
       <%=field_row 'Schedule D', f.text_field(:schedule_d_code)%>
       <%=field_row 'CBSA Port', f.text_field(:cbsa_port)%>
       <%=field_row 'CBSA Sublocation', f.text_field(:cbsa_sublocation)%>
-      <%=field_row 'UN/LOCODE', f.text_field(:unlocode)
+      <%=field_row 'UN/LOCODE', f.text_field(:unlocode)%>
     </table>
   <%end-%>
 </div>
@@ -62,7 +62,7 @@
       <%=field_row 'Schedule D', f.text_field(:schedule_d_code,:id=>'upd_d')%>
       <%=field_row 'CBSA Port', f.text_field(:cbsa_port,:id=>'upd_cp')%>
       <%=field_row 'CBSA Sublocation', f.text_field(:cbsa_sublocation,:id=>'upd_cs')%>
-      <%=field_row 'UN/LOCODE', f.text_field(:unlocode,:id=>'upd_u')
+      <%=field_row 'UN/LOCODE', f.text_field(:unlocode,:id=>'upd_u')%>
     </table>
   <%end-%>
 </div>

@@ -2,7 +2,10 @@ class PortsController < ApplicationController
   SEARCH_PARAMS = {
     'p_name'=>{:field=>'name',:label=>'Name'},
     'p_k_code'=>{:field=>'schedule_k_code',:label=>'Schedule K Code'},
-    'p_d_code'=>{:field=>'schedule_d_code',:label=>'Schedule D Code'}
+    'p_d_code'=>{:field=>'schedule_d_code',:label=>'Schedule D Code'},
+    'p_cp_code'=>{:field=>'cbsa_port',:label=>'CBSA Port'},
+    'p_cs_code'=>{:field=>'cbsa_sublocation',:label=>'CBSA Sublocation'},
+    'p_un_code'=>{:field=>'unlocode',:label=>'UN/LOCODE'}
   }
   def index
     admin_secure {
