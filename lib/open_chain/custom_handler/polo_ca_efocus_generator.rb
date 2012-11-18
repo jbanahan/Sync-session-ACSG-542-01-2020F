@@ -2,14 +2,15 @@ require 'rexml/document'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
 module OpenChain
   module CustomHandler
+
+    class PortMissingError < ::RuntimeError
+      attr_accessor :port_code
+    end
     #write XML files to go to e-Focus (at OHL) for supply chain tracking
     class PoloCaEfocusGenerator
 
       # key is fenix code, value is ohl code
       TRANSPORT_MODE_MAP = {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
-      PORT_MAP = {'9'=>'CAHAL','351'=>'CALCO','395'=>'CAMTR','396'=>'CADOR','399'=>'CAYMX','427'=>'CANIA',
-        '440'=>'CASNI','453'=>'CAWND','480'=>'CABRP','485'=>'CAYOW','495'=>'CATOR',
-        '496'=>'CATOR','497'=>'CAYYZ','809'=>'CAVAN','821'=>'CAYVR'}
       SYNC_CODE = 'polo_ca_efocus'
       
       #This is the master method that does all of the work
@@ -25,23 +26,17 @@ module OpenChain
           where("length(house_bills_of_lading) > 0 OR length(container_numbers) > 0").
           need_sync(SYNC_CODE).uniq
         entries.each do |ent|
+          begin
           t = Tempfile.new(["PoloCaEfocus",".xml"])  
-          if !ent.entry_port_code.blank? && !PORT_MAP.keys.include?(ent.entry_port_code.strip)
-            body = <<endbody
-Port code #{ent.entry_port_code.strip} is not set in the Ralph Lauren e-Focus XML Generator.
-
-If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
-
-The program currently has the following Port Code - UN/LOCODE mappings:
-
-endbody
-            PORT_MAP.each do |k,v|
-              body << "#{k} - #{v}\n"
-            end
-            OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com','INVALID RALPH LAUREN CA PORT CODE',body).deliver!
-          else
             generate_xml_file ent, t
             files << t
+          rescue OpenChain::CustomHandler::PortMissingError
+            body = <<endbody
+Port code #{$!.port_code} is not set in the Ralph Lauren e-Focus XML Generator.
+
+If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
+endbody
+            OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com','INVALID RALPH LAUREN CA PORT CODE',body).deliver!
           end
           sr = ent.sync_records.find_by_trading_partner(SYNC_CODE)
           sr = ent.sync_records.build(:trading_partner=>SYNC_CODE) unless sr
@@ -121,8 +116,19 @@ endbody
       end
       def add_unlading_port parent, fenix_port_code
         return nil if fenix_port_code.blank?
-        r = PORT_MAP[fenix_port_code].blank? ? 'ZZZZZ' : PORT_MAP[fenix_port_code]
-        add_element parent, 'port-unlading', r
+        pc = fenix_port_code
+        while pc.size < 4
+          pc = '0'+pc
+        end
+        port = Port.where(:cbsa_port=>pc).where("length(unlocode) > 0").first
+        if port
+          add_element parent, 'port-unlading', port.unlocode if port
+        else
+          pme = PortMissingError.new
+          pme.port_code = pc
+          raise pme
+        end
+        nil
       end
       def add_house_bills parent, hbol_numbers
         #since we don't have the right structure on the inbound, writing all house

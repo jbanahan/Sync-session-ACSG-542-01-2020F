@@ -39,7 +39,6 @@ class Port < ActiveRecord::Base
   def self.load_cbsa_data data
     Port.transaction do
       data.lines do |row|
-        puts row
         ary = row.split("\t")
         p = Port.find_by_cbsa_port ary[0]
         #do nothing if port is found

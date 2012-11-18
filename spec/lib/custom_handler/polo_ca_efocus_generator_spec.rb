@@ -101,8 +101,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
         @g.sync_xml
         mail = ActionMailer::Base.deliveries.pop
         mail.to.should == ['ralphlauren-ca@vandegriftinc.com']
-        mail.body.should include "Port code 000 is not set in the Ralph Lauren e-Focus XML Generator."
-        mail.body.should include OpenChain::CustomHandler::PoloCaEfocusGenerator::PORT_MAP.keys.first
+        mail.body.should include "Port code 0000 is not set in the Ralph Lauren e-Focus XML Generator."
       end
       it "should not generate file" do
         @g.sync_xml.should == [] 
@@ -190,17 +189,10 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       @e1.export_country_codes = "CN TW"
       get_entry_element.elements['country-export'].text.should == 'CN'
     end
-    it "should map known unlading port codes" do
-      {'9'=>'CAHAL','351'=>'CALCO','396'=>'CADOR','399'=>'CAYMX',
-        '440'=>'CASNI','496'=>'CATOR','497'=>'CAYYZ',
-        '395'=>'CAMTR','427'=>'CANIA','480'=>'CABRP',
-        '485'=>'CAYOW','495'=>'CATOR','809'=>'CAVAN',
-        '821'=>'CAYVR'}.each do |fen,ohl|
-        @f.unlink if @f
-        @f = Tempfile.new('pcefg')
-        @e1.entry_port_code = fen
-        get_entry_element.elements['port-unlading'].text.should == ohl
-      end
+    it "should use port codes table for unlading port codes" do
+      p = Factory(:port,:cbsa_port=>'0009',:unlocode=>'CAHAL')
+      @e1.entry_port_code = '9'
+      get_entry_element.elements['port-unlading'].text.should == 'CAHAL'
     end
   end
 
