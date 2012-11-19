@@ -744,7 +744,8 @@ class ModelField
         :qualified_field_name=>"(select sum(charge_amount) from broker_invoice_lines inner join broker_invoices on broker_invoices.id = broker_invoice_lines.broker_invoice_id where broker_invoices.entry_id = entries.id and charge_code = '0001')",
         :data_type=>:decimal,
         :can_view_lambda=>lambda {|u| u.view_broker_invoices? && u.company.broker?}
-      }]
+      }],
+      [127,:ent_first_it_date,:first_it_date,"First IT Date",{:data_type=>:date}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [

@@ -387,6 +387,12 @@ module OpenChain
 
     # tracking numbers
     def process_si00 r
+      it_date = parse_date(r[98,8].strip)
+      if it_date 
+        if @entry.first_it_date.blank? || @entry.first_it_date > it_date
+          @entry.first_it_date = it_date
+        end
+      end
       accumulate_string :it_number, r[4,12].strip
       accumulate_string :mbol, r[16,16].strip
       accumulate_string :hbol, r[32,12].strip

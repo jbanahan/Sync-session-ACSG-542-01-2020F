@@ -150,12 +150,12 @@ describe OpenChain::AllianceParser do
       rows.join("\n")
     }
     @si_lines = [
-      {:mbol=>'MAEU12345678',:it=>'123456789',:hbol=>'H325468',:sub=>'S19148kf'},
-      {:mbol=>'OOCL81851511',:it=>'V58242151',:hbol=>'H35156181',:sub=>'S5555555'}
+      {:mbol=>'MAEU12345678',:it=>'123456789',:hbol=>'H325468',:sub=>'S19148kf',:fit=>'20120603'},
+      {:mbol=>'OOCL81851511',:it=>'V58242151',:hbol=>'H35156181',:sub=>'S5555555',:fit=>'20120604'}
     ]
     @make_si_lambda = lambda {
       rows = []
-      @si_lines.each {|h| rows << "SI00#{h[:it].ljust(12)}#{h[:mbol].ljust(16)}#{h[:hbol].ljust(12)}#{h[:sub].ljust(12)}"}
+      @si_lines.each {|h| rows << "SI00#{h[:it].ljust(12)}#{h[:mbol].ljust(16)}#{h[:hbol].ljust(12)}#{h[:sub].ljust(12)}#{"".ljust(42)}#{h[:fit]}"}
       rows.join("\n")
     }
     #array of hashes for each invoice
@@ -657,6 +657,7 @@ describe OpenChain::AllianceParser do
     ent.house_bills_of_lading.should == (@si_lines.collect {|h| h[:hbol]}).join(@split_string)
     ent.sub_house_bills_of_lading.should == (@si_lines.collect {|h| h[:sub]}).join(@split_string)
     ent.it_numbers.should == (@si_lines.collect {|h| h[:it]}).join(@split_string)
+    ent.first_it_date.strftime("%Y%m%d").should == '20120603'
   end
   it 'should replace entry header tracking fields' do
     Entry.create(:broker_reference=>@ref_num,:it_numbers=>'12345',:master_bills_of_lading=>'mbols',:house_bills_of_lading=>'bolsh',:sub_house_bills_of_lading=>'shs',:source_system=>OpenChain::AllianceParser::SOURCE_CODE)
