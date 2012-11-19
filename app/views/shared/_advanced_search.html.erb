@@ -83,7 +83,7 @@ $(function() {
             <td colspan='<%=@current_search.search_columns.size%>'>This record had more than 20 details.  To see the full result, use the Download button.</td>
           <% else -%>
             <% row.each do |r| %>
-              <td><%=r.blank? ? (!r.nil? && r.is_a?(FalseClass) ? "false" : "&nbsp;".html_safe) : r%></td>
+              <td><%=search_result_value(@current_search,r)%></td>
             <% end %>
           <% end -%>
         </tr>

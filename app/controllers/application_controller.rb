@@ -215,7 +215,7 @@ class ApplicationController < ActionController::Base
         headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
       end
     
-      render :text => CsvMaker.new(:include_links=>@current_search.include_links?).make_from_search(@current_search,@results) 
+      render :text => CsvMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results) 
     end
 
     def error_redirect(message=nil)
@@ -401,7 +401,7 @@ class ApplicationController < ActionController::Base
         }
         format.xls {
           if @results.length < 100
-            book = XlsMaker.new(:include_links=>@current_search.include_links?).make_from_search(@current_search,@results.where("1=1")) 
+            book = XlsMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results.where("1=1")) 
             spreadsheet = StringIO.new 
             book.write spreadsheet 
             send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"

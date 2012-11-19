@@ -9,6 +9,18 @@ module ApplicationHelper
     :pdf=>ICON_PDF
   }
 
+  def search_result_value search_setup, result_value
+    return "false" if !result_value.nil? && result_value.is_a?(FalseClass)
+    return "&nbsp;".html_safe if result_value.blank?
+    if result_value.respond_to?(:strftime)
+      if result_value.is_a?(Date) || search_setup.no_time?
+        return result_value.strftime("%Y-%m-%d")
+      else
+        return result_value.strftime("%Y-%m-%d %H:%M")
+      end
+    end
+    result_value
+  end
   def field_view_row object, model_field_uid, show_prefix=nil
     mf = ModelField.find_by_uid(model_field_uid)
     debugger if mf.nil?

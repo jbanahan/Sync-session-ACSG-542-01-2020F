@@ -7,12 +7,15 @@ class XlsMaker
                                           :pattern => 1,
                                           :name=>"Heading"
   DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
+  DATE_TIME_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD HH:MM'
 
   attr_accessor :include_links
+  attr_accessor :no_time #hide timestamps on output
 
   def initialize opts={}
-    inner_opts = {:include_links=>false}.merge(opts)
+    inner_opts = {:include_links=>false,:no_time=>false}.merge(opts)
     @include_links = inner_opts[:include_links]
+    @no_time = inner_opts[:no_time]
   end
   
   def make_from_search(current_search, results)
@@ -68,9 +71,13 @@ class XlsMaker
         end
         sheet.row(row_number).push(cell)
         width = cell.to_s.size<8 ? 8 : cell.to_s.size + 3
-        if cell.is_a? Date
-          sheet.row(row_number).set_format(col,DATE_FORMAT) 
-          width = 13
+        if cell.respond_to?(:strftime)
+          if cell.is_a?(Date) || @no_time
+            width = 13
+            sheet.row(row_number).set_format(col,DATE_FORMAT) 
+          else
+            sheet.row(row_number).set_format(col,DATE_TIME_FORMAT)
+          end
         end
         width = 23 if width > 23
         if @column_widths[col] < width

@@ -23,6 +23,7 @@ parent_hash_name = 'search_setup' unless local_assigns.has_key? :parent_hash_nam
       Download Format: <%=f.select :download_format, ["xls","csv"] %><br />
       <%end-%>
       Include Links In Download: <%=f.check_box :include_links %><br />
+      Hide Time For All Date Fields: <%=f.check_box :no_time %><br />
       <%if current_search.respond_to? :module_type-%>
         <%=f.hidden_field :module_type %>
       <%end%>
