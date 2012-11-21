@@ -32,6 +32,8 @@ module OpenChain
             files << t
           rescue OpenChain::CustomHandler::PortMissingError
             body = <<endbody
+Error for file #{ent.broker_reference}.
+
 Port code #{$!.port_code} is not set in the Ralph Lauren e-Focus XML Generator.
 
 If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
