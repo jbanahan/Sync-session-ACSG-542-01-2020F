@@ -25,6 +25,7 @@ module OpenChain
             row.each do |cell|
               val_hash[cell['position']['column']] = cell['cell']['value']
             end
+            val_hash[5] = fix_date val_hash[5]
             parse_record :brok_ref=>fix_numeric(val_hash[0]),
               :mbol=>fix_numeric(val_hash[1]),
               :hbol=>fix_numeric(val_hash[2]),
@@ -83,6 +84,13 @@ module OpenChain
         v = val.to_s
         v = v[0,v.size-2] if v.end_with?('.0')
         v
+      end
+      def fix_date val
+        return val if val.respond_to?(:strftime)
+        v = val.to_s
+        date_parts = v.split("/")
+        return val unless date_parts.size == 3
+        return Date.new(date_parts[2].to_i,date_parts[0].to_i,date_parts[1].to_i)
       end
     end
   end
