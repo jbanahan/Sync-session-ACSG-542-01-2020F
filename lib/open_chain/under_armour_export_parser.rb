@@ -5,6 +5,7 @@ module OpenChain
     # parses line and returns a new DutyCalcExportFileLine
     def self.parse_csv_line r, row_num, importer
       d = DutyCalcExportFileLine.new
+      return nil if r.size <= 1 && r[0].blank?
       raise "Line #{row_num} had #{r.size} elements.  All lines must have 32 elements." unless r.size==32
       return nil if missing_country_of_origin?(r)
       d.export_date = Date.strptime(r[18],"%Y%m%d")
