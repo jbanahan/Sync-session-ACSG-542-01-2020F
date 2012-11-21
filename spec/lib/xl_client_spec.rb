@@ -8,6 +8,20 @@ describe OpenChain::XLClient do
     @client = OpenChain::XLClient.new @path
   end
 
+  context "error handling" do
+    it "should raise error if raise_errors is enabled" do
+      cmd = {"command"=>"new","path"=>@path}
+      @client.raise_errors = true
+      @client.should_receive(:private_send).with(cmd).and_return("errors"=>["BAD"])
+      lambda {@client.send(cmd)}.should raise_error OpenChain::XLClientError
+    end
+    it "should not raise error if raise_errors is not enabled" do
+      cmd = {"command"=>"new","path"=>@path}
+      resp = {'errors'=>'BAD'}
+      @client.should_receive(:private_send).with(cmd).and_return(resp)
+      @client.send(cmd).should == resp
+    end
+  end
   it 'should send a new command' do
     cmd = {"command"=>"new","path"=>@path}
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)
