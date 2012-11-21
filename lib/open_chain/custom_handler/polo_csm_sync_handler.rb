@@ -48,6 +48,7 @@ module OpenChain
               end
               xlc.set_cell 0, n, 16, matched
             rescue
+              raise $! if $!.message.include?("User does not have permission to edit product")
               had_errors = true
               xlc.set_cell 0, n, 16, "Error. Contact support."
               $!.log_me ["Custom File ID: #{@custom_file.id}","Last Row: #{last_row}"]
