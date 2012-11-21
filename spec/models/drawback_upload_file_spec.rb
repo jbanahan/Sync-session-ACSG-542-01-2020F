@@ -32,6 +32,17 @@ describe DrawbackUploadFile do
     it "should error if processor not valid" do
       lambda {DrawbackUploadFile.new(:processor=>'bad').process(@user)}.should raise_error
     end
+    it "should catch and log errors from delegated processes" do
+      d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS)
+      s3_att = mock("S3 Attachment")
+      s3_att.stub(:path).and_return('xyz')
+      @mock_attachment.stub(:attached).and_return(s3_att)
+      RuntimeError.any_instance.should_receive(:log_me)
+      OpenChain::UnderArmourReceivingParser.should_receive(:parse_s3).with('xyz').and_raise("ERR")
+      d.process(@user).should == nil
+      d.finish_at.should > 10.seconds.ago
+      d.error_message.should == "ERR"
+    end
     it "should route UA_WM_IMPORTS" do
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS)
       s3_att = mock("S3 Attachment")
