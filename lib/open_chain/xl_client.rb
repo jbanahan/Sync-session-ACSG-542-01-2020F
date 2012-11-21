@@ -1,4 +1,3 @@
-
 module OpenChain
   # Client to communicate with XLServer
   class XLClient
@@ -28,7 +27,10 @@ module OpenChain
         r = JSON.parse response_body
       rescue
         retry_count += 1
-        retry if retry_count < 3
+        if retry_count < 3
+          sleep 1
+          retry
+        end
         puts $!
         puts $!.backtrace
         r = {'errors'=>["Communications error: #{$!.message}", "Command: #{command.to_s}", "Response Body: #{response_body}", "Retry Count: #{retry_count}"]}
