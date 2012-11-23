@@ -124,6 +124,14 @@
         </ul>
       </li>
     <%end%>
+    <%if current_user.view_drawback?%>
+      <li><a href='#' class='click_sink'>Drawback</a>
+        <ul class='sub_menu'>
+          <li><a href='/drawback_claims'>Claims</a></li>
+          <li><a href='/drawback_upload_files'>Upload</a></li>
+        </ul>
+      </li>
+    <%end%>
     <%if !current_user.survey_responses.blank? || current_user.view_surveys?%>
       <li><a href='#' class='click_sink'>Surveys</a>
         <ul class='sub_menu'>

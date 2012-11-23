@@ -47,6 +47,11 @@ Factory.define :importer_user, :parent=>:user do |f|
   f.broker_invoice_view true
   f.after_create {|u| u.company.update_attributes(:importer=>true)}
 end
+Factory.define :drawback_user, :parent=>:user do |f|
+  f.drawback_view true
+  f.drawback_edit true
+  f.after_create {|u| u.company.update_attributes(:drawback=>true)}
+end
 Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
   c.sequence(:name) {|n| "Country #{n}"}
@@ -241,4 +246,7 @@ Factory.define :charge_code do |f|
   f.sequence :code
   f.description "cc description"
 end
-
+Factory.define :drawback_claim do |f|
+  f.name "dname"
+  f.association :importer, :factory => :company
+end

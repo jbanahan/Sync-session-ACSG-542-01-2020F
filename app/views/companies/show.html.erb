@@ -63,6 +63,7 @@ $(function() {
 <%=field_row "Customer", bool_txt(@company.customer?) %>
 <%=field_row "Importer", bool_txt(@company.importer?)%>
 <%=field_row "Broker", bool_txt(@company.broker?)%>
+<%=field_row "Drawback", bool_txt(@company.drawback?)%>
 <%=field_row("Alliance Customer Number", @company.alliance_customer_number) if @company.alliance_customer_number%>
 <%=field_row("Fenix Customer Number", @company.fenix_customer_number) if @company.fenix_customer_number%>
 <%=field_row "Internal System ID Number", @company.id %>

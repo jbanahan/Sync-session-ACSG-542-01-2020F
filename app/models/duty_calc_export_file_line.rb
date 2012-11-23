@@ -2,6 +2,10 @@ class DutyCalcExportFileLine < ActiveRecord::Base
   belongs_to :importer, :class_name=>"Company"
   belongs_to :duty_calc_export_file, :inverse_of=>:duty_calc_export_file_lines
 
+  scope :not_in_imports, lambda {
+    joins("LEFT OUTER JOIN drawback_import_lines on duty_calc_export_file_lines.part_number = drawback_import_lines.part_number AND duty_calc_export_file_lines.export_date > drawback_import_lines.import_date AND duty_calc_export_file_lines.importer_id = drawback_import_lines.importer_id").
+    where("drawback_import_lines.id is null")
+  }
 
   # returns an array of strings that can be used to make the duty calc csv file
   def make_line_array

@@ -343,7 +343,10 @@ OpenChain::Application.routes.draw do
     get 'invite', :on=>:member
     resources :survey_response_logs, :only=>[:index]
   end
+  
   resources :drawback_upload_files, :only=>[:index,:create]
+  resources :drawback_claims, :only=>[:index,:show]
+
   resources :error_log_entries, :only => [:index, :show]
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
   resources :ports, :only => [:index, :update, :create, :destroy]

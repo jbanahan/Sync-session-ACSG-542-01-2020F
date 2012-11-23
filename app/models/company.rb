@@ -18,6 +18,7 @@ class Company < ActiveRecord::Base
 	has_many	:products, :through => :divisions, :dependent => :destroy
 	has_many  :histories, :dependent => :destroy
   has_many  :power_of_attorneys, :dependent => :destroy
+  has_many  :drawback_claims
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
 	

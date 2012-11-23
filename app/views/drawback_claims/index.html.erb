@@ -1,0 +1,47 @@
+<h2>Drawback Claims</h2>
+
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Company</th>
+      <th>Export Date Range</th>
+      <th>Entry Number</th>
+      <th>Pieces (Claimed/Exported)</th>
+      <th>Claim Amount (Claimed/Planned)</th>
+      <th>Claim Details</th>
+      <th>Dates</th>
+    </tr>
+  </thead>
+  <tbody>
+    <%@claims.each do |c|%>
+    <tr class='search_row_break'>
+      <td><%=link_to c.name, c%></td>
+      <td><%=c.importer.name%></td>
+      <td><%=c.exports_start_date%> - <%=c.exports_end_date%></td>
+      <td><%=c.entry_number%></td>
+      <td><%=number_with_delimiter c.total_pieces_claimed%> / <%=number_with_delimiter c.total_pieces_exported%> (<%=number_to_percentage(c.percent_pieces_claimed*100,:precision=>1)%>)</td>
+      <td><%=number_to_currency(c.total_claim_amount)%> / <%=number_to_currency(c.planned_claim_amount)%> (<%=number_to_percentage(c.percent_money_claimed*100,:precision=>1)%>)</td>
+      <td>
+        <table cellspacing="0">
+          <%=field_row "Commercial Value", number_to_currency(c.total_export_value)%>
+          <%=field_row "Potential Duty Exported", number_to_currency(c.total_duty)%>
+          <%=field_row "HMF Claimed", number_to_currency(c.hmf_claimed)%>
+          <%=field_row "MPF Claimed", number_to_currency(c.mpf_claimed)%>
+          <%=field_row "Duty Claimed", number_to_currency(c.duty_claimed)%>
+          <%=field_row "Duty Check Amount", number_to_currency(c.duty_check_amount)%>
+        </table>
+      </td>
+      <td>
+        <table cellspacing="0">
+          <%=field_row "ABI Accepted", c.abi_accepted_date%>
+          <%=field_row "Sent To Customs", c.sent_to_customs_date%>
+          <%=field_row "Billed", c.billed_date%>
+          <%=field_row "Duty Check Received", c.duty_check_received_date%>
+        </table>
+      </td>
+    </tr>
+    <%end%>
+  </tbody>
+</table>
+<%=will_paginate(@claims)%>
