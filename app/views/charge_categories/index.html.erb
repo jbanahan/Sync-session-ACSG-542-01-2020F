@@ -1,0 +1,35 @@
+<%content_for :javascript do -%>
+$(function() {
+  $("#div_create").dialog({autoOpen:false,title:'New Charge Category',
+    buttons:{"OK":function() {$("#frm_create").submit();},"Cancel":function() {$("#div_create").dialog('close');}}
+    });
+  $("#btn_new").click(function() {$("#div_create").dialog('open');});
+});
+<%end-%>
+<%content_for :action_bar do -%>
+  <button id='btn_new'>New</button>
+<%end-%>
+<h2><%=@company.name%> - Charge Categories</h2>
+
+<table class='detail_table'>
+  <thead>
+    <tr><th>Charge Code</th><th>Category</th><th>Delete</th></tr>
+  </thead>
+  <tbody>
+    <%@charge_categories.each do |c|-%>
+    <tr class='hover'>
+      <td><%=c.charge_code%></td><td><%=c.category%></td>
+      <td><%=link_to "Delete", company_charge_category_path(@company,c), :confirm=>'Are you sure?', :method=>:delete%></td>
+    </tr>
+    <%end-%>
+  </tbody>
+</table>
+
+<div style='display:none;' id='div_create'>
+  <%=form_for [@company,@company.charge_categories.new], :html=>{:id=>'frm_create'} do |f|%>
+    <table>
+      <%=field_row "Charge Code", f.text_field(:charge_code)%>
+      <%=field_row "Category", f.text_field(:category)%>
+    </table>
+  <%end%>
+</div>

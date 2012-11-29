@@ -293,6 +293,7 @@ OpenChain::Application.routes.draw do
         get :destroy_all, :on => :collection
       end
 		end
+    resources :charge_categories, :only => [:index, :create, :destroy]
 		get :shipping_address_list, :on => :member
   end
   

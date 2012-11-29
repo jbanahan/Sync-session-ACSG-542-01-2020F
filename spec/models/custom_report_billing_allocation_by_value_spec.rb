@@ -35,12 +35,50 @@ describe CustomReportBillingAllocationByValue do
 
   describe :run do
     before :each do
-      @ent = Entry.create!(:entry_number=>"12345678901",:broker_reference=>"4567890")
+      @ent = Entry.create!(:entry_number=>"12345678901",:broker_reference=>"4567890",:importer_id=>Factory(:company).id)
       @ci_1 = @ent.commercial_invoices.create!(:invoice_number=>"ci_1")
       @cil_1_1 = @ci_1.commercial_invoice_lines.create!(:line_number=>"1",:value=>50)
       @cil_1_2 = @ci_1.commercial_invoice_lines.create!(:line_number=>"2",:value=>200)
       @bi = @ent.broker_invoices.create!(:invoice_date=>0.seconds.ago,:invoice_total=>250)
-      @bil_1 = @bi.broker_invoice_lines.create!(:charge_description=>"C1",:charge_amount=>"50")
+      @bil_1 = @bi.broker_invoice_lines.create!(:charge_description=>"C1",:charge_amount=>"50",:charge_code=>'CC1')
+    end
+    context "charge categories" do
+      before :each do
+        @imp = @ent.importer
+        @imp.charge_categories.create!(:charge_code=>'CC1',:category=>'X')
+      end
+      it "should use charge categories if they exist" do
+        arrays = @klass.new.to_arrays @u
+        heading_row = arrays.first
+        heading_row.should have(4).headings
+        heading_row[3].should == "X"
+        [10,40].each_with_index do |val,i|
+          arrays[i+1][3].should == val
+        end
+      end
+      it "should total amounts into categories across multiple codes" do
+        @imp.charge_categories.create!(:charge_code=>'CC2',:category=>'X')
+        @bi.broker_invoice_lines.create!(:charge_description=>"something",:charge_amount=>250,:charge_code=>'CC2')
+        arrays = @klass.new.to_arrays @u
+        heading_row = arrays.first
+        heading_row.should have(4).headings
+        heading_row[3].should == "X"
+        [60,240].each_with_index do |val,i|
+          arrays[i+1][3].should == val
+        end
+      end
+      it "should put uncategoriezed amounts into Other Charges category" do
+        @bi.broker_invoice_lines.create!(:charge_description=>"something",:charge_amount=>250,:charge_code=>'CC2')
+        arrays = @klass.new.to_arrays @u
+        heading_row = arrays.first
+        heading_row.should have(5).headings
+        heading_row[3].should == "X"
+        heading_row[4].should == "Other Charges"
+        [[10,50],[40,200]].each_with_index do |val,i|
+          arrays[i+1][3].should == val[0]
+          arrays[i+1][4].should == val[1]
+        end
+      end
     end
     it "should include base headings" do
       arrays = @klass.new.to_arrays @u
