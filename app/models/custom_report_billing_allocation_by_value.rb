@@ -44,14 +44,7 @@ class CustomReportBillingAllocationByValue < CustomReport
     invoices.each do |bi|
       charge_totals = {}
       bi.broker_invoice_lines.each do |line|
-        next if line.charge_type == "D"
-        cd = line.charge_description
-        cd = "ISF" if cd.starts_with?("ISF")
-        bill_columns << cd unless bill_columns.include?(cd)
-        val = charge_totals[cd]
-        val = BigDecimal("0.00") unless val
-        val = val + line.charge_amount
-        charge_totals[cd] = val
+        allocate_broker_invoice_line line, charge_totals, bill_columns
       end
       entry = bi.entry
       ci_lines = entry.commercial_invoice_lines
@@ -129,5 +122,32 @@ class CustomReportBillingAllocationByValue < CustomReport
       col_cursor += 1
     end
     heading_row 0
+  end
+  private 
+  def allocate_broker_invoice_line line, charge_totals, bill_columns
+    return if line.charge_type == "D"
+    @importer_category_cache ||= {}
+    importer_categories = @importer_category_cache[line.entry.importer_id]
+    if importer_categories.nil? && line.entry.importer
+      #load from database
+      importer_categories = {}
+      line.entry.importer.charge_categories.each do |cat|
+        importer_categories[cat.charge_code] = cat.category
+      end
+      @importer_category_cache[line.entry.importer_id] = importer_categories
+    end
+    cd = nil
+    if importer_categories.blank?
+      cd = line.charge_description
+      cd = "ISF" if cd.starts_with?("ISF")
+    else
+      cd = importer_categories[line.charge_code]
+      cd = "Other Charges" if cd.blank?
+    end
+    bill_columns << cd unless bill_columns.include?(cd)
+    val = charge_totals[cd]
+    val = BigDecimal("0.00") unless val
+    val = val + line.charge_amount
+    charge_totals[cd] = val
   end
 end
