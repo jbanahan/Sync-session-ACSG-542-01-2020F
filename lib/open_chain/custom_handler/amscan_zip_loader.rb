@@ -36,10 +36,7 @@ module OpenChain
       private 
       def self.match_value(original_name)
         #remove file extension
-        x = original_name.split(".")
-        x.pop
-        x = x.join(".")
-        elements = x.split("_")
+        elements = original_name.split(/[-\._]/)
         r = elements[0]
         if elements[1] && elements[1].match(/^[0-9]*$/)
           r << ".#{elements[1]}"

@@ -51,10 +51,28 @@ describe OpenChain::CustomHandler::AmscanZipLoader do
         LinkableAttachmentImportRule.should_receive(:import).with('tmp/123_ext.jpg','123_ext.jpg','/AMSCAN-ZIP','AMSCAN-123').and_return('abc')
         @h.process_zip_entry(@ze).should == 'abc'
       end
-      it "should separate consecutive numerics with period" do
+      it "should join consecutive numerics with period" do
         @ze.should_receive(:name).and_return("/x/y/123_04_ext.jpg")
         @ze.should_receive(:extract).with("tmp/123_04_ext.jpg")
         LinkableAttachmentImportRule.should_receive(:import).with('tmp/123_04_ext.jpg','123_04_ext.jpg','/AMSCAN-ZIP','AMSCAN-123.04').and_return('abc')
+        @h.process_zip_entry(@ze).should == 'abc'
+      end
+      it "should split on periods" do
+        @ze.should_receive(:name).and_return("/x/y/123.04_ext.jpg")
+        @ze.should_receive(:extract).with("tmp/123.04_ext.jpg")
+        LinkableAttachmentImportRule.should_receive(:import).with('tmp/123.04_ext.jpg','123.04_ext.jpg','/AMSCAN-ZIP','AMSCAN-123.04').and_return('abc')
+        @h.process_zip_entry(@ze).should == 'abc'
+      end
+      it "should split on hyphen" do
+        @ze.should_receive(:name).and_return("/x/y/123-04_ext.jpg")
+        @ze.should_receive(:extract).with("tmp/123-04_ext.jpg")
+        LinkableAttachmentImportRule.should_receive(:import).with('tmp/123-04_ext.jpg','123-04_ext.jpg','/AMSCAN-ZIP','AMSCAN-123.04').and_return('abc')
+        @h.process_zip_entry(@ze).should == 'abc'
+      end
+      it "should split on combo" do
+        @ze.should_receive(:name).and_return("/x/y/123-04.a_ext.jpg")
+        @ze.should_receive(:extract).with("tmp/123-04.a_ext.jpg")
+        LinkableAttachmentImportRule.should_receive(:import).with('tmp/123-04.a_ext.jpg','123-04.a_ext.jpg','/AMSCAN-ZIP','AMSCAN-123.04').and_return('abc')
         @h.process_zip_entry(@ze).should == 'abc'
       end
     end
