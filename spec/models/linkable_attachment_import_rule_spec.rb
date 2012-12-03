@@ -74,6 +74,10 @@ describe LinkableAttachmentImportRule do
         result = LinkableAttachmentImportRule.import @file, 'abcdef', @path
         result.value.should == 'abcdef'
       end
+      it 'should use value override if given' do
+        result = LinkableAttachmentImportRule.import @file, 'a.b_some file.csv', @path, 'x'
+        result.value.should == 'x'
+      end
     end
   end
 end
