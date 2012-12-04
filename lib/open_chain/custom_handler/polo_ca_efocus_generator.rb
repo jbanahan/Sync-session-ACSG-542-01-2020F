@@ -66,6 +66,7 @@ endbody
         add_element ent, 'total-duty', entry.total_duty
         add_element ent, 'total-tax', entry.total_gst
         add_element ent, 'total-invoice-value', entry.total_invoiced_value
+        add_element ent, 'do-issued-date', entry.first_do_issued_date
         add_country_origin ent, entry
         add_country_export ent, entry
         add_unlading_port ent, entry.entry_port_code

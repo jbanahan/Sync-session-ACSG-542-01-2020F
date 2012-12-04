@@ -25,12 +25,14 @@ module OpenChain
             row.each do |cell|
               val_hash[cell['position']['column']] = cell['cell']['value']
             end
-            val_hash[5] = fix_date val_hash[5]
+            [5,8].each {|i| val_hash[i] = fix_date val_hash[i]}
+            
             parse_record :brok_ref=>fix_numeric(val_hash[0]),
               :mbol=>fix_numeric(val_hash[1]),
               :hbol=>fix_numeric(val_hash[2]),
               :cont=>fix_numeric(val_hash[3]),
-              :docs_rec=>val_hash[5]
+              :docs_rec=>val_hash[5],
+              :do_issued=>val_hash[8]
           end
         rescue
           $!.log_me ["Custom File ID: #{@custom_file.id}","Row: #{row_counter}"]
@@ -55,6 +57,7 @@ module OpenChain
         changed = true if update_if_changed(ent,:house_bills_of_lading,clean_csv_lists(vals[:hbol]))
         changed = true if update_if_changed(ent,:container_numbers,clean_csv_lists(vals[:cont]))
         changed = true if update_if_changed(ent,:docs_received_date,vals[:docs_rec])
+        changed = true if update_if_changed(ent,:first_do_issued_date,vals[:do_issued])
         if changed
           ent.save! 
           @custom_file.custom_file_records.create!(:linked_object=>ent)
@@ -86,11 +89,12 @@ module OpenChain
         v
       end
       def fix_date val
+        return nil if val.nil?
         return val if val.respond_to?(:strftime)
         v = val.to_s
         date_parts = v.split("/")
         return val unless date_parts.size == 3
-        return Date.new(date_parts[2].to_i,date_parts[0].to_i,date_parts[1].to_i)
+        return ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(date_parts[2].to_i,date_parts[0].to_i,date_parts[1].to_i)
       end
     end
   end

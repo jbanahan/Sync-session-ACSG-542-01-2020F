@@ -22,7 +22,8 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       :master_bills_of_lading => "ABC1234",
       :house_bills_of_lading => "HBOL1",
       :container_numbers=>"CONT1",
-      :docs_received_date => 6.days.ago
+      :docs_received_date => 6.days.ago,
+      :first_do_issued_date => 7.days.ago
     )
     @date_format = "%Y%m%d"
     @g = OpenChain::CustomHandler::PoloCaEfocusGenerator.new
@@ -144,7 +145,8 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       e.elements['total-duty'].text.should == @e1.total_duty.to_s
       e.elements['total-tax'].text.should == @e1.total_gst.to_s
       e.elements['total-invoice-value'].text.should == @e1.total_invoiced_value.to_s
-      e.elements.to_a.should have(20).elements
+      e.elements['do-issued-date'].text.should == @e1.first_do_issued_date.strftime(@date_format)
+      e.elements.to_a.should have(21).elements
     end
     it "should truncate house bills longer than 16 characters" do
       @e1.house_bills_of_lading = "HB12345678901234567890"
