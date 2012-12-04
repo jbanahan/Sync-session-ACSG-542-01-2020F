@@ -778,8 +778,10 @@ class ModelField
       [15,:ent_state_export_code,:state_export_code,"State Export Code",{:data_type=>:string}],
       [16,:ent_state_origin_code,:state_origin_code,"State Origin Code",{:data_type=>:string}],
       [17,:ent_unit_price,:unit_price,"Unit Price",{:data_type=>:decimal}],
-
-      [18,:cil_department,:department,"Department",{:data_type=>:string}]
+      [18,:cil_department,:department,"Department",{:data_type=>:string}],
+      [19,:cil_hmf,:hmf,"HMF",{:data_type=>:decimal}],
+      [20,:cil_mpf,:mpf,"MPF - Full",{:data_type=>:decimal}],
+      [21,:cil_prorated_mpf,:prorated_mpf,"MPF - Prorated",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
       [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
