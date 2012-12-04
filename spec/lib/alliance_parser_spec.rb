@@ -168,7 +168,7 @@ describe OpenChain::AllianceParser do
           :po_number=>'abcdefg',:part_number=>'1291010', :department=>"123456",
           :mid=>'faljdsiadfl',:charges=>BigDecimal('120301.20'),:related_parties=>true,:volume=>BigDecimal('12391.21',2),:computed_value=>BigDecimal('123.45',2),
           :value=>BigDecimal('3219.23',2),:computed_adjustments=>BigDecimal('3010.32',2),:computed_net_value=>BigDecimal('301.21',2),
-          :related_parties => true, :mpf=>BigDecimal('27.01',2), :hmf=>BigDecimal('23.12',2), :cotton_fee=>BigDecimal('15.22',2),
+          :related_parties => true, :mpf=>BigDecimal('27.01',2), :hmf=>BigDecimal('23.12',2), :prorated_mpf=>BigDecimal('50.26'), :cotton_fee=>BigDecimal('15.22',2),
           :tariff=>[{
             :duty_total=>BigDecimal("21.10",2),:entered_value=>BigDecimal('19311.12',2),:spi_primary=>'A',:spi_secondary=>'B',:hts_code=>'6504212121',
             :class_q_1=>BigDecimal('10.04',2),:class_uom_1=>'ABC', 
@@ -189,7 +189,7 @@ describe OpenChain::AllianceParser do
       {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
-        :lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X",:part_number=>'123918'}
+        :lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X",:part_number=>'123918',:mpf=>BigDecimal('100.00',2)}
         ]},
       {:invoice_number=>'ff30101ffz',:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
@@ -217,7 +217,7 @@ describe OpenChain::AllianceParser do
               rows << t_row
             end
           end
-          rows << "CF00499#{convert_cur.call(line[:mpf],11)}" if line[:mpf]
+          rows << "CF00499#{convert_cur.call(line[:mpf] ? line[:mpf] : 0,11)}#{"".ljust(11)}#{line[:prorated_mpf] ? convert_cur.call(line[:prorated_mpf],11) : "00000000000U"}"
           rows << "CF00501#{convert_cur.call(line[:hmf],11)}" if line[:hmf]
 
         end
@@ -431,8 +431,13 @@ describe OpenChain::AllianceParser do
         ci_line.computed_value.should == line[:computed_value] if line[:computed_value]
         ci_line.computed_adjustments.should == line[:computed_adjustments] if line[:computed_adjustments]
         ci_line.computed_net_value.should == line[:computed_net_value] if line[:computed_net_value]
-        ci_line.mpf.should == line[:mpf]
+        ci_line.mpf.should == (line[:mpf] ? line[:mpf] : 0)
         ci_line.hmf.should == line[:hmf]
+        if line[:prorated_mpf]
+          ci_line.prorated_mpf.should == line[:prorated_mpf]
+        else
+          ci_line.prorated_mpf.should == (line[:mpf] ? line[:mpf] : 0)
+        end
         ci_line.department.should == line[:department]
 #        ci_line.cotton_fee.should == line[:cotton_fee]
         (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.quantity) * 100 ).to_i if ci_line.unit_price && ci_line.quantity
