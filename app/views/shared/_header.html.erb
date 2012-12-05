@@ -109,6 +109,13 @@
         </ul>
       </li>
     <%end%>
+    <%if current_user.view_security_filings?-%>
+      <li><a href='#' class='click_sink'>Security Filings</a>
+        <ul class='sub_menu'>
+          <li><a href='/security_filings?force_search=true'>Search</a></li>
+        </ul>
+      </li>
+    <%end-%>
     <%if current_user.view_entries?%>
       <li><a href='#' class='click_sink'>Entries</a>
         <ul class='sub_menu'>

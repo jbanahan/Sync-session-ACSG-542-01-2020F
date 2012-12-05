@@ -1,0 +1,26 @@
+<table>
+  <%CoreModule::SECURITY_FILING.model_fields.values.each do |mf|-%>
+  <%=field_view_row @security_filing, mf.uid%>
+  <%end-%>
+</table>
+
+<h2>Details</h2>
+<%fields = CoreModule::SECURITY_FILING_LINE.model_fields.values-%>
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <%fields.each do |f|-%>
+        <th><%=f.label(false)%></th>
+      <%end-%>
+    </tr>
+  </thead>
+  <tbody>
+    <%@security_filing.security_filing_lines.each do |sfl| -%>
+      <tr class='hover'>
+        <%fields.each do |f|-%>
+          <td><%=f.process_export(sfl,current_user)%></td>
+        <%end-%>
+      </tr>
+    <%end-%>
+  </tbody>
+</table>

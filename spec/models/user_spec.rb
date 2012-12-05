@@ -2,6 +2,41 @@ require 'spec_helper'
 
 describe User do
   context "permissions" do
+    context "security filing" do
+      context "company has permission" do
+        before :each do
+          Company.any_instance.stub(:view_security_filings?).and_return(true)
+          Company.any_instance.stub(:edit_security_filings?).and_return(true)
+          Company.any_instance.stub(:attach_security_filings?).and_return(true)
+          Company.any_instance.stub(:comment_security_filings?).and_return(true)
+        end
+        it "should allow if permission set and company has permission" do
+          u = Factory(:user,:security_filing_view=>true,:security_filing_edit=>true,:security_filing_attach=>true,:security_filing_comment=>true)
+          u.view_security_filings?.should be_true
+          u.edit_security_filings?.should be_true
+          u.attach_security_filings?.should be_true
+          u.comment_security_filings?.should be_true
+        end
+        it "should not allow if user permission not set and company has permission" do
+          u = Factory(:user,:security_filing_view=>false,:security_filing_edit=>false,:security_filing_attach=>false,:security_filing_comment=>false)
+          u.view_security_filings?.should be_false
+          u.edit_security_filings?.should be_false
+          u.attach_security_filings?.should be_false
+          u.comment_security_filings?.should be_false
+        end
+      end
+      it "should not allow if company does not have permission" do
+        Company.any_instance.stub(:view_security_filings?).and_return(false)
+        Company.any_instance.stub(:edit_security_filings?).and_return(false)
+        Company.any_instance.stub(:attach_security_filings?).and_return(false)
+        Company.any_instance.stub(:comment_security_filings?).and_return(false)
+        u = Factory(:user,:security_filing_view=>true,:security_filing_edit=>true,:security_filing_attach=>true,:security_filing_comment=>true)
+        u.view_security_filings?.should be_false
+        u.edit_security_filings?.should be_false
+        u.attach_security_filings?.should be_false
+        u.comment_security_filings?.should be_false
+      end
+    end
     context "drawback" do
       before :each do
         MasterSetup.get.update_attributes(:drawback_enabled=>true)

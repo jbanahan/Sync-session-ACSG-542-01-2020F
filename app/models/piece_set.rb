@@ -7,6 +7,7 @@ class PieceSet < ActiveRecord::Base
     belongs_to :milestone_plan
     belongs_to :commercial_invoice_line
     belongs_to :drawback_import_line
+    belongs_to :security_filing_line
 
     has_one :milestone_forecast_set, :dependent=>:destroy, :autosave=>true
 
