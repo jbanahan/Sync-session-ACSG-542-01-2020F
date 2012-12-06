@@ -3,6 +3,15 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
   validates :path, :presence=>true, :uniqueness=>true
   validates :model_field_uid, :presence=>true
 
+  # Are there any linkable attachment import rules for model fields associated with the given class
+  def self.exists_for_class? klass
+    LinkableAttachmentImportRule.all.each do |r|
+      mf = ModelField.find_by_uid(r.model_field_uid)
+      next unless mf
+      return true if mf.core_module.klass == klass
+    end
+    false
+  end
   # import the give file to create a LinkableAttachment based on the first matching rule
   # file_obj = the file or file's path
   # original_file_name = the original file name when the file was provided by the customer
