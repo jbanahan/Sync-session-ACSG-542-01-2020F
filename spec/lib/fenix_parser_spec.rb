@@ -344,4 +344,22 @@ describe OpenChain::FenixParser do
       end
     end
   end
+  describe 'process_past_days' do
+    it "should delay processing" do
+      OpenChain::FenixParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::FenixParser)
+      OpenChain::FenixParser.should_receive(:process_day).exactly(3).times
+      OpenChain::FenixParser.process_past_days 3
+    end
+  end
+  describe 'process_day' do
+    it 'should process all files from the given day' do
+      d = Date.new
+      OpenChain::S3.should_receive(:integration_keys).with(d,"/opt/wftpserver/ftproot/www-vfitrack-net/_fenix").and_yield("a").and_yield("b")
+      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
+      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
+      OpenChain::FenixParser.should_receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a"})
+      OpenChain::FenixParser.should_receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b"})
+      OpenChain::FenixParser.process_day d
+    end
+  end
 end

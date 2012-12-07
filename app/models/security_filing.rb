@@ -1,5 +1,6 @@
 class SecurityFiling < ActiveRecord::Base
   include CoreObjectSupport 
+  include IntegrationParserSupport
   belongs_to :importer, :class_name=>'Company'
   has_many :security_filing_lines, :dependent=>:destroy, :order=>'line_number'
   has_many :piece_sets, :through=>:security_filing_lines

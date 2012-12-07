@@ -6,14 +6,23 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     @k = OpenChain::CustomHandler::KewillIsfXmlParser
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
   end
-  describe :process_past_days do
-    it "should process past days"
+  describe 'process_past_days' do
+    it "should delay processing" do
+      @k.should_receive(:delay).exactly(3).times.and_return(@k)
+      @k.should_receive(:process_day).exactly(3).times
+      @k.process_past_days 3
+    end
   end
-  describe :process_day do
-    it "should process single day"
-  end
-  describe :process_from_s3 do
-    it "should process s3 file"
+  describe 'process_day' do
+    it 'should process all files from the given day' do
+      d = Date.new
+      OpenChain::S3.should_receive(:integration_keys).with(d,"/opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf").and_yield("a").and_yield("b")
+      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
+      OpenChain::S3.should_receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
+      @k.should_receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a"})
+      @k.should_receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b"})
+      @k.process_day d
+    end
   end
   describe :parse do
     it 'should process from text' do
@@ -66,6 +75,12 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ln.commercial_invoice_number.should == 'CIN'
       ln.mid.should == "MID"
       ln.country_of_origin_code.should == 'CN'
+    end
+    it "should set amazon bucket & path" do
+      @k.new(@dom).parse_dom 'bucket', 'path'
+      sf = SecurityFiling.first
+      sf.last_file_bucket.should == 'bucket'
+      sf.last_file_path.should == 'path'
     end
     it "should update existing security filing and replace lines" do
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446')

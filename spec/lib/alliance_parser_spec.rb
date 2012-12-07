@@ -764,6 +764,13 @@ describe OpenChain::AllianceParser do
     end
   end
 
+  describe 'process_past_days' do
+    it "should delay processing" do
+      OpenChain::AllianceParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)
+      OpenChain::AllianceParser.should_receive(:process_day).exactly(3).times
+      OpenChain::AllianceParser.process_past_days 3
+    end
+  end
   describe 'process_day' do
     it 'should process all files from the given day' do
       d = Date.new

@@ -1,20 +1,25 @@
 require 'rexml/document'
-
+require 'open_chain/integration_client_parser'
 module OpenChain
   module CustomHandler
     class KewillIsfXmlParser
+      extend OpenChain::IntegrationClientParser
       SYSTEM_NAME = "Kewill"
       NO_NOTES_EVENTS = [10,19,20,21]
+  
+      def self.integration_folder
+        "/opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf"
+      end
 
-      def self.parse data
-        self.new(REXML::Document.new data).parse_dom
+      def self.parse data, s3_bucket=nil, s3_key=nil
+        self.new(REXML::Document.new data).parse_dom s3_bucket, s3_key
       end
 
       def initialize dom
         @dom = dom
       end
       # process REXML document
-      def parse_dom
+      def parse_dom s3_bucket=nil, s3_key=nil
         SecurityFiling.transaction do
           @po_numbers = Set.new 
           @used_line_numbers = []
@@ -31,6 +36,8 @@ module OpenChain
             @sf.last_event = new_last_event
           end
           tx_num = et r, 'ISF_TX_NBR'
+          @sf.last_file_bucket = s3_bucket
+          @sf.last_file_path = s3_key
           @sf.transaction_number = tx_num.gsub('-','') unless tx_num.nil?
           @sf.importer_account_code = et r, 'IMPORTER_ACCT_CD'
           @sf.broker_customer_number = et r, 'IMPORTER_BROKERAGE_ACCT_CD'

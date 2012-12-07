@@ -209,6 +209,13 @@ module ApplicationHelper
     link_to "info", "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
   end
 
+  def secure_link obj, user
+      return "" unless user.sys_admin?
+      sec_url = obj.last_file_secure_url
+      return "" unless sec_url
+      return content_tag('div', content_tag('b',"Integration File:") + " " + link_to(obj.last_file_path.split("/").last, sec_url)).html_safe
+  end
+
   private
   def opts_for_model_text_field model_field_uid, opts
     inner_opts = {:class=>val_class(model_field_uid),:mf_id=>model_field_uid}
