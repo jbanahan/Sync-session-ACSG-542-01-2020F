@@ -67,6 +67,12 @@ describe OpenChain::IntegrationClientCommandProcessor do
       f.uploaded_by.should == User.find_by_username('rbjork')
       f.file_type.should == CustomFeaturesController::CSM_SYNC
     end
+    it 'should send date to Kewill parser if Alliance is enabled and path contains _kewill_isf' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
+      OpenChain::CustomHandler::KewillIsfXmlParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+      cmd = {'request_type'=>'remote_file','path'=>'/_kewill_isf/x.y','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+    end
     it 'should send data to Fenix parser if custom feature enabled and path contains _fenix' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
       OpenChain::FenixParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')

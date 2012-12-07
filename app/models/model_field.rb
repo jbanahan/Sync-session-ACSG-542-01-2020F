@@ -531,6 +531,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::ENTRY,Entry)
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE,BrokerInvoice)
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
+    ModelField.add_custom_fields(CoreModule::SECURITY_FILING,SecurityFiling)
     @@last_loaded = Time.now
     Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_cache_time
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
@@ -538,6 +539,44 @@ class ModelField
 
   def self.reload(update_cache_time=false)
     MODEL_FIELDS.clear
+    add_fields CoreModule::SECURITY_FILING_LINE, [
+      [2,:sfln_line_number,:line_number,"Line Number",{:data_type=>:integer}],
+      [4,:sfln_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
+      [5,:sfln_part_number,:part_number,"Part Number",{:data_type=>:string}],
+      [6,:sfln_po_number,:po_number,"PO Number",{:data_type=>:string}],
+      [7,:sfln_commercial_invoice_number,:commercial_invoice_number,"Commercial Invoice Number",{:data_type=>:string}],
+      [8,:sfln_mid,:mid,"MID",{:data_type=>:string}],
+      [9,:sfln_country_of_origin_code,:country_of_origin_code,"Country of Origin Code",{:data_type=>:string}]
+    ]
+    add_fields CoreModule::SECURITY_FILING, [
+      [1,:sf_transaction_number,:transaction_number, "Transaction Number",{:data_type=> :string}],
+      [2,:sf_host_system_file_number,:host_system_file_number, "Host System File Number",{:data_type=> :string}],
+      [3,:sf_host_system,:host_system, "Host System",{:data_type=> :string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [4,:sf_broker_customer_number,:broker_customer_number, "Customer Number",{:data_type=> :string}],
+      [5,:sf_importer_tax_id,:importer_tax_id, "Importer Tax ID",{:data_type=> :string}],
+      [6,:sf_transport_mode_code,:transport_mode_code, "Mode of Transport",{:data_type=> :string}],
+      [7,:sf_scac,:scac, "SCAC Code",{:data_type=> :string}],
+      [8,:sf_booking_number,:booking_number, "Booking Number",{:data_type=> :string}],
+      [9,:sf_vessel,:vessel, "Vessel",{:data_type=> :string}],
+      [10,:sf_voyage,:voyage, "Voyage",{:data_type=> :string}],
+      [11,:sf_lading_port_code,:lading_port_code, "Port of Lading Code",{:data_type=> :string}],
+      [12,:sf_unlading_port_code,:unlading_port_code, "Port of Unlading Code",{:data_type=> :string}],
+      [13,:sf_entry_port_code,:entry_port_code, "Port of Entry Code",{:data_type=> :string}],
+      [14,:sf_status_code,:status_code, "Customs Status Code",{:data_type=> :string}],
+      [15,:sf_late_filing,:late_filing, "Late Filing",{:data_type=> :boolean,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      [16,:sf_master_bill_of_lading,:master_bill_of_lading, "Master Bill of Lading",{:data_type=> :string}],
+      [17,:sf_house_bills_of_lading,:house_bills_of_lading, "House Bill(s) of Lading",{:data_type=> :string}],
+      [18,:sf_container_numbers,:container_numbers, "Container Numbers",{:data_type=> :string}],
+      [19,:sf_entry_numbers,:entry_numbers, "Entry Number(s)",{:data_type=> :string}],
+      [20,:sf_entry_reference_numbers,:entry_reference_numbers, "Entry File Number(s)",{:data_type=> :string}],
+      [21,:sf_file_logged_date,:file_logged_date, "File Logged Date",{:data_type=> :datetime}],
+      [22,:sf_first_sent_date,:first_sent_date, "First Sent Date",{:data_type=> :datetime}],
+      [23,:sf_first_accepted_date,:first_accepted_date, "First Accepted Date",{:data_type=> :datetime}],
+      [24,:sf_last_sent_date,:last_sent_date, "Last Sent Date",{:data_type=> :datetime}],
+      [25,:sf_last_accepted_date,:last_accepted_date, "Last Accepted Date",{:data_type=> :datetime}],
+      [26,:sf_estimated_vessel_load_date,:estimated_vessel_load_date, "Estimated Vessel Load Date",{:data_type=> :date}],
+      [27,:sf_po_numbers,:po_numbers, "PO Number(s)",{:data_type=> :string}]
+    ]
     add_fields CoreModule::OFFICIAL_TARIFF, [
       [1,:ot_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],
       [2,:ot_full_desc,:full_description,"Full Description",{:data_type=>:string}],

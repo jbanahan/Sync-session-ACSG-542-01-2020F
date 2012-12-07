@@ -250,3 +250,6 @@ Factory.define :drawback_claim do |f|
   f.name "dname"
   f.association :importer, :factory => :company
 end
+Factory.define :security_filing do |f|
+  f.association :importer, :factory => :company
+end

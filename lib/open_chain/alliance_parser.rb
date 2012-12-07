@@ -1,7 +1,9 @@
 require 'bigdecimal'
 require 'open_chain/alliance_imaging_client'
+require 'open_chain/integration_client_parser'
 module OpenChain
   class AllianceParser
+    extend OpenChain::IntegrationClientParser
     SOURCE_CODE = 'Alliance'
     DATE_MAP = {'00012'=>:arrival_date,
       '00016'=>:entry_filed_date,
@@ -31,24 +33,9 @@ module OpenChain
       '00121'=>:daily_statement_approved_date
     }
 
-    def self.process_past_days number_of_days, opts={:imaging=>false}
-      number_of_days.times {|i| process_day i.days.ago, opts}
-      if opts[:user_id]
-        u = User.find opts[:user_id]
-        u.messages.create(:subject=>"Alliance reprocessing complete.",:body=>"#{number_of_days} days have been reprocessed for Alliance")
-      end
+    def self.integration_folder
+      "/opt/wftpserver/ftproot/www-vfitrack-net/_alliance"
     end
-    # process all files in the archive for a given date.  Use this to reprocess old files. By default it skips the call to the imaging server
-    def self.process_day date, opts={:imaging=>false}
-      OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_alliance") do |key|
-        process_from_s3 OpenChain::S3.integration_bucket_name, key
-      end
-    end
-
-    def self.process_from_s3 bucket, key, opts={}
-      parse OpenChain::S3.get_data(bucket, key), {:bucket=>bucket, :key=>key}.merge(opts)
-    end
-
     # take the text inside an internet tracking file from alliance and create/update the entry
     def self.parse file_content, opts={}
       current_line = 0

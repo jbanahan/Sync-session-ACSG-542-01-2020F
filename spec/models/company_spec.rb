@@ -56,6 +56,48 @@ describe Company do
       c2.save.should be_false
       c2.errors.full_messages.first.should == "Alliance customer number is already taken."
     end
+    context "security filings" do
+      before :each do
+        MasterSetup.any_instance.stub(:security_filing_enabled?).and_return(true)
+      end
+      context "view" do
+        it "should allow for importers" do
+          Company.new(:importer=>true).view_security_filings?.should be_true
+        end
+        it "should allow for brokers" do
+          Company.new(:broker=>true).view_security_filings?.should be_true
+        end
+        it "should allow for master" do
+          Company.new(:master=>true).view_security_filings?.should be_true
+        end
+        it "should not allow for non importer/broker/master" do
+          Company.new.view_security_filings?.should be_false
+        end
+        it "should not allow if master setup is disabled" do
+          MasterSetup.any_instance.stub(:security_filing_enabled?).and_return(false)
+          Company.new(:master=>true).view_security_filings?.should be_false
+        end
+      end
+      context "edit" do
+        it "should be false" do
+          Company.new(:master=>true).edit_security_filings?.should be_false
+        end
+      end
+      context "attach/comment" do
+        it "should be true if view_security_filings is true" do
+          c = Company.new
+          c.should_receive(:view_security_filings?).twice.and_return(true)
+          c.attach_security_filings?.should be_true
+          c.comment_security_filings?.should be_true
+        end
+        it "should be false if view_security_filings is false" do
+          c = Company.new
+          c.should_receive(:view_security_filings?).twice.and_return(false)
+          c.attach_security_filings?.should be_false
+          c.comment_security_filings?.should be_false
+        end
+      end
+    end
     context 'entries' do
       it 'should not allow view if master setup is disabled' do
         MasterSetup.get.update_attributes(:entry_enabled=>false)

@@ -75,6 +75,10 @@ module OpenChain
         OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
         status_msg = 'success'
         response_type = 'remote_file'
+      elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
+        OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
+        status_msg = 'success'
+        response_type = 'remote_file'
       elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
         cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
         cf.attached = get_tempfile(bucket,remote_path,command['path'])

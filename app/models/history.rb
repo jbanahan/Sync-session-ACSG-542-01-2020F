@@ -7,6 +7,7 @@ class History < ActiveRecord::Base
   belongs_to  :order_line
   belongs_to  :sales_order
   belongs_to  :delivery
+  belongs_to  :security_filing
   
   has_many    :history_details
   
