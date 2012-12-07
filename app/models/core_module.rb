@@ -192,7 +192,7 @@ class CoreModule
     },
     :children => [SECURITY_FILING_LINE],
     :child_lambdas => [SECURITY_FILING_LINE => lambda {|parent| parent.security_filing_lines}],
-    :child_joins => [SECURITY_FILING_LINE => "LEFT OUTER JOIN security_filing_lines ON security_filing.id = security_filing_lines.security_filing_id"],
+    :child_joins => {SECURITY_FILING_LINE => "LEFT OUTER JOIN security_filing_lines ON security_filing.id = security_filing_lines.security_filing_id"},
     :default_search_columns => [:sf_transaction_number],
     :enabled_lambda => lambda {MasterSetup.get.security_filing_enabled?},
     :key_model_field_uids => [:sf_transaction_number]
