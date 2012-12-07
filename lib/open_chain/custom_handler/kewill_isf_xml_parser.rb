@@ -11,8 +11,8 @@ module OpenChain
         "/opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf"
       end
 
-      def self.parse data, s3_bucket=nil, s3_key=nil
-        self.new(REXML::Document.new data).parse_dom s3_bucket, s3_key
+      def self.parse data, opts={}
+        self.new(REXML::Document.new data).parse_dom opts[:bucket], opts[:key]
       end
 
       def initialize dom

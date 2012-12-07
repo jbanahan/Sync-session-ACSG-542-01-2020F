@@ -66,7 +66,7 @@ describe OpenChain::FenixParser do
     }
   end
   it 'should save an entry with one line' do
-    OpenChain::FenixParser.parse @entry_lambda.call, 'bucket', 'key'
+    OpenChain::FenixParser.parse @entry_lambda.call, {:bucket=>'bucket', :key=>'key'}
     ent = Entry.find_by_broker_reference @file_number
     ent.last_file_bucket.should == 'bucket'
     ent.last_file_path.should == 'key'

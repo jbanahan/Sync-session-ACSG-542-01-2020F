@@ -8,7 +8,7 @@ module OpenChain
       "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
     end
     # take the text from a Fenix CSV output file a create entries
-    def self.parse file_content, s3_bucket = nil, s3_path = nil
+    def self.parse file_content, opts={}
       begin
         entry_lines = []
         current_file_number = ""
@@ -16,13 +16,13 @@ module OpenChain
           next if line.size < 10 || line[0]=='Barcode'
           file_number = line[1]
           if !entry_lines.empty? && file_number!=current_file_number
-            FenixParser.new.parse_entry entry_lines, s3_bucket, s3_path
+            FenixParser.new.parse_entry entry_lines, opts 
             entry_lines = []
           end
           current_file_number = file_number
           entry_lines << line
         end
-        FenixParser.new.parse_entry entry_lines, s3_bucket, s3_path unless entry_lines.empty?
+        FenixParser.new.parse_entry entry_lines, opts unless entry_lines.empty?
       rescue
         puts $!
         puts $!.backtrace
@@ -34,7 +34,9 @@ module OpenChain
     end
 
 
-    def parse_entry lines, s3_bucket = nil, s3_path = nil
+    def parse_entry lines, opts={} 
+      s3_bucket = opts[:bucket]
+      s3_path = opts[:key]
       start_time = Time.now
       @total_units = BigDecimal('0.00')
       @total_entered_value = BigDecimal('0.00')
