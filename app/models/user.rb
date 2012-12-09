@@ -134,7 +134,7 @@ class User < ActiveRecord::Base
     when CoreModule::COMMERCIAL_INVOICE_TARIFF
       return self.view_commercial_invoices?
     when CoreModule::SECURITY_FILING
-      return self.view_security_filing?
+      return self.view_security_filings?
     end
     return false
   end

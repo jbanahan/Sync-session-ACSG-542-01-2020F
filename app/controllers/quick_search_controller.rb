@@ -1,11 +1,15 @@
 class QuickSearchController < ApplicationController
 
   def show
-    error_redirect "You must enter a search value." if params[:v].blank?
+    if params[:v].blank?
+      error_redirect "You must enter a search value." 
+      return
+    end
     @module_field_map = {
       CoreModule::ORDER=>[:ord_ord_num],
       CoreModule::PRODUCT=>[:prod_uid,:prod_name],
       CoreModule::ENTRY=>[:ent_brok_ref,:ent_entry_num,:ent_po_numbers,:ent_customer_references,:ent_mbols,:ent_container_nums],
+      CoreModule::SECURITY_FILING=>[:sf_transaction_number,:sf_entry_numbers,:sf_entry_reference_numbers,:sf_po_numbers,:sf_master_bill_of_lading,:sf_container_numbers],
       CoreModule::BROKER_INVOICE=>[:bi_brok_ref],
       CoreModule::SHIPMENT=>[:shp_ref],
       CoreModule::SALE=>[:sale_order_number],
