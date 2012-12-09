@@ -20,15 +20,15 @@ module OpenChain
       end
       # process REXML document
       def parse_dom s3_bucket=nil, s3_key=nil
+        @po_numbers = Set.new 
+        @used_line_numbers = []
+        @notes = []
+        r = @dom.root
+        host_system_file_number = et r, 'ISF_SEQ_NBR'
+        raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
+        @sf = SecurityFiling.find_by_host_system_and_host_system_file_number SYSTEM_NAME, host_system_file_number
+        @sf = SecurityFiling.create!(:host_system=>SYSTEM_NAME,:host_system_file_number=>host_system_file_number) unless @sf
         SecurityFiling.transaction do
-          @po_numbers = Set.new 
-          @used_line_numbers = []
-          @notes = []
-          r = @dom.root
-          host_system_file_number = et r, 'ISF_SEQ_NBR'
-          raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
-          @sf = SecurityFiling.find_by_host_system_and_host_system_file_number SYSTEM_NAME, host_system_file_number
-          @sf = SecurityFiling.new(:host_system=>SYSTEM_NAME,:host_system_file_number=>host_system_file_number) unless @sf
           new_last_event = last_event_time(r)
           if @sf.last_event && (new_last_event < @sf.last_event)
             return
