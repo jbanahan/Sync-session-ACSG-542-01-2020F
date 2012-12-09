@@ -1,7 +1,30 @@
-<table>
-  <%CoreModule::SECURITY_FILING.model_fields.values.each do |mf|-%>
-  <%=field_view_row @security_filing, mf.uid%>
-  <%end-%>
+<h1><%=CoreModule::SECURITY_FILING.label%></h1>
+<table class='ent_columns'>
+  <tbody>
+    <tr>
+      <td style='width:33%;'>
+        <table>
+          <%[:sf_transaction_number,:sf_entry_numbers,:sf_entry_reference_numbers,:sf_master_bill_of_lading,:sf_house_bills_of_lading,:sf_container_numbers,:sf_voyage,:sf_vessel].each do |f|-%>
+            <%=field_view_row @security_filing, f%>
+          <%end-%>
+        </table>
+      </td>
+      <td style='width:33%;'>
+        <table>
+          <%[:sf_status_code,:sf_file_logged_date,:sf_first_sent_date,:sf_last_sent_date,:sf_first_accepted_date,:sf_last_accepted_date,:sf_estimated_vessel_load_date,:sf_late_filing].each do |f|-%>
+            <%=field_view_row @security_filing, f%>
+          <%end-%>
+        </table>
+      </td>
+      <td style='width:34%;'>
+        <table>
+          <%[:sf_host_system_file_number,:sf_broker_customer_number,:sf_importer_tax_id,:sf_scac,:sf_booking_number,:sf_lading_port_code,:sf_unlading_port_code,:sf_entry_port_code].each do |f|-%>
+            <%=field_view_row @security_filing, f%>
+          <%end-%>
+        </table>
+      </td>
+    </tr>
+  </tbody>
 </table>
 
 <h2>Details</h2>
