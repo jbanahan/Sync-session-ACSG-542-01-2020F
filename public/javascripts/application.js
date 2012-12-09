@@ -43,9 +43,11 @@ var OpenChain = (function() {
       }
     });
   }
+  var bindQuickSearch = function() {$(document).bind('keyup','/',function() {$("#quick_search_input").focus();});}
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
     $(document).unbind('keyup');
+    bindQuickSearch();
     $(document).bind('keyup','k',showKeyboardMapPopUp);
   }
   var showKeyboardMapPopUp = function() {
@@ -647,6 +649,7 @@ var OpenChain = (function() {
       initRemoteValidate();
       initScheduleBLinks();
       initEntitySnapshotPopups();
+      bindQuickSearch();
       //initInfiniteScroll();
       if(user_id) {
         pollingId = pollForMessages(user_id);
