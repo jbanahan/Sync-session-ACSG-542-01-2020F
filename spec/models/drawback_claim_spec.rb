@@ -1,7 +1,32 @@
 require 'spec_helper'
 
 describe DrawbackClaim do
-  describe :validations do
+  context :callbacks do
+    before :each do
+      @imp = Factory(:company,:importer=>true)
+    end
+    it "should set total claim amount" do
+      DrawbackClaim.
+        create!(:importer=>@imp,:name=>'x',:hmf_claimed=>1,:duty_claimed=>2,:mpf_claimed=>3,:bill_amount=>1).
+        total_claim_amount.should == 6
+    end
+    it "should set net claim amount" do
+      DrawbackClaim.
+        create!(:importer=>@imp,:name=>'y',:hmf_claimed=>1,:duty_claimed=>2,:mpf_claimed=>3,:bill_amount=>1).
+        net_claim_amount.should == 5
+    end
+    it "should set claim totals when bill_amount is nil" do
+      d = DrawbackClaim.create!(:importer=>@imp,:name=>'y',:hmf_claimed=>1,:duty_claimed=>2,:mpf_claimed=>3)
+      d.total_claim_amount.should == 6
+      d.net_claim_amount.should == 6
+    end
+    it "should set claim totals when hmf is nil" do
+      d = DrawbackClaim.create!(:importer=>@imp,:name=>'y',:bill_amount=>1,:duty_claimed=>2,:mpf_claimed=>3)
+      d.total_claim_amount.should == 5
+      d.net_claim_amount.should == 4
+    end
+  end
+  context :validations do
     it "should require importer_id" do
       d = DrawbackClaim.new(:name=>'x')
       d.save.should be_false
@@ -31,17 +56,17 @@ describe DrawbackClaim do
     end
   end
   describe :percent_money_claimed do
-    it "should calculate percentage by claim amount vs planned" do
-      DrawbackClaim.new(:planned_claim_amount=>9,:total_claim_amount=>3).percent_money_claimed.should == 0.333
+    it "should calculate percentage by net claim amount vs planned" do
+      DrawbackClaim.new(:planned_claim_amount=>9,:net_claim_amount=>3).percent_money_claimed.should == 0.333
     end
     it "should return 0 if planned amount is nil" do
-      DrawbackClaim.new(:planned_claim_amount=>nil,:total_claim_amount=>3).percent_money_claimed.should == 0
+      DrawbackClaim.new(:planned_claim_amount=>nil,:net_claim_amount=>3).percent_money_claimed.should == 0
     end
     it "should return 0 if planned amount is 0" do
-      DrawbackClaim.new(:planned_claim_amount=>0,:total_claim_amount=>3).percent_money_claimed.should == 0
+      DrawbackClaim.new(:planned_claim_amount=>0,:net_claim_amount=>3).percent_money_claimed.should == 0
     end
-    it "should return 0 if claimed is nil" do
-      DrawbackClaim.new(:planned_claim_amount=>0,:total_claim_amount=>nil).percent_money_claimed.should == 0
+    it "should return 0 if net claimed is nil" do
+      DrawbackClaim.new(:planned_claim_amount=>0,:net_claim_amount=>nil).percent_money_claimed.should == 0
     end
   end
   describe :viewable do
@@ -103,6 +128,39 @@ describe DrawbackClaim do
       u = Factory(:master_user)
       u.stub(:view_drawback?).and_return(false)
       @d.can_view?(u).should be_false
+    end
+  end
+
+  describe :can_edit do
+    before :each do 
+      @d = Factory(:drawback_claim)
+    end
+    it "should now allow user without permission to edit" do
+      u = Factory(:master_user)
+      u.stub(:edit_drawback?).and_return(false)
+      @d.can_edit?(u).should be_false
+    end
+    context "with permission" do
+      before :each do
+        User.any_instance.stub(:edit_drawback?).and_return(true)
+      end
+      it "should allow user with permission and master company to edit" do
+        u = Factory(:master_user)
+        @d.can_edit?(u).should be_true
+      end
+      it "should allow user with permission and same company to edit" do
+        u = Factory(:user,:company=>@d.importer)
+        @d.can_edit?(u).should be_true
+      end
+      it "should allow user with permission and linked company to edit" do
+        u = Factory(:user)
+        u.company.linked_companies << @d.importer
+        @d.can_edit?(u).should be_true
+      end
+      it "should not allow user from different company to edit" do
+        u = Factory(:user)
+        @d.can_edit?(u).should be_false
+      end
     end
   end
 

@@ -1,3 +1,8 @@
+<%content_for :action_bar do-%>
+  <%if @claim.can_edit?(current_user)-%>
+  <button class='btn_link' link_to='<%=edit_drawback_claim_path(@claim)%>'>Edit</button>
+  <%end-%>
+<%end-%>
 <h2>Drawback Claim: <%=@claim.name%></h2>
 
 <table class='ent_columns'>
@@ -13,12 +18,14 @@
     </td>
     <td>
       <table cellspacing="0">
+        <%=field_row "Net Claim (Claim - Commission)", number_to_currency(@claim.net_claim_amount)%>
         <%=field_row "Commercial Value", number_to_currency(@claim.total_export_value)%>
         <%=field_row "Potential Duty Exported", number_to_currency(@claim.total_duty)%>
         <%=field_row "HMF Claimed", number_to_currency(@claim.hmf_claimed)%>
         <%=field_row "MPF Claimed", number_to_currency(@claim.mpf_claimed)%>
         <%=field_row "Duty Claimed", number_to_currency(@claim.duty_claimed)%>
         <%=field_row "Duty Check Amount", number_to_currency(@claim.duty_check_amount)%>
+        <%=field_row "Commission", number_to_currency(@claim.bill_amount)%>
       </table>
     </td>
     <td>

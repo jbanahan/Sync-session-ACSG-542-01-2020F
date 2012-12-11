@@ -5,6 +5,8 @@ class DrawbackClaim < ActiveRecord::Base
   validates_presence_of :importer_id
   validates_presence_of :name
   
+  before_save :set_claim_totals
+
   scope :viewable, lambda {|u|
     return where("1=0") unless u.view_drawback?
     return where("1=1") if u.company.master?
@@ -29,11 +31,15 @@ class DrawbackClaim < ActiveRecord::Base
   # $9 planned
   # return value 0.333
   def percent_money_claimed
-    calc_percent self.total_claim_amount, self.planned_claim_amount  
+    calc_percent self.net_claim_amount, self.planned_claim_amount  
   end
   
   def can_view? user
     user.view_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer)) 
+  end
+
+  def can_edit? user
+    user.edit_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer)) 
   end
 
   #find all duty calc export file lines for the importer and claim date range
@@ -48,5 +54,14 @@ class DrawbackClaim < ActiveRecord::Base
   def calc_percent num, den
     return 0 if num.nil? || den.nil? || den==0
     BigDecimal(BigDecimal.new(num,3) / BigDecimal.new(den)).round(3,BigDecimal::ROUND_DOWN)
+  end
+
+  def set_claim_totals
+    self.total_claim_amount = (force_num(self.hmf_claimed) + force_num(self.mpf_claimed) + force_num(self.duty_claimed))
+    self.net_claim_amount = self.total_claim_amount - force_num(self.bill_amount)
+  end
+
+  def force_num x
+    x.nil? ? 0 : x
   end
 end

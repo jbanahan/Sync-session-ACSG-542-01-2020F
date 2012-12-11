@@ -14,6 +14,41 @@ class DrawbackClaimsController < ApplicationController
     end
   end
 
+  def edit
+    claim = DrawbackClaim.find params[:id]
+    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+      @drawback_claim = claim
+    }
+  end
+  def update
+    claim = DrawbackClaim.find params[:id]
+    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+      claim.update_attributes(params[:drawback_claim])
+      errors_to_flash claim
+      if claim.errors.empty?
+        add_flash :notices, "Drawback saved successfully."
+      end
+      redirect_to claim
+    }
+  end
+  def new
+    action_secure(current_user.edit_drawback?,current_user,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+      @drawback_claim = DrawbackClaim.new
+    }
+  end
+  def create
+    action_secure(current_user.edit_drawback?,current_user,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+      d = DrawbackClaim.create(params[:drawback_claim])
+      errors_to_flash d
+      if d.errors.full_messages.size == 0
+        add_flash :notices, "Drawback saved successfully."
+        redirect_to DrawbackClaim
+      else
+        redirect_to request.referrer 
+      end
+    }
+  end
+
   def secure
     DrawbackClaim.viewable(current_user) 
   end
