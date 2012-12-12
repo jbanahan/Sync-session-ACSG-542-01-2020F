@@ -37,8 +37,8 @@ class Survey < ActiveRecord::Base
   end
 
   # generates a survey response in the target_user's account
-  def generate_response! target_user
-    sr = self.survey_responses.create!(:user=>target_user)
+  def generate_response! target_user, subtitle=nil
+    sr = self.survey_responses.create!(:user=>target_user,:subtitle=>subtitle)
     self.questions.each do |q|
       sr.answers.create!(:question=>q)
     end
