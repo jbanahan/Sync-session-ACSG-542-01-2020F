@@ -32,5 +32,47 @@ describe DelayedJobManager do
       DelayedJobManager.monitor_backlog 10 #this one shouldn't do anything because it hasn't been 30 minutes
     end
   end
+ 
+ describe 'report_delayed_job_errors' do
+  before :each do 
+    "test".delay.to_s
+    @job = Delayed::Job.last
+    @job.last_error = "error!"
+    @job.save
 
+    @one_hour_ago = 1.hour.ago
+    MasterSetup.get.update_attributes(:last_delayed_job_error_sent => @one_hour_ago)
+  end
+  it 'should send an email if any errors are found on the delayed job queue' do
+    # Make sure we're accomplishing sending an email by raising / logging an exception
+    DelayedJobManager.report_delayed_job_error
+    # This relies on knowing how log_me formats exception emails
+    email = ActionMailer::Base.deliveries.last
+    email.subject.should include "#{MasterSetup.get.system_code} - 1 delayed job(s) have errors."
+    email.body.raw_source.should include "Job Error: error!"
+
+    # Make sure MasterSetup was updated to approximately now
+    MasterSetup.last.last_delayed_job_error_sent.should > 1.minute.ago
+  end
+  it 'should not send an email if no errors are found on the delayed job queue' do
+    @job.destroy
+    RuntimeError.any_instance.should_not_receive(:log_me)
+    DelayedJobManager.report_delayed_job_error
+
+    # Verify that master setup was not updated 
+    MasterSetup.last.last_delayed_job_error_sent.to_s(:db).should eq @one_hour_ago.to_s(:db)
+  end
+  it 'should trim error messages that are over 500 characters long' do
+    m = "Really long error message..repeat ad nauseum"
+    begin 
+      m += m
+    end while m.length <= 500
+    @job.last_error = m
+    @job.save
+
+    # We can just mock the log_me call here since we've already determined that we're sending emails in a previous spec
+    RuntimeError.any_instance.should_receive(:log_me).with(["Job Error: " + m.slice(0, 500)], [], true)
+    DelayedJobManager.report_delayed_job_error
+  end
+ end
 end

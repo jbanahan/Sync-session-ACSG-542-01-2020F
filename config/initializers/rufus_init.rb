@@ -74,9 +74,10 @@ def execute_scheduler
     end
   end
 
-  #monitor delayed job backlog
+  #monitor delayed job backlog and watch for delayed job errors
   scheduler.every '5m' do
     DelayedJobManager.monitor_backlog
+    DelayedJobManager.report_delayed_job_error
   end
 
   scheduler.cron '0 23 * * *' do
