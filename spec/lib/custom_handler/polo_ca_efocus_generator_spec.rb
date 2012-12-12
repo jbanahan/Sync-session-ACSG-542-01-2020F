@@ -216,7 +216,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       @h.ftp_xml_files @tempfiles
     end
     it "should set remote file name" do
-      @h.remote_file_name.should match /VFITRACK[0-9]{14}\.xml/
+      @h.remote_file_name.should match /VFITRACK.*\.xml/
     end
   end
 end

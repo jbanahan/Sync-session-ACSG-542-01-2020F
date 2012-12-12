@@ -91,12 +91,14 @@ endbody
       def ftp_xml_files file_array
         environ = Rails.env=='production' ? 'prod' : 'dev'
         file_array.each do |f|
-          sleep 1 #force unique file names
           FtpSender.send_file('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',f,{:folder=>"to_ecs/Ralph_Lauren/efocus_ca_#{environ}",:remote_file_name=>remote_file_name})
         end
       end
-      def remote_file_name
-        "VFITRACK#{Time.now.strftime("%Y%m%d%H%M%S")}.xml" 
+      def remote_file_name 
+        t = Tempfile.new(['VFITRACK','.xml'])
+        n = File.basename t.path
+        t.unlink
+        n
       end
 
       private
