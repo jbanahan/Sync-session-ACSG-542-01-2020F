@@ -2,6 +2,10 @@ module OpenChain
   module CustomHandler
     class PoloMslPlusEnterpriseHandler
 
+      # :env=>:qa will put files in _test_to_msl instead of _to_msl
+      def initialize opts={}
+        @env = opts[:env]
+      end
       def generate_outbound_sync_file products
         file = Tempfile.new(['msl_outbound','.csv'])
         file << ["Style", "Country", "MP1 Flag", "HTS 1", "HTS 2", "HTS 3", "Length", "Width", "Height"].to_csv
@@ -124,7 +128,7 @@ module OpenChain
       end
 
       def send_file local_file, destination_file_name
-        FtpSender.send_file("ftp.chain.io",'polo','pZZ117',local_file,{:folder=>(Rails.env=='production' ? '/_to_msl' : '/_test_to_msl'),:remote_file_name=>destination_file_name})
+        FtpSender.send_file("ftp.chain.io",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_msl' : '/_to_msl'),:remote_file_name=>destination_file_name})
       end
 
       private 
