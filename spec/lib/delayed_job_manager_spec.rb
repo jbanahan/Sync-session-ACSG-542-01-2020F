@@ -33,11 +33,11 @@ describe DelayedJobManager do
     end
   end
  
- describe 'report_delayed_job_errors' do
+ describe 'report_delayed_job_error' do
   before :each do 
-    "test".delay.to_s
-    @job = Delayed::Job.last
+    @job = Delayed::Job.new
     @job.last_error = "error!"
+    @job.created_at = Time.now
     @job.save
 
     @one_hour_ago = 1.hour.ago
@@ -52,7 +52,7 @@ describe DelayedJobManager do
     email.body.raw_source.should include "Job Error: error!"
 
     # Make sure MasterSetup was updated to approximately now
-    MasterSetup.last.last_delayed_job_error_sent.should > 1.minute.ago
+    MasterSetup.get.last_delayed_job_error_sent.should > 1.minute.ago
   end
   it 'should not send an email if no errors are found on the delayed job queue' do
     @job.destroy
@@ -60,7 +60,7 @@ describe DelayedJobManager do
     DelayedJobManager.report_delayed_job_error
 
     # Verify that master setup was not updated 
-    MasterSetup.last.last_delayed_job_error_sent.to_s(:db).should eq @one_hour_ago.to_s(:db)
+    MasterSetup.get.last_delayed_job_error_sent.to_s(:db).should eq @one_hour_ago.to_s(:db)
   end
   it 'should trim error messages that are over 500 characters long' do
     m = "Really long error message..repeat ad nauseum"
@@ -73,6 +73,33 @@ describe DelayedJobManager do
     # We can just mock the log_me call here since we've already determined that we're sending emails in a previous spec
     RuntimeError.any_instance.should_receive(:log_me).with(["Job Error: " + m.slice(0, 500)], [], true)
     DelayedJobManager.report_delayed_job_error
+  end
+  it 'should not send an email if a previous email was sent less than X minutes ago' do
+    reporting_age = 60.minutes.ago
+    MasterSetup.get.last_delayed_job_error_sent = reporting_age
+    RuntimeError.any_instance.should_not_receive(:log_me)
+
+    # Add a minute to our max reporting age due to timing concerns
+    DelayedJobManager.report_delayed_job_error(61)
+
+    MasterSetup.get.last_delayed_job_error_sent.to_s(:db).should eq reporting_age.to_s(:db)
+  end
+  it 'should not add more than 50 error messages to an error notification email' do 
+    (1..50).each do |n|
+      new_job = Delayed::Job.new
+      new_job.last_error = "error - #{n}"
+      new_job.created_at = Time.now + n.minutes
+      new_job.save
+    end
+    
+    DelayedJobManager.report_delayed_job_error
+
+    email = ActionMailer::Base.deliveries.last
+    email.subject.should include "#{MasterSetup.get.system_code} - 51 delayed job(s) have errors."
+    email.body.raw_source.should include "Job Error: error - 50"
+    # Since @job has already been saved above and is the oldest job record, it should
+    # not appear in our messages
+    email.body.raw_source.should_not include "Job Error: " + @job.last_error
   end
  end
 end

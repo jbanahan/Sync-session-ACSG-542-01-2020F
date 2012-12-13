@@ -55,16 +55,16 @@ class DelayedJobManager
   end
   
   # Reports on any errored delayed job (by raising and logging an exception)
+  # Returns true if any error was reported, false otherwise
   def self.report_delayed_job_error min_reporting_age_minutes = 15
 
     # Don't bother sending emails for anything we've reported on less than 15 minutes ago
     # This lock is not a 100% foolproof way to prevent multiple instances from reporting
     # on the same errors at the same time.  To do that would require a DB lock/table which is
     # more work than we need to do at this time.
-    master_setup = MasterSetup.first
 
-    last_error_sent = master_setup.last_delayed_job_error_sent unless master_setup.nil?
-    return if last_error_sent.nil? || last_error_sent > min_reporting_age_minutes.minutes.ago
+    last_error_sent = MasterSetup.get.last_delayed_job_error_sent
+    return false if last_error_sent && last_error_sent > min_reporting_age_minutes.minutes.ago
 
     error_messages = []
     real_error_count = 0
@@ -72,7 +72,8 @@ class DelayedJobManager
     begin
       errored_jobs = Delayed::Job.where("last_error IS NOT NULL").order("created_at DESC")
       real_error_count = errored_jobs.length
-      errored_jobs.each do |job| 
+      errored_jobs.each_with_index do |job, i| 
+        break if i >= 50
         m = job.last_error.length < max_message_length ? job.last_error : job.last_error[0, max_message_length]
         error_messages << "Job Error: " + m
       end
