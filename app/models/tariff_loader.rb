@@ -1,3 +1,5 @@
+require 'zip/zip'
+
 class TariffLoader
   
   IMPORT_REG_LAMBDA = lambda {|o,d|
@@ -44,6 +46,7 @@ class TariffLoader
 #ignored fields
     "CALCULATIONMETHOD" => lambda {|o,d|}
   }
+  MIN_VALID_COLUMN_LENGTH = 14
 
   def initialize(country,file_path,tariff_set_label)
     @country = country
@@ -53,18 +56,19 @@ class TariffLoader
   
   def process
     ts = nil
+    tariff_file = get_file_to_process @file_path
+
     OfficialTariff.transaction do
       ts = TariffSet.create!(:country_id=>@country.id,:label=>@tariff_set_label)
       i = 0
-      parser = get_parser
-      parser.foreach(@file_path) do |row|
+      parser = get_parser tariff_file
+      parser.foreach(tariff_file) do |row|
         headers = parser.headers
         ot = TariffSetRecord.new(:tariff_set_id=>ts.id,:country=>@country) #use .new instead of ts.tariff_set_records.build to avoid large in memory array
         FIELD_MAP.each do |header,lmda|
           col_num = headers.index header
           unless col_num.nil?
-            val = row[col_num]
-            lmda.call ot, (val.respond_to?('strip') ? val.strip : val)
+            lmda.call ot, TariffLoader.column_value(row[col_num])
           end
         end
         ot.save!
@@ -84,7 +88,7 @@ class TariffLoader
   end
 
   def self.process_s3 s3_key, country, tariff_set_label, auto_activate, user=nil
-    Tempfile.open(['tariff_s3',"#{s3_key.split('.').last}"]) do |t|
+    Tempfile.open(['tariff_s3',".#{s3_key.split('.').last}"]) do |t|
       t.binmode
       s3 = AWS::S3.new AWS_CREDENTIALS
       t.write s3.buckets['chain-io'].objects[s3_key].read
@@ -95,9 +99,64 @@ class TariffLoader
     end
   end
 
-  def get_parser 
-    @file_path.downcase.end_with?("xls") ? XlsParser.new : CsvParser.new
+  def self.column_value val 
+    val.respond_to?('strip') ? val.strip : val
   end
+  private
+
+  def self.valid_header_row? row
+    return false unless row.length >= MIN_VALID_COLUMN_LENGTH
+
+    # See if we can find at least 1 of column header names in this row.  If we can,
+    # we'll assume we're looking at the header row.
+    FIELD_MAP.keys.each_with_index do |key, idx| 
+      return true unless row.index(key).nil?
+    end
+    false
+  end
+  private
+
+  def self.valid_row? row 
+    # Do a basic check to make sure there's at least one column in the row.
+    return false unless row.length >= MIN_VALID_COLUMN_LENGTH
+
+    row.each do |v|
+      # The to_s is there to handle cases where the cell's format is not text
+      # thus allowing us to always use the length method regardless of data type
+      # to determine if the cell has data in it
+      return true if column_value(v).to_s.length > 0
+    end
+    false
+  end
+  private
+
+  def get_parser file_path
+    file_path.downcase.end_with?("xls") ? XlsParser.new : CsvParser.new    
+  end
+
+  def get_file_to_process file_path
+    file_to_process = nil
+    if file_path.downcase.end_with? "zip"
+      Zip::ZipFile.open(file_path) do |zip_file| 
+        zip_file.each do |file|
+            parser = get_parser(file.name)
+            # Strip the extension from the file name for the first arg to the Tempfile constructor
+            temp_output = Tempfile.new([File.basename(file.name, ".*"), File.extname(file.name)]) if file.file? && !parser.nil?
+            if temp_output
+              # Since the tempfile call above actually creates the file, force the overwrite
+              # here (the extract call borks if you don't)
+              zip_file.extract(file.name, temp_output.path) {true}
+              file_to_process = temp_output.path
+              break
+            end
+        end
+      end
+    else 
+      file_to_process = file_path
+    end
+    file_to_process
+  end
+  private
 
   class CsvParser
 
@@ -107,10 +166,16 @@ class TariffLoader
     end
 
     def foreach file_path, &block
-      CSV.foreach(file_path, {:headers=>true}) do |row|
-        @headers = row.headers unless @headers
-        yield row
+      CSV.foreach(file_path) do |row|
+        # Iterate through the file until we find the header row
+        if @headers 
+          yield row if TariffLoader.valid_row? row
+        else 
+          @headers = row if TariffLoader.valid_header_row? row
+        end
       end
+
+      raise "No header row found in file #{File.basename(file_path)}." unless @headers
     end
 
   end
@@ -124,9 +189,19 @@ class TariffLoader
 
     def foreach file_path, &block
       sheet = Spreadsheet.open(file_path).worksheet 0
-      @headers = sheet.row 0
-      sheet.each 1 do |row|
-        yield row
+      header_index = -1
+      #Find the first row of the spreadsheet that looks like it contains the worksheet headers
+      sheet.each do |row|
+        @headers = row if TariffLoader.valid_header_row? row
+        header_index = row.idx if @headers
+        break if @headers
+      end
+
+      raise "No header row found in spreadsheet #{File.basename(file_path)}." unless @headers
+
+      # Start processing tariff information on the line directly after the header row
+      sheet.each header_index + 1 do |row|
+        yield row if TariffLoader.valid_row? row
       end
     end
 
