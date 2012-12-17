@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     @xlc.should_receive(:get_cell).with(0,3,2).and_return({'cell'=>{'value'=>'GHI'}})
     @xlc.should_receive(:get_cell).with(0,3,3).and_return({'cell'=>{'value'=>'123'}})
     @xlc.should_receive(:get_cell).with(0,3,4).and_return({'cell'=>{'value'=>'ABC'}})
-    @xlc.should_receive(:set_cell).with(0,3,16,'Style Found, No IT HTS')
+    @xlc.should_receive(:set_cell).with(0,3,16,"Style Found With US HTS #{p3.classifications.first.tariff_records.first.hts_1.hts_format}, No IT HTS")
     @xlc.should_receive(:save)
     OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)
     p.get_custom_value(@csm).value.should == p1_csm 

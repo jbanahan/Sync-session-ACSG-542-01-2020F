@@ -42,7 +42,7 @@ module OpenChain
                 else
                   us_classification = p.classifications.find_by_country_id(us.id)
                   if us_classification && us_classification.tariff_records.first && !us_classification.tariff_records.first.hts_1.blank?
-                    matched = 'Style Found, No IT HTS'
+                    matched = "Style Found With US HTS #{us_classification.tariff_records.first.hts_1.hts_format}, No IT HTS"
                   end
                 end
               end
