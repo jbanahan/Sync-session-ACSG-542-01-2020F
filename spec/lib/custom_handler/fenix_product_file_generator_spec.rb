@@ -59,9 +59,10 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   end
 
   describe "ftp file" do
-    it "should send ftp file to ftp2 server" do
+    it "should send ftp file to ftp2 server and delete it" do
       t = mock("tempfile")
       t.should_receive(:path).and_return('/tmp/a.txt')
+      t.should_receive(:unlink)
       FtpSender.should_receive(:send_file,).with('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',t,{:folder=>'to_ecs/fenix_products',:remote_file_name=>'a.txt'})
       @h.ftp_file t
     end

@@ -6,6 +6,7 @@ require 'open_chain/integration_client'
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/feed_monitor'
 require 'open_chain/custom_handler/polo_ca_efocus_generator'
+require 'open_chain/custom_handler/fenix_product_file_generator'
 
 def job_wrapper job_name, &block
   begin
@@ -87,6 +88,14 @@ def execute_scheduler
     end
   end
   
+  if MasterSetup.get.system_code == 'polo' && Rails.env == 'production'
+    scheduler.every("60m") do
+      ["RLAUREN","POLO","CLUBMONACO"].each do |cn|
+        OpenChain::CustomHandler::FenixProductFileGenerator.new(cn).delay.generate
+      end
+    end
+  end
+
   if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
     scheduler.every("5m") do
       OpenChain::AllianceImagingClient.delay.consume_images

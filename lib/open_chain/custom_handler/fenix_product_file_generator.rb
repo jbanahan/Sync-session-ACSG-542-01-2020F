@@ -38,6 +38,7 @@ module OpenChain
 
       def ftp_file f
         FtpSender.send_file('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',f,{:folder=>'to_ecs/fenix_products',:remote_file_name=>File.basename(f.path)})
+        f.unlink
       end
 
       private
