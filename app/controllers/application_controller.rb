@@ -215,7 +215,7 @@ class ApplicationController < ActionController::Base
         headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
       end
     
-      render :text => CsvMaker.new(:include_links=>@current_search.include_links?).make_from_search(@current_search,@results) 
+      render :text => CsvMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results) 
     end
 
     def error_redirect(message=nil)
@@ -228,7 +228,7 @@ class ApplicationController < ActionController::Base
     opts = {
       :lock_check => true, 
       :verb => "edit", 
-      :lock_lambda => lambda {|obj| obj.locked?},
+      :lock_lambda => lambda {|obj| obj.respond_to?(:locked?) && obj.locked?},
       :module_name => "object"}.merge(options)
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
     err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj) 
@@ -401,7 +401,7 @@ class ApplicationController < ActionController::Base
         }
         format.xls {
           if @results.length < 100
-            book = XlsMaker.new(:include_links=>@current_search.include_links?).make_from_search(@current_search,@results.where("1=1")) 
+            book = XlsMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results.where("1=1")) 
             spreadsheet = StringIO.new 
             book.write spreadsheet 
             send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"

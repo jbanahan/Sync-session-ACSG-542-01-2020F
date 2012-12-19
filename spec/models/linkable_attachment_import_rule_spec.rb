@@ -17,6 +17,19 @@ describe LinkableAttachmentImportRule do
     end
   end
 
+  describe 'exist_for_class?' do
+    before :each do
+      LinkableAttachmentImportRule.create!(:path=>'/this',:model_field_uid=>'ord_ord_num')
+      LinkableAttachmentImportRule.create!(:path=>'/that',:model_field_uid=>'prod_uid')
+    end
+    it "should find for module in use" do
+      LinkableAttachmentImportRule.exists_for_class?(Order).should be_true
+    end
+    it "should not find for module not in use" do
+      LinkableAttachmentImportRule.exists_for_class?(Shipment).should be_false
+    end
+  end
+
   context 'import' do
     before(:each) do
       #make some that shouldn't match
@@ -73,6 +86,10 @@ describe LinkableAttachmentImportRule do
       it 'should set full name as last choice' do
         result = LinkableAttachmentImportRule.import @file, 'abcdef', @path
         result.value.should == 'abcdef'
+      end
+      it 'should use value override if given' do
+        result = LinkableAttachmentImportRule.import @file, 'a.b_some file.csv', @path, 'x'
+        result.value.should == 'x'
       end
     end
   end

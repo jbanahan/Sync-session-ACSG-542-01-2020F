@@ -2,10 +2,12 @@ class CsvMaker
   require 'csv'
 
   attr_accessor :include_links
+  attr_accessor :no_time
 
   def initialize opts={}
-    inner_opts = {:include_links=>false}.merge(opts)
+    inner_opts = {:include_links=>false,:no_time=>false}.merge(opts)
     @include_links = inner_opts[:include_links]
+    @no_time = inner_opts[:no_time]
   end
   
   def make_from_search(current_search, results)
@@ -23,7 +25,7 @@ class CsvMaker
     CSV.generate(prep_opts(columns)) do |csv|
       GridMaker.new(results,columns,criterions,module_chain,user).go do |row,obj| 
         row << obj.view_url if self.include_links
-        row.each_with_index {|v,i| row[i] = v.gsub(/\n/,' ').gsub(/\r/,' ') if v.respond_to?(:gsub)}
+        row.each_with_index {|v,i| row[i] = format_value(v) }
         csv << row
       end
     end
@@ -44,6 +46,20 @@ class CsvMaker
     mf = ModelField.find_by_uid(model_field_uid)
     return "" if mf.nil?
     return mf.label
+  end
+
+  def format_value val
+    return "" if val.blank?
+    v = val
+    v = v.gsub(/\n/,' ').gsub(/\r/,' ') if v.respond_to?(:gsub)
+    if v.respond_to?(:strftime)
+      if v.is_a?(Date) || @no_time
+        v = v.strftime("%Y-%m-%d")
+      else
+        v = v.strftime("%Y-%m-%d %H:%M")
+      end
+    end
+    v
   end
 
 end

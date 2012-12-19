@@ -30,6 +30,7 @@ describe ChargeCodesController do
       post :create, {'charge_code'=> {'code'=>"x",'description'=>"y"} }
       response.should be_redirect
       flash[:errors].should have(1).message
+      ChargeCode.all.should be_empty
     end
     it "should create charge code" do
       post :create, {'charge_code'=> {'code'=>"x",'description'=>"y"} }
@@ -55,6 +56,7 @@ describe ChargeCodesController do
       delete :destroy, :id=>@c.id
       response.should be_redirect
       flash[:notices].should have(1).message
+      ChargeCode.all.should be_empty
     end
   end
 

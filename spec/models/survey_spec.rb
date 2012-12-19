@@ -75,6 +75,13 @@ describe Survey do
       sr = s.generate_response! u
       sr.survey_response_logs.where(:message=>"Survey assigned to #{u.full_name}").should have(1).item
     end
+    it 'should set response subtitle' do
+      u = Factory(:user)
+      s = Factory(:survey)
+      s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
+      sr = s.generate_response! u, 'abc'
+      sr.subtitle.should == 'abc'
+    end
   end
   describe "assigned_users" do
     it "should return all assigned users" do

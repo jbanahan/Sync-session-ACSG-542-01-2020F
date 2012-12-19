@@ -22,7 +22,8 @@ module CoreObjectSupport
     r += self.attachments.to_a
     self.linkable_attachments.each {|linkable| r << linkable.attachment}
     r.sort do |a,b|
-      v = a.attachment_type <=> b.attachment_type
+      v = 0
+      v = a.attachment_type <=> b.attachment_type if a.attachment_type && b.attachment_type
       v = a.attached_file_name <=> b.attached_file_name if v==0
       v = a.id <=> b.id if v==0
       v
@@ -30,7 +31,7 @@ module CoreObjectSupport
   end
 
   def process_linked_attachments
-    LinkedAttachment.delay.create_from_attachable self unless LinkableAttachmentImportRule.count.zero?
+    LinkedAttachment.delay.create_from_attachable(self) if LinkableAttachmentImportRule.exists_for_class?(self.class)
   end
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded spreadsheets)

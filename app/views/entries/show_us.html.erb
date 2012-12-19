@@ -69,7 +69,7 @@
     <tr>
       <td style="width:33%;">
         <table>
-          <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_arrival_date,:ent_release_date].each do |f|%>
+          <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_arrival_date,:ent_release_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
@@ -114,7 +114,7 @@
       </td>
       <td style="width:34%;">
         <table>
-          <%[:ent_total_fees,:ent_total_duty,:ent_total_duty_direct,:ent_cotton_fee, :ent_hmf, :ent_mpf,:ent_entered_value,:ent_total_invoiced_value,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom, :ent_broker_invoice_total].each do |f|%>
+          <%[:ent_total_fees,:ent_total_duty,:ent_total_duty_direct,:ent_cotton_fee, :ent_hmf, :ent_mpf,:ent_entered_value,:ent_total_invoiced_value,:ent_gross_weight,:ent_total_units,:ent_total_units_uoms,:ent_total_packages,:ent_total_packages_uom, :ent_broker_invoice_total, :ent_duty_billed].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
@@ -236,7 +236,7 @@
         </tr>
       </tbody>
     </table>
-    <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume]%>
+    <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf]%>
     <table class='detail_table'>
       <thead><tr>
         <%fields.each do |f|%>

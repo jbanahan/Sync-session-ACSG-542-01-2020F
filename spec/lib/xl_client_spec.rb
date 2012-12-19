@@ -8,17 +8,20 @@ describe OpenChain::XLClient do
     @client = OpenChain::XLClient.new @path
   end
 
-=begin TODO need to replace this with one that tests Net::HTTP
-  it 'should send a command and receive a response hash' do
-    cmd = {"some"=>"cmd"}
-    expected_json = cmd.to_json
-    resp = mock "response"
-    resp.should_receive(:body).and_return(@dummy_response.to_json)
-    @session.should_receive(:post).with('/process',expected_json).and_return(resp)
-    r = @client.send cmd
-    r.should == @dummy_response
+  context "error handling" do
+    it "should raise error if raise_errors is enabled" do
+      cmd = {"command"=>"new","path"=>@path}
+      @client.raise_errors = true
+      @client.should_receive(:private_send).with(cmd).and_return("errors"=>["BAD"])
+      lambda {@client.send(cmd)}.should raise_error OpenChain::XLClientError
+    end
+    it "should not raise error if raise_errors is not enabled" do
+      cmd = {"command"=>"new","path"=>@path}
+      resp = {'errors'=>'BAD'}
+      @client.should_receive(:private_send).with(cmd).and_return(resp)
+      @client.send(cmd).should == resp
+    end
   end
-=end
   it 'should send a new command' do
     cmd = {"command"=>"new","path"=>@path}
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)

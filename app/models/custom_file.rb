@@ -18,7 +18,16 @@ class CustomFile < ActiveRecord::Base
 
   # process the attached file using the appropriate handler
   def process user
-    handler.process user
+    r = nil
+    self.update_attributes(:start_at=>0.seconds.ago)
+    begin
+      r = handler.process user
+      self.update_attributes(:finish_at=>0.seconds.ago,:error_message=>nil)
+    rescue
+      self.update_attributes(:error_at=>0.seconds.ago,:error_message=>$!.message)
+      raise $!
+    end
+    r
   end
 
   def can_view? user

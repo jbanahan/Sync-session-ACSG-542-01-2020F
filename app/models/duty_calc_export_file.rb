@@ -30,14 +30,15 @@ class DutyCalcExportFile < ActiveRecord::Base
         r = sheet.row(row_count)
         line.make_line_array.each_with_index {|v,i| r[i] = (v.is_a?(BigDecimal) ? v.to_s.to_f : v)}
         row_count += 1
-        if (row_count % max_lines_per_file) == 0
+        if row_count >= max_lines_per_file
           zipfile.file.open("File #{file_count}.xls","w") {|f| book.write f}
           file_count += 1
+          row_count = 0
           book = Spreadsheet::Workbook.new
           sheet = book.create_worksheet :name=>"SHEET1"
         end
       end
-      if (row_count % max_lines_per_file) != 0  
+      if row_count > 0
         zipfile.file.open("File #{file_count}.xls","w") {|f| book.write f}
       end
     end

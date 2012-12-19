@@ -1,0 +1,29 @@
+<%content_for :action_bar do -%>
+<button class='form_to' form_id='frm_sub' key_map='s'>Save</button>
+<button class='btn_link' link_to='<%=request.referrer%>' key_map='c'>Cancel</button>
+<%end-%>
+<%=form_for @drawback_claim, :html=>{:id=>'frm_sub'} do |f|-%>
+<table>
+  <%=field_row "Importer", f.collection_select(:importer_id,Company.importers.order("name ASC"), :id, :name, :prompt=>true)%>
+  <%=field_row "Name", f.text_field(:name)%>
+  <%=field_row "Exports Start", f.text_field(:exports_start_date,:class=>'isdate')%>
+  <%=field_row "Exports End", f.text_field(:exports_end_date,:class=>'isdate')%>
+  <%=field_row "Claim Number", f.text_field(:entry_number)%>
+  <%=field_row "Total Pieces Claimed",f.text_field(:total_pieces_claimed)%>
+  <%=field_row "Total Pieces Exported",f.text_field(:total_pieces_exported)%>
+  <%=field_row "Planned Claim Amount",f.text_field(:planned_claim_amount)%>
+  <%=field_row "Total Export Value",f.text_field(:total_export_value)%>
+  <%=field_row "Total Duty Exported",f.text_field(:total_duty)%>
+  <%=field_row "Duty Claimed",f.text_field(:duty_claimed)%>
+  <%=field_row "HMF Claimed",f.text_field(:hmf_claimed)%>
+  <%=field_row "MPF Claimed",f.text_field(:mpf_claimed)%>
+  <%=field_row "Duty Check Amount",f.text_field(:duty_check_amount)%>
+  <%=field_row "Commission",f.text_field(:bill_amount)%>
+  <%=field_row "ABI Accepted",f.text_field(:abi_accepted_date,:class=>'isdate')%>
+  <%=field_row "Sent To Customs",f.text_field(:sent_to_customs_date,:class=>'isdate')%>
+  <%=field_row "Billed",f.text_field(:billed_date,:class=>'isdate')%>
+  <%=field_row "Duty Check Received",f.text_field(:duty_check_received_date,:class=>'isdate')%>
+</table>
+<%end-%>
+
+

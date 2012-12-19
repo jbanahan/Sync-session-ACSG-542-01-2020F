@@ -25,10 +25,14 @@ module OpenChain
             row.each do |cell|
               val_hash[cell['position']['column']] = cell['cell']['value']
             end
+            [5,8].each {|i| val_hash[i] = fix_date val_hash[i]}
+            
             parse_record :brok_ref=>fix_numeric(val_hash[0]),
               :mbol=>fix_numeric(val_hash[1]),
               :hbol=>fix_numeric(val_hash[2]),
-              :cont=>fix_numeric(val_hash[3])
+              :cont=>fix_numeric(val_hash[3]),
+              :docs_rec=>val_hash[5],
+              :do_issued=>val_hash[8]
           end
         rescue
           $!.log_me ["Custom File ID: #{@custom_file.id}","Row: #{row_counter}"]
@@ -49,9 +53,11 @@ module OpenChain
           ent = Entry.new(:broker_reference=>vals[:brok_ref].strip,:source_system=>'Fenix',:import_country_id=>@canada.id)
           changed = true
         end
-        changed = true if update_if_changed(ent,:master_bills_of_lading,vals[:mbol])
-        changed = true if update_if_changed(ent,:house_bills_of_lading,vals[:hbol])
-        changed = true if update_if_changed(ent,:container_numbers,vals[:cont])
+        changed = true if update_if_changed(ent,:master_bills_of_lading,clean_csv_lists(vals[:mbol]))
+        changed = true if update_if_changed(ent,:house_bills_of_lading,clean_csv_lists(vals[:hbol]))
+        changed = true if update_if_changed(ent,:container_numbers,clean_csv_lists(vals[:cont]))
+        changed = true if update_if_changed(ent,:docs_received_date,vals[:docs_rec])
+        changed = true if update_if_changed(ent,:first_do_issued_date,vals[:do_issued])
         if changed
           ent.save! 
           @custom_file.custom_file_records.create!(:linked_object=>ent)
@@ -59,14 +65,21 @@ module OpenChain
       end
       
       private
+      def clean_csv_lists hash_val
+        return '' if hash_val.blank?
+        hash_val.split(',').collect {|v| v.strip}.join(' ')
+      end
       def update_if_changed entry, field_name, hash_val
         changed = false
-        str = ''
-        str = hash_val.split(',').collect {|v| v.strip}.join(' ') unless hash_val.blank?
-        if entry[field_name] != str && !str.blank?
-          entry[field_name] = str
+        return changed if hash_val.blank?
+        if hash_val.respond_to?(:strftime)
+          if entry[field_name].blank? || entry[field_name].strftime("%Y%m%d") != hash_val.strftime("%Y%m%d")
+            changed = true
+          end
+        elsif entry[field_name] != hash_val
           changed = true
         end
+        entry[field_name] = hash_val if changed
         changed
       end
       def fix_numeric val
@@ -74,6 +87,14 @@ module OpenChain
         v = val.to_s
         v = v[0,v.size-2] if v.end_with?('.0')
         v
+      end
+      def fix_date val
+        return nil if val.nil?
+        return val if val.respond_to?(:strftime)
+        v = val.to_s
+        date_parts = v.split("/")
+        return val unless date_parts.size == 3
+        return ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(date_parts[2].to_i,date_parts[0].to_i,date_parts[1].to_i)
       end
     end
   end

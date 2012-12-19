@@ -33,7 +33,7 @@ class CoreModule
           master_hash = {'entity'=>{'core_module'=>self.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
           mf_hash = master_hash['entity']['model_fields']
           self.model_fields.values.each do |mf|
-            unless mf.history_ignore?
+            unless mf.history_ignore? || (mf.custom? && !CustomDefinition.find_by_id(mf.custom_id))
               v = mf.process_export entity, nil, true 
               mf_hash[mf.uid] = v unless v.nil?
             end
@@ -177,6 +177,26 @@ class CoreModule
     CoreModule.recursive_module_level(0,self,core_module)      
   end
 
+  SECURITY_FILING_LINE = new("SecurityFilingLine","Security Line", {
+    :show_field_prefix=>true,
+    :unique_id_field_name=>:sfln_line_number,
+    :object_from_piece_set_lambda => lambda {|ps| ps.security_filing_line},
+    :enabled_lambda => lambda {MasterSetup.get.security_filing_enabled?},
+    :key_model_field_uids=>[:sfln_line_number]
+  })
+  SECURITY_FILING = new("SecurityFiling","Security Filing",{
+    :unique_id_field_name=>:sf_transaction_number,
+    :object_from_piece_set_lambda => lambda {|ps|
+      s_line = ps.security_filing_line
+      s_line.nil? ? nil : s_line.security_filing
+    },
+    :children => [SECURITY_FILING_LINE],
+    :child_lambdas => {SECURITY_FILING_LINE => lambda {|parent| parent.security_filing_lines}},
+    :child_joins => {SECURITY_FILING_LINE => "LEFT OUTER JOIN security_filing_lines ON security_filings.id = security_filing_lines.security_filing_id"},
+    :default_search_columns => [:sf_transaction_number],
+    :enabled_lambda => lambda {MasterSetup.get.security_filing_enabled?},
+    :key_model_field_uids => [:sf_transaction_number]
+  })
   ORDER_LINE = new("OrderLine","Order Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:ordln_line_number,
@@ -345,7 +365,8 @@ class CoreModule
   })
   OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
-    CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
+    CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
+    SECURITY_FILING,SECURITY_FILING_LINE]
 
   def self.set_default_module_chain(core_module, core_module_array)
     mc = ModuleChain.new
@@ -360,6 +381,7 @@ class CoreModule
   set_default_module_chain DELIVERY, [DELIVERY,DELIVERY_LINE]
   set_default_module_chain ENTRY, [ENTRY,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF]
   set_default_module_chain BROKER_INVOICE, [BROKER_INVOICE,BROKER_INVOICE_LINE]
+  set_default_module_chain SECURITY_FILING, [SECURITY_FILING,SECURITY_FILING_LINE]
   
   def self.find_by_class_name(c,case_insensitive=false)
     CORE_MODULES.each do|m|

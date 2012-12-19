@@ -109,6 +109,13 @@
         </ul>
       </li>
     <%end%>
+    <%if current_user.view_security_filings?-%>
+      <li><a href='#' class='click_sink'>Security Filings</a>
+        <ul class='sub_menu'>
+          <li><a href='/security_filings?force_search=true'>Search</a></li>
+        </ul>
+      </li>
+    <%end-%>
     <%if current_user.view_entries?%>
       <li><a href='#' class='click_sink'>Entries</a>
         <ul class='sub_menu'>
@@ -121,6 +128,14 @@
       <li><a href='#' class='click_sink'>Invoices</a>
         <ul class='sub_menu'>
           <li><a href='/broker_invoices?force_search=true'>Search</a></li>
+        </ul>
+      </li>
+    <%end%>
+    <%if current_user.view_drawback?%>
+      <li><a href='#' class='click_sink'>Drawback</a>
+        <ul class='sub_menu'>
+          <li><a href='/drawback_claims'>Claims</a></li>
+          <li><a href='/drawback_upload_files'>Upload</a></li>
         </ul>
       </li>
     <%end%>
@@ -161,7 +176,7 @@
     <% if current_user %>
       <% unless no_buttons %>
         <div id="corner_links">
-            <div style='text-align:right;'><form action='/quick_search' method='GET'><input type='text' name='v' size='10'/><input type='submit' value='Search' id='quick_search_button' /></form></div>
+            <div style='text-align:right;'><form action='/quick_search' method='GET'><input type='text' name='v' size='10' id='quick_search_input' title='Tip: Press "/" to jump here.' /><input type='submit' value='Search' id='quick_search_button' /></form></div>
         </div>
       <% end %>
     <% end%>

@@ -1,0 +1,68 @@
+<%content_for :action_bar do-%>
+  <%if @claim.can_edit?(current_user)-%>
+  <button class='btn_link' link_to='<%=edit_drawback_claim_path(@claim)%>'>Edit</button>
+  <%end-%>
+<%end-%>
+<h2>Drawback Claim: <%=@claim.name%></h2>
+
+<table class='ent_columns'>
+  <tr>
+    <td>
+      <table cellspacing="0">
+        <%=field_row "Company", @claim.importer.name%>
+        <%=field_row "Export Date Range","#{@claim.exports_start_date} - #{@claim.exports_end_date}"%>
+        <%=field_row "Entry Number", @claim.entry_number%>
+        <%=field_row "Pieces (Claimed / Exported)", "#{number_with_delimiter @claim.total_pieces_claimed} / #{number_with_delimiter @claim.total_pieces_exported} (#{number_to_percentage(@claim.percent_pieces_claimed*100,:precision=>1)})"%>
+        <%=field_row "Claim Amount (Claimed / Planned)", "#{number_to_currency(@claim.total_claim_amount)} / #{number_to_currency(@claim.planned_claim_amount)} (#{number_to_percentage(@claim.percent_money_claimed*100,:precision=>1)})"%>
+      </table>
+    </td>
+    <td>
+      <table cellspacing="0">
+        <%=field_row "Net Claim (Claim - Commission)", number_to_currency(@claim.net_claim_amount)%>
+        <%=field_row "Commercial Value", number_to_currency(@claim.total_export_value)%>
+        <%=field_row "Potential Duty Exported", number_to_currency(@claim.total_duty)%>
+        <%=field_row "HMF Claimed", number_to_currency(@claim.hmf_claimed)%>
+        <%=field_row "MPF Claimed", number_to_currency(@claim.mpf_claimed)%>
+        <%=field_row "Duty Claimed", number_to_currency(@claim.duty_claimed)%>
+        <%=field_row "Duty Check Amount", number_to_currency(@claim.duty_check_amount)%>
+        <%=field_row "Commission", number_to_currency(@claim.bill_amount)%>
+      </table>
+    </td>
+    <td>
+      <table cellspacing="0">
+        <%=field_row "ABI Accepted", @claim.abi_accepted_date%>
+        <%=field_row "Sent To Customs", @claim.sent_to_customs_date%>
+        <%=field_row "Billed", @claim.billed_date%>
+        <%=field_row "Duty Check Received", @claim.duty_check_received_date%>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<h3>Exports Not Matching Imports (<%=@claim.exports_not_in_import.sum("duty_calc_export_file_lines.quantity")%> pieces)</h3>
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th>Export Date</th>
+      <th>Ref 1</th>
+      <th>Ref 2</th>
+      <th>Part Number</th>
+      <th>Quantity</th>
+      <th>Sent To Duty Calc</th>
+    </tr>
+  </thead>
+  <tbody>
+    <%@bad_exports.each do |exp|-%>
+      <tr class='hover'>
+        <td><%=exp.export_date%></td>
+        <td><%=exp.ref_1%></td>
+        <td><%=exp.ref_2%></td>
+        <td><%=exp.part_number%></td>
+        <td><%=exp.quantity%></td>
+        <td><%=exp.duty_calc_export_file_id.nil? ? "NO" : "YES"%></td>
+      </tr>
+    <%end-%>
+  </tbody>
+</table>
+<%=will_paginate(@bad_exports)%>
+

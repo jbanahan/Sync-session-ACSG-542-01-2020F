@@ -2,6 +2,7 @@ require 'aws-sdk'
 require 'open_chain/s3'
 require 'open_chain/alliance_parser'
 require 'open_chain/fenix_parser'
+require 'open_chain/custom_handler/kewill_isf_xml_parser'
 module OpenChain
   class IntegrationClient
     def self.go system_code, shutdown_if_not_schedule_server = false, sleep_time = 5
@@ -73,6 +74,10 @@ module OpenChain
         response_type = 'remote_file'
       elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
         OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
+        OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
         status_msg = 'success'
         response_type = 'remote_file'
       elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')

@@ -75,6 +75,16 @@ describe OpenChain::UnderArmourExportParser do
         DutyCalcExportFileLine.all.should have(2).items
         t.unlink
       end
+      it "should skip empty lines without error" do
+        @lines << "  "
+        content = @lines.join("\n")
+        t = Tempfile.new("xyz")
+        t << content
+        t.flush
+        OpenChain::UnderArmourExportParser.parse_csv_file t.path, @importer
+        DutyCalcExportFileLine.all.should have(2).items
+        t.unlink
+      end
     end
 
     describe :parse_csv_line do

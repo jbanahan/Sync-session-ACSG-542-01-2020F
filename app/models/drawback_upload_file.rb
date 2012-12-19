@@ -30,24 +30,25 @@ class DrawbackUploadFile < ActiveRecord::Base
   #process the attached file through the appropriate processor
   def process user
     r = nil
-    case self.processor
-    when PROCESSOR_UA_WM_IMPORTS
-      r = OpenChain::UnderArmourReceivingParser.parse_s3 self.attachment.attached.path 
-    when PROCESSOR_OHL_ENTRY
-      r = OpenChain::UnderArmourDrawbackProcessor.process_entries OpenChain::OhlDrawbackParser.parse tempfile.path
-    when PROCESSOR_UA_DDB_EXPORTS
-      r = OpenChain::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)
-    when PROCESSOR_UA_FMI_EXPORTS
-      r = OpenChain::UnderArmourExportParser.parse_fmi_csv_file tempfile.path
-    when PROCESSOR_JCREW_SHIPMENTS
-      r = OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path
-    when PROCESSOR_LANDS_END_EXPORTS
-      r = OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")
-    else
-      raise "Processor #{self.processor} not found."
+    p_map = {
+      PROCESSOR_UA_WM_IMPORTS=>lambda {OpenChain::UnderArmourReceivingParser.parse_s3 self.attachment.attached.path},
+      PROCESSOR_OHL_ENTRY => lambda {OpenChain::UnderArmourDrawbackProcessor.process_entries OpenChain::OhlDrawbackParser.parse tempfile.path},
+      PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)},
+      PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
+      PROCESSOR_JCREW_SHIPMENTS => lambda {OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path},
+      PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")}
+    }
+    to_run = p_map[self.processor]
+    raise "Processor #{self.processor} not found." if to_run.nil?
+    begin
+      r = to_run.call
+      user.messages.create(:subject=>"Drawback File Complete - #{self.attachment.attached_file_name}", :body=>"Your drawback processing job for file #{self.attachment.attached_file_name} is complete.")
+    rescue
+      self.update_attributes(:error_message=>$!.message)
+      $!.log_me ["Drawback Upload File ID: #{self.id}"]
+      user.messages.create(:subject=>"Drawback File Complete WITH ERRORS - #{self.attachment.attached_file_name}", :body=>"Your drawback processing job for file #{self.attachment.attached_file_name} is complete.")
     end
     self.update_attributes(:finish_at=>0.seconds.ago)
-    user.messages.create(:subject=>"Drawback File Complete - #{self.attachment.attached_file_name}", :body=>"Your drawback processing job for file #{self.attachment.attached_file_name} is complete.")
     r
   end
 

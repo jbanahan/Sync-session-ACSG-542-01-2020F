@@ -1,8 +1,9 @@
-
 module OpenChain
   # Client to communicate with XLServer
   class XLClient
   
+    # if true the client will raise exceptions instead of including the errors in the JSON response (default = false)
+    attr_accessor :raise_errors
     def initialize path 
       @path = path
       @session_id = "#{MasterSetup.get.uuid}-#{Process.pid}" #should be unqiue enough
@@ -12,27 +13,8 @@ module OpenChain
 
     # Send the given command Hash to the server and return a Hash with the response
     def send command
-      command['session'] = @session_id
-      json = command.to_json 
-      r = {'errors'=>'Client error: did not successfully receive server response.'}
-      retry_count = 0
-      response_body = "no response"
-      begin
-        req = Net::HTTP::Post.new(@uri.path)
-        req.body = json
-        res = Net::HTTP.start(@uri.host,@uri.port) do |http|
-          http.read_timeout = 600
-          http.request req
-        end
-        response_body = res.body
-        r = JSON.parse response_body
-      rescue
-        retry_count += 1
-        retry if retry_count < 3
-        puts $!
-        puts $!.backtrace
-        r = {'errors'=>["Communications error: #{$!.message}", "Command: #{command.to_s}", "Response Body: #{response_body}", "Retry Count: #{retry_count}"]}
-      end
+      r = private_send command
+      raise OpenChain::XLClientError.new(r['errors'].join("\n")) if @raise_errors && !r['errors'].blank? 
       r
     end
 
@@ -99,6 +81,31 @@ module OpenChain
     end
     
     private
+    def private_send command
+      command['session'] = @session_id
+      json = command.to_json 
+      r = {'errors'=>'Client error: did not successfully receive server response.'}
+      retry_count = 0
+      response_body = "no response"
+      begin
+        req = Net::HTTP::Post.new(@uri.path)
+        req.body = json
+        res = Net::HTTP.start(@uri.host,@uri.port) do |http|
+          http.read_timeout = 600
+          http.request req
+        end
+        response_body = res.body
+        r = JSON.parse response_body
+      rescue
+        retry_count += 1
+        if retry_count < 3
+          sleep 1
+          retry
+        end
+        r = {'errors'=>["Communications error: #{$!.message}", "Command: #{command.to_s}", "Response Body: #{response_body}", "Retry Count: #{retry_count}"]}
+      end
+      r
+    end
     def process_row_response r
       if r.is_a? Array
         r.each do |cell_set|
@@ -127,5 +134,8 @@ module OpenChain
       end
       r
     end
+  end
+  class XLClientError < RuntimeError
+    
   end
 end

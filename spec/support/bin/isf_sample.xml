@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<IsfHeaderData xmlns="http://isf.kewill.com/ws/integration/">
+  <ISF_SEQ_NBR>1870446</ISF_SEQ_NBR>
+  <IMPORTER_ACCT_CD>EDDIEX</IMPORTER_ACCT_CD>
+  <IMPORTER_BROKERAGE_ACCT_CD>EDDIE</IMPORTER_BROKERAGE_ACCT_CD>
+  <IRS_NBR>27-058606000</IRS_NBR>
+  <IS_IE_TE>N</IS_IE_TE>
+  <ISF_SHIPMENT_TYPE>01</ISF_SHIPMENT_TYPE>
+  <ISF_TX_NBR>316-71445820402</ISF_TX_NBR>
+  <SCAC_CD>KKLU</SCAC_CD>
+  <MOT_CD>11</MOT_CD>
+  <BOOKING_NBR>BKING</BOOKING_NBR>
+  <VESSEL_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <VESSEL_NAME>VSL</VESSEL_NAME>
+  <VOYAGE_NBR>VOY</VOYAGE_NBR>
+  <PORT_LADING_CD>PL</PORT_LADING_CD>
+  <PORT_UNLADING_CD>UL</PORT_UNLADING_CD>
+  <PORT_DELIVERY_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <PORT_ENTRY_CD>PE</PORT_ENTRY_CD>
+  <BROKER_FILER_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <ENTRY_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <BROKER_REF_NO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <PO_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <STATUS_CD>ACCNOMATCH</STATUS_CD>
+  <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <BOND_HOLDER>27-058606000</BOND_HOLDER>
+  <ISF_BOND_INDICATOR>N</ISF_BOND_INDICATOR>
+  <IT_NO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <BOND_NO xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <BOND_SURETY>281</BOND_SURETY>
+  <IS_FTZ>N</IS_FTZ>
+  <PORT_UNLADING_TYPE_CD>K</PORT_UNLADING_TYPE_CD>
+  <PORT_DELIVERY_TYPE_CD>K</PORT_DELIVERY_TYPE_CD>
+  <US_PORT_IMPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <ACTION_REASON_CD>CT</ACTION_REASON_CD>
+  <BOND_TYPE_CD>8</BOND_TYPE_CD>
+  <BOND_ACTIVITY_CD>01</BOND_ACTIVITY_CD>
+  <WAS_FLEXIBLE_RANGE>N</WAS_FLEXIBLE_RANGE>
+  <WAS_FLEXIBLE_TIMING>N</WAS_FLEXIBLE_TIMING>
+  <IMPORTER_SCAC_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <CARNET_COUNTRY_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <CARNET_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <BOND_REFERENCE_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <MESSAGE_TYPE>ACCEPT</MESSAGE_TYPE>
+  <LAST_SUBMISSION_TYPE>1</LAST_SUBMISSION_TYPE>
+  <IS_SUBMIT_LATE>N</IS_SUBMIT_LATE>
+  <SHIPMENT_SUB_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <ESTIMATED_VALUE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <ESTIMATED_QUANTITY xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <QUANTITY_UOM xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <ESTIMATED_WEIGHT xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <WEIGHT_UOM xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  <bols>
+    <MASTER_BILL_NBR>XM02368200</MASTER_BILL_NBR>
+    <MASTER_SCAC_CD>KKLU</MASTER_SCAC_CD>
+    <HOUSE_BILL_NBR>HBL123</HOUSE_BILL_NBR>
+    <HOUSE_SCAC_CD>HBSC</HOUSE_SCAC_CD>
+    <SUB_HOUSE_BILL_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <DISPOSITION_CD>S2</DISPOSITION_CD>
+    <DISPOSITION_DATE>2012-11-27T09:15:12.073-05:00</DISPOSITION_DATE>
+    <DISPOSITION_REMARKS>NO BILL MATCH (NOT ON FILE)             </DISPOSITION_REMARKS>
+  </bols>
+  <brokerrefs>
+    <BROKER_FILER_CD>316</BROKER_FILER_CD>
+    <ENTRY_NBR>19212983</ENTRY_NBR>
+    <BROKER_REF_NO>1921298</BROKER_REF_NO>
+  </brokerrefs>
+  <containers>
+    <CONTAINER_NBR>KKFU1694054</CONTAINER_NBR>
+    <EQUIPMENT_CD>CN</EQUIPMENT_CD>
+    <CONTAINER_SIZE_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </containers>
+  <entities>
+    <PARTY_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PARTY_TYPE_CD>BY</PARTY_TYPE_CD>
+    <PARTY_NAME>EDDIE BAUER LLC</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>10401 NE 8TH STREET</ADDRESS_1>
+    <ADDRESS_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CITY>BELLEVUE</CITY>
+    <COUNTRY_SUBENTITY_CD>WA</COUNTRY_SUBENTITY_CD>
+    <POSTAL_CD>98004</POSTAL_CD>
+    <COUNTRY_CD>US</COUNTRY_CD>
+    <IRS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <entities>
+    <PARTY_ACCT_CD>EDDIE</PARTY_ACCT_CD>
+    <PARTY_TYPE_CD>CN</PARTY_TYPE_CD>
+    <PARTY_NAME>EDDIE BAUER LLC</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>10401 NE 8TH ST</ADDRESS_1>
+    <ADDRESS_2>ST 500</ADDRESS_2>
+    <CITY>BELLEVUE</CITY>
+    <COUNTRY_SUBENTITY_CD>WA</COUNTRY_SUBENTITY_CD>
+    <POSTAL_CD>98004</POSTAL_CD>
+    <COUNTRY_CD>US</COUNTRY_CD>
+    <IRS_NBR>27-058606000</IRS_NBR>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <entities>
+    <PARTY_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PARTY_TYPE_CD>CS</PARTY_TYPE_CD>
+    <PARTY_NAME>KINGTAI INDUSTRIAL (XIAMEN) CO., LT</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>FUJINA CHINA</ADDRESS_1>
+    <ADDRESS_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CITY>XIAMEN</CITY>
+    <COUNTRY_SUBENTITY_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <POSTAL_CD>361006</POSTAL_CD>
+    <COUNTRY_CD>CN</COUNTRY_CD>
+    <IRS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <entities>
+    <PARTY_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PARTY_TYPE_CD>IM</PARTY_TYPE_CD>
+    <PARTY_NAME>EDDIE BAUER LLC</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>10401 NE 8TH ST</ADDRESS_1>
+    <ADDRESS_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CITY>BELLEVUE</CITY>
+    <COUNTRY_SUBENTITY_CD>WA</COUNTRY_SUBENTITY_CD>
+    <POSTAL_CD>98004</POSTAL_CD>
+    <COUNTRY_CD>US</COUNTRY_CD>
+    <IRS_NBR>27-058606000</IRS_NBR>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <entities>
+    <PARTY_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PARTY_TYPE_CD>LG</PARTY_TYPE_CD>
+    <PARTY_NAME>KINGTAI INDUSTRIAL (XIAMEN) CO., LT</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>FUJINA CHINA</ADDRESS_1>
+    <ADDRESS_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CITY>XIAMEN</CITY>
+    <COUNTRY_SUBENTITY_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <POSTAL_CD>361006</POSTAL_CD>
+    <COUNTRY_CD>CN</COUNTRY_CD>
+    <IRS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <entities>
+    <PARTY_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PARTY_TYPE_CD>MF</PARTY_TYPE_CD>
+    <PARTY_NAME>KINGTAI INDUSTRIAL (XIAMEN) CO., LT</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>FUJINA CHINA</ADDRESS_1>
+    <ADDRESS_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CITY>XIAMEN</CITY>
+    <COUNTRY_SUBENTITY_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <POSTAL_CD>361006</POSTAL_CD>
+    <COUNTRY_CD>CN</COUNTRY_CD>
+    <IRS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <entities>
+    <PARTY_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PARTY_TYPE_CD>SE</PARTY_TYPE_CD>
+    <PARTY_NAME>GREATEX INTERNATIONAL (HK) CO.</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>CHINA FERRY TERMINAL</ADDRESS_1>
+    <ADDRESS_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CITY>TSIMSHATSUI</CITY>
+    <COUNTRY_SUBENTITY_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <POSTAL_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_CD>HK</COUNTRY_CD>
+    <IRS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <entities>
+    <PARTY_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PARTY_TYPE_CD>ST</PARTY_TYPE_CD>
+    <PARTY_NAME>TRILOGY FULFILLMENT LLC</PARTY_NAME>
+    <SECOND_NAME xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <SECOND_NAME_TYPE_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ADDRESS_1>6755 PORT ROAD</ADDRESS_1>
+    <ADDRESS_2 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CITY>GROVEPORT</CITY>
+    <COUNTRY_SUBENTITY_CD>OH</COUNTRY_SUBENTITY_CD>
+    <POSTAL_CD>43125</POSTAL_CD>
+    <COUNTRY_CD>US</COUNTRY_CD>
+    <IRS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </entities>
+  <events>
+    <EVENT_NBR>18</EVENT_NBR>
+    <EVENT_DESCR>EDI Received</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T06:40:01.285-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T11:40:01.285-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+  </events>
+  <events>
+    <EVENT_NBR>1</EVENT_NBR>
+    <EVENT_DESCR>Logged</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T06:40:10.949-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T11:40:10.949-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+  </events>
+  <events>
+    <EVENT_NBR>19</EVENT_NBR>
+    <EVENT_DESCR>EDI Copied To ISF</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T06:40:11.058-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T11:40:11.058-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>EDI Transaction ID: 33380</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>3</EVENT_NBR>
+    <EVENT_DESCR>ISF Queued to Send to Customs</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:13:36.627-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:13:36.627-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>ISF Queued to Send to Customs - DANA</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>4</EVENT_NBR>
+    <EVENT_DESCR>Accepted by Customs</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:14:02.475-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:14:02.475-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>ISF issued as a Compliance Transaction (CT)</NOTE>
+    </notes>
+    <notes>
+      <NOTE>CBP Accepted - ISF ACCEPTED                            </NOTE>
+    </notes>
+    <notes>
+      <NOTE>Submission Type - 1 : Importer Security Filing 10 (ISF-10)</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>20</EVENT_NBR>
+    <EVENT_DESCR>Shipment Queued for Download</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:14:02.546-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:14:02.546-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>For Company Subscriber.</NOTE>
+    </notes>
+    <notes>
+      <NOTE>Message Type: ACCEPT</NOTE>
+    </notes>
+    <notes>
+      <NOTE>Process Queue Seq Nbr: 15087382</NOTE>
+    </notes>
+    <notes>
+      <NOTE>FILE transport.</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>20</EVENT_NBR>
+    <EVENT_DESCR>Shipment Queued for Download</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:14:02.564-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:14:02.564-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>For Company Subscriber.</NOTE>
+    </notes>
+    <notes>
+      <NOTE>Message Type: ACCEPT</NOTE>
+    </notes>
+    <notes>
+      <NOTE>Process Queue Seq Nbr: 15087383</NOTE>
+    </notes>
+    <notes>
+      <NOTE>FILE transport 2.</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>20</EVENT_NBR>
+    <EVENT_DESCR>Shipment Queued for Download</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:14:02.578-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:14:02.578-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>For Importer.</NOTE>
+    </notes>
+    <notes>
+      <NOTE>Message Type: ACCEPT</NOTE>
+    </notes>
+    <notes>
+      <NOTE>Process Queue Seq Nbr: 15087384</NOTE>
+    </notes>
+    <notes>
+      <NOTE>FILE transport.</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>8</EVENT_NBR>
+    <EVENT_DESCR>Bill of Lading Status Advisory</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:15:12.073-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:15:12.073-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>Bill Nbr: KKLUXM02368200. Disposition Cd: S2</NOTE>
+    </notes>
+    <notes>
+      <NOTE>NO BILL MATCH (NOT ON FILE)             </NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>21</EVENT_NBR>
+    <EVENT_DESCR>Shipment Downloaded</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:20:01.565-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:20:01.565-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>Process Queue Seq Nbr: 15087382</NOTE>
+    </notes>
+    <notes>
+      <NOTE>File name: isf_1870446_15087382_20121127092001243.xml</NOTE>
+    </notes>
+    <notes>
+      <NOTE>FILE transport.</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>3</EVENT_NBR>
+    <EVENT_DESCR>ISF Queued to Send to Customs</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T10:13:36.627-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T15:13:36.627-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>ISF Queued to Send to Customs - DANA</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>4</EVENT_NBR>
+    <EVENT_DESCR>Accepted by Customs</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T10:14:02.475-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T15:14:02.475-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>ISF issued as a Compliance Transaction (CT)</NOTE>
+    </notes>
+    <notes>
+      <NOTE>CBP Accepted - ISF ACCEPTED                            </NOTE>
+    </notes>
+    <notes>
+      <NOTE>Submission Type - 1 : Importer Security Filing 10 (ISF-10)</NOTE>
+    </notes>
+  </events>
+  <events>
+    <EVENT_NBR>10</EVENT_NBR>
+    <EVENT_DESCR>Estimated Loading</EVENT_DESCR>
+    <EVENT_DATE>2012-11-30T00:00:00-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-30T05:00:00-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+  </events>
+  <lines>
+    <ISF_LINE_NBR>1</ISF_LINE_NBR>
+    <PARTS_IMPORTER_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ASSEMBLER xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PART_CD>023-2214</PART_CD>
+    <MANUF_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID>MID</MID>
+    <TARIFF_NBR>940430</TARIFF_NBR>
+    <COUNTRY_ORIGIN_CD>CN</COUNTRY_ORIGIN_CD>
+    <CI_NBR>CIN</CI_NBR>
+    <CI_LINE_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PO_NBR>0425694</PO_NBR>
+    <PO_LINE_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </lines>
+  <lines>
+    <ISF_LINE_NBR>2</ISF_LINE_NBR>
+    <PARTS_IMPORTER_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <ASSEMBLER xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PART_CD>023-2215</PART_CD>
+    <MANUF_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <TARIFF_NBR>940430</TARIFF_NBR>
+    <COUNTRY_ORIGIN_CD>CN</COUNTRY_ORIGIN_CD>
+    <CI_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <CI_LINE_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <PO_NBR>0425697</PO_NBR>
+    <PO_LINE_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+  </lines>
+</IsfHeaderData>

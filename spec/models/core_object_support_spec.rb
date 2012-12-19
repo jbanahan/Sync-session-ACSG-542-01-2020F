@@ -1,6 +1,24 @@
 require 'spec_helper'
 
 describe CoreObjectSupport do
+  describe :process_linked_attachments do
+    before :each do
+      LinkableAttachmentImportRule.create!(:path=>'X',:model_field_uid=>'ord_ord_num')
+      @ws = Delayed::Worker.delay_jobs
+      Delayed::Worker.delay_jobs = false
+    end
+    after :each do
+      Delayed::Worker.delay_jobs = @ws
+    end
+    it "should kick off job if import rule exists for this module" do
+      LinkedAttachment.should_receive(:create_from_attachable).with(instance_of(Order))
+      Order.create!(:order_number=>'onum',:vendor_id=>Factory(:company,:vendor=>true).id)
+    end
+    it "should not kick off job if only import rules are for another module" do
+      LinkedAttachment.should_not_receive(:create_from_attachable)
+      Product.create!(:unique_identifier=>"PLA")
+    end
+  end
   describe :need_sync do
     before :each do
       @tp = "tradingpartner"

@@ -5,6 +5,7 @@ class ItemChangeSubscription < ActiveRecord::Base
   belongs_to  :user
   belongs_to  :sales_order
   belongs_to  :delivery
+  belongs_to  :security_filing
   
   validates :user, :presence => true
   

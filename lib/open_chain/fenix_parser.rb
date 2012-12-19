@@ -1,30 +1,28 @@
+require 'open_chain/integration_client_parser'
 module OpenChain
   class FenixParser
+    extend OpenChain::IntegrationClientParser
     SOURCE_CODE = 'Fenix'
 
-    def self.process_past_days number_of_days, opts={}
-      number_of_days.times {|i| process_day (number_of_days-i).days.ago}
-      if opts[:user_id]
-        u = User.find opts[:user_id]
-        u.messages.create(:subject=>"Fenix reprocessing complete.",:body=>"#{number_of_days} days have been reprocessed for Fenix")
-      end
+    def self.integration_folder
+      "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
     end
     # take the text from a Fenix CSV output file a create entries
-    def self.parse file_content, s3_bucket = nil, s3_path = nil
+    def self.parse file_content, opts={}
       begin
         entry_lines = []
         current_file_number = ""
         CSV.parse(file_content) do |line|
-          next unless line.size > 10
+          next if line.size < 10 || line[0]=='Barcode'
           file_number = line[1]
           if !entry_lines.empty? && file_number!=current_file_number
-            FenixParser.new.parse_entry entry_lines, s3_bucket, s3_path
+            FenixParser.new.parse_entry entry_lines, opts 
             entry_lines = []
           end
           current_file_number = file_number
           entry_lines << line
         end
-        FenixParser.new.parse_entry entry_lines, s3_bucket, s3_path unless entry_lines.empty?
+        FenixParser.new.parse_entry entry_lines, opts unless entry_lines.empty?
       rescue
         puts $!
         puts $!.backtrace
@@ -35,18 +33,10 @@ module OpenChain
       end
     end
 
-    # process all files in the archive for a given date.  Use this to reprocess old files
-    def self.process_day date
-      OpenChain::S3.integration_keys(date,"/opt/wftpserver/ftproot/www-vfitrack-net/_fenix") do |key|
-        process_from_s3 OpenChain::S3.integration_bucket_name, key
-      end
-    end
 
-    def self.process_from_s3 bucket, key
-        parse OpenChain::S3.get_data(bucket, key), bucket, key
-    end
-
-    def parse_entry lines, s3_bucket = nil, s3_path = nil
+    def parse_entry lines, opts={} 
+      s3_bucket = opts[:bucket]
+      s3_path = opts[:key]
       start_time = Time.now
       @total_units = BigDecimal('0.00')
       @total_entered_value = BigDecimal('0.00')

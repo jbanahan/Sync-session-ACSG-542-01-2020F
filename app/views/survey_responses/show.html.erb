@@ -170,12 +170,14 @@ textarea {
   padding-left: 5px;
 }
 .comm pre {
+  overflow-x: auto;
   background: none;
 }
 </style>
 <div id='filter_warn' class='c_warn' style='display:none;'></div>
 <%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
   <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> </h1>
+  <h3><%=@sr.subtitle%></h3>
   <%if @rate_mode %> 
     <%=f.select(:rating, @sr.survey.rating_values, {:include_blank=>true})%>
   <%elsif @sr.rating %>

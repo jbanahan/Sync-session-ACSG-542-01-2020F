@@ -117,12 +117,8 @@ class SurveysController < ApplicationController
     end
     cnt = 0
     params[:assign].values.each do |uid|
-      if SurveyResponse.find_by_survey_id_and_user_id(s.id,uid)
-        add_flash :notices, "Survey already exists for #{User.find(uid).full_name}, skipping."
-      else
-        s.generate_response!(User.find(uid)).delay.invite_user!
-        cnt += 1
-      end
+      s.generate_response!(User.find(uid),params[:subtitle]).delay.invite_user!
+      cnt += 1
     end
     add_flash :notices, "#{help.pluralize cnt, "user"} assigned successfully."
     redirect_to s

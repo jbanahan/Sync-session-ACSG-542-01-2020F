@@ -21,6 +21,68 @@ describe ModelField do
     end
   end
   context "special cases" do
+    context "PMS Month" do
+      before :each do 
+        @ent = Factory(:entry,:monthly_statement_due_date=>Date.new(2012,9,1))
+        @mf = ModelField.find_by_uid :ent_statement_month
+      end
+      it "should export month" do
+        @mf.process_export(@ent,nil,true).should == 9
+      end
+      it "should work as search criterion" do
+        sc = SearchCriterion.new(:model_field_uid=>'ent_statement_month',:operator=>'eq',:value=>'9')
+        Factory(:entry,:monthly_statement_due_date=>Date.new(2012,10,1))
+        r = sc.apply(Entry.where('1=1'))
+        r.should have(1).entry
+        r.first.should == @ent
+      end
+    end
+    context "duty billed" do
+      before :each do
+        @line1 = Factory(:broker_invoice_line,:charge_amount=>10,:charge_code=>'0001')
+        @line2 = Factory(:broker_invoice_line,:charge_amount=>5,:charge_code=>'0001',:broker_invoice=>@line1.broker_invoice)
+        @mf = ModelField.find_by_uid :ent_duty_billed
+      end
+      it "should total D records at broker invoice line" do
+        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 15
+      end
+      it "should not include records without an 0001 charge code" do
+        line3 = Factory(:broker_invoice_line,:charge_amount=>7,:charge_code=>'0099',:broker_invoice=>@line1.broker_invoice)
+        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 15
+      end
+      it "should work as search criterion" do
+        sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed',:operator=>'eq',:value=>'15')
+        sc.apply(Entry.where('1=1')).first.should == @line1.broker_invoice.entry
+      end
+      it "should total across multiple broker invoices for same entry" do
+        ent = @line1.broker_invoice.entry
+        line3 = Factory(:broker_invoice_line,:charge_amount=>20,:charge_code=>'0001',:broker_invoice=>Factory(:broker_invoice,:entry=>ent,:suffix=>'B'))
+        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 35
+        sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed',:operator=>'eq',:value=>'35')
+        sc.apply(Entry.where('1=1')).first.should == @line1.broker_invoice.entry
+      end
+      it "should only include broker invoices on the entry in question" do
+        line3 = Factory(:broker_invoice_line,:charge_amount=>3,:charge_code=>'0001') #will be on different entry
+        @mf.process_export(@line1.broker_invoice.entry,nil,true).should == 15
+        sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed',:operator=>'eq',:value=>'15')
+        sc.apply(Entry.where('1=1')).first.should == @line1.broker_invoice.entry
+      end
+      it "should view if broker and can view broker invoices" do
+        u = Factory(:broker_user)
+        u.stub(:view_broker_invoices?).and_return(true)
+        @mf.can_view?(u).should be_true
+      end
+      it "should not view if not broker" do
+        u = Factory(:importer_user)
+        u.stub(:view_broker_invoices?).and_return(true)
+        @mf.can_view?(u).should be_false
+      end
+      it "should not view user cannot view broker invoicees" do
+        u = Factory(:broker_user)
+        u.stub(:view_broker_invoices?).and_return(false)
+        @mf.can_view?(u).should be_false
+      end
+    end
     context "first HTS code" do
       before :each do
         country_1 = Factory(:country,:classification_rank=>1)

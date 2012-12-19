@@ -18,6 +18,8 @@ class Company < ActiveRecord::Base
 	has_many	:products, :through => :divisions, :dependent => :destroy
 	has_many  :histories, :dependent => :destroy
   has_many  :power_of_attorneys, :dependent => :destroy
+  has_many  :drawback_claims
+  has_many  :charge_categories, :dependent => :destroy
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
 	
@@ -63,6 +65,18 @@ class Company < ActiveRecord::Base
 
 
   #permissions
+  def view_security_filings?
+    master_setup.security_filing_enabled? && (self.master? || self.broker? || self.importer?) 
+  end
+  def edit_security_filings?
+    false
+  end
+  def comment_security_filings?
+    view_security_filings?
+  end
+  def attach_security_filings?
+    view_security_filings?
+  end
   def view_drawback?
     master_setup.drawback_enabled?
   end

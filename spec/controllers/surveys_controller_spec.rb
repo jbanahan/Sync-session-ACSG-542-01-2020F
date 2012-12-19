@@ -213,16 +213,23 @@ describe SurveysController do
       response.should redirect_to request.referrer
       flash[:errors].should have(1).item
     end
-    it "should not assign to the same user twice" do
+    it "should assign to the same user twice" do
       u2 = Factory(:user)
       Factory(:survey_response,:survey=>@s,:user=>u2) #making this one exist already
       u3 = Factory(:user) #this user should still have one created
       Survey.any_instance.stub(:can_edit?).and_return(true)
       post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s,"1"=>u3.id.to_s}
       response.should redirect_to survey_path(@s)
-      flash[:notices].should have(2).messages
+      flash[:notices].should have(1).messages
       SurveyResponse.find_by_survey_id_and_user_id(@s.id,u3.id).should_not be_nil
-      SurveyResponse.where(:user_id=>u2.id,:survey_id=>@s.id).count.should == 1
+      SurveyResponse.where(:user_id=>u2.id,:survey_id=>@s.id).count.should == 2
+    end
+    it "should set subtitle" do
+      u2 = Factory(:user)
+      Survey.any_instance.stub(:can_edit?).and_return(true)
+      post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s}, :subtitle=>'sub'
+      response.should redirect_to survey_path(@s)
+      SurveyResponse.find_by_survey_id_and_user_id(@s.id,u2.id).subtitle.should == 'sub'
     end
   end
   describe "toggle subscription" do

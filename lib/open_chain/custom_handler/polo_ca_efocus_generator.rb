@@ -2,12 +2,15 @@ require 'rexml/document'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
 module OpenChain
   module CustomHandler
+
+    class PortMissingError < ::RuntimeError
+      attr_accessor :port_code
+    end
     #write XML files to go to e-Focus (at OHL) for supply chain tracking
     class PoloCaEfocusGenerator
 
       # key is fenix code, value is ohl code
       TRANSPORT_MODE_MAP = {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
-      PORT_MAP = {'351'=>'CALCO','396'=>'CADOR','399'=>'CAYMX','440'=>'CASNI','496'=>'CATOR','497'=>'CAYYZ'}
       SYNC_CODE = 'polo_ca_efocus'
       
       #This is the master method that does all of the work
@@ -23,12 +26,23 @@ module OpenChain
           where("length(house_bills_of_lading) > 0 OR length(container_numbers) > 0").
           need_sync(SYNC_CODE).uniq
         entries.each do |ent|
+          begin
           t = Tempfile.new(["PoloCaEfocus",".xml"])  
-          generate_xml_file ent, t
+            generate_xml_file ent, t
+            files << t
+          rescue OpenChain::CustomHandler::PortMissingError
+            body = <<endbody
+Error for file #{ent.broker_reference}.
+
+Port code #{$!.port_code} is not set in the Ralph Lauren e-Focus XML Generator.
+
+If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
+endbody
+            OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com','INVALID RALPH LAUREN CA PORT CODE',body).deliver!
+          end
           sr = ent.sync_records.find_by_trading_partner(SYNC_CODE)
           sr = ent.sync_records.build(:trading_partner=>SYNC_CODE) unless sr
           sr.update_attributes(:sent_at=>2.seconds.ago,:confirmed_at=>1.second.ago,:confirmation_file_name=>'n/a')
-          files << t
         end
         files
       end
@@ -52,6 +66,7 @@ module OpenChain
         add_element ent, 'total-duty', entry.total_duty
         add_element ent, 'total-tax', entry.total_gst
         add_element ent, 'total-invoice-value', entry.total_invoiced_value
+        add_element ent, 'do-issued-date', entry.first_do_issued_date
         add_country_origin ent, entry
         add_country_export ent, entry
         add_unlading_port ent, entry.entry_port_code
@@ -65,13 +80,7 @@ module OpenChain
           entry.master_bills_of_lading.split(' ').each do |mb|
             el = ent.add_element('master-bill')
             el.add_element('number').text = mb
-            #since we don't have the right structure on the inbound, writing all house
-            #bills under each master bill
-            unless entry.house_bills_of_lading.blank?
-              entry.house_bills_of_lading.split(' ').each do |hb|
-                add_element el, 'house-bill', hb
-              end
-            end
+            add_house_bills el, entry.house_bills_of_lading
           end
         end
         output_file << doc.to_s
@@ -82,12 +91,14 @@ module OpenChain
       def ftp_xml_files file_array
         environ = Rails.env=='production' ? 'prod' : 'dev'
         file_array.each do |f|
-          sleep 1 #force unique file names
           FtpSender.send_file('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',f,{:folder=>"to_ecs/Ralph_Lauren/efocus_ca_#{environ}",:remote_file_name=>remote_file_name})
         end
       end
-      def remote_file_name
-        "VFITRACK#{Time.now.strftime("%Y%m%d%H%M%S")}.xml" 
+      def remote_file_name 
+        t = Tempfile.new(['VFITRACK','.xml'])
+        n = File.basename t.path
+        t.unlink
+        n
       end
 
       private
@@ -110,8 +121,29 @@ module OpenChain
       end
       def add_unlading_port parent, fenix_port_code
         return nil if fenix_port_code.blank?
-        r = PORT_MAP[fenix_port_code].blank? ? 'ZZZZZ' : PORT_MAP[fenix_port_code]
-        add_element parent, 'port-unlading', r
+        pc = fenix_port_code
+        while pc.size < 4
+          pc = '0'+pc
+        end
+        port = Port.where(:cbsa_port=>pc).where("length(unlocode) > 0").first
+        if port
+          add_element parent, 'port-unlading', port.unlocode if port
+        else
+          pme = PortMissingError.new
+          pme.port_code = pc
+          raise pme
+        end
+        nil
+      end
+      def add_house_bills parent, hbol_numbers
+        #since we don't have the right structure on the inbound, writing all house
+        #bills under each master bill
+        unless hbol_numbers.blank?
+          hbol_numbers.split(' ').each do |hb|
+            h = hb.size > 16 ? hb[0,16] : hb
+            add_element parent, 'house-bill', h
+          end
+        end
       end
     end
   end

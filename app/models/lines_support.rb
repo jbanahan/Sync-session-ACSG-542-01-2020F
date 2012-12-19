@@ -8,7 +8,8 @@ module LinesSupport
     base.instance_eval("has_many :delivery_lines, :through => :piece_sets")
     base.instance_eval("has_many :drawback_import_lines, :through => :piece_sets")
     base.instance_eval("has_many :commercial_invoice_lines, :through => :piece_sets")
-    unless base.instance_eval("self.name") == "CommercialInvoiceLine"
+    base.instance_eval("has_many :security_filing_lines, :through=>:piece_sets")
+    unless ["CommercialInvoiceLine","SecurityFilingLine"].include? base.instance_eval("self.name")
       base.instance_eval("belongs_to :product")
       base.instance_eval("validates :product, :presence => true")
       base.instance_eval("before_validation :default_quantity") 
@@ -23,6 +24,7 @@ module LinesSupport
     base.instance_eval("attr_accessor :linked_delivery_line_id")
     base.instance_eval("attr_accessor :linked_drawback_line_id")
     base.instance_eval("attr_accessor :linked_commercial_invoice_line_id")
+    base.instance_eval("attr_accessor :linked_security_filing_line_id")
     base.instance_eval("after_save :process_links")
   end
 
@@ -53,7 +55,8 @@ module LinesSupport
   def process_links
     {:order_line_id=>@linked_order_line_id,:shipment_line_id=>@linked_shipment_line_id,
     :sales_order_line_id=>@linked_sales_order_line_id,:delivery_line_id=>@linked_delivery_line_id,
-    :commercial_invoice_line_id=>@linked_commercial_invoice_line_id,:drawback_import_line_id=>@linked_drawback_line_id}.each do |s,i|
+    :commercial_invoice_line_id=>@linked_commercial_invoice_line_id,:drawback_import_line_id=>@linked_drawback_line_id,
+    :security_filing_line_id=>@linked_security_filing_line_id}.each do |s,i|
       process_link s,i
     end
   end

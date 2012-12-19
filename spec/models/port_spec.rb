@@ -16,14 +16,54 @@ describe Port do
       good = '1234'
       p = Port.new(:schedule_d_code=>good)
       p.save.should == true
-      ['123','12345','123a5',' 12345'].each do |bad|
+      ['123','12345','123a',' 1234'].each do |bad|
         p = Port.new(:schedule_d_code=>bad)
         p.save.should == false
         p.errors.full_messages.first.should include "Schedule D"
       end
     end
+    it 'should only allow 4 digit CBSA Ports' do
+      good = '1234'
+      p = Port.new(:cbsa_port=>good)
+      p.save.should == true
+      ['123','12345','123a',' 1234'].each do |bad|
+        p = Port.new(:cbsa_port=>bad)
+        p.save.should == false
+        p.errors.full_messages.first.downcase.should include "cbsa port"
+      end
+    end
+    it 'should only allow 4 digit CBSA Sublocations' do
+      good = '1234'
+      p = Port.new(:cbsa_sublocation=>good)
+      p.save.should == true
+      ['123','12345','123a',' 1234'].each do |bad|
+        p = Port.new(:cbsa_sublocation=>bad)
+        p.save.should == false
+        p.errors.full_messages.first.downcase.should include "cbsa sublocation"
+      end
+    end
+    it 'should only allow 5 character UN LOCODES' do
+      good = 'ABCDE'
+      p = Port.new(:unlocode=>good)
+      p.save.should == true
+      ['ABC',' ABCDE','A1234','abcde'].each do |bad|
+        p = Port.new(:unlocode=>bad)
+        p.save.should == false
+        p.errors.full_messages.first.should include "UN/LOCODE"
+      end
+    end
   end
   context 'file loaders' do
+    it 'should load CBSA info from tab separated file' do
+      data = "0922\t9922\tPort Name, Is Here\n4444\t4441\tAnother Port"
+      Port.load_cbsa_data data
+      Port.all.should have(2).ports
+      [['0922','9922','Port Name, Is Here'],['4444','4441','Another Port']].each do |a|
+        p = Port.find_by_cbsa_port a[0]
+        p.cbsa_sublocation.should == a[1]
+        p.name.should == a[2]
+      end
+    end
     it 'should load schedule d csv' do
       data = "\"01\",,\"PORTLAND, ME\"\n,\"0101\",\"PORTLAND, ME\"\n,\"0102\",\"BANGOR, ME\""
       Port.load_schedule_d data

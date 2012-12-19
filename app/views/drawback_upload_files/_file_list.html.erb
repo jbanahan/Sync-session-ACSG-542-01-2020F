@@ -1,8 +1,8 @@
 <table class='detail_table'>
-  <thead><tr><th>File</th><th>Started At</th><th>Finished At</th></tr></thead>
+  <thead><tr><th>File</th><th>Started At</th><th>Finished At</th><th>Errors</th></tr></thead>
   <tbody>
     <%DrawbackUploadFile.where(:processor=>processor).order("created_at DESC").limit(10).each do |d|-%>
-      <tr class='hover'><td><%=d.attachment.attached_file_name%></td><td><%=d.start_at%></td><td><%=d.finish_at%></td></tr>
+    <tr class='hover'><td><%=link_to d.attachment.attached_file_name, d.attachment.secure_url(90.seconds)%></td><td><%=d.start_at%></td><td><%=d.finish_at%></td><td><%=d.error_message%></td></tr>
     <%end-%>
   </tbody>
 </table>

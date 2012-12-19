@@ -26,15 +26,6 @@
   });
 <%end%>
 <style>
-.ent_columns {
-  width:99%;
-}
-.ent_columns tbody {
-  vertical-align:top;
-}
-.ent_columns .label_cell {
-  width:0;
-}
 .quick_jump {
   text-align: center;
   margin-bottom: 5px;
@@ -68,7 +59,7 @@
       </td>
       <td style="width:33%;">
         <table>
-          <%[:ent_direct_shipment_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date].each do |f|%>
+          <%[:ent_direct_shipment_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>

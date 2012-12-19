@@ -1,5 +1,6 @@
 <%content_for :javascript do%>
 $(function() {
+  $("#quick_search_input").val('<%=@value%>');
   <%@module_field_map.each do |cm,fields|%>
     <%fields.each do |f|%>
     $.getJSON('/quick_search/module_result?v=<%=@value%>&mfid=<%=f%>',function(data) {

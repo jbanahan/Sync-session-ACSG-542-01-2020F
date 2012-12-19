@@ -5,6 +5,7 @@ module OpenChain
       us = Country.find_by_iso_code 'US'
       hts_map = {}
       d = DutyCalcExportFileLine.new
+      return nil if r.size <= 1 && r[0].blank?
       raise "Line #{row_num} had #{r.size} elements.  All lines must have 29 elements." unless r.size==29
       raise "Line #{row_num} is missing the part number." if r[12].blank?
       hts_code = r[9].gsub('.','')

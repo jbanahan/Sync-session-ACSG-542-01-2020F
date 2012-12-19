@@ -1,0 +1,69 @@
+<%content_for :javascript do-%>
+  $(function() {
+    $("#mod_add_port").dialog({autoOpen:false,width:'auto',buttons:{'Save':function() {$("#frm_new").submit();},'Cancel':function() {$("#mod_add_port").dialog('close');}}});
+    $("#btn_add").click(function() {$("#mod_add_port").dialog('open');});
+    $("#mod_update_port").dialog({autoOpen:false,width:'auto',buttons:{'Save':function() {$("#frm_upd").submit();},'Cancel':function() {$("#mod_update_port").dialog('close');}}});
+    $("a.upd_lnk").click(function(evt) {
+      evt.preventDefault();
+      $("#frm_upd").attr('action','/ports/'+$(this).attr('pid'));
+      $("#upd_name").val($(this).attr("nm"));
+      $("#upd_k").val($(this).attr('k'));
+      $("#upd_d").val($(this).attr('d'));
+      $("#upd_cp").val($(this).attr('cp'));
+      $("#upd_cs").val($(this).attr('cs'));
+      $("#upd_u").val($(this).attr('u'));
+      $("#mod_update_port").dialog('open');
+    });
+  });
+<%end-%>
+<%content_for :action_bar do-%>
+  <button id='btn_add'>Add</button>
+<%end-%>
+<h2>Ports</h2>
+<%= render :partial => 'shared/search_box' %>
+<table class='detail_table'>
+  <thead>
+    <tr>
+      <th>Name</th><th>Schedule K</th><th>Schedule D</th><th>CBSA Port / Sublocation</th><th>UN/LOCODE</th><th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <%@ports.each do |p|-%>
+    <tr class='hover'>
+      <td><%=p.name%></td><td><%=p.schedule_k_code%></td><td><%=p.schedule_d_code%></td><td><%=p.cbsa_port%> / <%=p.cbsa_sublocation%></td><td><%=p.unlocode%></td>
+      <td>
+        <a href='#' class='upd_lnk' pid='<%=p.id%>' nm='<%=p.name%>' k='<%=p.schedule_k_code%>' d='<%= p.schedule_d_code %>' cp='<%=p.cbsa_port%>' cs='<%=p.cbsa_sublocation%>' u='<%=p.unlocode%>'>Update</a> | 
+        <%=link_to 'Delete', port_path(p), :confirm => 'Are you sure?', :method=>:delete%>
+      </td>
+    </tr>
+    <%end-%>
+  </tbody>
+</table>
+<%=will_paginate%>
+
+<div id='mod_add_port' style='display:none;'>
+  <%form_for Port.new, :html=>{:id=>'frm_new'} do |f|-%>
+    <table>
+      <%=field_row 'Name', f.text_field(:name)%>
+      <%=field_row 'Schedule K', f.text_field(:schedule_k_code)%>
+      <%=field_row 'Schedule D', f.text_field(:schedule_d_code)%>
+      <%=field_row 'CBSA Port', f.text_field(:cbsa_port)%>
+      <%=field_row 'CBSA Sublocation', f.text_field(:cbsa_sublocation)%>
+      <%=field_row 'UN/LOCODE', f.text_field(:unlocode)%>
+    </table>
+  <%end-%>
+</div>
+<%unless @ports.empty?-%>
+<div id='mod_update_port' style='display:none;'>
+  <%form_for @ports.first, :html=>{:id=>'frm_upd'} do |f|-%>
+    <table>
+      <%=field_row 'Name', f.text_field(:name,:id=>'upd_name')%>
+      <%=field_row 'Schedule K', f.text_field(:schedule_k_code,:id=>'upd_k')%>
+      <%=field_row 'Schedule D', f.text_field(:schedule_d_code,:id=>'upd_d')%>
+      <%=field_row 'CBSA Port', f.text_field(:cbsa_port,:id=>'upd_cp')%>
+      <%=field_row 'CBSA Sublocation', f.text_field(:cbsa_sublocation,:id=>'upd_cs')%>
+      <%=field_row 'UN/LOCODE', f.text_field(:unlocode,:id=>'upd_u')%>
+    </table>
+  <%end-%>
+</div>
+<%end-%>

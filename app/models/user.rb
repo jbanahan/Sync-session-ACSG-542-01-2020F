@@ -17,6 +17,7 @@ class User < ActiveRecord::Base
     :broker_invoice_view, :broker_invoice_edit,
     :classification_view, :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
+    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
     :support_agent,
     :password_reset,
     :simple_entry_mode
@@ -132,11 +133,25 @@ class User < ActiveRecord::Base
       return self.view_commercial_invoices?
     when CoreModule::COMMERCIAL_INVOICE_TARIFF
       return self.view_commercial_invoices?
+    when CoreModule::SECURITY_FILING
+      return self.view_security_filings?
     end
     return false
   end
   
   #permissions
+  def view_security_filings?
+    self.security_filing_view? && self.company.view_security_filings? 
+  end
+  def edit_security_filings?
+    self.security_filing_edit? && self.company.edit_security_filings? 
+  end
+  def attach_security_filings?
+    self.security_filing_attach? && self.company.attach_security_filings? 
+  end
+  def comment_security_filings?
+    self.security_filing_comment? && self.company.comment_security_filings? 
+  end
   def view_drawback?
     self.drawback_view? && MasterSetup.get.drawback_enabled?
   end

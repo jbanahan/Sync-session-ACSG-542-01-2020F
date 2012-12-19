@@ -137,6 +137,7 @@ OpenChain::Application.routes.draw do
   match "/custom_features/csm_sync" => "custom_features#csm_sync_index", :via=>:get
   match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
   match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get
+  match "/custom_features/csm_sync/:id/reprocess" => "custom_features#csm_sync_reprocess", :via=>:get
   match "/custom_features/polo_canada" => "custom_features#polo_efocus_index", :via=>:get
   match "/custom_features/polo_canada/upload" => "custom_features#polo_efocus_upload", :via => :post
   match "/custom_features/polo_canada/:id/download" => "custom_features#polo_efocus_download", :via => :get
@@ -292,6 +293,7 @@ OpenChain::Application.routes.draw do
         get :destroy_all, :on => :collection
       end
 		end
+    resources :charge_categories, :only => [:index, :create, :destroy]
 		get :shipping_address_list, :on => :member
   end
   
@@ -342,8 +344,13 @@ OpenChain::Application.routes.draw do
     get 'invite', :on=>:member
     resources :survey_response_logs, :only=>[:index]
   end
+  
   resources :drawback_upload_files, :only=>[:index,:create]
+  resources :drawback_claims
+
   resources :error_log_entries, :only => [:index, :show]
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
+  resources :ports, :only => [:index, :update, :create, :destroy]
+  resources :security_filings, :only=>[:index, :show]
   root :to => "dashboard_widgets#index"
 end
