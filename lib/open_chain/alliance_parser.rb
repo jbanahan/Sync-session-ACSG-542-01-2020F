@@ -321,6 +321,8 @@ module OpenChain
           end
         when '501'
           @c_line.hmf = val
+        when '056'
+          @c_line.cotton_fee = val
       end
     end
     # commercial invoice line - tariff

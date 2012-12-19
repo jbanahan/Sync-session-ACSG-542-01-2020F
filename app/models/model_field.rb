@@ -821,7 +821,8 @@ class ModelField
       [18,:cil_department,:department,"Department",{:data_type=>:string}],
       [19,:cil_hmf,:hmf,"HMF",{:data_type=>:decimal}],
       [20,:cil_mpf,:mpf,"MPF - Full",{:data_type=>:decimal}],
-      [21,:cil_prorated_mpf,:prorated_mpf,"MPF - Prorated",{:data_type=>:decimal}]
+      [21,:cil_prorated_mpf,:prorated_mpf,"MPF - Prorated",{:data_type=>:decimal}],
+      [22,:cil_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
       [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],

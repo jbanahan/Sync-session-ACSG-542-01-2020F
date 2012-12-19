@@ -161,6 +161,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_products_without_attachments" => "reports#run_products_without_attachments", :via=>:post
   match "/reports/show_product_sync_problems" => "reports#show_product_sync_problems", :via=>:get
   match "/reports/run_product_sync_problems" => "reports#run_product_sync_problems", :via=>:post
+  match "/reports/show_eddie_bauer_statement_summary" => "reports#show_eddie_bauer_statement_summary", :via=>:get
+  match "/reports/run_eddie_bauer_statement_summary" => "reports#run_eddie_bauer_statement_summary", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member

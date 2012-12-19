@@ -38,6 +38,10 @@
     <tr class='hover'><td><%=link_to "Product Sync Problems", reports_show_product_sync_problems_path%></td>
     <td>Shows all products out of sync with remote systems.</td</tr>
   <%end-%>
+  <%if OpenChain::Report::EddieBauerStatementSummary.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Eddie Bauer Statment Summary", reports_show_eddie_bauer_statement_summary_path%></td>
+    <td>Eddie Bauer custom A/P Due Customs Report</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

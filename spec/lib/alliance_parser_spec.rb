@@ -219,6 +219,7 @@ describe OpenChain::AllianceParser do
           end
           rows << "CF00499#{convert_cur.call(line[:mpf] ? line[:mpf] : 0,11)}#{"".ljust(11)}#{line[:prorated_mpf] ? convert_cur.call(line[:prorated_mpf],11) : "00000000000U"}"
           rows << "CF00501#{convert_cur.call(line[:hmf],11)}" if line[:hmf]
+          rows << "CF00056#{convert_cur.call(line[:cotton_fee],11)}" if line[:cotton_fee]
 
         end
       end
@@ -439,7 +440,7 @@ describe OpenChain::AllianceParser do
           ci_line.prorated_mpf.should == (line[:mpf] ? line[:mpf] : 0)
         end
         ci_line.department.should == line[:department]
-#        ci_line.cotton_fee.should == line[:cotton_fee]
+        ci_line.cotton_fee.should == line[:cotton_fee]
         (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.quantity) * 100 ).to_i if ci_line.unit_price && ci_line.quantity
         if line[:tariff]
           line[:tariff].each do |t_line|

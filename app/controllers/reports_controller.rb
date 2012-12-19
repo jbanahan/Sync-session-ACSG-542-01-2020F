@@ -86,6 +86,22 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_eddie_bauer_statement_summary
+    if OpenChain::Report::EddieBauerStatementSummary.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_eddie_bauer_statement_summary
+    if OpenChain::Report::EddieBauerStatementSummary.permission?(current_user)
+      run_report "Eddie Bauer Statement Summary", OpenChain::Report::EddieBauerStatementSummary, {}, [] 
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin
