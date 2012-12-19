@@ -1,29 +1,61 @@
 require 'test_helper'
 require 'spreadsheet'
+require 'zip/zip'
+
 class TariffLoaderTest < ActiveSupport::TestCase
 
-  test "s3 auto activate" do
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet
-    cols = ["HSCODE","FULL_DESC","SPC_RATES","UNITCODE","GENERAL","CHAPTER","HEADING","SUBHEADING","REST_DESC","ADDVALOREMRATE","PERUNIT","MFN","GPT","ERGA_OMNES","COL2_RATE",
+  cols = ["HSCODE","FULL_DESC","SPC_RATES","UNITCODE","GENERAL","CHAPTER","HEADING","SUBHEADING","REST_DESC","ADDVALOREMRATE","PERUNIT","MFN","GPT","ERGA_OMNES","COL2_RATE",
       "Import Reg 1","Import Reg 2","Import Reg 3","Import Reg 4","Export Reg 1","Export Reg 2","Export Reg 3","Export Reg 4"]
-    row1_data = []
-    row2_data = []
-    row1_expected = {}
-    row2_expected = {}
-    cols.each_index do |i|
-      s1 = "val-#{i}"
-      s2 = "s2-#{i}"
-      row1_data << s1
-      row2_data << s2
-      row1_expected[cols[i]] = s1
-      row2_expected[cols[i]] = s2
+  
+  def create_tariff_file excel, filename_prefix, starting_header_row, headers, number_of_rows, &block
+    t = Tempfile.new(["#{filename_prefix}_tariffloadertest-general", excel ? ".xls" : ".csv"])
+    if excel 
+      wb = Spreadsheet::Workbook.new
+      sheet = wb.create_worksheet
+      sheet.row(starting_header_row).replace headers
+      row_number = 0
+      begin
+        row = []
+        headers.each_index do |i|
+          row << "row-#{row_number} col-#{i}"
+        end
+        
+        block_row = yield row, row_number if block_given?
+        row = block_row unless block_row.nil?
+
+        sheet.row(starting_header_row + (row_number += 1)).replace row
+          
+      end while row_number < number_of_rows
+      wb.write t.path
+    else 
+      CSV.open(t.path, "wb") do |csv|
+        row_num = 0
+        begin
+          csv << []
+        end while (row_num += 1) < starting_header_row
+        csv << headers
+        row_number = 0
+        
+        begin
+          row = []
+          headers.each_index do |i|
+            row << "row-#{row_number} col-#{i}"
+          end
+          block_row = yield row, row_number if block_given?
+          row = block_row unless block_row.nil?
+
+          csv << row
+        end while (row_number += 1) < number_of_rows
+      end
     end
-    sheet.row(0).replace cols
-    sheet.row(1).replace row1_data
-    sheet.row(2).replace row2_data
-    t = Tempfile.new(["tariffloadertest-general",".xls"])
-    wb.write t.path
+
+    t
+  end
+  private
+
+  test "s3 auto activate" do
+    # asserts that we're pulling files from S3, processing them, and then activating the tariff set
+    t = create_tariff_file true, '', 0, cols, 2
 
     country = Country.first
     label = "ABCDEFS3A"
@@ -31,7 +63,7 @@ class TariffLoaderTest < ActiveSupport::TestCase
     #PUT THE FILE TO S3
     s3 = AWS::S3.new AWS_CREDENTIALS
     begin
-      key = "#{Rails.env.to_s}/TariffStore/#{t.path.split('/').last}"
+      key = "#{Rails.env.to_s}/TariffStore/#{File.basename(t)}"
       s3.buckets['chain-io'].objects[key].write(:file=>t.path)
       TariffLoader.process_s3 key, country, label, true
     ensure
@@ -48,28 +80,10 @@ class TariffLoaderTest < ActiveSupport::TestCase
     ot.each {|o| expected_hts.delete o.hts_code}
     assert expected_hts.empty?
   end
+
   test "s3" do 
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet
-    cols = ["HSCODE","FULL_DESC","SPC_RATES","UNITCODE","GENERAL","CHAPTER","HEADING","SUBHEADING","REST_DESC","ADDVALOREMRATE","PERUNIT","MFN","GPT","ERGA_OMNES","COL2_RATE",
-      "Import Reg 1","Import Reg 2","Import Reg 3","Import Reg 4","Export Reg 1","Export Reg 2","Export Reg 3","Export Reg 4"]
-    row1_data = []
-    row2_data = []
-    row1_expected = {}
-    row2_expected = {}
-    cols.each_index do |i|
-      s1 = "val-#{i}"
-      s2 = "s2-#{i}"
-      row1_data << s1
-      row2_data << s2
-      row1_expected[cols[i]] = s1
-      row2_expected[cols[i]] = s2
-    end
-    sheet.row(0).replace cols
-    sheet.row(1).replace row1_data
-    sheet.row(2).replace row2_data
-    t = Tempfile.new(["tariffloadertest-general",".xls"])
-    wb.write t.path
+    # asserts that we're pulling files from S3 and processing them, but not activating them
+    t = create_tariff_file true, '', 0, cols, 2
 
     country = Country.first
     label = "ABCDEFS3"
@@ -86,30 +100,17 @@ class TariffLoaderTest < ActiveSupport::TestCase
     ts = TariffSet.where(:label=>label).first
     assert_equal country, ts.country
     assert_equal 2, ts.tariff_set_records.size
+
+    assert_equal 0, OfficialTariff.where(:country_id=>country.id).size
   end
 
   test "activate" do 
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet
-    cols = ["HSCODE","FULL_DESC","SPC_RATES","UNITCODE","GENERAL","CHAPTER","HEADING","SUBHEADING","REST_DESC","ADDVALOREMRATE","PERUNIT","MFN","GPT","ERGA_OMNES","COL2_RATE",
-      "Import Reg 1","Import Reg 2","Import Reg 3","Import Reg 4","Export Reg 1","Export Reg 2","Export Reg 3","Export Reg 4"]
-    row1_data = []
-    row2_data = []
-    row1_expected = {}
-    row2_expected = {}
-    cols.each_index do |i|
-      s1 = "val-#{i}"
-      s2 = "s2-#{i}"
-      row1_data << s1
-      row2_data << s2
-      row1_expected[cols[i]] = s1
-      row2_expected[cols[i]] = s2
+    # Tests that we're processing a standard tariff file from the local filesystem and activating it
+    rows = []
+    t = create_tariff_file true, 'us', 0, cols, 2 do |row| 
+      rows << row
+      row
     end
-    sheet.row(0).replace cols
-    sheet.row(1).replace row1_data
-    sheet.row(2).replace row2_data
-    t = Tempfile.new(["us_tariffloadertest-general",".xls"])
-    wb.write t.path
 
     label = "ABCDEF"
     country = Country.where(:iso_code=>'US').first
@@ -118,83 +119,198 @@ class TariffLoaderTest < ActiveSupport::TestCase
 
     ts = OfficialTariff.where(:country_id=>country.id) 
     assert_equal 2, ts.size
-    result1 = ts.where(:country_id=>country.id,:hts_code=>row1_data[0]).first
-    result2 = ts.where(:country_id=>country.id,:hts_code=>row2_data[0]).first
-    [result1,result2].each do |r|
-      exp = r.hts_code==row1_data[0] ? row1_expected : row2_expected
-      assert r.full_description==exp["FULL_DESC"]
-      assert r.special_rates==exp["SPC_RATES"]
-      assert r.unit_of_measure==exp["UNITCODE"]
-      assert r.general_rate==exp["GENERAL"]
-      assert r.chapter==exp["CHAPTER"]
-      assert r.heading==exp["HEADING"]
-      assert r.sub_heading==exp["SUBHEADING"]
-      assert r.remaining_description==exp["REST_DESC"]
-      assert r.add_valorem_rate==exp["ADDVALOREMRATE"]
-      assert r.per_unit_rate==exp["PERUNIT"]
-      assert r.most_favored_nation_rate==exp["MFN"]
-      assert r.general_preferential_tariff_rate==exp["GPT"]
-      assert r.erga_omnes_rate==exp["ERGA_OMNES"]
-      assert r.column_2_rate==exp["COL2_RATE"]
-      assert r.import_regulations == "#{exp["Import Reg 1"]} #{exp["Import Reg 2"]} #{exp["Import Reg 3"]} #{exp["Import Reg 4"]}"
-      assert r.export_regulations == "#{exp["Export Reg 1"]} #{exp["Export Reg 2"]} #{exp["Export Reg 3"]} #{exp["Export Reg 4"]}"
-    end
-  end
-  test "general" do
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet
-    cols = ["HSCODE","FULL_DESC","SPC_RATES","UNITCODE","GENERAL","CHAPTER","HEADING","SUBHEADING","REST_DESC","ADDVALOREMRATE","PERUNIT","MFN","GPT","ERGA_OMNES","COL2_RATE",
-      "Import Reg 1","Import Reg 2","Import Reg 3","Import Reg 4","Export Reg 1","Export Reg 2","Export Reg 3","Export Reg 4"]
-    row1_data = []
-    row2_data = []
-    row1_expected = {}
-    row2_expected = {}
-    cols.each_index do |i|
-      s1 = "val-#{i}"
-      s2 = "s2-#{i}"
-      row1_data << s1
-      row2_data << s2
-      row1_expected[cols[i]] = s1
-      row2_expected[cols[i]] = s2
-    end
-    sheet.row(0).replace cols
-    sheet.row(1).replace row1_data
-    sheet.row(2).replace row2_data
-    t = Tempfile.new(["tariffloadertest-general",".xls"])
-    wb.write t.path
 
-    country = Country.first
+    result1 = ts.where(:country_id=>country.id,:hts_code=>rows[0][cols.index("HSCODE")]).first
+    result2 = ts.where(:country_id=>country.id,:hts_code=>rows[1][cols.index("HSCODE")]).first
+    validate_hts_data cols, result1, rows[0]
+    validate_hts_data cols, result2, rows[1]
+  end
+
+  def validate_hts_data cols, r, data_row
+    assert r.full_description==data_row[cols.index("FULL_DESC")]
+    assert r.special_rates==data_row[cols.index("SPC_RATES")]
+    assert r.unit_of_measure==data_row[cols.index("UNITCODE")]
+    assert r.general_rate==data_row[cols.index("GENERAL")]
+    assert r.chapter==data_row[cols.index("CHAPTER")]
+    assert r.heading==data_row[cols.index("HEADING")]
+    assert r.sub_heading==data_row[cols.index("SUBHEADING")]
+    assert r.remaining_description==data_row[cols.index("REST_DESC")]
+    assert r.add_valorem_rate==data_row[cols.index("ADDVALOREMRATE")]
+    assert r.per_unit_rate==data_row[cols.index("PERUNIT")]
+    assert r.most_favored_nation_rate==data_row[cols.index("MFN")]
+    assert r.general_preferential_tariff_rate==data_row[cols.index("GPT")]
+    assert r.erga_omnes_rate==data_row[cols.index("ERGA_OMNES")]
+    assert r.column_2_rate==data_row[cols.index("COL2_RATE")]
+    assert r.import_regulations == "#{data_row[cols.index("Import Reg 1")]} #{data_row[cols.index("Import Reg 2")]} #{data_row[cols.index("Import Reg 3")]} #{data_row[cols.index("Import Reg 4")]}"
+    assert r.export_regulations == "#{data_row[cols.index("Export Reg 1")]} #{data_row[cols.index("Export Reg 2")]} #{data_row[cols.index("Export Reg 3")]} #{data_row[cols.index("Export Reg 4")]}"
+  end
+
+  test "general" do
+    # Tests that we're processing a standard tariff file from the local filesystem and activating it
+    rows = []
+    t = create_tariff_file true, '', 0, cols, 2 do |row| 
+      rows << row
+      row
+    end
+
     label = "ABCDEF"
+    country = Country.where(:iso_code=>'US').first
     loader = TariffLoader.new(country,t.path,label)
     
     loader.process
-
 
     ts = TariffSet.where(:label=>label).first
     assert_equal label, ts.label
     assert_equal country, ts.country
     assert_equal 2, ts.tariff_set_records.size
-    result1 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>row1_data[0]).first
-    result2 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>row2_data[0]).first
-    [result1,result2].each do |r|
-      exp = r.hts_code==row1_data[0] ? row1_expected : row2_expected
-      assert r.full_description==exp["FULL_DESC"]
-      assert r.special_rates==exp["SPC_RATES"]
-      assert r.unit_of_measure==exp["UNITCODE"]
-      assert r.general_rate==exp["GENERAL"]
-      assert r.chapter==exp["CHAPTER"]
-      assert r.heading==exp["HEADING"]
-      assert r.sub_heading==exp["SUBHEADING"]
-      assert r.remaining_description==exp["REST_DESC"]
-      assert r.add_valorem_rate==exp["ADDVALOREMRATE"]
-      assert r.per_unit_rate==exp["PERUNIT"]
-      assert r.most_favored_nation_rate==exp["MFN"]
-      assert r.general_preferential_tariff_rate==exp["GPT"]
-      assert r.erga_omnes_rate==exp["ERGA_OMNES"]
-      assert r.column_2_rate==exp["COL2_RATE"]
-      assert r.import_regulations == "#{exp["Import Reg 1"]} #{exp["Import Reg 2"]} #{exp["Import Reg 3"]} #{exp["Import Reg 4"]}"
-      assert r.export_regulations == "#{exp["Export Reg 1"]} #{exp["Export Reg 2"]} #{exp["Export Reg 3"]} #{exp["Export Reg 4"]}"
+    result1 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[0][cols.index("HSCODE")]).first
+    result2 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[1][cols.index("HSCODE")]).first
+    validate_hts_data cols, result1, rows[0]
+    validate_hts_data cols, result2, rows[1]
+  end
+
+  test "headers not at beginning of file" do 
+    # Tests that we skip all file lines that appear prior to the actual column headers
+    t = create_tariff_file true, '', 2, cols, 2
+
+    label = "with blank rows"
+    country = Country.where(:iso_code=>'US').first
+    TariffLoader.new(country, t.path, label).process
+
+    ts = TariffSet.where(:label=>label).first
+    assert_equal 2, ts.tariff_set_records.size
+  end
+
+  test 'process csv file with headers not at the beginning of the file' do
+    rows = []
+    t = create_tariff_file false, '', 2, cols, 2 do |row|
+      rows << row
+      row
     end
+
+    label = "csv with blank rows"
+    country = Country.where(:iso_code=>'US').first
+    TariffLoader.new(country, t.path, label).process
+
+    ts = TariffSet.where(:label=>label).first
+    assert_equal 2, ts.tariff_set_records.size
+    result1 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[0][cols.index("HSCODE")]).first
+    result2 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[1][cols.index("HSCODE")]).first
+    validate_hts_data cols, result1, rows[0]
+    validate_hts_data cols, result2, rows[1]
+  end
+
+  test 'excel file with blank line between data fields and after data' do
+    rows = []
+    # Create a worksheet with a blank line between the two data rows and one after the data rows
+    t = create_tariff_file true, '', 1, cols, 4 do |row, row_number|
+      rows << row if row_number % 2 == 0
+      row_number % 2 == 0 ? row : [' ', '    ', '']
+    end
+
+    label = 'excel with blanks'
+    country = Country.where(:iso_code=>'US').first
+    TariffLoader.new(country, t.path, label).process
+
+    ts = TariffSet.where(:label=> label).first
+    assert_equal 2, ts.tariff_set_records.size
+    result1 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[0][cols.index("HSCODE")]).first
+    result2 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[1][cols.index("HSCODE")]).first
+    validate_hts_data cols, result1, rows[0]
+    validate_hts_data cols, result2, rows[1]
+  end
+
+  test 'csv file with blank line between data fields and after data' do
+    rows = []
+    # Create a worksheet with a blank line between the two data rows and one after the data rows
+    t = create_tariff_file false, '', 1, cols, 4 do |row, row_number|
+      rows << row if row_number % 2 == 0
+      row_number % 2 == 0 ? row : [' ', '    ', '']
+    end
+
+    label = 'excel with blanks'
+    country = Country.where(:iso_code=>'US').first
+    TariffLoader.new(country, t.path, label).process
+
+    ts = TariffSet.where(:label=> label).first
+    assert_equal 2, ts.tariff_set_records.size
+    result1 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[0][cols.index("HSCODE")]).first
+    result2 = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[1][cols.index("HSCODE")]).first
+    validate_hts_data cols, result1, rows[0]
+    validate_hts_data cols, result2, rows[1]
+    
+  end
+
+  test 'unzips and processes zip files with tariff sets in them' do
+    t = create_tariff_file true, '', 2, cols, 2
+
+    # Zip the file, ideally I'd have created a tempfile and then written the
+    # zip output into it, but the zip create failed whenever I tried that due
+    # to the file already existing.  Rather than overwriting, it just failed.
+    # So, I just rolled my own temp file here.
+  
+    zip_path = File.dirname(t) + "/zip-" + File.basename(t.path) + ".zip"
+    begin
+      tz = Zip::ZipFile.open(zip_path, Zip::ZipFile::CREATE) do |zf|
+        zf.add(File.basename(t.path), t.path)
+      end
+      # Make sure the process is removing any temp files it creates, 
+      # we can do a dir listing of files ending in .xls before and after
+      file_count_proc = lambda do
+        counter = 0
+        Dir.new(File.dirname(t)).each do |f|
+          counter += 1 if /.+\.xls$/.match(File.basename(f))
+        end
+        counter
+      end
+
+      xls_count = file_count_proc.call
+      label = "with blank rows"
+      country = Country.where(:iso_code=>'US').first
+      TariffLoader.new(country, zip_path, label).process
+      ts = TariffSet.where(:label=>label).first
+      assert_equal 2, ts.tariff_set_records.size
+      assert_equal xls_count, file_count_proc.call
+
+    ensure
+      File.delete(zip_path) if File.file?(zip_path)  
+    end 
+  end
+
+  test 'raises an error if no headers are found in an excel file' do
+    t = Tempfile.new ['test', '.xls']
+    
+    wb = Spreadsheet::Workbook.new
+    sheet = wb.create_worksheet
+    sheet.row(5).replace %w{"this is a test row"}
+    sheet.row(7).replace %w{"this is a second test row"}
+
+    wb.write t.path
+
+    label = "test no headers"
+    country = Country.where(:iso_code=>'US').first
+    ex = assert_raise(RuntimeError) { 
+      TariffLoader.new(country, t.path, label).process
+    }
+    assert_equal("No header row found in spreadsheet #{File.basename(t)}.", ex.message)
+
+  end
+
+  test 'raises an error if no headers are found in a csv file' do
+    t = Tempfile.new ['test', '.txt']
+    
+    CSV.open(t.path, "wb") do |csv|
+      csv << ['', '']
+      csv << %w{"this is a test row"}
+      csv << %w{"this is a test row"}
+    end
+
+    label = "test no headers"
+    country = Country.where(:iso_code=>'US').first
+    ex = assert_raise(RuntimeError) { 
+      TariffLoader.new(country, t.path, label).process
+    }
+    assert_equal("No header row found in file #{File.basename(t)}.", ex.message)
   end
 
 end

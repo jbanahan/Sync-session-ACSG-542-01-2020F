@@ -75,6 +75,11 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ln.commercial_invoice_number.should == 'CIN'
       ln.mid.should == "MID"
       ln.country_of_origin_code.should == 'CN'
+      
+      # validate the time_to_process was recorded (use 10
+      # to try to make sure we're recording milliseconds and not seconds)
+      sf.time_to_process.should > 10
+      sf.time_to_process.should < 1000 # NOTE: this fails if you're ever debugging the parser
     end
     it "should set amazon bucket & path" do
       @k.new(@dom).parse_dom 'bucket', 'path'

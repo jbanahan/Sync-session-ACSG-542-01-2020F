@@ -29,6 +29,7 @@ module OpenChain
         @sf = SecurityFiling.find_by_host_system_and_host_system_file_number SYSTEM_NAME, host_system_file_number
         @sf = SecurityFiling.create!(:host_system=>SYSTEM_NAME,:host_system_file_number=>host_system_file_number) unless @sf
         SecurityFiling.transaction do
+          start_time = Time.now
           new_last_event = last_event_time(r)
           if @sf.last_event && (new_last_event < @sf.last_event)
             return
@@ -71,6 +72,8 @@ module OpenChain
             @sf.importer = importer
           end
           @sf.save!
+          # The way we should probably do this after a Rails > 3.2 upgrade is via an update_column call
+          @sf.connection.execute "UPDATE security_filings SET time_to_process = #{((Time.now - start_time) * 1000).to_i} WHERE id = #{@sf.id}"
         end
       end
 
