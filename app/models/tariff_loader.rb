@@ -56,25 +56,31 @@ class TariffLoader
   
   def process
     ts = nil
-    tariff_file = get_file_to_process @file_path
+    # The first array index should be the file path and the second (if present) is a Tempfile pointing to the file we're processing
+    tariff_file_info = get_file_to_process @file_path
 
-    OfficialTariff.transaction do
-      ts = TariffSet.create!(:country_id=>@country.id,:label=>@tariff_set_label)
-      i = 0
-      parser = get_parser tariff_file
-      parser.foreach(tariff_file) do |row|
-        headers = parser.headers
-        ot = TariffSetRecord.new(:tariff_set_id=>ts.id,:country=>@country) #use .new instead of ts.tariff_set_records.build to avoid large in memory array
-        FIELD_MAP.each do |header,lmda|
-          col_num = headers.index header
-          unless col_num.nil?
-            lmda.call ot, TariffLoader.column_value(row[col_num])
+    begin
+      OfficialTariff.transaction do
+        ts = TariffSet.create!(:country_id=>@country.id,:label=>@tariff_set_label)
+        i = 0
+        parser = get_parser tariff_file_info[0]
+        parser.foreach(tariff_file_info[0]) do |row|
+          headers = parser.headers
+          ot = TariffSetRecord.new(:tariff_set_id=>ts.id,:country=>@country) #use .new instead of ts.tariff_set_records.build to avoid large in memory array
+          FIELD_MAP.each do |header,lmda|
+            col_num = headers.index header
+            unless col_num.nil?
+              lmda.call ot, TariffLoader.column_value(row[col_num])
+            end
           end
+          ot.save!
+          puts "Processed line #{i} for country: #{@country.name}" if i>50 && i%50==0
+          i += 1
         end
-        ot.save!
-        puts "Processed line #{i} for country: #{@country.name}" if i>50 && i%50==0
-        i += 1
       end
+    ensure
+      #delete the tempfile we may be working with if the file we're processing was a zip file
+      tariff_file_info[1].unlink unless (tariff_file_info[1].nil?() || !tariff_file_info[1].is_a?(Tempfile))
     end
     ts
   end
@@ -135,7 +141,9 @@ class TariffLoader
   end
 
   def get_file_to_process file_path
-    file_to_process = nil
+    # [0] = the path to the file to process, the second index 
+    # [1] = if a zip file, a tempfile reference to the extracted file.
+    file_to_process = []
     if file_path.downcase.end_with? "zip"
       Zip::ZipFile.open(file_path) do |zip_file| 
         zip_file.each do |file|
@@ -146,13 +154,14 @@ class TariffLoader
               # Since the tempfile call above actually creates the file, force the overwrite
               # here (the extract call borks if you don't)
               zip_file.extract(file.name, temp_output.path) {true}
-              file_to_process = temp_output.path
+              file_to_process << temp_output.path
+              file_to_process << temp_output
               break
             end
         end
       end
     else 
-      file_to_process = file_path
+      file_to_process << file_path
     end
     file_to_process
   end

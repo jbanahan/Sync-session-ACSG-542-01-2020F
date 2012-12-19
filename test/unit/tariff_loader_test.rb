@@ -251,16 +251,27 @@ class TariffLoaderTest < ActiveSupport::TestCase
   
     zip_path = File.dirname(t) + "/zip-" + File.basename(t.path) + ".zip"
     begin
-
       tz = Zip::ZipFile.open(zip_path, Zip::ZipFile::CREATE) do |zf|
         zf.add(File.basename(t.path), t.path)
       end
+      # Make sure the process is removing any temp files it creates, 
+      # we can do a dir listing of files ending in .xls before and after
+      file_count_proc = lambda do
+        counter = 0
+        Dir.new(File.dirname(t)).each do |f|
+          counter += 1 if /.+\.xls$/.match(File.basename(f))
+        end
+        counter
+      end
 
+      xls_count = file_count_proc.call
       label = "with blank rows"
       country = Country.where(:iso_code=>'US').first
       TariffLoader.new(country, zip_path, label).process
       ts = TariffSet.where(:label=>label).first
       assert_equal 2, ts.tariff_set_records.size
+      assert_equal xls_count, file_count_proc.call
+
     ensure
       File.delete(zip_path) if File.file?(zip_path)  
     end 
