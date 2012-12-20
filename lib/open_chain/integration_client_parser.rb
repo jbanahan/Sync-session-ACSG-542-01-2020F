@@ -2,12 +2,12 @@ module OpenChain
   #adds static methods for processing data from S3, expects class to implement static integration_folder method to return location in s3 for files
   module IntegrationClientParser
     def process_past_days number_of_days, opts={:imaging=>false}
-      number_of_days.times {|i| self.delay.process_day i.days.ago, opts}
+      number_of_days.times {|i| self.delay(:priority=>500).process_day i.days.ago, opts}
     end
     # process all files in the archive for a given date.  Use this to reprocess old files. By default it skips the call to the imaging server
     def process_day date, opts={:imaging=>false}
       OpenChain::S3.integration_keys(date,self.integration_folder) do |key|
-        process_from_s3 OpenChain::S3.integration_bucket_name, key
+        process_from_s3 OpenChain::S3.integration_bucket_name, key, opts
       end
     end
 

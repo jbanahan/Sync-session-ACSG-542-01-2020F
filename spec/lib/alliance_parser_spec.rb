@@ -217,7 +217,7 @@ describe OpenChain::AllianceParser do
               rows << t_row
             end
           end
-          rows << "CF00499#{convert_cur.call(line[:mpf] ? line[:mpf] : 0,11)}#{"".ljust(11)}#{line[:prorated_mpf] ? convert_cur.call(line[:prorated_mpf],11) : "00000000000U"}"
+          rows << "CF00499#{convert_cur.call(line[:mpf] ? line[:mpf] : 0,11)}#{"".ljust(11)}#{line[:prorated_mpf] ? convert_cur.call(line[:prorated_mpf],11) : "00000000000"}"
           rows << "CF00501#{convert_cur.call(line[:hmf],11)}" if line[:hmf]
           rows << "CF00056#{convert_cur.call(line[:cotton_fee],11)}" if line[:cotton_fee]
 

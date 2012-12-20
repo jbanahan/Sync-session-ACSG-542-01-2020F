@@ -6,6 +6,7 @@ require 'open_chain/integration_client'
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/feed_monitor'
 require 'open_chain/custom_handler/polo_ca_efocus_generator'
+require 'open_chain/custom_handler/polo_efocus_product_generator'
 require 'open_chain/custom_handler/fenix_product_file_generator'
 
 def job_wrapper job_name, &block
@@ -93,6 +94,9 @@ def execute_scheduler
       ["RLAUREN","POLO","CLUBMONACO"].each do |cn|
         OpenChain::CustomHandler::FenixProductFileGenerator.new(cn).delay.generate
       end
+    end
+    scheduler.every("240m") do
+      OpenChain::CustomHandler::PoloEfocusProductGenerator.new.delay.generate
     end
   end
 
