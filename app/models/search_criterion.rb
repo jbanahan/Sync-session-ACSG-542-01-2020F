@@ -113,21 +113,23 @@ class SearchCriterion < ActiveRecord::Base
       end
     end
   end
-
   private
 
   def number_value data_type, value
     sval = (value.blank? || !is_a_number(value) ) ? "0" : value
     data_type==:integer ? sval.to_i : sval.to_f
   end
+  private
 
   def is_a_number val
     begin Float(val) ; true end rescue false
   end
+  private
   
   def add_where(p)
     p.where(where_clause,where_value)
   end
+  private
 
   def where_clause
     mf = find_model_field
@@ -153,22 +155,27 @@ class SearchCriterion < ActiveRecord::Base
       end
     end
   end
+  private
   
   def boolean_field?
     return find_model_field.data_type==:boolean
   end
+  private
   
   def integer_field?
     return find_model_field.data_type==:integer
   end
+  private
   
   def decimal_field?
     return find_model_field.data_type==:decimal
   end
+  private
 
   def date_field?
     return find_model_field.data_type==:date
   end
+  private
 
   #value formatted properly for the appropriate condition in the SQL
   def where_value
@@ -196,9 +203,13 @@ class SearchCriterion < ActiveRecord::Base
       return self_val
     end
   end
+  private
 
   def break_rows val
-    val.strip.split(/[\r\n,\r,\n]/)
+    # We don't have to worry any longer about carriage returns being sent (\r) by themselves to denote new lines.
+    # No current operatring systems use this style to denote newlines any longer (Mac OS X is a unix and uses \n).
+    val.strip.split(/\r?\n/)
   end
+  private
 
 end
