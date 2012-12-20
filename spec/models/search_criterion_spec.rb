@@ -78,12 +78,16 @@ describe SearchCriterion do
           sc.apply(Product.where("1=1")).all.should include @product
         end
         it "should find something using a string field from a list of values using unix newlines" do
-          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\n#{@product.unique_identifier}\nnval2")
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\n#{@product.unique_identifier}\nval2")
           sc.apply(Product.where("1=1")).all.should include @product
         end
         it "should find something using a string field from a list of values using windows newlines" do
-          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\r\n#{@product.unique_identifier}\r\nnval2")
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\r\n#{@product.unique_identifier}\r\nval2")
           sc.apply(Product.where("1=1")).all.should include @product
+        end
+        it "should not add blank strings in the IN list when using windows newlines" do
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\r\n#{@product.unique_identifier}\r\nval2")
+          sc.apply(Product.where("1=1")).to_sql.should match /\('val',\s?'#{@product.unique_identifier}',\s?'val2'\)/
         end
         it "should find something using a numeric field from a list of values" do
           sc = SearchCriterion.new(:model_field_uid=>:prod_class_count, :operator=>"in", :value=>"1\n0\r\n3")
