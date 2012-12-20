@@ -34,18 +34,18 @@ module OpenChain
         summary_hash = {}
         entries.each do |ent|
           raise "You do not have permission to view the entries related to this report." unless ent.can_view?(@run_by)
-          r = @detail_sheet.row(@detail_cursor)
           monthly = ent.monthly_statement_number
           monthly = '' if monthly.blank?
           summary_hash[monthly] ||= {}
           statement_hash = summary_hash[ent.monthly_statement_number]
-          r[0] = monthly 
-          r[1] = ent.daily_statement_number
-          r[2] = ent.entry_number
-          r[9] = ent.daily_statement_approved_date
-          r[10] = ent.monthly_statement_received_date
           ent.commercial_invoices.each do |ci|
             ci.commercial_invoice_lines.each do |cil|
+              r = @detail_sheet.row(@detail_cursor)
+              r[0] = monthly 
+              r[1] = ent.daily_statement_number
+              r[2] = ent.entry_number
+              r[9] = ent.daily_statement_approved_date
+              r[10] = ent.monthly_statement_received_date
               po = cil.po_number
               po = '0-0' if po.blank?
               business = po.split("-").last
@@ -71,10 +71,10 @@ module OpenChain
               business_hash = statement_hash[business]
               business_hash[:duty] += line_duty
               business_hash[:fees] += line_fees
+              r[5] = ci.invoice_number
+              @detail_cursor += 1
             end
-            r[5] = ci.invoice_number
           end
-          @detail_cursor += 1
         end
 
         @summary_cursor = 0
