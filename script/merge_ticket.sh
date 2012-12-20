@@ -11,7 +11,7 @@ git checkout $2
 git merge $1
 git branch -d $1
 git push origin $2
-remotes=$(git branch -r)
-if [ "$remotes" == *origin/"$1"* ]; then
+remote_branches=$(git branch -r | sed -n "s/.*origin\/$1$/$1/p")
+if [ "$remote_branches"  == "$1" ]; then
   git push origin :$1
 fi
