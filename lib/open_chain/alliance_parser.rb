@@ -314,7 +314,7 @@ module OpenChain
       case r[4,3]
         when '499'
           @c_line.mpf = val
-          if r[40] == 'U'
+          if r[29,11] == '00000000000'
             @c_line.prorated_mpf = @c_line.mpf
           else
             @c_line.prorated_mpf = parse_currency r[29,11]
