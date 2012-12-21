@@ -102,6 +102,24 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_marc_jacobs_freight_budget
+    if OpenChain::Report::MarcJacobsFreightBudget.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_marc_jacobs_freight_budget
+    if OpenChain::Report::MarcJacobsFreightBudget.permission? current_user
+      year = params[:year]
+      month = params[:month]
+      run_report "Marc Jacobs Freight Budget - #{year}-#{month}", OpenChain::Report::MarcJacobsFreightBudget, {:year=>year,:month=>month}, ["Month: #{year}-#{month}"] 
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

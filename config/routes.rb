@@ -163,6 +163,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_product_sync_problems" => "reports#run_product_sync_problems", :via=>:post
   match "/reports/show_eddie_bauer_statement_summary" => "reports#show_eddie_bauer_statement_summary", :via=>:get
   match "/reports/run_eddie_bauer_statement_summary" => "reports#run_eddie_bauer_statement_summary", :via=>:post
+  match "/reports/show_marc_jacobs_freight_budget" => "reports#show_marc_jacobs_freight_budget", :via=>:get
+  match "/reports/run_marc_jacobs_freight_budget" => "reports#run_marc_jacobs_freight_budget", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member

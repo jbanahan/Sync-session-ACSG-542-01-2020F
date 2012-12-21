@@ -1,0 +1,11 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="link_btn" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Marc Jacobs Freight Budget</h2>
+<%=form_tag reports_run_marc_jacobs_freight_budget_path, :id=>'frm_run' do -%>
+  <table>
+    <%=field_row "Year", select_tag(:year,options_for_select((2012..2020).map {|m| [m, m]},Time.now.year))%>
+    <%=field_row "Month", select_tag(:month,options_for_select((1..12).map {|m| [Date::MONTHNAMES[m], m]},Time.now.month))%>
+  </table>
+<%end%>
