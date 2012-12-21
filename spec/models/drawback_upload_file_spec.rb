@@ -52,8 +52,9 @@ describe DrawbackUploadFile do
       d.process(@user).should == 'abc'
     end
     it "should route OHL Entry files" do
+      Entry.should_receive(:where).with("arrival_date > ?",instance_of(ActiveSupport::TimeWithZone)).and_return('abc')
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_OHL_ENTRY)
-      OpenChain::OhlDrawbackParser.should_receive(:parse).with('tmppath').and_return('abc')
+      OpenChain::OhlDrawbackParser.should_receive(:parse).with('tmppath')
       OpenChain::UnderArmourDrawbackProcessor.should_receive(:process_entries).with('abc').and_return('def')
       d.process(@user).should == 'def'
     end

@@ -165,6 +165,7 @@ LEFT OUTER JOIN tariff_records on tariff_records.classification_id = classificat
 LEFT OUTER JOIN sync_records on sync_records.syncable_type = 'Product' and sync_records.syncable_id = products.id and sync_records.trading_partner = '#{SYNC_CODE}'
 WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)
 AND (select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Barthco Customer ID\")) > 0
+AND ifnull((select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Test Style\")),0) = 0
 "
       end
 

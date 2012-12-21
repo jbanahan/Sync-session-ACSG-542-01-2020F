@@ -32,7 +32,10 @@ class DrawbackUploadFile < ActiveRecord::Base
     r = nil
     p_map = {
       PROCESSOR_UA_WM_IMPORTS=>lambda {OpenChain::UnderArmourReceivingParser.parse_s3 self.attachment.attached.path},
-      PROCESSOR_OHL_ENTRY => lambda {OpenChain::UnderArmourDrawbackProcessor.process_entries OpenChain::OhlDrawbackParser.parse tempfile.path},
+      PROCESSOR_OHL_ENTRY => lambda {
+        OpenChain::OhlDrawbackParser.parse tempfile.path
+        OpenChain::UnderArmourDrawbackProcessor.process_entries Entry.where("arrival_date > ?",90.days.ago)
+      },
       PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)},
       PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
       PROCESSOR_JCREW_SHIPMENTS => lambda {OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path},

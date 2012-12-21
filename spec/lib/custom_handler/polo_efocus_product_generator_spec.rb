@@ -52,6 +52,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
       before :each do
         @match_product = Factory(:classification,:country_id=>@us.id).product
         @barthco_cust = Factory(:custom_definition,:id=>1,:module_type=>'Product',:label=>'Barthco Customer ID')
+        @test_style = Factory(:custom_definition,:module_type=>'Product',:label=>'Test Style')
         @match_product.update_custom_value! @barthco_cust, '100'
       end
       it 'should not return product without US classification' do
@@ -78,6 +79,10 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
       end
       it "should not return products without barthco customer ids" do
         @match_product.custom_values.destroy_all
+        described_class.new.result_table.count.should == 0
+      end
+      it "should not return products that are test styles" do
+        @match_product.update_custom_value! @test_style, 'x'
         described_class.new.result_table.count.should == 0
       end
     end
