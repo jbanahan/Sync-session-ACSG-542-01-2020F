@@ -12,3 +12,4 @@ coverage/*
 coverage.data
 coverage/*
 .rvmrc*
+.sass-cache/

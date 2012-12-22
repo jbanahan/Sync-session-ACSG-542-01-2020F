@@ -512,7 +512,7 @@ var OpenChain = (function() {
       if(!keyMapPopUp) {
         $("body").append("<div id='mod_keymap'></div>");
         keyMapPopUp = $("#mod_keymap");
-        keyMapPopUp.dialog({autoOpen:false,width:'auto',title:"Action Keys",
+        keyMapPopUp.dialog({autoOpen:false,position:'center',width:'auto',title:"Action Keys",
           beforeClose: function() {
             unbindKeys();
           }});

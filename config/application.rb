@@ -2,9 +2,14 @@ require File.expand_path('../boot', __FILE__)
 
 require 'rails/all'
 
-# If you have a Gemfile, require the gems listed there, including any gems
-# you've limited to :test, :development, or :production.
-Bundler.require(:default, Rails.env) if defined?(Bundler)
+if defined?(Bundler)
+  # If you precompile assets before deploying to production,
+  #  use this line
+  Bundler.require *Rails.groups(:assets => %w(development test))
+  # If you want your assets lazily compiled in production,
+  #  use this line
+  # Bundler.require(:default, :assets, Rails.env)
+end
 
 require 'csv'
 
@@ -52,7 +57,14 @@ module OpenChain
       end 
     end
 
+    # Enable the asset pipeline
+    config.assets.enabled = true
+
+    # Version of your assets, change this if you want to expire all your assets
+    config.assets.version = '1.0'
+
     config.action_mailer.delivery_method = :postmark
+
     
     email_settings = YAML::load(File.open("#{::Rails.root.to_s}/config/email.yml"))
     postmark_api_key = email_settings[::Rails.env][:postmark_api_key] unless email_settings[::Rails.env].nil?

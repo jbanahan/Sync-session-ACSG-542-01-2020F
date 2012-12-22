@@ -1,13 +1,13 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.0.17'
-gem 'mysql2', '~> 0.2.7' #must stay pinned to this version until we move to rails 3.1+
+gem 'rails', '3.2.9'
+gem 'mysql2', '0.3.11'
 gem 'mongrel', '1.2.0.pre2'
 gem 'sqlite3'
 gem 'fog'
 gem 'aws-sdk'
 gem 'authlogic', '3.0.3'
-gem 'meta_search', '1.0.5'
+gem 'meta_search', '1.1.3'
 gem 'will_paginate', '3.0.2'
 gem 'paperclip', '2.4.5'
 gem 'uuidtools', '2.1.0'
@@ -22,6 +22,14 @@ gem 'RedCloth', '4.2.9'
 gem 'rubyzip'
 gem 'rspec-rails', '2.6', :group=>[:development,:test]
 gem 'factory_girl', '2.5.2', :group=>[:development,:test]
+
+#javascript environment, we will compile assets during deployment
+#so we need these on the production servers as well
+gem 'execjs' 
+gem 'libv8', '~> 3.11.8'
+gem 'therubyracer'
+
+
 group :test do
   gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
   gem 'spork'
@@ -32,4 +40,13 @@ group :development do
   gem 'debugger'
   gem 'sql-logging', '~> 3.0.8'
 end
+# Gems used only for assets and not required
+# in production environments by default.
+group :assets do
+  gem 'sass-rails', " ~> 3.2.3"
+  gem 'coffee-rails', " ~> 3.2.1"
+  gem 'uglifier'
+end
+
+gem 'jquery-rails'
 gem 'newrelic_rpm'
