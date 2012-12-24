@@ -302,7 +302,7 @@ class CoreModule
       :bulk_actions_lambda => lambda {|current_user| 
         bulk_actions = {}
         bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products?
-        bulk_actions["Classify"]='bulk_classify_products_path' if current_user.edit_classifications?
+        bulk_actions["Classify"]={:path=>'/products/bulk_classify.json',:callback=>'BulkActions.submitBulkClassify'} if current_user.edit_classifications?
         bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? 
         bulk_actions
       },

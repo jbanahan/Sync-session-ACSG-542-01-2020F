@@ -27,4 +27,30 @@ describe 'Chain', ->
     it 'should set selection', ->
       Chain.populateUserList(sel,2,data)
       expect(sel.find("optgroup[label='My Company']").find("option[value='2'][selected='selected']").html()).toEqual("Brian Glick")
-      
+
+  describe 'showQuickClassify', ->
+    data = loadJSONFixtures('product.json')['product.json'].product
+    beforeEach ->
+      $.fx.off = true
+
+    afterEach ->
+      $("#mod_quick_classify").remove()
+
+    it 'should create mod if it does not exist', ->
+      Chain.showQuickClassify(data,'/x')
+      mqc = $("#mod_quick_classify[class*='ui-dialog-content']")
+      expect(mqc).toBeVisible()
+      frm = mqc.find("form[action='/x'][method='post']")
+      expect(frm).toExist()
+
+    it "should write form inputs", ->
+      Chain.showQuickClassify(data,'/x')
+      expect($("input[name='product[classifications_attributes][0][country_id]'][value='14']")).toExist()
+      expect($("input[name='product[classifications_attributes][1][country_id]'][value='234']")).toExist()
+      expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][hts_1]'][value='1234567890']")).toExist()
+      expect($("input[name='product[classifications_attributes][1][tariff_records_attributes][0][hts_1]'][value='0987654321']")).toExist()
+
+    it "should replace null with blank string", ->
+      data.classifications[0].tariff_records[0].hts_1 = null
+      Chain.showQuickClassify(data,'/x')
+      expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][hts_1]'][value='']")).toExist()

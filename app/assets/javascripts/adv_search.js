@@ -44,46 +44,8 @@ var OCSearch = (function() {
     }
   }
 
-  var rewriteBulkForm = function() {
-    var checked = $("#result_table").find(":checked");
-    var selectedIds = []; 
-    var cookieItems;
-    var totalCheckboxes = $("#result_table").find(":checkbox:not(#chk_sel_all)").length;
-    var msg;
-    if(allObjectsMode && checked.length==$("#result_table").find(":checkbox:not(#chk_sel_all)").length) {
-      $("#div_bulk_content").html("<input type='hidden' name='sr_id' value='"+searchRunId+"' />");
-      $("#bulk_message").html("All "+maxObjects+" items selected.")
-    } else {
-      allObjectsMode = false;
-      $("#div_bulk_content").html("");
-      $("#result_table").find(":checkbox:not(#chk_sel_all)").each(function(index, item) {
-        removeSelectionCookie(searchRunId,$(item).attr('pk'));
-        if($(item).is(':checked')) {
-          addSelectionCookie(searchRunId,$(item).attr('pk'));
-        }
-      });
-      cookieItems = getSelectedCookieArray(searchRunId);
-      for(var x=0;x<cookieItems.length;x++) {
-        $("#div_bulk_content").append("<input type='hidden' name='pk["+x+"]' value='"+cookieItems[x]+"' />"); 
-      }
-      for(var x=0;x<bulkButtons.length;x++) {
-        if(cookieItems.length) {
-          bulkButtons[x].show();
-        } else {
-          bulkButtons[x].hide();
-        }
-      }
-      if(cookieItems.length>0) {
-        msg = cookieItems.length+" selected ";
-        if(cookieItems.length < maxObjects) {
-          msg += " | <a href='#' class='sel_full'>Select all "+maxObjects+"</a>";
-        }
-        msg += " | <a href='#' class='sel_none'>Clear</a>";
-      } else {
-        msg = "&nbsp;";
-      }
-      $("#bulk_message").html(msg);
-    }
+  var rewriteBulkForm = function() { //function here for legacy support
+    OCSearch.updateBulkForm();
   }
 
   var initBulkSelectors = function() {
@@ -384,11 +346,62 @@ var OCSearch = (function() {
     initSearchCriterions: function() {
       initSearchCrits();                      
     },
-    addBulkHandler: function(button_name,form_path) {
-      var b = $("#"+button_name);
+    updateBulkForm: function() {
+      var checked = $("#result_table").find(":checked");
+      var selectedIds = []; 
+      var cookieItems;
+      var totalCheckboxes = $("#result_table").find(":checkbox:not(#chk_sel_all)").length;
+      var msg;
+      if(allObjectsMode && checked.length==$("#result_table").find(":checkbox:not(#chk_sel_all)").length) {
+        $("#div_bulk_content").html("<input type='hidden' name='sr_id' value='"+searchRunId+"' />");
+        $("#bulk_message").html("All "+maxObjects+" items selected.")
+      } else {
+        allObjectsMode = false;
+        $("#div_bulk_content").html("");
+        $("#result_table").find(":checkbox:not(#chk_sel_all)").each(function(index, item) {
+          removeSelectionCookie(searchRunId,$(item).attr('pk'));
+          if($(item).is(':checked')) {
+            addSelectionCookie(searchRunId,$(item).attr('pk'));
+          }
+        });
+        cookieItems = getSelectedCookieArray(searchRunId);
+        for(var x=0;x<cookieItems.length;x++) {
+          $("#div_bulk_content").append("<input type='hidden' name='pk["+x+"]' value='"+cookieItems[x]+"' />"); 
+        }
+        for(var x=0;x<bulkButtons.length;x++) {
+          if(cookieItems.length) {
+            bulkButtons[x].show();
+          } else {
+            bulkButtons[x].hide();
+          }
+        }
+        if(cookieItems.length>0) {
+          msg = cookieItems.length+" selected ";
+          if(cookieItems.length < maxObjects) {
+            msg += " | <a href='#' class='sel_full'>Select all "+maxObjects+"</a>";
+          }
+          msg += " | <a href='#' class='sel_none'>Clear</a>";
+        } else {
+          msg = "&nbsp;";
+        }
+        $("#bulk_message").html(msg);
+      }
+    },
+    //partially tested (updateBulkForm not tested)
+    addBulkHandler: function(button_name,form_path,clickCallback) {
+      var callback, b;
+      callback = clickCallback ? clickCallback : function() {
+        $("#frm_bulk").removeAttr('data-remote'); //default is non-ajax event
+        $("#frm_bulk").attr('action',form_path).submit();
+      }
+      b = $("#"+button_name);
       bulkButtons.push(b);
-      b.click(function() {$("#frm_bulk").attr('action',form_path).submit();});
-      rewriteBulkForm();
+      b.click(callback);
+      OCSearch.updateBulkForm();
+    },
+    //tested
+    getBulkButtons: function() {
+      return bulkButtons
     },
     showSetup: function() {
       $("#search_setup_outer").show("blind", { direction: "vertical" }, 500)

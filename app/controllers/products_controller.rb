@@ -161,7 +161,11 @@ class ProductsController < ApplicationController
     OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
     pre_loaded_countries = @base_product.classifications.collect {|c| c.country_id}
     Country.import_locations.sort_classification_rank.each do |c|
-      @base_product.classifications.build(:country=>c) unless pre_loaded_countries.include? c.id
+      @base_product.classifications.build(:country=>c).tariff_records.build unless pre_loaded_countries.include? c.id
+    end
+    respond_to do |format|
+        format.html { render }
+        format.json  { render :json=>@base_product.to_json(:include=>{:classifications=>{:include=>[:country,:tariff_records]}}) }
     end
   end
 

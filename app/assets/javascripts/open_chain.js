@@ -428,6 +428,7 @@ var OpenChain = (function() {
     //tested
     setAuthToken: function(t) {
       authToken = t;
+      RailsHelper.authToken(t);
     },
     //tested
     getAuthToken: function() {

@@ -6,4 +6,6 @@
 # IT IS UNLIKELY THAT YOU WILL NEED TO CHANGE THIS FILE
 #
 #=require jquery
+#=require jquery.cookie
+#=require jquery-ui-1.9.2.custom
 #=require_tree ./

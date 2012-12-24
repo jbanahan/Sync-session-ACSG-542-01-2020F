@@ -206,6 +206,7 @@ class SearchSetup < ActiveRecord::Base
     end
     
     base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
+    debugger
     base = base.search_secure self.user, base if secure && base.respond_to?(:search_secure)
 
     #rebuild search_run

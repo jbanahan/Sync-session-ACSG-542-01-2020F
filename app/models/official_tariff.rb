@@ -72,6 +72,9 @@ class OfficialTariff < ActiveRecord::Base
     result
   end
 
+  def search_secure user, base
+    base
+  end
   private
   def update_cache
     CACHE.set "OfficialTariff:ct:#{self.hts_code.strip}:#{self.country_id}", self
