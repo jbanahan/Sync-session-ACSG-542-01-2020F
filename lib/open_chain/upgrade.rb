@@ -90,18 +90,8 @@ module OpenChain
     def apply_upgrade
       log_me "Touching stop.txt"
       capture_and_log "touch tmp/stop.txt"
-      log_me "Stopping Delayed Job"
-      DelayedJobManager.stop
-      dj_count = 0
-      while DelayedJobManager.running? && dj_count < 10
-        log_me "Waiting for delayed job to stop"
-        sleep 10
-        dj_count += 1
-      end
-      raise UpgradeFailure.new("Delayed job should be stopped and is still running.") if DelayedJobManager.running?
-      log_me "Delayed Job stopped"
       migrate
-      log_me "Migration complete"
+      precompile
       log_me "Touching restart.txt"
       capture_and_log "touch tmp/restart.txt"
       log_me "Upgrade complete"
@@ -117,6 +107,7 @@ module OpenChain
       raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock
       capture_and_log "rake db:migrate"
       MasterSetup.release_migration_lock
+      log_me "Migration complete"
     end
 
     def capture_and_log command
@@ -125,11 +116,17 @@ module OpenChain
       log_me stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
     end
+    def precompile 
+      log_me "Precompiling assets"
+      capture_and_log "rake assets:precompile"
+      log_me "Precompile complete"
+    end
     
     def log_me txt
       @log.info txt
       @upgrade_log.update_attributes(:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
+
   end
 
   class UpgradeFailure < StandardError
