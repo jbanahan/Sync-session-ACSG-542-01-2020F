@@ -425,8 +425,13 @@ var OpenChain = (function() {
         });
       });
     },
+    //tested
     setAuthToken: function(t) {
       authToken = t;
+    },
+    //tested
+    getAuthToken: function() {
+      return authToken;
     },
     changePlan: function(milestoneSetId,parentContainerId,headingModule,isAdmin) {
       var mp = $("#mod_loading_plans");
@@ -470,25 +475,9 @@ var OpenChain = (function() {
       detRow.fadeIn('slow');
       orderLineMilestones(mCont,orderLineId,isAdmin);
     },
+    //tested
     loadUserList: function(destinationSelect,selectedId) {
-      $.getJSON('/users.json',function(data) {
-        var i, company, j, u, selected;
-        var h = "";
-        for(i=0;i<data.length;i++) {
-          company = data[i].company;
-          if(company.users.length==0) {
-            continue;
-          }
-          h += "<optgroup label='"+company.name+"'>"
-          for(j=0;j<company.users.length;j++) {
-            u = company.users[j];
-            selected = (u.id==selectedId ? "selected=\'true\' " : "");
-            h += "<option value='"+u.id+"' "+selected+">"+u.full_name+"</option>";
-          }
-          h += "</optgroup>";
-        }
-        destinationSelect.html(h);
-      });
+      Chain.loadUserList(destinationSelect,selectedId);
     },
     hideByEntityType: function(table,entityTypeId) {
       table.find('.fld_lbl').each(function() {$(this).parents(".field_row:first").fadeIn('slow');});

@@ -42,7 +42,7 @@
 <%=will_paginate%>
 
 <div id='mod_add_port' style='display:none;'>
-  <%form_for Port.new, :html=>{:id=>'frm_new'} do |f|-%>
+  <%=form_for Port.new, :html=>{:id=>'frm_new'} do |f|-%>
     <table>
       <%=field_row 'Name', f.text_field(:name)%>
       <%=field_row 'Schedule K', f.text_field(:schedule_k_code)%>
@@ -55,7 +55,7 @@
 </div>
 <%unless @ports.empty?-%>
 <div id='mod_update_port' style='display:none;'>
-  <%form_for @ports.first, :html=>{:id=>'frm_upd'} do |f|-%>
+  <%=form_for @ports.first, :html=>{:id=>'frm_upd'} do |f|-%>
     <table>
       <%=field_row 'Name', f.text_field(:name,:id=>'upd_name')%>
       <%=field_row 'Schedule K', f.text_field(:schedule_k_code,:id=>'upd_k')%>

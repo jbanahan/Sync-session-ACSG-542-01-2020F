@@ -24,7 +24,7 @@ $(function() {
 <% visible_companies = [current_user.company] -%>
 <% visible_companies += current_user.company.linked_companies.to_a -%>
 <% visible_companies << Company.where(:master=>true).first unless visible_companies.include? Company.where(:master=>true).first -%>
-<% form_for @survey, :url=>assign_survey_path(@survey), :html=>{:method=>"POST",:id=>"frm_as"} do |f| %>
+<%= form_for @survey, :url=>assign_survey_path(@survey), :html=>{:method=>"POST",:id=>"frm_as"} do |f| %>
 <table class='detail_table'>
   <thead><tr><th style='text-align:center;'>Assign Users To <%=@survey.name%></th></tr></thead>
   <tbody>

@@ -20,8 +20,8 @@ gem 'dalli', '2.2.1'
 gem 'postmark-rails', '0.4.1'
 gem 'RedCloth', '4.2.9'
 gem 'rubyzip'
-gem 'rspec-rails', '2.6', :group=>[:development,:test]
-gem 'factory_girl', '2.5.2', :group=>[:development,:test]
+gem 'jquery-rails'
+gem 'newrelic_rpm'
 
 #javascript environment, we will compile assets during deployment
 #so we need these on the production servers as well
@@ -29,16 +29,18 @@ gem 'execjs'
 gem 'libv8', '~> 3.11.8'
 gem 'therubyracer'
 
+group :development,:test do
 
-group :test do
-  gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
+  #very active development so pinning to Github master
+  gem "jasminerice", :git => 'git://github.com/bradphelan/jasminerice.git'
+
+  gem 'rspec-rails'
+  gem 'factory_girl', '2.5.2', :group=>[:development,:test]
   gem 'spork'
   gem 'debugger'
 end
-group :development do
-  gem 'spork'
-  gem 'debugger'
-  gem 'sql-logging', '~> 3.0.8'
+group :test do
+  gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
 end
 # Gems used only for assets and not required
 # in production environments by default.
@@ -48,5 +50,3 @@ group :assets do
   gem 'uglifier'
 end
 
-gem 'jquery-rails'
-gem 'newrelic_rpm'

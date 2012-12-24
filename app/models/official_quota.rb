@@ -1,7 +1,7 @@
 class OfficialQuota < ActiveRecord::Base
   belongs_to :country
   belongs_to :official_tariff
-  set_table_name :official_quotas
+  self.table_name = :official_quotas
 
   #test and rebuild link to tariff (need to run this after rebuilding tariff table)
   def link

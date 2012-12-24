@@ -26,8 +26,10 @@ describe Shipment do
       PieceSet.create!(:shipment_line_id=>sl_1.id,:order_line_id=>ol_1.id,:commercial_invoice_line_id=>cl_1.id,:quantity=>10)
       PieceSet.create!(:shipment_line_id=>sl_2.id,:order_line_id=>ol_2.id,:commercial_invoice_line_id=>cl_2.id,:quantity=>11)
 
-      ci = Shipment.find(sl_1.shipment.id).commercial_invoices
-      ci.should have(1).invoice
+      sl_1.reload
+      ci = sl_1.shipment.commercial_invoices
+      # need to to_a call below because of bug: https://github.com/rails/rails/issues/5554
+      ci.to_a.should have(1).invoice
       ci.first.invoice_number == "IN1"
     end
   end

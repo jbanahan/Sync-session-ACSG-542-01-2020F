@@ -271,6 +271,10 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     end
     it "should write error in processing product to acknowledgement file and keep processing" do
       Product.should_receive(:find_or_create_by_unique_identifier).with("7352024LTBR").and_raise("PERROR")
+      ['3221691177NY','322169117JAL','443590','4371543380AX'].each do |g|
+        Product.should_receive(:find_or_create_by_unique_identifier).
+          with(g).and_return(Product.create(:unique_identifier=>g))
+      end
       @tmp = @h.process @file_content
       tmp_content = CSV.parse IO.read @tmp.path
       tmp_content[1][2].should == "PERROR"

@@ -22,13 +22,11 @@ describe DrawbackUploadFilesController do
   end
   describe :create do
     before :each do
-      @tmp = Tempfile.new(['x','.txt'])
-      @file = fixture_file_upload(@tmp.path, 'text/plain')
+      @file = fixture_file_upload('/files/test.txt', 'text/plain')
       @dj = Delayed::Worker.delay_jobs
       Delayed::Worker.delay_jobs = false
     end
     after :each do
-      @tmp.unlink
       Delayed::Worker.delay_jobs = @dj
     end
     context "don't process" do

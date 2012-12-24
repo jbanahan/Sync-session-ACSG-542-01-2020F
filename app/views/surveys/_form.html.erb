@@ -47,7 +47,7 @@
 <button class='form_to' form_id="frm_svy">Save</button>
 <button class='btn_link' link_to='<%=surveys_path%>'>Back</button>
 <% end %>
-<%form_for @survey, :html=>{ :id=>'frm_svy' } do |f|%>
+<%=form_for @survey, :html=>{ :id=>'frm_svy' } do |f|%>
   <table>
     <%=field_row "Survey Name", f.text_field(:name)%>
     <%=field_row "Rating Options", f.text_area(:ratings_list, :rows=>"5")%>

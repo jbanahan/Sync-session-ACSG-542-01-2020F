@@ -41,11 +41,12 @@ class PowerOfAttorneysController < ApplicationController
   end
 
   def destroy
-    @power_of_attorney = PowerOfAttorney.find(params[:id])
-    @power_of_attorney.destroy
+    power_of_attorney = PowerOfAttorney.find(params[:id])
+    c = power_of_attorney.company 
+    power_of_attorney.destroy
 
     respond_to do |format|
-      format.html { redirect_to(company_power_of_attorneys_path(@company)) }
+      format.html { redirect_to(company_power_of_attorneys_path(c)) }
       format.xml  { head :ok }
     end
   end

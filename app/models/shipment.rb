@@ -22,7 +22,9 @@ class Shipment < ActiveRecord::Base
 
   #get unique linked commercial invoices
   def commercial_invoices
-    CommercialInvoice.select("DISTINCT commercial_invoices.*").joins(:commercial_invoice_lines=>[:piece_sets=>[:shipment_line]]).where("shipment_lines.shipment_id = ?",self.id)
+    CommercialInvoice.
+      joins(:commercial_invoice_lines=>[:piece_sets=>[:shipment_line]]).
+      where("shipment_lines.shipment_id = ?",self.id).uniq
   end 
 	def self.modes 
 	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']

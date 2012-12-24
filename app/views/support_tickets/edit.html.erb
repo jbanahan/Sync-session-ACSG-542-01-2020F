@@ -17,7 +17,7 @@
 </style>
 <h1>Ticket #<%=@ticket.id%></h1>
 
-<%form_for @ticket, :html=>{:id=>"frm_t",:multipart=>true} do |f| %>
+<%=form_for @ticket, :html=>{:id=>"frm_t",:multipart=>true} do |f| %>
   <table>
     <%=field_row "User", current_user.support_agent? ? f.select(:requestor_id, ["Loading..."], {}, :id=>"sel_requestor") : @ticket.requestor.full_name %>
     <%if current_user.support_agent?%>
@@ -45,13 +45,13 @@
       </div>
     </div>
   <%end%>
-  <%f.fields_for :support_ticket_comments, @ticket.support_ticket_comments.build(:user=>current_user) do |stcf|%>
+  <%=f.fields_for :support_ticket_comments, @ticket.support_ticket_comments.build(:user=>current_user) do |stcf|%>
     <%=stcf.hidden_field :user_id%>
     <%=stcf.text_area :body, :style=>"width:90%;", :id=>'tx_entr'%><br />
     <div>
       <a href='#' id='preview_link'>Preview</a> | <a href='http://redcloth.org/hobix.com/textile/quick.html' target='_blank'>Formatting Guide</a>
     </div>
-    <%stcf.fields_for :attachments, stcf.object.attachments.build do |attf|%>
+    <%=stcf.fields_for :attachments, stcf.object.attachments.build do |attf|%>
       <%=attf.hidden_field :attachable_type%>
       <b>Attach File: </b><%=attf.file_field :attached%>
     <%end%>

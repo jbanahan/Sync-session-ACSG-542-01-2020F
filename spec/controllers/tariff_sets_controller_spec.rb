@@ -64,13 +64,13 @@ describe TariffSetsController do
         UserSession.create @user
       end
       it 'should delay load from s3 and without activating' do
-        Country.should_receive(:find).with(@country.id).and_return(@country)
+        Country.should_receive(:find).with(@country.id.to_s).and_return(@country)
         TariffLoader.should_receive(:delay).and_return(TariffLoader)
         TariffLoader.should_receive(:process_s3).with('abc',@country,'lbl',false,instance_of(User))
         post :load, :country_id=>@country.id, :path=>'abc', :label=>'lbl'
       end
       it 'should delay load from s3 and activate' do
-        Country.should_receive(:find).with(@country.id).and_return(@country)
+        Country.should_receive(:find).with(@country.id.to_s).and_return(@country)
         TariffLoader.should_receive(:delay).and_return(TariffLoader)
         TariffLoader.should_receive(:process_s3).with('abc',@country,'lbl',true,instance_of(User))
         post :load, :country_id=>@country.id, :path=>'abc', :label=>'lbl', :activate=>'yes'
@@ -97,7 +97,7 @@ describe TariffSetsController do
       @user = Factory(:user,:admin=>true)
       activate_authlogic
       UserSession.create @user
-      TariffSet.should_receive(:find).with(@tariff_set.id).and_return(@tariff_set)
+      TariffSet.should_receive(:find).with(@tariff_set.id.to_s).and_return(@tariff_set)
       @tariff_set.should_receive(:delay).and_return(@tariff_set)
       @tariff_set.should_receive(:activate).with(instance_of(User)).and_return(nil)
       get :activate, :id=>@tariff_set.id

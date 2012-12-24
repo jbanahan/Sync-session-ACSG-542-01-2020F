@@ -14,6 +14,7 @@ Spork.prefork do
 # in spec/support/ and its subdirectories.
   Dir[Rails.root.join("spec/support/**/*.rb")].each {|f| require f}
 
+  Rails.logger.level = 4
   RSpec.configure do |config|
     # == Mock Framework
     #
@@ -33,6 +34,9 @@ Spork.prefork do
     config.use_transactional_fixtures = true
     config.before(:all) do
       DeferredGarbageCollection.start
+    end
+    config.before(:each, :type => :controller) do
+        request.env["HTTP_REFERER"] = "/"
     end
 
     config.after(:all) do

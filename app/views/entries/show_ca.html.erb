@@ -221,7 +221,7 @@
   <%end%>
   <% if current_user.edit_broker_invoices?%>
     <a href='#' id='lnk_add_inv'>Add Invoice</a>
-    <%form_for [@entry, @entry.broker_invoices.build], :html=>{:id=>'frm_new_bi',:style=>'display:none;'} do |f|%>
+    <%=form_for [@entry, @entry.broker_invoices.build], :html=>{:id=>'frm_new_bi',:style=>'display:none;'} do |f|%>
       <h3>New Invoice</h3>
       <table>
         <%=field_row field_label(:bi_suffix), f.text_field(:suffix, "class" => "focus_first") %>
