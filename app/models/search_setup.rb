@@ -195,6 +195,7 @@ class SearchSetup < ActiveRecord::Base
   end
   
   def private_search(secure=true)
+    kls = Kernel.const_get(self.module_type)
     base = Kernel.const_get(self.module_type)
     
     self.search_criterions.each do |sc|
@@ -206,8 +207,7 @@ class SearchSetup < ActiveRecord::Base
     end
     
     base = base.group("#{base.table_name}.id") #prevents duplicate rows in search results
-    debugger
-    base = base.search_secure self.user, base if secure && base.respond_to?(:search_secure)
+    base = kls.search_secure self.user, base if secure && kls.respond_to?(:search_secure)
 
     #rebuild search_run
     unless self.id.nil? #only if in database

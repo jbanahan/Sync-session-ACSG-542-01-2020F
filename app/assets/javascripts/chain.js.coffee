@@ -19,7 +19,7 @@ root.Chain =
       Chain.populateUserList selectBox, defaultSelection, data
 
   #show modal for quick classify window based on given product json and saveUrl
-  showQuickClassify : (product,saveUrl) ->
+  showQuickClassify : (product,saveUrl,bulk_options) ->
     classificationIndex = 0
     writeClassification = (c) ->
       r = "<tr><td>"+c.country.name+"</td><td>"
@@ -33,15 +33,29 @@ root.Chain =
       $('body').append("<div style='display:none;' id='mod_quick_classify'>x</div>")
       modal = $("#mod_quick_classify")
     modal.html("")
-    h = "<form><table>"
+    h = "<form>"
+    if bulk_options
+      if bulk_options["sr_id"]
+        h += "<input type='hidden' value='"+bulk_options["sr_id"]+"' name='sr_id' />"
+      if bulk_options["pk"]
+        pk_counter = 0
+        for p in bulk_options["pk"]
+          h += "<input type='hidden' value='"+p+"' name='pk["+pk_counter+"]' />"
+          pk_counter++
+    h += "<table class='detail_table'><thead><tr><th>Country</th><th>HTS 1</th></tr></thead><tbody>"
     h += writeClassification(c) for c in product.classifications
-    h += "</table></form>"
+    h += "</tbody></table></form>"
     modal.html(h)
     RailsHelper.prepRailsForm modal.find("form"), saveUrl, 'post'
-    modal.dialog(title:"Quick Classify",width:400,buttons:{
+    buttons = {
     'Cancel': () ->
       $("#mod_quick_classify").remove()
     'Save': () ->
       $("#mod_quick_classify form").submit()
-    })
+    }
+    if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"])
+      buttons['Advanced'] = () ->
+        modal.find("form").attr("action","/products/bulk_classify")
+        modal.find("form").submit()
+    modal.dialog(title:"Quick Classify",width:400,buttons:buttons)
     modal.dialog('open')

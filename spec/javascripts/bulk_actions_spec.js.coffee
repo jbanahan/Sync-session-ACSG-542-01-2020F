@@ -26,8 +26,25 @@ describe "BulkActions", ->
       expect($("#frm_bulk")).toHandleWith('ajax:success',BulkActions.handleBulkClassify)
 
   describe "handleBulkClassify", ->
-    it "should pass to Chain.showQuickClassify", ->
-      d = loadJSONFixtures("product.json")['product.json']
+    d = loadJSONFixtures("product.json")['product.json']
+    beforeEach ->
       spyOn(Chain,'showQuickClassify')
+
+    it "should pass to Chain.showQuickClassify", ->
       BulkActions.handleBulkClassify "xhr", d, "success"
       expect(Chain.showQuickClassify).toHaveBeenCalledWith(d.product,'/products/bulk_update_classifications')
+
+    it "should pass search run id", ->
+      loadFixtures("basic_form")
+      $("#frm").attr('id','frm_bulk')
+      $("#frm_bulk").append("<input type='hidden' name='sr_id' value='5'/>")
+      BulkActions.handleBulkClassify "xhr", d, "success"
+      expect(Chain.showQuickClassify).toHaveBeenCalledWith(d.product,'/products/bulk_update_classifications',{"sr_id":"5"})
+
+    it "should pass primary keys", ->
+      loadFixtures("basic_form")
+      $("#frm").attr('id','frm_bulk')
+      $("#frm_bulk").append("<input type='hidden' name='pk[0]' value='5'/>")
+      $("#frm_bulk").append("<input type='hidden' name='pk[1]' value='6'/>")
+      BulkActions.handleBulkClassify "xhr", d, "success"
+      expect(Chain.showQuickClassify).toHaveBeenCalledWith(d.product,'/products/bulk_update_classifications',{"pk":["5","6"]})

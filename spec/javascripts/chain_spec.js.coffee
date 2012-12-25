@@ -54,3 +54,13 @@ describe 'Chain', ->
       data.classifications[0].tariff_records[0].hts_1 = null
       Chain.showQuickClassify(data,'/x')
       expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][hts_1]'][value='']")).toExist()
+
+    it "should write bulk search_run_id", ->
+      Chain.showQuickClassify(data,'/x',{"sr_id":"7"})
+      expect($("form input[name='sr_id'][type='hidden'][value='7']")).toExist()
+
+    it "should write bulk primary keys", ->
+      Chain.showQuickClassify(data,'/x',{"pk":["7","8","9"]})
+      expect($("form input[name='pk[0]'][type='hidden'][value='7']")).toExist()
+      expect($("form input[name='pk[1]'][type='hidden'][value='8']")).toExist()
+      expect($("form input[name='pk[2]'][type='hidden'][value='9']")).toExist()
