@@ -24,7 +24,7 @@ root.Chain =
     writeClassification = (c) ->
       r = "<tr><td>"+c.country.name+"</td><td>"
       r += "<input type='hidden' value='"+c.country_id+"' name='product[classifications_attributes]["+classificationIndex+"][country_id]' />"
-      r += "<input type='text' value='"+(if c.tariff_records[0].hts_1 then c.tariff_records[0].hts_1 else "")+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_1]' />"
+      r += "<input type='text' class='hts_field' country='"+c.country_id+"' value='"+(if c.tariff_records[0].hts_1 then c.tariff_records[0].hts_1 else "")+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_1]' />"
       r += "</td></tr>"
       classificationIndex++
       r
@@ -46,6 +46,7 @@ root.Chain =
     h += writeClassification(c) for c in product.classifications
     h += "</tbody></table></form>"
     modal.html(h)
+    OpenChain.enableHtsChecks() #check for HTS values inline
     RailsHelper.prepRailsForm modal.find("form"), saveUrl, 'post'
     buttons = {
     'Cancel': () ->

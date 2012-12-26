@@ -47,8 +47,8 @@ describe 'Chain', ->
       Chain.showQuickClassify(data,'/x')
       expect($("input[name='product[classifications_attributes][0][country_id]'][value='14']")).toExist()
       expect($("input[name='product[classifications_attributes][1][country_id]'][value='234']")).toExist()
-      expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][hts_1]'][value='1234567890']")).toExist()
-      expect($("input[name='product[classifications_attributes][1][tariff_records_attributes][0][hts_1]'][value='0987654321']")).toExist()
+      expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][hts_1]'][value='1234567890'][country='14']")).toExist()
+      expect($("input[name='product[classifications_attributes][1][tariff_records_attributes][0][hts_1]'][value='0987654321'][country='234']")).toExist()
 
     it "should replace null with blank string", ->
       data.classifications[0].tariff_records[0].hts_1 = null

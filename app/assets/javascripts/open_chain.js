@@ -572,6 +572,9 @@ var OpenChain = (function() {
           }
         });
       });
+      OpenChain.enableHtsChecks(); 
+    },
+    enableHtsChecks: function() {
       $(".sched_b_field").live('blur',function() {validateScheduleBValue($(this));});
       $(".sched_b_field").each(function() {validateScheduleBValue($(this));});
       $(".hts_field").live('blur',function() {validateHTSValue($(this).attr('country'),$(this))});
