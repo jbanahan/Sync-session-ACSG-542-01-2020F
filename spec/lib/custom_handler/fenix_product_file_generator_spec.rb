@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     it "should generate output file with given products" do
       @t = @h.make_file [@p] 
-      IO.read(@t.path).should == "#{"".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"myuid".ljust(40)}1234567890\n"
+      IO.read(@t.path).should == "#{"N".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"myuid".ljust(40)}1234567890\r\n"
     end
     it "should write sync records with dummy confirmation date" do
       @t = @h.make_file [@p] 
@@ -55,6 +55,14 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       sr = @p.sync_records.find_by_trading_partner("fenix-#{@code}")
       sr.sent_at.should < sr.confirmed_at
       sr.confirmation_file_name.should == "Fenix Confirmation"
+    end
+    it "should use CRLF line breaks" do
+      p2 = Factory(:product,:unique_identifier=>'myuid2')
+      c = p2.classifications.create!(:country_id=>@canada.id)
+      t = c.tariff_records.create!(:hts_1=>'1234567890')
+      @t = @h.make_file [@p,p2]
+      x = IO.read @t.path
+      x.index("\r\n").should == 81
     end
   end
 
