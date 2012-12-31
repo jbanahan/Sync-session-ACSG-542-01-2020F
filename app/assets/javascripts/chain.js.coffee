@@ -103,6 +103,9 @@ root.Chain =
       r += "<div>"
       r += "<input type='hidden' value='"+c.country_id+"' name='product[classifications_attributes]["+classificationIndex+"][country_id]' />"
       r += "HTS: <input type='text' class='hts_field' country='"+c.country_id+"' value='"+hts_val+"' id='product_classification_attributes_"+classificationIndex+"_tariff_records_attributes_0_hts_1' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_1]' />"
+      if c.tariff_records[0].id
+        r += "<input type='hidden' value='"+c.id+"' name='product[classifications_attributes]["+classificationIndex+"][id]' />"
+        r += "<input type='hidden' value='"+c.tariff_records[0].id+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][id]' />"
       r += "&nbsp;<a href='#' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
       r += "</div>"
       r += "<div data-target='auto-classify' country='"+c.country_id+"'></div>"
@@ -129,7 +132,7 @@ root.Chain =
     modal.html(h)
     writeClassification(c) for c in product.classifications
     OpenChain.enableHtsChecks() #check for HTS values inline
-    RailsHelper.prepRailsForm modal.find("form"), saveUrl, 'post'
+    RailsHelper.prepRailsForm modal.find("form"), saveUrl, (if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"]) then 'post' else 'put')
     buttons = {
     'Cancel': () ->
       $("#mod_quick_classify").remove()
@@ -151,6 +154,11 @@ root.Chain =
       buttons['Advanced'] = () ->
         modal.find("form").attr("action","/products/bulk_classify")
         modal.find("form").submit()
+    else
+      buttons['Advanced'] = ->
+        window.location = '/products/'+product.id+'/classify'
+    modal.find("form").submit ->
+      $("input.hts_field[value='']").parents('div[quick-class-content-id]').remove()
     Chain.htsAutoComplete()
     modal.dialog(title:"Quick Classify",width:550,buttons:buttons,modal:true)
     modal.dialog('open')

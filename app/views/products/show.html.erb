@@ -5,7 +5,10 @@
       .click(function() {
         window.location = '<%=edit_product_path(@product)%>';
       });
-    $("#btn_classify").click(function() {window.location='<%=classify_product_path%>';});
+    $("#btn_classify").click(function() {
+      var p = <%=@json_product.html_safe%>;
+      Chain.showQuickClassify(p.product,"<%=product_path(@product)%>");  
+    });
     OpenChain.addClickMap('e',"Edit","btn_edit");
     OpenChain.addClickMap('l',"Classify","btn_classify");
     OpenChain.activateHotKeys();
