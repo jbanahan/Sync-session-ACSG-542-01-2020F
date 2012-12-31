@@ -1,0 +1,70 @@
+$light_gray: #ccc;
+$dark_gray: #333;
+.quick_class_outer {
+  width:510px;
+  height: 390px;
+  margin:0;
+  padding:0;
+  border:1px solid black;
+}
+
+#quick_class_countries {
+  width:150px;
+  height: 390px;
+  margin: 0;
+  background-color: $light_gray;
+  border-right: 1px solid black;
+  overflow-x: hidden;
+}
+
+#quick_class_content {
+  width:350px;
+  padding: 0px;
+  float:right;
+  margin: 0;
+}
+#quick_class_content .auto-class-container {
+  margin: 5px 0px;
+  border-bottom: 1px solid $light_gray;
+}
+div.quick_class_country {
+  background-position: left;
+  background-repeat: no-repeat;
+  background-size: 20px 20px;
+  &:hover {
+    background-color: $dark_gray;
+    color: white;
+    a {
+      color: white;
+    }
+  }
+  padding: 5px 5px 5px 25px;
+}
+
+div.quick_class_country.selected {
+  background-color: black;
+  a { color: white;}
+}
+
+div.quick_class_country.good_class {
+  background-image: url(image_path('green_check.png'));
+}
+div.quick_class_country.bad_class {
+  background-image: url(image_path('error.png'));
+}
+
+div.quick_class_target {
+  width:350px;
+  margin:0;
+  padding:0;
+  display: none;
+  height: 390px;
+  overflow-y: auto;
+}
+
+.auto-class-title {
+  background-color: $dark_gray;
+  color:white;
+  font-size: 90%;
+  margin: 5px 0px;
+}

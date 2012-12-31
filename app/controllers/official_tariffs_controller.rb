@@ -1,6 +1,9 @@
 class OfficialTariffsController < ApplicationController
-  skip_before_filter :require_user, :set_user_time_zone, :log_request, :only=>:auto_classify
+  skip_before_filter :require_user, :set_user_time_zone, :log_request, :only=>[:auto_classify,:auto_complete]
 
+  def auto_complete
+    render :json=>OfficialTariff.where(:country_id=>params[:country]).where("hts_code LIKE ?","#{params[:hts]}%").pluck(:hts_code)
+  end
   def auto_classify
     h = params[:hts].blank? ? '' : params[:hts].strip.gsub('.','')
     found = OfficialTariff.auto_classify h
@@ -8,7 +11,7 @@ class OfficialTariffsController < ApplicationController
     found.each do |k,v|
       hts = []
       v.each {|ot| hts << {'code'=>ot.hts_code,'desc'=>ot.remaining_description,'rate'=>ot.common_rate}}
-      r << {'iso'=>k.iso_code,'hts'=>hts}
+      r << {'iso'=>k.iso_code,'country_id'=>k.id,'hts'=>hts}
     end
     r
     render :json => r
@@ -27,7 +30,7 @@ class OfficialTariffsController < ApplicationController
     ot = nil
     ot = OfficialTariff.find_cached_by_hts_code_and_country_id hts, cid unless cid.blank?
     c_iso = params[:ciso]
-    ot = OfficialTariff.joins(:country).where(:hts_code=>hts).where("countries.iso_code = ?",c_iso) unless !ot.nil? || c_iso.blank?
+    ot = OfficialTariff.joins(:country).where(:hts_code=>hts).where("countries.iso_code = ?",c_iso).first unless !ot.nil? || c_iso.blank?
     if ot.nil?
       if OfficialTariff.where(:country_id=>cid).empty?
         render :json => "country not loaded".to_json

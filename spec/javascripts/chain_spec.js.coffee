@@ -28,6 +28,41 @@ describe 'Chain', ->
       Chain.populateUserList(sel,2,data)
       expect(sel.find("optgroup[label='My Company']").find("option[value='2'][selected='selected']").html()).toEqual("Brian Glick")
 
+  describe "loadAutoClassifications", ->
+    it "should call renderAutoClassifications", ->
+      spyOn(jQuery,'get')
+      Chain.loadAutoClassifications('1234567890',1)
+      expect(jQuery.get).toHaveBeenCalledWith('/official_tariffs/auto_classify/1234567890.json',jasmine.any(Function))
+
+    it "should strip non-numerics", ->
+      spyOn(jQuery,'get')
+      Chain.loadAutoClassifications('1234567i.8A 90',1)
+      expect(jQuery.get).toHaveBeenCalledWith('/official_tariffs/auto_classify/1234567890.json',jasmine.any(Function))
+
+  describe "populateAutoClassifications", ->
+    it "should fill for multiple countries", ->
+      loadFixtures('basic_form')
+      $("form").append("<div data-target='auto-class' country='14'></div><div data-target='auto-class' country='234'></div>")
+      Chain.populateAutoClassifications("[data-target='auto-class']",loadJSONFixtures('auto_classify.json')['auto_classify.json'])
+      expect($("div[data-target='auto-class'][country='14']").html()).toMatch(/desc1/)
+      
+  describe 'add / fire TariffCallback', ->
+    it 'should add callback by country', ->
+      x = ""
+      cbX = (tNum) ->
+        x += 'x'+ tNum
+      cbY = (tNum) ->
+        x += 'y'+ tNum
+      cbZ = (tNum) ->
+        x += 'z'+ tNum
+      country_id = 10
+      Chain.addTariffCallback('valid',country_id,cbX)
+      Chain.addTariffCallback('valid',country_id,cbY)
+      Chain.addTariffCallback('invalid',country_id,cbZ)
+      
+      Chain.fireTariffCallbacks('valid',country_id,"ABC")
+      expect(x).toEqual('xABCyABC')
+
   describe 'showQuickClassify', ->
     data = loadJSONFixtures('product.json')['product.json'].product
     beforeEach ->
@@ -64,3 +99,14 @@ describe 'Chain', ->
       expect($("form input[name='pk[0]'][type='hidden'][value='7']")).toExist()
       expect($("form input[name='pk[1]'][type='hidden'][value='8']")).toExist()
       expect($("form input[name='pk[2]'][type='hidden'][value='9']")).toExist()
+    
+    it "should not submit form if invalid tariffs", ->
+      spyOn(OpenChain,'hasInvalidTariffs').andReturn(true)
+      spyOn(window,'alert')
+      frm = $("#mod_quick_classify form")
+      spyOn(frm,'submit')
+      Chain.showQuickClassify(data,'/x',{"pk":["7","8","9"]})
+      $("button").each ->
+        $(@).click() if $(@).children("span").html()=="Save"
+      expect(frm.submit).not.toHaveBeenCalled()
+      expect(window.alert).toHaveBeenCalledWith("Please correct or erase all bad tariff numbers.")

@@ -1,5 +1,6 @@
 root = exports ? this
 root.BulkActions =
+    
   submitBulkClassify : () ->
     $("#frm_bulk").attr('data-remote','true')
     $("#frm_bulk").attr('action','/products/bulk_classify.json')

@@ -82,9 +82,12 @@ OpenChain::Application.routes.draw do
 
   match "/official_tariffs/auto_classify/:hts" => "official_tariffs#auto_classify"
   resources :official_tariffs, :only=>[:index,:show] do
-    get 'find', :on => :collection
-    get 'find_schedule_b', :on => :collection
-    get 'schedule_b_matches', :on => :collection
+    collection do
+    get 'find'
+    get 'find_schedule_b'
+    get 'schedule_b_matches'
+    get 'auto_complete' 
+    end
   end
   resources :official_tariff_meta_data, :only=>[:create,:update]
 

@@ -40,9 +40,9 @@
      <%if f.object.has_schedule_b? || is_us %>
       <tr><th>Schedule B 1</th><th>Schedule B 2</th><th>Schedule B 3</th></tr>
       <tr>
-        <td><%=f.text_field :schedule_b_1, :class=>:sched_b_field, :col=>1%></td>
-        <td><%=f.text_field :schedule_b_2, :class=>:sched_b_field, :col=>2%></td>
-        <td><%=f.text_field :schedule_b_3, :class=>:sched_b_field, :col=>3%></td>
+        <td><%=f.text_field :schedule_b_1, :class=>:sched_b_field, :col=>1, :country=>country_id%></td>
+        <td><%=f.text_field :schedule_b_2, :class=>:sched_b_field, :col=>2, :country=>country_id%></td>
+        <td><%=f.text_field :schedule_b_3, :class=>:sched_b_field, :col=>3, :country=>country_id%></td>
       </tr>
      <%end%>
     </tbody>

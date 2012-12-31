@@ -48,3 +48,4 @@ describe "BulkActions", ->
       $("#frm_bulk").append("<input type='hidden' name='pk[1]' value='6'/>")
       BulkActions.handleBulkClassify "xhr", d, "success"
       expect(Chain.showQuickClassify).toHaveBeenCalledWith(d.product,'/products/bulk_update_classifications',{"pk":["5","6"]})
+

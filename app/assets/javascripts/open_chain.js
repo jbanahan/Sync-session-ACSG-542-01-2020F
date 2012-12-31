@@ -151,11 +151,11 @@ var OpenChain = (function() {
       }); 
     }
   }
-  var validateOfficialValue = function(uri,hts_field,writeDataFunction) {
+  var validateOfficialValue = function(country_id,uri,hts_field,writeDataFunction) {
     var get_result_box = function() {
       var to_write = hts_field.siblings(".tariff_result");
       if(to_write.length==0) {
-        hts_field.closest("td").append("<div class='tariff_result'></div>");
+        hts_field.parent().append("<div class='tariff_result'></div>");
         to_write = hts_field.siblings(".tariff_result"); 
       }
       return to_write;
@@ -165,6 +165,7 @@ var OpenChain = (function() {
       hts_field.addClass("error");
       var to_write = get_result_box();
       to_write.html("Invalid tariff number.");
+      Chain.fireTariffCallbacks('invalid',country_id,hts_field.val());
     }
     var valid_callback = function(data) {
       hts_field.removeClass("error");
@@ -172,6 +173,7 @@ var OpenChain = (function() {
       if(hts_field.hasClass("hts_field")) {
         writeScheduleBMatches(hts_field);
       }
+      Chain.fireTariffCallbacks('valid',country_id,hts_field.val());
     }
     var writeTariffInfo = function(data) {
       var t, h, to_write;
@@ -184,6 +186,7 @@ var OpenChain = (function() {
     if(hts.length==0) {
       $(this).removeClass("error");
       get_result_box().html("");
+      Chain.fireTariffCallbacks('empty',country_id,'');
       return;
     }
     if(!validateHTSFormat(hts)) {
@@ -230,7 +233,7 @@ var OpenChain = (function() {
       }
       return h;
     }
-    validateOfficialValue('/official_tariffs/find?hts='+hts_field.val()+'&cid='+country_id,hts_field,wdf)
+    validateOfficialValue(country_id,'/official_tariffs/find?hts='+hts_field.val()+'&cid='+country_id,hts_field,wdf)
   }
   var validateScheduleBValue = function(hts_field) {
     var wdf = function(data) {
@@ -244,7 +247,7 @@ var OpenChain = (function() {
       return h;
     }
 
-    validateOfficialValue('/official_tariffs/find_schedule_b?hts='+hts_field.val(),hts_field,wdf);
+    validateOfficialValue(hts_field.attr("country"),'/official_tariffs/find_schedule_b?hts='+hts_field.val(),hts_field,wdf);
   }
 
   var pollingId;
@@ -523,16 +526,15 @@ var OpenChain = (function() {
     registerDragTableDropHandler: function(table,handler) {
       dropTableHandlers[table.attr('id')] = handler;
     },
+    hasInvalidTariffs: function() {
+      return invalidTariffFields.length>0;
+    },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
         $(this).closest(".tf_row").find(".hts_field").each(function() {removeFromInvalidTariffs($(this));});
         $(this).closest(".tf_row").find(".sched_b_field").each(function() {removeFromInvalidTariffs($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
-      });
-      $("a.hts_option").live('click',function(ev) {
-        ev.preventDefault();
-        $(this).parents(".hts_cell").find("input.hts_field").val($(this).html());
       });
       $("a.auto_class").live('click',function(ev) {
         ev.preventDefault();
@@ -553,7 +555,7 @@ var OpenChain = (function() {
         $(this).closest("td").find("input.sched_b_field").val($(this).html());
       });
       $("form").submit(function() {
-        if(invalidTariffFields.length>0) {
+        if(OpenChain.hasInvalidTariffs()) {
           window.alert("Please fix or erase invalid tariff numbers.");
           return false;
         }
@@ -573,6 +575,7 @@ var OpenChain = (function() {
         });
       });
       OpenChain.enableHtsChecks(); 
+      Chain.htsAutoComplete();
     },
     enableHtsChecks: function() {
       $(".sched_b_field").live('blur',function() {validateScheduleBValue($(this));});
@@ -831,6 +834,12 @@ $( function() {
       var c_id = $(this).attr('country');
       var c_iso = $(this).attr('iso')
       tariffPopUp(hts,c_id,c_iso);
+    });
+    $("a.hts_option").live('click',function(ev) {
+      ev.preventDefault();
+      var h = $(this).parents(".hts_cell").find("input.hts_field")
+      h.val($(this).html())
+      h.blur();
     });
 });
 $(document).ready( function() {
