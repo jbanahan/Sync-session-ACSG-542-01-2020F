@@ -158,7 +158,8 @@ root.Chain =
       buttons['Advanced'] = ->
         window.location = '/products/'+product.id+'/classify'
     modal.find("form").submit ->
-      $("input.hts_field[value='']").parents('div[quick-class-content-id]').remove()
+      $("input.hts_field").each ->
+        $(@).parents('div[quick-class-content-id]').remove() if $(@).val()==''
     Chain.htsAutoComplete()
     modal.dialog(title:"Quick Classify",width:550,buttons:buttons,modal:true)
     modal.dialog('open')
