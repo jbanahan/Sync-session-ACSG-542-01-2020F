@@ -51,7 +51,6 @@ class TariffLoaderTest < ActiveSupport::TestCase
 
     t
   end
-  private
 
   test "s3 auto activate" do
     # asserts that we're pulling files from S3, processing them, and then activating the tariff set
@@ -249,11 +248,15 @@ class TariffLoaderTest < ActiveSupport::TestCase
     # to the file already existing.  Rather than overwriting, it just failed.
     # So, I just rolled my own temp file here.
   
-    zip_path = File.dirname(t) + "/zip-" + File.basename(t.path) + ".zip"
+    zip_path = File.dirname(t) + "/zip-" + File.basename(t.path, ".*") + ".zip"
     begin
       tz = Zip::ZipFile.open(zip_path, Zip::ZipFile::CREATE) do |zf|
         zf.add(File.basename(t.path), t.path)
       end
+      # Don't need the tempfile any more...delete it now, it seems that
+      # sometimes this test can fail if t isn't closed and unlinked here
+      t.close!
+
       # Make sure the process is removing any temp files it creates, 
       # we can do a dir listing of files ending in .xls before and after
       file_count_proc = lambda do
@@ -313,4 +316,36 @@ class TariffLoaderTest < ActiveSupport::TestCase
     assert_equal("No header row found in file #{File.basename(t)}.", ex.message)
   end
 
+  test 'parses most favored nation value if ISO is CN' do
+     # Tests that we're processing a standard tariff file from the local filesystem and activating it
+    rows = []
+    # New col headers sans MFN one, otherwise MFN overwrites SPC_RATES
+    fake_cols = ["HSCODE","FULL_DESC","SPC_RATES","UNITCODE","GENERAL","CHAPTER","HEADING","SUBHEADING","REST_DESC","ADDVALOREMRATE","PERUNIT","GPT","ERGA_OMNES","COL2_RATE",
+      "Import Reg 1","Import Reg 2","Import Reg 3","Import Reg 4","Export Reg 1","Export Reg 2","Export Reg 3","Export Reg 4"]
+    t = create_tariff_file true, '', 0, fake_cols, 2 do |row|
+      if rows.length == 0
+        # Set the "special" mnf formatting in the SPC_Rate column (pulled from an actual spreadsheet)
+        row[2] = "3%: (CC), 10%: (MFN tariff treatment), 3%: (CC), 5%: (PK), 7%: (PE), Free: (ASEAN: BN,ASEAN: KH,ASEAN: ID,ASEAN: LA,ASEAN: MY,ASEAN: MM,ASEAN: PH,ASEAN: SG,ASEAN: TH,ASEAN: VN,NZ,CR)"
+      else
+        # Set the "Free" data in the second row
+        row[2] = "Free: (MFN tariff treatment)"
+      end
+      rows << row
+      row
+    end
+
+    label = "ABCDEF"
+    country = Country.where(:iso_code=>'CN').first
+    loader = TariffLoader.new(country,t.path,label)
+    
+    loader.process
+
+    ts = TariffSet.where(:label=>label).first
+    assert_equal 2, ts.tariff_set_records.size
+    r = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[0][cols.index("HSCODE")]).first
+    assert_equal "10%", r.most_favored_nation_rate
+
+    r = ts.tariff_set_records.where(:country_id=>country.id,:hts_code=>rows[1][cols.index("HSCODE")]).first
+    assert_equal "Free", r.most_favored_nation_rate
+  end
 end

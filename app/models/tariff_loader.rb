@@ -18,7 +18,7 @@ class TariffLoader
   FIELD_MAP = {
     "HSCODE" => lambda {|o,d| o.hts_code = d},
     "FULL_DESC" => lambda {|o,d| o.full_description = d},
-    "SPC_RATES" => lambda {|o,d| o.special_rates = d},
+    "SPC_RATES" => lambda {|o,d| parse_spc_rates(o, d)},
     "SR1" => lambda {|o,d| o.special_rates = d},
     "UNITCODE" => lambda {|o,d| o.unit_of_measure = d},
     "GENERAL" => lambda {|o,d| o.general_rate = d},
@@ -48,29 +48,33 @@ class TariffLoader
   }
   MIN_VALID_COLUMN_LENGTH = 14
 
+  # Enables some special MFN handling for these countries
+  MOST_FAVORED_NATION_SPECIAL_PARSE_ISOS = ['CN']
+
   def initialize(country,file_path,tariff_set_label)
     @country = country
     @file_path = file_path  
     @tariff_set_label = tariff_set_label
+    should_do_mfn_parse country
   end
-  
+ 
   def process
     ts = nil
     # The first array index should be the file path and the second (if present) is a Tempfile pointing to the file we're processing
-    tariff_file_info = get_file_to_process @file_path
+    tariff_file, temp_file = get_file_to_process @file_path
 
     begin
       OfficialTariff.transaction do
         ts = TariffSet.create!(:country_id=>@country.id,:label=>@tariff_set_label)
         i = 0
-        parser = get_parser tariff_file_info[0]
-        parser.foreach(tariff_file_info[0]) do |row|
+        parser = get_parser tariff_file
+        parser.foreach(tariff_file) do |row|
           headers = parser.headers
           ot = TariffSetRecord.new(:tariff_set_id=>ts.id,:country=>@country) #use .new instead of ts.tariff_set_records.build to avoid large in memory array
           FIELD_MAP.each do |header,lmda|
             col_num = headers.index header
             unless col_num.nil?
-              lmda.call ot, TariffLoader.column_value(row[col_num])
+              instance_exec ot, TariffLoader.column_value(row[col_num]), &lmda
             end
           end
           ot.save!
@@ -80,7 +84,7 @@ class TariffLoader
       end
     ensure
       #delete the tempfile we may be working with if the file we're processing was a zip file
-      tariff_file_info[1].unlink unless (tariff_file_info[1].nil?() || !tariff_file_info[1].is_a?(Tempfile))
+      temp_file.close! unless temp_file.nil?
     end
     ts
   end
@@ -108,7 +112,6 @@ class TariffLoader
   def self.column_value val 
     val.respond_to?('strip') ? val.strip : val
   end
-  private
 
   def self.valid_header_row? row
     return false unless row.length >= MIN_VALID_COLUMN_LENGTH
@@ -120,7 +123,6 @@ class TariffLoader
     end
     false
   end
-  private
 
   def self.valid_row? row 
     # Do a basic check to make sure there's at least one column in the row.
@@ -134,7 +136,20 @@ class TariffLoader
     end
     false
   end
+
   private
+
+  def parse_spc_rates tariff, val
+    tariff.special_rates = val
+ 
+    # The following regex looks for a decimal value (optionally followed by a %) or words
+    # followed by zero or one space, followed by a colon, followed by zero or one space
+    # followed by an open parenth MFN (any chars) and then the first close parenth
+    if @do_mfn_parse && val =~ /(\d+%?|\w+) ?: ?\(MFN.*?\)/
+      tariff.most_favored_nation_rate = $1
+      #tariff.common_rate = $1
+    end
+  end
 
   def get_parser file_path
     file_path.downcase.end_with?("xls") ? XlsParser.new : CsvParser.new    
@@ -165,7 +180,10 @@ class TariffLoader
     end
     file_to_process
   end
-  private
+  
+  def should_do_mfn_parse country 
+    @do_mfn_parse = MOST_FAVORED_NATION_SPECIAL_PARSE_ISOS.include? country.iso_code.upcase
+  end
 
   class CsvParser
 
