@@ -26,6 +26,12 @@ class Classification < ActiveRecord::Base
     return r.empty? || r.first.id == self.id ? nil : r.first    
   end
 
+  #has at least one tariff record with an hts number in hts_1
+  def classified?
+    self.tariff_records.each {|tr| return true unless tr.hts_1.blank?}
+    false
+  end
+
   private
   def set_nested tr #needed to support the auto_set_line_number in TariffRecord on a nested form create
     tr.classification ||= self

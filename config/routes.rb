@@ -273,6 +273,12 @@ OpenChain::Application.routes.draw do
   end
 
   resources :countries
+  resources :regions, :only => [:index,:create,:destroy,:update] do
+    member do
+      get 'add_country'
+      get 'remove_country'
+    end
+  end
 
 	resources :addresses do
 		get 'render_partial', :on => :member

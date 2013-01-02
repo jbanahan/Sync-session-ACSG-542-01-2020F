@@ -56,6 +56,8 @@ Factory.define :country do |c|
   c.iso_code {Factory.next :iso}
   c.sequence(:name) {|n| "Country #{n}"}
 end
+Factory.define :region do |f|
+end
 Factory.define :official_tariff do |t|
   t.sequence(:hts_code) {|n| "123456#{n}"}
   t.full_description "description"
@@ -137,6 +139,17 @@ Factory.define :search_setup do |s|
 end
 Factory.define :search_schedule do |s|
   s.association :search_setup
+end
+Factory.define :search_criterion do |f|
+  f.model_field_uid 'prod_uid'
+  f.operator 'eq'
+  f.value 'x'
+end
+Factory.define :sort_criterion do |f|
+  f.model_field_uid 'prod_uid'
+end
+Factory.define :search_column do |f|
+  f.model_field_uid 'prod_uid' 
 end
 Factory.define :custom_definition do |c|
   c.sequence(:label)

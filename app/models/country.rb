@@ -12,6 +12,7 @@ class Country < ActiveRecord::Base
 	has_many :addresses
   has_many :tariff_sets
 	has_many :official_tariffs
+  has_and_belongs_to_many :regions
 	
   scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
 
