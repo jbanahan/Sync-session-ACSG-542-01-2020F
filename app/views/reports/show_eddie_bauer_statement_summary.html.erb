@@ -5,5 +5,7 @@
 <h2>Eddie Bauer Statement Summary</h2>
 <p>This report doesn't have any parameters to set. Click the Run Report button to continue.</p>
 <%=form_tag reports_run_eddie_bauer_statement_summary_path, :id=>'frm_run' do -%>
-
+  <table>
+    <%=field_row "Mode:", select_tag(:mode,"<option selected='selected' value='not_paid'>All Entries Not Paid</option><option value='previous_month'>All Entries Released Last Month</option>".html_safe)%>
+  </table>
 <%end%>
