@@ -220,7 +220,8 @@ class ApplicationController < ActionController::Base
 
     def error_redirect(message=nil)
         add_flash :errors, message unless message.nil?
-        redirect_to request.referrer
+        target = request.referrer ? request.referrer : "/"
+        redirect_to target
     end
     
   def action_secure(permission_check, obj, options={})

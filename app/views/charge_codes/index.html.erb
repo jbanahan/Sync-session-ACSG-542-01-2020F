@@ -27,7 +27,7 @@
 </table>
 
 <div id='mod_add_code' style='display:none;'>
-  <%form_for ChargeCode.new, :html=>{:id=>'frm_new'} do |f|%>
+  <%=form_for ChargeCode.new, :html=>{:id=>'frm_new'} do |f|%>
     <table>
       <%=field_row "Code", f.text_field(:code)%>
       <%=field_row "Description", f.text_field(:description)%>
@@ -38,7 +38,7 @@
 
 <%if !@charge_codes.empty?%>
   <div id='mod_update_code' style='display:none;'>
-    <%form_for @charge_codes.first, :html=>{:id=>'frm_upd'} do |f|%>
+    <%=form_for @charge_codes.first, :html=>{:id=>'frm_upd'} do |f|%>
       <table>
         <%=field_row "Code", f.text_field(:code,:id=>'upd_code')%>
         <%=field_row "Description", f.text_field(:description,:id=>'upd_desc')%>

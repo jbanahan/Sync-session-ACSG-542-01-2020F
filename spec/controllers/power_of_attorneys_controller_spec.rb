@@ -71,14 +71,14 @@ describe PowerOfAttorneysController do
 
   describe "DELETE destroy" do
     it "destroys the requested power_of_attorney" do
-      expect {
-        delete :destroy, :id => @poa.id, :company_id => @poa.company.id
-      }.to change(PowerOfAttorney, :count).by(-1)
+      delete :destroy, :id => @poa.id, :company_id => @poa.company.id
+      PowerOfAttorney.count.should == 0
     end
 
     it "redirects to the power_of_attorneys list" do
+      c = @poa.company
       delete :destroy, :id => @poa.id, :company_id => @poa.company.id
-      response.should redirect_to(company_power_of_attorneys_path(@path))
+      response.should redirect_to(company_power_of_attorneys_path(c))
     end
   end
 

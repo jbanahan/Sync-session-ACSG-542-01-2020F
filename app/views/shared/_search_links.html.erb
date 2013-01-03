@@ -3,6 +3,3 @@
 if obj.respond_to?('can_edit?') && obj.can_edit?(current_user) && self.respond_to?(ep)%>
   | <%=link_to "Edit", send(ep,obj,:c_pos=>cursor)%>
 <%end%>
-<%if obj.respond_to?('can_classify?') && obj.can_classify?(current_user)%>
-  | <%=link_to "Classify", send("classify_#{obj.class.to_s.underscore}_path",obj,:c_pos=>cursor)%>
-<%end%>

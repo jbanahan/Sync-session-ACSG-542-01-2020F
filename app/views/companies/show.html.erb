@@ -76,14 +76,14 @@ $(function() {
 
 <%if current_user.admin? %>
 <div id='mod_lock' style='display:none; text-align:center;'>
-  <% form_for @company, :html => {:id=>'frm_lock'} do |f| %>
+  <%= form_for @company, :html => {:id=>'frm_lock'} do |f| %>
     <h3>Are you sure you want to lock this company?</h3><br />
     <em>If you lock, then you cannot edit or create any Orders, Shipments, Sales, Products or Deliveries associated with this company.</em><br />
     <%= f.hidden_field :locked, {:value => '1'}%>
   <% end %>
 </div>
 <div id='mod_unlock' style='display:none; text-align:center;'>
-  <% form_for @company, :html => {:id=>'frm_unlock'}  do |f| %>
+  <%= form_for @company, :html => {:id=>'frm_unlock'}  do |f| %>
     <h3>Are you sure you want to unlock this company?</h3><br />
     <%= f.hidden_field :locked, {:value => '0'}%>
   <% end %>

@@ -20,7 +20,58 @@ describe ModelField do
       end
     end
   end
+  it "should get uid for region" do
+    r = Factory(:region)
+    ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
+  end
   context "special cases" do
+    context "regions" do
+      it "should create classification count model fields for existing regions" do
+        r = Factory(:region)
+        r2 = Factory(:region)
+        ModelField.reload
+        ModelField.find_by_region(r).should have(1).model_field
+        ModelField.find_by_region(r2).should have(1).model_field
+      end
+      context "classification count field methods" do
+        before :each do
+          @reg = Region.create!(:name=>"EMEA")
+          @mf = ModelField.find_by_uid "*r_#{@reg.id}_class_count"
+          @p = Factory(:product)
+          @c1 = Factory(:country)
+          @c2 = Factory(:country)
+          @reg.countries << @c1
+          tr1 = Factory(:tariff_record,:hts_1=>'12345678',:classification=>Factory(:classification,:country=>@c1,:product=>@p))
+          tr2 = Factory(:tariff_record,:hts_1=>'12345678',:classification=>Factory(:classification,:country=>@c2,:product=>@p))
+          @sc = SearchCriterion.new(:model_field_uid=>@mf.uid,:operator=>'eq',:value=>"1")
+          
+          #don't find this product because it's classified for a different country
+          Factory(:tariff_record,:hts_1=>'12345678',:classification=>Factory(:classification,:country=>@c2))
+        end
+        it "should have proper label" do
+          @mf.label.should == "Classification Count - EMEA"
+        end
+        it "should only count countries in region" do
+          @mf.process_export(@p,User.new,true).should == 1
+          x = @sc.apply(Product.where("1")).uniq
+          x.should have(1).product
+          x.first.should == @p
+        end
+        it "should not import" do
+          @mf.process_import(@p,1).should == "Classification count ignored."
+        end
+        it "should not count tariff records without hts_1 values" do
+          @p.classifications.find_by_country_id(@c1.id).tariff_records.first.update_attributes(:hts_1=>'')
+          @sc.apply(Product.where("1")).first.should be_nil
+        end
+        it "should not double count multiple tariff records for country" do
+          @p.classifications.find_by_country_id(@c1.id).tariff_records.create!(:hts_1=>'987654321')
+          x = @sc.apply(Product.where("1")).uniq
+          x.should have(1).product
+          x.first.should == @p
+        end
+      end
+    end
     context "PMS Month" do
       before :each do 
         @ent = Factory(:entry,:monthly_statement_due_date=>Date.new(2012,9,1))

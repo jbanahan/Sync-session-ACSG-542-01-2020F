@@ -14,7 +14,7 @@ $(function() {
   <button class='btn_link' link_to='<%=company_path(@company)%>'>Back</button>
 <% end %>
 <h1>Companies linked to <%=@company.name%></h1>
-<%form_for @company, :url=>update_children_company_path(@company), :html=>{:id=>'frm_cmp', :method=>"post"} do |f|%>
+<%=form_for @company, :url=>update_children_company_path(@company), :html=>{:id=>'frm_cmp', :method=>"post"} do |f|%>
   <table id='companies' class='detail_table' style='width:0%'>
     <thead><tr><th>Not Linked</th><th>Linked</th></thead>
     <tbody><tr><td>

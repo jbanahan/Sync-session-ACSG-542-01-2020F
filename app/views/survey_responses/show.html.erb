@@ -175,7 +175,7 @@ textarea {
 }
 </style>
 <div id='filter_warn' class='c_warn' style='display:none;'></div>
-<%form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
+<%=form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
   <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> </h1>
   <h3><%=@sr.subtitle%></h3>
   <%if @rate_mode %> 
@@ -196,7 +196,7 @@ textarea {
   </table>
   <%q_idx = 1%>
   <%@sr.answers.each_with_index do |ans,a_idx|%>
-    <%f.fields_for :answers, ans do |a|%>
+    <%=f.fields_for :answers, ans do |a|%>
       <%q = a.object.question%>
       <div class='question' answered='<%=a.object.answered? ? "y" : "n"%>' rating='<%=a.object.rating%>'>
         <div class='q_head'>Question #<%=q_idx%></div>
@@ -229,7 +229,7 @@ textarea {
             </pre>
           </div>
         <% end %>
-        <%a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
+        <%=a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
           <%=acf.hidden_field :user_id%>
           <%=acf.text_area :content, :class=>'a_opt'%><br />
           <%if @sr.can_view_private_comments?(current_user)%><%=acf.check_box :private%> Private<%end%>

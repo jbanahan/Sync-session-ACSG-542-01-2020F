@@ -126,6 +126,11 @@ class ModelField
     end
   end
   
+  #Get the unique ID to be used for a given region and model field type
+  def self.uid_for_region region, type
+    "*r_#{region.id}_#{type}" 
+  end
+
   #should be after all class level methods are declared
   MODEL_FIELDS = Hash.new
   def self.add_fields(core_module,descriptor_array)
@@ -498,11 +503,18 @@ class ModelField
     [sequence_number,mf_uid,field_reference,label,h]
   end
 
-  def self.add_custom_fields(core_module,base_class,parameters={})
+  def self.next_index_number(core_module)
     max = 0
     m_type = core_module.class_name.intern
     model_hash = MODEL_FIELDS[m_type]
     model_hash.values.each {|mf| max = mf.sort_rank + 1 if mf.sort_rank > max}
+    max
+  end
+
+  def self.add_custom_fields(core_module,base_class,parameters={})
+    m_type = core_module.class_name.intern
+    model_hash = MODEL_FIELDS[m_type]
+    max = next_index_number core_module
     base_class.new.custom_definitions.each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
@@ -536,6 +548,33 @@ class ModelField
     Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_cache_time
     CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
   end
+
+  def self.add_region_fields
+    Region.all.each do |r|
+      mf = ModelField.new(next_index_number(CoreModule::PRODUCT),
+        "*r_#{r.id}_class_count".to_sym,
+        CoreModule::PRODUCT,
+        "*r_#{r.id}_class_count".to_sym, {
+          :label_override => "Classification Count - #{r.name}",
+          :import_lambda => lambda {|p,d| "Classification count ignored."},
+          :export_lambda => lambda {|p|
+            good_country_ids = Region.find(r.id).countries.collect {|c| c.id}
+            cnt = 0
+            p.classifications.each do |cl|
+              cnt += 1 if good_country_ids.include?(cl.country_id) && cl.classified?
+            end
+            cnt
+          },
+          :data_type => :integer,
+          :history_ignore => true,
+          :qualified_field_name=>"(select count(*) from (select distinct classifications.id, classifications.product_id, classifications.country_id from classifications inner join tariff_records on tariff_records.classification_id = classifications.id where length(hts_1) > 0 ) cls where cls.product_id = products.id and cls.country_id in (select country_id from countries_regions where region_id = #{r.id}))"
+          
+        }
+      )
+      MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf
+    end
+  end
+
 
   def self.reload(update_cache_time=false)
     MODEL_FIELDS.clear
@@ -1094,9 +1133,10 @@ class ModelField
     ]
     add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","delivery_lines")
     reset_custom_fields update_cache_time
+    add_region_fields
   end
 
-  reload 
+  reload #does the reload when the class is loaded the first time 
 
   def self.find_by_uid(uid,dont_retry=false)
     return ModelField.new(10000,:_blank,nil,nil,{
@@ -1116,6 +1156,19 @@ class ModelField
       find_by_uid uid, true
     end
     return nil
+  end
+
+  #get array of model fields associated with the given region
+  def self.find_by_region r
+    ret = []
+    uid_regex = /^\*r_#{r.id}_/
+    reload_if_stale
+    MODEL_FIELDS.values.each do |h|
+      h.each do |k,v|
+        ret << v if k.to_s.match uid_regex
+      end
+    end
+    ret
   end
   
   def self.find_by_module_type(type_symbol)

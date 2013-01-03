@@ -61,7 +61,7 @@ function loadFieldNames() {
 <h2>Critera</h2>
 <table id='tbl_criteria'>
   <%@status_rule.search_criterions.build%>
-  <%f.fields_for :search_criterions do |sc| %>
+  <%=f.fields_for :search_criterions do |sc| %>
     <tr class='hover sc_row'>
       <td>
         <%=sc.hidden_field :model_field_uid %>

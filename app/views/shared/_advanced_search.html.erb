@@ -3,7 +3,12 @@ $(function() {
   OCSearch.init(<%=@results.total_entries%>,<%=@current_search.search_run.id%>,"<%=url_for @current_search%>","search_setup");
   <% unless @bulk_actions.blank? %>
     <% @bulk_actions.each do |k,v| %>
-      OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=send(v)%>');
+      <% if v.is_a? String -%>
+        OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=v.match(/^\//) ? v : send(v)%>');
+      <% else -%>
+        <% p = v[:path] -%>
+        OCSearch.addBulkHandler('<%="btn_bulk_#{k.gsub(/ /,"").underscore}"%>','<%=p.match(/^\//) ? p : send(p)%>',eval(<%=v[:callback]%>));
+      <% end -%>
     <% end %>
   <% end %>
   <%if current_user.search_open? %>

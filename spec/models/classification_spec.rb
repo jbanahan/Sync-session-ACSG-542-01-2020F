@@ -1,6 +1,22 @@
 require 'spec_helper'
 
 describe Classification do
+  describe 'classified?' do
+    before :each do
+      @c = Factory(:classification)
+    end
+    it "should return true for classified classification" do
+      @c.tariff_records.create!(:hts_1=>'12345678')
+      @c.should be_classified
+    end
+    it "should return false if no tariff records" do
+      @c.should_not be_classified
+    end
+    it "should return false if tariff records don't have HTS" do
+      @c.tariff_records.create!
+      @c.should_not be_classified
+    end
+  end
   describe 'find_same' do
     it 'should return nil when no matches' do
       c = Factory(:classification)

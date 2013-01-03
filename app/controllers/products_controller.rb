@@ -20,6 +20,7 @@ class ProductsController < ApplicationController
     action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
       @product = p
       p.load_custom_values #caches all custom values
+      @json_product = json_product_for_classification @product
       respond_to do |format|
           format.html # show.html.erb
           format.xml  { render :xml => @product }
@@ -159,9 +160,10 @@ class ProductsController < ApplicationController
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new
     OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
-    pre_loaded_countries = @base_product.classifications.collect {|c| c.country_id}
-    Country.import_locations.sort_classification_rank.each do |c|
-      @base_product.classifications.build(:country=>c) unless pre_loaded_countries.include? c.id
+    json = json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
+    respond_to do |format|
+        format.html { render }
+        format.json  { render :json=>json }
     end
   end
 
@@ -204,4 +206,11 @@ class ProductsController < ApplicationController
       CoreModule::PRODUCT.label
     end
 
+  def json_product_for_classification p
+    pre_loaded_countries = p.classifications.collect {|c| c.country_id} #don't use pluck here because bulk action does everything in memory
+    Country.import_locations.sort_classification_rank.each do |c|
+      p.classifications.build(:country=>c).tariff_records.build unless pre_loaded_countries.include? c.id
+    end
+    p.to_json(:include=>{:classifications=>{:include=>[:country,:tariff_records]}})
+  end
 end

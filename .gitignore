@@ -1,6 +1,7 @@
 log/*
 tmp/*
 db/*.sqlite3
+db/structure.sql
 db/development_structure.sql
 config/database.yml
 spec/support/tmp/*
@@ -12,3 +13,4 @@ coverage/*
 coverage.data
 coverage/*
 .rvmrc*
+.sass-cache/

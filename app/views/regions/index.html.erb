@@ -1,0 +1,43 @@
+<%content_for :action_bar do-%>
+  <button class='btn_link' link_to='<%=request.referrer%>' key_map='b'>Back</button>
+<%end-%>
+<h1>Regions</h1>
+<%@regions.each do |r|-%>
+<div class='region_box'>
+  <h2><%=r.name%> </h2>
+  <a href='#' data-action='edit-region' region-id='<%=r.id%>'>Edit</a> | <%=link_to "Delete", region_path(r),:method=>:delete,:confirm=>"Deleting this region will remove it from all reports.\n\nThis cannot be undone.\n\nDo you want to continue?"%> 
+  <%r.countries.each do |c|-%>
+    <div class='country_box'>
+      <%=c.name%> <%=link_to image_tag("x.png"), remove_country_region_path(r,:country_id=>c.id)%>
+    </div>
+  <%end-%>
+  <%=form_tag(add_country_region_path(r),:method=>'get') do -%>
+    <%=select_tag :country_id, options_from_collection_for_select(Country.order("name ASC"),"id","name")%>
+    <%=submit_tag "Add"%>
+  <%end-%>
+  <div data-target='mod-edit' region-id='<%=r.id%>' style='display:none;'>
+    <%=form_for r, :html=>{:id=>"frm_#{r.id}"} do |f|-%>
+      <%=f.label :name%> <%=f.text_field :name%>
+    <%end-%>
+  </div>
+</div>
+<script>
+</script>
+<%end-%>
+<%=form_for Region.new, :html=>{:id=>"frm_reg"} do |f|-%>
+  <h2>Add New Region</h2>
+  <%=f.label :name%> <%=f.text_field :name%> <%=f.submit "Add"%>
+<%end-%>
+<script>
+$(function() {
+  $("div[data-target='mod-edit']").dialog({autoOpen:false,modal:true,
+    buttons:{"OK":function() {$(this).find("form").submit();},
+      "Cancel":function() {$(this).dialog('close');}
+  }});
+  $("a[data-action='edit-region']").click(function(evt) {
+    var region_id = $(this).attr('region-id')
+    mod = $("div[data-target='mod-edit'][region-id='"+region_id+"']");
+    mod.dialog('open');
+  });
+})
+</script>

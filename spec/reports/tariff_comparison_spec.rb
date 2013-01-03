@@ -51,7 +51,7 @@ describe OpenChain::Report::TariffComparison do
       }.to raise_error "Two tariff sets are required."
     end
     it "should fail if both tariff sets are not from the same country" do
-      @old_ts.update_attributes(:country_id=>Country.create(:iso_code=>'OT',:name=>"other"))
+      @old_ts.update_attributes(:country_id=>Country.create(:iso_code=>'OT',:name=>"other").id)
       expect {
         OpenChain::Report::TariffComparison.run_report(@user, {'old_tariff_set_id'=>@old_ts.id,'new_tariff_set_id'=>@new_ts.id})
       }.to raise_error "Both tariff sets must be from the same country."

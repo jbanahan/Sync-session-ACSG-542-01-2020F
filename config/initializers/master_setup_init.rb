@@ -1,5 +1,3 @@
-require 'active_support/secure_random'
-
 if ActiveRecord::Base.connection.tables.include?("master_setups")
   MasterSetup.init_base_setup
 end
@@ -9,8 +7,8 @@ if (["companies","users"] - ActiveRecord::Base.connection.tables).length == 0
   c = Company.create(:name=>"My Company",:master=>true) if c.nil?
   u = User.where(:company_id=>c).where(:username=>"chainio_admin").first
   if u.nil?
-    pass = ActiveSupport::SecureRandom.base64(6)
-    u = c.users.build(:username=>"chainio_admin",:password=>pass,:password_confirmation=>pass,:email=>"chainio@aspect9.com")
+    pass = 'init_pass'
+    u = c.users.build(:username=>"chainio_admin",:password=>pass,:password_confirmation=>pass,:email=>"support@vandegriftinc.com")
     u.sys_admin = true
     u.admin = true
     u.save

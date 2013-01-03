@@ -1,0 +1,12 @@
+[
+  {"company":
+    {"name":"My Company",
+      "users":[
+        {"first_name":"fn",
+          "id":1,"last_name":"ln",
+          "full_name":"Joe User"},
+        {"first_name":"Brian",
+          "id":2,"last_name":"Glick",
+          "full_name":"Brian Glick"}]}},
+  {"company":{"name":"C2","users":[{"first_name":"fn","id":3,"last_name":"ln",
+  "full_name":"XYZ"}]}}]
