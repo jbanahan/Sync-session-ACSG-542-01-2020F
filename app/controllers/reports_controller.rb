@@ -96,7 +96,8 @@ class ReportsController < ApplicationController
 
   def run_eddie_bauer_statement_summary
     if OpenChain::Report::EddieBauerStatementSummary.permission?(current_user)
-      run_report "Eddie Bauer Statement Summary", OpenChain::Report::EddieBauerStatementSummary, {}, [] 
+      settings = {:mode=>params[:mode]}
+      run_report "Eddie Bauer Statement Summary", OpenChain::Report::EddieBauerStatementSummary, settings, ["Mode: #{settings[:mode=>'previous_month'] ? "All Entries From Previous Month" : "All Entries Not Paid"}"]
     else
       error_redirect "You do not have permission to view this report"
     end

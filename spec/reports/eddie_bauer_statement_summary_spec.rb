@@ -11,7 +11,8 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       :monthly_statement_number=>'MSTMT',
       :monthly_statement_received_date=>@monthly_date,
       :daily_statement_approved_date=>@daily_date,
-      :entry_number => "31612345678")
+      :entry_number => "31612345678",
+      :release_date=>1.month.ago)
     @po_number = 'E0427291-0011'
     @invoice_number = 'INV1234'
     @line = Factory(:commercial_invoice_line,
@@ -57,23 +58,36 @@ describe OpenChain::Report::EddieBauerStatementSummary do
     r[8].should == 32.6
     r[9].strftime("%Y%m%d").should == @ent.daily_statement_approved_date.strftime("%Y%m%d")
     r[10].strftime("%Y%m%d").should == @ent.monthly_statement_received_date.strftime("%Y%m%d")
-    r[11].should == "31612345678/8.1/INV1234"
+    r[11].strftime("%Y%m%d").should == @ent.release_date.strftime("%Y%m%d")
+    r[12].should == "31612345678/8.1/INV1234"
   end
   it "should write details headings" do
     r = get_details_tab.row(0)
     headings = ["Statement #", 
       "ACH #", "Entry #", "PO", "Business", "Invoice", 
-      "Duty Rate", "Duty", "Taxes / Fees", "ACH Date","Statement Date","Unique ID"]
+      "Duty Rate", "Duty", "Taxes / Fees", "ACH Date","Statement Date","Release Date","Unique ID"]
     headings.each_with_index do |h,i|
       r[i].should == h
     end
   end
-  it "should return entries not paid on PMS but on daily statement" do
-    dont_find_because_paid = Factory(:entry,:importer=>@imp,
-      :daily_statement_number=>'123456',:monthly_statement_paid_date=>Time.now)
-    dont_find_because_not_on_daily = Factory(:entry,:importer=>@imp) 
-    dont_find_because_not_eddie = Factory(:entry,:daily_statement_number=>'12345')
-    described_class.new(@user).find_entries.to_a.should == [@ent]
+  context "default mode (not_paid)" do
+    it "should return entries not paid on PMS but on daily statement" do
+      dont_find_because_paid = Factory(:entry,:importer=>@imp,
+        :daily_statement_number=>'123456',:monthly_statement_paid_date=>Time.now)
+      dont_find_because_not_on_daily = Factory(:entry,:importer=>@imp) 
+      dont_find_because_not_eddie = Factory(:entry,:daily_statement_number=>'12345')
+      described_class.new(@user).find_entries.to_a.should == [@ent]
+    end
+  end
+  context "previous_month mode" do
+    it "should return entries from previous month regardless of paid status" do
+      find_even_though_paid = Factory(:entry,:importer=>@imp,
+        :monthly_statement_paid_date=>Time.now,:release_date=>1.month.ago+1.day)
+      dont_find_even_though_unpaid_because_different_month = Factory(:entry,
+        :importer=>@imp,:release_date=>1.hour.from_now)
+      ent = described_class.new(@user,'previous_month')
+      ent.find_entries.to_a.should == [@ent,find_even_though_paid]
+    end
   end
   it "should total lines if multiple tariff records (and use higher duty rate)" do
     @line.commercial_invoice_tariffs.create!(:duty_rate=>BigDecimal("0.06"),

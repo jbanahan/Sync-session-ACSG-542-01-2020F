@@ -3,8 +3,9 @@ module OpenChain
     class EddieBauerStatementSummary
 
       #do not create objects for this class, use the #run_report method
-      def initialize(run_by)
+      def initialize(run_by,mode='not_paid')
         @run_by = run_by
+        @mode = mode
       end
       
       def self.permission? user
@@ -12,7 +13,8 @@ module OpenChain
       end
 
       def self.run_report run_by, settings={}
-        self.new(run_by).run
+        mode = HashWithIndifferentAccess.new(settings)[:mode]
+        self.new(run_by,mode).run
       end
 
       def run
@@ -25,7 +27,7 @@ module OpenChain
         r = @detail_sheet.row(@detail_cursor)
         ["Statement #","ACH #","Entry #","PO","Business","Invoice",
           "Duty Rate","Duty","Taxes / Fees","ACH Date",
-          "Statement Date","Unique ID"].each_with_index do |h,i|
+          "Statement Date","Release Date","Unique ID"].each_with_index do |h,i|
           r[i] = h
         end
         @detail_cursor += 1
@@ -46,6 +48,7 @@ module OpenChain
               r[2] = ent.entry_number
               r[9] = ent.daily_statement_approved_date
               r[10] = ent.monthly_statement_received_date
+              r[11] = ent.release_date
               po = cil.po_number
               po = '0-0' if po.blank?
               business = po.split("-").last
@@ -61,7 +64,7 @@ module OpenChain
               r[7] = line_duty.to_f
               line_fees = fees(cil).to_f
               r[8] = line_fees 
-              r[11] = "#{ent.entry_number}/#{duty_rate*100}/#{ci.invoice_number}"
+              r[12] = "#{ent.entry_number}/#{duty_rate*100}/#{ci.invoice_number}"
 
               #prep summary page data
               statement_hash[business] ||= {:duty=>BigDecimal("0.00"),
@@ -99,10 +102,19 @@ module OpenChain
         t
       end
       def find_entries
-        Entry.
-          where(:importer_id=>Company.find_by_alliance_customer_number("EDDIE").id).
-          where("length(daily_statement_number) > 0").
-          where("monthly_statement_paid_date is null")
+        r = nil
+        if @mode && @mode.to_s=='previous_month'
+          r = Entry.
+            where(:importer_id=>Company.find_by_alliance_customer_number("EDDIE").id).
+            where("MONTH(entries.release_date) = ? AND YEAR(entries.release_date) = ?",1.month.ago.month,1.month.ago.year).
+            order("entries.release_date ASC")
+        else
+          r = Entry.
+            where(:importer_id=>Company.find_by_alliance_customer_number("EDDIE").id).
+            where("length(daily_statement_number) > 0").
+            where("monthly_statement_paid_date is null")
+        end
+        r
       end
       private
       def fees cil
