@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-gem 'rails', '3.2.9'
+gem 'rails', '3.2.10'
 gem 'mysql2', '0.3.11'
 gem 'mongrel', '1.2.0.pre2'
 gem 'sqlite3'
