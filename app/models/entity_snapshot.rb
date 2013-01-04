@@ -18,7 +18,9 @@ class EntitySnapshot < ActiveRecord::Base
   end
   
   def restore user
-    recursive_restore JSON.parse(self.snapshot)['entity'], user
+    o = recursive_restore JSON.parse(self.snapshot)['entity'], user
+    o.create_snapshot user
+    o
   end
 
   #finds the previous snapshot for the same recordable object
