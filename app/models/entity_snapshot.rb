@@ -77,12 +77,12 @@ class EntitySnapshot < ActiveRecord::Base
         obj_hash['children'].each do |c|
           c_hash = c['entity']
           child_core_module = CoreModule.find_by_class_name c_hash['core_module']
-          good_children[child_core_module] ||= []
+          good_children[child_core_module] ||= [0]
           good_children[child_core_module] << c_hash['record_id']
         end
       end
       default_child = core_module.default_module_chain.child(core_module) #make we get the default child if it wasn't found in the hash
-      good_children[default_child] ||= [] if default_child
+      good_children[default_child] ||= [0] if default_child
       good_children.each do |cm,good_ids|
         core_module.child_lambdas[cm].call(obj).where("NOT #{cm.table_name}.id IN (?)",good_ids).destroy_all
       end

@@ -88,10 +88,14 @@ describe EntitySnapshot do
         restored.classifications.first.tariff_records.first.hts_1.should == '1234567890'
       end
       it "should remove children that didn't exist" do
-        tr2 = Factory(:tariff_record,:classification=>Factory(:classification,:product=>@p))
-        restored = @first_snapshot.restore @u
-        restored.classifications.first.tariff_records.first.hts_1.should == '1234567890'
-        TariffRecord.exists?(tr2.id).should be_false
+        p = Factory(:product)
+        es = p.create_snapshot @u
+        Factory(:tariff_record,:classification=>(Factory(:classification,:product=>p)))
+        p.reload
+        p.classifications.first.tariff_records.first.should_not be_nil
+        es.restore @u
+        p.reload
+        p.classifications.first.should be_nil
       end
       it "should replace values in children that changed" do
         @tr.update_attributes(:hts_1=>'1234')
