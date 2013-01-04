@@ -16,6 +16,10 @@ class EntitySnapshot < ActiveRecord::Base
     return nil if self.snapshot.nil?
     ActiveSupport::JSON.decode self.snapshot
   end
+  
+  def restore user
+    recursive_restore JSON.parse(self.snapshot)['entity'], user
+  end
 
   #finds the previous snapshot for the same recordable object
   def previous
@@ -38,6 +42,66 @@ class EntitySnapshot < ActiveRecord::Base
 
   private
 
+  def recursive_restore obj_hash, user, parent = nil
+    core_module = CoreModule.find_by_class_name obj_hash['core_module']
+    obj = core_module.klass.find_by_id obj_hash['record_id']
+    obj = core_module.klass.new unless obj
+    custom_values = []
+
+    if !obj.respond_to?(:can_edit?) || obj.can_edit?(user)
+      model_fields = ModelField.find_by_core_module(core_module)
+      model_fields.each do |mf|
+        v = obj_hash['model_fields'][mf.uid]
+        v = obj_hash['model_fields'][mf.uid.to_s]
+        v = "" if v.nil?
+        if mf.custom?
+          cv = CustomValue.new(:custom_definition=>CustomDefinition.find(mf.custom_id))
+          cv.value = v
+          custom_values << cv
+        else
+          mf.process_import obj, v
+        end
+      end
+      obj_hash['model_fields'].each do |mfuid,val| 
+        #this loop writes the values in the has again.
+        #this prevents an empty value not in the hash from blanking something
+        #that is in the hash like a missing Country ISO blanking an included Country Name
+        mf = ModelField.find_by_uid mfuid
+        mf.process_import obj, val unless mf.custom?
+      end
+      obj.last_updated_by_id=user.id if obj.respond_to?(:last_updated_by_id=)
+
+      #first we clear out any children that shouldn't be there so we don't have validation conflicts
+      good_children = {}
+      if obj_hash['children']
+        obj_hash['children'].each do |c|
+          c_hash = c['entity']
+          child_core_module = CoreModule.find_by_class_name c_hash['core_module']
+          good_children[child_core_module] ||= []
+          good_children[child_core_module] << c_hash['record_id']
+        end
+      end
+      default_child = core_module.default_module_chain.child(core_module) #make we get the default child if it wasn't found in the hash
+      good_children[default_child] ||= [] if default_child
+      good_children.each do |cm,good_ids|
+        core_module.child_lambdas[cm].call(obj).where("NOT #{cm.table_name}.id IN (?)",good_ids).destroy_all
+      end
+
+      #then we create/update children based on hash
+      obj_hash['children'].each {|c| recursive_restore c['entity'], user, obj} if obj_hash['children']
+    end
+    obj.save!
+    unless custom_values.empty?
+      custom_values.each {|cv| cv.customizable = obj}
+      CustomValue.batch_write! custom_values
+    end
+    if parent
+      parent_core_module = CoreModule.find_by_object parent
+      c_lam = parent_core_module.child_lambdas[core_module]
+      c_lam.call(parent) << obj
+    end
+    obj
+  end
   def diff_json old_json, new_json
     d = ESDiff.new
     d.record_id = new_json.nil? ? old_json['entity']['record_id'] : new_json['entity']['record_id']
