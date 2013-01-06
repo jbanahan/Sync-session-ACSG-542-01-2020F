@@ -1171,10 +1171,16 @@ class ModelField
     ret
   end
   
+  #DEPRECATED use find_by_core_module
   def self.find_by_module_type(type_symbol)
     reload_if_stale
     h = MODEL_FIELDS[type_symbol]
     h.nil? ? [] : h.values.to_a
+  end
+
+  #get an array of model fields given core module
+  def self.find_by_core_module cm
+    find_by_module_type cm.class_name.to_sym
   end
   
   def self.find_by_module_type_and_uid(type_symbol,uid_symbol)
