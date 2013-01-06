@@ -428,7 +428,7 @@ var OCSearch = (function() {
         h = h + "<td><select id='"+parentObject+"_search_criterions_attributes_"+m+"_operator' name='"+parentObject+"[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
         h = h + "</select></td><td><"+(operator=='in' ? "textarea rows='4' cols='30'" : "input size='30' type='text'")+" id='"+parentObject+"_search_criterions_attributes_"+m+"_value' name='"+parentObject+"[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></td>";
         if(canDelete) {
-          h = h + "<td><input class='sp_destroy' id='"+parentObject+"_search_criterions_attributes_"+m+"__destroy' name='"+parentObject+"[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='/images/x.png' title='remove' /></a></td></tr>";
+        h = h + "<td><input class='sp_destroy' id='"+parentObject+"_search_criterions_attributes_"+m+"__destroy' name='"+parentObject+"[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='<%=asset_path('x.png')%>' title='remove' /></a></td></tr>";
         }
       parentTable.append(h);
       var row = parentTable.find("tr:last");

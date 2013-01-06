@@ -25,7 +25,7 @@ var OpenChain = (function() {
       return;
     }
     field.nextAll(".val_status").remove();
-    field.after("<img src='/images/ajax-loader.gif' class='val_status' title='Validating...' style='display:none;'/>");
+    field.after("<img src='<%=asset_tag 'ajax-loader.giv'%>' class='val_status' title='Validating...' style='display:none;'/>");
     field.next().fadeIn();
     $.getJSON('/field_validator_rules/validate',{mf_id: mf_id, value: field.val()},function(data) {
       field.nextAll(".val_status").remove();
@@ -33,7 +33,7 @@ var OpenChain = (function() {
         var m = "";
         $.each(data,function(i,v) {m += v+"<br />"});
         field.addClass("error");
-        field.after("<img src='/images/error.png' alt='Field Error' class='val_status'/>");
+        field.after("<img src='<%=asset_tag 'error.png'%>' alt='Field Error' class='val_status'/>");
         field.next().after("<div class='val_status tooltip'>"+m+"</div>");
         field.next().tooltip({onShow: function() {
           return OpenChain.raiseTooltip(this.getTip());
@@ -698,7 +698,7 @@ var OCInvoice = (function() {
       h+="<td><input type='text' size='30' class='inv_det_fld desc_fld' name='"+namePre+"[charge_description]'/></td>";
       h+= "<td><input type='text' size='30' class='inv_det_fld decimal' name='"+namePre+"[charge_amount]'/></td>";
       h+= "<td><input type='text' size='30' class='inv_det_fld decimal hst_fld' name='"+namePre+"[hst_percent]'/></td>";
-      h+= "<td><a href='#' class='inv_det_del'><img src='/images/x.png' alt='delete'/></a></td></tr>";
+      h+= "<td><a href='#' class='inv_det_del'><img src='<%=asset_tag 'x.png'%>' alt='delete'/></a></td></tr>";
       $(parentTable+" tbody").append(h);
       $(".decimal").jStepper();
     }
@@ -929,7 +929,7 @@ function addHiddenFormField(parentForm,name,value,id,style_class) {
     .appendTo(parentForm);
 }
 function loading(wrapper) {
-  wrapper.html("<img src='/images/ajax-loader.gif' alt='loading'/>");
+  wrapper.html("<img src='<%=asset_path 'ajax-loader.gif'%>' alt='loading'/>");
 }
 
 //address setup
