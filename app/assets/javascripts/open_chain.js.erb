@@ -25,7 +25,7 @@ var OpenChain = (function() {
       return;
     }
     field.nextAll(".val_status").remove();
-    field.after("<img src='<%=asset_path 'ajax-loader.giv'%>' class='val_status' title='Validating...' style='display:none;'/>");
+    field.after("<img src='<%=asset_path 'ajax-loader.gif'%>' class='val_status' title='Validating...' style='display:none;'/>");
     field.next().fadeIn();
     $.getJSON('/field_validator_rules/validate',{mf_id: mf_id, value: field.val()},function(data) {
       field.nextAll(".val_status").remove();
