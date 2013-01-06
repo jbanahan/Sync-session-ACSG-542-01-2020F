@@ -23,7 +23,7 @@ $(function() {
       <% starting_def = @milestone_plan.starting_definition.nil? ? @milestone_plan.milestone_definitions.build(:display_rank=>0) : @milestone_plan.starting_definition%>
       <%=f.fields_for :milestone_definitions, starting_def do |sdf|%>
         <tr id='first_milestone_row' class='definition_row'>
-          <td><a href='#' class='add_row'><%=image_tag 'green_plus_24.png' :alt=>'Add Row', :title=>'Add Row'%></a><%=sdf.hidden_field :display_rank%></td>
+          <td><a href='#' class='add_row'><%=image_tag 'green_plus_24.png', :alt=>'Add Row', :title=>'Add Row'%></a><%=sdf.hidden_field :display_rank%></td>
           <td><%=sdf.hidden_field :model_field_uid, :class=>:hdn_mfuid, :id=>:starting_def_uid%><span class='mfuid_lbl' /></td></tr>
       <%end%>
       </tbody>
