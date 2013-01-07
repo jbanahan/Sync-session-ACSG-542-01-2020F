@@ -1,3 +1,4 @@
+require 'will_paginate/array'
 class FileImportResultsController < ApplicationController
 
   def show

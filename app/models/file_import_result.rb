@@ -12,14 +12,7 @@ class FileImportResult < ActiveRecord::Base
     search_criterions.each do |sc|
       r = sc.apply r 
     end
-    #really bad hack here to accomodate bug: https://github.com/rails/rails/issues/5554
-    def r.count
-      self.to_a.size
-    end
-    def r.size
-      self.to_a.size
-    end
-    r
+    r.to_a
   end
 
   # return the total minutes to process the file or nil if the file does not have a start_at and finish_at value

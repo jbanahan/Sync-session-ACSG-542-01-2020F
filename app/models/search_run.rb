@@ -1,3 +1,4 @@
+require 'will_paginate/array'
 class SearchRun < ActiveRecord::Base
 
   PAGE_SIZE = 20
