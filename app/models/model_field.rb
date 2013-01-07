@@ -523,6 +523,13 @@ class ModelField
     end
   end
   
+  #update the internal last_loaded flag and optionally retrigger all instances to invalidate their caches
+  def self.update_last_loaded update_global_cache
+    @@last_loaded = Time.now
+    Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_global_cache
+    CACHE.set "ModelField:last_loaded", @@last_loaded if update_global_cache
+  end
+  
   def self.reset_custom_fields(update_cache_time=false)
     CoreModule::CORE_MODULES.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]
@@ -544,9 +551,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE,BrokerInvoice)
     ModelField.add_custom_fields(CoreModule::BROKER_INVOICE_LINE,BrokerInvoiceLine)
     ModelField.add_custom_fields(CoreModule::SECURITY_FILING,SecurityFiling)
-    @@last_loaded = Time.now
-    Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_cache_time
-    CACHE.set "ModelField:last_loaded", @@last_loaded if update_cache_time
+    ModelField.update_last_loaded update_cache_time
   end
 
   def self.add_region_fields

@@ -16,6 +16,6 @@ class Region < ActiveRecord::Base
   end
 
   def reload_fields
-    ModelField.reload
+    ModelField.reload true
   end
 end
