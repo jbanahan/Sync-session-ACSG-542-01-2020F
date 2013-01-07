@@ -36,7 +36,7 @@ class EntriesController < ApplicationController
     else
       OpenChain::AllianceImagingClient.request_images ent.broker_reference
       add_flash :notices, "Updated images for file #{ent.broker_reference} have been requested.  Please allow 10 minutes for them to appear."
-      redirect_to request.referrer
+      redirect_to ent
     end
   end
 
@@ -47,7 +47,9 @@ class EntriesController < ApplicationController
       primary_keys = params[:pk]
       OpenChain::AllianceImagingClient.delay.bulk_request_images sr_id, primary_keys
       add_flash :notices, "Updated images have been requested.  Please allow 10 minutes for them to appear."
-      redirect_to request.referrer
+
+      # Redirect back to main page if referrer is blank (this can be removed once we set referrer to never be nil)
+      redirect_to request.referrer.nil? ? "/" : request.referrer
     }
   end
 
