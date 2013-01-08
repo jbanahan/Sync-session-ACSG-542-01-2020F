@@ -1,23 +1,25 @@
-<%diff.model_fields_changed.each do |mfuid,c|%>
-  <div>
+<div class='history_level'>
+  <table class='detail_table'>
+    <thead><tr><th>Field</th><th>From</th><th>To</th></tr></thead>
+    <tbody>
+<%diff.model_fields_changed.each do |mfuid,c|%> 
   <%mf = ModelField.find_by_uid(mfuid)%>
-  <% next unless mf.can_view? current_user %>
+  <% next if !mf.can_view?(current_user) || (c[0].blank? && c[1].blank?) %>
+  <tr class='hover'>
+    <td><%=ModelField.find_by_uid(mfuid).label%></td>
   <% 
     if mf.data_type==:datetime
       c[0] = Time.parse(c[0]) unless c[0].blank? || !c[0].is_a?(String)
       c[1] = Time.parse(c[1]) unless c[1].blank? || !c[1].is_a?(String)
     end %>
-  <% if c[0].blank? && c[1].blank? %>
-  <% elsif c[0].blank? %>
-    <%=ModelField.find_by_uid(mfuid).label%> set to &quot;<%=c[1]%>&quot;
-  <% elsif c[1].blank? %>
-    <%=ModelField.find_by_uid(mfuid).label%> &quot;<%=c[0]%>&quot; erased.
-  <% else %>
-    <%=ModelField.find_by_uid(mfuid).label%> changed from &quot;<%=c[0]%>&quot; to &quot;<%=c[1]%>&quot;
-  <% end %>
-  </div>
+    <td><%=c[0]%></td>
+    <td><%=c[1]%></td>
+  </tr>
 <%end%>
-<div style='margin-left: 1em;'>
+    </tbody>
+  </table>
+</div>
+<div >
   <%if !diff.nested_blank?(diff.children_added)%>
     <% diff.children_added.each do |ca|%>
       <%r = ca.recordable%>

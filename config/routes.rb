@@ -33,7 +33,9 @@ OpenChain::Application.routes.draw do
       post 'load'
     end
   end
-  resources :entity_snapshots, :only => [:show]
+  resources :entity_snapshots, :only => [:show] do
+    post 'restore', :on=>:member
+  end
   resources :instant_classifications do
     collection do
       post 'update_rank'
