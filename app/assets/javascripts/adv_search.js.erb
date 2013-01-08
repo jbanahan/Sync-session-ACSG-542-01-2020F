@@ -70,7 +70,7 @@ var OCSearch = (function() {
       ev.preventDefault();
       allObjectsMode = false;
       $.cookie("sr_"+searchRunId,'');
-      $("#result_table").find(':checkbox').attr('checked','');
+      $("#result_table").find(':checkbox').attr('checked',false);
       rewriteBulkForm();
     });
   }
