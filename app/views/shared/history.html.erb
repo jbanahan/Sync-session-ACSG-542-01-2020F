@@ -1,6 +1,13 @@
 <%content_for :action_bar do %>
   <button class='btn_link' link_to='<%=url_for(@base_object)%>' key_map='b'>Back</button>
 <%end%>
+<%content_for :javascript do %>
+  $(function() {
+    $("form.frm_restore").submit(function() {
+      return window.confirm("Restoring will overwrite the current values with the values from this history entry.\n\n Are you sure you want to continue?");
+    });
+  });
+<%end%>
 <%unless @base_object.sync_records.empty? -%>
 <h1>System Sync</h1>
 <table class='detail_table'>
@@ -25,14 +32,19 @@
 <h1>History: <%=CoreModule.find_by_object(@base_object).unique_id_field.process_export(@base_object,current_user)%></h1>
 <div>
   <%@snapshots.each do |s| %>
-    <div>
+    <div class='history_entry'>
       <% d = s.diff_vs_previous %>
-      <h2><%=s.user.full_name%> - <%=s.created_at %></h2>
+      <div class='history_title'><%=s.created_at %>: <%=s.user.full_name%></div>
       <%unless s.imported_file.nil?  %>
         <p>Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %></p> 
       <%end  %>
       <div style='margin-left:1em;'>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>d}%>
+      </div>
+      <div class='history_actions'>
+        <%=form_for s, :url=>restore_entity_snapshot_path(s), :method=>:post, :html=>{:class=>'frm_restore'} do |f|%>
+          <%=f.submit "Restore"%>
+        <%end%>
       </div>
     </div>
   <%end%>
