@@ -65,7 +65,7 @@ class SearchSchedule < ActiveRecord::Base
     t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
     send_email srch_setup.name, t, attachment_name, log
     send_ftp srch_setup.name, t, attachment_name, log
-    self.update_attributes(:last_finish_time)
+    self.update_attributes(:last_finish_time => Time.now)
     log.info "#{Time.now}: Search schedule #{self.id} complete." if log
   end
 
@@ -74,7 +74,7 @@ class SearchSchedule < ActiveRecord::Base
     attachment_name = "#{sanitize_filename(rpt.name)}.xls"
     send_email rpt.name, t, attachment_name, log
     send_ftp rpt.name, t, attachment_name, log
-    self.update_attributes(:last_finish_time)
+    self.update_attributes(:last_finish_time => Time.now)
     log.info "#{Time.now}: Search schedule #{self.id} complete." if log
   end
 
