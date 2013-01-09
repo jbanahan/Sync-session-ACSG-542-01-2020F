@@ -36,7 +36,8 @@ describe CustomReportsController do
     it "should set the @report_obj value" do
       get :new, :type=>'CustomReportEntryInvoiceBreakdown'
       response.should be_success
-      assigns[:report_obj].is_a?(CustomReportEntryInvoiceBreakdown).should == true
+      assigns(:report_obj).is_a?(CustomReport).should == true
+      assigns(:custom_report_type).should == 'CustomReportEntryInvoiceBreakdown'
     end
     it "should error if the type is not a subclass of CustomReport" do
       get :new, :type=>'String'
@@ -170,8 +171,8 @@ describe CustomReportsController do
   end
   describe :create do
     it "should create report of proper class" do
-      post :create, {:custom_report=>
-        {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
+      post :create, {:custom_report_type=>'CustomReportEntryInvoiceBreakdown',:custom_report=>
+        {:name=>'ABC',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
@@ -189,24 +190,24 @@ describe CustomReportsController do
     end
     it "should error if user cannot view report class" do
       CustomReportEntryInvoiceBreakdown.stub(:can_view?).and_return(false)
-      post :create, {:custom_report=>{:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown'}}
+      post :create, {:custom_report_type=>'CustomReportEntryInvoiceBreakdown',:custom_report=>{:name=>'ABC'}}
       response.should be_redirect
       flash[:errors].first.should == "You do not have permission to use the #{CustomReportEntryInvoiceBreakdown.template_name} report."
     end
     it "should error if type is not a subclass of CustomReport" do
-      post :create, {:custom_report=>{:name=>'ABC',:type=>'String'}}
+      post :create, {:custom_report_type=>'String',:custom_report=>{:name=>'ABC'}}
       response.should be_redirect
       flash[:errors].should have(1).message
     end
     it "should error if type is not set" do
-      post :create, {:custom_report=>{:name=>'ABC',:type=>''}}
+      post :create, {:custom_report=>{:name=>'ABC'}}
       response.should be_redirect
       flash[:errors].should have(1).message
     end
     it "should strip fields user cannot view" do
       ModelField.find_by_uid(:bi_brok_ref).stub(:can_view?).and_return(false)
-      post :create, {:custom_report=>
-        {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
+      post :create, {:custom_report_type=>'CustomReportEntryInvoiceBreakdown',:custom_report=>
+        {:name=>'ABC',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
@@ -217,8 +218,8 @@ describe CustomReportsController do
     end
     it "should strip parameters user cannot view" do
       ModelField.find_by_uid(:bi_brok_ref).stub(:can_view?).and_return(false)
-      post :create, {:custom_report=>
-        {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
+      post :create, {:custom_report_type=>'CustomReportEntryInvoiceBreakdown',:custom_report=>
+        {:name=>'ABC',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
@@ -226,8 +227,8 @@ describe CustomReportsController do
       CustomReport.first.search_criterions.should be_empty
     end
     it "should inject current user's user_id" do
-      post :create, {:custom_report=>
-        {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
+      post :create, {:custom_report_type=>'CustomReportEntryInvoiceBreakdown',:custom_report=>
+        {:name=>'ABC',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
