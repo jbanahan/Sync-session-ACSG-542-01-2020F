@@ -10,7 +10,8 @@ class CustomReportsController < ApplicationController
       elsif !report_class.can_view? current_user
         error_redirect "You do not have permission to view this report."
       else
-        @report_obj = report_class.new(:type=>report_class.name)
+        @report_obj = report_class.new
+        @custom_report_type = type
       end
     end
   end
@@ -70,7 +71,7 @@ class CustomReportsController < ApplicationController
     end
   end
   def create
-    type = params[:custom_report][:type]
+    type = params[:custom_report_type]
     klass = nil
     begin 
       klass = Kernel.const_get(type)

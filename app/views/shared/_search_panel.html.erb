@@ -27,8 +27,8 @@ parent_hash_name = 'search_setup' unless local_assigns.has_key? :parent_hash_nam
       <%if current_search.respond_to? :module_type-%>
         <%=f.hidden_field :module_type %>
       <%end%>
-      <%if current_search.respond_to? :type-%>
-        <%=f.hidden_field :type%>
+      <%if @custom_report_type-%>
+      <%=hidden_field_tag :custom_report_type, @custom_report_type %>
       <%end%>
     </div>
     <div id='params_cont'>

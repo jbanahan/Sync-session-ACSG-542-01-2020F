@@ -7,7 +7,7 @@ module OpenChain
     end
 
     def sorted_columns
-      self.search_columns.order("rank ASC")
+      self.persisted? ? self.search_columns.order("rank ASC") : []
     end
     # Returns a copy of self with matching columns, search & sort criterions 
     # all built.
