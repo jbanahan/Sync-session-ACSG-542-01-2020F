@@ -786,8 +786,8 @@ class ModelField
       [99,:ent_paperless_certification,:paperless_certification,"Paperless Release Cert",{:data_type=>:boolean}],
       [100,:ent_pdf_count,:pdf_count,"PDF Attachment Count", {
         :import_lambda=>lambda {|obj,data| "PDF Attachment Count ignored. (read only)"},
-        :export_lambda=>lambda {|obj| obj.attachments.where(:attached_content_type=>'application/pdf').count},
-        :qualified_field_name=>"(select count(*) from attachments where attachable_type = \"Entry\" and attachable_id = entries.id and attached_content_type=\"application/pdf\")",
+          :export_lambda=>lambda {|obj| obj.attachments.where("attached_content_type = 'application/pdf' OR lower(attached_file_name) LIKE '%pdf'").count},
+        :qualified_field_name=>"(select count(*) from attachments where attachable_type = \"Entry\" and attachable_id = entries.id and (attached_content_type=\"application/pdf\"OR lower(attached_file_name) LIKE '%pdf'))",
         :data_type=>:integer,
         :can_view_lambda=> lambda {|u| u.company.broker?}
       }],
