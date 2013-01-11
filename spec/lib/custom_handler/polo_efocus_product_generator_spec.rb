@@ -48,6 +48,11 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
     before :each do
       @us = Factory(:country,:iso_code=>'US')
     end
+    it "should use custom where clause" do
+      c = described_class.new(:where=>'WHERE 1=2')
+      c.should_receive(:build_query).with('WHERE 1=2').and_return("SELECT 'a'")
+      c.result_table
+    end
     context "simple tests" do
       before :each do
         @match_product = Factory(:classification,:country_id=>@us.id).product

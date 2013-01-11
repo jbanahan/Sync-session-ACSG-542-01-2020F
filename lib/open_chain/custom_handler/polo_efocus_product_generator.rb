@@ -3,6 +3,11 @@ module OpenChain
     class PoloEfocusProductGenerator
 
       SYNC_CODE = 'efocus-product'
+
+      def initialize(opts={})
+        @custom_where = opts[:where]
+      end
+
       def generate
         ftp_file sync_xls
       end
@@ -38,7 +43,7 @@ module OpenChain
       end
 
       def result_table
-        Product.connection.execute(build_query)
+        Product.connection.execute(build_query(@custom_where))
       end
       def ftp_file file
         begin
@@ -49,7 +54,7 @@ module OpenChain
       end
 
       private
-      def build_query
+      def build_query custom_where = nil
         fields = [
           cd_s(1),
           cd_s(2),
@@ -158,15 +163,17 @@ module OpenChain
           cd_s(95),
           cd_s(131)
         ]
-        "SELECT #{fields.join(", ")} 
+        r = "SELECT #{fields.join(", ")} 
 FROM products 
 INNER JOIN classifications on classifications.product_id = products.id and classifications.country_id = (select id from countries where iso_code = \"US\" LIMIT 1)
 LEFT OUTER JOIN tariff_records on tariff_records.classification_id = classifications.id
 LEFT OUTER JOIN sync_records on sync_records.syncable_type = 'Product' and sync_records.syncable_id = products.id and sync_records.trading_partner = '#{SYNC_CODE}'
-WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)
+"
+        w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)
 AND (select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Barthco Customer ID\")) > 0
 AND ifnull((select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Test Style\")),0) = 0
 "
+        r << (custom_where ? custom_where : w)
       end
 
       def cd_s cd_id
