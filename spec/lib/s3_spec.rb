@@ -31,15 +31,34 @@ describe OpenChain::S3 do
     end
     after(:each) do
       OpenChain::S3.delete @bucket, @key
+      @original_tempfile.close!
     end
     it 'should get data' do
       OpenChain::S3.get_data(@bucket,@key).should == @content
     end
     it 'should round trip a file to tempfile' do
       new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key
-      File.exist?(new_tempfile.path).should be_true
-      IO.read(new_tempfile.path).should == @content
-      new_tempfile.path.should =~ /\/tmp\/.*/
+      begin
+        File.exist?(new_tempfile.path).should be_true
+        IO.read(new_tempfile.path).should == @content
+        new_tempfile.path.should =~ /\/tmp\/.*/
+        File.basename(new_tempfile.path).should =~ /^iodownload/
+      ensure
+        new_tempfile.close!
+      end
+    end
+    it 'should download to a tempfile with the provided filename as a base' do
+      opts = {:filename => ["test", '.txt']}
+      new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key, opts
+      begin
+        File.exist?(new_tempfile.path).should be_true
+        IO.read(new_tempfile.path).should == @content
+        new_tempfile.path.should =~ /\/tmp\/.*/
+        # the tempfile name should end up looking like test189231-1ja.txt
+        File.basename(new_tempfile.path).should =~ /^test.+\.txt$/
+      ensure
+        new_tempfile.close!
+      end
     end
 
     describe 'exists?' do

@@ -195,7 +195,10 @@ class ImportedFile < ActiveRecord::Base
 
   def make_imported_file_download_from_s3_path s3_path, user, additional_countries=[]
     ifd = self.imported_file_downloads.build(:user=>user,:additional_countries=>additional_countries.join(", "))
-    tmp = OpenChain::S3.download_to_tempfile 'chain-io', s3_path
+    opts = {:filename => [File.basename(self.attached_file_name, ".*"), File.extname(self.attached_file_name)]}
+    # In order to ensure we get the correct content-type, we need to make sure the temp file we download
+    # to uses the same file extension as the imported file's name
+    tmp = OpenChain::S3.download_to_tempfile 'chain-io', s3_path, opts
     def tmp.original_filename= x
       @afn = x
     end
