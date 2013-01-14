@@ -26,8 +26,8 @@ module OpenChain
         r = @dom.root
         host_system_file_number = et r, 'ISF_SEQ_NBR'
         raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
-        @sf = SecurityFiling.find_by_host_system_and_host_system_file_number SYSTEM_NAME, host_system_file_number
-        @sf = SecurityFiling.create!(:host_system=>SYSTEM_NAME,:host_system_file_number=>host_system_file_number) unless @sf
+        @sf = SecurityFiling.where(:host_system=>SYSTEM_NAME, :host_system_file_number=>host_system_file_number).first_or_create!
+        
         SecurityFiling.transaction do
           start_time = Time.now
           new_last_event = last_event_time(r)
