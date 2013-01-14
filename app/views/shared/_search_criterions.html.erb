@@ -12,7 +12,15 @@
     $('#<%=wrapper%>').html("<table id='sp_table'></table><a href='#' id='sp_add'>Add</a>");
     <% sc_counter = 0 %>
     <% current_search.search_criterions.each do |sc| %>
-      addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc.value%>','<%=sc.id%>');
+      <% 
+        # Strips timezone from datetime criterions
+        sc_value = sc.value
+        # See search_criterion for regex explanation
+        if ModelField.find_by_uid(sc.model_field_uid).data_type == :datetime && sc_value =~ /\A([\d\-\/]+)( +([\d:]+)? *(.*)?)?\z/
+          sc_value = $1 + ($3.nil? ? "" : " " + $3)
+        end
+      %>
+      addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc_value%>','<%=sc.id%>');
       <% sc_counter += 1 %>
     <% end %>
   });
