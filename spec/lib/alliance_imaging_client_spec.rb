@@ -52,11 +52,11 @@ describe OpenChain::AllianceImagingClient do
 
   describe :consume_images do
     it "should use SQS queue to download messages and use the S3 client with tempfile to download the file" do
-      # This is mostly just mocks, but I wanted to ensure the tempfile stuff is handled correctly
+      # This is mostly just mocks, but I wanted to ensure the expected calls are actualy happening
       hash = {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"}
       t = double
       OpenChain::SQS.should_receive(:retrieve_messages_as_hash).with("https://queue.amazonaws.com/468302385899/alliance-img-doc-test").and_yield hash
-      OpenChain::S3.should_receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {:filename=>["file", ".txt"]}).and_return(t)
+      OpenChain::S3.should_receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"]).and_return(t)
       OpenChain::AllianceImagingClient.should_receive(:process_image_file).with(t, hash)
 
       OpenChain::AllianceImagingClient.consume_images

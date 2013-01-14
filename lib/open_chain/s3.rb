@@ -9,12 +9,14 @@ module OpenChain
     def self.get_data bucket, key
       AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].read
     end
-    # Downloads the AWS S3 data specified by the bucket and key.
-    # +opts+:: if the :filename symbol is present, its value will be passed directly to the Tempfile constructor
-    # 
-    def self.download_to_tempfile bucket, key, opts={}
-      filename = opts.fetch(:filename, "iodownload")
-      t = Tempfile.new(filename)
+    
+    # Downloads the AWS S3 data specified by the bucket and key.  The tempfile
+    # created will attempt to use the key as a template for naming the tempfile created.
+    # Meaning, at a minimum, the file name name should retain the same file extension that
+    # it currently has on the S3 file system.
+    def self.download_to_tempfile bucket, key
+      # Use the key's filename as the basis for the tempfile name
+      t = Tempfile.new([File.basename(key, ".*"), File.extname(key)])
       t.binmode
       t.write OpenChain::S3.get_data bucket, key
       t.flush

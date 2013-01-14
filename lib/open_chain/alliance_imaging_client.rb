@@ -18,8 +18,7 @@ class OpenChain::AllianceImagingClient
   #not unit tested since it'll all be mocks
   def self.consume_images
     OpenChain::SQS.retrieve_messages_as_hash "https://queue.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
-      opts = {:filename => [File.basename(hsh["file_name"], ".*"), File.extname(hsh["file_name"])]}
-      t = OpenChain::S3.download_to_tempfile hsh["s3_bucket"], hsh["s3_key"], opts
+      t = OpenChain::S3.download_to_tempfile hsh["s3_bucket"], hsh["s3_key"]
       OpenChain::AllianceImagingClient.process_image_file t, hsh
     end
   end

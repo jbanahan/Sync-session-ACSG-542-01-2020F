@@ -19,7 +19,7 @@ describe ImportedFile do
         OpenMailer.should_receive(:send_s3_file).with(current_user,to,cc,subj,body,'chain-io',s3_path,original_attachment_name).and_return(mail)
         f.should_receive(:make_updated_file).and_return(s3_path)
         f.should_receive(:make_imported_file_download_from_s3_path).with(s3_path,current_user,[]).and_call_original
-        OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', s3_path, {:filename=>["abc", ".xls"]}).and_return(temp)
+        OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', s3_path).and_return(temp)
         f.email_updated_file current_user, to, cc, subj, body
       ensure 
         temp.close!

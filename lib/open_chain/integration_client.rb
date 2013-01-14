@@ -124,8 +124,7 @@ module OpenChain
 
     def self.get_tempfile bucket, remote_path, original_path
       dir, fname = Pathname.new(original_path).split
-      opts = {:filename => [File.basename(fname.to_s, ".*"), File.extname(fname.to_s)]}
-      t = OpenChain::S3.download_to_tempfile(bucket,remote_path, opts)
+      t = OpenChain::S3.download_to_tempfile(bucket,remote_path)
       def t.original_filename=(fn); @fn = fn; end
       def t.original_filename; @fn; end
       t.original_filename= fname.to_s
