@@ -11,13 +11,19 @@ describe ImportedFile do
       body = 'b'
       s3_path = 'x/y/z'
       original_attachment_name = 'abc.xls'
-      f = Factory(:imported_file, :user=>current_user, :attached_file_name=>original_attachment_name)
-      mail = mock "mail delivery"
-      mail.stub(:deliver!).and_return(nil)
-      OpenMailer.should_receive(:send_s3_file).with(current_user,to,cc,subj,body,'chain-io',s3_path,original_attachment_name).and_return(mail)
-      f.should_receive(:make_updated_file).and_return(s3_path)
-      f.should_receive(:make_imported_file_download_from_s3_path).with(s3_path,current_user,[]) 
-      f.email_updated_file current_user, to, cc, subj, body
+      temp = Tempfile.new ["abc", ".xls"]
+      begin
+        f = Factory(:imported_file, :user=>current_user, :attached_file_name=>original_attachment_name)
+        mail = mock "mail delivery"
+        mail.stub(:deliver!).and_return(nil)
+        OpenMailer.should_receive(:send_s3_file).with(current_user,to,cc,subj,body,'chain-io',s3_path,original_attachment_name).and_return(mail)
+        f.should_receive(:make_updated_file).and_return(s3_path)
+        f.should_receive(:make_imported_file_download_from_s3_path).with(s3_path,current_user,[]).and_call_original
+        OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', s3_path).and_return(temp)
+        f.email_updated_file current_user, to, cc, subj, body
+      ensure 
+        temp.close!
+      end
     end
   end
   describe 'make_updated_file' do

@@ -19,6 +19,14 @@ class OpenChain::AllianceImagingClient
   def self.consume_images
     OpenChain::SQS.retrieve_messages_as_hash "https://queue.amazonaws.com/468302385899/alliance-img-doc-#{get_env}" do |hsh|
       t = OpenChain::S3.download_to_tempfile hsh["s3_bucket"], hsh["s3_key"]
+      OpenChain::AllianceImagingClient.process_image_file t, hsh
+    end
+  end
+
+  # The file passed in here must have the correct file extension for content type discovery or
+  # it will likely be saved with the wrong content type.  ie. If you're saving a pdf, the file
+  # t points to should have a .pdf extension on it.
+  def self.process_image_file t, hsh
       def t.original_filename=(fn); @fn = fn; end
       def t.original_filename; @fn; end
       begin
@@ -39,7 +47,7 @@ class OpenChain::AllianceImagingClient
       rescue
         $!.log_me ["Alliance imaging client hash: #{hsh}"], [t]
       end
-    end
+
   end
 
   private 
