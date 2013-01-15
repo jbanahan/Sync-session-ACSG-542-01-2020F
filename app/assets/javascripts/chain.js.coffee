@@ -85,7 +85,7 @@ root.Chain =
   showQuickClassify : (product,saveUrl,bulk_options) ->
     classificationIndex = 0
     writeClassification = (c) ->
-      hts_val = (if c.tariff_records[0].hts_1 then c.tariff_records[0].hts_1 else "")
+      hts_val = c.tariff_records[0]?.hts_1 ? ""
       Chain.addTariffCallback('invalid',c.country_id,(bad_hts) ->
         $("div.quick_class_country[country_id='"+c.country_id+"']").removeClass('good_class').addClass('bad_class')
         $("a[data-action='auto-classify'][country='"+c.country_id+"']").hide()
@@ -103,8 +103,9 @@ root.Chain =
       r += "<div>"
       r += "<input type='hidden' value='"+c.country_id+"' name='product[classifications_attributes]["+classificationIndex+"][country_id]' />"
       r += "HTS: <input type='text' class='hts_field' country='"+c.country_id+"' value='"+hts_val+"' id='product_classification_attributes_"+classificationIndex+"_tariff_records_attributes_0_hts_1' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_1]' />"
-      if c.tariff_records[0].id
+      if c.id?
         r += "<input type='hidden' value='"+c.id+"' name='product[classifications_attributes]["+classificationIndex+"][id]' />"
+      if c.tariff_records[0]?.id
         r += "<input type='hidden' value='"+c.tariff_records[0].id+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][id]' />"
       r += "&nbsp;<a href='#' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
       r += "</div>"
