@@ -20,6 +20,10 @@ class Company < ActiveRecord::Base
   has_many  :power_of_attorneys, :dependent => :destroy
   has_many  :drawback_claims
   has_many  :charge_categories, :dependent => :destroy
+  has_many  :attachment_archives
+  has_many  :attachment_archive_manifests, :dependent=>:destroy
+
+  has_one :attachment_archive_setup, :dependent => :destroy
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
 	
@@ -28,6 +32,8 @@ class Company < ActiveRecord::Base
   scope :customers, where(:customer=>true)
   scope :importers, where(:importer=>true)
   scope :by_name, order("companies.name ASC")
+  #find all companies that have attachment_archive_setups that include a start date
+  scope :attachment_archive_enabled, joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null")
 
 	
 	def self.find_can_view(user)

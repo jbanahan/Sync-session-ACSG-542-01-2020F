@@ -7,6 +7,28 @@ describe CompaniesController do
     UserSession.create! @u
     @c = Factory(:company)
   end
+  describe "attachment_archive_enabled" do
+    before :each do
+      @sd = Date.new(2010,4,18)
+      @c.create_attachment_archive_setup :start_date=>@sd
+    end
+    it "should return json for master user" do
+      get :attachment_archive_enabled, :format=>:json
+      response.should be_success
+      ary = JSON.parse response.body
+      ary.should have(1).company
+      ary.first['company']['name'].should == @c.name
+      ary.first['company']['id'].should == @c.id
+      Date.parse(ary.first['company']['attachment_archive_setup']['start_date']).should == @sd
+      ary.first['company']['attachment_archive_setup']['entry_attachments_available_count'].should == 0
+    end
+    it "should fail for non-master user" do
+      @u.update_attributes(:company_id=>@c.id)
+      get :attachment_archive_enabled, :format=>:json
+      response.should redirect_to request.referrer
+      flash[:errors].should have(1).entry
+    end
+  end
   describe 'show_children' do
     it "should reject if user isn't admin" do
       @u.admin = false

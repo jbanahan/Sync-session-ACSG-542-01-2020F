@@ -140,6 +140,12 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_attachment_archives?
+    self.company.master? && self.view_entries?
+  end
+  def edit_attachment_archives?
+    self.view_attachment_archives?
+  end
   def view_security_filings?
     self.security_filing_view? && self.company.view_security_filings? 
   end

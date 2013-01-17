@@ -1,6 +1,23 @@
 require 'spec_helper'
 
 describe Company do
+  describe :attachment_archive_enabled do
+    before :each do
+      @c = Factory(:company)
+      dont_find = Factory(:company)
+    end
+    it "should return companies with attachment archive setups that include start date" do
+      @c.create_attachment_archive_setup(:start_date=>Time.now)
+      Company.attachment_archive_enabled.to_a.should == [@c]
+    end
+    it "should not return company with setup that doesn't have start_date" do
+      @c.create_attachment_archive_setup()
+      Company.attachment_archive_enabled.count.should == 0
+    end
+    it "should not return company without setup" do
+      Company.attachment_archive_enabled.count.should == 0
+    end
+  end
   context "role scopes" do
     before :each do 
       @dont_find = Factory(:company)

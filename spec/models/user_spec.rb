@@ -2,6 +2,26 @@ require 'spec_helper'
 
 describe User do
   context "permissions" do
+    context "attachment_archives" do
+      it "should allow for master user who can view entries" do
+        u = Factory(:user,:company=>Factory(:company,:master=>true))
+        u.stub(:view_entries?).and_return true
+        u.should be_view_attachment_archives
+        u.should be_edit_attachment_archives
+      end
+      it "should not allow for non-master user" do
+        u = Factory(:user)
+        u.stub(:view_entries?).and_return true
+        u.should_not be_view_attachment_archives
+        u.should_not be_edit_attachment_archives
+      end
+      it "should not allow for user who cannot view entries" do
+        u = Factory(:user,:company=>Factory(:company,:master=>true))
+        u.stub(:view_entries?).and_return false
+        u.should_not be_view_attachment_archives
+        u.should_not be_edit_attachment_archives
+      end
+    end
     context "security filing" do
       context "company has permission" do
         before :each do
