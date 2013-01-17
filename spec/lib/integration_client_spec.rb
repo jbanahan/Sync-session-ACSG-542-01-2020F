@@ -60,7 +60,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
       mu = Factory(:master_user,:username=>"rbjork")
       MasterSetup.any_instance.should_receive(:custom_feature?).with('CSM Sync').and_return(true)
       CustomFile.any_instance.should_receive(:attached=).with(@t).and_return(@t)
-      OpenChain::CustomHandler::PoloCsmSyncHandler.any_instance.should_receive(:process)
+      #switched the line below to should_not_receive until we get the green light to turn this back on
+      OpenChain::CustomHandler::PoloCsmSyncHandler.any_instance.should_not_receive(:process)
       cmd = {'request_type'=>'remote_file','path'=>'/_csm_sync/a.xls','remote_path'=>'12345'}
       OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
