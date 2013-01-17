@@ -1,12 +1,17 @@
 class FixAttachmentsContentType < ActiveRecord::Migration
   def up
     # Update content_type for pdfs that have application/x-octet-stream to a valid content type
-    Attachment.where("attached_content_type LIKE ? AND attached_file_name LIKE ? AND created_at > ?", "%octet-stream%", "%pdf", Date.new(2013, 1, 1)).
-                update_all(:attached_content_type => 'application/pdf')
-
-    # Update content_type for tifs that have application/x-octet-stream to a valid content type
-    Attachment.where("attached_content_type LIKE ? AND attached_file_name LIKE ? and created_at > ?", "%octet-stream%", "%tif", Date.new(2013, 1, 1)).
-                update_all(:attached_content_type => 'image/tiff')
+    execute <<-SQL
+      UPDATE attachments
+      SET attached_content_type = 'application/pdf'
+      WHERE attached_content_type LIKE '%octet-stream%' AND attached_file_name LIKE '%pdf' AND created_at > '2013-01-1' 
+    SQL
+ 
+    execute <<-SQL
+      UPDATE attachments
+      SET attached_content_type = 'image/tiff'
+      WHERE attached_content_type LIKE '%octet-stream%' AND attached_file_name LIKE '%tif' AND created_at > '2013-01-1' 
+    SQL
   end
 
   def down
