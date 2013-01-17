@@ -110,3 +110,12 @@ describe 'Chain', ->
         $(@).click() if $(@).children("span").html()=="Save"
       expect(frm.submit).not.toHaveBeenCalled()
       expect(window.alert).toHaveBeenCalledWith("Please correct or erase all bad tariff numbers.")
+
+    it "should load classifications without tariff records", ->
+      data.classifications[0].id = 1
+      data.classifications[0].tariff_records = []
+      Chain.showQuickClassify(data, '/x')
+      
+      expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][hts_1]']").attr("value")).toEqual("")
+      expect($("input[name='product[classifications_attributes][0][id]']").attr("value")).toEqual(""+data.classifications[0].id)
+      expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][id]']")).not.toExist()

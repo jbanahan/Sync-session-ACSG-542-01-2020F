@@ -18,7 +18,7 @@ img {
     color: red;
 }
 .required_empty {
-  background-color: #D78888
+  background-color: rgb(255, 194, 194);
 }
 .indent {
   margin-left: 1em;

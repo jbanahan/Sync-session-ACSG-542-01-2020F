@@ -65,7 +65,7 @@ $(function() {
   <thead>
     <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
   </thead>
-  <% InstanceInformation.order("last_check_in DESC").each do |ii| %>
+  <% InstanceInformation.where("last_check_in > ?",10.days.ago).order("last_check_in DESC").each do |ii| %>
     <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'>
       <td><%=ii.host%></td>
       <td><%=ii.version%></td>

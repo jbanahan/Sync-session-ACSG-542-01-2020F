@@ -1,17 +1,5 @@
 class UserSessionsController < ApplicationController
-  skip_before_filter :require_user, :except => :index
-
-  # GET /user_sessions
-  # GET /user_sessions.xml
-  def index
-    @user_sessions = UserSession.all
-
-    respond_to do |format|
-      format.html # index.html.erb
-      format.xml  { render :xml => @user_sessions }
-    end
-  end
-
+  skip_before_filter :require_user
 
   # GET /user_sessions/new
   # GET /user_sessions/new.xml

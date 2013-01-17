@@ -270,6 +270,9 @@ describe ModelField do
         @mf.process_export(@without_attachments, @u).should == 0
         @mf.process_export(@with_tif, @u).should == 0
         @mf.process_export(@with_tif_and_2_pdf, @u).should == 2
+
+        @with_pdf.attachments.create!(:attached_content_type=>"application/notapdf", :attached_file_name=>"test.PDF")
+        @mf.process_export(@with_pdf, @u).should == 2
       end
       it "should search with greater than" do
         sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'gt',:value=>0)
@@ -284,6 +287,15 @@ describe ModelField do
         r.should have(2).entries
         r.should include(@with_tif)
         r.should include(@without_attachments)
+      end
+      it "should search with pdf counts based on file extension or mime type" do
+        @with_pdf.attachments.create!(:attached_content_type=>"application/notapdf", :attached_file_name=>"test.PDF")
+
+        sc = SearchCriterion.new(:model_field_uid=>:ent_pdf_count,:operator=>'eq',:value=>2)
+        r = sc.apply(Entry.where("1=1")).to_a
+        r.should have(2).entries
+        r.should include(@with_pdf)
+        r.should include(@with_tif_and_2_pdf)
       end
     end
   end

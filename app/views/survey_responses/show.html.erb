@@ -143,47 +143,27 @@ $(document).ready(function() {
 <% end %>
 
 <style>
-textarea {
-  width: 100%;
-  height: 10em;
-}
-.q_head {
-  font-size: 80%;
-  background-color: #ccc;
-  color: black;
-  text-align: center;
-  margin: 10px 0 0 0;
-}
-.q_subhead {
-  font-weight: bold;
-  font-size: 80%;
-}
-.c_warn {
-  width: 80%;
-  margin-top: 4px;
-  border: 2px solid #FF9900;
-  background-color: #FFFF66;
-}
-.comm {
-  border-left: 2px solid #1eb816;
-  margin: 2px;
-  padding-left: 5px;
-}
-.comm pre {
-  overflow-x: auto;
-  background: none;
-}
 </style>
+<div id='survey_response_inner'><!--here for style support-->
 <div id='filter_warn' class='c_warn' style='display:none;'></div>
 <%=form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
   <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> </h1>
   <h3><%=@sr.subtitle%></h3>
-  <%if @rate_mode %> 
-    <%=f.select(:rating, @sr.survey.rating_values, {:include_blank=>true})%>
-  <%elsif @sr.rating %>
-    <h2>Rating: <%=@sr.rating%></h2>
-  <%end%>
-  <div id='contact'>
+  <%if @rate_mode || !@sr.rating.blank?-%>
+    <div class='section_box'>
+      <div class='q_head'>Rating</div>
+      <div class='q_inner'>
+        <div class='comm'>
+          <%if @rate_mode -%> 
+            <%=f.select(:rating, @sr.survey.rating_values, {:include_blank=>"Select a master rating..."})%>
+          <%elsif @sr.rating -%>
+            <%=@sr.rating%>
+          <%end-%>
+        </div>
+      </div>
+    </div>
+  <%end-%>
+  <div id='contact' class='section_box'>
     <div class='q_head'>Contact Information</div>
     <table>
       <%=field_row "Name", @rate_mode ? @sr.name : f.text_field(:name,:class=>:creq)%>
@@ -198,55 +178,70 @@ textarea {
   <%@sr.answers.each_with_index do |ans,a_idx|%>
     <%=f.fields_for :answers, ans do |a|%>
       <%q = a.object.question%>
-      <div class='question' answered='<%=a.object.answered? ? "y" : "n"%>' rating='<%=a.object.rating%>'>
+      <div class='question section_box' answered='<%=a.object.answered? ? "y" : "n"%>' rating='<%=a.object.rating%>'>
         <div class='q_head'>Question #<%=q_idx%></div>
         <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
           <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
         <%end%>
         <%q_idx += 1%>
-        <div class='q_content'><%=RedCloth.new(q.content).to_html.html_safe%></div>
-        <p><span class='q_subhead'>Answer:</span>
-          <% if @respond_mode && !q.choices.blank? %>
-            <%=a.select :choice, q.choices.lines, {:include_blank=>true},:class=>'resp'%>
-          <% else %>
-            <%=a.object.choice%>
+        <div class='q_inner'>
+          <div class='q_subhead'>Question</div>
+          <div class='q_content'><%=RedCloth.new(q.content).to_html.html_safe%></div>
+          <p>
+            <% if @respond_mode && !q.choices.blank? %>
+              <div class='q_subhead'>Multiple Choice Answer</div> 
+              <div class='comm'>
+                <%=a.select :choice, q.choices.lines.to_a, {:include_blank=>"Select an answer..."},:class=>'resp'%>
+              </div>
+            <% elsif !a.object.choice.blank? %>
+              <div class='q_subhead'>Multiple Choice Answer</div>
+              <div class='comm'>
+                <%=a.object.choice%>
+              </div>
+            <% end %>
+          </p>
+          <p>
+          <% if @rate_mode %>
+            <div class='q_subhead'>Rating</div> 
+            <div class='comm'>
+              <%=a.select :rating, @sr.survey.rating_values, :include_blank=>"Select a rating..." %>
+            </div>
+          <% elsif !a.object.rating.blank? %>
+            <div class='q_subhead'>Rating</div> 
+            <div class='comm'>
+              <%=a.object.rating%>
+            </div>
           <% end %>
-        </p>
-        <p>
-        <% if @rate_mode %>
-          Rating: <%=a.select :rating, @sr.survey.rating_values, {:include_blank=>true} %>
-        <% elsif !a.object.rating.blank? %>
-          Rated: <%=a.object.rating%>
-        <% end %>
-        </p>
-        <div class='q_subhead'>Comments</div>
-        <% a.object.answer_comments.each do |ac|%>
-          <% next if ac.private? && !@sr.can_view_private_comments?(current_user) -%>
-          <div class='comm'>
-            <em><%=ac.user.full_name%> - <%=ac.created_at%> <%=ac.private? ? " - PRIVATE" : ""%></em><br/>
-            <pre>
-    <%=ac.content%>
-            </pre>
+          </p>
+          <div class='q_subhead'>Comments</div>
+          <% a.object.answer_comments.each do |ac|%>
+            <% next if ac.private? && !@sr.can_view_private_comments?(current_user) -%>
+            <div class='comm'>
+              <em><%=ac.user.full_name%> - <%=ac.created_at%> <%=ac.private? ? " - PRIVATE" : ""%></em><br/>
+              <pre>
+<%=ac.content-%>
+              </pre>
+            </div>
+          <% end %>
+          <%=a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
+            <%=acf.hidden_field :user_id%>
+            <%=acf.text_area :content, :class=>'a_opt'%><br />
+            <%if @sr.can_view_private_comments?(current_user)%><%=acf.check_box :private%> Private<%end%>
+          <% end %>
+          <ul>
+          <% a.object.attachments.each do |att|%>
+            <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
+          <% end %>
+          </ul>
+          <div class='attach_box' id='attach_box_<%=a.object.id%>'>
+            <a href='#' class='add_attach' uploaded_by_id='<%=current_user.id%>' answer_index='<%=a_idx%>'>Attach File</a>
           </div>
-        <% end %>
-        <%=a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
-          <%=acf.hidden_field :user_id%>
-          <%=acf.text_area :content, :class=>'a_opt'%><br />
-          <%if @sr.can_view_private_comments?(current_user)%><%=acf.check_box :private%> Private<%end%>
-        <% end %>
-        <ul>
-        <% a.object.attachments.each do |att|%>
-          <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
-        <% end %>
-        </ul>
-        <div class='attach_box' id='attach_box_<%=a.object.id%>'>
-          <a href='#' class='add_attach' uploaded_by_id='<%=current_user.id%>' answer_index='<%=a_idx%>'>Attach File</a>
         </div>
       </div>
     <%end%>
   <%end%>
 <%end%>
-
+</div>
 <div id='s_confirm' style='display:none;'>
   <p>Submitting this survey will lock all answers notify the survey owner.</p>
   <p>You will <span style='color:red'>NOT</span> be able to change your answers after clicking the Continue button below.</p>

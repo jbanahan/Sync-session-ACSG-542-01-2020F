@@ -23,7 +23,7 @@ describe OpenChain::S3 do
     before(:each) do
       @original_tempfile = Tempfile.new('abc')
       @content = "#{Time.now.to_f}"
-      @key = "s3_io_#{Time.now.to_f}"
+      @key = "s3_io_#{Time.now.to_f}.txt"
       @original_tempfile.write @content
       @original_tempfile.flush
       
@@ -31,17 +31,39 @@ describe OpenChain::S3 do
     end
     after(:each) do
       OpenChain::S3.delete @bucket, @key
+      @original_tempfile.close!
     end
     it 'should get data' do
       OpenChain::S3.get_data(@bucket,@key).should == @content
     end
     it 'should round trip a file to tempfile' do
       new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key
-      File.exist?(new_tempfile.path).should be_true
-      IO.read(new_tempfile.path).should == @content
-      new_tempfile.path.should =~ /\/tmp\/.*/
+      begin
+        File.exist?(new_tempfile.path).should be_true
+        IO.read(new_tempfile.path).should == @content
+        new_tempfile.path.should =~ /\/tmp\/.*/
+        File.basename(new_tempfile.path).should =~ /^s3_io.+\.txt$/
+      ensure
+        new_tempfile.close!
+      end
     end
-
+    it 'should not fail if file key is missing a file extension' do
+      @key = "test"
+      OpenChain::S3.should_receive(:get_data).and_return("test")
+      
+      new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key
+      begin
+        File.exist?(new_tempfile.path).should be_true
+        IO.read(new_tempfile.path).should == "test"
+        new_tempfile.path.should =~ /\/tmp\/.*/
+        File.basename(new_tempfile.path).should =~ /^test.+/
+        File.extname(new_tempfile.path).should == ""
+      ensure
+        new_tempfile.close!
+      end
+      
+    end
+    
     describe 'exists?' do
       it 'should return true when key exists' do
         OpenChain::S3.exists?(@bucket,@key).should be_true
