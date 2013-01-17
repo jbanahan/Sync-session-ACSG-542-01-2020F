@@ -19,6 +19,7 @@ module OpenChain
           (first_row..last_row).each do |n|
             begin
               matched = 'Style Not Found'
+              us_hts = nil
               style = xlc.get_cell(0, n, 8)['cell']['value']
               next if style.blank?
               style = style.to_s
@@ -42,11 +43,13 @@ module OpenChain
                 else
                   us_classification = p.classifications.find_by_country_id(us.id)
                   if us_classification && us_classification.tariff_records.first && !us_classification.tariff_records.first.hts_1.blank?
-                    matched = "Style Found With US HTS #{us_classification.tariff_records.first.hts_1.hts_format}, No IT HTS"
+                    us_hts = us_classification.tariff_records.first.hts_1.hts_format
+                    matched = "Style Found, No IT HTS"
                   end
                 end
               end
               xlc.set_cell 0, n, 16, matched
+              xlc.set_cell 0, n, 17, us_hts.hts_format unless us_hts.nil?
             rescue
               raise $! if $!.message.include?("User does not have permission to edit product")
               had_errors = true
