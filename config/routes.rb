@@ -338,6 +338,7 @@ OpenChain::Application.routes.draw do
     member do
       get 'copy'
       get 'give'
+      get 'attachments'
     end
     resources :imported_files, :only => [:new, :create, :show] do
       member do 

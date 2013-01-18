@@ -127,4 +127,7 @@ $(function() {
     </ul>
   </div>
   <% end %>
+  <%if @results.first.respond_to?(:attachments) -%>
+    <button class='btn_link' link_to='<%=attachments_search_setup_path(@current_search)%>'>Attachment List</button>
+  <%end-%>
 <% end %>
