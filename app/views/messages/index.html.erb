@@ -53,9 +53,9 @@
   <button class='btn_link' link_to='<%=new_message_path%>'>Send</button>
 <%end%>
 <% end %>
-<% form_tag users_email_new_message_path, :remote => true, :id => :email_form do  %>
+<%= form_tag users_email_new_message_path, :remote => true, :id => :email_form do  %>
 <%= check_box_tag(:email_new_messages, true, User.current.email_new_messages, { :onclick => "$('#email_form').submit();" }) %>
-<%= label_tag(:email_new_messages, "Email me when I have new message") %>
+<%= label_tag(:email_new_messages, "Email me when I have a new message") %>
 <% end %>
 <div id="accordion" style='width:98%;'>
 <% @messages.each do |message| %>
