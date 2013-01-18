@@ -31,10 +31,22 @@ module OpenChain
                 matched = 'Style Found, No US / IT HTS'
                 csm_number = string_val(xlc,0,n,2) + string_val(xlc,0,n,3) + string_val(xlc,0,n,4)
                 csm_custom_val = p.get_custom_value @csm_cd
-                if csm_custom_val.value != csm_number
-                  csm_custom_val.value = csm_number
-                  csm_custom_val.save!
-                  p.create_snapshot user
+
+                # We only want to insert csm_number into this product if the product doesn't already have a CSM Number
+                if csm_custom_val.value.blank?
+                  # Now we need to ensure that this CSM value isn't used on another product
+                  other_product = Product.joins(:custom_values).where(:custom_values => {:string_value => csm_number}).first
+
+                  if other_product.nil?
+                    csm_custom_val.value = csm_number
+                    csm_custom_val.save!
+                    p.create_snapshot user
+                  else
+                    matched = "Rejected: CSM Number is already assigned to US Style #{other_product.unique_identifier}"
+                  end
+                elsif csm_custom_val.value != csm_number
+                  # This product already has a different CSM number, reject it
+                  matched = "Rejected: US Style already has the CSM Number #{csm_custom_val.value} assigned."
                 end
                 italy_classification = p.classifications.find_by_country_id italy.id
                 if italy_classification
