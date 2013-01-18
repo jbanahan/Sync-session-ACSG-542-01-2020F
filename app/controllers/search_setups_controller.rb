@@ -7,6 +7,12 @@ class SearchSetupsController < ApplicationController
           :sort_criterions=>{:only=>[:model_field_uid,:rank,:descending]}}) }
     end 
   end
+
+  def attachments
+    @search = SearchSetup.for_user(current_user).find(params[:id])
+    @results = @search.search.has_attachment.paginate(:per_page=>50,:page => params[:page])
+    render :layout=>'one_col'
+  end
   
   def update
     search_setup = SearchSetup.for_user(current_user).find(params[:id])

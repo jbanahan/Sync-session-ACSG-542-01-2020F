@@ -14,6 +14,7 @@ module CoreObjectSupport
     base.instance_eval("after_save :process_linked_attachments")
 
     base.instance_eval("scope :need_sync, lambda {|trading_partner| joins(\"LEFT OUTER JOIN sync_records ON sync_records.syncable_type = '\#{self.name}' and sync_records.syncable_id = \#{self.table_name}.id and sync_records.trading_partner = '\#{trading_partner}'\").where(\"sync_records.id is NULL OR sync_records.sent_at is NULL or sync_records.confirmed_at is NULL or sync_records.sent_at > sync_records.confirmed_at or \#{self.table_name}.updated_at > sync_records.sent_at \")}")
+    base.instance_eval("scope :has_attachment, joins(\"LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '\#{self.name}' AND linked_attachments.attachable_id = \#{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '\#{self.name}' AND attachments.attachable_id = \#{self.table_name}.id\").where('attachments.id is not null OR linked_attachments.id is not null').uniq")
   end
 
 

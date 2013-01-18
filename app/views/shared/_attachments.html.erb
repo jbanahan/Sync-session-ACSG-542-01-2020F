@@ -1,14 +1,16 @@
-<% content_for :javascript do %>
-$(function() {
-  OpenChain.initAttachments();
-  $("#sub_attach").button();
-});    
-<% end %>
-<% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
-<% content_for :action_bar do %>
-  <button id='btn_add_attachment'>Add Attachment</button>
-<%end%>
-<% end %>
+<% if !local_assigns.has_key?(:view_only) || !view_only%>
+  <% content_for :javascript do %>
+    $(function() {
+      OpenChain.initAttachments();
+      $("#sub_attach").button();
+    });    
+  <% end %>
+  <% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
+    <% content_for :action_bar do %>
+      <button id='btn_add_attachment'>Add Attachment</button>
+    <%end%>
+  <% end %>
+<%end-%>
 <div class='attachments_box_<%=local_assigns.has_key?(:width) ? width : "narrow"%>'>
   <% unless attachable.attachments.blank?%>
   <div class='attachment_heading'>Attachments</div>

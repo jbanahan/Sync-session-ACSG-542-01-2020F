@@ -1,0 +1,12 @@
+<h1><%=@search.name%> - Attachment View</h1>
+<table>
+<%@results.each do |r|-%>
+<tr><td colspan='2'><strong><%=ModelField.find_by_uid(CoreModule.find_by_object(r).key_model_field_uids.first).process_export(r,current_user)%></strong></td></tr>
+  <%r.all_attachments.each do |att|-%>
+    <tr><td><%=attachment_icon att%></td><td><%=att.attached_file_name%></td></tr>
+  <%end-%>
+<%end-%>
+</table>
+<div>
+  <%=will_paginate @results%>
+</div>
