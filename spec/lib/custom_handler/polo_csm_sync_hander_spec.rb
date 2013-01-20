@@ -69,6 +69,26 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)
     p2.get_custom_value(@csm).value.should be_nil 
   end
+
+  it "should update if csm number is in a different custom value" do
+    other_cd = Factory(:custom_definition)
+    p = Factory(:product)
+    p.update_custom_value! other_cd, "ABC123XYZ"
+
+    p2 = Factory(:product)
+    Product.any_instance.stub(:can_edit?).and_return(true)
+
+    @xlc.should_receive(:last_row_number).and_return(1)
+    @xlc.should_receive(:get_cell).with(0,1,8).and_return({'cell'=>{'value'=>p2.unique_identifier}})
+    @xlc.should_receive(:get_cell).with(0,1,2).and_return({'cell'=>{'value'=>'ABC'}})
+    @xlc.should_receive(:get_cell).with(0,1,3).and_return({'cell'=>{'value'=>'123'}})
+    @xlc.should_receive(:get_cell).with(0,1,4).and_return({'cell'=>{'value'=>'XYZ'}})
+    @xlc.should_receive(:set_cell).with(0,1,16,'Style Found, No US / IT HTS')
+    @xlc.should_receive(:save)
+
+    OpenChain::CustomHandler::PoloCsmSyncHandler.new(@cf).process Factory(:user)
+    p2.get_custom_value(@csm).value.should == "ABC123XYZ"
+  end
   
   it "should warn if product already has a different CSM number" do
     p = Factory(:product)

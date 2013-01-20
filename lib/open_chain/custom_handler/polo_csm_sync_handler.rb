@@ -35,7 +35,7 @@ module OpenChain
                 # We only want to insert csm_number into this product if the product doesn't already have a CSM Number
                 if csm_custom_val.value.blank?
                   # Now we need to ensure that this CSM value isn't used on another product
-                  other_product = Product.joins(:custom_values).where(:custom_values => {:string_value => csm_number}).first
+                  other_product = Product.joins(:custom_values).where(:custom_values => {:string_value => csm_number, :custom_definition_id=>@csm_cd.id}).first
 
                   if other_product.nil?
                     csm_custom_val.value = csm_number
