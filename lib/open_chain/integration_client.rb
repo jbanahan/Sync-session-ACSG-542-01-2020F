@@ -84,8 +84,7 @@ module OpenChain
         cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
         cf.attached = get_tempfile(bucket,remote_path,command['path'])
         cf.save!
-        #Temporarily disabling this feed, turn it back on when polo wants to start using it again
-        #cf.delay.process(cf.uploaded_by)
+        cf.delay.process(cf.uploaded_by)
         status_msg = 'success'
         response_type = 'remote_file'
       elsif linkable = LinkableAttachmentImportRule.import(get_tempfile(bucket,remote_path,command['path']), fname.to_s, dir.to_s)
