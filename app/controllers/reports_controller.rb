@@ -64,6 +64,14 @@ class ReportsController < ApplicationController
     run_report "Stale Tariffs", OpenChain::Report::StaleTariffs, {}, []
   end
 
+  def show_drawback_exports_without_imports
+    error_redirect "You do not have permission to view this report." unless OpenChain::Report::DrawbackExportsWithoutImports.can_run?(current_user)
+  end
+
+  def run_drawback_exports_without_imports
+    run_report "Drawback Exports Without Imports", OpenChain::Report::DrawbackExportsWithoutImports, {:start_date=>params[:start_date],:end_date=>params[:end_date]}, ["Starting Date: #{params[:start_date]}","Ending Date: #{params[:end_date]}"]
+  end
+
   def show_shoes_for_crews_entry_breakdown
     #nothing to do here
   end
