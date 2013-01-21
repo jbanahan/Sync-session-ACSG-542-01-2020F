@@ -198,6 +198,8 @@ describe OpenChain::UnderArmourDrawbackProcessor do
         :importer_id=>@importer.id
       )
       @entry = @c_line.entry
+      @entry.update_attributes(:entry_number=>'1234567890',:arrival_date=>Date.new(2011,1,2),:entry_port_code=>'4701',:total_duty=>500,:total_duty_direct=>501,:mpf=>26,
+      :total_invoiced_value=>10001)
       @c_tar = @c_line.commercial_invoice_tariffs.create!(
         :hts_code=>'6602454545',
         :entered_value=>BigDecimal("144.00"),
@@ -240,6 +242,7 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       d.ocean.should == true #mode 10 or 11
       d.importer_id.should == @entry.importer_id
       d.total_mpf.should == @entry.mpf
+      d.total_invoice_value.should == @entry.total_invoiced_value
       PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).should have(1).result
     end
     it "should set importer_id based on entry.importer_id when companies are linked" do

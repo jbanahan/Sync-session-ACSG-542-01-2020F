@@ -91,7 +91,8 @@ module OpenChain
           :compute_code => "7",
           :ocean => entry.ocean?,
           :total_mpf => entry.mpf,
-          :importer_id => entry.importer_id
+          :importer_id => entry.importer_id,
+          :total_invoice_value => entry.total_invoiced_value
         )
         d.duty_per_unit = d.unit_price * d.rate
         d.save!
