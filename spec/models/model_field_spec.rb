@@ -58,6 +58,12 @@ describe ModelField do
           x.should have(1).product
           x.first.should == @p
         end
+        it "should return products without classification for eq 0" do
+          @p.classifications.destroy_all
+          @sc.value = "0"
+          x = @sc.apply(Product.where("1"))
+          x.first.should == @p
+        end
         it "should not import" do
           @mf.process_import(@p,1).should == "Classification count ignored."
         end
