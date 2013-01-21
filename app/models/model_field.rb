@@ -572,8 +572,10 @@ class ModelField
           },
           :data_type => :integer,
           :history_ignore => true,
-          :qualified_field_name=>"(select count(*) from (select distinct classifications.id, classifications.product_id, classifications.country_id from classifications inner join tariff_records on tariff_records.classification_id = classifications.id where length(hts_1) > 0 ) cls where cls.product_id = products.id and cls.country_id in (select country_id from countries_regions where region_id = #{r.id}))"
-          
+          :join_statement => "LEFT OUTER JOIN (select product_id, count(*) as 'cnt' from (select DISTINCT classifications.id, classifications.product_id, classifications.country_id from classifications inner join tariff_records ON tariff_records.classification_id = classifications.id inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id where length(hts_1) > 0) cls group by product_id order by product_id) r_#{r.id}_class_count on r_#{r.id}_class_count.product_id = products.id ",
+          :join_alias => "r_#{r.id}_class_count",
+          :qualified_field_name => "ifnull(r_#{r.id}_class_count.cnt,0)"          
+#:qualified_field_name=>"(select count(*) from (select distinct classifications.id, classifications.product_id, classifications.country_id from classifications inner join tariff_records on tariff_records.classification_id = classifications.id where length(hts_1) > 0 ) cls where cls.product_id = products.id and cls.country_id in (select country_id from countries_regions where region_id = #{r.id}))"
         }
       )
       MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf

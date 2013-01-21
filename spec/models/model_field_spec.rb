@@ -53,7 +53,8 @@ describe ModelField do
         end
         it "should only count countries in region" do
           @mf.process_export(@p,User.new,true).should == 1
-          x = @sc.apply(Product.where("1")).uniq
+          x = @sc.apply(Product.where("1"))
+          x = x.uniq
           x.should have(1).product
           x.first.should == @p
         end
