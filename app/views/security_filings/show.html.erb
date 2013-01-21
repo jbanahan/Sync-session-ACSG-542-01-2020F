@@ -28,12 +28,12 @@
 </table>
 
 <h2>Details</h2>
-<%fields = CoreModule::SECURITY_FILING_LINE.model_fields.values-%>
+<%fields = [:sfln_line_number, :sfln_hts_code, :sfln_part_number, :sfln_po_number, :sfln_commercial_invoice_number, :sfln_country_of_origin_code, :sfln_mid, :sfln_manufacturer_name]-%>
 <table class='detail_table'>
   <thead>
     <tr>
       <%fields.each do |f|-%>
-        <th><%=f.label(false)%></th>
+        <th><%=field_label f, false%></th>
       <%end-%>
     </tr>
   </thead>
@@ -41,7 +41,7 @@
     <%@security_filing.security_filing_lines.each do |sfl| -%>
       <tr class='hover'>
         <%fields.each do |f|-%>
-          <td><%=f.process_export(sfl,current_user)%></td>
+          <td><%=field_value sfl, f%></td>
         <%end-%>
       </tr>
     <%end-%>

@@ -93,6 +93,11 @@ module OpenChain
           ln.commercial_invoice_number = et(el, 'CI_NBR')
           ln.mid = et(el,'MID')
           ln.country_of_origin_code = et(el, 'COUNTRY_ORIGIN_CD')
+
+          unless ln.mid.nil? || ln.mid.strip.length == 0
+            name = REXML::XPath.first(parent, "entities[MID=$mid]/PARTY_NAME", nil, {"mid" => ln.mid})
+            ln.manufacturer_name = name.text unless name.nil?
+          end 
         end
       end
       def process_bills_of_lading parent

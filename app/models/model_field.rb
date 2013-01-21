@@ -590,7 +590,8 @@ class ModelField
       [6,:sfln_po_number,:po_number,"PO Number",{:data_type=>:string}],
       [7,:sfln_commercial_invoice_number,:commercial_invoice_number,"Commercial Invoice Number",{:data_type=>:string}],
       [8,:sfln_mid,:mid,"MID",{:data_type=>:string}],
-      [9,:sfln_country_of_origin_code,:country_of_origin_code,"Country of Origin Code",{:data_type=>:string}]
+      [9,:sfln_country_of_origin_code,:country_of_origin_code,"Country of Origin Code",{:data_type=>:string}],
+      [10,:sfln_manufacturer_name,:manufacturer_name,"Manfacturer Name",{:data_type=>:string}]
     ]
     add_fields CoreModule::SECURITY_FILING, [
       [1,:sf_transaction_number,:transaction_number, "Transaction Number",{:data_type=> :string}],

@@ -187,7 +187,7 @@
     <IRS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <DUNS_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <FIRMS_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
-    <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+    <MID>MID</MID>
     <PASSPORT_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <BIRTH_DATE xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <COUNTRY_PASSPORT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
