@@ -17,8 +17,8 @@ end
 String.class_eval do
   #returns a copy of the string with decimals in the right place to look like a commonly formatted HTS number
   def hts_format
-    return String.new self unless self.match(/^[0-9\. ]*$/) #if not potentially an HTS, return a copy without modification
-    cleaned = self.to_s.gsub(/[^0-9]/,"") #strip out extra characters
+    return String.new self unless TariffRecord.validate_hts(self) #if not potentially an HTS, return a copy without modification
+    cleaned = TariffRecord.clean_hts(self)
     case cleaned.length #format
     when 0..5
       return cleaned

@@ -56,3 +56,24 @@ describe 'time zone parse_us_base_format' do
     end
   end
 end
+
+describe "hts_format" do
+  it 'should format a standard hts number' do
+    '1234567890'.hts_format.should == '1234.56.7890'
+    # No length validations are done
+    '12345678901234'.hts_format.should == '1234.56.78.901234'
+    '1234'.hts_format.should == '1234'
+    '12345'.hts_format.should == '12345'
+    '123456'.hts_format.should == '1234.56'
+    '1234567'.hts_format.should == '1234.567'
+    '12345678'.hts_format.should == '1234.56.78'
+    '123456789'.hts_format.should == '1234.56.789'
+    '1234567890'.hts_format.should == '1234.56.7890'
+    # Make sure we also allow alpha chars
+    '1234Ab789b'.hts_format.should == '1234.Ab.789b'
+  end
+  it 'should not try to format values that are not hts numbers' do
+    # Anything that's not period, numeric, alpha is not an hts number
+    '!@#$%%^'.hts_format.should == '!@#$%%^'
+  end
+end

@@ -123,7 +123,8 @@ var OpenChain = (function() {
     if(hts.length<6) {
       return false;
     }
-    if(hts.match(/[^0-9\. ]/)!=null) {
+    // Some countries (NZ for instance) do have letters in their HTS numbers.
+    if(hts.match(/[^0-9A-Za-z\. ]{6,}/)!=null) {
       return false;
     }
     return true;
