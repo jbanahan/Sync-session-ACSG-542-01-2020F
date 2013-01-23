@@ -9,6 +9,22 @@ module ApplicationHelper
     :pdf=>ICON_PDF
   }
 
+
+  #create a visual
+  def section_box title, html_options={}, &block
+    inner_opts = {}.merge html_options
+    if inner_opts[:class]
+      inner_opts[:class] = "#{inner_opts[:class]} section_box"
+    else
+      inner_opts[:class] = "section_box"
+    end
+    content_tag('div', inner_opts) do 
+      content_tag('div',title,:class=>'section_head') +
+      content_tag('div',:class=>'section_body') do
+        yield 
+      end
+    end
+  end
   def search_result_value search_setup, result_value
     return "false" if !result_value.nil? && result_value.is_a?(FalseClass)
     return "&nbsp;".html_safe if result_value.blank?

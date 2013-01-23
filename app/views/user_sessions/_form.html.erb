@@ -1,25 +1,44 @@
 <script>
   $(function() {
-    $("#user_session_submit").button();
     $("#btn_forgot_pass").click(function(ev) {ev.preventDefault(); window.location = '<%=new_password_reset_path%>';});
   });
 </script>
-<div id='login'>
-<%= form_for(@user_session) do |f| %>
-  <table>
-    <%=field_row f.label(:username), f.text_field(:username,"class"=>"focus_first")%>
-    <%=field_row f.label(:password), f.password_field(:password)%>
-    <%=field_row f.label(:remember_me), f.check_box(:remember_me)%>
-  </table>
-  <div class="actions">
-    <%= f.submit 'Log In' %>
+<style>
+  div.login_section {
+    width: 400px;
+    margin: 10px;
+  }
+  div.login_section_center .section_body {
+    text-align: center;
+  }
+</style>
+<h1 style='margin-left:10px;'>Welcome</h1>
+<%=section_box 'Log In', :class=>'login_section' do%>
+  <div id='login'>
+  <%= form_for(@user_session) do |f| %>
+    <table>
+      <%=field_row f.label(:username), f.text_field(:username,"class"=>"focus_first")%>
+      <%=field_row f.label(:password), f.password_field(:password)%>
+      <%=field_row f.label(:remember_me), f.check_box(:remember_me)%>
+    </table>
+    <div class="actions">
+      <%= f.submit 'Log In' %>
+    </div>
+    <% end %>
   </div>
-<% end %>
-<%=link_to "Forgot your password?", new_password_reset_path %>
-</div>
-<% if PublicField.where("1=1").size>0%>
-<div id='shp_track' style='margin:1em 10px 0 0;border-top: 1px solid #d7d7d7;'>
-<h2>Shipment Tracking</h2>
-<%=render :partial=>'shared/tracker' %>
-</div>
+<%end%>
+<%if PublicField.where("1=1").size>0-%>
+  <%=section_box 'Public Shipment Tracking', :class=>'login_section' do-%>
+    <%=render :partial=>'shared/tracker' %>
+  <%end-%>
+<%end-%>
+<%if MasterSetup.get.custom_feature? 'fenix'-%>
+  <%=section_box 'PARS Check - Canada Imports', :class=>'login_section login_section_center' do-%>
+    <button class='btn_link' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
+  <%end-%>
+<%end-%>
+<%=section_box 'Lost Password', :class=>'login_section' do%>
+  <%=form_tag password_resets_path do %>
+    <b>Email:</b> <%=text_field_tag("email")-%> <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit' -%>
+  <% end %>
 <%end%>
