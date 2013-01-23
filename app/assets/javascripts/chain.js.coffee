@@ -40,7 +40,7 @@ root.Chain =
 
   #load auto classification values an populate into containers that match destination_selector and also have country='[country_id]'
   loadAutoClassifications : (hts,country_id,destination_selector) ->
-    cleanHTS = hts.replace( /[^\d]/g, "" )
+    cleanHTS = hts.replace( /[^\dA-Za-z]/g, "" )
     jQuery.get '/official_tariffs/auto_classify/'+cleanHTS+'.json', (data) ->
       Chain.populateAutoClassifications destination_selector, data
 

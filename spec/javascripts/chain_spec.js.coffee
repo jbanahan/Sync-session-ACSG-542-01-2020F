@@ -34,10 +34,10 @@ describe 'Chain', ->
       Chain.loadAutoClassifications('1234567890',1)
       expect(jQuery.get).toHaveBeenCalledWith('/official_tariffs/auto_classify/1234567890.json',jasmine.any(Function))
 
-    it "should strip non-numerics", ->
+    it "should strip non-alpha numerics", ->
       spyOn(jQuery,'get')
       Chain.loadAutoClassifications('1234567i.8A 90',1)
-      expect(jQuery.get).toHaveBeenCalledWith('/official_tariffs/auto_classify/1234567890.json',jasmine.any(Function))
+      expect(jQuery.get).toHaveBeenCalledWith('/official_tariffs/auto_classify/1234567i8A90.json',jasmine.any(Function))
 
   describe "populateAutoClassifications", ->
     it "should fill for multiple countries", ->
