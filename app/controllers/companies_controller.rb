@@ -131,6 +131,13 @@ class CompaniesController < ApplicationController
     redirect_to show_children_company_path c
   end
 
+  def attachment_archive_enabled
+    if !current_user.company.master?
+      error_redirect "You do not have permission to access this page."
+      return
+    end
+    render :json=>Company.attachment_archive_enabled.by_name.to_json(:include=>{:attachment_archive_setup=>{:methods=>:entry_attachments_available_count}})
+  end
   private 
   def secure
     Company.find_can_view(current_user)

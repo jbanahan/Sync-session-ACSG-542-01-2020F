@@ -1,0 +1,12 @@
+<%content_for :action_bar do-%>
+  <button class='form_to' form_id='frm_save'>Save</button>
+  <button class='btn_link' link_to='<%=company_path(@company)%>'>Back</button>
+<%end-%>
+<h1>Attachment Archive Setup: <%=@company.name%></h1>
+<%s = @company.attachment_archive_setup-%>
+<%s = @company.build_attachment_archive_setup unless s-%>
+<%=form_for [@company,s], :html=>{:id=>'frm_save'} do |f|-%>
+  <table>
+    <%=field_row "Start Date", f.text_field(:start_date,:class=>'isdate')%>
+  </table>
+<%end-%>

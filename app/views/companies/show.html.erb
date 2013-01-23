@@ -48,6 +48,11 @@ $(function() {
       <button class='btn_link' link_to='<%=show_children_company_path(@company)%>'>Linked Companies</button>
     <% end %>
     <button class='btn_link' link_to='<%=company_charge_categories_path(@company)%>'>Charge Categories</button>
+    <% if @company.attachment_archive_setup -%>
+      <button class='btn_link' link_to='<%=company_attachment_archive_setup_path(@company,@company.attachment_archive_setup)%>'>Attachment Archive Setup</button>
+    <% else -%>
+      <button class='btn_link' link_to='<%=new_company_attachment_archive_setup_path(@company)%>'>Attachment Archive Setup</button>
+    <% end -%>
   <%end%>
   <button id='btn_poas'>POAs</button>
   <button class='btn_link' link_to='<%=companies_path%>' key_map='b'>Back</button>

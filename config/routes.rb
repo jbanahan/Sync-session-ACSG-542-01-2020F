@@ -304,6 +304,13 @@ OpenChain::Application.routes.draw do
         get 'download'
       end
     end
+    resources :attachment_archive_manifests, :only=>[:create] do
+      get 'download', :on=>:member
+    end
+    resources :attachment_archives, :only=>[:create] do
+      post 'complete', :on=>:member
+    end
+    resources :attachment_archive_setups, :except=>[:destroy,:index]
     
 		resources :users do
 		  get :disable, :on => :member
@@ -314,6 +321,7 @@ OpenChain::Application.routes.draw do
 		end
     resources :charge_categories, :only => [:index, :create, :destroy]
 		get :shipping_address_list, :on => :member
+    get :attachment_archive_enabled, :on => :collection
   end
   
   resources :file_import_results, :only => [:show] do
