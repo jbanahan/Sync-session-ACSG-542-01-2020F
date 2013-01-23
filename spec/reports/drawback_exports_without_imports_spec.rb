@@ -5,7 +5,7 @@ describe OpenChain::Report::DrawbackExportsWithoutImports do
     before :each do
       @c = Factory(:company)
       @u = Factory(:user)
-      described_class.stub(:can_run?).and_return(true)
+      described_class.stub(:permission?).and_return(true)
       @exp = DutyCalcExportFileLine.create!(:part_number=>'ABC',:export_date=>1.day.ago,:quantity=>100,:ref_1=>'r1',:ref_2=>'r2',:importer_id=>@c.id)
     end
     after :each do
@@ -47,25 +47,25 @@ describe OpenChain::Report::DrawbackExportsWithoutImports do
       s.row(2).should be_empty
     end
     it "should fail if user cannot run report" do
-      described_class.stub(:can_run?).and_return(false)
+      described_class.stub(:permission?).and_return(false)
       lambda {described_class.run_report @user}.should raise_error "You do not have permission to run this report." 
     end
   end
-  describe :can_run? do
+  describe :permission? do
     it "should not run if user not from master company" do
       u = Factory(:user)
       u.stub(:view_drawback?).and_return(true)
-      described_class.can_run?(u).should be_false
+      described_class.permission?(u).should be_false
     end
     it "should not run if user cannot view drawback" do
       u = Factory(:master_user)
       u.stub(:view_drawback?).and_return(false)
-      described_class.can_run?(u).should be_false
+      described_class.permission?(u).should be_false
     end
     it "should run if user has permission" do
       u = Factory(:master_user)
       u.stub(:view_drawback?).and_return(true)
-      described_class.can_run?(u).should be_true
+      described_class.permission?(u).should be_true
     end
   end
 end

@@ -38,9 +38,13 @@
     <tr class='hover'><td><%=link_to "Product Sync Problems", reports_show_product_sync_problems_path%></td>
     <td>Shows all products out of sync with remote systems.</td</tr>
   <%end-%>
-  <%if OpenChain::Report::DrawbackExportsWithoutImports.can_run? current_user-%>
+  <%if OpenChain::Report::DrawbackExportsWithoutImports.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Drawback Exports Without Imports", reports_show_drawback_exports_without_imports_path%></td>
     <td>Shows all drawback exports without matching imports by part number. Export Date must be greater than import date for lines to match.</td</tr>
+  <%end-%>
+  <%if OpenChain::Report::DasBillingSummary.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "DAS Canada Billing Summary", reports_show_das_billing_summary_path%></td>
+    <td>DAS Billing Summary report.</td</tr>
   <%end-%>
   <%if OpenChain::Report::EddieBauerStatementSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Eddie Bauer Statment Summary", reports_show_eddie_bauer_statement_summary_path%></td>

@@ -1,14 +1,14 @@
 module OpenChain
   module Report
     class DrawbackExportsWithoutImports
-      def self.can_run? user
+      def self.permission? user
         user.company.master? && user.view_drawback? 
       end
       def self.run_report run_by, settings={}
-        raise "You do not have permission to run this report." unless can_run? run_by
+        raise "You do not have permission to run this report." unless permission? run_by
         wb = Spreadsheet::Workbook.new
         s = wb.create_worksheet :name=>"Unmatched Exports"
-        lines = DutyCalcExportFileLine.not_in_imports.where("export_date between ? and ?",settings[:start_date],settings[:end_date])
+        lines = DutyCalcExportFileLine.not_in_imports.where("export_date between ? and ?",settings['start_date'],settings['end_date'])
         cursor = 0
         r = s.row(cursor)
         ["Export Date","Part Number","Ref 1","Ref 2","Quantity"].each_with_index do |t,i|

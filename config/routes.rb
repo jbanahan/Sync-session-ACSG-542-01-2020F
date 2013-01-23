@@ -172,6 +172,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_marc_jacobs_freight_budget" => "reports#run_marc_jacobs_freight_budget", :via=>:post
   match "/reports/show_drawback_exports_without_imports" => "reports#show_drawback_exports_without_imports", :via=>:get
   match "/reports/run_drawback_exports_without_imports" => "reports#run_drawback_exports_without_imports", :via=>:post
+  match "/reports/show_das_billing_summary" => "reports#show_das_billing_summary", :via=>:get
+  match "/reports/run_das_billing_summary" => "reports#run_das_billing_summary", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
