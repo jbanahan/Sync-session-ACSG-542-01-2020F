@@ -65,11 +65,11 @@ class ReportsController < ApplicationController
   end
 
   def show_drawback_exports_without_imports
-    error_redirect "You do not have permission to view this report." unless OpenChain::Report::DrawbackExportsWithoutImports.can_run?(current_user)
+    error_redirect "You do not have permission to view this report." unless OpenChain::Report::DrawbackExportsWithoutImports.permission?(current_user)
   end
 
   def run_drawback_exports_without_imports
-    run_report "Drawback Exports Without Imports", OpenChain::Report::DrawbackExportsWithoutImports, {:start_date=>params[:start_date],:end_date=>params[:end_date]}, ["Starting Date: #{params[:start_date]}","Ending Date: #{params[:end_date]}"]
+    run_report "Drawback Exports Without Imports", OpenChain::Report::DrawbackExportsWithoutImports, {'start_date'=>params[:start_date],'end_date'=>params[:end_date]}, ["Starting Date: #{params[:start_date]}","Ending Date: #{params[:end_date]}"]
   end
 
   def show_shoes_for_crews_entry_breakdown
@@ -91,6 +91,23 @@ class ReportsController < ApplicationController
       run_report "POA Expirations", OpenChain::Report::POAExpiration, { "poa_expiration_date" => params[:poa_expiration_date] }, []
     else
       error_redirect "You do not have permissions to view this report"
+    end
+  end
+
+  def show_das_billing_summary
+    if OpenChain::Report::DasBillingSummary.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_das_billing_summary
+    if OpenChain::Report::DasBillingSummary.permission? current_user
+      settings = {'start_date'=>params[:start_date],'end_date'=>params['end_date']}
+      run_report "DAS Canada Billing Summary", OpenChain::Report::DasBillingSummary, settings, ["CADEX sent between #{params[:start_date]} and #{params[:end_date]}."]
+    else
+      error_redirect "You do not have permission to view this report"
     end
   end
 

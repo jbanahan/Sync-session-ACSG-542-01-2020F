@@ -9,25 +9,29 @@ module OpenChain
       :cit_hts_code,:cit_classification_qty_1,:cit_classification_uom_1,:cit_entered_value,
       :cil_units,:cil_uom,:cil_value,:ent_excise_amount,:ent_excise_rate_code,
       :ent_gst_rate_code,:ent_gst_amount,:ent_sima_amount,:cit_duty_amount]
-      #expects start_date and end_date as objects that implement strftime
 
+      def self.permission? user
+        user.company.master? && user.view_broker_invoices?
+      end
+
+      #expects start_date and end_date
       def self.run_report run_by, settings={}
-        start_date = settings[:start_date]
-        end_date = settings[:end_date]
+        start_date = settings['start_date']
+        end_date = settings['end_date']
         summary_qry = <<QRY
 select `Entry Number`, `DAS Invoice Number`, `Total Value By Entry`, `Invoice Lines`, `Billable Lines`, (`Billable Lines` * if(`lvs`,0.4,0.5)) as "Line Charge", 
-if(`lvs`,45,85) as `Brokerage Charge`
+if(`lvs`,45,85) as `Brokerage Charge`, `Total Duty`, `Total GST`
 from (
 select `Entry Number`, `Invoice Number` as `DAS Invoice Number`, `Entered Value` as `Total Value By Entry`, count(*) as `Invoice Lines`,
-if(count(*)>10,count(*)-10,0) as "Billable Lines", if(`Entered Value` > 1600,false,true) as "lvs"
+if(count(*)>10,count(*)-10,0) as "Billable Lines", if(`Entered Value` > 1600,false,true) as "lvs", `Total Duty`, `Total GST`
 from (
-select distinct ent.id, ci.invoice_number as `Invoice Number`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code
+select distinct ent.id, ci.invoice_number as `Invoice Number`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST` 
 from entries ent
 inner join commercial_invoices ci on ci.entry_id = ent.id
 inner join commercial_invoice_lines cil on cil.commercial_invoice_id = ci.id
 inner join commercial_invoice_tariffs cit on cil.id = cit.commercial_invoice_line_id
 where ent.importer_tax_id = "#{TAX_ID}"
-and cadex_sent_date between "#{start_date.strftime("%Y-%m-%d")}" and "#{end_date.strftime("%Y-%m-%d")}"
+and cadex_sent_date between "#{start_date}" and "#{end_date}"
 ) root
 group by `Entered Value` 
 ) middle
