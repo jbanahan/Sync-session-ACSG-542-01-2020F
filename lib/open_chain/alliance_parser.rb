@@ -159,6 +159,7 @@ module OpenChain
         @skip_entry = true
       else
         @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
+        clear_dates
         @entry.source_system = SOURCE_CODE
         @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
         @entry.broker_invoices.destroy_all #clear all invoices and recreate as we go
@@ -448,6 +449,9 @@ module OpenChain
       @entry.fcl_lcl = v
     end
 
+    def clear_dates
+      DATE_MAP.values.each {|v| @entry[v] = nil}
+    end
     def parse_date str
       return nil if str.blank? || str.match(/^[0]*$/)
       Date.parse str

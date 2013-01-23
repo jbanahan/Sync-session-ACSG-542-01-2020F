@@ -92,7 +92,7 @@ describe OpenChain::AllianceParser do
       r << "SH04DAS DISTRIBUTORS INC               DAS DISTRIBUTORS INC               724 LAWN RD                                                           PALMYRA                     PA17078    20110808#{@destination_state}                XQPIOTRA1932TIL            20110808   Vandegrift Forwarding Co. Inc.     0000000550900000000000000000000000000                                                                                                                                                                                    "
       r << "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
       r << "SD0000016#{@entry_filed_date_str}2009040616333461FILDEntry Filed (3461,3311,7523)                                "
-      r << "SD0000019#{@release_date_str}200904061633Release Release Date                                                "
+      r << "SD0000019#{@release_date_str}200904061633Release Release Date                                                " unless @release_date_str.blank?
       r << "SD0099202#{@first_release_date_str}200904061633Ist Rel First Release date                                          "
       r << "SD0000052#{@free_date_str}200904081441Free    Free Date                                                   "
       r << "SD0000028#{@last_billed_date_str}200904061647Bill PrtLast Billed                                                 "
@@ -238,6 +238,19 @@ describe OpenChain::AllianceParser do
     }
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @split_string = "\n "
+  end
+  it 'should clear dates that have previously been written but are not retransmitted' do
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.release_date.should_not be_nil #this one won't be in the file the 2nd time
+    ent.first_release_date.should_not be_nil #this one will be reprocesed
+    ent.update_attributes(:last_exported_from_source=>nil)
+
+    @release_date_str = nil
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
+    ent = Entry.find_by_broker_reference @ref_num
+    ent.release_date.should be_nil
+    ent.first_release_date.should_not be_nil 
   end
   it 'should set 7501 print dates' do
     first_7501 = '201104211627'
