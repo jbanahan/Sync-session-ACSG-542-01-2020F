@@ -300,6 +300,9 @@ OpenChain::Application.routes.draw do
         get 'download'
       end
     end
+    resources :attachment_archive_manifests, :only=>[:create] do
+      get 'download', :on=>:member
+    end
     resources :attachment_archives, :only=>[:create] do
       post 'complete', :on=>:member
     end
