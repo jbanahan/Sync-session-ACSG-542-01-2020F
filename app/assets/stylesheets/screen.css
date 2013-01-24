@@ -27,11 +27,9 @@ img {
   background-color: #F2BDBD;
 }
 .unread {
-    color: white;
     font-weight:bolder;
 }
 .read {
-    color: white;
     font-weight:lighter;
 }
 #search_setup_outer {
