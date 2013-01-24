@@ -215,15 +215,11 @@ p {
   margin-top: .5em;
 }
 .notices {
-  z-index: 5000;
-  position: absolute;
-  right: 0;
-  top: 0;
   background-color: white;
-  border-left: 1px solid black;
   border-bottom: 1px solid black;
   color: green;
   padding: 0 0 10px 10px;
+  text-align: center;
 }
 #notice_hide {
 	text-align: right;
