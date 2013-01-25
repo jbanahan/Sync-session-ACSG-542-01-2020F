@@ -75,7 +75,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ln.commercial_invoice_number.should == 'CIN'
       ln.mid.should == "MID"
       ln.country_of_origin_code.should == 'CN'
-      
+      ln.manufacturer_name.should == 'KINGTAI INDUSTRIAL (XIAMEN) CO., LT' 
       # validate the time_to_process was recorded (use 10
       # to try to make sure we're recording milliseconds and not seconds)
       sf.time_to_process.should > 10
@@ -194,6 +194,16 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       c.name.should == 'EDDIE'
       c.should be_importer
       c.alliance_customer_number.should == 'EDDIE'
+    end
+    it "should not fail if there is no matching entity found by MID" do 
+      @dom.root.get_elements("//IsfHeaderData/entities/MID").each do |el|
+        el.text = "NONMATCHING"
+      end
+
+      @k.new(@dom).parse_dom
+      SecurityFiling.first.security_filing_lines.each do |line|
+        line.manufacturer_name.should be_nil
+      end
     end
   end
 end
