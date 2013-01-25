@@ -25,6 +25,10 @@ class SearchCriterion < ActiveRecord::Base
     "*cf_#{custom_definition.id}"
   end
 
+  def self.date_time_operators_requiring_timezone
+    ['lt', 'gt', 'eq', 'nq']
+  end
+
   #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)
   def test? obj, user=nil
     mf = ModelField.find_by_uid(self.model_field_uid)
@@ -113,23 +117,21 @@ class SearchCriterion < ActiveRecord::Base
       end
     end
   end
+
   private
 
   def number_value data_type, value
     sval = (value.blank? || !is_a_number(value) ) ? "0" : value
     data_type==:integer ? sval.to_i : sval.to_f
   end
-  private
 
   def is_a_number val
     begin Float(val) ; true end rescue false
   end
-  private
   
   def add_where(p)
     p.where(where_clause,where_value)
   end
-  private
 
   def where_clause
     mf = find_model_field
@@ -155,30 +157,33 @@ class SearchCriterion < ActiveRecord::Base
       end
     end
   end
-  private
   
   def boolean_field?
     return find_model_field.data_type==:boolean
   end
-  private
   
   def integer_field?
     return find_model_field.data_type==:integer
   end
-  private
   
   def decimal_field?
     return find_model_field.data_type==:decimal
   end
-  private
 
   def date_field?
     return find_model_field.data_type==:date
   end
-  private
+
+  def date_time_field?
+    return find_model_field.data_type == :datetime
+  end
 
   #value formatted properly for the appropriate condition in the SQL
   def where_value
+    if (!self.value.nil? && date_time_field? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator))
+      return parse_date_time self.value
+    end
+
     self_val = date_field? && !self.value.nil? && self.value.is_a?(Time)? self.value.to_date : self.value
     if boolean_field? && ['null','notnull'].include?(self.operator)
       return self.operator=='notnull'
@@ -203,13 +208,47 @@ class SearchCriterion < ActiveRecord::Base
       return self_val
     end
   end
-  private
+
+  def parse_date_time value
+    # We need to adjut the user's date value for datetime fields to UTC and we're expecting the actual timezone
+    # name to be in the criterion's value. For cases where it's not (ie. any datetime prior to this
+    # changeset going live), we'll assume a timezone of "Eastern Time (US & Canada)".
+    parsed_value = nil
+
+    if value.is_a?(Time)
+      parsed_value = value.getutc
+    else 
+      # Expect the string to be like YYYY-MM-DD HH:MM:SS Timezone.  With HH:MM:SS being optional.
+      # Extract the timezone component from the string first, then we should be able to just
+      # parse the rest of the string directly.
+      
+      # The regular expression here splits the date string up into 4 parts with only the first (the actual date)
+      # being required.  The second group is just a throwaway (allowing for everything after the date to be
+      # optional).  The third is the time segement (again - optional) and the forth is the timezone.
+      # date - Allows numeric values and slashes or hyphens as seperators
+      # time - A space must follow the date for time to get picked up, allows numbers or colon
+      # time_zone - Anything that optionally follows the date and/or time is considered the time_zone
+      if value.match /\A([\d\-\/]+)( +([\d:]+)? *(.*)?)?\z/
+          date, time, time_zone = [$1, $3.nil? ? "00:00:00" : $3, Time.find_zone($4)]
+          
+          if time_zone.nil?
+            # The following should never fail - it's our fallback
+            time_zone = Time.find_zone! "Eastern Time (US & Canada)"
+          end
+          
+          Time.use_zone(time_zone) do
+            parsed_value = Time.zone.parse(date + " " + time)
+            parsed_value = parsed_value.utc.to_formatted_s(:db) unless parsed_value.nil?
+          end
+      end 
+    end
+    parsed_value
+  end
 
   def break_rows val
     # We don't have to worry any longer about carriage returns being sent (\r) by themselves to denote new lines.
     # No current operatring systems use this style to denote newlines any longer (Mac OS X is a unix and uses \n).
     val.strip.split(/\r?\n/)
   end
-  private
 
 end
