@@ -1,0 +1,30 @@
+#mailbox_outer {
+  #mailbox_list {
+    position: relative;
+    width: 225px;
+    float: left;
+  }
+  #mailbox_message_pane {
+    margin: 0 25px 0 235px;
+    div.message_list_title {
+      padding: 5px;
+      text-align: center;
+      font-size: 150%;
+    }
+    div.message_entry {
+      padding: 5px;
+      border-top: 1px solid black;
+      font-size: 110%;
+      .message_info {
+        position: relative;
+        float: right
+      }
+    }
+    div.message_entry:hover {
+      background-color: #ddd;
+    }
+    div.user_entry {
+      padding: 0;
+    }
+  }
+}

@@ -17,7 +17,8 @@
   <% end %>
   <% c = 0 %>
   <table class='attachment_table'>
-  <% attachable.all_attachments.each do |att| %>
+  <% attachments = (attachable.respond_to?('all_attachments') ? attachable.all_attachments : attachable.attachments)%>
+  <% attachments.each do |att| %>
     <% if(c%2==0) %><tr><%end%>
     <td>
       <div class='attachment_delete'>
