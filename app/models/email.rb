@@ -18,6 +18,7 @@ class Email < ActiveRecord::Base
       )
       if j["Attachments"]
         j["Attachments"].each do |att_hash|
+          next if att_hash["Content"].blank?
           io = StringIO.new(Base64.decode64(att_hash["Content"]))
           io.class.class_eval { attr_accessor :original_filename, :content_type }
           io.original_filename = att_hash["Name"]

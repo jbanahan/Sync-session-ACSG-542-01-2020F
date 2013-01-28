@@ -29,10 +29,16 @@ describe EmailsController do
       @e2 = Factory(:email)
       @e3 = Factory(:email)
     end
-    it "should return error if user does not have permission"
+    it "should return error if user does not have permission to edit"
+    it "should return error if target user does not have permission to view"
     it "should make assignements and return success if user has permission" do
       Email.any_instance.stub(:can_edit?).and_return true
-      post :assign, {''}
+      post :assign, {'email'=>{"0"=>{"id"=>@e1.id.to_s},"1"=>{"id"=>@e2.id.to_s}},'user_id'=>@u.id.to_s}
+      JSON.parse(response.body).should == {"OK"=>"OK"}
+      [@e1,@e2,@e3].each {|e| e.reload}
+      @e1.assigned_to.should == @u
+      @e2.assigned_to.should == @u
+      @e3.assigned_to.should be_nil
     end
   end
 end

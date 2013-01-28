@@ -15,16 +15,28 @@
       padding: 5px;
       border-top: 1px solid black;
       font-size: 110%;
+      background-color: white;
       .message_info {
         position: relative;
         float: right
       }
     }
-    div.message_entry:hover {
+    div.message_entry:hover, div.message_entry.selected {
       background-color: #ddd;
     }
     div.user_entry {
       padding: 0;
+    }
+    #message_controls {
+      background-color: #eee;
+      border: 1px solid black;
+      margin: 3px 0;
+      border-radius: 5px;
+      padding: 5px;
+      text-align: center;
+      div.count_message {
+        font-weight: bold;
+      }
     }
   }
 }

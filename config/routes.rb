@@ -57,6 +57,7 @@ OpenChain::Application.routes.draw do
   resources :emails, :only=>[:show] do
     collection do
       post 'assign'
+      post 'postmark_receive'
     end
   end
   resources :mailboxes, :only=>[:index,:show]
