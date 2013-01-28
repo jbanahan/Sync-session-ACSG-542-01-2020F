@@ -25,7 +25,7 @@ from (
 select `Entry Number`, `Invoice Number` as `DAS Invoice Number`, `Entered Value` as `Total Value By Entry`, count(*) as `Invoice Lines`,
 if(count(*)>10,count(*)-10,0) as "Billable Lines", if(`Entered Value` > 1600,false,true) as "lvs", `Total Duty`, `Total GST`
 from (
-select distinct ent.id, ci.invoice_number as `Invoice Number`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST` 
+select distinct cil.country_origin_code, ent.id, ci.invoice_number as `Invoice Number`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST` 
 from entries ent
 inner join commercial_invoices ci on ci.entry_id = ent.id
 inner join commercial_invoice_lines cil on cil.commercial_invoice_id = ci.id
