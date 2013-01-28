@@ -973,7 +973,8 @@ LEFT OUTER JOIN
         :qualified_field_name => "(SELECT name from ports where schedule_k_code = bi_entry.lading_port_code)",
         :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
         :join_alias => "bi_entry"
-      }]
+      }],
+      make_broker_invoice_entry_field(55,:bi_cargo_control_number,:cargo_control_number,"Cargo Control Number",:string, lambda{|entry| entry.cargo_control_number})
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
