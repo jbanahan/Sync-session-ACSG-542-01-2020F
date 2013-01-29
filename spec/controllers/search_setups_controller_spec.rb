@@ -33,5 +33,14 @@ describe SearchSetupsController do
       @ss.search_criterions.first.value.should == "2013-01-01" + " " + @u.time_zone
       @ss.search_criterions.second.value.should == "2013-01-01"
     end
+    it 'should not fail if no search criterions are in the search' do 
+      post :update, 
+      {"search_setup"=>{"name"=>"New Name", "download_format"=>"xls", "include_links"=>"0", "no_time"=>"0", "module_type"=>"Product"}, \
+        "id"=>"#{@ss.id}"}
+      
+      response.should redirect_to('/products')
+      @ss = SearchSetup.find(@ss.id)
+      @ss.search_criterions.length.should == 0
+    end
   end
 end

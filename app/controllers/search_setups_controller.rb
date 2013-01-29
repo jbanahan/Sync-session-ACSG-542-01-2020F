@@ -86,6 +86,6 @@ class SearchSetupsController < ApplicationController
           criterion[:value] = criterion[:value] + " " + Time.zone.name
         end
       end
-    end 
+    end unless p[:search_setup][:search_criterions_attributes].nil? 
   end
 end
