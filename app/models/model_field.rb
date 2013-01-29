@@ -1026,9 +1026,19 @@ LEFT OUTER JOIN
           }
           r
         },
-        :join_statement => "LEFT OUTER JOIN (SELECT COUNT(id) as class_count, product_id FROM classifications WHERE classifications.id IN (select classification_id from tariff_records) group by product_id) as prod_class_count ON prod_class_count.product_id = products.id",
+        :join_statement => "
+LEFT OUTER JOIN 
+(select product_id, count(*) as 'cnt' from 
+    (select DISTINCT classifications.id, classifications.product_id, classifications.country_id 
+        from classifications 
+        inner join tariff_records ON tariff_records.classification_id = classifications.id where length(hts_1) > 0) cls group by product_id
+ union 
+    select products.id, 0 from products left outer join classifications on classifications.product_id = products.id 
+        left outer join tariff_records ON tariff_records.classification_id = classifications.id and length(hts_1) > 0 
+        where tariff_records.id is null) prod_class_count on prod_class_count.product_id = products.id 
+", 
         :join_alias => "prod_class_count",
-        :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
+        :qualified_field_name => "prod_class_count.cnt",     
         :data_type => :integer
       }],
       [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}],
