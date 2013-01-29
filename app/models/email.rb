@@ -1,5 +1,5 @@
 class Email < ActiveRecord::Base
-  attr_accessible :body_text, :json_content, :mailbox_id, :mime_content, :subject, :from, :assigned_to_id
+  attr_accessible :body_text, :json_content, :mailbox_id, :mime_content, :subject, :from, :assigned_to_id, :html_content
   belongs_to :mailbox, :touch=>true, :inverse_of=>:emails
   belongs_to :email_linkable, :polymorphic=>true, :inverse_of=>:emails
   belongs_to :assigned_to, :inverse_of=>:assigned_emails, :class_name=>"User"
@@ -14,7 +14,8 @@ class Email < ActiveRecord::Base
       e = Email.create!(:subject=>j['Subject'],
         :body_text=>j['TextBody'],
         :from=>j['From'],
-        :json_content=>stripped_j.to_json
+        :json_content=>stripped_j.to_json,
+        :html_content=>j['HtmlBody']
       )
       if j["Attachments"]
         j["Attachments"].each do |att_hash|
@@ -34,16 +35,10 @@ class Email < ActiveRecord::Base
   #will return plain body text wrapped in a "pre" tag if no html available
   def safe_html 
     r = "<pre>\n[empty]\n</pre>"
-    if self.json_content
-      j = JSON.parse self.json_content
-      h = j["HtmlBody"]
-      if h
-        r = h
-      else
-        r = "<pre>\n#{j["TextBody"]}\n</pre>" 
-      end
+    if !self.html_content.blank?
+      r = Sanitize.clean(self.html_content, Sanitize::Config::RELAXED)
     elsif !self.body_text.blank?
-      r = "<pre>\n#{self.body_text}\n</pre>"
+      r = "<pre>\n#{Sanitize.clean(self.body_text, Sanitize::Config::RELAXED)}\n</pre>"
     end
     r.html_safe
   end

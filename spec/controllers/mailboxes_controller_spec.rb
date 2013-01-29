@@ -23,6 +23,30 @@ describe MailboxesController do
       response.should be_success
       JSON.parse(response.body).should == {"errors"=>["You do not have permission to view this mailbox."]}
     end
+    context :assignments do
+      before :each do
+        Mailbox.any_instance.stub(:can_view?).and_return(true)
+        u2 = Factory(:user)
+        @e1 = @m.emails.create!(:subject=>'e1',:assigned_to_id=>@u.id)
+        @e2 = @m.emails.create!(:subject=>'e2',:assigned_to_id=>u2.id)
+        @e3 = @m.emails.create!(:subject=>'e3')
+      end
+      
+      it "should only render emails for assigned user if user assigned" do
+        get :show, :id=>@m.id, :assigned_to=>@u.id.to_s
+        r = JSON.parse(response.body)
+        r['emails'].should have(1).email
+        r['emails'].first['subject'].should == 'e1'
+        r['selected_user']['id'].should == @u.id.to_s
+      end
+
+      it "should render unassigned emails if assigned_to=0" do
+        get :show, :id=>@m.id, :assigned_to=>'0'
+        r = JSON.parse(response.body)
+        r['emails'].should have(1).email
+        r['emails'].first['subject'].should == 'e3'
+      end
+    end
     it "should be json if permissions are good" do
       e = @m.emails.create!(:body_text=>"abc",:from=>'x',:subject=>'s',:assigned_to_id=>@u.id)
       Mailbox.any_instance.stub(:can_view?).and_return(true)

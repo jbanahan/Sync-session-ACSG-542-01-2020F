@@ -12,9 +12,9 @@ root.ChainMailboxes =
     $("#mailbox_accordion").accordion {header:'.mailbox_title'}
 
   #get the message list from the server and render it
-  loadMessageList : (messageListContainer,mailboxId) ->
+  loadMessageList : (messageListContainer,mailboxId,userId,pageId) ->
     messageListContainer.html("Loading...")
-    $.get "/mailboxes/"+mailboxId+".json", (data) ->
+    $.get "/mailboxes/"+mailboxId+".json?x=x"+(if userId? then "&assigned_to="+userId else "")+(if pageId? then "&page="+pageId else ""), (data) ->
       ChainMailboxes.renderMessageList messageListContainer, data
 
   #show message list on screen
@@ -25,14 +25,19 @@ root.ChainMailboxes =
       h += "<div class='message_info'>"+e.from+" | "+Chain.formatJSONDate(e.created_at,true)+"</div>"
       h += "</div>"
       aTo = if e.assigned_to_id then e.assigned_to_id else 0
-      $("div.user_entry[user-id='"+aTo+"']").append(h)
-    renderUser = (u) ->
-      "<div class='user_header'>"+u.full_name+"</div><div class='user_entry' user-id='"+u.id+"'></div>"
+      messageListContainer.find("div.message_list_inner").append(h)
     h = "<div class='message_list_inner' style='display:none;'><div class='message_list_title'>"+data.name+"</div>"
+    h += "<div id='message_nav'>Page "+data.pagination.current_page+" of "+data.pagination.total_pages+"&nbsp;"
+    if data.pagination.current_page > 1
+      h += "<a href='#' data-action='view-mailbox' mailbox-id='"+data.id+"' page='"+( data.pagination.current_page-1 )+"'"
+      h += "user-id='"+data.selected_user.id+"'" if data.selected_user
+      h += " >&lt;</a> "
+    if data.pagination.current_page < data.pagination.total_pages
+      h += "<a href='#' data-action='view-mailbox' mailbox-id='"+data.id+"' page='"+( data.pagination.current_page+1 )+"'"
+      h += "user-id='"+data.selected_user.id+"'" if data.selected_user
+      h += " >&gt;</a> "
+    h += "</div>"
     h += "<div id='message_controls' style='display:none;'><div class='count_message'><span id='selected_count'></span> Message<span id='selected_plural'></span> Selected</div> <a href='#' data-action='assign-emails'>Assign</a> | <a href='#' data-action='clear-email-selection'>Clear</a></div>"
-    h += "<div class='users'>"
-    h += "<div class='user_header'>Not Assigned</div><div class='user_entry' user-id='0'></div>"
-    h += renderUser(u) for u in data.users
     h += "</div>"
     messageListContainer.html(h)
     h += renderEmail(e) for e in data.emails
@@ -80,7 +85,7 @@ root.ChainMailboxes =
     ChainMailboxes.applyIndexLayout()
     $("a[data-action='view-mailbox']").live 'click', (evt) ->
       evt.preventDefault()
-      ChainMailboxes.loadMessageList messageListContainer, $(@).attr('mailbox-id')
+      ChainMailboxes.loadMessageList messageListContainer, $(@).attr('mailbox-id'), $(@).attr('user-id'), $(@).attr('page')
 
     $("a[data-action='view-email']").live 'click', (evt) ->
       evt.preventDefault()

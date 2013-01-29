@@ -2,10 +2,10 @@ require 'spec_helper'
 
 describe Email do
   describe :create_from_postmark_json! do
-    before :all do #using all to make the tests faster and cut down on I/O
+    before :each do #using all to make the tests faster and cut down on I/O
       @email = Email.create_from_postmark_json! IO.read 'spec/support/bin/email_json.txt'
     end
-    after :all do
+    after :each do
       @email.destroy if @email
     end
     it "should create from json" do
@@ -17,6 +17,10 @@ describe Email do
     it "should set json content" do
       j = JSON.parse @email.json_content
       j["Subject"].should == "My Subject"
+    end
+    it "should set html content" do
+      j = JSON.parse @email.json_content
+      @email.html_content.should == j["HtmlBody"] 
     end
     it "should leave mime content blank" do
       @email.mime_content.should be_nil
@@ -49,13 +53,19 @@ describe Email do
   
 
   describe :safe_html do
-    it "should return whitelist sanitized html from json"
-    it "should mark as html_safe"
+    it "should return whitelist sanitized html from json" do
+      e = Email.new(:html_content=>"<b>x</b><script>y</script>")
+      e.safe_html.should == "<b>x</b>y"
+    end
+    it "should mark as html_safe" do
+      e = Email.new(:body_text=>'x')
+      h = e.safe_html
+      h.should be_html_safe
+    end
     it "should use body_text if json_content nil" do
       e = Email.new(:body_text=>'x')
       h = e.safe_html
       h.should == "<pre>\nx\n</pre>"
-      h.should be_html_safe
     end
   end
   it "should create nested email"

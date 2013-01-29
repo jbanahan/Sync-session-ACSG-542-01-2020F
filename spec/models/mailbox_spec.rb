@@ -1,6 +1,24 @@
 require 'spec_helper'
 
 describe Mailbox do
+  describe "assignment breakdown" do
+    before :each do 
+      @m = Factory(:mailbox)
+      @u1 = Factory(:user)
+      @u2 = Factory(:user)
+      @e1a = Factory(:email,:assigned_to=>@u1,:mailbox=>@m)
+      @e1b = Factory(:email,:assigned_to=>@u1,:mailbox=>@m)
+      @e2a = Factory(:email,:assigned_to=>@u2,:mailbox=>@m)
+      @e_unassigned = Factory(:email,:mailbox=>@m)
+      @dont_find = Factory(:email,:assigned_to=>@u1)
+    end
+    it "should return a hash with assignment count by email" do
+      r = @m.assignment_breakdown
+      r[@u1].should == 2
+      r[nil].should == 1
+      r[@u2].should == 1
+    end
+  end
   describe "permissions" do
     before :each do
       @m = Factory(:mailbox)
