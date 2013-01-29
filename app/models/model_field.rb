@@ -580,13 +580,12 @@ LEFT OUTER JOIN
         inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id 
         inner join tariff_records ON tariff_records.classification_id = classifications.id where length(hts_1) > 0) cls group by product_id
  union 
-    select products.id, 0 from products left outer join classifications on classifications.product_id = products.id and classifications.country_id in (select country_id from countries_regions where countries_regions.region_id = 2)
+    select products.id, 0 from products left outer join classifications on classifications.product_id = products.id and classifications.country_id in (select country_id from countries_regions where countries_regions.region_id = #{r.id})
         left outer join tariff_records ON tariff_records.classification_id = classifications.id and length(hts_1) > 0 
         where tariff_records.id is null) r_#{r.id}_class_count on r_#{r.id}_class_count.product_id = products.id 
 ", 
           :join_alias => "r_#{r.id}_class_count",
           :qualified_field_name => "r_#{r.id}_class_count.cnt"          
-#:qualified_field_name=>"(select count(*) from (select distinct classifications.id, classifications.product_id, classifications.country_id from classifications inner join tariff_records on tariff_records.classification_id = classifications.id where length(hts_1) > 0 ) cls where cls.product_id = products.id and cls.country_id in (select country_id from countries_regions where region_id = #{r.id}))"
         }
       )
       MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf
