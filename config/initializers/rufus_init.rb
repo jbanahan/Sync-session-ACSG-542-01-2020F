@@ -91,7 +91,7 @@ def execute_scheduler
   
   if MasterSetup.get.system_code == 'polo' && Rails.env == 'production'
     scheduler.every("60m") do
-      ["RLAUREN","POLO","CLUBMONACO"].each do |cn|
+      ["RLAUREN","POLO","CLUBMONCO"].each do |cn|
         OpenChain::CustomHandler::FenixProductFileGenerator.new(cn).delay.generate
       end
     end
