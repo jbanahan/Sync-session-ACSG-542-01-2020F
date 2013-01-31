@@ -2,34 +2,20 @@ require 'spec_helper'
 
 describe Email do
   describe :create_from_postmark_json! do
-    before :each do #using all to make the tests faster and cut down on I/O
-      @email = Email.create_from_postmark_json! IO.read 'spec/support/bin/email_json.txt'
-    end
-    after :each do
-      @email.destroy if @email
+    before :each do
+      @m = Factory(:mailbox,:email_aliases=>"pmarktest")
+      @email = Email.create_from_postmark_json! IO.read 'spec/support/bin/email_json.txt' 
     end
     it "should create from json" do
       @email.id.should_not be_nil
-    end
-    it "should set subject" do
       @email.subject.should == "My Subject"
-    end
-    it "should set json content" do
       j = JSON.parse @email.json_content
       j["Subject"].should == "My Subject"
-    end
-    it "should set html content" do
-      j = JSON.parse @email.json_content
       @email.html_content.should == j["HtmlBody"] 
-    end
-    it "should leave mime content blank" do
       @email.mime_content.should be_nil
-    end
-    it "should set body text" do
       @email.body_text.should == "this is the body\n\nwith two rows\n"
-    end
-    it "should set from" do
       @email.from.should == "brian@brian-glick.com"
+      @email.mailbox.should == @m
     end
     describe :attachments do
       it "should strip attachments from json_content" do

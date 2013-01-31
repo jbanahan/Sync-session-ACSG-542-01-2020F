@@ -23,4 +23,14 @@ class EmailsController < ApplicationController
     Email.delay.create_from_postmark_json! request.body.read 
     render :nothing=>true
   end
+  def toggle_archive
+    r = {"OK"=>"OK"}
+    email = Email.find params[:id]
+    if email.can_edit? current_user
+      email.update_attributes(:archived=>!email.archived?)
+    else
+      r = {"errors"=>["You do not have permssion to edit this message."]}
+    end
+    render :json=>r
+  end
 end

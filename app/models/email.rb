@@ -1,5 +1,5 @@
 class Email < ActiveRecord::Base
-  attr_accessible :body_text, :json_content, :mailbox_id, :mime_content, :subject, :from, :assigned_to_id, :html_content
+  attr_accessible :body_text, :json_content, :mailbox_id, :mime_content, :subject, :from, :assigned_to_id, :html_content, :archived
   belongs_to :mailbox, :touch=>true, :inverse_of=>:emails
   belongs_to :email_linkable, :polymorphic=>true, :inverse_of=>:emails
   belongs_to :assigned_to, :inverse_of=>:assigned_emails, :class_name=>"User"
@@ -11,11 +11,21 @@ class Email < ActiveRecord::Base
     stripped_j.delete 'Attachments'
     e = nil
     Email.transaction do |t|
+      headers = j["Headers"]
+      list_id = headers.collect {|h| h['Name']=="List-ID" ? h['Value'] : nil}.compact.first
+      list_id = list_id.gsub("<",'').split(".").first if list_id
+      mailbox_id = nil
+      if list_id
+        Mailbox.where("email_aliases like ?","%#{list_id}%").each do |m|
+          m.email_aliases.split("\n").each {|mv| mailbox_id = m.id if mv==list_id} if m.email_aliases
+        end
+      end
       e = Email.create!(:subject=>j['Subject'],
         :body_text=>j['TextBody'],
         :from=>j['From'],
         :json_content=>stripped_j.to_json,
-        :html_content=>j['HtmlBody']
+        :html_content=>j['HtmlBody'],
+        :mailbox_id => mailbox_id
       )
       if j["Attachments"]
         j["Attachments"].each do |att_hash|

@@ -23,6 +23,28 @@ describe EmailsController do
       assigns(:email).should == @e
     end
   end
+  describe "toggle_archive" do
+    it "should return error if user does not have permission to edit"
+    context :secure do
+      before :each do
+        Email.any_instance.stub(:can_edit?).and_return true
+        @email = Factory(:email)
+      end
+      it "should archive email" do
+        post :toggle_archive, :id=>@email.id
+        JSON.parse(response.body).should == {"OK"=>"OK"}
+        @email.reload
+        @email.should be_archived
+      end
+      it "should remove archive flag" do
+        @email.update_attributes(:archived=>true)
+        post :toggle_archive, :id=>@email.id
+        JSON.parse(response.body).should == {"OK"=>"OK"}
+        @email.reload
+        @email.should_not be_archived
+      end
+    end
+  end
   describe "assign" do
     before :each do 
       @e1 = Factory(:email)
