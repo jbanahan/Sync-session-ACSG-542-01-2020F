@@ -54,6 +54,14 @@ OpenChain::Application.routes.draw do
       get 'show_by_order_line_id'
     end
   end
+  resources :emails, :only=>[:show] do
+    collection do
+      post 'toggle_archive'
+      post 'assign'
+      post 'postmark_receive'
+    end
+  end
+  resources :mailboxes, :only=>[:index,:show]
   resources :entity_types
   resources :field_validator_rules do
     get 'validate', :on=>:collection

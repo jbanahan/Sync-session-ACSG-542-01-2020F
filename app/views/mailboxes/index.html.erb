@@ -1,0 +1,11 @@
+<%content_for :javascript do -%>
+$(function() {
+  ChainMailboxes.init($("#mailbox_list"),$("#mailbox_message_pane"));
+});
+<%end-%>
+<div id='mailbox_outer'>
+  <div id='mailbox_list'>
+  </div>
+  <div id='mailbox_message_pane'>
+  </div>
+</div>

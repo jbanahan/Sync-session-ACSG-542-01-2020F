@@ -1,0 +1,12 @@
+<div class='email_wrapper'>
+  <table>
+    <%=field_row "From", email.from%>
+    <%=field_row "Subject", email.subject%>
+    <%=field_row "Mailbox", email.mailbox ? email.mailbox.name : "[unfiled]"%>
+    <%=field_row "Received At", email.created_at%>
+  </table>
+  <hr />
+  <%=email.safe_html%>
+  <hr />
+  <%=render :partial=>'shared/attachments', :locals=>{:attachable=>email, :width=>'wide'}%>
+</div>
