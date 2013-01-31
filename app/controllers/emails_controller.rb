@@ -9,13 +9,17 @@ class EmailsController < ApplicationController
   def assign
     r = {"OK"=>"OK"}
     u = User.find params[:user_id]
-    emails = params[:email].values.collect {|v| Email.find v[:id]}
-    secure = true
-    #TODO: write security check here
-    if secure
-      emails.each {|e| e.update_attributes(:assigned_to_id=>u.id)}
+    emails = Email.where("id IN (?)",params[:email].values.collect {|v| v[:id]})
+    if can_edit_all? emails 
+      error_msg = nil
+      emails.each {|e| error_msg = "Messages cannot be assigned because #{u.full_name} does not have permission to view them." if error_msg.nil? && !e.can_view?(u)}
+      if error_msg
+        r = {"errors"=>[error_msg]}
+      else
+        emails.each {|e| e.update_attributes(:assigned_to_id=>u.id)} 
+      end
     else
-      r = {"errors"=>["You do not have permssion to edit these messages."]}
+      r = {"errors"=>["You do not have permission to edit these messages."]}
     end
     render :json=>r
   end
@@ -25,12 +29,24 @@ class EmailsController < ApplicationController
   end
   def toggle_archive
     r = {"OK"=>"OK"}
-    email = Email.find params[:id]
-    if email.can_edit? current_user
-      email.update_attributes(:archived=>!email.archived?)
+    emails = Email.where("id IN (?)",params[:email].values.collect {|v| v[:id]})
+    if can_edit_all? emails
+      emails.each {|e| e.update_attributes(:archived=>!e.archived?)}
     else
-      r = {"errors"=>["You do not have permssion to edit this message."]}
+      r = {"errors"=>["You do not have permission to edit these messages."]}
     end
     render :json=>r
+  end
+
+  private
+  def can_edit_all? emails
+    r = true
+    emails.each do |e| 
+      if !e.can_edit? current_user
+        r = false
+        break
+      end
+    end
+    r
   end
 end

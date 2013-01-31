@@ -5,8 +5,8 @@ class Mailbox < ActiveRecord::Base
   
   #get hash of each user with an email assigned and the number of emails
   #the key is the user object and the value is the assignment count
-  def assignment_breakdown
-    h = self.emails.count(:group=>:assigned_to_id)
+  def assignment_breakdown archived
+    h = (archived ? self.emails.archived : self.emails.not_archived).count(:group=>:assigned_to_id)
     r = {}
     users = User.where("id IN (?)",h.keys.compact)
     uh = {}

@@ -1,6 +1,19 @@
 require 'spec_helper'
 
 describe Email do
+  context "scopes" do
+    before :each do
+      @archived_nil = Factory(:email,:body_text=>"A")
+      @archived_true = Factory(:email,:archived=>true)
+      @archived_false = Factory(:email,:archived=>false,:body_text=>"B")
+    end
+    it "should find archived items only" do
+      Email.archived.to_a.should == [@archived_true]
+    end
+    it "should find archived false or nil" do
+      Email.not_archived.order(:body_text).to_a.should == [@archived_nil,@archived_false]
+    end
+  end
   describe :create_from_postmark_json! do
     before :each do
       @m = Factory(:mailbox,:email_aliases=>"pmarktest")

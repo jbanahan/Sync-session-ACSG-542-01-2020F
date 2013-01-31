@@ -82,7 +82,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
   context "previous_month mode" do
     it "should return entries from previous month regardless of paid status" do
       find_even_though_paid = Factory(:entry,:importer=>@imp,
-        :monthly_statement_paid_date=>Time.now,:release_date=>1.month.ago+1.day)
+        :monthly_statement_paid_date=>Time.now,:release_date=>1.month.ago)
       dont_find_even_though_unpaid_because_different_month = Factory(:entry,
         :importer=>@imp,:release_date=>1.hour.from_now)
       ent = described_class.new(@user,'previous_month')

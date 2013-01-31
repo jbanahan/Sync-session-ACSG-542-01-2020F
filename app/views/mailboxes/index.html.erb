@@ -1,22 +1,11 @@
 <%content_for :javascript do -%>
 $(function() {
-  ChainMailboxes.init($("#mailbox_message_pane"));
+  ChainMailboxes.init($("#mailbox_list"),$("#mailbox_message_pane"));
 });
 <%end-%>
 <div id='mailbox_outer'>
   <div id='mailbox_list'>
-    <div id='mailbox_accordion'>
-      <%current_user.mailboxes.each do |m|-%>
-        <div class='mailbox_title'><%=m.name%></div>
-        <div class='mailbox_actions'>
-          <%m.assignment_breakdown.each do |user,count|-%>
-            <div><a href='#' data-action='view-mailbox' mailbox-id='<%=m.id%>'i user-id='<%=user ? user.id : 0%>'><%=user ? user.full_name : "Not Assigned"%></a> (<%=count%>)</div>
-          <%end-%>
-        </div>
-      <%end-%>
-    </div>
   </div>
   <div id='mailbox_message_pane'>
   </div>
 </div>
-

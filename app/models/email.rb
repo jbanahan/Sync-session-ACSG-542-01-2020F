@@ -5,6 +5,9 @@ class Email < ActiveRecord::Base
   belongs_to :assigned_to, :inverse_of=>:assigned_emails, :class_name=>"User"
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
 
+  scope :archived, where(:archived=>true)
+  scope :not_archived, where("archived = ? OR archived is null",false)
+
   def self.create_from_postmark_json! json
     j = JSON.parse json
     stripped_j = j.clone

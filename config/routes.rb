@@ -55,10 +55,8 @@ OpenChain::Application.routes.draw do
     end
   end
   resources :emails, :only=>[:show] do
-    member do
-      post 'toggle_archive'
-    end
     collection do
+      post 'toggle_archive'
       post 'assign'
       post 'postmark_receive'
     end

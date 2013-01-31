@@ -11,6 +11,42 @@ describe MailboxesController do
       get :index
       response.should be_success
     end
+    it "should get json for mailbox list" do
+      u1 = Factory(:user)
+      u2 = Factory(:user)
+      m1 = Factory(:mailbox,:name=>'M1')
+      m1e1 = Factory(:email,:mailbox=>m1)
+      m1e2 = Factory(:email,:mailbox=>m1,:assigned_to=>u1)
+      m1e3 = Factory(:email,:mailbox=>m1,:assigned_to=>u1)
+      m1e4 = Factory(:email,:mailbox=>m1,:assigned_to=>u1,:archived=>true)
+      m2 = Factory(:mailbox,:name=>'M2')
+      m2e1 = Factory(:email,:mailbox=>m2,:assigned_to=>u1)
+      m2e2 = Factory(:email,:mailbox=>m2,:assigned_to=>u2,:archived=>true)
+      [m1,m2].each {|m| @u.mailboxes << m}
+      expected = {
+        'mailboxes'=>[
+          {'id'=>m1.id,'name'=>'M1',
+            'archived'=>[
+              {'user'=>{'id'=>u1.id,'full_name'=>u1.full_name},'count'=>1}  
+            ],
+            'not_archived'=>[
+              {'user'=>{'id'=>0,'full_name'=>'Not Assigned'},'count'=>1},
+              {'user'=>{'id'=>u1.id,'full_name'=>u1.full_name},'count'=>2}
+            ]
+          },
+          {'id'=>m2.id,'name'=>'M2',
+            'archived'=>[
+              {'user'=>{'id'=>u2.id,'full_name'=>u2.full_name},'count'=>1}
+            ],
+            'not_archived'=>[
+              {'user'=>{'id'=>u1.id,'full_name'=>u1.full_name},'count'=>1}
+            ]
+          }
+        ]
+      }
+      get :index, :format=>:json
+      JSON.parse(response.body).should == expected
+    end
   end
   describe :show do
     before :each do
@@ -22,6 +58,27 @@ describe MailboxesController do
       get :show, :id=>@m.id
       response.should be_success
       JSON.parse(response.body).should == {"errors"=>["You do not have permission to view this mailbox."]}
+    end
+    context :archiving do
+      before :each do
+        Mailbox.any_instance.stub(:can_view?).and_return(true)
+        @archived = @m.emails.create!(:subject=>'e1',:archived=>true)
+        @not_archived = @m.emails.create!(:subject=>'e2',:archived=>false)
+      end
+      it "should not show archived messages by default" do
+        get :show, :id=>@m.id
+        r = JSON.parse(response.body)
+        r['archived'].should be_false
+        r['emails'].should have(1).email
+        r['emails'].first['subject'].should == 'e2'
+      end
+      it "should only show archived messages if archived parameter is sent" do
+        get :show, :id=>@m.id, :archived=>'true'
+        r = JSON.parse(response.body)
+        r['archived'].should be_true
+        r['emails'].should have(1).email
+        r['emails'].first['subject'].should == 'e1'
+      end
     end
     context :assignments do
       before :each do
@@ -37,7 +94,7 @@ describe MailboxesController do
         r = JSON.parse(response.body)
         r['emails'].should have(1).email
         r['emails'].first['subject'].should == 'e1'
-        r['selected_user']['id'].should == @u.id.to_s
+        r['selected_user']['id'].should == @u.id
       end
 
       it "should render unassigned emails if assigned_to=0" do

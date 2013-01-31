@@ -4,6 +4,18 @@
     width: 225px;
     float: left;
   }
+  div.mailbox_actions {
+    a.active_mailbox {
+      font-weight: bold;
+      background-color: #ddd;
+    }
+    div.mailbox_breakdown_label {
+      font-weight: bold;
+      margin-top: 5px;
+      font-size: 120%;
+    }
+  
+  }
   #mailbox_message_pane {
     margin: 0 25px 0 235px;
     div.message_list_title {
@@ -13,7 +25,8 @@
     }
     div.message_entry {
       padding: 5px;
-      border-top: 1px solid black;
+      border: 1px solid black;
+      border-top: none;
       font-size: 110%;
       background-color: white;
       .message_info {
@@ -26,6 +39,11 @@
     }
     div.user_entry {
       padding: 0;
+    }
+    #message_nav {
+      border-bottom: 1px solid black;
+      text-align: right;
+      padding: 5px;
     }
     #message_controls {
       background-color: #eee;
