@@ -1,5 +1,6 @@
 class EmailsController < ApplicationController
   skip_before_filter :verify_authenticity_token, :only=>[:postmark_receive]
+  skip_before_filter :require_user, :only=>[:postmark_receive]
   def show
     e = Email.find(params[:id])
     action_secure e.can_view?(current_user), e,{:lock_check=>false,:module_name=>"email",:verb=>"edit"} do
