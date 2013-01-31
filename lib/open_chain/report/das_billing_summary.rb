@@ -1,7 +1,8 @@
+require 'open_chain/report/report_helper'
 module OpenChain
   module Report
     class DasBillingSummary
-      DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
+      include OpenChain::Report::ReportHelper
       TAX_ID ="857733323RM0001" 
       DATA_TABLE_COLUMNS = [:ent_brok_ref,:ent_entry_num,:ci_invoice_number,:ent_cargo_control_number,
       :ent_cadex_sent_date,:ent_cadex_accept_date,:ent_pars_ack_date,:ent_direct_shipment_date,
@@ -16,8 +17,12 @@ module OpenChain
 
       #expects start_date and end_date
       def self.run_report run_by, settings={}
-        start_date = settings['start_date']
-        end_date = settings['end_date']
+        self.new.run run_by, settings
+      end
+
+      def run run_by, settings
+        start_date = sanitize_date_string settings['start_date']
+        end_date = sanitize_date_string settings['end_date']
         summary_qry = <<QRY
 select `Entry Number`, `DAS Invoice Number`, `Total Value By Entry`, `Invoice Lines`, `Billable Lines`, (`Billable Lines` * if(`lvs`,0.4,0.5)) as "Line Charge", 
 if(`lvs`,45,85) as `Brokerage Charge`, `Total Duty`, `Total GST`
@@ -44,28 +49,15 @@ QRY
         make_summary_sheet wb, summary_qry
         make_raw_sheet wb, entries, run_by
 
-        t = Tempfile.new(['das_billing','.xls'])
-        wb.write t.path
-        t
+        workbook_to_tempfile wb, 'das_billing'
       end
 
       private 
-      def self.make_summary_sheet wb, qry
-        rs = Entry.connection.execute qry
+      def make_summary_sheet wb, qry
         sheet = wb.create_worksheet :name=>"Summary"
-        cursor = 0
-        row = sheet.row(cursor)
-        rs.fields.each {|f| row.push << f }
-        cursor += 1
-        rs.each do |vals|
-          row = sheet.row(cursor)
-          vals.each_with_index do |v,col|
-            write_val sheet, row, cursor, col, v
-          end
-          cursor += 1
-        end
+        table_from_query sheet, qry
       end
-      def self.make_raw_sheet wb, entries, run_by 
+      def make_raw_sheet wb, entries, run_by 
         raw_sheet = wb.create_worksheet :name=>"Raw Data"
         cursor = 0
         row = raw_sheet.row(cursor)
@@ -90,14 +82,6 @@ QRY
               end
             end
           end
-        end
-      end
-      def self.write_val sheet, row, row_num, col_num, val
-        v = val
-        v = v.to_f if v.is_a?(BigDecimal)
-        row[col_num] = v
-        if v.respond_to?(:strftime)
-          sheet.row(row_num).set_format(col_num,DATE_FORMAT)
         end
       end
     end

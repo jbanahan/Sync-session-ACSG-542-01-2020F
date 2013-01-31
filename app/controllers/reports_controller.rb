@@ -94,6 +94,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_foot_locker_billing_summary
+    if OpenChain::Report::FootLockerBillingSummary.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_foot_locker_billing_summary
+    if OpenChain::Report::FootLockerBillingSummary.permission? current_user
+      settings = {'start_date'=>params[:start_date],'end_date'=>params['end_date']}
+      run_report "Foot Locker US Billing Summary", OpenChain::Report::FootLockerBillingSummary, settings, ["Invoice date between #{params[:start_date]} and #{params[:end_date]}."]
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   def show_das_billing_summary
     if OpenChain::Report::DasBillingSummary.permission? current_user
       render

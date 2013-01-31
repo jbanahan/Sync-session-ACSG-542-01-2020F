@@ -1,0 +1,25 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    var r = true;
+    if($("input[name='start_date']").val().length < 10) {
+      r = false;
+    }
+    if($("input[name='end_date']").val().length < 10) {
+      r = false;
+    }
+    if(!r) {
+      window.alert("You must enter both dates.");
+      return false;
+    }
+  });
+});
+<%end-%>
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="link_btn" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>Foot Locker US Billing Summary</h2>
+<%=form_tag reports_run_foot_locker_billing_summary_path, :id=>'frm_run' do -%>
+  Invoice Date between <%=text_field_tag :start_date, nil, :class=>'isdate'%> and <%=text_field_tag :end_date, nil, :class=>'isdate'%>.
+<%end%>
