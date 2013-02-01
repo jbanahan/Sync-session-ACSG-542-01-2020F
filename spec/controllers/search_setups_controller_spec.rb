@@ -40,7 +40,7 @@ describe SearchSetupsController do
       
       response.should redirect_to('/products')
       @ss = SearchSetup.find(@ss.id)
-      @ss.search_criterions.length.should == 0
+      @ss.search_criterions.length.should == 2
     end
   end
 end
