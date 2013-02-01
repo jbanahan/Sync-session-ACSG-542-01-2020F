@@ -56,7 +56,7 @@ describe CustomReportBillingStatementByPo do
       row.should == ["EntryTest", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "2", "Entry", "1\n 2\n 3"]
 
       row = r[3]
-      row.should == ["EntryTest", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "3", "Entry", "1\n 2\n 3"]
+      row.should == ["EntryTest", Date.parse("2013-01-01"), BigDecimal.new("33.34"), "3", "Entry", "1\n 2\n 3"]
     end
 
     it "should show a message if now results are returned" do

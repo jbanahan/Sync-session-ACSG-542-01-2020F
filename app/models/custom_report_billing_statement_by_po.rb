@@ -38,8 +38,13 @@ class CustomReportBillingStatementByPo < CustomReport
     invoices.each do |inv|
       entry = inv.entry
       po_numbers = split_po_numbers entry
-      inv_amount = ((inv.invoice_total || BigDecimal.new("0")) / BigDecimal.new(po_numbers.length)).round(2)
-      po_numbers.each do |po|
+      
+      # This invoice amount stuff is there to handle the case where, due to rounding the prorated amount you may
+      # be left with the need to tack on an extra penny on the last line (ie. 100 / 3 lines = 33.33, 33.33, 33.34)
+      remaining_invoice_amount = inv.invoice_total || BigDecimal.new("0")
+      even_split_amount = (remaining_invoice_amount / BigDecimal.new(po_numbers.length)).round(2)
+      
+      po_numbers.each_with_index do |po, i|
         col = 0
         cols = []
 
@@ -48,9 +53,17 @@ class CustomReportBillingStatementByPo < CustomReport
           col += 1
         end
 
+        po_value = 0
+        if i < (po_numbers.length - 1) 
+          po_value = even_split_amount
+          remaining_invoice_amount -= even_split_amount
+        else 
+          po_value = remaining_invoice_amount
+        end
+
         cols << entry.broker_reference + inv.suffix
         cols << inv.invoice_date
-        cols << inv_amount
+        cols << po_value
         cols << po
 
         search_cols.each do |c|
