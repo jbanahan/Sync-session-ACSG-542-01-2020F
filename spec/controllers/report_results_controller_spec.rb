@@ -52,6 +52,17 @@ describe ReportResultsController do
         results.first.should == first_result
         results.last.should == last_result
       end
+
+      it "should show customizable reports if user can view them" do
+        CustomReportEntryInvoiceBreakdown.stub(:can_view?).with(@base_user).and_return(true)
+        CustomReportBillingAllocationByValue.stub(:can_view?).with(@base_user).and_return(true)
+        CustomReportBillingStatementByPo.stub(:can_view?).with(@base_user).and_return(true)
+
+        get :index
+        response.should be_success
+        custom_reports = assigns(:customizable_reports)
+        custom_reports.should have(3).elements
+      end
     end
 
     context 'admin' do

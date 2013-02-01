@@ -63,6 +63,13 @@ class CustomReport < ActiveRecord::Base
     @listener.write row, column, content
   end
 
+  def write_columns row, starting_column, content_array
+    content_array.each do |c|
+      @listener.write row, starting_column, c
+      starting_column += 1
+    end
+  end
+
   def write_hyperlink row, column, url, alt_text=nil
     @listener.write_hyperlink row, column, url, alt_text 
   end

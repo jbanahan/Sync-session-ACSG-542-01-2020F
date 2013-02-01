@@ -104,10 +104,11 @@ describe SearchCriterion do
   context 'date time field' do
     it "should translate datetime values to UTC for lt operator" do
       # Run these as central timezone
-      tz = "Central Time (US & Canada)"
-      value = "2013-01-01 " + tz
+      tz = "Hawaii"
+      date = "2013-01-01"
+      value = date + " " + tz
       expected_value = Time.use_zone(tz) do
-        Time.zone.parse(value).utc.to_formatted_s(:db)
+        Time.zone.parse(date).utc.to_formatted_s(:db)
       end
 
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"lt", :value=>value)
@@ -116,22 +117,23 @@ describe SearchCriterion do
       
     it "should translate datetime values to UTC for gt operator" do
       # Make sure we're also allowing actual time values as well
-      tz = "Central Time (US & Canada)"
-      value = "2012-01-01 07:08:09 " + tz
+      tz = "Hawaii"
+      date = "2012-01-01 07:08:09" 
+      value = date + " " + tz
       expected_value = Time.use_zone(tz) do
-      Time.zone.parse(value).utc.to_formatted_s(:db)
+        Time.zone.parse(date).utc.to_formatted_s(:db)
       end
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"gt", :value=>value)
-      sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/ 
+      sql = sc.apply(Product.where("1=1")).to_sql
+      sql.should =~ /#{expected_value}/ 
     end
       
     it "should translate datetime values to UTC for eq operator" do
       # Make sure that if the timezone is not in the value, that we add eastern timezone to it
       value = "2012-01-01"
       sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"eq", :value=>value)
-      expected_value = nil
-      Time.use_zone("Eastern Time (US & Canada)") do
-        expected_value = Time.zone.parse(value + " 00:00:00").utc.to_formatted_s(:db)
+      expected_value = Time.use_zone("Eastern Time (US & Canada)") do
+        Time.zone.parse(value + " 00:00:00").utc.to_formatted_s(:db)
       end
 
       sc.apply(Product.where("1=1")).to_sql.should =~ /#{expected_value}/ 

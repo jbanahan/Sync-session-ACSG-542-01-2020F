@@ -68,6 +68,7 @@ describe CustomReport do
         write 1, 1, 7
         write_hyperlink 1, 2, "http://abc/def", "mylink"
         write 4, 4, "my row 4"
+        write_columns 5, 1, ["col1", "col2"]
         heading_row 0
       end
     end
@@ -85,6 +86,8 @@ describe CustomReport do
       sheet.row(1)[2].should == "mylink"
       sheet.row(1)[2].url.should == "http://abc/def"
       sheet.row(4)[4].should == "my row 4"
+      sheet.row(5)[1].should == "col1"
+      sheet.row(5)[2].should == "col2"
     end
     it 'should output to given xls file' do
       @tmp = Tempfile.new('custom_report_spec')
@@ -104,6 +107,7 @@ describe CustomReport do
       r[3].should have(0).elements
       r[4][0].should == ""
       r[4][4].should == "my row 4"
+      r[5].should == ["", "col1", "col2"]
     end
 
     it 'should output csv' do
@@ -118,6 +122,7 @@ describe CustomReport do
       r[3].should have(0).elements
       r[4][0].should == ""
       r[4][4].should == "my row 4"
+      r[5].should == ["", "col1", "col2"]
     end
   end
 end
