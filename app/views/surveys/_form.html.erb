@@ -33,6 +33,10 @@
       evt.preventDefault();
       OCSurvey.copyQuestion($(this).attr('qid'));
     });
+    $("#questions").sortable({handle:'.question_handle',axis:'y'});
+    $("#frm_svy").submit(function() {
+      ChainSurveys.applyRankToQuestions();
+    });
   });
 <% end %>
 <style>
@@ -41,6 +45,9 @@
 }
 .q_area {
   width: 100%;
+}
+.question_handle {
+  cursor: move;
 }
 </style>
 <%content_for :action_bar do %>
