@@ -662,9 +662,10 @@ var OCSurvey = (function() {
       if(id && id < 10000000) {
         h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][id]' value='"+mid+"' />";
       }
-      h += "<div id='qb-"+mid+"'>Question Body:</div><textarea id='q_"+mid+"' class='q_area' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
+      h += "<div id='qb-"+mid+"'><img src='<%=asset_path 'drag_handle.gif'%>' alt='move' class='question_handle'/>Question Body:</div><textarea id='q_"+mid+"' class='q_area' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
       h += "<a href='#' class='q_preview' qid='"+mid+"'>Preview</a><br />";
       h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
+      h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
       h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Warn If Empty</div>"
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";
       h += "</div>";
