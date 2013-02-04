@@ -14,3 +14,4 @@ coverage.data
 coverage/*
 .rvmrc*
 .sass-cache/
+public/assets/*
