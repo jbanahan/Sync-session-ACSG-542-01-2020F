@@ -75,7 +75,7 @@ var OCSearch = (function() {
     });
   }
 
-  var initSearchCrits = function() {
+  var bindValueValidations = function(tr) {
     var getDataType = function(f) {
       return f.parents("tr:first").find(".srch_crit_fld option:selected").attr('dtype');
     }
@@ -90,6 +90,48 @@ var OCSearch = (function() {
     }
     var relDateVal = function(f) {
       f.jStepper();
+    }
+    var validations = {
+      gt:numDateVal,
+      lt:numDateVal,
+      eq:numDateVal,
+      nq:numDateVal,
+      sw:numDateVal,
+      ew:numDateVal,
+      co:numDateVal,
+      ada:relDateVal,
+      adf:relDateVal,
+      bda:relDateVal,
+      bdf:relDateVal,
+      pm:relDateVal,
+      'null':function(f) {f.hide();},
+      'notnull':function(f) {f.hide()}
+    }
+    var op = tr.find(".srch_crit_oper");
+    var vField = tr.find(".srch_crit_value");
+    var vCont = tr.find('.srch_crit_cont')
+    var opVal = op.val();
+    var tagName = vField[0].nodeName.toLowerCase();
+    if(opVal=='in' && tagName!='textarea') {
+    vCont.html("<textarea class='srch_crit_value' name='"+vField.attr('name')+"' cols='30' rows='5' id='"+vField.attr('id')+"' /><div class='srch_instruction'>One Value Per Line</div>");
+      return;
+    } else if (opVal!='in' && tagName=='textarea') {
+      vCont.html("<input type='text' size='30' id='"+vField.attr('id')+"' name='"+vField.attr('name')+"' class='srch_crit_value' />")
+    }
+    var vField = tr.find(".srch_crit_value");
+    vField.unbind(); //remove bindings
+    vField.show();
+    vField.val('');
+    vField.datepicker('destroy');
+    var v = validations[op.val()]
+    if(v) {
+      v(vField);
+    }
+  }
+
+  var initSearchCrits = function() {
+    var getDataType = function(f) {
+      return f.parents("tr:first").find(".srch_crit_fld option:selected").attr('dtype');
     }
     var writeSearchOperators = function(modelField,selected) {
       var dt = getDataType(modelField);
@@ -130,42 +172,6 @@ var OCSearch = (function() {
       op.html(h);
       op.val(selected);
       op.change();
-    }
-    var validations = {
-      gt:numDateVal,
-      lt:numDateVal,
-      eq:numDateVal,
-      nq:numDateVal,
-      sw:numDateVal,
-      ew:numDateVal,
-      co:numDateVal,
-      ada:relDateVal,
-      adf:relDateVal,
-      bda:relDateVal,
-      bdf:relDateVal,
-      pm:relDateVal,
-      'null':function(f) {f.hide();},
-      'notnull':function(f) {f.hide()}
-    }
-    var bindValueValidations = function(tr) {
-      var op = tr.find(".srch_crit_oper");
-      var vField = tr.find(".srch_crit_value");
-      var opVal = op.val();
-      var tagName = vField[0].nodeName.toLowerCase();
-      if(opVal=='in' && tagName!='textarea') {
-        vField.replaceWith("<textarea class='srch_crit_value' name='"+vField.attr('name')+"' cols='30' rows='5' id='"+vField.attr('id')+"' />");
-        return;
-      } else if (opVal!='in' && tagName=='textarea') {
-        vField.replaceWith("<input type='text' size='30' id='"+vField.attr('id')+"' name='"+vField.attr('name')+"' class='srch_crit_value' />")
-      }
-      vField.unbind(); //remove bindings
-      vField.show();
-      vField.val('');
-      vField.datepicker('destroy');
-      var v = validations[op.val()]
-      if(v) {
-        v(vField);
-      }
     }
     $(".srch_crit_oper").live('change',function() {
       bindValueValidations($(this).parents("tr:first"));
@@ -426,7 +432,7 @@ var OCSearch = (function() {
         }
         h = h + "</select></td>";
         h = h + "<td><select id='"+parentObject+"_search_criterions_attributes_"+m+"_operator' name='"+parentObject+"[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
-        h = h + "</select></td><td><"+(operator=='in' ? "textarea rows='4' cols='30'" : "input size='30' type='text'")+" id='"+parentObject+"_search_criterions_attributes_"+m+"_value' name='"+parentObject+"[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></td>";
+        h = h + "</select></td><td><div class='srch_crit_cont'><input size='30' type='text' id='"+parentObject+"_search_criterions_attributes_"+m+"_value' name='"+parentObject+"[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></div></td>";
         if(canDelete) {
         h = h + "<td><input class='sp_destroy' id='"+parentObject+"_search_criterions_attributes_"+m+"__destroy' name='"+parentObject+"[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='<%=asset_path('x.png')%>' title='remove' /></a></td></tr>";
         }
@@ -441,6 +447,7 @@ var OCSearch = (function() {
         row.find(".srch_crit_oper").val(operator);
         row.find(".srch_crit_oper").change();
       }
+      bindValueValidations(row);
       if(value) {
         row.find(".srch_crit_value").val(value);
       }
