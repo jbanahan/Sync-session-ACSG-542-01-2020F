@@ -25,7 +25,7 @@ class EmailsController < ApplicationController
     render :json=>r
   end
   def postmark_receive
-    Email.delay.create_from_postmark_json! request.body.read.to_s 
+    Email.create_from_postmark_json! request.body.read.to_s 
     render :nothing=>true
   end
   def toggle_archive
