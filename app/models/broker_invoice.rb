@@ -5,7 +5,7 @@ class BrokerInvoice < ActiveRecord::Base
   has_many :broker_invoice_lines, :dependent => :destroy, :inverse_of=>:broker_invoice
   
   before_validation {self.currency = "USD" if self.currency.blank?}
-  validates_uniqueness_of :suffix, {:scope => :entry_id}
+  validates_uniqueness_of :invoice_number, {:scope => :source_system}
 
   accepts_nested_attributes_for :broker_invoice_lines, :allow_destroy=>true, :reject_if => lambda {|q|
     q[:charge_description].blank? || q[:charge_amount].blank?

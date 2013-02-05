@@ -143,6 +143,10 @@ describe OpenChain::FenixParser do
     tar.excise_amount.should == @excise_amount
   end
   
+  it 'should call link_broker_invoices' do
+    Entry.any_instance.should_receive :link_broker_invoices
+    OpenChain::FenixParser.parse @entry_lambda.call
+  end
   it 'should overwrite lines on reprocess' do
     2.times {OpenChain::FenixParser.parse @entry_lambda.call}
     Entry.where(:broker_reference=>@file_number).should have(1).record
