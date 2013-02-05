@@ -1,3 +1,4 @@
+require 'htmlentities'
 class Email < ActiveRecord::Base
   attr_accessible :body_text, :json_content, :mailbox_id, :mime_content, :subject, :from, :assigned_to_id, :html_content, :archived
   belongs_to :mailbox, :touch=>true, :inverse_of=>:emails
@@ -27,7 +28,7 @@ class Email < ActiveRecord::Base
         :body_text=>j['TextBody'],
         :from=>j['From'],
         :json_content=>stripped_j.to_json,
-        :html_content=>j['HtmlBody'],
+        :html_content=>(j['HtmlBody'].blank? ? "" : HTMLEntities.new.decode(j['HtmlBody'])),
         :mailbox_id => mailbox_id
       )
       if j["Attachments"]

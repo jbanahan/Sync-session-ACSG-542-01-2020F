@@ -24,7 +24,7 @@ describe Email do
       @email.subject.should == "My Subject"
       j = JSON.parse @email.json_content
       j["Subject"].should == "My Subject"
-      @email.html_content.should == j["HtmlBody"] 
+      @email.html_content.should == "<b>Hello world</b>\n" 
       @email.mime_content.should be_nil
       @email.body_text.should == "this is the body\n\nwith two rows\n"
       @email.from.should == "brian@brian-glick.com"

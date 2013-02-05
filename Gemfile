@@ -18,11 +18,14 @@ gem 'delayed_job_active_record', '0.3.2'
 gem 'delayed_job', '3.0.3'
 gem 'dalli', '2.2.1'
 gem 'postmark-rails', '0.4.1'
-gem 'RedCloth', '4.2.9'
-gem 'sanitize'
 gem 'rubyzip'
 gem 'jquery-rails'
 gem 'newrelic_rpm'
+
+#text processing/encoding stuff
+gem 'RedCloth', '4.2.9'
+gem 'htmlentities'
+gem 'sanitize'
 
 #javascript environment, we will compile assets during deployment
 #so we need these on the production servers as well
