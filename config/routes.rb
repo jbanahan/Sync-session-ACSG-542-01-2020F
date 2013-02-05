@@ -211,7 +211,7 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  resources :user_sessions, :only => [:new,:create,:destroy]
+  resources :user_sessions, :only => [:index,:new,:create,:destroy]
 
   resources :item_change_subscriptions
   

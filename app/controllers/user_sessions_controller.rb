@@ -1,14 +1,26 @@
 class UserSessionsController < ApplicationController
   skip_before_filter :require_user
 
+
+  def index
+    if current_user
+      redirect_to root_path
+    else
+      redirect_to new_user_session_path
+    end
+  end
   # GET /user_sessions/new
   # GET /user_sessions/new.xml
   def new
-    @user_session = UserSession.new
+    if current_user
+      redirect_to root_path
+    else
+      @user_session = UserSession.new
 
-    respond_to do |format|
-      format.html { render :layout => 'one_col' }# new.html.erb
-      format.xml  { render :xml => @user_session }
+      respond_to do |format|
+        format.html { render :layout => 'one_col' }# new.html.erb
+        format.xml  { render :xml => @user_session }
+      end
     end
   end
 
