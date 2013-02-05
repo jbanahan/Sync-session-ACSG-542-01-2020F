@@ -107,6 +107,14 @@ def execute_scheduler
     scheduler.every("30m") do
       OpenChain::CustomHandler::PoloCaEfocusGenerator.new.delay.generate 
     end
+    scheduler.every('60m') do
+      begin
+        eb = Company.find_by_alliance_customer_number 'EDDIE' #the product database is tied to the US importer
+        OpenChain::CustomHandler::FenixProductFileGenerator.new('EDDIEBR',lambda {|p| p.where(:importer_id=>eb.id)}).delay.generate
+      rescue
+        $!.log_me ['Eddie Bauer Fenix File Generator Failed']
+      end
+    end
   end
 
 end

@@ -24,6 +24,11 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     it "should find products that need sync and have canadian classifications" do
       @h.find_products.to_a.should == [@to_find_1,@to_find_2] 
     end
+    it "should apply additional filters" do
+      @to_find_1.update_attributes(:name=>'XYZ')
+      h = @h.class.new(@code,lambda {|products| products.where(:name=>'XYZ')})
+      h.find_products.to_a.should == [@to_find_1]
+    end
     it "should not find products that don't have canada classifications but need sync" do
       different_country_product = Factory(:tariff_record,:hts_1=>'1234567891',:classification=>Factory(:classification)).product
       @h.find_products.to_a.should == [@to_find_1,@to_find_2] 
