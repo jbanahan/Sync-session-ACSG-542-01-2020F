@@ -317,7 +317,7 @@ OpenChain::Application.routes.draw do
     resources :attachment_archive_manifests, :only=>[:create] do
       get 'download', :on=>:member
     end
-    resources :attachment_archives, :only=>[:create] do
+    resources :attachment_archives, :only=>[:create, :show] do
       post 'complete', :on=>:member
     end
     resources :attachment_archive_setups, :except=>[:destroy,:index]

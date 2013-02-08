@@ -29,6 +29,26 @@ class AttachmentArchivesController < ApplicationController
     end
   end
 
+  def show 
+    errors = []
+    archive = nil
+    if current_user.edit_attachment_archives?
+      c = Company.find_by_id(params[:company_id])
+      archive = c.attachment_archives.find_by_id(params[:id]) unless c.nil?
+      if archive.nil?
+        errors << "Archive not found."
+      end
+    else 
+      errors << "You do not have permission to view archives."
+    end
+
+    if errors.empty?
+      render :json=>archive.attachment_list_json
+    else 
+      render :json=>{'errors'=>errors}.to_json
+    end
+  end
+
   def complete
     raise ActionController::RoutingError.new('Not Found') unless current_user.edit_attachment_archives?
     arch = Company.find(params[:company_id]).attachment_archives.find_by_id(params[:id])

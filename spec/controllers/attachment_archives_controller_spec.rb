@@ -70,4 +70,44 @@ describe AttachmentArchivesController do
       @arch.finish_at.should be_nil
     end
   end
+
+  describe :show do
+    before :each do
+      @c = Factory(:company)
+      @arch = @c.attachment_archives.create!(:name=>'xyz',:start_at=>Time.now)  
+    end
+
+    it "should return json archive listing" do
+      User.any_instance.stub(:edit_attachment_archives?).and_return true
+      AttachmentArchive.any_instance.stub(:attachment_list_json).and_return("json")
+      get :show, :company_id=>@c.id, :id=>@arch.id
+      response.should be_success
+      response.body.should == 'json' 
+    end
+
+    it "should return errors if user doesn't have permission" do
+      User.any_instance.stub(:edit_attachment_archives?).and_return false
+      
+      get :show, :company_id=>@c.id, :id=>@arch.id
+      response.should be_success
+      response.body.should == {'errors'=>['You do not have permission to view archives.']}.to_json
+    end
+
+    it "should return error if archive isn't found" do
+      User.any_instance.stub(:edit_attachment_archives?).and_return true
+      
+      get :show, :company_id=>@c.id, :id=>-1
+      response.should be_success
+      response.body.should == {'errors'=>['Archive not found.']}.to_json
+    end
+
+    it "should return error if company isn't found" do
+      User.any_instance.stub(:edit_attachment_archives?).and_return true
+      
+      get :show, :company_id=>-1, :id=>@arch.id
+      response.should be_success
+      response.body.should == {'errors'=>['Archive not found.']}.to_json
+
+    end
+  end
 end

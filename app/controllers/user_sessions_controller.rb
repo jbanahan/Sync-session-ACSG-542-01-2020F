@@ -1,5 +1,6 @@
 class UserSessionsController < ApplicationController
   skip_before_filter :require_user
+  skip_before_filter :verify_authenticity_token, :only=> [:create]
 
 
   def index
@@ -19,7 +20,6 @@ class UserSessionsController < ApplicationController
 
       respond_to do |format|
         format.html { render :layout => 'one_col' }# new.html.erb
-        format.xml  { render :xml => @user_session }
       end
     end
   end
@@ -31,7 +31,6 @@ class UserSessionsController < ApplicationController
 
     respond_to do |format|
       if @user_session.save
-        add_flash :notices, "Login successful."
         c = @user_session.user
         if @user_session.user.host_with_port.nil?
           @user_session.user.host_with_port = request.host_with_port
@@ -39,12 +38,17 @@ class UserSessionsController < ApplicationController
         end
         
         History.create({:history_type => 'login', :user_id => c.id, :company_id => c.company_id})
-        format.html { redirect_back_or_default(:root) }
-        format.xml  { render :xml => @user_session, :status => :created, :location => @user_session }
+        format.html do 
+          add_flash :notices, "Login successful."
+          redirect_back_or_default(:root)
+        end
+        format.json { head :ok }
       else
-        errors_to_flash @user_session, :now => true
-        format.html { render :action => "new" }
-        format.xml  { render :xml => @user_session.errors, :status => :unprocessable_entity }
+        format.html do 
+          errors_to_flash @user_session, :now => true
+          render :action => "new" 
+        end
+        format.json { render :json => {"errors"=>@user_session.errors.full_messages}}
       end
     end
   end
@@ -58,7 +62,6 @@ class UserSessionsController < ApplicationController
     respond_to do |format|
       add_flash :notices, "You are logged out.  Thanks for visiting."
       format.html { redirect_to new_user_session_path }
-      format.xml  { head :ok }
     end
   end
 end
