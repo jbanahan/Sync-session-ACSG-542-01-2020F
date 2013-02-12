@@ -186,6 +186,7 @@ Factory.define :commercial_invoice_line do |f|
   f.sequence :line_number
 end
 Factory.define :broker_invoice do |f|
+  f.sequence :invoice_number
   f.association :entry
 end
 Factory.define :broker_invoice_line do |f|

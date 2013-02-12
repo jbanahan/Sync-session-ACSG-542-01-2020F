@@ -138,7 +138,7 @@ describe CustomReportBillingAllocationByValue do
       @ci_2 = @ent_2.commercial_invoices.create!(:invoice_number=>"ci_2")
       @cil_2_1 = @ci_2.commercial_invoice_lines.create!(:line_number=>"1",:value=>100)
       @cil_2_2 = @ci_2.commercial_invoice_lines.create!(:line_number=>"2",:value=>100)
-      @bi_2 = @ent_2.broker_invoices.create!(:invoice_date=>0.seconds.ago,:invoice_total=>100)
+      @bi_2 = @ent_2.broker_invoices.create!(:invoice_date=>0.seconds.ago,:invoice_total=>100,:invoice_number=>'bi_2')
       @bi_2.broker_invoice_lines.create!(:charge_description=>"C1",:charge_amount=>"1000")
       rpt = @klass.new
       rpt.search_criterions.build(:model_field_uid=>:bi_entry_num,:operator=>"eq",:value=>"9999")
@@ -202,7 +202,7 @@ describe CustomReportBillingAllocationByValue do
       imp_user = Factory(:importer_user)
       @e2 = Entry.create!(:broker_reference=>'8888',:importer_id=>imp_user.company_id)
       @e2.broker_invoices.
-        create!(:invoice_date=>0.seconds.ago,:invoice_total=>20).
+        create!(:invoice_date=>0.seconds.ago,:invoice_total=>20,:invoice_number=>'e2').
         broker_invoice_lines.create!(:charge_description=>"CDX",:charge_amount=>20)
       @e2.commercial_invoices.create!(:invoice_number=>"X").
         commercial_invoice_lines.create!(:value=>100)

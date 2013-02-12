@@ -5,6 +5,13 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     @content = File.read 'spec/support/bin/fenix_invoices.csv'
     @k = OpenChain::CustomHandler::FenixInvoiceParser
   end
+
+  it "should set s3 info if passed" do
+    @k.parse @content, {:bucket=>'bucket',:key=>'key'}
+    b = BrokerInvoice.first
+    b.last_file_bucket.should == 'bucket'
+    b.last_file_path.should == 'key'
+  end
   it "should write invoice" do
     @k.parse @content
     BrokerInvoice.count.should == 2
@@ -20,7 +27,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
     bi.should have(3).broker_invoice_lines
 
-    billing = bi.broker_invoice_lines.find_by_charge_code '5'
+    billing = bi.broker_invoice_lines.find_by_charge_code '55' #should truncate the text if the invoice charge code starts with a number and a space
     billing.charge_description.should == 'BILLING'
     billing.charge_amount.should == 45
     billing.charge_type.should == 'R'
@@ -30,7 +37,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     hst.charge_amount.should == 5.85
     hst.charge_type.should == 'R'
     
-    gst = bi.broker_invoice_lines.find_by_charge_code '2'
+    gst = bi.broker_invoice_lines.find_by_charge_code '21'
     gst.charge_description.should == 'GST ON IMPORTS'
     gst.charge_amount.should == 4523.98
     gst.charge_type.should == 'D'
@@ -52,5 +59,11 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     @k.parse @content
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
     bi.entry.should == ent
+  end
+
+  it "invoice total should not include codes 20 or 21" do
+    @k.parse @content
+    BrokerInvoice.find_by_broker_reference('280952').invoice_total.should == 50.85
+    BrokerInvoice.find_by_broker_reference('281350').invoice_total.should == 53.11
   end
 end

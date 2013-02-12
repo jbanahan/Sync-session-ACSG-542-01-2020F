@@ -1,26 +1,29 @@
 module OpenChain
   module CustomHandler
     class FenixInvoiceParser
-      def self.parse file_content
+    
+      def self.parse file_content, opts={}
         last_invoice_number = ''
         rows = []
         CSV.parse(file_content,:headers=>true) do |row|
           next if row.length==0
           my_invoice_number = row[3]
           if last_invoice_number!=my_invoice_number && !rows.empty?
-            self.new rows
+            self.new rows, opts
             rows = []
           end
           rows << row
           last_invoice_number = my_invoice_number
         end
-        self.new rows unless rows.empty?
+        self.new rows, opts unless rows.empty?
       end
       
       #don't call this, use the static parse method
-      def initialize rows
+      def initialize rows, opts
         BrokerInvoice.transaction do
           invoice = make_header rows.first
+          invoice.last_file_bucket = opts[:bucket]
+          invoice.last_file_path = opts[:key]
           invoice.invoice_total = BigDecimal('0.00')
           rows.each do |r|
             line = add_detail(invoice, r)
@@ -43,8 +46,11 @@ module OpenChain
       end
 
       def add_detail invoice, row
-        line = invoice.broker_invoice_lines.build(:charge_description=>row[7].strip,:charge_code=>row[6].strip,:charge_amount=>BigDecimal(row[8].strip))
-        line.charge_type = (line.charge_code == '2' ? 'D' : 'R')
+        charge_code = row[6].strip
+        charge_code_prefix = charge_code.split(" ").first
+        charge_code = charge_code_prefix if charge_code_prefix.match /^[0-9]*$/
+        line = invoice.broker_invoice_lines.build(:charge_description=>row[7].strip,:charge_code=>charge_code,:charge_amount=>BigDecimal(row[8].strip))
+        line.charge_type = (['20','21'].include?(line.charge_code) ? 'D' : 'R')
         line
       end
     end
