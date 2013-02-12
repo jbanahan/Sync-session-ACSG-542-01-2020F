@@ -33,6 +33,25 @@ describe AttachmentArchiveManifestsController do
       get :download, :company_id=>@u.company.id, :id=>@m.id
       response.status.should == 204
     end
+    it "should respond with a 204 if the manifest doesn't exist in s3" do
+      # The excessive mocking is because you can't really reliably 
+      # test a situation where the attachment record exists but the actual
+      # data isn't in S3 yet.
+      attachment = double()
+      company = double()
+      manifests = double()
+      manifest = double()
+      attach = double()
+      Company.should_receive(:find).with("#{@u.company.id}").and_return(company)
+      company.should_receive(:attachment_archive_manifests).and_return(manifests)
+      manifests.should_receive(:find).with("#{@m.id}").and_return(manifest)
+      manifest.should_receive(:attachment).any_number_of_times.and_return(attachment)
+      attachment.should_receive(:attached).any_number_of_times.and_return(attach)
+      attach.should_receive(:exists?).and_return(false)
+
+      get :download, :company_id=>@u.company.id, :id=>@m.id
+      response.status.should == 204
+    end
     it "should respond with 200 and attachment if done" do
       @m.make_manifest!
       get :download, :company_id=>@u.company.id, :id=>@m.id

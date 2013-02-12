@@ -8,7 +8,7 @@ class AttachmentArchiveManifestsController < ApplicationController
 
   def download
     m = Company.find(params[:company_id]).attachment_archive_manifests.find(params[:id])
-    if m.attachment
+    if m.attachment && m.attachment.attached && m.attachment.attached.exists?
       redirect_to m.attachment.secure_url
     else
       render :nothing=>true, :status=>204
