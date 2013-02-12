@@ -351,6 +351,9 @@ module OpenChain
     # invoice header
     def process_ih00 r
       @invoice = @entry.broker_invoices.build(:suffix=>r[4,2],:currency=>"USD")
+      @invoice.invoice_number = "#{@entry.broker_reference}#{@invoice.suffix}"
+      @invoice.source_system = @entry.source_system
+      @invoice.broker_reference = @entry.broker_reference
       @invoice.invoice_date = parse_date r[6,8] unless r[6,8] == "00000000"
       @invoice.invoice_total = parse_currency r[24,11]
       @invoice.customer_number = r[14,10].strip

@@ -19,6 +19,15 @@ class Entry < ActiveRecord::Base
   def locked?
     false
   end
+
+  #find any broker invoices by source system and broker reference and link them to this entry
+  #will replace any existing entry link in the invoices
+  def link_broker_invoices
+    BrokerInvoice.where(:source_system=>self.source_system,:broker_reference=>self.broker_reference).each do |bi|
+      bi.update_attributes(:entry_id=>self.id)
+    end
+    self.reload
+  end
   # Return true if transport mode is 10 or 11
   def ocean?
     ['10','11'].include? self.transport_mode_code

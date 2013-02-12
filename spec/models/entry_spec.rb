@@ -1,6 +1,26 @@
 require 'spec_helper'
 
 describe Entry do
+  describe "link_broker_invoices" do
+    before :each do
+      @ent = Factory(:entry,:broker_reference=>'5555',:source_system=>'ABC')
+    end
+    it 'should match' do 
+      bi = BrokerInvoice.create!(:broker_reference=>'5555',:invoice_number=>'notbrokref',:source_system=>'ABC')
+      @ent.link_broker_invoices
+      @ent.broker_invoices.first.should == bi
+    end
+    it "should not match if source system doesn't match" do
+      bi = BrokerInvoice.create!(:broker_reference=>'5555',:invoice_number=>'notbrokref',:source_system=>'ZZ')
+      @ent.link_broker_invoices
+      @ent.broker_invoices.count.should == 0
+    end
+    it "should not match if broker_reference doesn't match" do
+      bi = BrokerInvoice.create!(:broker_reference=>'XX',:invoice_number=>'notbrokref',:source_system=>'ABC')
+      @ent.link_broker_invoices
+      @ent.broker_invoices.count.should == 0
+    end
+  end
   describe 'ocean?' do
     it "should return false for nil transport mode" do
       Entry.new.should_not be_ocean

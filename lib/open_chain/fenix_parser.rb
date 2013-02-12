@@ -70,6 +70,8 @@ module OpenChain
       end
 
       @entry.save!
+      #match up any broker invoices that might have already been loaded
+      @entry.link_broker_invoices
       #write time to process without reprocessing hooks
       @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
     end

@@ -973,7 +973,9 @@ LEFT OUTER JOIN
         :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
         :join_alias => "bi_entry"
       }],
-      make_broker_invoice_entry_field(55,:bi_cargo_control_number,:cargo_control_number,"Cargo Control Number",:string, lambda{|entry| entry.cargo_control_number})
+      make_broker_invoice_entry_field(55,:bi_cargo_control_number,:cargo_control_number,"Cargo Control Number",:string, lambda{|entry| entry.cargo_control_number}),
+      [56,:bi_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
+      [57,:bi_source_system,:source_system,"Source System",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}]
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
