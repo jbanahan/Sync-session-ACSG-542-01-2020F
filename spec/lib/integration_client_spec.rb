@@ -75,7 +75,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end
-    it 'should send data to Fenix parser if custom feature enabled and path contains _fenix' do
+    it 'should send data to Fenix parser if custom feature enabled and path contains _fenix but not _fenix_invoices' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
       OpenChain::FenixParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
@@ -86,6 +86,19 @@ describe OpenChain::IntegrationClientCommandProcessor do
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
       OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix/x.y"} 
+    end
+    it 'should send data to Fenix invoice parser if feature enabled and path contains _fenix_invoices' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
+      OpenChain::CustomHandler::FenixInvoiceParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+      OpenChain::FenixParser.should_not_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
+      cmd = {'request_type'=>'remote_file','path'=>'/_fenix_invoices/x.y','remote_path'=>'12345'}
+      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
+    end
+    it 'should not send data to Fenix invoice parser if custom feature is not enabled' do
+      cmd = {'request_type'=>'remote_file','path'=>'/_fenix_invoices/x.y','remote_path'=>'12345'}
+      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix_invoices/x.y"} 
     end
     it 'should send data to Alliance parser if custom feature enabled and path contains _alliance' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
