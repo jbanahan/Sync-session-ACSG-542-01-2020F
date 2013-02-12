@@ -19,6 +19,8 @@ class BrokerInvoicesController < ApplicationController
       error_redirect "You do not have permission to edit invoices."
     else
       bi = ent.broker_invoices.build(params[:broker_invoice])
+      bi.invoice_number = "#{ent.broker_reference}#{bi.suffix}" if bi.invoice_number.blank?
+      bi.source_system = "Screen (#{current_user.full_name})"
       if bi.broker_invoice_lines.empty?
         add_flash :errors, "Cannot create invoice without lines."
       else
