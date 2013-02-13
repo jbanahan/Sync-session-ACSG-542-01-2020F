@@ -161,9 +161,10 @@ class SearchSetupTest < ActiveSupport::TestCase
     
     m = []
     assert !s.uploadable?(m), "Should not upload without required fields or as vendor. Messages: #{m}"
-    assert m.length==2, "Messages length should have been 2, was #{m.length}"
+    assert m.length==3, "Messages length should have been 2, was #{m.length}"
     assert m.include?("You do not have permission to edit Products."), "Permission missing. Messages: #{m}"
     assert m.include?("#{label "prod_uid"} field is required to upload Products."), "UID required missing. Messages: #{m}"
+    assert m.include?("Only users from the master company can upload products.")
 
     s.search_columns.create!(:model_field_uid=>"prod_uid",:rank=>0)
     s.user=users(:masteruser)
@@ -242,35 +243,5 @@ class SearchSetupTest < ActiveSupport::TestCase
     assert f.nil?
     f = SearchSetup.find_last_accessed User.find(3), CoreModule::PRODUCT
     assert f.nil?
-  end
-  
-  test "deep copy" do
-    base = SearchSetup.create!(:name => "deep copy test", :user => User.find(1), :module_type=>"Product", :download_format=>"test")
-    search_crit = base.search_criterions.create!(:operator => "eq", :value=>"10", :model_field_uid=>"prod_name")
-    sort_crit = base.sort_criterions.create!(:rank=>5,:model_field_uid=>"prod_ven",:descending=>true)
-    search_col = base.search_columns.create!(:rank=>0,:model_field_uid=>"prod_ven_name")
-    base.deep_copy("new name",true)
-    copy = SearchSetup.where(:name=>"new name").first
-    assert copy.id != base.id, "IDs were the same"
-    assert copy.user==base.user, "Users were different"
-    assert copy.module_type == base.module_type, "Module types different"
-    assert copy.download_format==base.download_format
-    assert copy.search_criterions.length==base.search_criterions.length, "Search criterions length were different"
-    copy_search = copy.search_criterions.first
-    assert copy_search.id != search_crit.id, "Search criterion ids were the same."
-    assert copy_search.operator == search_crit.operator, "Search criterion operators were different"
-    assert copy_search.value == search_crit.value, "Search criterion values were different"
-    assert copy_search.model_field_uid == search_crit.model_field_uid, "Search criterion model_field_uids were different"
-    assert copy.sort_criterions.length==base.sort_criterions.length, "Sort criterions length were different"
-    copy_sort = copy.sort_criterions.first
-    assert copy_sort.id != sort_crit.id, "Sort criterion ids were the same"
-    assert copy_sort.model_field_uid==sort_crit.model_field_uid, "Sort criterion model_field_uids were different"
-    assert copy_sort.rank==sort_crit.rank, "Sort criterion ranks were different"
-    assert copy_sort.descending==sort_crit.descending, "Sort criterion descending were different"
-    assert copy.search_columns.length==base.search_columns.length, "Sort column lengths were different"
-    copy_col = copy.search_columns.first
-    assert copy_col.id != sort_crit.id, "Search column ids were the same"
-    assert copy_col.model_field_uid==search_col.model_field_uid, "Search column model_field_uids were different"
-    assert copy_col.rank==search_col.rank, "Search column ranks were different"
   end
 end

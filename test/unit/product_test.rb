@@ -57,43 +57,10 @@ class ProductTest < ActiveSupport::TestCase
     assert_not_same cv, base_cv
   end
 
-  test "auto classify" do
-    us = countries(:us)
-    us.import_location = true
-    us.save!
-    cn = countries(:china)
-    cn.import_location = true
-    cn.save!
-
-    base_ot = OfficialTariff.create!(:country_id=>us.id,:hts_code=>"1111112345",:full_description=>"FD")
-    ot_to_find = OfficialTariff.create!(:country_id=>cn.id,:hts_code=>"1111115432",:full_description=>"FDD")
-    ot_to_ignore = OfficialTariff.create!(:country_id=>cn.id,:hts_code=>"1111115555",:full_description=>"ADK")
-    md = ot_to_ignore.meta_data
-    md.auto_classify_ignore = true
-    md.save!
-
-    p = Product.create!(:unique_identifier=>"UID")
-    c = p.classifications.create!(:country_id=>us.id)
-    c.tariff_records.create!(:hts_1=>base_ot.hts_code)
-
-    p.auto_classify(us)
-    assert p.classifications.size == 2
-    classifications = p.classifications.to_a
-    china_class = (p.classifications.keep_if {|x| x.country_id==cn.id}).first
-    assert china_class.tariff_records.size==1
-    expected = china_class.tariff_records.first.hts_1
-    assert expected ==ot_to_find.hts_code, "Expected #{ot_to_find.hts_code}, Found #{expected}"
-    assert china_class.tariff_records.first.hts_1_matches.first == ot_to_find
-    assert china_class.tariff_records.first.hts_1_matches.size==1
-  end
-
   # Replace this with your real tests.
   test "can_view" do
     u = User.find(1)
     assert Product.find(1).can_view?(u), "Master user can't view product."
-    u = User.find(2)
-    assert Product.find(1).can_view?(u), "Vendor can't view own product."
-    assert !Product.find(2).can_view?(u), "Vendor can view other's product."
     u = User.find(4)
     assert !Product.find(1).can_view?(u), "Carrier can view product."
     assert !Product.find(2).can_view?(u), "Carrier can view product."
@@ -102,9 +69,6 @@ class ProductTest < ActiveSupport::TestCase
   test "can_edit" do
     u = User.find(1)
     assert Product.find(1).can_edit?(u), "Master user can't edit product."
-    u = User.find(2)
-    assert !Product.find(1).can_edit?(u), "Vendor can edit own product."
-    assert !Product.find(2).can_edit?(u), "Vendor can edit other's product."
     u = User.find(4)
     assert !Product.find(1).can_edit?(u), "Carrier can edit product."
     assert !Product.find(2).can_edit?(u), "Carrier can edit product."

@@ -85,7 +85,8 @@ class UserTest < ActiveSupport::TestCase
 
     u = users(:customer6user)
     enable_all_personal_permissions u
-    assert !u.view_products? && !u.edit_products? && !u.add_products? && !u.comment_products? && !u.attach_products?
+    #Every company can view/comment/attach products - the controlling permissions for those are set at user level only now
+    assert u.view_products? && !u.edit_products? && !u.add_products? && u.comment_products? && u.attach_products?
   end
   test "order permissions" do
     u = users(:masteruser)

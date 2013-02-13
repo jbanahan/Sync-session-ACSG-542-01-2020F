@@ -3,6 +3,8 @@ require 'test_helper'
 class SalesOrderTest < ActiveSupport::TestCase
   test "can edit & view" do
     mast_u = Company.where(:master=>true).first.users.first
+    mast_u.sales_order_edit = true
+    mast_u.sales_order_view = true
     cust = Company.where(:customer=>true).first
     cust_u = cust.users.first
     wrong_cust_u = Company.where(:customer=>true).where("id <> ?",cust.id).first.users.first

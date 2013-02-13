@@ -13,7 +13,7 @@ class MilestoneDefinitionTest < ActiveSupport::TestCase
   test "plan" do
     p = Product.where(:vendor_id=>companies(:vendor).id).first
     ord = Order.create!(:order_number=>"ordnum",:vendor_id=>companies(:vendor).id)
-    o_line = ord.order_lines.create!(:product_id=>p,:quantity=>100,:line_number=>1)
+    o_line = ord.order_lines.create!(:product_id=>p.id,:quantity=>100,:line_number=>1)
     ps = o_line.piece_sets.create!(:quantity=>100)
 
     assert_nil @order_md.plan(ps)
@@ -28,7 +28,7 @@ class MilestoneDefinitionTest < ActiveSupport::TestCase
     assert_equal 30.days.from_now.to_date, @shipment_md.plan(ps)
 
     shp = Shipment.create!(:reference=>"shprf",:vendor_id=>ord.vendor_id)
-    s_line = shp.shipment_lines.create!(:product_id=>p,:quantity=>100,:line_number=>1)
+    s_line = shp.shipment_lines.create!(:product_id=>p.id,:quantity=>100,:line_number=>1)
     ps.update_attributes!(:shipment_line_id=>s_line.id)
     shp_cv = shp.get_custom_value @ship_date
     shp_cv.value = 2.days.from_now.to_date
@@ -82,7 +82,7 @@ class MilestoneDefinitionTest < ActiveSupport::TestCase
 
     p = Product.where(:vendor_id=>companies(:vendor).id).first
     ord = Order.create!(:order_number=>"ordnum",:vendor_id=>companies(:vendor).id)
-    o_line = ord.order_lines.create!(:product_id=>p,:quantity=>100,:line_number=>1)
+    o_line = ord.order_lines.create!(:product_id=>p.id,:quantity=>100,:line_number=>1)
     ps = o_line.piece_sets.create!(:quantity=>100)
 
     assert_nil @order_md.forecast(ps)
@@ -99,7 +99,7 @@ class MilestoneDefinitionTest < ActiveSupport::TestCase
     assert_equal 45.days.from_now.to_date, @s2_md.forecast(ps)
 
     shp = Shipment.create!(:reference=>"shprf",:vendor_id=>ord.vendor_id)
-    s_line = shp.shipment_lines.create!(:product_id=>p,:quantity=>100,:line_number=>1)
+    s_line = shp.shipment_lines.create!(:product_id=>p.id,:quantity=>100,:line_number=>1)
     ps.update_attributes!(:shipment_line_id=>s_line.id)
 
     assert_equal 30.days.from_now.to_date, @shipment_md.forecast(ps)

@@ -85,7 +85,7 @@ class CoreExtTest < ActiveSupport::TestCase
       "1234567890"=>"1234.56.7890",
       "1234567890123"=>"1234.56.78.90123",
       "1234.5.6"=>"1234.56", #cleanup periods
-      "12x34.56"=>"12x34.56", #ignore anything with letters
+      "12x34.56"=>"12x3.456", #allow letters
       "12 34 56"=>"1234.56" #cleanup spaces
     }
     test_map.each do |given,expected|

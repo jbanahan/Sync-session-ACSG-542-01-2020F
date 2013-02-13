@@ -21,9 +21,9 @@ class SortCriterionTest < ActiveSupport::TestCase
 
   test "apply multi-level" do
     zp = Product.create!(:unique_identifier=>"hts_sort_1",:name=>"hct",:vendor=>companies(:vendor))
-    zh = zp.classifications.create!(:country_id=>Country.first).tariff_records.create!(:hts_1=>"999")
+    zh = zp.classifications.create!(:country_id=>Country.first.id).tariff_records.create!(:hts_1=>"999")
     ap = Product.create!(:unique_identifier=>"hts_sort_2",:name=>"hct",:vendor=>companies(:vendor))
-    ah = ap.classifications.create!(:country_id=>Country.first).tariff_records.create!(:hts_1=>"111")
+    ah = ap.classifications.create!(:country_id=>Country.first.id).tariff_records.create!(:hts_1=>"111")
     sc = SortCriterion.create(:model_field_uid=>"hts_hts_1",:descending=>true);
     results = sc.apply(Product.where(:name=>"hct"))
     assert results.first==zp
@@ -39,12 +39,12 @@ class SortCriterionTest < ActiveSupport::TestCase
     cd = CustomDefinition.create!(:module_type=>"Classification",:label=>"MC",:data_type=>"integer")
     ModelField.reload
     zp = Product.create!(:unique_identifier=>"hts_sort_1",:name=>"hct",:vendor=>companies(:vendor))
-    zc = zp.classifications.create!(:country_id=>Country.first)
+    zc = zp.classifications.create!(:country_id=>Country.first.id)
     zcv = zc.get_custom_value(cd)
     zcv.value = 2
     zcv.save!
     ap = Product.create!(:unique_identifier=>"hts_sort_2",:name=>"hct",:vendor=>companies(:vendor))
-    ac = ap.classifications.create!(:country_id=>Country.first)
+    ac = ap.classifications.create!(:country_id=>Country.first.id)
     acv = ac.get_custom_value(cd)
     acv.value = 1
     acv.save!

@@ -25,12 +25,12 @@ class GridMakerTest < ActiveSupport::TestCase
 
   test "three levels" do
     u = User.first
-    p1 = Product.create!(:unique_identifier=>"a",:vendor_id => companies(:vendor))
+    p1 = Product.create!(:unique_identifier=>"a",:vendor_id => companies(:vendor).id)
     c1a = p1.classifications.create!(:country_id => countries(:us).id)
     t1ay = c1a.tariff_records.create!(:hts_1 => "1010")
     c1b = p1.classifications.create!(:country_id => countries(:china).id)
     
-    p2 = Product.create!(:unique_identifier=>"b",:vendor_id => companies(:vendor))
+    p2 = Product.create!(:unique_identifier=>"b",:vendor_id => companies(:vendor).id)
 
     field_list = [SearchColumn.new(:model_field_uid =>"hts_hts_1"),
       SearchColumn.new(:model_field_uid=>"prod_uid"), SearchColumn.new(:model_field_uid=>"_blank"),
