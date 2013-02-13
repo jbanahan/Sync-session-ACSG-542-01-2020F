@@ -47,6 +47,9 @@ Factory.define :importer_user, :parent=>:user do |f|
   f.broker_invoice_view true
   f.after_create {|u| u.company.update_attributes(:importer=>true)}
 end
+Factory.define :vendor_user, :parent=>:user do |f|
+  f.after_create {|u| u.company.update_attributes(:vendor=>true)}
+end
 Factory.define :drawback_user, :parent=>:user do |f|
   f.drawback_view true
   f.drawback_edit true

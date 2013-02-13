@@ -4,7 +4,7 @@ class CoreModuleTest < ActiveSupport::TestCase
 
   test "object from piece set" do
     o = Order.create!(:order_number=>"1234",:vendor_id=>companies(:vendor).id)
-    o_line = o.order_lines.create!(:product_id=>Product.where(:vendor_id=>o.vendor_id).first,:quantity=>40)
+    o_line = o.order_lines.create!(:product_id=>Product.where(:vendor_id=>o.vendor_id).first.id,:quantity=>40)
     s = Shipment.create!(:reference=>"sr",:vendor_id=>o.vendor_id)
     s_line = s.shipment_lines.create!(:product_id=>o_line.product_id,:quantity=>40)
     so = SalesOrder.create!(:order_number=>"1515",:customer_id=>companies(:customer6).id)

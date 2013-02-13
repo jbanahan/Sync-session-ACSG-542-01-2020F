@@ -10,7 +10,7 @@ class OrderTest < ActiveSupport::TestCase
     
 
     o = Order.create!(:order_number=>"olms",:vendor_id=>companies(:vendor).id,:order_date=>30.days.ago)
-    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first,:quantity=>100)
+    o_line = o.order_lines.create!(:line_number=>1,:product_id=>Product.where(:vendor_id=>o.vendor_id).first.id,:quantity=>100)
     
     s_1 = Shipment.create!(:reference=>"ref1",:vendor_id=>o.vendor_id)
     s_line_1 = s_1.shipment_lines.create!(:line_number=>1,:product_id=>o_line.product_id,:quantity=>90)

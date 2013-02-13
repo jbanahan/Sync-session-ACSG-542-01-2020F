@@ -18,7 +18,7 @@ class LinesSupportTest < ActiveSupport::TestCase
 
   test "linked piece sets" do
     original_qty = 50
-    sline = Shipment.first.shipment_lines.create!(:line_number=>1000,:quantity=>original_qty,:product_id=>Shipment.first.vendor.vendor_products.first)
+    sline = Shipment.first.shipment_lines.create!(:line_number=>1000,:quantity=>original_qty,:product_id=>Shipment.first.vendor.vendor_products.first.id)
     #create initial piece sets
     oline = Order.first.order_lines.create!(:product_id=>sline.product_id)
     oline.piece_sets.create!(:quantity=>original_qty+10) #piece set should get split into two

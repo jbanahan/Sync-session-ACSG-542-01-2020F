@@ -50,6 +50,56 @@ describe Product do
         @unassociated_product.can_comment?(@importer_user).should be_false
         @unassociated_product.can_attach?(@importer_user).should be_false
       end
+      context "vendor" do
+        before :each do
+          @vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true)
+          @vendor_user.company.linked_companies << @linked_importer_user.company 
+          @vendor_product = Factory(:product,:vendor=>@vendor_user.company) 
+          @linked_vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true) 
+          @linked_vendor_user.company.linked_companies << @vendor_user.company
+        end
+
+        it "should allow a vendor to handle own products" do
+          @vendor_product.can_view?(@vendor_user).should be_true
+          #Vendors can't edit products - only master and importer types
+          @vendor_product.can_edit?(@vendor_user).should be_false
+          @vendor_product.can_classify?(@vendor_user).should be_false
+          @vendor_product.can_comment?(@vendor_user).should be_true
+          @vendor_product.can_attach?(@vendor_user).should be_true
+        end
+
+        it "should allow vendor to handle linked importer company products" do
+          @linked_product.can_view?(@vendor_user).should be_true
+          @linked_product.can_edit?(@vendor_user).should be_false
+          @linked_product.can_classify?(@vendor_user).should be_false
+          @linked_product.can_comment?(@vendor_user).should be_true
+          @linked_product.can_attach?(@vendor_user).should be_true
+        end
+        
+        it "should allow vendor to handle linked vendor company products" do
+          @vendor_product.can_view?(@linked_vendor_user).should be_true
+          @vendor_product.can_edit?(@linked_vendor_user).should be_false
+          @vendor_product.can_classify?(@linked_vendor_user).should be_false
+          @vendor_product.can_comment?(@linked_vendor_user).should be_true
+          @vendor_product.can_attach?(@linked_vendor_user).should be_true
+        end
+
+        it "should not allow vendor to handle unlinked company products" do
+          @importer_product.can_view?(@vendor_user).should be_false
+          @importer_product.can_edit?(@vendor_user).should be_false
+          @importer_product.can_classify?(@vendor_user).should be_false
+          @importer_product.can_comment?(@vendor_user).should be_false
+          @importer_product.can_attach?(@other_importer_user).should be_false
+        end
+
+        it "should not allow vendor to handle product with no vendor" do
+          @unassociated_product.can_view?(@vendor_user).should be_false
+          @unassociated_product.can_edit?(@vendor_user).should be_false
+          @unassociated_product.can_classify?(@vendor_user).should be_false
+          @unassociated_product.can_comment?(@vendor_user).should be_false
+          @unassociated_product.can_attach?(@vendor_user).should be_false
+        end
+      end
     end
     describe "search_secure" do
       it "should find all for master" do

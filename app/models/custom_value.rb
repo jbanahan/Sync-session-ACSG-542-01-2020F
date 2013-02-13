@@ -57,7 +57,7 @@ class CustomValue < ActiveRecord::Base
   def value=(val)
     d = self.custom_definition
     raise "Cannot set custom value without a custom definition" if d.nil?
-    v = [:date,:datetime].include?(d.data_type) ? parse_date(val) : val
+    v = d.date? ? parse_date(val) : val
     self.send "#{d.data_type}_value=", v
   end
 

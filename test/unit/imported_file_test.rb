@@ -301,7 +301,7 @@ class ImportedFileTest < ActiveSupport::TestCase
 
     rule = FieldValidatorRule.create!(:model_field_uid=>"ord_ord_num",:regex=>"^a.*",:custom_message=>"cmsg")
 
-    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser).id)
     ic.save!
     ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
@@ -387,7 +387,7 @@ class ImportedFileTest < ActiveSupport::TestCase
     base_order = Order.find(1)
     new_vendor = base_order.vendor_id + 1
     attachment = "Order Number,Vendor\n#{base_order.order_number},#{new_vendor}"
-    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser).id)
     ic.save!
     ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
@@ -398,7 +398,7 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
   
   test "record with empty details only creates header" do
-    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser).id)
     ic.save!
     ic.search_columns.create(:model_field_uid => "ord_ord_num", :rank => 0)
     ic.search_columns.create(:model_field_uid => "ord_ven_id", :rank => 1)
@@ -422,7 +422,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       :ordered_qty => 55,
       :price_per_unit => 27.2,
       }
-    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser))
+    ic = SearchSetup.new(:module_type => "Order", :name => "test", :user_id => users(:masteruser).id)
     ic.save!
     attachment_vals = [vh[:order_number],vh[:order_date],vh[:vendor_id],vh[:puid],vh[:ordered_qty],vh[:price_per_unit]]
     [:ord_ord_num,:ord_ord_date,:ord_ven_id,:ordln_puid,:ordln_ordered_qty,:ordln_ppu].each_with_index do |u,i|
@@ -449,7 +449,7 @@ class ImportedFileTest < ActiveSupport::TestCase
       :div_id => Division.first.id,
       :vendor_name => Company.where(:vendor=>true).first.name
     }
-    ss = SearchSetup.new(:module_type => "Product", :name => "test", :user_id => users(:masteruser))
+    ss = SearchSetup.new(:module_type => "Product", :name => "test", :user_id => users(:masteruser).id)
     ss.save!
     attachment_vals = [vh[:unique_identifier],vh[:div_id],vh[:name],vh[:vendor_id],vh[:vendor_name]]
     [:prod_uid,:prod_div_id,:prod_name,:prod_ven_id,:prod_ven_name].each_with_index do |u,i|
@@ -552,12 +552,12 @@ class ImportedFileTest < ActiveSupport::TestCase
   end
 
   test "change product status" do
-    p = Product.create!(:unique_identifier=>"CPS",:vendor_id=>companies(:vendor))
+    p = Product.create!(:unique_identifier=>"CPS",:vendor_id=>companies(:vendor).id)
     p.set_status
     p.save!
     assert p.status_rule==status_rules(:ProductFallback)
 
-    ss = SearchSetup.create!(:module_type=>"Product",:name=>"cpstest",:user_id=>users(:masteruser))
+    ss = SearchSetup.create!(:module_type=>"Product",:name=>"cpstest",:user_id=>users(:masteruser).id)
     ["prod_uid","*cf_1"].each_with_index {|u,i| ss.search_columns.create!(:model_field_uid=>u,:rank=>i)}
     f = ss.imported_files.new(:attached_file_name=>'fn.csv',:starting_row=>1,:starting_column=>1,:update_mode=>'any')
     assert f.process(User.find(1),:attachment_data=>"#{p.unique_identifier},true")
