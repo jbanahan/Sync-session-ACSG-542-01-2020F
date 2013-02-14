@@ -38,6 +38,6 @@ OpenChain::Application.configure do
   config.active_record.auto_explain_threshold_in_seconds = 0.5
 
   # don't serve any precompiled assets
-  config.serve_static_assets = false
+  config.serve_static_assets = true #need this to allow /public directory to work
 end
 
