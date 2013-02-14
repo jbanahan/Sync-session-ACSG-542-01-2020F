@@ -59,35 +59,38 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_by_core_module core_module, force_search=false
-    to_append = force_search ? "?force_search=true" : ""
-    redirect_path = root_path
+    redirect_path = "root_path"
     case core_module
     when CoreModule::ORDER_LINE
-      redirect_path = orders_path
+      redirect_path = "orders_path"
     when CoreModule::ORDER
-      redirect_path = orders_path
+      redirect_path = "orders_path"
     when CoreModule::SHIPMENT_LINE
-      redirect_path = shipments_path
+      redirect_path = "shipments_path"
     when CoreModule::SHIPMENT
-      redirect_path = shipments_path
+      redirect_path = "shipments_path"
     when CoreModule::SALE_LINE
-      redirect_path = sales_orders_path
+      redirect_path = "sales_orders_path"
     when CoreModule::SALE 
-      redirect_path = sales_orders_path
+      redirect_path = "sales_orders_path"
     when CoreModule::DELIVERY_LINE
-      redirect_path = deliveries_path
+      redirect_path = "deliveries_path"
     when CoreModule::DELIVERY
-      redirect_path = deliveries_path
+      redirect_path = "deliveries_path"
     when CoreModule::TARIFF
-      redirect_path = products_path
+      redirect_path = "products_path"
     when CoreModule::CLASSIFICATION
-      redirect_path = products_path
+      redirect_path = "products_path"
     when CoreModule::PRODUCT
-      redirect_path = products_path
+      redirect_path = "products_path"
     when CoreModule::OFFICIAL_TARIFF
-      redirect_path = official_tariffs_path
+      redirect_path = "official_tariffs_path"
     end
-    redirect_to (redirect_path+to_append)
+    if force_search
+      redirect_to eval(redirect_path<<"(:force_search=>true)")
+    else
+      redirect_to eval(redirect_path)
+    end
   end
 
   class SearchResult
