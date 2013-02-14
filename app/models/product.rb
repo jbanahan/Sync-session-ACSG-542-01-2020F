@@ -161,6 +161,6 @@ class Product < ActiveRecord::Base
     end
   end
   def company_permission? user
-    self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)
+    self.importer_id==user.company_id || self.vendor_id == user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer) || user.company.linked_companies.include?(self.vendor)
   end
 end

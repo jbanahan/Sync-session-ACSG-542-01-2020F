@@ -143,7 +143,7 @@ class SearchCriterionTest < ActiveSupport::TestCase
 
   test "tariff join" do
     p = Product.create!(:unique_identifier=>"tj",:vendor_id=>companies(:vendor).id, :division=>Division.first)
-    c = p.classifications.create!(:country_id => Country.first)
+    c = p.classifications.create!(:country_id => Country.first.id)
     h = c.tariff_records.create!(:hts_1 => "9912345678")
     sc = SearchCriterion.create!(:model_field_uid => "hts_hts_1", :operator => "sw", :value=>"991")
     result = sc.apply(Product)

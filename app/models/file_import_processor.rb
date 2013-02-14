@@ -98,7 +98,6 @@ class FileImportProcessor
             obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
             custom_fields.each do |mf,data|
               cd = @custom_definition_map[mf.custom_id]
-              debugger if cd.id == 131
               cv = cv_map[cd.id]
               cv = obj.custom_values.build(:custom_definition_id=>cd.id) if cv.nil?
               orig_value = cv.value
