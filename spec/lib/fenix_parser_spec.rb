@@ -196,6 +196,22 @@ describe OpenChain::FenixParser do
     Entry.find_by_broker_reference(@file_number).us_exit_port_code.should == '0444'
   end
 
+  it 'should parse files with almost no information in them' do
+    #extra commas added to pass the line length check
+    entry_data = lambda {
+      data = '"1234567890",12345,"My Company",TAXID,,,,,,,,'
+      data 
+    }
+
+    OpenChain::FenixParser.parse entry_data.call
+    entry = Entry.find_by_broker_reference 12345
+    entry.should_not be_nil
+    entry.entry_number.should == "1234567890"
+    entry.importer_tax_id.should == "TAXID"
+  
+    entry.commercial_invoices.length.should == 0
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
