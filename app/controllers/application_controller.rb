@@ -24,8 +24,7 @@ class ApplicationController < ActionController::Base
    
 
     def office_browser_detect
-      is_office = request.headers['HTTP_USER_AGENT'].ends_with? 'ms-office)'
-      if is_office
+      if request.headers['HTTP_USER_AGENT'].match /ms-office/
         render :text=>"<html><head><meta http-equiv='refresh' content='0;URL=\"#{request.fullpath}\"'></head><body>Reloading outside of MS office</body></html>"
         return false
       end
@@ -349,7 +348,10 @@ class ApplicationController < ActionController::Base
   end
 
   def force_reset
-    redirect_to(forced_password_reset_path(current_user)) if logged_in? && current_user.password_reset
+    if logged_in? && current_user.password_reset
+      redirect_to(forced_password_reset_path(current_user))
+      return false
+    end
   end
 
   def render_search_results no_results = false
