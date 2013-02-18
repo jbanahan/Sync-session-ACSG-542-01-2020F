@@ -315,6 +315,19 @@ class ApplicationController < ActionController::Base
       redirect_to(base_object) 
     end
   end
+
+  # Strips top level parameter keys from the URI query string.  Note, this method
+  # does not support nested parameter names (ala "model[attribute]").
+  def strip_uri_params uri_string, *keys
+    uri = URI.parse uri_string
+    begin 
+      query_params = Rack::Utils.parse_nested_query(uri.query).except(*keys)
+      uri.query = Rack::Utils.build_nested_query(query_params)
+    end unless uri.query.blank? || keys.empty?
+    # Set the query to nil if it's blank, othewise a dangling "?" is added to the path
+    uri.query = nil if uri.query.blank?
+    return uri.to_s
+  end
   
   def get_search_to_run
     return SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?

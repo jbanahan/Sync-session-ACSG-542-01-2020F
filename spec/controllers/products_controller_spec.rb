@@ -48,4 +48,37 @@ describe ProductsController do
       p.importer.should == @user.company
     end
   end
+
+  describe :bulk_update_classifications do
+    before :each do
+      @user.update_attributes(:classification_edit=>true)
+      MasterSetup.any_instance.should_receive(:classification_enabled).at_least(:once).and_return true
+    end
+
+    it "should allow user to bulk update classifications" do
+      delay = double
+      p = {"k1"=>"v1", "k2"=>"v2"}
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
+      delay.should_receive(:go_serializable) do |args, id| 
+        json = JSON.parse(args)
+        json["k1"].should == "v1"
+        json["k2"].should == "v2"
+        id.should == @user.id
+      end
+
+      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val" 
+      post :bulk_update_classifications, p
+      flash[:notices].should == ["These products will be updated in the background.  You will receive a system message when they're ready."]
+      response.should redirect_to("http://www.test.com?key=val")
+    end
+    
+    it "should redirect to products_path with no referer" do
+      delay = double
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
+      delay.should_receive(:go_serializable)
+      request.env["HTTP_REFERER"] = nil
+      post :bulk_update_classifications
+      response.should redirect_to(products_path)
+    end
+  end
 end
