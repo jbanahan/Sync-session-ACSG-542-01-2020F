@@ -122,4 +122,56 @@ describe Survey do
       Survey.new(:ratings_list=>vals).rating_values.should == ["a","b"]
     end
   end
+  describe "to_xls" do
+    before :each do
+      @survey = Factory(:survey,:name=>"my name",:email_subject=>"emlsubj",:email_body=>"emlbod",:ratings_list=>"1\n2") 
+      @q1 = Factory(:question,:rank=>1,:survey_id=>@survey.id,:content=>'my question content 1',:choices=>"x",:warning=>true)
+      @q2 = Factory(:question,:rank=>2,:survey_id=>@survey.id,:content=>'my question content 2')
+      
+      @r1 = Factory(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now)
+      @r2 = Factory(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub2", :submitted_date=>Time.now)
+      @r3 = Factory(:survey_response, :survey_id=>@survey.id, :submitted_date=>nil)
+
+      @a1 = Factory(:answer, :question_id=>@q1.id, :rating=>"1", :survey_response_id=>@r1.id)
+      @a2 = Factory(:answer, :question_id=>@q2.id, :rating=>"2", :survey_response_id=>@r2.id)
+      @a3 = Factory(:answer, :question_id=>@q1.id, :rating=>"2", :survey_response_id=>@r3.id)
+    end
+
+    it "should create an excel file" do
+      wb = @survey.to_xls
+      responses = wb.worksheet 'Survey Responses'
+      responses.should_not be_nil
+
+      responses.row_count.should == 4
+      responses.row(0).should == ['Company', 'Label', 'Responder', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated']
+      x = responses.row(1)
+      x[0].should == @r1.user.company.name
+      x[1].should == @r1.subtitle
+      x[2].should == @r1.user.full_name
+      x[3].should == @r1.status
+      x[4].should == @r1.rating
+      x[5].to_s.should == @r1.email_sent_date.to_s
+      x[6].to_s.should == @r1.response_opened_date.to_s
+      x[7].to_s.should == @r1.submitted_date.to_s
+      x[8].to_s.should == @r1.updated_at.to_s
+
+      responses.row(2)[1].should == @r2.subtitle
+
+      questions = wb.worksheet "Questions"
+      questions.should_not be_nil
+
+      questions.row(0).should == ["Question", "Answered", "1", "2"]
+      x = questions.row(1)
+      x[0].should == @q1.content
+      x[1].should == 1
+      x[2].should == 1
+      x[3].should == 1
+
+      x = questions.row(2)
+      x[0].should == @q2.content
+      x[1].should == 1
+      x[2].should == 0
+      x[3].should == 1
+    end
+  end
 end
