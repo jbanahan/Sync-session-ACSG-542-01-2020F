@@ -147,10 +147,19 @@ class ProductsController < ApplicationController
     action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
       [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
-      params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?}
+      params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?} if params[:product_cf]
       params.delete :utf8
-      Product.delay.batch_bulk_update(current_user, params)
-      add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
+      if run_delayed params
+        Product.delay.batch_bulk_update(current_user, params)
+        add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
+      else
+        messages = Product.batch_bulk_update(current_user, params, :no_email => true)
+        # Show the user the update message and any errors if there were some
+        add_flash :notices, messages[:message]
+        messages[:errors].each do |e|
+          add_flash :errors, e
+        end if messages[:errors]
+      end
       redirect_to products_path
     }
   end
@@ -169,8 +178,18 @@ class ProductsController < ApplicationController
 
   def bulk_update_classifications
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
-      OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id 
-      add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
+      if run_delayed params 
+        OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id 
+        add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
+      else 
+        messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true
+        add_flash :notices, messages[:message]
+        if messages[:errors]
+          messages[:errors].each do |e|
+            add_flash :errors, e
+          end
+        end
+      end
       redirect_to products_path
     }
   end
@@ -212,5 +231,9 @@ class ProductsController < ApplicationController
       p.classifications.build(:country=>c).tariff_records.build unless pre_loaded_countries.include? c.id
     end
     p.to_json(:include=>{:classifications=>{:include=>[:country,:tariff_records]}})
+  end
+
+  def run_delayed params
+    params[:sr_id] || (params[:pk] && params[:pk].length > 10)
   end
 end

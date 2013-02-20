@@ -114,12 +114,71 @@ describe Product do
     end
   end
   describe 'linkable attachments' do
+    
     it 'should have linkable attachments' do
       product = Factory(:product)
       linkable = Factory(:linkable_attachment,:model_field_uid=>'prod',:value=>'ordn')
       linked = LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>product)
       product.reload
       product.linkable_attachments.first.should == linkable
+    end
+  end
+
+  describe 'batch_bulk_update' do
+    before :each do 
+      @user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true)
+      @product = Factory(:product, :importer => @user.company)
+      @product2 = Factory(:product, :importer => @user.company)
+    end
+    
+    it 'should bulk update' do
+      params = {:product => {:name => "value"}, :pk => {"0"=> @product.id, "1"=>@product2.id}}
+      
+      #Mock out the User.current stuff so we can ensure it's happening
+      orig_user = double
+      User.should_receive(:current).and_return orig_user
+      User.should_receive(:current=).with(@user)
+      User.should_receive(:current).any_number_of_times.and_return(@user)
+      User.should_receive(:current=).with(orig_user)
+
+      Message.should_receive(:create) do |o|
+        o[:user].should == @user
+        o[:subject].should == "Product update complete - 2 products."
+        o[:body].should == "Product update complete - 2 products."
+      end
+
+      messages = Product.batch_bulk_update(@user, params)
+      messages[:message].should == "Product update complete - 2 products."
+      messages[:errors].should be_nil
+
+      @product.reload.name.should == "value"
+      @product2.reload.name.should == "value"
+    end
+
+    it 'should bulk update and not email' do
+      params = {:product => {:name => "value"}, :pk => {"0"=> @product.id, "1"=>@product2.id}}
+      
+      messages = Product.batch_bulk_update(@user, params, :no_email => true)
+      messages[:message].should == "Product update complete - 2 products."
+      messages[:errors].should be_nil
+
+      @product.reload.name.should == "value"
+      @product2.reload.name.should == "value"
+    end
+
+    it 'should ensure user can edit product' do
+      company = Factory(:company)
+      @product.importer = company
+      @product2.importer = company
+      @product.save!
+      @product2.save!
+
+      params = {:product => {:name => "value"}, :pk => {"0"=> @product.id, "1"=>@product2.id}}
+      
+      messages = Product.batch_bulk_update(@user, params, :no_email=>true)
+      messages[:message].should == "Product update complete - 2 ERRORS."
+      messages[:errors].first.should == "You do not have permission to edit product #{@product.unique_identifier}."
+      messages[:errors][1].should ==  "You do not have permission to edit product #{@product2.unique_identifier}."
     end
   end
 end

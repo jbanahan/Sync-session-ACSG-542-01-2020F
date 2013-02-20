@@ -9,14 +9,24 @@ describe OpenChain::BulkUpdateClassification do
       @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>Factory(:country).id.to_s}}}} 
     end
     it "should update an existing classification with primary keys" do
-      OpenChain::BulkUpdateClassification.go(@h,@u)
+      m = OpenChain::BulkUpdateClassification.go(@h,@u)
       Product.find(@p.id).classifications.should have(1).item
+      @u.messages.length.should == 1
+      @u.messages[0].subject.should == "Classification Job Complete."
+      @u.messages[0].body.should == "<p>Your classification job has completed.</p><p>Products saved: 1</p><p>Messages:<br></p>"
+      m[:message].should == "Classification Job Complete."
+      m[:errors].should == []
+      m[:good_count].should == 1
     end
     it "should update using serializable version of method" do
       OpenChain::BulkUpdateClassification.go_serializable(@h.to_json,@u.id)
       Product.find(@p.id).classifications.should have(1).item
     end
-
+    it "should update but not make user messages" do
+      OpenChain::BulkUpdateClassification.go(@h,@u, :no_user_message => true)
+      Product.find(@p.id).classifications.should have(1).item
+      @u.messages.length.should == 0
+    end
   end
   describe 'build_common_classifications' do
     before :each do
