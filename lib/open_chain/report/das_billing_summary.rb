@@ -27,10 +27,10 @@ module OpenChain
 select `Entry Number`, `DAS Invoice Number`, `Total Value By Entry`, `Invoice Lines`, `Billable Lines`, (`Billable Lines` * if(`lvs`,0.4,0.5)) as "Line Charge", 
 if(`lvs`,45,85) as `Brokerage Charge`, `Total Duty`, `Total GST`
 from (
-select `Entry Number`, `Invoice Number` as `DAS Invoice Number`, `Entered Value` as `Total Value By Entry`, count(*) as `Invoice Lines`,
+select `Id`, `Entry Number`, `Invoice Number` as `DAS Invoice Number`, `Entered Value` as `Total Value By Entry`, count(*) as `Invoice Lines`,
 if(count(*)>10,count(*)-10,0) as "Billable Lines", if(`Entered Value` > 1600,false,true) as "lvs", `Total Duty`, `Total GST`
 from (
-select distinct cil.country_origin_code, ent.id, ci.invoice_number as `Invoice Number`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST` 
+select distinct cil.country_origin_code, ent.id as `Id`, ci.invoice_number as `Invoice Number`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST` 
 from entries ent
 inner join commercial_invoices ci on ci.entry_id = ent.id
 inner join commercial_invoice_lines cil on cil.commercial_invoice_id = ci.id
@@ -38,7 +38,7 @@ inner join commercial_invoice_tariffs cit on cil.id = cit.commercial_invoice_lin
 where ent.importer_tax_id = "#{TAX_ID}"
 and cadex_sent_date between "#{start_date}" and "#{end_date}"
 ) root
-group by `Entered Value` 
+group by `Id` 
 ) middle
 QRY
         wb = Spreadsheet::Workbook.new
