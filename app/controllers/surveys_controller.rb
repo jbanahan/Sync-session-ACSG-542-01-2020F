@@ -14,6 +14,18 @@ class SurveysController < ApplicationController
     @survey = Survey.find params[:id]
     if @survey.company_id!=current_user.company_id
       error_redirect "You cannot view surveys that aren't from your company."
+      return
+    end
+
+    respond_to do |format|
+      format.html
+      format.xls do 
+        wb = @survey.to_xls
+        io = StringIO.new
+        wb.write(io)
+        filename = @survey.name.blank? ? "survey" : @survey.name
+        send_data io.string, :type=> :xls, :filename => filename + ".xls"
+      end
     end
   end
   def new

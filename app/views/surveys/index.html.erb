@@ -9,7 +9,8 @@
   <td><%=link_to "view", s%>
   <%if current_user.view_surveys? && !s.locked?%>
     | <%=link_to "edit", edit_survey_path(s)%>
-  <%end%>
+    <%end%>
+    | <%=link_to "download", survey_path(s, :format=>:xls) %>
   </td>
   <td><%=s.name%></td>
   <td><%=s.survey_responses.count%></td>

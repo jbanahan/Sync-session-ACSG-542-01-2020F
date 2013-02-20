@@ -46,8 +46,74 @@ class Survey < ActiveRecord::Base
     sr
   end
 
+  def to_xls 
+    wb = Spreadsheet::Workbook.new
+    create_responses_sheet wb
+    create_questions_sheet wb
+    wb
+  end
+  
   private
   def lock_check
     errors[:base] << "You cannot change a locked survey." if self.locked?
+  end
+
+  def create_responses_sheet workbook
+    sheet = workbook.create_worksheet :name=>"Survey Responses"
+
+    row = 0
+    cols = ['Company', 'Label', 'Responder', 'Status', 'Rating', 'Invited', 'Opened', 'Submitted', 'Last Updated']
+    col_widths = []
+    XlsMaker.add_header_row sheet, row, cols, col_widths
+    row += 1
+
+    self.survey_responses.each do |r|
+      cols = []
+      cols << r.user.company.name
+      cols << r.subtitle
+      cols << r.user.full_name
+      cols << r.status
+      cols << r.rating
+      cols << r.email_sent_date
+      cols << r.response_opened_date
+      cols << r.submitted_date
+      cols << r.updated_at
+
+      XlsMaker.add_body_row sheet, row, cols, col_widths, true
+      row += 1
+    end
+  end
+
+  def create_questions_sheet workbook
+    sheet = workbook.create_worksheet :name => "Questions"
+    
+    row = 0
+    cols = ['Question', 'Answered']
+    self.rating_values.each do |value|
+      cols << value
+    end
+    col_widths = []
+
+    XlsMaker.add_header_row sheet, row, cols, col_widths
+    row += 1
+
+    wrap_format = Spreadsheet::Format.new :text_wrap => true
+    self.questions.each do |q|
+      cols = []
+      
+      # The question content is actually textile markup, which is converted to HTML when viewed
+      # by the browser.  Excel doesn't support that, so we're just displaying the raw text.
+      cols << q.content
+      cols << self.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").count
+      self.rating_values.each do |value|
+        # This may be a bug, we're limiting answer counts only for 
+        cols << self.answers.where(:question_id=>q.id, :rating=>value).count
+      end
+      
+      XlsMaker.add_body_row sheet, row, cols, col_widths, true
+      # Make sure the content column allows text wrap
+      sheet.row(row).set_format(0, wrap_format)
+      row += 1
+    end
   end
 end
