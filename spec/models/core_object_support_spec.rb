@@ -84,14 +84,10 @@ describe CoreObjectSupport do
     end
     it "should make url based on request_host" do
       p = Factory(:product)
-      p.view_url.should == "http://#{@rh}/products/#{p.id}"
+      p.view_url.should == "http://#{@rh}/redirect.html?page=/products/#{p.id}"
     end
     it "should raise exception if id not set" do
       lambda {Product.new.view_url}.should raise_error
-    end
-    it "should raise exception if request host not set" do
-      MasterSetup.get.update_attributes(:request_host=>nil)
-      lambda {Factory(:product).view_url}.should raise_error
     end
   end
   describe :relative_url do

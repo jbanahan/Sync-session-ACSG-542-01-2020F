@@ -102,11 +102,7 @@ class XlsMaker
 
   def process_row sheet, row_number, row_data, base_object
       XlsMaker.add_body_row sheet, row_number, row_data, @column_widths, @no_time
-      sheet.row(row_number).push(Spreadsheet::Link.new(excel_url(base_object),"Web View")) if self.include_links 
+      sheet.row(row_number).push(Spreadsheet::Link.new(base_object.excel_url,"Web View")) if self.include_links 
   end
 
-  def excel_url base_object
-    @req_host ||= MasterSetup.get.request_host
-    "http://#{@req_host}/redirect.html?page=#{base_object.relative_url}"
-  end
 end

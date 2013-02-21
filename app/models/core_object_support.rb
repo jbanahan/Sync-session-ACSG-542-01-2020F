@@ -37,12 +37,20 @@ module CoreObjectSupport
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded file links)
   def view_url
-    raise "Cannot generate view_url because MasterSetup.request_host not set." unless MasterSetup.get.request_host
-    "http://#{MasterSetup.get.request_host}#{relative_url}"
+    excel_url
   end
-
+  
+  #return the relative url to the view page for the object
   def relative_url
     raise "Cannot generate view_url because object id not set." unless self.id
     "/#{self.class.table_name}/#{self.id}"
   end
+
+  #return an excel friendly link to the object that handles Excel session bugs
+  def excel_url
+    @@req_host ||= MasterSetup.get.request_host
+    raise "Cannot generate view_url because MasterSetup.request_host not set." unless @@req_host
+    "http://#{@@req_host}/redirect.html?page=#{relative_url}"
+  end
+
 end
