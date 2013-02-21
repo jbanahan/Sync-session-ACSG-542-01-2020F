@@ -208,7 +208,8 @@ describe OpenChain::FenixParser do
     entry.should_not be_nil
     entry.entry_number.should == "1234567890"
     entry.importer_tax_id.should == "TAXID"
-  
+    entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
+    
     entry.commercial_invoices.length.should == 0
   end
 

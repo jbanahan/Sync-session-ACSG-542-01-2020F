@@ -69,6 +69,8 @@ module OpenChain
       @entry.vendor_names = accumulated_string(:vend)
       @entry.entered_value = @total_entered_value
 
+      @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
+
       @commercial_invoices.each do |inv_num, inv|
         inv.invoice_value = @ci_invoice_val[inv_num]
       end
@@ -220,8 +222,13 @@ module OpenChain
 
     def parse_date_time line, start_pos
       return nil if line[start_pos].blank? || line[start_pos+1].blank?
-      ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse_us_base_format "#{line[start_pos]} #{line[start_pos+1]}"
+      time_zone.parse_us_base_format "#{line[start_pos]} #{line[start_pos+1]}"
     end
+
+    def time_zone
+      ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
+    end
+
     def country_state str
       return ["US",str[1,2]] if str && str.length==3 && str[0]="U"
       return [str,nil]
