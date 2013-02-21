@@ -94,6 +94,12 @@ describe CoreObjectSupport do
       lambda {Factory(:product).view_url}.should raise_error
     end
   end
+  describe :relative_url do
+    it "should make url without host" do
+      p = Factory(:product)
+      p.relative_url.should == "/products/#{p.id}"
+    end
+  end
   describe :all_attachments do
     it "should sort by attachment type then attached file name then id" do
       p = Factory(:product)
