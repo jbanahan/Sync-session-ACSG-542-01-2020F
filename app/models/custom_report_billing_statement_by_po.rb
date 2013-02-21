@@ -23,7 +23,7 @@ class CustomReportBillingStatementByPo < CustomReport
     raise "User #{user.email} does not have permission to view invoices and cannot run the #{CustomReportBillingStatementByPo.template_name} report." unless user.view_broker_invoices?
 
     search_cols = self.search_columns.order("rank ASC")
-    invoices = BrokerInvoice.includes(:entry)
+    invoices = BrokerInvoice.select("distinct invoices.*").includes(:entry)
     self.search_criterions.each {|sc| invoices = sc.apply(invoices)}
     invoices = BrokerInvoice.search_secure user, invoices
     invoices = invoices.limit(row_limit) if row_limit
