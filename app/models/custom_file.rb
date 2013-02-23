@@ -51,7 +51,7 @@ class CustomFile < ActiveRecord::Base
   end
 
   def secure_url(expires_in=10.seconds)
-    AWS::S3.new(AWS_CREDENTIALS).buckets[attached.options.fog_directory].objects[attached.path].url_for(:read,:expires=>expires_in,:secure=>true,:response_content_disposition=>"attachment; filename=>#{self.attached_file_name}").to_s
+    AWS::S3.new(AWS_CREDENTIALS).buckets[attached.options.fog_directory].objects[attached.path].url_for(:read,:expires=>expires_in,:secure=>true,:response_content_disposition=>"attachment; filename=\"#{self.attached_file_name}\"").to_s
   end
   private
   def no_post
