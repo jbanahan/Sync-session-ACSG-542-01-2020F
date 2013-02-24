@@ -1,6 +1,42 @@
 require 'spec_helper'
 
 describe ModelField do
+  context :read_only do
+    before :each do
+      FieldLabel::LABEL_CACHE.clear
+    end
+    after :each do
+      FieldLabel.set_default_value :x, nil
+      FieldLabel::LABEL_CACHE.clear
+    end
+    it "should default to not being read only" do
+      mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string})
+      mf.should_not be_read_only
+      p = Product.new
+      mf.process_import p, "n"
+      p.name.should == 'n'
+    end
+    it "should not write if read only" do
+      FieldLabel.set_label :x, "PLBL"
+      mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string,:read_only=>true})
+      mf.should be_read_only
+      p = Product.new(:name=>'x')
+      r = mf.process_import p, 'n'
+      p.name.should == 'x'
+      r.should == "Value ignored. PLBL is read only."
+    end
+    it "should set read_only for custom_defintion that is read only" do
+      cd = Factory(:custom_definition,:read_only=>true)
+      ModelField.reload
+      ModelField.find_by_uid("*cf_#{cd.id}").should be_read_only
+    end
+    it "should not set read_only for custom_definition that isn't read only" do
+      cd = Factory(:custom_definition)
+      ModelField.reload
+      ModelField.find_by_uid("*cf_#{cd.id}").should_not be_read_only
+    end
+
+  end
   describe "can_view?" do
     it "should default to true" do
       ModelField.new(1,:x,CoreModule::SHIPMENT,:z).can_view?(Factory(:user)).should be_true

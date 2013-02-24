@@ -9,7 +9,11 @@ class ModelField
   def initialize(rank,uid,core_module, field, options={})
     o = {:import_lambda =>  lambda {|obj,data|
           d = [:date,:datetime].include?(self.data_type) ? parse_date(data) : data
-          obj.send("#{@field_name}=".intern,d)
+          if obj.is_a?(CustomValue)
+            obj.value = d
+          else
+            obj.send("#{@field_name}=".intern,d)
+          end
           return "#{FieldLabel.label_text uid} set to #{d}"
         },
           :export_lambda => lambda {|obj|
@@ -17,6 +21,7 @@ class ModelField
           },
           :entity_type_field => false,
           :history_ignore => false,
+          :read_only => false,
           :can_view_lambda => lambda {|u| true}
         }.merge(options)
     @uid = uid
@@ -24,6 +29,7 @@ class ModelField
     @sort_rank = rank
     @model = core_module.class_name.intern unless core_module.nil?
     @field_name = field
+    @read_only = o[:read_only]
     @import_lambda = o[:import_lambda]
     @export_lambda = o[:export_lambda]
     @can_view_lambda = o[:can_view_lambda]
@@ -43,6 +49,10 @@ class ModelField
     @custom_definition = CustomDefinition.find @custom_id if @custom_id
   end
 
+  # if true, then the field can't be updated with `process_import`
+  def read_only?
+    @read_only
+  end
   # returns true if the given user should be allowed to view this field
   def can_view? user
     @can_view_lambda.call user 
@@ -91,6 +101,7 @@ class ModelField
   end
     #code to process when importing a field
   def process_import(obj,data)
+    return "Value ignored. #{FieldLabel.label_text uid} is read only." if self.read_only?
     @import_lambda.call(obj,data)
   end
 
@@ -518,7 +529,7 @@ class ModelField
     base_class.new.custom_definitions.each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}"}))
+      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",:read_only=>d.read_only?}))
       model_hash[mf.uid.to_sym] = mf
     end
   end

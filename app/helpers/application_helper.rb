@@ -150,7 +150,7 @@ module ApplicationHelper
       name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
       c_val = customizable.get_custom_value(d).value
       if opts[:table]
-        if opts[:form]
+        if opts[:form] && !mf.read_only?
           field = ''
           field_tip_class = d.tool_tip.blank? ? "" : "fieldtip"
           case d.data_type
@@ -167,7 +167,7 @@ module ApplicationHelper
         end
       else
         z = "<b>".html_safe+field_label(d.model_field_uid,opts[:show_prefix])+": </b>".html_safe
-        if opts[:form]
+        if opts[:form] && !mf.read_only?
           case d.data_type
           when 'boolean'
             z << hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:title=>"#{d.tool_tip}",:class=>"cv_chkbx #{field_tip_class} #{data_type_class(mf)}", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
