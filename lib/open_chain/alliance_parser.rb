@@ -117,7 +117,7 @@ module OpenChain
             @entry.master_bills_of_lading = accumulated_string :mbol 
             @entry.house_bills_of_lading = accumulated_string :hbol 
             @entry.sub_house_bills_of_lading = accumulated_string :sub 
-            [:cust_ref,:po_numbers].each {|x| @accumulated_strings[x] ||= []}
+            [:cust_ref,:po_numbers,:part_numbers].each {|x| @accumulated_strings[x] ||= []}
             @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n ")
             @entry.mfids = accumulated_string :mfid
             @entry.export_country_codes = accumulated_string :export_country_codes
@@ -126,6 +126,7 @@ module OpenChain
             @entry.total_units_uoms = accumulated_string :total_units_uoms
             @entry.special_program_indicators = accumulated_string :spis
             @entry.po_numbers = accumulated_string :po_numbers
+            @entry.part_numbers = accumulated_string :part_numbers
             @entry.container_numbers = accumulated_string :container_numbers
             @entry.container_sizes = accumulated_string :container_sizes
             @entry.charge_codes = accumulated_string :charge_codes
@@ -306,6 +307,7 @@ module OpenChain
       accumulate_string :vendor_names, @c_line.vendor_name 
       accumulate_string :total_units_uoms, @c_line.unit_of_measure 
       accumulate_string :po_numbers, r[180,35].strip
+      accumulate_string :part_numbers, @c_line.part_number
       @entry.total_units += @c_line.quantity 
     end
 

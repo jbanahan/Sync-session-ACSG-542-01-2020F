@@ -251,6 +251,7 @@ describe OpenChain::FenixParser do
           @duty_amount = inv[:duty] if inv[:duty]
           @entered_value = inv[:entered_value] if inv[:entered_value]
           @gst_amount = inv[:gst_amount] if inv[:gst_amount]
+          @part_number = inv[:part_number] if inv[:part_number]
           data += @entry_lambda.call+"\r\n"
         end
         data.strip
@@ -362,6 +363,11 @@ describe OpenChain::FenixParser do
         ['x','y'].each_with_index {|b,i| @invoices[i][:cont]=b} 
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).container_numbers.should == "x\n y"
+      end
+      it "part numbers" do
+        ['x','y'].each_with_index {|b,i| @invoices[i][:part_number]=b}
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).part_numbers.should == "x\n y"
       end
     end
   end

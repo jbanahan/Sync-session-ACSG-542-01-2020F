@@ -67,6 +67,7 @@ module OpenChain
       @entry.export_country_codes = accumulated_string(:exp_country)
       @entry.export_state_codes = accumulated_string(:exp_state)
       @entry.vendor_names = accumulated_string(:vend)
+      @entry.part_numbers = accumulated_string(:part_number)
       @entry.entered_value = @total_entered_value
 
       @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
@@ -164,6 +165,7 @@ module OpenChain
       accumulate_string :po_number, inv_ln.po_number unless inv_ln.po_number.blank?
       accumulate_string :bol, str_val(line[13])
       accumulate_string :cont, str_val(line[8])
+      accumulate_string :part_number, inv_ln.part_number unless inv_ln.part_number.blank?
       exp = country_state(line[26])
       org = country_state(line[27])
       inv_ln.country_export_code = exp[0]

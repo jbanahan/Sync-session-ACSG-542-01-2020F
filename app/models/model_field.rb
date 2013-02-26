@@ -853,7 +853,8 @@ LEFT OUTER JOIN
         :can_view_lambda=>lambda {|u| u.view_broker_invoices? && u.company.broker?}
       }],
       [127,:ent_first_it_date,:first_it_date,"First IT Date",{:data_type=>:date}],
-      [128,:ent_first_do_issued_date,:first_do_issued_date,"First DO Date",{:data_type=>:datetime}]
+      [128,:ent_first_do_issued_date,:first_do_issued_date,"First DO Date",{:data_type=>:datetime}],
+      [129,:ent_part_numbers,:part_numbers,"Part Numbers",{:data_type=>:text}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -986,7 +987,8 @@ LEFT OUTER JOIN
       }],
       make_broker_invoice_entry_field(55,:bi_cargo_control_number,:cargo_control_number,"Cargo Control Number",:string, lambda{|entry| entry.cargo_control_number}),
       [56,:bi_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
-      [57,:bi_source_system,:source_system,"Source System",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}]
+      [57,:bi_source_system,:source_system,"Source System",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      make_broker_invoice_entry_field(58,:bi_ent_part_numbers,:part_numbers,"Part Numbers",:text,lambda {|entry| entry.part_numbers})
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
