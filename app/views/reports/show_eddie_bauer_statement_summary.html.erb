@@ -2,10 +2,30 @@
   <button class="form_to" form_id="frm_run">Run Report</button>
   <button class="link_btn" link_to="<%=request.referrer%>">Back</button>
 <%end%>
+<% content_for :javascript do %>
+$(function() {
+  $('#mode').change(function() {
+    if ($('#mode').val() === 'not_paid') {
+      $('#month_year').hide();
+      $('#month_instructions').hide();
+      $('#not_paid_instructions').show();
+    } else {
+      $('#month_year').show();
+      $('#not_paid_instructions').hide();
+      $('#month_instructions').show();
+    }
+  });
+})
+<% end %>
+
 <h2>Eddie Bauer Statement Summary</h2>
-<p>This report doesn't have any parameters to set. Click the Run Report button to continue.</p>
+<p><span id="not_paid_instructions">This report doesn't have any parameters to set</span><span id="month_instructions" style="display: none;">Select a Month and Year to run this report for</span>. Click the Run Report button to continue.</p>
 <%=form_tag reports_run_eddie_bauer_statement_summary_path, :id=>'frm_run' do -%>
   <table>
-    <%=field_row "Mode:", select_tag(:mode,"<option selected='selected' value='not_paid'>All Entries Not Paid</option><option value='previous_month'>All Entries Released Last Month</option>".html_safe)%>
+    <%=field_row "Mode", select_tag(:mode,"<option selected='selected' value='not_paid'>All Entries Not Paid</option><option value='previous_month'>All Entries Released In Month</option>".html_safe)%>
+  </table>
+  <table id="month_year" style="display: none;">
+    <%=field_row "Month", select_month(Date.today - 1.month)%>
+    <%=field_row "Year", select_year(Date.today)%>
   </table>
 <%end%>
