@@ -3,18 +3,19 @@ module OpenChain
     class EddieBauerStatementSummary
 
       #do not create objects for this class, use the #run_report method
-      def initialize(run_by,mode='not_paid')
+      def initialize(run_by, parameters = {})
         @run_by = run_by
-        @mode = mode
+        @mode = parameters[:mode] ? parameters[:mode] : 'not_paid'
+        @year = parameters[:year] ? parameters[:year] : Time.current.year
+        @month = parameters[:month] ? parameters[:month] : (Time.current - 1.month).month
       end
       
       def self.permission? user
         (Rails.env=='development' || MasterSetup.get.system_code=='www-vfitrack-net') && user.company.master?
       end
 
-      def self.run_report run_by, settings={}
-        mode = HashWithIndifferentAccess.new(settings)[:mode]
-        self.new(run_by,mode).run
+      def self.run_report run_by, parameters={}
+        self.new(run_by, HashWithIndifferentAccess.new(parameters)).run 
       end
 
       def run
@@ -106,7 +107,7 @@ module OpenChain
         if @mode && @mode.to_s=='previous_month'
           r = Entry.
             where(:importer_id=>Company.find_by_alliance_customer_number("EDDIE").id).
-            where("MONTH(entries.release_date) = ? AND YEAR(entries.release_date) = ?",1.month.ago.month,1.month.ago.year).
+            where("MONTH(entries.release_date) = ? AND YEAR(entries.release_date) = ?", @month, @year).
             order("entries.release_date ASC")
         else
           r = Entry.
