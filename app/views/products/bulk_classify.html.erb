@@ -17,6 +17,9 @@ $(function() {
   <span class='error'>Warning: Clicking save will replace ALL classifications for the selected products.</span>
 </div>
 <%=form_for @base_product, :url=>bulk_update_classifications_products_path, :html=>{:method=>"POST", :id=>"frm_bu"} do |f| %>
+  <%unless @back_to.blank?%>
+    <%=hidden_field_tag 'back_to', @back_to%>
+  <%end%>
   <%if @search_run%>
     <%=hidden_field_tag "sr_id", @search_run.id%>
   <%else%>

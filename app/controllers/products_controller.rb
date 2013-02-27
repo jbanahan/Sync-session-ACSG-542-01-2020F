@@ -159,6 +159,7 @@ class ProductsController < ApplicationController
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new
+    @back_to = request.referrer
     OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
     json = json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
     respond_to do |format|
@@ -175,7 +176,10 @@ class ProductsController < ApplicationController
       # previous page was loaded (ie. search page position).  However, we don't want to 
       # redo the search if we're reloading the first search page after a search was run
       # so we're stripping the force_search param from the redirect uri
-      if request.referer.present? && !request.referer.blank? 
+      if !params['back_to'].blank?
+        debugger
+        redirect_to strip_uri_params(params['back_to'],'force_search')
+      elsif !request.referer.blank? 
         redirect_to strip_uri_params(request.referer, "force_search")
       else 
         redirect_to products_path

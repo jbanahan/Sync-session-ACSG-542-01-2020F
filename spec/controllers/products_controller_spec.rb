@@ -80,5 +80,14 @@ describe ProductsController do
       post :bulk_update_classifications
       response.should redirect_to(products_path)
     end
+
+    it "should redirect to 'back_to' parameter if set" do
+      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=x" 
+      delay = double
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
+      delay.should_receive(:go_serializable)
+      post :bulk_update_classifications, {'back_to'=>'/somewhere?force_search=true&key=val'}
+      response.should redirect_to("http://test.host/somewhere?key=val")
+    end
   end
 end
