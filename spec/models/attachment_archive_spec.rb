@@ -4,6 +4,7 @@ describe AttachmentArchive do
   describe :attachment_list_json do
     it "should write entry information" do
       entry = Factory(:entry,:arrival_date=>1.day.ago,:importer=>Factory(:company))
+      invoice = Factory(:broker_invoice, :entry=>entry, :invoice_date=>2.months.ago)
       attachment = entry.attachments.create!(:attached_file_name=>'a.txt',:attached_file_size=>100,:attachment_type=>'EDOC')
       arch = entry.importer.create_attachment_archive_setup(:start_date=>1.year.ago).create_entry_archive! "my arch", 100.megabytes
       r = JSON.parse arch.attachment_list_json

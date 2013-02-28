@@ -100,7 +100,7 @@ class EntriesController < ApplicationController
         OpenChain::FenixParser.delay.process_past_days days, {:user_id=>current_user.id}
         add_flash :notices, "Prcessing the past #{days} days for Fenix."
       end
-      redirect_to request.referrer
+      redirect_to root_path
     }
   end
 

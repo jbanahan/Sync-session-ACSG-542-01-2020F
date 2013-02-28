@@ -29,12 +29,15 @@ class AttachmentArchiveSetup < ActiveRecord::Base
 
   private
   def available_entry_files
-    Attachment.
+    days_ago = Time.current.midnight - 30.days
+    Attachment.select("distinct attachments.*").
       joins("INNER JOIN entries on entries.id = attachments.attachable_id AND attachments.attachable_type = \"Entry\"").
+      joins("INNER JOIN broker_invoices ON entries.id = broker_invoices.entry_id").
       joins("LEFT OUTER JOIN attachment_archives_attachments on attachments.id = attachment_archives_attachments.attachment_id").
       where("attachment_archives_attachments.attachment_id is null").
+      where("broker_invoices.invoice_date <= ?", days_ago).
+      where("broker_invoices.invoice_date >= ?",self.start_date).
       where("entries.importer_id = ?",self.company_id).
-      where("entries.arrival_date >= ?",self.start_date).
       order("entries.arrival_date ASC")
   end
 end

@@ -35,7 +35,7 @@ describe SurveysController do
   end
   describe "show" do
     before :each do
-      @s = Factory(:survey,:company_id=>@u.company_id)
+      @s = Factory(:survey,:company_id=>@u.company_id, :name=>"Name")
     end
     it "should fail if user doesn't have view survey permission" do
       @u.update_attributes(:survey_view=>false)
@@ -53,6 +53,41 @@ describe SurveysController do
       get :show, :id=>@s.id
       assigns(:survey).should == @s
     end
+    it "should write excel file for excel formats" do 
+      wb = double
+      Survey.should_receive(:find).with(@s.id.to_s).and_return(@s)
+      @s.should_receive(:to_xls).and_return(wb)
+      wb.should_receive(:write) do |io|
+        io.string= "Test"
+      end
+      @controller.should_receive(:send_data) do |data, options|
+        data.should == "Test"
+        options[:type].should == :xls
+        options[:filename].should == @s.name + ".xls"
+        
+        # Need this so the controller knows some template was utilized (since we mocked
+        # away the send_data call)
+        @controller.render :nothing => true
+      end
+
+      get :show, {:id=>@s.id, :format=>:xls}
+    end
+    it "should handle surveys with no names" do
+      wb = double
+      @s.name = ""
+      Survey.should_receive(:find).with(@s.id.to_s).and_return(@s)
+      @s.should_receive(:to_xls).and_return(wb)
+      wb.should_receive(:write)
+
+      @controller.should_receive(:send_data) do |data, options|
+        options[:filename].should == "survey.xls"
+
+        @controller.render :nothing => true
+      end
+      
+      get :show, {:id=>@s.id,  :format=>:xls}
+    end
+
   end
   describe "edit" do
     before :each do

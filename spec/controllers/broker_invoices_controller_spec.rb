@@ -45,13 +45,6 @@ describe BrokerInvoicesController do
       bi.broker_invoice_lines.first.charge_description.should == 'x'
       bi.broker_invoice_lines.first.charge_amount.should == 12.21
     end
-    it "should not allow duplicate suffix on same entry" do
-      @entry.broker_invoices.create!(:suffix=>'a')
-      post :create, {'entry_id'=>@entry.id, 'broker_invoice'=>{'suffix'=>'a','broker_invoice_lines_attributes'=>{'1'=>{'charge_description'=>'x','charge_amount'=>'12.21'}}}}
-      response.should redirect_to @entry
-      BrokerInvoice.count.should == 1
-      flash[:errors].should have(1).message
-    end
     it "should update invoice total" do
       post :create, {'entry_id'=>@entry.id, 'broker_invoice'=>
         {'suffix'=>'a','broker_invoice_lines_attributes'=>{

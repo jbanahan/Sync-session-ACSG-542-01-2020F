@@ -1,5 +1,5 @@
 class MessagesController < ApplicationController
-  skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position, :only=>:message_count
+  skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position,:force_reset, :only=>:message_count
   # GET /messages
   # GET /messages.xml
   def index

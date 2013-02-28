@@ -4,7 +4,6 @@ class ApplicationController < ActionController::Base
     require 'newrelic_rpm'
 
     protect_from_forgery
-    before_filter :office_browser_detect
     before_filter :new_relic
     before_filter :require_user
     before_filter :set_user_time_zone
@@ -22,14 +21,6 @@ class ApplicationController < ActionController::Base
     helper_method :sortable_search_heading
     helper_method :master_setup
    
-
-    def office_browser_detect
-      is_office = request.headers['HTTP_USER_AGENT'].ends_with? 'ms-office)'
-      if is_office
-        render :text=>"<html><head><meta http-equiv='refresh' content='0;URL=\"#{request.fullpath}\"'></head><body>Reloading outside of MS office</body></html>"
-        return false
-      end
-    end
 
     def log_request
       #prep for exception notification
@@ -59,35 +50,38 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_by_core_module core_module, force_search=false
-    to_append = force_search ? "?force_search=true" : ""
-    redirect_path = root_path
+    redirect_path = "root_path"
     case core_module
     when CoreModule::ORDER_LINE
-      redirect_path = orders_path
+      redirect_path = "orders_path"
     when CoreModule::ORDER
-      redirect_path = orders_path
+      redirect_path = "orders_path"
     when CoreModule::SHIPMENT_LINE
-      redirect_path = shipments_path
+      redirect_path = "shipments_path"
     when CoreModule::SHIPMENT
-      redirect_path = shipments_path
+      redirect_path = "shipments_path"
     when CoreModule::SALE_LINE
-      redirect_path = sales_orders_path
+      redirect_path = "sales_orders_path"
     when CoreModule::SALE 
-      redirect_path = sales_orders_path
+      redirect_path = "sales_orders_path"
     when CoreModule::DELIVERY_LINE
-      redirect_path = deliveries_path
+      redirect_path = "deliveries_path"
     when CoreModule::DELIVERY
-      redirect_path = deliveries_path
+      redirect_path = "deliveries_path"
     when CoreModule::TARIFF
-      redirect_path = products_path
+      redirect_path = "products_path"
     when CoreModule::CLASSIFICATION
-      redirect_path = products_path
+      redirect_path = "products_path"
     when CoreModule::PRODUCT
-      redirect_path = products_path
+      redirect_path = "products_path"
     when CoreModule::OFFICIAL_TARIFF
-      redirect_path = official_tariffs_path
+      redirect_path = "official_tariffs_path"
     end
-    redirect_to (redirect_path+to_append)
+    if force_search
+      redirect_to eval(redirect_path<<"(:force_search=>true)")
+    else
+      redirect_to eval(redirect_path)
+    end
   end
 
   class SearchResult
@@ -315,6 +309,19 @@ class ApplicationController < ActionController::Base
       redirect_to(base_object) 
     end
   end
+
+  # Strips top level parameter keys from the URI query string.  Note, this method
+  # does not support nested parameter names (ala "model[attribute]").
+  def strip_uri_params uri_string, *keys
+    uri = URI.parse uri_string
+    begin 
+      query_params = Rack::Utils.parse_nested_query(uri.query).except(*keys)
+      uri.query = Rack::Utils.build_nested_query(query_params)
+    end unless uri.query.blank? || keys.empty?
+    # Set the query to nil if it's blank, othewise a dangling "?" is added to the path
+    uri.query = nil if uri.query.blank?
+    return uri.to_s
+  end
   
   def get_search_to_run
     return SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
@@ -346,7 +353,10 @@ class ApplicationController < ActionController::Base
   end
 
   def force_reset
-    redirect_to(forced_password_reset_path(current_user)) if logged_in? && current_user.password_reset
+    if logged_in? && current_user.password_reset
+      redirect_to(forced_password_reset_path(current_user))
+      return false
+    end
   end
 
   def render_search_results no_results = false

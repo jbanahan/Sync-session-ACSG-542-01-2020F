@@ -414,6 +414,7 @@ describe OpenChain::AllianceParser do
     expected_total_units_uoms = Set.new
     expected_spis = Set.new
     expected_pos = Set.new 
+    expected_parts = Set.new
     expected_total_units = BigDecimal("0",2)
     
     @commercial_invoices.each do |ci| 
@@ -428,6 +429,7 @@ describe OpenChain::AllianceParser do
         expected_total_units_uoms << line[:units_uom]
         expected_total_units += line[:units]
         expected_pos << line[:po_number] unless line[:po_number].blank?
+        expected_parts << line[:part_number] unless line[:part_number].blank?
 
         ci_line = inv.commercial_invoice_lines.where(:part_number=>line[:part_number]).first
         ci_line.mid.should == line[:mid]
@@ -496,6 +498,7 @@ describe OpenChain::AllianceParser do
     ent.total_units.should == expected_total_units
     ent.total_units_uoms.split(@split_string).should == expected_total_units_uoms.to_a
     ent.po_numbers.split(@split_string).should == expected_pos.to_a
+    ent.part_numbers.split(@split_string).should == expected_parts.to_a
     ent.special_program_indicators.split(@split_string).should == expected_spis.to_a
 
     ent.time_to_process.should < 1000 

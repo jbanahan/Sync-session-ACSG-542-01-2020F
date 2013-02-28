@@ -35,6 +35,8 @@ describe CustomReportBillingStatementByPo do
       @user.stub(:view_broker_invoices?).and_return(true)
       @invoice = Factory(:broker_invoice, :suffix=>"Test", :invoice_total=>"100", :invoice_date=>Date.parse("2013-01-01"))
       @invoice.entry.update_attributes(:broker_reference=>"Entry", :po_numbers=>"1\n 2\n 3")
+      @invoice.broker_invoice_lines.create!(:charge_description => "A", :charge_amount=>1)
+      @invoice.broker_invoice_lines.create!(:charge_description => "B", :charge_amount=>2)
       @entry = @invoice.entry
       @report = CustomReportBillingStatementByPo.create!
     end
@@ -42,6 +44,7 @@ describe CustomReportBillingStatementByPo do
     it "should split the invoice into 3 po lines and prorate the invoice amount across each line" do
       @report.search_columns.create!(:model_field_uid=>:bi_brok_ref, :rank=>1)
       @report.search_columns.create!(:model_field_uid=>:bi_ent_po_numbers, :rank=>2)
+      @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>@entry.broker_reference) 
 
       r = @report.to_arrays @user
       #4 rows..1 header, 3 PO lines

@@ -33,6 +33,9 @@ gem 'execjs'
 gem 'libv8', '~> 3.11.8'
 gem 'therubyracer'
 
+# performance profiling (this is auto-disabled in production)
+gem 'rack-mini-profiler'
+
 group :development,:test do
 
   #very active development so pinning to Github master
@@ -43,6 +46,7 @@ group :development,:test do
   gem 'spork'
   gem 'debugger'
 end
+
 group :test do
   gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
 end

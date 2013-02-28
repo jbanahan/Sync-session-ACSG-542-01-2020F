@@ -38,7 +38,6 @@ module CustomFieldSupport
   end
 
   def get_custom_value_by_id(id)
-  logger.debug "INJECTED SIZE: #{@injected.nil? ? "NIL" : @injected.size}"
     cv = get_custom_value_by_overrides id
     return cv if cv
     cv = self.custom_values.find_by_custom_definition_id id if cv.nil? && !self.lock_custom_values
@@ -55,7 +54,6 @@ module CustomFieldSupport
   #regardless of database changes. Basically, you're overriding any database or cache checks with a hard coded value for the lifetime of this object in memory.
   #use cautiously
   def inject_custom_value custom_value
-    logger.debug "Injecting custom value into object #{self.class.to_s} with id #{self.id} and cv.id #{custom_value.id}"
     @injected = {} if @injected.nil?
     @injected[custom_value.custom_definition_id] = custom_value
   end

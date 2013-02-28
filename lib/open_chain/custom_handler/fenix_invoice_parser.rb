@@ -1,7 +1,8 @@
+require 'open_chain/integration_client_parser'
 module OpenChain
   module CustomHandler
     class FenixInvoiceParser
-    
+      extend OpenChain::IntegrationClientParser
       def self.parse file_content, opts={}
         last_invoice_number = ''
         rows = []

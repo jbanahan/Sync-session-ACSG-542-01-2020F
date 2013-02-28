@@ -9,7 +9,11 @@ class ModelField
   def initialize(rank,uid,core_module, field, options={})
     o = {:import_lambda =>  lambda {|obj,data|
           d = [:date,:datetime].include?(self.data_type) ? parse_date(data) : data
-          obj.send("#{@field_name}=".intern,d)
+          if obj.is_a?(CustomValue)
+            obj.value = d
+          else
+            obj.send("#{@field_name}=".intern,d)
+          end
           return "#{FieldLabel.label_text uid} set to #{d}"
         },
           :export_lambda => lambda {|obj|
@@ -17,6 +21,7 @@ class ModelField
           },
           :entity_type_field => false,
           :history_ignore => false,
+          :read_only => false,
           :can_view_lambda => lambda {|u| true}
         }.merge(options)
     @uid = uid
@@ -24,6 +29,7 @@ class ModelField
     @sort_rank = rank
     @model = core_module.class_name.intern unless core_module.nil?
     @field_name = field
+    @read_only = o[:read_only]
     @import_lambda = o[:import_lambda]
     @export_lambda = o[:export_lambda]
     @can_view_lambda = o[:can_view_lambda]
@@ -43,6 +49,10 @@ class ModelField
     @custom_definition = CustomDefinition.find @custom_id if @custom_id
   end
 
+  # if true, then the field can't be updated with `process_import`
+  def read_only?
+    @read_only
+  end
   # returns true if the given user should be allowed to view this field
   def can_view? user
     @can_view_lambda.call user 
@@ -91,6 +101,7 @@ class ModelField
   end
     #code to process when importing a field
   def process_import(obj,data)
+    return "Value ignored. #{FieldLabel.label_text uid} is read only." if self.read_only?
     @import_lambda.call(obj,data)
   end
 
@@ -518,7 +529,7 @@ class ModelField
     base_class.new.custom_definitions.each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}"}))
+      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",:read_only=>d.read_only?}))
       model_hash[mf.uid.to_sym] = mf
     end
   end
@@ -842,7 +853,8 @@ LEFT OUTER JOIN
         :can_view_lambda=>lambda {|u| u.view_broker_invoices? && u.company.broker?}
       }],
       [127,:ent_first_it_date,:first_it_date,"First IT Date",{:data_type=>:date}],
-      [128,:ent_first_do_issued_date,:first_do_issued_date,"First DO Date",{:data_type=>:datetime}]
+      [128,:ent_first_do_issued_date,:first_do_issued_date,"First DO Date",{:data_type=>:datetime}],
+      [129,:ent_part_numbers,:part_numbers,"Part Numbers",{:data_type=>:text}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -975,7 +987,8 @@ LEFT OUTER JOIN
       }],
       make_broker_invoice_entry_field(55,:bi_cargo_control_number,:cargo_control_number,"Cargo Control Number",:string, lambda{|entry| entry.cargo_control_number}),
       [56,:bi_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
-      [57,:bi_source_system,:source_system,"Source System",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}]
+      [57,:bi_source_system,:source_system,"Source System",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+      make_broker_invoice_entry_field(58,:bi_ent_part_numbers,:part_numbers,"Part Numbers",:text,lambda {|entry| entry.part_numbers})
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],

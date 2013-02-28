@@ -38,9 +38,13 @@ module OpenChain
       s3_bucket = opts[:bucket]
       s3_path = opts[:key]
       start_time = Time.now
+      @commercial_invoices = {}
+      @total_invoice_val = BigDecimal('0.00')
       @total_units = BigDecimal('0.00')
       @total_entered_value = BigDecimal('0.00')
       @total_gst = BigDecimal('0.00')
+      @total_duty = BigDecimal('0.00')
+
       #get header info from first line
       process_header lines.first
       lines.each do |x| 
@@ -63,7 +67,10 @@ module OpenChain
       @entry.export_country_codes = accumulated_string(:exp_country)
       @entry.export_state_codes = accumulated_string(:exp_state)
       @entry.vendor_names = accumulated_string(:vend)
+      @entry.part_numbers = accumulated_string(:part_number)
       @entry.entered_value = @total_entered_value
+
+      @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
 
       @commercial_invoices.each do |inv_num, inv|
         inv.invoice_value = @ci_invoice_val[inv_num]
@@ -92,15 +99,13 @@ module OpenChain
       @entry.import_country = Country.find_by_iso_code('CA')
       @entry.importer_tax_id = tax_id
       @entry.cargo_control_number = str_val(line[12])
-      @entry.ship_terms = str_val(line[17].upcase)
+      @entry.ship_terms = str_val(line[17]) {|val| val.upcase}
       @entry.direct_shipment_date = parse_date(line[42])
       @entry.transport_mode_code = str_val(line[4])
       @entry.entry_port_code = str_val(line[5])
       @entry.carrier_code = str_val(line[6])
       @entry.voyage = str_val(line[7])
-      us_exit = str_val(line[9])
-      us_exit = us_exit.rjust(4,'0') unless us_exit.blank?
-      @entry.us_exit_port_code = us_exit
+      @entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4,'0')}
       @entry.entry_type = str_val(line[10])
       @entry.duty_due_date = parse_date(line[56])
       @entry.entry_filed_date = @entry.across_sent_date = parse_date_time(line, 57)
@@ -113,13 +118,15 @@ module OpenChain
       @entry.employee_name = str_val(line[88])
       @entry.po_numbers = str_val(line[14])
       file_logged_str = str_val(line[94])
-      if file_logged_str.length==10
+      if file_logged_str && file_logged_str.length==10
         @entry.file_logged_date = parse_date_time([file_logged_str,"12:00am"],0)
       end
     end
 
     def process_invoice line
-      @commercial_invoices ||= {}
+      # Skip invoice lines that don't have invoice numbers
+      return if line[16].nil? || line[16].blank?
+
       @commercial_invoices[line[15]] ||= @entry.commercial_invoices.build
       @ci_line_count ||= {}
       @ci_line_count[line[15]] ||= 0
@@ -136,6 +143,9 @@ module OpenChain
 
     def process_invoice_line line
       inv = @commercial_invoices[line[15]]
+      #inv will be blank if there was no invoice information on the line
+      return if inv.nil?
+
       inv_ln = inv.commercial_invoice_lines.build
       page_num = str_val(line[21])
       line_num = str_val(line[22])
@@ -155,6 +165,7 @@ module OpenChain
       accumulate_string :po_number, inv_ln.po_number unless inv_ln.po_number.blank?
       accumulate_string :bol, str_val(line[13])
       accumulate_string :cont, str_val(line[8])
+      accumulate_string :part_number, inv_ln.part_number unless inv_ln.part_number.blank?
       exp = country_state(line[26])
       org = country_state(line[27])
       inv_ln.country_export_code = exp[0]
@@ -177,7 +188,6 @@ module OpenChain
       t.entered_value = dec_val(line[45])
       @total_entered_value += t.entered_value if t.entered_value
       t.duty_amount = dec_val(line[47])
-      @total_duty ||= BigDecimal('0.00')
       @total_duty += t.duty_amount if t.duty_amount
       t.gst_rate_code = str_val(line[48])
       t.gst_amount = dec_val(line[49])
@@ -193,10 +203,18 @@ module OpenChain
     def int_val val
       val.strip.to_i unless val.blank?
     end
+
+    # Evaluates and returns any given block if the value passed in is 
+    # not blank or nill.
     def str_val val
-      return nil if val.blank?
-      return "" if val.match /^[ 0]*$/
-      val.strip
+      return nil if val.nil? || val.blank?
+      if val.match /^[ 0]*$/
+        val = ""
+      else 
+        val = val.strip
+      end
+      val = yield val if block_given?
+      val
     end
 
     def parse_date d
@@ -206,10 +224,15 @@ module OpenChain
 
     def parse_date_time line, start_pos
       return nil if line[start_pos].blank? || line[start_pos+1].blank?
-      ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse_us_base_format "#{line[start_pos]} #{line[start_pos+1]}"
+      time_zone.parse_us_base_format "#{line[start_pos]} #{line[start_pos+1]}"
     end
+
+    def time_zone
+      ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
+    end
+
     def country_state str
-      return ["US",str[1,2]] if str.length==3 && str[0]="U"
+      return ["US",str[1,2]] if str && str.length==3 && str[0]="U"
       return [str,nil]
     end
 

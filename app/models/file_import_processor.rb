@@ -31,7 +31,7 @@ class FileImportProcessor
       r = @import_file.starting_row - 1
       get_rows do |row|
         begin
-          obj = do_row r+1, row, true
+          obj = do_row r+1, row, true, @import_file.starting_column - 1
           obj.errors.full_messages.each {|m| @import_file.errors[:base] << "Row #{r+1}: #{m}"}
         rescue => e
           @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
@@ -48,7 +48,7 @@ class FileImportProcessor
   
   def preview_file
     get_rows do |row|
-      do_row @import_file.starting_row, row, false
+      do_row @import_file.starting_row, row, false, @import_file.starting_column - 1
       return @listeners.first.messages
     end
   end
@@ -59,7 +59,11 @@ class FileImportProcessor
       return CSVImportProcessor.new(import_file,import_file.attachment_data,listeners)
     end
   end
-  def do_row row_number, row, save
+  # get the array of SearchColumns to be used by the processor
+  def get_columns
+    @import_file.sorted_columns.blank? ? @search_setup.sorted_columns : @import_file.sorted_columns
+  end
+  def do_row row_number, row, save, base_column
     messages = []
     object_map = {}
     begin
@@ -68,10 +72,10 @@ class FileImportProcessor
         @module_chain.to_a.each do |mod|
           data_map[mod] = {}
         end
-        columns = @import_file.sorted_columns.blank? ? @search_setup.sorted_columns : @import_file.sorted_columns
+        columns = get_columns
         columns.each do |col|
           mf = col.find_model_field
-          r = row[col.rank + @import_file.starting_column - 1]
+          r = row[col.rank + base_column]
           r = r.value if r.respond_to? :value #get real value for Excel formulas
           r = r.strip if r.is_a? String
           data_map[mf.core_module][mf.uid]=r unless mf.uid==:_blank
@@ -96,35 +100,34 @@ class FileImportProcessor
             object_map[mod] = obj
             cv_map = {}
             obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
+            to_batch_write = []
             custom_fields.each do |mf,data|
               cd = @custom_definition_map[mf.custom_id]
               cv = cv_map[cd.id]
-              cv = obj.custom_values.build(:custom_definition_id=>cd.id) if cv.nil?
+              cv = CustomValue.new(:customizable_id=>obj.id,:customizable_type=>obj.class.to_s,:custom_definition_id=>cd.id) if cv.nil?
               orig_value = cv.value
-              if cd.data_type.to_sym==:boolean
-                set_boolean_value cv, data
-              else
-                cv.value = data
-              end
-              messages << "#{cd.label} set to #{cv.value}"
-              if save && !(orig_value.blank? && data.blank?) 
-                cv.save!
+              val = cd.data_type.to_sym==:boolean ? get_boolean_value(data) : data
+              m = mf.process_import cv, val 
+              messages << "#{cd.label}: #{m} "
+              if !(orig_value.blank? && val.blank?) 
+                to_batch_write << cv
               else
                 obj.custom_values.delete(cv)
               end
             end
+            CustomValue.batch_write! to_batch_write if save
             object_map[mod] = obj
           end
         end
         if save
           object_map.values.each do |obj|
             if obj.class.include?(StatusableSupport)
+              sr = obj.status_rule
               obj.set_status
-              obj.save!
+              obj.save! unless sr == obj.status_rule #only save if status changed
             end
           end
         end
-        Rails.logger.info "object_map[@core_module] is nill for row #{row_number} in imported_file: #{@import_file.id}" if object_map[@core_module].nil?
         OpenChain::FieldLogicValidator.validate! object_map[@core_module] unless object_map[@core_module].nil?
         fire_row row_number, object_map[@core_module], messages
       end
@@ -156,15 +159,16 @@ class FileImportProcessor
     end
   end
   
-  def set_boolean_value cv, data
+  def get_boolean_value  data
     if !data.nil? && data.to_s.length>0
       dstr = data.to_s.downcase.strip
       if ["y","t"].include?(dstr[0])
-        cv.value = true
+        return true
       elsif ["n","f"].include?(dstr[0])
-        cv.value = false
+        return false
       end
     end
+    nil
   end
 
   def fields_for_me_or_children? data_map, cm

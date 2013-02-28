@@ -26,6 +26,7 @@ describe AttachmentArchiveManifest do
     before :each do
       @rel_date = 1.day.ago
       @ent = Factory(:entry,:importer=>@c,:broker_reference=>'123',:release_date=>@rel_date,:master_bills_of_lading=>'mbol',:arrival_date=>1.day.ago)
+      @inv = Factory(:broker_invoice, :entry=>@ent, :invoice_date => 2.months.ago)
       @att1 = @ent.attachments.create!(:attached_file_name=>'a.txt',:attached_file_size=>100,:attachment_type=>'EDOC')
       @att2 = @ent.attachments.create!(:attached_file_name=>'b.txt',:attached_file_size=>200,:attachment_type=>'7501')
       @a_setup = @c.create_attachment_archive_setup(:start_date=>10.years.ago)

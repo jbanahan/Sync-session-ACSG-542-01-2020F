@@ -168,6 +168,7 @@ class ProductsController < ApplicationController
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new
+    @back_to = request.referrer
     OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
     json = json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
     respond_to do |format|
@@ -178,7 +179,7 @@ class ProductsController < ApplicationController
 
   def bulk_update_classifications
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
-      if run_delayed params 
+      if run_delayed params
         OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id 
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else 
@@ -190,7 +191,18 @@ class ProductsController < ApplicationController
           end
         end
       end
-      redirect_to products_path
+
+      # Going back to the referrer here will preserve any query params that were included when the 
+      # previous page was loaded (ie. search page position).  However, we don't want to 
+      # redo the search if we're reloading the first search page after a search was run
+      # so we're stripping the force_search param from the redirect uri
+      if !params['back_to'].blank?
+        redirect_to strip_uri_params(params['back_to'],'force_search')
+      elsif !request.referer.blank? 
+        redirect_to strip_uri_params(request.referer, "force_search")
+      else 
+        redirect_to products_path
+      end
     }
   end
 

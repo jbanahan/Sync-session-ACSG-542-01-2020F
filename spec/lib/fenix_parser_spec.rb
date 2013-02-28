@@ -196,6 +196,23 @@ describe OpenChain::FenixParser do
     Entry.find_by_broker_reference(@file_number).us_exit_port_code.should == '0444'
   end
 
+  it 'should parse files with almost no information in them' do
+    #extra commas added to pass the line length check
+    entry_data = lambda {
+      data = '"1234567890",12345,"My Company",TAXID,,,,,,,,'
+      data 
+    }
+
+    OpenChain::FenixParser.parse entry_data.call
+    entry = Entry.find_by_broker_reference 12345
+    entry.should_not be_nil
+    entry.entry_number.should == "1234567890"
+    entry.importer_tax_id.should == "TAXID"
+    entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
+    
+    entry.commercial_invoices.length.should == 0
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
@@ -234,6 +251,7 @@ describe OpenChain::FenixParser do
           @duty_amount = inv[:duty] if inv[:duty]
           @entered_value = inv[:entered_value] if inv[:entered_value]
           @gst_amount = inv[:gst_amount] if inv[:gst_amount]
+          @part_number = inv[:part_number] if inv[:part_number]
           data += @entry_lambda.call+"\r\n"
         end
         data.strip
@@ -345,6 +363,11 @@ describe OpenChain::FenixParser do
         ['x','y'].each_with_index {|b,i| @invoices[i][:cont]=b} 
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).container_numbers.should == "x\n y"
+      end
+      it "part numbers" do
+        ['x','y'].each_with_index {|b,i| @invoices[i][:part_number]=b}
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).part_numbers.should == "x\n y"
       end
     end
   end

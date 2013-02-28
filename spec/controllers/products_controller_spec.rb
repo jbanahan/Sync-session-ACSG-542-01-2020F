@@ -144,7 +144,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to products_path
+      response.should redirect_to request.referer
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
 
@@ -164,7 +164,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to products_path
+      response.should redirect_to request.referer
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
 
@@ -183,10 +183,45 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to products_path
+      response.should redirect_to request.referer
       flash[:notices].first.should == "Test"
       flash[:errors].should == ["A", "B"]
     end
-  end
 
+    it "should allow user to bulk update classifications" do
+      delay = double
+      p = {"k1"=>"v1", "k2"=>"v2", :sr_id=>"1"}
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
+      delay.should_receive(:go_serializable) do |args, id| 
+        json = JSON.parse(args)
+        json["k1"].should == "v1"
+        json["k2"].should == "v2"
+        id.should == @user.id
+      end
+
+      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val" 
+      post :bulk_update_classifications, p
+      flash[:notices].should == ["These products will be updated in the background.  You will receive a system message when they're ready."]
+      response.should redirect_to("http://www.test.com?key=val")
+    end
+    
+    it "should redirect to products_path with no referer" do
+      delay = double
+      p = {:sr_id => "1"}
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
+      delay.should_receive(:go_serializable)
+      request.env["HTTP_REFERER"] = nil
+      post :bulk_update_classifications, p
+      response.should redirect_to(products_path)
+    end
+
+    it "should redirect to 'back_to' parameter if set" do
+      request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=x" 
+      delay = double
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
+      delay.should_receive(:go_serializable)
+      post :bulk_update_classifications, {'back_to'=>'/somewhere?force_search=true&key=val', :sr_id=>"1"}
+      response.should redirect_to("http://test.host/somewhere?key=val")
+    end
+  end
 end
