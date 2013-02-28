@@ -177,7 +177,6 @@ class ProductsController < ApplicationController
       # redo the search if we're reloading the first search page after a search was run
       # so we're stripping the force_search param from the redirect uri
       if !params['back_to'].blank?
-        debugger
         redirect_to strip_uri_params(params['back_to'],'force_search')
       elsif !request.referer.blank? 
         redirect_to strip_uri_params(request.referer, "force_search")
