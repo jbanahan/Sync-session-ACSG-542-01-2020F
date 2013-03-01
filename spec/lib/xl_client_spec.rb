@@ -84,6 +84,14 @@ describe OpenChain::XLClient do
     @client.should_receive(:process_row_response).with(@dummy_response).and_return(@dummy_response)
     @client.copy_row 0, 1, 3
   end
+  it 'should get a row as column hash' do
+    t = Time.now
+    row_response = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
+                    {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
+    expected_val = {0=>{"value"=>"abc","datatype"=>"string"},3=>{"value"=>t.to_i,"datatype"=>"datetime"}}
+    @client.should_receive(:get_row).with(0,1).and_return(row_response)
+    @client.get_row_as_column_hash(0,1).should == expected_val
+  end
   it 'should get a row' do
     t = Time.now
     cmd = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>0,"row"=>10}}
