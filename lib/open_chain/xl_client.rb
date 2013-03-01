@@ -14,7 +14,7 @@ module OpenChain
     # Send the given command Hash to the server and return a Hash with the response
     def send command
       r = private_send command
-      raise OpenChain::XLClientError.new(r['errors'].join("\n")) if @raise_errors && !r['errors'].blank? 
+      raise OpenChain::XLClientError.new(r['errors'].join("\n")) if @raise_errors && r.is_a?(Hash) && !r['errors'].blank? 
       r
     end
 
@@ -53,21 +53,20 @@ module OpenChain
       raise_error r
     end
 
-    # get all cells for a row
     def get_row sheet, row
       c = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>sheet,"row"=>row}}
       r = send c
       process_row_response r
     end
 
-    # get all cells for a row as a hash where the key is the column number and the value is the cell payload
     def get_row_as_column_hash sheet, row
       resp = get_row sheet, row
-      r_val = {}
-      resp.each do |item|
-        r_val[item['position']['column']] = item['cell']
+      r = {}
+      resp.each do |c|
+        col = c['position']['column']
+        r[col] = c['cell']
       end
-      r_val
+      r
     end
 
     def copy_row sheet, source_row, destination_row
