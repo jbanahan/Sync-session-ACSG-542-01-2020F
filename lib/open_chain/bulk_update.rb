@@ -48,11 +48,12 @@ module OpenChain
       end
     end
 
-    def self.go params, current_user
+    def self.go params, current_user, options = {}
       User.current = current_user if User.current.nil? #set this in case we're not in a web environment (like delayed_job)
       good_count = nil
-      msgs = []
+      error_messages = []
       error_count = 0
+      messages = {}
       OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
         begin
           if p.can_classify?(current_user)
@@ -66,7 +67,7 @@ module OpenChain
               failure = lambda {|o,errors|
                 good_count += -1
                 errors.full_messages.each do |m| 
-                  msgs << "Error saving product #{o.unique_identifier}: #{m}"
+                  error_messages << "Error saving product #{o.unique_identifier}: #{m}"
                   error_count += 1
                 end
                 raise OpenChain::ValidationLogicError
@@ -79,16 +80,23 @@ module OpenChain
             end
           else
             error_count += 1
-            msgs << "You do not have permission to classify product #{p.unique_identifier}."
+            error_messages << "You do not have permission to classify product #{p.unique_identifier}."
             good_count += -1
           end
         rescue OpenChain::ValidationLogicError
           #ok to do nothing here
         end
       end
-      body = "<p>Your classification job has completed.</p><p>Products saved: #{good_count}</p><p>Messages:<br>#{msgs.join("<br />")}</p>"
-      current_user.messages.create(:subject=>"Classification Job Complete #{error_count>0 ? "("+error_count.to_s+" Errors)" : ""}", :body=>body)
-      good_count
+      title = "Classification Job Complete#{error_count>0 ? " ("+error_count.to_s+" Errors)" : ""}."
+      begin
+        body = "<p>Your classification job has completed.</p><p>Products saved: #{good_count}</p><p>Messages:<br>#{error_messages.join("<br />")}</p>"
+        current_user.messages.create(:subject=>title, :body=>body)
+      end unless options[:no_user_message]
+      
+      messages[:message] = title
+      messages[:errors] = error_messages
+      messages[:good_count] = good_count
+      messages
     end
   end
 

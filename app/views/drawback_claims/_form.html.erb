@@ -23,6 +23,9 @@
   <%=field_row "Sent To Customs",f.text_field(:sent_to_customs_date,:class=>'isdate')%>
   <%=field_row "Billed",f.text_field(:billed_date,:class=>'isdate')%>
   <%=field_row "Duty Check Received",f.text_field(:duty_check_received_date,:class=>'isdate')%>
+  <%=field_row "HMF/MPF Check Number", f.text_field(:hmf_mpf_check_number)%>
+  <%=field_row "HMF/MPF Check Amount", f.text_field(:hmf_mpf_check_amount)%>
+  <%=field_row "HMF/MPF Check Received", f.text_field(:hmf_mpf_check_received_date,:class=>'isdate')%>
 </table>
 <%end-%>
 
