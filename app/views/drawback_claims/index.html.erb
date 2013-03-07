@@ -56,6 +56,8 @@ google.setOnLoadCallback(claimCharts);
           <%=field_row "Duty Claimed", number_to_currency(c.duty_claimed)%>
           <%=field_row "Duty Check Amount", number_to_currency(c.duty_check_amount)%>
           <%=field_row "Commission", number_to_currency(c.bill_amount)%>
+          <%=field_row "HMF/MPF Check Number", c.hmf_mpf_check_number%>
+          <%=field_row "HMF/MPF Check Amount", number_to_currency(c.hmf_mpf_check_amount)%>
         </table>
       </td>
       <td>

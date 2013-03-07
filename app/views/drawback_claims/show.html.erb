@@ -26,6 +26,8 @@
         <%=field_row "Duty Claimed", number_to_currency(@claim.duty_claimed)%>
         <%=field_row "Duty Check Amount", number_to_currency(@claim.duty_check_amount)%>
         <%=field_row "Commission", number_to_currency(@claim.bill_amount)%>
+        <%=field_row "HMF/MPF Check Number", @claim.hmf_mpf_check_number%>
+        <%=field_row "HMF/MPF Check Amount", number_to_currency(@claim.hmf_mpf_check_amount)%>
       </table>
     </td>
     <td>
