@@ -1,49 +1,33 @@
 require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
-    class PoloCsmProductGenerator < ProductGenerator
+    class PoloOmlogProductGenerator < ProductGenerator
       def sync_code
-        'csm_product'
+        "omlog-product"
       end
-      
-      #overriding to handle special splitting of CSM numbers
-      def sync_csv include_headers=true
-        f = Tempfile.new(['ProductSync','.csv'])
+      def ftp_credentials
+        {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
+      end
+      def sync_xls
+        wb = Spreadsheet::Workbook.new
+        sht = wb.create_worksheet :name=>'Results'
         cursor = 0
         sync do |rv|
-          if include_headers || cursor > 0
-            csm_numbers = rv[1] ? rv[1].split("\n") : []
-            csm_numbers.each do |c|
-              max_col = rv.keys.sort.last
-              row = []
-              (0..max_col).each do |i|
-                v = i==1 ? c : rv[i]
-                v = "" if v.blank?
-                row << v.to_s
-              end
-              f << row.to_csv
-            end
+          csm_numbers = rv[1].split("\n")
+          csm_numbers.each do |c|
+            row = sht.row(cursor)
+            rv.each {|k,v| row[k] = (k==1 ? c : v)}
+            cursor += 1
           end
-          cursor += 1
         end
-        f.flush
-        if (include_headers && cursor > 1) || cursor > 0
-          return f
+        if cursor > 1
+          t = Tempfile.new(['ProductSync','.xls'])
+          wb.write t
+          return t
         else
-          f.unlink
           return nil
         end
       end
-      
-      #custom remote file name required by trading partner (yes, we know that granularity to the second is bad)
-      def remote_file_name
-        "Chain#{Time.now.strftime("%Y%m%d%H%M%S")}.csv"
-      end
-
-      def ftp_credentials
-        {:server=>'ftp.chain.io',:username=>'polo',:password=>'pZZ117',:folder=>'/_to_csm',:remote_file_name=>remote_file_name}
-      end
-
       def query
         q = "SELECT products.id, 
 #{cd_s 101},

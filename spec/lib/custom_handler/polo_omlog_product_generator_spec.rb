@@ -1,21 +1,13 @@
 require 'spec_helper'
 
-describe OpenChain::CustomHandler::PoloCsmProductGenerator do
-  describe :remote_file_name do
-    #ChainYYYYMMDDHHSS.csv
-    it "should return datestamp naming convention" do
-      described_class.new.remote_file_name.should match /Chain[0-9]{14}\.csv/
-    end
-  end
+describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
   describe :ftp_credentials do
-    it "should send credentials" do
-      c = described_class.new
-      c.stub(:remote_file_name).and_return("x.csv")
-      c.ftp_credentials.should == {:username=>'polo',:password=>'pZZ117',:server=>'ftp.chain.io',:folder=>'/_to_csm',:remote_file_name=>'x.csv'}
-    end
+    c = described_class.new
+    c.ftp_credentials.should == {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
   end
-  describe :sync_csv do
-    after :each do
+
+  describe :sync_xls do
+    after :each do 
       @tmp.unlink if @tmp
     end
     it "should split CSM numbers" do
@@ -24,15 +16,14 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country=>@italy))
       @product = tr.classification.product
       @product.update_custom_value! @cd, "CSM1\nCSM2"
-      @tmp = described_class.new.sync_csv
-      a = CSV.parse IO.read @tmp
-      a[0][1].should == "CSM Number"
-      a[1][1].should == "CSM1"
-      a[1][6].should == @product.unique_identifier
-      a[1][10].should == '1234567890'
-      a[2][1].should == "CSM2"
-      a[2][6].should == @product.unique_identifier
-      a[2][10].should == '1234567890'
+      @tmp = described_class.new.sync_xls
+      sheet = Spreadsheet.open(@tmp).worksheet(0)
+      sheet.row(1)[1].should == "CSM1"
+      sheet.row(1)[6].should == @product.unique_identifier
+      sheet.row(1)[10].should == '1234567890'
+      sheet.row(2)[1].should == "CSM2"
+      sheet.row(2)[6].should == @product.unique_identifier
+      sheet.row(2)[10].should == '1234567890'
     end
   end
   describe :query do
