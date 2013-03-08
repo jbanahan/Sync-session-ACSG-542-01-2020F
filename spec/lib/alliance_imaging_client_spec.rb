@@ -48,6 +48,36 @@ describe OpenChain::AllianceImagingClient do
       entry.attachments[0].alliance_suffix = @hash["suffix"][2, 3]
       entry.attachments[0].alliance_suffix = @hash["suffix"][0, 2]
     end
+
+    it 'should look for source_system in the message hash and use entry number to lookup for Fenix source system' do
+      @hash["source_system"] = 'Fenix'
+      @e1.update_attributes :source_system => 'Fenix', :entry_number => "#{@hash['file_number']}", :broker_reference => '654321'
+
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+      entry = Entry.find(@e1.id)
+      entry.attachments.size.should == 1
+      entry.attachments[0].attached_content_type.should == "application/pdf"
+      entry.attachments[0].attachment_type.should == @hash["doc_desc"]
+      entry.attachments[0].source_system_timestamp.should_not be_nil
+    end
+
+    it 'should generate shell entry records when an entry is missing and the source system is Fenix' do
+      # These are the only hash values we should currently expect from the Fenix imaging monitoring process
+      @hash = {"source_system" => "Fenix", "file_number" => "123456", "doc_date" => Time.now, "file_name"=>"file.pdf", "doc_desc" => "Source Testing"}
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      
+      entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+      entry.should_not be_nil
+      entry.entry_number.should == @hash["file_number"]
+      entry.source_system.should == 'Fenix'
+      entry.file_logged_date.should >= (Time.zone.now - 1.minute)
+
+      entry.attachments.size.should == 1
+      entry.attachments[0].attached_content_type.should == "application/pdf"
+      entry.attachments[0].attachment_type.should == @hash["doc_desc"]
+      entry.attachments[0].source_system_timestamp.should_not be_nil
+    end
   end
 
   describe :consume_images do
