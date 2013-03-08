@@ -45,7 +45,7 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>20},'cell'=>{'value'=>d[:name],'datatype'=>'string'}},
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>21},'cell'=>{'value'=>d[:fiber],'datatype'=>'string'}},
             {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>28},'cell'=>{'value'=>d[:gcc],'datatype'=>'string'}},
-            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>47},'cell'=>{'value'=>d[:msl_hts],'datatype'=>'string'}}
+            {'position'=>{'sheet'=>0,'row'=>i+4,'column'=>51},'cell'=>{'value'=>d[:msl_hts],'datatype'=>'string'}}
           ]
           @xlc.should_receive(:get_row).with(0,i+4).and_return(r)
         end
@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
         width = '11'
         length = '12'
         gcc_desc = 'gcc'
-        iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR','VN','TH']
+        iso_codes = ['HK','CN','MO','MY','SG','TW','PH','JP','KR','VN','TH','AU','NZ']
         countries = {}
         expected_writes = [[29,'YES']]
         hts_1_prefix = '1654611'
@@ -130,13 +130,13 @@ describe OpenChain::CustomHandler::PoloMslPlusHandler do
           countries[c] = {:country=>Factory(:country,:iso_code=>c),
             :hts_1=>"#{hts_1_prefix}#{i}",:hts_2=>"#{hts_2_prefix}#{i}",:hts_3=>"#{hts_3_prefix}#{i}"}
           if c=="TW"
-            expected_writes << [35+i,"#{hts_1_prefix}#{i}"]
-            expected_writes << [52+i,"#{hts_2_prefix}#{i}"]
-            expected_writes << [69+i,"#{hts_3_prefix}#{i}"]
+            expected_writes << [37+i,"#{hts_1_prefix}#{i}"]
+            expected_writes << [56+i,"#{hts_2_prefix}#{i}"]
+            expected_writes << [75+i,"#{hts_3_prefix}#{i}"]
           else
-            expected_writes << [35+i,"#{hts_1_prefix}#{i}".hts_format]
-            expected_writes << [52+i,"#{hts_2_prefix}#{i}".hts_format]
-            expected_writes << [69+i,"#{hts_3_prefix}#{i}".hts_format]
+            expected_writes << [37+i,"#{hts_1_prefix}#{i}".hts_format]
+            expected_writes << [56+i,"#{hts_2_prefix}#{i}".hts_format]
+            expected_writes << [75+i,"#{hts_3_prefix}#{i}".hts_format]
           end
         end
         OfficialTariff.create!(:country_id=>countries['TW'][:country].id,:hts_code=>countries['TW'][:hts_1],:import_regulations=>'a MP1 b')
