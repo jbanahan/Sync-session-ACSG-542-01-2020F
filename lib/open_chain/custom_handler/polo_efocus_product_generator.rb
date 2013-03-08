@@ -1,61 +1,26 @@
+require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
-    class PoloEfocusProductGenerator
+    class PoloEfocusProductGenerator < ProductGenerator
 
       SYNC_CODE = 'efocus-product'
-
-      def initialize(opts={})
-        @custom_where = opts[:where]
+      
+      #Superclass requires this method
+      def sync_code
+        SYNC_CODE
       end
 
       def generate
         ftp_file sync_xls
       end
 
-      def sync_xls
-        synced_products = []
-        wb = Spreadsheet::Workbook.new
-        sht = wb.create_worksheet :name=>'Results'
-        rt = result_table
-        cursor = 0
-        row = sht.row(cursor)
-        rt.fields.each_with_index do |f,i|
-          row[i] = f
-        end
-        cursor += 1
-        rt.each do |vals|
-          row = sht.row(cursor)
-          vals.each_with_index {|v,i| row[i] = v}
-          synced_products << vals[5]
-          cursor +=1
-        end
-        synced_products.in_groups_of(100,false) do |uids|
-          x = uids.collect {|u| "\"#{u}\""}
-          Product.transaction do
-            Product.connection.execute "DELETE FROM sync_records where syncable_id IN (select id from products where unique_identifier in (#{x.join(",")}));"
-            Product.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at,confirmed_at,updated_at,created_at,trading_partner) 
- (select id, \"Product\",now(),now() + INTERVAL 1 MINUTE,now(),now(),\"#{SYNC_CODE}\" from products where unique_identifier in (#{x.join(",")}));"
-          end
-        end
-        t = Tempfile.new(['BarthcoSync','.xls'])
-        wb.write t
-        t
+      def ftp_credentials
+        {:server=>'ftp.freightek.com',:username=>'polo',:password=>'polo541xm',:folder=>'/ProductUpload'}
       end
-
-      def result_table
-        Product.connection.execute(build_query(@custom_where))
-      end
-      def ftp_file file
-        begin
-          FtpSender.send_file('ftp.freightek.com','polo','polo541xm',file,{:folder=>'/ProductUpload'})
-        ensure
-          file.unlink
-        end
-      end
-
-      private
-      def build_query custom_where = nil
+    
+      def query
         fields = [
+          "products.id",
           cd_s(1),
           cd_s(2),
           "\"US\" as `#{ModelField.find_by_uid(:class_cntry_iso).label}`",
@@ -167,32 +132,15 @@ module OpenChain
 FROM products 
 INNER JOIN classifications on classifications.product_id = products.id and classifications.country_id = (select id from countries where iso_code = \"US\" LIMIT 1)
 LEFT OUTER JOIN tariff_records on tariff_records.classification_id = classifications.id
-LEFT OUTER JOIN sync_records on sync_records.syncable_type = 'Product' and sync_records.syncable_id = products.id and sync_records.trading_partner = '#{SYNC_CODE}'
+LEFT OUTER JOIN sync_records on sync_records.syncable_type = 'Product' and sync_records.syncable_id = products.id and sync_records.trading_partner = '#{sync_code}'
 "
         w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)
 AND (select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Barthco Customer ID\")) > 0
 AND ifnull((select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Test Style\")),0) = 0
 "
-        r << (custom_where ? custom_where : w)
+        r << (@custom_where ? @custom_where : w)
       end
 
-      def cd_s cd_id
-        @definitions ||= {}
-        if @definitions.empty?
-          CustomDefinition.all.each {|cd| @definitions[cd.id] = cd}
-        end
-        cd = @definitions[cd_id]
-        return "(SELECT \"\") as `Custom #{cd_id}`" unless cd #so report doesn't bomb if custom field is removed from system
-        table_name = ''
-        case cd.module_type
-        when 'Product'
-          table_name = 'products'
-        when 'Classification'
-          table_name = 'classifications'
-        end
-        
-        r = "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`"
-      end
     end
   end
 end

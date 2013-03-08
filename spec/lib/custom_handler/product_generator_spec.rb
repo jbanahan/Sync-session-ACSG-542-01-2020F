@@ -1,0 +1,137 @@
+require 'spec_helper'
+
+describe OpenChain::CustomHandler::ProductGenerator do
+  
+  before :each do
+    @base = Class.new(OpenChain::CustomHandler::ProductGenerator) do
+      def ftp_credentials 
+        {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r'}
+      end
+
+      def query
+        "select id, unique_identifier as 'UID', name as 'NM' from products order by products.id asc"
+      end
+    end
+  end
+
+  describe :sync do
+
+    before :each do 
+      @p1 = Factory(:product,:name=>'x')
+    end
+    context :sync_records do
+      context :implments_sync_code do
+        before :each do
+          @inst = @base.new
+          def @inst.sync_code; "SYN"; end
+        end
+        it "should write sync_records if class implements sync_code" do
+          @tmp = @inst.sync {|r| nil}
+          records = @p1.sync_records.where(:trading_partner=>"SYN")
+          records.should have(1).sync_record
+          sr = records.first
+          sr.sent_at.should < sr.confirmed_at
+        end
+        it "should delete existing sync_records" do
+          base_rec = @p1.sync_records.create!(:trading_partner=>"SYN")
+          @tmp = @inst.sync {|r| nil}
+          SyncRecord.find_by_id(base_rec.id).should be_nil
+        end
+        it "should not delete sync_records for other trading partners" do
+          other_rec = @p1.sync_records.create!(:trading_partner=>"OTHER")
+          @tmp = @inst.sync {|r| nil}
+          SyncRecord.find_by_id(other_rec.id).should_not be_nil
+        end
+      end
+      it "should not write sync_records if class doesn't implement sync_code" do
+        @tmp = @base.new.sync {|r| nil}
+        @p1.sync_records.should be_empty
+      end
+    end
+  end
+
+  describe :sync_csv do
+    before :each do
+      @p1 = Factory(:product,:name=>'x')
+      @p2 = Factory(:product,:name=>'y')
+    end
+    after :each do
+      @tmp.unlink if @tmp
+    end
+
+    it "should create csv from results" do
+      @tmp = @base.new.sync_csv
+      a = CSV.parse IO.read @tmp
+      a[0][0].should == "UID"
+      a[0][1].should == "NM"
+      [@p1,@p2].each_with_index do |p,i|
+        a[i+1][0].should == p.unique_identifier
+        a[i+1][1].should == p.name
+      end
+    end
+    it "should create csv without headers" do
+      @tmp = @base.new.sync_csv false
+      a = CSV.parse IO.read @tmp
+      [@p1,@p2].each_with_index do |p,i|
+        a[i][0].should == p.unique_identifier
+        a[i][1].should == p.name
+      end
+    end
+    it "should return nil if no records returned" do
+      Product.destroy_all
+      @tmp = @base.new.sync_csv
+      @tmp.should be_nil
+    end
+  end
+  describe :sync_xls do
+    before :each do 
+      @p1 = Factory(:product,:name=>'x')
+    end
+    after :each do
+      @tmp.unlink if @tmp
+    end
+    it "should create workbook from results" do
+      p2 = Factory(:product,:name=>'y')
+      @tmp = @base.new.sync_xls
+      sheet = Spreadsheet.open(@tmp).worksheet(0)
+      [@p1,p2].each_with_index do |p,i|
+        r = sheet.row(i+1)
+        r[0].should == p.unique_identifier
+        r[1].should == p.name
+      end
+    end
+    it "should return nil if no results" do
+      Product.destroy_all
+      @tmp = @base.new.sync_xls
+      @tmp.should be_nil
+    end
+
+  end
+  describe :ftp_file do
+    before :each do
+      @t = mock('tmpfile')
+      @t.stub(:path).and_return('/x.badfile')
+    end
+    it "should ftp_file" do
+      File.stub(:exists?).and_return true
+      @t.should_receive(:unlink)
+      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
+      @base.new.ftp_file @t
+    end
+    it 'should not unlink if false is passed' do
+      File.stub(:exists?).and_return true
+      @t.should_not_receive(:unlink)
+      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
+      @base.new.ftp_file @t, false
+    end
+    it "should return false if file is nil" do
+      File.stub(:exists?).and_return true
+      FtpSender.should_not_receive(:send_file)
+      @base.new.ftp_file(nil).should be_false
+    end
+    it "should return false if file does not exist" do
+      FtpSender.should_not_receive(:send_file)
+      @base.new.ftp_file(@t).should be_false
+    end
+  end
+end
