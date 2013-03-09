@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::DasProductGenerator do
     it "should send credentials" do
       c = described_class.new
       c.stub(:remote_file_name).and_return("x.csv")
-      c.ftp_credentials.should == {:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'/to_ecs/alliance_products',:remote_file_name=>'x.csv'}
+      c.ftp_credentials.should == {:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/alliance_products',:remote_file_name=>'x.csv'}
     end
   end
 
