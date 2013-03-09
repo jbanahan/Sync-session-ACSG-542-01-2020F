@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       end
       @tmp = @b.sync_fixed_position
       r = IO.read @tmp
-      r.should == "ABC#{@t.strftime('%Y%m%d')}   5\n"
+      r.should == "ABC#{@t.strftime('%Y%m%d')}   5\r"
     end
   end
   describe :sync_xls do
