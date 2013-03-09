@@ -83,6 +83,27 @@ describe OpenChain::CustomHandler::ProductGenerator do
       @tmp.should be_nil
     end
   end
+  describe :sync_fixed_position do
+    before :each do 
+      @t = Time.now
+      @p1 = Factory(:product,:name=>'ABCDEFG',:created_at=>@t)
+      @b = @base.new
+      def @b.query
+        'select id, name, created_at, 5 from products'
+      end
+    end
+    after :each do 
+      @tmp.unlink if @tmp
+    end
+    it "should create fixed position file from results" do
+      def @b.fixed_position_map
+        [{:len=>3},{:len=>8,:to_s=>lambda {|o| o.strftime("%Y%m%d")}},{:len=>4}]
+      end
+      @tmp = @b.sync_fixed_position
+      r = IO.read @tmp
+      r.should == "ABC#{@t.strftime('%Y%m%d')}   5\n"
+    end
+  end
   describe :sync_xls do
     before :each do 
       @p1 = Factory(:product,:name=>'x')

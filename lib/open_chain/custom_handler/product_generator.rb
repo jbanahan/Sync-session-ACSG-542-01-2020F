@@ -67,7 +67,44 @@ module OpenChain
           return nil
         end
       end
-
+      
+      #output a fixed position file based on the layout provided by the subclass in the `fixed_position_map` method
+      #
+      # `fixed_position_map` should return an array of hashes that include length and an optional to_s lambda like: 
+      # [{:len=>5},{:len=>8,:to_s=>lambda {|o| o.strftime("%Y%m%d")}]
+      #
+      # The `fixed_position_map` array should start with the second element from the query response since the first should
+      # always be the products.id and is ignored
+      # 
+      # The default to_s formatter will left pad strings and right pad anything that responds true to o.is_a?(Numeric)
+      # it will truncate strings that are too long.  You should always override date formatting.
+      def sync_fixed_position
+        f = Tempfile.new(['ProductSync','.txt'])
+        map = fixed_position_map #subclass must implement this
+        cursor = 0
+        sync do |rv|
+          cursor += 1
+          next if cursor == 1
+          row = ""
+          map.each_with_index do |settings,i|
+            v = rv[i] 
+            to_s = settings[:to_s] ? settings[:to_s] : lambda {|o| o.to_s}
+            val = to_s.call(v)
+            len = settings[:len]
+            val = val[0,len] if val.length > len
+            val = v.is_a?(Numeric) ? val.rjust(len) : val.ljust(len)
+            row << val
+          end
+          f << "#{row}\n"
+        end
+        f.flush
+        if cursor > 1
+          return f
+        else 
+          f.unlink
+          return nil
+        end
+      end
       #output an excel file with headers
       def sync_xls
         wb = Spreadsheet::Workbook.new
