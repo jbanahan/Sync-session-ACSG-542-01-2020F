@@ -1,7 +1,7 @@
 class CommercialInvoice < ActiveRecord::Base
   include CoreObjectSupport
   has_many :commercial_invoice_lines, :dependent => :destroy
-  belongs_to :entry
+  belongs_to :entry, :touch=>true
   belongs_to :vendor, :class_name => "Company"
   belongs_to :importer, :class_name => "Company"
 

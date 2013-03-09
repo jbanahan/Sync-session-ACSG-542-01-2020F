@@ -35,122 +35,124 @@
   </style>
   <![endif]-->
 </head>
-<body>
-<% if @run_as_user %>
-  <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
-<% end %>
-<% if current_user && !no_buttons %>
-  <ul id='nb_r' class='dropdown'>
-    <li><%=link_to current_user.full_name, company_user_path(current_user.company, current_user)%></li>
-    <li id='message_envelope' style='display:none;'><%=link_to image_tag('envelope.png'), "/messages"%></li>
-    <li><a href='#' class='click_sink'>Menu</a>
-      <ul class='sub_menu' id='tools_menu'>
-        <li><a href='/messages'>Messages</a></li>
-        <li><a href='/report_results'>Reports</a></li>
-        <li><a href='/support_tickets'>Support</a></li>
-        <li><a href='/tools'>Tools</a></li>
-        <%if !current_user.imported_files.blank?%>
-          <li><a href='/imported_files'>Uploads</a></li>
-        <%end%>
-        <li><a href='/logout'>Log Out</a></li>
-      </ul>
-    </li>
-  </ul>
-  <ul id='nb_l' class='dropdown'>
-    <li><a href='/'>Dashboard</a></li>
-    <%if current_user.view_products?%>
-      <li><a href='#' class='click_sink'>Products</a>
-        <ul class='sub_menu'>
-          <li><a href='/products?force_search=true'>Search</a></li>
-          <%if current_user.add_products?%>
-            <li><a href='/products/new'>Add</a></li>
+<% cache ['v1',ms,current_user.company,current_user] do %>
+  <body>
+  <% if @run_as_user %>
+    <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
+  <% end %>
+  <% if current_user && !no_buttons %>
+    <ul id='nb_r' class='dropdown'>
+      <li><%=link_to current_user.full_name, company_user_path(current_user.company, current_user)%></li>
+      <li id='message_envelope' style='display:none;'><%=link_to image_tag('envelope.png'), "/messages"%></li>
+      <li><a href='#' class='click_sink'>Menu</a>
+        <ul class='sub_menu' id='tools_menu'>
+          <li><a href='/messages'>Messages</a></li>
+          <li><a href='/report_results'>Reports</a></li>
+          <li><a href='/support_tickets'>Support</a></li>
+          <li><a href='/tools'>Tools</a></li>
+          <%if !current_user.imported_files.blank?%>
+            <li><a href='/imported_files'>Uploads</a></li>
           <%end%>
+          <li><a href='/logout'>Log Out</a></li>
         </ul>
       </li>
-    <%end%>
-    <%if current_user.view_orders?%>
-      <li><a href='#' class='click_sink'>Orders</a>
-        <ul class='sub_menu'>
-          <li><a href='/orders?force_search=true'>Search</a></li>
-          <%if current_user.add_orders?%>
-            <li><a href='/orders/new'>Add</a></li>
-          <%end%>
-        </ul>
-      </li>
-    <%end%>
-    <%if current_user.view_shipments?%>
-      <li><a href='#' class='click_sink'>Shipments</a>
-        <ul class='sub_menu'>
-          <li><a href='/shipments?force_search=true'>Search</a></li>
-          <%if current_user.add_shipments?%>
-            <li><a href='/shipments/new'>Add</a></li>
-          <%end%>
-        </ul>
-      </li>
-    <%end%>
-    <%if current_user.view_sales_orders?%>
-      <li><a href='#' class='click_sink'>Sales</a>
-        <ul class='sub_menu'>
-          <li><a href='/sales_orders?force_search=true'>Search</a></li>
-          <%if current_user.add_sales_orders?%>
-            <li><a href='/sales_orders/new'>Add</a></li>
-          <%end%>
-        </ul>
-      </li>
-    <%end%>
-    <%if current_user.view_deliveries?%>
-      <li><a href='#' class='click_sink'>Deliveries</a>
-        <ul class='sub_menu'>
-          <li><a href='/deliveries?force_search=true'>Search</a></li>
-          <%if current_user.add_deliveries?%>
-            <li><a href='/deliveries/new'>Add</a></li>
-          <%end%>
-        </ul>
-      </li>
-    <%end%>
-    <%if current_user.view_security_filings?-%>
-      <li><a href='#' class='click_sink'>Security Filings</a>
-        <ul class='sub_menu'>
-          <li><a href='/security_filings?force_search=true'>Search</a></li>
-        </ul>
-      </li>
-    <%end-%>
-    <%if current_user.view_entries?%>
-      <li><a href='#' class='click_sink'>Entries</a>
-        <ul class='sub_menu'>
-          <li><a href='/entries?force_search=true'>Search</a></li>
-          <li><a href='/entries/bi'>Snapshots</a></li>
-        </ul>
-      </li>
-    <%end%>
-    <%if current_user.view_broker_invoices?%>
-      <li><a href='#' class='click_sink'>Invoices</a>
-        <ul class='sub_menu'>
-          <li><a href='/broker_invoices?force_search=true'>Search</a></li>
-        </ul>
-      </li>
-    <%end%>
-    <%if current_user.view_drawback?%>
-      <li><a href='#' class='click_sink'>Drawback</a>
-        <ul class='sub_menu'>
-          <li><a href='/drawback_claims'>Claims</a></li>
-          <li><a href='/drawback_upload_files'>Upload</a></li>
-        </ul>
-      </li>
-    <%end%>
-    <%if !current_user.survey_responses.blank? || current_user.view_surveys?%>
-      <li><a href='#' class='click_sink'>Surveys</a>
-        <ul class='sub_menu'>
-          <li><a href='/survey_responses'>View</a></li>
-          <%if current_user.view_surveys? %>
-            <li><%=link_to('Manage', surveys_path)%></li>
-          <%end%>
-        </ul>
-      </li>
-    <%end%>
-  </ul>
-  <div id='nav_bar'>&nbsp;
-  </div>
+    </ul>
+    <ul id='nb_l' class='dropdown'>
+      <li><a href='/'>Dashboard</a></li>
+      <%if current_user.view_products?%>
+        <li><a href='#' class='click_sink'>Products</a>
+          <ul class='sub_menu'>
+            <li><a href='/products?force_search=true'>Search</a></li>
+            <%if current_user.add_products?%>
+              <li><a href='/products/new'>Add</a></li>
+            <%end%>
+          </ul>
+        </li>
+      <%end%>
+      <%if current_user.view_orders?%>
+        <li><a href='#' class='click_sink'>Orders</a>
+          <ul class='sub_menu'>
+            <li><a href='/orders?force_search=true'>Search</a></li>
+            <%if current_user.add_orders?%>
+              <li><a href='/orders/new'>Add</a></li>
+            <%end%>
+          </ul>
+        </li>
+      <%end%>
+      <%if current_user.view_shipments?%>
+        <li><a href='#' class='click_sink'>Shipments</a>
+          <ul class='sub_menu'>
+            <li><a href='/shipments?force_search=true'>Search</a></li>
+            <%if current_user.add_shipments?%>
+              <li><a href='/shipments/new'>Add</a></li>
+            <%end%>
+          </ul>
+        </li>
+      <%end%>
+      <%if current_user.view_sales_orders?%>
+        <li><a href='#' class='click_sink'>Sales</a>
+          <ul class='sub_menu'>
+            <li><a href='/sales_orders?force_search=true'>Search</a></li>
+            <%if current_user.add_sales_orders?%>
+              <li><a href='/sales_orders/new'>Add</a></li>
+            <%end%>
+          </ul>
+        </li>
+      <%end%>
+      <%if current_user.view_deliveries?%>
+        <li><a href='#' class='click_sink'>Deliveries</a>
+          <ul class='sub_menu'>
+            <li><a href='/deliveries?force_search=true'>Search</a></li>
+            <%if current_user.add_deliveries?%>
+              <li><a href='/deliveries/new'>Add</a></li>
+            <%end%>
+          </ul>
+        </li>
+      <%end%>
+      <%if current_user.view_security_filings?-%>
+        <li><a href='#' class='click_sink'>Security Filings</a>
+          <ul class='sub_menu'>
+            <li><a href='/security_filings?force_search=true'>Search</a></li>
+          </ul>
+        </li>
+      <%end-%>
+      <%if current_user.view_entries?%>
+        <li><a href='#' class='click_sink'>Entries</a>
+          <ul class='sub_menu'>
+            <li><a href='/entries?force_search=true'>Search</a></li>
+            <li><a href='/entries/bi'>Snapshots</a></li>
+          </ul>
+        </li>
+      <%end%>
+      <%if current_user.view_broker_invoices?%>
+        <li><a href='#' class='click_sink'>Invoices</a>
+          <ul class='sub_menu'>
+            <li><a href='/broker_invoices?force_search=true'>Search</a></li>
+          </ul>
+        </li>
+      <%end%>
+      <%if current_user.view_drawback?%>
+        <li><a href='#' class='click_sink'>Drawback</a>
+          <ul class='sub_menu'>
+            <li><a href='/drawback_claims'>Claims</a></li>
+            <li><a href='/drawback_upload_files'>Upload</a></li>
+          </ul>
+        </li>
+      <%end%>
+      <%if !current_user.survey_responses.blank? || current_user.view_surveys?%>
+        <li><a href='#' class='click_sink'>Surveys</a>
+          <ul class='sub_menu'>
+            <li><a href='/survey_responses'>View</a></li>
+            <%if current_user.view_surveys? %>
+              <li><%=link_to('Manage', surveys_path)%></li>
+            <%end%>
+          </ul>
+        </li>
+      <%end%>
+    </ul>
+    <div id='nav_bar'>&nbsp;
+    </div>
+  <%end%>
 <%end%>
 <% unless no_buttons %>
   <% if has_messages || !ms.system_message.blank?%>

@@ -27,7 +27,7 @@ OpenChain::Application.configure do
   config.logger = Logger.new(Rails.root.join("log", Rails.env + ".log"), 3, 100 * 1024 * 1024)
 
   # Use a different cache store in production
-  # config.cache_store = :mem_cache_store
+  config.cache_store = :dalli_store, 'chain-cache.roatcx.0001.use1.cache.amazonaws.com'
 
   # Disable Rails's static asset server
   # In production, Apache or nginx will already do this

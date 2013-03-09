@@ -1,6 +1,28 @@
 require 'spec_helper'
 
 describe User do
+  describe :magic_columns do
+    before :each do
+      @updated_at = 1.year.ago
+      @u = Factory(:user,:updated_at=>@updated_at)
+    end
+    it "should not update updated_at if only authlogic columns changed" do
+      @u.perishable_token='12345'
+      @u.save!
+      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
+      User.record_timestamps.should be_true
+    end
+    it "should update updated_at if non-authlogic column changes" do
+      @u.update_attributes(:email=>'a@sample.com')
+      User.record_timestamps.should be_true
+      User.find(@u.id).updated_at.should > 10.seconds.ago
+    end
+    it "should update updated_at if both non-authlogic and authlogic columns change" do
+      @u.update_attributes(:perishable_token=>'12345',:email=>'a@sample.com')
+      User.record_timestamps.should be_true
+      User.find(@u.id).updated_at.should > 10.seconds.ago
+    end
+  end
   context "permissions" do
     context "unfiled_emails" do
       it "should allow view_unfiled_emails? if edit_unfiled_emails" do

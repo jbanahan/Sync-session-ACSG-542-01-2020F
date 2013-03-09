@@ -46,6 +46,9 @@ class User < ActiveRecord::Base
   
   validates  :company, :presence => true
 
+  before_save :authlogic_persistence
+  after_save :reset_timestamp_flag
+
   def self.find_not_locked(login) 
     u = User.where(:username => login).first
     unless u.nil? || u.company.locked
@@ -327,6 +330,14 @@ class User < ActiveRecord::Base
   private
   def master_setup
     MasterSetup.get 
+  end
+  def authlogic_persistence
+    self.record_timestamps = false if (self.changed - ['perishable_token','persistence_token','last_request_at']).empty?
+    true
+  end
+  def reset_timestamp_flag
+    self.record_timestamps = true
+    true
   end
 
 end
