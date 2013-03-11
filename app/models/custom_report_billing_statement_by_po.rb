@@ -36,7 +36,12 @@ class CustomReportBillingStatementByPo < CustomReport
     end
 
     invoices.each do |inv|
+      invoice_number = inv.invoice_number
       entry = inv.entry
+      if invoice_number.blank?
+        invoice_number = entry.broker_reference
+        invoice_number << inv.suffix unless inv.suffix.blank?
+      end
       po_numbers = split_po_numbers entry
       
       # This invoice amount stuff is there to handle the case where, due to rounding the prorated amount you may
@@ -61,7 +66,7 @@ class CustomReportBillingStatementByPo < CustomReport
           po_value = remaining_invoice_amount
         end
 
-        cols << inv.invoice_number.blank? ? entry.broker_reference + (inv.suffix.blank? ? "" : inv.suffix) : inv.invoice_number
+        cols << invoice_number 
         cols << inv.invoice_date
         cols << po_value
         cols << po
