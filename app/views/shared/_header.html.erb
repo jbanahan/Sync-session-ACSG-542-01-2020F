@@ -35,7 +35,7 @@
   </style>
   <![endif]-->
 </head>
-<% cache ['v1',ms,current_user.company,current_user] do %>
+<% cache ['v1',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0)] do %>
   <body>
   <% if @run_as_user %>
     <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
