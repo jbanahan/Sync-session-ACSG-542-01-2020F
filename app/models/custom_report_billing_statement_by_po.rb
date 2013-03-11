@@ -61,7 +61,7 @@ class CustomReportBillingStatementByPo < CustomReport
           po_value = remaining_invoice_amount
         end
 
-        cols << entry.broker_reference + inv.suffix
+        cols << inv.invoice_number.blank? ? entry.broker_reference + inv.suffix : inv.invoice_number
         cols << inv.invoice_date
         cols << po_value
         cols << po
