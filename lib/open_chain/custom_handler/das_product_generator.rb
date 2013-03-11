@@ -1,12 +1,10 @@
 require 'open_chain/custom_handler/product_generator'
+require 'open_chain/custom_handler/alliance_product_support'
 
 module OpenChain
   module CustomHandler
     class DasProductGenerator < ProductGenerator
-      def ftp_credentials
-        {:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/alliance_products',:remote_file_name=>remote_file_name}
-      end
-
+      include AllianceProductSupport
       def remote_file_name
         "#{Time.now.strftime("%Y%m%d%H%M%S%L")}-DAPART.DAT"
       end
