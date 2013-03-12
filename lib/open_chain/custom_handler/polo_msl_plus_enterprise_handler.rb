@@ -6,6 +6,15 @@ module OpenChain
       def initialize opts={}
         @env = opts[:env]
       end
+
+      # find the products that need to be sent to MSL+ (they have MSL+ Receive Dates and need sync)
+      def products_to_send
+        cd_msl_rec = cust_def "MSL+ Receive Date", "date"
+        sc = SearchCriterion.new(:model_field_uid=>"*cf_#{cd_msl_rec.id}",:operator=>"notnull")
+        sc.apply(Product.need_sync("MSLE"))
+      end
+
+      # Generate the file with data that needs to be sent back to MSL+
       def generate_outbound_sync_file products
         file = Tempfile.new(['msl_outbound','.csv'])
         file << ["Style", "Country", "MP1 Flag", "HTS 1", "HTS 2", "HTS 3", "Length", "Width", "Height"].to_csv
@@ -28,10 +37,14 @@ module OpenChain
         file.flush
         file
       end
+
+      # Send the file created by `generate_outbound_sync_file`
       def send_and_delete_sync_file local_file, send_time=Time.now #only override send_time for test case
         send_file local_file, "ChainIO_HTSExport_#{send_time.strftime('%Y%m%d%H%M%S')}.csv"
         File.delete local_file 
       end
+
+      # Process the acknowledgment file confirming receipt of outbound sync records
       def process_ack_from_msl file_content, file_name
         errors = []
         CSV.parse(file_content,:headers=>true) do |row|
@@ -52,10 +65,13 @@ module OpenChain
         end
         email_ack_failures file_content, file_name, errors unless errors.blank?
       end
+
+      #notify developers if acknowledgment file from MSL+ was invalid
       def email_ack_failures file_content, file_name, error_messages
         m = CustomMailer.polo_msl_ack_failure(file_content,file_name,error_messages)
         m.deliver
       end
+
       #process the inbound file
       def process file_content
         cd_board = cust_def "Board Number"
