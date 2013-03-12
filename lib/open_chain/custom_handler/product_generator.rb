@@ -55,6 +55,7 @@ module OpenChain
               v = "" if v.blank?
               row << v.to_s
             end
+            row = before_csv_write cursor, row
             f << row.to_csv
           end
           cursor += 1
@@ -66,6 +67,11 @@ module OpenChain
           f.unlink
           return nil
         end
+      end
+
+      #stub for callback to intercept array of values to be written as CSV and return changed/corrected values
+      def before_csv_write row_num_zero_based, values_array
+        values_array 
       end
       
       #output a fixed position file based on the layout provided by the subclass in the `fixed_position_map` method

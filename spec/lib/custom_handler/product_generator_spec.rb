@@ -82,6 +82,32 @@ describe OpenChain::CustomHandler::ProductGenerator do
       @tmp = @base.new.sync_csv
       @tmp.should be_nil
     end
+
+    it "should call before_csv_write callback" do
+    @base = Class.new(OpenChain::CustomHandler::ProductGenerator) do
+      def initialize
+        @vals = ["A","B","C"]
+      end
+      def ftp_credentials 
+        {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r'}
+      end
+
+      def query
+        "select id, unique_identifier as 'UID', name as 'NM' from products order by products.id asc"
+      end
+      def before_csv_write cursor, vals
+        [@vals[cursor]]
+      end
+    end
+#      @base.should_receive(:before_csv_write).with(0,["UID","NM"]).ordered.and_return("A")
+#      @base.should_receive(:before_csv_write).with(1,[@p1.unique_identifier,@p1.name]).ordered.and_return("B")
+#      @base.should_receive(:before_csv_write).with(2,[@p2.unique_identifier,@p2.name]).ordered.and_return("C")
+      @tmp = @base.new.sync_csv
+      a = CSV.parse IO.read @tmp
+      a[0][0].should == "A"
+      a[1][0].should == "B"
+      a[2][0].should == "C"
+    end
   end
   describe :sync_fixed_position do
     before :each do 

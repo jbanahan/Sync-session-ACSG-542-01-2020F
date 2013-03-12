@@ -33,7 +33,7 @@ describe CustomReportBillingStatementByPo do
     before :each do
       @user = Factory(:master_user)
       @user.stub(:view_broker_invoices?).and_return(true)
-      @invoice = Factory(:broker_invoice, :suffix=>"Test", :invoice_total=>"100", :invoice_date=>Date.parse("2013-01-01"))
+      @invoice = Factory(:broker_invoice, :suffix=>"Test", :invoice_total=>"100", :invoice_date=>Date.parse("2013-01-01"),:invoice_number=>'ZZZ')
       @invoice.entry.update_attributes(:broker_reference=>"Entry", :po_numbers=>"1\n 2\n 3")
       @invoice.broker_invoice_lines.create!(:charge_description => "A", :charge_amount=>1)
       @invoice.broker_invoice_lines.create!(:charge_description => "B", :charge_amount=>2)
@@ -53,13 +53,13 @@ describe CustomReportBillingStatementByPo do
       row.should == ["Invoice Number", "Invoice Date", "Invoice Total", "PO Number", ModelField.find_by_uid(:bi_brok_ref).label, ModelField.find_by_uid(:bi_ent_po_numbers).label]
 
       row = r[1]
-      row.should == ["EntryTest", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "1", "Entry", "1\n 2\n 3"]
+      row.should == ["ZZZ", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "1", "Entry", "1\n 2\n 3"]
 
       row = r[2]
-      row.should == ["EntryTest", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "2", "Entry", "1\n 2\n 3"]
+      row.should == ["ZZZ", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "2", "Entry", "1\n 2\n 3"]
 
       row = r[3]
-      row.should == ["EntryTest", Date.parse("2013-01-01"), BigDecimal.new("33.34"), "3", "Entry", "1\n 2\n 3"]
+      row.should == ["ZZZ", Date.parse("2013-01-01"), BigDecimal.new("33.34"), "3", "Entry", "1\n 2\n 3"]
     end
 
     it "should show a message if now results are returned" do
@@ -83,7 +83,7 @@ describe CustomReportBillingStatementByPo do
       r.length.should == 4
       r[0].should == ["Web Links", "Invoice Number", "Invoice Date", "Invoice Total", "PO Number"]
 
-      r[1].should == [@entry.view_url, "EntryTest", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "1"]
+      r[1].should == [@entry.view_url, "ZZZ", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "1"]
     end
 
     it "should show invoices with no po numbers as 1 line" do
@@ -92,7 +92,7 @@ describe CustomReportBillingStatementByPo do
       r = @report.to_arrays @user
       r.length.should == 2
 
-      r[1].should == ["EntryTest", Date.parse("2013-01-01"), BigDecimal.new("100"), ""]
+      r[1].should == ["ZZZ", Date.parse("2013-01-01"), BigDecimal.new("100"), ""]
     end
 
     it "should raise an error if the user cannot view broker invoices" do
