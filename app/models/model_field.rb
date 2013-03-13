@@ -47,6 +47,17 @@ class ModelField
     @currency = o[:currency]
     @query_parameter_lambda = o[:query_parameter_lambda]
     @custom_definition = CustomDefinition.find @custom_id if @custom_id
+    @process_query_result_lambda = o[:process_query_result_lambda]
+  end
+
+  # do post processing on raw sql query result generated using qualified_field_name
+  def process_query_result val, user
+    return "HIDDEN" unless can_view? user
+    if @process_query_result_lambda
+      return @process_query_result_lambda.call val
+    else
+      return val
+    end
   end
 
   # if true, then the field can't be updated with `process_import`
@@ -284,6 +295,9 @@ class ModelField
             when 2 then t.hts_2
             when 3 then t.hts_3
           end
+        },
+        :process_query_result_lambda => lambda {|val|
+          val.blank? ? "" : val.hts_format
         }
       }]
       id_counter += 1

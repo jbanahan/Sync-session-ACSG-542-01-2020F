@@ -54,4 +54,16 @@ class Delivery < ActiveRecord::Base
       return base_object.where("1=0")
     end
   end
+
+  def self.search_where user
+    if user.company.master
+      return "1=1"
+    elsif user.company.carrier
+      return "deliveries.carrier_id = #{user.company_id}"
+    elsif user.company.customer
+      return "deliveries.customer_id = #{user.company_id}"
+    else
+      return "1=0"
+    end
+  end
 end

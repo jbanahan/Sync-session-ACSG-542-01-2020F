@@ -118,21 +118,7 @@ class SearchCriterion < ActiveRecord::Base
     end
   end
 
-  private
-
-  def number_value data_type, value
-    sval = (value.blank? || !is_a_number(value) ) ? "0" : value
-    data_type==:integer ? sval.to_i : sval.to_f
-  end
-
-  def is_a_number val
-    begin Float(val) ; true end rescue false
-  end
-  
-  def add_where(p)
-    p.where(where_clause,where_value)
-  end
-
+  #build the where clause for this criterion to add to a sql statement (doesn't include the word "WHERE")
   def where_clause
     mf = find_model_field
     table_name = mf.join_alias
@@ -208,6 +194,22 @@ class SearchCriterion < ActiveRecord::Base
       return self_val
     end
   end
+
+  private
+
+  def number_value data_type, value
+    sval = (value.blank? || !is_a_number(value) ) ? "0" : value
+    data_type==:integer ? sval.to_i : sval.to_f
+  end
+
+  def is_a_number val
+    begin Float(val) ; true end rescue false
+  end
+  
+  def add_where(p)
+    p.where(where_clause,where_value)
+  end
+
 
   def parse_date_time value
     # We need to adjut the user's date value for datetime fields to UTC and we're expecting the actual timezone

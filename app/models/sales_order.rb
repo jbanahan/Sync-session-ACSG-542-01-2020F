@@ -36,12 +36,16 @@ class SalesOrder < ActiveRecord::Base
   #gets a list of unique products on the order
   
 	def self.search_secure user, base_object
+    base_object.where search_where user
+  end
+
+  def self.search_where user
     if user.company.master
-      return base_object.where("1=1")
+      return "1=1"
     elsif user.company.customer?
-      return base_object.where(:customer_id => user.company)
+      return "sales_orders.customer_id = #{user.company_id}"
     else
-      return base_object.where("1=0")
+      return "1=0"
     end
   end
 end
