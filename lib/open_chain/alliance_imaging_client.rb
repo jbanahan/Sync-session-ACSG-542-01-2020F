@@ -35,14 +35,12 @@ class OpenChain::AllianceImagingClient
 
         if source_system == OpenChain::FenixParser::SOURCE_CODE
           # The Fenix imaging client sends the entry number as "file_number" and not the broker ref
-          entry = Entry.find_by_entry_number_and_source_system hsh["file_number"], source_system
 
           # Create a shell entry record if there wasn't one, so we can actually attach the image.
           # We don't do this for Alliance files because Chain initiates the imaging extracts for it, so
           # there's no real valid scenario where an entry doesn't already exist in Chain.
-          if entry.nil?
-            entry = Entry.create! :entry_number => hsh["file_number"], :source_system => source_system, :file_logged_date => Time.zone.now
-          end  
+
+          entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first_or_create!(:file_logged_date => Time.zone.now)
         else
           entry = Entry.find_by_broker_reference_and_source_system hsh["file_number"], source_system
         end
