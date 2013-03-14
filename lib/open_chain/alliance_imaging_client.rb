@@ -25,13 +25,26 @@ class OpenChain::AllianceImagingClient
 
   # The file passed in here must have the correct file extension for content type discovery or
   # it will likely be saved with the wrong content type.  ie. If you're saving a pdf, the file
-  # t points to should have a .pdf extension on it.
+  # it points to should have a .pdf extension on it.
   def self.process_image_file t, hsh
       def t.original_filename=(fn); @fn = fn; end
       def t.original_filename; @fn; end
       begin
         t.original_filename= hsh["file_name"]
-        entry = Entry.find_by_broker_reference_and_source_system hsh["file_number"], OpenChain::AllianceParser::SOURCE_CODE
+        source_system = hsh["source_system"].nil? ? OpenChain::AllianceParser::SOURCE_CODE : hsh["source_system"]
+
+        if source_system == OpenChain::FenixParser::SOURCE_CODE
+          # The Fenix imaging client sends the entry number as "file_number" and not the broker ref
+
+          # Create a shell entry record if there wasn't one, so we can actually attach the image.
+          # We don't do this for Alliance files because Chain initiates the imaging extracts for it, so
+          # there's no real valid scenario where an entry doesn't already exist in Chain.
+
+          entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first_or_create!(:file_logged_date => Time.zone.now)
+        else
+          entry = Entry.find_by_broker_reference_and_source_system hsh["file_number"], source_system
+        end
+
         if entry
           att = entry.attachments.build
           att.attached = t

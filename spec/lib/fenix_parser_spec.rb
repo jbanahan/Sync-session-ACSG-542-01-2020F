@@ -213,6 +213,26 @@ describe OpenChain::FenixParser do
     entry.commercial_invoices.length.should == 0
   end
 
+  it 'should fall back to using entry number and source system lookup to find imaging shell records' do
+    existing_entry = Factory(:entry,:entry_number=>@entry_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    
+    #extra commas added to pass the line length check
+    entry_data = lambda {
+      data = "\"#{@entry_number}\",12345,\"My Company\",TAXID,,,,,,,,"
+      data 
+    }
+
+    OpenChain::FenixParser.parse entry_data.call
+    existing_entry.reload
+
+    existing_entry.broker_reference.should == "12345"
+    existing_entry.entry_number.should == @entry_number
+    existing_entry.importer_tax_id.should == "TAXID"
+    existing_entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
+    
+    existing_entry.commercial_invoices.length.should == 0
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
