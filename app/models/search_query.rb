@@ -23,6 +23,8 @@ class SearchQuery
       result = []
       sorted_columns.each_with_index {|sc,i| result << sc.model_field.process_query_result(raw[i],@user)}
 
+      result = result.collect {|r| r.nil? ? "" : r}
+
       h = {:row_key=>k, :result=>result}
       if block_given?
         yield h
@@ -36,6 +38,16 @@ class SearchQuery
   #get the row count for the query
   def count
     ActiveRecord::Base.connection.execute(to_sql).size
+  end
+
+  #get the count of the total number of unique primary keys for the top level module 
+  #
+  # For example: If there are 7 entries returned with 3 commercial invoices each, this record will return 7
+  # If you're looking for a return value of `21` you should use the `count` method
+  def unique_parent_count
+    r = "SELECT COUNT(DISTINCT #{@search_setup.core_module.table_name}.id) " +
+      build_from + build_where
+    ActiveRecord::Base.connection.execute(r).first.first
   end
 
   # get the SQL query that will be executed
@@ -103,16 +115,35 @@ class SearchQuery
   end
 
   def build_order
-    return "" if @search_setup.sort_criterions.empty?
     r = " ORDER BY "
     sorts = @search_setup.sort_criterions
+    #using this sort instead of .order so we don't make a db call when working with an unsaved SearchSetup
     sorts.sort! {|a,b|
       x = a.rank <=> b.rank
       x = a.model_field_uid <=> b.model_field_uid if x==0
       x
     }
-    sort_clauses = sorts.collect {|sc| "#{sc.model_field.qualified_field_name} #{sc.descending? ? "DESC" : "ASC"}"}
-    r << sort_clauses.join(", ")
+    #need to put the sorts in the right order from top of the module chain to the bottom
+    #and also inject id sorts on any parent levels that don't already have a sort
+    sort_clause_hash = {}
+    module_chain_array = @search_setup.core_module.default_module_chain.to_a
+    module_chain_array.each {|cm| sort_clause_hash[cm] = []}
+    sorts.each do |sc|
+      mf = sc.model_field
+      sort_clause_hash[mf.core_module] << "#{mf.qualified_field_name} #{sc.descending? ? "DESC" : "ASC"}"
+    end
+    sort_clauses = []
+    need_parent_sorts = false
+    while !module_chain_array.empty?
+      cm = module_chain_array.pop
+      a = sort_clause_hash[cm]
+      need_parent_sorts = true unless a.empty?
+      if need_parent_sorts && a.empty?
+        a << "#{cm.table_name}.id"
+      end
+      sort_clauses = a + sort_clauses #add clauses to the beginning because we're looping backwards 
+    end
+    sort_clauses.empty? ? "" : r << sort_clauses.join(", ")
   end
 
   def build_pagination per_page, target_page

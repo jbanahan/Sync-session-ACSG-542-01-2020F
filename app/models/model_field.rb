@@ -180,6 +180,7 @@ class ModelField
         end
       },
       :export_lambda => lambda {|obj| obj.division.nil? ? "" : obj.division.name},
+      :qualified_field_name => "(SELECT name FROM divisions WHERE divisions.id = #{table_name}.division_id)",
       :join_statement => "LEFT OUTER JOIN divisions AS #{table_name}_div on #{table_name}_div.id = #{table_name}.division_id",
       :join_alias => "#{table_name}_div",
       :data_type => :string
@@ -204,8 +205,7 @@ class ModelField
         end
       },
       :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).name},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_#{short_prefix}_comp on #{table_name}_#{short_prefix}_comp.id = #{table_name}.#{association_name}_id",
-      :join_alias => "#{table_name}_#{short_prefix}_comp",
+      :qualified_field_name => "(SELECT name FROM companies WHERE companies.id = #{table_name}.#{association_name}_id)",
       :data_type => :string
     }]
     r << [rank_start+2,"#{uid_prefix}_#{short_prefix}_syscode".to_sym,:system_code,"#{description} System Code", {
@@ -219,8 +219,7 @@ class ModelField
         end
       },
       :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).system_code},
-      :join_statement => "LEFT OUTER JOIN companies AS #{table_name}_#{short_prefix}_comp on #{table_name}_#{short_prefix}_comp.id = #{table_name}.#{association_name}_id",
-      :join_alias => "#{table_name}_#{short_prefix}_comp",
+      :qualified_field_name => "(SELECT system_code FROM companies WHERE companies.id = #{table_name}.#{association_name}_id)",
       :data_type=>:string
     }]
     r
@@ -266,8 +265,7 @@ class ModelField
           return obj.ship_from.nil? ? "" : obj.ship_from.name
         end
       },
-      :join_statement => "LEFT OUTER JOIN addresses AS #{table_name}_ship_#{ft} on #{table_name}_ship_#{ft}.id = #{table_name}.ship_#{ft}_id",
-      :join_alias => "#{table_name}_ship_#{ft}",
+      :qualified_field_name => "(SELECT name FROM addresses WHERE addresses.id = #{table_name}.ship_#{ft}_id)",
       :data_type=>:string
     }]
     r << n
@@ -313,8 +311,7 @@ class ModelField
           end
           ot.nil? ? "" : ot.general_rate 
         },
-        :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
-        :join_alias => "OT_#{i}",
+        :qualified_field_name => "(SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
         :history_ignore=>true
       }]
@@ -329,8 +326,7 @@ class ModelField
           end
           ot.nil? ? "" : ot.common_rate 
         },
-        :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
-        :join_alias => "OT_#{i}",
+        :qualified_field_name => "(SELECT common_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
         :history_ignore=>true
       }]
@@ -346,8 +342,7 @@ class ModelField
             end
             ot.nil? ? "" : ot.general_preferential_tariff_rate
           },
-          :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
-          :join_alias => "OT_#{i}",
+          :qualified_field_name => "(SELECT general_preferential_tariff_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
           :history_ignore=>true
         }]
@@ -364,8 +359,7 @@ class ModelField
             end
             ot.nil? ? "" : ot.import_regulations
           },
-          :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
-          :join_alias => "OT_#{i}",
+          :qualified_field_name => "(SELECT import_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
           :history_ignore=>true
         }]
@@ -380,8 +374,7 @@ class ModelField
             end
             ot.nil? ? "" : ot.export_regulations
           },
-          :join_statement => "LEFT OUTER JOIN official_tariffs AS OT_#{i} on OT_#{i}.hts_code = tariff_records.hts_#{i} AND OT_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
-          :join_alias => "OT_#{i}",
+          :qualified_field_name => "(SELECT export_regulations FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_#{i} AND official_tariffs.hts_code = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
           :data_type=>:string,
           :history_ignore=>true
         }]
@@ -399,8 +392,7 @@ class ModelField
           q = ot.official_quota
           q.nil? ? "" : q.category
         },
-        :join_statement => "LEFT OUTER JOIN official_quotas AS OQ_#{i} on OQ_#{i}.hts_code = tariff_records.hts_#{i} AND OQ_#{i}.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1)",
-        :join_alias => "OQ_#{i}",
+        :qualified_field_name => "(SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_#{i} AND official_quotas.country_id = (SELECT classifications.country_id FROM classifications WHERE classifications.id = tariff_records.classification_id LIMIT 1))",
         :data_type=>:string,
         :history_ignore=>true
       }]
@@ -428,8 +420,7 @@ class ModelField
         end
       },
       :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.name"},
-      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.#{foreign_key}",
-      :join_alias => "#{table_name}_country",
+      :qualified_field_name=>"(SELECT name from countries where countries.id = #{table_name}.#{foreign_key})",
       :data_type=>:string
     }]
     r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "Country ISO Code",{
@@ -443,8 +434,7 @@ class ModelField
         end    
       },
       :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.iso_code"},
-      :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.#{foreign_key}",
-      :join_alias => "#{table_name}_country",
+      :qualified_field_name=>"(SELECT iso_code from countries where countries.id = #{table_name}.#{foreign_key})",
       :data_type=>:string,
       :history_ignore=>true
     }]
@@ -466,8 +456,7 @@ class ModelField
           return nil
         end
       },
-      :join_statement => "LEFT OUTER JOIN products AS #{uid_prefix}_puid ON #{uid_prefix}_puid.id = #{table_name}.product_id",
-      :join_alias => "#{uid_prefix}_puid",:data_type=>:string
+      :qualified_field_name => "(SELECT unique_identifier FROM products WHERE products.id = #{table_name}.product_id)"
     }]
     r << [rank_start+1,"#{uid_prefix}_pname".to_sym, :name,"Product Name",{
       :import_lambda => lambda {|detail,data|
@@ -488,8 +477,7 @@ class ModelField
           return nil
         end
       },
-      :join_statement => "LEFT OUTER JOIN products AS #{uid_prefix}_pname ON #{uid_prefix}_pname.id = #{table_name}.product_id",
-      :join_alias => "#{uid_prefix}_pname",:data_type=>:string
+      :qualified_field_name => "(SELECT name FROM products WHERE products.id = #{table_name}.product_id)"
     }]
     r
   end
@@ -498,7 +486,7 @@ class ModelField
     r << [rank_start,"#{uid_prefix}_system_code".to_sym,:system_code,"Master System Code", {
       :import_lambda => lambda {|detail,data| return "Master System Code cannot by set by import, ignored."},
       :export_lambda => lambda {|detail| return MasterSetup.get.system_code},
-      :qualified_field_name => "ifnull(prod_class_count.class_count,0)",
+      :qualified_field_name => "(SELECT system_code FROM master_setups LIMIT 1)",
       :data_type=>:string,
       :history_ignore=>true
     }]
@@ -510,9 +498,7 @@ class ModelField
       :export_lambda => lambda {|obj| 
         obj.last_updated_by.blank? ? "" : obj.last_updated_by.username
       },
-      :join_statement =>"LEFT OUTER JOIN users as #{uid_prefix}_lupdby on #{uid_prefix}_lupdby.id = #{table_name}.last_updated_by_id",
-      :join_alias => "#{uid_prefix}_lupdby",
-      :qualified_field_name => "ifnull(#{uid_prefix}_lupdby.username,'')",
+      :qualified_field_name => "(SELECT username FROM users where users.id = #{table_name}.last_updated_by_id)",
       :data_type=>:string,
       :history_ignore => true
     }]
@@ -521,8 +507,7 @@ class ModelField
     h = {:data_type=>data_type,
         :import_lambda => lambda {|inv,data| "#{label} cannot be set via invoice upload."},
         :export_lambda => lambda {|inv| inv.entry.blank? ? "" : ent_exp_lambda.call(inv.entry)},
-        :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
-        :join_alias => "bi_entry"
+        :qualified_field_name => "(SELECT #{field_reference} FROM entries where entries.id = broker_invoices.entry_id)"
       }
     h[:can_view_lambda]=can_view_lambda unless can_view_lambda.nil?
     [sequence_number,mf_uid,field_reference,label,h]
@@ -543,7 +528,9 @@ class ModelField
     base_class.new.custom_definitions.each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",:read_only=>d.read_only?}))
+      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",:read_only=>d.read_only?,
+        :qualified_field_name=>"(SELECT IFNULL(#{d.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{d.id})"
+      }))
       model_hash[mf.uid.to_sym] = mf
     end
   end
@@ -597,9 +584,7 @@ class ModelField
           },
           :data_type => :integer,
           :history_ignore => true,
-          :join_statement => "
-LEFT OUTER JOIN 
-(select product_id, count(*) as 'cnt' from 
+          :qualified_field_name => "(SELECT tot FROM (SELECT product_id, max(cnt) as 'tot' FROM (select product_id, count(*) as 'cnt' from 
     (select DISTINCT classifications.id, classifications.product_id, classifications.country_id 
         from classifications 
         inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id 
@@ -607,10 +592,7 @@ LEFT OUTER JOIN
  union 
     select products.id, 0 from products left outer join classifications on classifications.product_id = products.id and classifications.country_id in (select country_id from countries_regions where countries_regions.region_id = #{r.id})
         left outer join tariff_records ON tariff_records.classification_id = classifications.id and length(hts_1) > 0 
-        where tariff_records.id is null) r_#{r.id}_class_count on r_#{r.id}_class_count.product_id = products.id 
-", 
-          :join_alias => "r_#{r.id}_class_count",
-          :qualified_field_name => "r_#{r.id}_class_count.cnt"          
+        where tariff_records.id is null) x group by product_id) y WHERE y.product_id = products.id)"
         }
       )
       MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf
@@ -748,8 +730,7 @@ LEFT OUTER JOIN
         :export_lambda => lambda {|ent|
           ent.lading_port.blank? ? "" : ent.lading_port.name
         },
-        :join_statement => "LEFT OUTER JOIN ports as ent_lading_port on ent_lading_port.schedule_k_code = entries.lading_port_code",
-        :join_alias => "ent_lading_port"
+        :qualified_field_name => "(SELECT name FROM ports WHERE ports.schedule_k_code = entries.lading_port_code)"
       }],
       [59,:ent_unlading_port_name,:name,"Port of Unlading Name",{:data_type=>:string,
         :import_lambda => lambda { |ent, data|
@@ -761,8 +742,7 @@ LEFT OUTER JOIN
         :export_lambda => lambda {|ent|
           ent.unlading_port.blank? ? "" : ent.unlading_port.name
         },
-        :join_statement => "LEFT OUTER JOIN ports as ent_unlading_port on ent_unlading_port.schedule_d_code = entries.unlading_port_code",
-        :join_alias => "ent_unlading_port"
+        :qualified_field_name => "(SELECT name FROM ports WHERE ports.schedule_d_code = entries.unlading_port_code)"
       }],
       [60,:ent_entry_port_name,:name,"Port of Entry Name",{:data_type=>:string,
         :import_lambda => lambda { |ent, data|
@@ -774,8 +754,7 @@ LEFT OUTER JOIN
         :export_lambda => lambda {|ent|
           ent.entry_port.blank? ? "" : ent.entry_port.name
         },
-        :join_statement => "LEFT OUTER JOIN ports as ent_entry_port on ent_entry_port.schedule_d_code = entries.entry_port_code",
-        :join_alias => "ent_entry_port"
+        :qualified_field_name => "(SELECT name FROM ports WHERE ports.schedule_d_code = entries.entry_port_code)"
       }],
       [61,:ent_vessel,:vessel,"Vessel/Airline",{:data_type=>:string}],
       [62,:ent_voyage,:voyage,"Voyage/Flight",{:data_type=>:string}],
@@ -952,7 +931,7 @@ LEFT OUTER JOIN
           "Bill to Country set to #{data}"
         },
         :export_lambda=> lambda {|inv| inv.bill_to_country_id.blank? ? "" : inv.bill_to_country.iso_code},
-        :join_statement => "LEFT OUTER JOIN countries as bi_country on bi_country.id = broker_invoices.bill_to_country_id"
+        :qualified_field_name => "(SELECT iso_code FROM countries WHERE countries.id = broker_invoices.bill_to_country_id)"
       }],
       make_broker_invoice_entry_field(15,:bi_mbols,:master_bills_of_lading,"Master Bills",:text,lambda {|entry| entry.master_bills_of_lading}),
       make_broker_invoice_entry_field(16,:bi_hbols,:house_bills_of_lading,"House Bills",:text,lambda {|entry| entry.house_bills_of_lading}),
@@ -995,9 +974,7 @@ LEFT OUTER JOIN
         :data_type=>:string,
         :import_lambda => lambda {|inv,data| "Port of Lading cannot be set via invoice upload."},
         :export_lambda => lambda {|inv| (inv.entry.blank? || inv.entry.lading_port.blank?) ? "" : inv.entry.lading_port.name},
-        :qualified_field_name => "(SELECT name from ports where schedule_k_code = bi_entry.lading_port_code)",
-        :join_statement => "LEFT OUTER JOIN entries as bi_entry ON bi_entry.id = broker_invoices.entry_id",
-        :join_alias => "bi_entry"
+        :qualified_field_name => "(SELECT name from ports where schedule_k_code = (select lading_port_code from entries where entries.id = broker_invoices.entry_id))"
       }],
       make_broker_invoice_entry_field(55,:bi_cargo_control_number,:cargo_control_number,"Cargo Control Number",:string, lambda{|entry| entry.cargo_control_number}),
       [56,:bi_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
@@ -1029,8 +1006,7 @@ LEFT OUTER JOIN
           et = detail.entity_type
           et.nil? ? "" : et.name
         },
-        :join_statement => "LEFT OUTER JOIN entity_types AS prod_entity_type_name ON prod_entity_type_name.id = products.entity_type_id",
-        :join_alias => "prod_entity_type_name",
+        :qualified_field_name => "(SELECT name from entity_types where entity_types.id = products.entity_type_id)",
         :data_type=>:integer
       }],
       [3,:prod_name,:name,"Name",{:data_type=>:string}],
@@ -1041,8 +1017,7 @@ LEFT OUTER JOIN
           return "Statuses are ignored. They are automatically calculated."
         },
         :export_lambda => lambda {|detail| detail.status_rule.nil? ? "" : detail.status_rule.name },
-        :join_statement => "LEFT OUTER JOIN status_rules AS prod_status_name ON  prod_status_name.id = products.status_rule_id",
-        :join_alias => "prod_status_name",
+        :qualified_field_name => "(SELECT name FROM status_rules WHERE status_rules.id = products.status_rule_id)",
         :data_type=>:string
       }],
       #9 is available to use
@@ -1056,19 +1031,14 @@ LEFT OUTER JOIN
           }
           r
         },
-        :join_statement => "
-LEFT OUTER JOIN 
-(select product_id, count(*) as 'cnt' from 
+        :qualified_field_name => "(SELECT tot FROM (SELECT product_id, max(cnt) as 'tot' FROM (select product_id, count(*) as 'cnt' from 
     (select DISTINCT classifications.id, classifications.product_id, classifications.country_id 
         from classifications 
         inner join tariff_records ON tariff_records.classification_id = classifications.id where length(hts_1) > 0) cls group by product_id
  union 
     select products.id, 0 from products left outer join classifications on classifications.product_id = products.id 
         left outer join tariff_records ON tariff_records.classification_id = classifications.id and length(hts_1) > 0 
-        where tariff_records.id is null) prod_class_count on prod_class_count.product_id = products.id 
-", 
-        :join_alias => "prod_class_count",
-        :qualified_field_name => "prod_class_count.cnt",     
+        where tariff_records.id is null) x group by product_id) y where y.product_id = products.id)",
         :data_type => :integer
       }],
       [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}],
@@ -1098,9 +1068,7 @@ LEFT OUTER JOIN
       [1,:class_comp_cnt, :comp_count, "Component Count", {
         :import_lambda => lambda {|obj,data| return "Component Count was ignored. (read only)"},
         :export_lambda => lambda {|obj| obj.tariff_records.size },
-        :join_statement => "LEFT OUTER JOIN (SELECT count(id) as comp_count, classification_id FROM tariff_records group by classification_id) as class_comp_cnt ON class_comp_cnt.classification_id = classifications.id",
-        :join_alias => "class_comp_cnt",
-        :qualified_field_name => "ifnull(class_comp_cnt.comp_count,0)",
+        :qualified_field_name => "(SELECT comp_count FROM (SELECT count(id) as comp_count, classification_id FROM tariff_records group by classification_id) x where x.classification_id = classifications.id)",
         :data_type => :integer
       }],
       [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime}]
@@ -1173,7 +1141,7 @@ LEFT OUTER JOIN
       [3,:soln_ordered_qty,:quantity,"Sale Quantity",{:data_type=>:decimal}],
       [4,:soln_ppu,:price_per_unit,"Price / Unit",{:data_type => :decimal}]
     ]
-    add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","sale_order_lines")
+    add_fields CoreModule::SALE_LINE, make_product_arrays(100,"soln","sales_order_lines")
     
     add_fields CoreModule::DELIVERY, [
       [1,:del_ref,:reference,"Reference",{:data_type=>:string}],
@@ -1201,7 +1169,8 @@ LEFT OUTER JOIN
       :label_override => "[blank]",
       :import_lambda => lambda {|o,d| "Field ignored"},
       :export_lambda => lambda {|o| },
-      :data_type => :string
+      :data_type => :string,
+      :qualified_field_name => "\"\""
     }) if uid.to_sym == :_blank
     reload_if_stale
     MODEL_FIELDS.values.each do |h|

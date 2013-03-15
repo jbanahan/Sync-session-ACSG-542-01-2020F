@@ -92,4 +92,23 @@ describe SearchSetup do
       d.search_schedules.should be_empty
     end
   end
+  describe "values" do
+    it "should work for all model fields in SELECT" do
+      r = Factory(:region)
+      r.countries << Factory(:country)
+      ModelField.reload true
+      CoreModule::CORE_MODULES.each do |cm|
+        cm.klass.stub(:search_where).and_return("1=1")
+        
+        ss = SearchSetup.new(:module_type=>cm.class_name)
+        cm.model_fields.keys.each_with_index do |mfid,i|
+          ss.search_columns.build(:model_field_uid=>mfid,:rank=>i)
+          ss.sort_criterions.build(:model_field_uid=>mfid,:rank=>i)
+          ss.search_criterions.build(:model_field_uid=>mfid,:operator=>'null')
+        end
+        #just making sure each query executes without error
+        SearchQuery.new(ss,User.new).execute
+      end
+    end
+  end
 end

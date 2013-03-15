@@ -1,4 +1,5 @@
 OpenChain::Application.routes.draw do
+  
   resources :delayed_jobs, :only => [:destroy]
   resources :ftp_sessions, :only => [:index, :show] do
     member do
@@ -137,6 +138,9 @@ OpenChain::Application.routes.draw do
 
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
+
+  match '/advanced_search/:id/result' => 'advanced_search#result', :via => :get, :as => 'advanced_search_result'
+  match '/advanced_search/:id/count' => 'advanced_search#count', :via => :get, :as => 'advanced_search_count'
 
   #custom features
   resources :custom_files, :only => :show

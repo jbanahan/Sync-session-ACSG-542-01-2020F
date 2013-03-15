@@ -25,11 +25,11 @@ module ApplicationHelper
       end
     end
   end
-  def search_result_value search_setup, result_value
+  def search_result_value result_value, no_time 
     return "false" if !result_value.nil? && result_value.is_a?(FalseClass)
     return "&nbsp;".html_safe if result_value.blank?
     if result_value.respond_to?(:strftime)
-      if result_value.is_a?(Date) || search_setup.no_time?
+      if result_value.is_a?(Date) || no_time
         return result_value.strftime("%Y-%m-%d")
       else
         return result_value.strftime("%Y-%m-%d %H:%M")

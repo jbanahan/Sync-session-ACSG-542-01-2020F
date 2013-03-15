@@ -209,7 +209,7 @@ class ApplicationController < ActionController::Base
         headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
       end
     
-      render :text => CsvMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results) 
+      render :text => CsvMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,results) 
     end
 
     def error_redirect(message=nil)
@@ -325,7 +325,7 @@ class ApplicationController < ActionController::Base
   
   def get_search_to_run
     return SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
-    s = SearchSetup.find_last_accessed current_user, @core_module
+    s = SearchSetup.last_accessed(current_user, @core_module).first
     s = @core_module.make_default_search current_user if s.nil?
     s
   end
@@ -364,22 +364,19 @@ class ApplicationController < ActionController::Base
       raise "Extreme latest goes boom!!"
     end
     
-    @results = no_results ? @current_search.core_module.klass.where("1=0") : @current_search.search
     if no_results
       @current_search.touch
-      @results = @results.paginate(:per_page => 20, :page => params[:page]) 
+      @results = @current_search.core_module.klass.where("1=0").paginate(:per_page => 20, :page => params[:page]) 
       self.formats = [:html]
       render :layout => 'one_col'
     else
       respond_to do |format| 
         format.html {
           @current_search.touch
-          @results = Product.where("1=0") if no_results
-          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
           render :layout => 'one_col'
         }
         format.csv {
-          @results = @results.where("1=1") unless no_results
+          @results = @current_search.search
           if @results.length < 100
             render_csv("#{@core_module.label}.csv")
           else
@@ -388,6 +385,7 @@ class ApplicationController < ActionController::Base
           end
         }
         format.json {
+          @results = @current_search.search
           @results = @results.paginate(:per_page => 20, :page => params[:page])
           rval = []
           cols = @current_search.search_columns.order("rank ASC")
@@ -411,6 +409,7 @@ class ApplicationController < ActionController::Base
           render :json => sr
         }
         format.xls {
+          @results = @current_search.search
           if @results.length < 100
             book = XlsMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results.where("1=1")) 
             spreadsheet = StringIO.new 

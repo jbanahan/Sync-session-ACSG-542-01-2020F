@@ -37,12 +37,12 @@ class SearchSetup < ActiveRecord::Base
     
   scope :for_user, lambda {|u| where(:user_id => u)} 
   scope :for_module, lambda {|m| where(:module_type => m.class_name)}
+  scope :last_accessed, lambda {|u,m| for_user(u).for_module(m).
+    joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id").
+    order("ifnull(search_runs.last_accessed,1900-01-01) DESC") }
   
   def self.find_last_accessed user, core_module
-    SearchSetup.for_user(user).for_module(core_module).
-      joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id").
-      order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
-      first
+    SearchSetup.last_accessed(user,core_module).first
   end
 
   #get all column fields as ModelFields available for the user to add to the search
