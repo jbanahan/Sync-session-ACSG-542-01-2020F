@@ -19,7 +19,7 @@ module OpenChain
               (0..max_col).each do |i|
                 v = i==1 ? c : rv[i]
                 v = "" if v.blank?
-                row << v.to_s
+                row << v.to_s.gsub(/\r?\n/, " ")
               end
               f << row.to_csv
             end
