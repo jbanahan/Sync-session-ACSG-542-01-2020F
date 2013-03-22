@@ -61,9 +61,14 @@ $(function() {
   </div>
   <%=render :partial=>'shared/search_panel', :locals=>{:show=>false,:include_sorts=>true,:current_search=>@current_search,:parent_hash_name=>'search_setup'}%>
   <div id='bulk_message'></div>
-  <div id='show_all_columns'><p>Click Headings To Hide Columns</p></div>
   <table class='detail_table' id='result_table'>
-    <thead><tr>
+    <thead>
+      <tr>
+        <td colspan='100%'>
+          <div id='pagination'></div>
+        </td>
+      </tr>
+      <tr>
       <% unless @bulk_actions.blank?%><th><input type='checkbox' id='chk_sel_all' /></th><%end%>
       <th>Actions</th>
       <%@current_search.search_columns.order("rank ASC").each do |c|%>
@@ -73,9 +78,6 @@ $(function() {
     <tbody id='result_rows'>
     </tbody>
   </table>
-</div>
-<div id='pagination'>
-
 </div>
 <div> 
 <%=form_tag('',:id=>'frm_bulk') do %>
@@ -112,5 +114,5 @@ $(function() {
 <script>
   OCAdvancedSearch.loadInitialRows("#result_rows",<%=@current_search.id%>);
   <%=sq_count = sq.count%>
-  OCAdvancedSearch.loadPagination("#pagination",<%=@current_search.id%>);
+  OCAdvancedSearch.loadPagination("#pagination","#result_rows",<%=@current_search.id%>);
 </script>

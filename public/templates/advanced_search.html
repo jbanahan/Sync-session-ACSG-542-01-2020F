@@ -1,0 +1,195 @@
+<div ng-controller='AdvancedSearchCtrl' id='advanced_search_wrapper'>
+  <select id='select_search' ng-model='searchId' ng-options='s.id as s.name for s in searchSetup.search_list' ng-show='searchSetup.search_list'>
+    <option>--Select A Search--</option>
+  </select>
+  <div id='search_setup_controls' ng-show='showSetup'>
+    <h1>Setup</h1>
+    <h2 ng-click='showGeneral = (!showGeneral)' class='section_selector'>General</h2>
+    <div ng-show='showGeneral'>
+      Name: <input type='text' ng-model='searchSetup.name' />
+      <br />
+      <input type='checkbox' ng-model='searchSetup.include_links'/> Include Links In Download
+      <br />
+      <input type='checkbox' ng-model='searchSetup.no_time'/> Hide Time
+    </div>
+    <h2 ng-click='showSettings = (!showSettings)' class='section_selector'>Layout</h2>
+    <div ng-show='showSettings'>
+      <div id='columns_wrapper' class='settings_wrapper'>
+        <h3>Columns</h3>
+        <div class='toggle_pane'>
+          <div class='tpane_label'>Available</div>
+          <select multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns'>
+          </select>
+          <br />
+          <a ng-show='columnsToAdd' ng-click='addColumns()'>Add</a> 
+          <a ng-click='addBlank()'>Add Blank</a>&nbsp;
+        </div>
+        <div class='toggle_pane'>
+          <div class='tpane_label'>Included</div>
+          <select multiple='multiple' size='10' ng-model='columnsToRemove' ng-options='s.mfid as s.label for s in searchSetup.search_columns'>
+          </select>
+          <br />
+          <div ng-hide='columnsToRemove'>&nbsp;</div>
+          <div ng-show='columnsToRemove'>
+            <a ng-click='removeColumns()'>Remove</a>
+            <a ng-click='moveColumnsUp()'>Up</a>
+            <a ng-click='moveColumnsDown()'>Down</a>
+          </div>
+        </div>
+      </div>  
+      <div id='sorts_wrapper' class='settings_wrapper'>
+        <h3>Sorts</h3>
+        <div class='toggle_pane'>
+          <div class='tpane_label'>Available</div>
+          <select multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts'>
+          </select>
+          <div ng-hide='sortsToAdd'>&nbsp;</div>
+          <div ng-show='sortsToAdd'>
+            <a ng-show='sortsToAdd' ng-click='addSorts()'>Add</a>
+          </div>
+        </div>
+        <div class='toggle_pane'>
+          <div class='tpane_label'>Included</div>
+          <select multiple='multiple' size='10' ng-model='sortsToRemove' ng-options='s.mfid as s.label + descendingLabel(s.descending) for s in searchSetup.sort_criterions'>
+          </select>
+          <br />
+          <div ng-hide='sortsToRemove'>&nbsp;</div>
+          <div ng-show='sortsToRemove'>
+            <a ng-click='removeSorts()'>Remove</a>
+            <a ng-click='moveSortsUp()'>Up</a>
+            <a ng-click='moveSortsDown()'>Down</a>
+          </div>
+        </div>
+      </div>
+      <div id='criterions_wrapper' class='settings_wrapper'>
+        <h3>Parameters</h3>
+        <span style='color:red;'>TODO: figure out datepicker, jStepper, handling relative vs. absolute dates</span>
+        <div ng-repeat='crit in searchSetup.search_criterions'>
+          {{crit.label}}
+          <select ng-model='crit.operator' ng-options='o.operator as o.label for o in operators[crit.datatype]'>
+          </select>
+          <input type='text' ng-model='crit.value' ng-show='crit.datatype=="string"' />
+          <input type='text' ng-model='crit.value' ng-show='crit.datatype=="decimal"' class='decimal' />
+          <input type='text' ng-model='crit.value' ng-show='["datetime","date"].indexOf(crit.datatype)>=0' class='isdate' />
+          <input type='text' ng-model='crit.value' ng-show='["integer","fixnum"].indexOf(crit.datatype)>=0' class='integer' />
+          <textarea ng-model='crit.value' ng-show='crit.datatype=="text"' />
+          <a ng-click='removeCriterion(crit)'><img src='/images/x.png'/></a>
+        </div>
+        Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
+        </select>
+        <a ng-show='criterionToAdd' ng-click='addCriterion()'>Add</a>
+      </div>
+    </div>
+    <h2 ng-click='showSchedules = (!showSchedules)' class='section_selector'>Schedules ({{searchSetup.search_schedules.length}})</h2>
+    <div ng-show='showSchedules'>
+      <div id='current_schedules'>
+        <div ng-repeat='sched in searchSetup.search_schedules' class='schedule_display'>
+          To: {{sched.email_addresses}}<br />
+          <span ng-show='sched.ftp_server'>FTP Server: {{sched.ftp_server}}<br /></span>
+          {{scheduleTimingText(sched)}} <br /> 
+          As: {{sched.download_format}} <br />
+          <a ng-click='editSchedule(sched)'>Edit</a> <a ng-click='removeSchedule(sched)'>Remove</a>
+        </div>
+        <a class='action_link' ng-click='addSchedule()'>Add</a>
+      </div>
+      <div id='schedule_edit' ng-show='scheduleToEdit'>
+        Email: <input type='text' ng-model='scheduleToEdit.email_addresses'/><br />
+        Day of Month: 
+        <select ng-model='scheduleToEdit.day_of_month'>
+          <option></option>
+          <option>1</option>
+          <option>2</option>
+          <option>3</option>
+          <option>4</option>
+          <option>5</option>
+          <option>6</option>
+          <option>7</option>
+          <option>8</option>
+          <option>9</option>
+          <option>10</option>
+          <option>11</option>
+          <option>12</option>
+          <option>13</option>
+          <option>14</option>
+          <option>15</option>
+          <option>16</option>
+          <option>17</option>
+          <option>18</option>
+          <option>19</option>
+          <option>20</option>
+          <option>21</option>
+          <option>22</option>
+          <option>23</option>
+          <option>24</option>
+          <option>25</option>
+          <option>26</option>
+          <option>27</option>
+          <option>28</option>
+        </select>
+        <div ng-hide='scheduleToEdit.day_of_month'>
+          <input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday<br />
+          <input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday<br />
+          <input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday<br />
+          <input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday<br />
+          <input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday<br />
+          <input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday<br />
+          <input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday<br />
+        </div>
+        <div ng-show='searchSetup.allow_ftp'>
+          FTP Server: <input type='text' ng-model='scheduleToEdit.ftp_server'/><br />
+          FTP Username: <input type='text' ng-model='scheduleToEdit.ftp_username' /><br />
+          FTP Password: <input type='text' ng-model='scheduleToEdit.ftp_password' /><br />
+          FTP Subfolder: <input type='text' ng-model='scheduleToEdit.ftp_subfolder' /><br />
+        </div>
+        <a ng-click='scheduleToEdit = null'>Hide</a>
+      </div>
+      <div class='clear'></div>
+    </div>
+  </div>
+  <div ng-show='searchResult' id='search_result'>
+    <div id='search_header'>
+      <div id='search_actions'>
+        <a ng-click='showSetup = (!showSetup)' class='action_link' ng-show='searchSetup'>Setup</a>
+        <a class='action_link' href='#'>Download</a> 
+        <span ng-repeat='b in searchResult.bulk_actions'>
+          <a class='action_link' href='#'>{{b.label}}</a>
+        </span>
+      </div>
+      <div id='page_nav'>
+        <a class='action_link' ng-show='searchResult.page>1' ng-click='searchResult.page=1'>&lt;&lt;</a>
+        <a class='action_link' ng-show='searchResult.page>1' ng-click='searchResult.page=searchResult.page-1'>&lt;</a>
+        <select ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
+        </select>
+        <a class='action_link' ng-show='searchResult.page<searchResult.total_pages' ng-click='searchResult.page=searchResult.page+1'>&gt;</a>
+        <a class='action_link' ng-show='searchResult.page<searchResult.total_pages' ng-click='searchResult.page=searchResult.total_pages'>&gt;&gt;</a>
+      </div>
+      <div class='clear'>&nbsp;</div>
+    </div>
+    <table class='detail_table search_result_table'>
+      <thead>
+        <tr>
+          <th ng-show='searchResult.bulk_actions'></th>
+          <th></th>
+          <th ng-repeat='col in searchResult.columns'>
+            {{col}}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat='row in searchResult.rows' ng-class='classesForRow($index)'>
+          <td ng-show='searchResult.bulk_actions' class='min_width'>
+            <input type='checkbox' ng-model='row.bulk_selected' ng-show='newObjectRow($index)' />
+          </td>
+          <td class='action_cell min_width'>
+            <span ng-repeat='l in row.links'>
+              <a href='{{l.url}}'>{{l.label}}</a>
+            </span>
+          </td>
+          <td ng-repeat='v in row.vals'>
+            {{v}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

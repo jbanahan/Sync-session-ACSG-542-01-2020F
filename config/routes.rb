@@ -139,8 +139,8 @@ OpenChain::Application.routes.draw do
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
 
-  match '/advanced_search/:id/result' => 'advanced_search#result', :via => :get, :as => 'advanced_search_result'
-  match '/advanced_search/:id/count' => 'advanced_search#count', :via => :get, :as => 'advanced_search_count'
+  match '/advanced_search' => 'advanced_search#index', :via=>:get, :as=>:advanced_search
+  match '/advanced_search/:id' => 'advanced_search#show', :via=>:get, :as=>:advanced_search_show, :via=>:get
 
   #custom features
   resources :custom_files, :only => :show

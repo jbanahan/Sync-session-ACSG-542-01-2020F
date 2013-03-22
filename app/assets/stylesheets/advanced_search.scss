@@ -1,0 +1,83 @@
+#advanced_search_wrapper {
+  width: 99%;
+  a.action_link {
+    color: black;
+    text-decoration: none;
+    padding: 0.25em 0.5em;
+    border: 1px solid #333;
+    background-color: #ccc;
+    display: inline-block;
+  }
+  a.action_link:hover {
+    color: white;
+    background-color: #666;
+  }
+  #select_search {
+    font-size: 175%;
+    width: 99%;
+  }
+  #search_setup_controls {
+    margin: 1em;
+    padding: 1em;
+    border: 2px solid black;
+    border-radius: 0.5em;
+    h1 {
+      margin: .25em;
+      text-align: center;
+    }
+  }
+  h2.section_selector {
+    cursor: pointer; 
+    border-bottom: 2px solid black;
+    padding: .25em;
+    text-align: center;
+  }
+  div.settings_wrapper {
+    display: inline-block;
+    margin-right: .5em;
+    h3 {
+      text-align: center;
+    }
+  }
+  #current_schedules {
+    float: left;
+  }
+  #schedule_edit {
+    float: right;
+  }
+  div.schedule_display {
+    margin-bottom: .5em;
+  }
+  div.toggle_pane {
+    display: inline-block;
+    .tpane_label {
+      text-align: center;
+      font-size: 90%;
+    }
+  }
+  #search_result {
+      width: 99%;
+    #search_header {
+    }
+    margin-top: 1em;
+    table.search_result_table {
+      width: 100%;
+      td.action_cell {
+        span {
+          padding: 0 0.25em;
+        }
+      }
+      td.min_width {
+        width: 0%;
+      }
+    }
+    #page_nav {
+      float:right;
+      text-align: right;
+    }
+    #search_actions {
+      float:left;
+    }
+  }
+}
+
