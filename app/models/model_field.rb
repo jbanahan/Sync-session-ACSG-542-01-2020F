@@ -416,7 +416,8 @@ class ModelField
       :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.name"},
       :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.#{foreign_key}",
       :join_alias => "#{table_name}_country",
-      :data_type=>:string
+      :data_type=>:string,
+      :history_ignore=>true
     }]
     r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "Country ISO Code",{
       :import_lambda => lambda {|detail,data|
@@ -1057,8 +1058,8 @@ LEFT OUTER JOIN
         :qualified_field_name => "prod_class_count.cnt",     
         :data_type => :integer
       }],
-      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}],
-      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime}],
+      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}],
+      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true}],
       [14,:prod_first_hts, :prod_first_hts, "First HTS Number", {
         :import_lambda => lambda {|obj,data| "First HTS Number was ignored, must be set at the tariff level."},
         :export_lambda => lambda {|obj| 
@@ -1071,7 +1072,8 @@ LEFT OUTER JOIN
           r.nil? ? "" : r.hts_format
         },
         :qualified_field_name => "(select hts_1 from tariff_records fht inner join classifications fhc on fhc.id = fht.classification_id  where fhc.product_id = products.id and fhc.country_id = (SELECT id from countries ORDER BY ifnull(classification_rank,9999), iso_code ASC LIMIT 1) LIMIT 1)",
-        :data_type=>:string
+        :data_type=>:string,
+        :history_ignore=>true
       }]
     ]
     add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
@@ -1087,9 +1089,10 @@ LEFT OUTER JOIN
         :join_statement => "LEFT OUTER JOIN (SELECT count(id) as comp_count, classification_id FROM tariff_records group by classification_id) as class_comp_cnt ON class_comp_cnt.classification_id = classifications.id",
         :join_alias => "class_comp_cnt",
         :qualified_field_name => "ifnull(class_comp_cnt.comp_count,0)",
-        :data_type => :integer
+        :data_type => :integer,
+        :history_ignore=>true
       }],
-      [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime}]
+      [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}]
     ]
     add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
 

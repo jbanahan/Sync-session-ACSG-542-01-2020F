@@ -1,9 +1,7 @@
 div.history_entry {
   margin: 10px;
-  border-radius: 10px;
-  border: 2px solid black;
+  border-bottom: 2px solid black;
   padding: 5px;
-  box-shadow: 3px 5px 10px #333;
   
   .history_title {
     font-weight: bold;
@@ -11,5 +9,15 @@ div.history_entry {
   }
   .history_actions {
     text-align: right;
+  }
+  .history_children {
+    padding-left: 1em;
+
+    h3 {
+      margin: 0.1em;
+    }
+  }
+  .history_items td {
+    width: 33%;
   }
 }
