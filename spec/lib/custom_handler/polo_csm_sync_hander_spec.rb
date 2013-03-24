@@ -11,6 +11,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     @cf.stub(:update_attributes)
     OpenChain::XLClient.should_receive(:new).with('/path/to').and_return(@xlc)
     @csm = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Number",:data_type=>'text')
+    @dept = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Department",:data_type=>'text')
     @h = described_class.new @cf 
     Product.any_instance.stub(:can_edit?).and_return(true)
   end
@@ -26,14 +27,16 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
       5=>{'value'=>'KLMNO','datatype'=>'string'},
-      8=>{'value'=>p.unique_identifier,'datatype'=>'string'}
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
     @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
       2=>{'value'=>'ZZZ','datatype'=>'string'},
       3=>{'value'=>'PQRST','datatype'=>'string'},
       4=>{'value'=>'UVWXY','datatype'=>'string'},
       5=>{'value'=>'Z1234','datatype'=>'string'},
-      8=>{'value'=>p.unique_identifier,'datatype'=>'string'}
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
     @h.process Factory(:user)
     p.get_custom_value(@csm).value.should == "140ABCDEFGHIJKLMNO\nZZZPQRSTUVWXYZ1234"
@@ -46,21 +49,27 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
       5=>{'value'=>'KLMNO','datatype'=>'string'},
-      8=>{'value'=>p.unique_identifier,'datatype'=>'string'}
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+
     )
     @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
       2=>{'value'=>'140','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
       5=>{'value'=>'KLMNO','datatype'=>'string'},
-      8=>{'value'=>'something else','datatype'=>'string'}
+      8=>{'value'=>'something else','datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+
     )
     @xlc.should_receive(:get_row_as_column_hash).with(0,3).and_return(
       2=>{'value'=>'ZZZ','datatype'=>'string'},
       3=>{'value'=>'PQRST','datatype'=>'string'},
       4=>{'value'=>'UVWXY','datatype'=>'string'},
       5=>{'value'=>'Z1234','datatype'=>'string'},
-      8=>{'value'=>p.unique_identifier,'datatype'=>'string'}
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+
     )
     @h.process Factory(:user)
     p.get_custom_value(@csm).value.should == "140ABCDEFGHIJKLMNO\nZZZPQRSTUVWXYZ1234"
@@ -73,10 +82,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
       5=>{'value'=>'KLMNO','datatype'=>'string'},
-      8=>{'value'=>'something else','datatype'=>'string'}
+      8=>{'value'=>'something else','datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+
     )
     @h.process Factory(:user)
-    Product.find_by_unique_identifier('something else').get_custom_value(@csm).value.should == "140ABCDEFGHIJKLMNO"
+    p = Product.find_by_unique_identifier('something else')
+    p.get_custom_value(@csm).value.should == "140ABCDEFGHIJKLMNO"
+    p.get_custom_value(@dept).value.should == 'CSMDEPT'
   end
   it "should drop existing CSM numbers not in file" do
     p = Factory(:product)
@@ -87,7 +100,8 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
       5=>{'value'=>'KLMNO','datatype'=>'string'},
-      8=>{'value'=>p.unique_identifier,'datatype'=>'string'}
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
     @h.process Factory(:user)
     p.get_custom_value(@csm).value.should == "140ABCDEFGHIJKLMNO"
@@ -101,7 +115,8 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
       5=>{'value'=>'KLMNO','datatype'=>'string'},
-      8=>{'value'=>p.unique_identifier,'datatype'=>'string'}
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
     Exception.any_instance.should_receive(:log_me)
     @h.process Factory(:user)
@@ -123,7 +138,8 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
       5=>{'value'=>'KLMNO','datatype'=>'string'},
-      8=>{'value'=>p.unique_identifier,'datatype'=>'string'}
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
     Exception.any_instance.should_receive(:log_me)
     @h.process Factory(:user)
