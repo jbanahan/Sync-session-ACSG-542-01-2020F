@@ -101,7 +101,7 @@ module OpenChain
             val = v.is_a?(Numeric) ? val.rjust(len) : val.ljust(len)
             row << val
           end
-          f << "#{row}\r"
+          f << "#{row}\n"
         end
         f.flush
         if cursor > 1
