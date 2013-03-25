@@ -432,8 +432,8 @@ class ModelField
       :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.iso_code"},
       :join_statement => "LEFT OUTER JOIN countries AS #{table_name}_country on #{table_name}_country.id = #{table_name}.#{foreign_key}",
       :join_alias => "#{table_name}_country",
-      :data_type=>:string,
-      :history_ignore=>true
+      :data_type=>:string
+  
     }]
     r
   end
