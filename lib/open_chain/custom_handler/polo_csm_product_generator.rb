@@ -19,6 +19,7 @@ module OpenChain
               (0..max_col).each do |i|
                 v = i==1 ? c : rv[i]
                 v = "" if v.blank?
+                v = v.hts_format if [10,13,16].include?(i)
                 row << v.to_s.gsub(/\r?\n/, " ")
               end
               f << row.to_csv
@@ -62,7 +63,7 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 tariff_records.hts_2 as 'Tariff - HTS Code 2',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_2 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 2 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_2 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 2 - General Rate',
-tariff_records.hts_2 as 'Tariff - HTS Code 2',
+tariff_records.hts_3 as 'Tariff - HTS Code 3',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
         (9..84).each do |i|
