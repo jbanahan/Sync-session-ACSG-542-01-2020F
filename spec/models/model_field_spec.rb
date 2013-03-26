@@ -61,6 +61,60 @@ describe ModelField do
     ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
   end
   context "special cases" do
+    context "bill of materials" do
+      before :each do
+        @parent_mf = ModelField.find_by_uid :prod_bom_parents
+        @child_mf = ModelField.find_by_uid :prod_bom_children
+      end
+      it "should not allow imports for parents" do
+        p = Factory(:product)
+        r = @parent_mf.process_import p, 'abc'
+        p.should_not be_on_bill_of_materials
+        r.should == "Bill of Materials ignored, cannot be changed by upload."
+      end
+      it "process_export should return csv of BOM parents" do
+        parent1 = Factory(:product,:unique_identifier=>'bomc1')
+        parent2 = Factory(:product,:unique_identifier=>'bomc2')
+        child = Factory(:product)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id,:quantity=>1)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id,:quantity=>1)
+        output = @parent_mf.process_export child, nil, true
+        output.should == "#{parent1.unique_identifier},#{parent2.unique_identifier}"
+      end
+      it "qualified_field_name should return csv of BOM parents" do
+        parent1 = Factory(:product,:unique_identifier=>'bomc1')
+        parent2 = Factory(:product,:unique_identifier=>'bomc2')
+        child = Factory(:product)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id,:quantity=>1)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id,:quantity=>1)
+        r = ActiveRecord::Base.connection.execute "SELECT #{@parent_mf.qualified_field_name} FROM products where id = #{child.id}"
+        r.first.first.should == "#{parent1.unique_identifier},#{parent2.unique_identifier}"
+      end
+      it "should not allow imports for children" do
+        p = Factory(:product)
+        r = @child_mf.process_import p, 'abc'
+        p.should_not be_on_bill_of_materials
+        r.should == "Bill of Materials ignored, cannot be changed by upload."
+      end
+      it "should return csv of BOM children" do
+        child1 = Factory(:product,:unique_identifier=>'bomc1')
+        child2 = Factory(:product,:unique_identifier=>'bomc2')
+        parent = Factory(:product)
+        parent.bill_of_materials_children.create!(:child_product_id=>child1.id,:quantity=>1)
+        parent.bill_of_materials_children.create!(:child_product_id=>child2.id,:quantity=>1)
+        output = @child_mf.process_export parent, nil, true
+        output.should == "#{child1.unique_identifier},#{child2.unique_identifier}"
+      end
+      it "qualified_field_name should return csv of BOM children" do
+        child1 = Factory(:product,:unique_identifier=>'bomc1')
+        child2 = Factory(:product,:unique_identifier=>'bomc2')
+        parent = Factory(:product)
+        parent.bill_of_materials_children.create!(:child_product_id=>child1.id,:quantity=>1)
+        parent.bill_of_materials_children.create!(:child_product_id=>child2.id,:quantity=>1)
+        r = ActiveRecord::Base.connection.execute "SELECT #{@child_mf.qualified_field_name} FROM products where id = #{parent.id}"
+        r.first.first.should == "#{child1.unique_identifier},#{child2.unique_identifier}"
+      end
+    end
     context "regions" do
       it "should create classification count model fields for existing regions" do
         r = Factory(:region)

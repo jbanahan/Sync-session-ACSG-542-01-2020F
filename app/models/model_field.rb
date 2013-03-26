@@ -1074,6 +1074,22 @@ LEFT OUTER JOIN
         :qualified_field_name => "(select hts_1 from tariff_records fht inner join classifications fhc on fhc.id = fht.classification_id  where fhc.product_id = products.id and fhc.country_id = (SELECT id from countries ORDER BY ifnull(classification_rank,9999), iso_code ASC LIMIT 1) LIMIT 1)",
         :data_type=>:string,
         :history_ignore=>true
+      }],
+      [15,:prod_bom_parents,:unique_identifier,"BOM - Parents",{
+        :data_type=>:string,
+        :import_lambda => lambda {|o,d| "Bill of Materials ignored, cannot be changed by upload."},
+        :export_lambda => lambda {|product|
+          product.parent_products.pluck(:unique_identifier).uniq.sort.join(",")
+        },
+        :qualified_field_name => "(select group_concat(distinct unique_identifier SEPARATOR ',') FROM bill_of_materials_links INNER JOIN products par on par.id = bill_of_materials_links.parent_product_id where bill_of_materials_links.child_product_id = products.id)"
+      }],
+      [16,:prod_bom_children,:unique_identifier,"BOM - Children",{
+        :data_type=>:string,
+        :import_lambda => lambda {|o,d| "Bill of Materials ignored, cannot be changed by upload."},
+        :export_lambda => lambda {|product|
+          product.child_products.pluck(:unique_identifier).uniq.sort.join(",")
+        },
+        :qualified_field_name => "(select group_concat(distinct unique_identifier SEPARATOR ',') FROM bill_of_materials_links INNER JOIN products par on par.id = bill_of_materials_links.child_product_id where bill_of_materials_links.parent_product_id = products.id)"
       }]
     ]
     add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
