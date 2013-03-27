@@ -1,3 +1,4 @@
+require 'open_chain/xl_client'
 module OpenChain
   module CustomHandler
     #process bill of materials report from Polo SAP and associate products

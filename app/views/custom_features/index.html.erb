@@ -12,3 +12,6 @@
 <%if enabled_features.include?('Polo Canada') && OpenChain::CustomHandler::PoloCaEntryParser.new(nil).can_view?(current_user)-%>
   <%=link_to "Polo Canada", '/custom_features/polo_canada'%><br />
 <%end-%>
+<%if enabled_features.include?('Polo SAP') && OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user)-%>
+  <%=link_to "SAP Bill of Materials", '/custom_features/polo_sap_bom'%><br />
+<%end-%>
