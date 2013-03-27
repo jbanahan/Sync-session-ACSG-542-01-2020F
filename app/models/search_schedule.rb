@@ -59,23 +59,34 @@ class SearchSchedule < ActiveRecord::Base
       log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
       return
     end
-    cm = CoreModule.find_by_class_name srch_setup.module_type
-    extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
-    attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
-    t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
-    send_email srch_setup.name, t, attachment_name, log
-    send_ftp srch_setup.name, t, attachment_name, log
-    self.update_attributes(:last_finish_time => Time.now)
-    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+
+    User.run_with_user_settings(srch_setup.user) do
+      cm = CoreModule.find_by_class_name srch_setup.module_type
+      extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
+      attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
+      t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
+      send_email srch_setup.name, t, attachment_name, log
+      send_ftp srch_setup.name, t, attachment_name, log
+      self.update_attributes(:last_finish_time => Time.now)
+      log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    end
+    
   end
 
   def run_custom_report rpt, log
-    t = rpt.xls_file rpt.user
-    attachment_name = "#{sanitize_filename(rpt.name)}.xls"
-    send_email rpt.name, t, attachment_name, log
-    send_ftp rpt.name, t, attachment_name, log
-    self.update_attributes(:last_finish_time => Time.now)
-    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    if !rpt.user.active?
+      log.info "#{Time.now}: Custom Report schedule #{self.id} stopped, user is locked." if log
+      return
+    end
+    
+    User.run_with_user_settings(rpt.user) do
+      t = rpt.xls_file rpt.user
+      attachment_name = "#{sanitize_filename(rpt.name)}.xls"
+      send_email rpt.name, t, attachment_name, log
+      send_ftp rpt.name, t, attachment_name, log
+      self.update_attributes(:last_finish_time => Time.now)
+      log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    end
   end
 
   def write_csv srch_setup
