@@ -59,29 +59,31 @@ class ReportResult < ActiveRecord::Base
   end
 
   def execute_report
-    self.update_attributes(:status=>"Running")
-    local_path = nil
-    begin
-      local_file = nil
-      if self.custom_report_id.nil?
-        local_file = eval(self.report_class).run_report run_by, ActiveSupport::JSON.decode(self.settings_json)
-      else
-        local_file = self.custom_report.run_report run_by
-      end
-      self.report_data = local_file
-      self.status = "Complete"
-      self.save
-      run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
+    User.run_with_user_settings(run_by) do
+      self.update_attributes(:status=>"Running")
+      local_path = nil
+      begin
+        local_file = nil
+        if self.custom_report_id.nil?
+          local_file = eval(self.report_class).run_report run_by, ActiveSupport::JSON.decode(self.settings_json)
+        else
+          local_file = self.custom_report.run_report run_by
+        end
+        self.report_data = local_file
+        self.status = "Complete"
+        self.save
+        run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
 <p>You can download it by clicking <a href='/report_results/#{self.id}/download'>here</a>.</p>
 <p>You can view the report status page by clicking <a href='/report_results/#{self.id}'>here</a>.</p>"
-      )
-    rescue
-      $!.log_me ["Report execution failure.","User: #{self.run_by.full_name}","ReportResultID: #{self.id}"]
-      self.update_attributes(:status=>"Failed",:run_errors=>$!.message)
-      run_by.messages.create(:subject=>"Report FAILED: #{name}",:body=>"<p>Your report failed to run properly.</p>
+        )
+      rescue
+        $!.log_me ["Report execution failure.","User: #{self.run_by.full_name}","ReportResultID: #{self.id}"]
+        self.update_attributes(:status=>"Failed",:run_errors=>$!.message)
+        run_by.messages.create(:subject=>"Report FAILED: #{name}",:body=>"<p>Your report failed to run properly.</p>
 <p>If you need immediate support, please click the Help link at the top of the screen and log a new incident.</p>")
-    ensure
-      File.delete local_file if local_file && File.exists?(local_file)
+      ensure
+        File.delete local_file if local_file && File.exists?(local_file)
+      end
     end
   end
 

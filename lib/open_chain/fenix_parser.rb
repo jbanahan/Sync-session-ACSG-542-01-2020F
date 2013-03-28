@@ -68,6 +68,7 @@ module OpenChain
       @entry.export_state_codes = accumulated_string(:exp_state)
       @entry.vendor_names = accumulated_string(:vend)
       @entry.part_numbers = accumulated_string(:part_number)
+      @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
       @entry.entered_value = @total_entered_value
 
       @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
@@ -152,6 +153,7 @@ module OpenChain
       ci.currency = str_val(line[43])
       ci.exchange_rate = dec_val(line[44])
       accumulate_string :vend, ci.vendor_name
+      accumulate_string :invoice_number, ci.invoice_number
     end
 
     def process_invoice_line line

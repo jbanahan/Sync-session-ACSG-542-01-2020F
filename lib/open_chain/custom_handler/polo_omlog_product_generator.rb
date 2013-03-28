@@ -14,9 +14,20 @@ module OpenChain
         cursor = 0
         sync do |rv|
           csm_numbers = rv[1].split("\n")
-          csm_numbers.each do |c|
+          csm_numbers.each do |csm_number|
             row = sht.row(cursor)
-            rv.each {|k,v| row[k] = (k==1 ? c : v)}
+            rv.each {|k,v| 
+              value = nil
+              case k
+              when 1
+                value = csm_number
+              when 10,13,16
+                value = v.hts_format unless v.blank?
+              else
+                value = v.respond_to?(:gsub) ? v.gsub(/\r?\n/, " "): v
+              end
+              row[k] = value
+            }
             cursor += 1
           end
         end
@@ -46,7 +57,7 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 tariff_records.hts_2 as 'Tariff - HTS Code 2',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_2 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 2 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_2 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 2 - General Rate',
-tariff_records.hts_2 as 'Tariff - HTS Code 2',
+tariff_records.hts_3 as 'Tariff - HTS Code 3',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
         (9..84).each do |i|

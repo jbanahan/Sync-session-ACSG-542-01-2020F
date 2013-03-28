@@ -42,7 +42,7 @@ describe OpenChain::UnderArmourReceivingParser do
         [0,'Vendor','string'],
         [1,'','string'],
         [2,'Stock Category','string'],
-        [3,'Country','string'],
+        [3,'Ship From Country','string'],
         [4,'','string'],
         [5,'PO Number','string'],
         [6,'IBD Number','string'],
@@ -87,7 +87,7 @@ describe OpenChain::UnderArmourReceivingParser do
         [19,'Delivery Value','string']
       ]
       @make_line_lambda.call(0,bad)
-      OpenChain::UnderArmourReceivingParser.validate_s3(@s3_path).should == ["Heading at position 3 should be Country and was Ctry."]
+      OpenChain::UnderArmourReceivingParser.validate_s3(@s3_path).should == ["Heading at position 3 should be Ship From Country and was Ctry."]
     end
   end
   it "should create custom definitions if they don't exist" do
