@@ -321,10 +321,28 @@ class User < ActiveRecord::Base
     self.admin?
   end
 
-
   def master_company?
     @mc = self.company.master? if @mc.nil?
     @mc
+  end
+
+  # Runs the passed in block of code using any global
+  # user settings that can be extracted from the passed in user.
+  # In effect, it sets User.current and Time.zone for the given block of code
+  # and then unsets it after the block has been run.
+  # In general, this is only really useful in background jobs since these values
+  # are already set by the application controller in a web context.
+  def self.run_with_user_settings user
+    previous_user = User.current
+    previous_time_zone = Time.zone
+    begin
+      User.current = user
+      Time.zone = user.time_zone unless user.time_zone.blank?
+      yield
+    ensure
+      User.current = previous_user
+      Time.zone = previous_time_zone
+    end
   end
 
   private
