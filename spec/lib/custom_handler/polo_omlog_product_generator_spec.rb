@@ -13,17 +13,24 @@ describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
     it "should split CSM numbers" do
       @cd = Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text)
       @italy = Factory(:country,:iso_code=>'IT')
-      tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country=>@italy))
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>Factory(:classification,:country=>@italy))
       @product = tr.classification.product
+      @product.update_attributes :name => "Value1\nValue2\r\nValue3"
       @product.update_custom_value! @cd, "CSM1\nCSM2"
       @tmp = described_class.new.sync_xls
       sheet = Spreadsheet.open(@tmp).worksheet(0)
       sheet.row(1)[1].should == "CSM1"
       sheet.row(1)[6].should == @product.unique_identifier
-      sheet.row(1)[10].should == '1234567890'
+      sheet.row(1)[8].should == 'Value1 Value2 Value3'
+      sheet.row(1)[10].should == '1234567890'.hts_format
+      sheet.row(1)[13].should == '2222222222'.hts_format
+      sheet.row(1)[16].should == '3333333333'.hts_format
       sheet.row(2)[1].should == "CSM2"
       sheet.row(2)[6].should == @product.unique_identifier
-      sheet.row(2)[10].should == '1234567890'
+      sheet.row(2)[8].should == 'Value1 Value2 Value3'
+      sheet.row(2)[10].should == '1234567890'.hts_format
+      sheet.row(2)[13].should == '2222222222'.hts_format
+      sheet.row(2)[16].should == '3333333333'.hts_format
     end
   end
   describe :query do
