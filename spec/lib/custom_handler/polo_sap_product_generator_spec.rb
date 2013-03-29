@@ -10,6 +10,23 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
   end
 
+  describe :sync_csv do
+    it "should not send countries except US, CA, IT with custom where" do
+      us = Factory(:country,:iso_code=>'US')
+      ca = Factory(:country,:iso_code=>'CA')
+      italy = Factory(:country,:iso_code=>'IT')
+      kr = Factory(:country,:iso_code=>'KR')
+      p = Factory(:product)
+      [us,ca,italy,kr].each do |country|
+        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id))
+      end
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
+      a = CSV.parse(IO.read(@tmp.path),:headers=>true)
+      a.should have(3).items
+      a.collect {|x| x[2]}.sort.should == ['CA','IT','US']
+    end
+  end
+
   describe :ftp_credentials do
     it "should send proper credentials" do
       @g.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ralph_Lauren/sap_prod'}

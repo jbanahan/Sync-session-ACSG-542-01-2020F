@@ -55,11 +55,10 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{cd_s 140},
 #{cd_s 141}
 FROM products 
-INNER JOIN classifications on classifications.product_id = products.id
+INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN ('IT','US','CA'))
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id
 LEFT OUTER JOIN sync_records on sync_records.syncable_id = products.id AND sync_records.trading_partner = '#{sync_code}' " 
-        w = "WHERE classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN ('IT','US','CA')) 
-AND (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)"
+        w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)"
         q << (@custom_where ? @custom_where : w)
         q
       end
