@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
     c.ftp_credentials.should == {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
   end
 
-  describe :sync_xls do
+  describe :sync_csv do
     after :each do 
       @tmp.unlink if @tmp
     end
@@ -17,20 +17,20 @@ describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
       @product = tr.classification.product
       @product.update_attributes :name => "Value1\nValue2\r\nValue3"
       @product.update_custom_value! @cd, "CSM1\nCSM2"
-      @tmp = described_class.new.sync_xls
-      sheet = Spreadsheet.open(@tmp).worksheet(0)
-      sheet.row(1)[1].should == "CSM1"
-      sheet.row(1)[6].should == @product.unique_identifier
-      sheet.row(1)[8].should == 'Value1 Value2 Value3'
-      sheet.row(1)[10].should == '1234567890'.hts_format
-      sheet.row(1)[13].should == '2222222222'.hts_format
-      sheet.row(1)[16].should == '3333333333'.hts_format
-      sheet.row(2)[1].should == "CSM2"
-      sheet.row(2)[6].should == @product.unique_identifier
-      sheet.row(2)[8].should == 'Value1 Value2 Value3'
-      sheet.row(2)[10].should == '1234567890'.hts_format
-      sheet.row(2)[13].should == '2222222222'.hts_format
-      sheet.row(2)[16].should == '3333333333'.hts_format
+      @tmp = described_class.new.sync_csv
+      a = CSV.parse IO.read @tmp.path
+      a[1][1].should == "CSM1"
+      a[1][6].should == @product.unique_identifier
+      a[1][8].should == 'Value1 Value2 Value3'
+      a[1][10].should == '1234567890'.hts_format
+      a[1][13].should == '2222222222'.hts_format
+      a[1][16].should == '3333333333'.hts_format
+      a[2][1].should == "CSM2"
+      a[2][6].should == @product.unique_identifier
+      a[2][8].should == 'Value1 Value2 Value3'
+      a[2][10].should == '1234567890'.hts_format
+      a[2][13].should == '2222222222'.hts_format
+      a[2][16].should == '3333333333'.hts_format
     end
   end
   describe :query do

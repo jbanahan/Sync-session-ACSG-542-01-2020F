@@ -8,34 +8,32 @@ module OpenChain
       def ftp_credentials
         {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
       end
-      def sync_xls
-        wb = Spreadsheet::Workbook.new
-        sht = wb.create_worksheet :name=>'Results'
+      #overriding to handle special splitting of CSM numbers
+      def sync_csv include_headers=true
+        f = Tempfile.new(['ProductSync','.csv'])
         cursor = 0
         sync do |rv|
-          csm_numbers = rv[1].split("\n")
-          csm_numbers.each do |csm_number|
-            row = sht.row(cursor)
-            rv.each {|k,v| 
-              value = nil
-              case k
-              when 1
-                value = csm_number
-              when 10,13,16
-                value = v.hts_format unless v.blank?
-              else
-                value = v.respond_to?(:gsub) ? v.gsub(/\r?\n/, " "): v
+          if include_headers || cursor > 0
+            csm_numbers = rv[1] ? rv[1].split("\n") : []
+            csm_numbers.each do |c|
+              max_col = rv.keys.sort.last
+              row = []
+              (0..max_col).each do |i|
+                v = i==1 ? c : rv[i]
+                v = "" if v.blank?
+                v = v.hts_format if [10,13,16].include?(i)
+                row << v.to_s.gsub(/\r?\n/, " ")
               end
-              row[k] = value
-            }
-            cursor += 1
+              f << row.to_csv
+            end
           end
+          cursor += 1
         end
-        if cursor > 1
-          t = Tempfile.new(['ProductSync','.xls'])
-          wb.write t
-          return t
+        f.flush
+        if (include_headers && cursor > 1) || cursor > 0
+          return f
         else
+          f.unlink
           return nil
         end
       end
