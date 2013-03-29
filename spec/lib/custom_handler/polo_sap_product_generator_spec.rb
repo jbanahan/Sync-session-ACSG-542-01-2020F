@@ -36,6 +36,15 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       @vals[3] = ''
       r.should == @vals
     end
+    it "should clean line breaks and new lines" do
+      @vals[1] = "a\nb"
+      @vals[2] = "a\rb"
+      @vals[4] = "a\r\nb"
+      r = @g.before_csv_write 1, @vals
+      r[1].should == "a b"
+      r[2].should == "a b"
+      r[4].should == "a  b"
+    end
   end
 
 
