@@ -149,23 +149,37 @@ module OpenChain
       end
 
       # Generate a subselect representing a custom value based on custom definition id
-      def cd_s cd_id
+      def cd_s cd_id, suppress_alias = false
         @definitions ||= {}
         if @definitions.empty?
           CustomDefinition.all.each {|cd| @definitions[cd.id] = cd}
         end
         cd = @definitions[cd_id]
-        return "(SELECT \"\") as `Custom #{cd_id}`" unless cd #so report doesn't bomb if custom field is removed from system
-        table_name = ''
-        case cd.module_type
-        when 'Product'
-          table_name = 'products'
-        when 'Classification'
-          table_name = 'classifications'
+
+        if cd
+          table_name = ''
+          case cd.module_type
+          when 'Product'
+            table_name = 'products'
+          when 'Classification'
+            table_name = 'classifications'
+          end
+          
+          "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+        else
+          #so report doesn't bomb if custom field is removed from system
+          "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
         end
-        
-        r = "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`"
       end
+
+      private 
+        def build_custom_def_query_alias suppress_alias, cd_id, cd
+          if suppress_alias
+            ""
+          else
+            cd ? " as `#{cd.label}`" : " as `Custom #{cd_id}`"
+          end
+        end
     end
   end
 end

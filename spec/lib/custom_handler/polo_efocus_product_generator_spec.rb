@@ -25,7 +25,9 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
     end
     context "simple tests" do
       before :each do
-        @match_product = Factory(:classification,:country_id=>@us.id).product
+        @classification = Factory(:classification, :country_id=>@us.id)
+        @tariff_record = Factory(:tariff_record, :classification => @classification, :hts_1 => '12345')
+        @match_product = @classification.product
         @barthco_cust = Factory(:custom_definition,:id=>1,:module_type=>'Product',:label=>'Barthco Customer ID')
         @test_style = Factory(:custom_definition,:module_type=>'Product',:label=>'Test Style')
         @match_product.update_custom_value! @barthco_cust, '100'
@@ -61,6 +63,31 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
         @match_product.update_custom_value! @test_style, 'x'
         r = Product.connection.execute described_class.new.query
         r.count.should == 0
+      end
+      it "should not return products that are non-RL sets and are missing hts numbers" do
+        @tariff_record.update_attributes :hts_1 => ''
+        r = Product.connection.execute described_class.new.query
+        r.count.should == 0
+      end
+      it "should return products that only have hts 2" do
+        @tariff_record.update_attributes :hts_1 => '', :hts_2 => "1234"
+        r = Product.connection.execute described_class.new.query
+        r.count.should == 1
+        r.first[6].should == @match_product.unique_identifier
+      end
+      it "should return products that only have hts 3" do
+        @tariff_record.update_attributes :hts_1 => '', :hts_3 => "1234"
+        r = Product.connection.execute described_class.new.query
+        r.count.should == 1
+        r.first[6].should == @match_product.unique_identifier
+      end
+      it "should return products that are RL sets and are missing hts numbers" do
+        set_type = Factory(:custom_definition,:id=>131,:module_type=>'Product',:label=>'Set Type')
+        @tariff_record.update_attributes :hts_1 => '', :hts_2 => '', :hts_3 => ''
+        @match_product.update_custom_value! set_type, 'RL'
+        r = Product.connection.execute described_class.new.query
+        r.count.should == 1
+        r.first[6].should == @match_product.unique_identifier
       end
     end
     context "Full DB Prep" do #VERY TIME CONSUMING
