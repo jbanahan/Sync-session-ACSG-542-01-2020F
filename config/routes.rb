@@ -306,6 +306,7 @@ OpenChain::Application.routes.draw do
     member do
       get 'show_children'
       post 'update_children'
+      post 'push_alliance_products'
     end
 		resources :addresses
 		resources :divisions

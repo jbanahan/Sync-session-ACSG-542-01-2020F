@@ -1,3 +1,4 @@
+require 'open_chain/custom_handler/generic_alliance_product_generator'
 class CompaniesController < ApplicationController
   # GET /companies
   # GET /companies.xml
@@ -137,6 +138,25 @@ class CompaniesController < ApplicationController
       return
     end
     render :json=>Company.attachment_archive_enabled.by_name.to_json(:include=>{:attachment_archive_setup=>{:methods=>:entry_attachments_available_count}})
+  end
+
+  #send the generic fixed position file to Alliance for this importer
+  def push_alliance_products
+    c = Company.find params[:id]
+    admin_secure do
+      if !MasterSetup.get.custom_feature? 'alliance'
+        add_flash :errors, "Cannot push file because \"alliance\" custom feature is not enabled."
+      elsif c.alliance_customer_number.blank?
+        add_flash :errors, "Cannot push file because company doesn't have an alliance customer number."
+      elsif c.last_alliance_product_push_at && c.last_alliance_product_push_at > 10.minutes.ago
+        add_flash :errors, "Cannot push file because last push was less than 10 minutes ago."
+      else
+        OpenChain::CustomHandler::GenericAllianceProductGenerator.delay.sync(c)
+        c.update_attributes :last_alliance_product_push_at => 0.seconds.ago
+        add_flash :notices, "Product file has been queued to be sent to alliance."
+      end
+      redirect_to c
+    end
   end
   private 
   def secure

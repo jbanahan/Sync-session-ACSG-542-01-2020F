@@ -4,6 +4,18 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
   before :each do
     @c = Factory(:company,:alliance_customer_number=>'MYCUS')
   end
+  describe :sync do
+    it "should call appropriate methods" do
+      k = described_class
+      m = mock("generator")
+      k.should_receive(:new).with(@c).and_return m
+      f = mock("file")
+      f.should_receive(:unlink)
+      m.should_receive(:sync_fixed_position).and_return(f)
+      m.should_receive(:ftp_file).with(f)
+      k.sync(@c).should be_nil
+    end
+  end
   describe :remote_file_name do
     it "should base remote file name on alliance customer number" do
       g = described_class.new(@c)
@@ -56,6 +68,11 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         r.count.should == 1
         vals = r.first
         vals[0].should == @p.id
+      end
+      it "should not output if part number is blank" do
+        @p.update_custom_value! @pn, ""
+        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r.count.should == 0
       end
       it "should not output country of origin if not 2 digits" do
         @p.update_custom_value! @coo, "CHINA"
