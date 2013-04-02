@@ -92,7 +92,6 @@ GEM
     gem_plugin (0.2.3)
     haml (3.1.7)
     hike (1.2.1)
-    htmlentities (4.3.1)
     httparty (0.9.0)
       multi_json (~> 1.0)
       multi_xml
@@ -184,9 +183,6 @@ GEM
     rubyzip (0.9.9)
     rufus-scheduler (2.0.8)
       tzinfo (>= 0.3.23)
-    sanitize (2.0.3)
-      nokogiri (>= 1.4.4, < 1.6)
-      nokogiri (>= 1.4.4, < 1.6)
     sass (3.2.5)
     sass-rails (3.2.5)
       railties (~> 3.2.0)
@@ -232,7 +228,6 @@ DEPENDENCIES
   execjs
   factory_girl (= 2.5.2)
   fog
-  htmlentities
   jasminerice!
   jquery-rails
   libv8 (~> 3.11.8)
@@ -248,7 +243,6 @@ DEPENDENCIES
   rspec-rails
   rubyzip
   rufus-scheduler (= 2.0.8)
-  sanitize
   sass-rails (~> 3.2.3)
   spork
   spreadsheet (= 0.6.5.9)

@@ -18,7 +18,6 @@ class User < ActiveRecord::Base
     :classification_view, :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
     :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
-    :unfiled_emails_edit,
     :support_agent,
     :password_reset,
     :simple_entry_mode
@@ -40,10 +39,7 @@ class User < ActiveRecord::Base
   has_many   :survey_responses
   has_many   :support_tickets, :foreign_key => :requestor_id
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
-  has_many   :assigned_emails, :foreign_key => :assigned_to_id, :class_name=>"Email"
 
-  has_and_belongs_to_many :mailboxes
-  
   validates  :company, :presence => true
 
   before_save :authlogic_persistence
@@ -147,12 +143,6 @@ class User < ActiveRecord::Base
   end
   
   #permissions
-  def view_unfiled_emails?
-    self.edit_unfiled_emails?
-  end
-  def edit_unfiled_emails?
-    self.unfiled_emails_edit?
-  end
   def view_attachment_archives?
     self.company.master? && self.view_entries?
   end
