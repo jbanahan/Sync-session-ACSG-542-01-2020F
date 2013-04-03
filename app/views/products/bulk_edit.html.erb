@@ -1,7 +1,7 @@
 <%content_for :javascript do %>
 $(function() {
   $("#btn_save").click(function() {$("#frm_bu").submit();});
-  $("#btn_cancel").click(function() {window.location='<%=products_path%>';});
+  $("#btn_cancel").click(function() {window.location='<%=request.referrer%>';});
   OpenChain.addClickMap('s','Save','btn_save');
   OpenChain.addClickMap('c','Cancel','btn_cancel');
   OpenChain.activateHotKeys();

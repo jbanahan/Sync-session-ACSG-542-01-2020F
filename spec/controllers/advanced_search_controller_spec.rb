@@ -20,6 +20,7 @@ describe AdvancedSearchController do
         @p = Factory(:product,:name=>'mpn')
       end
       it "should render json response" do
+        User.any_instance.stub(:edit_classifications?).and_return(true) #to allow bulk actions
         SearchQuery.any_instance.stub(:count).and_return(501)
         SearchQuery.any_instance.stub(:unique_parent_count).and_return(42)
         Product.any_instance.stub(:can_view?).and_return(true)
@@ -28,6 +29,7 @@ describe AdvancedSearchController do
         response.should be_success
         r = JSON.parse response.body
         r['id'].should == @ss.id
+        r['search_run_id'].should == @ss.search_run.id
         r['name'].should == @ss.name
         r['page'].should == 1
         r['total_pages'].should == 11
@@ -41,6 +43,18 @@ describe AdvancedSearchController do
               ],
             'vals'=>
               [@p.unique_identifier,@p.name]}]
+        expected_bulk_actions = []
+        CoreModule::PRODUCT.bulk_actions(@user).each do |k,v|
+          h = {"label"=>k.to_s}
+          if v.is_a? String
+            h["path"] = eval(v)
+          else
+            h["path"] = v[:path]
+            h["callback"] = v[:ajax_callback]
+          end
+          expected_bulk_actions << h
+        end
+        r['bulk_actions'].should == expected_bulk_actions 
       end
       it "should 404 if not for current_user"
       it "should default page to 1"

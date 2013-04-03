@@ -7,6 +7,7 @@ class AdvancedSearchController < ApplicationController
       format.html {redirect_to "/advanced_search#/#{params[:id]}"}
       format.json {
         ss = SearchSetup.for_user(current_user).find(params[:id]) 
+        ss.touch
 
         p_str = params[:page]
         page = 1
@@ -35,8 +36,9 @@ class AdvancedSearchController < ApplicationController
           links << {'label'=>'View', 'url'=>view_path} if obj.can_view?(current_user)
           unless no_edit_links
             begin
+              ep = "edit_#{obj.class.to_s.underscore}_path"
               edit_path = "#{view_path}/edit"
-              links << {'label'=>'Edit', 'url'=>edit_path} if !no_edit_links && obj.respond_to?(:can_edit?) && obj.can_edit?(current_user)
+              links << {'label'=>'Edit', 'url'=>edit_path} if !no_edit_links && obj.respond_to?(:can_edit?) && obj.can_edit?(current_user) && self.respond_to?(ep)
             rescue ActionController::RoutingError
               no_edit_links = true
             end
@@ -46,14 +48,33 @@ class AdvancedSearchController < ApplicationController
 
         render :json=>{
           :name=>ss.name,
+          :search_run_id=>ss.search_run.id,
           :page=>page,
           :id=>ss.id,
           :columns=>cols,
           :rows=>rows,
           :total_pages=>total_pages,
-          :total_objects=>sq.unique_parent_count
+          :total_objects=>sq.unique_parent_count,
+          :bulk_actions=>prep_bulk_actions(ss.core_module)
         }
       }
     end
+  end
+
+  private
+  def prep_bulk_actions core_module
+    bulk_actions = []
+    core_module.bulk_actions(current_user).each do |k,v|
+      h = {"label"=>k.to_s}
+      if v.is_a? String
+        h["path"] = eval(v) 
+        puts eval(v)
+      else
+        h["path"] = v[:path]
+        h["callback"] = v[:ajax_callback]
+      end
+      bulk_actions << h
+    end
+    bulk_actions
   end
 end
