@@ -9,7 +9,7 @@ class ReportResultsController < ApplicationController
   def index
     @show_basic = current_user.company.master? || current_user.view_entries?
     @customizable_reports = []
-    [CustomReportEntryInvoiceBreakdown,CustomReportBillingAllocationByValue,CustomReportBillingStatementByPo].each do |rpt|
+    [CustomReportEntryInvoiceBreakdown, CustomReportBillingAllocationByValue, CustomReportBillingStatementByPo, CustomReportEntryBillingBreakdownByPo].each do |rpt|
       @customizable_reports << rpt if rpt.can_view?(current_user)
     end
     @current_custom_reports = current_user.custom_reports.order("name ASC").all
