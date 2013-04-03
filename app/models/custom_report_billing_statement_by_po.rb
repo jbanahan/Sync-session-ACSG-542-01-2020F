@@ -47,7 +47,7 @@ class CustomReportBillingStatementByPo < CustomReport
       # This invoice amount stuff is there to handle the case where, due to rounding the prorated amount you may
       # be left with the need to tack on an extra penny on the last line (ie. 100 / 3 lines = 33.33, 33.33, 33.34)
       remaining_invoice_amount = inv.invoice_total || BigDecimal.new("0")
-      even_split_amount = (remaining_invoice_amount / BigDecimal.new(po_numbers.length)).round(2)
+      even_split_amount = (remaining_invoice_amount / BigDecimal.new(po_numbers.length)).round(2, BigDecimal::ROUND_DOWN)
       
       po_numbers.each_with_index do |po, i|
         col = 0
@@ -58,7 +58,7 @@ class CustomReportBillingStatementByPo < CustomReport
           col += 1
         end
 
-        po_value = 0
+        po_value = BigDecimal.new("0")
         if i < (po_numbers.length - 1) 
           po_value = even_split_amount
           remaining_invoice_amount -= even_split_amount
