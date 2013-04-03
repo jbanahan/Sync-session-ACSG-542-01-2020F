@@ -30,6 +30,10 @@ class CustomReport < ActiveRecord::Base
     self.class.column_fields_available user
   end
 
+  def criterion_fields_available user
+    self.class.criterion_fields_available user
+  end
+
   def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : self.name),".xls"] )
     @listener = XlsListener.new 
     run run_by
