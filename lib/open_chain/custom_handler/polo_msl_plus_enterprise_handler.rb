@@ -4,7 +4,14 @@ module OpenChain
 
       # :env=>:qa will put files in _test_to_msl instead of _to_msl
       def initialize opts={}
-        @env = opts[:env]
+        o = HashWithIndifferentAccess.new(opts)
+        @env = o[:env].to_sym if o[:env]
+      end
+
+      def self.run_schedulable opts
+        g = self.new(opts)
+        prods = g.products_to_send
+        g.send_and_delete_sync_file g.generate_outbound_sync_file prods if prods.count > 0 
       end
 
       # find the products that need to be sent to MSL+ (they have MSL+ Receive Dates and need sync)
