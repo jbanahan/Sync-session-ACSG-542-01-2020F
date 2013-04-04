@@ -62,7 +62,29 @@ describe CustomReportBillingStatementByPo do
       row.should == ["ZZZ", Date.parse("2013-01-01"), BigDecimal.new("33.34"), "3", "Entry", "1\n 2\n 3"]
     end
 
-    it "should show a message if now results are returned" do
+    it "should use the correct rounding mode when determining pro-rated PO values" do
+      # There was a bug in the report where the proration amount should have been truncating the rounded value at 2
+      # decimal places, instead, it was rounding up. .ie .995 rounded to 1 instead of .99
+      @invoice.update_attributes(:invoice_total=>BigDecimal("99.99"))
+      @invoice.entry.update_attributes(:broker_reference=>"Entry", :po_numbers=>"1\n 2")
+      @report.search_columns.create!(:model_field_uid=>:bi_brok_ref, :rank=>1)
+      @report.search_columns.create!(:model_field_uid=>:bi_ent_po_numbers, :rank=>2)
+      @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>@entry.broker_reference) 
+
+      r = @report.to_arrays @user
+      #4 rows..1 header, 2 PO lines
+      r.length.should == 3
+      row = r[0]
+      row.should == ["Invoice Number", "Invoice Date", "Invoice Total", "PO Number", ModelField.find_by_uid(:bi_brok_ref).label, ModelField.find_by_uid(:bi_ent_po_numbers).label]
+
+      row = r[1]
+      row.should == ["ZZZ", Date.parse("2013-01-01"), BigDecimal.new("49.99"), "1", "Entry", "1\n 2"]
+
+      row = r[2]
+      row.should == ["ZZZ", Date.parse("2013-01-01"), BigDecimal.new("50.00"), "2", "Entry", "1\n 2"]
+    end
+
+    it "should show a message if no results are returned" do
       @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>"FAIL")
 
       r = @report.to_arrays @user
