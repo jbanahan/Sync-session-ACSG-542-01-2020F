@@ -24,13 +24,6 @@ describe User do
     end
   end
   context "permissions" do
-    context "unfiled_emails" do
-      it "should allow view_unfiled_emails? if edit_unfiled_emails" do
-        u = Factory(:user,:unfiled_emails_edit=>true)
-        u.should be_edit_unfiled_emails
-        u.should be_view_unfiled_emails
-      end
-    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))

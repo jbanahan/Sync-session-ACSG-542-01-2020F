@@ -7,7 +7,6 @@ class Entry < ActiveRecord::Base
   has_many :commercial_invoice_lines, :through => :commercial_invoices
   has_many :commercial_invoice_tariffs, :through => :commercial_invoice_lines
   has_many :entry_comments, :dependent=>:destroy
-  has_many :emails, :as=>:email_linkable
 
   belongs_to :importer, :class_name=>"Company"
   belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'

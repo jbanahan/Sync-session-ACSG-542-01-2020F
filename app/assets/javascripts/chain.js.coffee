@@ -1,13 +1,5 @@
 root = exports ? this
 root.Chain =
-  formatJSONDate : (jsonDateString,includeTime) ->
-    return '' unless jsonDateString && jsonDateString.length > 0
-    f = null
-    if includeTime
-      f = new SimpleDateFormat("yyyy-MM-dd HH:mm")
-    else
-      f = new SimpleDateFormat("yyyy-MM-dd")
-    f.format(new Date(Date.parse jsonDateString))
 
   #populates the user list from json result
   populateUserList : (selectBox,defaultSelection,data) ->
