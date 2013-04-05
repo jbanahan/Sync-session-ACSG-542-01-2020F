@@ -6,7 +6,7 @@ class CustomReportEntryInvoiceBreakdown < CustomReport
 
   #long description of report purpose / structure
   def self.description
-    "Shows Broker Invoices with entry header information and each charge in it's own column."
+    "Shows Broker Invoices with entry header information and each charge in its own column."
   end
 
   #ModelFields available to be included on report as columns
