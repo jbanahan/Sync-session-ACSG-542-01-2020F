@@ -1,7 +1,8 @@
 require 'open_chain/schedule_support'
 class SchedulableJob < ActiveRecord::Base
   include OpenChain::ScheduleSupport
-  attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday, :run_tuesday, :run_wednesday, :time_zone_name
+  attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday, 
+    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time
   
   def run log=nil
     rc = self.run_class.gsub("::",":")
