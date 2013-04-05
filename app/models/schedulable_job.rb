@@ -22,7 +22,9 @@ class SchedulableJob < ActiveRecord::Base
 
   def time_zone
     return ActiveSupport::TimeZone["Eastern Time (US & Canada)"] if self.time_zone_name.blank?
-    ActiveSupport::TimeZone[self.time_zone_name]
+    tz = ActiveSupport::TimeZone[self.time_zone_name]
+    raise "Invalid time zone name: #{self.time_zone_name}" if tz.nil?
+    tz
   end
 
   def day_to_run

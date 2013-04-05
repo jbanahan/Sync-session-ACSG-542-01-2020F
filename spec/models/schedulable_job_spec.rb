@@ -24,5 +24,10 @@ describe SchedulableJob do
     it "should override" do
       SchedulableJob.new(:time_zone_name=>"American Samoa").time_zone.should == ActiveSupport::TimeZone["American Samoa"] #Tony Rocky Horror
     end
+    it "should fail on bad tz" do
+      lambda {
+        SchedulableJob.new(:time_zone_name=>"BAD").time_zone
+      }.should raise_error "Invalid time zone name: BAD"
+    end
   end
 end
