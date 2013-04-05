@@ -47,6 +47,43 @@ describe OpenChain::S3 do
         new_tempfile.close!
       end
     end
+
+    it 'should ensure the tempfile is unlinked if an error occurs while downloading' do
+      # Need to do this with mocks, since there's no external references made to the tempfile
+      # created while the download is ocurring
+      tempfile = double('tempfile')
+      OpenChain::S3.should_receive(:create_tempfile).and_return tempfile
+      tempfile.should_receive(:binmode)
+      tempfile.should_receive(:close!)
+      OpenChain::S3.should_receive(:get_data).and_raise "Error!"
+      expect {OpenChain::S3.download_to_tempfile @bucket, @key}.to raise_error "Error!"
+    end
+
+    it 'should yield the downloaded tempfile to a block' do
+      tempfile = nil
+      OpenChain::S3.download_to_tempfile @bucket, @key do |t|
+        tempfile = t
+        File.basename(t.path).should =~ /^s3_io.+\.txt$/
+        IO.read(t).should == @content
+      end
+
+      # Path is nil if the file has been unlinked
+      tempfile.path.should be_nil
+    end
+
+    it 'should ensure the tempfile is unlinked if block raises an error' do
+      tempfile = nil
+      expect {
+        OpenChain::S3.download_to_tempfile @bucket, @key do |t|
+          tempfile = t
+          raise Exception, "Error"
+        end
+      }.to raise_error Exception
+
+      # Path is nil if the file has been unlinked
+      tempfile.path.should be_nil
+    end
+
     it 'should not fail if file key is missing a file extension' do
       @key = "test"
       OpenChain::S3.should_receive(:get_data).and_return("test")
