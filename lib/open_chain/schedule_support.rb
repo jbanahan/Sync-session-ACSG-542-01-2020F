@@ -13,6 +13,7 @@ module OpenChain
   # The following methods can be overriden for extra functionality
   # * `day_to_run` #if the schedule should only be executed on a specific day of the month (defaults to nil)
   # * `hour_to_run` #if the schedule should be run at a specific hour (defaults to midnight aka 0)
+  # * `minute_to_run` #if the schedule should be run after a specific minute within the `hour_to_run` (defaults to 0)
   # * `sunday_active?`, `monday_active?`, etc #if the schedule should be run on a specifc day (each defaults to false)
   #
   # NOTE: The day of week methods are ignored if the day_to_run returns a value
@@ -28,6 +29,10 @@ module OpenChain
     end
 
     def hour_to_run
+      0
+    end
+
+    def minute_to_run
       0
     end
 
@@ -66,7 +71,7 @@ module OpenChain
       tz_str = tz.name
       base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
       local_base_time = base_time.in_time_zone(tz_str)
-      next_time_local = tz.local(local_base_time.year,local_base_time.month,local_base_time.day,hour_to_run)
+      next_time_local = tz.local(local_base_time.year,local_base_time.month,local_base_time.day,hour_to_run,minute_to_run)
       while next_time_local < local_base_time || !run_day?(next_time_local)
         next_time_local += 1.day
       end

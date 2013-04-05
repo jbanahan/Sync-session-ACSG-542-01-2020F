@@ -9,6 +9,7 @@ class CreateSchedulableJobs < ActiveRecord::Migration
       t.boolean :run_saturday
       t.boolean :run_sunday
       t.integer :run_hour
+      t.integer :run_minute
       t.integer :day_of_month
       t.string :time_zone_name
       t.string :run_class

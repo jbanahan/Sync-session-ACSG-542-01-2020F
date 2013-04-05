@@ -16,6 +16,7 @@ class SchedulableJob < ActiveRecord::Base
     end
     k = Kernel
     components.each {|c| k = k.const_get(c)}
+    log.info "Running schedule for #{k.to_s} with options #{opts_hash.to_s}" if log
     k.run_schedulable opts_hash
   end
 
@@ -30,6 +31,10 @@ class SchedulableJob < ActiveRecord::Base
 
   def hour_to_run
     self.run_hour
+  end
+
+  def minute_to_run
+    self.run_minute
   end
 
   def sunday_active?
