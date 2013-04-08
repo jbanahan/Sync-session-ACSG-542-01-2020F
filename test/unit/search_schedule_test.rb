@@ -84,23 +84,4 @@ class SearchScheduleTest < ActiveSupport::TestCase
   end
 
 
-  test "is_running? - never finished" do 
-    s = SearchSchedule.new(:last_start_time => 3.minutes.ago)
-    assert s.is_running?, "Should have returned running with start time in past & no finish time"
-  end
-
-  test "is_running? - never started" do
-    s = SearchSchedule.new
-    assert !s.is_running?, "Should have returned false with no start time"
-  end
-
-  test "is_running? - started after finished" do
-    s = SearchSchedule.new(:last_start_time => 3.minutes.ago, :last_finish_time => 5.minutes.ago)
-    assert s.is_running?, "Should have returned true with start time after finish time"
-  end
-
-  test "is_running? - started before finished" do
-    s = SearchSchedule.new(:last_start_time => 3.minutes.ago, :last_finish_time => Time.now)
-    assert !s.is_running?, "Should have returned false with start time before finish time"
-  end
 end

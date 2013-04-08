@@ -177,9 +177,25 @@ describe SearchCriterion do
 
       sc.operator = "notnull"
       sc.apply(Entry.where("1=1")).to_sql.should =~ /NOT NULL/
+    end
 
-
+    it "should use current timezone to compare object field" do
+      tz = "Hawaii"
+      date = "2013-01-01"
+      value = date + " " + tz
       
+
+      sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"gt", :value=>value)
+      p = Product.new
+      # Hawaii is 10 hours behind UTC so adjust our created at to make sure 
+      # the offset is being calculated
+      p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 10:01"
+
+      Time.use_zone(tz) do
+        sc.test?(p).should be_true
+        p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 09:59"
+        sc.test?(p).should be_false
+      end
     end
   end
 

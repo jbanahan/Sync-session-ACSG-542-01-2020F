@@ -18,7 +18,6 @@ class User < ActiveRecord::Base
     :classification_view, :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
     :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
-    :unfiled_emails_edit,
     :support_agent,
     :password_reset,
     :simple_entry_mode
@@ -40,10 +39,7 @@ class User < ActiveRecord::Base
   has_many   :survey_responses
   has_many   :support_tickets, :foreign_key => :requestor_id
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
-  has_many   :assigned_emails, :foreign_key => :assigned_to_id, :class_name=>"Email"
 
-  has_and_belongs_to_many :mailboxes
-  
   validates  :company, :presence => true
 
   before_save :authlogic_persistence
@@ -147,12 +143,6 @@ class User < ActiveRecord::Base
   end
   
   #permissions
-  def view_unfiled_emails?
-    self.edit_unfiled_emails?
-  end
-  def edit_unfiled_emails?
-    self.unfiled_emails_edit?
-  end
   def view_attachment_archives?
     self.company.master? && self.view_entries?
   end
@@ -321,10 +311,28 @@ class User < ActiveRecord::Base
     self.admin?
   end
 
-
   def master_company?
     @mc = self.company.master? if @mc.nil?
     @mc
+  end
+
+  # Runs the passed in block of code using any global
+  # user settings that can be extracted from the passed in user.
+  # In effect, it sets User.current and Time.zone for the given block of code
+  # and then unsets it after the block has been run.
+  # In general, this is only really useful in background jobs since these values
+  # are already set by the application controller in a web context.
+  def self.run_with_user_settings user
+    previous_user = User.current
+    previous_time_zone = Time.zone
+    begin
+      User.current = user
+      Time.zone = user.time_zone unless user.time_zone.blank?
+      yield
+    ensure
+      User.current = previous_user
+      Time.zone = previous_time_zone
+    end
   end
 
   private

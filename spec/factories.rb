@@ -270,9 +270,3 @@ end
 Factory.define :security_filing do |f|
   f.association :importer, :factory => :company
 end
-Factory.define :mailbox do |f|
-  f.name "mname"
-end
-Factory.define :email do |f|
-  f.subject "subj"
-end

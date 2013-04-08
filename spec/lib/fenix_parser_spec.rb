@@ -104,6 +104,7 @@ describe OpenChain::FenixParser do
     ent.time_to_process.should be > 0
     ent.source_system.should == OpenChain::FenixParser::SOURCE_CODE
     ent.entered_value.should == @entered_value
+    ent.commercial_invoice_numbers == @invoice_number
 
     #commercial invoice header
     ent.commercial_invoices.should have(1).invoice
@@ -388,6 +389,10 @@ describe OpenChain::FenixParser do
         ['x','y'].each_with_index {|b,i| @invoices[i][:part_number]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).part_numbers.should == "x\n y"
+      end
+      it "invoice numbers" do
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).commercial_invoice_numbers.split("\n ").should == [@invoices[0][:inv_num], @invoices[1][:inv_num]]
       end
     end
   end

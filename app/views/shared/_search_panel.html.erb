@@ -3,8 +3,10 @@ include_sorts = false unless local_assigns.has_key? :include_sorts
 show = true unless local_assigns.has_key? :show
 routing_object = current_search unless local_assigns.has_key? :routing_object
 parent_hash_name = 'search_setup' unless local_assigns.has_key? :parent_hash_name
+criterion_fields = current_search.column_fields_available current_user
+criterion_fields = current_search.criterion_fields_available(current_user) if current_search.respond_to?(:criterion_fields_available)
 -%>
-<%render :partial=>'shared/search_criterions', :locals=>{:current_search=>current_search,:model_fields=>current_search.column_fields_available(current_user),:wrapper=>'params_cont',:parent_hash_name=>parent_hash_name}%>
+<%render :partial=>'shared/search_criterions', :locals=>{:current_search=>current_search,:model_fields=>criterion_fields,:wrapper=>'params_cont',:parent_hash_name=>parent_hash_name}%>
 <div id='search_setup_outer' style='<%=!show ? "display:none;" : ""%>'>
   <div id='search_setup'>
     <%=form_for(routing_object, :html=>{:id=>"frm_current_search"}) do |f| %>

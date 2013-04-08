@@ -416,12 +416,14 @@ describe OpenChain::AllianceParser do
     expected_pos = Set.new 
     expected_parts = Set.new
     expected_total_units = BigDecimal("0",2)
+    expected_inv_numbers = Set.new
     
     @commercial_invoices.each do |ci| 
       invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
       invoices.should have(1).item
       inv = invoices.first
       expected_invoiced_value += ci[:invoiced_value]
+      expected_inv_numbers << ci[:invoice_number]
       ci[:lines].each do |line|
         expected_export_country_codes << line[:export_country_code]
         expected_origin_country_codes << line[:origin_country_code]
@@ -500,6 +502,7 @@ describe OpenChain::AllianceParser do
     ent.po_numbers.split(@split_string).should == expected_pos.to_a
     ent.part_numbers.split(@split_string).should == expected_parts.to_a
     ent.special_program_indicators.split(@split_string).should == expected_spis.to_a
+    ent.commercial_invoice_numbers.split(@split_string).should == expected_inv_numbers.to_a
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0

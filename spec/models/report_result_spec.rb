@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ReportResult do
   before :each do
-    @u = User.create!(:company_id=>Company.create!(:name=>'x').id,:username=>'user1',:password=>'pass123',:password_confirmation=>'pass123',:email=>'a@aspect9.com')
+    @u = User.create!(:company_id=>Company.create!(:name=>'x').id,:username=>'user1',:password=>'pass123',:password_confirmation=>'pass123',:email=>'a@aspect9.com', :time_zone => 'Hawaii')
   end
 
   describe 'friendly settings' do
@@ -99,6 +99,18 @@ describe ReportResult do
       ReportResult.any_instance.stub(:execute_report) #don't need report to run
       ReportResult.any_instance.should_receive(:delay).with(:priority=>100).and_return(ReportResult.new)
       ReportResult.run_report! 'delay', @u, @report_class
+    end
+
+    it "should run with user settings" do
+      SampleReport.should_receive(:run_report) do |run_by|
+        User.current.should == run_by
+        Time.zone.should == ActiveSupport::TimeZone[run_by.time_zone]
+
+        loc = 'test/assets/sample_report.txt'
+        File.open(loc,'w') {|f| f.write('mystring')}
+        File.new loc
+      end
+      ReportResult.run_report! 'user settings', @u, @report_class
     end
 
     describe "error handling" do

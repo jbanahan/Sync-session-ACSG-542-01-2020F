@@ -1,4 +1,8 @@
+require 'open_chain/schedule_support'
 class SearchSchedule < ActiveRecord::Base
+
+  include OpenChain::ScheduleSupport
+
   RUFUS_TAG = "search_schedule"  
 
   belongs_to :search_setup
@@ -8,28 +12,12 @@ class SearchSchedule < ActiveRecord::Base
    return self.search_setup.user if self.search_setup
    return self.custom_report.user if self.custom_report
   end
-  # get the next time in UTC that this schedule should be executed
-  def next_run_time
-    return Time.now.utc+1.day unless (self.day_of_month || run_day_set?) && !self.run_hour.nil?
+  
+  # get the time zone to consider for the user
+  def time_zone
     tz_str = user.time_zone
     tz_str = "Eastern Time (US & Canada)" if tz_str.blank?
     tz = ActiveSupport::TimeZone[tz_str]
-    base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
-    local_base_time = base_time.in_time_zone(tz_str)
-    next_time_local = tz.local(local_base_time.year,local_base_time.month,local_base_time.day,self.run_hour)
-    while next_time_local < local_base_time || !run_day?(next_time_local)
-      next_time_local += 1.day
-    end
-    next_time_local.utc
-  end
-  #run the job if it should be run (next scheduled time < now & not already run by another thread)
-  def run_if_needed log=nil
-    if self.next_run_time < Time.now.utc
-      update_count = SearchSchedule.where(:id=>self.id,:last_start_time=>self.last_start_time).update_all(["last_start_time = ?",Time.now])
-      if update_count == 1
-        self.run log
-      end
-    end
   end
 
   def run log=nil
@@ -39,17 +27,40 @@ class SearchSchedule < ActiveRecord::Base
   end
 
 
-  
-  def is_running?
-    if self.last_start_time.nil?
-      return false
-    elsif self.last_finish_time.nil?
-      return true
-    elsif self.last_start_time > self.last_finish_time
-      return true
-    else
-      return false
-    end
+  def day_to_run
+    self.day_of_month 
+  end
+
+  def hour_to_run
+    self.run_hour
+  end
+
+  def sunday_active?
+    self.run_sunday?
+  end
+
+  def monday_active?
+    self.run_monday?
+  end
+
+  def tuesday_active?
+    self.run_tuesday?
+  end
+
+  def wednesday_active?
+    self.run_wednesday?
+  end
+
+  def thursday_active?
+    self.run_thursday?
+  end
+
+  def friday_active?
+    self.run_friday?
+  end
+
+  def saturday_active?
+    self.run_saturday?
   end
 
   private
@@ -59,23 +70,34 @@ class SearchSchedule < ActiveRecord::Base
       log.info "#{Time.now}: Search schedule #{self.id} stopped, user is locked." if log
       return
     end
-    cm = CoreModule.find_by_class_name srch_setup.module_type
-    extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
-    attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
-    t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
-    send_email srch_setup.name, t, attachment_name, log
-    send_ftp srch_setup.name, t, attachment_name, log
-    self.update_attributes(:last_finish_time => Time.now)
-    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+
+    User.run_with_user_settings(srch_setup.user) do
+      cm = CoreModule.find_by_class_name srch_setup.module_type
+      extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
+      attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
+      t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
+      send_email srch_setup.name, t, attachment_name, log
+      send_ftp srch_setup.name, t, attachment_name, log
+      self.update_attributes(:last_finish_time => Time.now)
+      log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    end
+    
   end
 
   def run_custom_report rpt, log
-    t = rpt.xls_file rpt.user
-    attachment_name = "#{sanitize_filename(rpt.name)}.xls"
-    send_email rpt.name, t, attachment_name, log
-    send_ftp rpt.name, t, attachment_name, log
-    self.update_attributes(:last_finish_time => Time.now)
-    log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    if !rpt.user.active?
+      log.info "#{Time.now}: Custom Report schedule #{self.id} stopped, user is locked." if log
+      return
+    end
+    
+    User.run_with_user_settings(rpt.user) do
+      t = rpt.xls_file rpt.user
+      attachment_name = "#{sanitize_filename(rpt.name)}.xls"
+      send_email rpt.name, t, attachment_name, log
+      send_ftp rpt.name, t, attachment_name, log
+      self.update_attributes(:last_finish_time => Time.now)
+      log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+    end
   end
 
   def write_csv srch_setup
@@ -126,15 +148,6 @@ class SearchSchedule < ActiveRecord::Base
   end
   
 
-  def any_days_scheduled?
-    self.run_sunday || 
-    self.run_monday ||
-    self.run_tuesday ||
-    self.run_wednesday ||
-    self.run_thursday || 
-    self.run_friday ||
-    self.run_saturday
-  end
   def make_days_of_week
     d = []
     d << "0" if self.run_sunday
@@ -155,38 +168,6 @@ class SearchSchedule < ActiveRecord::Base
       # Finally, replace all non alphanumeric, underscore
       # or periods with underscore
       name.gsub! /[^\w\.\-]/, '_'
-    end
-  end
-
-  def run_day_set?
-    self.run_sunday? || 
-    self.run_monday? ||
-    self.run_tuesday? || 
-    self.run_wednesday? ||
-    self.run_thursday? ||
-    self.run_friday? ||
-    self.run_saturday
-  end
-  #is the day of week for the given time a day that we should run the schedule
-  def run_day? t
-    if self.day_of_month
-      return self.day_of_month == t.day
-    end
-    case t.wday
-    when 0
-      return self.run_sunday?
-    when 1
-      return self.run_monday?
-    when 2
-      return self.run_tuesday?
-    when 3
-      return self.run_wednesday?
-    when 4
-      return self.run_thursday?
-    when 5
-      return self.run_friday?
-    when 6
-      return self.run_saturday?
     end
   end
 

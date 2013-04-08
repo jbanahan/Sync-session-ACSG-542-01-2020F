@@ -127,7 +127,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       end
       @tmp = @b.sync_fixed_position
       r = IO.read @tmp
-      r.should == "ABC#{@t.utc.strftime('%Y%m%d')}   5\n"
+      r.should == "ABC#{@t.strftime('%Y%m%d')}   5\n"
     end
   end
   describe :sync_xls do
@@ -179,6 +179,36 @@ describe OpenChain::CustomHandler::ProductGenerator do
     it "should return false if file does not exist" do
       FtpSender.should_not_receive(:send_file)
       @base.new.ftp_file(@t).should be_false
+    end
+  end
+
+  describe :cd_s do
+    it "should generate a subselect with an alias" do
+      cd = Factory(:custom_definition, :module_type=>'Product')
+      subselect = @base.new.cd_s cd.id
+      subselect.should == "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`"
+    end
+    it "should generate a subselect without an alias" do
+      cd = Factory(:custom_definition, :module_type=>'Product')
+      subselect = @base.new.cd_s cd.id, true
+      subselect.should == "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id})"
+    end
+    it "should gracefully handle missing definitions" do
+      subselect = @base.new.cd_s -1
+      subselect.should == "(SELECT \"\") as `Custom -1`"
+    end
+    it "should gracefully handle missing definitions without an alias" do
+      subselect = @base.new.cd_s -1, true
+      subselect.should == "(SELECT \"\")"
+    end
+    it "should cache the custom defintion lookup" do
+      cd = Factory(:custom_definition, :module_type=>'Product')
+      gen = @base.new
+      subselect = gen.cd_s cd.id
+      cd.delete
+
+      subselect = gen.cd_s cd.id
+      subselect.should == "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = #{cd.id}) as `#{cd.label}`"
     end
   end
 end
