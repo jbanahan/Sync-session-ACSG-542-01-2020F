@@ -24,14 +24,14 @@ module OpenChain
         (1..last_row_number).each do |n|
           h = x.get_row_as_column_hash 0,n
           parent_style = h[0]['value']
-          plant_code = h[23]['value']
+          plant_code = h[2]['value']
           parent_id = "#{parent_style}~#{plant_code}"
           next if parent_style.blank?
           if parent_id != last_parent_id
             parent_mapping[last_parent_style] = children unless children.empty?
             children = []
           end
-          children << {:style=>h[35]['value'],:quantity=>h[38]['value']}
+          children << {:style=>h[4]['value'],:quantity=>h[6]['value']}
           last_parent_id = parent_id
           last_parent_style = parent_style
         end

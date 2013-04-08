@@ -29,15 +29,15 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(2)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10004','datatype'=>'number'}, #child material number
-        38=>{'value'=>'2','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10004','datatype'=>'number'}, #child material number
+        6=>{'value'=>'2','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
       p = Product.find_by_unique_identifier 'parentuid'
@@ -52,27 +52,27 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(4)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10004','datatype'=>'number'}, #child material number
-        38=>{'value'=>'2','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10004','datatype'=>'number'}, #child material number
+        6=>{'value'=>'2','datatype'=>'number'} #quantity
       )
       @xlc.should_receive(:get_row_as_column_hash).with(0,3).and_return(
         0=>{'value'=>'parentuid2','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10005','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10005','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       @xlc.should_receive(:get_row_as_column_hash).with(0,4).and_return(
         0=>{'value'=>'parentuid2','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10006','datatype'=>'number'}, #child material number
-        38=>{'value'=>'2','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10006','datatype'=>'number'}, #child material number
+        6=>{'value'=>'2','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
       p2 = Product.find_by_unique_identifier('parentuid2')
@@ -85,27 +85,27 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(4)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10004','datatype'=>'number'}, #child material number
-        38=>{'value'=>'2','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10004','datatype'=>'number'}, #child material number
+        6=>{'value'=>'2','datatype'=>'number'} #quantity
       )
       @xlc.should_receive(:get_row_as_column_hash).with(0,3).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode2','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10005','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode2','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10005','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       @xlc.should_receive(:get_row_as_column_hash).with(0,4).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode2','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10006','datatype'=>'number'}, #child material number
-        38=>{'value'=>'2','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode2','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10006','datatype'=>'number'}, #child material number
+        6=>{'value'=>'2','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
       p = Product.find_by_unique_identifier 'parentuid'
@@ -122,9 +122,9 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(1)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
       Product.count.should == 2
@@ -135,9 +135,9 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(1)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
       Product.count.should == 2
@@ -152,9 +152,9 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(1)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
       Product.count.should == 3
@@ -168,9 +168,9 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(1)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process Factory(:user)
       Product.count.should == 3
@@ -184,9 +184,9 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
       @xlc.should_receive(:last_row_number).and_return(1)
       @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
         0=>{'value'=>'parentuid','datatype'=>'string'}, #parent material number
-        23=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
-        35=>{'value'=>'10003','datatype'=>'number'}, #child material number
-        38=>{'value'=>'1','datatype'=>'number'} #quantity
+        2=>{'value'=>'plantcode','datatype'=>'string'}, #plant code
+        4=>{'value'=>'10003','datatype'=>'number'}, #child material number
+        6=>{'value'=>'1','datatype'=>'number'} #quantity
       )
       described_class.new(@cf).process u
       u.should have(1).messages
