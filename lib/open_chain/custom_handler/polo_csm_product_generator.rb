@@ -2,6 +2,11 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloCsmProductGenerator < ProductGenerator
+
+      def generate
+        ftp_file sync_csv
+      end
+
       def sync_code
         'csm_product'
       end
