@@ -3,6 +3,9 @@ module OpenChain
   module CustomHandler
     class PoloCsmProductGenerator < ProductGenerator
 
+      def self.run_schedulable opts
+        self.new.generate
+      end
       def generate
         ftp_file sync_csv
       end
