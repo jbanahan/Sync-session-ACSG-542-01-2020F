@@ -140,6 +140,15 @@ describe SearchQuery do
       @sq.count.should == 2
     end
   end
+  describe :result_keys do
+    it "should return unique key list for multi level query" do
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
+      tr2 = Factory(:tariff_record,:hts_1=>'9876543210',:line_number=>2,:classification=>tr.classification)
+      @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
+      keys = @sq.result_keys
+      keys.should == [@p2.id,@p1.id]
+    end
+  end
   describe :unique_parent_count do
     it "should return parent count when there are details" do
       @ss.search_columns.build(:model_field_uid=>'class_cntry_iso',:rank=>2)

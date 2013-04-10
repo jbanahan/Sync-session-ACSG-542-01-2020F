@@ -241,6 +241,9 @@ root = exports ? this
   # End bulk action handling
   #
 
+  $scope.toggleSetup = () ->
+    $scope.showSetup = !$scope.showSetup
+
   #put a schedule in edit mode
   $scope.editSchedule = (s) ->
     $scope.scheduleToEdit = s

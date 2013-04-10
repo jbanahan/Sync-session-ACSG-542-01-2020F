@@ -35,6 +35,14 @@ class SearchQuery
     block_given? ? nil : r
   end
 
+  #get distinct list of primary keys for the query
+  def result_keys opts={}
+    q = "SELECT DISTINCT #{@search_setup.core_module.table_name}.id " +
+      build_from + build_where + build_order + build_pagination_from_opts(opts)
+    rs = ActiveRecord::Base.connection.execute(q)
+    rs.collect {|r| r.first}
+  end
+  
   #get the row count for the query
   def count
     ActiveRecord::Base.connection.execute(to_sql).size
@@ -52,13 +60,9 @@ class SearchQuery
 
   # get the SQL query that will be executed
   #
-  # opts paramter takes :per_page and :page values like `will_paginate`
+  # opts parameter takes :per_page and :page values like `will_paginate`
   def to_sql opts={}
-    r = build_select + build_from + build_where + build_order 
-    target_page = (opts[:page].blank? || !opts[:page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? 1 : opts[:page].to_i
-    per_page = (opts[:per_page].blank? || !opts[:per_page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? nil : opts[:per_page].to_i
-    r << build_pagination(per_page, target_page) if per_page
-    r
+    build_select + build_from + build_where + build_order + build_pagination_from_opts(opts)
   end
   private
   def build_select
@@ -145,7 +149,17 @@ class SearchQuery
     end
     sort_clauses.empty? ? "" : r << sort_clauses.join(", ")
   end
-
+  
+  #build pagination from the options hash or return empty string if :per_page and :page values aren't there
+  def build_pagination_from_opts opts
+    target_page = (opts[:page].blank? || !opts[:page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? 1 : opts[:page].to_i
+    per_page = (opts[:per_page].blank? || !opts[:per_page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? nil : opts[:per_page].to_i
+    if per_page
+      return build_pagination(per_page, target_page)
+    else
+      return ""
+    end
+  end
   def build_pagination per_page, target_page
     " LIMIT #{per_page} OFFSET #{per_page*(target_page-1)} "
   end

@@ -2,6 +2,7 @@ class AdvancedSearchController < ApplicationController
   def index
     render :layout=>'one_col'
   end
+ 
   def show
     respond_to do |format|
       format.html {redirect_to "/advanced_search#/#{params[:id]}"}

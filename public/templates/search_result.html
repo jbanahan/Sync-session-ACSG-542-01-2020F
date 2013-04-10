@@ -4,7 +4,7 @@
 <div ng-show='searchResult' id='search_result'>
   <div id='search_header'>
     <div id='search_actions'>
-      <a ng-click='showSetup = (!showSetup)' class='action_link' ng-show='searchSetup'>Setup</a>
+      <a ng-click='toggleSetup()' class='action_link' ng-show='searchSetup'>Setup</a>
       <a class='action_link' href='#'>Download</a> 
       <span ng-show='bulkSelected.length > 0'>
         <span ng-repeat='b in searchResult.bulk_actions'>
