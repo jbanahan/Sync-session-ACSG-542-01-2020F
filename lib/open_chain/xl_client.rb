@@ -99,12 +99,13 @@ module OpenChain
       response_body = "no response"
       begin
         req = Net::HTTP::Post.new(@uri.path)
+        req.set_content_type "application/json", "charset"=>json.encoding.to_s
         req.body = json
         res = Net::HTTP.start(@uri.host,@uri.port) do |http|
           http.read_timeout = 600
           http.request req
         end
-        response_body = res.body
+        response_body = get_response_body res
         r = JSON.parse response_body
       rescue
         retry_count += 1
@@ -116,6 +117,32 @@ module OpenChain
       end
       r
     end
+
+    def get_response_body response
+      # This is a fix for the absolutely moronic implementation detail of Net::HTTP not setting the response body
+      # charset based on the server's content-type response header.
+
+      content_type = response['content-type']
+      if content_type && content_type['charset']
+        # Split the content_type header on ; (ie. header field separator) -> Content-Type: text/html; charset=UTF-8
+        charset = content_type.split(';').select do |key|
+          # Find the header key value that contains a charset
+          key['charset']
+        end
+
+        # Only use the first charset (technically, there's nothing preventing multiple of them from being supplied in the header)
+        # and split it into a key value pair array
+        charset = charset.first.to_s.split("=")
+        if charset.length == 2
+          # If the server supplies an invalid or unsupported charset, we'll just handle the error and ignore it.
+          # This isn't really any worse than what was happening before where the default charset was utilized.
+          response.body.force_encoding(charset.last.strip) rescue ArgumentError
+        end
+      end
+
+      response.body
+    end
+
     def process_row_response r
       if r.is_a? Array
         r.each do |cell_set|

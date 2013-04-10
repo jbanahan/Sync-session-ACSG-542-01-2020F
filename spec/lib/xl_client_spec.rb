@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'spec_helper'
 
 describe OpenChain::XLClient do
@@ -135,6 +136,71 @@ describe OpenChain::XLClient do
     end
     it 'should return nil for missing cell' do
       OpenChain::XLClient.find_cell_in_row(@row,1).should be_nil
+    end
+  end
+
+  describe 'charset handling in send' do
+    it 'should specify application/json and UTF-8 charset as Content-Type in the request and parse response charset' do
+      command = {"test" => "test"}
+      uri = URI("#{YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']}/process")
+      
+      #Mock out the actual Net::HTTP stuff (since we don't have an actual mock http server to run)
+      http = double("Net::HTTP")
+      Net::HTTP.should_receive(:start).with(uri.host, uri.port).and_yield http
+      http.should_receive(:read_timeout=).with 600
+
+      response = double("response")
+      # The response_body simulates the actual response string sent back by the server
+      # Which is actually a UTF-8 character stream , but Net::HTTP 
+      # won't automatically set it as so and leaves the body encoding 
+      # as Binary (hence the setting here).  Binary is the default encoding for anything read
+      # from a socket.
+      response_body = '{"response": "31¢"}'.force_encoding Encoding::BINARY
+      response.stub(:body).and_return response_body
+
+      http.should_receive(:request) do |request|
+        request['Content-Type'].should == "application/json; charset=#{command.to_json.encoding.to_s}"
+        request.body.should == command.to_json
+        response
+      end
+
+      # Make sure the correct response encoding is read and set
+      # This is the expected response content-type from the xlserver
+      ct = "application/json; charset=UTF-8"
+      response.should_receive(:[]).with('content-type').and_return ct
+
+      r = @client.send command
+
+      # response_body should have been forced to UTF-8 encoding since that's the content type
+      # charset sent in of the response (it's originally set to binary above)
+      response_body.encoding.to_s.should == "UTF-8"
+      r['response'].should == "31¢"
+    end
+
+    it 'should handle missing charset in response' do 
+      response = double("response")
+      Net::HTTP.should_receive(:start).and_return response
+      response.should_receive(:[]).with('content-type').and_return 'application/json'
+      response_body = '{"response": "31¢"}'.force_encoding Encoding::BINARY
+      response.stub(:body).and_return response_body
+
+      r = @client.send({"test" => "test"})
+
+      # The response charset should just be left alone
+      response_body.encoding.to_s.should == Encoding::BINARY.to_s
+    end
+
+    it 'should handle invalid charsets by leaving encoding as binary' do
+      response = double("response")
+      Net::HTTP.should_receive(:start).and_return response
+      response.should_receive(:[]).with('content-type').and_return 'application/json; charset=My-NonExistant-Charset'
+      response_body = '{"response": "31¢"}'.force_encoding Encoding::BINARY
+      response.stub(:body).and_return response_body
+
+      r = @client.send({"test" => "test"})
+
+      # The response charset should just be left alone
+      response_body.encoding.to_s.should == Encoding::BINARY.to_s
     end
   end
 
