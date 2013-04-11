@@ -2,6 +2,11 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloOmlogProductGenerator < ProductGenerator
+
+      def self.run_schedulable opts={}
+        h = self.new
+        h.ftp_file f.sync_csv
+      end
       def sync_code
         "omlog-product"
       end
