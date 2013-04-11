@@ -20,17 +20,17 @@
           sc_value = $1 + ($3.nil? ? "" : " " + $3)
         end
       %>
-      addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc_value%>','<%=sc.id%>');
+      addSearchCriterion(<%=sc_counter%>,'<%=sc.model_field_uid%>','<%=sc.operator%>','<%=escape_javascript sc_value%>','<%=sc.id%>', <%=sc.include_empty == true%>);
       <% sc_counter += 1 %>
     <% end %>
   });
-  function addSearchCriterion(m,field,operator,value,id) {
+  function addSearchCriterion(m,field,operator,value,id, include_empty_checked) {
     var fields = [];
     <%ModelField.sort_by_label(model_fields).each do |mf| %>
       <% next unless mf.can_view?(current_user)%>
       fields.push({"uid":'<%=escape_javascript mf.uid.to_s%>',"dtype":'<%=escape_javascript mf.data_type.to_s%>',"label":'<%=escape_javascript mf.label%>'});
     <%end%>
-    OCSearch.addSearchCriterion($("#sp_table"),'<%=parent_hash_name%>',fields,m,field,operator,value,id,true);
+    OCSearch.addSearchCriterion($("#sp_table"),'<%=parent_hash_name%>',fields,m,field,operator,value,id,true, include_empty_checked);
   }
   function addNewSearchCriterion() {
     addSearchCriterion(new Date().getTime(),null,null,null);

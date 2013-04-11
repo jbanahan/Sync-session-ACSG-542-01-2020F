@@ -20,7 +20,7 @@ describe SearchSetupsController do
       {"search_setup"=>{"name"=>"New Name", "download_format"=>"xls", "include_links"=>"0", "no_time"=>"0", "module_type"=>"Product", \
           "search_criterions_attributes"=> \
           {"0"=> \
-              {"id"=>"#{@crit1.id}", "model_field_uid"=>"ent_release_date", "operator"=>"eq", "value"=>"2013-01-01", "_destroy"=>"false"}, \
+              {"id"=>"#{@crit1.id}", "model_field_uid"=>"ent_release_date", "operator"=>"eq", "value"=>"2013-01-01", "_destroy"=>"false", "include_empty" => true}, \
             "1" => \
               {"id"=>"#{@crit2.id}", "model_field_uid"=>"ent_export_date", "operator"=>"eq", "value"=>"2013-01-01", "_destroy"=>"false"} \
           },
@@ -31,7 +31,9 @@ describe SearchSetupsController do
       #make sure the release date value had the time zone appended to it
       @ss.reload
       @ss.search_criterions.first.value.should == "2013-01-01" + " " + @u.time_zone
+      @ss.search_criterions.first.include_empty.should be_true
       @ss.search_criterions.second.value.should == "2013-01-01"
+      @ss.search_criterions.second.include_empty.should be_nil
     end
     it 'should not fail if no search criterions are in the search' do 
       post :update, 

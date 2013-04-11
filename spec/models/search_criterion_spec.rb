@@ -33,6 +33,33 @@ describe SearchCriterion do
       it "should be false for nil" do
         @sc.passes?(nil).should be_false
       end
+      it "should be true for nil with include_empty for date fields" do
+        crit = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
+        crit.include_empty = true
+        crit.passes?(nil).should be_true
+      end
+      it "should be true for nil and blank values with include_empty for string fields" do
+        crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
+        crit.include_empty = true
+        crit.passes?(nil).should be_true
+        crit.passes?("").should be_true
+        # Make sure we consider nothing but whitespace as empty
+        crit.passes?("\n  \t  \r").should be_true
+      end
+      it "should be true for nil and 0 with include_empty for numeric fields" do
+        crit = SearchCriterion.new(:model_field_uid=>:ent_total_fees,:operator=>"eq",:value=>"1")
+        crit.include_empty = true
+        crit.passes?(nil).should be_true
+        crit.passes?(0).should be_true
+        crit.passes?(0.0).should be_true
+      end
+      it "should be true for nil and false with include_empty for boolean fields" do
+        crit = SearchCriterion.new(:model_field_uid=>:ent_paperless_release,:operator=>"notnull",:value=>nil)
+        crit.include_empty = true
+        crit.passes?(nil).should be_true
+        crit.passes?(true).should be_true
+        crit.passes?(false).should be_false
+      end
     end
     describe :apply do
       context :custom_field do
@@ -40,6 +67,63 @@ describe SearchCriterion do
           @definition = Factory(:custom_definition,:data_type=>'date')
           @product.update_custom_value! @definition, 1.month.ago
           sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"pm",:value=>1)
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+
+        it "should find something with nil date and include_empty" do
+          @definition = Factory(:custom_definition,:data_type=>'date')
+          @product.update_custom_value! @definition, nil
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"pm",:value=>1)
+          sc.include_empty = true
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+
+        it "should find something with nil string and include_empty" do
+          @definition = Factory(:custom_definition,:data_type=>'string')
+          @product.update_custom_value! @definition, nil
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
+          sc.include_empty = true
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+
+        it "should find something with blank string and include_empty" do
+          @definition = Factory(:custom_definition,:data_type=>'string')
+          # MySQL only trims out spaces (not other whitespace), that's good enough for our use
+          # as the actual vetting of the model fields will catch any additional whitespace and reject
+          # the model
+          @product.update_custom_value! @definition, "   "
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
+          sc.include_empty = true
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+
+        it "should find something with nil text and include_empty" do
+          @definition = Factory(:custom_definition,:data_type=>'text')
+          @product.update_custom_value! @definition, nil
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
+          sc.include_empty = true
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+
+        it "should find something with blank text and include_empty" do
+          @definition = Factory(:custom_definition,:data_type=>'text')
+          @product.update_custom_value! @definition, " "
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
+          sc.include_empty = true
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+
+        it "should find something with 0 and include_empty" do
+          @definition = Factory(:custom_definition,:data_type=>'integer')
+          @product.update_custom_value! @definition, 0
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
+          sc.include_empty = true
           v = sc.apply(Product.where("1=1"))
           v.all.should include @product
         end
@@ -76,6 +160,51 @@ describe SearchCriterion do
           @product.update_attributes(:created_at=>2.months.ago)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
           sc.apply(Product.where("1=1")).all.should include @product
+        end
+
+        it "should find something with a nil date and include_empty" do
+          @product.update_attributes(:created_at=>nil)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>2)
+          sc.include_empty = true
+          sc.apply(Product.where("1=1")).all.should include @product
+        end
+
+        it "should find something with a nil string and include_empty" do
+          @product.update_attributes(:name=>nil)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
+          sc.include_empty = true
+          sc.apply(Product.where("1=1")).all.should include @product
+        end
+
+        it "should find something with a blank string and include_empty" do
+          @product.update_attributes(:name=>'   ')
+          sc = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
+          sc.include_empty = true
+          sc.apply(Product.where("1=1")).all.should include @product
+        end
+
+        it "should find something with 0 integer value and include_empty" do
+          entry = Factory(:entry)
+          entry.update_attributes(:total_packages=> 0)
+          sc = SearchCriterion.new(:model_field_uid=>:ent_total_packages,:operator=>"eq",:value=>"1")
+          sc.include_empty = true
+          sc.apply(Entry.where("1=1")).all.should include entry
+        end
+
+        it "should find something with 0 decimal value and include_empty" do
+          entry = Factory(:entry)
+          entry.update_attributes(:total_fees=> 0.0)
+          sc = SearchCriterion.new(:model_field_uid=>:ent_total_fees,:operator=>"eq",:value=>"1")
+          sc.include_empty = true
+          sc.apply(Entry.where("1=1")).all.should include entry
+        end
+
+        it "should find something with blank text value and include_empty" do
+          entry = Factory(:entry)
+          entry.update_attributes(:sub_house_bills_of_lading=> '   ')
+          sc = SearchCriterion.new(:model_field_uid=>:ent_sbols,:operator=>"eq",:value=>"1")
+          sc.include_empty = true
+          sc.apply(Entry.where("1=1")).all.should include entry
         end
       end
     end
@@ -260,6 +389,14 @@ describe SearchCriterion do
         @custom_value.save!
         @search_criterion.apply(Product).should_not include @product 
         @search_criterion.passes?(@custom_value.value).should == false
+      end
+
+      it 'should return for Is Not Empty, include_empty and nil' do
+        @custom_value.value = nil
+        @custom_value.save!
+        @search_criterion.include_empty = true
+        @search_criterion.apply(Product).should include @product 
+        @search_criterion.passes?(@custom_value.value).should == true
       end
 
     end
