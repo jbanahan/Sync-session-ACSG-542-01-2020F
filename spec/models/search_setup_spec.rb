@@ -1,6 +1,12 @@
 require 'spec_helper'
 
 describe SearchSetup do
+  describe :result_keys do
+    it "should initialize query" do
+      SearchQuery.any_instance.should_receive(:result_keys).and_return "X"
+      SearchSetup.new.result_keys.should == "X"
+    end
+  end
   describe "uploadable?" do
     #there are quite a few tests for this in the old test unit structure
     it 'should always reject ENTRY' do

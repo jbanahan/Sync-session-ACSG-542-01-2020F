@@ -7,7 +7,8 @@ class AdvancedSearchController < ApplicationController
     respond_to do |format|
       format.html {redirect_to "/advanced_search#/#{params[:id]}"}
       format.json {
-        ss = SearchSetup.for_user(current_user).find(params[:id]) 
+        ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+        raise ActionController::RoutingError.new('Not Found') unless ss
         ss.touch
 
         p_str = params[:page]
@@ -69,7 +70,6 @@ class AdvancedSearchController < ApplicationController
       h = {"label"=>k.to_s}
       if v.is_a? String
         h["path"] = eval(v) 
-        puts eval(v)
       else
         h["path"] = v[:path]
         h["callback"] = v[:ajax_callback]

@@ -18,8 +18,13 @@ describe AdvancedSearchController do
         @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
         @ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>2)
         @p = Factory(:product,:name=>'mpn')
+        User.any_instance.stub(:edit_classifications?).and_return(true) #to allow bulk actions
+        SearchQuery.any_instance.stub(:count).and_return(501)
+        SearchQuery.any_instance.stub(:unique_parent_count).and_return(42)
+        Product.any_instance.stub(:can_view?).and_return(true)
       end
       it "should render json response" do
+        Product.any_instance.stub(:can_edit?).and_return(true)
         User.any_instance.stub(:edit_classifications?).and_return(true) #to allow bulk actions
         SearchQuery.any_instance.stub(:count).and_return(501)
         SearchQuery.any_instance.stub(:unique_parent_count).and_return(42)
@@ -56,11 +61,36 @@ describe AdvancedSearchController do
         end
         r['bulk_actions'].should == expected_bulk_actions 
       end
-      it "should 404 if not for current_user"
-      it "should default page to 1"
-      it "should default per_page to 100"
-      it 'should render second page'
-      it "shouldn't write edit link if user cannot edit"
+      it "should 404 if not for current_user" do
+        u = Factory(:user)
+        @ss.update_attributes(:user_id=>u.id)
+        lambda {get :show, :id=>@ss.id, :page=>'1', :per_page=>'50', :format=>'json'}.should raise_error ActionController::RoutingError
+      end
+      it "should default page to 1" do
+        get :show, :id=>@ss.id, :format=>'json'
+        r = JSON.parse response.body
+        r['page'].should == 1
+      end
+      it "should default per_page to 100" do
+        get :show, :id=>@ss.id, :format=>'json'
+        r = JSON.parse response.body
+        r['total_pages'].should == 6
+      end
+      it 'should render second page' do
+        p2 = Factory(:product,:name=>'prod2')
+        get :show, :id=>@ss.id, :format=>'json', :per_page=>'1', :page=>'2'
+        r = JSON.parse response.body
+        r['page'].should == 2
+        r['rows'].first['id'].should == p2.id
+      end
+      it "shouldn't write edit link if user cannot edit" do
+        Product.any_instance.stub(:can_edit?).and_return(false)
+        get :show, :id=>@ss.id, :format=>'json'
+        r = JSON.parse response.body
+        links = r['rows'].first['links']
+        links.should have(1).link
+        links.first['label'].should == 'View'
+      end
     end
   end
 end

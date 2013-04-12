@@ -22,7 +22,7 @@ class SearchRun < ActiveRecord::Base
 
   def total_objects
     r = all_objects.size
-    r.is_a?(Hash) ? r.size : r #if the search has a group by, then the first size call will return an ordered has
+    r.is_a?(Hash) ? r.size : r #if the search has a group by, then the first size call will return an ordered hash
   end
 
   def all_objects

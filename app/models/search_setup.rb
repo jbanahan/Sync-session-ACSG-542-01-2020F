@@ -14,6 +14,7 @@ class SearchSetup < ActiveRecord::Base
   has_many :imported_files 
   has_many :dashboard_widgets, :dependent => :destroy
   has_one :search_run, :dependent => :destroy
+  has_one :result_cache, :as=>:result_cacheable, :dependent=>:destroy
 
   belongs_to :user
   
@@ -43,6 +44,11 @@ class SearchSetup < ActiveRecord::Base
   
   def self.find_last_accessed user, core_module
     SearchSetup.last_accessed(user,core_module).first
+  end
+
+  #defer to SearchQuery.result_keys seeded with this search
+  def result_keys opts={}
+    SearchQuery.new(self,self.user).result_keys opts
   end
 
   #get all column fields as ModelFields available for the user to add to the search

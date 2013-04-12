@@ -1,6 +1,7 @@
 #represents a direct SQL query executed for a SearchSetup
 class SearchQuery
   attr_reader :search_setup
+  attr_reader :user
   def initialize search_setup, user
     @search_setup = search_setup
     @user = user
@@ -37,10 +38,9 @@ class SearchQuery
 
   #get distinct list of primary keys for the query
   def result_keys opts={}
-    q = "SELECT DISTINCT #{@search_setup.core_module.table_name}.id " +
-      build_from + build_where + build_order + build_pagination_from_opts(opts)
-    rs = ActiveRecord::Base.connection.execute(q)
-    rs.collect {|r| r.first}
+    rs = ActiveRecord::Base.connection.execute to_sql opts
+    keys = rs.collect {|r| r[0]}
+    keys.uniq
   end
   
   #get the row count for the query
