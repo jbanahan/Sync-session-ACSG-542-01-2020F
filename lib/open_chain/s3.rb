@@ -14,13 +14,44 @@ module OpenChain
     # created will attempt to use the key as a template for naming the tempfile created.
     # Meaning, at a minimum, the file name name should retain the same file extension that
     # it currently has on the S3 file system.
+    #
+    # If a block is passed, the tempfile is yielded to the block as the sole argument and cleanup
+    # of the tempfile is handled transparently to the caller.  The tempfile's will be set to read from the
+    # beginning of the file when yielded.
     def self.download_to_tempfile bucket, key
-      # Use the key's filename as the basis for the tempfile name
-      t = Tempfile.new([File.basename(key, ".*"), File.extname(key)])
-      t.binmode
-      t.write OpenChain::S3.get_data bucket, key
-      t.flush
-      t
+      t = nil
+      e = nil
+      begin
+        # Use the key's filename as the basis for the tempfile name
+        t = create_tempfile key
+        t.binmode
+        t.write OpenChain::S3.get_data bucket, key
+        t.flush
+
+        # Reset the read/write pointer to the beginning of the file so we can actually read from the file
+        # as an IO object. 
+        t.rewind
+
+        # pass the tempfile to any given block
+        if block_given?
+          yield t
+        else
+          return t
+        end
+      rescue Exception
+        # We don't particularly care about the error here...just want to give an indicator
+        # to our ensure clause to tell it there was an error and to clean up the tempfile.
+        e = true
+        raise $!
+      ensure 
+        # We want to make sure we destroy the tempfile if we yield to a block or
+        # if something was raised inside the above block
+        t.close! if t && (e || block_given?)
+      end
+    end
+
+    def self.create_tempfile key
+      Tempfile.new([File.basename(key, ".*"), File.extname(key)])
     end
 
     def self.delete bucket, key

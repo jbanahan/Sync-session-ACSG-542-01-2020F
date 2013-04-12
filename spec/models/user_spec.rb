@@ -24,13 +24,6 @@ describe User do
     end
   end
   context "permissions" do
-    context "unfiled_emails" do
-      it "should allow view_unfiled_emails? if edit_unfiled_emails" do
-        u = Factory(:user,:unfiled_emails_edit=>true)
-        u.should be_edit_unfiled_emails
-        u.should be_view_unfiled_emails
-      end
-    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))
@@ -193,6 +186,64 @@ describe User do
           User.new(:commercial_invoice_edit=>true).edit_commercial_invoices?.should be_false
         end
       end
+    end
+  end
+
+  context :run_with_user_settings do
+
+    before :each do
+      @user = User.current
+      @time = Time.zone
+
+      @run_as = User.new :name => 'Run As', :time_zone => "Hawaii"
+      @current_user = User.new :name => 'Current', :time_zone => "UTC"
+      User.current = @current_user
+      Time.zone = @current_user.time_zone
+    end
+
+    after :each do
+      User.current = @user
+      Time.zone = @time
+    end
+
+    it "should set/unset User settings" do
+      
+      val = User.run_with_user_settings(@run_as) do
+        User.current.should == @run_as
+        Time.zone.should == ActiveSupport::TimeZone[@run_as.time_zone]
+        "abcdefg"
+      end
+      # Just make sure the method returns whatever the block returns
+      val.should == "abcdefg"
+
+      User.current.should == @current_user
+      Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
+    end
+
+    it "should set/unset User settings even if block raises an Exception" do
+      # Exception is used here since it's the base for any other errors (even syntax or "severe" runtime issues)
+      expect {
+        User.run_with_user_settings(@run_as) {
+          raise Exception, "Error"
+        }
+      }.to raise_exception "Error" 
+
+      User.current.should == @current_user
+      Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
+    end
+
+    it "should not set Time.zone if user has no timezone" do
+      # the main admin user doesn't appear to have timezone set. User.run_with.. handles this
+      # scenario just in case.
+      @run_as.time_zone = ""
+
+      User.run_with_user_settings(@run_as) do
+        User.current.should == @run_as
+        Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
+      end
+
+      User.current.should == @current_user
+      Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
     end
   end
 end

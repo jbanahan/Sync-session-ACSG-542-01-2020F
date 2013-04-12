@@ -103,13 +103,14 @@ class FileImportProcessor
             to_batch_write = []
             custom_fields.each do |mf,data|
               cd = @custom_definition_map[mf.custom_id]
+              is_boolean = cd.data_type.to_sym==:boolean
               cv = cv_map[cd.id]
               cv = CustomValue.new(:customizable_id=>obj.id,:customizable_type=>obj.class.to_s,:custom_definition_id=>cd.id) if cv.nil?
               orig_value = cv.value
-              val = cd.data_type.to_sym==:boolean ? get_boolean_value(data) : data
+              val = is_boolean ? get_boolean_value(data) : data
               m = mf.process_import cv, val 
               messages << "#{cd.label}: #{m} "
-              if !(orig_value.blank? && val.blank?) 
+              if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?) 
                 to_batch_write << cv
               else
                 obj.custom_values.delete(cv)

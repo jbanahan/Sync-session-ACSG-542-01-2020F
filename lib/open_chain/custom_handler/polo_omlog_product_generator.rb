@@ -2,29 +2,43 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloOmlogProductGenerator < ProductGenerator
+
+      def self.run_schedulable opts={}
+        h = self.new
+        h.ftp_file h.sync_csv
+      end
       def sync_code
         "omlog-product"
       end
       def ftp_credentials
         {:server=>'77.93.255.102',:username=>'polo',:password=>'Z%JZp#yUxxH7'}
       end
-      def sync_xls
-        wb = Spreadsheet::Workbook.new
-        sht = wb.create_worksheet :name=>'Results'
+      #overriding to handle special splitting of CSM numbers
+      def sync_csv include_headers=true
+        f = Tempfile.new(['ProductSync','.csv'])
         cursor = 0
         sync do |rv|
-          csm_numbers = rv[1].split("\n")
-          csm_numbers.each do |c|
-            row = sht.row(cursor)
-            rv.each {|k,v| row[k] = (k==1 ? c : v)}
-            cursor += 1
+          if include_headers || cursor > 0
+            csm_numbers = rv[1] ? rv[1].split("\n") : []
+            csm_numbers.each do |c|
+              max_col = rv.keys.sort.last
+              row = []
+              (0..max_col).each do |i|
+                v = i==1 ? c : rv[i]
+                v = "" if v.blank?
+                v = v.hts_format if [10,13,16].include?(i)
+                row << v.to_s.gsub(/\r?\n/, " ")
+              end
+              f << row.to_csv
+            end
           end
+          cursor += 1
         end
-        if cursor > 1
-          t = Tempfile.new(['ProductSync','.xls'])
-          wb.write t
-          return t
+        f.flush
+        if (include_headers && cursor > 1) || cursor > 0
+          return f
         else
+          f.unlink
           return nil
         end
       end
@@ -46,7 +60,7 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 tariff_records.hts_2 as 'Tariff - HTS Code 2',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_2 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 2 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_2 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 2 - General Rate',
-tariff_records.hts_2 as 'Tariff - HTS Code 2',
+tariff_records.hts_3 as 'Tariff - HTS Code 3',
 (select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
 (select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
         (9..84).each do |i|

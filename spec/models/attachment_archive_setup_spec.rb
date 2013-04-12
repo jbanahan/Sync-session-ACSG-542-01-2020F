@@ -15,19 +15,28 @@ describe AttachmentArchiveSetup do
       archive.should be_persisted
       archive.name.should == "my name"
       archive.company.should == @c
-      archive.attachments.to_a.should == [@att,@att2]
+      archive.should have(2).attachments
+      archive.attachments.should include(@att,@att2)
     end
     it "should stop at max size" do
-      @setup.create_entry_archive!("my name", 199).attachments.to_a.should == [@att]
+      # Because of the indeterminate ordering of the archive (attachments are only ordered by entry arrival date), 
+      # just make sure 1 of the 2 attachments were included in the archive
+      att = @setup.create_entry_archive!("my name", 199).attachments.to_a
+      att.length.should == 1
+      fail("Archive attachments should have included @att or @att2") unless att[0].id == @att.id || att[0].id == @att2.id
     end
     it "should not include non-entry attachments" do
       att3 = Attachment.create!(:attached_file_name=>'no.txt',:attached_file_size=>1)
-      @setup.create_entry_archive!("my name", 1000).attachments.to_a.should == [@att,@att2]
+      archive = @setup.create_entry_archive!("my name", 1000)
+      archive.should have(2).attachments
+      archive.attachments.should include(@att,@att2)
     end
     it "should not include attachments for other importers" do
       e2 = Factory(:entry)
       att3 = e2.attachments.create(:attached_file_name=>'c.txt',:attached_file_size=>1)
-      @setup.create_entry_archive!("my name", 1000).attachments.to_a.should == [@att,@att2]
+      archive = @setup.create_entry_archive!("my name", 1000)
+      archive.should have(2).attachments
+      archive.attachments.should include(@att,@att2)
     end
     it "should not include attachments invoiced before start_date" do
       @setup.update_attributes(:start_date=>Time.now)

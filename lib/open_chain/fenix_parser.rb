@@ -68,6 +68,7 @@ module OpenChain
       @entry.export_state_codes = accumulated_string(:exp_state)
       @entry.vendor_names = accumulated_string(:vend)
       @entry.part_numbers = accumulated_string(:part_number)
+      @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
       @entry.entered_value = @total_entered_value
 
       @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
@@ -86,16 +87,29 @@ module OpenChain
     private
 
     def process_header line
+      entry_number = str_val(line[0])
       file_number = line[1]
       tax_id = str_val line[3]
       @entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
+
+      # Because the Fenix shell records created by the imaging client only have and entry number in them,
+      # we also have to double check if this file data matches to one of those shell records before 
+      # creating a new Entry record.
       if @entry.nil?
-        @entry = Entry.new(:broker_reference=>file_number,:source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id) 
-      end 
+        @entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE
+
+        if @entry.nil?
+          @entry = Entry.new(:broker_reference=>file_number,:source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id) 
+        else
+          # Shell records won't have broker references, so make sure to set it
+          @entry.broker_reference = file_number
+        end 
+      end
+      
       #clear commercial invoices
       @entry.commercial_invoices.destroy_all
 
-      @entry.entry_number = str_val(line[0])
+      @entry.entry_number = entry_number
       @entry.import_country = Country.find_by_iso_code('CA')
       @entry.importer_tax_id = tax_id
       @entry.cargo_control_number = str_val(line[12])
@@ -139,6 +153,7 @@ module OpenChain
       ci.currency = str_val(line[43])
       ci.exchange_rate = dec_val(line[44])
       accumulate_string :vend, ci.vendor_name
+      accumulate_string :invoice_number, ci.invoice_number
     end
 
     def process_invoice_line line

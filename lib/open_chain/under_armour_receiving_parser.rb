@@ -12,7 +12,7 @@ module OpenChain
 
     def self.validate_s3 s3_path
       r = []
-      headings = {0=>'Vendor',2=>'Stock Category',3=>'Country',5=>'PO Number',6=>'IBD Number',7=>'Delivery Date',8=>'AGI Date',9=>'Material',11=>'Grid Value',12=>'Plant',
+      headings = {0=>'Vendor',2=>'Stock Category',3=>'Ship From Country',5=>'PO Number',6=>'IBD Number',7=>'Delivery Date',8=>'AGI Date',9=>'Material',11=>'Grid Value',12=>'Plant',
       14=>'Company Code',16=>'PO Doc Type',17=>'Delivery Qty',18=>'AFS Net Price',19=>'Delivery Value'}
       client = OpenChain::XLClient.new s3_path
       row = client.get_row 0, 0 

@@ -37,6 +37,14 @@ describe EmailAttachmentsController do
         get 'download', :id => @ea.id, :email => "baz@example.com"
         response.should be_success
       end
+
+      it "sends file when mixed casing is present" do
+        @ea.email = "foo@example.com,bar@example.com;baz@example.com"
+        @ea.save
+        controller.expects("send_data").returns(:success)
+        get 'download', :id => @ea.id, :email => "BaZ@Example.COM"
+        response.should be_success
+      end
     end
 
     describe 'not registered email address' do

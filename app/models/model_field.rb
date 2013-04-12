@@ -421,7 +421,8 @@ class ModelField
       },
       :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.name"},
       :qualified_field_name=>"(SELECT name from countries where countries.id = #{table_name}.#{foreign_key})",
-      :data_type=>:string
+      :data_type=>:string,
+      :history_ignore=>true
     }]
     r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "Country ISO Code",{
       :import_lambda => lambda {|detail,data|
@@ -435,8 +436,7 @@ class ModelField
       },
       :export_lambda => lambda {|detail| eval "detail.#{join}.nil? ? '' : detail.#{join}.iso_code"},
       :qualified_field_name=>"(SELECT iso_code from countries where countries.id = #{table_name}.#{foreign_key})",
-      :data_type=>:string,
-      :history_ignore=>true
+      :data_type=>:string
     }]
     r
   end
@@ -584,15 +584,12 @@ class ModelField
           },
           :data_type => :integer,
           :history_ignore => true,
-          :qualified_field_name => "(SELECT tot FROM (SELECT product_id, max(cnt) as 'tot' FROM (select product_id, count(*) as 'cnt' from 
-    (select DISTINCT classifications.id, classifications.product_id, classifications.country_id 
-        from classifications 
-        inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id 
-        inner join tariff_records ON tariff_records.classification_id = classifications.id where length(hts_1) > 0) cls group by product_id
- union 
-    select products.id, 0 from products left outer join classifications on classifications.product_id = products.id and classifications.country_id in (select country_id from countries_regions where countries_regions.region_id = #{r.id})
-        left outer join tariff_records ON tariff_records.classification_id = classifications.id and length(hts_1) > 0 
-        where tariff_records.id is null) x group by product_id) y WHERE y.product_id = products.id)"
+          :qualified_field_name => "(
+select count(*) from classifications 
+inner join countries_regions on countries_regions.region_id = #{r.id} and countries_regions.country_id = classifications.country_id 
+where (select count(*) from tariff_records where tariff_records.classification_id = classifications.id and length(tariff_records.hts_1)>0) > 0
+and classifications.product_id = products.id
+)"          
         }
       )
       MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf
@@ -847,7 +844,8 @@ class ModelField
       }],
       [127,:ent_first_it_date,:first_it_date,"First IT Date",{:data_type=>:date}],
       [128,:ent_first_do_issued_date,:first_do_issued_date,"First DO Date",{:data_type=>:datetime}],
-      [129,:ent_part_numbers,:part_numbers,"Part Numbers",{:data_type=>:text}]
+      [129,:ent_part_numbers,:part_numbers,"Part Numbers",{:data_type=>:text}],
+      [130,:ent_commercial_invoice_numbers,:commercial_invoice_numbers,"Commercial Invoice Numbers",{:data_type=>:text}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -979,7 +977,8 @@ class ModelField
       make_broker_invoice_entry_field(55,:bi_cargo_control_number,:cargo_control_number,"Cargo Control Number",:string, lambda{|entry| entry.cargo_control_number}),
       [56,:bi_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
       [57,:bi_source_system,:source_system,"Source System",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
-      make_broker_invoice_entry_field(58,:bi_ent_part_numbers,:part_numbers,"Part Numbers",:text,lambda {|entry| entry.part_numbers})
+      make_broker_invoice_entry_field(58,:bi_ent_part_numbers,:part_numbers,"Part Numbers",:text,lambda {|entry| entry.part_numbers}),
+      make_broker_invoice_entry_field(59,:bi_ent_commercial_invoice_numbers,:commercial_invoice_numbers,"Commercial Invoice Numbers",:text,lambda {|entry| entry.commercial_invoice_numbers})
     ]
     add_fields CoreModule::BROKER_INVOICE_LINE, [
       [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
@@ -1041,8 +1040,8 @@ class ModelField
         where tariff_records.id is null) x group by product_id) y where y.product_id = products.id)",
         :data_type => :integer
       }],
-      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime}],
-      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime}],
+      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}],
+      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true}],
       [14,:prod_first_hts, :prod_first_hts, "First HTS Number", {
         :import_lambda => lambda {|obj,data| "First HTS Number was ignored, must be set at the tariff level."},
         :export_lambda => lambda {|obj| 
@@ -1055,7 +1054,8 @@ class ModelField
           r.nil? ? "" : r.hts_format
         },
         :qualified_field_name => "(select hts_1 from tariff_records fht inner join classifications fhc on fhc.id = fht.classification_id  where fhc.product_id = products.id and fhc.country_id = (SELECT id from countries ORDER BY ifnull(classification_rank,9999), iso_code ASC LIMIT 1) LIMIT 1)",
-        :data_type=>:string
+        :data_type=>:string,
+        :history_ignore=>true
       }]
     ]
     add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
@@ -1069,9 +1069,10 @@ class ModelField
         :import_lambda => lambda {|obj,data| return "Component Count was ignored. (read only)"},
         :export_lambda => lambda {|obj| obj.tariff_records.size },
         :qualified_field_name => "(SELECT comp_count FROM (SELECT count(id) as comp_count, classification_id FROM tariff_records group by classification_id) x where x.classification_id = classifications.id)",
-        :data_type => :integer
+        :data_type => :integer,
+        :history_ignore=>true
       }],
-      [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime}]
+      [2,:class_updated_at, :updated_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}]
     ]
     add_fields CoreModule::CLASSIFICATION, make_country_arrays(100,"class","classifications")
 

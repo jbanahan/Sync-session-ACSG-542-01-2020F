@@ -63,8 +63,25 @@ class SearchCriterion < ActiveRecord::Base
         return break_rows(self.value.downcase).include?(value_to_test.downcase)
       end
     elsif [:date, :datetime].include? d
+      # For date comparisons we want to make sure we're actually dealing w/ a Date
+      # from the model object and not a date and time (essentially, we're just trimming 
+      # the time portion if it's present).  Since the value is expected to be coming from
+      # an actual ActiveRecord model, then the value_to_test should have already been 
+      # converted to user local timezone, hence no need to adjust further
       vt = d==:date && !value_to_test.nil? ? value_to_test.to_date : value_to_test
-      self_val = ["eq","gt","lt","nq"].include?(self.operator) ? Date.parse(self.value.to_s) : number_value(:integer,self.value)
+
+      self_val = nil
+      if d == :date && ["eq","gt","lt","nq"].include?(self.operator)
+        self_val = Date.parse(self.value.to_s)
+      elsif d == :datetime && !self.value.nil? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator)
+        # parse_date_time converts the datetime criterion into a UTC String (for the initial DB Query), what we're doing 
+        # here is parsing that UTC string back into the user local time zone.
+        # Adding the "UTC" informs the parse method that the given time string is in a different timezone
+        self_val = Time.zone.parse((parse_date_time self.value) + " UTC")
+      else
+        self_val = number_value(:integer,self.value)
+      end
+
       if self.operator == "eq"
         return vt == self_val
       elsif self.operator == "gt"

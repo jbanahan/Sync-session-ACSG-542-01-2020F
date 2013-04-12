@@ -73,4 +73,60 @@ describe CompaniesController do
       Company.find(@c.id).linked_companies.to_a.should == [c2,c3]
     end
   end
+  describe :push_alliance_products do
+    before :each do
+      MasterSetup.get.update_attributes(:custom_features=>"alliance")
+      @u.admin = true
+      @u.save!
+      @c.update_attributes(:alliance_customer_number=>"ACNUM")
+    end
+    it "should initiate delayed_job" do
+      post :push_alliance_products, :id=>@c.id
+      response.should redirect_to @c
+      flash[:notices].should have(1).message
+      flash[:errors].should be_blank
+      Delayed::Job.all.should have(1).job
+    end
+    it "should push products" do
+      dj_state = Delayed::Worker.delay_jobs
+      begin
+        Delayed::Worker.delay_jobs = false
+        OpenChain::CustomHandler::GenericAllianceProductGenerator.should_receive(:sync).with(instance_of(Company))
+        post :push_alliance_products, :id=>@c.id
+        response.should redirect_to @c
+        flash[:notices].should have(1).message
+        flash[:errors].should be_blank
+        @c.reload
+        @c.last_alliance_product_push_at.should > 1.minute.ago
+      ensure
+        Delayed::Worker.delay_jobs = dj_state
+      end
+    end
+    it "should reject if alliance custom feature isn't enabled" do
+      MasterSetup.get.update_attributes(:custom_features=>"")
+      post :push_alliance_products, :id=>@c.id
+      flash[:errors].first.should == "Cannot push file because \"alliance\" custom feature is not enabled."
+      Delayed::Job.all.should be_empty
+    end
+    it "should reject if company doesn't have alliance customer number" do
+      @c.update_attributes(:alliance_customer_number=>nil)
+      post :push_alliance_products, :id=>@c.id
+      flash[:errors].first.should == "Cannot push file because company doesn't have an alliance customer number." 
+      Delayed::Job.all.should be_empty
+    end
+    it "should reject if user isn't admin" do
+      @u.admin = false
+      @u.save!
+      post :push_alliance_products, :id=>@c.id
+      response.should be_redirect 
+      flash[:errors].should have(1).message
+      Delayed::Job.all.should be_empty
+    end
+    it "should reject if job was initiated less than 10 minutes ago" do
+      @c.update_attributes :last_alliance_product_push_at=>1.minute.ago
+      post :push_alliance_products, :id=>@c.id
+      flash[:errors].first.should == "Cannot push file because last push was less than 10 minutes ago." 
+      Delayed::Job.all.should be_empty
+    end
+  end
 end

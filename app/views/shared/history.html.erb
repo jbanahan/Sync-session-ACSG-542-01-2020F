@@ -34,10 +34,13 @@
   <%@snapshots.each do |s| %>
     <div class='history_entry'>
       <% d = s.diff_vs_previous %>
-      <div class='history_title'><%=s.created_at %>: <%=s.user.full_name%></div>
-      <%unless s.imported_file.nil?  %>
-        <p>Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %></p> 
-      <%end  %>
+      <div class='history_title'>
+        <%unless s.imported_file.nil?  %>
+        <div style='float:right'>(Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %>) </div>
+        <%end  %>
+        <div style='float:left'><%=s.created_at %>: <%=s.user.full_name%></div>
+        <div style='clear:both'></div> 
+      </div>
       <div style='margin-left:1em;'>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>d}%>
       </div>

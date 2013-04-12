@@ -24,8 +24,6 @@ gem 'newrelic_rpm'
 
 #text processing/encoding stuff
 gem 'RedCloth', '4.2.9'
-gem 'htmlentities'
-gem 'sanitize'
 
 #javascript environment, we will compile assets during deployment
 #so we need these on the production servers as well

@@ -53,6 +53,9 @@ $(function() {
     <% else -%>
       <button class='btn_link' link_to='<%=new_company_attachment_archive_setup_path(@company)%>'>Attachment Archive Setup</button>
     <% end -%>
+    <% if MasterSetup.get.custom_feature?('alliance') && !@company.alliance_customer_number.blank? && @company.importer_products.first-%>
+      <button class='form_to' form_id='frm_alliance'>Products To Alliance</button>
+    <% end -%>
   <%end%>
   <button id='btn_poas'>POAs</button>
   <button class='btn_link' link_to='<%=companies_path%>' key_map='b'>Back</button>
@@ -94,3 +97,6 @@ $(function() {
   <% end %>
 </div>
 <%end%>
+<%=form_tag push_alliance_products_company_path(@company), :id=>'frm_alliance', :method=>:post do-%>
+  &nbsp;
+<%end-%>

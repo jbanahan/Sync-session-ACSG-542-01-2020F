@@ -6,6 +6,7 @@ module OpenChain
       def initialize(custom_file)
         @custom_file = custom_file
         @csm_cd = CustomDefinition.find_or_create_by_label("CSM Number",:module_type=>'Product',:data_type=>'text')
+        @dept_cd = CustomDefinition.find_or_create_by_label("CSM Department",:module_type=>'Product',:data_type=>'text')
       end
 
       def process user, first_row = 1
@@ -16,6 +17,7 @@ module OpenChain
           xlc.raise_errors = true
           last_row = xlc.last_row_number(0)
           style_map = {}
+          dept_map = {}
           (first_row..last_row).each do |n|
             row_hash = xlc.get_row_as_column_hash 0, n
             us_style_cell = row_hash[8]
@@ -26,12 +28,16 @@ module OpenChain
 
             style_map[us_style] ||= Set.new
             style_map[us_style] << csm
+
+            department = row_hash[13]['value']
+            dept_map[us_style] = department
           end
           style_map.each do |us_style,csm_set|
             current_style = us_style
             p = Product.where(:unique_identifier=>us_style).first_or_create!
             raise "File failed: #{user.full_name} can't edit product #{p.unique_identifier}" unless p.can_edit?(user)
             p.update_custom_value! @csm_cd, csm_set.to_a.join("\n")
+            p.update_custom_value! @dept_cd, dept_map[us_style]
           end
         rescue
           had_errors = true

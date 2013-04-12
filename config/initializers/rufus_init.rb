@@ -62,6 +62,14 @@ def execute_scheduler
     end
   end
 
+  scheduler.every("3m") do
+    job_wrapper "Schedulable Jobs" do
+      if Rails.env == 'production'
+        SchedulableJob.all.each {|sj| sj.delay.run_if_needed logger}
+      end
+    end
+  end
+
   #launch listener for jobs from integration server
   if Rails.env == 'production'
     scheduler.in '1s' do

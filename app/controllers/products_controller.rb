@@ -29,9 +29,6 @@ class ProductsController < ApplicationController
     }
   end
 
-
-
-
   # GET /products/new
   # GET /products/new.xml
   def new
@@ -125,7 +122,6 @@ class ProductsController < ApplicationController
       end
     }
   end
-
   
   def classify
     p = Product.find(params[:id])
@@ -136,7 +132,6 @@ class ProductsController < ApplicationController
       end
     }
   end
-  
 
   def bulk_edit
     @pks = params[:pk]
@@ -223,19 +218,19 @@ class ProductsController < ApplicationController
     @preview_instant_classification = InstantClassification.find_by_product @preview_product, current_user
   end
     
-    private
+  private
 
-    def secure_classifications
-      params[:product].delete(:classifications_attributes) unless params[:product].nil? || current_user.edit_classifications?
-    end
-    
-    def save_classification_custom_fields(product,product_params)
-      OpenChain::CustomFieldProcessor.new(params).save_classification_custom_fields product, product_params
-    end
+  def secure_classifications
+    params[:product].delete(:classifications_attributes) unless params[:product].nil? || current_user.edit_classifications?
+  end
+  
+  def save_classification_custom_fields(product,product_params)
+    OpenChain::CustomFieldProcessor.new(params).save_classification_custom_fields product, product_params
+  end
 
-    def module_label
-      CoreModule::PRODUCT.label
-    end
+  def module_label
+    CoreModule::PRODUCT.label
+  end
 
   def json_product_for_classification p
     pre_loaded_countries = p.classifications.collect {|c| c.country_id} #don't use pluck here because bulk action does everything in memory

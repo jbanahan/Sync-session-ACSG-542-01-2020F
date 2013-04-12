@@ -56,6 +56,24 @@ describe OpenChain::IntegrationClientCommandProcessor do
       Delayed::Worker.delay_jobs = @ws
       @t.close!
     end
+    context :msl_plus_enterprise do
+      it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do
+        ack = mock("ack_file")
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
+        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+        cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a.csv','remote_path'=>'12345'}
+        OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:process).with('abcdefg').and_return(ack)
+        OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:send_and_delete_ack_file).with(ack,'a.csv')
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+      it "should handle ack files" do
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
+        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+        OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:process_ack_from_msl).with('abcdefg','a-ack.csv')
+        cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a-ack.csv','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+    end
     it 'should send data to CSM Sync custom handler if feature enabled and path contains _csm_sync' do
       mu = Factory(:master_user,:username=>"rbjork")
       MasterSetup.any_instance.should_receive(:custom_feature?).with('CSM Sync').and_return(true)
@@ -68,7 +86,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       f.uploaded_by.should == User.find_by_username('rbjork')
       f.file_type.should == CustomFeaturesController::CSM_SYNC
     end
-    it 'should send date to Kewill parser if Alliance is enabled and path contains _kewill_isf' do
+    it 'should send data to Kewill parser if Alliance is enabled and path contains _kewill_isf' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       OpenChain::CustomHandler::KewillIsfXmlParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_kewill_isf/x.y','remote_path'=>'12345'}

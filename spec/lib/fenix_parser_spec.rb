@@ -104,6 +104,7 @@ describe OpenChain::FenixParser do
     ent.time_to_process.should be > 0
     ent.source_system.should == OpenChain::FenixParser::SOURCE_CODE
     ent.entered_value.should == @entered_value
+    ent.commercial_invoice_numbers == @invoice_number
 
     #commercial invoice header
     ent.commercial_invoices.should have(1).invoice
@@ -211,6 +212,26 @@ describe OpenChain::FenixParser do
     entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
     
     entry.commercial_invoices.length.should == 0
+  end
+
+  it 'should fall back to using entry number and source system lookup to find imaging shell records' do
+    existing_entry = Factory(:entry,:entry_number=>@entry_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    
+    #extra commas added to pass the line length check
+    entry_data = lambda {
+      data = "\"#{@entry_number}\",12345,\"My Company\",TAXID,,,,,,,,"
+      data 
+    }
+
+    OpenChain::FenixParser.parse entry_data.call
+    existing_entry.reload
+
+    existing_entry.broker_reference.should == "12345"
+    existing_entry.entry_number.should == @entry_number
+    existing_entry.importer_tax_id.should == "TAXID"
+    existing_entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
+    
+    existing_entry.commercial_invoices.length.should == 0
   end
 
   context 'importer company' do
@@ -368,6 +389,10 @@ describe OpenChain::FenixParser do
         ['x','y'].each_with_index {|b,i| @invoices[i][:part_number]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).part_numbers.should == "x\n y"
+      end
+      it "invoice numbers" do
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        Entry.find_by_broker_reference(@file_number).commercial_invoice_numbers.split("\n ").should == [@invoices[0][:inv_num], @invoices[1][:inv_num]]
       end
     end
   end

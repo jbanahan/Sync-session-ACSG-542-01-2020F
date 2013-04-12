@@ -1,7 +1,7 @@
 <%if current_user.sys_admin?%>
   <%content_for :javascript do%>
     $(function() {
-      $("#mod_load").dialog({autoOpen:false,title:"Load Tariff Set",width:400,
+      $("#mod_load").dialog({autoOpen:false,title:"Load Tariff Set",width:"auto",
         buttons:{"OK":function() {$("#frm_load").submit();},
         "Cancel":function() {$("#mod_load").dialog('close');}}});
       $("#btn_load").click(function() {$("#mod_load").dialog('open');});
@@ -22,8 +22,9 @@
     <%=form_tag load_tariff_sets_path, :method=>:post, :id=>'frm_load' do -%>
       Country: <%=select_tag "country_id", options_from_collection_for_select(Country.import_locations.sort_name, "id", "name")%><br />
       Label: <%=text_field_tag "label"%><br />
-      S3 Path: <%=text_field_tag "path"%><br />
-      Activate: <%=check_box_tag "activate", "yes"%>
+      S3 Path: <%=text_field_tag "path", "", :size=>70 %><br />
+      Activate: <%=check_box_tag "activate", "yes"%><br />
+      Process At: <%=select_datetime(Time.zone.now, :ampm => true)%>
     <%end%>
   </div>
 <%end%>
