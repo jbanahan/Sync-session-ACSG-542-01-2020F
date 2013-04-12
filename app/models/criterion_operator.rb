@@ -7,8 +7,23 @@ class CriterionOperator
     @label = label
   end
 
-  def query_string(field_name)
-    @query_string.gsub(/_fn_/,field_name)
+  def query_string(field_name, data_type, include_empty = false)
+    # This code is test cased in the search_criterion's test case
+    query = @query_string.gsub(/_fn_/,field_name)
+    if include_empty
+      query = "#{query} OR #{field_name} IS NULL"
+
+      if character_based_data_type? data_type
+        # We'll consider having nothing but whitespace as being empty too
+        query += " OR LENGTH(TRIM(#{field_name})) = 0"
+      elsif numeric_data_type? data_type
+        # We'll consider equaling zero as being empty too
+        query += " OR #{field_name} = 0"
+      end
+      query = "#{query}"
+    end
+
+    query 
   end
   
   OPERATORS = [
@@ -34,4 +49,13 @@ class CriterionOperator
     OPERATORS.each {|o| return o if o.key==key}
     nil
   end
+
+  private 
+    def character_based_data_type? data_type
+      return [:text, :string].include? data_type
+    end
+
+    def numeric_data_type? data_type
+      return [:integer, :decimal, :fixnum].include? data_type
+    end
 end

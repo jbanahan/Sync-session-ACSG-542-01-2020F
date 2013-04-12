@@ -421,7 +421,7 @@ var OCSearch = (function() {
       $("#show_srch_setup").show();
       $.post('/search_setups/sticky_close');
     },
-    addSearchCriterion: function(parentTable,parentObject,fieldList,m,field,operator,value,id,canDelete) {
+    addSearchCriterion: function(parentTable,parentObject,fieldList,m,field,operator,value,id,canDelete, include_empty_checked) {
       var h = "<tr class='sp_row'><td>";
         if(id) {
           h += "<input id='"+parentObject+"_search_criterions_attributes_"+m+"_id' name='"+parentObject+"[search_criterions_attributes]["+m+"][id]' type='hidden' value='"+id+"'>";
@@ -433,8 +433,9 @@ var OCSearch = (function() {
         h = h + "</select></td>";
         h = h + "<td><select id='"+parentObject+"_search_criterions_attributes_"+m+"_operator' name='"+parentObject+"[search_criterions_attributes]["+m+"][operator]' class='srch_crit_oper'>";
         h = h + "</select></td><td><div class='srch_crit_cont'><input size='30' type='text' id='"+parentObject+"_search_criterions_attributes_"+m+"_value' name='"+parentObject+"[search_criterions_attributes]["+m+"][value]' class='srch_crit_value' /></div></td>";
+        h = h + "<td><input type='hidden' name='"+parentObject+"[search_criterions_attributes]["+m+"][include_empty]' value='0' /><input type='checkbox' id='"+parentObject+"_search_criterions_attributes_"+m+"_include_empty' name='"+parentObject+"[search_criterions_attributes]["+m+"][include_empty]' value='1'" + (include_empty_checked ? "checked='checked'" : "")+ "/> Include Empty?<td>";
         if(canDelete) {
-        h = h + "<td><input class='sp_destroy' id='"+parentObject+"_search_criterions_attributes_"+m+"__destroy' name='"+parentObject+"[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='<%=asset_path('x.png')%>' title='remove' /></a></td></tr>";
+        h = h + "<td><input class='sp_destroy' id='"+parentObject+"_search_criterions_attributes_"+m+"__destroy' name='"+parentObject+"[search_criterions_attributes]["+m+"][_destroy]' type='hidden' value='false' /><a href='#' class='sp_remove'><img src='<%=asset_path('x.png')%>' title='Remove this parameter' /></parameter></td></tr>";
         }
       parentTable.append(h);
       var row = parentTable.find("tr:last");
