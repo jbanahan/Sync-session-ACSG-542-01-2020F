@@ -10,8 +10,11 @@ module OpenChain
 
       def self.run_schedulable opts
         g = self.new(opts)
-        prods = g.products_to_send
-        g.send_and_delete_sync_file g.generate_outbound_sync_file prods if prods.count > 0 
+        prods = g.products_to_send.limit(1000)
+        while prods.count > 0
+          g.send_and_delete_sync_file g.generate_outbound_sync_file prods
+          prods = g.products_to_send.limit(1000)
+        end
       end
 
       # find the products that need to be sent to MSL+ (they have MSL+ Receive Dates and need sync)
