@@ -10,10 +10,10 @@ module OpenChain
 
       def self.run_schedulable opts
         g = self.new(opts)
-        prods = g.products_to_send.limit(1000)
+        prods = g.products_to_send.where("sync_records.sent_at < ",3.hours.ago).limit(1000)
         while prods.count > 0
           g.send_and_delete_sync_file g.generate_outbound_sync_file prods
-          prods = g.products_to_send.limit(1000)
+          prods = g.products_to_send.where("sync_records.sent_at < ",3.hours.ago).limit(1000)
         end
       end
 
