@@ -5,7 +5,7 @@ module OpenChain
 
       def self.run_schedulable opts={}
         h = self.new
-        h.ftp_file f.sync_csv
+        h.ftp_file h.sync_csv
       end
       def sync_code
         "omlog-product"
