@@ -21,7 +21,7 @@ module OpenChain
       def products_to_send
         cd_msl_rec = cust_def "MSL+ Receive Date", "date"
         sc = SearchCriterion.new(:model_field_uid=>"*cf_#{cd_msl_rec.id}",:operator=>"notnull")
-        sc.apply(Product.need_sync("MSLE"))
+        sc.apply(Product.select("distinct products.*").need_sync("MSLE"))
       end
 
       # Generate the file with data that needs to be sent back to MSL+
