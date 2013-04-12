@@ -30,19 +30,17 @@ module OpenChain
         file << ["Style", "Country", "MP1 Flag", "HTS 1", "HTS 2", "HTS 3", "Length", "Width", "Height"].to_csv
         dont_send_countries = Country.where("iso_code IN (?)",['US','CA','IT']).collect{|c| c.id}
         cd_length, cd_width, cd_height = ["Length (cm)","Width (cm)","Height (cm)"].collect {|lbl| CustomDefinition.find_by_label lbl}
-        Product.transaction do
-          products.each do |p|
-            classifications = p.classifications.includes(:country).where("not classifications.country_id IN (?)",dont_send_countries)
-            classifications.each do |cl|
-              iso = cl.country.iso_code
-              cl.tariff_records.each do |tr|
-                file << [p.unique_identifier,cl.country.iso_code,mp1_value(tr,iso),hts_value(tr.hts_1,iso),hts_value(tr.hts_2,iso),hts_value(tr.hts_3,iso),
-                  p.get_custom_value(cd_length).value,p.get_custom_value(cd_width).value,p.get_custom_value(cd_height).value].to_csv
-              end
+        products.each do |p|
+          classifications = p.classifications.includes(:country).where("not classifications.country_id IN (?)",dont_send_countries)
+          classifications.each do |cl|
+            iso = cl.country.iso_code
+            cl.tariff_records.each do |tr|
+              file << [p.unique_identifier,cl.country.iso_code,mp1_value(tr,iso),hts_value(tr.hts_1,iso),hts_value(tr.hts_2,iso),hts_value(tr.hts_3,iso),
+                p.get_custom_value(cd_length).value,p.get_custom_value(cd_width).value,p.get_custom_value(cd_height).value].to_csv
             end
-            sr = p.sync_records.find_or_initialize_by_trading_partner("MSLE")
-            sr.update_attributes(:sent_at=>Time.now)
           end
+          sr = p.sync_records.find_or_initialize_by_trading_partner("MSLE")
+          sr.update_attributes(:sent_at=>Time.now)
         end
         file.flush
         file
