@@ -58,6 +58,10 @@
     <tr class='hover'><td><%=link_to "Marc Jacobs Freight Budget", reports_show_marc_jacobs_freight_budget_path%></td>
     <td>Marc Jacobs Monthly Freight Budget</td></tr>
   <%end-%>
+  <%if OpenChain::Report::KitchenCraftBillingReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "KitchenCraft Billing", reports_show_kitchencraft_billing_path%></td>
+    <td>KitchenCraft Monthly Billing Report</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>
