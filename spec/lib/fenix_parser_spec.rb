@@ -66,8 +66,9 @@ describe OpenChain::FenixParser do
       data
     }
   end
-  it 'should save an entry with one line' do
-    OpenChain::FenixParser.parse @entry_lambda.call, {:bucket=>'bucket', :key=>'key'}
+
+  def do_full_test entry_data
+    OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'key'}
     ent = Entry.find_by_broker_reference @file_number
     ent.last_file_bucket.should == 'bucket'
     ent.last_file_path.should == 'key'
@@ -144,7 +145,16 @@ describe OpenChain::FenixParser do
     tar.excise_rate_code.should == @excise_rate_code
     tar.excise_amount.should == @excise_amount
   end
+
+
+  it 'should save an entry with one line' do
+    do_full_test @entry_lambda.call
+  end
   
+  it 'should save an entry with one line in the new format' do
+    do_full_test @entry_lambda.call(true)
+  end
+
   it 'should call link_broker_invoices' do
     Entry.any_instance.should_receive :link_broker_invoices
     OpenChain::FenixParser.parse @entry_lambda.call
@@ -237,21 +247,9 @@ describe OpenChain::FenixParser do
 
   it 'should skip newstyle lines (for now)' do
     data = @entry_lambda.call(true)
-    data += "\nSD,#{@barcode},12345,,,,,\nCCN,12345,987454\nCON,12345,65456546"
-
-    OpenChain::FenixParser.any_instance.should_not_receive(:parse_entry)
-    OpenChain::FenixParser.parse data
-  end
-
-  it 'should skip newstyle lines (for now) but handle oldstyle ones' do
-    data = @entry_lambda.call(true)
     data += "\nSD,#{@barcode},12345,,,,,\nCCN,12345,987454\nCON,12345,65456546\n"
-    data += @entry_lambda.call
 
-    OpenChain::FenixParser.parse data
-
-    ent = Entry.find_by_broker_reference @file_number
-    ent.should_not be_nil
+    do_full_test data
   end
 
   context 'importer company' do
