@@ -13,7 +13,14 @@ module OpenChain
         entry_lines = []
         current_file_number = ""
         CSV.parse(file_content) do |line|
-          next if line.size < 10 || line[0]=='Barcode'
+          # Skip any new lines that come from the new style of entry lines
+          next if line.size < 10 || line[0]=='Barcode' || ['SD', 'CCN', 'CON'].include?(line[0])
+
+          # B3L in position 0 indicates we have the new fenix style of line, the new B3L "header" lines 
+          # are identical to the existing fenix file lines, except that they have the leading B3L record identifier.
+          # Just remove the first element and continue processing
+          line.shift() if line[0] == "B3L"
+          
           file_number = line[1]
           if !entry_lines.empty? && file_number!=current_file_number
             FenixParser.new.parse_entry entry_lines, opts 
