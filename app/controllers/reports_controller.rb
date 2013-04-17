@@ -163,6 +163,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_kitchencraft_billing
+    if OpenChain::Report::KitchenCraftBillingReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_kitchencraft_billing
+    if OpenChain::Report::KitchenCraftBillingReport.permission? current_user
+      settings = {:start_date=>params[:start_date],:end_date=>params[:end_date]}  
+      run_report "KitchenCraft Billing", OpenChain::Report::KitchenCraftBillingReport, settings, ["Release Date between #{settings[:start_date]} and #{settings[:end_date]}."]
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin
