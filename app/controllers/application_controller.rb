@@ -8,7 +8,6 @@ class ApplicationController < ActionController::Base
     before_filter :require_user
     before_filter :set_user_time_zone
     before_filter :log_request
-    before_filter :set_cursor_position
     before_filter :force_reset
 
     helper_method :current_user
@@ -251,65 +250,6 @@ class ApplicationController < ActionController::Base
     end
   end
   
-  #get the next object from the most recently run search 
-  def next_object(move=true)
-    sr = search_run
-    n = sr.next_object
-    if move && !n.nil?
-      sr.move_forward
-      sr.save
-    end
-    n
-  end
-
-  #get the previous object from the most recenty run search
-  def previous_object(move=true)
-    sr = search_run
-    n = sr.previous_object
-    if move && !n.nil?
-      sr.move_back
-      sr.save
-    end
-    n
-  end
-
-  #action to show next object from search result (supporting next button)
-  def show_next
-    n = next_object
-    if n.nil?
-      error_redirect "No more items in the search list."
-    else
-      redirect_to n
-    end
-  end
-  
-  #action to show previous object from search result (supporting previous button)
-  def show_previous
-    n = previous_object
-    if n.nil?
-      error_redirect "No more items in the search list."
-    else
-      redirect_to n
-    end
-  end
-
-  #add this redirect at the end of your update controller action to support next & previous buttons
-  def redirect_update base_object, action="edit"
-    target = nil
-    if params[:c_next]
-      target = next_object
-      add_flash :errors, "No more items in the search list." if target.nil?
-    elsif params[:c_previous]
-      target = previous_object
-      add_flash :errors, "No more items in the search list." if target.nil?
-    end
-    if target
-      redirect_to send("#{action}_#{base_object.class.to_s.underscore}_path",target)
-    else
-      redirect_to(base_object) 
-    end
-  end
-
   # Strips top level parameter keys from the URI query string.  Note, this method
   # does not support nested parameter names (ala "model[attribute]").
   def strip_uri_params uri_string, *keys
@@ -343,14 +283,6 @@ class ApplicationController < ActionController::Base
   end
 
   private
-  def set_cursor_position
-    cp = params[:c_pos]
-    return unless cp && cp.match(/^[0-9]*$/)
-    sr = search_run
-    return unless sr
-    sr.position = cp.to_i
-    sr.save
-  end
 
   def force_reset
     if logged_in? && current_user.password_reset
@@ -360,10 +292,6 @@ class ApplicationController < ActionController::Base
   end
 
   def render_search_results no_results = false
-    if !no_results && @current_search.name == "Extreme latest" && current_user.sys_admin?
-      raise "Extreme latest goes boom!!"
-    end
-    
     if no_results
       @current_search.touch
       @results = @current_search.core_module.klass.where("1=0").paginate(:per_page => 20, :page => params[:page]) 

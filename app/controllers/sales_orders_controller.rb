@@ -79,7 +79,7 @@ class SalesOrdersController < ApplicationController
     action_secure(o.can_edit?(current_user),o,{:verb => "edit", :module_name=>"order"}) {
       success = lambda {|so|
         add_flash :notices, "Sale was updated successfully."
-        redirect_update so
+        redirect_to so
       }
       failure = lambda {|so,errors|
         errors_to_flash so, :now=>true

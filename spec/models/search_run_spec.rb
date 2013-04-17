@@ -24,33 +24,24 @@ describe SearchRun do
       SearchRun.find_last_run(@u,CoreModule::PRODUCT).should_not be_readonly
     end
   end
-  context "navigation" do
-    it "should step" do
-      prods = []
-      3.times do |c|
-        prods << Factory(:product,:unique_identifier=>"bs_#{c}")
-      end
-
-      ss = Factory(:search_setup,:module_type=>"Product",:user=>@u)
-      ss.sort_criterions.create!(:model_field_uid=>:prod_uid)
-
-      ss.touch #creates search run
-
-      sr = SearchRun.find_last_run @u, CoreModule::PRODUCT
-
-      sr.current_object.should == prods[0]
-      sr.move_forward
-      sr.current_object.should == prods[1]
-      sr.move_back
-      sr.current_object.should == prods[0]
-      sr.previous_object.should == nil
-      sr.next_object.should == prods[1]
-      sr.next_object.should == prods[1] #next_object doesn't move cursor so repeated calls should have same value
-      sr.current_id.should == prods[0].id
-      sr.move_forward
-      sr.move_forward
-      sr.current_object.should == prods[2]
-      sr.next_object.should == nil
+  describe :parent do
+    before :each do
+      @cf = Factory(:custom_file)
+    end
+    it "should return search setup if it exists" do
+      ss = Factory(:search_setup)
+      im = Factory(:imported_file)
+      sr = SearchRun.create(:search_setup_id=>ss.id,:imported_file_id=>im.id,:custom_file_id=>@cf.id)
+      sr.parent.should == ss
+    end
+    it "should return imported_file if it exists and search setup doesn't" do
+      im = Factory(:imported_file)
+      sr = SearchRun.create(:imported_file_id=>im.id,:custom_file_id=>@cf.id)
+      sr.parent.should == im
+    end
+    it "should return custom_file if it exists and search_setup/imported_file don't" do
+      sr = SearchRun.create(:custom_file_id=>@cf.id)
+      sr.parent.should == @cf 
     end
   end
   describe "all_objects / total_objects" do
@@ -78,15 +69,6 @@ describe SearchRun do
       sr = cf.search_runs.create!
       sr.all_objects.should == [@p2,@p3]
       sr.total_objects.should == 2
-    end
-  end
-  describe :reset_cursor do
-    it "should clear cursor fields" do
-      s = SearchRun.new(:position=>99,:result_cache=>'1,2,3',:starting_cache_position=>3)
-      s.reset_cursor
-      s.position.should be_nil
-      s.result_cache.should be_nil
-      s.starting_cache_position.should be_nil
     end
   end
 end

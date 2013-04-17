@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe ImportedFile do
+  describe :result_keys do
+    it "should return empty array if no file import results" do
+      f = Factory(:imported_file)
+      f.result_keys.should == []
+    end
+    it "should return result of file_import_result#changed_objects" do
+      f = Factory(:imported_file)
+      fir = f.file_import_results.create!(:finished_at=>Time.now) #only shows for last finished result
+      p1 = Factory(:product)
+      p2 = Factory(:product)
+      FileImportResult.any_instance.should_receive(:changed_objects).and_return [p1,p2]
+      f.result_keys.should == [p1.id,p2.id]
+    end
+  end
 
   describe 'email_updated_file' do
     it 'should generate and send the file' do

@@ -131,8 +131,10 @@ OpenChain::Application.routes.draw do
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
 
-  match '/advanced_search' => 'advanced_search#index', :via=>:get, :as=>:advanced_search
-  match '/advanced_search/:id' => 'advanced_search#show', :via=>:get, :as=>:advanced_search_show, :via=>:get
+  resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
+    get 'last_search_id', :on=>:collection
+    get 'setup', :on=>:member
+  end
 
   #custom features
   resources :custom_files, :only => :show
@@ -214,10 +216,6 @@ OpenChain::Application.routes.draw do
 	resources :piece_sets
 
   resources :shipments do
-    collection do
-      get 'show_next'
-      get 'show_previous'
-    end
     member do
       get 'history'
       get 'make_invoice'
@@ -229,10 +227,6 @@ OpenChain::Application.routes.draw do
 	end
 	
 	resources :deliveries do
-    collection do
-      get 'show_next'
-      get 'show_previous'
-    end
     member do
       get 'history'
     end
@@ -243,8 +237,6 @@ OpenChain::Application.routes.draw do
 
   resources :products do
     collection do
-      get 'show_next'
-      get 'show_previous'
       post 'bulk_edit'
       post 'bulk_update'
       post 'bulk_classify'
@@ -255,6 +247,8 @@ OpenChain::Application.routes.draw do
     member do
       get 'history'
       get 'classify'
+      get :next_item
+      get :previous_item
       put :import_worksheet 
     end
     post :import_new_worksheet, :on=>:new
@@ -262,8 +256,6 @@ OpenChain::Application.routes.draw do
 
   resources :orders do
     collection do
-      get 'show_next'
-      get 'show_previous'
       get 'all_open'
     end
     member do
@@ -274,8 +266,6 @@ OpenChain::Application.routes.draw do
 	
   resources :sales_orders do
     collection do
-      get 'show_next'
-      get 'show_previous'
       get 'all_open'
     end
     member do

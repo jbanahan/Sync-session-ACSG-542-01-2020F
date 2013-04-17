@@ -11,6 +11,7 @@
   a.action_link:hover {
     color: white;
     background-color: #666;
+    cursor: pointer;
   }
   #select_search {
     font-size: 175%;
@@ -29,12 +30,6 @@
       margin: .25em;
       text-align: center;
     }
-  }
-  h2.section_selector {
-    cursor: pointer; 
-    border-bottom: 2px solid black;
-    padding: .25em;
-    text-align: center;
   }
   div.settings_wrapper {
     display: inline-block;

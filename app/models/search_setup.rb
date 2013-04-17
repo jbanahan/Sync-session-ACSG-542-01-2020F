@@ -46,6 +46,11 @@ class SearchSetup < ActiveRecord::Base
     SearchSetup.last_accessed(user,core_module).first
   end
 
+  #only admins can setup ftp schedules
+  def can_ftp?
+    self.user.admin?
+  end
+
   #defer to SearchQuery.result_keys seeded with this search
   def result_keys opts={}
     SearchQuery.new(self,self.user).result_keys opts
@@ -82,7 +87,7 @@ class SearchSetup < ActiveRecord::Base
   
   def touch
     sr = self.search_run
-    sr = self.build_search_run(:position=>0) if sr.nil?
+    sr = self.build_search_run(:page=>1) if sr.nil?
     sr.last_accessed = Time.now
     sr.user_id = self.user_id
     sr.save
@@ -220,7 +225,6 @@ class SearchSetup < ActiveRecord::Base
       if self.search_run.nil?
         self.create_search_run
       else
-        self.search_run.reset_cursor
         self.search_run.save
       end
     end

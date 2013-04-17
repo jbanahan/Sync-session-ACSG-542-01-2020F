@@ -1,9 +1,9 @@
 root = exports ? this
 @app = angular.module('AdvancedSearchApp',['ngResource']).config(['$routeProvider', ($routeProvider) -> 
   $routeProvider.
-    when('/:searchId/:page',{templateUrl:'templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
-    when('/:searchId',{templateUrl:'templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
-    when('/',{templateUrl:'templates/advanced_search.html',controller:'AdvancedSearchCtrl'})
+    when('/:searchId/:page',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
+    when('/:searchId',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
+    when('/',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'})
 ])
 
 @app.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http',($scope,$routeParams,$location,$http) ->
@@ -120,75 +120,25 @@ root = exports ? this
       $scope.searchResult = data
       readSelectionCookie data.id
     )
-    ###
-    $scope.searchResult =
-      name:"My Search"
-      id: searchId
-      page: page
-      total_pages: 100
-      total_objects: 500
-      bulk_actions: [
-        {label:'Classify',action:'figure this out'}
-      ]
-      columns: [
-        "Unique Identifier"
-        "Name"
-        ]
-      rows: [
-        {id:21,links:[{label:'View',url:'/entries/21'}],vals:['PUID','PName'+searchId]}
-        {id:22,links:[{label:'View',url:'/entries/22'}],vals:['PUID2','PName'+page]}
-        ]
-    ###
   loadSearch = (id) ->
-    $scope.searchSetup =
-      name:"Search "+id
-      include_links:true
-      no_time:false
-      id:id
-      allow_ftp:true #should the user be able to set ftp on schedule
-      user: {email:'brian@vandegriftinc.com'}
-      search_list:[
-        {name:'Search '+id,id:id},
-        {name:'Search 4',id:4},
-        {name:'Search 1',id:1}
-        ]
-      search_columns:[
-        {mfid:'prod_uid',label:'Unique Identifier',rank:0},
-        {mfid:'prod_name',label:'Name',rank:1}
-        ]
-      sort_criterions:[
-        {mfid:'prod_div_name',label:'Division Name',descending:true}
-        {mfid:'prod_style',label:'Style',descending:false}
-        ]
-      search_criterions:[
-        {mfid:'prod_uid',label:'Unique Identifier',operator:'eq',value:'123',datatype:'string'}
-        {mfid:'prod_last_upd',label:'Last Updated',operator:'gt',value:'2013-01-01',datatype:'datetime'}
-        ]
-      search_schedules:[
-        {email_addresses:'bglick@vandegriftinc.com',run_monday:false,run_tuesday:false,run_wednesday:true,run_thursday:false,run_friday:false,run_saturday:false,run_sunday:false,run_hour:1,download_format:'xls',day_of_month:null}
-        {email_addresses:'bglick@vandegriftinc.com',run_monday:false,run_tuesday:false,run_wednesday:true,run_thursday:false,run_friday:false,run_saturday:false,run_sunday:false,run_hour:1,download_format:'xls',day_of_month:1}
-        {ftp_server:'ftp.vandegriftinc.com',ftp_username:'user',ftp_password:'pwd',ftp_subfolder:'/my_loc',run_monday:false,run_tuesday:false,run_wednesday:true,run_thursday:false,run_friday:false,run_saturday:false,run_sunday:false,run_hour:1,download_format:'xls',day_of_month:1}
-      ]
-      model_fields:[
-        {mfid:'prod_uid',label:'Unique Identifier',datatype:'string'}
-        {mfid:'prod_name',label:'Name',datatype:'string'}
-        {mfid:'prod_div_name',label:'Division Name',datatype:'string'}
-        {mfid:'prod_style',label:'Style',datatype:'string'}
-        {mfid:'prod_color',label:'Color',datatype:'string'}
-        {mfid:'prod_long',label:'Long Description',datatype:'text'}
-        {mfid:'prod_last_upd',label:'Last Updated',datatype:'datetime'}
-        {mfid:'prod_class_cnt',label:'Classification Count',datatype:'integer'}
-        {mfid:'prod_test',label:'Test Style',datatype:'boolean'}
-        ]
-
-    resetAvailables()
+    $http.get('/advanced_search/'+id+'/setup').success((data,status,headers,config) ->
+      $scope.searchSetup = data
+      resetAvailables()
+    )
 
   $scope.searchId = parseInt $routeParams.searchId
   pg = parseInt $routeParams.page
   pg = 1 if isNaN(pg) or pg<1
   $scope.page = pg
-  loadSearch $scope.searchId if $scope.searchId
-  loadResultPage $scope.searchId, $scope.page if $scope.searchId
+
+  if $scope.searchId
+    loadSearch $scope.searchId
+    loadResultPage $scope.searchId, $scope.page
+  else
+    $http.get('/advanced_search/last_search_id').success((data,status,headers,config) ->
+      $location.path '/'+data.id+'/'+$scope.page
+    )
+
   $scope.columnsToRemove = []
   $scope.columnsToAdd = []
   $scope.availableColumns = []
@@ -200,10 +150,34 @@ root = exports ? this
 
   #stateful view settings
   $scope.showSetup = false
-  $scope.showGeneral = true
-  $scope.showSettings = true
-  $scope.showSchedules = true
+
+  #save the search setup and reload the results on after save
+  $scope.saveSetup = () ->
+    $scope.searchResult = {}
+    $scope.searchSetup = {}
+    $http.put('/advanced_search/'+$scope.searchSetup.id,JSON.stringify({search_setup:$scope.searchSetup})).success(() ->
+      loadSearch $scope.searchId
+      loadResultPage $scope.searchId, 1
+    )
   
+  #create a new setup and change location to first page
+  $scope.newSetup = () ->
+    $scope.searchResult = {}
+    mt = $scope.searchSetup.module_type
+    $scope.searchSetup = {}
+    $http.post('/advanced_search',JSON.stringify({module_type:mt})).success((data) ->
+      $location.path '/'+data.id+'/1'
+    )
+
+  $scope.deletePrompt = false
+  #delete current setup and change location to replacement setup
+  $scope.deleteSetup = () ->
+    $scope.searchResult = {}
+    id = $scope.searchSetup.id
+    $scope.searchSetup = {}
+    $http.delete('/advanced_search/'+id).success((data) ->
+      $location.path '/'+data.id+'/1'
+    )
   #
   # Bulk action handling
   #
@@ -259,9 +233,9 @@ root = exports ? this
     schedules.splice(schedules.indexOf(s),1)
 
   #add criterion to model
-  $scope.addCriterion = () ->
+  $scope.addCriterion = (toAddId) ->
     toAdd = {value:''}
-    mf = findByMfid $scope.searchSetup.model_fields, $scope.criterionToAdd
+    mf = findByMfid $scope.searchSetup.model_fields, toAddId
     toAdd.mfid = mf.mfid
     toAdd.datatype = mf.datatype
     toAdd.label = mf.label
@@ -310,13 +284,22 @@ root = exports ? this
   $scope.moveSortsDown = () ->
     moveSelectionDown $scope.searchSetup.sort_criterions, $scope.sortsToRemove
 
+  #toggle sort order between ascending / descending
+  $scope.toggleSort = () ->
+    for s in $scope.sortsToRemove
+      mf = findByMfid $scope.searchSetup.sort_criterions, s
+      mf.descending = !mf.descending
+  
+  $scope.changeSearch = (newId) ->
+    $location.path '/'+newId+'/1'
+    
   #
   # WATCHES
   #
 
   #change monitor for selected search
   $scope.$watch 'searchId',(newValue,oldValue) ->
-    $location.path '/'+newValue+'/1' unless isNaN(newValue) || newValue==oldValue
+    $scope.changeSearch(newValue) unless isNaN(newValue) || newValue==oldValue
 
   $scope.$watch 'searchResult.page', (newValue,oldValue) ->
     $location.path '/'+$scope.searchId+'/'+newValue unless isNaN(newValue) || newValue==oldValue

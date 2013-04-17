@@ -72,7 +72,7 @@ class DeliveriesController < ApplicationController
     action_secure(d.can_edit?(current_user),d,{:verb => "edit",:module_name=>"delivery"}) {
       succeed = lambda {|del|
         add_flash :notices, "Delivery was updated successfully"
-        redirect_update del
+        redirect_to del
       }
       failure = lambda {|del, errors|
         errors_to_flash del, :now=>true

@@ -3,21 +3,9 @@ $(function() {
   $("#btn_save").click(function() {
     $("#frm_p").attr("action",'<%=product_path%>').submit();
   });
-  $("#btn_edit_next").click(function() {
-    next_action_to_form($("#frm_p"));
-    hidden_to_form($("#frm_p"),"c_classify","true");
-    $("#frm_p").submit();
-  });
-  $("#btn_edit_previous").click(function() {
-    previous_action_to_form($("#frm_p"))
-    hidden_to_form($("#frm_p"),"c_classify","true");
-    $("#frm_p").submit();
-  });
   $("#btn_cancel").click(function() {window.location='<%=product_path(@product)%>';});
 
   OpenChain.addClickMap('s',"Save","btn_save");
-  OpenChain.addClickMap('n',"Next","btn_edit_next");
-  OpenChain.addClickMap('p',"Previous","btn_edit_previous");
   OpenChain.addClickMap('c',"Cancel","btn_cancel");
   OpenChain.addKeyMap('j',"Jump To Classification Section",function() {window.location.hash=""; window.location.hash="classifications";});
   OpenChain.activateHotKeys();
@@ -29,8 +17,6 @@ $(function() {
 <%content_for :action_bar do %>
   <button id='btn_save'>Save</button>
   <button id='btn_cancel'>Cancel</button>
-  <button id='btn_edit_next'>Next</button>
-  <button id='btn_edit_previous'>Previous</button>
 <% end %>
 <a href='#classifications'>Jump To Classifications</a>
 <br />

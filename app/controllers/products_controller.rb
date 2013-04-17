@@ -1,7 +1,9 @@
 require 'open_chain/field_logic'
 require 'open_chain/bulk_update'
+require 'open_chain/next_previous_support'
 class ProductsController < ApplicationController
   include Worksheetable
+  include OpenChain::NextPreviousSupport
   before_filter :secure_classifications
 
 	def root_class 
@@ -89,7 +91,7 @@ class ProductsController < ApplicationController
     action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
       succeed = lambda {|p|
         add_flash :notices, "Product was saved successfully."
-        redirect_update p, (params[:c_classify] ? "classify" : "edit")
+        redirect_to p
       }
       failure = lambda {|p,errors|
         errors_to_flash p
@@ -214,7 +216,7 @@ class ProductsController < ApplicationController
   def show_bulk_instant_classify
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil 
-    @preview_product = @pks.blank? ? @search_run.current_object : Product.find(@pks.values.first)
+    @preview_product = @pks.blank? ? Product.find(@search_run.parent.result_keys(:page=>1,:per_page=>1).first) : Product.find(@pks.values.first)
     @preview_instant_classification = InstantClassification.find_by_product @preview_product, current_user
   end
     

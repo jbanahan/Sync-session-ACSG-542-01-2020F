@@ -9,6 +9,42 @@ describe ProductsController do
     @user.company.linked_companies << @linked_importer
     UserSession.create! @user
   end
+  describe :next do
+    it "should go to next item" do
+      p = Factory(:product)
+      ResultCache.any_instance.should_receive(:next).with(99).and_return(p.id)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :next_item, :id=>"99"
+      response.should redirect_to "/products/#{p.id}"
+    end
+    it "should redirect to referrer and show error if result cache return nil" do
+      ResultCache.any_instance.should_receive(:next).with(99).and_return(nil)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :next_item, :id=>"99"
+      response.should redirect_to request.referrer
+      flash[:errors].first.should == "Next object could not be found."
+    end
+  end
+  describe :previous do
+    it "should go to the previous item" do
+      p = Factory(:product)
+      ResultCache.any_instance.should_receive(:previous).with(99).and_return(p.id)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :previous_item, :id=>"99"
+      response.should redirect_to "/products/#{p.id}"
+    end
+    it "should redirect to referrer and show error if result cache return nil" do
+      ResultCache.any_instance.should_receive(:previous).with(99).and_return(nil)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :previous_item, :id=>"99"
+      response.should redirect_to request.referrer
+      flash[:errors].first.should == "Previous object could not be found."
+    end
+  end
   describe :create do
     it "should fail if not master and importer_id is not current company or linked company" do
       post :create, 'product'=>{'unique_identifier'=>'abc123455_pccreate','importer_id'=>@other_importer.id}

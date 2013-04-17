@@ -5,6 +5,14 @@ describe ResultCache do
     Product.stub(:search_where).and_return("1=1")
   end
   describe :next do
+    it "should load cache if empty" do
+      ss = Factory(:search_setup,:module_type=>"Product")
+      ss.sort_criterions.create!(:model_field_uid=>:prod_uid)
+      p = []
+      2.times {|i| p << Factory(:product,:unique_identifier=>"rc#{i}").id }
+      rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>5)
+      rc.next(p[0]).should == p[1]
+    end
     it "should find in cache" do
       ResultCache.new(:object_ids=>[7,1,5].to_json).next(1).should == 5
     end
@@ -45,6 +53,14 @@ describe ResultCache do
   describe :previous do
     it "should find in cache" do
       ResultCache.new(:object_ids=>[7,1,5].to_json).previous(5).should == 1
+    end
+    it "should load cache if empty" do
+      ss = Factory(:search_setup,:module_type=>"Product")
+      ss.sort_criterions.create!(:model_field_uid=>:prod_uid)
+      p = []
+      2.times {|i| p << Factory(:product,:unique_identifier=>"rc#{i}").id }
+      rc = ResultCache.new(:result_cacheable=>ss,:page=>1,:per_page=>5)
+      rc.previous(p[1]).should == p[0]
     end
     it "should find in previous page" do
       ss = Factory(:search_setup,:module_type=>"Product")

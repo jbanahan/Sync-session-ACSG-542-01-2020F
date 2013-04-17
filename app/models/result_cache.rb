@@ -45,15 +45,20 @@ class ResultCache < ActiveRecord::Base
   private
   #parse the object_ids into an array of integers
   def id_array
-    return [] if self.object_ids.blank?
+    load_current_page if self.object_ids.blank?
     JSON.parse self.object_ids
   end
+  def load_current_page
+    self.page = 1 if self.page.blank? || self.page < 1
+    self.object_ids = self.result_cacheable.result_keys(:per_page=>self.per_page,:page=>self.page).to_json
+    self.save!
+  end
   def load_next_page
-    keys = self.result_cacheable.result_keys(:per_page=>self.per_page,:page=>self.page+1)
-    self.update_attributes(:page=>self.page+1,:object_ids=>keys.to_json)
+    self.page += 1 unless self.page.blank?
+    load_current_page
   end
   def load_previous_page
-    keys = self.result_cacheable.result_keys(:per_page=>self.per_page,:page=>self.page-1)
-    self.update_attributes(:page=>self.page-1,:object_ids=>keys.to_json)
+    self.page -= 1 unless self.page.blank?
+    load_current_page
   end
 end

@@ -37,9 +37,6 @@ GEM
     activesupport (3.2.12)
       i18n (~> 0.6)
       multi_json (~> 1.0)
-    angular-rails (0.0.12)
-      coffee-script (~> 2.2.0)
-      rails
     arel (3.0.2)
     authlogic (3.0.3)
       activerecord (>= 3.0.7)
@@ -220,7 +217,6 @@ PLATFORMS
 
 DEPENDENCIES
   RedCloth (= 4.2.9)
-  angular-rails
   authlogic (= 3.0.3)
   aws-sdk
   coffee-rails (~> 3.2.1)
