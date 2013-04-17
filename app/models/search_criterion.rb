@@ -53,7 +53,8 @@ class SearchCriterion < ActiveRecord::Base
     if [:string, :text].include? d
       return self.value.nil? if value_to_test.nil? && self.operator != 'nq'
       if self.operator == "eq"
-        return value_to_test.nil? ? self.value.nil? : value_to_test.downcase == self.value.downcase
+        # The rstrip here is to match how the equality operator works in MySQL.
+        return value_to_test.nil? ? self.value.nil? : value_to_test.downcase.rstrip == self.value.downcase.rstrip
       elsif self.operator == "co"
         return value_to_test.downcase.include?(self.value.downcase)
       elsif self.operator == "nc"
@@ -63,9 +64,11 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == "ew"
         return value_to_test.downcase.end_with?(self.value.downcase)
       elsif self.operator == "nq"
-        return value_to_test.nil? || value_to_test.downcase!=self.value.downcase
+        # The rstrip here is to match how the inequality operator works in MySQL.
+        return value_to_test.nil? || value_to_test.downcase.rstrip != self.value.downcase.rstrip
       elsif self.operator == "in"
-        return break_rows(self.value.downcase).include?(value_to_test.downcase)
+        # The rstrip here is to match how the IN LIST operator works in MySQL.
+        return break_rows(self.value.downcase).include?(value_to_test.downcase.rstrip)
       end
     elsif [:date, :datetime].include? d
       # For date comparisons we want to make sure we're actually dealing w/ a Date
@@ -278,7 +281,11 @@ class SearchCriterion < ActiveRecord::Base
   def break_rows val
     # We don't have to worry any longer about carriage returns being sent (\r) by themselves to denote new lines.
     # No current operatring systems use this style to denote newlines any longer (Mac OS X is a unix and uses \n).
-    val.strip.split(/\r?\n/)
+
+    # We're rstrip'ing here to emulate the IN list handling of MySQL (which trims trailing whitespace before doing comparisons)
+    # The strip is to remove any trailing newlines from the initial list, without which we'd possibly get a extra blank value added 
+    # to the comparison list
+    val.strip.split(/\r?\n/).collect {|line| line.rstrip}
   end
 
 end
