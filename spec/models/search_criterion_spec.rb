@@ -60,6 +60,39 @@ describe SearchCriterion do
         crit.passes?(true).should be_true
         crit.passes?(false).should be_false
       end
+      it "should not consider trailing whitespce for = operator" do
+        crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"ABC")
+        crit.passes?("ABC   ").should be_true
+        crit.value = "ABC   "
+        crit.passes?("ABC").should be_true
+
+        #Make sure we are considering leading whitespace
+        crit.passes?("   ABC").should be_false
+        crit.value = "   ABC"
+        crit.passes?("ABC").should be_false
+      end
+      it "should not consider trailing whitespce for != operator" do
+        crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"nq",:value=>"ABC")
+        crit.passes?("ABC   ").should be_false
+        crit.value = "ABC   "
+        crit.passes?("ABC").should be_false
+
+        #Make sure we are considering leading whitespace
+        crit.passes?("   ABC").should be_true
+        crit.value = "   ABC"
+        crit.passes?("ABC").should be_true
+      end
+      it "should not consider trailing whitespce for IN operator" do
+        crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"in",:value=>"ABC\nDEF")
+        crit.passes?("ABC   ").should be_true
+        crit.passes?("DEF    ").should be_true
+        crit.value = "ABC   \nDEF   \n"
+        crit.passes?("DEF").should be_true
+
+        #Make sure we are considering leading whitespace
+        crit.passes?("   ABC").should be_false
+        crit.passes?("   DEF").should be_false
+      end
     end
     describe :apply do
       context :custom_field do
