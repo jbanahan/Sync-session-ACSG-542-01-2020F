@@ -7,6 +7,7 @@ module OpenChain
         @custom_file = custom_file
         @csm_cd = CustomDefinition.find_or_create_by_label("CSM Number",:module_type=>'Product',:data_type=>'text')
         @dept_cd = CustomDefinition.find_or_create_by_label("CSM Department",:module_type=>'Product',:data_type=>'text')
+        @season_cd = CustomDefinition.find_or_create_by_label('CSM Season',:module_type=>'Product',:data_type=>'text')  
       end
 
       def process user, first_row = 1
@@ -18,6 +19,7 @@ module OpenChain
           last_row = xlc.last_row_number(0)
           style_map = {}
           dept_map = {}
+          season_map = {}
           (first_row..last_row).each do |n|
             row_hash = xlc.get_row_as_column_hash 0, n
             us_style_cell = row_hash[8]
@@ -31,6 +33,9 @@ module OpenChain
 
             department = row_hash[13]['value']
             dept_map[us_style] = department
+
+            season = row_hash[0]['value']
+            season_map[us_style] = season
           end
           style_map.each do |us_style,csm_set|
             current_style = us_style
@@ -38,6 +43,7 @@ module OpenChain
             raise "File failed: #{user.full_name} can't edit product #{p.unique_identifier}" unless p.can_edit?(user)
             p.update_custom_value! @csm_cd, csm_set.to_a.join("\n")
             p.update_custom_value! @dept_cd, dept_map[us_style]
+            p.update_custom_value! @season_cd, season_map[us_style]
           end
         rescue
           had_errors = true

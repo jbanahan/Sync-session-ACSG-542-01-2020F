@@ -12,8 +12,62 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     OpenChain::XLClient.should_receive(:new).with('/path/to').and_return(@xlc)
     @csm = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Number",:data_type=>'text')
     @dept = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Department",:data_type=>'text')
+    @season = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Season",:data_type=>'text')
     @h = described_class.new @cf 
     Product.any_instance.stub(:can_edit?).and_return(true)
+  end
+
+  context :csm_season do
+    it "should set CSM Season for existing products" do
+      p = Factory(:product)
+      p.update_custom_value! @season, 'someval'
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h.process Factory(:user)
+      p.reload
+      p.get_custom_value(@season).value.should == 'seas'
+    end
+    it "should set CSM Season for new product" do
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>'newproduid','datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h.process Factory(:user)
+      p = Product.find_by_unique_identifier 'newproduid'
+      p.get_custom_value(@season).value.should == 'seas'
+    end
+    it "should create CSM Season field if it doesn't exist" do
+      id = @season.id
+      @season.destroy
+      CustomDefinition.find_by_id(id).should be_nil
+      @h = described_class.new @cf 
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>'newproduid','datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h.process Factory(:user)
+      CustomDefinition.find_by_module_type_and_label('Product','CSM Season').data_type.should == 'text'
+    end
   end
 
   # CSM Number is columns C-F in the source spreadsheet concatenated
@@ -23,6 +77,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     p = Factory(:product)
     @xlc.should_receive(:last_row_number).and_return(2)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'140','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
@@ -31,6 +86,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
     @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'ZZZ','datatype'=>'string'},
       3=>{'value'=>'PQRST','datatype'=>'string'},
       4=>{'value'=>'UVWXY','datatype'=>'string'},
@@ -45,6 +101,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     p = Factory(:product)
     @xlc.should_receive(:last_row_number).and_return(3)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'140','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
@@ -54,6 +111,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
 
     )
     @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'140','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
@@ -63,6 +121,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
 
     )
     @xlc.should_receive(:get_row_as_column_hash).with(0,3).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'ZZZ','datatype'=>'string'},
       3=>{'value'=>'PQRST','datatype'=>'string'},
       4=>{'value'=>'UVWXY','datatype'=>'string'},
@@ -78,6 +137,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
   it "should create new CSM number for new product" do
     @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'140','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
@@ -96,6 +156,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     p.update_custom_value!(@csm,'XZY')
     @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'140','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
@@ -111,6 +172,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     p = Factory(:product)
     @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'140XX','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
@@ -134,6 +196,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     @cf.stub(:id).and_return(1)
     @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
       2=>{'value'=>'140','datatype'=>'string'},
       3=>{'value'=>'ABCDE','datatype'=>'string'},
       4=>{'value'=>'FGHIJ','datatype'=>'string'},
