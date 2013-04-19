@@ -119,11 +119,21 @@ root = exports ? this
     $http.get('/advanced_search/'+searchId+'?page='+page).success((data,status,headers,config) ->
       $scope.searchResult = data
       readSelectionCookie data.id
+    ).error((data,status) ->
+      if status == 404
+        $scope.errors.push "This search with id "+id+" could not be found."
+      else
+       $scope.errors.push "An error occurred while loading this search result. Please reload and try again."
     )
   loadSearch = (id) ->
     $http.get('/advanced_search/'+id+'/setup').success((data,status,headers,config) ->
       $scope.searchSetup = data
       resetAvailables()
+    ).error((data,status) ->
+      if status == 404
+        $scope.errors.push "This search with id "+id+" could not be found."
+      else
+        $scope.errors.push "An error occurred while loading this search setup. Please reload and try again."
     )
 
   $scope.searchId = parseInt $routeParams.searchId
@@ -147,6 +157,11 @@ root = exports ? this
   $scope.availableSorts = []
   $scope.criterionToAdd = null
   $scope.scheduleToEdit = null
+  $scope.errors = []
+
+  #clear error messages
+  $scope.clearErrors = () ->
+    $scope.errors = []
 
   #stateful view settings
   $scope.showSetup = false
@@ -177,6 +192,8 @@ root = exports ? this
     $scope.searchSetup = {}
     $http.delete('/advanced_search/'+id).success((data) ->
       $location.path '/'+data.id+'/1'
+    ).error((data) ->
+      $scope.errors.push "An error occurred while deleting this search. Please reload and try again."
     )
   #
   # Bulk action handling

@@ -1,4 +1,5 @@
 <div ng-controller='AdvancedSearchCtrl' id='advanced_search_wrapper'>
+  <div ng-include src='"/templates/errors.html"'></div>
   <div ng-show='searchSetup.id'>
     <select id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>
     </select>

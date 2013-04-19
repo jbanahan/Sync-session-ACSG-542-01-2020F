@@ -16,4 +16,19 @@ div.section_box {
     padding: 5px;
   }
 }
-
+div.ang_error_box {
+  margin: 1em auto;
+  width: 80%;
+  border: 1px solid black;
+  padding: 1em;
+  div.ang_error_message {
+    color: red;
+    margin: .25em;
+  }
+  div.ang_error_close {
+    text-align: right;
+    img {
+      cursor: pointer;
+    }
+  }
+}

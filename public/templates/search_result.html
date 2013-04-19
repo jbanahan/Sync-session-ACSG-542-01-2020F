@@ -1,4 +1,4 @@
-<div ng-hide='searchResult.id' id='search_loading'>
+<div ng-hide='searchResult.id || errors.length > 0' id='search_loading'>
   <img src='/images/ajax_load_64.gif' title='Loading...' />
 </div>
 <div ng-show='searchResult.id' id='search_result'>

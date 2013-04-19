@@ -15,12 +15,24 @@ describe AdvancedSearchController do
       JSON.parse(response.body)['id'].should == old_search.id
       SearchSetup.find_by_id(new_search.id).should be_nil
     end
-    it "should destroy and create new search if none found"
-    it "should not allow destroy of another users search (404)"
+    it "should destroy and create new search if none found" do
+      ss = Factory(:search_setup,:user=>@user)
+      delete :destroy, :id=>ss.id
+      id = JSON.parse(response.body)['id']
+      new_ss = SearchSetup.find(id)
+      new_ss.user.should == @user
+      new_ss.module_type.should == ss.module_type
+    end
+    it "should not allow destroy of another users search (404)" do
+      ss = Factory(:search_setup)
+      lambda {delete :destroy, :id=>ss.id}.should raise_error ActionController::RoutingError
+      SearchSetup.find_by_id(ss.id).should_not be_nil
+    end
   end
   describe :create do
     before :each do
       CoreModule::PRODUCT.stub(:enabled?).and_return(true)
+      CoreModule::PRODUCT.stub(:view?).and_return(true)
     end
     it "should create new default search" do
       post :create, :module_type=>"Product"
@@ -31,9 +43,15 @@ describe AdvancedSearchController do
       ss.module_type.should == 'Product'
       ss.name.should == "New Search"
     end
-    it "should fail if user cannot view module"
-    it "should fail if module not enabled"
-    it "should fail if module not specified"
+    it "should fail if user cannot view module" do
+      CoreModule::PRODUCT.stub(:view?).and_return(false)
+      lambda {post :create, :module_type=>"Product"}.should raise_error ActionController::RoutingError
+      SearchSetup.for_user(@user).should be_empty
+    end
+    it "should fail if module not specified" do
+      lambda {post :create}.should raise_error ActionController::RoutingError
+      SearchSetup.for_user(@user).should be_empty
+    end
   end
   describe :update do
     before :each do
@@ -108,14 +126,14 @@ describe AdvancedSearchController do
     it "should recreate criterions" do
       @ss.search_criterions.create!(:model_field_uid=>:prod_uid,:operator=>:sw,:value=>'X')
       put :update, :id=>@ss.id, :search_setup=>{:search_criterions=>[
-        {:mfid=>'prod_uid',:operator=>'eq',:value=>'y',:label=>'XX',:datatype=>'string'},
-        {:mfid=>'prod_name',:operator=>'ew',:value=>'q',:label=>'XX',:datatype=>'string'}
+        {:mfid=>'prod_uid',:operator=>'eq',:value=>'y',:label=>'XX',:datatype=>'string',:include_empty=>true},
+        {:mfid=>'prod_name',:operator=>'ew',:value=>'q',:label=>'XX',:datatype=>'string',:include_empty=>false}
       ]}
       response.should be_success
       @ss.reload
       @ss.should have(2).search_criterions
-      @ss.search_criterions.find_by_model_field_uid_and_operator_and_value('prod_uid','eq','y').should_not be_nil
-      @ss.search_criterions.find_by_model_field_uid_and_operator_and_value('prod_name','ew','q').should_not be_nil
+      @ss.search_criterions.find_by_model_field_uid_and_operator_and_value('prod_uid','eq','y').include_empty?.should be_true
+      @ss.search_criterions.find_by_model_field_uid_and_operator_and_value('prod_name','ew','q').include_empty?.should be_false
     end
   end
 
@@ -183,7 +201,7 @@ describe AdvancedSearchController do
         {"mfid"=>"prod_uid","descending"=>true,"label"=>ModelField.find_by_uid(:prod_uid).label,"rank"=>1}
       ]
       h['search_criterions'].should == [
-        {"mfid"=>"prod_name","operator"=>"eq","label"=>ModelField.find_by_uid(:prod_name).label,"value"=>"123","datatype"=>"string"}
+        {"mfid"=>"prod_name","operator"=>"eq","label"=>ModelField.find_by_uid(:prod_name).label,"value"=>"123","datatype"=>"string","include_empty"=>false}
       ]
       h['search_schedules'].should == [
         {"email_addresses"=>"x@example.com","run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
@@ -198,6 +216,15 @@ describe AdvancedSearchController do
         x
       }
       h['model_fields'].should == expected_model_fields
+    end
+    it "should set include empty for criterions" do
+      @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
+        :module_type=>"Product")
+      @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123",:include_empty=>true)
+      get :setup, :id=>@ss.id, :format=>'json'
+      response.should be_success
+      h = JSON.parse response.body
+      h['search_criterions'][0]['include_empty'].should be_true
     end
     it "should 404 if not for correct user" do
       ss = Factory(:search_setup)
