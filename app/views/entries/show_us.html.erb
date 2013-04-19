@@ -6,7 +6,7 @@
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
 <%end-%>
-<% cache [current_user,@entry] do-%>
+<% cache ["v2",current_user.company,current_user,@entry] do-%>
   <style>
   .ent_columns {
     width:99%;
@@ -124,11 +124,14 @@
     </tbody>
   </table>
   <hr />
-  <% if current_user.company.broker? && !@entry.entry_comments.empty?-%>
+  <% entry_comments = @entry.entry_comments.order("generated_at ASC").select {|c| c.can_view? current_user} -%>
+  <% if !entry_comments.empty? -%>
   <h2>Notes</h2>
   <table class='detail_table'>
-    <%@entry.entry_comments.order("generated_at ASC").each do |c|-%>
-    <tr class='hover'><td><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
+    <%entry_comments.each do |c|
+      if c.can_view? current_user -%>
+        <tr class='hover'><td><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
+      <%end-%>
     <%end-%>
   </table>
   <hr />
