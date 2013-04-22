@@ -60,14 +60,36 @@ describe OpenChain::FenixParser do
     @sima_amount = BigDecimal("8.20")
     @excise_amount = BigDecimal("2.22")
     @excise_rate_code = '3'
-    @entry_lambda = lambda { |new_style = false|
+    @additional_container_numbers = ['456', '789']
+    @additional_cargo_control_numbers = ['asdf', 'sdfa']
+    @activities = {
+      '180' => [Time.new(2013,4,1,10,0), Time.new(2013,4,1,18,0)],
+      '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)]
+    }
+    @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
       data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, 0 ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
+      if new_style && multi_line
+        @additional_container_numbers.each do |container|
+          data += "\r\nCON,#{@barcode},#{container}"
+        end
+
+        @additional_cargo_control_numbers.each do |ccn|
+          data += "\r\nCCN,#{@barcode},#{ccn}"
+        end
+        
+        @activities.each do |activity_number, date_times|
+          date_times.each do |date|
+            data += "\r\nSD,#{@barcode},#{activity_number},#{date.strftime('%Y%m%d')},#{date.strftime('%H%M')},USERID,NOTES"
+          end
+        end
+      end
+
       data
     }
   end
 
-  def do_full_test entry_data
+  def do_shared_test entry_data
     OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'key'}
     ent = Entry.find_by_broker_reference @file_number
     ent.last_file_bucket.should == 'bucket'
@@ -75,7 +97,7 @@ describe OpenChain::FenixParser do
     ent.import_country.should == Country.find_by_iso_code('CA')
     ent.entry_number.should == @barcode
     ent.importer_tax_id.should == @importer_tax_id
-    ent.cargo_control_number.should == @cargo_control_no
+    
     ent.ship_terms.should == @ship_terms.upcase
     ent.direct_shipment_date.should == Date.strptime(@direct_shipment_date, @mdy)
     ent.transport_mode_code.should == @transport_mode_code.strip
@@ -99,7 +121,7 @@ describe OpenChain::FenixParser do
     ent.employee_name.should == @employee_name
     ent.file_logged_date.should == @est.parse_us_base_format("#{@file_logged_date},12:00am")
     ent.po_numbers.should == @header_po
-    ent.container_numbers.should == @container
+    
     ent.vendor_names.should == @vendor_name
     ent.total_invoiced_value.should == @line_value
     ent.total_duty.should == @duty_amount
@@ -144,15 +166,43 @@ describe OpenChain::FenixParser do
     tar.sima_amount.should == @sima_amount
     tar.excise_rate_code.should == @excise_rate_code
     tar.excise_amount.should == @excise_amount
+
+    ent
   end
 
 
   it 'should save an entry with one line' do
-    do_full_test @entry_lambda.call
+    ent = do_shared_test @entry_lambda.call(false)
+
+    # These are file differences that are handled differently now with the new style entry format
+    ent.cargo_control_number.should == @cargo_control_no
+    ent.container_numbers.should == @container
+    ent.first_do_issued_date.should be_nil
+    ent.docs_received_date.should be_nil
   end
   
-  it 'should save an entry with one line in the new format' do
-    do_full_test @entry_lambda.call(true)
+  it 'should save an entry with one main line in the new format' do
+    ent = do_shared_test @entry_lambda.call
+
+    # New Entry file differences 
+    
+    # We're pulling cargo control number from B3L and CCN lines
+    ccn = ent.cargo_control_number.split("\n ")
+    ccn.length.should == @additional_cargo_control_numbers.length + 1
+    ([@cargo_control_no] + @additional_cargo_control_numbers).each do |n|
+      ccn.include?(n).should be_true
+    end
+
+    # We're pulling container from B3L and CON lines
+    containers = ent.container_numbers.split("\n ")
+    containers.length.should == @additional_container_numbers.length + 1
+    ([@container] + @additional_container_numbers).each do |n|
+      containers.include?(n).should be_true
+    end
+    # Need to use local time since we pulled the entry back from the DB 
+    ent.first_do_issued_date.should == @activities['180'][0].in_time_zone(Time.zone)
+    # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
+    ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
   end
 
   it 'should call link_broker_invoices' do
@@ -225,6 +275,21 @@ describe OpenChain::FenixParser do
     entry.commercial_invoices.length.should == 0
   end
 
+  it 'should read master bills and container numbers for entries without invoice lines' do
+    entry_data = lambda {
+      data = '"1234567890",12345,"My Company",TAXID,,,,,CONT,,,,,MASTERBILL'
+      data 
+    }
+
+    OpenChain::FenixParser.parse entry_data.call
+    entry = Entry.find_by_broker_reference 12345
+    entry.should_not be_nil
+    entry.master_bills_of_lading.should == "MASTERBILL"
+    entry.container_numbers.should == "CONT"
+    
+    entry.commercial_invoices.length.should == 0
+  end
+
   it 'should fall back to using entry number and source system lookup to find imaging shell records' do
     existing_entry = Factory(:entry,:entry_number=>@entry_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
     
@@ -243,13 +308,6 @@ describe OpenChain::FenixParser do
     existing_entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
     
     existing_entry.commercial_invoices.length.should == 0
-  end
-
-  it 'should skip newstyle lines (for now)' do
-    data = @entry_lambda.call(true)
-    data += "\nSD,#{@barcode},12345,,,,,\nCCN,12345,987454\nCON,12345,65456546\n"
-
-    do_full_test data
   end
 
   context 'importer company' do
@@ -276,7 +334,7 @@ describe OpenChain::FenixParser do
       ]
       @multi_line_lambda = lambda {
         data = ""
-        @invoices.each do |inv|
+        @invoices.each_with_index do |inv, i|
           @invoice_number = inv[:inv_num]
           @invoice_sequence = inv[:seq]
           @detail_po = inv[:detail_po] if inv[:detail_po]
@@ -291,7 +349,7 @@ describe OpenChain::FenixParser do
           @entered_value = inv[:entered_value] if inv[:entered_value]
           @gst_amount = inv[:gst_amount] if inv[:gst_amount]
           @part_number = inv[:part_number] if inv[:part_number]
-          data += @entry_lambda.call+"\r\n"
+          data += @entry_lambda.call(true, i==0)+"\r\n"
         end
         data.strip
       }  
@@ -401,7 +459,13 @@ describe OpenChain::FenixParser do
       it 'container numbers' do
         ['x','y'].each_with_index {|b,i| @invoices[i][:cont]=b} 
         OpenChain::FenixParser.parse @multi_line_lambda.call
-        Entry.find_by_broker_reference(@file_number).container_numbers.should == "x\n y"
+        containers = Entry.find_by_broker_reference(@file_number).container_numbers.split("\n ")
+        # Make sure we're accounting for the container numbers pulled from the CON records
+        containers.include?('x').should be_true
+        containers.include?('y').should be_true
+        @additional_container_numbers.each do |c|
+          containers.include?(c).should be_true
+        end
       end
       it "part numbers" do
         ['x','y'].each_with_index {|b,i| @invoices[i][:part_number]=b}
