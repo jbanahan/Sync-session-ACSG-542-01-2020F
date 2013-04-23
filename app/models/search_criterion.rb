@@ -69,6 +69,9 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == "in"
         # The rstrip here is to match how the IN LIST operator works in MySQL.
         return break_rows(self.value.downcase).include?(value_to_test.downcase.rstrip)
+      elsif self.operator == "notin"
+        # The rstrip here is to match how the IN LIST operator works in MySQL.
+        return !break_rows(self.value.downcase).include?(value_to_test.downcase.rstrip)
       end
     elsif [:date, :datetime].include? d
       # For date comparisons we want to make sure we're actually dealing w/ a Date
@@ -141,7 +144,9 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == "nq"
         return value_to_test.nil? || value_to_test!=self_val
       elsif self.operator == "in"
-        return break_rows(self.value.downcase).include?(value_to_test.to_s)
+        return break_rows(self.value.downcase).include?(value_to_test.to_s.rstrip)
+      elsif self.operator == "notin"
+        return !break_rows(self.value.downcase).include?(value_to_test.to_s.rstrip)
       end
     end
   end
@@ -235,7 +240,7 @@ class SearchCriterion < ActiveRecord::Base
       return "#{self_val}%"
     when "ew"
       return "%#{self_val}"
-    when "in"
+    when "in", "notin"
       return break_rows(self_val)
     else
       return self_val

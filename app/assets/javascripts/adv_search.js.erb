@@ -112,10 +112,10 @@ var OCSearch = (function() {
     var vCont = tr.find('.srch_crit_cont')
     var opVal = op.val();
     var tagName = vField[0].nodeName.toLowerCase();
-    if(opVal=='in' && tagName!='textarea') {
+    if((opVal=='in' || opVal=='notin') && tagName!='textarea') {
     vCont.html("<textarea class='srch_crit_value' name='"+vField.attr('name')+"' cols='30' rows='5' id='"+vField.attr('id')+"' /><div class='srch_instruction'>One Value Per Line</div>");
       return;
-    } else if (opVal!='in' && tagName=='textarea') {
+    } else if (opVal!='in' && opVal!='notin' && tagName=='textarea') {
       vCont.html("<input type='text' size='30' id='"+vField.attr('id')+"' name='"+vField.attr('name')+"' class='srch_crit_value' />")
     }
     var vField = tr.find(".srch_crit_value");
@@ -156,6 +156,7 @@ var OCSearch = (function() {
         h += "<option value='ew'>Ends With</option>";
         h += "<option value='co'>Contains</option>";
         h += "<option value='in'>One Of</option>";
+        h += "<option value='notin'>Not One Of</option>";
       }
       if(dt=="string" || dt=="text") {
         h += "<option value='eq'>Equals</option>";
@@ -165,6 +166,7 @@ var OCSearch = (function() {
         h += "<option value='co'>Contains</option>";
         h += "<option value='nc'>Doesn't Contain</option>";
         h += "<option value='in'>One Of</option>";
+        h += "<option value='notin'>Not One Of</option>";
       }
       h += "<option value='null'>Is Empty</option>";
       h += "<option value='notnull'>Is Not Empty</option>";

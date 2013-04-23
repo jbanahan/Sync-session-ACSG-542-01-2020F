@@ -93,6 +93,16 @@ describe SearchCriterion do
         crit.passes?("   ABC").should be_false
         crit.passes?("   DEF").should be_false
       end
+      it "should find something with a NOT IN operator" do
+        crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"notin",:value=>"ABC\nDEF")
+        crit.passes?("A").should be_true
+        crit.passes?("ABC").should be_false
+        crit.passes?("ABC   ").should be_false
+        crit.passes?("DEF   ").should be_false
+
+        crit.passes?("  ABC").should be_true
+        crit.passes?("  DEF").should be_true
+      end
     end
     describe :apply do
       context :custom_field do
@@ -238,6 +248,17 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>:ent_sbols,:operator=>"eq",:value=>"1")
           sc.include_empty = true
           sc.apply(Entry.where("1=1")).all.should include entry
+        end
+
+        it "should find something with NOT IN operator" do
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"notin", :value=>"val\nval2")
+          sc.apply(Product.where("1=1")).all.should include @product
+        end
+
+        it "should not find something with NOT IN operator" do
+          #Leave some whitespace in so we know it's getting trimmed out
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"notin", :value=>"#{@product.unique_identifier}   ")
+          sc.apply(Product.where("1=1")).all.should_not include @product
         end
       end
     end
