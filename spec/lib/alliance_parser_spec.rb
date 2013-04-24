@@ -169,6 +169,7 @@ describe OpenChain::AllianceParser do
           :mid=>'faljdsiadfl',:charges=>BigDecimal('120301.20'),:related_parties=>true,:volume=>BigDecimal('12391.21',2),:computed_value=>BigDecimal('123.45',2),
           :value=>BigDecimal('3219.23',2),:computed_adjustments=>BigDecimal('3010.32',2),:computed_net_value=>BigDecimal('301.21',2),
           :related_parties => true, :mpf=>BigDecimal('27.01',2), :hmf=>BigDecimal('23.12',2), :prorated_mpf=>BigDecimal('50.26'), :cotton_fee=>BigDecimal('15.22',2),
+          :line_number => '00010',
           :tariff=>[{
             :duty_total=>BigDecimal("21.10",2),:entered_value=>BigDecimal('19311.12',2),:spi_primary=>'A',:spi_secondary=>'B',:hts_code=>'6504212121',
             :class_q_1=>BigDecimal('10.04',2),:class_uom_1=>'ABC', 
@@ -207,6 +208,7 @@ describe OpenChain::AllianceParser do
         ci[:lines].each do |line|
           [:mid,:po_number,:department].each {|k| line[k]='' unless line[k]}
           rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(18)}#{line[:department].ljust(6)}#{"".ljust(27)}#{line[:po_number].ljust(35)}#{"".ljust(45)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{"".ljust(8)}"
+          rows << "CL01#{"".ljust(426)}#{line[:line_number]}"
           if line[:tariff]
             line[:tariff].each do |t|
               t_row = "CT00#{convert_cur.call(t[:duty_total],12)}#{convert_cur.call(t[:entered_value],13)}#{t[:spi_primary].ljust(2)}#{t[:spi_secondary].ljust(1)}#{t[:hts_code].ljust(10)}"
@@ -459,6 +461,7 @@ describe OpenChain::AllianceParser do
         ci_line.department.should == line[:department]
         ci_line.cotton_fee.should == line[:cotton_fee]
         (ci_line.unit_price*100).to_i.should == ( (ci_line.value / ci_line.quantity) * 100 ).to_i if ci_line.unit_price && ci_line.quantity
+        ci_line.line_number.should == line[:line_number].to_i / 10
         if line[:tariff]
           line[:tariff].each do |t_line|
             found = ci_line.commercial_invoice_tariffs.where(:hts_code=>t_line[:hts_code])
