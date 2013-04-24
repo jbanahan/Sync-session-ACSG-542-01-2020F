@@ -1,5 +1,5 @@
 root = exports ? this
-@app = angular.module('AdvancedSearchApp',['ngResource']).config(['$routeProvider', ($routeProvider) -> 
+@app = angular.module('AdvancedSearchApp',['ngResource','ChainComponents']).config(['$routeProvider', ($routeProvider) -> 
   $routeProvider.
     when('/:searchId/:page',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
     when('/:searchId',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
@@ -7,6 +7,8 @@ root = exports ? this
 ])
 
 @app.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http',($scope,$routeParams,$location,$http) ->
+  
+  $scope.mydate = null
   
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
@@ -158,10 +160,19 @@ root = exports ? this
   $scope.criterionToAdd = null
   $scope.scheduleToEdit = null
   $scope.errors = []
+  $scope.notices = []
 
-  #clear error messages
-  $scope.clearErrors = () ->
-    $scope.errors = []
+  #give functionality
+  $scope.giveUserId = null
+  $scope.givePrompt = false
+  $scope.give = (targetId) ->
+    $scope.givePrompt = false
+    $http.post('/search_setups/'+$scope.searchSetup.id+'/give',{'other_user_id':targetId}).success((data) ->
+      $scope.notices.push "Report given to user."
+    ).error((data) ->
+      $scope.errors.push "Error giving this report, please try again."
+    )
+
 
   #stateful view settings
   $scope.showSetup = false
@@ -169,10 +180,13 @@ root = exports ? this
   #save the search setup and reload the results on after save
   $scope.saveSetup = () ->
     $scope.searchResult = {}
+    ss = $scope.searchSetup
     $scope.searchSetup = {}
-    $http.put('/advanced_search/'+$scope.searchSetup.id,JSON.stringify({search_setup:$scope.searchSetup})).success(() ->
+    $http.put('/advanced_search/'+ss.id,JSON.stringify({search_setup:ss})).success(() ->
       loadSearch $scope.searchId
       loadResultPage $scope.searchId, 1
+    ).error((data) ->
+      $scope.error.push "An error occurred while saving this search."
     )
   
   #create a new setup and change location to first page
@@ -182,6 +196,8 @@ root = exports ? this
     $scope.searchSetup = {}
     $http.post('/advanced_search',JSON.stringify({module_type:mt})).success((data) ->
       $location.path '/'+data.id+'/1'
+    ).error((data) ->
+      $scope.error.push "An error occurred while creating this search."
     )
 
   $scope.deletePrompt = false

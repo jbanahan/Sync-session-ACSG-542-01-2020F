@@ -1,5 +1,5 @@
 <div ng-controller='AdvancedSearchCtrl' id='advanced_search_wrapper'>
-  <div ng-include src='"/templates/errors.html"'></div>
+  <div chain-messages errors='errors' notices='notices'></div>
   <div ng-show='searchSetup.id'>
     <select id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>
     </select>
@@ -69,9 +69,10 @@
             </select>
             <input type='text' ng-model='crit.value' ng-show='crit.datatype=="string"' />
             <input type='number' ng-model='crit.value' ng-show='crit.datatype=="decimal"' />
-            <input type='text' ng-model='crit.value' ng-show='["datetime","date"].indexOf(crit.datatype)>=0' class='isdate' />
+            <span ng-show='crit.datatype=="date" || crit.datatype=="datetime"'><div style='display:inline;' chain-date-picker='crit.value'></div></span>
             <input type='number' ng-model='crit.value' ng-show='["integer","fixnum"].indexOf(crit.datatype)>=0' class='integer' />
             <textarea ng-model='crit.value' ng-show='crit.datatype=="text"' />
+            <input type='checkbox' ng-model='crit.include_empty'/> Include Empty
             <a ng-click='removeCriterion(crit)'><img src='/images/x.png'/></a>
           </div>
           Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
@@ -145,15 +146,22 @@
         <div class='clear'></div>
       </div>
       <div id='search_action_links'>
-        <span ng-hide='deletePrompt==true'>
+        <span ng-hide='deletePrompt==true || givePrompt==true'>
           <a class='action_link' ng-click='saveSetup()'>Save</a>
           <a class='action_link' ng-click='newSetup()'>New</a>
+          <a class='action_link' ng-click='givePrompt=true'>Give</a>
           <a class='action_link' ng-click='deletePrompt=true'>Delete</a>
         </span>
         <span ng-show='deletePrompt==true'>
           Really Delete?
           <a class='action_link' ng-click='deleteSetup()'>Yes</a>
           <a class='action_link' ng-click='deletePrompt=false'>No</a>
+        </span>
+        <span ng-show='givePrompt==true'>
+          Select User
+          <div style='display:inline;' chain-user-list='giveUserId'></div>
+          <a class='action_link' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
+          <a class='action_link' ng-click='givePrompt=false'>Cancel</a>
         </span>
       </div>
     </div>

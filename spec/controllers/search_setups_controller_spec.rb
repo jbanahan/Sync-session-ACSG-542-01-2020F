@@ -43,4 +43,28 @@ describe SearchSetupsController do
       @ss.search_criterions.length.should == 2
     end
   end
+  describe 'give' do
+    it "should give and redirect" do
+      u2 = Factory(:user,:company=>@u.company)
+      get :give, :id=>@ss.id, :other_user_id=>u2.id
+      response.should redirect_to '/entries'
+      u2.search_setups.first.name.should == "Test (From #{@u.full_name})" 
+    end
+    it "should give and return ok for json" do
+      u2 = Factory(:user,:company=>@u.company)
+      post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
+      response.should be_success
+      JSON.parse(response.body)['ok'].should=='ok'
+    end
+    it "should 404 if search not found" do
+      u2 = Factory(:user,:company=>@u.company)
+      lambda {post :give, :id=>(@ss.id+1), :other_user_id=>u2.id}.should raise_error ActionController::RoutingError
+      SearchSetup.count.should == 1
+    end
+    it "should error if user cannot give report to other user" do
+      u2 = Factory(:user)
+      post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
+      response.status.should == 422
+    end
+  end
 end
