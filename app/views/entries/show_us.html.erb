@@ -6,7 +6,7 @@
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
 <%end-%>
-<% cache ["v2",current_user.company,current_user,@entry] do-%>
+<% cache ["v3",current_user.company,current_user,@entry] do-%>
   <style>
   .ent_columns {
     width:99%;
@@ -278,7 +278,7 @@
       <a href='#c_invoices'>Commercial Invoices</a>
     </div>
     <h1>Broker Invoices</h1>
-    <%fields = [:bi_invoice_date,:bi_suffix,:bi_invoice_total,:bi_currency]%>
+    <%fields = [:bi_invoice_number,:bi_invoice_date,:bi_suffix,:bi_invoice_total,:bi_currency]%>
     <table class='detail_table'>
       <thead><tr>
         <%fields.each do |f|%>
@@ -291,7 +291,7 @@
             <tr class='hover'>
               <%fields.each do |f|%>
                 <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>>
-                  <%=f==:bi_invoice_date ? link_to(field_value(line,f),"#bi_#{line.id}") : field_value(line, f)%>
+                  <%=f==:bi_invoice_number ? link_to(field_value(line,f),"#bi_#{line.id}") : field_value(line, f)%>
                 </td>
               <%end%>
             </tr>
@@ -309,7 +309,7 @@
             <tr>
               <td style='width:50%;'>
                 <table>
-                  <%[:bi_suffix,:bi_invoice_total].each do |f|%>
+                  <%[:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency].each do |f|%>
                     <%=field_view_row bi,f,false%>
                   <%end%>
                 </table>

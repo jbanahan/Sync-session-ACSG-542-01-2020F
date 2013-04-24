@@ -4,42 +4,58 @@ module OpenChain
     extend OpenChain::IntegrationClientParser
     SOURCE_CODE = 'Fenix'
 
+    # You can easily add new simple date mappings from the SD records by adding a 
+    # Activity # -> method name symbol in the entry.
+    # ie. 'ABC' => :abc_date 
+    ACTIVITY_DATE_MAP = {
+      # Because there's special handling associated with these fields, some of these 
+      # mapped values intentially use symbols that don't map to actual entry property setter methods
+      '180' => :do_issued_date_first,
+      '490' => :docs_received_date_first
+    }
+
+    SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON']
+
     def self.integration_folder
       "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
     end
+
     # take the text from a Fenix CSV output file a create entries
     def self.parse file_content, opts={}
       begin
         entry_lines = []
         current_file_number = ""
         CSV.parse(file_content) do |line|
-          # Skip any new lines that come from the new style of entry lines
-          next if line.size < 10 || line[0]=='Barcode' || ['SD', 'CCN', 'CON'].include?(line[0])
-
-          # B3L in position 0 indicates we have the new fenix style of line, the new B3L "header" lines 
-          # are identical to the existing fenix file lines, except that they have the leading B3L record identifier.
-          # Just remove the first element and continue processing
-          line.shift() if line[0] == "B3L"
+          # The "supporting" lines in the new format all have less than 10 file positions 
+          # So, don't skip the line if we're proc'ing one of those.
+          next if (line.size < 10 && !SUPPORTING_LINE_TYPES.include?(line[0])) || line[0]=='Barcode'
           
+          # We're counting on the new-style lines to have a unique value in the barcode field (line[1] in new style)
+          # and the old style lines were counting on the file number value being unique (line[1] in old style)
+          # These values are never going to be the same for old/new style lines either, so we can safely
+          # depend on the value to a unique way to identify new lines, even across new vs. old line styles.
           file_number = line[1]
           if !entry_lines.empty? && file_number!=current_file_number
             FenixParser.new.parse_entry entry_lines, opts 
             entry_lines = []
           end
           current_file_number = file_number
+
+          # The new style header line is exactly the same as the old, except for a leading line identifier
+          # value in the first position.  Shift the identifier off so we don't have to bother with different 
+          # array indexes between line styles when parsing the entry and invoice data from these lines
+          line.shift if line[0] == "B3L"
+
           entry_lines << line
         end
         FenixParser.new.parse_entry entry_lines, opts unless entry_lines.empty?
       rescue
-        puts $!
-        puts $!.backtrace
         tmp = Tempfile.new(['fenix_error_','.txt'])
         tmp << file_content
         tmp.flush
         $!.log_me ["Fenix parser failure."], [tmp.path]
       end
     end
-
 
     def parse_entry lines, opts={} 
       s3_bucket = opts[:bucket]
@@ -52,13 +68,26 @@ module OpenChain
       @total_gst = BigDecimal('0.00')
       @total_duty = BigDecimal('0.00')
 
+      accumulated_dates = Hash.new {|h, k| h[k] = []}
+
       #get header info from first line
       process_header lines.first
-      lines.each do |x| 
-        process_invoice x
-        process_invoice_line x
+      lines.each do |line| 
+
+        case line[0]
+        when "SD"
+          process_activity_line line, accumulated_dates
+        when "CCN"
+          process_cargo_control_line line
+        when "CON"
+          process_container_line line
+        else 
+          process_invoice line
+          process_invoice_line line
+        end
       end
-      detail_pos = accumulated_string(:po_number)
+
+      detail_pos = accumulated_string(:po_numbers)
       @entry.last_file_bucket = s3_bucket
       @entry.last_file_path = s3_path
       @entry.total_invoiced_value = @total_invoice_val
@@ -67,15 +96,16 @@ module OpenChain
       @entry.total_gst = @total_gst
       @entry.total_duty_gst = @total_duty + @total_gst
       @entry.po_numbers = detail_pos unless detail_pos.blank?
-      @entry.master_bills_of_lading = accumulated_string(:bol)
-      @entry.container_numbers = accumulated_string(:cont)
+      @entry.master_bills_of_lading = accumulated_string(:master_bills_of_lading)
+      @entry.container_numbers = accumulated_string(:container_numbers)
       @entry.origin_country_codes = accumulated_string(:org_country)
       @entry.origin_state_codes = accumulated_string(:org_state)
       @entry.export_country_codes = accumulated_string(:exp_country)
       @entry.export_state_codes = accumulated_string(:exp_state)
-      @entry.vendor_names = accumulated_string(:vend)
+      @entry.vendor_names = accumulated_string(:vendor_names)
       @entry.part_numbers = accumulated_string(:part_number)
       @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
+      @entry.cargo_control_number = accumulated_string(:cargo_control_number)
       @entry.entered_value = @total_entered_value
 
       @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
@@ -83,6 +113,8 @@ module OpenChain
       @commercial_invoices.each do |inv_num, inv|
         inv.invoice_value = @ci_invoice_val[inv_num]
       end
+
+      set_entry_dates @entry, accumulated_dates
 
       @entry.save!
       #match up any broker invoices that might have already been loaded
@@ -119,7 +151,9 @@ module OpenChain
       @entry.entry_number = entry_number
       @entry.import_country = Country.find_by_iso_code('CA')
       @entry.importer_tax_id = tax_id
-      @entry.cargo_control_number = str_val(line[12])
+      accumulate_string :cargo_control_number, str_val(line[12])
+      accumulate_string :master_bills_of_lading, str_val(line[13])
+      accumulate_string :container_numbers, str_val(line[8])
       @entry.ship_terms = str_val(line[17]) {|val| val.upcase}
       @entry.direct_shipment_date = parse_date(line[42])
       @entry.transport_mode_code = str_val(line[4])
@@ -159,7 +193,7 @@ module OpenChain
       ci.vendor_name = str_val(line[11])
       ci.currency = str_val(line[43])
       ci.exchange_rate = dec_val(line[44])
-      accumulate_string :vend, ci.vendor_name
+      accumulate_string :vendor_names, ci.vendor_name
       accumulate_string :invoice_number, ci.invoice_number
     end
 
@@ -184,9 +218,9 @@ module OpenChain
         @total_invoice_val ||= BigDecimal('0.00')
         @total_invoice_val += inv_ln.value
       end
-      accumulate_string :po_number, inv_ln.po_number unless inv_ln.po_number.blank?
-      accumulate_string :bol, str_val(line[13])
-      accumulate_string :cont, str_val(line[8])
+      accumulate_string :po_numbers, inv_ln.po_number unless inv_ln.po_number.blank?
+      accumulate_string :master_bills_of_lading, str_val(line[13])
+      accumulate_string :container_numbers, str_val(line[8])
       accumulate_string :part_number, inv_ln.part_number unless inv_ln.part_number.blank?
       exp = country_state(line[26])
       org = country_state(line[27])
@@ -218,6 +252,23 @@ module OpenChain
       t.excise_rate_code = str_val(line[51])
       t.excise_amount = dec_val(line[52])
     end
+
+    def process_activity_line line, accumulated_dates
+      if !line[2].nil? && !line[3].nil? && !line[4].nil? && ACTIVITY_DATE_MAP[line[2]]
+        time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M")
+        # This assumes we're using a hash with a default return value of an empty array
+        accumulated_dates[ACTIVITY_DATE_MAP[line[2]]] << time.in_time_zone(time_zone)
+      end
+      rescue
+    end
+
+    def process_cargo_control_line line
+      accumulate_string(:cargo_control_number, line[2]) unless line[2].nil?
+    end
+
+    def process_container_line line
+      accumulate_string(:container_numbers, line[2]) unless line[2].nil?
+    end
     
     def dec_val val
       BigDecimal(val) unless val.blank?
@@ -241,12 +292,12 @@ module OpenChain
 
     def parse_date d
       return nil if d.blank? 
-      Date.strptime d.strip, '%m/%d/%Y'
+      Date.strptime(d.strip, '%m/%d/%Y') rescue return nil
     end
 
     def parse_date_time line, start_pos
       return nil if line[start_pos].blank? || line[start_pos+1].blank?
-      time_zone.parse_us_base_format "#{line[start_pos]} #{line[start_pos+1]}"
+      time_zone.parse_us_base_format("#{line[start_pos]} #{line[start_pos+1]}") rescue return nil
     end
 
     def time_zone
@@ -263,6 +314,31 @@ module OpenChain
       @accumulated_strings[string_code] ||= Set.new
       @accumulated_strings[string_code] << value unless value.blank?
     end
+
+    def first_accumulated_date dates, key
+      date_list = dates[key]
+      date_list ? date_list.first : nil
+    end
+
+    def set_entry_dates entry, accumulated_dates
+      # The accumulated dates hash is supposed to be a symbol => Activity Date array
+      # We're basically just looping through the dates we've processed from SD records
+      # and then setting the last SD date value processed from the file into the entry.
+      # So in the case of multiple records that have the same code, we're pushing
+      # only the last date value into the entry here.
+
+      accumulated_dates.each do |date_setter, date_array|
+        if entry.respond_to? date_setter
+          entry.send(date_setter, date_array.last)  
+        end
+      end
+
+      # There's a couple of date values that need special handling beyond just setting the
+      # last SD date value from the file.
+      entry.first_do_issued_date = first_accumulated_date(accumulated_dates, :do_issued_date_first)
+      entry.docs_received_date = first_accumulated_date(accumulated_dates, :docs_received_date_first)
+    end
+
     def accumulated_string string_code
       return "" unless @accumulated_strings && @accumulated_strings[string_code]
       @accumulated_strings[string_code].to_a.join("\n ")
