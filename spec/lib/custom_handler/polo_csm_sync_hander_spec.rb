@@ -13,6 +13,8 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     @csm = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Number",:data_type=>'text')
     @dept = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Department",:data_type=>'text')
     @season = Factory(:custom_definition,:module_type=>'Product',:label=>"CSM Season",:data_type=>'text')
+    @first_csm_date_cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>'date',:label=>"CSM Received Date (First)")
+    @last_csm_date_cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>'date',:label=>"CSM Received Date (Last)")
     @h = described_class.new @cf 
     Product.any_instance.stub(:can_edit?).and_return(true)
   end
@@ -33,7 +35,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       )
       @h.process Factory(:user)
       p.reload
-      p.get_custom_value(@season).value.should == 'seas'
+      p.get_custom_value(@season).value.should == "seas\nsomeval"
     end
     it "should set CSM Season for new product" do
       @xlc.should_receive(:last_row_number).and_return(1)
@@ -67,6 +69,31 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       )
       @h.process Factory(:user)
       CustomDefinition.find_by_module_type_and_label('Product','CSM Season').data_type.should == 'text'
+    end
+    it "should accumulate CSM Seasons" do
+      p = Factory(:product)
+      @xlc.should_receive(:last_row_number).and_return(2)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @xlc.should_receive(:get_row_as_column_hash).with(0,2).and_return(
+        0=>{'value'=>'aaa','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h.process Factory(:user)
+      p.reload
+      p.get_custom_value(@season).value.should == "aaa\nseas"
     end
   end
 
@@ -207,5 +234,103 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     Exception.any_instance.should_receive(:log_me)
     @h.process Factory(:user)
     p.get_custom_value(@csm).value.should be_blank 
+  end
+  context :dates do
+    it "should create csm date custom fields" do
+      id = @first_csm_date_cd.id
+      @first_csm_date_cd.destroy
+      CustomDefinition.find_by_id(id).should be_nil
+      id = @last_csm_date_cd.id
+      @last_csm_date_cd.destroy
+      CustomDefinition.find_by_id(id).should be_nil
+      p = Factory(:product)
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h = described_class.new @cf 
+      @h.process Factory(:user)
+      p.reload
+      f = CustomDefinition.find_by_label("CSM Received Date (First)")
+      f.module_type.should == "Product"
+      f.data_type.should == "date"
+      l = CustomDefinition.find_by_label("CSM Received Date (Last)")
+      l.module_type.should == "Product"
+      l.data_type.should == "date"
+    end
+    it "should set first/last csm received dates" do
+      p = Factory(:product)
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h.process Factory(:user)
+      p.reload
+      p.get_custom_value(@first_csm_date_cd).value.strftime("%y%m%d").should == 0.seconds.ago.strftime("%y%m%d")
+      p.get_custom_value(@last_csm_date_cd).value.strftime("%y%m%d").should == 0.seconds.ago.strftime("%y%m%d")
+    end
+    it "should not change existing first csm received date" do
+      p = Factory(:product)
+      p.update_custom_value! @first_csm_date_cd, 1.day.ago
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h.process Factory(:user)
+      p.reload
+      p.get_custom_value(@first_csm_date_cd).value.strftime("%y%m%d").should == 1.day.ago.strftime("%y%m%d")
+    end
+    it "should not move last csm date backwards" do
+      p = Factory(:product)
+      p.update_custom_value! @last_csm_date_cd, 1.day.from_now
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h.process Factory(:user)
+      p.reload
+      p.get_custom_value(@last_csm_date_cd).value.strftime("%y%m%d").should == 1.day.from_now.strftime("%y%m%d")
+    end
+    it "should respect override for file received date" do
+      p = Factory(:product)
+      @xlc.should_receive(:last_row_number).and_return(1)
+      @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+        0=>{'value'=>'seas','datatype'=>'string'},
+        2=>{'value'=>'140','datatype'=>'string'},
+        3=>{'value'=>'ABCDE','datatype'=>'string'},
+        4=>{'value'=>'FGHIJ','datatype'=>'string'},
+        5=>{'value'=>'KLMNO','datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      )
+      @h = described_class.new @cf, 1.day.from_now 
+      @h.process Factory(:user)
+      p.reload
+      p.get_custom_value(@last_csm_date_cd).value.strftime("%y%m%d").should == 1.day.from_now.strftime("%y%m%d")
+    end
   end
 end
