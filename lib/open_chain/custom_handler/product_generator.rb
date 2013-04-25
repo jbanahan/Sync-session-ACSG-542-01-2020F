@@ -1,3 +1,5 @@
+require 'open_chain/ftp_file_support'
+
 module OpenChain
   module CustomHandler
     # Generates product output files based on subclass implementing a few helper methods
@@ -11,6 +13,7 @@ module OpenChain
     # Subclass must implmeent `ftp_credentials` if you want to call the `ftp_file` method.  `ftp_credentials` should return a hash like {:server=>'ftp.sample.com',:username=>'uname',:password=>'pwd',:folder=>'/ftp_folder',:remote_file_name=>'remote_name.txt'}
     # :folder & :remote_file_name are optional
     class ProductGenerator
+      include OpenChain::FtpFileSupport
 
       def initialize(opts={})
         @custom_where = opts[:where]
@@ -130,23 +133,7 @@ module OpenChain
         end
       end
 
-      # ftp the given file to the appropriate location for this product generator
-      # will return true if subclass responds to ftp_credentials and file is sent without error
-      # will return false if file is nil or doesn't exist
-      def ftp_file file, delete_local=true
-        return false unless self.respond_to? :ftp_credentials
-        return false if file.nil? || !File.exists?(file.path)
-        begin
-          opts = {}
-          c = ftp_credentials
-          opts[:folder] = c[:folder] unless c[:folder].blank?
-          opts[:remote_file_name] = c[:remote_file_name] unless c[:remote_file_name].blank?
-          FtpSender.send_file(c[:server],c[:username],c[:password],file,opts)
-        ensure
-          file.unlink if delete_local
-        end
-        true
-      end
+      
 
       # Generate a subselect representing a custom value based on custom definition id
       def cd_s cd_id, suppress_alias = false
