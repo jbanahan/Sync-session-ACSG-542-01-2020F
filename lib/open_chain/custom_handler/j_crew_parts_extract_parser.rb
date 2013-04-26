@@ -14,19 +14,23 @@ module OpenChain
       def self.process_file path
         # Open in binmode (otherwise we tend to run into encoding issues with this file)
         File.open(path, "rb") do |io|
-          JCrewPartsExtractParser.new(nil).generate_and_send io
+          JCrewPartsExtractParser.new.generate_and_send io
         end
       end
 
       # downloads the custom file to a temp file, then generate and send it
       def self.process_s3 s3_path, bucket = OpenChain::S3.bucket_name
         OpenChain::S3.download_to_tempfile(bucket, s3_path) do |file|
-          JCrewPartsExtractParser.new(nil).generate_and_send file
+          JCrewPartsExtractParser.new.generate_and_send file
         end
       end
 
-      def initialize custom_file
+      def initialize custom_file = nil
         @custom_file = custom_file
+      end
+
+      def can_view?(user)
+        user.company.master?
       end
 
       # Required for usage via Custom File interfaces
@@ -44,6 +48,7 @@ module OpenChain
         # ftp_file is from FtpSupport
         # All ftp options for FTP sending are defined in AllianceProductSupport (except remote_file_name)
         Tempfile.open(['JCrewPartsExtract', '.DAT']) do |temp|
+          temp.binmode
           generate_product_file(input_io, temp)
           ftp_file(temp)
         end
@@ -67,7 +72,6 @@ module OpenChain
         csv = CSV.new(input_io, {:col_sep => "\t", :skip_blanks => true, :quote_char=> "\007"})
         begin
           csv.each do |line|
-            #TODO Figure out why we're not finding any header line data
             if has_product_header_data(line)
               # Just in case we get a product without a description and then another line, write the product
               # data sans description in that case.
@@ -85,8 +89,8 @@ module OpenChain
             end
           end
         rescue
-          puts "#{$!.message} occurred when reading a line at or close to line #{csv.lineno + 1}"
-          puts $!.backtrace.join $/
+          # Re-raise the error but add approximately where we were in processing the file when the error occurred
+          raise $!, "#{$!.message} occurred when reading a line at or close to line #{csv.lineno + 1}", $!.backtrace
         end
 
         write_product_data(output_io, product) unless product.nil?

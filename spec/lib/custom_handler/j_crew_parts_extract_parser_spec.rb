@@ -46,7 +46,7 @@ describe 'JCrewPartsExtractParser' do
     end
 
     it "should not process if custom file is missing" do
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new(nil).process double("user")
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.process double("user")
     end
 
     it "should not process if custom file has no attachment" do
@@ -72,6 +72,7 @@ describe 'JCrewPartsExtractParser' do
       tempfile = nil
       @p.should_receive(:generate_product_file) { |input, output|  
         input.should == io
+        output.binmode?.should be_true
         File.basename(output.path).should =~ /^JCrewPartsExtract.+\.DAT$/
         output.class.should == Tempfile
         tempfile = output
@@ -87,7 +88,7 @@ describe 'JCrewPartsExtractParser' do
 
   context :remote_file_name do 
     it "should use current time + JCrew customer number" do
-      file = OpenChain::CustomHandler::JCrewPartsExtractParser.new(nil).remote_file_name
+      file = OpenChain::CustomHandler::JCrewPartsExtractParser.new.remote_file_name
       file.should =~ /J0000.DAT$/
       #Make sure the time component of the file name is current
       (Time.now.to_i - (file.split("-")[0].to_i)).should <= 2
@@ -118,7 +119,7 @@ describe 'JCrewPartsExtractParser' do
 					Mens woven 100% yd linen shirt"      
 FILE
       output = StringIO.new ""
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new(nil).generate_product_file(StringIO.new(file), output)
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
       output.rewind
       line1, line2 = output.read.split("\r\n")
       line1[0, 20].should == "1618733".ljust(20)
@@ -142,7 +143,7 @@ FILE
 					98% COTTON 2% SPANDEX TWILL WOMENS WOVEN SHORT
 FILE
       output = StringIO.new ""
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new(nil).generate_product_file(StringIO.new(file), output)
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
       output.rewind
       line1 = output.read
       line1[0, 20].should == "12345678901234567890"
@@ -159,7 +160,7 @@ FILE
 	1621783			SU1	43644	6205904040	840	2.80	CN	CS	22.27
 FILE
 			output = StringIO.new ""
-			OpenChain::CustomHandler::JCrewPartsExtractParser.new(nil).generate_product_file(StringIO.new(file), output)
+			OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
 			output.rewind
 			line1, line2 = output.read.split("\r\n")
 			line1[0, 20].should == "1618733".ljust(20)
@@ -216,4 +217,15 @@ FILE
     end
   end
 
+  context :can_view? do
+    it "should allow master users to view" do
+      user = Factory(:master_user)
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(user).should be_true
+    end
+
+    it "should prevent non-master users from viewing" do
+      user = Factory(:user)
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(user).should be_false
+    end
+  end
 end

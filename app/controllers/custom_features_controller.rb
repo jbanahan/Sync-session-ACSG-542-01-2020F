@@ -2,6 +2,8 @@ class CustomFeaturesController < ApplicationController
   MSL_PLUS = 'OpenChain::CustomHandler::PoloMslPlusHandler'
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
+  JCREW = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
+
   def index
     render :layout=>'one_col'
   end
@@ -154,6 +156,35 @@ class CustomFeaturesController < ApplicationController
       f.delay.email_updated_file current_user, params[:to], (params[:copy_me] ? current_user.email : ""), params[:subject], params[:body]
       add_flash :notices, "Your file is being processed and will be emailed soon."
       redirect_to "/custom_features/msl_plus/#{f.id}"
+    }
+  end
+
+  def jcrew_parts_index
+    action_secure(OpenChain::CustomHandler::JCrewPartsExtractParser.new(nil).can_view?(current_user),Product,{:verb=>"view",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>JCREW).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def jcrew_parts_upload
+    f = CustomFile.new(:file_type=>JCREW,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/jcrew_parts'
+    }
+  end
+
+  def jcrew_parts_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),Product,{:verb=>"download",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
+      redirect_to f.secure_url
     }
   end
 end
