@@ -19,6 +19,12 @@ class Product < ActiveRecord::Base
   has_many   :sales_order_lines, :dependent => :destroy
   has_many   :shipment_lines, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
+  has_many   :bill_of_materials_children, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink", 
+    :foreign_key=>:parent_product_id, :include=>:child_product
+  has_many   :bill_of_materials_parents, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink",
+    :foreign_key=>:child_product_id, :include=>:parent_product
+  has_many   :child_products, :through=>:bill_of_materials_children
+  has_many   :parent_products, :through=>:bill_of_materials_parents
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true,
     :reject_if => lambda { |a| a[:country_id].blank?}
@@ -52,6 +58,12 @@ class Product < ActiveRecord::Base
 
   def can_attach? user
     return user.attach_products? && self.can_view?(user)
+  end
+
+
+  # is this product either a parent or child for a bill of materials
+  def on_bill_of_materials?
+    !self.bill_of_materials_children.empty? || !self.bill_of_materials_parents.empty?
   end
 
   def find_same
