@@ -98,6 +98,8 @@ module OpenChain
                 process_ci00 r
               when "CL00"
                 process_cl00 r
+              when "CL01"
+                process_cl01 r
               when "CT00"
                 process_ct00 r
               when "CF00"
@@ -311,6 +313,10 @@ module OpenChain
       accumulate_string :po_numbers, r[180,35].strip
       accumulate_string :part_numbers, @c_line.part_number
       @entry.total_units += @c_line.quantity 
+    end
+
+    def process_cl01 line
+      @c_line.line_number = (parse_decimal(line[430, 5], 0) / 10).to_i
     end
 
     # commercial invoice line - fees
