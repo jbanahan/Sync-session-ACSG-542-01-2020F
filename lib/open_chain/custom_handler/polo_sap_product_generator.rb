@@ -2,10 +2,16 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloSapProductGenerator < ProductGenerator
-      #Accepts 2 parameters :env=>:qa to send to qa ftp folder or :custom_where to replace the query where clause
+      #Accepts 3 parameters
+      # * :env=>:qa to send to qa ftp folder 
+      # * :custom_where to replace the query where clause
+      # * :no_brand_restriction to allow styles to be sent that don't have SAP Brand set
       def initialize params = {}
         @env = params[:env]
         @custom_where = params[:custom_where]
+        @sap_brand = CustomDefinition.find_by_module_type_and_label('Product','SAP Brand')
+        @no_brand_restriction = params[:no_brand_restriction]
+        raise "SAP Brand custom definition does not exist." unless @sap_brand
       end
       def sync_code 
         'polo_sap'
@@ -55,6 +61,7 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 #{cd_s 140},
 #{cd_s 141}
 FROM products 
+#{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
 INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN ('IT','US','CA'))
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id
 LEFT OUTER JOIN sync_records on sync_records.syncable_id = products.id AND sync_records.trading_partner = '#{sync_code}' " 
