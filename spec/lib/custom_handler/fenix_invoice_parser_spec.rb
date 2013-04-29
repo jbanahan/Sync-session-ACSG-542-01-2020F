@@ -68,11 +68,10 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
   end
 
   it "should handle a minimal amount of information" do
-    Entry.should_not_receive(:find_by_source_system_and_broker_reference)
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
-              "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,"
+              "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,"
     bi = BrokerInvoice.find_by_invoice_number_and_source_system 'INV#', 'Fenix'
-    bi.should_not be_nil
+    bi.broker_reference.should == "REF#"
   end
 
   it "should handle errors for each invoice individually" do
@@ -80,9 +79,19 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
 
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               # This line fails due to missing invoice date
-              ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,\n" +
-              "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,\n", {:key => "path/to/file"}
+              ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n" +
+              "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n", {:key => "path/to/file"}
     bi = BrokerInvoice.find_by_invoice_number_and_source_system 'INV#', 'Fenix'
     bi.should_not be_nil
+  end
+
+  it "should raise an error if the broker reference is missing" do
+    Exception.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # INV#2."])
+    
+    @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
+              # This line fails due to missing broker reference
+              "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,"
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system 'INV#2', 'Fenix'
+    bi.should be_nil
   end
 end

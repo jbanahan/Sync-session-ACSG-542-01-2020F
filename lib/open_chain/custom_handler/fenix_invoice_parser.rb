@@ -42,7 +42,8 @@ module OpenChain
             line = add_detail(invoice, r)
             invoice.invoice_total += line.charge_amount unless line.charge_type=='D'
           end
-          ent = Entry.find_by_source_system_and_broker_reference(invoice.source_system, invoice.broker_reference) if invoice.broker_reference
+
+          ent = Entry.find_by_source_system_and_broker_reference(invoice.source_system, invoice.broker_reference)
           invoice.entry = ent if ent
           invoice.save!
         end
@@ -50,9 +51,17 @@ module OpenChain
 
       private 
         def make_header row
+          broker_reference = safe_strip row[9]
+
+          # We need a broker reference in the system to link to an entry, so that we can then know which 
+          # customer the invoice belongs to
+          if broker_reference.blank?
+            raise "Invoice # #{FenixInvoiceParser.get_invoice_number(row)} is missing a broker reference number."
+          end
+
           inv = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>FenixInvoiceParser.get_invoice_number(row)).first_or_create!
           inv.broker_invoice_lines.destroy_all #clear existing lines
-          inv.broker_reference = safe_strip row[9]
+          inv.broker_reference = broker_reference
           inv.currency = safe_strip row[10]
           inv.invoice_date = Date.strptime safe_strip(row[0]), '%m/%d/%Y'
           inv
