@@ -8,8 +8,7 @@
         Name: <input type='text' ng-model='searchSetup.name' />
         <br />
         <input type='checkbox' ng-model='searchSetup.include_links'/> Include Links In Download
-        <br />
-        <input type='checkbox' ng-model='searchSetup.no_time'/> Hide Time
+        | <input type='checkbox' ng-model='searchSetup.no_time'/> Hide Time
       </div>
       <div>
         <div id='columns_wrapper' class='settings_wrapper'>
@@ -60,20 +59,10 @@
             </div>
           </div>
         </div>
-        <div id='criterions_wrapper' class='settings_wrapper'>
+        <div id='criterions_wrapper'>
           <h3>Parameters</h3>
-          <span style='color:red;'>TODO: figure out datepicker, jStepper, handling relative vs. absolute dates</span>
           <div ng-repeat='crit in searchSetup.search_criterions'>
-            {{crit.label}}
-            <select ng-model='crit.operator' ng-options='o.operator as o.label for o in operators[crit.datatype]'>
-            </select>
-            <input type='text' ng-model='crit.value' ng-show='crit.datatype=="string"' />
-            <input type='number' ng-model='crit.value' ng-show='crit.datatype=="decimal"' />
-            <span ng-show='crit.datatype=="date" || crit.datatype=="datetime"'><div style='display:inline;' chain-date-picker='crit.value'></div></span>
-            <input type='number' ng-model='crit.value' ng-show='["integer","fixnum"].indexOf(crit.datatype)>=0' class='integer' />
-            <textarea ng-model='crit.value' ng-show='crit.datatype=="text"' />
-            <input type='checkbox' ng-model='crit.include_empty'/> Include Empty
-            <a ng-click='removeCriterion(crit)'><img src='/images/x.png'/></a>
+            <div chain-search-criterion='crit'></div>
           </div>
           Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
           </select>

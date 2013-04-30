@@ -108,7 +108,7 @@ class SearchQuery
       else
         v = ActiveRecord::Base.sanitize v
       end
-      sc.where_clause.gsub("?",v)
+      sc.where_clause(v).gsub("?",v)
     end
     wheres << @search_setup.core_module.klass.search_where(@user)
     if wheres.empty?

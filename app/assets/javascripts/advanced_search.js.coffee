@@ -6,7 +6,7 @@ root = exports ? this
     when('/',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'})
 ])
 
-@app.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http',($scope,$routeParams,$location,$http) ->
+@app.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators',($scope,$routeParams,$location,$http,chainSearchOperators) ->
   
   $scope.mydate = null
   
@@ -151,6 +151,7 @@ root = exports ? this
       $location.path '/'+data.id+'/'+$scope.page
     )
 
+  $scope.operators = chainSearchOperators.ops
   $scope.columnsToRemove = []
   $scope.columnsToAdd = []
   $scope.availableColumns = []
@@ -356,6 +357,12 @@ root = exports ? this
   $scope.$watch 'allSelected', (newValue,oldValue) ->
     writeSelectionCookie() unless newValue==oldValue
 
+  #remove criterions that are deleted
+  $scope.$watch 'searchSetup.search_criterions', (() ->
+    return unless $scope.searchSetup && $scope.searchSetup.search_criterions && $scope.searchSetup.search_criterions.length > 0
+    for c in $scope.searchSetup.search_criterions
+      $scope.removeCriterion(c) if c.deleteMe
+  ), true
   #
   #  VIEW FORMATTING UTILITIES BELOW HERE
   #
@@ -404,95 +411,5 @@ root = exports ? this
   $scope.descendingLabel = (bool) ->
     if bool then " (Z -> A)" else ""
 
-  #get the search operator for given datatype
-  $scope.operators =
-    date: [
-      {operator:'eq',label:'Equals'}
-      {operator:'nq',label:'Not Equal To'}
-      {operator:'gt',label:'After'}
-      {operator:'lt',label:'Before'}
-      {operator:'bda',label:'Before _ Days Ago'}
-      {operator:'ada',label:'After _ Days Ago'}
-      {operator:'bdf',label:'Before _ Days From Now'}
-      {operator:'adf',label:'After _ Days From Now'}
-      {operator:'pm',label:'Previous _ Months'}
-      {operator:'null',label:'Is Empty'}
-      {operator:'notnull',label:'Is Not Empty'}
-      ]
-    datetime: [
-      {operator:'eq',label:'Equals'}
-      {operator:'nq',label:'Not Equal To'}
-      {operator:'gt',label:'After'}
-      {operator:'lt',label:'Before'}
-      {operator:'bda',label:'Before _ Days Ago'}
-      {operator:'ada',label:'After _ Days Ago'}
-      {operator:'bdf',label:'Before _ Days From Now'}
-      {operator:'adf',label:'After _ Days From Now'}
-      {operator:'pm',label:'Previous _ Months'}
-      {operator:'null',label:'Is Empty'}
-      {operator:'notnull',label:'Is Not Empty'}
-      ]
-    integer: [
-      {operator:'eq',label:'Equals'}
-      {operator:'nq',label:'Not Equal To'}
-      {operator:'gt',label:'Greater Than'}
-      {operator:'lt',label:'Less Than'}
-      {operator:'sw',label:'Starts With'}
-      {operator:'ew',label:'Ends With'}
-      {operator:'co',label:'Contains'}
-      {operator:'in',label:'One Of'}
-      {operator:'null',label:'Is Empty'}
-      {operator:'notnull',label:'Is Not Empty'}
-      ]
-    decimal: [
-      {operator:'eq',label:'Equals'}
-      {operator:'nq',label:'Not Equal To'}
-      {operator:'gt',label:'Greater Than'}
-      {operator:'lt',label:'Less Than'}
-      {operator:'sw',label:'Starts With'}
-      {operator:'ew',label:'Ends With'}
-      {operator:'co',label:'Contains'}
-      {operator:'in',label:'One Of'}
-      {operator:'null',label:'Is Empty'}
-      {operator:'notnull',label:'Is Not Empty'}
-      ]
-    fixnum: [
-      {operator:'eq',label:'Equals'}
-      {operator:'nq',label:'Not Equal To'}
-      {operator:'gt',label:'Greater Than'}
-      {operator:'lt',label:'Less Than'}
-      {operator:'sw',label:'Starts With'}
-      {operator:'ew',label:'Ends With'}
-      {operator:'co',label:'Contains'}
-      {operator:'in',label:'One Of'}
-      {operator:'null',label:'Is Empty'}
-      {operator:'notnull',label:'Is Not Empty'}
-      ]
-    string: [
-      {operator:'eq',label:'Equals'}
-      {operator:'nq',label:'Not Equal To'}
-      {operator:'sw',label:'Starts With'}
-      {operator:'ew',label:'Ends With'}
-      {operator:'co',label:'Contains'}
-      {operator:'nc',label:"Doesn't Contain"}
-      {operator:'in',label:'One Of'}
-      {operator:'null',label:'Is Empty'}
-      {operator:'notnull',label:'Is Not Empty'}
-      ]
-    text: [
-      {operator:'eq',label:'Equals'}
-      {operator:'nq',label:'Not Equal To'}
-      {operator:'sw',label:'Starts With'}
-      {operator:'ew',label:'Ends With'}
-      {operator:'co',label:'Contains'}
-      {operator:'nc',label:"Doesn't Contain"}
-      {operator:'in',label:'One Of'}
-      {operator:'null',label:'Is Empty'}
-      {operator:'notnull',label:'Is Not Empty'}
-      ]
-    boolean: [
-      {operator:'notnull',label:'Yes'}
-      {operator:'null',label:'No'}
-      ]
   @
 ]

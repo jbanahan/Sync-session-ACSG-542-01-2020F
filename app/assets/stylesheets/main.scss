@@ -1,3 +1,10 @@
+a.action_link:hover {
+  color: white;
+  background-color: #666;
+}
+.action_link:hover {
+  cursor: pointer;
+}
 div.section_box {
   border-radius: 10px;
   border: 1px solid black;
