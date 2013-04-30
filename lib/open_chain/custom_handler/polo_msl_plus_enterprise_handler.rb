@@ -10,15 +10,18 @@ module OpenChain
 
       def self.run_schedulable opts
         g = self.new(opts)
-        prods = g.products_to_send
-        g.send_and_delete_sync_file g.generate_outbound_sync_file prods if prods.count > 0 
+        prods = g.products_to_send.where("sync_records.sent_at < ? or sync_records.sent_at is null",6.hours.ago).limit(1000)
+        while prods.count > 0
+          g.send_and_delete_sync_file g.generate_outbound_sync_file prods
+          prods = g.products_to_send.where("sync_records.sent_at < ? OR sync_records.sent_at is null",6.hours.ago).limit(1000)
+        end
       end
 
       # find the products that need to be sent to MSL+ (they have MSL+ Receive Dates and need sync)
       def products_to_send
         cd_msl_rec = cust_def "MSL+ Receive Date", "date"
         sc = SearchCriterion.new(:model_field_uid=>"*cf_#{cd_msl_rec.id}",:operator=>"notnull")
-        sc.apply(Product.need_sync("MSLE"))
+        sc.apply(Product.select("distinct products.*").need_sync("MSLE"))
       end
 
       # Generate the file with data that needs to be sent back to MSL+
@@ -27,19 +30,17 @@ module OpenChain
         file << ["Style", "Country", "MP1 Flag", "HTS 1", "HTS 2", "HTS 3", "Length", "Width", "Height"].to_csv
         dont_send_countries = Country.where("iso_code IN (?)",['US','CA','IT']).collect{|c| c.id}
         cd_length, cd_width, cd_height = ["Length (cm)","Width (cm)","Height (cm)"].collect {|lbl| CustomDefinition.find_by_label lbl}
-        Product.transaction do
-          products.each do |p|
-            classifications = p.classifications.includes(:country).where("not classifications.country_id IN (?)",dont_send_countries)
-            classifications.each do |cl|
-              iso = cl.country.iso_code
-              cl.tariff_records.each do |tr|
-                file << [p.unique_identifier,cl.country.iso_code,mp1_value(tr,iso),hts_value(tr.hts_1,iso),hts_value(tr.hts_2,iso),hts_value(tr.hts_3,iso),
-                  p.get_custom_value(cd_length).value,p.get_custom_value(cd_width).value,p.get_custom_value(cd_height).value].to_csv
-              end
+        products.each do |p|
+          classifications = p.classifications.includes(:country).where("not classifications.country_id IN (?)",dont_send_countries)
+          classifications.each do |cl|
+            iso = cl.country.iso_code
+            cl.tariff_records.each do |tr|
+              file << [p.unique_identifier,cl.country.iso_code,mp1_value(tr,iso),hts_value(tr.hts_1,iso),hts_value(tr.hts_2,iso),hts_value(tr.hts_3,iso),
+                p.get_custom_value(cd_length).value,p.get_custom_value(cd_width).value,p.get_custom_value(cd_height).value].to_csv
             end
-            sr = p.sync_records.find_or_initialize_by_trading_partner("MSLE")
-            sr.update_attributes(:sent_at=>Time.now)
           end
+          sr = p.sync_records.find_or_initialize_by_trading_partner("MSLE")
+          sr.update_attributes(:sent_at=>Time.now)
         end
         file.flush
         file

@@ -34,21 +34,27 @@ class SearchCriterion < ActiveRecord::Base
     mf = ModelField.find_by_uid(self.model_field_uid)
     passes?(mf.process_query_parameter(obj))
   end
+
   #does the given value pass the criterion test
   def passes?(value_to_test)
     mf = find_model_field
     d = mf.data_type
 
-    nil_fails_operators = ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf","pm"] #all of these operators should return false if value_to_test is nil
-    return false if value_to_test.nil? && nil_fails_operators.include?(self.operator)
-
-    return value_to_test.blank? if self.operator == "null" 
+    # If we include empty values, Returns true for nil, blank strings (ie. only whitespace), or anything that equals zero
+    return true if (self.include_empty && ((value_to_test.blank? && value_to_test != false) || value_to_test == 0))
+    #all of these operators should return false if value_to_test is nil
+    return false if value_to_test.nil? && ["co","nc","sw","ew","gt","lt","bda","ada","adf","bdf","pm"].include?(self.operator)
+   
+    # Does the given value pass the criterion test (this is primarily for boolean fields)
+    # Since we're considering blank strings as empty, we should also consider 0 (ie. blank number) as empty as well
+    return (value_to_test.blank? || value_to_test == 0) if self.operator == "null" 
     return !value_to_test.blank? if self.operator == "notnull"
     
     if [:string, :text].include? d
       return self.value.nil? if value_to_test.nil? && self.operator != 'nq'
       if self.operator == "eq"
-        return value_to_test.nil? ? self.value.nil? : value_to_test.downcase == self.value.downcase
+        # The rstrip here is to match how the equality operator works in MySQL.
+        return value_to_test.nil? ? self.value.nil? : value_to_test.downcase.rstrip == self.value.downcase.rstrip
       elsif self.operator == "co"
         return value_to_test.downcase.include?(self.value.downcase)
       elsif self.operator == "nc"
@@ -58,9 +64,14 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == "ew"
         return value_to_test.downcase.end_with?(self.value.downcase)
       elsif self.operator == "nq"
-        return value_to_test.nil? || value_to_test.downcase!=self.value.downcase
+        # The rstrip here is to match how the inequality operator works in MySQL.
+        return value_to_test.nil? || value_to_test.downcase.rstrip != self.value.downcase.rstrip
       elsif self.operator == "in"
-        return break_rows(self.value.downcase).include?(value_to_test.downcase)
+        # The rstrip here is to match how the IN LIST operator works in MySQL.
+        return break_rows(self.value.downcase).include?(value_to_test.downcase.rstrip)
+      elsif self.operator == "notin"
+        # The rstrip here is to match how the IN LIST operator works in MySQL.
+        return !break_rows(self.value.downcase).include?(value_to_test.downcase.rstrip)
       end
     elsif [:date, :datetime].include? d
       # For date comparisons we want to make sure we're actually dealing w/ a Date
@@ -104,12 +115,15 @@ class SearchCriterion < ActiveRecord::Base
         return (vt < Time.now.to_date) && (vt >= base_date) && !(vt.month == 0.seconds.ago.month && vt.year == 0.seconds.ago.year)
       end
     elsif d == :boolean
-      self_val = ["t","true","yes","y"].include?(self.value.downcase)
+      # The screen does't use 'eq', 'nq' for boolean types, it uses 'null', 'notnull' (evaluated above)
+      # So this code doesn't run for searches initiated by the screen.
+      truthiness = ["t","true","yes","y"]
+      self_val = truthiness.include?(self.value.downcase)
       if self.operator == "eq"
         return value_to_test == self_val
       elsif self.operator == "nq"
         #testing not equal to true
-        if ["t","true","yes","y"].include(self.value.downcase)
+        if truthiness.include?(self.value.downcase)
           return value_to_test.nil? || !value_to_test
         else
           return value_to_test
@@ -130,33 +144,54 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == "nq"
         return value_to_test.nil? || value_to_test!=self_val
       elsif self.operator == "in"
-        return break_rows(self.value.downcase).include?(value_to_test.to_s)
+        return break_rows(self.value.downcase).include?(value_to_test.to_s.rstrip)
+      elsif self.operator == "notin"
+        return !break_rows(self.value.downcase).include?(value_to_test.to_s.rstrip)
       end
     end
   end
 
-  #build the where clause for this criterion to add to a sql statement (doesn't include the word "WHERE")
-  def where_clause
+  private
+
+  def number_value data_type, value
+    sval = (value.blank? || !is_a_number(value) ) ? "0" : value
+    data_type==:integer ? sval.to_i : sval.to_f
+  end
+
+  def is_a_number val
+    begin Float(val) ; true end rescue false
+  end
+  
+  def add_where(p)
+    value = where_value
+    p.where(where_clause(value), value)
+  end
+
+  def where_clause sql_value
     mf = find_model_field
     table_name = mf.join_alias
     if custom_field? 
       c_def_id = mf.custom_id
       cd = CustomDefinition.cached_find(c_def_id)
       if boolean_field?
-        bool_val = where_value ? "custom_values.boolean_value = ?" : "(custom_values.boolean_value is null OR custom_values.boolean_value = ?)"
-        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{bool_val})"
+        clause = "custom_values.boolean_value = ?"
+        if self.include_empty || !sql_value
+          clause = "(#{clause} OR custom_values.boolean_value IS NULL)"
+        end
+        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
       elsif self.operator=='null'
-        "((SELECT count(*) FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id)=0) OR #{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}")})"
+        "((SELECT count(*) FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id)=0) OR #{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, true)})"
       else
-        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}")})"
+        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
       end
     else
       if boolean_field?
-        bool_val = where_value ? 
-          "#{mf.qualified_field_name} = ?" :
-          "(#{mf.qualified_field_name} = ? OR #{mf.qualified_field_name} is null)"
+        clause = "#{mf.qualified_field_name} = ?"
+        if self.include_empty || !sql_value
+          clause = "(#{clause} OR #{mf.qualified_field_name} IS NULL)"
+        end
       else
-        CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name)
+        CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name, mf.data_type, self.include_empty)
       end
     end
   end
@@ -191,7 +226,7 @@ class SearchCriterion < ActiveRecord::Base
     if boolean_field? && ['null','notnull'].include?(self.operator)
       return self.operator=='notnull'
     elsif boolean_field?
-      return ["t","true","yes","y"].include? self_val.downcase if boolean_field?
+      return ["t","true","yes","y"].include? self_val.downcase
     end
     
     return self_val.to_i if integer_field? && self.operator!="in"
@@ -205,7 +240,7 @@ class SearchCriterion < ActiveRecord::Base
       return "#{self_val}%"
     when "ew"
       return "%#{self_val}"
-    when "in"
+    when "in", "notin"
       return break_rows(self_val)
     else
       return self_val
@@ -267,7 +302,11 @@ class SearchCriterion < ActiveRecord::Base
   def break_rows val
     # We don't have to worry any longer about carriage returns being sent (\r) by themselves to denote new lines.
     # No current operatring systems use this style to denote newlines any longer (Mac OS X is a unix and uses \n).
-    val.strip.split(/\r?\n/)
+
+    # We're rstrip'ing here to emulate the IN list handling of MySQL (which trims trailing whitespace before doing comparisons)
+    # The strip is to remove any trailing newlines from the initial list, without which we'd possibly get a extra blank value added 
+    # to the comparison list
+    val.strip.split(/\r?\n/).collect {|line| line.rstrip}
   end
 
 end

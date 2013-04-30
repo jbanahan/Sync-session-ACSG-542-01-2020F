@@ -55,10 +55,34 @@
 -->
 <% end %>
 <div>
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
-<div class='next_to_attachments'>
-<%=render :partial => 'product_view', :locals => {:product => @product} %>
-</div>
+  <%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
+  <%if @product.on_bill_of_materials?-%>
+    <div class='bom_cont'>
+      <% unless @product.parent_products.empty? -%>
+        <table class='detail_table'>
+          <thead><tr><th>Parent Products</th></tr></thead>
+          <tbody>
+            <%@product.parent_products.each do |par| -%>
+              <tr><td><%=link_to par.unique_identifier, par%></td></tr>
+            <%end-%>
+          </tbody>
+        </table>
+      <% end -%>
+      <% unless @product.bill_of_materials_children.empty? -%>
+        <table class='detail_table'>
+          <thead><tr><th>Child Products</th></tr></thead>
+          <tbody>
+            <%@product.bill_of_materials_children.each do |ch| -%>
+            <tr><td><%=link_to ch.child_product.unique_identifier, ch.child_product%> - <span title='Total Pieces In Set'><%=ch.quantity%></span></td></tr>
+            <%end-%>
+          </tbody>
+        </table>
+      <% end -%>
+    </div>
+  <%end-%>
+  <div class='next_to_attachments'>
+    <%=render :partial => 'product_view', :locals => {:product => @product} %>
+  </div>
 </div>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
 <div class='attachments_container section_insert'>

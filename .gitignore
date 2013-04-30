@@ -13,5 +13,7 @@ coverage/*
 coverage.data
 coverage/*
 .rvmrc*
+.ruby-gemset
+.ruby-version
 .sass-cache/
 public/assets/*

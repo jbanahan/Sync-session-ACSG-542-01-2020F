@@ -637,6 +637,9 @@ width:60%;
 .search_row {
   cursor: pointer;
 }
+.sp_row {
+  vertical-align: top;
+}
 #run_as_box {
   background-color: #FF4747;
   text-align: center;

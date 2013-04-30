@@ -170,7 +170,7 @@
     <a href='#c_invoices'>Commercial Invoices</a>
   </div>
   <h1>Broker Invoices</h1>
-  <%fields = [:bi_invoice_date,:bi_suffix,:bi_invoice_total]%>
+  <%fields = [:bi_invoice_number,:bi_invoice_date,:bi_suffix,:bi_invoice_total]%>
   <table class='detail_table'>
     <thead><tr>
       <%fields.each do |f|%>
@@ -183,7 +183,7 @@
           <tr class='hover'>
             <%fields.each do |f|%>
               <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>>
-                <%=f==:bi_invoice_date ? link_to(field_value(line,f),"#bi_#{line.id}") : field_value(line, f)%>
+                <%=f==:bi_invoice_number ? link_to(field_value(line,f),"#bi_#{line.id}") : field_value(line, f)%>
               </td>
             <%end%>
           </tr>
@@ -201,7 +201,7 @@
           <tr>
             <td style='width:50%;'>
               <table>
-                <%[:bi_suffix,:bi_invoice_total,:bi_currency].each do |f|%>
+                <%[:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency].each do |f|%>
                   <%=field_view_row bi,f,false%>
                 <%end%>
               </table>
@@ -225,7 +225,8 @@
     <%=form_for [@entry, @entry.broker_invoices.build], :html=>{:id=>'frm_new_bi',:style=>'display:none;'} do |f|%>
       <h3>New Invoice</h3>
       <table>
-        <%=field_row field_label(:bi_suffix), f.text_field(:suffix, "class" => "focus_first") %>
+        <%=field_row field_label(:bi_invoice_number), f.text_field(:invoice_number, "class" => "focus_first") %>
+        <%=field_row field_label(:bi_suffix), f.text_field(:suffix) %>
         <%=field_row field_label(:bi_currency), f.text_field(:currency)%>
         <%=field_row field_label(:bi_invoice_date), f.text_field(:invoice_date, :class=>'isdate')%>
       </table>

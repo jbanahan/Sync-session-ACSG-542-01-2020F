@@ -140,6 +140,9 @@ describe CustomReportBillingAllocationByValue do
       @cil_2_2 = @ci_2.commercial_invoice_lines.create!(:line_number=>"2",:value=>100)
       @bi_2 = @ent_2.broker_invoices.create!(:invoice_date=>0.seconds.ago,:invoice_total=>100,:invoice_number=>'bi_2')
       @bi_2.broker_invoice_lines.create!(:charge_description=>"C1",:charge_amount=>"1000")
+      # Adding multiple broker invoice lines resulted in a bug causing duplicate output lines (adding a second here to make 
+      # sure we're preventing that)
+      @bi_2.broker_invoice_lines.create!(:charge_description=>"something",:charge_amount=>250,:charge_code=>'CC2')
       rpt = @klass.new
       rpt.search_criterions.build(:model_field_uid=>:bi_entry_num,:operator=>"eq",:value=>"9999")
       arrays = rpt.to_arrays @u

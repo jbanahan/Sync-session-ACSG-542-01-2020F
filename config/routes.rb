@@ -149,6 +149,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
   match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get
   match "/custom_features/csm_sync/:id/reprocess" => "custom_features#csm_sync_reprocess", :via=>:get
+  match "/custom_features/polo_sap_bom" => "custom_features#polo_sap_bom_index", :via=>:get
+  match "/custom_features/polo_sap_bom/upload" => "custom_features#polo_sap_bom_upload", :via=>:post
+  match "/custom_features/polo_sap_bom/:id/download" => "custom_features#polo_sap_bom_download", :via=>:get
+  match "/custom_features/polo_sap_bom/:id/reprocess" => "custom_features#polo_sap_bom_reprocess", :via=>:get
   match "/custom_features/polo_canada" => "custom_features#polo_efocus_index", :via=>:get
   match "/custom_features/polo_canada/upload" => "custom_features#polo_efocus_upload", :via => :post
   match "/custom_features/polo_canada/:id/download" => "custom_features#polo_efocus_download", :via => :get
@@ -182,6 +186,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_foot_locker_billing_summary" => "reports#run_foot_locker_billing_summary", :via=>:post
   match "/reports/show_das_billing_summary" => "reports#show_das_billing_summary", :via=>:get
   match "/reports/run_das_billing_summary" => "reports#run_das_billing_summary", :via=>:post
+  match "/reports/show_kitchencraft_billing" => "reports#show_kitchencraft_billing", :via=>:get
+  match "/reports/run_kitchencraft_billing" => "reports#run_kitchencraft_billing", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
