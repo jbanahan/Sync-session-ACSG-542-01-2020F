@@ -94,33 +94,10 @@ class ApplicationController < ActionController::Base
   end
 
   def advanced_search(core_module)
-    @last_run = SearchRun.find_last_run current_user, core_module
-    if params[:force_search] || @last_run.nil? || !@last_run.search_setup_id.nil? || params[:sid]
-      @core_module = core_module
-      @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user).order('name ASC')
-      @current_search = get_search_to_run
-      if @current_search.nil?
-        error_redirect "Search with this ID could not be found."
-      elsif @current_search.user != current_user
-        error_redirect "You cannot run a search that is assigned to a different user."
-      else
-        begin
-          render_search_results
-        rescue Exception => e
-          #logger.error $!, $!.backtrace
-          error_params = {:current_search_id=>@current_search.id, :username=>current_user.username,:current_search_name => @current_search.name}.merge(params)
-          OpenMailer.send_custom_search_error(@current_user, e, error_params).deliver
-          current_user.search_open = true
-          current_user.save
-          add_flash :errors, "There was an error running your search.  Only the setup area is being displayed."
-          render_search_results true #render without the results
-        end
-      end    
-    elsif @last_run.imported_file
-      redirect_to @last_run.imported_file
-    else
-      redirect_to @last_run.custom_file
-    end
+    setup = current_user.search_setups.includes(:search_run).where(:module_type=>core_module.class_name).order("search_runs.updated_at DESC").limit(1).first
+    setup = current_user.search_setups.order("updated_at DESC").where(:module_type=>core_module.class_name).limit(1).first unless setup
+    setup = core_module.make_default_search(current_user) unless setup
+    redirect_to "/advanced_search#/#{setup.id}"
   end
 
   #controller action to display generic history page

@@ -393,9 +393,7 @@ describe AdvancedSearchController do
         JSON.parse(response.body)['ok'].should == 'ok'
       end
       it "should call delay" do
-        m = mock('xlsm')
-        m.should_receive(:make_from_search_query_by_search_id_and_user_id).with(@ss.id,@user.id)
-        XlsMaker.any_instance.should_receive(:delay).and_return(m)
+        ReportResult.should_receive(:run_report!).with(@ss.name,instance_of(User),'OpenChain::Report::XLSSearch',{:settings=>{'search_setup_id'=>@ss.id}})
         get :download, :id=>@ss.id, :format=>:json
         response.should be_success
         JSON.parse(response.body)['ok'].should == 'ok'

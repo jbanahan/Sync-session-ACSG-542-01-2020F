@@ -138,14 +138,7 @@ OpenChain::Application.routes.draw do
   end
 
   #custom features
-  resources :custom_files, :only => :show
   match "/custom_features" => "custom_features#index", :via => :get
-  match "/custom_features/msl_plus" => "custom_features#msl_plus_index", :via => :get
-  match "/custom_features/msl_plus/:id" => "custom_features#msl_plus_show", :via => :get 
-  match "/custom_features/msl_plus/upload" => "custom_features#msl_plus_upload", :via => :post
-  match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_show_email", :via => :get
-  match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_send_email", :via => :post
-  match "/custom_features/msl_plus/:id/filter" => "custom_features#msl_plus_filter", :via=>:post
   match "/custom_features/csm_sync" => "custom_features#csm_sync_index", :via=>:get
   match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
   match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get

@@ -169,20 +169,21 @@ class SearchCriterion < ActiveRecord::Base
         if self.include_empty || !sql_value
           clause = "(#{clause} OR custom_values.boolean_value IS NULL)"
         end
-        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
+        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
       elsif self.operator=='null'
-        "((SELECT count(*) FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id)=0) OR #{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, true)})"
+        return "((SELECT count(*) FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id)=0) OR #{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, true)})"
       else
-        "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
+        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
       end
     else
       if boolean_field?
         clause = "#{mf.qualified_field_name} = ?"
         if self.include_empty || !sql_value
-          clause = "(#{clause} OR #{mf.qualified_field_name} IS NULL)"
+          return "(#{clause} OR #{mf.qualified_field_name} IS NULL)"
         end
+        return clause
       else
-        CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name, mf.data_type, self.include_empty)
+        return CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name, mf.data_type, self.include_empty)
       end
     end
   end
