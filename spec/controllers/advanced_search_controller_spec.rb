@@ -148,7 +148,7 @@ describe AdvancedSearchController do
     it "should return last search created if no search_runs" do
       #this fails if another test is failing, not sure why
       ss_first = Factory(:search_setup,:user=>@user,:updated_at=>1.day.ago)
-      ss_second = Factory(:search_setup,:user=>@user,:updated_at=>2.days.ago)
+      ss_second = Factory(:search_setup,:user=>@user,:updated_at=>2.years.ago)
       get :last_search_id
       JSON.parse(response.body)['id'].should == ss_first.id.to_s
     end
@@ -359,6 +359,51 @@ describe AdvancedSearchController do
         links.should have(1).link
         links.first['label'].should == 'View'
       end
+    end
+  end
+  describe :download do
+    before :each do
+      @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
+      @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
+      @ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>2)
+      @p = Factory(:product,:name=>'mpn')
+      Product.any_instance.stub(:can_view?).and_return(true)
+    end
+    it "should run file for XLS" do
+      wb = mock('wb')
+      wb.should_receive(:write)
+      XlsMaker.any_instance.should_receive(:make_from_search_query).and_return(wb)
+      get :download, :id=>@ss.id, :format=>:xls
+      response.should be_success
+      response.headers['Content-Type'].should == "application/vnd.ms-excel"
+      response.headers['Content-Disposition'].should == "attachment; filename=\"#{@ss.name}.xls\""
+    end
+    context :delayed_job do
+      before :each do
+        @dj_status = Delayed::Worker.delay_jobs
+        Delayed::Worker.delay_jobs = false
+      end
+      after :each do
+        Delayed::Worker.delay_jobs = @dj_status
+      end
+      it "should delay running file for json" do
+        XlsMaker.any_instance.should_receive(:make_from_search_query_by_search_id_and_user_id).with(@ss.id,@user.id)
+        get :download, :id=>@ss.id, :format=>:json
+        response.should be_success
+        JSON.parse(response.body)['ok'].should == 'ok'
+      end
+      it "should call delay" do
+        m = mock('xlsm')
+        m.should_receive(:make_from_search_query_by_search_id_and_user_id).with(@ss.id,@user.id)
+        XlsMaker.any_instance.should_receive(:delay).and_return(m)
+        get :download, :id=>@ss.id, :format=>:json
+        response.should be_success
+        JSON.parse(response.body)['ok'].should == 'ok'
+      end
+    end
+    it "should 404 if user doesn't own search setup" do
+      ss = Factory(:search_setup)
+      lambda {get :download, :id=>ss.id, :format=>:xls}.should raise_error ActionController::RoutingError 
     end
   end
 end

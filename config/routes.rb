@@ -134,6 +134,7 @@ OpenChain::Application.routes.draw do
   resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
     get 'last_search_id', :on=>:collection
     get 'setup', :on=>:member
+    get 'download', :on=>:member
   end
 
   #custom features

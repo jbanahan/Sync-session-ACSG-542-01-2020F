@@ -326,6 +326,13 @@ root = exports ? this
   
   $scope.changeSearch = (newId) ->
     $location.path '/'+newId+'/1'
+
+  #send background job to build excel
+  $scope.backgroundDownload = () ->
+    $scope.notices.push "Report is running in the background. You will receive a system message when it's done."
+    $http.get('/advanced_search/'+$scope.searchSetup.id+"/download.json").error(() ->
+      $scope.errors.push "Report download failed.  Please contact support"
+    )
     
   #
   # WATCHES

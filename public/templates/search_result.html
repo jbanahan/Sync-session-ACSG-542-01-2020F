@@ -5,7 +5,8 @@
   <div id='search_header'>
     <div id='search_actions'>
       <a ng-click='toggleSetup()' class='action_link' ng-show='searchSetup'>Setup</a>
-      <a class='action_link' href='#'>Download</a> 
+      <a class='action_link' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</a> 
+      <a class='action_link' ng-show='searchResult.total_pages==1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
       <span ng-show='bulkSelected.length > 0'>
         <span ng-repeat='b in searchResult.bulk_actions'>
           <a class='action_link' ng-click='executeBulkAction(b)'>{{b.label}}</a>

@@ -134,6 +134,25 @@ class AdvancedSearchController < ApplicationController
     end
   end
 
+  def download
+    ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
+    raise ActionController::RoutingError.new('Not Found') unless ss
+    m = XlsMaker.new(:include_links=>ss.include_links?,:no_time=>ss.no_time?)
+    respond_to do |format|
+      format.xls {
+        sq = SearchQuery.new ss, current_user
+        book = m.make_from_search_query sq
+        spreadsheet = StringIO.new 
+        book.write spreadsheet 
+        send_data spreadsheet.string, :filename => "#{ss.name}.xls", :type =>  "application/vnd.ms-excel"
+      }
+      format.json {
+        ReportResult.run_report! ss.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>ss.id }
+        render :json=>{:ok=>:ok}
+      }
+    end
+  end
+
   def last_search_id
     setup = current_user.search_setups.includes(:search_run).order("search_runs.updated_at DESC").limit(1).first
     setup = current_user.search_setups.order("updated_at DESC").limit(1).first if setup.nil?
