@@ -1,10 +1,10 @@
-<div ng-hide='searchResult.id || errors.length > 0' id='search_loading'>
+<div ng-hide='searchResult.rows || errors.length > 0' id='search_loading'>
   <img src='/images/ajax_load_64.gif' title='Loading...' />
 </div>
-<div ng-show='searchResult.id' id='search_result'>
+<div ng-show='searchResult.rows' id='search_result'>
   <div id='search_header'>
     <div id='search_actions'>
-      <a ng-click='toggleSetup()' class='action_link' ng-show='searchSetup'>Setup</a>
+      <span ng-transclude></span>
       <a class='action_link' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</a> 
       <a class='action_link' ng-show='searchResult.total_pages==1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
       <span ng-show='bulkSelected.length > 0'>

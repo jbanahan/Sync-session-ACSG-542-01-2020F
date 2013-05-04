@@ -2,7 +2,17 @@
 class SearchQuery
   attr_reader :search_setup
   attr_reader :user
-  def initialize search_setup, user
+
+  #
+  # search_setup must be an object that implements the following interface
+  # * #core_module - returns CoreModule
+  # * #search_columns - returns Enumerable of SearchColumn objects
+  # * #search_criterions - returns Enumerable of SearchCriterions
+  # * #sort_criterions - returns Enumberable of SortCriterions
+  #
+  # valid values for opts = {:extra_where=>'a where clause that will be appended to all queries as an AND'}
+  #
+  def initialize search_setup, user, opts={}
     @search_setup = search_setup
     @user = user
   end

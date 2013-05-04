@@ -1,14 +1,12 @@
 root = exports ? this
-@app = angular.module('AdvancedSearchApp',['ngResource','ChainComponents']).config(['$routeProvider', ($routeProvider) -> 
+advSearchApp = angular.module('AdvancedSearchApp',['ChainComponents']).config(['$routeProvider', ($routeProvider) -> 
   $routeProvider.
     when('/:searchId/:page',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
     when('/:searchId',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
     when('/',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'})
 ])
 
-@app.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators',($scope,$routeParams,$location,$http,chainSearchOperators) ->
-  
-  $scope.mydate = null
+advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators',($scope,$routeParams,$location,$http,chainSearchOperators) ->
   
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
@@ -102,31 +100,6 @@ root = exports ? this
       $scope.availableColumns.push mf unless findByMfid($scope.searchSetup.search_columns,mf.mfid)
       $scope.availableSorts.push mf unless findByMfid($scope.searchSetup.sort_criterions,mf.mfid)
 
-  #write cookie for current selection state
-  writeSelectionCookie = () ->
-    o = {rows:$scope.bulkSelected,all:$scope.allSelected}
-    $.cookie("adv_srch_"+$scope.searchResult.id,JSON.stringify(o))
-
-  #load selection state values from cookie
-  readSelectionCookie = (searchId) ->
-    v = $.cookie("adv_srch_"+searchId)
-    if v
-      o = $.parseJSON v
-      $scope.bulkSelected = o.rows
-      $scope.selectAll() if o.all
-      for r in $scope.searchResult.rows
-        r.bulk_selected = true if $scope.bulkSelected.indexOf(r.id)>=0
-
-  loadResultPage = (searchId,page) ->
-    $http.get('/advanced_search/'+searchId+'?page='+page).success((data,status,headers,config) ->
-      $scope.searchResult = data
-      readSelectionCookie data.id
-    ).error((data,status) ->
-      if status == 404
-        $scope.errors.push "This search with id "+id+" could not be found."
-      else
-       $scope.errors.push "An error occurred while loading this search result. Please reload and try again."
-    )
   loadSearch = (id) ->
     $http.get('/advanced_search/'+id+'/setup').success((data,status,headers,config) ->
       $scope.searchSetup = data
@@ -139,13 +112,14 @@ root = exports ? this
     )
 
   $scope.searchId = parseInt $routeParams.searchId
+  $scope.searchResult = {}
   pg = parseInt $routeParams.page
   pg = 1 if isNaN(pg) or pg<1
   $scope.page = pg
 
   if $scope.searchId
     loadSearch $scope.searchId
-    loadResultPage $scope.searchId, $scope.page
+    $scope.searchResult.id = $scope.searchId
   else
     $http.get('/advanced_search/last_search_id').success((data,status,headers,config) ->
       $location.path '/'+data.id+'/'+$scope.page
@@ -185,7 +159,7 @@ root = exports ? this
     $scope.searchSetup = {}
     $http.put('/advanced_search/'+ss.id,JSON.stringify({search_setup:ss})).success(() ->
       loadSearch $scope.searchId
-      loadResultPage $scope.searchId, 1
+      $scope.searchResult.id = $scope.searchId
     ).error((data) ->
       $scope.error.push "An error occurred while saving this search."
     )
@@ -212,43 +186,6 @@ root = exports ? this
     ).error((data) ->
       $scope.errors.push "An error occurred while deleting this search. Please reload and try again."
     )
-  #
-  # Bulk action handling
-  #
-
-  #active list of selected bulk actions
-  $scope.bulkSelected = []
-  $scope.allSelected = false
-  $scope.selectPageCheck = false
-
-  #clear selection
-  $scope.selectNone = () ->
-    $scope.bulkSelected = []
-    $scope.allSelected = false
-    r.bulk_selected = false for r in $scope.searchResult.rows
-
-  $scope.selectAll = () ->
-    $scope.allSelected = true
-    r.bulk_selected = true for r in $scope.searchResult.rows
-
-  $scope.selectPage = () ->
-    r.bulk_selected = true for r in $scope.searchResult.rows
-
-  #run a bulk action
-  $scope.executeBulkAction = (bulkAction) ->
-    selectedItems = $scope.bulkSelected
-    sId = (if $scope.allSelected then $scope.searchResult.search_run_id else null)
-    cb = null
-    cb = eval(bulkAction.callback) if bulkAction.callback
-    if cb
-      BulkActions.submitBulkAction selectedItems, sId, bulkAction.path, 'post', cb
-    else
-      BulkActions.submitBulkAction selectedItems, sId, bulkAction.path, 'post'
-
-  #
-  # End bulk action handling
-  #
-
   $scope.toggleSetup = () ->
     $scope.showSetup = !$scope.showSetup
 
@@ -345,24 +282,7 @@ root = exports ? this
   $scope.$watch 'searchResult.page', (newValue,oldValue) ->
     $location.path '/'+$scope.searchId+'/'+newValue unless isNaN(newValue) || newValue==oldValue
 
-  $scope.$watch 'searchResult', ((newValue,oldValue) ->
-    if newValue && newValue.rows
-      for r in newValue.rows
-        if r.bulk_selected
-          $scope.bulkSelected.push(r.id) unless $scope.bulkSelected.indexOf(r.id)>=0
-        else
-          idx = $scope.bulkSelected.indexOf(r.id)
-          $scope.bulkSelected.splice(idx,1) if idx>=0
-          $scope.allSelected = false
-    $scope.selectPageCheck = false
-    ), true #true means "deep search"
 
-  $scope.$watch 'bulkSelected', ((newValue,oldValue) ->
-    writeSelectionCookie() unless newValue==oldValue
-  ), true
-
-  $scope.$watch 'allSelected', (newValue,oldValue) ->
-    writeSelectionCookie() unless newValue==oldValue
 
   #remove criterions that are deleted
   $scope.$watch 'searchSetup.search_criterions', (() ->
@@ -374,26 +294,7 @@ root = exports ? this
   #  VIEW FORMATTING UTILITIES BELOW HERE
   #
 
-  #return true if the given row's id is different than the previous rows id
-  $scope.newObjectRow = (idx) ->
-    return true if idx==0
-    myRowId = $scope.searchResult.rows[idx].id
-    lastRowId = $scope.searchResult.rows[idx-1].id
-    return myRowId!=lastRowId && idx>0
 
-  #return the classes that should be applied to a result row based on it's position and whether it's the first instance of a new row key
-  $scope.classesForRow = (idx) ->
-    return ['hover'] if idx==0
-    r = ['hover']
-    r.push 'search_row_break' if $scope.newObjectRow(idx)
-    r
-
-  #return array of valid page numbers for the current search result
-  $scope.pageNumberArray = () ->
-    if $scope.searchResult
-      [1..$scope.searchResult.total_pages]
-    else
-      [1]
 
   #user friendly description of the schedule's timing
   $scope.scheduleTimingText = (s) ->

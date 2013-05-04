@@ -213,3 +213,130 @@
       }
     }
 ]
+@components.directive 'chainSearchResult', ['$http',($http) ->
+  {
+    scope: {
+      searchResult:"=chainSearchResult"
+      page: "="
+      errors:"=",
+      notices:"="
+      urlPrefix:"@src"
+    }
+    transclude:true
+    templateUrl:'templates/search_result.html'
+    controller: ['$scope',($scope) ->
+
+      $scope.loadedSearchId = null
+
+      #write cookie for current selection state
+      writeSelectionCookie = () ->
+        o = {rows:$scope.bulkSelected,all:$scope.allSelected}
+        $.cookie($scope.urlPrefix+$scope.searchResult.id,JSON.stringify(o))
+
+      #load selection state values from cookie
+      readSelectionCookie = (searchId) ->
+        v = $.cookie($scope.urlPrefix+searchId)
+        if v
+          o = $.parseJSON v
+          $scope.bulkSelected = o.rows
+          $scope.selectAll() if o.all
+          for r in $scope.searchResult.rows
+            r.bulk_selected = true if $scope.bulkSelected.indexOf(r.id)>=0
+
+      loadResultPage = (searchId,page) ->
+        p = if page==undefined then 1 else page
+        $scope.searchResult = {id:searchId}
+        $http.get($scope.urlPrefix+searchId+'?page='+p).success((data,status,headers,config) ->
+          $scope.searchResult = data
+          $scope.loadedsearchId = $scope.searchResult.id
+          readSelectionCookie data.id
+        ).error((data,status) ->
+          if status == 404
+            $scope.errors.push "This search with id "+id+" could not be found."
+          else
+           $scope.errors.push "An error occurred while loading this search result. Please reload and try again."
+        )
+
+      #return array of valid page numbers for the current search result
+      $scope.pageNumberArray = () ->
+        if $scope.searchResult && $scope.searchResult.total_pages
+          [1..$scope.searchResult.total_pages]
+        else
+          [1]
+
+      #return true if the given row's id is different than the previous rows id
+      $scope.newObjectRow = (idx) ->
+        return true if idx==0
+        myRowId = $scope.searchResult.rows[idx].id
+        lastRowId = $scope.searchResult.rows[idx-1].id
+        return myRowId!=lastRowId && idx>0
+
+      #return the classes that should be applied to a result row based on it's position and whether it's the first instance of a new row key
+      $scope.classesForRow = (idx) ->
+        return ['hover'] if idx==0
+        r = ['hover']
+        r.push 'search_row_break' if $scope.newObjectRow(idx)
+        r
+
+      #
+      # Bulk action handling
+      #
+
+      #active list of selected bulk actions
+      $scope.bulkSelected = []
+      $scope.allSelected = false
+      $scope.selectPageCheck = false
+
+      #clear selection
+      $scope.selectNone = () ->
+        $scope.bulkSelected = []
+        $scope.allSelected = false
+        r.bulk_selected = false for r in $scope.searchResult.rows
+
+      $scope.selectAll = () ->
+        $scope.allSelected = true
+        r.bulk_selected = true for r in $scope.searchResult.rows
+
+      $scope.selectPage = () ->
+        r.bulk_selected = true for r in $scope.searchResult.rows
+
+      #run a bulk action
+      $scope.executeBulkAction = (bulkAction) ->
+        selectedItems = $scope.bulkSelected
+        sId = (if $scope.allSelected then $scope.searchResult.search_run_id else null)
+        cb = null
+        cb = eval(bulkAction.callback) if bulkAction.callback
+        if cb
+          BulkActions.submitBulkAction selectedItems, sId, bulkAction.path, 'post', cb
+        else
+          BulkActions.submitBulkAction selectedItems, sId, bulkAction.path, 'post'
+      
+      $scope.$watch 'bulkSelected', ((newValue,oldValue) ->
+        writeSelectionCookie() unless newValue==oldValue
+      ), true
+
+      $scope.$watch 'allSelected', (newValue,oldValue) ->
+        writeSelectionCookie() unless newValue==oldValue
+
+      $scope.$watch 'searchResult', ((newValue,oldValue) ->
+        if newValue && newValue.rows
+          for r in newValue.rows
+            if r.bulk_selected
+              $scope.bulkSelected.push(r.id) unless $scope.bulkSelected.indexOf(r.id)>=0
+            else
+              idx = $scope.bulkSelected.indexOf(r.id)
+              $scope.bulkSelected.splice(idx,1) if idx>=0
+              $scope.allSelected = false
+        $scope.selectPageCheck = false
+        ), true #true means "deep search"
+
+      #
+      # End bulk action handling
+      #
+
+
+      $scope.$watch 'searchResult.id', (newVal,oldVal) ->
+        loadResultPage(newVal,$scope.page) if newVal!=undefined && !isNaN(newVal) && newVal!=$scope.loadedSearchId
+    ]
+  }
+]

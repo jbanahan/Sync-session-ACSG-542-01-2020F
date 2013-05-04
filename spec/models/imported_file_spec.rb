@@ -1,17 +1,24 @@
 require 'spec_helper'
 
 describe ImportedFile do
+  describe :result_keys_where do
+    it "should build proper where clause" do
+      f = Factory(:imported_file,:module_type=>'Product')
+      w = f.result_keys_where
+      w.should == "products.id in (select recordable_id from change_records inner join (select * from file_import_results where imported_file_id = #{f.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id)"
+    end
+  end
   describe :result_keys do
     it "should return empty array if no file import results" do
       f = Factory(:imported_file)
       f.result_keys.should == []
     end
-    it "should return result of file_import_result#changed_objects" do
+    it "should return results" do
       f = Factory(:imported_file)
       fir = f.file_import_results.create!(:finished_at=>Time.now) #only shows for last finished result
       p1 = Factory(:product)
       p2 = Factory(:product)
-      FileImportResult.any_instance.should_receive(:changed_objects).and_return [p1,p2]
+      [p1,p2].each {|p| fir.change_records.create!(:recordable=>p)}
       f.result_keys.should == [p1.id,p2.id]
     end
   end

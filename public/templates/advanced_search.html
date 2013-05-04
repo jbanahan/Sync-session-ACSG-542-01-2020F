@@ -155,5 +155,7 @@
       </div>
     </div>
   </div>
-  <div ng-include src='"/templates/search_result.html"'></div>
+  <div chain-search-result='searchResult' page='page' src='/advanced_search/'>
+    <a ng-click='toggleSetup()' class='action_link' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</a>
+  </div>
 </div>

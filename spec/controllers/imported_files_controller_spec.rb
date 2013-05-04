@@ -8,15 +8,36 @@ describe ImportedFilesController do
     UserSession.create! @u
   end
   describe 'show' do
-    it 'should apply search filters' do
-      fir = Factory(:file_import_result, :imported_file=>Factory(:imported_file, :user=>@u))
-      f = fir.imported_file
-      sc = f.search_criterions.create!(:operator=>"eq",:value=>"x",:model_field_uid=>"prod_uid") 
-      FileImportResult.any_instance.should_receive(:changed_objects).with(duck_type(:all)).and_return(Product.where("1=1"))
-      get :show, :id=>f.id
+    it 'should pass for html' do
+      get :show, :id=>1
       response.should be_success
-      assigns(:filters).should have(1).item
-      assigns(:filters).first.should == sc
+    end
+    it "should 404 for json & imported file that user can't view" do
+      FileImportResult.any_instance.stub(:can_view?).and_return false
+      f = Factory(:imported_file)
+      lambda {get :show, :id=>f.id,:format=>:json}.should raise_error ActionController::RoutingError
+    end
+    it "should return json for user who can view" do
+      FileImportResult.any_instance.stub(:time_to_process).and_return(89)
+      FileImportResult.any_instance.stub(:error_count).and_return(61)
+      p1 = Factory(:product)
+      p2 = Factory(:product)
+      f = Factory(:imported_file,:user=>@u)
+      finished_at = 1.minute.ago
+      fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
+      [p1,p2].each {|p| fir.change_records.create!(:recordable=>p)}
+      fir.change_records.create!(:recordable=>p1) #extra file row
+      get :show, :id=>f.id, :format=>:json
+      response.should be_success
+      r = JSON.parse response.body
+      r['id'].should == f.id
+      r['uploaded_at'].should == 0.seconds.ago.strftime("%Y-%m-%d")
+      r['uploaded_by'].should == @u.full_name
+      r['total_rows'].should == 3
+      r['total_records'].should == 2
+      r['last_processed'].should == finished_at.strftime("%Y-%m-%d HH:MM")
+      r['time_to_process'].should == 89
+      r['processing_error_count'].should == 61
     end
   end
   describe 'filter' do

@@ -36,6 +36,27 @@ class ImportedFilesController < ApplicationController
   end
   
   def show
+    respond_to do |format|
+      format.html {
+        render :action=>'show_angular', :layout=>'one_col'
+      }
+      format.json {
+        f = ImportedFile.find params[:id] 
+        fir= f.last_file_import_finished
+        raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
+        r = {:id=>f.id,
+          :uploaded_at=>f.created_at.strftime("%Y-%m-%d"),
+          :uploaded_by=>f.user.full_name,
+          :total_rows=>(fir ? fir.change_records.size : ''),
+          :total_records=>f.result_keys.count,
+          :last_processed=>(fir && fir.finished_at ? fir.finished_at.strftime("%Y-%m-%d HH:MM") : ''),
+          :time_to_process=>(fir ? fir.time_to_process : ''),
+          :processing_error_count=>(fir ? fir.error_count : '')
+        } 
+        render :json=>r
+      }
+    end
+=begin
     f = ImportedFile.find params[:id]
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"view",:module_name=>"uploaded file"}) {
       @imported_file = f
@@ -60,6 +81,7 @@ class ImportedFilesController < ApplicationController
       end
       @bulk_actions = f.core_module.bulk_actions current_user
     }
+=end
   end
 
   # show the user prompt page for emailing the imported file

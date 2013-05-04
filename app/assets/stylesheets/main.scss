@@ -41,4 +41,19 @@ div.ang_error_box, div.ang_notice_box {
     }
   }
 }
-
+dl.field_list {
+  dt {
+    padding-top: 0.5em;
+    font-weight:bold;
+    width: 10em;
+    float: left;
+    clear: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  dd {
+    padding-top: 0.5em;
+    margin-left: 10.5em;
+  }
+}

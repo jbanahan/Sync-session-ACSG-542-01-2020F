@@ -34,11 +34,18 @@ class ImportedFile < ActiveRecord::Base
   validates_presence_of :update_mode
   validates_inclusion_of :update_mode, :in => UPDATE_MODES.keys.to_a
   
+  #always returns empty array (here for duck typing with SearchSetup)
+  def sort_criterions
+    []
+  end
+
+  def result_keys_where
+    "#{core_module.table_name}.id in (select recordable_id from change_records inner join (select * from file_import_results where imported_file_id = #{self.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id)"
+  end
+
   #return keys from last file import result
   def result_keys opts={}
-    fi = last_file_import_finished
-    return [] unless fi
-    fi.changed_objects.collect {|o| o.id}
+    core_module.klass.where(result_keys_where).pluck(:id).uniq
   end
 
   def sorted_columns
