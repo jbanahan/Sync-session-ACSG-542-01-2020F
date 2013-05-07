@@ -10,7 +10,7 @@ describe ImportedFilesController do
   describe 'show' do
     it 'should pass for html' do
       get :show, :id=>1
-      response.should be_success
+      response.should redirect_to "/imported_files/show_angular#/1"
     end
     it "should 404 for json & imported file that user can't view" do
       FileImportResult.any_instance.stub(:can_view?).and_return false
@@ -31,13 +31,69 @@ describe ImportedFilesController do
       response.should be_success
       r = JSON.parse response.body
       r['id'].should == f.id
-      r['uploaded_at'].should == 0.seconds.ago.strftime("%Y-%m-%d")
+      r['uploaded_at'].should == 0.seconds.ago.strftime("%Y-%m-%d %H:%M")
       r['uploaded_by'].should == @u.full_name
       r['total_rows'].should == 3
       r['total_records'].should == 2
-      r['last_processed'].should == finished_at.strftime("%Y-%m-%d HH:MM")
+      r['last_processed'].should == finished_at.strftime("%Y-%m-%d %H:%M")
       r['time_to_process'].should == 89
       r['processing_error_count'].should == 61
+      r['current_user'].should == {'id'=>@u.id,'full_name'=>@u.full_name,'email'=>@u.email}
+    end
+    it "should return available countries" do
+      f = Factory(:imported_file,:user=>@u)
+      us = Factory(:country,:iso_code=>"US",:name=>"USA",:import_location=>true,:classification_rank=>2)
+      ca = Factory(:country,:iso_code=>"CA",:name=>"Canada",:import_location=>true,:classification_rank=>1)
+      get :show, :id=>f.id, :format=>:json
+      response.should be_success
+      r = JSON.parse response.body
+      r['available_countries'].should == [
+        {'iso_code'=>'CA','name'=>'Canada','id'=>ca.id},
+        {'iso_code'=>'US','name'=>'USA','id'=>us.id}
+      ]
+    end
+  end
+  describe 'results' do
+    it "should 404 if user can't view" do
+      FileImportResult.any_instance.stub(:can_view?).and_return false
+      f = Factory(:imported_file)
+      lambda {get :results, :id=>f.id,:format=>:json}.should raise_error ActionController::RoutingError
+    end
+    it "should return json" do
+      Product.stub(:search_where).and_return("1=1")
+      p1 = Factory(:product)
+      p2 = Factory(:product)
+      f = Factory(:imported_file,:user=>@u,:attached_file_name=>'fn.xls')
+      f.search_columns.create!(:model_field_uid=>'prod_uid')
+      f.search_columns.create!(:model_field_uid=>'prod_name')
+      finished_at = 1.minute.ago
+      fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
+      [p1,p2].each {|p| fir.change_records.create!(:recordable=>p)}
+      fir.change_records.create!(:recordable=>p1) #extra file row
+      get :results, :id=>f.id, :format=>:json
+      response.should be_success
+      r = JSON.parse response.body
+      r['id'].should == f.id
+      r['page'].should == 1
+      r['name'].should == f.attached_file_name
+      r['columns'].should == [ModelField.find_by_uid('prod_uid').label,ModelField.find_by_uid('prod_name').label]
+      r['rows'].size.should == 2
+      r['rows'].first['id'].should == p1.id
+    end
+    it "should restrict results to products in file" do
+      Product.stub(:search_where).and_return("1=1")
+      p1 = Factory(:product)
+      p2 = Factory(:product)
+      f = Factory(:imported_file,:user=>@u,:attached_file_name=>'fn.xls')
+      f.search_columns.create!(:model_field_uid=>'prod_uid')
+      f.search_columns.create!(:model_field_uid=>'prod_name')
+      finished_at = 1.minute.ago
+      fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
+      fir.change_records.create!(:recordable=>p1)
+      get :results, :id=>f.id, :format=>:json
+      response.should be_success
+      r = JSON.parse response.body
+      r['rows'].size.should == 1
     end
   end
   describe 'filter' do

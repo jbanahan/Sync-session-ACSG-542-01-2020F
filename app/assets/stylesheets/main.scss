@@ -1,4 +1,10 @@
-a.action_link:hover {
+a.action_link {
+  color: black;
+  text-decoration: none;
+  padding: 0.25em 0.5em;
+  border: 1px solid #333;
+  background-color: #ccc;
+  display: inline-block;
   color: white;
   background-color: #666;
 }
@@ -56,4 +62,7 @@ dl.field_list {
     padding-top: 0.5em;
     margin-left: 10.5em;
   }
+}
+div.chainActionBarWrap {
+  display: inline;
 }

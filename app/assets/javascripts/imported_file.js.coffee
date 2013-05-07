@@ -1,31 +1,70 @@
 root = exports ? this
-importedFileApp = angular.module('ImportedFileApp',[]).config(['$routeProvider', ($routeProvider) ->
+importedFileApp = angular.module('ImportedFileApp',['ChainComponents']).config(['$routeProvider', ($routeProvider) ->
   $routeProvider.
-    when('/:fileId',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'}).
-    otherwise({templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'})
+    when('/:fileId',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'})
 ])
 
-importedFileApp.controller 'ImportedFileController', ['$scope', ($scope) ->
-  $scope.importedFile = {
-    id:1
-    file_name:'fn.xls'
-    uploaded_at:'2013-01-01'
-    uploaded_by:'Brian Glick'
-    total_rows:10
-    total_records:8
-    last_processed:'2013-01-01 12:25'
-    time_to_process:3
-    }
+importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', ($scope,$routeParams,$http) ->
 
-  $scope.searchResult = {
-    id:1
-    columns: ['a','b','c']
-    rows: [
-      {
-        id:1
-        links:[{label:'View',url:'/product/1'}]
-        vals:['a1','b1','c1']
-        }
-      ]
-    }
-]
+  $scope.errors = []
+  $scope.notices = []
+  $scope.page = 1
+  $scope.importedFile = {}
+  $scope.searchResult = {}
+
+  $scope.showPreviewBox = false
+  $scope.previewResults = []
+
+  $scope.showEmailCurrent = false
+  $scope.emailCurrentSettings = {to:'',subject:'[chain.io] Current File Data',body:''}
+
+  $scope.enableEmailCurrent = () ->
+    $scope.showEmailCurrent = true
+
+  $scope.disableEmailCurrent = () ->
+    $scope.showEmailCurrent = false
+
+  $scope.sendEmailCurrent = () ->
+    countryIds = []
+    for c in $scope.importedFile.available_countries
+      countryIds.push c.id if c.selected
+    $scope.emailCurrentSettings.extra_countries = countryIds
+    $scope.disableEmailCurrent()
+    $http.post('/imported_files/'+$scope.importedFile.id+"/email_file",$scope.emailCurrentSettings).success(() ->
+      $scope.notices.push "Your file has been scheduled and will be emailed soon."
+    ).error(() ->
+      $scope.errors.push "There was an error emailing this file. Please contact support."
+    )
+
+
+  $scope.process = () ->
+    $scope.showPreviewBox = false
+    $http.post('/imported_files/'+$scope.importedFile.id+"/process_file").success(() ->
+      $scope.notices.push "Your file is being processed. You'll receive a system message when it is complete."
+      $scope.showEmailCurrent=false
+    ).error(() ->
+      $scope.errors.push "There was an error processing the file. Please contact support."
+    )
+
+  $scope.downloadOriginal = () ->
+    $.fileDownload '/imported_files/'+$scope.importedFile.id+'/download', (() ->
+      console.log('download started')
+    ), (() ->
+      $scope.errors.push "There was an error downloading the file. Please contact support."
+    )
+
+  if($routeParams.fileId>0)
+    $http.get('/imported_files/'+parseInt($routeParams.fileId)).success((data) ->
+      $scope.importedFile = data
+      $scope.emailCurrentSettings.to = $scope.importedFile.current_user.email
+      if $scope.importedFile.last_processed && $scope.importedFile.last_processed.length>0
+        $scope.searchResult.id = data.id
+      else
+        $scope.showPreviewBox = true
+        $http.get('/imported_files/'+$scope.importedFile.id+'/preview').success((data) ->
+          $scope.previewResults = data
+        )
+    )
+
+  @
+  ]

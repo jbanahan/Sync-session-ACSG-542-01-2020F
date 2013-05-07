@@ -329,15 +329,16 @@ OpenChain::Application.routes.draw do
   resources :imported_files, :only => [:index, :show, :destroy] do
     member do
       get 'preview'
-      get 'show_email_file'
       post 'email_file'
       get 'download'
       post 'download_items'
-      get 'process'
+      post 'process_file'
       post 'filter'
     end
+    get 'show_angular', :on=>:collection
     resources :imported_file_downloads, :only=>[:index,:show]
   end
+  match "/imported_files_results/:id" => "imported_files#results", :via=>:get
 
   resources :search_setups do
     collection do
@@ -353,7 +354,6 @@ OpenChain::Application.routes.draw do
     resources :imported_files, :only => [:new, :create, :show] do
       member do 
         get 'download'
-        get 'process_file'
       end
     end 
   end

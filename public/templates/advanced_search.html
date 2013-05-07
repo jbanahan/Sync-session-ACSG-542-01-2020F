@@ -157,5 +157,15 @@
   </div>
   <div chain-search-result='searchResult' page='page' src='/advanced_search/'>
     <a ng-click='toggleSetup()' class='action_link' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</a>
+    <a class='action_link' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</a> 
+    <a class='action_link' ng-show='searchResult.total_pages==1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
+    <a class='action_link' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</a>
+    <span  ng-show='searchSetup.uploadable_error_messages.length > 0'>
+      <span chain-message-box title="'Upload'" >
+        <div ng-repeat='s in searchSetup.uploadable_error_messages'>
+          {{s}}
+        </div>
+      </span>
+    </span>
   </div>
 </div>

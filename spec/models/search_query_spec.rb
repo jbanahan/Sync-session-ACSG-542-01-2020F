@@ -24,6 +24,12 @@ describe SearchQuery do
       r[1][:result][0].should == @p1.unique_identifier
       r[1][:result][1].should == @p1.name
     end
+    it "should add extra_where clause" do
+      @sq = SearchQuery.new @ss, User.new, :extra_where=>"products.id = #{@p1.id}"
+      r = @sq.execute
+      r.should have(1).result
+      r[0][:row_key].should == @p1.id
+    end
     it "should yield with loop of arrays and return nil" do
       r = []
       @sq.execute {|row_hash| r << row_hash}.should be_nil

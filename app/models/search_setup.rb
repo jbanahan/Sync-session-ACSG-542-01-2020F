@@ -114,11 +114,10 @@ class SearchSetup < ActiveRecord::Base
     CoreModule.find_by_class_name self.module_type
   end
 
-  #does this search have the appropriate columns set to be used as a file upload?
-  #acceptes an optional array that will have any user facing messages appended to it
-  def uploadable? messages=[]
+  #return error message array if search cannot be used as a file upload or an empty array if it can
+  def uploadable_error_messages
     #refactor later to use setup within CoreModule to figure this out instead of hard codes
-    start_messages_count = messages.size
+    messages = []
     cm = core_module 
     messages << "Search's core module not set." if cm.nil?
 
@@ -176,7 +175,14 @@ class SearchSetup < ActiveRecord::Base
         messages << "#{combine_field_names ["ordln_puid","ordln_pname"]} is required to upload Order Lines." unless has_one_of ["ordln_puid","ordln_pname"]
       end
     end
+    messages
+  end
 
+  #does this search have the appropriate columns set to be used as a file upload?
+  #acceptes an optional array that will have any user facing messages appended to it
+  def uploadable? messages=[]
+    start_messages_count = messages.size
+    uploadable_error_messages.each {|m| messages << m}
     return messages.size == start_messages_count
   end
 

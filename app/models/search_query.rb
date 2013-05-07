@@ -15,6 +15,7 @@ class SearchQuery
   def initialize search_setup, user, opts={}
     @search_setup = search_setup
     @user = user
+    @extra_where = opts[:extra_where]
   end
 
   # Execute the query returning either an array of hashes or yielding to a block with a hash for each row
@@ -121,6 +122,7 @@ class SearchQuery
       sc.where_clause(v).gsub("?",v)
     end
     wheres << @search_setup.core_module.klass.search_where(@user)
+    wheres << @extra_where unless @extra_where.blank?
     if wheres.empty?
       return ""
     else 

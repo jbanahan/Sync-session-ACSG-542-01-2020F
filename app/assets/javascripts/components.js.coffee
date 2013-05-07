@@ -1,5 +1,48 @@
 @components = angular.module 'ChainComponents', []
 
+# moves the transcluded content into the action bar
+@components.directive 'chainActionBarItem', [() ->
+  {
+    transclude:true
+    template:"<div class='chainActionBarWrap' ng-transclude></div>"
+    link: (scope,el,attrs) ->
+      d = el.find('div.chainActionBarWrap')
+      $("div.action_container").append(d)
+      d.find('button').button()
+    }
+]
+
+# creates a modal dialog box with a link based on the title attributes and transcludes the content into the body of the dialog.  There will be an "OK" button to close the dialog.
+@components.directive 'chainMessageBox', [() ->
+  {
+    scope: {
+      title:'=title'
+      asButton:'=asButton'
+    }
+    transclude:true
+    template:"<div class='dialog_content_wrap' ng-transclude></div>"
+    link: (scope,el,attrs) ->
+      if scope.asButton
+        el.prepend("<button class='chainMessageBoxLauncher'>"+scope.title+"</button>")
+        el.find('button.chainMessageBoxLauncher').button()
+      else
+        el.prepend("<a class='action_link chainMessageBoxLauncher'>"+scope.title+'</a>')
+      d = el.find("div.dialog_content_wrap")
+      d.dialog({
+        modal:true
+        autoOpen:false
+        buttons:{
+          "OK": () ->
+            $(@).dialog('close')
+          }
+        }
+      )
+      el.find(".chainMessageBoxLauncher").click(() ->
+        d.dialog('open')
+      )
+    }
+]
+
 # shows the user a drop down to select a user and sets the 
 # selected user id into the passed in object
 # <div user-list="myUserIdVariable"></div>
@@ -26,7 +69,7 @@
       errors:"=",
       notices:"="
     }
-    templateUrl:'templates/chain_messages.html'
+    templateUrl:'/templates/chain_messages.html'
     }
 ]
 @components.directive 'chainDatePicker', [() ->
@@ -53,7 +96,7 @@
 @components.directive 'chainSearchCriterion', ['$compile','chainSearchOperators',($compile,chainSearchOperators) ->
   {
     scope: {crit:"=chainSearchCriterion"},
-    templateUrl:"templates/chain_search_criterion.html",
+    templateUrl:"/templates/chain_search_criterion.html",
     controller: ['$scope',($scope) ->
       $scope.operators = chainSearchOperators.ops
 
@@ -223,7 +266,7 @@
       urlPrefix:"@src"
     }
     transclude:true
-    templateUrl:'templates/search_result.html'
+    templateUrl:'/templates/search_result.html'
     controller: ['$scope',($scope) ->
 
       $scope.loadedSearchId = null

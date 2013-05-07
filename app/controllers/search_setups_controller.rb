@@ -3,7 +3,7 @@ class SearchSetupsController < ApplicationController
   def show
     search_setup = SearchSetup.for_user(current_user).find(params[:id])
     respond_to do |format|
-      format.json { render :json => search_setup.to_json(:include => {:search_columns=>{:only=>[:model_field_uid,:rank]}, 
+      format.json { render :json => search_setup.to_json(:methods=>[:uploadable_error_messages],:include => {:search_columns=>{:only=>[:model_field_uid,:rank]}, 
           :sort_criterions=>{:only=>[:model_field_uid,:rank,:descending]}}) }
     end 
   end
