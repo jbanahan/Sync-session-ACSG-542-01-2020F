@@ -80,7 +80,8 @@ describe OpenChain::FenixParser do
         
         @activities.each do |activity_number, date_times|
           date_times.each do |date|
-            data += "\r\nSD,#{@barcode},#{activity_number},#{date.strftime('%Y%m%d')},#{date.strftime('%H%M')},USERID,NOTES"
+            # For some reason Fenix adds spaces before and after the activity number
+            data += "\r\nSD,#{@barcode},\" #{activity_number} \",#{date.strftime('%Y%m%d')},#{date.strftime('%H%M')},USERID,NOTES"
           end
         end
       end
