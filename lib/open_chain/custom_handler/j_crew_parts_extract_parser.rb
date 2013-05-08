@@ -8,8 +8,37 @@ module OpenChain
       include OpenChain::FtpFileSupport
       include AllianceProductSupport
       
+      JCrewProduct = Struct.new(:po, :article, :hts, :description, :country_of_origin, :season, :cost)
       COLUMN_HEADERS = Set.new ['PO #', 'Season', 'Article', 'HS #', 'Quota', 'Duty %', 'COO', 'FOB', 'PO Cost', 'Binding Ruling']
-      JCrewProduct = Struct.new(:po, :article, :hts, :description, :country_of_origin)
+      HTS_TRANSLATIONS = {
+        '4602102500' => '4202192500', \
+        '6115110010' => '6115210010', \
+        '6115122000' => '6115220000', \
+        '6203424005' => '6203424006', \
+        '6203424010' => '6203424011', \
+        '6203424015' => '6203424016', \
+        '6203424025' => '6203424026', \
+        '6203424045' => '6203424046', \
+        '6203424050' => '6203424051', \
+        '6203424060' => '6203424061', \
+        '6204624005' => '6204624006', \
+        '6204624020' => '6204624021', \
+        '6204624030' => '6204624031', \
+        '6204624050' => '6204624051', \
+        '6204624055' => '6204624056', \
+        '6204624065' => '6204624066', \
+        '6205202050' => '6205202051', \
+        '6205202060' => '6205202061', \
+        '6205202065' => '6205202066', \
+        '6206303010' => '6206303011', \
+        '6206303030' => '6206303031', \
+        '6206303040' => '6206303041', \
+        '6211310040' => '6211320040', \
+        '6404193560' => '6404193960', \
+        '6505906040' => '6505006040', \
+        '6505908090' => '6505008090', \
+        '6505902060' => '6506002060', \
+        '6601900000' => '6601910000'}
 
       def self.process_file path
         # Open in binmode (otherwise we tend to run into encoding issues with this file)
@@ -57,6 +86,12 @@ module OpenChain
       def remote_file_name
         # Required for AllianceProductSupport for sending the file via FTP
         "#{Time.now.to_i}-J0000.DAT"
+      end
+
+      def ftp_file file, delete_local=true
+        require 'fileutils'
+        FileUtils.cp(file.path, "tmp/#{remote_file_name}")
+        file.unlink if delete_local
       end
 
       # Reads the IO object containing JCrew part information and writes the translated output
@@ -113,8 +148,12 @@ module OpenChain
           end
 
           # TODO Add the HTS translation here using the xref table for JCrew and US country.
+          if HTS_TRANSLATIONS.has_key?(product.hts)
+            product.hts = HTS_TRANSLATIONS[product.hts]
+          end
 
-          io << "#{out(product.po, 20)}#{out(product.article, 30)}#{out(product.hts, 10)}#{out(product.description, 40)}#{out(product.country_of_origin, 2)}\r\n"
+          #io << "#{out(product.po, 20)}#{out(product.article, 30)}#{out(product.hts, 10)}#{out(product.description, 40)}#{out(product.country_of_origin, 2)}\r\n"
+          io << "#{out(product.po, 20)}#{out(product.season, 10)}#{out(product.article, 30)}#{out(product.hts, 10)} #{out(product.description, 40)} #{out(product.cost, 10)}#{out(product.country_of_origin, 2)}\r\n"
         end
 
         def out value, maxlen
@@ -130,9 +169,11 @@ module OpenChain
 
         def parse_product_data line, product
           product.po = get_data line, 1
+          product.season = get_data line, 4
           product.article = get_data line, 5
           product.hts = get_data line, 6
           product.country_of_origin = get_data line, 9
+          product.cost = sprintf("%0.2f", BigDecimal.new(get_data(line, 11)))
 
           product
         end
