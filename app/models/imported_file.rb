@@ -17,7 +17,7 @@ class ImportedFile < ActiveRecord::Base
   
   belongs_to :search_setup
   belongs_to :user
-  has_many :search_runs
+  has_one :search_run
   has_many :file_import_results, :dependent=>:destroy
   has_many :search_columns
   has_many :search_criterions, :dependent=>:destroy

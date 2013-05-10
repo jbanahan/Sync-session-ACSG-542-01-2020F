@@ -5,7 +5,7 @@ class ShipmentsController < ApplicationController
 	end
 	
   def index
-    advanced_search CoreModule::SHIPMENT
+    redirect_to advanced_search CoreModule::SHIPMENT
   end
 
   # GET /shipments/1

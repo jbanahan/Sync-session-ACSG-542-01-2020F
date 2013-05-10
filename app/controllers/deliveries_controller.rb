@@ -4,10 +4,8 @@ class DeliveriesController < ApplicationController
 		Delivery
 	end
 	
-
-  
   def index
-    advanced_search CoreModule::DELIVERY
+    redirect_to advanced_search CoreModule::DELIVERY
   end
 
   # GET /deliveries/1

@@ -17,7 +17,7 @@ class OfficialTariffsController < ApplicationController
     render :json => r
   end
   def index
-    advanced_search CoreModule::OFFICIAL_TARIFF
+    redirect_to advanced_search CoreModule::OFFICIAL_TARIFF
   end
   
   def show

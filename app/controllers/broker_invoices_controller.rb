@@ -3,7 +3,7 @@ class BrokerInvoicesController < ApplicationController
     BrokerInvoice
   end
   def index
-    advanced_search CoreModule::BROKER_INVOICE
+    redirect_to advanced_search CoreModule::BROKER_INVOICE
   end
   def show
     i = BrokerInvoice.find params[:id]

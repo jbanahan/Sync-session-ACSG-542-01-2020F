@@ -93,11 +93,23 @@ class ApplicationController < ActionController::Base
     attr_accessor :url
   end
 
-  def advanced_search(core_module)
-    setup = current_user.search_setups.includes(:search_run).where(:module_type=>core_module.class_name).order("search_runs.updated_at DESC").limit(1).first
-    setup = current_user.search_setups.order("updated_at DESC").where(:module_type=>core_module.class_name).limit(1).first unless setup
-    setup = core_module.make_default_search(current_user) unless setup
-    redirect_to "/advanced_search#/#{setup.id}"
+  def advanced_search(core_module,force_search=false)
+    search_run = SearchRun.find_last_run current_user, core_module
+    if search_run.nil?
+      setup = current_user.search_setups.order("updated_at DESC").where(:module_type=>core_module.class_name).limit(1).first
+      setup = core_module.make_default_search(current_user) unless setup
+      search_run = setup.create_search_run
+    end
+    parent = search_run.parent
+    page = (search_run.page ? search_run.page : nil)
+    case parent.class.to_s
+    when 'SearchSetup'
+      return "/advanced_search#/#{parent.id}#{page ? "/#{page}" : ''}"
+    when 'ImportedFile'
+      return "/imported_files/show_angular#/#{f.id}#{page ? "/#{page}" : ''}"
+    else
+      raise "advanced_search has no routing for class: #{parent.class}"
+    end
   end
 
   #controller action to display generic history page

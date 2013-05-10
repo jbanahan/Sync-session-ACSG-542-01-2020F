@@ -11,8 +11,7 @@ class ProductsController < ApplicationController
 	end
 
   def index
-    @bulk_actions = CoreModule::PRODUCT.bulk_actions current_user
-    advanced_search CoreModule::PRODUCT
+    redirect_to advanced_search CoreModule::PRODUCT
   end
 
   # GET /products/1

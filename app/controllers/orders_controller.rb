@@ -5,7 +5,7 @@ class OrdersController < ApplicationController
 		end
 
     def index
-      advanced_search CoreModule::ORDER
+      redirect_to advanced_search CoreModule::ORDER
     end
 
     def all_open

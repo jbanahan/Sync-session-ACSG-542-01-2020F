@@ -4,7 +4,7 @@ class SalesOrdersController < ApplicationController
 	end
   
   def index
-    advanced_search CoreModule::SALE
+    redirect_to advanced_search CoreModule::SALE
   end
   def all_open
     if current_user.view_sales_orders?
