@@ -31,14 +31,38 @@ describe ApplicationController do
       fsr = f.create_search_run
 
       #make sure the search setup run is older
-      SearchRun.connection.execute("UPDATE search_runs SET updated_at = '2010-01-01 11:00' where id = #{sr.id}")
+      SearchRun.connection.execute("UPDATE search_runs SET last_accessed = '2010-01-01 11:00' where id = #{sr.id}")
       r = controller.advanced_search(CoreModule::PRODUCT,true) 
+      r.should == "/advanced_search#/#{ss.id}"
+    end
+    it "should redirect to most recent search run" do
+      ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
+      sr = ss.create_search_run
+      f = Factory(:imported_file,:module_type=>'Product',:user=>@u)
+      fsr = f.create_search_run
+      #make sure the search setup run is older
+      SearchRun.connection.execute("UPDATE search_runs SET last_accessed = '2010-01-01 11:00' where id = #{sr.id}")
+      r = controller.advanced_search(CoreModule::PRODUCT) 
       r.should == "/imported_files/show_angular#/#{f.id}"
     end
-    it "should redirect to most recent search run"
-    it "should redirect to imported file with page"
-    it "should redirect to imported file without page"
-    it "should redirect to custom file"
+    it "should redirect to imported file with page" do
+      f = Factory(:imported_file,:module_type=>'Product',:user=>@u)
+      fsr = f.create_search_run(:page=>7)
+      r = controller.advanced_search(CoreModule::PRODUCT) 
+      r.should == "/imported_files/show_angular#/#{f.id}/7"
+    end
+    it "should redirect to imported file without page" do
+      f = Factory(:imported_file,:module_type=>'Product',:user=>@u)
+      fsr = f.create_search_run
+      r = controller.advanced_search(CoreModule::PRODUCT) 
+      r.should == "/imported_files/show_angular#/#{f.id}"
+    end
+    it "should redirect to custom file" do
+      f = Factory(:custom_file,:uploaded_by=>@u,:module_type=>'Product')
+      fsr = f.create_search_run
+      r = controller.advanced_search(CoreModule::PRODUCT) 
+      r.should == "/custom_files/#{f.id}"
+    end
   end
   describe :strip_uri_params do
     it "should remove specified parameters from a URI string" do

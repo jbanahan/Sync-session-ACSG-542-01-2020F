@@ -94,19 +94,32 @@ class ApplicationController < ActionController::Base
   end
 
   def advanced_search(core_module,force_search=false)
-    search_run = SearchRun.find_last_run current_user, core_module
+    search_run = nil
+    if force_search
+      search_run = SearchRun.
+        includes(:search_setup).
+        where(:user_id=>current_user.id).
+        where("search_setups.user_id = ?",current_user.id).
+        order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
+        first
+    else
+      search_run = SearchRun.find_last_run current_user, core_module
+    end
     if search_run.nil?
       setup = current_user.search_setups.order("updated_at DESC").where(:module_type=>core_module.class_name).limit(1).first
       setup = core_module.make_default_search(current_user) unless setup
-      search_run = setup.create_search_run
+      search_run = setup.search_runs.create!
     end
+    page_number = (search_run.page ? search_run.page : nil)
+    page_str = page_number ? "/#{page_number}" : ''
     parent = search_run.parent
-    page = (search_run.page ? search_run.page : nil)
     case parent.class.to_s
     when 'SearchSetup'
-      return "/advanced_search#/#{parent.id}#{page ? "/#{page}" : ''}"
+      return "/advanced_search#/#{parent.id}#{page_str}"
     when 'ImportedFile'
-      return "/imported_files/show_angular#/#{f.id}#{page ? "/#{page}" : ''}"
+      return "/imported_files/show_angular#/#{parent.id}#{page_str}"
+    when 'CustomFile'
+      return "/custom_files/#{parent.id}"
     else
       raise "advanced_search has no routing for class: #{parent.class}"
     end

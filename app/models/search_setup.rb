@@ -13,7 +13,7 @@ class SearchSetup < ActiveRecord::Base
   has_many :search_schedules, :dependent => :destroy
   has_many :imported_files 
   has_many :dashboard_widgets, :dependent => :destroy
-  has_one :search_run, :dependent => :destroy
+  has_many :search_runs, :dependent => :destroy
   has_one :result_cache, :as=>:result_cacheable, :dependent=>:destroy
 
   belongs_to :user
@@ -86,8 +86,8 @@ class SearchSetup < ActiveRecord::Base
   end
   
   def touch
-    sr = self.search_run
-    sr = self.build_search_run(:page=>1) if sr.nil?
+    sr = self.search_runs.first
+    sr = self.search_runs.build(:page=>1,:per_page=>100) if sr.nil?
     sr.last_accessed = Time.now
     sr.user_id = self.user_id
     sr.save

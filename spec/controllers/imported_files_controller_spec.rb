@@ -54,6 +54,25 @@ describe ImportedFilesController do
     end
   end
   describe 'results' do
+    context :search_runs do
+      before :each do
+        @f = Factory(:imported_file,:user=>@u)
+        fir = Factory(:file_import_result,:imported_file=>@f,:finished_at=>1.minute.ago)
+      end
+      it "should create search run" do
+        get :results, :id=>@f.id, :format=>:json
+        response.should be_success
+        @f.search_runs.first.should_not be_nil
+      end
+      it "should update last accessed on search run" do
+        @f.search_runs.create!(:last_accessed=>1.day.ago)
+        get :results, :id=>@f.id, :format=>:json
+        response.should be_success
+        @f.reload
+        @f.search_runs.first.last_accessed.should > 1.minute.ago
+      end
+
+    end
     it "should 404 if user can't view" do
       FileImportResult.any_instance.stub(:can_view?).and_return false
       f = Factory(:imported_file)
@@ -128,20 +147,6 @@ describe ImportedFilesController do
       sc.value.should == "x"
     end
     
-  end
-  describe 'show_email_file' do
-    it 'should run sucessfully' do
-      f = Factory(:imported_file, :user=>@u)
-      get :show_email_file, :id=>f.id
-      response.should be_success
-    end
-    it 'should not allow a user who cannot view the file' do
-      other_user = Factory(:user)
-      f = Factory(:imported_file, :user=>other_user)
-      get :show_email_file, :id=>f.id
-      response.should be_redirect
-      flash[:errors].should have(1).message
-    end
   end
   describe 'email_file' do
     before :each do

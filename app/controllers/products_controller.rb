@@ -11,7 +11,7 @@ class ProductsController < ApplicationController
 	end
 
   def index
-    redirect_to advanced_search CoreModule::PRODUCT
+    redirect_to advanced_search CoreModule::PRODUCT, params[:force_search]
   end
 
   # GET /products/1

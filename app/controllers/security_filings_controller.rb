@@ -3,7 +3,7 @@ class SecurityFilingsController < ApplicationController
     SecurityFiling
   end
   def index
-    redirect_to advanced_search CoreModule::SECURITY_FILING
+    redirect_to advanced_search CoreModule::SECURITY_FILING, params[:force_search]
   end
   def show
     sf = SecurityFiling.find(params[:id])

@@ -5,7 +5,7 @@ class DeliveriesController < ApplicationController
 	end
 	
   def index
-    redirect_to advanced_search CoreModule::DELIVERY
+    redirect_to advanced_search CoreModule::DELIVERY, params[:force_search]
   end
 
   # GET /deliveries/1

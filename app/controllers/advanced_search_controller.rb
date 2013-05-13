@@ -71,10 +71,11 @@ class AdvancedSearchController < ApplicationController
         ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
         raise ActionController::RoutingError.new('Not Found') unless ss
         ss.touch
-        sr = ss.search_run
-        sr = ss.build_search_run unless sr
+        sr = ss.search_runs.first
+        sr = ss.search_runs.create! unless sr
         sr.page = page
         sr.per_page = per_page
+        sr.last_accessed = Time.now
         sr.save!
 
         render :json=>execute_query_to_hash(SearchQuery.new(ss,current_user),current_user,page,per_page)

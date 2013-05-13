@@ -1,11 +1,14 @@
-require 'will_paginate/array'
 class SearchRun < ActiveRecord::Base
 
   PAGE_SIZE = 20
 
+  before_save :set_user
+  before_save :set_last_accessed
+
   belongs_to :search_setup
   belongs_to :imported_file
   belongs_to :custom_file
+  belongs_to :user
   has_many :search_criterions, :dependent=>:destroy
 
   def self.find_last_run user, core_module
@@ -46,5 +49,17 @@ class SearchRun < ActiveRecord::Base
     end
     @changed_objects = r
     return @changed_objects
+  end
+
+  private 
+  def set_user
+    return unless self.user_id.blank? && self.user.blank?
+    p = self.parent
+    self.user = p.user if p && p.respond_to?(:user)
+    self.user = p.uploaded_by if self.user.blank? && p && p.respond_to?(:uploaded_by)
+    return
+  end
+  def set_last_accessed
+    self.last_accessed = Time.now unless self.last_accessed
   end
 end

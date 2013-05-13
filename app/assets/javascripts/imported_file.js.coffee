@@ -1,14 +1,17 @@
 root = exports ? this
 importedFileApp = angular.module('ImportedFileApp',['ChainComponents']).config(['$routeProvider', ($routeProvider) ->
   $routeProvider.
-    when('/:fileId',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'})
+    when('/:fileId',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'}).
+    when('/:fileId/:page',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'})
 ])
 
 importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', ($scope,$routeParams,$http) ->
 
   $scope.errors = []
   $scope.notices = []
-  $scope.page = 1
+  pg = parseInt $routeParams.page
+  pg = 1 if isNaN(pg) or pg<1
+  $scope.page = pg
   $scope.importedFile = {}
   $scope.searchResult = {}
 
@@ -65,6 +68,14 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
           $scope.previewResults = data
         )
     )
+
+  #
+  # WATCHES
+  #
+
+
+  $scope.$watch 'importedFile.page', (newValue,oldValue) ->
+    $location.path '/'+$scope.importedFile.id+'/'+newValue unless isNaN(newValue) || newValue==oldValue
 
   @
   ]

@@ -43,6 +43,12 @@ class ImportedFilesController < ApplicationController
   def results
     f = ImportedFile.find params[:id]
     raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
+    sr = f.search_runs.where(:user_id=>current_user.id).first 
+    if sr
+      sr.update_attributes(:last_accessed=>Time.now)
+    else
+      f.search_runs.create!
+    end
     page = number_from_param params[:page], 1
     per_page = number_from_param params[:per_page], 100
     def f.name; self.attached_file_name; end #duck typing to search setup
