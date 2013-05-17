@@ -5,7 +5,13 @@ importedFileApp = angular.module('ImportedFileApp',['ChainComponents']).config([
     when('/:fileId/:page',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'})
 ])
 
-importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', ($scope,$routeParams,$http) ->
+importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', '$location', 'chainSearchOperators', ($scope,$routeParams,$http,$location,chainSearchOperators) ->
+
+  #find object in array by mfid
+  findByMfid = (ary,mfid) ->
+    for m in ary
+      return m if m.mfid==mfid
+    return null
 
   $scope.errors = []
   $scope.notices = []
@@ -14,6 +20,23 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   $scope.page = pg
   $scope.importedFile = {}
   $scope.searchResult = {}
+
+  $scope.operators = chainSearchOperators.ops
+  $scope.criterionToAdd = null
+  #add criterion to model
+  $scope.addCriterion = (toAddId) ->
+    toAdd = {value:''}
+    mf = findByMfid $scope.importedFile.model_fields, toAddId
+    toAdd.mfid = mf.mfid
+    toAdd.datatype = mf.datatype
+    toAdd.label = mf.label
+    toAdd.operator = $scope.operators[toAdd.datatype][0].operator
+    $scope.importedFile.search_criterions.push toAdd
+
+  #remove criterion from model
+  $scope.removeCriterion = (crit) ->
+    criterions = $scope.importedFile.search_criterions
+    criterions.splice(criterions.indexOf(crit),1)
 
   $scope.showPreviewBox = false
   $scope.previewResults = []
@@ -74,7 +97,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   #
 
 
-  $scope.$watch 'importedFile.page', (newValue,oldValue) ->
+  $scope.$watch 'searchResult.page', (newValue,oldValue) ->
     $location.path '/'+$scope.importedFile.id+'/'+newValue unless isNaN(newValue) || newValue==oldValue
 
   @

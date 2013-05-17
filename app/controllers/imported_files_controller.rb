@@ -40,20 +40,7 @@ class ImportedFilesController < ApplicationController
   def show_angular
     render :layout=>'one_col'
   end
-  def results
-    f = ImportedFile.find params[:id]
-    raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
-    sr = f.search_runs.where(:user_id=>current_user.id).first 
-    if sr
-      sr.update_attributes(:last_accessed=>Time.now)
-    else
-      f.search_runs.create!
-    end
-    page = number_from_param params[:page], 1
-    per_page = number_from_param params[:per_page], 100
-    def f.name; self.attached_file_name; end #duck typing to search setup
-    render :json=>execute_query_to_hash(SearchQuery.new(f,current_user,:extra_where=>f.result_keys_where),current_user,page,per_page) 
-  end
+
   def show
     respond_to do |format|
       format.html {
@@ -73,12 +60,31 @@ class ImportedFilesController < ApplicationController
           :last_processed=>(fir && fir.finished_at ? fir.finished_at.strftime("%Y-%m-%d %H:%M") : ''),
           :time_to_process=>(fir ? fir.time_to_process : ''),
           :processing_error_count=>(fir ? fir.error_count : ''),
-          :current_user=>{'id'=>current_user.id,'full_name'=>current_user.full_name,'email'=>current_user.email}
+          :current_user=>{'id'=>current_user.id,'full_name'=>current_user.full_name,'email'=>current_user.email},
+          :search_criterions=>f.search_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>c.model_field.label,:operator=>c.operator,:value=>c.value,:datatype=>c.model_field.data_type,:include_empty=>c.include_empty?}},
+          :model_fields => ModelField.sort_by_label(f.core_module.model_fields_including_children(current_user).values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}},
+          :file_import_result => {}
         } 
-        r['available_countries'] = Country.import_locations.sort_classification_rank.collect {|c| {:id=>c.id,:iso_code=>c.iso_code,:name=>c.name}}
+        r[:file_import_result][:id] = fir.id if fir
+        r[:available_countries] = Country.import_locations.sort_classification_rank.collect {|c| {:id=>c.id,:iso_code=>c.iso_code,:name=>c.name}}
         render :json=>r
       }
     end
+  end
+  
+  def results
+    f = ImportedFile.find params[:id]
+    raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
+    page = number_from_param params[:page], 1
+    per_page = number_from_param params[:per_page], 100
+    sr = f.search_runs.where(:user_id=>current_user.id).first 
+    sr = f.search_runs.build unless sr
+    sr.last_accessed=Time.now
+    sr.page = page
+    sr.per_page = per_page
+    sr.save!
+    def f.name; self.attached_file_name; end #duck typing to search setup
+    render :json=>execute_query_to_hash(SearchQuery.new(f,current_user,:extra_where=>f.result_keys_where),current_user,page,per_page) 
   end
 
   # email the updated current data for an imported_file

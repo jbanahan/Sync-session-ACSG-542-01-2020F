@@ -1,12 +1,16 @@
 @components = angular.module 'ChainComponents', []
 
 # moves the transcluded content into the action bar
+# each instance must have a unique ID attribute
 @components.directive 'chainActionBarItem', [() ->
   {
     transclude:true
     template:"<div class='chainActionBarWrap' ng-transclude></div>"
     link: (scope,el,attrs) ->
       d = el.find('div.chainActionBarWrap')
+      d.attr('action-bar-item-id',el.attr('id'))
+      existingEl = $('div.action_container div.chainActionBarWrap[action-bar-item-id="'+el.attr('id')+'"]')
+      existingEl.remove()
       $("div.action_container").append(d)
       d.find('button').button()
     }
@@ -354,6 +358,19 @@
         else
           BulkActions.submitBulkAction selectedItems, sId, bulkAction.path, 'post'
       
+      #pagination
+      $scope.firstPage = () ->
+        $scope.searchResult.page = 1
+      
+      $scope.lastPage = () ->
+        $scope.searchResult.page = searchResult.total_pages
+
+      $scope.nextPage = () ->
+        $scope.searchResult.page++
+
+      $scope.previousPage = () ->
+        $scope.searchResult.page--
+
       $scope.$watch 'bulkSelected', ((newValue,oldValue) ->
         writeSelectionCookie() unless newValue==oldValue
       ), true

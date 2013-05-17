@@ -1,4 +1,9 @@
 div.search_result_wrapper {
+  div.search_result_table_wrapper {
+    width: 100%;
+    position: relative;
+    overflow-x: auto;
+  }
   #search_loading {
     text-align:center;
     padding: 2em;

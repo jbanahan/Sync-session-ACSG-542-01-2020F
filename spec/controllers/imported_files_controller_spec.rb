@@ -39,6 +39,19 @@ describe ImportedFilesController do
       r['time_to_process'].should == 89
       r['processing_error_count'].should == 61
       r['current_user'].should == {'id'=>@u.id,'full_name'=>@u.full_name,'email'=>@u.email}
+      r['file_import_result'].should == {'id'=>fir.id}
+    end
+    it "should return search_criterions" do
+      f = Factory(:imported_file,:user=>@u)
+      f.search_criterions.create!(:model_field_uid=>'prod_uid',:operator=>'eq',:value=>'X')
+      f.search_criterions.create!(:model_field_uid=>'prod_name',:operator=>'sw',:value=>'N')
+      get :show, :id=>f.id, :format=>:json
+      response.should be_success
+      r = JSON.parse response.body
+      crits = r['search_criterions']
+      crits.should have(2).criterions
+      crits[0].should == {'mfid'=>'prod_uid','operator'=>'eq','value'=>'X','include_empty'=>false,'datatype'=>'string','label'=>'Unique Identifier'}
+      crits[1].should == {'mfid'=>'prod_name','operator'=>'sw','value'=>'N','include_empty'=>false,'datatype'=>'string','label'=>'Name'}
     end
     it "should return available countries" do
       f = Factory(:imported_file,:user=>@u)
@@ -51,6 +64,13 @@ describe ImportedFilesController do
         {'iso_code'=>'CA','name'=>'Canada','id'=>ca.id},
         {'iso_code'=>'US','name'=>'USA','id'=>us.id}
       ]
+    end
+    it "should return available model fields" do
+      f = Factory(:imported_file,:user=>@u,:module_type=>"Product")
+      get :show, :id=>f.id, :format=>:json
+      response.should be_success
+      r = JSON.parse response.body
+      r['model_fields'].collect {|m| m['mfid']}.include?('prod_uid')
     end
   end
   describe 'results' do
