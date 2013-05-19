@@ -6,7 +6,6 @@ dashboardApp.controller  'DashboardViewController', ['$scope','$http',($scope,$h
   $scope.errors = []
   $scope.notices = []
 
-  $scope.loadWidget = (widgetId) ->
-    console.log(widgetId)
-    $scope.widget.id = widgetId
+  $scope.loadWidget = (searchSetupId) ->
+    $scope.widget.id = searchSetupId
 ]

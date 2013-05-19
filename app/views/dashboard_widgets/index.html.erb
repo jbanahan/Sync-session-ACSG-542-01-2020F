@@ -12,7 +12,7 @@ $(function() {
   <h1>Welcome!</h1>
   <p>This is your personal dashboard.  Click <%=link_to "here", edit_dashboard_widgets_path%> to setup your search widgets.</p>
   <%@widgets.each do |w|-%>
-    <div ng-controller='DashboardViewController' class='widget_box' widget-id='<%=w.id%>'>
+    <div ng-controller='DashboardViewController' class='widget_box' widget-id='<%=w.search_setup_id%>'>
       <h2 ng-show='widget.name' class='widget_heading' >{{widget.name}} - {{widget.core_module_name}}</h2>
       <div chain-search-result='widget' per_page='per_page' page='page' no-chrome='true' src='/advanced_search/'></div>
       <a ng-show='widget.name' class='action_link' href='/advanced_search/<%=w.id%>'>More</a>
