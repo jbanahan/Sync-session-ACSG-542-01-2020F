@@ -125,11 +125,27 @@ describe OpenChain::S3 do
       after :each do
         @my_keys.each {|my_key| OpenChain::S3.delete @bucket, my_key}
       end
-      it 'should get keys from integration bucket by date' do
-        OpenChain::S3.should_receive(:integration_bucket_name).and_return(@bucket)
+      it 'should get keys from integration bucket by date ordered by last modified date' do
+        OpenChain::S3.should_receive(:integration_bucket_name).at_least(2).times.and_return(@bucket)
         found_keys = []
         OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
-        found_keys.should == @my_keys
+        found_keys[0].should == @my_keys[0]
+        found_keys[1].should == @my_keys[1]
+
+        Tempfile.open('test') do |f|
+          f.binmode
+          f << "Test"
+          f.flush
+
+          # Lets update key[0] and it should then be returned second
+          # Need to use a different file with different content, otherwise S3 object is too smart
+          # and doesn't actually send the data if it didn't change
+          OpenChain::S3.upload_file @bucket, @my_keys[0], f
+          found_keys = []
+          OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
+          found_keys[0].should == @my_keys[1]
+          found_keys[1].should == @my_keys[0]
+        end
       end
     end
   end

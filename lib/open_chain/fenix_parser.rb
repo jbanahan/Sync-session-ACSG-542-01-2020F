@@ -254,10 +254,10 @@ module OpenChain
     end
 
     def process_activity_line line, accumulated_dates
-      if !line[2].nil? && !line[3].nil? && !line[4].nil? && ACTIVITY_DATE_MAP[line[2]]
+      if !line[2].nil? && !line[3].nil? && !line[4].nil? && ACTIVITY_DATE_MAP[line[2].strip]
         time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M")
         # This assumes we're using a hash with a default return value of an empty array
-        accumulated_dates[ACTIVITY_DATE_MAP[line[2]]] << time.in_time_zone(time_zone)
+        accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time.in_time_zone(time_zone)
       end
       rescue
     end

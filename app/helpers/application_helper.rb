@@ -144,11 +144,15 @@ module ApplicationHelper
   def show_custom_fields(customizable, opts={})
 		opts = {:form=>false, :table=>false, :show_prefix=>nil}.merge(opts)
 	  x = ""
-	  customizable.custom_definitions.each {|d|
+    custom_value_hash = {}
+    customizable.custom_values.each {|cv| custom_value_hash[cv.custom_definition_id] = cv}
+	  CustomDefinition.where(:module_type => customizable.class.to_s).order("rank ASC, label ASC").each {|d|
       mf = d.model_field
       name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
       name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
-      c_val = customizable.get_custom_value(d).value
+      c_val_obj = custom_value_hash[d.id]
+      c_val_obj = customizable.get_custom_value d if c_val_obj.nil?
+      c_val = c_val_obj.value
       if opts[:table]
         if opts[:form] && !mf.read_only?
           field = ''
