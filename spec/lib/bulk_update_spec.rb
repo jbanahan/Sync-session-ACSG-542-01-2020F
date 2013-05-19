@@ -53,7 +53,7 @@ describe OpenChain::BulkUpdateClassification do
       user = Factory(:user,:admin=>true,:company_id=>Factory(:company,:master=>true).id)
       search_setup = Factory(:search_setup,:module_type=>"Product",:user=>user)
       search_setup.touch #makes search_run
-      OpenChain::BulkUpdateClassification.build_common_classifications search_setup.search_run, @base_product
+      OpenChain::BulkUpdateClassification.build_common_classifications search_setup.search_runs.first, @base_product
       @base_product.classifications.should have(1).item
       classification = @base_product.classifications.first
       classification.country.should == @country

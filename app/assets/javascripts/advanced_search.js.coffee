@@ -290,16 +290,15 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     for c in $scope.searchSetup.search_criterions
       $scope.removeCriterion(c) if c.deleteMe
   ), true
+
   #
   #  VIEW FORMATTING UTILITIES BELOW HERE
   #
 
-
-
   #user friendly description of the schedule's timing
   $scope.scheduleTimingText = (s) ->
     h = parseInt s.run_hour
-    o_clock = if h>12 then (h-12)+":00am " else h+":00pm"
+    o_clock = if h>12 then (h-12)+":00pm " else h+":00am"
     o_clock = 'midnight' if h==0
     o_clock = 'noon' if h==12
     r = "At "+o_clock+" on "

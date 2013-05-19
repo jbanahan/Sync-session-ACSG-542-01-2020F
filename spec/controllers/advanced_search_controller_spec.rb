@@ -146,7 +146,7 @@ describe AdvancedSearchController do
       JSON.parse(response.body)['id'].should == ss_first.id.to_s
     end
     it "should return last search created if no search_runs" do
-      #this fails if another test is failing, not sure why
+      SearchSetup.destroy_all #not sure why test was failing without this
       ss_first = Factory(:search_setup,:user=>@user,:updated_at=>1.day.ago)
       ss_second = Factory(:search_setup,:user=>@user,:updated_at=>2.years.ago)
       get :last_search_id
@@ -276,7 +276,7 @@ describe AdvancedSearchController do
       get :show, :id=>@ss.id, :page=>'2', :per_page=>'40', :format=>'json'
       response.should be_success
       @ss.reload
-      sr = @ss.search_run
+      sr = @ss.search_runs.first
       sr.page.should == 2
       sr.per_page.should == 40
     end
@@ -302,7 +302,7 @@ describe AdvancedSearchController do
         response.should be_success
         r = JSON.parse response.body
         r['id'].should == @ss.id
-        r['search_run_id'].should == @ss.search_run.id
+        r['search_run_id'].should == @ss.search_runs.first.id
         r['name'].should == @ss.name
         r['page'].should == 1
         r['total_pages'].should == 11

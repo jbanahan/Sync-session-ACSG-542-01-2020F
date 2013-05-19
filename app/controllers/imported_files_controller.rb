@@ -135,21 +135,6 @@ class ImportedFilesController < ApplicationController
     }
   end
 
-  def filter
-    f = ImportedFile.find params[:id]
-    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"filter",:module_name=>"uploaded file"}) {
-      search_params = (params[:imported_file] && params[:imported_file][:search_criterions_attributes]) ? params[:imported_file][:search_criterions_attributes] : {}
-      f.search_criterions.destroy_all
-      search_params.each do |k,p|
-        if p[:_destroy] != "true"
-          p.delete "_destroy"
-          f.search_criterions.create(p) 
-        end
-      end
-      redirect_to f
-    }
-  end
-
   def download_items
     f = ImportedFile.find(params[:id])
     action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"download",:module_name=>"uploaded file"}) {
@@ -205,6 +190,20 @@ class ImportedFilesController < ApplicationController
         format.html { render :text=>"This page is not accessible for end users."}
       end
     }
+  end
+
+  def update_search_criterions
+    f = ImportedFile.find(params[:id])
+    raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
+    f.search_criterions.delete_all
+    criterion_params = params[:imported_file][:search_criterions]
+    unless criterion_params.blank?
+      criterion_params.each do |cp|
+        f.search_criterions.build(:model_field_uid=>cp[:mfid],:operator=>cp[:operator],:value=>cp[:value],:include_empty=>cp[:include_empty])
+      end
+      f.save!
+    end
+    render :json=>{:ok=>:ok}
   end
 
   def destroy

@@ -11,12 +11,12 @@ describe SearchRun do
       wrong_module = Factory(:search_setup,:user=>@u,:module_type=>"Order")
       wrong_user = Factory(:search_setup,:module_type=>"Product")
 
-      too_old.create_search_run(:last_accessed=>3.days.ago,:user_id=>@u.id)
-      find_me.create_search_run(:last_accessed=>2.days.ago,:user_id=>@u.id)
-      wrong_module.create_search_run(:last_accessed=>1.day.ago,:user_id=>@u.id)
-      wrong_user.create_search_run(:last_accessed=>1.day.ago,:user_id=>wrong_user.user_id)
+      too_old.search_runs.create!(:last_accessed=>3.days.ago,:user_id=>@u.id)
+      find_me.search_runs.create!(:last_accessed=>2.days.ago,:user_id=>@u.id)
+      wrong_module.search_runs.create!(:last_accessed=>1.day.ago,:user_id=>@u.id)
+      wrong_user.search_runs.create!(:last_accessed=>1.day.ago,:user_id=>wrong_user.user_id)
 
-      SearchRun.find_last_run(@u,CoreModule::PRODUCT).should == find_me.search_run
+      SearchRun.find_last_run(@u,CoreModule::PRODUCT).should == find_me.search_runs.first
     end
     it "should not be read only" do
       find_me = Factory(:search_setup,:user=>@u,:module_type=>"Product")
@@ -52,7 +52,7 @@ describe SearchRun do
     end
     it "should find based on search_setup" do
       ss = Factory(:search_setup,:module_type=>"Product",:user=>@u)
-      sr = ss.create_search_run
+      sr = ss.search_runs.create!
       sr.all_objects.should == [@p1,@p2,@p3]
       sr.total_objects.should == 3
     end

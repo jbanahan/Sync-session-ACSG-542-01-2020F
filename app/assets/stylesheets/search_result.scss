@@ -17,9 +17,9 @@ div.search_result_wrapper {
       margin-bottom:0.25em;
     }
   }
-  #search_result {
+  .search_result {
       width: 99%;
-    #search_header {
+    .search_header {
     }
     margin-top: 1em;
     table.search_result_table {
@@ -33,11 +33,11 @@ div.search_result_wrapper {
         width: 0%;
       }
     }
-    #page_nav {
+    .page_nav {
       float:right;
       text-align: right;
     }
-    #search_actions {
+    .search_actions {
       float:left;
     }
   }

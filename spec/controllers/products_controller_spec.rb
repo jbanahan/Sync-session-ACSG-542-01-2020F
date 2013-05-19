@@ -180,7 +180,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to request.referer
+      response.should redirect_to Product 
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
 
@@ -200,7 +200,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to request.referer
+      response.should redirect_to Product 
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
 
@@ -219,7 +219,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to request.referer
+      response.should redirect_to Product
       flash[:notices].first.should == "Test"
       flash[:errors].should == ["A", "B"]
     end
@@ -238,7 +238,7 @@ describe ProductsController do
       request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val" 
       post :bulk_update_classifications, p
       flash[:notices].should == ["These products will be updated in the background.  You will receive a system message when they're ready."]
-      response.should redirect_to("http://www.test.com?key=val")
+      response.should redirect_to Product
     end
     
     it "should redirect to products_path with no referer" do

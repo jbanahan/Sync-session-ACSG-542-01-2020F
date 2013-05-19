@@ -228,10 +228,10 @@ class SearchSetup < ActiveRecord::Base
 
     #rebuild search_run
     unless self.id.nil? #only if in database
-      if self.search_run.nil?
-        self.create_search_run
+      if self.search_runs.empty?
+        self.search_runs.create!
       else
-        self.search_run.save
+        self.search_runs.first.update_attributes(:last_accessed=>Time.now)
       end
     end
     base

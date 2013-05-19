@@ -40,6 +40,8 @@
       Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in importedFile.model_fields'>
       </select>
       <a ng-show='criterionToAdd' class='action_link' ng-click='addCriterion(criterionToAdd)'>Add</a>
+      <br />
+      <a class='action_link' ng-click='updateSearchCriterions()'>Save</a>
     </div>
   </div>
   <div class='clear'></div>

@@ -62,6 +62,13 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
       $scope.errors.push "There was an error emailing this file. Please contact support."
     )
 
+  $scope.updateSearchCriterions = () ->
+    $scope.searchResult = {}
+    $http.put('/imported_files/'+$scope.importedFile.id+'/update_search_criterions',JSON.stringify({imported_file:$scope.importedFile})).success(() ->
+      $scope.searchResult = {id:$scope.importedFile.id} #will trigger result reload
+    ).error(() ->
+      $scope.errors.push "Error saving results.  Please reload this page."
+    )
 
   $scope.process = () ->
     $scope.showPreviewBox = false
@@ -96,9 +103,15 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   # WATCHES
   #
 
-
   $scope.$watch 'searchResult.page', (newValue,oldValue) ->
     $location.path '/'+$scope.importedFile.id+'/'+newValue unless isNaN(newValue) || newValue==oldValue
+
+  #remove criterions that are deleted
+  $scope.$watch 'importedFile.search_criterions', (() ->
+    return unless $scope.importedFile && $scope.importedFile.search_criterions && $scope.importedFile.search_criterions.length > 0
+    for c in $scope.importedFile.search_criterions
+      $scope.removeCriterion(c) if c.deleteMe
+  ), true
 
   @
   ]

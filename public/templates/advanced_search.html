@@ -1,14 +1,34 @@
 <div ng-controller='AdvancedSearchCtrl' id='advanced_search_wrapper'>
   <div chain-messages errors='errors' notices='notices'></div>
   <div ng-show='searchSetup.id'>
-    <select id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>
+    <select ng-hide='showSetup' id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>
     </select>
     <div id='search_setup_controls' ng-show='showSetup'>
+      <div id='search_action_links'>
+        <span ng-hide='deletePrompt==true || givePrompt==true'>
+          <a class='action_link' ng-click='saveSetup()'>Save</a>
+          <a class='action_link' ng-click='newSetup()'>New</a>
+          <a class='action_link' ng-click='givePrompt=true'>Give</a>
+          <a class='action_link' ng-click='deletePrompt=true'>Delete</a>
+        </span>
+        <span ng-show='deletePrompt==true'>
+          Really Delete?
+          <a class='action_link' ng-click='deleteSetup()'>Yes</a>
+          <a class='action_link' ng-click='deletePrompt=false'>No</a>
+        </span>
+        <span ng-show='givePrompt==true'>
+          Select User
+          <div style='display:inline;' chain-user-list='giveUserId'></div>
+          <a class='action_link' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
+          <a class='action_link' ng-click='givePrompt=false'>Cancel</a>
+        </span>
+      </div>
       <div>
-        Name: <input type='text' ng-model='searchSetup.name' />
+        <div class='name_box'><input type='text' ng-model='searchSetup.name' /></div>
         <br />
         <input type='checkbox' ng-model='searchSetup.include_links'/> Include Links In Download
-        | <input type='checkbox' ng-model='searchSetup.no_time'/> Hide Time
+        <br />
+        <input type='checkbox' ng-model='searchSetup.no_time'/> Hide Time
       </div>
       <div>
         <div id='columns_wrapper' class='settings_wrapper'>
@@ -72,87 +92,102 @@
       <div>
         <div id='current_schedules'>
           <h3>Schedules</h3>
-          <div ng-repeat='sched in searchSetup.search_schedules' class='schedule_display'>
-            To: {{sched.email_addresses}}<br />
-            <span ng-show='sched.ftp_server'>FTP Server: {{sched.ftp_server}}<br /></span>
-            {{scheduleTimingText(sched)}} <br /> 
-            As: {{sched.download_format}} <br />
-            <a class='action_link' ng-click='editSchedule(sched)'>Edit</a> <a class='action_link' ng-click='removeSchedule(sched)'>Remove</a>
+          <div ng-hide='scheduleToEdit'>
+            <div ng-repeat='sched in searchSetup.search_schedules' class='schedule_display'>
+              To: {{sched.email_addresses}}, 
+              {{scheduleTimingText(sched)}}, 
+              As: {{sched.download_format}} 
+              <span ng-show='sched.ftp_server'>FTP Server: {{sched.ftp_server}}<br /></span>
+              <a class='action_link' ng-click='editSchedule(sched)'>Edit</a> <a class='action_link' ng-click='removeSchedule(sched)'>Remove</a>
+            </div>
+            <a class='action_link' ng-click='addSchedule()'>Add Schedule</a>
           </div>
-          <a class='action_link' ng-click='addSchedule()'>Add Schedule</a>
+          <div id='schedule_edit' ng-show='scheduleToEdit'>
+            Email: <input type='text' ng-model='scheduleToEdit.email_addresses'/><br />
+            Format: 
+            <select ng-model='scheduleToEdit.download_format'>
+              <option>csv</option>
+              <option>xls</option>
+            </select><br/>
+            Time: 
+            <select ng-model='scheduleToEdit.run_hour'>
+              <option value='0'>midnight</option>
+              <option value='1'>1:00am</option>
+              <option value='2'>2:00am</option>
+              <option value='3'>3:00am</option>
+              <option value='4'>4:00am</option>
+              <option value='5'>5:00am</option>
+              <option value='6'>6:00am</option>
+              <option value='7'>7:00am</option>
+              <option value='8'>8:00am</option>
+              <option value='9'>9:00am</option>
+              <option value='10'>10:00am</option>
+              <option value='11'>11:00am</option>
+              <option value='12'>noon</option>
+              <option value='13'>1:00pm</option>
+              <option value='14'>2:00pm</option>
+              <option value='15'>3:00pm</option>
+              <option value='16'>4:00pm</option>
+              <option value='17'>5:00pm</option>
+              <option value='18'>6:00pm</option>
+              <option value='19'>7:00pm</option>
+              <option value='20'>8:00pm</option>
+              <option value='21'>9:00pm</option>
+              <option value='22'>10:00pm</option>
+              <option value='23'>11:00pm</option>
+            </select>
+            Day of Month: 
+            <select ng-model='scheduleToEdit.day_of_month'>
+              <option></option>
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+              <option>10</option>
+              <option>11</option>
+              <option>12</option>
+              <option>13</option>
+              <option>14</option>
+              <option>15</option>
+              <option>16</option>
+              <option>17</option>
+              <option>18</option>
+              <option>19</option>
+              <option>20</option>
+              <option>21</option>
+              <option>22</option>
+              <option>23</option>
+              <option>24</option>
+              <option>25</option>
+              <option>26</option>
+              <option>27</option>
+              <option>28</option>
+            </select>
+            <div ng-hide='scheduleToEdit.day_of_month'>
+              <input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday<br />
+              <input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday<br />
+              <input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday<br />
+              <input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday<br />
+              <input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday<br />
+              <input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday<br />
+              <input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday<br />
+            </div>
+            <div ng-show='searchSetup.allow_ftp'>
+              FTP Server: <input type='text' ng-model='scheduleToEdit.ftp_server'/><br />
+              FTP Username: <input type='text' ng-model='scheduleToEdit.ftp_username' /><br />
+              FTP Password: <input type='text' ng-model='scheduleToEdit.ftp_password' /><br />
+              FTP Subfolder: <input type='text' ng-model='scheduleToEdit.ftp_subfolder' /><br />
+            </div>
+            <a class='action_link' ng-click='scheduleToEdit = null'>Hide</a>
+          </div>
         </div>
-        <div id='schedule_edit' ng-show='scheduleToEdit'>
-          Email: <input type='text' ng-model='scheduleToEdit.email_addresses'/><br />
-          Day of Month: 
-          <select ng-model='scheduleToEdit.day_of_month'>
-            <option></option>
-            <option>1</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-            <option>6</option>
-            <option>7</option>
-            <option>8</option>
-            <option>9</option>
-            <option>10</option>
-            <option>11</option>
-            <option>12</option>
-            <option>13</option>
-            <option>14</option>
-            <option>15</option>
-            <option>16</option>
-            <option>17</option>
-            <option>18</option>
-            <option>19</option>
-            <option>20</option>
-            <option>21</option>
-            <option>22</option>
-            <option>23</option>
-            <option>24</option>
-            <option>25</option>
-            <option>26</option>
-            <option>27</option>
-            <option>28</option>
-          </select>
-          <div ng-hide='scheduleToEdit.day_of_month'>
-            <input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday<br />
-            <input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday<br />
-            <input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday<br />
-            <input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday<br />
-            <input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday<br />
-            <input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday<br />
-            <input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday<br />
-          </div>
-          <div ng-show='searchSetup.allow_ftp'>
-            FTP Server: <input type='text' ng-model='scheduleToEdit.ftp_server'/><br />
-            FTP Username: <input type='text' ng-model='scheduleToEdit.ftp_username' /><br />
-            FTP Password: <input type='text' ng-model='scheduleToEdit.ftp_password' /><br />
-            FTP Subfolder: <input type='text' ng-model='scheduleToEdit.ftp_subfolder' /><br />
-          </div>
-          <a class='action_link' ng-click='scheduleToEdit = null'>Hide</a>
-        </div>
-        <div class='clear'></div>
       </div>
-      <div id='search_action_links'>
-        <span ng-hide='deletePrompt==true || givePrompt==true'>
-          <a class='action_link' ng-click='saveSetup()'>Save</a>
-          <a class='action_link' ng-click='newSetup()'>New</a>
-          <a class='action_link' ng-click='givePrompt=true'>Give</a>
-          <a class='action_link' ng-click='deletePrompt=true'>Delete</a>
-        </span>
-        <span ng-show='deletePrompt==true'>
-          Really Delete?
-          <a class='action_link' ng-click='deleteSetup()'>Yes</a>
-          <a class='action_link' ng-click='deletePrompt=false'>No</a>
-        </span>
-        <span ng-show='givePrompt==true'>
-          Select User
-          <div style='display:inline;' chain-user-list='giveUserId'></div>
-          <a class='action_link' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
-          <a class='action_link' ng-click='givePrompt=false'>Cancel</a>
-        </span>
-      </div>
+      <hr />
     </div>
   </div>
   <div chain-search-result='searchResult' page='page' src='/advanced_search/'>

@@ -135,38 +135,33 @@ describe ImportedFilesController do
       r['rows'].size.should == 1
     end
   end
-  describe 'filter' do
-    before :each do 
-      @imported_file = Factory(:imported_file,:user=>@u,:module_type=>"Product")
+  describe 'update_search_criterions' do
+    before :each do
+      @f = Factory(:imported_file, :user=>@u)
     end
-    it 'should save filters' do
-      p = {"id"=>@imported_file.id,"imported_file"=>{"search_criterions_attributes"=>{"0"=>{"model_field_uid"=>"prod_uid","operator"=>"eq","value"=>"x"}}}}
-      post :filter, p
-      f = ImportedFile.find @imported_file.id
-      f.should have(1).search_criterions
-      sc = f.search_criterions.first
-      sc.model_field_uid.should == "prod_uid"
-      sc.operator.should == "eq"
-      sc.value.should == "x"
+    it "should add criterion" do
+      post :update_search_criterions, :id=>@f.id, :imported_file=>{:id=>@f.id,:search_criterions=>[{:mfid=>'prod_uid',:operator=>'eq',:value=>'X'},{:mfid=>'prod_name',:operator=>'sw',:value=>'Y'}]}
+      response.should be_success
+      JSON.parse(response.body)['ok'].should == 'ok'
+      @f.should have(2).search_criterions
+      @f.search_criterions.where(:model_field_uid=>'prod_uid',:value=>'X',:operator=>'eq').should have(1).item
+      @f.search_criterions.where(:model_field_uid=>'prod_name',:value=>'Y',:operator=>'sw').should have(1).item
     end
-    it 'should not save other attributes' do
-      p = {"id"=>@imported_file.id,"imported_file"=>{"module_type"=>"ABC","search_criterions_attributes"=>{"0"=>{"model_field_uid"=>"prod_uid","operator"=>"eq","value"=>"x"}}}}
-      post :filter, p
-      f = ImportedFile.find @imported_file.id
-      f.module_type.should == "Product"
+    it "should remove criterion not in params" do
+      @f.search_criterions.create!(:model_field_uid=>'prod_class_count',:value=>2,:operator=>'eq')
+      post :update_search_criterions, :id=>@f.id, :imported_file=>{:id=>@f.id,:search_criterions=>[{:mfid=>'prod_uid',:operator=>'eq',:value=>'X'},{:mfid=>'prod_name',:operator=>'sw',:value=>'Y'}]}
+      response.should be_success
+      JSON.parse(response.body)['ok'].should == 'ok'
+      @f.should have(2).search_criterions
+      @f.search_criterions.where(:model_field_uid=>'prod_uid',:value=>'X',:operator=>'eq').should have(1).item
+      @f.search_criterions.where(:model_field_uid=>'prod_name',:value=>'Y',:operator=>'sw').should have(1).item
     end
-    it 'should replace filters' do
-      @imported_file.search_criterions.create!(:model_field_uid=>"prod_name",:operator=>"sw",:value=>"q")
-      p = {"id"=>@imported_file.id,"imported_file"=>{"search_criterions_attributes"=>{"0"=>{"model_field_uid"=>"prod_uid","operator"=>"eq","value"=>"x"}}}}
-      post :filter, p
-      f = ImportedFile.find @imported_file.id
-      f.should have(1).search_criterions
-      sc = f.search_criterions.first
-      sc.model_field_uid.should == "prod_uid"
-      sc.operator.should == "eq"
-      sc.value.should == "x"
+    it "should 404 if user cannot view file" do
+      ImportedFile.any_instance.stub(:can_view?).and_return false
+      lambda { post :update_search_criterions, :id=>@f.id, :imported_file=>{:id=>@f.id,:search_criterions=>[{:mfid=>'prod_uid',:operator=>'eq',:value=>'X'},{:mfid=>'prod_name',:operator=>'sw',:value=>'Y'}]}}.should raise_error ActionController::RoutingError
+      @f.reload
+      @f.search_criterions.should be_empty
     end
-    
   end
   describe 'email_file' do
     before :each do

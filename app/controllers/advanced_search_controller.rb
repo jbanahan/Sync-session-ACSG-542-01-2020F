@@ -78,7 +78,9 @@ class AdvancedSearchController < ApplicationController
         sr.last_accessed = Time.now
         sr.save!
 
-        render :json=>execute_query_to_hash(SearchQuery.new(ss,current_user),current_user,page,per_page)
+        h = execute_query_to_hash(SearchQuery.new(ss,current_user),current_user,page,per_page)
+        h[:search_run_id] = sr.id
+        render :json=> h
       }
     end
   end
@@ -103,7 +105,7 @@ class AdvancedSearchController < ApplicationController
   end
 
   def last_search_id
-    setup = current_user.search_setups.includes(:search_run).order("search_runs.updated_at DESC").limit(1).first
+    setup = current_user.search_setups.includes(:search_runs).order("search_runs.updated_at DESC").limit(1).first
     setup = current_user.search_setups.order("updated_at DESC").limit(1).first if setup.nil?
     render :json=>{:id=>(setup ? setup.id.to_s : "0")}
   end

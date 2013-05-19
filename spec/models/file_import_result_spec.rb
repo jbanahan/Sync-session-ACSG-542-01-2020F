@@ -29,16 +29,6 @@ describe FileImportResult do
       co.include?(Product.where(:unique_identifier=>"#{i}pid").first).should be_true
     end
   end
-  it 'should allow pagination' do
-    i_file = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
-    fir = i_file.file_import_results.create!
-    3.times do |i| #add 3 products twice for 6 total change records
-      p = Product.create!(:unique_identifier=>"#{i}pid")
-      2.times { |z| fir.change_records.create!(:recordable=>p) }
-    end
-    co = fir.changed_objects
-    co.respond_to?('paginate').should be_true
-  end
   it 'should allow additional filters on changed_objects' do
     i_file = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
     fir = i_file.file_import_results.create!

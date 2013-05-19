@@ -333,7 +333,7 @@ OpenChain::Application.routes.draw do
       get 'download'
       post 'download_items'
       post 'process_file'
-      post 'filter'
+      put 'update_search_criterions'
     end
     get 'show_angular', :on=>:collection
     resources :imported_file_downloads, :only=>[:index,:show]
