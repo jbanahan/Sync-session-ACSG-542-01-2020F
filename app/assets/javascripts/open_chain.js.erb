@@ -129,15 +129,16 @@ var OpenChain = (function() {
     }
     return true;
   }
-  var writeScheduleBMatches = function(htsField) {
+  var writeScheduleBMatches = function(htsNumber,countryId,schedBField) {
     var col, schedBField;
-    col = htsField.attr("col");
-    schedBField = htsField.parents(".tf_row").find('input.sched_b_field[col="'+col+'"]')
     if(schedBField.length) {
-      $.getJSON('/official_tariffs/schedule_b_matches?hts='+htsField.val(),function(data) {
+      $.getJSON('/official_tariffs/schedule_b_matches?hts='+htsNumber,function(data) {
+        if(data==null) {
+          return;
+        }
         var to_write = schedBField.siblings('.sched_b_options');
         if(to_write.length==0) {
-          schedBField.closest("td").append("<div class='sched_b_options'></div>");
+          schedBField.parent().append("<div class='sched_b_options'></div>");
           to_write = schedBField.siblings('.sched_b_options');
         }
         var h = "";
@@ -149,6 +150,10 @@ var OpenChain = (function() {
           h += "<a href='#' class='lnk_schedb_popup' schedb='"+sb.hts_code+"'>info</a>";
         }
         to_write.html(h);
+        $(document).on('click',"a.sched_b_option",function(ev) {
+          ev.preventDefault();
+          schedBField.val($(this).html());
+        });
       }); 
     }
   }
@@ -169,10 +174,22 @@ var OpenChain = (function() {
       Chain.fireTariffCallbacks('invalid',country_id,hts_field.val());
     }
     var valid_callback = function(data) {
+      var schedBField, col, htsNumber;
       hts_field.removeClass("error");
       writeTariffInfo(data);
       if(hts_field.hasClass("hts_field")) {
-        writeScheduleBMatches(hts_field);
+        col = hts_field.attr("col");
+        if(col!=undefined && col.length) {
+          //Schedule B in table format
+          schedBField = hts_field.parents(".tf_row").find('input.sched_b_field[col="'+col+'"]');
+        } else {
+          //everything else, just assume 1 schedule b per page
+          schedBField = $(".sched_b_field")
+        }
+        if(schedBField.length) {
+          htsNumber = hts_field.val()
+          writeScheduleBMatches(htsNumber,country_id,schedBField);
+        }
       }
       Chain.fireTariffCallbacks('valid',country_id,hts_field.val());
     }
@@ -550,10 +567,6 @@ var OpenChain = (function() {
         if(!found) {
           window.alert("You must enter at least one HTS number in order to Auto-Classify.");
         }
-      });
-      $("a.sched_b_option").live('click',function(ev) {
-        ev.preventDefault();
-        $(this).closest("td").find("input.sched_b_field").val($(this).html());
       });
       $("form").submit(function() {
         if(OpenChain.hasInvalidTariffs()) {
