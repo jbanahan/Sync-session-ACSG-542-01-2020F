@@ -25,7 +25,7 @@ module OpenChain
         else
           vals[3] = vals[3].hts_format
         end
-        vals.each {|v| v.gsub!(/[\r\n]/," ") if v.respond_to?(:gsub!)}
+        vals.each {|v| v.gsub!(/[\r\n\"]/," ") if v.respond_to?(:gsub!)}
         vals
       end
       def query
