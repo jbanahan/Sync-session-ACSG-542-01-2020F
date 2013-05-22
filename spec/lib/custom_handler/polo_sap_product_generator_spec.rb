@@ -77,6 +77,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       @vals = []
       30.times {|i| @vals << i}
       @vals[3] = "1234567890"
+      @vals[8] = "CA"
     end
     it "should hts_format HTS value if set type indicator is not X" do
       r = @g.before_csv_write 1, @vals
@@ -88,6 +89,16 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       r = @g.before_csv_write 1, @vals
       @vals[3] = ''
       r.should == @vals
+    end
+    it "should capitalize country of origin" do
+      @vals[8] = 'us'
+      r = @g.before_csv_write 1, @vals
+      r[8].should == "US"
+    end
+    it "should not send country of origin unless it is 2 digits" do
+      @vals[8] = "ABC"
+      r = @g.before_csv_write 1, @vals
+      r[8].should == ""
     end
     it "should clean line breaks and new lines" do
       @vals[1] = "a\nb"
