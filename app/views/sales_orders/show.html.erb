@@ -49,7 +49,6 @@ $(function() {
     <button id='btn_add_line'>Add Product</button>
   <% end %>
   <button class='btn_link' link_to='<%=history_sales_order_path(@sales_order)%>' key_map='h'>History</button>
-  <%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@sales_order} %>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:sales_order_id => @sales_order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <%end%>
 <%=render :partial=>'shared/attachments',:locals=>{:attachable=>@sales_order}%>
