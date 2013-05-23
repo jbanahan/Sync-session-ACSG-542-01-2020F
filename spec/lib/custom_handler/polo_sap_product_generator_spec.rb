@@ -20,14 +20,16 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     lambda {described_class.new}.should raise_error
   end
   describe :sync_csv do
+    before :each do
+      @us = Factory(:country,:iso_code=>'US')
+    end
     it "should not send countries except US, CA, IT with custom where" do
-      us = Factory(:country,:iso_code=>'US')
       ca = Factory(:country,:iso_code=>'CA')
       italy = Factory(:country,:iso_code=>'IT')
       kr = Factory(:country,:iso_code=>'KR')
       p = Factory(:product)
       p.update_custom_value! @sap_brand_cd, true
-      [us,ca,italy,kr].each do |country|
+      [@us,ca,italy,kr].each do |country|
         Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>p))
       end
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
@@ -35,27 +37,36 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       a.should have(3).items
       a.collect {|x| x[2]}.sort.should == ['CA','IT','US']
     end
+    it "should not send records with blank tariff numbers" do
+      p1 = Factory(:product)
+      p2 = Factory(:product)
+      [p1,p2].each {|p| p.update_custom_value! @sap_brand_cd, true}
+      Factory(:tariff_record,:classification=>Factory(:classification,:country_id=>@us.id,:product=>p1))
+      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p2))
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
+      a = CSV.parse(IO.read(@tmp.path),:headers=>true)
+      a.should have(1).item
+      a[0][0].should == p2.unique_identifier
+    end
     it "should not send products that aren't SAP Brand" do
-      us = Factory(:country,:iso_code=>'US')
       p1 = Factory(:product)
       p1.update_custom_value! @sap_brand_cd, true
       p2 = Factory(:product) #no custom value at all
       p3 = Factory(:product) #false custom value
       p3.update_custom_value! @sap_brand_cd, false
-      [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>us.id,:product=>p))}
+      [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))}
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
       a.should have(1).item
       a[0][0].should == p1.unique_identifier
     end
     it "should not limit if :no_brand_restriction = true" do
-      us = Factory(:country,:iso_code=>'US')
       p1 = Factory(:product)
       p1.update_custom_value! @sap_brand_cd, true
       p2 = Factory(:product) #no custom value at all
       p3 = Factory(:product) #false custom value
       p3.update_custom_value! @sap_brand_cd, false
-      [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>us.id,:product=>p))}
+      [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))}
       @tmp = described_class.new(:no_brand_restriction=>true,:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
       a.should have(3).item
