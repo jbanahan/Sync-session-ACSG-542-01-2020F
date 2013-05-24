@@ -44,7 +44,18 @@ class XlsMaker
   end
   
   def self.add_body_row sheet, row_number, row_data, column_widths = [], no_time = false
-    row_data.each_with_index do |cell_base,col| 
+    make_body_row sheet, row_number, 0, row_data, column_widths, {:no_time => no_time}
+  end
+
+  # Method allows insertion of a row data array into a middle column of a spreadsheet row.
+  def self.insert_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], no_time = false
+    make_body_row sheet, row_number, starting_column_number, row_data, column_widths, {:no_time => no_time, :insert=>true}
+  end
+
+  def self.make_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], options = {}
+    row_data.each_with_index do |cell_base, col| 
+      col = starting_column_number + col
+
       cell = nil
       if cell_base.nil?
         cell = ""
@@ -53,11 +64,17 @@ class XlsMaker
       else
         cell = cell_base
       end
-      sheet.row(row_number).push(cell)
+      
+      if options[:insert] == true
+        sheet.row(row_number).insert(col, cell)
+      else
+        sheet.row(row_number).push(cell)
+      end
+
       width = cell.to_s.size + 3
       width = 8 unless width > 8
       if cell.respond_to?(:strftime)
-        if cell.is_a?(Date) || no_time
+        if cell.is_a?(Date) || options[:no_time] == true
           width = 13
           sheet.row(row_number).set_format(col,DATE_FORMAT) 
         else
@@ -66,8 +83,9 @@ class XlsMaker
       end
       width = 23 if width > 23
       XlsMaker.calc_column_width sheet, col, column_widths, width
-    end 
+    end
   end
+  private_class_method :make_body_row
 
   def self.add_header_row sheet, row_number, header_labels, column_widths = []
     header_labels.each_with_index do |label, i|
@@ -83,6 +101,13 @@ class XlsMaker
       sheet.column(col).width = width
       column_widths[col] = width
     end
+  end
+
+  def self.create_workbook sheet_name, headers = []
+    wb = Spreadsheet::Workbook.new
+    sheet = wb.create_worksheet :name=> sheet_name
+    XlsMaker.add_header_row(sheet, 0, headers) if headers.length > 0
+    wb
   end
   
   private

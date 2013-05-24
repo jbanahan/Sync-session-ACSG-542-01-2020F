@@ -7,4 +7,15 @@ describe Attachment do
       a.unique_file_name.should == "#{a.id}-a.txt"
     end
   end
+
+  describe "add_original_filename_method" do
+    it "should add original_filename accessor methods to subject object" do
+      a = "test"
+      Attachment.add_original_filename_method a
+
+      a.original_filename.should be_nil
+      a.original_filename = "file.txt"
+      a.original_filename.should == "file.txt"
+    end
+  end
 end

@@ -196,12 +196,7 @@ class ImportedFile < ActiveRecord::Base
   def make_imported_file_download_from_s3_path s3_path, user, additional_countries=[]
     ifd = self.imported_file_downloads.build(:user=>user,:additional_countries=>additional_countries.join(", "))
     tmp = OpenChain::S3.download_to_tempfile 'chain-io', s3_path
-    def tmp.original_filename= x
-      @afn = x
-    end
-    def tmp.original_filename
-      @afn
-    end
+    Attachment.add_original_filename_method tmp
     tmp.original_filename= self.attached_file_name
     ifd.attached = tmp
     ifd.save
