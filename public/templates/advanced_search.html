@@ -4,25 +4,6 @@
     <select ng-hide='showSetup' id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>
     </select>
     <div id='search_setup_controls' ng-show='showSetup'>
-      <div id='search_action_links'>
-        <span ng-hide='deletePrompt==true || givePrompt==true'>
-          <a class='action_link' ng-click='saveSetup()'>Save</a>
-          <a class='action_link' ng-click='newSetup()'>New</a>
-          <a class='action_link' ng-click='givePrompt=true'>Give</a>
-          <a class='action_link' ng-click='deletePrompt=true'>Delete</a>
-        </span>
-        <span ng-show='deletePrompt==true'>
-          Really Delete?
-          <a class='action_link' ng-click='deleteSetup()'>Yes</a>
-          <a class='action_link' ng-click='deletePrompt=false'>No</a>
-        </span>
-        <span ng-show='givePrompt==true'>
-          Select User
-          <div style='display:inline;' chain-user-list='giveUserId'></div>
-          <a class='action_link' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
-          <a class='action_link' ng-click='givePrompt=false'>Cancel</a>
-        </span>
-      </div>
       <div>
         <div class='name_box'><input type='text' ng-model='searchSetup.name' /></div>
         <br />
@@ -186,6 +167,25 @@
             <a class='action_link' ng-click='scheduleToEdit = null'>Hide</a>
           </div>
         </div>
+      </div>
+      <div id='search_action_links'>
+        <span ng-hide='deletePrompt==true || givePrompt==true'>
+          <a class='action_link' ng-click='saveSetup()'>Save</a>
+          <a class='action_link' ng-click='newSetup()'>New</a>
+          <a class='action_link' ng-click='givePrompt=true'>Give</a>
+          <a class='action_link' ng-click='deletePrompt=true'>Delete</a>
+        </span>
+        <span ng-show='deletePrompt==true'>
+          Really Delete?
+          <a class='action_link' ng-click='deleteSetup()'>Yes</a>
+          <a class='action_link' ng-click='deletePrompt=false'>No</a>
+        </span>
+        <span ng-show='givePrompt==true'>
+          Select User
+          <div style='display:inline;' chain-user-list='giveUserId'></div>
+          <a class='action_link' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
+          <a class='action_link' ng-click='givePrompt=false'>Cancel</a>
+        </span>
       </div>
       <hr />
     </div>
