@@ -88,9 +88,9 @@ class AdvancedSearchController < ApplicationController
   def download
     ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
     raise ActionController::RoutingError.new('Not Found') unless ss
-    m = XlsMaker.new(:include_links=>ss.include_links?,:no_time=>ss.no_time?)
     respond_to do |format|
       format.xls {
+        m = XlsMaker.new(:include_links=>ss.include_links?,:no_time=>ss.no_time?)
         sq = SearchQuery.new ss, current_user
         book = m.make_from_search_query sq
         spreadsheet = StringIO.new 
