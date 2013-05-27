@@ -1,35 +1,15 @@
+require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 module OpenChain
   module CustomHandler
     module AnnInc
       class AnnSapProductHandler
-        CUSTOM_DEFINITION_INSTRUCTIONS ||= {
-          :po=>{:label=>"PO Numbers",:data_type=>:text,:read_only=>true,:module_type=>'Product'},
-          :origin=>{:label=>"Origin Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true},
-          :import=>{:label=>"Import Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true},
-          :cost=>{:label=>"Unit Costs",:data_type=>:text,:module_type=>'Product',:read_only=>true},
-          :ac_date=>{:label=>"Earliest AC Date",:data_type=>:date,:module_type=>'Product',:read_only=>true},
-          :dept_num=>{:label=>"Merch Dept Number",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :dept_name=>{:label=>"Merch Dept Name",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :prop_hts=>{:label=>"Proposed HTS",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :prop_long=>{:label=>"Proposed Long Description",:data_type=>:text,:module_type=>'Product',:read_only=>true},
-          :oga_flag=>{:label=>"Other Agency Flag",:data_type=>:boolean,:module_type=>'Classification',:read_only=>false},
-          :imp_flag=>{:label=>"SAP Import Flag",:data_type=>:boolean,:module_type=>'Product',:read_only=>true},
-          :inco_terms=>{:label=>"INCO Terms",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :missy=>{:label=>"Missy Style",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :petite=>{:label=>"Petite Style",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :tall=>{:label=>"Tall Style",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :season=>{:label=>"Season",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :article=>{:label=>"Article Type",:data_type=>:string,:module_type=>'Product',:read_only=>true},
-          :approved_long=>{:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product',:read_only=>false},
-          :approved_date=>{:label=>"Approved Date",:data_type=>:date,:module_type=>'Product',:read_only=>false},
-          :first_sap_date=>{:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true},
-          :last_sap_date=>{:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true}
-        }
+        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
         def initialize
-          @custom_definitions = {}
-          CUSTOM_DEFINITION_INSTRUCTIONS.each do |code,cdi|
-            @custom_definitions[code] = CustomDefinition.where(cdi).first_or_create!
-          end
+          @custom_definitions = prep_custom_definitions [:po,:origin,:import,:cost,
+            :ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
+            :inco_terms,:missy,:petite,:tall,:season,:article,:approved_long,:approved_date,
+            :first_sap_date,:last_sap_date
+          ]
         end
 
         def process file_content, run_by
