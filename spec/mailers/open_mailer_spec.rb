@@ -81,4 +81,148 @@ describe OpenMailer do
       pa["Name"].should == alt_name
     end
   end
+
+  context :send_simple_html do 
+    it "should send html email with an attachment" do
+      Tempfile.open(["file", "txt"]) do |f|
+        f.binmode
+        f << "Content"
+
+        OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>", f).deliver
+
+        mail = ActionMailer::Base.deliveries.pop
+        mail.to.should == ["me@there.com"]
+        mail.subject.should == "Subject"
+        mail.body.raw_source.should match("&lt;p&gt;Body&lt;/p&gt;")
+        mail.postmark_attachments.should have(1).item
+        pa = mail.postmark_attachments.first
+        pa["Name"].should == File.basename(f)
+        pa["Content"].should == Base64.encode64(File.read(f))
+        pa["ContentType"].should == "application/octet-stream"
+      end
+    end
+
+    it "should send html email with multiple attachments" do
+      Tempfile.open(["file", "txt"]) do |f|
+        f.binmode
+        f << "Content"
+
+        Tempfile.open(["file2", "txt"]) do |f2|
+          f2.binmode
+          f << "Content2"
+          
+          OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
+
+          mail = ActionMailer::Base.deliveries.pop
+          mail.to.should == ["me@there.com"]
+          mail.subject.should == "Subject"
+          mail.body.raw_source.should match("<p>Body</p>")
+          mail.postmark_attachments.should have(2).item
+
+          pa = mail.postmark_attachments.first
+          pa["Name"].should == File.basename(f)
+          pa["Content"].should == Base64.encode64(File.read(f))
+          pa["ContentType"].should == "application/octet-stream"
+
+          pa = mail.postmark_attachments.second
+          pa["Name"].should == File.basename(f2)
+          pa["Content"].should == Base64.encode64(File.read(f2))
+          pa["ContentType"].should == "application/octet-stream"
+        end
+      end
+    end
+
+    it "should save an email attachment if the attachment is too large" do
+      MasterSetup.get.update_attributes(:request_host=>"host.xxx")
+
+      # One attachment should get mailed, the second should get saved off and a link for
+      # downloading added to the email
+      Tempfile.open(["file", "txt"]) do |f|
+        Tempfile.open(["file2", "txt"]) do |f2|
+          f.binmode
+          f << "Content"
+          f2.binmode
+          f << "Content2"
+
+          OpenMailer.any_instance.should_receive(:large_attachment?).with(f).and_return true
+          OpenMailer.any_instance.should_receive(:large_attachment?).with(f2).and_return false
+
+          OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
+
+          mail = ActionMailer::Base.deliveries.pop
+          mail.postmark_attachments.should have(1).item
+
+          pa = mail.postmark_attachments.first
+          pa["Name"].should == File.basename(f2)
+          pa["Content"].should == Base64.encode64(File.read(f2))
+          pa["ContentType"].should == "application/octet-stream"
+
+          ea = EmailAttachment.all.first
+          ea.should_not be_nil
+          ea.attachment.attached_file_name.should == File.basename(f)
+
+          body = <<EMAIL
+An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.
+Click <a href='http://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
+All system attachments are deleted after seven days, please retrieve your attachments promptly.
+EMAIL
+          mail.body.raw_source.should match(body)
+        end
+      end    
+    end
+
+    it "should utilize original_filename method for file attachments" do
+      Tempfile.open(["file", "txt"]) do |f|
+        f.binmode
+        f << "Content"
+        Attachment.add_original_filename_method f
+        f.original_filename = "test.txt"
+
+        OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>", f).deliver
+
+        mail = ActionMailer::Base.deliveries.pop
+        pa = mail.postmark_attachments.first
+        pa["Name"].should == "test.txt"
+        pa["Content"].should == Base64.encode64(File.read(f))
+        pa["ContentType"].should == "application/octet-stream"
+      end
+    end
+  end
+
+  context :send_generic_exception do
+    it "should send an exception email" do
+      # This is just primarily a test to make sure regressions weren't introduced
+      # when the save_large_attachment method was modified
+      MasterSetup.get.update_attributes(:request_host=>"host.xxx")
+
+      Tempfile.open(["file", "txt"]) do |f|
+        e = nil
+        begin
+          raise "Error"
+        rescue
+          e = $!
+        end
+        f.binmode
+        f << "Test"
+
+        OpenMailer.any_instance.should_receive(:large_attachment?).with(f.path).and_return true
+
+        OpenMailer.send_generic_exception(e, ["Test", "Test2"], "Error Message", nil, [f.path]).deliver
+
+        mail = ActionMailer::Base.deliveries.pop
+        pa = mail.postmark_attachments.length.should == 0
+
+        ea = EmailAttachment.all.first
+        ea.should_not be_nil
+        ea.attachment.attached_file_name.should == File.basename(f)
+
+        body = <<EMAIL
+An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.
+Click <a href='http://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
+All system attachments are deleted after seven days, please retrieve your attachments promptly.
+EMAIL
+        mail.body.raw_source.should match(body)
+      end
+    end
+  end
 end

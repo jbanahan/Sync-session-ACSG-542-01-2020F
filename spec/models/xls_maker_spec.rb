@@ -83,5 +83,55 @@ describe XlsMaker do
       @sheet.row(1).formats[0].should == XlsMaker::DATE_FORMAT
     end
   end
+
+  context :insert_body_row do
+    before :each do
+      @wb = Spreadsheet::Workbook.new
+      @sheet = @wb.create_worksheet :name => "Sheet"
+    end
+
+    it "should insert a row starting at the column specified" do 
+      col_widths = []
+      date = DateTime.now.to_date
+      datetime = Time.now
+
+      XlsMaker.insert_body_row @sheet, 1, 1, ["Test", date, datetime], col_widths
+
+      @sheet.row(1)[0].should be_nil
+      @sheet.row(1)[1].should == "Test"
+      @sheet.row(1)[2].should == date
+      @sheet.row(1)[3].should == datetime
+
+      col_widths[1].should == 8
+      col_widths[2].should == 13
+      col_widths[3].should == datetime.to_s.size + 3
+
+      @sheet.row(1).formats[2].should == XlsMaker::DATE_FORMAT
+      @sheet.row(1).formats[3].should == XlsMaker::DATE_TIME_FORMAT
+    end
+
+    it "should insert a row starting at the column specified and push back existing columns" do 
+      col_widths = []
+      date = DateTime.now.to_date
+      datetime = Time.now
+
+      XlsMaker.add_body_row @sheet, 1, ["A", "D", "E"]
+
+      XlsMaker.insert_body_row @sheet, 1, 1, ["B", "C"]
+
+      @sheet.row(1)[0].should == "A"
+      @sheet.row(1)[1].should == "B"
+      @sheet.row(1)[2].should == "C"
+      @sheet.row(1)[3].should == "D"
+      @sheet.row(1)[4].should == "E"
+    end
+
+    it "should force date format for datetimes" do 
+      col_widths = []
+      XlsMaker.insert_body_row @sheet, 1, 0, [Time.now], col_widths, true
+      col_widths[0].should == 13
+      @sheet.row(1).formats[0].should == XlsMaker::DATE_FORMAT
+    end
+  end
 end
 

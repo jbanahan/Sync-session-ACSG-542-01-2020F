@@ -25,6 +25,13 @@ class Attachment < ActiveRecord::Base
   def unique_file_name
     "#{self.id}-#{self.attached_file_name}"
   end
+
+  def self.add_original_filename_method attached_object
+    def attached_object.original_filename=(fn); @fn = fn; end
+    def attached_object.original_filename; @fn; end
+    nil
+  end
+
   private
   def no_post
     false
