@@ -10,7 +10,7 @@ describe SearchSchedule do
         :name => 'test/-#t!e~s)t .^t&x@t', :download_format => 'csv'
         )
       @report = CustomReport.new(:user => @u)
-      @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report)
+      @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report, :download_format=>"csv")
       @ss.custom_report = @report
     end
 
@@ -45,6 +45,7 @@ describe SearchSchedule do
 
     it "should run with a custom report and no search" do
       @ss.search_setup = nil
+      @ss.update_attributes(:download_format => "xls")
 
       @report.stub(:user) {@u}
       # We tested a full sanitization earlier, just double check that it's still being done here too
@@ -71,6 +72,35 @@ describe SearchSchedule do
 
     end
 
+    it "should run custom report with csv format and no search" do
+      @ss.search_setup = nil
+      @ss.update_attributes(:download_format => "csv")
+
+      @report.stub(:user) {@u}
+      # We tested a full sanitization earlier, just double check that it's still being done here too
+      @report.stub(:name) {'test/t!st.txt'}
+
+      # Use the block version here so we can also verify that User.current and Time.zone is set to the 
+      # custom report's user in the context of the write_csv call
+      @report.should_receive(:csv_file) {|user|
+        user.should == @u
+        User.current.should == @u
+        Time.zone.should == ActiveSupport::TimeZone[@u.time_zone]
+        @temp
+      }
+      
+      log = double
+      log.should_receive(:info).twice
+
+      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', log)
+      @ss.should_receive(:send_ftp).with(@report.name, @temp, 't_st.txt.csv', log)
+
+      @ss.run log
+
+      @ss.last_finish_time.should_not be_nil
+
+    end
+
     it "should run with a custom report and search setup" do
       log = double
       log.should_receive(:info).exactly(3).times
@@ -88,15 +118,15 @@ describe SearchSchedule do
       @report.stub(:user) {@u}
       # We tested a full sanitization earlier, just double check that it's still being done here too
       @report.stub(:name) {'test/t!st.txt'}
-      @report.should_receive(:xls_file) {|u|
+      @report.should_receive(:csv_file) {|u|
         u.should == @u
         User.current.should == @report.user
         Time.zone.should == ActiveSupport::TimeZone[@report.user.time_zone]
         @temp
       }
       
-      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.xls', log)
-      @ss.should_receive(:send_ftp).with(@report.name, @temp, 't_st.txt.xls', log)
+      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', log)
+      @ss.should_receive(:send_ftp).with(@report.name, @temp, 't_st.txt.csv', log)
 
       @ss.run log
 

@@ -91,8 +91,17 @@ class SearchSchedule < ActiveRecord::Base
     end
     
     User.run_with_user_settings(rpt.user) do
-      t = rpt.xls_file rpt.user
-      attachment_name = "#{sanitize_filename(rpt.name)}.xls"
+      t = nil
+      attachment_name = "#{sanitize_filename(rpt.name)}"
+
+      if self.download_format.nil? || self.download_format.downcase=='csv'
+        t = rpt.csv_file rpt.user
+        attachment_name = "#{attachment_name}.csv"
+      else
+        t = rpt.xls_file rpt.user
+        attachment_name = "#{attachment_name}.xls"
+      end
+      
       send_email rpt.name, t, attachment_name, log
       send_ftp rpt.name, t, attachment_name, log
       self.update_attributes(:last_finish_time => Time.now)
