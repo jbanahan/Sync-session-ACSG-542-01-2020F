@@ -14,6 +14,16 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       @g.sync_code.should == 'polo_sap'
     end
   end
+  describe :run_schedulable do
+    it "should call ftp_file & sync_csv" do
+      pg = mock 'product generator'
+      csv_output = mock 'CSV Output'
+      pg.should_receive(:ftp_file).with(csv_output).and_return('x')
+      pg.should_receive(:sync_csv).and_return(csv_output)
+      described_class.should_receive(:new).with("ABC").and_return(pg)
+      described_class.run_schedulable "ABC"
+    end
+  end
 
   it "should raise error if no sap brand custom definition" do
     @sap_brand_cd.destroy

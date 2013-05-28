@@ -2,6 +2,12 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloSapProductGenerator < ProductGenerator
+      #SchedulableJob compatibility
+      def self.run_schedulable opts={}
+        g = self.new(opts)
+        g.ftp_file g.sync_csv
+      end
+
       #Accepts 3 parameters
       # * :env=>:qa to send to qa ftp folder 
       # * :custom_where to replace the query where clause
