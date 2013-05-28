@@ -103,9 +103,11 @@ def execute_scheduler
         OpenChain::CustomHandler::FenixProductFileGenerator.new(cn).delay.generate
       end
     end
+=begin
     scheduler.every("240m") do
       OpenChain::CustomHandler::PoloEfocusProductGenerator.new.delay.generate
     end
+=end
   end
 
   if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
