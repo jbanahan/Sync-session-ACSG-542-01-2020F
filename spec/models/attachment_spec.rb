@@ -5,6 +5,9 @@ describe Attachment do
     it "should generate unique name" do
       a = Attachment.create(:attached_file_name=>"a.txt")
       a.unique_file_name.should == "#{a.id}-a.txt"
+
+      a.update_attributes(:attachment_type=>"type")
+      a.unique_file_name.should == "type-#{a.id}-a.txt"      
     end
   end
 
