@@ -790,6 +790,17 @@ describe OpenChain::AllianceParser do
     end
   end
 
+  it 'should handle times with a value of 60 minutes' do
+    # Stupid alliance bug we're working around, only seems to appear in comments lines
+    @comments[0][:date] = "201305152300"
+
+    OpenChain::AllianceParser.parse @make_entry_lambda.call
+    comments = Entry.find_by_broker_reference(@ref_num).entry_comments
+    comments.should have(1).comment
+    comment = comments.first
+    comment.generated_at.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("201305152300")
+  end
+
   describe 'process_past_days' do
     it "should delay processing" do
       OpenChain::AllianceParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)

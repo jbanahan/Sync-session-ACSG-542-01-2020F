@@ -469,10 +469,21 @@ module OpenChain
       return nil if str.blank? || str.match(/^[0]*$/)
       Date.parse str
     end
+
     def parse_date_time str
       return nil if str.blank? || str.match(/^[0]*$/)
-      ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
+      begin
+        ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
+      rescue 
+        # For some reason Alliance will send us dates with a 60 in the minutes columns (rather than adding an hour)
+        # .ie  201305152260
+        if str =~ /60$/
+          time = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(str[0, -2] + "00")
+          time + 1.hour
+        end
+      end
     end
+
     def parse_decimal str, decimal_places
       offset = -(decimal_places+1)
       BigDecimal.new str.insert(offset,"."), decimal_places
