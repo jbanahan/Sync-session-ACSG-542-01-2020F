@@ -11,7 +11,8 @@ module OpenChain
       # Because there's special handling associated with these fields, some of these 
       # mapped values intentially use symbols that don't map to actual entry property setter methods
       '180' => :do_issued_date_first,
-      '490' => :docs_received_date_first
+      '490' => :docs_received_date_first,
+      '10' => :eta_date=
     }
 
     SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON']
@@ -50,6 +51,7 @@ module OpenChain
         end
         FenixParser.new.parse_entry entry_lines, opts unless entry_lines.empty?
       rescue
+        debugger
         tmp = Tempfile.new(['fenix_error_','.txt'])
         tmp << file_content
         tmp.flush
@@ -115,7 +117,6 @@ module OpenChain
       end
 
       set_entry_dates @entry, accumulated_dates
-
       @entry.save!
       #match up any broker invoices that might have already been loaded
       @entry.link_broker_invoices
@@ -254,10 +255,16 @@ module OpenChain
     end
 
     def process_activity_line line, accumulated_dates
-      if !line[2].nil? && !line[3].nil? && !line[4].nil? && ACTIVITY_DATE_MAP[line[2].strip]
-        time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M")
+      if !line[2].nil? && !line[3].nil? && ACTIVITY_DATE_MAP[line[2].strip]
+        # We may get just a date here (not date and time)
+        time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M") rescue nil
+        unless time
+          time = Date.strptime(line[3], '%Y%m%d') # we actually want this to fail..it means we're getting bad data
+        end
         # This assumes we're using a hash with a default return value of an empty array
-        accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time.in_time_zone(time_zone)
+        if time
+          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << ((time.is_a?(Date)) ? time : time.in_time_zone(time_zone))
+        end
       end
       rescue
     end
@@ -326,9 +333,8 @@ module OpenChain
       # and then setting the last SD date value processed from the file into the entry.
       # So in the case of multiple records that have the same code, we're pushing
       # only the last date value into the entry here.
-
       accumulated_dates.each do |date_setter, date_array|
-        if entry.respond_to? date_setter
+        if entry.respond_to?(date_setter) && date_array.length > 0
           entry.send(date_setter, date_array.last)  
         end
       end

@@ -64,7 +64,8 @@ describe OpenChain::FenixParser do
     @additional_cargo_control_numbers = ['asdf', 'sdfa']
     @activities = {
       '180' => [Time.new(2013,4,1,10,0), Time.new(2013,4,1,18,0)],
-      '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)]
+      '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
+      '10' => [Date.new(2013,4,2), Date.new(2013,4,3)]
     }
     @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
@@ -81,7 +82,8 @@ describe OpenChain::FenixParser do
         @activities.each do |activity_number, date_times|
           date_times.each do |date|
             # For some reason Fenix adds spaces before and after the activity number
-            data += "\r\nSD,#{@barcode},\" #{activity_number} \",#{date.strftime('%Y%m%d')},#{date.strftime('%H%M')},USERID,NOTES"
+            time_segment = (date.is_a?(Date) ? "" : date.strftime('%H%M'))
+            data += "\r\nSD,#{@barcode},\" #{activity_number} \",#{date.strftime('%Y%m%d')},#{time_segment},USERID,NOTES"
           end
         end
       end
@@ -204,6 +206,7 @@ describe OpenChain::FenixParser do
     ent.first_do_issued_date.should == @activities['180'][0].in_time_zone(Time.zone)
     # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
     ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
+    ent.eta_date.should == @activities['10'][1]
   end
 
   it 'should call link_broker_invoices' do
