@@ -7,21 +7,11 @@ $(function() {
   $("#btn_save").click(function() {
     $("#frm_so").submit();
   });
-  $("#btn_edit_next").click(function() {
-    next_action_to_form($("#frm_so"));
-    $("#frm_so").submit();
-  });
-  $("#btn_edit_previous").click(function() {
-    previous_action_to_form($("#frm_so"));
-    $("#frm_so").submit();
-  });
   $("#btn_cancel").click(function() {
     window.location = '<%=url_for @sales_order%>';
   });
   OpenChain.addClickMap('s','Save','btn_save');
   OpenChain.addClickMap('c','Cancel','btn_cancel');
-  OpenChain.addClickMap('n','Next','btn_edit_next');
-  OpenChain.addClickMap('p','Previous','btn_edit_previous');
   OpenChain.activateHotKeys();
 });
 

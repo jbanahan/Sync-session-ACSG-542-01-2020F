@@ -44,4 +44,9 @@ class BrokerInvoice < ActiveRecord::Base
   def self.search_secure user, base_object
     Entry.search_secure user, base_object.includes(:entry)
   end
+
+  def self.search_where user
+    "entry_id in (select id from entries where #{Entry.search_where user})"
+  end
+
 end

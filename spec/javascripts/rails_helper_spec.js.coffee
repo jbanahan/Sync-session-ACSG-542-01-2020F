@@ -7,7 +7,7 @@ describe 'RailsHelper', ->
       expect(RailsHelper.authToken()).toEqual('abc')
   describe 'prepRailsForm', ->
     beforeEach ->
-      loadFixtures('basic_form.html')
+      loadFixtures('basic_form')
       RailsHelper.authToken('atok')
 
     it 'should set auth token', ->

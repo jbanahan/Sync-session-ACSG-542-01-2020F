@@ -49,28 +49,28 @@ var OCSearch = (function() {
   }
 
   var initBulkSelectors = function() {
-    $("#result_table").find(":checkbox:not(#chk_sel_all)").click(rewriteBulkForm);
+    $("#result_table :checkbox:not(#chk_sel_all)").on('click',rewriteBulkForm);
     var selAllBinding = function() {
-      $("#result_table").find(":checkbox:not(#chk_sel_all)").unbind('click').attr('checked',(allSelected ? '' : 'checked')).click(rewriteBulkForm);;
-      $("#chk_sel_all").unbind('click').attr('checked','').click(selAllBinding);
+      $("#result_table :checkbox:not(#chk_sel_all)").off('click').attr('checked',(allSelected ? '' : 'checked')).on('click',rewriteBulkForm);;
+      $("#chk_sel_all").unbind('click').attr('checked','').on('click',selAllBinding);
       allSelected = !allSelected;
       rewriteBulkForm();
     }
-    $("#chk_sel_all").click(selAllBinding);
+    $("#chk_sel_all").on('click',selAllBinding);
   }
 
   var initSelectFullList = function() {
     $(".sel_full").live('click',function(ev) {
       ev.preventDefault();
       allObjectsMode = true;
-      $("#result_table").find(":checkbox:not(#chk_sel_all)").attr('checked','checked');
+      $("#result_table :checkbox:not(#chk_sel_all)").attr('checked','checked');
       rewriteBulkForm();
     });
     $(".sel_none").live('click',function(ev) {
       ev.preventDefault();
       allObjectsMode = false;
       $.cookie("sr_"+searchRunId,'');
-      $("#result_table").find(':checkbox').attr('checked',false);
+      $("#result_table :checkbox").attr('checked',false);
       rewriteBulkForm();
     });
   }
@@ -184,12 +184,12 @@ var OCSearch = (function() {
   }
 
   var initRowDoubleClick = function() {
-    $(".search_row").dblclick(function() {
+    $(".search_row").on('dblclick',function() {
       $(this).find(".double_click_action").each(function() {
         window.location = $(this).attr("href");
       });
     });
-    $(".search_row").find("a").dblclick(function(evt) {evt.stopPropagation();}) //prevent an accidental double-click on a link from bubbling up to the row
+    $(".search_row a").on('dblclick',function(evt) {evt.stopPropagation();}) //prevent an accidental double-click on a link from bubbling up to the row
   }
   var initSave = function(parentHash) {
     $("#btn_setup_save").click(function() {

@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe ModelField do
+  describe :process_query_result do
+    before :each do
+      @u = User.new
+    end
+    it "should pass vlue through for default object" do
+      ModelField.new(10000,:test,CoreModule::PRODUCT,:name).process_query_result("x",@u).should=="x"
+    end
+    it "should override with given lambda" do
+      ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:process_query_result_lambda=>lambda {|v| v.upcase}).process_query_result("x",@u).should=="X"
+    end
+    it "should write HIDDEN if user cannot view column" do
+      ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:can_view_lambda=>lambda {|u| false}).process_query_result("x",@u).should=="HIDDEN"
+    end
+  end
   context :read_only do
     before :each do
       FieldLabel::LABEL_CACHE.clear

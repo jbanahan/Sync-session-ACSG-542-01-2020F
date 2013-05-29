@@ -1,6 +1,12 @@
 require 'spec_helper'
 
 describe SearchSetup do
+  describe :result_keys do
+    it "should initialize query" do
+      SearchQuery.any_instance.should_receive(:result_keys).and_return "X"
+      SearchSetup.new.result_keys.should == "X"
+    end
+  end
   describe "uploadable?" do
     #there are quite a few tests for this in the old test unit structure
     it 'should always reject ENTRY' do
@@ -90,6 +96,25 @@ describe SearchSetup do
       @s.search_schedules.create!
       d = @s.deep_copy "new"
       d.search_schedules.should be_empty
+    end
+  end
+  describe "values" do
+    it "should work for all model fields in SELECT" do
+      r = Factory(:region)
+      r.countries << Factory(:country)
+      ModelField.reload true
+      CoreModule::CORE_MODULES.each do |cm|
+        cm.klass.stub(:search_where).and_return("1=1")
+        
+        ss = SearchSetup.new(:module_type=>cm.class_name)
+        cm.model_fields.keys.each_with_index do |mfid,i|
+          ss.search_columns.build(:model_field_uid=>mfid,:rank=>i)
+          ss.sort_criterions.build(:model_field_uid=>mfid,:rank=>i)
+          ss.search_criterions.build(:model_field_uid=>mfid,:operator=>'null')
+        end
+        #just making sure each query executes without error
+        SearchQuery.new(ss,User.new).execute
+      end
     end
   end
 end

@@ -1,0 +1,8 @@
+<div class='ang_notice_box' ng-show='notices.length > 0'>
+  <div class='ang_notice_close'><img src='/images/x.png' title='Close' ng-click='notices=[]'/></div>
+  <div class='ang_notice_message' ng-repeat='n in notices'>{{n}}</div>
+</div>
+<div class='ang_error_box' ng-show='errors.length > 0'>
+  <div class='ang_error_close'><img src='/images/x.png' title='Close' ng-click='errors=[]'/></div>
+  <div class='ang_error_message' ng-repeat='e in errors'>{{e}}</div>
+</div>

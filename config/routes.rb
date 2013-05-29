@@ -1,4 +1,5 @@
 OpenChain::Application.routes.draw do
+  
   resources :delayed_jobs, :only => [:destroy]
   resources :ftp_sessions, :only => [:index, :show] do
     member do
@@ -130,15 +131,14 @@ OpenChain::Application.routes.draw do
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
 
+  resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
+    get 'last_search_id', :on=>:collection
+    get 'setup', :on=>:member
+    get 'download', :on=>:member
+  end
+
   #custom features
-  resources :custom_files, :only => :show
   match "/custom_features" => "custom_features#index", :via => :get
-  match "/custom_features/msl_plus" => "custom_features#msl_plus_index", :via => :get
-  match "/custom_features/msl_plus/:id" => "custom_features#msl_plus_show", :via => :get 
-  match "/custom_features/msl_plus/upload" => "custom_features#msl_plus_upload", :via => :post
-  match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_show_email", :via => :get
-  match "/custom_features/msl_plus/:id/email" => "custom_features#msl_plus_send_email", :via => :post
-  match "/custom_features/msl_plus/:id/filter" => "custom_features#msl_plus_filter", :via=>:post
   match "/custom_features/csm_sync" => "custom_features#csm_sync_index", :via=>:get
   match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
   match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get
@@ -216,10 +216,6 @@ OpenChain::Application.routes.draw do
 	resources :piece_sets
 
   resources :shipments do
-    collection do
-      get 'show_next'
-      get 'show_previous'
-    end
     member do
       get 'history'
       get 'make_invoice'
@@ -231,10 +227,6 @@ OpenChain::Application.routes.draw do
 	end
 	
 	resources :deliveries do
-    collection do
-      get 'show_next'
-      get 'show_previous'
-    end
     member do
       get 'history'
     end
@@ -245,8 +237,6 @@ OpenChain::Application.routes.draw do
 
   resources :products do
     collection do
-      get 'show_next'
-      get 'show_previous'
       post 'bulk_edit'
       post 'bulk_update'
       post 'bulk_classify'
@@ -257,6 +247,8 @@ OpenChain::Application.routes.draw do
     member do
       get 'history'
       get 'classify'
+      get :next_item
+      get :previous_item
       put :import_worksheet 
     end
     post :import_new_worksheet, :on=>:new
@@ -264,8 +256,6 @@ OpenChain::Application.routes.draw do
 
   resources :orders do
     collection do
-      get 'show_next'
-      get 'show_previous'
       get 'all_open'
     end
     member do
@@ -276,8 +266,6 @@ OpenChain::Application.routes.draw do
 	
   resources :sales_orders do
     collection do
-      get 'show_next'
-      get 'show_previous'
       get 'all_open'
     end
     member do
@@ -341,15 +329,16 @@ OpenChain::Application.routes.draw do
   resources :imported_files, :only => [:index, :show, :destroy] do
     member do
       get 'preview'
-      get 'show_email_file'
       post 'email_file'
       get 'download'
       post 'download_items'
-      get 'process'
-      post 'filter'
+      post 'process_file'
+      put 'update_search_criterions'
     end
+    get 'show_angular', :on=>:collection
     resources :imported_file_downloads, :only=>[:index,:show]
   end
+  match "/imported_files_results/:id" => "imported_files#results", :via=>:get
 
   resources :search_setups do
     collection do
@@ -359,12 +348,12 @@ OpenChain::Application.routes.draw do
     member do
       get 'copy'
       get 'give'
+      post 'give'
       get 'attachments'
     end
     resources :imported_files, :only => [:new, :create, :show] do
       member do 
         get 'download'
-        get 'process_file'
       end
     end 
   end

@@ -1,3 +1,16 @@
+a.action_link {
+  color: black;
+  text-decoration: none;
+  padding: 0.25em 0.5em;
+  border: 1px solid #333;
+  background-color: #ccc;
+  display: inline-block;
+  color: white;
+  background-color: #666;
+}
+.action_link:hover {
+  cursor: pointer;
+}
 div.section_box {
   border-radius: 10px;
   border: 1px solid black;
@@ -16,4 +29,40 @@ div.section_box {
     padding: 5px;
   }
 }
-
+div.ang_error_box, div.ang_notice_box {
+  margin: 1em auto;
+  width: 60%;
+  border: 1px solid #aaa;
+  padding: 0;
+  div.ang_error_message, div.ang_notice_message {
+    margin: 0 .25em .25em .25em;
+  }
+  div.ang_error_message {
+    color: red;
+  }
+  div.ang_error_close, div.ang_notice_close {
+    text-align: right;
+    img {
+      cursor: pointer;
+    }
+  }
+}
+dl.field_list {
+  dt {
+    padding-top: 0.5em;
+    font-weight:bold;
+    width: 10em;
+    float: left;
+    clear: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  dd {
+    padding-top: 0.5em;
+    margin-left: 10.5em;
+  }
+}
+div.chainActionBarWrap {
+  display: inline;
+}

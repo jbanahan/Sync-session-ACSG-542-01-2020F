@@ -18,6 +18,31 @@ class XlsMaker
     @no_time = inner_opts[:no_time]
   end
   
+  def make_from_search_query search_query
+    @column_widths = {}
+    ss = search_query.search_setup
+    cols = search_query.search_setup.search_columns.order('rank ASC')
+    wb = prep_workbook cols
+    sheet = wb.worksheet 0
+    row_number = 1
+    base_objects = {}
+    search_query.execute do |row_hash|
+      #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
+      key = row_hash[:row_key]
+      base_objects[key] ||= (@include_links ? ss.core_module.find(key) : nil)
+      process_row sheet, row_number, row_hash[:result], base_objects[key]
+      row_number += 1
+    end
+    wb
+  end
+
+  #delay job friendly version of make_from_search_query
+  def make_from_search_query_by_search_id_and_user_id search_id, user_id
+    sq = SearchQuery.new(SearchSetup.find(search_id),User.find(user_id))
+    make_from_search_query sq
+  end
+  
+  #deprecated
   def make_from_search(current_search, results)
     @column_widths = {}
     cols = current_search.search_columns.order("rank ASC")
@@ -31,6 +56,7 @@ class XlsMaker
     wb
   end
 
+  #deprecated
   def make_from_results results, columns, module_chain, user, search_criterions=[]
     @column_widths = {}
     wb = prep_workbook columns

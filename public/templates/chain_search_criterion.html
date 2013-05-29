@@ -1,0 +1,7 @@
+{{crit.label}}
+<select ng-model='crit.operator' ng-options='o.operator as o.label for o in operators[crit.datatype]'>
+</select>
+<div style='display:inline;' class='value_area'></div>
+<input type='checkbox' ng-model='crit.include_empty'/> Include Empty
+<img ng-click='remove(crit)' class='action_link' src='/images/x.png'/>
+

@@ -1,0 +1,80 @@
+<div chain-messages errors='errors' notices='notices'></div>
+<div ng-show='showEmailCurrent'>
+  <dl>
+    <dt>To:</dt><dd><input type='text' ng-model='emailCurrentSettings.to'/></dd>
+    <dt>Subject:</dt><dd><input type='text' ng-model='emailCurrentSettings.subject'/></dd>
+    <dt>Body:</dt><dd><textarea ng-model='emailCurrentSettings.body'/></dd>
+    <dt>Extra Countries:</dt>
+    <dd>
+      <div ng-repeat='c in importedFile.available_countries'>
+        <input type='checkbox' ng-model='c.selected'/> {{c.name}}
+      </div>
+    </dd>
+  </dl>
+  <a class='action_link' ng-click='sendEmailCurrent()'>Send</a> 
+  <a class='action_link' ng-click='disableEmailCurrent()'>Cancel</a>
+</div>
+<div chain-action-bar-item id='imported-file-action-buttons'>
+</div>
+<div ng-hide='showEmailCurrent'>
+  <div ng-hide='importedFile.file_name'>
+    <img src='/images/ajax_load_64.gif' title='Loading...' />
+  </div>
+  <div ng-show='importedFile.file_name'>
+    <dl class='field_list'>
+      <dt>File Name:</dt><dd>&nbsp;{{importedFile.file_name}}</dd>
+      <dt>Uploaded At:</dt><dd>&nbsp;{{importedFile.uploaded_at}}</dd>
+      <dt>Uploaded By:</dt><dd>&nbsp;{{importedFile.uploaded_by}}</dd>
+      <dt>File Rows:</dt><dd>&nbsp;{{importedFile.total_rows}}</dd>
+      <dt>Unique Records</dt><dd>&nbsp;{{importedFile.total_records}}</dd>
+      <dt>Last Processed:</dt><dd>&nbsp;{{importedFile.last_processed}}</dd>
+      <dt>Time To Process:</dt><dd>&nbsp;{{importedFile.time_to_process}} minutes</dd>
+      <dt ng-show='importedFile.processing_error_count > 0'>Processing Errors</dt><dd ng-show='importedFile.processing_error_count > 0'>{{importedFile.processing_error_count}}</dd>
+    </dl>
+    <hr />
+    <div>
+      <h3>
+        Parameters
+      </h3>
+      <div ng-repeat='crit in importedFile.search_criterions'>
+        <div chain-search-criterion='crit'></div>
+      </div>
+      Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in importedFile.model_fields'>
+      </select>
+      <a ng-show='criterionToAdd' class='action_link' ng-click='addCriterion(criterionToAdd)'>Add</a>
+      <br />
+      <a class='action_link' ng-click='updateSearchCriterions()'>Save</a>
+    </div>
+  </div>
+  <div class='clear'></div>
+  <hr />
+  <div ng-show='importedFile.last_processed.length>0'>
+    <div chain-search-result='searchResult' page='page' src='/imported_files_results/'>
+      <a class='action_link' ng-click='downloadOriginal()' ng-show='importedFile.file_name && !showEmailCurrent'>Download Original</a>
+      <a class='action_link' ng-click='enableEmailCurrent()' ng-hide='showEmailCurrent'>Email Current</a>
+      <span ng-show='showEmailCurrent'>
+        <a class='action_link' ng-click='sendEmailCurrent()'>Send</a>
+        <a class='action_link' ng-click='disableEmailCurrent()'>Cancel</a>
+      </span>
+      <a class='action_link' ng-show='importedFile.file_import_result.id > 0' href='/file_import_results/{{importedFile.file_import_result.id}}'>Log</a>
+    </div>
+  </div>
+  <div ng-show='showPreviewBox'>
+    <div ng-show='previewResults.length == 0'>
+      <h2>Loading File Preview</h2>
+      <img src='/images/ajax_load_64.gif' title='Loading...' /><br />
+    </div>
+    <div ng-show='previewResults.length > 0'>
+      <h2>File Preview</h2>
+      <strong>The following messages describe the results of processing the first row of this file.  Click process to run the file.</strong>
+      <ul>
+        <li ng-repeat='m in previewResults'>
+          {{m}}
+        </li>
+      </ul>
+      <span chain-action-bar-item>
+        <button ng-click='process()' ng-show='previewResults.length > 0 && showPreviewBox'>Process File</a>
+      </span>
+    </div>
+  </div>
+</div>

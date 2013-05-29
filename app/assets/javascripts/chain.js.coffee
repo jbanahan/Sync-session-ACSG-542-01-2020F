@@ -87,6 +87,7 @@ root.Chain =
     classificationIndex = 0
     writeClassification = (c) ->
       hts_val = c.tariff_records[0]?.hts_1 ? ""
+      sched_b_val = c.tariff_records[0]?.schedule_b_1 ? ""
       Chain.addTariffCallback('invalid',c.country_id,(bad_hts) ->
         $("div.quick_class_country[country_id='"+c.country_id+"']").removeClass('good_class').addClass('bad_class')
         $("a[data-action='auto-classify'][country='"+c.country_id+"']").hide()
@@ -111,6 +112,8 @@ root.Chain =
       r += "&nbsp;<a href='#' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
       r += "</div>"
       r += "<div data-target='auto-classify' country='"+c.country_id+"'></div>"
+      if c.country.iso_code=='US'
+        r += "<hr /><div>SCHED B: <input type='text' class='sched_b_field' country='"+c.country_id+"' value='"+sched_b_val+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][schedule_b_1]' /><div class='tariff_result'></div></div>"
       r += "</div>"
       classificationIndex++
       $("#quick_class_content").append(r)

@@ -16,8 +16,8 @@ describe OpenChain::AllianceImagingClient do
       OpenChain::AllianceImagingClient.should_receive(:request_images).with('123456')
       OpenChain::AllianceImagingClient.should_receive(:request_images).with('654321')
       ss = Factory(:search_setup,:module_type=>"Entry",:user=>Factory(:master_user))
-      ss.search
-      OpenChain::AllianceImagingClient.bulk_request_images ss.search_run.id, nil
+      ss.search_runs.create!
+      OpenChain::AllianceImagingClient.bulk_request_images ss.search_runs.first.id, nil
     end
     it 'should not request for non-alliance entries' do
       OpenChain::AllianceImagingClient.should_not_receive(:request_images)

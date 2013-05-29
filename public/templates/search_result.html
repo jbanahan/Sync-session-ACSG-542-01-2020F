@@ -1,0 +1,66 @@
+<div class='search_result_wrapper'>
+  <div ng-hide='searchResult.rows!=undefined || errors.length > 0' id='search_loading'>
+    <img src='/images/ajax_load_64.gif' title='Loading...' />
+  </div>
+  <div ng-show='searchResult.rows!=undefined' class='search_result'>
+    <div ng-show='bulkSelected.length>0 || allSelected' class='bulk_selection_controls'>
+      <div ng-show='allSelected' class='bulk_selection_message'>
+        All {{searchResult.total_objects}} selected
+      </div>
+      <div ng-hide='allSelected' class='bulk_selection_message'>
+        {{bulkSelected.length}} selected
+      </div>
+      <a ng-hide='allSelected' ng-click='selectAll()' class='action_link'>Select All ({{searchResult.total_objects}})</a>
+      <a ng-click='selectNone()' class='action_link'>Clear</a>
+    </div>
+    <div class='search_header'>
+      <div class='search_actions'>
+        <span ng-transclude></span>
+        <span ng-show='bulkSelected.length > 0'>
+          <span ng-repeat='b in searchResult.bulk_actions'>
+            <a class='action_link' ng-click='executeBulkAction(b)'>{{b.label}}</a>
+          </span>
+        </span>
+      </div>
+      <div class='page_nav' ng-hide='noChrome'>
+        <a class='action_link' ng-show='searchResult.page>1' ng-click='firstPage()'>&lt;&lt;</a>
+        <a class='action_link' ng-show='searchResult.page>1' ng-click='previousPage()'>&lt;</a>
+        <select ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
+        </select>
+        <a class='action_link' ng-show='searchResult.page<searchResult.total_pages' ng-click='nextPage()'>&gt;</a>
+        <a class='action_link' ng-show='searchResult.page<searchResult.total_pages' ng-click='lastPage()'>&gt;&gt;</a>
+      </div>
+      <div class='clear'>&nbsp;</div>
+    </div>
+    <div class='search_result_table_wrapper'>
+      <table class='detail_table search_result_table'>
+        <thead>
+          <tr>
+            <th ng-show='searchResult.bulk_actions && !noChrome'>
+              <input type='checkbox' ng-click='selectPage()' ng-model='selectPageCheck'/>
+            </th>
+            <th></th>
+            <th ng-repeat='col in searchResult.columns'>
+              {{col}}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat='row in searchResult.rows' ng-class='classesForRow($index)'>
+            <td ng-show='searchResult.bulk_actions && !noChrome' class='min_width'>
+              <input type='checkbox' ng-model='row.bulk_selected' ng-show='newObjectRow($index)' />
+            </td>
+            <td class='action_cell min_width'>
+              <span ng-repeat='l in row.links'>
+                <a href='{{l.url}}'>{{l.label}}</a>
+              </span>
+            </td>
+            <td ng-repeat='v in row.vals'>
+              {{v}}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
