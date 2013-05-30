@@ -1031,14 +1031,8 @@ and classifications.product_id = products.id
           }
           r
         },
-        :qualified_field_name => "(SELECT tot FROM (SELECT product_id, max(cnt) as 'tot' FROM (select product_id, count(*) as 'cnt' from 
-    (select DISTINCT classifications.id, classifications.product_id, classifications.country_id 
-        from classifications 
-        inner join tariff_records ON tariff_records.classification_id = classifications.id where length(hts_1) > 0) cls group by product_id
- union 
-    select products.id, 0 from products left outer join classifications on classifications.product_id = products.id 
-        left outer join tariff_records ON tariff_records.classification_id = classifications.id and length(hts_1) > 0 
-        where tariff_records.id is null) x group by product_id) y where y.product_id = products.id)",
+        :qualified_field_name => "(SELECT COUNT(*) FROM classifications pcc_cls WHERE 
+          (select count(*) FROM tariff_records pcc_tr where pcc_tr.classification_id = pcc_cls.id and length(pcc_tr.hts_1)) > 0 AND pcc_cls.product_id = products.id)",
         :data_type => :integer
       }],
       [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}],
