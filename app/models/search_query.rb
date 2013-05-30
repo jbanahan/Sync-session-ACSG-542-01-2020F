@@ -15,6 +15,7 @@ class SearchQuery
   def initialize search_setup, user, opts={}
     @search_setup = search_setup
     @user = user
+    @extra_from = opts[:extra_from]
     @extra_where = opts[:extra_where]
   end
 
@@ -108,6 +109,7 @@ class SearchQuery
     unless join_statements.empty?
       r << join_statements.reverse.join("  ")
     end
+    r << " #{@extra_from} " unless @extra_from.blank?
     r
   end
 

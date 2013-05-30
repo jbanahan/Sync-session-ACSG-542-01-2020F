@@ -39,13 +39,14 @@ class ImportedFile < ActiveRecord::Base
     []
   end
 
-  def result_keys_where
-    "#{core_module.table_name}.id in (select recordable_id from change_records inner join (select * from file_import_results where imported_file_id = #{self.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id)"
+  def result_keys_from 
+    "INNER JOIN (select distinct recordable_id from change_records inner join (select id from file_import_results where imported_file_id = #{self.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id) as change_recs on change_recs.recordable_id = #{core_module.table_name}.id"
   end
 
   #return keys from last file import result
   def result_keys opts={}
-    core_module.klass.where(result_keys_where).pluck(:id).uniq
+    qry = "select distinct recordable_id from change_records inner join (select id from file_import_results where imported_file_id = #{self.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id"
+    ActiveRecord::Base.connection.execute(qry).collect {|r| r[0]}
   end
 
   def sorted_columns
