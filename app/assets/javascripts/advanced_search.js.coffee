@@ -50,7 +50,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     for mfid in selectionArray
       c = findByMfid modelArray, mfid
       if c
-        idx = modelArray.indexOf c
+        idx = $.inArray c, modelArray
         modelArray.splice(idx,1)
     selectionArray.splice(0,selectionArray.length)
     resetAvailables()
@@ -61,7 +61,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     for mfid in selectionArray
       c = findByMfid modelArray, mfid
       if c
-        idx = modelArray.indexOf c
+        idx = $.inArray c, modelArray
         newArray = moveElementUp modelArray, idx
         #we can't replace the object for the target array so we need to clear
         #it and repopulate it with the values from the moveElementUp method
@@ -77,7 +77,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       mfid = selectionArray[i]
       c = findByMfid modelArray, mfid
       if c
-        idx = modelArray.indexOf c
+        idx = $.inArray c, modelArray
         newArray = moveElementDown modelArray, idx
         #we can't replace the object for the target array so we need to clear
         #it and repopulate it with the values from the moveElementDown method
@@ -201,7 +201,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   $scope.removeSchedule = (s) ->
     schedules = $scope.searchSetup.search_schedules
-    schedules.splice(schedules.indexOf(s),1)
+    schedules.splice($.inArray(s, schedules),1)
 
   #add criterion to model
   $scope.addCriterion = (toAddId) ->
@@ -216,7 +216,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   #remove criterion from model
   $scope.removeCriterion = (crit) ->
     criterions = $scope.searchSetup.search_criterions
-    criterions.splice(criterions.indexOf(crit),1)
+    criterions.splice($.inArray(crit, criterions ),1)
 
   #add columns to the selected box
   $scope.addColumns = () ->

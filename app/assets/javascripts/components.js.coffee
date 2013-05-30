@@ -300,7 +300,7 @@
           $scope.bulkSelected = o.rows
           $scope.selectAll() if o.all
           for r in $scope.searchResult.rows
-            r.bulk_selected = true if $scope.bulkSelected.indexOf(r.id)>=0
+            r.bulk_selected = true if $.inArray(r.id,$scope.bulkSelected)>=0
 
       loadResultPage = (searchId,page) ->
         p = if page==undefined then 1 else page
@@ -395,11 +395,11 @@
           valsAdded = []
           for r in newValue.rows
             if r.bulk_selected
-              unless $scope.bulkSelected.indexOf(r.id)>=0
+              unless $.inArray(r.id,$scope.bulkSelected)>=0
                 $scope.bulkSelected.push r.id
                 valsAdded.push r.id
-            else if valsAdded.indexOf(r.id)==-1
-              idx = $scope.bulkSelected.indexOf(r.id)
+            else if $.inArray(r.id,valsAdded)==-1
+              idx = $.inArray(r.id,$scope.bulkSelected)
               $scope.bulkSelected.splice(idx,1) if idx>=0
               $scope.allSelected = false
         $scope.selectPageCheck = false
