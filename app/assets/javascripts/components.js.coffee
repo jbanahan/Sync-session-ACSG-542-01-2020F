@@ -392,10 +392,13 @@
 
       $scope.$watch 'searchResult', ((newValue,oldValue) ->
         if newValue && newValue.rows
+          valsAdded = []
           for r in newValue.rows
             if r.bulk_selected
-              $scope.bulkSelected.push(r.id) unless $scope.bulkSelected.indexOf(r.id)>=0
-            else
+              unless $scope.bulkSelected.indexOf(r.id)>=0
+                $scope.bulkSelected.push r.id
+                valsAdded.push r.id
+            else if valsAdded.indexOf(r.id)==-1
               idx = $scope.bulkSelected.indexOf(r.id)
               $scope.bulkSelected.splice(idx,1) if idx>=0
               $scope.allSelected = false
