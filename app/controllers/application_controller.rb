@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
   require 'newrelic_rpm'
 
   protect_from_forgery
+  before_filter :prep_model_fields
   before_filter :new_relic
   before_filter :set_master_setup
   before_filter :require_user
@@ -380,7 +381,7 @@ class ApplicationController < ActionController::Base
     p.each {|k,v| r[k]=v if v.is_a?(String)}
     r
   end
-def model_field_label(model_field_uid) 
+  def model_field_label(model_field_uid) 
     r = ""
     return "" if model_field_uid.nil?
     mf = ModelField.find_by_uid(model_field_uid)
@@ -394,5 +395,9 @@ def model_field_label(model_field_uid)
       NewRelic::Agent.add_custom_parameters(:system_code=>m.system_code)
       NewRelic::Agent.add_custom_parameters(:user=>current_user.username) unless current_user.nil?
     end
+  end
+  def prep_model_fields
+    ModelField.reload_if_stale
+    ModelField.web_mode = true
   end
 end

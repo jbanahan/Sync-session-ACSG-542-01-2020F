@@ -1,4 +1,10 @@
 class ModelField
+
+  # When web mode is true, the class assumes that there is a before filter calling ModelField.reload_if_stale at the beginning of every request.
+  # This means the class won't call memchached on every call to ModelField.find_by_uid to see if the ModelFieldSetups are stale
+  # This should not be used outside of the web environment where jobs will be long running
+  cattr_accessor :web_mode
+
   @@last_loaded = nil
   attr_reader :model, :field_name, :label_prefix, :sort_rank, 
               :import_lambda, :export_lambda, 
@@ -1241,6 +1247,7 @@ and classifications.product_id = products.id
   end
 
   def self.reload_if_stale
+    return if ModelField.web_mode #see documentation at web_mode accessor
     cache_time = CACHE.get "ModelField:last_loaded"
     if !cache_time.nil? && !cache_time.is_a?(Time)
       begin
