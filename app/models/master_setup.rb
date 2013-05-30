@@ -4,7 +4,6 @@ class MasterSetup < ActiveRecord::Base
   CACHE_KEY = "MasterSetup:setup"
 
   after_update :update_cache 
-  after_update :update_current
   after_find :update_cache
 
   def version
