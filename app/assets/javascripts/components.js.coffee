@@ -112,14 +112,21 @@
         
     ],
     link: (scope, el, attrs) ->
+      renderTextInput = (opr) ->
+        switch opr
+          when "in", "notin"
+            return "<textarea ng-model='crit.value' />"
+          when "null", "notnull"
+            return ""
+
+        return "<input type='text' ng-model='crit.value' />"
+
       render = () ->
         dateStepper = false #true means apply jStepper to a relative date field
         v_str = "<input type='text' ng-model='crit.value' />"
         switch scope.crit.datatype
-          when "string"
-            v_str = "<input type='text' ng-model='crit.value' />"
-          when "integer", "fixnum", "decimal"
-            v_str = "<input type='text' ng-model='crit.value' />"
+          when "string", "integer", "fixnum", "decimal"
+            v_str = renderTextInput scope.crit.operator
           when "date", "datetime"
             if chainSearchOperators.isRelative scope.crit.datatype, scope.crit.operator
               v_str = "<input type='text' ng-model='crit.value' />"
@@ -140,14 +147,14 @@
             va.find('input').jStepper()
         va.find('input').jStepper() if dateStepper
 
-      if scope.crit.datatype=='date' || scope.crit.datatype=='datetime'
-        scope.$watch 'crit.operator', ((newVal,oldVal) ->
-            newRel = chainSearchOperators.isRelative(scope.crit.datatype,newVal)
-            oldRel = chainSearchOperators.isRelative(scope.crit.datatype,oldVal)
-            if newRel != oldRel
-              scope.crit.value = ""
-              render()
-        ), false
+      scope.$watch 'crit.operator', ((newVal,oldVal) ->
+        if scope.crit.datatype=='date' || scope.crit.datatype=='datetime'
+          newRel = chainSearchOperators.isRelative(scope.crit.datatype,newVal)
+          oldRel = chainSearchOperators.isRelative(scope.crit.datatype,oldVal)
+          if newRel != oldRel
+            scope.crit.value = ""
+        render()
+      ), false
 
       render()
     }
