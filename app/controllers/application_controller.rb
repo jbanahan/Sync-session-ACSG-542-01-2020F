@@ -5,10 +5,12 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery
   before_filter :new_relic
+  before_filter :set_master_setup
   before_filter :require_user
   before_filter :set_user_time_zone
   before_filter :log_request
   before_filter :force_reset
+
 
   helper_method :current_user
   helper_method :master_company
@@ -271,6 +273,11 @@ class ApplicationController < ActionController::Base
   end
 
   private
+  
+  def set_master_setup
+    MasterSetup.current = MasterSetup.get false 
+  end
+
 
   def force_reset
     if logged_in? && current_user.password_reset
