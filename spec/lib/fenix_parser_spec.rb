@@ -93,14 +93,15 @@ describe OpenChain::FenixParser do
   end
 
   def do_shared_test entry_data
-    OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'key'}
+    OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by_broker_reference @file_number
     ent.last_file_bucket.should == 'bucket'
-    ent.last_file_path.should == 'key'
+    ent.last_file_path.should == 'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'
     ent.import_country.should == Country.find_by_iso_code('CA')
     ent.entry_number.should == @barcode
     ent.importer_tax_id.should == @importer_tax_id
-    
+    ent.last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+
     ent.ship_terms.should == @ship_terms.upcase
     ent.direct_shipment_date.should == Date.strptime(@direct_shipment_date, @mdy)
     ent.transport_mode_code.should == @transport_mode_code.strip
@@ -312,6 +313,78 @@ describe OpenChain::FenixParser do
     existing_entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
     
     existing_entry.commercial_invoices.length.should == 0
+  end
+
+  it "should skip files with older system export times than current entry" do
+    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+
+    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
+    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958483.1369859062.csv'}
+    entries = Entry.where(:broker_reference=>@file_number)
+    entries.should have(1).entries
+    # Verify the updated last exported date was used
+    entries[0].last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58483).seconds
+  end
+
+  it "should process files with same system export times as current entry" do
+    # We want to make sure we do reprocess entries with the same export dates, this allows us to run larger
+    # reprocess processes to get older data, but then only reprocess the most up to date file.
+    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    
+    # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
+    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958482.1369859062.csv'}
+    entries = Entry.where(:broker_reference=>@file_number)
+    entries.should have(1).entries
+   
+    # All we really need to do is make sure the entry got saved by the parser and not skipped.
+    # Verifying any piece of data not set in the factory is present should be enough to prove this.
+    entries[0].entry_number.should == @barcode
+  end
+
+  it "should process files missing export date only if entry is missing export date" do
+    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    
+    OpenChain::FenixParser.parse @entry_lambda.call
+    entries = Entry.where(:broker_reference=>@file_number)
+    entries.should have(1).entries
+   
+    # All we really need to do is make sure the entry got saved by the parser and not skipped.
+    # Verifying any piece of data not set in the factory is present should be enough to prove this.
+    entries[0].entry_number.should == @barcode
+  end
+
+  it "should handle supporting line types with missing entry numbers in them" do
+    lines = []
+
+    first_entry_number = @barcode
+    first_broker_ref = @file_number
+
+    # Basically, we're splitting the lines up, replacing the 2nd index on non-B3L lines,
+    # and then re-assembling the lines
+    @entry_lambda.call.split("\r\n").each {|line| lines << line.split(",")}
+    lines.each {|line| line[1] == "0000000" if line[0] != "B3L"}
+    lines = lines.collect {|line| line.join(",")}.join("\r\n")
+
+    @barcode = "123456"
+    @file_number = "987654"
+
+    # Add another b3 after the "invalid" lines to make sure it also gets parsed right
+    lines += "\r\n" + @entry_lambda.call(true, false)
+  
+    OpenChain::FenixParser.parse lines
+
+    entries = Entry.order("entries.id ASC").all
+    entries.should have(2).entries
+
+    # The ETA date comes from a SD supporting line, so by checking for it it makes sure we're parsing those lines
+    # even if the entry number doesn't match
+    entries[0].entry_number.should == first_entry_number
+    entries[0].eta_date.should == @activities['10'][1]
+
+    # Make sure we also created that second entry
+    entries[1].entry_number.should == @barcode
   end
 
   context 'importer company' do
