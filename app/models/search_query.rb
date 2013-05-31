@@ -80,7 +80,7 @@ class SearchQuery
   def build_select
     r = "SELECT DISTINCT "
     flds = ["#{search_setup.core_module.table_name}.id"]
-    sorted_columns.each {|sc| flds << sc.model_field.qualified_field_name}
+    sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
     r << "#{flds.join(", ")} "
     r
   end

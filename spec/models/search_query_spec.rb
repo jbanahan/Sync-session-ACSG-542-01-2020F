@@ -145,6 +145,11 @@ describe SearchQuery do
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
       @sq.count.should == 2
     end
+    it "should hanlde multiple blanks" do
+      @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>10)
+      @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>11)
+      @sq.count.should == 2
+    end
   end
   describe :result_keys do
     it "should return unique key list for multi level query" do
