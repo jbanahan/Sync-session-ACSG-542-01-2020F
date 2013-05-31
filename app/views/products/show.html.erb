@@ -13,28 +13,6 @@
     OpenChain.addClickMap('l',"Classify","btn_classify");
     OpenChain.activateHotKeys();
   <% end %>
-    $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
-      buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
-    $("#btn_subscriptions")
-      .click(function() {
-        $("#mod_subscriptions").dialog('open');
-      });
-    $("#btn_order_jump")
-      .click(function() {
-        window.location = '<%=raw url_for(:action => :index, :controller => :orders, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq' )%>';
-      });
-    $("#btn_shipment_jump")
-      .click(function() {
-        window.location = '<%=raw url_for(:action => :index, :controller => :shipments, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq' )%>';
-      });
-    $("#btn_sales_order_jump")
-      .click(function() {
-        window.location = '<%=raw url_for(:action => :index, :controller => :sales_orders, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq' )%>';
-      });
-    $("#btn_delivery_jump")
-      .click(function() {
-        window.location = '<%=raw url_for(:action => :index, :controller => :deliveries, :s => @product.unique_identifier, :f => 'p_id', :con => 'eq')%>';
-      })
   });
 <% end %>
 
@@ -46,13 +24,6 @@
 <button class='btn_link' link_to='<%=products_path%>' key_map='b'>Back To Search</button>
 <%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@product} %>
 <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
-<button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:product_id => @product.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
-<!-- fix these later
-<% if current_user.view_orders? && @product.has_orders? %><button id='btn_order_jump'>Orders</button><%end%>
-<% if current_user.view_shipments? && @product.has_shipments? %><button id='btn_shipment_jump'>Shipments</button><%end%>
-<% if current_user.view_sales_orders? && @product.has_sales_orders?%><button id='btn_sales_order_jump'>Sales</button><%end%>
-<% if current_user.view_deliveries? && @product.has_deliveries? %><button id='btn_delivery_jump'>Deliveries</button><%end%>
--->
 <% end %>
 <div>
   <%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
@@ -140,22 +111,3 @@
     </table>
     <% end %>
 </div>
-
-<div id='mod_subscriptions' style='display:none;'>
-  <% 
-  change_subs = ItemChangeSubscription.where({:product_id => @product.id, :user_id => current_user.id})
-  if change_subs.length == 0
-   @ics = @product.item_change_subscriptions.build
-   @ics.user = current_user 
-  else
-   @ics = change_subs[0]
-  end 
- %>
- <%= form_for @ics, :html=>{:id=>'frm_sub'} do |ics| %>
-    <%= ics.hidden_field :user_id %>
-    <%= ics.hidden_field :product_id %>
-    <%= ics.check_box :app_message %> Message<br />
-    <%= ics.check_box :email %> Email<br />
- <% end %>
-</div>
-

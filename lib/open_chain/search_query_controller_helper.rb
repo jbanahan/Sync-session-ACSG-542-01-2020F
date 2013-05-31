@@ -14,8 +14,11 @@ module OpenChain
       k = ss.core_module.klass
       rows = []
       no_edit_links = false
-      sq.execute(:per_page=>per_page,:page=>page) do |row|
-        obj = k.find row[:row_key]
+      results = sq.execute(:per_page=>per_page,:page=>page)
+      ar_objects = {}
+      k.find(results.collect{|r| r[:row_key]}).each {|o| ar_objects[o.id] = o}
+      results.each do |row|
+        obj = ar_objects[row[:row_key]]
         links = []
         view_path = polymorphic_path(obj)
         links << {'label'=>'View', 'url'=>view_path} if obj.can_view?(user)
