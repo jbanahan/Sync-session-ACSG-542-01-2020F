@@ -29,6 +29,7 @@ describe OpenChain::AllianceParser do
     @fda_transmit_str = "201203141421"
     @docs_rec_str = "20120414"
     @docs_rec2_str = @docs_rec_str #this will be an override tested later
+    @eta_date_str = "201305291340"
     @total_packages = 88
     @total_fees = BigDecimal("999.88",2)
     @total_duty = BigDecimal("55.27",2)
@@ -111,6 +112,7 @@ describe OpenChain::AllianceParser do
       r << "SD0000121#{@daily_stmt_approved_str}1826                                                                            "
       r << "SD0099310#{@monthly_stmt_received_str}1826                                                                            "
       r << "SD0099311#{@monthly_stmt_paid_str}1826                                                                            "
+      r << "SD0000011#{@eta_date_str}                                                                                "
       r << "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       r << "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       r << "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
@@ -406,6 +408,7 @@ describe OpenChain::AllianceParser do
     ent.monthly_statement_received_date.strftime("%Y%m%d").should == @monthly_stmt_received_str
     ent.monthly_statement_paid_date.strftime("%Y%m%d").should == @monthly_stmt_paid_str
     ent.monthly_statement_number.should == @monthly_stmt_number
+    ent.eta_date.strftime("%Y%m%d").should == @eta_date_str[0, 8]
 
     ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
 
