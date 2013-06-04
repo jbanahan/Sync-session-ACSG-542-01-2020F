@@ -142,16 +142,7 @@ module OpenChain
       
       entry = find_entry file_number, entry_number, tax_id, current_export_date
 
-      # We want to utilize the last exported from source date to determine if the
-      # file we're processing is stale / out of date or if we should process it
-
-      # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
-      # current entry's
-      if entry.last_exported_from_source.nil? || (current_export_date && entry.last_exported_from_source <= current_export_date)
-        entry.last_exported_from_source = current_export_date
-      else
-        return nil
-      end
+      return if entry.nil?
 
       # Shell records won't have broker references, so make sure to set it
       entry.broker_reference = file_number
@@ -368,22 +359,40 @@ module OpenChain
     end
 
     def find_entry file_number, entry_number, tax_id, source_system_export_date
-      entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
+      # Make sure we aquire a cross process lock to prevent multiple job queues from executing this 
+      # at the same time (prevents duplicate entries from being created).
+      Lock.acquire(Lock::FENIX_PARSER_LOCK) do 
+        entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
 
-      # Because the Fenix shell records created by the imaging client only have an entry number in them,
-      # we also have to double check if this file data matches to one of those shell records before 
-      # creating a new Entry record.
-      if entry.nil?
-        entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE
+        # Because the Fenix shell records created by the imaging client only have an entry number in them,
+        # we also have to double check if this file data matches to one of those shell records before 
+        # creating a new Entry record.
+        if entry.nil?
+          entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE 
+        end
 
         if entry.nil?
           # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
           # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
           entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id, :last_exported_from_source=>source_system_export_date) 
-        end 
-      end
+        elsif source_system_export_date
+          # Make sure we also update the source system export date while locked too so we prevent other processes from 
+          # processing the same entry with stale data.
 
-      entry
+          # We want to utilize the last exported from source date to determine if the
+          # file we're processing is stale / out of date or if we should process it
+
+          # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
+          # current entry's (entries may have nil exported dates if they were created by the imaging client)
+          if entry.last_exported_from_source.nil? || (entry.last_exported_from_source <= source_system_export_date)
+            entry.update_attributes(:last_exported_from_source=>source_system_export_date)
+          else
+            entry = nil
+          end
+        end
+
+        entry
+      end
     end
 
     def find_source_system_export_time file_path
