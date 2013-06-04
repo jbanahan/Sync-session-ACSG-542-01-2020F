@@ -15,6 +15,12 @@ module OpenChain
       def initialize(opts={})
         @custom_where = opts[:where]
       end
+      
+      # do any preprocessing on the row results before passing to the sync_[file_format] methods
+      # returns array of rows so you can add more rows into the process
+      def preprocess_row row
+        [row]
+      end
 
       def sync
         synced_products = []
@@ -28,7 +34,8 @@ module OpenChain
           row = {}
           vals.each_with_index {|v,i| row[i-1] = v unless i==0}
           synced_products << vals[0]
-          yield row
+          processed_rows = preprocess_row row
+          processed_rows.each {|r| yield r}
         end
         if self.respond_to? :sync_code
           synced_products.in_groups_of(100,false) do |uids|
@@ -43,7 +50,7 @@ module OpenChain
       end
 
       #output a csv file or return nil if no rows written
-      def sync_csv include_headers=true
+      def sync_csv include_headers=true, csv_opts={}
         f = Tempfile.new(['ProductSync','.csv'])
         cursor = 0
         sync do |rv|
@@ -56,7 +63,7 @@ module OpenChain
               row << v.to_s
             end
             row = before_csv_write cursor, row
-            f << row.to_csv
+            f << row.to_csv(csv_opts)
           end
           cursor += 1
         end
