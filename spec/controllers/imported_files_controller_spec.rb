@@ -22,6 +22,7 @@ describe ImportedFilesController do
       FileImportResult.any_instance.stub(:error_count).and_return(61)
       p1 = Factory(:product)
       p2 = Factory(:product)
+      dont_find = Factory(:product)
       f = Factory(:imported_file,:user=>@u)
       finished_at = 1.minute.ago
       fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
@@ -105,6 +106,7 @@ describe ImportedFilesController do
       f = Factory(:imported_file,:user=>@u,:attached_file_name=>'fn.xls')
       f.search_columns.create!(:model_field_uid=>'prod_uid')
       f.search_columns.create!(:model_field_uid=>'prod_name')
+      f.search_columns.create!(:model_field_uid=>'prod_changed_at')
       finished_at = 1.minute.ago
       fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
       [p1,p2].each {|p| fir.change_records.create!(:recordable=>p)}
@@ -115,7 +117,7 @@ describe ImportedFilesController do
       r['id'].should == f.id
       r['page'].should == 1
       r['name'].should == f.attached_file_name
-      r['columns'].should == [ModelField.find_by_uid('prod_uid').label,ModelField.find_by_uid('prod_name').label]
+      r['columns'].should == [ModelField.find_by_uid('prod_uid').label,ModelField.find_by_uid('prod_name').label, ModelField.find_by_uid('prod_changed_at').label]
       r['rows'].size.should == 2
       r['rows'].first['id'].should == p1.id
     end

@@ -11,7 +11,7 @@
   <tbody>
     <%@imported_files.each do |imp|%>
       <tr class='hover'>
-        <td><%=link_to "Go", imp%></td>
+        <td><%=link_to "Go", "/imported_files/show_angular#/#{imp.id}/1"%></td>
         <td><%=imp.attached_file_name%></td>
         <td><%=imp.core_module.label%></td>
         <td><%=imp.created_at%></td>

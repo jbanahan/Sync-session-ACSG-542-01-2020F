@@ -129,6 +129,49 @@ describe ModelField do
         r.first.first.should == "#{child1.unique_identifier},#{child2.unique_identifier}"
       end
     end
+    context "classification count" do
+      before :each do
+        @user = Factory(:master_user)
+        @p = Factory(:product)
+        @country = Factory(:country)
+        @ss = SearchSetup.new(:module_type=>'Product')
+      end
+      it "should reflect 0 if no classifications" do
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+      it "should reflect 0 with classificaton and no tariff record" do
+        @p.classifications.create!(:country_id=>@country.id)
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+      it "should reflect 0 with no hts_1" do
+        @p.classifications.create!(:country_id=>@country.id).tariff_records.create!
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+      it "should reflect proper count with mixed bag" do
+        @p.classifications.create!(:country_id=>@country.id).tariff_records.create! # = 0
+        country_2 = Factory(:country)
+        @p.classifications.create!(:country_id=>country_2.id).tariff_records.create!(:hts_1=>'123') # = 1
+        @p.classifications.find_by_country_id(country_2.id).tariff_records.create!(:hts_1=>'123') # = 0 don't add for second component of same classification
+        @p.classifications.create!(:country_id=>Factory(:country).id).tariff_records.create!(:hts_1=>'123') # = 1
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'2')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+    end
     context "regions" do
       it "should create classification count model fields for existing regions" do
         r = Factory(:region)

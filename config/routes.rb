@@ -75,6 +75,7 @@ OpenChain::Application.routes.draw do
   end
   resources :master_setups do
     collection do
+      get 'perf' #MasterSetup.get performance test
       get 'show_system_message'
       post 'set_system_message'
       post 'upgrade'

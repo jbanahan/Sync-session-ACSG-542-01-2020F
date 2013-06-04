@@ -2,11 +2,7 @@ require 'spec_helper'
 
 describe ImportedFile do
   describe :result_keys_where do
-    it "should build proper where clause" do
-      f = Factory(:imported_file,:module_type=>'Product')
-      w = f.result_keys_where
-      w.should == "products.id in (select recordable_id from change_records inner join (select * from file_import_results where imported_file_id = #{f.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id)"
-    end
+    it "should build proper where clause"
   end
   describe :result_keys do
     it "should return empty array if no file import results" do

@@ -1,4 +1,10 @@
 class ModelField
+
+  # When web mode is true, the class assumes that there is a before filter calling ModelField.reload_if_stale at the beginning of every request.
+  # This means the class won't call memchached on every call to ModelField.find_by_uid to see if the ModelFieldSetups are stale
+  # This should not be used outside of the web environment where jobs will be long running
+  cattr_accessor :web_mode
+
   @@last_loaded = nil
   attr_reader :model, :field_name, :label_prefix, :sort_rank, 
               :import_lambda, :export_lambda, 
@@ -17,7 +23,7 @@ class ModelField
           return "#{FieldLabel.label_text uid} set to #{d}"
         },
           :export_lambda => lambda {|obj|
-            self.custom? ? obj.get_custom_value_by_id(@custom_id).value(@custom_definition) : obj.send("#{@field_name}")
+            self.custom? ? obj.get_custom_value(@custom_definition).value(@custom_definition) : obj.send("#{@field_name}")
           },
           :entity_type_field => false,
           :history_ignore => false,
@@ -845,7 +851,8 @@ and classifications.product_id = products.id
       [127,:ent_first_it_date,:first_it_date,"First IT Date",{:data_type=>:date}],
       [128,:ent_first_do_issued_date,:first_do_issued_date,"First DO Date",{:data_type=>:datetime}],
       [129,:ent_part_numbers,:part_numbers,"Part Numbers",{:data_type=>:text}],
-      [130,:ent_commercial_invoice_numbers,:commercial_invoice_numbers,"Commercial Invoice Numbers",{:data_type=>:text}]
+      [130,:ent_commercial_invoice_numbers,:commercial_invoice_numbers,"Commercial Invoice Numbers",{:data_type=>:text}],
+      [131,:ent_eta_date,:eta_date,"ETA Date",{:data_type=>:date}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
     add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -1030,14 +1037,8 @@ and classifications.product_id = products.id
           }
           r
         },
-        :qualified_field_name => "(SELECT tot FROM (SELECT product_id, max(cnt) as 'tot' FROM (select product_id, count(*) as 'cnt' from 
-    (select DISTINCT classifications.id, classifications.product_id, classifications.country_id 
-        from classifications 
-        inner join tariff_records ON tariff_records.classification_id = classifications.id where length(hts_1) > 0) cls group by product_id
- union 
-    select products.id, 0 from products left outer join classifications on classifications.product_id = products.id 
-        left outer join tariff_records ON tariff_records.classification_id = classifications.id and length(hts_1) > 0 
-        where tariff_records.id is null) x group by product_id) y where y.product_id = products.id)",
+        :qualified_field_name => "(SELECT COUNT(*) FROM classifications pcc_cls WHERE 
+          (select count(*) FROM tariff_records pcc_tr where pcc_tr.classification_id = pcc_cls.id and length(pcc_tr.hts_1)) > 0 AND pcc_cls.product_id = products.id)",
         :data_type => :integer
       }],
       [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}],
@@ -1246,6 +1247,7 @@ and classifications.product_id = products.id
   end
 
   def self.reload_if_stale
+    return if ModelField.web_mode #see documentation at web_mode accessor
     cache_time = CACHE.get "ModelField:last_loaded"
     if !cache_time.nil? && !cache_time.is_a?(Time)
       begin

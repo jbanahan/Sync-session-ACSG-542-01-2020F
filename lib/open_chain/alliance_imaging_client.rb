@@ -27,8 +27,7 @@ class OpenChain::AllianceImagingClient
   # it will likely be saved with the wrong content type.  ie. If you're saving a pdf, the file
   # it points to should have a .pdf extension on it.
   def self.process_image_file t, hsh
-      def t.original_filename=(fn); @fn = fn; end
-      def t.original_filename; @fn; end
+      Attachment.add_original_filename_method t
       begin
         t.original_filename= hsh["file_name"]
         source_system = hsh["source_system"].nil? ? OpenChain::AllianceParser::SOURCE_CODE : hsh["source_system"]

@@ -36,7 +36,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   #remove criterion from model
   $scope.removeCriterion = (crit) ->
     criterions = $scope.importedFile.search_criterions
-    criterions.splice(criterions.indexOf(crit),1)
+    criterions.splice($.inArray(crit,criterions),1)
 
   $scope.showPreviewBox = false
   $scope.previewResults = []

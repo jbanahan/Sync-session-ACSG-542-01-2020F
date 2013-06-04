@@ -6,7 +6,7 @@
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
 <%end-%>
-<% cache ["v3",current_user.company,current_user,@entry] do-%>
+<% cache ["v4",current_user.company,current_user,@entry] do-%>
   <style>
   .ent_columns {
     width:99%;
@@ -70,7 +70,7 @@
       <tr>
         <td style="width:33%;">
           <table>
-            <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_arrival_date,:ent_release_date].each do |f|%>
+            <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_eta_date,:ent_arrival_date,:ent_release_date].each do |f|%>
               <%=field_view_row @entry, f %>
             <%end%>
           </table>

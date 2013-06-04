@@ -75,6 +75,7 @@ describe OpenChain::AllianceImagingClient do
 
       entry.attachments.size.should == 1
       entry.attachments[0].attached_content_type.should == "application/pdf"
+      entry.attachments[0].attached_file_name.should == "file.pdf"
       entry.attachments[0].attachment_type.should == @hash["doc_desc"]
       entry.attachments[0].source_system_timestamp.should_not be_nil
     end

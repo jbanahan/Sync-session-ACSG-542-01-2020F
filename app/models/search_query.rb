@@ -15,6 +15,7 @@ class SearchQuery
   def initialize search_setup, user, opts={}
     @search_setup = search_setup
     @user = user
+    @extra_from = opts[:extra_from]
     @extra_where = opts[:extra_where]
   end
 
@@ -56,7 +57,7 @@ class SearchQuery
   
   #get the row count for the query
   def count
-    ActiveRecord::Base.connection.execute(to_sql).size
+    ActiveRecord::Base.connection.execute("SELECT COUNT(*) FROM (#{to_sql}) sq_count").first.first
   end
 
   #get the count of the total number of unique primary keys for the top level module 
@@ -79,7 +80,7 @@ class SearchQuery
   def build_select
     r = "SELECT DISTINCT "
     flds = ["#{search_setup.core_module.table_name}.id"]
-    sorted_columns.each {|sc| flds << sc.model_field.qualified_field_name}
+    sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
     r << "#{flds.join(", ")} "
     r
   end
@@ -108,6 +109,7 @@ class SearchQuery
     unless join_statements.empty?
       r << join_statements.reverse.join("  ")
     end
+    r << " #{@extra_from} " unless @extra_from.blank?
     r
   end
 

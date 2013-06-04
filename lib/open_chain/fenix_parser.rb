@@ -11,7 +11,8 @@ module OpenChain
       # Because there's special handling associated with these fields, some of these 
       # mapped values intentially use symbols that don't map to actual entry property setter methods
       '180' => :do_issued_date_first,
-      '490' => :docs_received_date_first
+      '490' => :docs_received_date_first,
+      '10' => :eta_date=
     }
 
     SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON']
@@ -28,18 +29,24 @@ module OpenChain
         CSV.parse(file_content) do |line|
           # The "supporting" lines in the new format all have less than 10 file positions 
           # So, don't skip the line if we're proc'ing one of those.
-          next if (line.size < 10 && !SUPPORTING_LINE_TYPES.include?(line[0])) || line[0]=='Barcode'
+          supporting_line_type = SUPPORTING_LINE_TYPES.include?(line[0])
+          next if (line.size < 10 && !supporting_line_type) || line[0]=='Barcode'
           
-          # We're counting on the new-style lines to have a unique value in the barcode field (line[1] in new style)
-          # and the old style lines were counting on the file number value being unique (line[1] in old style)
-          # These values are never going to be the same for old/new style lines either, so we can safely
-          # depend on the value to a unique way to identify new lines, even across new vs. old line styles.
-          file_number = line[1]
-          if !entry_lines.empty? && file_number!=current_file_number
-            FenixParser.new.parse_entry entry_lines, opts 
-            entry_lines = []
+          # We'll never encounter a situation where if we have a "new-style" line type where we need to start
+          # a new entry.  Therefore, don't even consider creating a new entry unless we have an old-style header
+          # line or a new style header
+          if !supporting_line_type
+            # We're counting on the new-style lines to have a unique value in the barcode field (line[1] in new style)
+            # and the old style lines were counting on the file number value being unique (line[1] in old style)
+            # These values are never going to be the same for old/new style lines either, so we can safely
+            # depend on the value to a unique way to identify new lines, even across new vs. old line styles.
+            file_number = line[1]
+            if !entry_lines.empty? && file_number!=current_file_number
+              FenixParser.new.parse_entry entry_lines, opts 
+              entry_lines = []
+            end
+            current_file_number = file_number
           end
-          current_file_number = file_number
 
           # The new style header line is exactly the same as the old, except for a leading line identifier
           # value in the first position.  Shift the identifier off so we don't have to bother with different 
@@ -71,7 +78,11 @@ module OpenChain
       accumulated_dates = Hash.new {|h, k| h[k] = []}
 
       #get header info from first line
-      process_header lines.first
+      @entry = process_header lines.first, find_source_system_export_time(s3_path)
+
+      # If the parse header returned nil, it means we shouldn't continue parsing the files lines
+      return if @entry.nil?
+
       lines.each do |line| 
 
         case line[0]
@@ -115,7 +126,6 @@ module OpenChain
       end
 
       set_entry_dates @entry, accumulated_dates
-
       @entry.save!
       #match up any broker invoices that might have already been loaded
       @entry.link_broker_invoices
@@ -125,57 +135,60 @@ module OpenChain
 
     private
 
-    def process_header line
+    def process_header line, current_export_date
       entry_number = str_val(line[0])
       file_number = line[1]
       tax_id = str_val line[3]
-      @entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
-
-      # Because the Fenix shell records created by the imaging client only have and entry number in them,
-      # we also have to double check if this file data matches to one of those shell records before 
-      # creating a new Entry record.
-      if @entry.nil?
-        @entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE
-
-        if @entry.nil?
-          @entry = Entry.new(:broker_reference=>file_number,:source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id) 
-        else
-          # Shell records won't have broker references, so make sure to set it
-          @entry.broker_reference = file_number
-        end 
-      end
       
-      #clear commercial invoices
-      @entry.commercial_invoices.destroy_all
+      entry = find_entry file_number, entry_number, tax_id, current_export_date
 
-      @entry.entry_number = entry_number
-      @entry.import_country = Country.find_by_iso_code('CA')
-      @entry.importer_tax_id = tax_id
+      # We want to utilize the last exported from source date to determine if the
+      # file we're processing is stale / out of date or if we should process it
+
+      # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
+      # current entry's
+      if entry.last_exported_from_source.nil? || (current_export_date && entry.last_exported_from_source <= current_export_date)
+        entry.last_exported_from_source = current_export_date
+      else
+        return nil
+      end
+
+      # Shell records won't have broker references, so make sure to set it
+      entry.broker_reference = file_number
+
+      #clear commercial invoices
+      entry.commercial_invoices.destroy_all
+
+      entry.entry_number = entry_number
+      entry.import_country = Country.find_by_iso_code('CA')
+      entry.importer_tax_id = tax_id
       accumulate_string :cargo_control_number, str_val(line[12])
       accumulate_string :master_bills_of_lading, str_val(line[13])
       accumulate_string :container_numbers, str_val(line[8])
-      @entry.ship_terms = str_val(line[17]) {|val| val.upcase}
-      @entry.direct_shipment_date = parse_date(line[42])
-      @entry.transport_mode_code = str_val(line[4])
-      @entry.entry_port_code = str_val(line[5])
-      @entry.carrier_code = str_val(line[6])
-      @entry.voyage = str_val(line[7])
-      @entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4,'0')}
-      @entry.entry_type = str_val(line[10])
-      @entry.duty_due_date = parse_date(line[56])
-      @entry.entry_filed_date = @entry.across_sent_date = parse_date_time(line, 57)
-      @entry.first_release_date = @entry.pars_ack_date = parse_date_time(line,59)
-      @entry.pars_reject_date = parse_date_time(line,61) 
-      @entry.release_date = parse_date_time(line,65)
-      @entry.cadex_accept_date = parse_date_time(line,67)
-      @entry.cadex_sent_date = parse_date_time(line,69)
-      @entry.release_type = str_val(line[89])
-      @entry.employee_name = str_val(line[88])
-      @entry.po_numbers = str_val(line[14])
+      entry.ship_terms = str_val(line[17]) {|val| val.upcase}
+      entry.direct_shipment_date = parse_date(line[42])
+      entry.transport_mode_code = str_val(line[4])
+      entry.entry_port_code = str_val(line[5])
+      entry.carrier_code = str_val(line[6])
+      entry.voyage = str_val(line[7])
+      entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4,'0')}
+      entry.entry_type = str_val(line[10])
+      entry.duty_due_date = parse_date(line[56])
+      entry.entry_filed_date = entry.across_sent_date = parse_date_time(line, 57)
+      entry.first_release_date = entry.pars_ack_date = parse_date_time(line,59)
+      entry.pars_reject_date = parse_date_time(line,61) 
+      entry.release_date = parse_date_time(line,65)
+      entry.cadex_accept_date = parse_date_time(line,67)
+      entry.cadex_sent_date = parse_date_time(line,69)
+      entry.release_type = str_val(line[89])
+      entry.employee_name = str_val(line[88])
+      entry.po_numbers = str_val(line[14])
       file_logged_str = str_val(line[94])
       if file_logged_str && file_logged_str.length==10
-        @entry.file_logged_date = parse_date_time([file_logged_str,"12:00am"],0)
+        entry.file_logged_date = parse_date_time([file_logged_str,"12:00am"],0)
       end
+
+      entry
     end
 
     def process_invoice line
@@ -254,10 +267,16 @@ module OpenChain
     end
 
     def process_activity_line line, accumulated_dates
-      if !line[2].nil? && !line[3].nil? && !line[4].nil? && ACTIVITY_DATE_MAP[line[2].strip]
-        time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M")
+      if !line[2].nil? && !line[3].nil? && ACTIVITY_DATE_MAP[line[2].strip]
+        # We may get just a date here (not date and time)
+        time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M") rescue nil
+        unless time
+          time = Date.strptime(line[3], '%Y%m%d') # we actually want this to fail..it means we're getting bad data
+        end
         # This assumes we're using a hash with a default return value of an empty array
-        accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time.in_time_zone(time_zone)
+        if time
+          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << ((time.is_a?(Date)) ? time : time.in_time_zone(time_zone))
+        end
       end
       rescue
     end
@@ -326,9 +345,8 @@ module OpenChain
       # and then setting the last SD date value processed from the file into the entry.
       # So in the case of multiple records that have the same code, we're pushing
       # only the last date value into the entry here.
-
       accumulated_dates.each do |date_setter, date_array|
-        if entry.respond_to? date_setter
+        if entry.respond_to?(date_setter) && date_array.length > 0
           entry.send(date_setter, date_array.last)  
         end
       end
@@ -347,6 +365,46 @@ module OpenChain
       imp = Company.find_by_fenix_customer_number tax_id
       imp = Company.create!(:name=>tax_id,:fenix_customer_number=>tax_id,:importer=>true) if imp.nil?
       imp
+    end
+
+    def find_entry file_number, entry_number, tax_id, source_system_export_date
+      entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
+
+      # Because the Fenix shell records created by the imaging client only have an entry number in them,
+      # we also have to double check if this file data matches to one of those shell records before 
+      # creating a new Entry record.
+      if entry.nil?
+        entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE
+
+        if entry.nil?
+          # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
+          # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
+          entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id, :last_exported_from_source=>source_system_export_date) 
+        end 
+      end
+
+      entry
+    end
+
+    def find_source_system_export_time file_path
+      return if file_path.blank?
+
+      export_time = nil
+      file_name = File.basename(file_path)
+
+      # The b3 filenames are expected to be like b3_detail_acc_111468_201305221506.1369249786.csv, 
+      # or b3_detail_rns_109757_201305241527.1369423822.csv.  We're looking to extract the
+      # file timestamp value after the last underscore and prior to the .
+
+      # The actual timestamp values are a little funky...they're the date followed by the # of seconds 
+      # since midnight of the date (.ie 2013052939266 -> Date = 2013-05-29 Seconds => 39266)
+      if file_name =~ /^.+_.+_.+_.+_(\d{8})(\d*)\..+\..+$/
+        export_time = time_zone.parse $1
+        # Second argument is the radix (to avoid ruby interpretting leading zeros as binary or hex values)
+        export_time = export_time + Integer($2, 10).seconds
+      end
+
+      export_time
     end
   end
 end

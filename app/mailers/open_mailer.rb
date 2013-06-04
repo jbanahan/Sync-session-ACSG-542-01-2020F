@@ -1,7 +1,7 @@
 class OpenMailer < ActionMailer::Base
   ATTACHMENT_LIMIT = 10.megabytes
   ATTACHMENT_TEXT = <<EOS
-The attachments for this message were larger than the maximum system size.
+An attachment named '_filename_' for this message was larger than the maximum system size.
 Click <a href='_path_'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EOS
@@ -16,6 +16,39 @@ EOS
       format.text
     end
   end
+
+  #send a very simple HTML email (attachments are expected to answer as File objects )
+  def send_simple_html to, subject, body, file_attachments = []
+    @body_content = body
+    @attachment_messages = []
+
+    pm_attachments = []
+
+    file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
+    
+    file_attachments.each do |file|
+      
+      save_large_attachment(file, to) do |email_attachment, attachment_text|
+        if email_attachment
+          @attachment_messages << attachment_text
+        else
+          pm_attachments << {
+            "Name"        => ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename(file.path)),
+            "Content"     => Base64.encode64(File.read(file.path)),
+            "ContentType" => "application/octet-stream"
+          }
+        end
+      end
+      
+    end
+
+    m = mail(:to=>to,:subject=>subject) do |format|
+      format.html
+    end
+    m.postmark_attachments = pm_attachments
+    m
+  end
+
   def send_change(history,subscription,text_only)
     details = history.details_hash
     type = details[:type].nil? ? "Item" : details[:type]
@@ -165,7 +198,7 @@ EOS
     attachment_files = []
     attachment_paths.each do |ap|
       if save_large_attachment ap, 'bug@aspect9.com' 
-        @additional_messages << @body_text.html_safe
+        @additional_messages << @body_text
       else
         attachment_files << File.open(ap) 
       end
@@ -220,30 +253,36 @@ EOS
   end
 
   private
-  def sanitize_filename(filename)
-    filename.strip.tap do |name|
-      # NOTE: File.basename doesn't work right with Windows paths on Unix
-      # get only the filename, not the whole path
-      name.sub! /\A.*(\\|\/)/, ''
-      # Finally, replace all non alphanumeric, underscore
-      # or periods with underscore
-      name.gsub! /[^\w\.\-]/, '_'
+
+    def save_large_attachment(file, registered_emails)
+      email_attachment = nil
+      large_attachment_text = nil
+
+      if large_attachment? file
+        ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
+
+        email_attachment = EmailAttachment.create!(:email => registered_emails)
+        email_attachment.attachment = Attachment.new(:attachable => email_attachment)
+        # Allow passing file objects here as well, not just paths to a file.
+        # This also allows us to implement an original_filename method on the file object to utilize the paperclip
+        # attachment naming.
+        email_attachment.attachment.attached = (file.is_a?(String) ? File.open(file) : file)
+        email_attachment.attachment.save
+        email_attachment.save
+
+        large_attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
+        large_attachment_text = large_attachment_text.html_safe
+      end
+
+      if block_given?
+        yield email_attachment, large_attachment_text
+      else
+        @body_text = large_attachment_text if large_attachment_text
+        return (large_attachment_text.nil? ? false : true)
+      end
     end
-  end
 
-  def save_large_attachment(file_path, registered_emails)
-    if File.exist?(file_path) && File.size(file_path) > ATTACHMENT_LIMIT
-      ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
-
-      email_attachment = EmailAttachment.create!(:email => registered_emails)
-      email_attachment.attachment = Attachment.new(:attachable => email_attachment)
-      email_attachment.attachment.attached = File.open(file_path)
-      email_attachment.attachment.save
-      email_attachment.save
-
-      @body_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment))
-      return true
+    def large_attachment? file
+      File.exist?(file) && File.size(file) > ATTACHMENT_LIMIT
     end
-    false
-  end
 end
