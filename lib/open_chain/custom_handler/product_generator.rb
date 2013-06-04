@@ -170,6 +170,8 @@ module OpenChain
             table_name = 'products'
           when 'Classification'
             table_name = 'classifications'
+          when 'TariffRecord'
+            table_name = 'tariff_records'
           end
           
           "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"

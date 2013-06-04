@@ -24,7 +24,10 @@ module OpenChain
           :approved_date=>{:label=>"Approved Date",:data_type=>:date,:module_type=>'Product',:read_only=>false},
           :first_sap_date=>{:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true},
           :last_sap_date=>{:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true},
-          :long_desc_override=>{:label=>'Long Description Override',:data_type=>:text,:module_type=>'Classification',:read_only=>false}
+          :long_desc_override=>{:label=>'Long Description Override',:data_type=>:text,:module_type=>'Classification',:read_only=>false},
+          :manual_flag=>{:label=>'Manual Entry Processing',:data_type=>:boolean,:module_type=>'Classification',:read_only=>false},
+          :fta_flag=>{:label=>'FTA Eligible',:data_type=>:boolean,:module_type=>'Classification',:read_only=>false},
+          :set_qty=>{:label=>'Set Quantity',:data_type=>:integer,:module_type=>'TariffRecord',:read_only=>false}
         }
         #find or create all given custom definitions based on the CUSTOM_DEFINITION_INSTRUCTIONS
         def prep_custom_definitions fields
