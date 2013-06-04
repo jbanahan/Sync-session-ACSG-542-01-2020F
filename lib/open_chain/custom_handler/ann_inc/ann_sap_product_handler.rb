@@ -32,7 +32,7 @@ module OpenChain
               p.update_custom_value! @custom_definitions[:prop_hts], base_row[9].strip
               p.update_custom_value! @custom_definitions[:prop_long], base_row[10].strip
               p.update_custom_value! @custom_definitions[:approved_long], base_row[10].strip
-              p.update_custom_value! @custom_definitions[:imp_flag], (base_row[12].strip=='1')
+              p.update_custom_value! @custom_definitions[:imp_flag], (base_row[12].strip=='Y')
               p.update_custom_value! @custom_definitions[:inco_terms], base_row[13].strip
               p.update_custom_value! @custom_definitions[:missy], base_row[14].strip
               p.update_custom_value! @custom_definitions[:petite], base_row[15].strip
@@ -65,7 +65,7 @@ module OpenChain
                 tr.hts_1 = row[9].gsub(/[^0-9]/,'') if tr.hts_1.blank? && hts_valid?(row[9],country)
                 cls.save!
 
-                cls.update_custom_value! @custom_definitions[:oga_flag], (row[11].strip=='1') 
+                cls.update_custom_value! @custom_definitions[:oga_flag], (row[11].strip=='Y') 
               end
               p.create_snapshot run_by
             end

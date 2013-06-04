@@ -15,8 +15,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       :merch_dept_name=>'MDN',
       :proposed_hts=>'1234567890',
       :proposed_long_description=>'P Long Desc',
-      :fw=>'1',
-      :import_indicator=>'1',
+      :fw=>'Y',
+      :import_indicator=>'Y',
       :inco_terms=>'FOB',
       :missy=>'mstyle',
       :petite=>'pstyle',
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(CustomDefinition.find_by_label('Merch Dept Name')).value.should == h[:merch_dept_name]
     p.get_custom_value(CustomDefinition.find_by_label('Proposed HTS')).value.should == h[:proposed_hts]
     p.get_custom_value(CustomDefinition.find_by_label('Proposed Long Description')).value.should == h[:proposed_long_description]
-    p.get_custom_value(CustomDefinition.find_by_label('SAP Import Flag')).value.should == ( h[:import_indicator] == '1')
+    p.get_custom_value(CustomDefinition.find_by_label('SAP Import Flag')).value.should == ( h[:import_indicator] == 'Y')
     p.get_custom_value(CustomDefinition.find_by_label('INCO Terms')).value.should == h[:inco_terms]
     p.get_custom_value(CustomDefinition.find_by_label('Missy Style')).value.should == h[:missy]
     p.get_custom_value(CustomDefinition.find_by_label('Petite Style')).value.should == h[:petite]
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(CustomDefinition.find_by_label('Last SAP Received Date')).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
     p.should have(1).classifications
     cls = p.classifications.find_by_country_id @us.id
-    cls.get_custom_value(CustomDefinition.find_by_label('Other Agency Flag')).value.should == (h[:fw]=='1')
+    cls.get_custom_value(CustomDefinition.find_by_label('Other Agency Flag')).value.should == (h[:fw]=='Y')
     cls.should have(1).tariff_records
     tr = cls.tariff_records.first
     tr.hts_1.should == '1234567890'
