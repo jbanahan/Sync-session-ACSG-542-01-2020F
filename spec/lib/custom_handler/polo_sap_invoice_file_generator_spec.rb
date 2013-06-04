@@ -21,8 +21,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   end
 
   def get_workbook_sheet attachment
-    wb = Spreadsheet.open(StringIO.new(Base64.decode64(attachment["Content"])))
+    wb = Spreadsheet.open(decode_attachment_to_string(attachment))
     wb.worksheet 0
+  end
+
+  def decode_attachment_to_string attachment
+    StringIO.new(Base64.decode64(attachment["Content"]))
   end
 
   def make_sap_po 
@@ -51,6 +55,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         (Time.zone.now.to_i - job.end_time.to_i).should <= 5
         job.successful.should be_true
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
+        job.attachments.length.should == 1
+        job.attachments.first.attached_file_name.should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
@@ -129,24 +135,49 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         (Time.zone.now.to_i - job.end_time.to_i).should <= 5
         job.successful.should be_true
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
+        job.attachments.length.should == 2
+        job.attachments.first.attached_file_name.should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"
+        job.attachments.second.attached_file_name.should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.txt"
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
         mail.subject.should == "Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoices as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        mail.postmark_attachments.should have(1).item
+        mail.postmark_attachments.should have(2).items
         mail.postmark_attachments.first["Name"].should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"
+        mail.postmark_attachments.second["Name"].should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.txt"
 
         sheet = get_workbook_sheet mail.postmark_attachments.first
         sheet.name.should == "FFI"
         now = job.start_time.strftime("%m/%d/%Y")
-        sheet.row(1).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "31", "100023825", nil, BigDecimal.new("18.99"), "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "49999999", nil, @entry.entry_number, nil]
-        sheet.row(2).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101230", nil, @entry.total_duty, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "Duty"]
-        sheet.row(3).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @entry.total_gst, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "GST"]
-        sheet.row(4).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @broker_invoice_line1.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line1.charge_description[0, 50]]
-        sheet.row(5).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
-        sheet.row(6).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line3.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
+        rows = []
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "31", "100023825", nil, BigDecimal.new("18.99"), "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "49999999", nil, @entry.entry_number, nil]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101230", nil, @entry.total_duty, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "Duty"]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @entry.total_gst, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "GST"]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @broker_invoice_line1.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line1.charge_description[0, 50]]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line3.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
+
+        sheet.row(1).should == rows[0]
+        sheet.row(2).should == rows[1]
+        sheet.row(3).should == rows[2]
+        sheet.row(4).should == rows[3]
+        sheet.row(5).should == rows[4]
+        sheet.row(6).should == rows[5]
+
+        # Verify the csv file is the same data as xls file
+        csv_string = decode_attachment_to_string mail.postmark_attachments.second
+
+        csv_rows = []
+        # CSV is tab delimited with windows newlines, also Convert the stringified BigDecimal back to BD's (so we can use same row expectations as xls file)
+        CSV.parse(csv_string, {:col_sep=>"\t", :row_sep=>"\r\n"}) {|row| row[12] = BigDecimal.new(row[12]); csv_rows << row}
+
+        csv_rows[0].should == rows[0]
+        csv_rows[1].should == rows[1]
+        csv_rows[2].should == rows[2]
+        csv_rows[3].should == rows[3]
+        csv_rows[4].should == rows[4]
       end
 
       it "should generate an FFI invoice for converted legacy PO's missing profit center links" do
@@ -234,16 +265,16 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.should_not be_nil
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.postmark_attachments.should have(2).items
+        mail.postmark_attachments.should have(3).items
 
         sheet = get_workbook_sheet mail.postmark_attachments.find {|a| a["Name"] =~ /_MM_/}
 
         # Just check enough to make sure we have the right invoices in each file (other tests are already ensuring data integrity)
         sheet.row(1)[2].should == @broker_invoice.invoice_number
 
-        sheet = get_workbook_sheet mail.postmark_attachments.find {|a| a["Name"] =~ /_FFI_/}
+        sheet = get_workbook_sheet mail.postmark_attachments.find {|a| a["Name"] =~ /_FFI_.*\.xls/}
 
-        sheet.row(1)[8].should == @broker_invoice2.invoice_number        
+        sheet.row(1)[8].should == @broker_invoice2.invoice_number
       end
     end
   end
@@ -315,7 +346,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       zone = double("zone")
       now = double("now")
 
-      Time.should_receive(:use_zone).with(@gen.time_zone).and_yield
+      Time.should_receive(:use_zone).with("Eastern Time (US & Canada)").and_yield
       Time.should_receive(:zone).and_return zone
       zone.should_receive(:now).and_return now
       @gen.should_receive(:find_broker_invoices).and_return [@broker_invoice]
@@ -325,11 +356,11 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
   end
 
-  context :run do
+  context :run_schedulable do
     it "should instantiate a new generator and run the process" do
       # The only thing this method does is instantiate a new generator and call a method..just make sure it's doing that
       OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.any_instance.should_receive(:find_generate_and_send_invoices)
-      OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.run nil
+      OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.run_schedulable {}
     end
   end
 

@@ -1,11 +1,10 @@
 require 'bigdecimal'
 require 'tempfile'
-require 'open_chain/schedule_support'
+require 'csv'
 
 module OpenChain
   module CustomHandler
     class PoloSapInvoiceFileGenerator
-      include OpenChain::ScheduleSupport
 
       RL_CANADA_TAX_IDS ||= ['806167003RM0001'] # This is ONLY the RL Canada importer, other RL accounts are done by hand for now
       EMAIL_INVOICES_TO ||= ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
@@ -16,14 +15,12 @@ module OpenChain
         @custom_where = custom_where
       end
 
-      #TODO This generation needs to be schedulable and run on Sundays at 8am
-      def self.run logger
+      def self.run_schedulable opts = {}
         PoloSapInvoiceFileGenerator.new.find_generate_and_send_invoices
       end
 
       def find_generate_and_send_invoices 
-        # time_zone comes from the ScheduleSupport module (defaults to eastern timezone)
-        Time.use_zone(time_zone) do
+        Time.use_zone("Eastern Time (US & Canada)") do
           start_time = Time.zone.now
           generate_and_send_invoices start_time, find_broker_invoices
         end
@@ -58,37 +55,40 @@ module OpenChain
       def generate_and_send_invoices start_time, broker_invoices
        # Send them 
         if broker_invoices.length > 0
-          invoice_output = generate_invoice_output broker_invoices
-
-          export_jobs = []
           files = []
-
-          invoice_output.each_pair do |format, output_hash|
-            files << output_hash[:file] if output_hash[:file] # no file for exception format
-            export_jobs << output_hash[:export_job] if output_hash[:export_job]  # export job may be nil if running in qa mode
-          end
-
-          # Email the files that were created
-          delivered = false
           begin
-            # Only deliver the emails if we're in prod mode (other modes can grab the file via ec2)
-            if @env == :prod
-              OpenMailer.send_simple_html(EMAIL_INVOICES_TO, "Vandegrift, Inc. RL Canada Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(broker_invoices, start_time), files).deliver!
-              delivered = true
+            invoice_output = generate_invoice_output broker_invoices
+
+            export_jobs = []
+
+            invoice_output.each_pair do |format, output_hash|
+              files << output_hash[:files] if output_hash[:files] # no file for exception format
+              export_jobs << output_hash[:export_job] if output_hash[:export_job]  # export job may be nil if running in qa mode
             end
-          ensure
+            files.flatten!
+
+            # Email the files that were created
+            delivered = false
             begin
+              # Only deliver the emails if we're in prod mode (other modes can grab the file via ec2)
+              if @env == :prod
+                OpenMailer.send_simple_html(EMAIL_INVOICES_TO, "Vandegrift, Inc. RL Canada Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(broker_invoices, start_time), files).deliver!
+                delivered = true
+              end
+            ensure
               export_jobs.each do |export_job|
                 export_job.start_time = start_time
                 export_job.end_time = Time.zone.now
-                export_job.successful = delivered
+                # Only mark prod jobs as successful, anything else shouldn't be automatically set as sent since an email isn't generated.
+                # This allows us to easily generate files from the console, and grab them from s3, but not affect any automated weekly exports.
+                export_job.successful = (@env == :prod && delivered)
                 export_job.save
               end
-            ensure
-              # remove the tempfiles 
-              files.each do |f|
-                f.close!
-              end
+            end
+          ensure 
+            # remove the tempfiles 
+            files.each do |f|
+              f.close!
             end
           end
         end
@@ -202,7 +202,7 @@ module OpenChain
           @sheet = nil
           Attachment.add_original_filename_method file
           file.original_filename = "#{filename}.xls"
-          file
+          [file]
         end
 
         private 
@@ -303,43 +303,63 @@ module OpenChain
 
         def initialize generator
           @inv_generator = generator
-
-          @starting_row ||= 1
-          @workbook ||= XlsMaker.create_workbook 'FFI', [
-              "Document Date", "Document Type", "Company Code", "Posting Date", "Currency", "Exchange Rate", "Translation Date",
-              "Document Header Text", "Reference", "Posting Key", "G/L A/c/ Vendor/ Customer", "New Co Code", "Amount",
-              "Payment Terms", "Baseline Date", "Payment Method", "Payment Method Supplement", "Payment Block", "Trading Partner",
-              "Tax Code", "Tax Amount", "Value Date", "Cost Center", "WBS Element", "Profit Center", "Business Area",
-              "Assignment", "Line Item Text", "Reversal Reason", "Reversal Date", "Tax Jurisdiction Code"]
-          @sheet ||= @workbook.worksheet(0)
         end
 
         # Appends the invoice information specified here to the excel file currently being generated
         # Preserve this method name for duck-typing compatibility with the other invoice output generator
         def add_invoices commercial_invoices, broker_invoice
-          lines = get_invoice_information broker_invoice
-          lines.each_with_index do |row, i|
-            XlsMaker.add_body_row @sheet, @starting_row + i, row
-          end
+          @document_lines ||= []
 
-          @starting_row += lines.length
+          lines = get_invoice_information broker_invoice
+          if lines
+            lines.each {|line| @document_lines << line}
+          end
+          
           nil
         end
 
         def write_file
+          output_files = []
+          return output_files unless @document_lines && @document_lines.length > 0
+
           filename = "Vandegrift_#{Time.zone.now.strftime("%Y%m%d")}_FFI_Invoice"
-          file = Tempfile.new([filename, ".xls"])
-          file.binmode
-          @workbook.write file
-          
-          # Blank these variables, just to prevent weirdness if the writer is attempted to be re-used...they're incapable
-          # of being re-used so I want this to fail hard.
-          @starting_row = nil
-          @workbook = nil
-          @sheet = nil
-          Attachment.add_original_filename_method file
-          file.original_filename = "#{filename}.xls"
-          file
+          xls_file = Tempfile.new([filename, ".xls"])
+          xls_file.binmode
+
+          workbook = XlsMaker.create_workbook 'FFI', [
+              "Document Date", "Document Type", "Company Code", "Posting Date", "Currency", "Exchange Rate", "Translation Date",
+              "Document Header Text", "Reference", "Posting Key", "G/L A/c/ Vendor/ Customer", "New Co Code", "Amount",
+              "Payment Terms", "Baseline Date", "Payment Method", "Payment Method Supplement", "Payment Block", "Trading Partner",
+              "Tax Code", "Tax Amount", "Value Date", "Cost Center", "WBS Element", "Profit Center", "Business Area",
+              "Assignment", "Line Item Text", "Reversal Reason", "Reversal Date", "Tax Jurisdiction Code"]
+          sheet = workbook.worksheet(0)
+          starting_row = 1
+
+          @document_lines.each_with_index do |row, i|
+            XlsMaker.add_body_row sheet, starting_row + i, row
+          end
+
+          workbook.write xls_file
+          Attachment.add_original_filename_method xls_file
+          xls_file.original_filename = "#{filename}.xls"
+          output_files << xls_file
+
+          # Now create a tab delimited text file of the same data (sans headers)
+          # The tab delimited file is fed into RL's computer system, which apparently can't accept the xls one.
+          # The xls one is for human consumption
+          tab_file = Tempfile.new([filename, ".txt"])
+          CSV.open(tab_file, "wb", {:col_sep=>"\t", :row_sep=>"\r\n"}) do |csv|
+            @document_lines.each do |row|
+              csv << row
+            end
+            csv.flush
+          end
+          Attachment.add_original_filename_method tab_file
+          tab_file.original_filename = "#{filename}.txt"
+          output_files << tab_file
+
+          @document_lines = nil
+          output_files
         end
 
         private 
@@ -407,7 +427,7 @@ module OpenChain
             row << profit_center
             row << nil
             row << entry_number
-            row << description[0,50] #Only allows 50 chars max
+            row << (description.blank?  ? nil : description[0,50]) #Only allows 50 chars max (blank/nil is just to make output between xls and txt easier to test)
 
             row
           end
@@ -493,22 +513,24 @@ module OpenChain
           invoice_output = {}
 
           writers.each_pair do |format, writer|
-            output_file = writer.write_file
+            output_files = writer.write_file
             export_job = export_jobs[format]
 
-            # Some outputs purposefully may not result in export jobs (.ie the exception report)
-            if export_job
-              attachment = export_job.build_attachment 
-              attachment.attached = output_file if output_file
-
+            # Some outputs purposefully may not result in export jobs or files (.ie the exception report)
+            if export_job && output_files
+              output_files.each do |file|
+                attachment = export_job.attachments.build
+                attachment.attached = file
+              end
+            
               export_job.save!
             end
 
             # We technically could destroy the tempfile here and then
-            # look up the output data again via the export job attachment,
+            # look up the output data again via the export job attachments,
             # but it's much more efficient (though slightly clumsier) to 
             # pass the file back and send it directly
-            invoice_output[format] = {:export_job => export_job, :file=>output_file}
+            invoice_output[format] = {:export_job => export_job, :files=>output_files}
           end
 
           @output_writers = nil
@@ -517,8 +539,7 @@ module OpenChain
         end
 
         def log_job? format
-          # We only want to create export jobs if this is done in prod env
-          return @env == :prod && format != :exception
+          return format != :exception
         end
 
         def determine_invoice_output_format broker_invoice
