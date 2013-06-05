@@ -52,7 +52,7 @@ class ModelField
     @history_ignore = o[:history_ignore]
     @currency = o[:currency]
     @query_parameter_lambda = o[:query_parameter_lambda]
-    @custom_definition = CustomDefinition.find @custom_id if @custom_id
+    @custom_definition = CustomDefinition.find_by_id @custom_id if @custom_id
     @process_query_result_lambda = o[:process_query_result_lambda]
   end
 
