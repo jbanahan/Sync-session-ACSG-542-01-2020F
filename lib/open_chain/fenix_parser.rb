@@ -15,7 +15,7 @@ module OpenChain
       '10' => :eta_date=
     }
 
-    SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON']
+    SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']
 
     def self.integration_folder
       "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
@@ -92,6 +92,8 @@ module OpenChain
           process_cargo_control_line line
         when "CON"
           process_container_line line
+        when "BL"
+          process_bill_of_lading_line line
         else 
           process_invoice line
           process_invoice_line line
@@ -107,7 +109,7 @@ module OpenChain
       @entry.total_gst = @total_gst
       @entry.total_duty_gst = @total_duty + @total_gst
       @entry.po_numbers = detail_pos unless detail_pos.blank?
-      @entry.master_bills_of_lading = accumulated_string(:master_bills_of_lading)
+      @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
       @entry.container_numbers = accumulated_string(:container_numbers)
       @entry.origin_country_codes = accumulated_string(:org_country)
       @entry.origin_state_codes = accumulated_string(:org_state)
@@ -142,16 +144,7 @@ module OpenChain
       
       entry = find_entry file_number, entry_number, tax_id, current_export_date
 
-      # We want to utilize the last exported from source date to determine if the
-      # file we're processing is stale / out of date or if we should process it
-
-      # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
-      # current entry's
-      if entry.last_exported_from_source.nil? || (current_export_date && entry.last_exported_from_source <= current_export_date)
-        entry.last_exported_from_source = current_export_date
-      else
-        return nil
-      end
+      return if entry.nil?
 
       # Shell records won't have broker references, so make sure to set it
       entry.broker_reference = file_number
@@ -282,11 +275,28 @@ module OpenChain
     end
 
     def process_cargo_control_line line
-      accumulate_string(:cargo_control_number, line[2]) unless line[2].nil?
+      accumulate_string(:cargo_control_number, line[2]) unless line[2].blank?
     end
 
     def process_container_line line
-      accumulate_string(:container_numbers, line[2]) unless line[2].nil?
+      accumulate_string(:container_numbers, line[2]) unless line[2].blank?
+    end
+
+    def process_bill_of_lading_line line
+      accumulate_string(:master_bills_of_lading, line[2]) unless line[2].blank?
+    end
+
+    def retrieve_valid_bills_of_lading 
+      # For some reason, RL needs to use abnormally long master bill numbers that are 
+      # too long for Fenix to handle.  These numbers are going to come through at the "header"
+      # level but will be truncated versions of the real values that will be coming through
+      # at the BL line level.
+
+      # Basically, to combat this situation, if one of our master bills is 15 chars (max bill length in fenix)
+      # and is a subsequence of one of the others, then we're going to not use it.
+      master_bills = @accumulated_strings[:master_bills_of_lading].to_a
+      master_bills = master_bills.find_all {|bol| bol.length < 15 || !master_bills.any? {|super_bol| bol != super_bol && super_bol.start_with?(bol)}}
+      master_bills.join("\n ")
     end
     
     def dec_val val
@@ -368,22 +378,40 @@ module OpenChain
     end
 
     def find_entry file_number, entry_number, tax_id, source_system_export_date
-      entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
+      # Make sure we aquire a cross process lock to prevent multiple job queues from executing this 
+      # at the same time (prevents duplicate entries from being created).
+      Lock.acquire(Lock::FENIX_PARSER_LOCK) do 
+        entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
 
-      # Because the Fenix shell records created by the imaging client only have an entry number in them,
-      # we also have to double check if this file data matches to one of those shell records before 
-      # creating a new Entry record.
-      if entry.nil?
-        entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE
+        # Because the Fenix shell records created by the imaging client only have an entry number in them,
+        # we also have to double check if this file data matches to one of those shell records before 
+        # creating a new Entry record.
+        if entry.nil?
+          entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE 
+        end
 
         if entry.nil?
           # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
           # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
           entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id, :last_exported_from_source=>source_system_export_date) 
-        end 
-      end
+        elsif source_system_export_date
+          # Make sure we also update the source system export date while locked too so we prevent other processes from 
+          # processing the same entry with stale data.
 
-      entry
+          # We want to utilize the last exported from source date to determine if the
+          # file we're processing is stale / out of date or if we should process it
+
+          # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
+          # current entry's (entries may have nil exported dates if they were created by the imaging client)
+          if entry.last_exported_from_source.nil? || (entry.last_exported_from_source <= source_system_export_date)
+            entry.update_attributes(:last_exported_from_source=>source_system_export_date)
+          else
+            entry = nil
+          end
+        end
+
+        entry
+      end
     end
 
     def find_source_system_export_time file_path

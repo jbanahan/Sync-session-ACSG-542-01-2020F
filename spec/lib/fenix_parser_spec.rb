@@ -67,6 +67,7 @@ describe OpenChain::FenixParser do
       '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
       '10' => [Date.new(2013,4,2), Date.new(2013,4,3)]
     }
+    @additional_bols = ["123456", "9876542321"]
     @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
       data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, 0 ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
@@ -86,6 +87,10 @@ describe OpenChain::FenixParser do
             data += "\r\nSD,#{@barcode},\" #{activity_number} \",#{date.strftime('%Y%m%d')},#{time_segment},USERID,NOTES"
           end
         end
+
+        @additional_bols.each do |bol|
+          data += "\r\nBL,#{@barcode},#{bol}"
+        end
       end
 
       data
@@ -93,6 +98,9 @@ describe OpenChain::FenixParser do
   end
 
   def do_shared_test entry_data
+    # Make sure the locking mechanism is utilized
+    Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK).and_yield
+    
     OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by_broker_reference @file_number
     ent.last_file_bucket.should == 'bucket'
@@ -208,6 +216,13 @@ describe OpenChain::FenixParser do
     # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
     ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
     ent.eta_date.should == @activities['10'][1]
+
+    # Master Bills should include ones from BL lines
+    bols = ent.master_bills_of_lading.split("\n ")
+    [@bill_of_lading, @additional_bols].flatten.each {|bol|
+      bols.include?(bol).should be_true
+    }
+    
   end
 
   it 'should call link_broker_invoices' do
@@ -504,6 +519,8 @@ describe OpenChain::FenixParser do
         Entry.find_by_broker_reference(@file_number).total_units.should == BigDecimal('68.27')
       end
       it 'bills of lading' do
+        # Disable the additional BL lines
+        @additional_bols = []
         ['x','y'].each_with_index {|b,i| @invoices[i][:bol]=b} 
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).master_bills_of_lading.should == "x\n y"
@@ -552,6 +569,23 @@ describe OpenChain::FenixParser do
       it "invoice numbers" do
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).commercial_invoice_numbers.split("\n ").should == [@invoices[0][:inv_num], @invoices[1][:inv_num]]
+      end
+
+      it "should not use bols that are 15 chars long and are subsets of a BL line number" do
+        # This is a stupid RL workaround to allow them to use more than the max # of chars for a 
+        # master bill.  When they use an extra long BOL, the portion of the number that doesn't overflow
+        # the field is keyed into the standard header level field.  We don't want that value to show
+        # in the system (since it's essentially a nonsense number at this point).
+        @additional_bols = ["abcd", "1234567890123456789"]
+        ["123456789012345",'y'].each_with_index {|b,i| @invoices[i][:bol]=b}
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        entry = Entry.find_by_broker_reference(@file_number)
+        bols = entry.master_bills_of_lading.split("\n ")
+        [@additional_bols, "y"].flatten.each do |bol|
+          bols.include?(bol).should be_true
+        end
+
+        bols.include?("123456789012345").should be_false
       end
     end
   end
