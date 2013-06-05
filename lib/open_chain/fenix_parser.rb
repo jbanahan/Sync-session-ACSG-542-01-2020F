@@ -15,7 +15,7 @@ module OpenChain
       '10' => :eta_date=
     }
 
-    SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON']
+    SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']
 
     def self.integration_folder
       "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
@@ -92,6 +92,8 @@ module OpenChain
           process_cargo_control_line line
         when "CON"
           process_container_line line
+        when "BL"
+          process_bill_of_lading_line line
         else 
           process_invoice line
           process_invoice_line line
@@ -107,7 +109,7 @@ module OpenChain
       @entry.total_gst = @total_gst
       @entry.total_duty_gst = @total_duty + @total_gst
       @entry.po_numbers = detail_pos unless detail_pos.blank?
-      @entry.master_bills_of_lading = accumulated_string(:master_bills_of_lading)
+      @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
       @entry.container_numbers = accumulated_string(:container_numbers)
       @entry.origin_country_codes = accumulated_string(:org_country)
       @entry.origin_state_codes = accumulated_string(:org_state)
@@ -273,11 +275,28 @@ module OpenChain
     end
 
     def process_cargo_control_line line
-      accumulate_string(:cargo_control_number, line[2]) unless line[2].nil?
+      accumulate_string(:cargo_control_number, line[2]) unless line[2].blank?
     end
 
     def process_container_line line
-      accumulate_string(:container_numbers, line[2]) unless line[2].nil?
+      accumulate_string(:container_numbers, line[2]) unless line[2].blank?
+    end
+
+    def process_bill_of_lading_line line
+      accumulate_string(:master_bills_of_lading, line[2]) unless line[2].blank?
+    end
+
+    def retrieve_valid_bills_of_lading 
+      # For some reason, RL needs to use abnormally long master bill numbers that are 
+      # too long for Fenix to handle.  These numbers are going to come through at the "header"
+      # level but will be truncated versions of the real values that will be coming through
+      # at the BL line level.
+
+      # Basically, to combat this situation, if one of our master bills is 15 chars (max bill length in fenix)
+      # and is a subsequence of one of the others, then we're going to not use it.
+      master_bills = @accumulated_strings[:master_bills_of_lading].to_a
+      master_bills = master_bills.find_all {|bol| bol.length < 15 || !master_bills.any? {|super_bol| bol != super_bol && super_bol.start_with?(bol)}}
+      master_bills.join("\n ")
     end
     
     def dec_val val
