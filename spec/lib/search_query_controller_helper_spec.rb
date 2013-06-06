@@ -55,6 +55,27 @@ describe OpenChain::SearchQueryControllerHelper do
       expected_bulk_actions << h
     end
     r['bulk_actions'].should == expected_bulk_actions 
+    r['too_big'].should be_false
+  end
+  
+  it "should set too_big flag when more than 1000 results" do
+    User.any_instance.stub(:edit_classifications?).and_return(true) #to allow bulk actions
+    Product.any_instance.stub(:can_edit?).and_return(true)
+    User.any_instance.stub(:edit_classifications?).and_return(true) #to allow bulk actions
+    SearchQuery.any_instance.stub(:count).and_return(1000)
+    SearchQuery.any_instance.stub(:unique_parent_count).and_return(42)
+    Product.any_instance.stub(:can_view?).and_return(true)
+    Product.any_instance.stub(:can_edit?).and_return(true)
+    @user = Factory(:master_user,:email=>'a@example.com', :time_zone => "Hawaii")
+    @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
+    @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
+    @ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>2)
+    @ss.search_columns.create!(:model_field_uid=>:prod_changed_at, :rank=>3)
+    @p = Factory(:product,:name=>'mpn')
+    r = @k.new.execute_query_to_hash(SearchQuery.new(@ss,@user),@user,1,50)
+    r = HashWithIndifferentAccess.new r
+    r['id'].should == @ss.id
+    r['too_big'].should be_true
   end
 
   it "should prep hash for response and hide time when no_time? is true" do

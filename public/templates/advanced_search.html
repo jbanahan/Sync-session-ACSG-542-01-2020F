@@ -190,7 +190,7 @@
       <hr />
     </div>
   </div>
-  <div chain-search-result='searchResult' page='page' src='/advanced_search/'>
+  <div chain-search-result='searchResult' page='page' errors='errors' src='/advanced_search/'>
     <a ng-click='toggleSetup()' class='action_link' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</a>
     <a class='action_link' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</a> 
     <a class='action_link' ng-show='searchResult.total_pages==1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>

@@ -307,6 +307,7 @@
         $scope.searchResult = {id:searchId}
         $http.get($scope.urlPrefix+searchId+'?page='+p+'&per_page='+$scope.itemsPerPage).success((data,status,headers,config) ->
           $scope.searchResult = data
+          $scope.errors.push "Your search was too big.  Only the first 10 pages are being shown." if $scope.searchResult.too_big
           $scope.loadedsearchId = $scope.searchResult.id
           readSelectionCookie data.id
         ).error((data,status) ->

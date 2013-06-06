@@ -53,6 +53,7 @@ module OpenChain
           :total_pages=>total_pages,
           :total_objects=>sq.unique_parent_count,
           :core_module_name=>ss.core_module.label,
+          :too_big=>(sq.count>=1000),
           :bulk_actions=>prep_bulk_actions(ss.core_module,user)
         }
 
