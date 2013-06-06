@@ -57,7 +57,7 @@ class SearchQuery
   
   #get the row count for the query
   def count
-    ActiveRecord::Base.connection.execute("SELECT COUNT(*) FROM (#{to_sql}) sq_count").first.first
+    ActiveRecord::Base.connection.execute(to_sql).count
   end
 
   #get the count of the total number of unique primary keys for the top level module 
