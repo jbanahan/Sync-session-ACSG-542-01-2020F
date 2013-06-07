@@ -39,6 +39,12 @@ Spork.prefork do
         request.env["HTTP_REFERER"] = "/"
     end
 
+    config.after(:each, :type => :controller) do
+      # Counteract the application controller setting MasterSetup.current, which bleeds across multiple tests
+      # since it's not unset by the controller.
+      MasterSetup.current = nil
+    end
+
     config.after(:all) do
       DeferredGarbageCollection.reconsider
     end
