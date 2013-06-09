@@ -12,7 +12,7 @@ describe AttachmentArchive do
       aa['name'].should == 'my arch'
       aa['attachment_archives_attachments'].should have(1).element
       aaa = aa['attachment_archives_attachments'].first
-      aaa['file_name'].should == "#{attachment.id}-a.txt"
+      aaa['file_name'].should == "EDOC-#{attachment.id}-a.txt"
       aaa['output_path'].should == arch.attachment_archives_attachments.first.output_path
 
       att = aaa['attachment']
