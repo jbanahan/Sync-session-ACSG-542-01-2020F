@@ -109,6 +109,8 @@ module OpenChain
                 process_sc00 r
               when "SN00" 
                 process_sn00 r
+              when "CP00"
+                process_cp00 r
             end
             current_row += 1
           end
@@ -360,6 +362,33 @@ module OpenChain
       accumulate_string :spis, @ct.spi_secondary
     end
 
+    def process_cp00 r
+      # There's technically two types of cp00 lines.  Ones for ADD (Anti-Dumping Duty) and CVD (Countervailing Duty)
+      # The line positions and field names are identical in each, they just go into different prefix'ed fields based on       
+      # the line type
+      values = {}
+      values[:case_number] = r[8, 9]
+      values[:bond] = ((r[32, 1] == "Y") ? true : false)
+      values[:duty_amount] = parse_currency r[34, 10]
+      values[:case_value] = parse_currency r[17, 10]
+      values[:case_percent] = parse_decimal r[27, 5], 2
+
+      type = r[4, 3]
+      if type == "ADA"
+        @c_line.add_case_number = values[:case_number]
+        @c_line.add_bond = values[:bond]
+        @c_line.add_duty_amount = values[:duty_amount]
+        @c_line.add_case_value = values[:case_value]
+        @c_line.add_case_percent = values[:case_percent]
+      elsif type == "CVD"
+        @c_line.cvd_case_number = values[:case_number]
+        @c_line.cvd_bond = values[:bond]
+        @c_line.cvd_duty_amount = values[:duty_amount]
+        @c_line.cvd_case_value = values[:case_value]
+        @c_line.cvd_case_percent = values[:case_percent]
+      end
+    end
+
     # invoice header
     def process_ih00 r
       @invoice = @entry.broker_invoices.build(:suffix=>r[4,2],:currency=>"USD")
@@ -480,7 +509,7 @@ module OpenChain
         # For some reason Alliance will send us dates with a 60 in the minutes columns (rather than adding an hour)
         # .ie  201305152260
         if str =~ /60$/
-          time = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(str[0, -2] + "00")
+          time = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(str[0..-3] + "00")
           time + 1.hour
         end
       end

@@ -185,7 +185,9 @@ describe OpenChain::AllianceParser do
             :class_q_2=>BigDecimal('15.04',2),:class_uom_2=>'ABC', 
             :class_q_3=>BigDecimal('16.04',2),:class_uom_3=>'ABC', 
             :gross_weight=>"559",:tariff_description=>"BDAFDADdafda"
-          }]
+          }],
+          :add=>{:case_number => 'A23456789', :bond=> "Y", :amount=>BigDecimal('12345678.90'), :percent=>BigDecimal('123.45'), :value=>BigDecimal('98765432.10')},
+          :cvd=>{:case_number => 'C12345678', :bond=> "N", :amount=>BigDecimal('12345678.90'), :percent=>BigDecimal('123.45'), :value=>BigDecimal('98765432.10')}
           },
         {:part_number=>'101301',:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301'}
       ]},
@@ -222,6 +224,11 @@ describe OpenChain::AllianceParser do
               rows << t_row
             end
           end
+          
+          cvd_add_line = lambda {|type, v| "CP00#{type}A#{v[:case_number].ljust(9)}#{convert_cur.call(v[:value],10)}#{convert_cur.call(v[:percent],5)}#{v[:bond]}0#{convert_cur.call(v[:amount],10)}"}
+          rows << cvd_add_line.call("ADA", line[:add]) if line[:add]
+          rows << cvd_add_line.call("CVD", line[:cvd]) if line[:cvd]
+
           rows << "CF00499#{convert_cur.call(line[:mpf] ? line[:mpf] : 0,11)}#{"".ljust(11)}#{line[:prorated_mpf] ? convert_cur.call(line[:prorated_mpf],11) : "00000000000"}"
           rows << "CF00501#{convert_cur.call(line[:hmf],11)}" if line[:hmf]
           rows << "CF00056#{convert_cur.call(line[:cotton_fee],11)}" if line[:cotton_fee]
@@ -494,6 +501,27 @@ describe OpenChain::AllianceParser do
             [:spi_primary,:spi_secondary].each {|k| expected_spis << t_line[k] unless t_line[k].blank?}
           end
         end
+
+        if line[:add]
+          add = line[:add]
+          
+          ci_line.add_case_number.should == add[:case_number]
+          ci_line.add_bond.should == (add[:bond] == "Y")
+          ci_line.add_duty_amount.should == add[:amount]
+          ci_line.add_case_value.should == add[:value]
+          ci_line.add_case_percent.should == add[:percent]
+        end
+
+        if line[:cvd]
+          cvd = line[:cvd]
+          
+          ci_line.cvd_case_number.should == cvd[:case_number]
+          ci_line.cvd_bond.should == (cvd[:bond] == "Y")
+          ci_line.cvd_duty_amount.should == cvd[:amount]
+          ci_line.cvd_case_value.should == cvd[:value]
+          ci_line.cvd_case_percent.should == cvd[:percent]
+        end
+
       end
       inv.currency.should == ci[:currency]
       inv.exchange_rate.should == ci[:exchange_rate]
@@ -802,7 +830,7 @@ describe OpenChain::AllianceParser do
 
   it 'should handle times with a value of 60 minutes' do
     # Stupid alliance bug we're working around, only seems to appear in comments lines
-    @comments[0][:date] = "201305152300"
+    @comments[0][:date] = "201305152260"
 
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     comments = Entry.find_by_broker_reference(@ref_num).entry_comments

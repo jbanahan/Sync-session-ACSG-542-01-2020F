@@ -890,7 +890,17 @@ and classifications.product_id = products.id
       [20,:cil_mpf,:mpf,"MPF - Full",{:data_type=>:decimal}],
       [21,:cil_prorated_mpf,:prorated_mpf,"MPF - Prorated",{:data_type=>:decimal}],
       [22,:cil_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal}],
-      [22,:cil_contract_amount,:contract_amount,"Contract Amount",{:data_type=>:decimal,:currency=>:other}]
+      [23,:cil_contract_amount,:contract_amount,"Contract Amount",{:data_type=>:decimal,:currency=>:other}],
+      [24,:cil_add_case_number,:add_case_number,"ADD Case Number",{:data_type=>:string}],
+      [25,:cil_add_bond,:add_bond,"ADD Bond",{:data_type=>:boolean}],
+      [26,:cil_add_case_value,:add_case_value,"ADD Value",{:data_type=>:decimal,:currency=>:other}],
+      [27,:cil_add_duty_amount,:add_duty_amount,"ADD Duty",{:data_type=>:decimal,:currency=>:other}],
+      [28,:cil_add_case_percent,:add_case_percent,"ADD Percentage",{:data_type=>:decimal}],
+      [29,:cil_cvd_case_number,:cvd_case_number,"CVD Case Number",{:data_type=>:string}],
+      [30,:cil_cvd_bond,:cvd_bond,"CVD Bond",{:data_type=>:boolean}],
+      [31,:cil_cvd_case_value,:cvd_case_value,"CVD Value",{:data_type=>:decimal,:currency=>:other}],
+      [32,:cil_cvd_duty_amount,:cvd_duty_amount,"CVD Duty",{:data_type=>:decimal,:currency=>:other}],
+      [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
       [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
