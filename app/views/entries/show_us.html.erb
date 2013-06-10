@@ -6,7 +6,7 @@
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
 <%end-%>
-<% cache ["v4",current_user.company,current_user,@entry] do-%>
+<% cache ["v5",current_user.company,current_user,@entry] do-%>
   <style>
   .ent_columns {
     width:99%;
@@ -240,7 +240,7 @@
           </tr>
         </tbody>
       </table>
-      <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf,:cil_cotton_fee]%>
+      <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf,:cil_cotton_fee, :cil_contract_amount]%>
       <table class='detail_table'>
         <thead><tr>
           <%fields.each do |f|%>
