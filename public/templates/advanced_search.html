@@ -19,8 +19,8 @@
             <select multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns'>
             </select>
             <br />
-            <a ng-show='columnsToAdd' class='action_link' ng-click='addColumns()'>Add</a> 
-            <a class='action_link' ng-click='addBlank()'>Add Blank</a>&nbsp;
+            <a ng-show='columnsToAdd' class='btn' ng-click='addColumns()'>Add</a> 
+            <a class='btn' ng-click='addBlank()'>Add Blank</a>&nbsp;
           </div>
           <div class='toggle_pane'>
             <div class='tpane_label'>Included</div>
@@ -29,9 +29,9 @@
             <br />
             <div ng-hide='columnsToRemove'>&nbsp;</div>
             <div ng-show='columnsToRemove'>
-              <a class='action_link' ng-click='removeColumns()'>Remove</a>
-              <a class='action_link' ng-click='moveColumnsUp()'>Up</a>
-              <a class='action_link' ng-click='moveColumnsDown()'>Down</a>
+              <a class='btn' ng-click='removeColumns()'>Remove</a>
+              <a class='btn' ng-click='moveColumnsUp()'>Up</a>
+              <a class='btn' ng-click='moveColumnsDown()'>Down</a>
             </div>
           </div>
         </div>  
@@ -43,7 +43,7 @@
             </select>
             <div ng-hide='sortsToAdd'>&nbsp;</div>
             <div ng-show='sortsToAdd'>
-              <a ng-show='sortsToAdd' class='action_link' ng-click='addSorts()'>Add</a>
+              <a ng-show='sortsToAdd' class='btn' ng-click='addSorts()'>Add</a>
             </div>
           </div>
           <div class='toggle_pane'>
@@ -53,10 +53,10 @@
             <br />
             <div ng-hide='sortsToRemove'>&nbsp;</div>
             <div ng-show='sortsToRemove'>
-              <a class='action_link' ng-click='removeSorts()'>Remove</a>
-              <a class='action_link' ng-click='moveSortsUp()'>Up</a>
-              <a class='action_link' ng-click='moveSortsDown()'>Down</a>
-              <a class='action_link' ng-click='toggleSort()'>Change Order</a>
+              <a class='btn' ng-click='removeSorts()'>Remove</a>
+              <a class='btn' ng-click='moveSortsUp()'>Up</a>
+              <a class='btn' ng-click='moveSortsDown()'>Down</a>
+              <a class='btn' ng-click='toggleSort()'>Change Order</a>
             </div>
           </div>
         </div>
@@ -67,7 +67,7 @@
           </div>
           Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
           </select>
-          <a ng-show='criterionToAdd' class='action_link' ng-click='addCriterion(criterionToAdd)'>Add</a>
+          <a ng-show='criterionToAdd' class='btn' ng-click='addCriterion(criterionToAdd)'>Add</a>
         </div>
       </div>
       <div>
@@ -79,9 +79,9 @@
               {{scheduleTimingText(sched)}}, 
               As: {{sched.download_format}} 
               <span ng-show='sched.ftp_server'>FTP Server: {{sched.ftp_server}}<br /></span>
-              <a class='action_link' ng-click='editSchedule(sched)'>Edit</a> <a class='action_link' ng-click='removeSchedule(sched)'>Remove</a>
+              <a class='btn' ng-click='editSchedule(sched)'>Edit</a> <a class='btn' ng-click='removeSchedule(sched)'>Remove</a>
             </div>
-            <a class='action_link' ng-click='addSchedule()'>Add Schedule</a>
+            <a class='btn' ng-click='addSchedule()'>Add Schedule</a>
           </div>
           <div id='schedule_edit' ng-show='scheduleToEdit'>
             Email: <input type='text' ng-model='scheduleToEdit.email_addresses'/><br />
@@ -164,37 +164,37 @@
               FTP Password: <input type='text' ng-model='scheduleToEdit.ftp_password' /><br />
               FTP Subfolder: <input type='text' ng-model='scheduleToEdit.ftp_subfolder' /><br />
             </div>
-            <a class='action_link' ng-click='scheduleToEdit = null'>Hide</a>
+            <a class='btn' ng-click='scheduleToEdit = null'>Hide</a>
           </div>
         </div>
       </div>
-      <div id='search_action_links'>
+      <div id='search_btns'>
         <span ng-hide='deletePrompt==true || givePrompt==true'>
-          <a class='action_link' ng-click='saveSetup()'>Save</a>
-          <a class='action_link' ng-click='newSetup()'>New</a>
-          <a class='action_link' ng-click='givePrompt=true'>Give</a>
-          <a class='action_link' ng-click='deletePrompt=true'>Delete</a>
+          <a class='btn' ng-click='saveSetup()'>Save</a>
+          <a class='btn' ng-click='newSetup()'>New</a>
+          <a class='btn' ng-click='givePrompt=true'>Give</a>
+          <a class='btn' ng-click='deletePrompt=true'>Delete</a>
         </span>
         <span ng-show='deletePrompt==true'>
           Really Delete?
-          <a class='action_link' ng-click='deleteSetup()'>Yes</a>
-          <a class='action_link' ng-click='deletePrompt=false'>No</a>
+          <a class='btn' ng-click='deleteSetup()'>Yes</a>
+          <a class='btn' ng-click='deletePrompt=false'>No</a>
         </span>
         <span ng-show='givePrompt==true'>
           Select User
           <div style='display:inline;' chain-user-list='giveUserId'></div>
-          <a class='action_link' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
-          <a class='action_link' ng-click='givePrompt=false'>Cancel</a>
+          <a class='btn' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
+          <a class='btn' ng-click='givePrompt=false'>Cancel</a>
         </span>
       </div>
       <hr />
     </div>
   </div>
   <div chain-search-result='searchResult' page='page' errors='errors' src='/advanced_search/'>
-    <a ng-click='toggleSetup()' class='action_link' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</a>
-    <a class='action_link' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</a> 
-    <a class='action_link' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
-    <a class='action_link' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</a>
+    <a ng-click='toggleSetup()' class='btn' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</a>
+    <a class='btn' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</a> 
+    <a class='btn' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
+    <a class='btn' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</a>
     <span  ng-show='searchSetup.uploadable_error_messages.length > 0'>
       <span chain-message-box title="'Upload'" >
         <div ng-repeat='s in searchSetup.uploadable_error_messages'>

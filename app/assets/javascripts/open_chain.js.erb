@@ -272,17 +272,17 @@ var OpenChain = (function() {
   var pollForMessages = function(user_id) {
     $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
       if(data>0) {
-        $('#message_envelope').show();
+        $('#message_envelope').html(data);
       } else {
-        $('#message_envelope').hide();
+        $('#message_envelope').html('');
       }
     });
     return setInterval(function() {
         $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
           if(data>0) {
-            $('#message_envelope').show();
+            $('#message_envelope').html(data);
           } else {
-            $('#message_envelope').hide();
+            $('#message_envelope').html('');
           }
         });
       }, 30000

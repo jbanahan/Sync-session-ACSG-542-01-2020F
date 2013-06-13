@@ -333,8 +333,8 @@
 
       #return the classes that should be applied to a result row based on it's position and whether it's the first instance of a new row key
       $scope.classesForRow = (idx) ->
-        return ['hover'] if idx==0
-        r = ['hover']
+        return [] if idx==0
+        r = []
         r.push 'search_row_break' if $scope.newObjectRow(idx)
         r
 

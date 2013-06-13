@@ -14,7 +14,7 @@ OpenChain::Application.configure do
   config.consider_all_requests_local       = true
 #  config.action_view.debug_rjs             = true
 
-#  config.action_controller.perform_caching = true #on for testing cache, turn this OFF
+  config.action_controller.perform_caching = false #on for testing cache, turn this OFF
   config.cache_store = :dalli_store, 'localhost'
 
   # Don't care if the mailer can't send

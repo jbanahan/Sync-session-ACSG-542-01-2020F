@@ -1,8 +1,14 @@
-<div class='ang_notice_box' ng-show='notices.length > 0'>
-  <div class='ang_notice_close'><img src='/images/x.png' title='Close' ng-click='notices=[]'/></div>
-  <div class='ang_notice_message' ng-repeat='n in notices'>{{n}}</div>
+<div class='container-fluid'>
+  <div class='row-fluid'>
+    <div class='alert alert-info span6 offset3' ng-show='notices.length > 0'>
+      <button type="button" class="close" ng-click='notices=[]'>&times;</button>
+      <div class='ang_notice_close'><img src='/images/x.png' title='Close' ng-click='notices=[]'/></div>
+      <p ng-repeat='n in notices'>{{n}}</p>
+    </div>
+    <div class='alert alert-error span6 offset3' ng-show='errors.length > 0'>
+      <button type="button" class="close" ng-click='errors=[]'>&times;</button>
+      <p ng-repeat='e in errors'>{{e}}</p>
+    </div>
+  </div>
 </div>
-<div class='ang_error_box' ng-show='errors.length > 0'>
-  <div class='ang_error_close'><img src='/images/x.png' title='Close' ng-click='errors=[]'/></div>
-  <div class='ang_error_message' ng-repeat='e in errors'>{{e}}</div>
-</div>
+

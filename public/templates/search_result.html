@@ -10,30 +10,40 @@
       <div ng-hide='allSelected' class='bulk_selection_message'>
         {{bulkSelected.length}} selected
       </div>
-      <a ng-hide='allSelected' ng-click='selectAll()' class='action_link'>Select All ({{searchResult.total_objects}})</a>
-      <a ng-click='selectNone()' class='action_link'>Clear</a>
+      <a ng-hide='allSelected' ng-click='selectAll()' class='btn'>Select All ({{searchResult.total_objects}})</a>
+      <a ng-click='selectNone()' class='btn'>Clear</a>
+    </div>
+    <div class='navbar navbar-fixed-bottom'>
+      <div class='navbar-inner'>
+        <ul class='nav'>
+          <li><span ng-transclude></span></li>
+        </ul>
+        <ul class='nav' ng-show='bulkSelected.length > 0'>
+          <li ng-repeat='b in searchResult.bulk_actions'>
+            <a class='btn' ng-click='executeBulkAction(b)'>{{b.label}}</a>
+          </li>
+        </ul>
+        <ul class='nav pull-right' ng-hide='noChrome'>
+          <li><a class='btn' ng-show='searchResult.page>1' ng-click='firstPage()'>&lt;&lt;</a></li>
+          <li><a class='btn' ng-show='searchResult.page>1' ng-click='previousPage()'>&lt;</a></li>
+          <li>
+            <select class='btn' ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
+            </select>
+          </li>
+          <li><a class='btn' ng-show='searchResult.page<searchResult.total_pages' ng-click='nextPage()'>&gt;</a></li>
+          <li><a class='btn' ng-show='searchResult.page<searchResult.total_pages' ng-click='lastPage()'>&gt;&gt;</a></li>
+        </ul>
+      </div>
     </div>
     <div class='search_header'>
       <div class='search_actions'>
-        <span ng-transclude></span>
-        <span ng-show='bulkSelected.length > 0'>
-          <span ng-repeat='b in searchResult.bulk_actions'>
-            <a class='action_link' ng-click='executeBulkAction(b)'>{{b.label}}</a>
-          </span>
-        </span>
       </div>
       <div class='page_nav' ng-hide='noChrome'>
-        <a class='action_link' ng-show='searchResult.page>1' ng-click='firstPage()'>&lt;&lt;</a>
-        <a class='action_link' ng-show='searchResult.page>1' ng-click='previousPage()'>&lt;</a>
-        <select ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
-        </select>
-        <a class='action_link' ng-show='searchResult.page<searchResult.total_pages' ng-click='nextPage()'>&gt;</a>
-        <a class='action_link' ng-show='searchResult.page<searchResult.total_pages' ng-click='lastPage()'>&gt;&gt;</a>
       </div>
       <div class='clear'>&nbsp;</div>
     </div>
     <div class='search_result_table_wrapper'>
-      <table class='detail_table search_result_table'>
+      <table class='table table-striped table-bordered table-condensed table-hover search_result_table'>
         <thead>
           <tr>
             <th ng-show='searchResult.bulk_actions && !noChrome'>
