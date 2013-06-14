@@ -3,7 +3,7 @@
     <img src='/images/ajax_load_64.gif' title='Loading...' />
   </div>
   <div ng-show='searchResult.rows!=undefined' class='search_result'>
-    <div class='container' ng-show='bulkSelected.length>0 || allSelected'>
+    <div class='container search-result-bulk-controls' ng-show='bulkSelected.length>0 || allSelected'>
       <div class='row text-center' ng-show='allSelected'>
         <div class='span12'>
           <strong>All {{searchResult.total_objects}} selected</strong>
@@ -26,18 +26,20 @@
         <ul class='nav'>
           <li><span ng-transclude></span></li>
         </ul>
-        <ul class='nav' ng-show='bulkSelected.length > 0'>
-          <li ng-repeat='b in searchResult.bulk_actions'>
-            <a class='btn' ng-click='executeBulkAction(b)'>{{b.label}}</a>
+        <ul class='nav'>
+          <li ng-show='bulkSelected.length > 0'>
+            <span ng-repeat='b in searchResult.bulk_actions'>
+              <button class='btn btn-inverse' ng-click='executeBulkAction(b)'>{{b.label}}</button>
+            </span>
           </li>
         </ul>
         <form class='navbar-form pull-right' ng-hide='noChrome'>
-          <button class='btn' ng-show='searchResult.page>1' ng-click='firstPage()'>&lt;&lt;</button>
-          <button class='btn' ng-show='searchResult.page>1' ng-click='previousPage()'>&lt;</button>
-          <select class='btn input-mini' ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
+          <button class='btn btn-inverse' ng-show='searchResult.page>1' ng-click='firstPage()'>&lt;&lt;</button>
+          <button class='btn btn-inverse' ng-show='searchResult.page>1' ng-click='previousPage()'>&lt;</button>
+          <select class='btn btn-inverse input-mini' ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
           </select>
-          <button class='btn' ng-show='searchResult.page<searchResult.total_pages' ng-click='nextPage()'>&gt;</button></li>
-          <button class='btn' ng-show='searchResult.page<searchResult.total_pages' ng-click='lastPage()'>&gt;&gt;</button></li>
+          <button class='btn btn-inverse' ng-show='searchResult.page<searchResult.total_pages' ng-click='nextPage()'>&gt;</button></li>
+          <button class='btn btn-inverse' ng-show='searchResult.page<searchResult.total_pages' ng-click='lastPage()'>&gt;&gt;</button></li>
         </form>
       </div>
     </div>

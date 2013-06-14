@@ -316,10 +316,10 @@
     </div>
   </div>
   <div chain-search-result='searchResult' page='page' errors='errors' src='/advanced_search/'>
-    <a class='btn' ng-click='toggleSetup()' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</a>
-    <a class='btn' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</a> 
-    <a class='btn' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
-    <a class='btn' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</a>
+    <button class='btn btn-inverse' ng-click='toggleSetup()' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</button>
+    <button class='btn btn-inverse' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</button> 
+    <button class='btn btn-inverse' ng-show='searchResult.total_pages<=1' href='/buttondvanced_search/{{searchSetup.id}}/download.xls'>Download</a>
+    <button class='btn btn-inverse' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</button>
     <span  ng-show='searchSetup.uploadable_error_messages.length > 0'>
       <span chain-message-box title="'Upload'" >
         <div ng-repeat='s in searchSetup.uploadable_error_messages'>
