@@ -26,6 +26,17 @@ describe FileImportProcessor do
       pro.do_row 0, ['uid-abc','name'], true, -1
       Product.find_by_unique_identifier('uid-abc').name.should == 'name'
     end
+    it "should update row" do
+      p = Factory(:product,unique_identifier:'uid-abc')
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
+      ])
+      pro.do_row 0, ['uid-abc','name'], true, -1
+      p.reload
+      p.name.should == 'name'
+    end
     it "should set custom values" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
       pro = FileImportProcessor.new(@f,nil,[])
@@ -47,6 +58,37 @@ describe FileImportProcessor do
       ])
       pro.do_row 0, ['uid-abc','name','cval'], true, -1
       Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value.should be_blank
+    end
+    context 'special cases' do
+      it "should set country classification from product level fields" do
+        c = Factory(:country,:import_location=>true)
+        ModelField.reload
+        pro = FileImportProcessor.new(@f,nil,[])
+        pro.stub(:get_columns).and_return([
+          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+          SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
+        ])
+        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1
+        Product.count.should == 1
+        p = Product.find_by_unique_identifier 'uid-abc'
+        p.should have(1).classification
+        p.classifications.where(:country_id=>c.id).first.tariff_records.first.hts_1.should == '1234567890'
+      end
+      it "should set country classification from product level for existing product" do
+        Factory(:product,unique_identifier:'uid-abc')
+        c = Factory(:country,:import_location=>true)
+        ModelField.reload
+        pro = FileImportProcessor.new(@f,nil,[])
+        pro.stub(:get_columns).and_return([
+          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+          SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
+        ])
+        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1
+        Product.count.should == 1
+        p = Product.find_by_unique_identifier 'uid-abc'
+        p.should have(1).classification
+        p.classifications.where(:country_id=>c.id).first.tariff_records.first.hts_1.should == '1234567890'
+      end
     end
   end
 end
