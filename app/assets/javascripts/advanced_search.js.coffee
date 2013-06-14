@@ -301,7 +301,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     o_clock = if h>12 then (h-12)+":00pm " else h+":00am"
     o_clock = 'midnight' if h==0
     o_clock = 'noon' if h==12
-    r = "At "+o_clock+" on "
+    r = o_clock+" on "
     if s.day_of_month > 0
       r += "day "+s.day_of_month+" of each month"
     else

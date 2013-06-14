@@ -272,7 +272,7 @@ var OpenChain = (function() {
   var pollForMessages = function(user_id) {
     $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
       if(data>0) {
-        $('#message_envelope').html(data);
+        $('#message_envelope').html(data + " messages");
       } else {
         $('#message_envelope').html('');
       }
@@ -280,7 +280,7 @@ var OpenChain = (function() {
     return setInterval(function() {
         $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
           if(data>0) {
-            $('#message_envelope').html(data);
+            $('#message_envelope').html(data + " messages");
           } else {
             $('#message_envelope').html('');
           }

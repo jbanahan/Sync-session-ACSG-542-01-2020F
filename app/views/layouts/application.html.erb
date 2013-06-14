@@ -1,14 +1,13 @@
 <%= render :partial => 'shared/header' %>
-    <div id='main_cont'>
-      <div id='two_col_content'>
-        <%=yield%>
+    <div class='container-fluid'>
+      <div class='row-fluid'>
+        <div class='span10'>
+          <%=yield%>
+        </div>
+        <div id='two_col_action' class='span2 action_container'>
+          <%=yield :action_bar%>
+        </div>
       </div>
-      <div id='two_col_action' class='action_container'>
-        <%=yield :action_bar%>
-      </div>
-    </div>
-    <div id="footer">
-    &nbsp;
     </div>
   </body>
 </html>

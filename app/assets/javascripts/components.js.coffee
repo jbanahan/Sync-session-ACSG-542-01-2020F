@@ -27,10 +27,9 @@
     template:"<div class='dialog_content_wrap' ng-transclude></div>"
     link: (scope,el,attrs) ->
       if scope.asButton
-        el.prepend("<button class='chainMessageBoxLauncher'>"+scope.title+"</button>")
-        el.find('button.chainMessageBoxLauncher').button()
+        el.prepend("<button class='btn chainMessageBoxLauncher'>"+scope.title+"</button>")
       else
-        el.prepend("<a class='action_link chainMessageBoxLauncher'>"+scope.title+'</a>')
+        el.prepend("<a class='btn chainMessageBoxLauncher'>"+scope.title+'</a>')
       d = el.find("div.dialog_content_wrap")
       d.dialog({
         modal:true
@@ -91,7 +90,7 @@
             scope.chainDatePicker = text
         showOn: 'button'
         }
-      )
+      ).next(".ui-datepicker-trigger").addClass("btn")
       #add watch to update
       scope.$watch 'chainDatePicker', (newVal) ->
         $(el).find('input').val(newVal)
@@ -115,7 +114,7 @@
       renderTextInput = (opr) ->
         switch opr
           when "in", "notin"
-            return "<textarea ng-model='crit.value' />"
+            return "<textarea rows='8' ng-model='crit.value' />"
           when "null", "notnull"
             return ""
 
