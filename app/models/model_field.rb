@@ -587,9 +587,15 @@ class ModelField
               hts = TariffRecord.clean_hts(d)
               return "Blank HTS ignored for #{c.iso_code}" if hts.blank?
               return "#{d} is not valid for #{c.iso_code} HTS #{i}" unless OfficialTariff.find_by_country_id_and_hts_code(c.id,hts) || OfficialTariff.where(country_id:c.id).empty?
-              cls = p.classifications.where(:country_id=>c.id).first
+              cls = nil
+              #find classifications & tariff records in memory so this can work on objects that are dirty
+              p.classifications.each do |existing| 
+                cls = existing if existing.country_id == c.id
+                break if cls
+              end
               cls = p.classifications.build(:country_id=>c.id) unless cls
-              tr = cls.tariff_records.order("line_number ASC").first
+              tr = nil
+              tr = cls.tariff_records.sort {|a,b| a.line_number <=> b.line_number}.first
               tr = cls.tariff_records.build unless tr
               tr.send("hts_#{i}=".intern,hts)
               "#{c.iso_code} HTS #{i} set to #{hts.hts_format}"

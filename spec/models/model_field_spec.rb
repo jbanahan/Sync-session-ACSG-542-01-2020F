@@ -101,6 +101,7 @@ describe ModelField do
           r = mf.process_import(p, "123456789#{i}")
           r.should == "ZY HTS #{i} set to 1234.56.789#{i}"
         end
+        p.save!
         p.should have(1).classifications
         cls = p.classifications.find_by_country_id(@c.id)
         cls.should have(1).tariff_records
@@ -114,6 +115,7 @@ describe ModelField do
         tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
         mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
         mf.process_import tr.product, '1234567899'
+        tr.product.save!
         tr.reload
         tr.hts_1.should == '1234567899'
       end
