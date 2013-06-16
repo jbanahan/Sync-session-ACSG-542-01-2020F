@@ -11,6 +11,24 @@ describe FileImportProcessor do
     imp.search_setup.should be_nil #id should not match to anything
     lambda { FileImportProcessor.new(imp,'a,b') }.should_not raise_error
   end
+  
+  describe :preview do
+    it "should not write to DB" do
+      @ss = SearchSetup.new(:module_type=>"Product")
+      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0) 
+      country = Factory(:country)
+      pro = FileImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"class_cntry_iso",:rank=>3)
+      ])
+      pro.stub(:get_rows).and_yield ['abc-123','pn',country.iso_code]
+      r = pro.preview_file
+      r.should have(3).rows
+      Product.count.should == 0
+    end
+  end
 
   describe :do_row do
     before :each do
@@ -25,6 +43,25 @@ describe FileImportProcessor do
       ])
       pro.do_row 0, ['uid-abc','name'], true, -1
       Product.find_by_unique_identifier('uid-abc').name.should == 'name'
+    end
+    it "should create children" do
+      country = Factory(:country)
+      ot = Factory(:official_tariff,:hts_code=>'1234567890',:country=>country)
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"class_cntry_iso",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"hts_line_number",:rank=>3),
+        SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>4)
+      ])
+      pro.do_row 0, ['uid-abc',country.iso_code,1,'1234567890'], true, -1
+      p = Product.find_by_unique_identifier('uid-abc')
+      p.should have(1).classifications
+      cl = p.classifications.first
+      cl.country.should == country
+      cl.should have(1).tariff_records
+      tr = cl.tariff_records.first
+      tr.hts_1.should == '1234567890'
     end
     it "should update row" do
       p = Factory(:product,unique_identifier:'uid-abc')
