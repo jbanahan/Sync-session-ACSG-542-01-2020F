@@ -17,97 +17,100 @@
 <% end %>
 
 <% content_for :action_bar do %>
-<% if @product.can_edit?(current_user) && !@product.locked?%>
-  <button id='btn_edit'>Edit</button>
-  <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
-<%end%>
-<button class='btn_link' link_to='<%=products_path%>' key_map='b'>Back To Search</button>
-<%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@product} %>
-<button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
+  <% if @product.can_edit?(current_user) && !@product.locked?%>
+    <button id='btn_edit'>Edit</button>
+    <%if current_user.edit_classifications? %> <button id='btn_classify'>Classify</button><% end %>
+  <%end%>
+  <button class='btn_link' link_to='<%=products_path%>' key_map='b'>Back To Search</button>
+  <%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@product} %>
+  <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
 <% end %>
-<div>
-  <%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
-  <%if @product.on_bill_of_materials?-%>
-    <div class='bom_cont'>
-      <% unless @product.parent_products.empty? -%>
-        <table class='detail_table'>
-          <thead><tr><th>Parent Products</th></tr></thead>
-          <tbody>
-            <%@product.parent_products.each do |par| -%>
-              <tr><td><%=link_to par.unique_identifier, par%></td></tr>
-            <%end-%>
-          </tbody>
-        </table>
-      <% end -%>
-      <% unless @product.bill_of_materials_children.empty? -%>
-        <table class='detail_table'>
-          <thead><tr><th>Child Products</th></tr></thead>
-          <tbody>
-            <%@product.bill_of_materials_children.each do |ch| -%>
-            <tr><td><%=link_to ch.child_product.unique_identifier, ch.child_product%> - <span title='Total Pieces In Set'><%=ch.quantity%></span></td></tr>
-            <%end-%>
-          </tbody>
-        </table>
-      <% end -%>
+<div class='container-fluid'>
+  <div class='row-fluid'>
+    <div class='span6'>
+      <h3 class='text-center'>Attributes</h3>
+      <%=render :partial => 'product_view', :locals => {:product => @product} %>
     </div>
-  <%end-%>
-  <div class='next_to_attachments'>
-    <%=render :partial => 'product_view', :locals => {:product => @product} %>
+    <div class='span6'>
+      <h3 class='text-center'>Classifications</h3>
+      <div class='attachments_container section_insert'>
+        <% @product.classifications.sort_classification_rank.each do |c| %>
+          <table class='classification_box'>
+            <thead><tr><th class='class_ctry_name'><%=c.country.name.titleize%></th></tr></thead>
+            <tbody>
+              <tr>
+                <td class='class_tr_box'>
+                  <div class='cf_box'>
+                    <%=show_custom_fields c, {:show_prefix=>false}%>
+                  </div> 
+                  <% c.tariff_records.each do |t| %>
+                    <div class='tf_row'>
+                      <table>
+                        <%=field_row field_label(:hts_line_number,false), t.line_number%>
+                        <%=show_custom_fields t, {:table=>true,:show_prefix=>false}%>
+                      </table>
+                      <table class='tr_hts'>
+                        <thead>
+                          <tr>
+                            <th><%=field_label :hts_hts_1, false%></th>
+                            <th><%=field_label :hts_hts_2, false%></th>
+                            <th><%=field_label :hts_hts_3, false%></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td><%=show_tariff t.hts_1,c.country_id%></td>
+                            <td><%=show_tariff t.hts_2,c.country_id%></td>
+                            <td><%=show_tariff t.hts_3,c.country_id%></td>
+                          </tr>
+                          <% if t.has_schedule_b?%>
+                            <tr>
+                              <th><%=field_label :hts_hts_1_schedb, false%></th>
+                              <th><%=field_label :hts_hts_2_schedb, false%></th>
+                              <th><%=field_label :hts_hts_3_schedb, false%></th>
+                            </tr>
+                            <tr>
+                             <td><%=show_schedule_b t.schedule_b_1%></td> 
+                             <td><%=show_schedule_b t.schedule_b_2%></td> 
+                             <td><%=show_schedule_b t.schedule_b_3%></td> 
+                            </tr>
+                          <% end %>
+                        </tbody>
+                      </table>
+                    </div>
+                  <% end %>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+      <%=render :partial => 'shared/attachments', :locals => {:attachable => @product} %>
+      <%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
+      <%if @product.on_bill_of_materials?-%>
+        <div class='bom_cont'>
+          <% unless @product.parent_products.empty? -%>
+            <table class='detail_table'>
+              <thead><tr><th>Parent Products</th></tr></thead>
+              <tbody>
+                <%@product.parent_products.each do |par| -%>
+                  <tr><td><%=link_to par.unique_identifier, par%></td></tr>
+                <%end-%>
+              </tbody>
+            </table>
+          <% end -%>
+          <% unless @product.bill_of_materials_children.empty? -%>
+            <table class='detail_table'>
+              <thead><tr><th>Child Products</th></tr></thead>
+              <tbody>
+                <%@product.bill_of_materials_children.each do |ch| -%>
+                <tr><td><%=link_to ch.child_product.unique_identifier, ch.child_product%> - <span title='Total Pieces In Set'><%=ch.quantity%></span></td></tr>
+                <%end-%>
+              </tbody>
+            </table>
+          <% end -%>
+        </div>
+      <%end-%>
+    </div>
   </div>
-</div>
-<%=render :partial => 'shared/comments', :locals => {:commentable => @product} %>
-<div class='attachments_container section_insert'>
-  <h2 class='section_insert_heading'>Classifications</h2>
-  <% @product.classifications.sort_classification_rank.each do |c| %>
-    <table class='classification_box'>
-      <thead><tr><th class='class_ctry_name'><%=c.country.name.titleize%></th></tr></thead>
-      <tbody>
-        <tr>
-          <td class='class_tr_box'>
-            <div class='cf_box'>
-              <table>
-                <%=show_custom_fields c, {:table=>true,:show_prefix=>false}%>
-              </table>
-            </div> 
-            <% c.tariff_records.each do |t| %>
-              <div class='tf_row'>
-                <table>
-                  <%=field_row field_label(:hts_line_number,false), t.line_number%>
-                  <%=show_custom_fields t, {:table=>true,:show_prefix=>false}%>
-                </table>
-                <table class='tr_hts'>
-                  <thead>
-                    <tr>
-                      <th><%=field_label :hts_hts_1, false%></th>
-                      <th><%=field_label :hts_hts_2, false%></th>
-                      <th><%=field_label :hts_hts_3, false%></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td><%=show_tariff t.hts_1,c.country_id%></td>
-                      <td><%=show_tariff t.hts_2,c.country_id%></td>
-                      <td><%=show_tariff t.hts_3,c.country_id%></td>
-                    </tr>
-                    <% if t.has_schedule_b?%>
-                      <tr>
-                        <th><%=field_label :hts_hts_1_schedb, false%></th>
-                        <th><%=field_label :hts_hts_2_schedb, false%></th>
-                        <th><%=field_label :hts_hts_3_schedb, false%></th>
-                      </tr>
-                      <tr>
-                       <td><%=show_schedule_b t.schedule_b_1%></td> 
-                       <td><%=show_schedule_b t.schedule_b_2%></td> 
-                       <td><%=show_schedule_b t.schedule_b_3%></td> 
-                      </tr>
-                    <% end %>
-                  </tbody>
-                </table>
-              </div>
-            <% end %>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <% end %>
 </div>

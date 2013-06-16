@@ -62,9 +62,11 @@
               <input type='checkbox' ng-model='row.bulk_selected' ng-show='newObjectRow($index)' />
             </td>
             <td class='action_cell min_width'>
-              <span ng-repeat='l in row.links'>
-                <a href='{{l.url}}'>{{l.label}}</a>
-              </span>
+              <div class='btn-group' ng-show='newObjectRow($index)'>
+                <span ng-repeat='l in row.links'>
+                  <a class='btn btn-mini' href='{{l.url}}'>{{l.label}}</a>&nbsp;
+                </span>
+              </div>
             </td>
             <td ng-repeat='v in row.vals'>
               {{v}}

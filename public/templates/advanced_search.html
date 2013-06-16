@@ -166,140 +166,150 @@
             </div>
           </div>
           <div class='form-horizontal' ng-show='scheduleToEdit'>
-            <div class='control-group'>
-              <label class='control-label' for='sched-email-addresses'>Email</label>
-              <div class='controls'>
-                <input id='sched-email-addresses' type='text' ng-model='scheduleToEdit.email_addresses'/>
-              </div>
-            </div>
-            <div class='control-group'>
-              <label class='control-label' for='sched-format'>Format</label>
-              <div class='controls'>
-                <select id='sched-format' ng-model='scheduleToEdit.download_format'>
-                  <option>csv</option>
-                  <option>xls</option>
-                </select>
-              </div>
-            </div>
-            <div class='control-group'>
-              <label class='control-label' for='sched-time'>Time</label>
-              <div class='controls'>
-                <select id='sched-time' ng-model='scheduleToEdit.run_hour'>
-                  <option value='0'>midnight</option>
-                  <option value='1'>1:00am</option>
-                  <option value='2'>2:00am</option>
-                  <option value='3'>3:00am</option>
-                  <option value='4'>4:00am</option>
-                  <option value='5'>5:00am</option>
-                  <option value='6'>6:00am</option>
-                  <option value='7'>7:00am</option>
-                  <option value='8'>8:00am</option>
-                  <option value='9'>9:00am</option>
-                  <option value='10'>10:00am</option>
-                  <option value='11'>11:00am</option>
-                  <option value='12'>noon</option>
-                  <option value='13'>1:00pm</option>
-                  <option value='14'>2:00pm</option>
-                  <option value='15'>3:00pm</option>
-                  <option value='16'>4:00pm</option>
-                  <option value='17'>5:00pm</option>
-                  <option value='18'>6:00pm</option>
-                  <option value='19'>7:00pm</option>
-                  <option value='20'>8:00pm</option>
-                  <option value='21'>9:00pm</option>
-                  <option value='22'>10:00pm</option>
-                  <option value='23'>11:00pm</option>
-                </select>
-              </div>
-            </div>
-            <div class='control-group'>
-              <label class='control-label' for='sched-dom'>Day of Month</label>
-              <div class='controls'>
-                <select id='sched-dom' ng-model='scheduleToEdit.day_of_month'>
-                  <option></option>
-                  <option>1</option>
-                  <option>2</option>
-                  <option>3</option>
-                  <option>4</option>
-                  <option>5</option>
-                  <option>6</option>
-                  <option>7</option>
-                  <option>8</option>
-                  <option>9</option>
-                  <option>10</option>
-                  <option>11</option>
-                  <option>12</option>
-                  <option>13</option>
-                  <option>14</option>
-                  <option>15</option>
-                  <option>16</option>
-                  <option>17</option>
-                  <option>18</option>
-                  <option>19</option>
-                  <option>20</option>
-                  <option>21</option>
-                  <option>22</option>
-                  <option>23</option>
-                  <option>24</option>
-                  <option>25</option>
-                  <option>26</option>
-                  <option>27</option>
-                  <option>28</option>
-                </select>
-              </div>
-            </div>
-            <div class='control-group' ng-hide='scheduleToEdit.day_of_month'>
-              <div class='controls'>
-                <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday</label>
-                <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday</label>
-                <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday</label>
-                <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday</label>
-                <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday</label>
-                <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday</label>
-                <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday</label>
-              </div>
-            </div>
-            <fieldset ng-show='searchSetup.allow_ftp'>
-              <div class='control-group'>
-                <label class='control-label' for='sched-f-server'>FTP Server</label>
-                <div class='controls'>
-                  <input id='sched-f-server' type='text' ng-model='scheduleToEdit.ftp_server'/>
+            <div class='row-fluid'>
+              <div class='span6'>
+                <div class='control-group'>
+                  <label class='control-label' for='sched-email-addresses'>Email</label>
+                  <div class='controls'>
+                    <textarea id='sched-email-addresses' ng-model='scheduleToEdit.email_addresses' rows='4' data-/>
+                    <br />
+                    <small class='muted'>
+                      Separate addresses with commas.
+                    </small>
+                  </div>
+                </div>
+                <div class='control-group'>
+                  <label class='control-label' for='sched-format'>Format</label>
+                  <div class='controls'>
+                    <select id='sched-format' ng-model='scheduleToEdit.download_format'>
+                      <option>csv</option>
+                      <option>xls</option>
+                    </select>
+                  </div>
+                </div>
+                <div class='control-group'>
+                  <label class='control-label' for='sched-time'>Time</label>
+                  <div class='controls'>
+                    <select id='sched-time' ng-model='scheduleToEdit.run_hour'>
+                      <option value='0'>midnight</option>
+                      <option value='1'>1:00am</option>
+                      <option value='2'>2:00am</option>
+                      <option value='3'>3:00am</option>
+                      <option value='4'>4:00am</option>
+                      <option value='5'>5:00am</option>
+                      <option value='6'>6:00am</option>
+                      <option value='7'>7:00am</option>
+                      <option value='8'>8:00am</option>
+                      <option value='9'>9:00am</option>
+                      <option value='10'>10:00am</option>
+                      <option value='11'>11:00am</option>
+                      <option value='12'>noon</option>
+                      <option value='13'>1:00pm</option>
+                      <option value='14'>2:00pm</option>
+                      <option value='15'>3:00pm</option>
+                      <option value='16'>4:00pm</option>
+                      <option value='17'>5:00pm</option>
+                      <option value='18'>6:00pm</option>
+                      <option value='19'>7:00pm</option>
+                      <option value='20'>8:00pm</option>
+                      <option value='21'>9:00pm</option>
+                      <option value='22'>10:00pm</option>
+                      <option value='23'>11:00pm</option>
+                    </select>
+                  </div>
+                </div>
+                <div class='control-group'>
+                  <label class='control-label' for='sched-dom'>Day of Month</label>
+                  <div class='controls'>
+                    <select id='sched-dom' ng-model='scheduleToEdit.day_of_month'>
+                      <option></option>
+                      <option>1</option>
+                      <option>2</option>
+                      <option>3</option>
+                      <option>4</option>
+                      <option>5</option>
+                      <option>6</option>
+                      <option>7</option>
+                      <option>8</option>
+                      <option>9</option>
+                      <option>10</option>
+                      <option>11</option>
+                      <option>12</option>
+                      <option>13</option>
+                      <option>14</option>
+                      <option>15</option>
+                      <option>16</option>
+                      <option>17</option>
+                      <option>18</option>
+                      <option>19</option>
+                      <option>20</option>
+                      <option>21</option>
+                      <option>22</option>
+                      <option>23</option>
+                      <option>24</option>
+                      <option>25</option>
+                      <option>26</option>
+                      <option>27</option>
+                      <option>28</option>
+                    </select>
+                  </div>
+                </div>
+                <div class='control-group' ng-hide='scheduleToEdit.day_of_month'>
+                  <div class='controls'>
+                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_monday'/> Monday</label>
+                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_tuesday'/> Tuesday</label>
+                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_wednesday'/> Wednesday</label>
+                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_thursday'/> Thursday</label>
+                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_friday'/> Friday</label>
+                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_saturday'/> Saturday</label>
+                    <label class='checkbox'><input type='checkbox' ng-model='scheduleToEdit.run_sunday'/> Sunday</label>
+                  </div>
                 </div>
               </div>
-              <div class='control-group'>
-                <label class='control-label' for='sched-f-user'>FTP User</label>
-                <div class='controls'>
-                  <input id='sched-f-user' type='text' ng-model='scheduleToEdit.ftp_username' />
-                </div>
+              <div class='span6'>
+                <fieldset ng-show='searchSetup.allow_ftp'>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-f-server'>FTP Server</label>
+                    <div class='controls'>
+                      <input id='sched-f-server' type='text' ng-model='scheduleToEdit.ftp_server'/>
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-f-user'>FTP User</label>
+                    <div class='controls'>
+                      <input id='sched-f-user' type='text' ng-model='scheduleToEdit.ftp_username' />
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-f-pass'>FTP Password</label>
+                    <div class='controls'>
+                      <input id='sched-f-pass' type='text' ng-model='scheduleToEdit.ftp_password' />
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-f-folder'>FTP Folder</label>
+                    <div class='controls'>
+                      <input id='sched-f-folder' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
+                    </div>
+                  </div>
+                </fieldset>
               </div>
-              <div class='control-group'>
-                <label class='control-label' for='sched-f-pass'>FTP Password</label>
-                <div class='controls'>
-                  <input id='sched-f-pass' type='text' ng-model='scheduleToEdit.ftp_password' />
-                </div>
-              </div>
-              <div class='control-group'>
-                <label class='control-label' for='sched-f-folder'>FTP Folder</label>
-                <div class='controls'>
-                  <input id='sched-f-folder' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
-                </div>
-              </div>
-            </fieldset>
+            </div>
             <div class='control-group'>
               <div class='controls'>
-                <button class='btn' ng-click='scheduleToEdit = null'>Done</button>
+                <button class='btn btn-primary' ng-click='scheduleToEdit = null'>Done</button>
               </div>
             </div>
           </div>
         </div>
         <hr />
         <div id='search-setup-actions' class='row text-center'>
-          <span class='span12' ng-hide='deletePrompt==true || givePrompt==true'>
-            <button class='btn btn-large  btn-inverse' ng-click='saveSetup()'>Save</button>
-            <button class='btn btn-large  btn-inverse' ng-click='newSetup()'>New</button>
-            <button class='btn btn-large  btn-inverse' ng-click='givePrompt=true'>Give</button>
-            <button class='btn btn-large  btn-inverse' ng-click='deletePrompt=true'>Delete</button>
-          </span>
+          <div class='btn-group' ng-hide='deletePrompt==true || givePrompt==true'>
+            <button class='btn btn-large btn-success' ng-click='saveSetup()'>Save</button>
+            <button class='btn btn-large' ng-click='newSetup()'>New</button>
+            <button class='btn btn-large' ng-click='givePrompt=true'>Give</button>
+            <button class='btn btn-large' ng-click='deletePrompt=true'>Delete</button>
+          </div>
           <div class='span12 form-horizontal' ng-show='givePrompt==true'>
             Select User
             <div style='display:inline;' chain-user-list='giveUserId'></div>

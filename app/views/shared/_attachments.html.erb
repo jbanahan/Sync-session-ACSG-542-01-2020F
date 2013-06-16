@@ -11,33 +11,36 @@
     <%end%>
   <% end %>
 <%end-%>
-<div class='attachments_box_<%=local_assigns.has_key?(:width) ? width : "narrow"%>'>
-  <% unless attachable.attachments.blank?%>
-  <div class='attachment_heading'>Attachments</div>
-  <% end %>
-  <% c = 0 %>
-  <table class='attachment_table'>
-  <% attachments = (attachable.respond_to?('all_attachments') ? attachable.all_attachments : attachable.attachments)%>
-  <% attachments.each do |att| %>
-    <% if(c%2==0) %><tr><%end%>
-    <td>
-      <div class='attachment_delete'>
-        <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>
-          <%=link_to(image_tag("x.png",:size=>"16x16"), att, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
-        <%else%>
-          <%=image_tag('spacer.gif',:size=>'16x16')%>
-        <%end%>
+<% attachments = (attachable.respond_to?('all_attachments') ? attachable.all_attachments : attachable.attachments)-%>
+<% unless attachable.attachments.blank?-%>
+  <div class='container-fluid'>
+    <div class='row-fluid text-center'>
+      <div class='span12'>
+        <h3>Attachments</h3>
       </div>
-      <div class='attachment_type'><%=att.attachment_type%></div>
-      <div><%=attachment_icon att%></div>
-      <%=att.attached_file_name%>
-    </td>
-    <% if(c%2==1) %></tr><%end%>
-    <% c += 1%>
-  <% end %>
-    <% if(c%2==1)%></tr><%end%>
-  </table>
-</div>
+    </div>
+    <div class='row'>
+      <ul class='thumbnails'>
+        <% attachments.each do |att| %>
+          <li class='span4'>
+            <div class='thumbnail text-center'>
+              <div class='attachment_delete'>
+                <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>
+                  <%=link_to(image_tag("x.png",:size=>"16x16"), att, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
+                <%else%>
+                  <%=image_tag('spacer.gif',:size=>'16x16')%>
+                <%end%>
+              </div>
+              <div class='attachment_type'><%=att.attachment_type%></div>
+              <div><%=attachment_icon att%></div>
+              <%=att.attached_file_name%>
+            </div>
+          </li>
+        <% end -%>
+      </ul>
+    </div>
+  </div>
+<%end-%>
 <div id='mod_attach'>
   Attach File:<br />
   <% att = attachable.attachments.build %>

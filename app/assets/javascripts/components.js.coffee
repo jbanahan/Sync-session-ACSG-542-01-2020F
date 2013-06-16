@@ -114,7 +114,7 @@
       renderTextInput = (opr) ->
         switch opr
           when "in", "notin"
-            return "<textarea rows='8' ng-model='crit.value' />"
+            return "<textarea rows='8' ng-model='crit.value' /><div><small class='muted'>Enter one value per line.</small></div>"
           when "null", "notnull"
             return ""
 

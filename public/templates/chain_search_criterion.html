@@ -10,8 +10,12 @@
     <div style='display:inline;' class='value_area'></div>
   </div>
   <div class='span3'>
-    <input type='checkbox' ng-model='crit.include_empty'/> Include Empty
-    <img ng-click='remove(crit)' class='action_link' src='/images/x.png'/>
+    <div>
+      <input type='checkbox' ng-model='crit.include_empty'/> Include Empty
+    </div>
+    <div>
+      <button ng-click='remove(crit)' class='btn'>Remove</button>
+    </div>
   </div>
 </div>
 
