@@ -2,12 +2,11 @@
   <% content_for :javascript do %>
     $(function() {
       OpenChain.initAttachments();
-      $("#sub_attach").button();
     });    
   <% end %>
   <% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
     <% content_for :action_bar do %>
-      <button id='btn_add_attachment'>Add Attachment</button>
+      <button id='btn btn_add_attachment'>Add Attachment</button>
     <%end%>
   <% end %>
 <%end-%>

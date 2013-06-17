@@ -1,7 +1,7 @@
 <% content_for :javascript do %>
 $(function() {
    setupShippingAddress('Master Company',$('#delivery_ship_from_id'),$('#ship_from_ad'),<%=Company.find_by_master(true).id%><%=@delivery.ship_from_id.nil? ? '' : ",#{@delivery.ship_from_id}"%>);
-   setupShippingAddress('Customer',$('#delivery_ship_to_id'),$('#ship_to_ad'),<%=@delivery.customer.nil? ? "'not set'": @delivery.customer.id%><%=@delivery.ship_to_id.nil? ? '' : ",#{@delivery.ship_to_id}"%>);
+   setupShippingAddress('Customer',$('#delivery_ship_to_id'),$('#ship_to_ad'),<%=@delivery.customer.nil? ? "'not set'".html_safe : @delivery.customer.id%><%=@delivery.ship_to_id.nil? ? '' : ",#{@delivery.ship_to_id}"%>);
    getAddress($('#ship_to_ad'),$("#delivery_ship_to_id").val());
    $("#delivery_customer_id").change(function() {
       setupShippingAddress('Customer',$('#delivery_ship_to_id'),$('#ship_to_ad'),$(this).val());

@@ -9,6 +9,11 @@
   });
   <% end %>
 <% end %>
+<%content_for :action_bar do-%>
+  <% if current_user.company.master? -%>
+    <button id="btn_new">New</button>
+  <% end -%>
+<% end -%>
 <%= render :partial => 'shared/search_box' %>
 <table class="detail_table">
   <thead>
@@ -41,6 +46,3 @@
   </tr>
 <% end %>
 </table>
-<% if current_user.company.master %>
-<button id="btn_new">New</button>
-<% end %>

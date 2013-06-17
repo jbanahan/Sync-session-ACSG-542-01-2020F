@@ -114,7 +114,7 @@ var OpenChain = (function() {
   var removeFromInvalidTariffs = function(hts_field) {
     hts_field.removeClass("error");
     var fieldId = hts_field.attr("id");
-    var invalidPosition = jQuery.inArray(fieldId,invalidTariffFields);
+    var invalidPosition = $.inArray(fieldId,invalidTariffFields);
     if(invalidPosition!=-1) {
       invalidTariffFields.splice(invalidPosition,1);
     }
@@ -784,7 +784,6 @@ $( function() {
     .click( function() {
         $("#mod_export").dialog('open');
     });
-    $("button").button();
     
     $(".classification_expand").click(function(ev) {
       ev.preventDefault();
@@ -805,7 +804,6 @@ $( function() {
         $(this).addClass("bad_data");
       }
     });
-    $(".comment_sub").button();
     $(".comment_lnk").click(function(ev) {
       ev.preventDefault();
       var bodyRow = $(this).parents(".comment_header").next();
@@ -880,7 +878,7 @@ $(document).ready( function() {
 });
 
 function endsWith(str, suffix) {
-    return inArray(suffix, str, str.length - suffix.length) !== -1;
+    return $.inArray(suffix, str, str.length - suffix.length) !== -1;
 }
 function toggleSearchValue() {
     var sv = $("#srch_val");
@@ -1073,7 +1071,7 @@ function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
     buttons:{"Save":function() {$("#frm_edit_line").submit();},
              "Cancel":function() {window.location = cancelPath;}}  
   });
-  $("#btn_add_line").button().click(function() {
+  $("#btn_add_line").click(function() {
     $("#mod_edit_line").dialog('open');
   });
   OpenChain.addClickMap(isSalesOrder ? 'l' : 'o','Add '+(isSalesOrder ? 'Sale' : 'Order'),'btn_add_order');

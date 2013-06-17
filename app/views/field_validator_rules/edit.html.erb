@@ -1,13 +1,13 @@
 <% content_for :javascript do%>
 $(function() {
-  $("#btn_delete").button();
+  $("#btn_delete_redirect").click(function() {$("#btn_delete").click();});
   OpenChain.addClickMap('d',"Delete","btn_delete");
 });
 
 <%end%>
 <% content_for :action_bar do%>
   <button class="form_to" key_map="s" form_id="frm_rule">Save</button> 
-  <%=button_to('Delete', field_validator_rule_path(@rule),:method=>:delete, :confirm=>"Are you sure?", :id=>"btn_delete")%>
+  <button id='btn_delete_redirect'>Delete</button>
   <button class="btn_link" key_map="b" link_to="<%=field_validator_rules_path%>">Back</button>
 <% end %>
 <% mf = @rule.model_field%>
@@ -39,3 +39,6 @@ $(function() {
   <%=field_row "Regular Expression", content_tag(:span,f.text_field(:regex)+tag("br")+"See "+link_to("this article","http://en.wikipedia.org/wiki/Regular_expression",:target=>"_blank")+".")%>
   </table>
 <%end%>
+<div style='display:none;'>
+  <%=button_to('Delete', field_validator_rule_path(@rule),:method=>:delete, :confirm=>"Are you sure?", :id=>"btn_delete")%>
+</div>

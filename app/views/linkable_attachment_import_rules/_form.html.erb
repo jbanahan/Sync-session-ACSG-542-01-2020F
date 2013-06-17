@@ -1,9 +1,9 @@
 <%content_for :javascript do %>
-$(function() {$("#btn_delete").button();});
+$(function() {$("#btn_delete_redirect").click(function() {$("#btn_delete").click();});});
 <%end%>
 <%content_for :action_bar do %>
   <button class="form_to" form_id="frm_rule" key_map='s'>Save</button>
-  <%=button_to('Delete', linkable_attachment_import_rule_path(@rule),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") if @rule.id%>
+  <button id='btn_delete_redirect'>Delete</button>
   <button class='btn_link' link_to='<%=linkable_attachment_import_rules_path%>' key_map='b'>Back</button>
 <%end%>
 <h1>Linkable Attachment Rule</h1>
@@ -13,3 +13,6 @@ $(function() {$("#btn_delete").button();});
     <%=field_row "Field", select_model_fields_tag("linkable_attachment_import_rule[model_field_uid]",@rule.model_field_uid) %>
   </table>
 <%end%>
+<div style='display:none;'>
+  <%=button_to('Delete', linkable_attachment_import_rule_path(@rule),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") if @rule.id%>
+</div>
