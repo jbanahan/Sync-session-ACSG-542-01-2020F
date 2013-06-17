@@ -2,7 +2,6 @@
   <% if current_user.company.master %>
   $(function() {
     $( "#btn_new" )
-      .button()
       .click(function() {
         window.location = '<%=new_company_path%>';
       });
@@ -46,3 +45,4 @@
   </tr>
 <% end %>
 </table>
+<%=will_paginate @companies%>
