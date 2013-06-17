@@ -128,7 +128,6 @@ class FileImportProcessor
       }
       fire_row row_number, nil, messages, true #true = failed
     rescue
-      debugger
       messages << "SYS ERROR: #{$!.message}"
       fire_row row_number, nil, messages, true
       raise $!
