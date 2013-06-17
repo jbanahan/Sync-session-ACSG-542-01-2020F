@@ -136,6 +136,39 @@ describe ImportedFilesController do
       r = JSON.parse response.body
       r['rows'].size.should == 1
     end
+
+    it "should limit page size to 10 for old IE versions" do
+      @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
+      Product.stub(:search_where).and_return("1=1")
+      p1 = Factory(:product)
+      f = Factory(:imported_file,:user=>@u,:attached_file_name=>'fn.xls')
+      f.search_columns.create!(:model_field_uid=>'prod_uid')
+      f.search_columns.create!(:model_field_uid=>'prod_name')
+      finished_at = 1.minute.ago
+      fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
+      fir.change_records.create!(:recordable=>p1)
+
+      # The important bit here is the 10 at the end of the with parameters
+      ImportedFilesController.any_instance.should_receive(:execute_query_to_hash).with(an_instance_of(SearchQuery), @u, 1, 10).and_return {}
+      get :results, :id=>f.id, :format=>:json
+      response.should be_success
+    end
+
+    it "should limit page size to 100 for all other browsers" do
+      Product.stub(:search_where).and_return("1=1")
+      p1 = Factory(:product)
+      f = Factory(:imported_file,:user=>@u,:attached_file_name=>'fn.xls')
+      f.search_columns.create!(:model_field_uid=>'prod_uid')
+      f.search_columns.create!(:model_field_uid=>'prod_name')
+      finished_at = 1.minute.ago
+      fir = Factory(:file_import_result,:imported_file=>f,:finished_at=>finished_at)
+      fir.change_records.create!(:recordable=>p1)
+
+      # The important bit here is the 100 at the end of the with parameters
+      ImportedFilesController.any_instance.should_receive(:execute_query_to_hash).with(an_instance_of(SearchQuery), @u, 1, 100).and_return {}
+      get :results, :id=>f.id, :format=>:json
+      response.should be_success
+    end
   end
   describe 'update_search_criterions' do
     before :each do

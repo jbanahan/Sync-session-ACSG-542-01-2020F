@@ -473,10 +473,6 @@ $( function() {
     OpenChain.init(OpenChain.user_id);
     $(".decimal").jStepper();
     $(".integer").jStepper({allowDecimals:false});
-    $("#lnk_hide_notice").click(function(ev) {
-      ev.preventDefault();
-      $('#notice').hide();
-    });
     $(".btn_cancel_mod").click( function() {
         $.modal.close();
     });
@@ -597,7 +593,6 @@ $(document).ready( function() {
     OpenChain.initDragTables();
     handleCustomFieldCheckboxes();
     $(':checkbox').css('border-style','none');
-    $('#notice').slideDown('slow');
     $('.focus_first').focus();
 
     //make the shared/search_box partial work

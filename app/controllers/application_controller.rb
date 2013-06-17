@@ -281,6 +281,12 @@ class ApplicationController < ActionController::Base
     true
   end
 
+  # Returns true if the user's browser is IE < 9.
+  # Relies on the browser gem to make this calculation
+  def old_ie_version? 
+    return browser.ie? && Integer(browser.version) < 9 rescue true
+  end
+
   private
   
   def set_master_setup

@@ -300,6 +300,11 @@ root.Chain =
 
 $(document).ready () ->
   Chain.bindQuickSearchKey()
+  $("#lnk_hide_notice").click (evt) ->
+    evt.preventDefault
+    $('#notice').hide()
+
+  $('#notice').slideDown('slow')
 
   $(document).on 'click', "a.click_sink", (evt) ->
     evt.preventDefault();

@@ -80,7 +80,11 @@ class ImportedFilesController < ApplicationController
     f = ImportedFile.find params[:id]
     raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
     page = number_from_param params[:page], 1
-    per_page = number_from_param params[:per_page], 100
+    # Only show 10 results per page for older IE versions.  This is because these browser
+    # versions don't have the rendering speed of newer ones and take too long to load for 100
+    # rows (plus, we want to encourage people to upgrade).
+    per_page = (old_ie_version? ? 10 : 100)
+
     sr = f.search_runs.where(:user_id=>current_user.id).first 
     sr = f.search_runs.build unless sr
     sr.last_accessed=Time.now

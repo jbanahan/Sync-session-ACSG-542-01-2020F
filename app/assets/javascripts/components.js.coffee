@@ -300,7 +300,6 @@
       errors:"=",
       notices:"="
       urlPrefix:"@src"
-      perPage: "="
       noChrome: "@"
     }
     transclude:true
@@ -308,9 +307,6 @@
     controller: ['$scope',($scope) ->
 
       $scope.loadedSearchId = null
-
-      $scope.itemsPerPage = 100
-      $scope.itemsPerPage = $scope.perPage unless $scope.perPage==undefined or isNaN($scope.perPage)
 
       #write cookie for current selection state
       writeSelectionCookie = (scope) ->
@@ -330,7 +326,7 @@
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
         scope.searchResult = {id:searchId}
-        $http.get(scope.urlPrefix+searchId+'?page='+p+'&per_page='+scope.itemsPerPage).success((data,status,headers,config) ->
+        $http.get(scope.urlPrefix+searchId+'?page='+p).success((data,status,headers,config) ->
           scope.searchResult = data
           scope.errors.push "Your search was too big.  Only the first " + scope.searchResult.total_pages + " pages are being shown."  if scope.searchResult.too_big
 
