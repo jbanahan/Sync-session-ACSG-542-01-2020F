@@ -196,4 +196,10 @@ describe ImportedFilesController do
       flash[:errors].should have(1).message
     end
   end
+
+  describe :legacy_javascripts? do
+    it "should not include legacy javascripts" do
+      ImportedFilesController.new.legacy_javascripts?.should be_false
+    end
+  end
 end

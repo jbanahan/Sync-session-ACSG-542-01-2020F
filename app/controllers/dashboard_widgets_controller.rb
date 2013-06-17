@@ -21,4 +21,8 @@ class DashboardWidgetsController < ApplicationController
     end
     redirect_to root_path
   end
+
+  def legacy_javascripts?
+    false
+  end
 end

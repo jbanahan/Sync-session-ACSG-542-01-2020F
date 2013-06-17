@@ -1,9 +1,7 @@
 var OpenChain = (function() {
   //private stuff
-  var authToken;
   var mappedKeys = new Object();
   var keyMapPopUp = null;
-  var invalidTariffFields = [];
 
   var initRemoteValidate = function() {
     $(".rvalidate").live('change',function() {
@@ -43,11 +41,11 @@ var OpenChain = (function() {
       }
     });
   }
-  var bindQuickSearch = function() {$(document).bind('keyup','/',function() {$("#quick_search_input").focus();});}
+
   var keyDialogClose = function() {keyMapPopUp.dialog('close');}
   var unbindKeys = function() {
     $(document).unbind('keyup');
-    bindQuickSearch();
+    Chain.bindQuickSearchKey();
     $(document).bind('keyup','k',showKeyboardMapPopUp);
   }
   var showKeyboardMapPopUp = function() {
@@ -111,184 +109,7 @@ var OpenChain = (function() {
       }
     });
   }
-  var removeFromInvalidTariffs = function(hts_field) {
-    hts_field.removeClass("error");
-    var fieldId = hts_field.attr("id");
-    var invalidPosition = jQuery.inArray(fieldId,invalidTariffFields);
-    if(invalidPosition!=-1) {
-      invalidTariffFields.splice(invalidPosition,1);
-    }
-  }
-  var validateHTSFormat = function(hts) {
-    if(hts.length<6) {
-      return false;
-    }
-    // Some countries (NZ for instance) do have letters in their HTS numbers.
-    if(hts.match(/[^0-9A-Za-z\. ]/)!=null) {
-      return false;
-    }
-    return true;
-  }
-  var writeScheduleBMatches = function(htsNumber,countryId,schedBField) {
-    var col, schedBField;
-    if(schedBField.length) {
-      $.getJSON('/official_tariffs/schedule_b_matches?hts='+htsNumber,function(data) {
-        if(data==null) {
-          return;
-        }
-        var to_write = schedBField.siblings('.sched_b_options');
-        if(to_write.length==0) {
-          schedBField.parent().append("<div class='sched_b_options'></div>");
-          to_write = schedBField.siblings('.sched_b_options');
-        }
-        var h = "";
-        var sb;
-        for(var i=0; i<data.length; i++) {
-          sb = data[i].official_schedule_b_code
-          h += "<div class='sched_b_opt'><a href='#' class='sched_b_option'>"+sb.hts_code+"</a><br />";
-          h += sb.short_description+"<br />";
-          h += "<a href='#' class='lnk_schedb_popup' schedb='"+sb.hts_code+"'>info</a>";
-        }
-        to_write.html(h);
-        $(document).on('click',"a.sched_b_option",function(ev) {
-          ev.preventDefault();
-          schedBField.val($(this).html());
-        });
-      }); 
-    }
-  }
-  var validateOfficialValue = function(country_id,uri,hts_field,writeDataFunction) {
-    var get_result_box = function() {
-      var to_write = hts_field.siblings(".tariff_result");
-      if(to_write.length==0) {
-        hts_field.parent().append("<div class='tariff_result'></div>");
-        to_write = hts_field.siblings(".tariff_result"); 
-      }
-      return to_write;
-    }
-    var invalid_callback = function() {
-      invalidTariffFields.push(hts_field.attr("id"));
-      hts_field.addClass("error");
-      var to_write = get_result_box();
-      to_write.html("Invalid tariff number.");
-      Chain.fireTariffCallbacks('invalid',country_id,hts_field.val());
-    }
-    var valid_callback = function(data) {
-      var schedBField, col, htsNumber;
-      hts_field.removeClass("error");
-      writeTariffInfo(data);
-      if(hts_field.hasClass("hts_field")) {
-        col = hts_field.attr("col");
-        if(col!=undefined && col.length) {
-          //Schedule B in table format
-          schedBField = hts_field.parents(".tf_row").find('input.sched_b_field[col="'+col+'"]');
-        } else {
-          //everything else, just assume 1 schedule b per page
-          schedBField = $(".sched_b_field")
-        }
-        if(schedBField.length) {
-          htsNumber = hts_field.val()
-          writeScheduleBMatches(htsNumber,country_id,schedBField);
-        }
-      }
-      Chain.fireTariffCallbacks('valid',country_id,hts_field.val());
-    }
-    var writeTariffInfo = function(data) {
-      var t, h, to_write;
-      to_write = get_result_box();
-      h = writeDataFunction(data);
-      to_write.html(h);
-    }
-    removeFromInvalidTariffs(hts_field);
-    var hts = hts_field.val();
-    if(hts.length==0) {
-      $(this).removeClass("error");
-      get_result_box().html("");
-      Chain.fireTariffCallbacks('empty',country_id,'');
-      return;
-    }
-    if(!validateHTSFormat(hts)) {
-      invalid_callback();
-      return;
-    }
-    $.getJSON(uri,function(data) {
-      if(data==null) {
-        invalid_callback();
-      }
-      else {
-        valid_callback(data);
-      }
-    });
-  }
-  var validateHTSValue = function(country_id,hts_field) {
-    var wdf = function(data) {  
-      if(data!="country not loaded") {
-        var t = data.official_tariff;
-        var h = t.remaining_description+"<br />"; 
-        if(t.common_rate) {
-          h+="Common Rate: "+t.common_rate+"<br />";
-        } else {
-          if(t.general_rate) {
-            h+="General Rate: "+t.general_rate+"<br />";
-          }
-          if(t.erga_omnes_rate) {
-            h+="Erga Omnes Rate: "+t.erga_omnes_rate+"<br />";
-          }
-          if(t.most_favored_nation_rate) {
-            h+="MFN Rate: "+t.most_favored_nation_rate+"<br />";
-          }
-        }
-        if(t.general_preferential_tariff_rate) {
-          h+="GPT Rate: "+t.general_preferential_tariff_rate+"<br />";
-        }
-        if(t.import_regulations) {
-          h+="Import Regulations: "+t.import_regulations+"<br />";
-        }
-        if(t.export_regulations) {
-          h+="Export Regulations: "+t.export_regulations+"<br />";
-        }
-        h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
-      }
-      return h;
-    }
-    validateOfficialValue(country_id,'/official_tariffs/find?hts='+hts_field.val()+'&cid='+country_id,hts_field,wdf)
-  }
-  var validateScheduleBValue = function(hts_field) {
-    var wdf = function(data) {
-      var h, t;
-      h = "";
-      if(data) {
-        t = data.official_schedule_b_code;
-        h = t.short_description+"<br />"
-        h += "<a href='#' class='lnk_schedb_popup' schedb='"+t.hts_code+"'>info</a>";
-      }
-      return h;
-    }
-
-    validateOfficialValue(hts_field.attr("country"),'/official_tariffs/find_schedule_b?hts='+hts_field.val(),hts_field,wdf);
-  }
-
-  var pollingId;
-  var pollForMessages = function(user_id) {
-    $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
-      if(data>0) {
-        $('#message_envelope').show();
-      } else {
-        $('#message_envelope').hide();
-      }
-    });
-    return setInterval(function() {
-        $.getJSON('/messages/message_count?user_id='+user_id,function(data) {
-          if(data>0) {
-            $('#message_envelope').show();
-          } else {
-            $('#message_envelope').hide();
-          }
-        });
-      }, 30000
-    );
-  }
-
+  
   var renderMilestones = function(parentContainer,milestoneSetJson,headingModule,isAdmin) { 
     var mfs = milestoneSetJson.milestone_forecast_set;
     var ident = mfs.piece_set.identifiers[headingModule];
@@ -331,52 +152,6 @@ var OpenChain = (function() {
         renderMilestones(parentContainer,data,headingModule,isAdmin);
       });
     }}});
-  }
-  var initScheduleBLinks = function() {
-    $(".lnk_schedb_popup").live('click',function(evt) {
-      evt.preventDefault();
-      scheduleBPopUp($(this).attr("schedb"));
-    }); 
-  }
-  var scheduleBPopUp = function(hts) {
-    var mp = $("#mod_sched_b");
-    if(!mp.length) {
-      $("body").append("<div id='mod_sched_b' style='display:none;'><div id='sched_b_cont'>Loading Schedule B Data</div></div>")
-      mp = $("#mod_sched_b");
-      mp.dialog({autoOpen:false,width:'400',height:'500',buttons:{"OK":function() {$("#mod_sched_b").dialog('close');}}});
-    }
-    var c = $("#sched_b_cont");
-    c.html("Loading Schedule B Data");
-    mp.dialog('open');
-    $.ajax({
-      url:'/official_tariffs/find_schedule_b?hts='+hts,
-      dataType:'json',
-      error: function(req,msg,obj) {
-        c.html("We're sorry, an error occurred while trying to load this information.");
-
-      },
-      success: function(data) {
-        var h = '';
-        if(data==null) {
-          h = "No data was found for tariff "+hts;
-        } else {
-          var o = data.official_schedule_b_code;
-          h = "<table class='tbl_hts_popup'><tbody>";
-          h += htsDataRow("Tariff #:",o.hts_code);
-          h += htsDataRow("Short Description:",o.short_description);
-          h += htsDataRow("Long Description:",o.long_description);
-          h += htsDataRow("Quantity 1",o.quantity_1);
-          h += htsDataRow("Quantity 2",o.quantity_2);
-          h += htsDataRow("SITC Code",o.sitc_code);
-          h += htsDataRow("End Use Classification",o.end_use_classification);
-          h += htsDataRow("USDA Code",o.usda_code);
-          h += htsDataRow("NAICS Classification",o.naics_classification);
-          h += htsDataRow("HiTech Classification",o.hitech_classification);
-          h += "</tbody></table>";
-        }
-        c.html(h);
-      }
-    });
   }
 
   var initEntitySnapshotPopups = function() {
@@ -446,15 +221,7 @@ var OpenChain = (function() {
         });
       });
     },
-    //tested
-    setAuthToken: function(t) {
-      authToken = t;
-      RailsHelper.authToken(t);
-    },
-    //tested
-    getAuthToken: function() {
-      return authToken;
-    },
+
     changePlan: function(milestoneSetId,parentContainerId,headingModule,isAdmin) {
       var mp = $("#mod_loading_plans");
       if(!mp.length) {
@@ -544,13 +311,10 @@ var OpenChain = (function() {
     registerDragTableDropHandler: function(table,handler) {
       dropTableHandlers[table.attr('id')] = handler;
     },
-    hasInvalidTariffs: function() {
-      return invalidTariffFields.length>0;
-    },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
-        $(this).closest(".tf_row").find(".hts_field").each(function() {removeFromInvalidTariffs($(this));});
-        $(this).closest(".tf_row").find(".sched_b_field").each(function() {removeFromInvalidTariffs($(this));});
+        $(this).closest(".tf_row").find(".hts_field").each(function() {Classify.removeFromInvalidTariffs($(this));});
+        $(this).closest(".tf_row").find(".sched_b_field").each(function() {Classify.removeFromInvalidTariffs($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
@@ -569,7 +333,7 @@ var OpenChain = (function() {
         }
       });
       $("form").submit(function() {
-        if(OpenChain.hasInvalidTariffs()) {
+        if(Classify.hasInvalidTariffs()) {
           window.alert("Please fix or erase invalid tariff numbers.");
           return false;
         }
@@ -588,14 +352,8 @@ var OpenChain = (function() {
           }
         });
       });
-      OpenChain.enableHtsChecks(); 
+      Classify.enableHtsChecks(); 
       Chain.htsAutoComplete();
-    },
-    enableHtsChecks: function() {
-      $(".sched_b_field").live('blur',function() {validateScheduleBValue($(this));});
-      $(".sched_b_field").each(function() {validateScheduleBValue($(this));});
-      $(".hts_field").live('blur',function() {validateHTSValue($(this).attr('country'),$(this))});
-      $(".hts_field").each(function() {validateHTSValue($(this).attr('country'),$(this))});
     },
     add_tf_row: function(link,parent_index,country_id) {
       my_index = new Date().getTime();
@@ -614,9 +372,6 @@ var OpenChain = (function() {
         "Cancel":function() {$("#mod_attach").dialog('close');}
       }});
       $("#btn_add_attachment").click(function() {$("#mod_attach").dialog('open');});
-    },
-    disableMessagePolling: function() {
-      clearInterval(pollingId) 
     },
     link_selects: function(wrapTableSelector) {
       var tbl, s_unselected, s_selected, l_unsel, l_sel;
@@ -657,13 +412,8 @@ var OpenChain = (function() {
       initLinkButtons();
       initFormButtons();
       initRemoteValidate();
-      initScheduleBLinks();
       initEntitySnapshotPopups();
-      bindQuickSearch();
-      //initInfiniteScroll();
-      if(user_id) {
-        pollingId = pollForMessages(user_id);
-      }
+      Chain.bindQuickSearchKey();
     }
   };
 })();
@@ -720,7 +470,6 @@ var OCInvoice = (function() {
   }
 })();
 $( function() {
-    $("a.click_sink").live('click',function(evt) {evt.preventDefault();});
     OpenChain.init(OpenChain.user_id);
     $(".decimal").jStepper();
     $(".integer").jStepper({allowDecimals:false});
@@ -799,7 +548,7 @@ $( function() {
       $(this).nextAll("div.classification_detail_box").hide("blind", {direction: "vertical"}, 500);
     });
     $(".hts_field").change(function() {
-      if(validateHTS($(this).val())) {
+      if(Classify.validateHTS($(this).val())) {
         $(this).removeClass("bad_data");
       } else {
         $(this).addClass("bad_data");
@@ -842,19 +591,6 @@ $( function() {
           $("#edit_line_uom").html(uom);
         });
       }
-    });
-    $(".lnk_tariff_popup").live("click", function(evt) {
-      evt.preventDefault();
-      var hts = $(this).attr('hts');
-      var c_id = $(this).attr('country');
-      var c_iso = $(this).attr('iso')
-      tariffPopUp(hts,c_id,c_iso);
-    });
-    $("a.hts_option").live('click',function(ev) {
-      ev.preventDefault();
-      var h = $(this).parents(".hts_cell").find("input.hts_field")
-      h.val($(this).html())
-      h.blur();
     });
 });
 $(document).ready( function() {
@@ -1057,11 +793,6 @@ function getProductUOM(id, callback) {
 function getProductJSON(id, callback) {
   $.getJSON("/products/"+id+".json",callback);
 } 
-/* right now just validating length */
-function validateHTS(inputStr) {
-  base = stripNonNumeric(inputStr);
-  return base.length>5  
-}
 function stripNonNumeric(inputStr) {
     return inputStr.replace(/[^0-9]/g, ''); 
 }
@@ -1168,82 +899,6 @@ function openPackOrder(id) {
     $("#div_pack_order_content").html(h);
     $(".decimal").jStepper();
   });
-}
-function tariffPopUp(htsNumber,country_id,country_iso) {
-  var mod = $("#mod_tariff_popup");
-  if(mod.length==0) {
-    $("body").append("<div id='mod_tariff_popup'><div id='tariff_popup_content'></div></div>");
-    mod = $("#mod_tariff_popup");
-    mod.dialog({autoOpen:false,title:'Tariff Information',width:'400',height:'500',
-      buttons:{"Close":function() {$("#mod_tariff_popup").dialog('close');}}
-    });
-  }
-  var c = $("#tariff_popup_content");
-  c.html("Loading tariff information...");
-  mod.dialog('open');
-  var u = '/official_tariffs/find?hts='+htsNumber;
-  if(country_id) {
-    u += "&cid="+country_id;
-  } else if (country_iso) {
-    u += "&ciso="+country_iso;
-  }
-  $.ajax({
-    url:u,
-    dataType:'json',
-    error: function(req,msg,obj) {
-      c.html("We're sorry, an error occurred while trying to load this information.");
-
-    },
-    success: function(data) {
-      var h = '';
-      if(data==null) {
-        h = "No data was found for tariff "+htsNumber;
-      } else {
-        var o = data.official_tariff
-        h = "<table class='tbl_hts_popup'><tbody>";
-        h += htsDataRow("Country:",o.country.name);
-        h += htsDataRow("Tariff #:",o.hts_code);
-        h += htsDataRow("Common Rate:",o.common_rate);
-        h += htsDataRow("General Rate:",o.general_rate);
-        h += htsDataRow("Chapter:",o.chapter);
-        h += htsDataRow("Heading:",o.heading);
-        h += htsDataRow("Sub-Heading:",o.sub_heading);
-        h += htsDataRow("Text:",o.remaining_description);
-        h += htsDataRow("Special Rates:",o.special_rates);
-        h += htsDataRow("Add Valorem:",o.add_valorem_rate);
-        h += htsDataRow("Per Unit:",o.per_unit_rate);
-        h += htsDataRow("UOM:",o.unit_of_measure);
-        h += htsDataRow("MFN:",o.most_favored_nation_rate);
-        h += htsDataRow("GPT:",o.general_preferential_tariff_rate);
-        h += htsDataRow("Erga Omnes:",o.erga_omnes_rate);
-        h += htsDataRow("Column 2:",o.column_2_rate);
-        h += htsDataRow("Import Regulations:",o.import_regulations);
-        h += htsDataRow("Export Regulations:",o.export_regulations);
-        if(o.binding_ruling_url) {
-          h += htsDataRow("Binding Rulings:","<a href='"+o.binding_ruling_url+"' target='rulings'>Click Here</a>");
-        }
-        if(o.official_quota!=undefined) {
-          h += htsDataRow("Quota Category",o.official_quota.category);
-          h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor);
-          h += htsDataRow("SME UOM",o.official_quota.unit_of_measure);
-        }
-        h += htsDataRow("Notes:",o.notes);
-        if(o.auto_classify_ignore) {
-          h += htsDataRow("Ignore For Auto Classify","Yes")
-        }
-        h += "</tbody></table>";
-      }
-      c.html(h);
-    }
-  });
-}
-
-function htsDataRow(label,data) {
-  if(data!=undefined && jQuery.trim(data).length>0) {
-    return "<tr class='hover'><td class='lbl_hts_popup'>"+label+"</td><td>"+data+"</td></tr>";
-  } else {
-    return "";
-  }
 }
 
 function next_action_to_form(form) {

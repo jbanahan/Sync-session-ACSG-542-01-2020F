@@ -1,4 +1,4 @@
-<div ng-controller='AdvancedSearchCtrl' id='advanced_search_wrapper'>
+<div id='advanced_search_wrapper'>
   <div chain-messages errors='errors' notices='notices'></div>
   <div ng-show='searchSetup.id'>
     <select ng-hide='showSetup' id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>

@@ -1,6 +1,11 @@
 require 'open_chain/search_query_controller_helper'
 class AdvancedSearchController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
+
+  def legacy_javascripts?
+    false
+  end
+
   def index
     render :layout=>'one_col'
   end

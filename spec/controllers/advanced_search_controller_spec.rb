@@ -404,4 +404,10 @@ describe AdvancedSearchController do
       lambda {get :download, :id=>ss.id, :format=>:xls}.should raise_error ActionController::RoutingError 
     end
   end
+
+  describe :legacy_javascripts? do
+    it "should not include legacy javascripts" do
+      AdvancedSearchController.new.legacy_javascripts?.should be_false
+    end
+  end
 end

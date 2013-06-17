@@ -4,6 +4,10 @@ require 'open_chain/search_query_controller_helper'
 
 class ImportedFilesController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
+
+  def legacy_javascripts?
+    false
+  end
   
   def index
     @imported_files = ImportedFile.where(:user_id=>current_user.id).order("created_at DESC").paginate(:page=>20, :page=>params[:page])

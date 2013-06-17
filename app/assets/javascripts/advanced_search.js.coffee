@@ -140,6 +140,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   #give functionality
   $scope.giveUserId = null
   $scope.givePrompt = false
+
   $scope.give = (targetId) ->
     $scope.givePrompt = false
     $http.post('/search_setups/'+$scope.searchSetup.id+'/give',{'other_user_id':targetId}).success((data) ->
@@ -224,7 +225,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #remove columns from selected box
   $scope.removeColumns = () ->
-    removeSelectionFromModel($scope.searchSetup.search_columns,$scope.columnsToRemove)
+    removeSelectionFromModel($scope.searchSetup.search_columns, $scope.columnsToRemove)
 
   #add a blank column
   $scope.addBlank = () ->
@@ -245,7 +246,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #remove sorts from selected box
   $scope.removeSorts = () ->
-    removeSelectionFromModel($scope.searchSetup.sort_criterions,$scope.sortsToRemove)
+    removeSelectionFromModel($scope.searchSetup.sort_criterions, $scope.sortsToRemove)
 
   #move sorts up in the list
   $scope.moveSortsUp = () ->
@@ -274,22 +275,30 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   #
   # WATCHES
   #
+  registrations = []
 
   #change monitor for selected search
-  $scope.$watch 'searchId',(newValue,oldValue) ->
-    $scope.changeSearch(newValue) unless isNaN(newValue) || newValue==oldValue
+  registrations.push($scope.$watch 'searchId',(newValue,oldValue, watchScope) ->
+    watchScope.changeSearch(newValue) unless isNaN(newValue) || newValue==oldValue
+  )
 
-  $scope.$watch 'searchResult.page', (newValue,oldValue) ->
-    $location.path '/'+$scope.searchId+'/'+newValue unless isNaN(newValue) || newValue==oldValue
-
+  registrations.push($scope.$watch 'searchResult.page', (newValue, oldValue, watchScope) ->
+    $location.path '/'+watchScope.searchId+'/'+newValue unless isNaN(newValue) || newValue==oldValue
+  )
 
 
   #remove criterions that are deleted
-  $scope.$watch 'searchSetup.search_criterions', (() ->
-    return unless $scope.searchSetup && $scope.searchSetup.search_criterions && $scope.searchSetup.search_criterions.length > 0
-    for c in $scope.searchSetup.search_criterions
-      $scope.removeCriterion(c) if c.deleteMe
-  ), true
+  registrations.push($scope.$watch 'searchSetup.search_criterions', ((newValue, oldValue, watchScope) ->
+      return unless watchScope.searchSetup && watchScope.searchSetup.search_criterions && watchScope.searchSetup.search_criterions.length > 0
+      for c in watchScope.searchSetup.search_criterions
+        watchScope.removeCriterion(c) if c.deleteMe
+    ), true
+  )
+
+  $scope.$on('$destroy', () ->
+    deregister() for deregister in registrations
+    registrations = null
+  )
 
   #
   #  VIEW FORMATTING UTILITIES BELOW HERE

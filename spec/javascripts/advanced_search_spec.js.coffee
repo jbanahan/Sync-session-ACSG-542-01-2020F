@@ -1,4 +1,6 @@
+#=require components
 #=require advanced_search
+
 
 beforeEach module 'AdvancedSearchApp'
 

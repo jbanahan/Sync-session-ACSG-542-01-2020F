@@ -1,6 +1,5 @@
-<!-- quirks mode IE7 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <% 
   no_buttons = false
   no_buttons = true if @no_buttons
@@ -12,22 +11,26 @@
 <!-- Hostname: <%=`hostname`.strip%> -->
 <% end %>
 <head>
-  <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
   <title>chain.io</title>
+  <!-- TODO Add IE8 compat level (if needed?) / UTF-8 meta tag-->
   <%= favicon_link_tag %>
   <%= stylesheet_link_tag    "application", :media => "all" %>
   <%= javascript_include_tag "application" %>
+  <% if @include_legacy_scripts %>
+    <%= javascript_include_tag "legacy" %>
+  <% end %>
   <%= csrf_meta_tags %>
   <%= yield :head_tags%>
   <script type='text/javascript'>
-  OpenChain.setAuthToken('<%=form_authenticity_token%>');
+  Chain.setAuthToken('<%=form_authenticity_token%>');
   <% if current_user %>
-    OpenChain.user_id = <%=current_user.id%>;
+    Chain.messagePoller.initialize('<%=current_user.id%>', <%=((Rails.env != 'development') ? 30 : -1)%>)
+    <% if @include_legacy_scripts %>
+      OpenChain.user_id = <%=current_user.id%>;
+    <% end %>
   <% end %>
+
   <%= yield :javascript%>
-  <% if Rails.env=='development' || current_user.nil?%>
-    $(document).ready(OpenChain.disableMessagePolling());
-  <% end %>
   </script>
   <!--[if IE 7]>
   <style type='text/css'>
