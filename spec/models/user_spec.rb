@@ -246,4 +246,31 @@ describe User do
       Time.zone.should == ActiveSupport::TimeZone[@current_user.time_zone]
     end
   end
+  describe 'hidden messages' do
+    it "should add hidden message" do
+      u = User.new
+      u.add_hidden_message 'h1'
+      u.hide_message?('h1').should be_true
+    end
+    it "should remove hidden message" do
+      u = User.new
+      u.add_hidden_message 'hx'
+      u.remove_hidden_message 'hx'
+      u.hide_message?('hx').should be_false
+    end
+    it "should save hidden messages" do
+      u = Factory(:user)
+      u.add_hidden_message 'hx'
+      u.add_hidden_message 'abc'
+      u.save!
+      u = User.find(u.id)
+      u.hide_message?('hx').should be_true
+      u.hide_message?('abc').should be_true
+    end
+    it "should be case insensitive" do
+      u = User.new
+      u.add_hidden_message 'hx'
+      u.hide_message?('HX').should be_true
+    end
+  end
 end

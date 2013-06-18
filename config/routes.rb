@@ -124,6 +124,7 @@ OpenChain::Application.routes.draw do
   match "/public_fields" => "public_fields#index"
   match "/public_fields/save" => "public_fields#save", :via => :post
   match "/users/email_new_message" => "users#email_new_message"
+  match "/hide_message/:message_name" => 'users#hide_message', :via => :post
   match "/quick_search" => "quick_search#show"
   match "/quick_search/module_result" => "quick_search#module_result"
   match "/enable_run_as" => "users#enable_run_as"

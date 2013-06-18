@@ -1,25 +1,28 @@
 <%content_for :javascript do -%>
 $(function() {
   $(document).ready(function() {
-    $("#what-happened").modal();
-    $("#never-show").click(function() {
-      $("#what-happened").modal('hide');
-    });
-    $("#show-tour").click(function() {
-      $("#what-happened").modal('hide');
-      bootstro.start('',{items:[
-         {selector:'#leftnav',placement:'bottom',content:'Move between system modules and build custom searches here.'},
-         {selector:'#menu_dropdown',placement:'bottom',content:'Manage your account and access extra settings here.'},
-         {selector:'#quick_search_input',placement:'bottom',content:'Search for items here.'},
-         {selector:'#nav-action-bar',placement:'top',content:"Each page's actions are down here.",width:'400px'}
-        ]});
-    });
+    <%unless current_user.hide_message?('wh1')-%>
+      $("#what-happened").modal();
+      $("#never-show").click(function() {
+        $("#what-happened").modal('hide');
+        Chain.hideMessage('wh1');
+      });
+      $("#show-tour").click(function() {
+        $("#what-happened").modal('hide');
+        bootstro.start('',{items:[
+           {selector:'#leftnav',placement:'bottom',content:'Move between system modules and build custom searches here.'},
+           {selector:'#menu_dropdown',placement:'bottom',content:'Manage your account and access extra settings here.'},
+           {selector:'#quick_search_input',placement:'bottom',content:'Search for items here.'},
+           {selector:'#nav-help-anchor',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
+          ]});
+      });
+    <%end-%>
     $("#btn_tour").click(function() {
       bootstro.start('',{items:[
          {selector:'#leftnav',placement:'bottom',content:'Move between system modules and build custom searches here.'},
          {selector:'#menu_dropdown',placement:'bottom',content:'Manage your account and access extra settings here.'},
          {selector:'#quick_search_input',placement:'bottom',content:'Search for items here.'},
-         {selector:'#nav-action-bar',placement:'top',content:"Each page's actions are down here.",width:'400px'}
+         {selector:'#nav-help-anchor',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
         ]});
     });
     $(".widget_box").each(function() {
@@ -29,7 +32,8 @@ $(function() {
 });
 <%end-%>
 <%content_for :action_bar do -%>
-  <%unless @widgets.blank? -%>
+  <span id='nav-help-anchor'>&nbsp;</span>
+  <%unless current_user.search_setups.empty? -%>
     <button class='btn_link' link_to='<%=edit_dashboard_widgets_path%>'>Setup</button>
   <%end-%>
 <%end-%>
@@ -62,22 +66,24 @@ $(function() {
     <%end -%>
   <%end -%>
 </div>
-<div id='what-happened' class='modal hide fade'>
-  <div class='modal-header'>
-    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-    <h3>DON'T PANIC</h3>
+<%unless current_user.hide_message?('wh1')-%>
+  <div id='what-happened' class='modal hide fade'>
+    <div class='modal-header'>
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      <h3>DON'T PANIC</h3>
+    </div>
+    <div class='modal-body'>
+      <p>We've made a bunch of improvements to the user interface.</p>
+      <ul>
+        <li>The top navigation bar is simpler and takes up less space.</li>
+        <li>Buttons have been moved from the right to the bottom of the page.</li>
+        <li>The search setup screen is easier to use.</li>
+      </ul>
+      <p>Don't worry, all the stuff under the hood still works the same.</p>
+    </div>
+    <div class='modal-footer'>
+      <button class='btn' id='never-show'>Never Show This Again</button>
+      <button class='btn btn-primary' id='show-tour'>Give Me A Tour</button>
+    </div>
   </div>
-  <div class='modal-body'>
-    <p>We've made a bunch of improvements to the user interface.</p>
-    <ul>
-      <li>The top navigation bar is simpler and takes up less space.</li>
-      <li>Buttons have been moved from the right to the bottom of the page.</li>
-      <li>The search setup screen is easier to use.</li>
-    </ul>
-    <p>Don't worry, all the stuff under the hood still works the same.</p>
-  </div>
-  <div class='modal-footer'>
-    <button id='never-show'>Never Show This Again</button>
-    <button id='show-tour'>Give Me A Tour</button>
-  </div>
-</div>
+<%end-%>

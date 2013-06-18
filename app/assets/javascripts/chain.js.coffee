@@ -1,6 +1,10 @@
 root = exports ? this
 root.Chain =
 
+  #tell the server never to show this user message to the current user again
+  hideMessage : (messageName) ->
+    $.post('/hide_message/'+messageName)
+
   #populates the user list from json result
   populateUserList : (selectBox,defaultSelection,data) ->
     selectBox.html('')
