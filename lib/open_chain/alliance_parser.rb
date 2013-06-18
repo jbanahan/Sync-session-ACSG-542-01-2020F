@@ -30,7 +30,8 @@ module OpenChain
       '99310'=>:monthly_statement_received_date,
       '99311'=>:monthly_statement_paid_date,
       '00048'=>:daily_statement_due_date,
-      '00121'=>:daily_statement_approved_date
+      '00121'=>:daily_statement_approved_date,
+      '00011'=>:eta_date
     }
 
     def self.integration_folder
@@ -108,6 +109,8 @@ module OpenChain
                 process_sc00 r
               when "SN00" 
                 process_sn00 r
+              when "CP00"
+                process_cp00 r
             end
             current_row += 1
           end
@@ -302,6 +305,7 @@ module OpenChain
       @c_line.vendor_name = r[83,35].strip
       @c_line.volume = parse_currency r[118,11] #not really currency, but 2 decimals, so it's ok
       @c_line.unit_price = @c_line.value / @c_line.quantity if @c_line.value > 0 && @c_line.quantity > 0
+      @c_line.contract_amount = parse_currency r[135,10]
       @c_line.department = r[147,6].strip
       @c_line.computed_value = parse_currency r[260,13]
       @c_line.computed_adjustments = parse_currency r[299,13]
@@ -356,6 +360,33 @@ module OpenChain
       @ct.gross_weight = gw unless gw.nil?
       accumulate_string :spis, @ct.spi_primary 
       accumulate_string :spis, @ct.spi_secondary
+    end
+
+    def process_cp00 r
+      # There's technically two types of cp00 lines.  Ones for ADD (Anti-Dumping Duty) and CVD (Countervailing Duty)
+      # The line positions and field names are identical in each, they just go into different prefix'ed fields based on       
+      # the line type
+      values = {}
+      values[:case_number] = r[8, 9]
+      values[:bond] = ((r[32, 1] == "Y") ? true : false)
+      values[:duty_amount] = parse_currency r[34, 10]
+      values[:case_value] = parse_currency r[17, 10]
+      values[:case_percent] = parse_decimal r[27, 5], 2
+
+      type = r[4, 3]
+      if type == "ADA"
+        @c_line.add_case_number = values[:case_number]
+        @c_line.add_bond = values[:bond]
+        @c_line.add_duty_amount = values[:duty_amount]
+        @c_line.add_case_value = values[:case_value]
+        @c_line.add_case_percent = values[:case_percent]
+      elsif type == "CVD"
+        @c_line.cvd_case_number = values[:case_number]
+        @c_line.cvd_bond = values[:bond]
+        @c_line.cvd_duty_amount = values[:duty_amount]
+        @c_line.cvd_case_value = values[:case_value]
+        @c_line.cvd_case_percent = values[:case_percent]
+      end
     end
 
     # invoice header
@@ -469,13 +500,35 @@ module OpenChain
       return nil if str.blank? || str.match(/^[0]*$/)
       Date.parse str
     end
+
     def parse_date_time str
       return nil if str.blank? || str.match(/^[0]*$/)
-      ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
+      begin
+        ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
+      rescue 
+        # For some reason Alliance will send us dates with a 60 in the minutes columns (rather than adding an hour)
+        # .ie  201305152260
+        if str =~ /60$/
+          time = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(str[0..-3] + "00")
+          time + 1.hour
+        end
+      end
     end
+
     def parse_decimal str, decimal_places
-      offset = -(decimal_places+1)
-      BigDecimal.new str.insert(offset,"."), decimal_places
+      # If the decimal string already has a period in it, don't insert another into it, just parse as is
+      if str && str =~ /\./
+        d = BigDecimal.new str
+        # Make sure we're rounding the value to the specified decimal places (otherwise, the string may be 1.2345 and we may only want 1.23)
+        d.round(decimal_places, BigDecimal::ROUND_HALF_UP)
+      else
+        offset = -(decimal_places+1)
+        # NOTE: I don't think this call is doing what was thought it was doing when initially programmed.  The 
+        # second argument to new is the # significant digits which is not the same as # of decimal places to use.
+        # I'm hesitant to change though, since this has been in place for a while.
+        BigDecimal.new str.insert(offset,"."), decimal_places
+      end
+      
     end
     def parse_currency str
       parse_decimal str, 2

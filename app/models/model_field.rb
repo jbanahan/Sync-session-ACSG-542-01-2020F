@@ -572,6 +572,56 @@ class ModelField
     ModelField.update_last_loaded update_cache_time
   end
 
+  def self.add_country_hts_fields
+    Country.import_locations.each do |c|
+      (1..3).each do |i|
+        mf = ModelField.new(next_index_number(CoreModule::PRODUCT),
+          "*fhts_#{i}_#{c.id}".to_sym,
+          CoreModule::PRODUCT,
+          "*fhts_#{i}_#{c.id}".to_sym,
+          {:label_override => "First HTS #{i} (#{c.iso_code})",
+            :data_type=>:string,
+            :history_ignore=>true,
+            :import_lambda => lambda {|p,d|
+              #validate HTS
+              hts = TariffRecord.clean_hts(d)
+              return "Blank HTS ignored for #{c.iso_code}" if hts.blank?
+              return "#{d} is not valid for #{c.iso_code} HTS #{i}" unless OfficialTariff.find_by_country_id_and_hts_code(c.id,hts) || OfficialTariff.where(country_id:c.id).empty?
+              cls = nil
+              #find classifications & tariff records in memory so this can work on objects that are dirty
+              p.classifications.each do |existing| 
+                cls = existing if existing.country_id == c.id
+                break if cls
+              end
+              cls = p.classifications.build(:country_id=>c.id) unless cls
+              tr = nil
+              tr = cls.tariff_records.sort {|a,b| a.line_number <=> b.line_number}.first
+              tr = cls.tariff_records.build unless tr
+              tr.send("hts_#{i}=".intern,hts)
+              "#{c.iso_code} HTS #{i} set to #{hts.hts_format}"
+            },
+            :export_lambda => lambda {|p|
+              #do this in memory with a loop over classifications instead of a where
+              #since there is a better probability that classifications will already be loaded
+              #and we don't want to hit the database again
+              cls = nil
+              p.classifications.each do |cl|
+                cls = cl if cl.country_id = c.id
+                break if cls
+              end
+              return "" unless cls && cls.tariff_records.first
+              h = cls.tariff_records.first.send "hts_#{i}"
+              h.nil? ? "" : h.hts_format
+            },
+            :qualified_field_name => "(SELECT hts_#{i} FROM tariff_records INNER JOIN classifications ON tariff_records.classification_id = classifications.id WHERE classifications.country_id = #{c.id} AND classifications.product_id = products.id ORDER BY tariff_records.line_number LIMIT 1)",
+            :process_query_result_lambda => lambda {|r| r.nil? ? nil : r.hts_format }
+          }
+        )
+        MODEL_FIELDS[CoreModule::PRODUCT.class_name.intern][mf.uid.to_sym] = mf
+      end
+    end
+  end
+
   def self.add_region_fields
     Region.all.each do |r|
       mf = ModelField.new(next_index_number(CoreModule::PRODUCT),
@@ -889,7 +939,18 @@ and classifications.product_id = products.id
       [19,:cil_hmf,:hmf,"HMF",{:data_type=>:decimal}],
       [20,:cil_mpf,:mpf,"MPF - Full",{:data_type=>:decimal}],
       [21,:cil_prorated_mpf,:prorated_mpf,"MPF - Prorated",{:data_type=>:decimal}],
-      [22,:cil_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal}]
+      [22,:cil_cotton_fee,:cotton_fee,"Cotton Fee",{:data_type=>:decimal}],
+      [23,:cil_contract_amount,:contract_amount,"Contract Amount",{:data_type=>:decimal,:currency=>:other}],
+      [24,:cil_add_case_number,:add_case_number,"ADD Case Number",{:data_type=>:string}],
+      [25,:cil_add_bond,:add_bond,"ADD Bond",{:data_type=>:boolean}],
+      [26,:cil_add_case_value,:add_case_value,"ADD Value",{:data_type=>:decimal,:currency=>:other}],
+      [27,:cil_add_duty_amount,:add_duty_amount,"ADD Duty",{:data_type=>:decimal,:currency=>:other}],
+      [28,:cil_add_case_percent,:add_case_percent,"ADD Percentage",{:data_type=>:decimal}],
+      [29,:cil_cvd_case_number,:cvd_case_number,"CVD Case Number",{:data_type=>:string}],
+      [30,:cil_cvd_bond,:cvd_bond,"CVD Bond",{:data_type=>:boolean}],
+      [31,:cil_cvd_case_value,:cvd_case_value,"CVD Value",{:data_type=>:decimal,:currency=>:other}],
+      [32,:cil_cvd_duty_amount,:cvd_duty_amount,"CVD Duty",{:data_type=>:decimal,:currency=>:other}],
+      [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
       [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
@@ -1178,6 +1239,7 @@ and classifications.product_id = products.id
     add_fields CoreModule::DELIVERY_LINE, make_product_arrays(100,"delln","delivery_lines")
     reset_custom_fields update_cache_time
     add_region_fields
+    add_country_hts_fields
   end
 
   reload #does the reload when the class is loaded the first time 

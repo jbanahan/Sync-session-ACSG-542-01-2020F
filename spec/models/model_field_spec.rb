@@ -75,6 +75,87 @@ describe ModelField do
     ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
   end
   context "special cases" do
+    context "first hts by country" do
+      before :each do
+        @c = Factory(:country,:iso_code=>'ZY',:import_location=>true)
+        ModelField.reload true
+      end
+      it "should create fields for each import country" do
+        c2 = Factory(:country,:iso_code=>'ZZ',:import_location=>true)
+        c3 = Factory(:country,:iso_code=>'NO',:import_location=>false)
+        ModelField.reload true
+        (1..3).each do |i|
+          c_mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
+          c_mf.label.should == "First HTS #{i} (ZY)"
+          c2_mf = ModelField.find_by_uid "*fhts_#{i}_#{c2.id}"
+          c2_mf.label.should == "First HTS #{i} (ZZ)"
+          ModelField.find_by_uid("*fhts_#{i}_#{c3.id}").should be_nil #don't create because not an import location
+        end
+      end
+      it "should allow import" do
+        ModelField.reload true
+        p = Factory(:product)
+        (1..3).each do |i|
+          Factory(:official_tariff,:country=>@c,:hts_code=>"123456789#{i}")
+          mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
+          r = mf.process_import(p, "123456789#{i}")
+          r.should == "ZY HTS #{i} set to 1234.56.789#{i}"
+        end
+        p.save!
+        p.should have(1).classifications
+        cls = p.classifications.find_by_country_id(@c.id)
+        cls.should have(1).tariff_records
+        tr = cls.tariff_records.find_by_line_number 1
+        tr.hts_1.should == "1234567891"
+        tr.hts_2.should == "1234567892"
+        tr.hts_3.should == "1234567893"
+      end
+      it "should update existing hts" do
+        Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
+        tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        mf.process_import tr.product, '1234567899'
+        tr.product.save!
+        tr.reload
+        tr.hts_1.should == '1234567899'
+      end
+      it "should strip non numerics from hts" do
+        Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
+        p = Factory(:product)
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        mf.process_import p, '1234.567-899 '
+        p.classifications.first.tariff_records.first.hts_1.should == '1234567899'
+      end
+      it "should not allow import of invalid HTS" do
+        Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
+        p = Factory(:product)
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        r = mf.process_import p, '0000000000'
+        r.should == "0000000000 is not valid for ZY HTS 1"
+      end
+      it "should allow any HTS for country withouth official tariffs" do
+        p = Factory(:product)
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        r = mf.process_import p, '0000000000'
+        p.classifications.first.tariff_records.first.hts_1.should == '0000000000'
+      end
+      it "should format export" do
+        tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        mf.process_export(tr.product,nil,true).should == '0000000000'.hts_format
+      end
+      it "should work with query" do
+        u = Factory(:master_user)
+        tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
+        ss = SearchSetup.new(module_type:'Product')
+        ss.search_columns.build(model_field_uid:"*fhts_1_#{@c.id}",rank:1)
+        ss.search_criterions.build(model_field_uid:"*fhts_1_#{@c.id}",operator:'eq',value:'0000000000')
+        h = SearchQuery.new(ss,u).execute
+        h.should have(1).record
+        h.first[:row_key].should == tr.product.id
+        h.first[:result].first.should == '0000000000'.hts_format
+      end
+    end
     context "bill of materials" do
       before :each do
         @parent_mf = ModelField.find_by_uid :prod_bom_parents
