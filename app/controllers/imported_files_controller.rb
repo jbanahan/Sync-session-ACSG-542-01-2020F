@@ -38,7 +38,7 @@ class ImportedFilesController < ApplicationController
   end
   
   def show_angular
-    render :layout=>'one_col'
+    @no_action_bar = true #implements it's own via templates/search_results.html
   end
 
   def show

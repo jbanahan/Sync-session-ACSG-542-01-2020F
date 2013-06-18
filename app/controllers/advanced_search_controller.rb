@@ -2,7 +2,7 @@ require 'open_chain/search_query_controller_helper'
 class AdvancedSearchController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
   def index
-    render :layout=>'one_col'
+    @no_action_bar = true #implements it's own via templates/search_results.html
   end
  
   def update

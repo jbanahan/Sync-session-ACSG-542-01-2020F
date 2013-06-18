@@ -230,6 +230,7 @@
         <div class='span12'>
           <%=yield%>
         </div>
+        <%unless @no_action_bar-%>
         <div class='navbar navbar-fixed-bottom'>
           <div class='navbar-inner'>
             <ul class='nav'>
@@ -239,6 +240,7 @@
             </ul>
           </div>
         </div>
+        <%end-%>
       </div>
     </div>
   </body>
