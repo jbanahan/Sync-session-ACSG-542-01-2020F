@@ -302,11 +302,6 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     ), true
   )
 
-  registrations.push($scope.$on('searchLoaded', () ->
-      resetAvailables()
-    )
-  )
-
   $scope.$on('$destroy', () ->
     deregister() for deregister in registrations
     registrations = null
