@@ -1,6 +1,11 @@
 require 'open_chain/search_query_controller_helper'
 class AdvancedSearchController < ApplicationController
   include OpenChain::SearchQueryControllerHelper
+
+  def legacy_javascripts?
+    false
+  end
+
   def index
     @no_action_bar = true #implements it's own via templates/search_results.html
   end
@@ -66,7 +71,10 @@ class AdvancedSearchController < ApplicationController
       format.html {redirect_to "/advanced_search#/#{params[:id]}"}
       format.json {
         page = number_from_param params[:page], 1
-        per_page = number_from_param params[:per_page], 100
+        # Only show 10 results per page for older IE versions.  This is because these browser
+        # versions don't have the rendering speed of newer ones and take too long to load for 100
+        # rows (plus, we want to encourage people to upgrade).
+        per_page = (old_ie_version? ? 10 : 100)
 
         ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
         raise ActionController::RoutingError.new('Not Found') unless ss
