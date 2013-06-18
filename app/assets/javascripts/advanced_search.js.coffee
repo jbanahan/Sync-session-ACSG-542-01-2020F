@@ -100,10 +100,11 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       $scope.availableColumns.push mf unless findByMfid($scope.searchSetup.search_columns,mf.mfid)
       $scope.availableSorts.push mf unless findByMfid($scope.searchSetup.sort_criterions,mf.mfid)
 
-  loadSearch = (id) ->
+  loadSearch = (id, saved=false) ->
     $http.get('/advanced_search/'+id+'/setup').success((data,status,headers,config) ->
       $scope.searchSetup = data
-      resetAvailables()
+      # Let the components section know that the search has been reloaded so it can actually do the search.
+      $scope.$broadcast 'searchLoaded', saved
     ).error((data,status) ->
       if status == 404
         $scope.errors.push "This search with id "+id+" could not be found."
@@ -159,8 +160,8 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     ss = $scope.searchSetup
     $scope.searchSetup = {}
     $http.put('/advanced_search/'+ss.id,JSON.stringify({search_setup:ss})).success(() ->
-      loadSearch $scope.searchId
       $scope.searchResult.id = $scope.searchId
+      loadSearch $scope.searchId, true
     ).error((data) ->
       $scope.error.push "An error occurred while saving this search."
     )
@@ -293,6 +294,11 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       for c in watchScope.searchSetup.search_criterions
         watchScope.removeCriterion(c) if c.deleteMe
     ), true
+  )
+
+  registrations.push($scope.$on('searchLoaded', () ->
+      resetAvailables()
+    )
   )
 
   $scope.$on('$destroy', () ->

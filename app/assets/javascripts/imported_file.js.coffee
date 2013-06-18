@@ -65,7 +65,9 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   $scope.updateSearchCriterions = () ->
     $scope.searchResult = {}
     $http.put('/imported_files/'+$scope.importedFile.id+'/update_search_criterions',JSON.stringify({imported_file:$scope.importedFile})).success(() ->
-      $scope.searchResult = {id:$scope.importedFile.id} #will trigger result reload
+      $scope.searchResult = {id:$scope.importedFile.id}
+      # Let the components section know that the search has been reloaded via a save action
+      $scope.$broadcast 'searchLoaded', true
     ).error(() ->
       $scope.errors.push "Error saving results.  Please reload this page."
     )
@@ -92,6 +94,9 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
       $scope.emailCurrentSettings.to = $scope.importedFile.current_user.email
       if $scope.importedFile.last_processed && $scope.importedFile.last_processed.length>0
         $scope.searchResult.id = data.id
+        # Let the components section know that the search has been loaded (since this is an initial load
+        # we set the updated flag to false)
+        $scope.$broadcast 'searchLoaded', false
       else
         $scope.showPreviewBox = true
         $http.get('/imported_files/'+$scope.importedFile.id+'/preview').success((data) ->

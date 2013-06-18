@@ -308,14 +308,20 @@
 
       $scope.loadedSearchId = null
 
+      cookieIdentifier = (scope) ->
+        scope.urlPrefix+scope.searchResult.id
+
+      clearSelectionCookie = (scope) ->
+        $.removeCookie(cookieIdentifier(scope))
+
       #write cookie for current selection state
       writeSelectionCookie = (scope) ->
         o = {rows:scope.bulkSelected,all:scope.allSelected}
-        $.cookie(scope.urlPrefix+scope.searchResult.id,JSON.stringify(o))
+        $.cookie(cookieIdentifier(scope),JSON.stringify(o))
 
       #load selection state values from cookie
       readSelectionCookie = (scope, searchId) ->
-        v = $.cookie(scope.urlPrefix+searchId)
+        v = $.cookie(cookieIdentifier(scope))
         if v
           o = $.parseJSON v
           scope.bulkSelected = o.rows
@@ -373,7 +379,7 @@
       $scope.selectNone = () ->
         $scope.bulkSelected = []
         $scope.allSelected = false
-        r.bulk_selected = false for r in $scope.searchResult.rows
+        r.bulk_selected = false for r in $scope.searchResult.rows if $scope.searchResult.rows
 
       $scope.selectAll = () ->
         $scope.allSelected = true
@@ -436,9 +442,21 @@
       # End bulk action handling
       #
 
+      registrations.push($scope.$on('searchLoaded', (evt, saved) ->
+          # targetScope is the scope in effect where the event was sent from
+          # currentScope is the scope in this controller
 
-      registrations.push($scope.$watch 'searchResult.id', (newVal,oldVal, cbScope) ->
-        loadResultPage(cbScope, newVal,cbScope.page) if newVal!=undefined && !isNaN(newVal) && newVal!=cbScope.loadedSearchId
+          # We can listen for the loaded event and determine if it was for a user save
+          # by checking the first non-event parameter.
+          # We want to clear bulkSelections in this case since the user saved the setup (which will
+          # re-run the search and likely invalidate existing bulk selections)
+          if saved
+            clearSelectionCookie evt.currentScope
+            evt.currentScope.selectNone()
+          
+          if evt.targetScope.searchResult.id != evt.currentScope.loadedSearchId
+            loadResultPage(evt.currentScope, evt.targetScope.searchResult.id, evt.targetScope.page)
+        )
       )
 
       $scope.$on('$destroy', () ->
