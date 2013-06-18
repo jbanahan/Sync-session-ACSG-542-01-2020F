@@ -8,6 +8,11 @@ module OpenChain
         
         SYNC_CODE ||= 'ANN-ZYM'
         
+        def self.generate
+          g = self.new
+          g.ftp_file g.sync_csv
+        end
+
         def initialize opts={}
           super(opts)
           @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin]
@@ -15,6 +20,9 @@ module OpenChain
 
         def sync_code
           SYNC_CODE
+        end
+        def ftp_credentials
+          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/SAP"}
         end
         def preprocess_row row
           r = []

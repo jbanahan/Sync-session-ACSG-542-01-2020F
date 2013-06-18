@@ -5,6 +5,7 @@ require 'open_chain/fenix_parser'
 require 'open_chain/custom_handler/kewill_isf_xml_parser'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
+require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 module OpenChain
   class IntegrationClient
     def self.go system_code, shutdown_if_not_schedule_server = false, sleep_time = 5
@@ -113,6 +114,11 @@ module OpenChain
       elsif command['path'].include? '/to_chain/'
         status_msg = process_imported_file command, get_tempfile(bucket,remote_path,command['path'])
         response_type = 'remote_file' if status_msg == 'success'
+      elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
+        tmp = get_tempfile(bucket,remote_path,command['path']) 
+        OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+        status_msg = 'success'
+        response_type = 'remote_file'
       else
         status_msg = "Can't figure out what to do for path #{command['path']}"
       end
