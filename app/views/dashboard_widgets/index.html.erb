@@ -1,21 +1,83 @@
 <%content_for :javascript do -%>
 $(function() {
   $(document).ready(function() {
+    $("#what-happened").modal();
+    $("#never-show").click(function() {
+      $("#what-happened").modal('hide');
+    });
+    $("#show-tour").click(function() {
+      $("#what-happened").modal('hide');
+      bootstro.start('',{items:[
+         {selector:'#leftnav',placement:'bottom',content:'Move between system modules and build custom searches here.'},
+         {selector:'#menu_dropdown',placement:'bottom',content:'Manage your account and access extra settings here.'},
+         {selector:'#quick_search_input',placement:'bottom',content:'Search for items here.'},
+         {selector:'#nav-action-bar',placement:'top',content:"Each page's actions are down here.",width:'400px'}
+        ]});
+    });
+    $("#btn_tour").click(function() {
+      bootstro.start('',{items:[
+         {selector:'#leftnav',placement:'bottom',content:'Move between system modules and build custom searches here.'},
+         {selector:'#menu_dropdown',placement:'bottom',content:'Manage your account and access extra settings here.'},
+         {selector:'#quick_search_input',placement:'bottom',content:'Search for items here.'},
+         {selector:'#nav-action-bar',placement:'top',content:"Each page's actions are down here.",width:'400px'}
+        ]});
+    });
     $(".widget_box").each(function() {
       $(this).scope().loadWidget($(this).attr('widget-id'))
     })
   });
 });
 <%end-%>
+<%content_for :action_bar do -%>
+  <%unless @widgets.blank? -%>
+    <button class='btn_link' link_to='<%=edit_dashboard_widgets_path%>'>Setup</button>
+  <%end-%>
+<%end-%>
 <div id='ng-app' ng-app='DashboardApp'>
   <div chain-messages errors='errors' notices='notices'></div>
-  <h1>Welcome!</h1>
-  <p>This is your personal dashboard.  Click <%=link_to "here", edit_dashboard_widgets_path%> to setup your search widgets.</p>
-  <%@widgets.each do |w|-%>
-    <div ng-controller='DashboardViewController' class='widget_box' widget-id='<%=w.search_setup_id%>'>
-      <h2 ng-show='widget.name' class='widget_heading' >{{widget.name}} - {{widget.core_module_name}}</h2>
-      <div chain-search-result='widget' per_page='per_page' page='page' no-chrome='true' src='/advanced_search/'></div>
-      <a ng-show='widget.name' class='action_link' href='/advanced_search/<%=w.search_setup_id%>'>More</a>
+  <%if @widgets.blank? -%>
+    <div class='container'>
+      <div class='row'>
+        <div class='span12 hero-unit'>
+          <h1>Welcome!</h1>
+          <% if current_user.search_setups.empty? -%>
+            <p>This is your personal dashboard. Once you've setup some searches, you'll be able to add them here.</p>
+          <% elsif @widgets.empty? -%>
+            <p>Click the setup link at the bottom of the page to add some of your searches to your dashboard.</p>
+          <% end -%>
+          <p>
+            <button id='btn_tour' class='btn btn-large btn-primary'>Click for a quick tour</button>
+          </p>
+        </div>
+      </div>
     </div>
-  <%end-%>
+  <%else-%>
+    <h1 class='text-center'>Dashboard</h1>
+    <%@widgets.each do |w| -%>
+      <div ng-controller='DashboardViewController' class='widget_box' widget-id='<%=w.search_setup_id%>'>
+        <h2 ng-show='widget.name' class='widget_heading' >{{widget.name}} - {{widget.core_module_name}}</h2>
+        <div chain-search-result='widget' per_page='per_page' page='page' no-chrome='true' src='/advanced_search/'></div>
+        <a ng-show='widget.name' class='action_link' href='/advanced_search/<%=w.search_setup_id%>'>More</a>
+      </div>
+    <%end -%>
+  <%end -%>
+</div>
+<div id='what-happened' class='modal hide fade'>
+  <div class='modal-header'>
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>DON'T PANIC</h3>
+  </div>
+  <div class='modal-body'>
+    <p>We've made a bunch of improvements to the user interface.</p>
+    <ul>
+      <li>The top navigation bar is simpler and takes up less space.</li>
+      <li>Buttons have been moved from the right to the bottom of the page.</li>
+      <li>The search setup screen is easier to use.</li>
+    </ul>
+    <p>Don't worry, all the stuff under the hood still works the same.</p>
+  </div>
+  <div class='modal-footer'>
+    <button id='never-show'>Never Show This Again</button>
+    <button id='show-tour'>Give Me A Tour</button>
+  </div>
 </div>
