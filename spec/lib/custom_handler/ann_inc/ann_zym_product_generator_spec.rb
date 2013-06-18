@@ -94,6 +94,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     described_class.new.sync_code.should == 'ANN-ZYM'
   end
   context :ftp do
-    it 'needs to be implemented'
+    it "should send proper credentials" do
+      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/SAP'}
+    end
   end
 end
