@@ -28,7 +28,8 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #create a new array with element moved down one position
   moveElementDown = (ary,idx) ->
-    return ary if idx == ary.length-1
+    # Returns null if the element is already at the end of the array
+    return null if idx >= ary.length-1
     x = ary.slice(0,idx+2)
     x.push(ary[idx]) # 1,2,3,4,5 idx=2
     x = x.concat(ary.slice(idx+2))
@@ -79,11 +80,12 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       if c
         idx = $.inArray c, modelArray
         newArray = moveElementDown modelArray, idx
-        #we can't replace the object for the target array so we need to clear
-        #it and repopulate it with the values from the moveElementDown method
-        #which returns a new array object
-        modelArray.splice(0,modelArray.length)
-        modelArray.push o for o in newArray
+        if newArray
+          #we can't replace the object for the target array so we need to clear
+          #it and repopulate it with the values from the moveElementDown method
+          #which returns a new array object
+          modelArray.splice(0,modelArray.length)
+          modelArray.push o for o in newArray
       i--
     rankArray modelArray
 
