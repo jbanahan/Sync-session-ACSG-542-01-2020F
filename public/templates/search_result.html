@@ -14,12 +14,6 @@
           <strong>{{bulkSelected.length}} selected</strong>
         </div>
       </div>
-      <div class='row text-center'>
-        <div class='span12'>
-          <button ng-hide='allSelected' ng-click='selectAll()' class='btn'>Select All ({{searchResult.total_objects}})</button>
-          <button ng-click='selectNone()' class='btn'>Clear</button>
-        </div>
-      </div>
     </div>
     <div class='navbar navbar-fixed-bottom'>
       <div class='navbar-inner'>
@@ -33,7 +27,13 @@
             </span>
           </li>
         </ul>
-        <form class='navbar-form pull-right' ng-hide='noChrome'>
+        <ul class='nav' ng-show='bulkSelected.length>0 || allSelected'>
+          <li>
+            <button ng-hide='allSelected' ng-click='selectAll()' class='btn btn-inverse'>Select All ({{searchResult.total_objects}})</button>
+            <button ng-click='selectNone()' class='btn btn-inverse'>Clear</button>
+          </li>
+        </ul>
+        <form class='navbar-form pull-right btn-group' ng-hide='noChrome'>
           <button class='btn btn-inverse' ng-show='searchResult.page>1' ng-click='firstPage()'>&lt;&lt;</button>
           <button class='btn btn-inverse' ng-show='searchResult.page>1' ng-click='previousPage()'>&lt;</button>
           <select class='btn btn-inverse input-mini' ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>

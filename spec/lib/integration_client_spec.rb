@@ -56,6 +56,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       Delayed::Worker.delay_jobs = @ws
       @t.close!
     end
+    context :ann_inc_sap do
+      it "should send data to Ann Inc SAP Product Handler if feature enabled and path contains _from_sap" do
+        Factory(:user,:username=>'integration')
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(true)
+        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+        OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.any_instance.should_receive(:process).with('abcdefg',instance_of(User))
+        cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/a.csv','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+    end
     context :msl_plus_enterprise do
       it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do
         ack = mock("ack_file")
