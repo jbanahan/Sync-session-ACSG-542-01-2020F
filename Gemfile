@@ -30,9 +30,7 @@ gem 'RedCloth', '4.2.9'
 gem 'execjs' 
 gem 'libv8', '~> 3.11.8'
 gem 'therubyracer'
-
-# performance profiling (this is auto-disabled in production)
-gem 'rack-mini-profiler'
+gem 'browser'
 
 group :development,:test do
 

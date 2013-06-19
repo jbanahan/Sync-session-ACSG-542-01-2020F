@@ -6,13 +6,16 @@
   no_buttons = true if !local_assigns[:not_buttons].nil?
   show_navbar = (!no_buttons && current_user)
   ms = MasterSetup.get
-%>
+-%>
   <head>
     <title><%=@page_title.blank? ? 'VFI Track' : @page_title%></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= favicon_link_tag -%>
     <%= stylesheet_link_tag    "application", :media => "all" -%>
     <%= javascript_include_tag "application" -%>
+    <% if @include_legacy_scripts %>
+      <%= javascript_include_tag "legacy" %>
+    <% end %>
     <%= csrf_meta_tags -%>
     <%= yield :head_tags -%>
     <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -20,16 +23,14 @@
      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
     <script type='text/javascript'>
-      OpenChain.setAuthToken('<%=form_authenticity_token%>');
+      Chain.setAuthToken('<%=form_authenticity_token%>');
       <% if current_user %>
-        OpenChain.user_id = <%=current_user.id%>;
+        Chain.messagePoller.initialize('<%=current_user.id%>', 30)
+        <% if @include_legacy_scripts %>
+          OpenChain.user_id = <%=current_user.id%>;
+        <% end %>
       <% end %>
-      $(document).ready(function() {
-      });
       <%= yield :javascript -%>
-      <% if current_user.nil? -%>
-        $(document).ready(OpenChain.disableMessagePolling());
-      <% end -%>
     </script>
   </head>
   <body>

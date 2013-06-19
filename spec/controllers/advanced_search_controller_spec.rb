@@ -344,6 +344,12 @@ describe AdvancedSearchController do
         r = JSON.parse response.body
         r['total_pages'].should == 6
       end
+      it "should set per_page to 10 for IE < 9" do
+        @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
+        get :show, :id=>@ss.id, :format=>'json'
+        r = JSON.parse response.body
+        r['total_pages'].should == 51
+      end
       it 'should render second page' do
         p2 = Factory(:product,:name=>'prod2')
         get :show, :id=>@ss.id, :format=>'json', :per_page=>'1', :page=>'2'
@@ -402,6 +408,12 @@ describe AdvancedSearchController do
     it "should 404 if user doesn't own search setup" do
       ss = Factory(:search_setup)
       lambda {get :download, :id=>ss.id, :format=>:xls}.should raise_error ActionController::RoutingError 
+    end
+  end
+
+  describe :legacy_javascripts? do
+    it "should not include legacy javascripts" do
+      AdvancedSearchController.new.legacy_javascripts?.should be_false
     end
   end
 end

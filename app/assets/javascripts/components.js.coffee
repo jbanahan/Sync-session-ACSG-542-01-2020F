@@ -43,6 +43,14 @@
       el.find(".chainMessageBoxLauncher").click(() ->
         d.dialog('open')
       )
+
+      scope.$on('$destroy', () ->
+        el.find(".chainMessageBoxLauncher").off('click')
+        d.dialog('destroy')
+        d.html("")
+        el = null
+        d = null
+      )
     }
 ]
 
@@ -55,14 +63,18 @@
       chainUserList:"="
     },
     template:"<select ng-model='chainUserList' ng-options='u.id as u.full_name group by u.company_name for u in users'></select>",
-    link: (scope,el,attrs) ->
-      $http.get('/users.json').success((data) ->
-        scope.users = []
+    controller: ['$scope',($scope) ->
+      $scope.update_users = (data) -> 
+        @.users = []
         for c in data
           cName = c.company.name
           for u in c.company.users
             u.company_name = cName
-            scope.users.push u
+            @.users.push u
+    ],
+    link: (scope,el,attrs) ->
+      $http.get('/users.json').success((data) ->
+        scope.update_users(data)
       )
     }
 ]
@@ -82,7 +94,7 @@
     }
     template:"<input type='text' disabled='disabled' />",
     link: (scope,el,attrs) ->
-      $(el).find('input').datepicker({
+      el.find('input').datepicker({
         buttonText:'Select Date',
         dateFormat:'yy-mm-dd',
         onSelect:(text,dp) ->
@@ -92,8 +104,14 @@
         }
       ).next(".ui-datepicker-trigger").addClass("btn")
       #add watch to update
-      scope.$watch 'chainDatePicker', (newVal) ->
-        $(el).find('input').val(newVal)
+      deregister = scope.$watch 'chainDatePicker', (newVal) ->
+        el.find('input').val(newVal)
+
+      # Remove the watch so el can get cleaned up
+      scope.$on('$destroy', () ->
+        deregister()
+        el.find('input').datepicker("destroy")
+      )
   }
 ]
 @components.directive 'chainSearchCriterion', ['$compile','chainSearchOperators',($compile,chainSearchOperators) ->
@@ -107,11 +125,7 @@
       $scope.remove = (crit) ->
         crit.deleteMe = true
 
-      $scope.updateValueHtml = () ->
-        
-    ],
-    link: (scope, el, attrs) ->
-      renderTextInput = (opr) ->
+      $scope.renderTextInput = (opr) ->
         switch opr
           when "in", "notin"
             return "<textarea rows='8' ng-model='crit.value' /><div><small class='muted'>Enter one value per line.</small></div>"
@@ -120,14 +134,14 @@
 
         return "<input type='text' ng-model='crit.value' />"
 
-      render = () ->
+      $scope.renderInput = (rScope, el) ->
         dateStepper = false #true means apply jStepper to a relative date field
         v_str = "<input type='text' ng-model='crit.value' />"
-        switch scope.crit.datatype
+        switch rScope.crit.datatype
           when "string", "integer", "fixnum", "decimal"
-            v_str = renderTextInput scope.crit.operator
+            v_str = rScope.renderTextInput rScope.crit.operator
           when "date", "datetime"
-            if chainSearchOperators.isRelative scope.crit.datatype, scope.crit.operator
+            if chainSearchOperators.isRelative rScope.crit.datatype, rScope.crit.operator
               v_str = "<input type='text' ng-model='crit.value' />"
               dateStepper = true
             else
@@ -136,27 +150,38 @@
             v_str = ""
           when "text"
             v_str = "<textarea ng-model='crit.value' />"
-        v = $compile(v_str)(scope)
+
+        v = $compile(v_str)(rScope)
         va = $(el).find(".value_area")
         va.html(v)
-        switch scope.crit.datatype
+
+        switch rScope.crit.datatype
           when "integer", "fixnum"
             va.find('input').jStepper({allowDecimals:false})
           when "decimal"
             va.find('input').jStepper()
         va.find('input').jStepper() if dateStepper
 
-      scope.$watch 'crit.operator', ((newVal,oldVal) ->
-        if scope.crit.datatype=='date' || scope.crit.datatype=='datetime'
-          newRel = chainSearchOperators.isRelative(scope.crit.datatype,newVal)
-          oldRel = chainSearchOperators.isRelative(scope.crit.datatype,oldVal)
+    ],
+
+    link: (scope, el, attrs) ->
+      deregister = scope.$watch 'crit.operator', ((newVal,oldVal, cbScope) ->
+        if cbScope.crit.datatype=='date' || cbScope.crit.datatype=='datetime'
+          newRel = chainSearchOperators.isRelative(cbScope.crit.datatype,newVal)
+          oldRel = chainSearchOperators.isRelative(cbScope.crit.datatype,oldVal)
           if newRel != oldRel
-            scope.crit.value = ""
-        render()
+            cbScope.crit.value = ""
+        cbScope.renderInput(cbScope, el)
       ), false
 
-      render()
-    }
+      scope.$on('$destroy', () ->
+        deregister()
+        deregister = null
+      )
+
+      scope.renderInput(scope, el)
+      null
+  }
 ]
 @components.service 'chainSearchOperators', [() ->
   {
@@ -274,7 +299,6 @@
       errors:"=",
       notices:"="
       urlPrefix:"@src"
-      perPage: "="
       noChrome: "@"
     }
     transclude:true
@@ -283,38 +307,52 @@
 
       $scope.loadedSearchId = null
 
-      $scope.itemsPerPage = 100
-      $scope.itemsPerPage = $scope.perPage unless $scope.perPage==undefined or isNaN($scope.perPage)
+      cookieIdentifier = (scope) ->
+        scope.urlPrefix+scope.searchResult.id
+
+      clearSelectionCookie = (scope) ->
+        $.removeCookie(cookieIdentifier(scope))
 
       #write cookie for current selection state
-      writeSelectionCookie = () ->
-        o = {rows:$scope.bulkSelected,all:$scope.allSelected}
-        $.cookie($scope.urlPrefix+$scope.searchResult.id,JSON.stringify(o))
+      writeSelectionCookie = (scope) ->
+        o = {rows:scope.bulkSelected,all:scope.allSelected}
+        $.cookie(cookieIdentifier(scope),JSON.stringify(o))
 
       #load selection state values from cookie
-      readSelectionCookie = (searchId) ->
-        v = $.cookie($scope.urlPrefix+searchId)
+      readSelectionCookie = (scope, searchId) ->
+        v = $.cookie(cookieIdentifier(scope))
         if v
           o = $.parseJSON v
-          $scope.bulkSelected = o.rows
-          $scope.selectAll() if o.all
-          for r in $scope.searchResult.rows
-            r.bulk_selected = true if $.inArray(r.id,$scope.bulkSelected)>=0
+          scope.bulkSelected = o.rows
+          scope.selectAll() if o.all
+          for r in scope.searchResult.rows
+            r.bulk_selected = true if $.inArray(r.id,scope.bulkSelected)>=0
 
-      loadResultPage = (searchId,page) ->
+      loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
-        $scope.searchResult = {id:searchId}
-        $http.get($scope.urlPrefix+searchId+'?page='+p+'&per_page='+$scope.itemsPerPage).success((data,status,headers,config) ->
-          $scope.searchResult = data
-          $scope.errors.push "Your search was too big.  Only the first 10 pages are being shown." if $scope.searchResult.too_big
-          $scope.loadedsearchId = $scope.searchResult.id
-          readSelectionCookie data.id
+        scope.searchResult = {id:searchId}
+        $http.get(scope.urlPrefix+searchId+'?page='+p).success((data,status,headers,config) ->
+          scope.searchResult = data
+          scope.errors.push "Your search was too big.  Only the first " + scope.searchResult.total_pages + " pages are being shown."  if scope.searchResult.too_big
+
+          scope.loadedsearchId = scope.searchResult.id
+          readSelectionCookie scope, data.id
         ).error((data,status) ->
           if status == 404
-            $scope.errors.push "This search with id "+id+" could not be found."
+            scope.errors.push "This search with id "+id+" could not be found."
           else
-           $scope.errors.push "An error occurred while loading this search result. Please reload and try again."
+           scope.errors.push "An error occurred while loading this search result. Please reload and try again."
         )
+
+      onSearchLoaded = (saved, scope) ->
+        # We want to clear bulkSelections in this case since the user saved the setup (which will
+        # re-run the search and likely invalidate existing bulk selections)
+        if saved
+          clearSelectionCookie scope
+          scope.selectNone()
+        
+        if scope.searchResult.id != scope.loadedSearchId
+          loadResultPage(scope, scope.searchResult.id, scope.page)
 
       #return array of valid page numbers for the current search result
       $scope.pageNumberArray = () ->
@@ -350,7 +388,7 @@
       $scope.selectNone = () ->
         $scope.bulkSelected = []
         $scope.allSelected = false
-        r.bulk_selected = false for r in $scope.searchResult.rows
+        r.bulk_selected = false for r in $scope.searchResult.rows if $scope.searchResult.rows
 
       $scope.selectAll = () ->
         $scope.allSelected = true
@@ -375,7 +413,7 @@
         $scope.searchResult.page = 1
       
       $scope.lastPage = () ->
-        $scope.searchResult.page = searchResult.total_pages
+        $scope.searchResult.page = $scope.searchResult.total_pages
 
       $scope.nextPage = () ->
         $scope.searchResult.page++
@@ -383,35 +421,44 @@
       $scope.previousPage = () ->
         $scope.searchResult.page--
 
-      $scope.$watch 'bulkSelected', ((newValue,oldValue) ->
-        writeSelectionCookie() unless newValue==oldValue
-      ), true
+      registrations = []
+      registrations.push($scope.$watch 'bulkSelected', ((newValue,oldValue, cbScope) ->
+          writeSelectionCookie(cbScope) unless newValue==oldValue
+        ), true
+      )
 
-      $scope.$watch 'allSelected', (newValue,oldValue) ->
-        writeSelectionCookie() unless newValue==oldValue
+      registrations.push($scope.$watch 'allSelected', (newValue,oldValue, cbScope) ->
+        writeSelectionCookie(cbScope) unless newValue==oldValue
+      )
 
-      $scope.$watch 'searchResult', ((newValue,oldValue) ->
+      registrations.push($scope.$watch 'searchResult', ((newValue,oldValue, cbScope) ->
         if newValue && newValue.rows
           valsAdded = []
           for r in newValue.rows
             if r.bulk_selected
-              unless $.inArray(r.id,$scope.bulkSelected)>=0
-                $scope.bulkSelected.push r.id
+              unless $.inArray(r.id,cbScope.bulkSelected)>=0
+                cbScope.bulkSelected.push r.id
                 valsAdded.push r.id
             else if $.inArray(r.id,valsAdded)==-1
-              idx = $.inArray(r.id,$scope.bulkSelected)
-              $scope.bulkSelected.splice(idx,1) if idx>=0
-              $scope.allSelected = false
-        $scope.selectPageCheck = false
+              idx = $.inArray(r.id,cbScope.bulkSelected)
+              cbScope.bulkSelected.splice(idx,1) if idx>=0
+              cbScope.allSelected = false
+        cbScope.selectPageCheck = false
         ), true #true means "deep search"
+      )
 
       #
       # End bulk action handling
       #
+      registrations.push($scope.$watch 'searchResult.id', (newVal, oldVal, cbScope) ->
+        if newVal!=undefined && !isNaN(newVal) && newVal!=cbScope.loadedSearchId
+          onSearchLoaded cbScope.searchResult.saved, cbScope
+      )
 
-
-      $scope.$watch 'searchResult.id', (newVal,oldVal) ->
-        loadResultPage(newVal,$scope.page) if newVal!=undefined && !isNaN(newVal) && newVal!=$scope.loadedSearchId
+      $scope.$on('$destroy', () ->
+        deregister() for deregister in registrations
+        registrations = null
+      )
     ]
   }
 ]

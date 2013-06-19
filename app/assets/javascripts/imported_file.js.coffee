@@ -6,7 +6,7 @@ importedFileApp = angular.module('ImportedFileApp',['ChainComponents']).config([
 ])
 
 importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', '$location', 'chainSearchOperators', ($scope,$routeParams,$http,$location,chainSearchOperators) ->
-
+  
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
     for m in ary
@@ -65,7 +65,10 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   $scope.updateSearchCriterions = () ->
     $scope.searchResult = {}
     $http.put('/imported_files/'+$scope.importedFile.id+'/update_search_criterions',JSON.stringify({imported_file:$scope.importedFile})).success(() ->
-      $scope.searchResult = {id:$scope.importedFile.id} #will trigger result reload
+      $scope.searchResult = {
+        id:$scope.importedFile.id
+        saved:true
+      } # Will trigger search reload, which in turn, will update this search result
     ).error(() ->
       $scope.errors.push "Error saving results.  Please reload this page."
     )
@@ -102,16 +105,24 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
   #
   # WATCHES
   #
+  registrations = []
 
-  $scope.$watch 'searchResult.page', (newValue,oldValue) ->
-    $location.path '/'+$scope.importedFile.id+'/'+newValue unless isNaN(newValue) || newValue==oldValue
+  registrations.push($scope.$watch 'searchResult.page', (newValue,oldValue, wScope) ->
+    $location.path '/'+wScope.importedFile.id+'/'+newValue unless isNaN(newValue) || newValue==oldValue
+  )
 
   #remove criterions that are deleted
-  $scope.$watch 'importedFile.search_criterions', (() ->
-    return unless $scope.importedFile && $scope.importedFile.search_criterions && $scope.importedFile.search_criterions.length > 0
-    for c in $scope.importedFile.search_criterions
-      $scope.removeCriterion(c) if c.deleteMe
-  ), true
+  registrations.push($scope.$watch 'importedFile.search_criterions', ((n,o,wScope) ->
+      return unless wScope.importedFile && wScope.importedFile.search_criterions && wScope.importedFile.search_criterions.length > 0
+      for c in wScope.importedFile.search_criterions
+        wScope.removeCriterion(c) if c.deleteMe
+    ), true
+  )
+
+  $scope.$on('$destroy', () ->
+    deregister() for deregister in registrations
+    registrations = null
+  )
 
   @
   ]
