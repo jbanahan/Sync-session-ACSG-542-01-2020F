@@ -164,7 +164,7 @@ root.Chain =
       buttons['Advanced'] = () ->
         # $("#mod_quick_classify") = modal (model not reference directly due to circular reference / garbage collection concerns)
         form = $("#mod_quick_classify").find("form")
-        form.attr("action","/products/bulk_classify")
+        form.attr("action","/products/bulk_edit")
         form.submit()
     else
       buttons['Advanced'] = ->

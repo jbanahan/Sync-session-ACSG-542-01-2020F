@@ -301,9 +301,9 @@ class CoreModule
       :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts,:prod_ven_name],
       :bulk_actions_lambda => lambda {|current_user| 
         bulk_actions = {}
-        bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products?
+        bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products? || current_user.edit_classifications?
         bulk_actions["Classify"]={:path=>'/products/bulk_classify.json',:callback=>'BulkActions.submitBulkClassify',:ajax_callback=>'BulkActions.handleBulkClassify'} if current_user.edit_classifications?
-        bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? 
+        bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? && !InstantClassification.scoped.empty?
         bulk_actions
       },
       :changed_at_parents_lambda=>lambda {|p| [p]},#only update self

@@ -150,9 +150,13 @@ class ProductsController < ApplicationController
         messages = Product.batch_bulk_update(current_user, params, :no_email => true) if current_user.edit_products?
         cls_messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true if current_user.edit_classifications?
         # Show the user the update message and any errors if there were some
-        add_flash :notices, messages[:message]
+        if messages && messages[:message]
+          add_flash :notices, messages[:message]
+        elsif cls_messages && cls_messages[:message]
+          add_flash :notices, cls_messages[:message]
+        end
         [messages,cls_messages].each do |hsh|
-          hsh[:errors].each {|e| add_flash(:errors, e)} if hsh[:errors]
+          hsh[:errors].each {|e| add_flash(:errors, e)} if hsh && hsh[:errors]
         end
       end
       redirect_to products_path
@@ -165,11 +169,7 @@ class ProductsController < ApplicationController
     @base_product = Product.new
     @back_to = request.referrer
     OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
-    json = json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
-    respond_to do |format|
-        format.html { render }
-        format.json  { render :json=>json }
-    end
+    render :json=> json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
   end
 
   def bulk_update_classifications

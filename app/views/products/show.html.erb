@@ -97,7 +97,8 @@
     <div class='modal-body'>
       <p>Welcome to the new product screens.</p>
       <ul>
-        <li>The classification section is now on the right so you can see more on the screen without scrolling.</li>
+        <li>The classification section is now on the right.</li>
+        <li>Empty product attributes are hidden.</p>
         <%if @product.can_edit?(current_user) || @product.can_classify?(current_user)-%>
           <li>The advanced classification screen has been combined with the edit screen so you can edit product attributes and classifications at the same time. (If you have the appropriate permissions, of course.)</li>
         <%end-%>

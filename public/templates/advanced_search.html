@@ -330,8 +330,8 @@
     <button class='btn btn-inverse' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</button> 
     <a class='btn btn-inverse' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
     <button class='btn btn-inverse' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</button>
-    <span  ng-show='searchSetup.uploadable_error_messages.length > 0'>
-      <span chain-message-box title="'Upload'" >
+    <span ng-show='searchSetup.uploadable_error_messages.length > 0'>
+      <span chain-message-box title="'Upload'" as-button='true' extra-class="'btn-inverse'">
         <div ng-repeat='s in searchSetup.uploadable_error_messages'>
           {{s}}
         </div>
