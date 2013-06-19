@@ -49,7 +49,7 @@ OpenChain::Application.configure do
   # Send deprecation notices to registered listeners
   config.active_support.deprecation = :notify
   
-  config.assets.precompile += ['legacy.js']
+  config.assets.precompile += ['legacy.js','html5shim.js']
 
   # Compress JavaScript and CSS
   config.assets.compress = true

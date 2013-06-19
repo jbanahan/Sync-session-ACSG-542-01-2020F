@@ -1,5 +1,9 @@
-// This is a manifest file that'll be compiled into application.js, which will include all the files
+// This is a manifest file that'll be compiled into html5shim.js, which will include all the files
 // listed below.
+//
+// This manifest is meant to contain directives for including javascript files on all "html5shim" scripts.
+// In essence, anything that is not meant to be part of the "modern, angular" page design components
+// should be included here.
 //
 // Any JavaScript/Coffee file within this directory, lib/assets/javascripts, vendor/assets/javascripts,
 // or vendor/assets/javascripts of plugins, if any, can be referenced here using a relative path.
@@ -9,11 +13,6 @@
 //
 // WARNING: THE FIRST BLANK LINE MARKS THE END OF WHAT'S TO BE PROCESSED, ANY BLANK LINE SHOULD
 // GO AFTER THE REQUIRES BELOW.
-//= require jquery
-//= require jquery_ujs
-//= require json3
-//= require bootstrap
-//= require angular
-//= require_directory .
-//= stub legacy
-//= stub html5shim
+
+//= require_tree ./html5shim
+
