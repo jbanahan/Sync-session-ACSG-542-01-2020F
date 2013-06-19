@@ -330,3 +330,9 @@ $(document).ready () ->
     h.val($(@).html())
     h.blur()
 
+  $(document).on 'click', '.btn_link', (evt) ->
+    # TODO Pull Key Mapping into this file
+    evt.preventDefault()
+    link = $(@).attr('link_to')
+    if link
+      window.location=link;
