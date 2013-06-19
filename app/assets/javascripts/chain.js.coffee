@@ -165,7 +165,7 @@ root.Chain =
         modal.find("form").submit()
     else
       buttons['Advanced'] = ->
-        window.location = '/products/'+product.id+'/classify'
+        window.location = '/products/'+product.id+'/edit'
     modal.find("form").submit ->
       $("input.hts_field").each ->
         $(@).parents('div[quick-class-content-id]').remove() if $(@).val()==''

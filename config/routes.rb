@@ -248,7 +248,6 @@ OpenChain::Application.routes.draw do
     end
     member do
       get 'history'
-      get 'classify'
       get :next_item
       get :previous_item
       put :import_worksheet 

@@ -35,6 +35,15 @@ class Product < ActiveRecord::Base
 
   dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
 
+  #are there any classifications written to the database
+  def saved_classifications_exist?
+    r = false
+    self.classifications.each do |cls|
+      r = true if cls.exists?
+      break if r
+    end
+    r
+  end
 
   def can_view?(user)
     return user.view_products? && company_permission?(user)

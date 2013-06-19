@@ -45,8 +45,12 @@ class ProductsController < ApplicationController
 
   # GET /products/1/edit
   def edit
-    p = Product.find(params[:id])
+    p = Product.includes(:classifications=>[:tariff_records]).find(params[:id])
     action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+      used_countries = p.classifications.collect {|cls| cls.country_id}
+      Country.import_locations.sort_classification_rank.each do |c|
+        p.classifications.build(:country => c) unless used_countries.include?(c.id) 
+      end
       @product = p
     }
   end
@@ -124,16 +128,6 @@ class ProductsController < ApplicationController
     }
   end
   
-  def classify
-    p = Product.find(params[:id])
-    action_secure(p.can_classify?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
-      @product = p
-      Country.import_locations.sort_classification_rank.each do |c|
-        p.classifications.build(:country => c) if p.classifications.where(:country_id=>c).empty?
-      end
-    }
-  end
-
   def bulk_edit
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
