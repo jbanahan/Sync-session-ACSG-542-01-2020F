@@ -32,13 +32,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       :fw,:import_indicator,:inco_terms,:missy,:petite,:tall,:season,
       :article_type].collect {|k| h[k]}.to_csv.gsub(',','|')
   end
+  before :all do
+    @h = described_class.new
+  end
+  after :all do
+    CustomDefinition.destroy_all
+  end
   before :each do
     @us = Factory(:country,:iso_code=>'US',:import_location=>true)
     @good_hts = OfficialTariff.create(:hts_code=>'1234567890',:country=>@us)
     @user = Factory(:user)
   end
   it "should create custom fields" do 
-    described_class.new #create on initialization
+    @h #create on initialization
     CustomDefinition.where(:label=>"PO Numbers",:data_type=>:text,:module_type=>"Product",:read_only=>true).first.should_not be_nil
     CustomDefinition.where(:label=>"Origin Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
     CustomDefinition.where(:label=>"Import Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
@@ -63,7 +69,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
   end
   it "should create new product" do
     data = make_row
-    described_class.new.process data, @user
+    @h.process data, @user
     Product.count.should == 1 
     p = Product.first
     h = default_values
@@ -98,27 +104,28 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
   end
   it "should not set hts number if not valid" do
     data = make_row(:proposed_hts=>'655432198')
-    described_class.new.process data, @user 
+    @h.process data, @user 
     Product.first.classifications.first.tariff_records.first.hts_1.should be_blank
   end
   it "should not create classification if country is not import_location?" do
     cn = Factory(:country,:iso_code=>'CN')
     data = make_row(:import=>', @userCN')
-    described_class.new.process data, @user
+    @h.process data, @user
     Product.first.classifications.should be_empty
   end
   it "should find earliest AC Date" do
     data = make_row(:ac_date=>'12/29/2013')
     data << make_row(:ac_date=>'12/28/2013')
     data << make_row(:ac_date=>'12/23/2014')
-    described_class.new.process data, @user
+    @h.process data, @user
     Product.first.get_custom_value(CustomDefinition.find_by_label('Earliest AC Date')).value.strftime("%m/%d/%Y").should == "12/28/2013"
   end
   it "should aggregate values" do
     data = make_row(:unit_cost=>'10.11')
     data << make_row(:unit_cost=>'12.21')
     data << make_row(:unit_cost=>'6.14')
-    described_class.new.process data, @user
+    data << make_row(:unit_cost=>'6.14')
+    @h.process data, @user
     Product.first.get_custom_value(CustomDefinition.find_by_label('Unit Costs')).value.should == "10.11\n12.21\n6.14"
   end
   it "should set hts for multiple countries" do
@@ -126,7 +133,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     ot = cn.official_tariffs.create!(:hts_code=>'9876543210')
     data = make_row
     data << make_row(:import=>'CN',:proposed_hts=>ot.hts_code)
-    described_class.new.process data, @user
+    @h.process data, @user
     p = Product.first
     p.should have(2).classifications
     p.classifications.find_by_country_id(@us.id).tariff_records.first.hts_1.should == '1234567890'
@@ -135,17 +142,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
   it "should not override actual hts if proposed changes" do
     p = Factory(:product,:unique_identifier=>default_values[:style])
     p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>'1111111111')
-    described_class.new.process make_row, @user
+    @h.process make_row, @user
     p.reload
     p.should have(1).classifications
     p.classifications.first.should have(1).tariff_records
     p.classifications.first.tariff_records.first.hts_1.should == '1111111111'
   end
   it "should not override actual long description if proposed change" do
-    ald = CustomDefinition.create!(:label=>'Approved Long Description',:module_type=>'Product',:data_type=>'text')
+    ald = CustomDefinition.where(:label=>'Approved Long Description',:module_type=>'Product',:data_type=>'text').first
     p = Factory(:product,:unique_identifier=>default_values[:style])
     p.update_custom_value! ald, 'something'
-    described_class.new.process make_row, @user
+    @h.process make_row, @user
     p = Product.first
     p.get_custom_value(CustomDefinition.find_by_label('Approved Long Description')).value.should == 'something'
   end
@@ -153,7 +160,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     h = default_values
     data = make_row
     data << make_row(:style=>'STY2',:ac_date=>'10/30/2015')
-    described_class.new.process data, @user
+    @h.process data, @user
     Product.count.should == 2
     p1 = Product.find_by_unique_identifier(h[:style])
     p1.get_custom_value(CustomDefinition.find_by_label('Earliest AC Date')).value.strftime("%m/%d/%Y").should == h[:ac_date]
@@ -161,18 +168,18 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p2.get_custom_value(CustomDefinition.find_by_label('Earliest AC Date')).value.strftime("%m/%d/%Y").should == '10/30/2015'
   end
   it "should create snapshot" do
-    described_class.new.process make_row, @user
+    @h.process make_row, @user
     p = Product.first
     p.should have(1).entity_snapshots
     p.entity_snapshots.first.user.should == @user
   end
   it "should update last sap sent date but not first sap sent date" do
-    first = CustomDefinition.create!(:label=>'First SAP Received Date',:module_type=>'Product',:data_type=>'date',:read_only=>true)
-    last = CustomDefinition.create!(:label=>'Last SAP Received Date',:module_type=>'Product',:data_type=>'date',:read_only=>true)
+    first = CustomDefinition.where(:label=>'First SAP Received Date',:module_type=>'Product',:data_type=>'date',:read_only=>true).first
+    last = CustomDefinition.where(:label=>'Last SAP Received Date',:module_type=>'Product',:data_type=>'date',:read_only=>true).first
     p = Factory(:product,:unique_identifier=>default_values[:style])
     p.update_custom_value! first, Date.new(2012,4,10)
     p.update_custom_value! last, Date.new(2012,4,15)
-    described_class.new.process make_row, @user
+    @h.process make_row, @user
     p = Product.first
     p.get_custom_value(first).value.should == Date.new(2012,4,10)
     p.get_custom_value(last).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")

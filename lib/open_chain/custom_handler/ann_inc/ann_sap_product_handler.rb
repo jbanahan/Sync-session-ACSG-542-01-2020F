@@ -26,23 +26,27 @@ module OpenChain
 
               #using the first row as the basis for all non-aggregated values
               base_row = rows.first
-              p.name = base_row[2].strip
+              p.name = clean_string(base_row[2])
               p.save!
               p.update_custom_value! @custom_definitions[:ac_date], earliest_ac_date(rows)
-              p.update_custom_value! @custom_definitions[:prop_hts], base_row[9].strip
-              p.update_custom_value! @custom_definitions[:prop_long], base_row[10].strip
-              p.update_custom_value! @custom_definitions[:approved_long], base_row[10].strip
-              p.update_custom_value! @custom_definitions[:imp_flag], (base_row[12].strip=='Y')
-              p.update_custom_value! @custom_definitions[:inco_terms], base_row[13].strip
-              p.update_custom_value! @custom_definitions[:missy], base_row[14].strip
-              p.update_custom_value! @custom_definitions[:petite], base_row[15].strip
-              p.update_custom_value! @custom_definitions[:tall], base_row[16].strip
-              p.update_custom_value! @custom_definitions[:season], base_row[17].strip
-              p.update_custom_value! @custom_definitions[:article], base_row[18].strip
+              p.update_custom_value! @custom_definitions[:prop_hts], clean_string(base_row[9])
+              p.update_custom_value! @custom_definitions[:prop_long], clean_string(base_row[10])
+              p.update_custom_value! @custom_definitions[:imp_flag], (clean_string(base_row[12])=='Y')
+              p.update_custom_value! @custom_definitions[:inco_terms], clean_string(base_row[13])
+              p.update_custom_value! @custom_definitions[:missy], clean_string(base_row[14])
+              p.update_custom_value! @custom_definitions[:petite], clean_string(base_row[15])
+              p.update_custom_value! @custom_definitions[:tall], clean_string(base_row[16])
+              p.update_custom_value! @custom_definitions[:season], clean_string(base_row[17])
+              p.update_custom_value! @custom_definitions[:article], clean_string(base_row[18])
               f_sap = p.get_custom_value(@custom_definitions[:first_sap_date])
               if f_sap.value.nil?
                 f_sap.value = 0.days.ago
                 f_sap.save!
+              end
+              approved_long = p.get_custom_value(@custom_definitions[:approved_long])
+              if approved_long.value.blank?
+                approved_long.value = clean_string(base_row[10])
+                approved_long.save!
               end
               p.update_custom_value! @custom_definitions[:last_sap_date], 0.days.ago
               agg = aggregate_values rows
@@ -51,21 +55,24 @@ module OpenChain
               #don't fill values for the same import country twice
               used_countries = []
               rows.each do |row|
-                iso = row[4].strip
+                iso = clean_string(row[4])
                 next if used_countries.include? iso
                 used_countries << iso
                 country = Country.find_by_iso_code_and_import_location iso, true
                 next unless country #don't write classification for country that isn't setup or isn't an import location
 
                 #build the classfiication
+                hts = clean_string(row[9])
                 cls = p.classifications.find_by_country_id country.id 
                 cls = p.classifications.build(:country_id=>country.id) unless cls
-                tr = cls.tariff_records.first
-                tr = cls.tariff_records.build unless tr
-                tr.hts_1 = row[9].gsub(/[^0-9]/,'') if tr.hts_1.blank? && hts_valid?(row[9],country)
+                unless hts.blank?
+                  tr = cls.tariff_records.first
+                  tr = cls.tariff_records.build unless tr
+                  tr.hts_1 = hts.gsub(/[^0-9]/,'') if tr.hts_1.blank? && hts_valid?(row[9],country)
+                end
                 cls.save!
 
-                cls.update_custom_value! @custom_definitions[:oga_flag], (row[11].strip=='Y') 
+                cls.update_custom_value! @custom_definitions[:oga_flag], (clean_string(row[11])=='Y') 
               end
               p.create_snapshot run_by
             end
@@ -79,6 +86,10 @@ module OpenChain
           end
         end
         private
+        def clean_string x
+          return nil if x.blank?
+          x.strip
+        end
         def hts_valid? hts_number, country
           !country.official_tariffs.find_by_hts_code(hts_number.gsub(/[^0-9]/,'')).blank?
         end
@@ -89,13 +100,14 @@ module OpenChain
           r = {:po=>[],:origin=>[],:import=>[],:cost=>[],:dept_num=>[],
             :dept_name=>[]}
           rows.each do |row|
-            r[:po] << row[0].strip
-            r[:origin] << row[3].strip
-            r[:import] << row[4].strip
-            r[:cost] << row[5].strip
-            r[:dept_num] << row[7].strip
-            r[:dept_name] << row[8].strip
+            r[:po] << clean_string(row[0])
+            r[:origin] << clean_string(row[3])
+            r[:import] << clean_string(row[4])
+            r[:cost] << clean_string(row[5])
+            r[:dept_num] << clean_string(row[7])
+            r[:dept_name] << clean_string(row[8])
           end
+          r.each {|k,v| v.uniq!}
           r
         end
         def earliest_ac_date rows

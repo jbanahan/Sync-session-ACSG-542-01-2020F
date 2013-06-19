@@ -39,7 +39,7 @@ class MasterSetup < ActiveRecord::Base
   end
 
   def self.need_upgrade?
-    ms = MasterSetup.get
+    ms = MasterSetup.get(false)
     !ms.target_version.blank? && ms.version.strip!=ms.target_version.strip
   end
 
