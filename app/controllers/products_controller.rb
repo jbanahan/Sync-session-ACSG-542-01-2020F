@@ -131,24 +131,29 @@ class ProductsController < ApplicationController
   def bulk_edit
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
+    @base_product = Product.new
+    OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
+    json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
   end
 
   def bulk_update
-    action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
+    action_secure((current_user.edit_products? || current_user.edit_classifications?),Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
       [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
       params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?} if params[:product_cf]
       params.delete :utf8
       if run_delayed params
-        Product.delay.batch_bulk_update(current_user, params)
+        Product.delay.batch_bulk_update(current_user, params) if current_user.edit_products?
+        OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id if current_user.edit_classifications? 
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else
-        messages = Product.batch_bulk_update(current_user, params, :no_email => true)
+        messages = Product.batch_bulk_update(current_user, params, :no_email => true) if current_user.edit_products?
+        cls_messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true if current_user.edit_classifications?
         # Show the user the update message and any errors if there were some
         add_flash :notices, messages[:message]
-        messages[:errors].each do |e|
-          add_flash :errors, e
-        end if messages[:errors]
+        [messages,cls_messages].each do |hsh|
+          hsh[:errors].each {|e| add_flash(:errors, e)} if hsh[:errors]
+        end
       end
       redirect_to products_path
     }

@@ -2,6 +2,7 @@
 $(function() {
   $("#btn_save").click(function() {$("#frm_bu").submit();});
   $("#btn_cancel").click(function() {window.location='<%=request.referrer%>';});
+  OpenChain.initClassifyPage();
   OpenChain.addClickMap('s','Save','btn_save');
   OpenChain.addClickMap('c','Cancel','btn_cancel');
   OpenChain.activateHotKeys();
@@ -12,9 +13,13 @@ $(function() {
   <button id='btn_cancel'>Cancel</button>
 <%end%>
 <div class='bulk_header_inner'>
-  Changes will be applied to <strong><%=pluralize @search_run ? @search_run.total_objects : @pks.size, CoreModule::PRODUCT.label.downcase%></strong>.
+  Changes will be applied to <strong><%=pluralize @search_run ? @search_run.total_objects : @pks.size, CoreModule::PRODUCT.label.downcase%></strong>.<br />
+  <span class='error'>Warning: Clicking save will replace ALL classifications for the selected products.</span>
 </div>
-<%=form_for Product.new, :url=>bulk_update_products_path, :html=>{:method=>"POST", :id=>"frm_bu"} do |f| %>
+<%=form_for @base_product, :url=>bulk_update_products_path, :html=>{:method=>"POST", :id=>"frm_bu"} do |f| %>
+  <%unless @back_to.blank?%>
+    <%=hidden_field_tag 'back_to', @back_to%>
+  <%end%>
   <%if @search_run %>
     <%=hidden_field_tag "sr_id", @search_run.id%>
   <%else%>
@@ -22,5 +27,16 @@ $(function() {
       <%=hidden_field_tag "pk[#{k}]", v %>
     <%end%>
   <%end%>
-  <%=render :partial=> 'product_edit', :locals=>{:form_obj => f,:hide_no_bulk_fields=>true}%>
+  <div class='container-fluid'>
+    <div class='row-fluid'>
+      <div class='span6'>
+        <%=render :partial=> 'product_edit', :locals=>{:form_obj => f,:hide_no_bulk_fields=>true}%>
+      </div>
+      <%if current_user.edit_classifications? -%>
+        <div class='span6'>
+          <%=render :partial=> 'classify', :locals=>{:form_obj => f}%>
+        </div>
+      <%end-%>
+    </div>
+  </div>
 <% end %>
