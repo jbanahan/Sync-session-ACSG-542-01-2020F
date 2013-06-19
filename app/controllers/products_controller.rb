@@ -46,7 +46,7 @@ class ProductsController < ApplicationController
   # GET /products/1/edit
   def edit
     p = Product.includes(:classifications=>[:tariff_records]).find(params[:id])
-    action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+    action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
       used_countries = p.classifications.collect {|cls| cls.country_id}
       Country.import_locations.sort_classification_rank.each do |c|
         p.classifications.build(:country => c) unless used_countries.include?(c.id) 
@@ -91,7 +91,7 @@ class ProductsController < ApplicationController
   # PUT /products/1.xml
   def update
     p = Product.find(params[:id])
-    action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+    action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
       succeed = lambda {|p|
         add_flash :notices, "Product was saved successfully."
         redirect_to p

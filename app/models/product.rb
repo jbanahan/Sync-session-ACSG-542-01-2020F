@@ -58,7 +58,7 @@ class Product < ActiveRecord::Base
   end
 
   def can_classify?(user)
-    can_edit?(user) && user.edit_classifications?
+    can_view?(user) && user.edit_classifications?
   end
 
   def can_comment? user

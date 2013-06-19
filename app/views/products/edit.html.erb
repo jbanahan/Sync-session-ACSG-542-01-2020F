@@ -39,11 +39,19 @@ $(function() {
     <div class='row-fluid'>
       <div class='span6'>
         <h3 class='text-center'>Attributes</h3>
-        <%= render :partial => 'product_edit', :locals=>{:form_obj => f}%>
+        <% if @product.can_edit?(current_user) -%>
+          <%= render :partial => 'product_edit', :locals=>{:form_obj => f}%>
+        <% else -%>
+          <%=render :partial => 'product_view', :locals => {:product => @product} %>
+        <% end -%>
       </div>
       <div class='span6'>
         <h3 class='text-center'>Classifications</h3>
-        <%= render :partial=>'classify', :locals=>{:form_obj=>f}%>
+        <% if @product.can_classify?(current_user) -%>
+          <%= render :partial=>'classify', :locals=>{:form_obj=>f}%>
+        <% else -%>
+          <%=render :partial=>'show_classification'%>
+        <% end -%>
       </div>
     </div>
   </div>
