@@ -39,7 +39,7 @@ class Product < ActiveRecord::Base
   def saved_classifications_exist?
     r = false
     self.classifications.each do |cls|
-      r = true if cls.exists?
+      r = true unless cls.new_record?
       break if r
     end
     r
