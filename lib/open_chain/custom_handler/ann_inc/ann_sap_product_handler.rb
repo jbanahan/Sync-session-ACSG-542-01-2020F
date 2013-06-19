@@ -31,7 +31,6 @@ module OpenChain
               p.update_custom_value! @custom_definitions[:ac_date], earliest_ac_date(rows)
               p.update_custom_value! @custom_definitions[:prop_hts], clean_string(base_row[9])
               p.update_custom_value! @custom_definitions[:prop_long], clean_string(base_row[10])
-              p.update_custom_value! @custom_definitions[:approved_long], clean_string(base_row[10])
               p.update_custom_value! @custom_definitions[:imp_flag], (clean_string(base_row[12])=='Y')
               p.update_custom_value! @custom_definitions[:inco_terms], clean_string(base_row[13])
               p.update_custom_value! @custom_definitions[:missy], clean_string(base_row[14])
@@ -43,6 +42,11 @@ module OpenChain
               if f_sap.value.nil?
                 f_sap.value = 0.days.ago
                 f_sap.save!
+              end
+              approved_long = p.get_custom_value(@custom_definitions[:approved_long])
+              if approved_long.value.blank?
+                approved_long.value = clean_string(base_row[10])
+                approved_long.save!
               end
               p.update_custom_value! @custom_definitions[:last_sap_date], 0.days.ago
               agg = aggregate_values rows
@@ -103,6 +107,7 @@ module OpenChain
             r[:dept_num] << clean_string(row[7])
             r[:dept_name] << clean_string(row[8])
           end
+          r.each {|k,v| v.uniq!}
           r
         end
         def earliest_ac_date rows
