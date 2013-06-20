@@ -157,6 +157,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #save the search setup and reload the results on after save
   $scope.saveSetup = () ->
+    $scope.toggleSetup()
     $scope.searchResult = {}
     ss = $scope.searchSetup
     $scope.searchSetup = {}
