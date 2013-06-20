@@ -22,7 +22,7 @@ module OpenChain
           SYNC_CODE
         end
         def ftp_credentials
-          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/SAP"}
+          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/ZYM"}
         end
         def preprocess_row row
           r = []
