@@ -76,6 +76,14 @@ class AdvancedSearchController < ApplicationController
         # rows (plus, we want to encourage people to upgrade).
         per_page = (old_ie_version? ? 10 : 100)
 
+        # Some search implementations may specify a per page value via the params, allow it 
+        # as long as the value isn't more than our predefined value.
+        query_per_page = number_from_param params[:per_page], nil
+
+        if query_per_page && (query_per_page < per_page)
+          per_page = query_per_page
+        end
+
         ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
         raise ActionController::RoutingError.new('Not Found') unless ss
         ss.touch

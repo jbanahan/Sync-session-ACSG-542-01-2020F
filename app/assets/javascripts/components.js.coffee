@@ -297,10 +297,11 @@
     scope: {
       searchResult:"=chainSearchResult"
       page: "="
-      errors:"=",
+      errors:"="
       notices:"="
       urlPrefix:"@src"
       noChrome: "@"
+      perPage: "="
     }
     transclude:true
     templateUrl:'/templates/search_result.html'
@@ -332,17 +333,22 @@
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
         scope.searchResult = {id:searchId}
-        $http.get(scope.urlPrefix+searchId+'?page='+p).success((data,status,headers,config) ->
+        url = scope.urlPrefix+searchId+'?page='+p
+        if scope.perPage
+          url += "&per_page=" + scope.perPage
+
+        $http.get(url).success((data,status,headers,config) ->
           scope.searchResult = data
-          scope.errors.push "Your search was too big.  Only the first " + scope.searchResult.total_pages + " pages are being shown."  if scope.searchResult.too_big
+          scope.errors.push "Your search was too big.  Only the first " + scope.searchResult.total_pages + " pages are being shown."  if scope.errors && scope.searchResult.too_big
 
           scope.loadedsearchId = scope.searchResult.id
           readSelectionCookie scope, data.id
         ).error((data,status) ->
-          if status == 404
-            scope.errors.push "This search with id "+id+" could not be found."
-          else
-           scope.errors.push "An error occurred while loading this search result. Please reload and try again."
+          if scope.errors
+            if status == 404
+              scope.errors.push "This search with id "+id+" could not be found."
+            else
+             scope.errors.push "An error occurred while loading this search result. Please reload and try again."
         )
 
       onSearchLoaded = (saved, scope) ->

@@ -365,6 +365,16 @@ describe AdvancedSearchController do
         links.should have(1).link
         links.first['label'].should == 'View'
       end
+      it 'should accept per_page parameter' do
+        get :show, :id=>@ss.id, :per_page=>'10', :format=>'json'
+        r = JSON.parse response.body
+        r['total_pages'].should == 51
+      end
+      it "should not utilize per_page parameter if it's value is greater than default per page value" do
+        get :show, :id=>@ss.id, :per_page=>'200', :format=>'json'
+        r = JSON.parse response.body
+        r['total_pages'].should == 6
+      end
     end
   end
   describe :download do
