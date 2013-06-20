@@ -7,7 +7,7 @@ if [[ !$restart_count > 0 ]]; then
   restart_count=1
 fi
 
-echo Stopping $restart_count jobs
+echo "$(date) - Stopping $restart_count jobs"
 ./script/delayed_job stop -n $restart_count
 
 #let the job finish
@@ -15,6 +15,6 @@ sleep 2
 
 for i in ${ls_out}
 	do
-		echo "Killing $i"
+		echo "$(date) - Killing $i"
 		kill -9 $i
 	done
