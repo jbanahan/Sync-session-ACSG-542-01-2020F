@@ -27,41 +27,6 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       sr.confirmation_file_name.should == 'a.csv'
       sr.failure_message.should be_blank
     end
-    it 'should have error when status not OK' do
-      @tmp << [@p.unique_identifier,Time.now,'BADSTYLE'].to_csv
-      @tmp.flush
-      @h.should_receive(:email_ack_failures).with(IO.read(@tmp.path),'a.csv',["Style #{@p.unique_identifier} failed: BADSTYLE"])
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-      sr = @p.sync_records.first
-      sr.confirmed_at.should > 2.seconds.ago
-      sr.trading_partner.should == 'MSLE'
-      sr.confirmation_file_name.should == 'a.csv'
-      sr.failure_message.should == 'BADSTYLE'
-    end
-    it "should have error if product doesn't exist" do
-      @tmp << ["#{@p.unique_identifier}nogood",Time.now,'OK'].to_csv
-      @tmp.flush
-      @h.should_receive(:email_ack_failures).with(IO.read(@tmp.path),'a.csv',["Style #{@p.unique_identifier}nogood confirmed, but it does not exist."])
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-    end
-    it "should have error if sync record doesn't exist" do
-      @p.sync_records.destroy_all
-      @tmp << [@p.unique_identifier,Time.now,'OK'].to_csv
-      @tmp.flush
-      @h.should_receive(:email_ack_failures).with(IO.read(@tmp.path),'a.csv',["Style #{@p.unique_identifier} confirmed, but it was never sent."])
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-    end
-    it 'should email failed records with attachment' do
-      @tmp << [@p.unique_identifier,Time.now,'BADSTYLE'].to_csv
-      @tmp.flush
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-      mail = ActionMailer::Base.deliveries.pop
-      mail.to.should == ['bug@aspect9.com']
-      mail.subject.should == "[Chain.io] MSL+ Enterprise Product Sync Failure"
-      mail.should have(1).postmark_attachments
-      mail.postmark_attachments.first["Name"] == 'a.csv'
-      mail.body.should match(/BADSTYLE/)
-    end
   end
   describe :products_to_send do
     before :each do

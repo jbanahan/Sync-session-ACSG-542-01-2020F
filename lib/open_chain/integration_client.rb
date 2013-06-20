@@ -6,6 +6,8 @@ require 'open_chain/custom_handler/kewill_isf_xml_parser'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
+require 'open_chain/custom_handler/ann_inc/ann_zym_ack_handler'
+
 module OpenChain
   class IntegrationClient
     def self.go system_code, shutdown_if_not_schedule_server = false, sleep_time = 5
@@ -116,7 +118,11 @@ module OpenChain
         response_type = 'remote_file' if status_msg == 'success'
       elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
         tmp = get_tempfile(bucket,remote_path,command['path']) 
-        OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+        if fname.to_s.match /^zym_ack/
+          OpenChain::CustomHandler::AnnInc::AnnZymAckHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'ANN-ZYM')
+        else
+          OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+        end
         status_msg = 'success'
         response_type = 'remote_file'
       else
