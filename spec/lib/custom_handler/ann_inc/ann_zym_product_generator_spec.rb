@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
   end
   context :ftp do
     it "should send proper credentials" do
-      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/SAP'}
+      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/ZYM'}
     end
   end
 end
