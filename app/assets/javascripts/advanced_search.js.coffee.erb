@@ -1,9 +1,9 @@
 root = exports ? this
 advSearchApp = angular.module('AdvancedSearchApp',['ChainComponents']).config(['$routeProvider', ($routeProvider) -> 
   $routeProvider.
-    when('/:searchId/:page',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
-    when('/:searchId',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'}).
-    when('/',{templateUrl:'/templates/advanced_search.html',controller:'AdvancedSearchCtrl'})
+    when('/:searchId/:page',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'}).
+    when('/:searchId',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'}).
+    when('/',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'})
 ])
 
 advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$location','$http','chainSearchOperators',($scope,$routeParams,$location,$http,chainSearchOperators) ->

@@ -1,8 +1,8 @@
 root = exports ? this
 importedFileApp = angular.module('ImportedFileApp',['ChainComponents']).config(['$routeProvider', ($routeProvider) ->
   $routeProvider.
-    when('/:fileId',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'}).
-    when('/:fileId/:page',{templateUrl:'/templates/imported_file.html',controller:'ImportedFileController'})
+    when('/:fileId',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'}).
+    when('/:fileId/:page',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'})
 ])
 
 importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', '$location', 'chainSearchOperators', ($scope,$routeParams,$http,$location,chainSearchOperators) ->

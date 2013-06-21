@@ -85,7 +85,7 @@
       errors:"=",
       notices:"="
     }
-    templateUrl:'/templates/chain_messages.html'
+    templateUrl:'<%=asset_path("chain_messages.html")%>'
     }
 ]
 @components.directive 'chainDatePicker', [() ->
@@ -118,7 +118,7 @@
 @components.directive 'chainSearchCriterion', ['$compile','chainSearchOperators',($compile,chainSearchOperators) ->
   {
     scope: {crit:"=chainSearchCriterion"},
-    templateUrl:"/templates/chain_search_criterion.html",
+    templateUrl:'<%=asset_path("chain_search_criterion.html")%>',
     controller: ['$scope',($scope) ->
       $scope.operators = chainSearchOperators.ops
 
@@ -304,7 +304,7 @@
       perPage: "="
     }
     transclude:true
-    templateUrl:'/templates/search_result.html'
+    templateUrl:'<%=asset_path("search_result.html")%>'
     controller: ['$scope',($scope) ->
 
       $scope.loadedSearchId = null
