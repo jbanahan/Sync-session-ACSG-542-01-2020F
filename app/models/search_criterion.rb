@@ -1,7 +1,7 @@
 class SearchCriterion < ActiveRecord::Base
   include HoldsCustomDefinition
   include JoinSupport
-  
+
   belongs_to :milestone_plan
   belongs_to :status_rule  
   belongs_to :search_setup
@@ -32,9 +32,122 @@ class SearchCriterion < ActiveRecord::Base
   #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)
   def test? obj, user=nil
     mf = ModelField.find_by_uid(self.model_field_uid)
-    passes?(mf.process_query_parameter(obj))
+    r = false
+    if CriterionOperator::FIELD_RELATIVE_OPERATORS.include?(self.operator)
+      r = relative_check mf.process_query_parameter(obj), ModelField.find_by_uid(self.value).process_query_parameter(obj) 
+    else
+      r = passes?(mf.process_query_parameter(obj))
+    end
+    r
   end
 
+  def add_where(p)
+    value = where_value
+    p.where(where_clause(value), value)
+  end
+
+  def where_clause sql_value
+    return relative_where_clause(sql_value) if CriterionOperator::FIELD_RELATIVE_OPERATORS.include?(self.operator)
+    mf = find_model_field
+    table_name = mf.join_alias
+    if custom_field? 
+      c_def_id = mf.custom_id
+      cd = CustomDefinition.cached_find(c_def_id)
+      if boolean_field?
+        clause = "custom_values.boolean_value = ?"
+        if self.include_empty || !sql_value
+          clause = "(#{clause} OR custom_values.boolean_value IS NULL)"
+        end
+        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
+      elsif self.operator=='null'
+        return "#{table_name}.id NOT IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+      elsif self.operator=='notnull'
+        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+      else
+        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
+      end
+    else
+      if boolean_field?
+        clause = "#{mf.qualified_field_name} = ?"
+        if self.include_empty || !sql_value
+          return "(#{clause} OR #{mf.qualified_field_name} IS NULL)"
+        end
+        return clause
+      else
+        return CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name, mf.data_type, self.include_empty)
+      end
+    end
+  end
+  
+  def boolean_field?
+    return find_model_field.data_type==:boolean
+  end
+  
+  def integer_field?
+    return find_model_field.data_type==:integer
+  end
+  
+  def decimal_field?
+    return find_model_field.data_type==:decimal
+  end
+
+  def date_field?
+    return find_model_field.data_type==:date
+  end
+
+  def date_time_field?
+    return find_model_field.data_type == :datetime
+  end
+
+  #value formatted properly for the appropriate condition in the SQL
+  def where_value
+    if (!self.value.nil? && date_time_field? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator))
+      return parse_date_time self.value
+    end
+
+    self_val = date_field? && !self.value.nil? && self.value.is_a?(Time)? self.value.to_date : self.value
+    if boolean_field? && ['null','notnull'].include?(self.operator)
+      return self.operator=='notnull'
+    elsif boolean_field?
+      return ["t","true","yes","y"].include? self_val.downcase
+    end
+    
+    return self_val.to_i if integer_field? && self.operator!="in"
+    
+    case self.operator
+    when "co"
+      return "%#{self_val}%"
+    when "nc"
+      return "%#{self_val}%"
+    when "sw"
+      return "#{self_val}%"
+    when "ew"
+      return "%#{self_val}"
+    when "in", "notin"
+      return break_rows(self_val)
+    else
+      return self_val
+    end
+  end
+
+  private
+
+
+  def relative_check my_value, other_value
+    return self.include_empty? if my_value.blank? || other_value.blank?
+    case self.operator
+    when 'bfld'
+      return true if my_value.to_date < other_value.to_date
+    end
+  end
+  def relative_where_clause other_mfid
+    my_mf = find_model_field
+
+    case self.operator
+    when 'bfld'
+      return "#{}"
+    end
+  end
   #does the given value pass the criterion test
   def passes?(value_to_test)
     mf = find_model_field
@@ -150,98 +263,6 @@ class SearchCriterion < ActiveRecord::Base
       end
     end
   end
-
-
-  
-  def add_where(p)
-    value = where_value
-    p.where(where_clause(value), value)
-  end
-
-  def where_clause sql_value
-    mf = find_model_field
-    table_name = mf.join_alias
-    if custom_field? 
-      c_def_id = mf.custom_id
-      cd = CustomDefinition.cached_find(c_def_id)
-      if boolean_field?
-        clause = "custom_values.boolean_value = ?"
-        if self.include_empty || !sql_value
-          clause = "(#{clause} OR custom_values.boolean_value IS NULL)"
-        end
-        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
-      elsif self.operator=='null'
-        return "#{table_name}.id NOT IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
-      elsif self.operator=='notnull'
-        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
-      else
-        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
-      end
-    else
-      if boolean_field?
-        clause = "#{mf.qualified_field_name} = ?"
-        if self.include_empty || !sql_value
-          return "(#{clause} OR #{mf.qualified_field_name} IS NULL)"
-        end
-        return clause
-      else
-        return CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name, mf.data_type, self.include_empty)
-      end
-    end
-  end
-  
-  def boolean_field?
-    return find_model_field.data_type==:boolean
-  end
-  
-  def integer_field?
-    return find_model_field.data_type==:integer
-  end
-  
-  def decimal_field?
-    return find_model_field.data_type==:decimal
-  end
-
-  def date_field?
-    return find_model_field.data_type==:date
-  end
-
-  def date_time_field?
-    return find_model_field.data_type == :datetime
-  end
-
-  #value formatted properly for the appropriate condition in the SQL
-  def where_value
-    if (!self.value.nil? && date_time_field? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator))
-      return parse_date_time self.value
-    end
-
-    self_val = date_field? && !self.value.nil? && self.value.is_a?(Time)? self.value.to_date : self.value
-    if boolean_field? && ['null','notnull'].include?(self.operator)
-      return self.operator=='notnull'
-    elsif boolean_field?
-      return ["t","true","yes","y"].include? self_val.downcase
-    end
-    
-    return self_val.to_i if integer_field? && self.operator!="in"
-    
-    case self.operator
-    when "co"
-      return "%#{self_val}%"
-    when "nc"
-      return "%#{self_val}%"
-    when "sw"
-      return "#{self_val}%"
-    when "ew"
-      return "%#{self_val}"
-    when "in", "notin"
-      return break_rows(self_val)
-    else
-      return self_val
-    end
-  end
-
-  private
 
   def number_value data_type, value
     sval = (value.blank? || !is_a_number(value) ) ? "0" : value

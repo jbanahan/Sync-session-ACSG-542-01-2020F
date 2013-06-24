@@ -4,6 +4,58 @@ describe SearchCriterion do
   before :each do 
     @product = Factory(:product)
   end
+  it "should have tests for after (field)"
+  context "before (field)" do
+    before :each do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'Entry',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'ent_release_date',operator:'bfld',value:'ent_arrival_date')
+    end
+    it "should pass if field is before other field's value" do
+      ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
+      @sc.test?(ent).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.first.should == ent
+    end
+    it "should fail if field is same as other field's value" do
+      ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.days.ago)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should fail if field is after other field's value" do
+      ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>1.days.ago)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should fail if field is null" do
+      ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should fail if other field is null" do
+      ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.day.ago)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should pass if field is null and include empty is true" do
+      @sc.include_empty = true
+      ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
+      @sc.test?(ent).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should pass if field is not null and other field is true and include empty is true" do
+      @sc.include_empty = true
+      ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.days.ago)
+      @sc.test?(ent).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+  end
   context "previous _ months" do
     describe :passes? do
       before :each do
