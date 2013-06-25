@@ -27,12 +27,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
     it "should not quote empty fields" do
       header_row = {0=>'uid',1=>'imp',2=>'ldesc',3=>'org',4=>'hts'}
-      content_row = {0=>'213',1=>'US',2=>"",3=>'CA',4=>'9876543210',5=>''}
+      content_row = {0=>'213',1=>'US',2=>"",3=>'',4=>'9876543210',5=>''}
       gen = described_class.new
       gen.should_receive(:sync).and_yield(header_row).and_yield(content_row)
       @tmp = gen.sync_csv
       r = IO.read(@tmp)
-      r.should == "213|US||CA|9876543210\n"
+      r.should == "213|US|||9876543210\n"
     end
   end
   describe :query do

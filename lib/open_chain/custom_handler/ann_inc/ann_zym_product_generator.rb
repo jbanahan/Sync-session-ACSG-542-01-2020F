@@ -46,7 +46,7 @@ module OpenChain
           #unless the override is blank
           vals[2] = vals[5] unless vals[5].blank?
 
-          vals[2] = nil if vals[2].blank? #prevents empty string from returning quotes
+          [2,3].each { |i| vals[i] = nil if vals[i].blank?} #prevents empty string from returning quotes
 
           #remove the long description override value
           vals.pop
