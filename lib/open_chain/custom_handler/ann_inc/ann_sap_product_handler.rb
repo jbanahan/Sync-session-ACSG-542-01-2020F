@@ -16,6 +16,7 @@ module OpenChain
           begin
             style_hash = {}
             CSV.parse(file_content,:col_sep=>'|') do |row|
+              next if row.blank? || row[1].blank?
               style = row[1].strip
               style_hash[style] ||= []
               style_hash[style] << row
