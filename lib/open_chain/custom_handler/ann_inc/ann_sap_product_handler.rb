@@ -32,7 +32,7 @@ module OpenChain
               p.update_custom_value! @custom_definitions[:ac_date], earliest_ac_date(rows)
               p.update_custom_value! @custom_definitions[:prop_hts], clean_string(base_row[9])
               p.update_custom_value! @custom_definitions[:prop_long], clean_string(base_row[10])
-              p.update_custom_value! @custom_definitions[:imp_flag], (clean_string(base_row[12])=='Y')
+              p.update_custom_value! @custom_definitions[:imp_flag], (clean_string(base_row[12])=='X')
               p.update_custom_value! @custom_definitions[:inco_terms], clean_string(base_row[13])
               p.update_custom_value! @custom_definitions[:missy], clean_string(base_row[14])
               p.update_custom_value! @custom_definitions[:petite], clean_string(base_row[15])
@@ -73,7 +73,7 @@ module OpenChain
                 end
                 cls.save!
 
-                cls.update_custom_value! @custom_definitions[:oga_flag], (clean_string(row[11])=='Y') 
+                cls.update_custom_value! @custom_definitions[:oga_flag], (clean_string(row[11])=='X') 
               end
               p.create_snapshot run_by
             end

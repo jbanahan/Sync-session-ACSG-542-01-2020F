@@ -14,7 +14,7 @@ div.clear {
   clear: both;
 }
 .error, .exception_value {
-    color: red;
+    color: red !important;
 }
 .required_empty {
   background-color: rgb(255, 194, 194);
