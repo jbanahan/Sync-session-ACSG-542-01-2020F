@@ -22,8 +22,13 @@ var OpenChain = (function() {
     if(!mf_id) {
       return;
     }
+    // Only init a tooltip when we haven't already done so for a field
+    if (field.parent().data("tooltip") === undefined) {
+      field.parent().tooltip({items: "img.val_status"});
+    }
+
     field.nextAll(".val_status").remove();
-    field.after("<img src='<%=asset_path 'ajax-loader.gif'%>' class='val_status' title='Validating...' style='display:none;'/>");
+    field.after("<img src='<%=asset_path 'ajax_load_64.gif'%>' class='val_status' title='Validating...' style='display:none;' height='16' width='16'/>");
     field.next().fadeIn();
     $.getJSON('/field_validator_rules/validate',{mf_id: mf_id, value: field.val()},function(data) {
       field.nextAll(".val_status").remove();
@@ -32,10 +37,7 @@ var OpenChain = (function() {
         $.each(data,function(i,v) {m += v+"<br />"});
         field.addClass("error");
         field.after("<img src='<%=asset_path 'error.png'%>' alt='Field Error' class='val_status'/>");
-        field.next().after("<div class='val_status tooltip'>"+m+"</div>");
-        field.next().tooltip({onShow: function() {
-          return OpenChain.raiseTooltip(this.getTip());
-        }});
+        field.parent().tooltip("option", "content", m);
       } else {
         field.removeClass("error");
       }
@@ -273,11 +275,6 @@ var OpenChain = (function() {
         });
       }
     },
-    raiseTooltip: function(tip) {
-      tip.css('z-index','5000');
-      $("body").append(tip);
-      return true;
-    },
     addKeyMap: function(key,desc,act) {
       mappedKeys[key]=new Object();
       mappedKeys[key].description = desc;
@@ -475,25 +472,9 @@ $( function() {
     });
     //.isdate must be before the tooltip call
     $(".isdate").datepicker({dateFormat: 'yy-mm-dd'});
-    $(".fieldtip").tooltip({
-      // place tooltip on the right edge
-      position: "center right",
-      // a little tweaking of the position
-      offset: [-2, 10],
-      // use the built-in fadeIn/fadeOut effect
-      effect: "fade",
-      // custom opacity setting
-      opacity: 0.9         
+    $(".fieldtip, .dialogtip").tooltip({
+      position: {my: "left top", at: "left bottom+3"}
     });
-    $(".dialogtip").tooltip({
-      position: "center left",
-      effect: "fade",
-      opacity: 0.9,
-      onBeforeShow: function(event, position){
-        OpenChain.raiseTooltip(this.getTip());
-       }
-    });
-    $(".tiplink").tooltip({position:"bottom center", effect: "fade", opacity: 0.9, offset: [8,0]});
     
     //Make the shared/search_box partial work
     $("#srch_fields").change( function() {
@@ -670,7 +651,7 @@ function addHiddenFormField(parentForm,name,value,id,style_class) {
     .appendTo(parentForm);
 }
 function loading(wrapper) {
-  wrapper.html("<img src='<%=asset_path 'ajax-loader.gif'%>' alt='loading'/>");
+  wrapper.html("<img src='<%=asset_path 'ajax_load_64.gif'%>' alt='loading' height='16' width='16'/>");
 }
 
 //address setup
