@@ -89,6 +89,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
   end
 
   context :ftp do
-    it "should implement ftp"
+    it "should send proper credentials" do
+      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/MIL'}
+    end
   end
 end

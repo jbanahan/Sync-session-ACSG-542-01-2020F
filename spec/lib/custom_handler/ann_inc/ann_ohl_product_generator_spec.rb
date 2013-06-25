@@ -125,7 +125,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
   end
   describe :ftp_credentials do
-    it 'needs to be implemented'
+    it "should send proper credentials" do
+      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/OHL'}
+    end
   end
   it "should have sync_code" do
     described_class.new.sync_code.should == 'ANN-PDM'

@@ -5,11 +5,16 @@ module OpenChain
       # send updated product information to Ann's Zymmetry system
       class AnnZymProductGenerator < OpenChain::CustomHandler::ProductGenerator
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
-        
+       
         SYNC_CODE ||= 'ANN-ZYM'
+
+        #SchedulableJob compatibility
+        def self.run_schedulable opts={}
+          self.generate opts
+        end
         
-        def self.generate
-          g = self.new
+        def self.generate opts={}
+          g = self.new(opts)
           g.ftp_file g.sync_csv
         end
 
@@ -41,13 +46,15 @@ module OpenChain
           #unless the override is blank
           vals[2] = vals[5] unless vals[5].blank?
 
+          vals[2] = nil if vals[2].blank? #prevents empty string from returning quotes
+
           #remove the long description override value
           vals.pop
 
           vals
         end
         def sync_csv
-          super(false,col_sep:'|') #no headers, pipe delimited
+          super(false,col_sep:'|') #no headers, pipe delimited, no quoting
         end
         def query
           fields = [
