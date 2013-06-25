@@ -7,6 +7,16 @@ module OpenChain
 
         SYNC_CODE ||= 'ANN-MIL'
         
+        #SchedulableJob compatibility
+        def self.run_schedulable opts={}
+          self.generate opts
+        end
+        
+        def self.generate opts={}
+          g = self.new(opts)
+          g.ftp_file g.sync_csv
+        end
+
         def initialize(opts={})
           super(opts)
           @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty]
@@ -14,6 +24,9 @@ module OpenChain
 
         def sync_code
           SYNC_CODE
+        end
+        def ftp_credentials
+          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/MIL"}
         end
 
         def sync_csv

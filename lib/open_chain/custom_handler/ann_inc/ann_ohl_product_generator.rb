@@ -7,6 +7,16 @@ module OpenChain
         
         SYNC_CODE ||= 'ANN-PDM'
 
+        #SchedulableJob compatibility
+        def self.run_schedulable opts={}
+          self.generate opts
+        end
+        
+        def self.generate opts={}
+          g = self.new(opts)
+          g.ftp_file g.sync_csv
+        end
+
         def initialize(opts={})
           super(opts)
           @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override]
@@ -15,6 +25,10 @@ module OpenChain
         #superclass requires this method
         def sync_code
           SYNC_CODE
+        end
+
+        def ftp_credentials
+          {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/OHL"}
         end
 
         def sync_csv
