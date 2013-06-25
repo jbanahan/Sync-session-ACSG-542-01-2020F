@@ -15,8 +15,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       :merch_dept_name=>'MDN',
       :proposed_hts=>'1234567890',
       :proposed_long_description=>'P Long Desc',
-      :fw=>'Y',
-      :import_indicator=>'Y',
+      :fw=>'X',
+      :import_indicator=>'X',
       :inco_terms=>'FOB',
       :missy=>'mstyle',
       :petite=>'pstyle',
@@ -84,7 +84,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(CustomDefinition.find_by_label('Merch Dept Name')).value.should == h[:merch_dept_name]
     p.get_custom_value(CustomDefinition.find_by_label('Proposed HTS')).value.should == h[:proposed_hts]
     p.get_custom_value(CustomDefinition.find_by_label('Proposed Long Description')).value.should == h[:proposed_long_description]
-    p.get_custom_value(CustomDefinition.find_by_label('SAP Import Flag')).value.should == ( h[:import_indicator] == 'Y')
+    p.get_custom_value(CustomDefinition.find_by_label('SAP Import Flag')).value.should == ( h[:import_indicator] == 'X')
     p.get_custom_value(CustomDefinition.find_by_label('INCO Terms')).value.should == h[:inco_terms]
     p.get_custom_value(CustomDefinition.find_by_label('Missy Style')).value.should == h[:missy]
     p.get_custom_value(CustomDefinition.find_by_label('Petite Style')).value.should == h[:petite]
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(CustomDefinition.find_by_label('Last SAP Received Date')).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
     p.should have(1).classifications
     cls = p.classifications.find_by_country_id @us.id
-    cls.get_custom_value(CustomDefinition.find_by_label('Other Agency Flag')).value.should == (h[:fw]=='Y')
+    cls.get_custom_value(CustomDefinition.find_by_label('Other Agency Flag')).value.should == (h[:fw]=='X')
     cls.should have(1).tariff_records
     tr = cls.tariff_records.first
     tr.hts_1.should == '1234567890'
@@ -183,5 +183,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p = Product.first
     p.get_custom_value(first).value.should == Date.new(2012,4,10)
     p.get_custom_value(last).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+  end
+  it "should set import indicator and fw flag to false if value is not 'X'" do
+    row = make_row :fw=>"", :import_indicator=>"a"
+    @h.process row, @user
+    p = Product.first
+    p.get_custom_value(CustomDefinition.find_by_label('SAP Import Flag')).value.should be_false
+    cls = p.classifications.find_by_country_id @us.id
+    cls.get_custom_value(CustomDefinition.find_by_label('Other Agency Flag')).value.should be_false
   end
 end
