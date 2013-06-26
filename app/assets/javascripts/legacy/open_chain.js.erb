@@ -360,13 +360,6 @@ var OpenChain = (function() {
       link.parents('.add_row').before(content);
       link.parents('.tr_body').children('.tf_row').last().find('.hts_field').first().focus();
     },
-    initAttachments: function() {
-      $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{
-        "Attach":function() {$("#frm_attach").submit();},
-        "Cancel":function() {$("#mod_attach").dialog('close');}
-      }});
-      $("#btn_add_attachment").click(function() {$("#mod_attach").dialog('open');});
-    },
     link_selects: function(wrapTableSelector) {
       var tbl, s_unselected, s_selected, l_unsel, l_sel;
       tbl = $(wrapTableSelector);

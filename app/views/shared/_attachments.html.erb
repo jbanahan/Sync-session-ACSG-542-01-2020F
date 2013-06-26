@@ -1,12 +1,12 @@
 <% if !local_assigns.has_key?(:view_only) || !view_only%>
   <% content_for :javascript do %>
-    $(function() {
-      OpenChain.initAttachments();
+    $(document).ready(function() {
+      Chain.initAttachments();
     });    
   <% end %>
   <% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
     <% content_for :action_bar do %>
-      <button id='btn btn_add_attachment'>Add Attachment</button>
+      <button id='btn_add_attachment'>Add Attachment</button>
     <%end%>
   <% end %>
 <%end-%>
@@ -40,10 +40,10 @@
     </div>
   </div>
 <%end-%>
-<div id='mod_attach'>
+<div id='mod_attach' style='display:none;'>
   Attach File:<br />
   <% att = attachable.attachments.build %>
-  <%=form_for att, :html=>{:multipart=>true,:id=>"frm_attach"} do |f|%>
+  <%=form_for att, :html=>{:multipart=>true,:id=>"frm_attach",:class=>'form-horizontal'} do |f|%>
     <%=f.hidden_field :attachable_id %>
     <%=f.hidden_field :attachable_type %>
     <%=f.collection_select :attachment_type, AttachmentType.all, :name, :name %>
