@@ -299,7 +299,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   registrations.push($scope.$watch 'searchSetup.search_criterions', ((newValue, oldValue, watchScope) ->
       return unless watchScope.searchSetup && watchScope.searchSetup.search_criterions && watchScope.searchSetup.search_criterions.length > 0
       for c in watchScope.searchSetup.search_criterions
-        watchScope.removeCriterion(c) if c.deleteMe
+        watchScope.removeCriterion(c) if c && c.deleteMe  # Not sure why, but I've seen console errors due to c being null here.
     ), true
   )
 

@@ -111,16 +111,41 @@
       # Remove the watch so el can get cleaned up
       scope.$on('$destroy', () ->
         deregister()
-        el.find('input').datepicker("destroy")
+        input = el.find('input')
+        if input.datepicker('widget')
+          # Clear the onSelect for this datepicker so the scope is no longer referenced by the onSelect closure
+          # Typically, we'd want to destroy the datepicker, but for some reason the destroy is blowing up because
+          # the internal instance found in the destroy method is undefined (not sure if it's a jquery bug or usage bug)
+          input.datepicker("option", "onSelect", () ->
+
+          )
       )
   }
 ]
 @components.directive 'chainSearchCriterion', ['$compile','chainSearchOperators',($compile,chainSearchOperators) ->
   {
-    scope: {crit:"=chainSearchCriterion"},
-    templateUrl:'<%=asset_path("chain_search_criterion.html")%>',
+    scope: {
+      crit:"=chainSearchCriterion"
+      modelFields: "=modelFields"
+    }
+    templateUrl:'<%=asset_path("chain_search_criterion.html")%>'
     controller: ['$scope',($scope) ->
       $scope.operators = chainSearchOperators.ops
+
+      $scope.getMatchingModelFieldTypes = (datatypes, excludeMfId) ->
+        match = []
+        for field in @.modelFields
+          if excludeMfId != field.mfid
+            for type in datatypes
+              if field.datatype == type
+                match.push(field)
+                break
+        match
+
+      $scope.findByMfid = (ary,mfid) ->
+        for m in ary
+          return m if m.mfid==mfid
+        null
 
       # parent controller needs to $watch for deleteMe and do the actual work of removing the object!
       $scope.remove = (crit) ->
@@ -145,6 +170,14 @@
             if chainSearchOperators.isRelative rScope.crit.datatype, rScope.crit.operator
               v_str = "<input type='text' ng-model='crit.value' />"
               dateStepper = true
+            else if rScope.modelFields && chainSearchOperators.isFieldRelative rScope.crit.datatype, rScope.crit.operator
+              # Angular doesn't appear to have a way to select the first option from the select box as a default, so using a new scope
+              # property and setting the crit.value ahead of time is the only way to not have a blank option value show in the select box
+              rScope.matchingModelFields = rScope.getMatchingModelFieldTypes ['date', 'datetime'], rScope.crit.mfid
+              if rScope.matchingModelFields.length > 0 && !rScope.findByMfid(rScope.matchingModelFields, rScope.crit.value)
+                rScope.crit.value = rScope.matchingModelFields[0].mfid
+
+              v_str = "<select ng-model='crit.value' ng-options='f.mfid as f.label for f in matchingModelFields'></select>"
             else
               v_str = "<div style='display:inline;' chain-date-picker='crit.value'></div>"
           when "boolean"
@@ -167,11 +200,12 @@
 
     link: (scope, el, attrs) ->
       deregister = scope.$watch 'crit.operator', ((newVal,oldVal, cbScope) ->
+
+        # Reset the criterion value for date types when moving between operators that have different value types (ie. date -> field or date -> # days,etc)
         if cbScope.crit.datatype=='date' || cbScope.crit.datatype=='datetime'
-          newRel = chainSearchOperators.isRelative(cbScope.crit.datatype,newVal)
-          oldRel = chainSearchOperators.isRelative(cbScope.crit.datatype,oldVal)
-          if newRel != oldRel
+          if !chainSearchOperators.isCompatibleDateOperators cbScope.crit.datatype, newVal, oldVal
             cbScope.crit.value = ""
+         
         cbScope.renderInput(cbScope, el)
       ), false
 
@@ -186,14 +220,39 @@
 ]
 @components.service 'chainSearchOperators', [() ->
   {
-    isRelative : (datatype, operator) ->
+    findOperator : (datatype, name) ->
       opList = @.ops[datatype]
-      return false unless opList
       op = null
-      for o in opList
-        op = o if o.operator == operator
-      return false unless op
-      op.relative
+      if opList
+        for o in opList
+          if o.operator == name
+            op = o 
+            break
+      op
+
+    isRelative : (datatype, operator) ->
+      op = @.findOperator datatype, operator
+      if op then op.relative else false
+
+    isFieldRelative : (datatype, operator) ->
+      op = @.findOperator datatype, operator
+      if op then op.fieldRelative else false
+
+    isCompatibleDateOperators : (datatype, newOperatorString, oldOperatorString) ->
+      newOp = @.findOperator datatype, newOperatorString
+      oldOp = @.findOperator datatype, oldOperatorString
+
+      compatible = false
+      if newOp? and oldOp?
+        if newOp.relative
+          compatible = oldOp.relative == true
+        else if newOp.fieldRelative
+          compatible = oldOp.fieldRelative == true
+        else 
+          compatible = (!oldOp.relative? && !oldOp.fieldRelative?)
+
+      return compatible
+
 
     ops : {
       date: [
@@ -208,6 +267,8 @@
         {operator:'pm',label:'Previous _ Months',relative:true}
         {operator:'null',label:'Is Empty'}
         {operator:'notnull',label:'Is Not Empty'}
+        {operator:'afld',label:'After (Field)', fieldRelative: true}
+        {operator:'bfld',label:'Before (Field)', fieldRelative: true}
         ]
       datetime: [
         {operator:'eq',label:'Equals'}
@@ -221,6 +282,8 @@
         {operator:'pm',label:'Previous _ Months',relative:true}
         {operator:'null',label:'Is Empty'}
         {operator:'notnull',label:'Is Not Empty'}
+        {operator:'afld',label:'After (Field)', fieldRelative: true}
+        {operator:'bfld',label:'Before (Field)', fieldRelative: true}
         ]
       integer: [
         {operator:'eq',label:'Equals'}

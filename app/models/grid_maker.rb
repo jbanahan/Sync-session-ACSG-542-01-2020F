@@ -85,11 +85,15 @@ class GridMaker
   def test_row(row_objects)
     @criteria.each do |c|
       mf = c.find_model_field
-      obj = row_objects[mf.core_module]
-      val = mf.process_export(obj,@user)
-      if obj.nil? && ["null","nq"].include?(c.operator)
+      primary_obj = row_objects[mf.core_module]
+      # This will be nil, unless we're using a criterion referencing multiple 
+      # model fields.  The other model field may be on a secondary level (ie different object), hence the
+      # need for finding multiple objects
+      secondary_obj = row_objects[c.secondary_model_field]
+
+      if primary_obj.nil? && ["null","nq"].include?(c.operator)
         #ok, just continue to testing the next criterion
-      elsif obj.nil? || !c.test?(obj)
+      elsif primary_obj.nil? || !c.test?(secondary_obj.nil? ? primary_obj : [primary_obj, secondary_obj])
         return false
       end
     end

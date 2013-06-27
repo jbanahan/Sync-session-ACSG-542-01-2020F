@@ -4,7 +4,86 @@ describe SearchCriterion do
   before :each do 
     @product = Factory(:product)
   end
-  it "should have tests for after (field)"
+  context "after (field)" do
+    before :each do
+      @u = Factory(:master_user)
+      @ss = SearchSetup.new(module_type:'Entry',user:@u)
+      @sc = @ss.search_criterions.new(model_field_uid:'ent_release_date',operator:'afld',value:'ent_arrival_date')
+    end
+    it "should pass if field is after other field's value" do
+      ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>1.days.ago)
+      @sc.test?(ent).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.first.should == ent
+    end
+    it "should fail if field is same as other field's value" do
+      ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>1.days.ago)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should fail if field is before other field's value" do
+      ent = Factory(:entry,:arrival_date=>1.day.ago,:release_date=>2.days.ago)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should fail if field is null" do
+      ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should fail if other field is null" do
+      ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.day.ago)
+      @sc.test?(ent).should be_false
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should pass if field is null and include empty is true" do
+      @sc.include_empty = true
+      ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
+      @sc.test?(ent).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should pass if field is not null and other field is true and include empty is true" do
+      @sc.include_empty = true
+      ent = Factory(:entry,:arrival_date=>nil,:release_date=>2.days.ago)
+      @sc.test?(ent).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.should be_empty
+    end
+    it "should pass for custom date fields before another custom date field" do
+      # There's no real logic differences in search criterion for handling custom fields
+      # for the before fields, but there is some backend stuff behind it that I want to make sure
+      # don't cause regressions if they're modified.
+      @def1 = Factory(:custom_definition,:data_type=>'date', :module_type=>'Entry')
+      @def2 = Factory(:custom_definition,:data_type=>'date', :module_type=>'Entry')
+      @sc.model_field_uid = SearchCriterion.make_field_name @def1
+      @sc.value = SearchCriterion.make_field_name @def2
+      
+      ent = Factory(:entry,:arrival_date=>2.day.ago,:release_date=>nil)
+      ent.update_custom_value! @def1, 1.months.ago
+      ent.update_custom_value! @def2, 2.month.ago
+
+      @sc.test?(ent).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.first.should == ent
+    end
+    it "should pass when comparing fields across multiple module levels" do
+      # This tests that we get the entry back if the release date is after the invoice date
+      inv = Factory(:commercial_invoice, :invoice_date => 2.months.ago)
+      ent = inv.entry
+      ent.update_attributes :release_date => 1.month.ago
+      @sc.value = "ci_invoice_date"
+
+      @sc.test?([ent, inv]).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.first.should == ent
+    end
+  end
+
   context "before (field)" do
     before :each do
       @u = Factory(:master_user)
@@ -55,105 +134,167 @@ describe SearchCriterion do
       ents = @sc.apply(Entry.scoped).all
       ents.should be_empty
     end
+    it "should pass for custom date fields before another custom date field" do
+      # There's no real logic differences in search criterion for handling custom fields
+      # for the before fields, but there is some backend stuff behind it that I want to make sure
+      # don't cause regressions if they're modified.
+      @def1 = Factory(:custom_definition,:data_type=>'date')
+      @def2 = Factory(:custom_definition,:data_type=>'date')
+      @sc.model_field_uid = SearchCriterion.make_field_name @def1
+      @sc.value = SearchCriterion.make_field_name @def2
+      
+      @product.update_custom_value! @def1, 2.months.ago
+      @product.update_custom_value! @def2, 1.month.ago
+
+      @sc.test?(@product).should be_true
+      prods = @sc.apply(Product.scoped).all
+      prods.first.should == @product
+    end
+    it "should pass when comparing fields across multiple module levels" do
+      # This tests that we get the entry back if the release date is before the invoice date
+      inv = Factory(:commercial_invoice, :invoice_date => 1.months.ago)
+      ent = inv.entry
+      ent.update_attributes :release_date => 2.month.ago
+      @sc.value = "ci_invoice_date"
+
+      @sc.test?([ent, inv]).should be_true
+      ents = @sc.apply(Entry.scoped).all
+      ents.first.should == ent
+    end
   end
   context "previous _ months" do
-    describe :passes? do
+    describe :test? do
       before :each do
         @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
       end
       it "should find something from the last month with val = 1" do
-        @sc.passes?(1.month.ago).should be_true
+        @product.created_at = 1.month.ago
+        @sc.test?(@product).should be_true
       end
       it "should not find something from this month" do
-        @sc.passes?(1.second.ago).should be_false
+        @product.created_at = 1.second.ago
+        @sc.test?(@product).should be_false
       end
       it "should find something from last month with val = 2" do
+        @product.created_at = 1.month.ago
         @sc.value = 2
-        @sc.passes?(1.month.ago).should be_true
+        @sc.test?(@product).should be_true
       end
       it "should find something from 2 months ago with val = 2" do
+        @product.created_at = 2.months.ago
         @sc.value = 2
-        @sc.passes?(2.months.ago).should be_true
+        @sc.test?(@product).should be_true
       end
       it "should not find something from 2 months ago with val = 1" do
+        @product.created_at = 2.months.ago
         @sc.value = 1
-        @sc.passes?(2.months.ago).should be_false
+        @sc.test?(@product).should be_false
       end
       it "should not find a date in the future" do
-        @sc.passes?(1.month.from_now).should be_false
+        @product.created_at = 1.month.from_now
+        @sc.test?(@product).should be_false
       end
       it "should be false for nil" do
-        @sc.passes?(nil).should be_false
+        @product.created_at = nil
+        @sc.test?(@product).should be_false
       end
       it "should be true for nil with include_empty for date fields" do
+        @product.created_at = nil
         crit = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"pm",:value=>1)
         crit.include_empty = true
-        crit.passes?(nil).should be_true
+        crit.test?(@product).should be_true
       end
       it "should be true for nil and blank values with include_empty for string fields" do
+        @product.name = nil
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
         crit.include_empty = true
-        crit.passes?(nil).should be_true
-        crit.passes?("").should be_true
+        crit.test?(@product).should be_true
+        @product.name = ""
+        crit.test?(@product).should be_true
         # Make sure we consider nothing but whitespace as empty
-        crit.passes?("\n  \t  \r").should be_true
+        @product.name = "\n  \t  \r"
+        crit.test?(@product).should be_true
       end
       it "should be true for nil and 0 with include_empty for numeric fields" do
+        e = Entry.new
         crit = SearchCriterion.new(:model_field_uid=>:ent_total_fees,:operator=>"eq",:value=>"1")
         crit.include_empty = true
-        crit.passes?(nil).should be_true
-        crit.passes?(0).should be_true
-        crit.passes?(0.0).should be_true
+        crit.test?(e).should be_true
+        e.total_fees = 0
+        crit.test?(e).should be_true
+        e.total_fees = 0.0
+        crit.test?(e).should be_true
       end
       it "should be true for nil and false with include_empty for boolean fields" do
+        e = Entry.new
         crit = SearchCriterion.new(:model_field_uid=>:ent_paperless_release,:operator=>"notnull",:value=>nil)
         crit.include_empty = true
-        crit.passes?(nil).should be_true
-        crit.passes?(true).should be_true
-        crit.passes?(false).should be_false
+        crit.test?(e).should be_true
+        e.paperless_release = true
+        crit.test?(e).should be_true
+        e.paperless_release = false
+        crit.test?(e).should be_false
       end
       it "should not consider trailing whitespce for = operator" do
+        @product.name = "ABC   "
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"ABC")
-        crit.passes?("ABC   ").should be_true
+        crit.test?(@product).should be_true
         crit.value = "ABC   "
-        crit.passes?("ABC").should be_true
+        @product.name = "ABC"
+        crit.test?(@product).should be_true
 
         #Make sure we are considering leading whitespace
-        crit.passes?("   ABC").should be_false
+        @product.name = "   ABC"
+        crit.test?(@product).should be_false
         crit.value = "   ABC"
-        crit.passes?("ABC").should be_false
+        @product.name = "ABC"
+        crit.test?(@product).should be_false
       end
       it "should not consider trailing whitespce for != operator" do
+        @product.name = "ABC   "
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"nq",:value=>"ABC")
-        crit.passes?("ABC   ").should be_false
+        crit.test?(@product).should be_false
         crit.value = "ABC   "
-        crit.passes?("ABC").should be_false
+        @product.name = "ABC"
+        crit.test?(@product).should be_false
 
         #Make sure we are considering leading whitespace
-        crit.passes?("   ABC").should be_true
+        @product.name = "   ABC"
+        crit.test?(@product).should be_true
         crit.value = "   ABC"
-        crit.passes?("ABC").should be_true
+        @product.name = "ABC"
+        crit.test?(@product).should be_true
       end
       it "should not consider trailing whitespce for IN operator" do
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"in",:value=>"ABC\nDEF")
-        crit.passes?("ABC   ").should be_true
-        crit.passes?("DEF    ").should be_true
+        @product.name = "ABC   "
+        crit.test?(@product).should be_true
+        @product.name = "DEF    "
+        crit.test?(@product).should be_true
         crit.value = "ABC   \nDEF   \n"
-        crit.passes?("DEF").should be_true
+        crit.test?(@product).should be_true
 
         #Make sure we are considering leading whitespace
-        crit.passes?("   ABC").should be_false
-        crit.passes?("   DEF").should be_false
+        @product.name = "   ABC"
+        crit.test?(@product).should be_false
+        @product.name = "   DEF"
+        crit.test?(@product).should be_false
       end
       it "should find something with a NOT IN operator" do
         crit = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"notin",:value=>"ABC\nDEF")
-        crit.passes?("A").should be_true
-        crit.passes?("ABC").should be_false
-        crit.passes?("ABC   ").should be_false
-        crit.passes?("DEF   ").should be_false
+        @product.name = "A"
+        crit.test?(@product).should be_true
+        @product.name = "ABC"
+        crit.test?(@product).should be_false
+        @product.name = "ABC   "
+        crit.test?(@product).should be_false
+        @product.name = "DEF   "
+        crit.test?(@product).should be_false
 
-        crit.passes?("  ABC").should be_true
-        crit.passes?("  DEF").should be_true
+        @product.name = "  ABC"
+        crit.test?(@product).should be_true
+        @product.name = "  DEF"
+        crit.test?(@product).should be_true
       end
     end
     describe :apply do
@@ -477,20 +618,20 @@ describe SearchCriterion do
         @custom_value.value = false
         @custom_value.save!
         @search_criterion.apply(Product).should include @product 
-        @search_criterion.passes?(@custom_value.value).should == true
+        @search_criterion.test?(@product).should == true
       end
       it 'should return for Is Empty and nil' do
         @custom_value.value = nil
         @custom_value.save!
         @search_criterion.apply(Product).should include @product 
-        @search_criterion.passes?(@custom_value.value).should == true
+        @search_criterion.test?(@product).should == true
       end
 
       it 'should not return for Is Empty and true' do
         @custom_value.value = true
         @custom_value.save!
         @search_criterion.apply(Product).should_not include @product 
-        @search_criterion.passes?(@custom_value.value).should == false
+        @search_criterion.test?(@product).should == false
       end
 
     end
@@ -506,21 +647,21 @@ describe SearchCriterion do
         @custom_value.value = true
         @custom_value.save!
         @search_criterion.apply(Product).should include @product 
-        @search_criterion.passes?(@custom_value.value).should == true
+        @search_criterion.test?(@product).should == true
       end
 
       it 'should not return for Is Not Empty and false' do
         @custom_value.value = false
         @custom_value.save!
         @search_criterion.apply(Product).should_not include @product 
-        @search_criterion.passes?(@custom_value.value).should == false
+        @search_criterion.test?(@product).should == false
       end
 
       it 'should not return for Is Not Empty and nil' do
         @custom_value.value = nil
         @custom_value.save!
         @search_criterion.apply(Product).should_not include @product 
-        @search_criterion.passes?(@custom_value.value).should == false
+        @search_criterion.test?(@product).should == false
       end
 
       it 'should return for Is Not Empty, include_empty and nil' do
@@ -528,7 +669,7 @@ describe SearchCriterion do
         @custom_value.save!
         @search_criterion.include_empty = true
         @search_criterion.apply(Product).should include @product 
-        @search_criterion.passes?(@custom_value.value).should == true
+        @search_criterion.test?(@product).should == true
       end
 
     end

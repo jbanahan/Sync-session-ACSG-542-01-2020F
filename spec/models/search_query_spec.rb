@@ -97,6 +97,17 @@ describe SearchQuery do
       r[4][:result][3].should start_with '1'
       r[5][:result][3].should start_with '3'
     end
+    it "should handle relative fields referencing different core modules" do
+      # Make sure that the search criterion's value is the only thing referencing a different module level so 
+      # that we're sure that we're testing the code that handles collecting this field's core module
+      classfication = Factory(:classification,:product=>@p1)
+      classfication.update_attributes :updated_at => 1.day.from_now
+      @ss.search_criterions.clear
+      @ss.search_criterions.build(:model_field_uid=>'prod_created_at', :operator=>'bfld', :value=>"class_updated_at")
+      r = @sq.execute
+      r[0][:result][0].should == @p1.unique_identifier
+    end
+
     context :custom_values do
       before :each do
         @cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>:string)

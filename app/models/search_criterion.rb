@@ -33,8 +33,19 @@ class SearchCriterion < ActiveRecord::Base
   def test? obj, user=nil
     mf = ModelField.find_by_uid(self.model_field_uid)
     r = false
-    if CriterionOperator::FIELD_RELATIVE_OPERATORS.include?(self.operator)
-      r = relative_check mf.process_query_parameter(obj), ModelField.find_by_uid(self.value).process_query_parameter(obj) 
+    if field_relative?
+      # for relative fields, if a secondary object is needed to supply a value (ie. when we're dealing with
+      # objects from mutiple heirarchical levels, we're expecting the obj passed in to be an array containing the appropriate 
+      # model objects to test values against..first index is primary object, second is secondary.
+      # Otherwise, the same object will be used for both fields.
+      mf_two = get_relative_model_field
+
+      primary_obj, secondary_obj = [obj, obj]
+      if obj.is_a? Enumerable
+        primary_obj, secondary_obj = obj.take(2)
+      end
+
+      r = passes_relative? mf.process_query_parameter(primary_obj), get_relative_model_field.process_query_parameter(secondary_obj) 
     else
       r = passes?(mf.process_query_parameter(obj))
     end
@@ -47,7 +58,10 @@ class SearchCriterion < ActiveRecord::Base
   end
 
   def where_clause sql_value
-    return relative_where_clause(sql_value) if CriterionOperator::FIELD_RELATIVE_OPERATORS.include?(self.operator)
+    if field_relative?
+      return relative_where_clause 
+    end
+    
     mf = find_model_field
     table_name = mf.join_alias
     if custom_field? 
@@ -99,6 +113,14 @@ class SearchCriterion < ActiveRecord::Base
     return find_model_field.data_type == :datetime
   end
 
+  def secondary_model_field
+    mf_two = nil
+      if field_relative?
+        mf_two = get_relative_model_field
+      end
+    mf_two
+  end
+
   #value formatted properly for the appropriate condition in the SQL
   def where_value
     if (!self.value.nil? && date_time_field? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator))
@@ -132,22 +154,49 @@ class SearchCriterion < ActiveRecord::Base
 
   private
 
-
-  def relative_check my_value, other_value
-    return self.include_empty? if my_value.blank? || other_value.blank?
-    case self.operator
-    when 'bfld'
-      return true if my_value.to_date < other_value.to_date
-    end
+  def field_relative? 
+    ['bfld', 'afld'].include? self.operator
   end
-  def relative_where_clause other_mfid
+
+  def get_relative_model_field
+    ModelField.find_by_uid self.value
+  end
+
+  def passes_relative? my_value, other_value
+    passes = false
+
+    if my_value.blank? || other_value.blank?
+      passes = self.include_empty?
+    else
+      # We're specifically truncating the time values for these (even for on datetimes fields) to try and avoid
+      # confusion.  If we need to have after/before field operators for more advanced usage we'll create a new 
+      # operator type that explicity states time is being compared.
+      case self.operator
+      when 'bfld'
+        passes = my_value.to_date < other_value.to_date
+      when 'afld'
+        passes = my_value.to_date > other_value.to_date
+      end
+    end
+
+    passes
+  end
+
+  def relative_where_clause 
     my_mf = find_model_field
+    other_mf = get_relative_model_field
 
+    clause = ""
     case self.operator
     when 'bfld'
-      return "#{}"
+      clause = "#{my_mf.qualified_field_name} < #{other_mf.qualified_field_name}"
+    when 'afld'
+      clause = "#{my_mf.qualified_field_name} > #{other_mf.qualified_field_name}"
     end
+
+    clause
   end
+  
   #does the given value pass the criterion test
   def passes?(value_to_test)
     mf = find_model_field
