@@ -192,9 +192,12 @@ root.Chain =
     getMessageCount : (url) ->
       $.getJSON url, (data) ->
         if data > 0
-          $('#message_envelope').html(data + " messages")
+          message = " message"
+          if data > 1
+            message += "s"
+          $('#message_envelope').html(data + message).show()
         else
-          $('#message_envelope').html('')
+          $('#message_envelope').html('').hide()
     
     
     # If pollingSeconds is <=0, no ongoing polling is done.
