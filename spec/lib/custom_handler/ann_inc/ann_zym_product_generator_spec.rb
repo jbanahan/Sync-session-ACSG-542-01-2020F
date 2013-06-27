@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
     end
     @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin]
+    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article]
   end
   describe :sync_csv do
     it "should clean newlines from long description" do
@@ -41,6 +41,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
     it "should split mulitple countries of origin into separate rows" do
       p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], "MX\nCN"
       p.update_custom_value! @cdefs[:approved_long], 'LD'
       p.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -50,8 +51,26 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       r.first.should == [p.unique_identifier,'US','LD','MX','1234567890'] 
       r.last.should ==  [p.unique_identifier,'US','LD','CN','1234567890']
     end
+    it "should not output style without ZSCR article type" do
+      p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
+      p.update_custom_value! @cdefs[:origin], 'MX'
+      p.update_custom_value! @cdefs[:approved_long], 'LD'
+      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      p2 = Factory(:product)
+      p2.update_custom_value! @cdefs[:article], 'ZSCR-X'
+      p2.update_custom_value! @cdefs[:origin], 'MX'
+      p2.update_custom_value! @cdefs[:approved_long], 'LD'
+      p2.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p2.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      r = run_to_array
+      r.should have(1).records
+      r.first.first.should == p.unique_identifier
+    end
     it "should only output US" do
       p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], 'MX'
       p.update_custom_value! @cdefs[:approved_long], 'LD'
       p.update_custom_value! @cdefs[:approved_date], 1.day.ago
@@ -64,6 +83,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
     it "should only output records that need sync" do
       p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
       dont_include = Factory(:product)
@@ -78,6 +98,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
     it "should only output approved products" do
       p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
       dont_include = Factory(:product)
@@ -88,6 +109,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
     it "should use long description override from classification if it exists" do
       p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.update_custom_value! @cdefs[:approved_long], "Don't use me"
       cls = p.classifications.create!(:country_id=>@us.id)

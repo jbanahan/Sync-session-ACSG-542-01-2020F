@@ -1,5 +1,17 @@
 root = exports ? this
 root.Chain =
+  
+  #prep the attachments partial
+  initAttachments: () ->
+    $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{
+      "Attach":(() ->
+        $("#frm_attach").submit()),
+      "Cancel":(() ->
+        $("#mod_attach").dialog('close'))}
+    })
+    $("#btn_add_attachment").click(() ->
+      $("#mod_attach").dialog('open')
+    )
 
   #tell the server never to show this user message to the current user again
   hideMessage : (messageName) ->

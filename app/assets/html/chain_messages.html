@@ -2,7 +2,6 @@
   <div class='row-fluid'>
     <div class='alert alert-info span6 offset3' ng-show='notices.length > 0'>
       <button type="button" class="close" ng-click='notices=[]'>&times;</button>
-      <div class='ang_notice_close'><img src='/images/x.png' title='Close' ng-click='notices=[]'/></div>
       <p ng-repeat='n in notices'>{{n}}</p>
     </div>
     <div class='alert alert-error span6 offset3' ng-show='errors.length > 0'>
