@@ -18,3 +18,4 @@ coverage/*
 .ruby-version
 .sass-cache/
 public/assets/*
+vendor/
