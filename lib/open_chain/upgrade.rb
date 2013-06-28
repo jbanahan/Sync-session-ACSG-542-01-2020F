@@ -83,7 +83,7 @@ module OpenChain
       capture_and_log "git checkout #{@target}"
       log_me "Source checked out"
       log_me "Running bundle install"
-      capture_and_log "bundle install --without=development test --deployment"
+      capture_and_log "bundle install --without=development test"
       log_me "Bundle complete, running migrations"
     end
 
