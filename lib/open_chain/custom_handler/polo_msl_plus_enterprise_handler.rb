@@ -2,7 +2,6 @@ require 'open_chain/custom_handler/ack_file_handler'
 module OpenChain
   module CustomHandler
     class PoloMslPlusEnterpriseHandler
-      include OpenChain::CustomHandler::AckFileHandler
       # :env=>:qa will put files in _test_to_msl instead of _to_msl
       def initialize opts={}
         o = HashWithIndifferentAccess.new(opts)
@@ -51,11 +50,6 @@ module OpenChain
       def send_and_delete_sync_file local_file, send_time=Time.now #only override send_time for test case
         send_file local_file, "ChainIO_HTSExport_#{send_time.strftime('%Y%m%d%H%M%S')}.csv"
         File.delete local_file 
-      end
-
-      # Process the acknowledgment file confirming receipt of outbound sync records
-      def process_ack_from_msl file_content, file_name
-        process_product_ack_file file_content, file_name, 'MSLE'
       end
 
       #process the inbound file

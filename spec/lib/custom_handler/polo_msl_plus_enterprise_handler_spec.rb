@@ -4,30 +4,6 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   after :each do
     @tmp.unlink if @tmp
   end
-  describe :process_ack_from_msl do
-    before :each do
-      @p = Factory(:product)
-      @sent_time = Time.now
-      @p.sync_records.create!(:sent_at=>@sent_time,:trading_partner=>'MSLE')
-      @tmp = Tempfile.new(['ack','.csv'])
-      @tmp << ['Style','Time Processed','Status'].to_csv
-      @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
-    end
-    it 'should update sync record' do
-      @tmp << [@p.unique_identifier,Time.now,'OK'].to_csv
-      @tmp.flush
-      @h.should_not_receive(:email_ack_failures)
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-      @p.reload
-      @p.should have(1).sync_records
-      sr = @p.sync_records.first
-      sr.sent_at.to_i.should == @sent_time.to_i
-      sr.confirmed_at.should > 2.seconds.ago
-      sr.trading_partner.should == 'MSLE'
-      sr.confirmation_file_name.should == 'a.csv'
-      sr.failure_message.should be_blank
-    end
-  end
   describe :products_to_send do
     before :each do
       @cd_msl_rec = Factory(:custom_definition,:label=>"MSL+ Receive Date",:data_type=>"date",:module_type=>"Product")

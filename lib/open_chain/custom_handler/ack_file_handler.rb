@@ -1,7 +1,7 @@
 module OpenChain
   module CustomHandler
     # Process CSV Acknowledgements
-    module AckFileHandler
+    class AckFileHandler
       
       def process_product_ack_file file_content, file_name, sync_code
         errors = []

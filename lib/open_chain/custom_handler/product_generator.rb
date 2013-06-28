@@ -4,6 +4,8 @@ module OpenChain
     #
     # If subclass implements `sync_code` then class will write / update sync records after generating the file
     #
+    # If subclass implements `auto_confirm?` and returns false, the sync records will not automatically be marked as confirmed
+    #
     # Subclass must implement `query` ande return a string representing the sql query to build the grid that will become the output file.  
     # The `query` method should check for a @custom_where variable to override the where clause of the query in case someone needs to run the generator for a specific product set
     # The first column in the query MUST be the products.id and will not be output in the file.
@@ -20,6 +22,10 @@ module OpenChain
       # returns array of rows so you can add more rows into the process
       def preprocess_row row
         [row]
+      end
+
+      def auto_confirm?
+        true
       end
 
       def sync
@@ -42,8 +48,8 @@ module OpenChain
             x = uids
             Product.transaction do
               Product.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{x.join(",")});"
-              Product.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at,confirmed_at,updated_at,created_at,trading_partner) 
-   (select id, \"Product\",now(),now() + INTERVAL 1 MINUTE,now(),now(),\"#{sync_code}\" from products where products.id in (#{x.join(",")}));"
+              Product.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner) 
+   (select id, \"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\" from products where products.id in (#{x.join(",")}));"
             end
           end
         end

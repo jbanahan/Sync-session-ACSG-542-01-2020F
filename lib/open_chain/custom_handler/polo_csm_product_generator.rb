@@ -13,6 +13,10 @@ module OpenChain
       def sync_code
         'csm_product'
       end
+
+      def auto_confirm?
+        false
+      end
       
       #overriding to handle special splitting of CSM numbers
       def sync_csv include_headers=true
