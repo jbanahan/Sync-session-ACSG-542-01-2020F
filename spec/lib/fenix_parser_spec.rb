@@ -402,6 +402,20 @@ describe OpenChain::FenixParser do
     entries[1].entry_number.should == @barcode
   end
 
+  it "should handle date time values with missing time components" do
+    @release_date = "01/09/2012,"
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.release_date.should == @est.parse_us_base_format(@release_date.gsub(',',' 12:00am'))
+  end
+
+  it "should handle date time values with invalid date times" do
+    @release_date = "192012,"
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.release_date.should be_nil
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call

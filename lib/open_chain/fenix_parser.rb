@@ -325,8 +325,14 @@ module OpenChain
     end
 
     def parse_date_time line, start_pos
-      return nil if line[start_pos].blank? || line[start_pos+1].blank?
-      time_zone.parse_us_base_format("#{line[start_pos]} #{line[start_pos+1]}") rescue return nil
+      dt = nil
+      if !line[start_pos].blank?
+        # If the time component is missing, just set the time to midnight 
+        # (Fenix omits time for some entry type / date field combinations and sends it for others)
+        time = (line[start_pos+1].blank? ? "12:00am" : line[start_pos+1])
+        dt = time_zone.parse_us_base_format("#{line[start_pos]} #{time}") rescue nil
+      end
+      return dt
     end
 
     def time_zone
