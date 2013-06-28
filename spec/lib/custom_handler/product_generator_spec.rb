@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
   end
   describe :sync_fixed_position do
     before :each do 
-      @t = Time.now
+      @t = 0.seconds.ago 
       @p1 = Factory(:product,:name=>'ABCDEFG',:created_at=>@t)
       @b = @base.new
       def @b.query
