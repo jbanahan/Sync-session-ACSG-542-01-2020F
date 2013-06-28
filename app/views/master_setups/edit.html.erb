@@ -89,7 +89,7 @@ $(function() {
                   <div>
                     <%=link_to u.started_at.to_s, u%> (<%=u.to_version%>)
                     <%= "FAILED" if u.log && u.finished_at && !u.log.include?("Upgrade complete") %>
-                    <%= "Running" if u.log && !u.finished_at && !u.log.started_at < 30.minutes.ago %>
+                    <%= "Running" if u.log && !u.finished_at && !u.started_at < 30.minutes.ago %>
                   </div>
                 <%end%>
               </div>
