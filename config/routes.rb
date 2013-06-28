@@ -114,7 +114,6 @@ OpenChain::Application.routes.draw do
   match "/logout" => "user_sessions#destroy", :as => :logout
   match "/settings" => "settings#index", :as => :settings
   match "/tools" => "settings#tools", :as => :tools
-  match "/active_users" => "settings#active_users", :as=>:active_users
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
