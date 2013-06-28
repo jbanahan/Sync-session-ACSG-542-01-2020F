@@ -28,7 +28,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should handle timezone conversion for datetime columns" do
-      release_date = Time.now
+      release_date = 0.seconds.ago
       e1 = Factory(:entry,:entry_number=>'12345', :release_date => release_date)
       q = "SELECT release_date 'REL1', date(release_date) as 'Rel2' FROM entries order by entry_number ASC"
       workbook = nil
