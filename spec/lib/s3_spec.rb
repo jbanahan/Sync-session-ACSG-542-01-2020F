@@ -132,6 +132,7 @@ describe OpenChain::S3 do
         found_keys[0].should == @my_keys[0]
         found_keys[1].should == @my_keys[1]
 
+        sleep 1
         Tempfile.open('test') do |f|
           f.binmode
           f << "Test"
