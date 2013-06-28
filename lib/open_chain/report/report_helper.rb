@@ -65,6 +65,20 @@ module OpenChain
         Date.parse(dstr).strftime("%Y-%m-%d")
       end
 
+      def datetime_translation_lambda target_time_zone_name, convert_to_date = false
+        time_zone = ActiveSupport::TimeZone[target_time_zone_name]
+        lambda { |result_set_row, raw_column_value|
+          time = nil
+          if raw_column_value
+            time = raw_column_value.in_time_zone time_zone
+            if convert_to_date
+              time = time.to_date
+            end
+          end
+          time
+        }
+      end
+
     private 
       # Takes the raw result set value from the query and conditionally does some data manipulation on it.
       # By default, it handles timezone conversions in Datetime columns and nothing else.  See the data_conversions param
