@@ -2,6 +2,9 @@ describe OpenChain::SearchQueryControllerHelper do
   before :each do
     @k = Class.new do
       include OpenChain::SearchQueryControllerHelper
+      include ActionDispatch::Routing::UrlFor
+      include Rails.application.routes.url_helpers 
+      default_url_options[:host] = 'www.example.com' 
       def polymorphic_path o
         "/products/#{o.id}"
       end
