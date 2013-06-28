@@ -81,6 +81,7 @@ module OpenChain
           else
             error_count += 1
             error_messages << "You do not have permission to classify product #{p.unique_identifier}."
+            good_count = gc if good_count.nil?
             good_count += -1
           end
         rescue OpenChain::ValidationLogicError
