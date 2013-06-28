@@ -1,10 +1,9 @@
 GIT
-  remote: git://github.com/bradphelan/jasminerice.git
-  revision: 80a853761d2856c4f74a8809f8e5d3a1a1f8d770
+  remote: http://github.com/bradphelan/jasminerice
+  revision: 13ae61378afdf66aed7eb945172eb1f5c75b451b
   specs:
-    jasminerice (0.0.10)
+    jasminerice (0.1.0)
       coffee-rails
-      haml
 
 GEM
   remote: http://rubygems.org/
@@ -91,7 +90,6 @@ GEM
       ruby-hmac
     formatador (0.2.4)
     gem_plugin (0.2.3)
-    haml (3.1.7)
     hike (1.2.1)
     httparty (0.9.0)
       multi_json (~> 1.0)
