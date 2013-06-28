@@ -79,6 +79,7 @@ describe CompaniesController do
       @u.admin = true
       @u.save!
       @c.update_attributes(:alliance_customer_number=>"ACNUM")
+      Delayed::Job.delete_all
     end
     it "should initiate delayed_job" do
       post :push_alliance_products, :id=>@c.id
