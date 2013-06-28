@@ -26,7 +26,7 @@ describe DashboardWidgetsController do
     it "should identify Internet Explorer < 9 and add notice" do
       @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
       get :index
-      flash[:notices].should == ["Because you are using an older version of Internet Explorer, the search screens will have reduced functionality, showing only 10 search results per page.  Please consider upgrading or using the Chrome browser instead."]
+      flash[:notices].should == ["Because you are using an older version of Internet Explorer, the search/report screens will have reduced functionality, showing only 10 search results per page.  Please consider upgrading or using the Chrome browser instead."]
     end
 
     it "should identify Chrome" do
