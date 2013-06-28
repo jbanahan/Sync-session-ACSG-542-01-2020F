@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   after :each do
-    @tmp.unlink if @tmp
+    File.delete @tmp if @tmp && File.exists?(@tmp)
   end
   describe :products_to_send do
     before :each do
@@ -141,6 +141,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @h.should_receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
       @h.send_and_delete_sync_file @tmp, override_time
       File.exists?(@tmp.path).should be_false
+      @tmp = nil
     end
   end
   describe :send_file do
@@ -159,7 +160,12 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   end
   describe :inbound_file do
     before :each do
-      @file_content = IO.read 'spec/support/bin/msl_plus_enterprise_inbound_sample.csv'
+      @file_content = "US Style Number,US Season,Board Number,Item Description,US Model Description,GCC Style Description,HTS Description 1,HTS Description 2,HTS Description 3,AX Sub Class,US Brand,US Sub Brand,US Class
+7352024LTBR,F12,O26SC10,LEATHER BARRACUDA-POLYESTER,LEATHER BARRACUDA,Men's Jacket,100% Real Lambskin Men's Jacket,TESTHTS2,TESTHTS3,Suede/Leather Outerwear,Menswear,POLO SPORTSWEAR,OUTERWEAR
+3221691177NY,S13,,SS BIG PP POLO SHIRT-MESH,SS BIG PP POLO SHIRT,Boys Knit Shirt,100% COTTON Boys Knit Shirt,,,SS Big Pony Mesh,Childrenswear,BOYS 4-7,KNITS
+322169117JAL,S13,,SS BIG PP POLO SHIRT-MESH,SS BIG PP POLO SHIRT,Boys Knit Shirt,100% COTTON Boys Knit Shirt,,,SS Big Pony Mesh,Childrenswear,BOYS 4-7,KNITS
+443590,S13,K21RB05,SS SLD JRSY CN PK,SS SLD JRSY CN PK,Men's Knit T-Shirt,100% COTTON Men's Knit T-Shirt,,,,Menswear,MENS RRL,KNITS
+4371543380AX,NOS,,DOUBLE HANDLE ATTACHE-ALLIGATOR,DOUBLE HANDLE ATTACHE,Handbag,100% Crocodile Handbag,,,Business Case,Leathergoods,MEN'S COLLECTION BAGS,EXOTIC BAGS"
       @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
       @style_numbers = ["7352024LTBR","3221691177NY","322169117JAL","443590","4371543380AX"]
       @h.stub(:send_file)
@@ -241,10 +247,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       tmp_content[2][0].should == "3221691177NY" 
     end
     it "should FTP acknowledgement file" do
-      @tmp = @h.process @file_content
+      @tmp = File.new('spec/support/tmp/abc.csv','w')
+      @tmp << 'ABC'
+      @tmp.flush
       @h.should_receive(:send_file).with(@tmp,'abc-ack.csv')
       @h.send_and_delete_ack_file @tmp, 'abc.csv'
       File.exists?(@tmp.path).should be_false
+      @tmp = nil
     end
   end
 end
