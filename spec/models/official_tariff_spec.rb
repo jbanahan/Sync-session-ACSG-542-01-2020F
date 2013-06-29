@@ -1,6 +1,28 @@
 require 'spec_helper'
 
 describe OfficialTariff do
+  describe :update_use_count do
+    it "should update with counts from all 3 hts code locations for the right country" do
+      c = Factory(:country)
+      Factory(:tariff_record,:hts_1=>'123456',:hts_2=>'123456',:hts_3=>'1111111',
+        :classification=>Factory(:classification,:country=>c)
+        )
+      Factory(:tariff_record,:hts_1=>'123456',:hts_2=>'123456',:hts_3=>'123456',
+        :classification=>Factory(:classification,:country=>c)
+        )
+      Factory(:tariff_record,:hts_1=>'123456',:hts_2=>'123456',:hts_3=>'123456',
+        :classification=>Factory(:classification,:country=>Factory(:country)) #don't match this
+        )
+      ot1 = Factory(:official_tariff,:hts_code=>'123456',:country=>c)
+      ot2 = Factory(:official_tariff,:hts_code=>'1111111',:country=>c)
+      ot3 = Factory(:official_tariff,:hts_code=>'1111117',:country=>c)
+      OfficialTariff.update_use_count
+      [ot1,ot2,ot3].each {|o| o.reload}
+      ot1.use_count.should == 5
+      ot2.use_count.should == 1
+      ot3.use_count.should == 0
+    end
+  end
   describe :can_view? do
     it "should allow if user can view official tariffs" do
       u = User.new

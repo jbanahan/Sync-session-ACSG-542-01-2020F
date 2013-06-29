@@ -11,6 +11,28 @@ class OfficialTariff < ActiveRecord::Base
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
   
+  #update the database with the total number of times that each official tariff has been used
+  def self.update_use_count
+    ActiveRecord::Base.connection.execute "UPDATE official_tariffs SET use_count = (
+SELECT 
+(SELECT count(tariff_records.id) FROM tariff_records
+INNER JOIN classifications ON classifications.id = tariff_records.classification_id 
+WHERE tariff_records.hts_1 = official_tariffs.hts_code 
+AND classifications.country_id = official_tariffs.country_id
+) +
+(SELECT count(tariff_records.id) FROM tariff_records
+INNER JOIN classifications ON classifications.id = tariff_records.classification_id 
+WHERE tariff_records.hts_2 = official_tariffs.hts_code 
+AND classifications.country_id = official_tariffs.country_id
+) +
+(SELECT count(tariff_records.id) FROM tariff_records
+INNER JOIN classifications ON classifications.id = tariff_records.classification_id 
+WHERE tariff_records.hts_3 = official_tariffs.hts_code 
+AND classifications.country_id = official_tariffs.country_id
+) 
+)"
+  end
+
   #get hash of auto-classification results keyed by country object
   def self.auto_classify base_hts
     return {} if base_hts.blank? || base_hts.strip.size < 6 #only works on 6 digit or longer
