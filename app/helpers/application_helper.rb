@@ -145,6 +145,7 @@ module ApplicationHelper
     customizable.custom_values.each {|cv| custom_value_hash[cv.custom_definition_id] = cv}
 	  CustomDefinition.where(:module_type => customizable.class.to_s).order("rank ASC, label ASC").each {|d|
       mf = d.model_field
+      next unless mf
       name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
       name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
       c_val_obj = custom_value_hash[d.id]

@@ -22,10 +22,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     end
     it "should only send Canadian tariff" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.update_custom_value! @cdefs[:approved_long], 'PLONG'
       [@ca,Factory(:country,:iso_code=>'US')].each do |cntry|
-        p.classifications.create!(:country_id=>cntry.id).tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
+        cls = p.classifications.create!(:country_id=>cntry.id)
+        cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
+        cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
       p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
       r = run_to_array
@@ -34,8 +35,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     end
     it "should only send approved products" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"0012345678")
+      cls = p.classifications.create!(:country_id=>@ca.id)
+      cls.tariff_records.create!(:hts_1=>"0012345678")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_find = Factory(:product)
       dont_find.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"0012345678")
       r = run_to_array
@@ -44,11 +46,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     end
     it "should only send products that need sync" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"0012345678")
+      cls = p.classifications.create!(:country_id=>@ca.id)
+      cls.tariff_records.create!(:hts_1=>"0012345678")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_find = Factory(:product)
-      dont_find.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_find.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"0012345678")
+      d_cls = dont_find.classifications.create!(:country_id=>@ca.id)
+      d_cls.tariff_records.create!(:hts_1=>"0012345678")
+      d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.hour.ago,:confirmed_at=>1.minute.ago)
       ActiveRecord::Base.connection.execute 'UPDATE products SET updated_at = "2010-01-01"' #reset updated at so product doesn't need sync
       r = run_to_array
@@ -57,8 +61,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     end
     it "should override long description with country specific version" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"0012345678")
+      cls = p.classifications.create!(:country_id=>@ca.id)
+      cls.tariff_records.create!(:hts_1=>"0012345678")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.classifications.first.update_custom_value! @cdefs[:long_desc_override], 'LDOV'
       r = run_to_array
       r.should have(1).record
@@ -67,9 +72,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     context :sets do
       it "should create 3 rows for two component style" do
         p = Factory(:product)
-        p.update_custom_value! @cdefs[:approved_date], 1.day.ago
         p.update_custom_value! @cdefs[:approved_long], 'LONG'
         cls = p.classifications.create!(:country_id=>@ca.id)
+        cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
         tr1 = cls.tariff_records.create!(:hts_1=>"0012345678",:line_number=>1)
         tr2 = cls.tariff_records.create!(:hts_1=>'2222222222',:line_number=>2)
         tr1.update_custom_value! @cdefs[:set_qty], 10

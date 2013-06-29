@@ -44,8 +44,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], "MX\nCN"
       p.update_custom_value! @cdefs[:approved_long], 'LD'
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
       r.should have(2).records
       r.first.should == [p.unique_identifier,'US','LD','MX','1234567890'] 
@@ -56,14 +57,16 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], 'MX'
       p.update_custom_value! @cdefs[:approved_long], 'LD'
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p2 = Factory(:product)
       p2.update_custom_value! @cdefs[:article], 'ZSCR-X'
       p2.update_custom_value! @cdefs[:origin], 'MX'
       p2.update_custom_value! @cdefs[:approved_long], 'LD'
-      p2.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p2.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls2 = p2.classifications.create!(:country_id=>@us.id)
+      cls2.tariff_records.create!(:hts_1=>"1234567890")
+      cls2.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
       r.should have(1).records
       r.first.first.should == p.unique_identifier
@@ -73,9 +76,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], 'MX'
       p.update_custom_value! @cdefs[:approved_long], 'LD'
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       [@us,Factory(:country,:iso_code=>'CN')].each do |c|
-        p.classifications.create!(:country_id=>c.id).tariff_records.create!(:hts_1=>'1234567890')
+        cls = p.classifications.create!(:country_id=>c.id)
+        cls.tariff_records.create!(:hts_1=>'1234567890')
+        cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
       r = run_to_array
       r.should have(1).record
@@ -84,11 +88,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     it "should only output records that need sync" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_include = Factory(:product)
-      dont_include.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      d_cls = dont_include.classifications.create!(:country_id=>@us.id)
+      d_cls.tariff_records.create!(:hts_1=>"1234567890")
+      d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_include.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.day.ago,:confirmed_at=>1.minute.ago)
       #reset updated at so that dont_include won't need sync
       ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
@@ -99,8 +105,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     it "should only output approved products" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_include = Factory(:product)
       dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
@@ -110,11 +117,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     it "should use long description override from classification if it exists" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.update_custom_value! @cdefs[:approved_long], "Don't use me"
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.update_custom_value! @cdefs[:long_desc_override], "Other long description"
       cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
       r.should have(1).record
       r[0][0].should == p.unique_identifier

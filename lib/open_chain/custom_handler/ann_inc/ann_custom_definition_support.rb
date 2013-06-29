@@ -21,7 +21,7 @@ module OpenChain
           :season=>{:label=>"Season",:data_type=>:string,:module_type=>'Product',:read_only=>true},
           :article=>{:label=>"Article Type",:data_type=>:string,:module_type=>'Product',:read_only=>true},
           :approved_long=>{:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product',:read_only=>false},
-          :approved_date=>{:label=>"Approved Date",:data_type=>:date,:module_type=>'Product',:read_only=>false},
+          :approved_date=>{:label=>"Approved Date",:data_type=>:date,:module_type=>'Classification',:read_only=>false},
           :first_sap_date=>{:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true},
           :last_sap_date=>{:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true},
           :long_desc_override=>{:label=>'Long Description Override',:data_type=>:text,:module_type=>'Classification',:read_only=>false},
