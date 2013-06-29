@@ -10,6 +10,8 @@
     <h2><a href='/settings'>Settings</a></h2>
     <p>Adjust administrative system settings</p>
   <%end%>
-  <h2><a href='/official_tariffs'>Tariff Database</a></h2>
-  <p>Search the tariff regulations database.</p>
+  <% if current_user.view_official_tariffs?-%>
+    <h2><a href='/official_tariffs'>Tariff Database</a></h2>
+    <p>Search the tariff regulations database.</p>
+  <%end-%>
 </div>

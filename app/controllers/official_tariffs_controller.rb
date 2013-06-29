@@ -22,6 +22,7 @@ class OfficialTariffsController < ApplicationController
   
   def show
     @official_tariff = OfficialTariff.find(params[:id])
+    raise ActionController::RoutingError.new('Not Found') unless @official_tariff && @official_tariff.can_view?(current_user)
   end
   
   def find
@@ -55,6 +56,6 @@ class OfficialTariffsController < ApplicationController
 
 
   def secure base_search
-    base_search #no extra security
+    OfficalTariff.search_secure current_user, base_search
   end
 end

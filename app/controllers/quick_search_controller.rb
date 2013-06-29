@@ -13,7 +13,8 @@ class QuickSearchController < ApplicationController
       CoreModule::BROKER_INVOICE=>[:bi_brok_ref],
       CoreModule::SHIPMENT=>[:shp_ref],
       CoreModule::SALE=>[:sale_order_number],
-      CoreModule::DELIVERY=>[:del_ref]
+      CoreModule::DELIVERY=>[:del_ref],
+      CoreModule::OFFICIAL_TARIFF=>[:ot_hts_code,:ot_full_desc]
     }
     @module_field_map.delete_if {|k,v| !k.view?(current_user)}
     @value = params[:v].strip

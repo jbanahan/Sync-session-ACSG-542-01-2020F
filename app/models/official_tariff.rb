@@ -72,14 +72,14 @@ class OfficialTariff < ActiveRecord::Base
     result
   end
 
-  def search_secure user, base
-    base
+  def self.search_secure user, base
+    base.where(search_where(user))
   end
   def can_view? u
-    true
+    u.view_official_tariffs? 
   end
   def self.search_where user
-    "1=1"
+    user.view_official_tariffs? ? "1=1" : "1=0"
   end
   private
   def update_cache

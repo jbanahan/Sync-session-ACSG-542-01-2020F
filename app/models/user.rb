@@ -142,7 +142,7 @@ class User < ActiveRecord::Base
     when CoreModule::CLASSIFICATION
       return self.view_products?
     when CoreModule::OFFICIAL_TARIFF
-      return true
+      return self.view_official_tariffs? 
     when CoreModule::ENTRY
       return self.view_entries?
     when CoreModule::BROKER_INVOICE
@@ -162,6 +162,9 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_official_tariffs?
+    self.company.master?
+  end
   def view_attachment_archives?
     self.company.master? && self.view_entries?
   end

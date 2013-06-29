@@ -1,6 +1,37 @@
 require 'spec_helper'
 
 describe OfficialTariff do
+  describe :can_view? do
+    it "should allow if user can view official tariffs" do
+      u = User.new
+      u.should_receive(:view_official_tariffs?).and_return(true)
+      OfficialTariff.new.can_view?(u).should be_true
+    end
+    it "should not allow if user cannot view offical tariffs" do
+      u = User.new
+      u.should_receive(:view_official_tariffs?).and_return(false)
+      OfficialTariff.new.can_view?(u).should be_false
+    end
+  end
+  describe :search_where do
+    it "should return '1=0' if user cannot view official tariffs" do
+      u = User.new
+      u.should_receive(:view_official_tariffs?).and_return(false)
+      OfficialTariff.search_where(u).should == '1=0'
+    end
+    it "should return '1=1' if user can view official tariffs" do
+      u = User.new
+      u.should_receive(:view_official_tariffs?).and_return(true)
+      OfficialTariff.search_where(u).should == '1=1'
+    end
+  end
+  describe :search_secure do
+    it "should inject search where" do
+      u = User.new
+      OfficialTariff.should_receive(:search_where).with(u).and_return('XX')
+      OfficialTariff.search_secure(u,OfficialTariff).to_sql.should include 'XX'
+    end
+  end
   describe :auto_classify do
     before :each do
       @us = Factory(:country,:iso_code=>'US',:import_location=>true) 

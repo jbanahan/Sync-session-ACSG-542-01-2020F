@@ -24,6 +24,14 @@ describe User do
     end
   end
   context "permissions" do
+    context "official tariffs" do
+      it "should allow master company user" do
+        Factory(:master_user).should be_view_official_tariffs
+      end
+      it "should not allow non master company user" do
+        Factory(:user).should_not be_view_official_tariffs
+      end
+    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))

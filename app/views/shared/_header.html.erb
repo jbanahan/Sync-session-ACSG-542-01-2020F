@@ -34,7 +34,7 @@
     </script>
   </head>
   <body>
-    <% cache ['v3',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
+    <% cache ['v4',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
       <% if @run_as_user %>
         <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
       <% end %>
@@ -54,7 +54,10 @@
                       <li class='dropdown'><a href='/products?force_search=true'>Search</a></li>
                       <% if current_user.edit_products?-%>
                         <li class='dropdown'><a href='/products/new'>New</a></li>
-                      <%end-%>
+                      <% end -%>
+                      <% if current_user.view_official_tariffs?-%>
+                        <li class='dropdown'><a href='/official_tariffs?force_search=true'>Tariffs</a></li>
+                      <% end -%>
                     </ul>
                   </li>
                 <% end -%>
