@@ -38,7 +38,7 @@ AND classifications.country_id = official_tariffs.country_id
     return {} if base_hts.blank? || base_hts.strip.size < 6 #only works on 6 digit or longer
     to_test = base_hts[0,6]
     r = {}
-    OfficialTariff.joins(:country).where("hts_code like ?","#{to_test}%").where("countries.import_location = ?",true).order("official_tariffs.hts_code ASC").each do |ot|
+    OfficialTariff.joins(:country).where("hts_code like ?","#{to_test}%").where("countries.import_location = ?",true).order("official_tariffs.use_count DESC, official_tariffs.hts_code ASC").each do |ot|
       r[ot.country] ||= []
       r[ot.country] << ot
     end

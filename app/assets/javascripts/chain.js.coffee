@@ -68,8 +68,10 @@ root.Chain =
       h ="<div class='auto-class-title'>Auto Classifications</div>"
       for hts in country_result['hts']
         h += "<div class='auto-class-container'><a href='#' class='hts_option'>"+hts.code+"</a>"
-        h += "&nbsp;[<a href='#' class='lnk_tariff_popup' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>]"
-        h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br /></div>"
+        h += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>" if hts.use_count
+        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-mini' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
+        h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />"
+        h += "</div>"
       target.html(h)
     write cntry for cntry in data
 
@@ -311,9 +313,9 @@ root.Chain =
           if o.auto_classify_ignore
             h += htsDataRow("Ignore For Auto Classify","Yes")
         
-          h += "</tbody></table>";
+          h += "</tbody></table>"
         
-        c.html(h);
+        c.html(h)
     )
 
 
@@ -326,7 +328,7 @@ $(document).ready () ->
   $('#notice').slideDown('slow')
 
   $(document).on 'click', "a.click_sink", (evt) ->
-    evt.preventDefault();
+    evt.preventDefault()
 
   $(document).on 'click', "a[data-action='auto-classify']", (evt) ->
     evt.preventDefault()
@@ -350,4 +352,4 @@ $(document).ready () ->
     evt.preventDefault()
     link = $(@).attr('link_to')
     if link
-      window.location=link;
+      window.location=link

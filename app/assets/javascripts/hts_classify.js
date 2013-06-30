@@ -40,7 +40,7 @@ var Classify = (function() {
           sb = data[i].official_schedule_b_code
           h += "<div class='sched_b_opt'><a href='#' class='sched_b_option'>"+sb.hts_code+"</a><br />";
           h += sb.short_description+"<br />";
-          h += "<a href='#' class='lnk_schedb_popup' schedb='"+sb.hts_code+"'>info</a>";
+          h += "<a href='#' class='lnk_schedb_popup btn btn-mini' schedb='"+sb.hts_code+"'>info</a>";
         }
         to_write.html(h);
         $(document).on('click',"a.sched_b_option",function(ev) {
@@ -122,7 +122,7 @@ var Classify = (function() {
       if(data) {
         t = data.official_schedule_b_code;
         h = t.short_description+"<br />"
-        h += "<a href='#' class='lnk_schedb_popup' schedb='"+t.hts_code+"'>info</a>";
+        h += "<a href='#' class='lnk_schedb_popup btn btn-mini' schedb='"+t.hts_code+"'>info</a>";
       }
       return h;
     }
@@ -157,7 +157,7 @@ var Classify = (function() {
         if(t.export_regulations) {
           h+="Export Regulations: "+t.export_regulations+"<br />";
         }
-        h+="<a href='#' class='lnk_tariff_popup' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
+        h+="<a href='#' class='lnk_tariff_popup btn btn-mini' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
       }
       return h;
     }
@@ -165,6 +165,9 @@ var Classify = (function() {
   }
 
   var scheduleBPopUp = function(hts) {
+    htsDataRow = function(label,val) {
+      return "<strong>"+label+"</strong>"+val+"<br />";
+    }
     var mp = $("#mod_sched_b");
     if(!mp.length) {
       $("body").append("<div id='mod_sched_b' style='display:none;'><div id='sched_b_cont'>Loading Schedule B Data</div></div>")
