@@ -50,6 +50,7 @@ class ScheduledReportsController < ApplicationController
       # assign_to_user_id -> user ids to assign the searches / reports to
 
       # All the search id's will be prefaced with sr~, Custom Reports will be prefaced with cr~
+      count = 0
       params[:search_setup_id].each do |search_identifier|
         type, id = search_identifier.split "~"
 
@@ -60,10 +61,12 @@ class ScheduledReportsController < ApplicationController
 
           users.each do |assign_to|
             search.give_to assign_to, !params[:copy_schedules].nil?
+            count += 1
           end
         end
       end
-
+      
+      add_flash :notices, "#{count} reports copied."
       redirect_to user_scheduled_reports_path(@user)
     end
   end

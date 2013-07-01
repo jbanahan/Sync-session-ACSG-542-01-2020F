@@ -10,6 +10,8 @@ function validate() {
     return false;
   }
 
+  $("#frm_give_scheduled_reports").submit();
+
 }
 
 $(function() {
@@ -17,28 +19,31 @@ $(function() {
 });
 <% end %>
 
-<h1>Give <%= @user.first_name %> <%= @user.last_name %>'s Reports to Another User</h1>
+<% content_for :action_bar do -%>
+  <button onclick="return validate();">Give Report(s)</button>
+<% end -%>
 
 <%= form_tag give_reports_scheduled_reports_path, :method=>"post", :id=>'frm_give_scheduled_reports' do %>
-<%= hidden_field_tag :user_id, @user.id %>
-<table>
-    <tr>
-      <th>Report - Last Run Time</th>
-      <th style="padding-left: 30px;">Assign To User(s)</th>
-    </tr>
-    <tr>
-      <td style="vertical-align: top">
+  <%= hidden_field_tag :user_id, @user.id %>
+  <div class='container'>
+    <div class='row text-center'>
+      <div class='span12'>
+        <h1>Give <%= @user.first_name %> <%= @user.last_name %>'s Reports to Another User</h1>
+      </div>
+    </div>
+    <div class='row text-center'>
+      <div class='span6'>
+        <h3>Report - Last Run Time</h3>
         <div><%=select_tag :search_setup_id, grouped_options_for_select(@reports), :multiple=>true, :size=>10%></div>
         <div><em>Reports with an '*' have schedules.</em></div>
         <div><em>(Select one or more)</em></div>
-      </td>
-      <td style="vertical-align: top; padding-left: 30px;">
+      </div>
+      <div class='span6'>
+        <h3>Assign To User(s)</h3>
         <div><%=select_tag :assign_to_user_id, "", :multiple=>true, :size=>10 %></div>
         <div>Copy Schedules? : <%=check_box_tag :copy_schedules, true, true %>
         <div><em>(Select one or more)</em></div>
-        <div>&nbsp;</div>
-        <div><button onclick="return validate();">Give Report(s)</button></div>
-      </td>
-    </tr>
-</table>
+      </div>
+    </div>
+  </div>
 <% end %>
