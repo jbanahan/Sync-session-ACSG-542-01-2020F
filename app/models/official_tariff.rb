@@ -13,24 +13,28 @@ class OfficialTariff < ActiveRecord::Base
   
   #update the database with the total number of times that each official tariff has been used
   def self.update_use_count
-    ActiveRecord::Base.connection.execute "UPDATE official_tariffs SET use_count = (
-SELECT 
-(SELECT count(tariff_records.id) FROM tariff_records
-INNER JOIN classifications ON classifications.id = tariff_records.classification_id 
-WHERE tariff_records.hts_1 = official_tariffs.hts_code 
-AND classifications.country_id = official_tariffs.country_id
-) +
-(SELECT count(tariff_records.id) FROM tariff_records
-INNER JOIN classifications ON classifications.id = tariff_records.classification_id 
-WHERE tariff_records.hts_2 = official_tariffs.hts_code 
-AND classifications.country_id = official_tariffs.country_id
-) +
-(SELECT count(tariff_records.id) FROM tariff_records
-INNER JOIN classifications ON classifications.id = tariff_records.classification_id 
-WHERE tariff_records.hts_3 = official_tariffs.hts_code 
-AND classifications.country_id = official_tariffs.country_id
-) 
-)"
+    conn = ActiveRecord::Base.connection
+    countries = Country.where("id IN (SELECT DISTINCT country_id from classifications)")
+    countries.each do |c|
+      hts_hash = {}
+      (1..3).each do |i|
+        r = conn.execute "select hts_#{i} as \"HTS\", count(*) from tariff_records
+inner join classifications on classifications.id = tariff_records.classification_id
+where length(hts_#{i}) > 0 and classifications.country_id = #{c.id}
+group by hts_#{i}"
+        r.each do |row|
+          hts_hash[row[0]] ||= 0
+          hts_hash[row[0]] += row[1]
+        end
+      end
+      ActiveRecord::Base.transaction do
+        conn.execute "UPDATE official_tariffs SET use_count = null WHERE country_id = #{c.id};"
+        hts_hash.each do |k,v|
+           conn.execute "UPDATE official_tariffs SET use_count = #{v} WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
+        end
+        conn.execute "UPDATE official_tariffs SET use_count = 0 WHERE country_id = #{c.id} AND use_count is null;"
+      end
+    end
   end
 
   #get hash of auto-classification results keyed by country object

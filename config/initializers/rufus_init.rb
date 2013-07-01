@@ -53,7 +53,7 @@ def execute_scheduler
   #Rebuild official tariff use counts
   scheduler.every '2h' do
     job_wrapper "OfficialTariff Use Count Update" do
-      OfficialTariff.delay.update_use_count
+    #  OfficialTariff.delay.update_use_count
     end
   end
 
