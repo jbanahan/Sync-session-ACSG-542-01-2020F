@@ -18,8 +18,8 @@ module OpenChain
         qry = <<QRY
 select 
 ent.entry_number as "Entry Number", 
-date_format(ent.arrival_date,"%Y-%m-%d") as "Arrival", 
-date_format(ent.release_date,"%Y-%m-%d") as "Release", 
+ent.arrival_date as "Arrival", 
+ent.release_date as "Release", 
 ent.entry_port_code as "Entry Port", 
 ent.broker_reference as "File Number", 
 ent.customer_name as "Customer Name", 
@@ -61,7 +61,12 @@ where ent.customer_number = "FOOLO" and bi.invoice_date between "#{start_date}" 
 QRY
         wb = Spreadsheet::Workbook.new
         sheet = wb.create_worksheet :name=>'Billing Summary'
-        table_from_query sheet, qry
+        # Translate the release, arrival date into Eastern Timezone before trimming the time portion off
+        # Moved out of the query because if done in the query we're converting the UTC time to a date and potentially 
+        # reporting the wrong date if the release is done between 8-12PM EDT.
+        dt_lambda = datetime_translation_lambda("Eastern Time (US & Canada)", true)
+        conversions = {"Release" => dt_lambda, "Arrival" => dt_lambda}
+        table_from_query sheet, qry, conversions
         workbook_to_tempfile wb, 'FootLockerBillingSummary-'
       end
     end

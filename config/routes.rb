@@ -179,6 +179,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_drawback_exports_without_imports" => "reports#run_drawback_exports_without_imports", :via=>:post
   match "/reports/show_foot_locker_billing_summary" => "reports#show_foot_locker_billing_summary", :via=>:get
   match "/reports/run_foot_locker_billing_summary" => "reports#run_foot_locker_billing_summary", :via=>:post
+  match "/reports/show_foot_locker_ca_billing_summary" => "reports#show_foot_locker_ca_billing_summary", :via=>:get
+  match "/reports/run_foot_locker_ca_billing_summary" => "reports#run_foot_locker_ca_billing_summary", :via=>:post
   match "/reports/show_das_billing_summary" => "reports#show_das_billing_summary", :via=>:get
   match "/reports/run_das_billing_summary" => "reports#run_das_billing_summary", :via=>:post
   match "/reports/show_kitchencraft_billing" => "reports#show_kitchencraft_billing", :via=>:get
