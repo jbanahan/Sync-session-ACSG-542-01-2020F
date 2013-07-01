@@ -34,13 +34,13 @@ $(function() {
     <div class='row text-center'>
       <div class='span6'>
         <h3>Report - Last Run Time</h3>
-        <div><%=select_tag :search_setup_id, grouped_options_for_select(@reports), :multiple=>true, :size=>10%></div>
+        <div><%=select_tag :search_setup_id, grouped_options_for_select(@reports), :multiple=>true, :size=>10, :style=>"width: auto;"%></div>
         <div><em>Reports with an '*' have schedules.</em></div>
         <div><em>(Select one or more)</em></div>
       </div>
       <div class='span6'>
         <h3>Assign To User(s)</h3>
-        <div><%=select_tag :assign_to_user_id, "", :multiple=>true, :size=>10 %></div>
+        <div><%=select_tag :assign_to_user_id, "", :multiple=>true, :size=>10, :style=>"width: auto;" %></div>
         <div>Copy Schedules? : <%=check_box_tag :copy_schedules, true, true %>
         <div><em>(Select one or more)</em></div>
       </div>
