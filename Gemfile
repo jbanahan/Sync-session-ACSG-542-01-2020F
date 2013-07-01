@@ -34,9 +34,6 @@ gem 'browser'
 
 group :development,:test do
 
-  #very active development so pinning to Github master
-  gem "jasminerice", :git => 'https://github.com/bradphelan/jasminerice.git'
-
   gem 'rspec-rails'
   gem 'factory_girl', '2.5.2', :group=>[:development,:test]
   gem 'spork'
