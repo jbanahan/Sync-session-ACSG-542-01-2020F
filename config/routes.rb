@@ -287,7 +287,15 @@ OpenChain::Application.routes.draw do
 		get 'render_partial', :on => :member
 	end
 
-  resources :users, :only => [:index]
+  resources :users, :only => [:index] do
+    resources :scheduled_reports, :only=>[:index]
+  end
+
+  resources :scheduled_reports, :only => [] do
+    collection do
+      post 'give_reports'
+    end
+  end
 
   resources :companies do
     member do

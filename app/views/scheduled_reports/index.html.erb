@@ -1,0 +1,44 @@
+<% content_for :javascript do %>
+function validate() {
+  if ($("#search_setup_id").find(":selected").length == 0 || $("#assign_to_user_id").find(":selected").length == 0) {
+    alert("You must select at least one report and a user to give it to.");
+    return false;
+  } 
+
+  var c = confirm("Are you sure you want to give these reports to these users?")
+  if(!c) {
+    return false;
+  }
+
+}
+
+$(function() {
+  Chain.loadUserList($("#assign_to_user_id"));
+});
+<% end %>
+
+<h1>Give <%= @user.first_name %> <%= @user.last_name %>'s Reports to Another User</h1>
+
+<%= form_tag give_reports_scheduled_reports_path, :method=>"post", :id=>'frm_give_scheduled_reports' do %>
+<%= hidden_field_tag :user_id, @user.id %>
+<table>
+    <tr>
+      <th>Report - Last Run Time</th>
+      <th style="padding-left: 30px;">Assign To User(s)</th>
+    </tr>
+    <tr>
+      <td style="vertical-align: top">
+        <div><%=select_tag :search_setup_id, grouped_options_for_select(@reports), :multiple=>true, :size=>10%></div>
+        <div><em>Reports with an '*' have schedules.</em></div>
+        <div><em>(Select one or more)</em></div>
+      </td>
+      <td style="vertical-align: top; padding-left: 30px;">
+        <div><%=select_tag :assign_to_user_id, "", :multiple=>true, :size=>10 %></div>
+        <div>Copy Schedules? : <%=check_box_tag :copy_schedules, true, true %>
+        <div><em>(Select one or more)</em></div>
+        <div>&nbsp;</div>
+        <div><button onclick="return validate();">Give Report(s)</button></div>
+      </td>
+    </tr>
+</table>
+<% end %>

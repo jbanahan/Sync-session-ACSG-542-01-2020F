@@ -94,7 +94,7 @@ class SearchSetup < ActiveRecord::Base
   end
 
   def last_accessed
-    sr = self.search_run
+    sr = self.search_runs.first
     sr.nil? ? nil : sr.last_accessed
   end
 
