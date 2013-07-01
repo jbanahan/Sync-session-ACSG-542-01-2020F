@@ -37,20 +37,17 @@ module ApplicationHelper
     end
     result_value
   end
+
+  #render view of field in table row form
   def field_view_row object, model_field_uid, show_prefix=nil
-    mf = ModelField.find_by_uid(model_field_uid)
-    debugger if mf.nil?
-    show_field = mf.can_view? User.current
-    if show_field && !mf.entity_type_field? && object.respond_to?('entity_type_id')
-      e_id = object.entity_type_id
-      ids = mf.entity_type_ids
-      show_field = false if !e_id.nil? && !ids.include?(e_id)
-    end
-    r = ""
-    if show_field
-      r = field_row(field_label(model_field_uid,show_prefix),  field_value(object,mf),false,mf) 
-    end
-    r
+    l = lambda {|label,field,never_hide,model_field| field_row(label,field,never_hide,model_field)}
+    field_view_generic object, model_field_uid, show_prefix, l
+  end
+
+  # render field in bootstrap friendly view mode
+  def field_view_bootstrap object, model_field_uid, show_prefix=nil
+    l = lambda {|b,f,n,m| field_bootstrap b,f,n,m}
+    field_view_generic object, model_field_uid, show_prefix, l
   end
 
   # render the value of the given model field for the given object
@@ -142,12 +139,13 @@ module ApplicationHelper
     !customizable.custom_definitions.empty?
   end
   def show_custom_fields(customizable, opts={})
-		opts = {:form=>false, :table=>false, :show_prefix=>nil}.merge(opts)
+		opts = {:form=>false, :table=>false, :show_prefix=>nil, :never_hide=>false}.merge(opts)
 	  x = ""
     custom_value_hash = {}
     customizable.custom_values.each {|cv| custom_value_hash[cv.custom_definition_id] = cv}
 	  CustomDefinition.where(:module_type => customizable.class.to_s).order("rank ASC, label ASC").each {|d|
       mf = d.model_field
+      next unless mf
       name = "#{customizable.class.to_s.downcase}_cf[#{d.id}]"
       name = "#{opts[:parent_name]}#{customizable.class.to_s.downcase}_cf[#{d.id}]" unless opts[:parent_name].nil?
       c_val_obj = custom_value_hash[d.id]
@@ -170,7 +168,7 @@ module ApplicationHelper
           x << field_view_row(customizable, d.model_field_uid,opts[:show_prefix])
         end
       else
-        z = "<b>".html_safe+field_label(d.model_field_uid,opts[:show_prefix])+": </b>".html_safe
+        z = ""
         if opts[:form] && !mf.read_only?
           case d.data_type
           when 'boolean'
@@ -183,14 +181,33 @@ module ApplicationHelper
         else
           z << "#{c_val}"
         end
-        x << content_tag(:div, z.html_safe, :class=>'field')  	
+        lbl = 
+        x << field_bootstrap(field_label(d.model_field_uid,opts[:show_prefix]), z.html_safe, opts[:never_hide], mf)  	
       end
 	  }
     return opts[:table] ? x.html_safe : content_tag(:div, x.html_safe, :class=>'custom_field_box')	  
   end
   
+  # render <tr> with field content
   def field_row(label, field, never_hide=false, model_field=nil) 
     content_tag(:tr, content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')+content_tag(:td, field, :style=>"#{model_field && [:decimal,:integer].include?(model_field.data_type) ? "text-align:right;" : ""}"), :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
+  end
+
+  # render bootstrap friendly field content
+  def field_bootstrap label, field, never_hide=false, model_field=nil
+    return '' if !never_hide && field.blank?
+    field_content = field
+    if model_field && model_field.data_type==:text
+      field_content = content_tag(:pre,field,:class=>'pre-nochrome')
+    end
+    content_tag(:div, 
+      content_tag(:div,
+        label.blank? ? '' : label,
+        :class=>'span4'
+      ) +
+      content_tag(:div,field_content,:class=>'span8'),
+      :class=>'row-fluid bootstrap-hover'
+    )
   end
   
   def model_field_label(model_field_uid) 
@@ -237,6 +254,20 @@ module ApplicationHelper
   end
 
   private
+
+  # render generic field view, last parameter is lambda for actual rendering
+  # which should take label, field, never_hide, model_field (see field_row)
+  def field_view_generic object, model_field_uid, show_prefix, render_lambda
+    mf = ModelField.find_by_uid(model_field_uid)
+    show_field = mf.can_view? User.current
+    if show_field && !mf.entity_type_field? && object.respond_to?('entity_type_id')
+      e_id = object.entity_type_id
+      ids = mf.entity_type_ids
+      show_field = false if !e_id.nil? && !ids.include?(e_id)
+    end
+    show_field ? render_lambda.call(field_label(model_field_uid,show_prefix),  field_value(object,mf),false,mf) : ""
+  end
+
   def opts_for_model_text_field model_field_uid, opts
     inner_opts = {:class=>val_class(model_field_uid),:mf_id=>model_field_uid}
     passed_class = opts.delete(:class)
@@ -247,7 +278,7 @@ module ApplicationHelper
   def val_class model_field_uid
   #returns the string "rvalidate" if the field needs remote validation
     r = ""
-    r << "rvalidate " if FieldValidatorRule.find_cached_by_model_field_uid(model_field_uid.to_s).empty?
+    r << "rvalidate " unless FieldValidatorRule.find_cached_by_model_field_uid(model_field_uid.to_s).empty?
     mf = ModelField.find_by_uid(model_field_uid)
     case mf.data_type
     when :decimal

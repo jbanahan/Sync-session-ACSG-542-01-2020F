@@ -9,10 +9,11 @@
 //
 // WARNING: THE FIRST BLANK LINE MARKS THE END OF WHAT'S TO BE PROCESSED, ANY BLANK LINE SHOULD
 // GO AFTER THE REQUIRES BELOW.
-//
 //= require jquery
 //= require jquery_ujs
 //= require json3
+//= require bootstrap
 //= require angular
-//= require angular-resource
-//= require_tree .
+//= require_directory .
+//= stub legacy
+//= stub html5shim

@@ -89,6 +89,25 @@ class User < ActiveRecord::Base
     return n
   end
   
+  #should a user message be hidden for this user
+  def hide_message? message_name
+    parse_hidden_messages
+    @parsed_hidden_messages.include? message_name.upcase
+  end
+
+  #add a message to the list that shouldn't be displayed for this user
+  def add_hidden_message message_name 
+    parse_hidden_messages
+    @parsed_hidden_messages << message_name.upcase
+    store_hidden_messages
+  end
+
+  def remove_hidden_message message_name
+    parse_hidden_messages
+    @parsed_hidden_messages.delete message_name.upcase
+    store_hidden_messages
+  end
+
   def can_view?(user)
     return user.admin? || self==user
   end
@@ -123,7 +142,7 @@ class User < ActiveRecord::Base
     when CoreModule::CLASSIFICATION
       return self.view_products?
     when CoreModule::OFFICIAL_TARIFF
-      return true
+      return self.view_official_tariffs? 
     when CoreModule::ENTRY
       return self.view_entries?
     when CoreModule::BROKER_INVOICE
@@ -143,6 +162,9 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_official_tariffs?
+    self.company.master?
+  end
   def view_attachment_archives?
     self.company.master? && self.view_entries?
   end
@@ -336,6 +358,12 @@ class User < ActiveRecord::Base
   end
 
   private
+  def parse_hidden_messages
+    @parsed_hidden_messages ||= (self.hidden_message_json.blank? ? [] : JSON.parse(self.hidden_message_json))
+  end
+  def store_hidden_messages
+    self.hidden_message_json = @parsed_hidden_messages.to_json unless @parsed_hidden_messages.nil?
+  end
   def master_setup
     MasterSetup.get 
   end

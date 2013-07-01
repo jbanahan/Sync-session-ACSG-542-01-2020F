@@ -1,7 +1,7 @@
 <% content_for :javascript do %>
 $(function() {
 	setupShippingAddress('Master Company',$('#shipment_ship_to_id'),$('#ship_to_ad'),<%=Company.find_by_master(true).id%><%=@shipment.ship_to_id.nil? ? '' : ",#{@shipment.ship_to_id}"%>);
-	setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),<%=@shipment.vendor.nil? ? "'not set'": @shipment.vendor.id%><%=@shipment.ship_from_id.nil? ? '' : ",#{@shipment.ship_from_id}"%>);
+	setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),<%=@shipment.vendor.nil? ? "'not set'".html_safe : @shipment.vendor.id%><%=@shipment.ship_from_id.nil? ? '' : ",#{@shipment.ship_from_id}"%>);
   getAddress($('#ship_from_ad'),$("#shipment_ship_from_id").val());
   $("#shipment_vendor_id").change(function() {
      setupShippingAddress('Vendor',$('#shipment_ship_from_id'),$('#ship_from_ad'),$(this).val());

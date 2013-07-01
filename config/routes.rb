@@ -114,7 +114,6 @@ OpenChain::Application.routes.draw do
   match "/logout" => "user_sessions#destroy", :as => :logout
   match "/settings" => "settings#index", :as => :settings
   match "/tools" => "settings#tools", :as => :tools
-  match "/active_users" => "settings#active_users", :as=>:active_users
   match "/adjust_inventory" => "products#adjust_inventory"
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
@@ -124,6 +123,7 @@ OpenChain::Application.routes.draw do
   match "/public_fields" => "public_fields#index"
   match "/public_fields/save" => "public_fields#save", :via => :post
   match "/users/email_new_message" => "users#email_new_message"
+  match "/hide_message/:message_name" => 'users#hide_message', :via => :post
   match "/quick_search" => "quick_search#show"
   match "/quick_search/module_result" => "quick_search#module_result"
   match "/enable_run_as" => "users#enable_run_as"
@@ -247,7 +247,6 @@ OpenChain::Application.routes.draw do
     end
     member do
       get 'history'
-      get 'classify'
       get :next_item
       get :previous_item
       put :import_worksheet 

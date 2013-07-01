@@ -1,8 +1,7 @@
 <% content_for :javascript do %>
 $(function() {
   $("#mod_division").dialog({autoOpen:false, title:'<%= edit_div.nil? ? "Add" : "Edit" %> Division'});
-  $("#division_submit").button();
-  $("#btn_add_division").button().click(function() {
+  $("#btn_add_division").click(function() {
     $("#mod_division").dialog('open');
   });
 });
@@ -23,7 +22,7 @@ $(document).ready( function() {
   </li>
   <% end %>
 </ul>
-<% if edit_div.nil? && @company.can_edit?(current_user)%><button id='btn_add_division'>Add</button><%end%>
+<% if edit_div.nil? && @company.can_edit?(current_user)%><button id='btn_add_division' class='btn'>Add</button><%end%>
 <div id='mod_division' style='display:none;'>
 <%= form_for(edit_div.nil? ? [@company, @company.divisions.build] : [@company, edit_div]) do |f| %>
 	<div class="field">
@@ -31,7 +30,7 @@ $(document).ready( function() {
 		<%= f.text_field :name %>
 	</div>
 	<div class="actions">
-		<%= f.submit %>
+    <%= f.submit :class=>'btn' %>
 	</div>
 <% end %>
 </div>

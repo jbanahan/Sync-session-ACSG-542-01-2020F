@@ -1,43 +1,12 @@
-#advanced_search_wrapper {
-  width: 99%;
-  #select_search {
-    font-size: 175%;
-    width: 99%;
-  }
-  #search_setup_controls {
-    margin: 1em 0;
-    padding: 1em 0;
-    h1 {
-      margin: .25em;
-      text-align: center;
-    }
-    .name_box {
-      font-size: 200%;
-      input {
-        font-size: 125%;
-      }
-    }
-  }
-  div.settings_wrapper {
-    display: inline-block;
-    margin-right: .5em;
-  }
-  #search_action_links {
-    font-size: 125%;
-    margin: 1em 0;
-  } 
-  div.schedule_display {
-    margin-bottom: .5em;
-  }
-  div.toggle_pane {
-    display: inline-block;
-    .tpane_label {
-      text-align: center;
-      font-size: 90%;
-    }
-    select {
-      min-width: 8em;
-    }
-  }
+div.schedule-display {
+  border-color: black;
 }
-
+#select_search {
+  width: 90%;
+}
+#search-setup-name-box {
+  width: 90%;
+}
+#search-setup-actions {
+  margin-top: 1em;
+}

@@ -11,7 +11,7 @@ class ApplicationController < ActionController::Base
   before_filter :set_user_time_zone
   before_filter :log_request
   before_filter :force_reset
-
+  before_filter :set_legacy_scripts
 
   helper_method :current_user
   helper_method :master_company
@@ -22,6 +22,8 @@ class ApplicationController < ActionController::Base
   helper_method :merge_params
   helper_method :sortable_search_heading
   helper_method :master_setup
+
+  after_filter :reset_state_values
  
 
   def log_request
@@ -273,12 +275,23 @@ class ApplicationController < ActionController::Base
     sr
   end
 
+  # If true (default), legacy javascript files will be included in the html rendered.
+  # Override and return false if legacy files are not needed (all angular based pages should return false )
+  def legacy_javascripts?
+    true
+  end
+
+  # Returns true if the user's browser is IE < 9.
+  # Relies on the browser gem to make this calculation
+  def old_ie_version? 
+    return browser.ie? && Integer(browser.version) < 9 rescue true
+  end
+
   private
   
   def set_master_setup
     MasterSetup.current = MasterSetup.get false 
   end
-
 
   def force_reset
     if logged_in? && current_user.password_reset
@@ -363,6 +376,7 @@ class ApplicationController < ActionController::Base
   end
 
   def set_user_time_zone
+      @default_time_zone = Time.zone
       Time.zone = current_user.time_zone if logged_in?
   end
 
@@ -399,5 +413,18 @@ class ApplicationController < ActionController::Base
   def prep_model_fields
     ModelField.reload_if_stale
     ModelField.web_mode = true
+  end
+
+  def set_legacy_scripts
+    @include_legacy_scripts = legacy_javascripts?
+  end
+
+  def reset_state_values
+    # Try and clear any globals that may retain any unwanted state inside the current the process.
+    @current_user = nil
+    User.current = nil
+    MasterSetup.current = nil
+    Time.zone = @default_time_zone
+    @include_legacy_scripts = nil
   end
 end

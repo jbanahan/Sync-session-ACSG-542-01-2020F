@@ -1,7 +1,7 @@
+require 'open_chain/custom_handler/ack_file_handler'
 module OpenChain
   module CustomHandler
     class PoloMslPlusEnterpriseHandler
-
       # :env=>:qa will put files in _test_to_msl instead of _to_msl
       def initialize opts={}
         o = HashWithIndifferentAccess.new(opts)
@@ -50,34 +50,6 @@ module OpenChain
       def send_and_delete_sync_file local_file, send_time=Time.now #only override send_time for test case
         send_file local_file, "ChainIO_HTSExport_#{send_time.strftime('%Y%m%d%H%M%S')}.csv"
         File.delete local_file 
-      end
-
-      # Process the acknowledgment file confirming receipt of outbound sync records
-      def process_ack_from_msl file_content, file_name
-        errors = []
-        CSV.parse(file_content,:headers=>true) do |row|
-          errors << "Malformed response line: #{row.to_csv}" unless row.size==3
-          prod = Product.find_by_unique_identifier row[0]
-          if prod.nil?
-            errors << "Style #{row[0]} confirmed, but it does not exist."
-            next
-          end
-          sync = prod.sync_records.find_by_trading_partner 'MSLE'
-          if sync.nil?
-            errors << "Style #{row[0]} confirmed, but it was never sent."
-            next
-          end
-          fail_message = row[2]=='OK' ? '' : row[2]
-          sync.update_attributes(:confirmed_at=>Time.now,:confirmation_file_name=>file_name,:failure_message=>fail_message)
-          errors << "Style #{row[0]} failed: #{fail_message}" unless fail_message.blank?
-        end
-        email_ack_failures file_content, file_name, errors unless errors.blank?
-      end
-
-      #notify developers if acknowledgment file from MSL+ was invalid
-      def email_ack_failures file_content, file_name, error_messages
-        m = CustomMailer.polo_msl_ack_failure(file_content,file_name,error_messages)
-        m.deliver
       end
 
       #process the inbound file

@@ -27,7 +27,6 @@
 <%if current_user.sys_admin? %>
   <h1>Sys Admin Settings</h1>
   <table>
-    <%=field_row link_to('Active Users', active_users_path ),"Show users who have viewed a page in the last 30 minutes."%>
     <%=field_row link_to('Master Setup', master_setups_path ),"The master system settings (for system administrators who know what they're doing!)"%>
     <%=field_row link_to('Error Log', error_log_entries_path ),"System errors, nuff said."%>
   </table>

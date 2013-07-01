@@ -1,6 +1,6 @@
 <%content_for :javascript do %>
 $(function() {
-  setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),<%=@sales_order.customer.nil? ? "'not set'": @sales_order.customer.id%><%=@sales_order.ship_to_id.nil? ? '' : ",#{@sales_order.ship_to_id}"%>);
+  setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),<%=@sales_order.customer.nil? ? "'not set'".html_safe : @sales_order.customer.id%><%=@sales_order.ship_to_id.blank? ? '' : ",#{@sales_order.ship_to_id}"%>);
   $("#sales_order_customer_id").change(function() {
     setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),$(this).val());
   });

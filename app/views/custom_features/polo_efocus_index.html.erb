@@ -1,10 +1,7 @@
-<% content_for :javascript do %>
-  $(function() {$('#btn_upload').button();});
-<% end %>
 <h1>Polo Canada Files</h1>
 <h2>Upload</h2>
-<%= form_tag '/custom_features/polo_canada/upload', :multipart => true do %>
-  <%= file_field_tag :attached %> <%=submit_tag 'Upload', :id=>'btn_upload' %>
+<%= form_tag '/custom_features/polo_canada/upload', :multipart => true, :class=>'form-horizontal' do %>
+  <%= file_field_tag :attached %> <%=submit_tag 'Upload', :id=>'btn_upload', :class=>'btn' %>
 <% end %>
 <h2>Existing Files</h2>
 <table class='detail_table'>

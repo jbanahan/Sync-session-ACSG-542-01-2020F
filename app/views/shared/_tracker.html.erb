@@ -1,4 +1,4 @@
-<%=form_tag "/tracker", :method=>"get" do%>
+<%=form_tag "/tracker", :method=>"get", :class=>'form-horizontal' do%>
 <select name='f'>
 <%PublicField.where(:searchable=>true).each do |pf|%>
   <% mf = ModelField.find_by_uid pf.model_field_uid%>
@@ -7,5 +7,5 @@
   <% end%>
 <%end%>
 </select>
-<%=text_field_tag :v, @value%>&nbsp;<%=submit_tag "Search"%>
+<%=text_field_tag :v, @value%>&nbsp;<%=submit_tag "Search", :class=>'btn'%>
 <%end%>

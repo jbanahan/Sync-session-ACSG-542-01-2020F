@@ -11,12 +11,38 @@ class OfficialTariff < ActiveRecord::Base
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
   
+  #update the database with the total number of times that each official tariff has been used
+  def self.update_use_count
+    conn = ActiveRecord::Base.connection
+    countries = Country.where("id IN (SELECT DISTINCT country_id from classifications)")
+    countries.each do |c|
+      hts_hash = {}
+      (1..3).each do |i|
+        r = conn.execute "select hts_#{i} as \"HTS\", count(*) from tariff_records
+inner join classifications on classifications.id = tariff_records.classification_id
+where length(hts_#{i}) > 0 and classifications.country_id = #{c.id}
+group by hts_#{i}"
+        r.each do |row|
+          hts_hash[row[0]] ||= 0
+          hts_hash[row[0]] += row[1]
+        end
+      end
+      ActiveRecord::Base.transaction do
+        conn.execute "UPDATE official_tariffs SET use_count = null WHERE country_id = #{c.id};"
+        hts_hash.each do |k,v|
+           conn.execute "UPDATE official_tariffs SET use_count = #{v} WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
+        end
+        conn.execute "UPDATE official_tariffs SET use_count = 0 WHERE country_id = #{c.id} AND use_count is null;"
+      end
+    end
+  end
+
   #get hash of auto-classification results keyed by country object
   def self.auto_classify base_hts
     return {} if base_hts.blank? || base_hts.strip.size < 6 #only works on 6 digit or longer
     to_test = base_hts[0,6]
     r = {}
-    OfficialTariff.joins(:country).where("hts_code like ?","#{to_test}%").where("countries.import_location = ?",true).order("official_tariffs.hts_code ASC").each do |ot|
+    OfficialTariff.joins(:country).where("hts_code like ?","#{to_test}%").where("countries.import_location = ?",true).order("official_tariffs.use_count DESC, official_tariffs.hts_code ASC").each do |ot|
       r[ot.country] ||= []
       r[ot.country] << ot
     end
@@ -72,14 +98,14 @@ class OfficialTariff < ActiveRecord::Base
     result
   end
 
-  def search_secure user, base
-    base
+  def self.search_secure user, base
+    base.where(search_where(user))
   end
   def can_view? u
-    true
+    u.view_official_tariffs? 
   end
   def self.search_where user
-    "1=1"
+    user.view_official_tariffs? ? "1=1" : "1=0"
   end
   private
   def update_cache

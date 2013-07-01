@@ -3,9 +3,9 @@
 <div class='tf_row'>
 <input type='hidden' name='product[classifications_attributes][<%=classification_count%>][tariff_records_attributes][<%=tariff_count%>][view_sequence]' value='<%=tariff_view_sequence%>' />
 <div class='tr_close'>
-  <a href='#' class='auto_class'>Auto-Classify</a> | 
+  <a href='#' class='auto_class btn btn-mini'>Auto-Classify</a>  
   <%= f.hidden_field :_destroy, "class" => "tf_destroy"%>
-  <%=link_to "Delete", '#', :class=>'tf_remove'%>
+  <%=link_to "Delete", '#', :class=>'tf_remove btn btn-mini'%>
 </div>
   <table>
     <%=field_row field_label(:hts_line_number,false), model_text_field(f,:line_number, :hts_line_number, {:class=>'tf_line_number'})%> 

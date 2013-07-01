@@ -2,66 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   after :each do
-    @tmp.unlink if @tmp
-  end
-  describe :process_ack_from_msl do
-    before :each do
-      @p = Factory(:product)
-      @sent_time = Time.now
-      @p.sync_records.create!(:sent_at=>@sent_time,:trading_partner=>'MSLE')
-      @tmp = Tempfile.new(['ack','.csv'])
-      @tmp << ['Style','Time Processed','Status'].to_csv
-      @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
-    end
-    it 'should update sync record' do
-      @tmp << [@p.unique_identifier,Time.now,'OK'].to_csv
-      @tmp.flush
-      @h.should_not_receive(:email_ack_failures)
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-      @p.reload
-      @p.should have(1).sync_records
-      sr = @p.sync_records.first
-      sr.sent_at.to_i.should == @sent_time.to_i
-      sr.confirmed_at.should > 2.seconds.ago
-      sr.trading_partner.should == 'MSLE'
-      sr.confirmation_file_name.should == 'a.csv'
-      sr.failure_message.should be_blank
-    end
-    it 'should have error when status not OK' do
-      @tmp << [@p.unique_identifier,Time.now,'BADSTYLE'].to_csv
-      @tmp.flush
-      @h.should_receive(:email_ack_failures).with(IO.read(@tmp.path),'a.csv',["Style #{@p.unique_identifier} failed: BADSTYLE"])
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-      sr = @p.sync_records.first
-      sr.confirmed_at.should > 2.seconds.ago
-      sr.trading_partner.should == 'MSLE'
-      sr.confirmation_file_name.should == 'a.csv'
-      sr.failure_message.should == 'BADSTYLE'
-    end
-    it "should have error if product doesn't exist" do
-      @tmp << ["#{@p.unique_identifier}nogood",Time.now,'OK'].to_csv
-      @tmp.flush
-      @h.should_receive(:email_ack_failures).with(IO.read(@tmp.path),'a.csv',["Style #{@p.unique_identifier}nogood confirmed, but it does not exist."])
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-    end
-    it "should have error if sync record doesn't exist" do
-      @p.sync_records.destroy_all
-      @tmp << [@p.unique_identifier,Time.now,'OK'].to_csv
-      @tmp.flush
-      @h.should_receive(:email_ack_failures).with(IO.read(@tmp.path),'a.csv',["Style #{@p.unique_identifier} confirmed, but it was never sent."])
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-    end
-    it 'should email failed records with attachment' do
-      @tmp << [@p.unique_identifier,Time.now,'BADSTYLE'].to_csv
-      @tmp.flush
-      @h.process_ack_from_msl IO.read(@tmp.path), 'a.csv'
-      mail = ActionMailer::Base.deliveries.pop
-      mail.to.should == ['bug@aspect9.com']
-      mail.subject.should == "[Chain.io] MSL+ Enterprise Product Sync Failure"
-      mail.should have(1).postmark_attachments
-      mail.postmark_attachments.first["Name"] == 'a.csv'
-      mail.body.should match(/BADSTYLE/)
-    end
+    File.delete @tmp if @tmp && File.exists?(@tmp)
   end
   describe :products_to_send do
     before :each do
@@ -200,6 +141,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @h.should_receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
       @h.send_and_delete_sync_file @tmp, override_time
       File.exists?(@tmp.path).should be_false
+      @tmp = nil
     end
   end
   describe :send_file do
@@ -218,7 +160,12 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   end
   describe :inbound_file do
     before :each do
-      @file_content = IO.read 'spec/support/bin/msl_plus_enterprise_inbound_sample.csv'
+      @file_content = "US Style Number,US Season,Board Number,Item Description,US Model Description,GCC Style Description,HTS Description 1,HTS Description 2,HTS Description 3,AX Sub Class,US Brand,US Sub Brand,US Class
+7352024LTBR,F12,O26SC10,LEATHER BARRACUDA-POLYESTER,LEATHER BARRACUDA,Men's Jacket,100% Real Lambskin Men's Jacket,TESTHTS2,TESTHTS3,Suede/Leather Outerwear,Menswear,POLO SPORTSWEAR,OUTERWEAR
+3221691177NY,S13,,SS BIG PP POLO SHIRT-MESH,SS BIG PP POLO SHIRT,Boys Knit Shirt,100% COTTON Boys Knit Shirt,,,SS Big Pony Mesh,Childrenswear,BOYS 4-7,KNITS
+322169117JAL,S13,,SS BIG PP POLO SHIRT-MESH,SS BIG PP POLO SHIRT,Boys Knit Shirt,100% COTTON Boys Knit Shirt,,,SS Big Pony Mesh,Childrenswear,BOYS 4-7,KNITS
+443590,S13,K21RB05,SS SLD JRSY CN PK,SS SLD JRSY CN PK,Men's Knit T-Shirt,100% COTTON Men's Knit T-Shirt,,,,Menswear,MENS RRL,KNITS
+4371543380AX,NOS,,DOUBLE HANDLE ATTACHE-ALLIGATOR,DOUBLE HANDLE ATTACHE,Handbag,100% Crocodile Handbag,,,Business Case,Leathergoods,MEN'S COLLECTION BAGS,EXOTIC BAGS"
       @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
       @style_numbers = ["7352024LTBR","3221691177NY","322169117JAL","443590","4371543380AX"]
       @h.stub(:send_file)
@@ -300,10 +247,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       tmp_content[2][0].should == "3221691177NY" 
     end
     it "should FTP acknowledgement file" do
-      @tmp = @h.process @file_content
+      @tmp = File.new('spec/support/tmp/abc.csv','w')
+      @tmp << 'ABC'
+      @tmp.flush
       @h.should_receive(:send_file).with(@tmp,'abc-ack.csv')
       @h.send_and_delete_ack_file @tmp, 'abc.csv'
       File.exists?(@tmp.path).should be_false
+      @tmp = nil
     end
   end
 end

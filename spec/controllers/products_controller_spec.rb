@@ -87,6 +87,7 @@ describe ProductsController do
 
   describe :bulk_update do
     it "should bulk update inline for less than 10 products" do
+      OpenChain::BulkUpdateClassification.stub(:go)
       # Several fields are not allowed to be bulk updated (as well as blank values)
       p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => ''}, :utf8 => 'v'}
       pks = {}
@@ -114,6 +115,7 @@ describe ProductsController do
     end
 
     it "should show errors for inline bulk updates" do
+      OpenChain::BulkUpdateClassification.stub(:go)
       p = {:product_cf => {:field => "v", :field2 => ""}, :pk => {"0" => '0'}, :product => {:id => ""}}
       
       Product.should_receive(:batch_bulk_update) do |u, params, options| 

@@ -7,6 +7,7 @@ describe OpenChain::BulkUpdateClassification do
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
       @p = Factory(:product)
       @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>Factory(:country).id.to_s}}}} 
+      Product.any_instance.stub(:can_classify?).and_return true
     end
     it "should update an existing classification with primary keys" do
       m = OpenChain::BulkUpdateClassification.go(@h,@u)

@@ -282,6 +282,13 @@ describe SearchCriterion do
       sc = SearchCriterion.new(:model_field_uid=>:prod_class_count, :operator=>"in", :value=>"1\n0\r\n3")
       sc.apply(Product.where("1=1")).all.should include @product        
     end
+    it "should find something with a blank value provided a blank IN list value" do
+      # Without the added code backing what's in this test, the query produced for a blank IN list value would be IN (null),
+      # but after the change it's IN (''), which is more in line with what the user is requesting if they left the value blank.
+      @product.update_attributes :name => ""
+      sc = SearchCriterion.new(:model_field_uid=>:prod_name, :operator=>"in", :value=>"")
+      sc.apply(Product.where("1=1")).all.should include @product
+    end
   end
   
   context 'date time field' do

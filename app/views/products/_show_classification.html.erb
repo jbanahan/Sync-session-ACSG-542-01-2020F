@@ -1,0 +1,52 @@
+<div class='attachments_container section_insert'>
+  <% @product.classifications.sort_classification_rank.each do |c| %>
+    <table class='classification_box'>
+      <thead><tr><th class='class_ctry_name'><%=c.country.name.titleize%></th></tr></thead>
+      <tbody>
+        <tr>
+          <td class='class_tr_box'>
+            <div class='cf_box'>
+              <%=show_custom_fields c, {:show_prefix=>false}%>
+            </div> 
+            <% c.tariff_records.each do |t| %>
+              <div class='tf_row'>
+                <table>
+                  <%=field_row field_label(:hts_line_number,false), t.line_number%>
+                  <%=show_custom_fields t, {:table=>true,:show_prefix=>false}%>
+                </table>
+                <table class='tr_hts'>
+                  <thead>
+                    <tr>
+                      <th><%=field_label :hts_hts_1, false%></th>
+                      <th><%=field_label :hts_hts_2, false%></th>
+                      <th><%=field_label :hts_hts_3, false%></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><%=show_tariff t.hts_1,c.country_id%></td>
+                      <td><%=show_tariff t.hts_2,c.country_id%></td>
+                      <td><%=show_tariff t.hts_3,c.country_id%></td>
+                    </tr>
+                    <% if t.has_schedule_b?%>
+                      <tr>
+                        <th><%=field_label :hts_hts_1_schedb, false%></th>
+                        <th><%=field_label :hts_hts_2_schedb, false%></th>
+                        <th><%=field_label :hts_hts_3_schedb, false%></th>
+                      </tr>
+                      <tr>
+                       <td><%=show_schedule_b t.schedule_b_1%></td> 
+                       <td><%=show_schedule_b t.schedule_b_2%></td> 
+                       <td><%=show_schedule_b t.schedule_b_3%></td> 
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% end %>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  <% end %>
+</div>

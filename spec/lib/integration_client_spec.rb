@@ -56,13 +56,20 @@ describe OpenChain::IntegrationClientCommandProcessor do
       Delayed::Worker.delay_jobs = @ws
       @t.close!
     end
-    context :ann_inc_sap do
+    context :ann_inc do
       it "should send data to Ann Inc SAP Product Handler if feature enabled and path contains _from_sap" do
         Factory(:user,:username=>'integration')
         MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(true)
         OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
         OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.any_instance.should_receive(:process).with('abcdefg',instance_of(User))
         cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/a.csv','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+      it "should send data to Ack Handler if SAP enabled and path containers _from_sap and file starts with zym_ack" do
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(true)
+        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+        OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','zym_ack.a.csv','ANN-ZYM')
+        cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/zym_ack.a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
     end
@@ -79,10 +86,17 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "should handle ack files" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
         OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
-        OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:process_ack_from_msl).with('abcdefg','a-ack.csv')
+        OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','a-ack.csv','MSLE')
         cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a-ack.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
+    end
+    it 'should process CSM Acknowledgements' do
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('CSM Sync').and_return(true)
+      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
+      OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','ACK1234567890.csv','csm_product')
+      cmd = {'request_type'=>'remote_file','path'=>'/_from_csm/ACK1234567890.csv','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should send data to CSM Sync custom handler if feature enabled and path contains _csm_sync' do
       mu = Factory(:master_user,:username=>"rbjork")
