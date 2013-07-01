@@ -301,9 +301,9 @@ class CoreModule
       :default_search_columns => [:prod_uid,:prod_name,:prod_first_hts,:prod_ven_name],
       :bulk_actions_lambda => lambda {|current_user| 
         bulk_actions = {}
-        bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products?
+        bulk_actions["Edit"]='bulk_edit_products_path' if current_user.edit_products? || current_user.edit_classifications?
         bulk_actions["Classify"]={:path=>'/products/bulk_classify.json',:callback=>'BulkActions.submitBulkClassify',:ajax_callback=>'BulkActions.handleBulkClassify'} if current_user.edit_classifications?
-        bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? 
+        bulk_actions["Instant Classify"]='show_bulk_instant_classify_products_path' if current_user.edit_classifications? && !InstantClassification.scoped.empty?
         bulk_actions
       },
       :changed_at_parents_lambda=>lambda {|p| [p]},#only update self
@@ -363,7 +363,7 @@ class CoreModule
     :child_lambdas => {COMMERCIAL_INVOICE => lambda {|ent| ent.commercial_invoices}},
     :child_joins => {COMMERCIAL_INVOICE => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"}
   })
-  OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_full_desc,:ot_gen_rate])
+  OFFICIAL_TARIFF = new("OfficialTariff","HTS Regulation",:default_search_columns=>[:ot_hts_code,:ot_cntry_iso,:ot_full_desc,:ot_common_rate])
   CORE_MODULES = [ORDER,SHIPMENT,PRODUCT,SALE,DELIVERY,ORDER_LINE,SHIPMENT_LINE,DELIVERY_LINE,SALE_LINE,TARIFF,
     CLASSIFICATION,OFFICIAL_TARIFF,ENTRY,BROKER_INVOICE,BROKER_INVOICE_LINE,COMMERCIAL_INVOICE,COMMERCIAL_INVOICE_LINE,COMMERCIAL_INVOICE_TARIFF,
     SECURITY_FILING,SECURITY_FILING_LINE]

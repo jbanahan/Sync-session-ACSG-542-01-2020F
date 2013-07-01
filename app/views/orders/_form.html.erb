@@ -4,7 +4,7 @@
     $("#btn_save").click(function() {
       $("#frm_ord").submit();
     });
-    $("#btn_cancel").button().click(function() {
+    $("#btn_cancel").click(function() {
       window.location = '<%=url_for @order%>';
     });
     OpenChain.addClickMap('s','Save','btn_save');

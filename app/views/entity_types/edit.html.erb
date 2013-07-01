@@ -1,11 +1,11 @@
 <%content_for :javascript do %>
-$(function() {$("#btn_delete").button();});
+$(function() {$("#btn_delete_redirect").click(function() {$("#btn_delete").click();});});
 <%end%>
 <%content_for :action_bar do %>
   <button class="form_to" form_id="frm_et" key_map='s'>Save</button>
-  <% if @entity_type.id %>
-    <%= button_to('Delete', entity_type_path(@entity_type),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
-  <% end %>
+  <% if @entity_type.id -%>
+    <button id='btn_delete_redirect'>Delete</button>
+  <% end -%>
   <button class='btn_link' link_to='<%=entity_types_path%>' key_map='b'>Back To Search</button>
 <%end%>
 <%=form_for @entity_type, :html=>{:id=>'frm_et'} do |f| %>
@@ -21,3 +21,8 @@ $(function() {$("#btn_delete").button();});
     <%end%>
   </ul>
 <%end%>
+<% if @entity_type.id %>
+  <div style='display:none;'>
+    <%= button_to('Delete', entity_type_path(@entity_type),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+  </div>
+<% end %>

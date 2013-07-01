@@ -1,13 +1,17 @@
-<table>
-<%if !MasterSetup.get.custom_features_list.blank?%>
-  <%=field_row link_to("Custom Features", '/custom_features'), "Custom features enabled for your company."%>
-<%end%>
-<%if !current_user.instant_classification_results.blank?%>
-  <%=field_row link_to("Instant Classification Results", instant_classification_results_path), "View the results of the instant classifications you've run."%>
-<%end%>
-<%=field_row link_to("Messages", messages_path),"Messages that the system has generated for you."%>
-<% if current_user.admin? %>
-  <%=field_row link_to('Settings', settings_path), "Work with administrative system settings." %>
-<%end%>
-<%=field_row link_to("Tariff Database", official_tariffs_path), "Search the tariffs for your subscribed countries."%>
-</table>
+  <%if !MasterSetup.get.custom_features_list.blank?%>
+    <h2><a href='/custom_features'>Custom Features</a></h2>
+    <p>Custom features enabled for your company.</p>
+  <%end%>
+  <%if !current_user.instant_classification_results.blank?%>
+    <h2><a href='/instant_classification_results'>Instant Classification Results</a></h2>
+    <p>View the results of the instant classification jobs you've run.</p>
+  <%end%>
+  <% if current_user.admin? %>
+    <h2><a href='/settings'>Settings</a></h2>
+    <p>Adjust administrative system settings</p>
+  <%end%>
+  <% if current_user.view_official_tariffs?-%>
+    <h2><a href='/official_tariffs'>Tariff Database</a></h2>
+    <p>Search the tariff regulations database.</p>
+  <%end-%>
+</div>

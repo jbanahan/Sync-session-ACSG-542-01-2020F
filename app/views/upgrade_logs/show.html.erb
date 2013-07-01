@@ -1,9 +1,8 @@
-<table>
-<%=field_row "From Version", @upgrade_log.from_version%>
-<%=field_row "To Version", @upgrade_log.to_version%>
-<%=field_row "Started At", @upgrade_log.started_at%>
-<%=field_row "Finished At", @upgrade_log.finished_at%>
-</table>
+<%=field_bootstrap "From Version", @upgrade_log.from_version%>
+<%=field_bootstrap "To Version", @upgrade_log.to_version%>
+<%=field_bootstrap "Started At", @upgrade_log.started_at%>
+<%=field_bootstrap "Finished At", @upgrade_log.finished_at%>
+<%=field_bootstrap "Host", @upgrade_log.instance_information.host%>
 <h2>Log</h2>
 <pre>
 <%=@upgrade_log.log%>

@@ -1,5 +1,11 @@
 class DashboardWidgetsController < ApplicationController
   def index
+    # Let user logging in know they're using an outdated browser and will have reducded search screen functionality.
+    # Added here because this action is the root application controller/action.
+    if old_ie_version? 
+      add_flash :notices, "Because you are using an older version of Internet Explorer, the search/report screens will have reduced functionality, showing only 10 search results per page.  Please consider upgrading or using the Chrome browser instead."
+    end
+
     @widgets = current_user.dashboard_widgets
     render :layout=>'one_col'
   end
@@ -20,5 +26,9 @@ class DashboardWidgetsController < ApplicationController
       end
     end
     redirect_to root_path
+  end
+
+  def legacy_javascripts?
+    false
   end
 end

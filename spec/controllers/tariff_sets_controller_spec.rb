@@ -59,7 +59,7 @@ describe TariffSetsController do
     end
     context 'behavior' do
       before :each do
-        @user = Factory(:user,:sys_admin=>true)
+        @user = Factory(:user,:sys_admin=>true, :time_zone=>'Hawaii')
         activate_authlogic
         UserSession.create @user
       end
@@ -71,7 +71,7 @@ describe TariffSetsController do
       end
       it 'should delay load from s3 and without activating and run at date specified from params' do
         Country.should_receive(:find).with(@country.id.to_s).and_return(@country)
-        TariffLoader.should_receive(:delay).with(:run_at => Time.zone.parse("2012-01-01 01:01")).and_return(TariffLoader)
+        TariffLoader.should_receive(:delay).with(:run_at => ActiveSupport::TimeZone[@user.time_zone].parse("2012-01-01 01:01")).and_return(TariffLoader)
         TariffLoader.should_receive(:process_s3).with('abc',@country,'lbl',false,instance_of(User))
         post :load, :country_id=>@country.id, :path=>'abc', :label=>'lbl', :date => {:year => "2012", :month=>1, :day => 1, :hour=>1, :minute => 1}
       end

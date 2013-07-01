@@ -8,8 +8,6 @@
 #=require jquery
 #=require jquery.cookie
 #=require jquery-ui-1.9.2.custom
-#=require simpledateformat 
 #=require angular
-#=require angular-resource
 #=require helpers/angular-mocks
 #=require_tree ./

@@ -1,7 +1,6 @@
 <% content_for :javascript do %>
 $(function() {
   $( "#btn_edit" )
-    .button()
     .click(function() {
       window.location = '<%=edit_shipment_path(@shipment)%>';
     });
@@ -11,10 +10,9 @@ $(function() {
   $("#mod_subscriptions").dialog({autoOpen:false,title:"Subscriptions",
     buttons:{"Subscribe":function() {$("#frm_sub").submit();}}});
   $("#btn_subscriptions")
-    .button()
     .click(function() {
       $("#mod_subscriptions").dialog('open');
-  });
+    });
 });
 <% end %>
 

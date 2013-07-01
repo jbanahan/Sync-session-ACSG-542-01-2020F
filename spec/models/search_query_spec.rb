@@ -97,6 +97,16 @@ describe SearchQuery do
       r[4][:result][3].should start_with '1'
       r[5][:result][3].should start_with '3'
     end
+
+    it "should not bomb on IN lists with blank values" do
+      @p3.update_attributes :name => ""
+      @ss.search_criterions[0].value = ""
+      r = @sq.execute
+      r.should have(1).results
+
+      r[0][:row_key].should == @p3.id
+    end
+
     context :custom_values do
       before :each do
         @cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>:string)

@@ -15,8 +15,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       :merch_dept_name=>'MDN',
       :proposed_hts=>'1234567890',
       :proposed_long_description=>'P Long Desc',
-      :fw=>'Y',
-      :import_indicator=>'Y',
+      :fw=>'X',
+      :import_indicator=>'X',
       :inco_terms=>'FOB',
       :missy=>'mstyle',
       :petite=>'pstyle',
@@ -42,9 +42,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     @us = Factory(:country,:iso_code=>'US',:import_location=>true)
     @good_hts = OfficialTariff.create(:hts_code=>'1234567890',:country=>@us)
     @user = Factory(:user)
+    helper_class = Class.new do
+      include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
+    end
+    @helper = helper_class.new
+    @cdefs = @helper.prep_custom_definitions [:po,:origin,:import,:cost,
+        :ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
+        :inco_terms,:missy,:petite,:tall,:season,:article,:approved_long,
+        :first_sap_date,:last_sap_date,:sap_revised_date
+      ]
   end
   it "should create custom fields" do 
-    @h #create on initialization
     CustomDefinition.where(:label=>"PO Numbers",:data_type=>:text,:module_type=>"Product",:read_only=>true).first.should_not be_nil
     CustomDefinition.where(:label=>"Origin Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
     CustomDefinition.where(:label=>"Import Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
@@ -63,9 +71,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     CustomDefinition.where(:label=>"Season",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
     CustomDefinition.where(:label=>"Article Type",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
     CustomDefinition.where(:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product',:read_only=>false).first.should_not be_nil
-    CustomDefinition.where(:label=>"Approved Date",:data_type=>:date,:module_type=>'Product',:read_only=>false).first.should_not be_nil
     CustomDefinition.where(:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true).first.should_not be_nil
     CustomDefinition.where(:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true).first.should_not be_nil
+    CustomDefinition.where(:label=>"SAP Revised Date",:data_type=>:date,:module_type=>'Product',:read_only=>true).first.should_not be_nil
   end
   it "should create new product" do
     data = make_row
@@ -75,32 +83,49 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     h = default_values
     p.unique_identifier.should == h[:style]
     p.name.should == h[:name]
-    p.get_custom_value(CustomDefinition.find_by_label('PO Numbers')).value.should == h[:po]
-    p.get_custom_value(CustomDefinition.find_by_label('Origin Countries')).value.should == h[:origin]
-    p.get_custom_value(CustomDefinition.find_by_label('Import Countries')).value.should == h[:import]
-    p.get_custom_value(CustomDefinition.find_by_label('Unit Costs')).value.should == h[:unit_cost]
-    p.get_custom_value(CustomDefinition.find_by_label('Earliest AC Date')).value.strftime("%m/%d/%Y").should == h[:ac_date]
-    p.get_custom_value(CustomDefinition.find_by_label('Merch Dept Number')).value.should == h[:merch_dept_num]
-    p.get_custom_value(CustomDefinition.find_by_label('Merch Dept Name')).value.should == h[:merch_dept_name]
-    p.get_custom_value(CustomDefinition.find_by_label('Proposed HTS')).value.should == h[:proposed_hts]
-    p.get_custom_value(CustomDefinition.find_by_label('Proposed Long Description')).value.should == h[:proposed_long_description]
-    p.get_custom_value(CustomDefinition.find_by_label('SAP Import Flag')).value.should == ( h[:import_indicator] == 'Y')
-    p.get_custom_value(CustomDefinition.find_by_label('INCO Terms')).value.should == h[:inco_terms]
-    p.get_custom_value(CustomDefinition.find_by_label('Missy Style')).value.should == h[:missy]
-    p.get_custom_value(CustomDefinition.find_by_label('Petite Style')).value.should == h[:petite]
-    p.get_custom_value(CustomDefinition.find_by_label('Tall Style')).value.should == h[:tall]
-    p.get_custom_value(CustomDefinition.find_by_label('Season')).value.should == h[:season]
-    p.get_custom_value(CustomDefinition.find_by_label('Article Type')).value.should == h[:article_type]
-    p.get_custom_value(CustomDefinition.find_by_label('Approved Long Description')).value.should == h[:proposed_long_description]
-    p.get_custom_value(CustomDefinition.find_by_label('Approved Date')).value.should be_nil
-    p.get_custom_value(CustomDefinition.find_by_label('First SAP Received Date')).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
-    p.get_custom_value(CustomDefinition.find_by_label('Last SAP Received Date')).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+    p.get_custom_value(@cdefs[:po]).value.should == h[:po]
+    p.get_custom_value(@cdefs[:origin]).value.should == h[:origin]
+    p.get_custom_value(@cdefs[:import]).value.should == h[:import]
+    p.get_custom_value(@cdefs[:cost]).value.should == h[:unit_cost]
+    p.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y").should == h[:ac_date]
+    p.get_custom_value(@cdefs[:dept_num]).value.should == h[:merch_dept_num]
+    p.get_custom_value(@cdefs[:dept_name]).value.should == h[:merch_dept_name]
+    p.get_custom_value(@cdefs[:prop_hts]).value.should == h[:proposed_hts]
+    p.get_custom_value(@cdefs[:prop_long]).value.should == h[:proposed_long_description]
+    p.get_custom_value(@cdefs[:imp_flag]).value.should == ( h[:import_indicator] == 'X')
+    p.get_custom_value(@cdefs[:inco_terms]).value.should == h[:inco_terms]
+    p.get_custom_value(@cdefs[:missy]).value.should == h[:missy]
+    p.get_custom_value(@cdefs[:petite]).value.should == h[:petite]
+    p.get_custom_value(@cdefs[:tall]).value.should == h[:tall]
+    p.get_custom_value(@cdefs[:season]).value.should == h[:season]
+    p.get_custom_value(@cdefs[:article]).value.should == h[:article_type]
+    p.get_custom_value(@cdefs[:approved_long]).value.should == h[:proposed_long_description]
+    p.get_custom_value(@cdefs[:first_sap_date]).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+    p.get_custom_value(@cdefs[:last_sap_date]).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+    p.get_custom_value(@cdefs[:sap_revised_date]).value.should be_nil
     p.should have(1).classifications
     cls = p.classifications.find_by_country_id @us.id
-    cls.get_custom_value(CustomDefinition.find_by_label('Other Agency Flag')).value.should == (h[:fw]=='Y')
+    cls.get_custom_value(@cdefs[:oga_flag]).value.should == (h[:fw]=='X')
     cls.should have(1).tariff_records
     tr = cls.tariff_records.first
     tr.hts_1.should == '1234567890'
+  end
+  it "should set sap revised date if key field changes" do
+    h = default_values
+    p = Factory(:product,unique_identifier:h[:style])
+    p.update_custom_value! @cdefs[:missy], 'oldvalue'
+    @h.process make_row, @user
+    p = Product.find p.id
+    p.get_custom_value(@cdefs[:sap_revised_date]).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+  end
+  it "should not set sap revised date if no key fields change" do
+    h = default_values
+    @h.process make_row, @user
+    p = Product.first
+    p.update_custom_value! @cdefs[:sap_revised_date], 1.year.ago
+    @h.process make_row, @user
+    p = Product.find p.id
+    p.get_custom_value(@cdefs[:sap_revised_date]).value.should == 1.year.ago.to_date
   end
   it "should not set hts number if not valid" do
     data = make_row(:proposed_hts=>'655432198')
@@ -109,16 +134,20 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
   end
   it "should not create classification if country is not import_location?" do
     cn = Factory(:country,:iso_code=>'CN')
-    data = make_row(:import=>', @userCN')
+    data = make_row(:import=>'CN')
     @h.process data, @user
     Product.first.classifications.should be_empty
+  end
+  it "should pass with quotes in field" do
+    @h.process '7073705|560120|s 3.0 and 3.1|CN|US|        10|07/25/2013|023|M Knits|3924905500| Ladies "batwing" top made of silk|||DDP||||ATS Perfect Pcs|ZNSC', @user
+    Product.first.get_custom_value(@cdefs[:prop_long]).value.should == 'Ladies "batwing" top made of silk'
   end
   it "should find earliest AC Date" do
     data = make_row(:ac_date=>'12/29/2013')
     data << make_row(:ac_date=>'12/28/2013')
     data << make_row(:ac_date=>'12/23/2014')
     @h.process data, @user
-    Product.first.get_custom_value(CustomDefinition.find_by_label('Earliest AC Date')).value.strftime("%m/%d/%Y").should == "12/28/2013"
+    Product.first.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y").should == "12/28/2013"
   end
   it "should aggregate values" do
     data = make_row(:unit_cost=>'10.11')
@@ -126,7 +155,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     data << make_row(:unit_cost=>'6.14')
     data << make_row(:unit_cost=>'6.14')
     @h.process data, @user
-    Product.first.get_custom_value(CustomDefinition.find_by_label('Unit Costs')).value.should == "10.11\n12.21\n6.14"
+    Product.first.get_custom_value(@cdefs[:cost]).value.should == "10.11\n12.21\n6.14"
   end
   it "should set hts for multiple countries" do
     cn = Factory(:country,:iso_code=>'CN',:import_location=>true)
@@ -149,12 +178,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.classifications.first.tariff_records.first.hts_1.should == '1111111111'
   end
   it "should not override actual long description if proposed change" do
-    ald = CustomDefinition.where(:label=>'Approved Long Description',:module_type=>'Product',:data_type=>'text').first
     p = Factory(:product,:unique_identifier=>default_values[:style])
-    p.update_custom_value! ald, 'something'
+    p.update_custom_value! @cdefs[:approved_long], 'something'
     @h.process make_row, @user
     p = Product.first
-    p.get_custom_value(CustomDefinition.find_by_label('Approved Long Description')).value.should == 'something'
+    p.get_custom_value(@cdefs[:approved_long]).value.should == 'something'
   end
   it "should handle multiple products" do
     h = default_values
@@ -163,9 +191,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     @h.process data, @user
     Product.count.should == 2
     p1 = Product.find_by_unique_identifier(h[:style])
-    p1.get_custom_value(CustomDefinition.find_by_label('Earliest AC Date')).value.strftime("%m/%d/%Y").should == h[:ac_date]
+    p1.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y").should == h[:ac_date]
     p2 = Product.find_by_unique_identifier('STY2')
-    p2.get_custom_value(CustomDefinition.find_by_label('Earliest AC Date')).value.strftime("%m/%d/%Y").should == '10/30/2015'
+    p2.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y").should == '10/30/2015'
   end
   it "should create snapshot" do
     @h.process make_row, @user
@@ -174,14 +202,20 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.entity_snapshots.first.user.should == @user
   end
   it "should update last sap sent date but not first sap sent date" do
-    first = CustomDefinition.where(:label=>'First SAP Received Date',:module_type=>'Product',:data_type=>'date',:read_only=>true).first
-    last = CustomDefinition.where(:label=>'Last SAP Received Date',:module_type=>'Product',:data_type=>'date',:read_only=>true).first
     p = Factory(:product,:unique_identifier=>default_values[:style])
-    p.update_custom_value! first, Date.new(2012,4,10)
-    p.update_custom_value! last, Date.new(2012,4,15)
+    p.update_custom_value! @cdefs[:first_sap_date], Date.new(2012,4,10)
+    p.update_custom_value! @cdefs[:last_sap_date], Date.new(2012,4,15)
     @h.process make_row, @user
     p = Product.first
-    p.get_custom_value(first).value.should == Date.new(2012,4,10)
-    p.get_custom_value(last).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+    p.get_custom_value(@cdefs[:first_sap_date]).value.should == Date.new(2012,4,10)
+    p.get_custom_value(@cdefs[:last_sap_date]).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+  end
+  it "should set import indicator and fw flag to false if value is not 'X'" do
+    row = make_row :fw=>"", :import_indicator=>"a"
+    @h.process row, @user
+    p = Product.first
+    p.get_custom_value(@cdefs[:imp_flag]).value.should be_false
+    cls = p.classifications.find_by_country_id @us.id
+    cls.get_custom_value(@cdefs[:oga_flag]).value.should be_false
   end
 end

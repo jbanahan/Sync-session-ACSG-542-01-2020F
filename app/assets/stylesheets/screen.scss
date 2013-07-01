@@ -1,24 +1,20 @@
-/* General styles */
 body {
-    margin: 0;
-    padding: 0;
-    border: 0;			/* This removes the border around the viewport in old versions of IE */
-    width:100%;
-    min-width: 600px;		/* Minimum width of layout - remove line if not required */
-    /* The min-width property does not work in old versions of Internet Explorer */
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-    background-color: #eee;
-    /*background-image: url('/images/background.jpg');*/
-    background-repeat: repeat-x;
+  padding-bottom: 40px; //padding to accomodate sticky footer nav bar 
 }
 img {
   border-style: none;
+}
+#dash-logo {
+  padding: 5px 15px;
+  img {
+    height: 30px;
+  }
 }
 div.clear {
   clear: both;
 }
 .error, .exception_value {
-    color: red;
+    color: red !important;
 }
 .required_empty {
   background-color: rgb(255, 194, 194);
@@ -109,6 +105,14 @@ td.drag_handle {
     background-position: center center;
     cursor: move;
 }
+.bootstrap-hover {
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+}
+.bootstrap-hover:hover {
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
 .hover:hover {
     background-color: #1eb816;
     color: #FFFFFF;
@@ -172,55 +176,6 @@ p {
 /*
 */
 /* Header styles */
-#title {
-    text-decoration: none;
-    color: #707070;
-}
-#header {
-    background-color: #151515;
-}
-#linkbar .ui-button {
-  border: none;
-  font-size: .9em;
-  margin-top: 0px;
-  margin-bottom: 0px;
-}
-#linkbar {
-    text-align: left;
-    padding: 0px 0px 0px 10px;
-    background-color: #151515;
-}
-#top_box {
-  margin-top: .2em;
-  background-color: #eee;
-  vertical-align: top;
-  padding-bottom: 10px;
-}
-#quick_search_button {
-  line-height: 1;
-  padding: .4em .6em;
-  font-size: .9em;
-}
-#corner_links {
-    float: right;
-    padding: 5px 1em 5px 1em;
-    font-size: 80%;
-}
-#corner_links, #corner_links a, #corner_links a:visited, #corner_title a, #corner_title a:visited {
-    color: #151515;
-}
-#corner_links a:hover, #corner_title a:hover {
-  color:#1eb816;
-}
-#corner_title {
-    margin-left: 1%;
-}
-#corner_title a {
-  text-decoration: none;
-}
-#corner_title img {
-  margin-top: .5em;
-}
 .notices {
   background-color: white;
   border-bottom: 1px solid black;
@@ -245,85 +200,6 @@ p {
 }
 .light_text {
   color: #707070;
-}
-#main_cont {
-  width:100%;
-  clear:both;
-  position: relative;
-  margin: 0;
-  padding: 0;
-}
-#two_col_content {
-  width:85%;
-  overflow-x: auto;
-  border-right: 1px solid black;
-  border-bottom: 1px solid black;
-  border-top: 1px solid black;
-  background-color: white;
-  padding: .5em 1%;
-  float: left;
-  margin:0;
-}
-#two_col_action {
-  width:12%;
-  right: 0;
-  vertical-align: top;
-  padding: 0;
-  text-align: center;
-  margin: 10px 0 0 0;
-  overflow-x: hidden;
-  position: fixed;
-}
-#two_col_action button, #two_col_action input {
-  width: 98%;
-}
-/* column container */
-.colmask {
-    position: relative;	/* This fixes the IE7 overflow hidden bug */
-    clear: both;
-    float: left;
-    width: 100%;			/* width of whole page */
-    overflow:hidden;		/* This chops off any overhanging divs */
-}
-/* common column settings */
-.colright, .colmid, .colleft {
-    float: left;
-    width: 100%;
-    position: relative;
-}
-
-.col1, .col2, .bottom_action_bar {
-    float: left;
-    position: relative;
-    padding: 1em 0 1em 0;
-    overflow: hidden;
-    font-size: 80%
-}
-.col1 {
-    background: #FFFFFF;
-    padding-left: 1em;
-    border-top: 1px solid black;
-    border-bottom: 1px solid black;
-}
-.col2 {
-    padding-left: 1em;
-}
-/* 2 Column (right menu) settings */
-.rightmenu {
-}
-.rightmenu .colleft {
-    right:12%;      /* right column width */
-}
-.rightmenu .col1, .rightmenu .bottom_action_bar {
-    width:86%;      /* left column content width (left column width minus left and right padding) */
-    left: 12%;     /* (right column width) plus (left column left padding) */
-}
-.rightmenu .col2 {
-    width:12%;      /* right column content width (right column width minus left and right padding) */
-    left:12%;     /* (right column width) plus (left column left and right padding) plus (right column left padding) */
-}
-#two_col_right button, #two_col_right input, .col2 button, .col2 input {
-    width: 100%;
 }
 /* Footer styles */
 #footer {
@@ -405,49 +281,6 @@ p {
 }
 .field_row textarea {
   width: 14.7em;
-}
-/* Attachment Box */
-.attachments_box_narrow {
-  width: 38%;
-  float: right;
-  margin-right: 2%;
-  margin-bottom: 10px;
-}
-.attachments_box_wide {
-  margin-bottom: 10px;
-}
-.attachment_heading {
-  text-align: center;
-  font-weight: bold;
-}
-.attachment_table {
-  width: 100%;
-}
-.attachment_table td {
-  width: 50%;
-  border: 1px solid #d7d7d7;
-  text-align: center;
-  font-size: 80%;
-  vertical-align: top;
-  padding-top: 5px;
-}
-.attachment_delete {
-  text-align: right
-}
-.attachment_delete img {
-  margin: 0px;
-}
-.attachment_icon {
-  margin: 5px;
-}
-.attachment_type {
-  font-weight: bold;
-}
-#mod_attach {
-  display: none;
-}
-.next_to_attachments {
-width:60%;
 }
 /* Comments boxes */
 
@@ -758,4 +591,48 @@ ul.dropdown li:hover > ul       { visibility: visible; }
 }
 .ent_columns .label_cell {
   width:0;
+}
+
+/* stuff from scaffold */
+pre.pre-nochrome {
+  padding: 0;
+  word-wrap: break-word;
+  background-color: white;
+  border: none;
+}
+
+div.field, div.actions {
+  margin-bottom: 10px;
+}
+
+
+.field_with_errors {
+  padding: 2px;
+  background-color: red;
+  display: table;
+}
+
+#error_explanation {
+  width: 450px;
+  border: 2px solid red;
+  padding: 7px;
+  padding-bottom: 0;
+  margin-bottom: 20px;
+  background-color: #f0f0f0;
+}
+
+#error_explanation h2 {
+  text-align: left;
+  font-weight: bold;
+  padding: 5px 5px 5px 15px;
+  font-size: 12px;
+  margin: -7px;
+  margin-bottom: 0px;
+  background-color: #c00;
+  color: #fff;
+}
+
+#error_explanation ul li {
+  font-size: 12px;
+  list-style: square;
 }

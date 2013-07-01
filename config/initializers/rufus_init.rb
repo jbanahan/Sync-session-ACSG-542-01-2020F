@@ -50,6 +50,13 @@ def execute_scheduler
     end
   end
 
+  #Rebuild official tariff use counts
+  scheduler.every '2h' do
+    job_wrapper "OfficialTariff Use Count Update" do
+      OfficialTariff.delay.update_use_count
+    end
+  end
+
   #Rebuild index to capture any saved schedules
   scheduler.every("10m") do
     job_wrapper "Search Schedule" do

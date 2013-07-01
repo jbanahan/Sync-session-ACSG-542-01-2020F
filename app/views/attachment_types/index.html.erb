@@ -1,8 +1,3 @@
-<%content_for :javascript do %>
-$(function() {
-  $("#attachment_type_submit").button();
-});
-<%end%>
 <%=form_for AttachmentType.new do |f| %>
   <table class='detail_table'>
     <thead><tr><th>Attachment Type</th><th></th></tr></thead>
@@ -10,12 +5,12 @@ $(function() {
       <%@attachment_types.each do |a|%>
       <tr class='hover'>
         <td><%=a.name%></td>
-        <td><%=link_to 'Delete', a, :confirm => "Are you sure you want to delete this attachment type?", :method => :delete%></td>
+        <td><%=link_to 'Delete', a, :confirm => "Are you sure you want to delete this attachment type?", :method => :delete, :class=>'btn btn-small'%></td>
       </tr>
       <%end%>
       <tr class='hover'>
         <td><%=f.text_field :name%></td>
-        <td><%=f.submit 'Add' %></td>
+        <td><%=f.submit 'Add', :class=>'btn btn-small btn-primary' %></td>
       </tr>
     </tbody>
   </table>

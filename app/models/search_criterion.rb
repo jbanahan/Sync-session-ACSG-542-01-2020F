@@ -296,7 +296,15 @@ class SearchCriterion < ActiveRecord::Base
     # We're rstrip'ing here to emulate the IN list handling of MySQL (which trims trailing whitespace before doing comparisons)
     # The strip is to remove any trailing newlines from the initial list, without which we'd possibly get a extra blank value added 
     # to the comparison list
-    val.strip.split(/\r?\n/).collect {|line| line.rstrip}
+    list = val.strip.split(/\r?\n/).collect {|line| line.rstrip}
+
+    # If val was blank to begin with, we'll get a zero length array back (split returns a blank array on blank strings), 
+    # which causes the query to generate an in list like "()", which bombs, so we'll just put a blank value back in the array.
+    # Standard ActiveRecord where clauses handle this ok, but our search_query building doesn't so much.
+    if list.length == 0
+      list = [""]
+    end
+    list
   end
 
 end

@@ -6,6 +6,8 @@ require 'open_chain/custom_handler/kewill_isf_xml_parser'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
+require 'open_chain/custom_handler/ack_file_handler'
+
 module OpenChain
   class IntegrationClient
     def self.go system_code, shutdown_if_not_schedule_server = false, sleep_time = 5
@@ -89,10 +91,10 @@ module OpenChain
         response_type = 'remote_file'
       elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
         tmp = get_tempfile(bucket,remote_path,command['path']) 
-        h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
         if fname.to_s.match /-ack/
-          h.process_ack_from_msl IO.read(tmp), fname.to_s
+          OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'MSLE')
         else
+          h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
           h.send_and_delete_ack_file h.process(IO.read(tmp)), fname.to_s
         end
         status_msg = 'success'
@@ -102,6 +104,11 @@ module OpenChain
         cf.attached = get_tempfile(bucket,remote_path,command['path'])
         cf.save!
         cf.delay.process(cf.uploaded_by)
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
+        tmp = get_tempfile(bucket,remote_path,command['path']) 
+        OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'csm_product')
         status_msg = 'success'
         response_type = 'remote_file'
       elsif linkable = LinkableAttachmentImportRule.import(get_tempfile(bucket,remote_path,command['path']), fname.to_s, dir.to_s)
@@ -116,7 +123,11 @@ module OpenChain
         response_type = 'remote_file' if status_msg == 'success'
       elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
         tmp = get_tempfile(bucket,remote_path,command['path']) 
-        OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+        if fname.to_s.match /^zym_ack/
+          OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'ANN-ZYM')
+        else
+          OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+        end
         status_msg = 'success'
         response_type = 'remote_file'
       else

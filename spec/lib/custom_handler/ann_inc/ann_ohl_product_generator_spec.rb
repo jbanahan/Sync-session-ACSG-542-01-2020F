@@ -38,72 +38,54 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
   end
   describe :query do
-    it "should sort US then CA" do
+    it "should sort US then CA and not include other companies" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.update_custom_value! @cdefs[:approved_long], "My Long Description"
-      [@ca,@us].each_with_index do |cntry,i|
-        p.classifications.create!(:country_id=>cntry.id).tariff_records.create!(:hts_1=>"123456789#{i}")
+      [@ca,@us,Factory(:country,:iso_code=>'CN')].each_with_index do |cntry,i|
+        cls = p.classifications.create!(:country_id=>cntry.id)
+        cls.tariff_records.create!(:hts_1=>"123456789#{i}")
+        cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
       r = run_to_array
+      r.size.should == 2
       r[0][4].should == 'US'
       r[1][4].should == 'CA'
     end
-    it "should not send products that aren't approved" do
+    it "should not send classifications that aren't approved" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>'1234567899')
+      
       dont_include = Factory(:product)
       dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
-      r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
-    end
-    it "should find product with US that needs sync" do
-      p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
-      r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
-    end
-    it "should find products with CA that need sync" do
-      p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@ca.id).tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
       r.should have(1).record
       r[0][0].should == p.unique_identifier
     end
     it "should not send record with empty HTS" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_include = Factory(:product)
-      dont_include.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!
-      r = run_to_array
-      r.should have(1).record
-      r[0][0].should == p.unique_identifier
-    end
-    it "should not send other countries besides US & CA" do
-      p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
-      dont_include = Factory(:product)
-      dont_include.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include.classifications.create!(:country_id=>Factory(:country,:iso_code=>'CN').id).tariff_records.create!(:hts_1=>"1234567890")
+      d_cls = dont_include.classifications.create!(:country_id=>@us.id)
+      d_cls.tariff_records.create!
+      d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
       r.should have(1).record
       r[0][0].should == p.unique_identifier
     end
     it "should not send record that doesn't need sync" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      p.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_include = Factory(:product)
-      dont_include.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include.classifications.create!(:country_id=>@us.id).tariff_records.create!(:hts_1=>"1234567890")
+      d_cls = dont_include.classifications.create!(:country_id=>@us.id)
+      d_cls.tariff_records.create!(:hts_1=>"1234567890")
+      d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       dont_include.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.day.ago,:confirmed_at=>1.minute.ago)
       #reset updated at so that dont_include won't need sync
       ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
@@ -113,10 +95,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
     it "should use long description override from classification if it exists" do
       p = Factory(:product)
-      p.update_custom_value! @cdefs[:approved_date], 1.day.ago
       p.update_custom_value! @cdefs[:approved_long], "Don't use me"
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.update_custom_value! @cdefs[:long_desc_override], "Other long description"
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       cls.tariff_records.create!(:hts_1=>"1234567890")
       r = run_to_array
       r.should have(1).record
@@ -125,7 +107,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
   end
   describe :ftp_credentials do
-    it 'needs to be implemented'
+    it "should send proper credentials" do
+      described_class.new.ftp_credentials.should == {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/OHL'}
+    end
   end
   it "should have sync_code" do
     described_class.new.sync_code.should == 'ANN-PDM'

@@ -142,6 +142,16 @@ class UsersController < ApplicationController
       redirect_to '/'
     end
     
+  def hide_message
+    if params[:message_name].blank?
+      render :json=>{error:'Message Name missing.'}
+    else
+      current_user.add_hidden_message params[:message_name]
+      current_user.save!
+      render :json=>{'OK'=>'OK'}
+    end
+  end
+
   private
   def set_debug_expiration(u)
     if current_user.sys_admin? && !params[:debug_expiration_hours].blank?

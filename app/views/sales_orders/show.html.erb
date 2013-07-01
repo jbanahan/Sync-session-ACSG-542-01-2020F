@@ -1,7 +1,7 @@
 <%content_for :javascript do %>
 $(function() {
   <%if @sales_order.can_edit?(current_user)%>
-  $("#btn_edit").button().click(function() {
+  $("#btn_edit").click(function() {
     window.location = '<%=url_for edit_sales_order_path(@sales_order)%>';
   });
   OpenChain.addClickMap('e','Edit','btn_edit');
@@ -10,7 +10,6 @@ $(function() {
       buttons:{"Subscribe":function() {$("#frm_sub").submit();}}
     });
   $("#btn_subscriptions")
-    .button()
     .click(function() {
       $("#mod_subscriptions").dialog('open');
     });
@@ -18,7 +17,7 @@ $(function() {
     buttons:{"Save":function() {$("#frm_edit_line").submit();},
              "Cancel":function() {window.location = '<%=sales_order_path(@sales_order)%>';}}
   });
-  $("#btn_add_line").button().click(function() {
+  $("#btn_add_line").click(function() {
     $("#mod_edit_line").dialog('open');
   });  
   <% if @sales_order.can_edit?(current_user) && !@line.nil? %>
@@ -34,16 +33,16 @@ $(function() {
     }
   });
   <% if current_user.company.master && !@sales_order.locked? %>
-    $("#btn_delete").button();
     OpenChain.addClickMap('d','Delete','btn_delete');
   <%end%>
+  $("#btn_delete_redirect").click(function() {$("#btn_delete").click();});
 });
 <%end%>
 <%content_for :action_bar do%>
   <%if @sales_order.can_edit?(current_user)%><button id='btn_edit'>Edit</button><%end%>
   <button class='btn_link' link_to='<%=sales_orders_path%>' key_map='b'>Back To Search</button>
   <% if current_user.company.master && !@sales_order.locked? %>
-      <%= button_to('Delete', sales_order_path(@sales_order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
+    <button id='btn_delete_redirect'>Delete</button>
   <% end %>
   <% if @line.nil? && @sales_order.can_edit?(current_user) %>
     <button id='btn_add_line'>Add Product</button>
@@ -127,4 +126,7 @@ $(function() {
     <%= ics.check_box :app_message %> Message<br />
     <%= ics.check_box :email %> Email<br />
  <% end %>
+</div>
+<div style='display:none;'>
+  <%= button_to('Delete', sales_order_path(@sales_order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
 </div>

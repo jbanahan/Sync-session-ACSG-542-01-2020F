@@ -1,5 +1,21 @@
 root = exports ? this
 root.Chain =
+  
+  #prep the attachments partial
+  initAttachments: () ->
+    $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{
+      "Attach":(() ->
+        $("#frm_attach").submit()),
+      "Cancel":(() ->
+        $("#mod_attach").dialog('close'))}
+    })
+    $("#btn_add_attachment").click(() ->
+      $("#mod_attach").dialog('open')
+    )
+
+  #tell the server never to show this user message to the current user again
+  hideMessage : (messageName) ->
+    $.post('/hide_message/'+messageName)
 
   #populates the user list from json result
   populateUserList : (selectBox,defaultSelection,data) ->
@@ -52,8 +68,10 @@ root.Chain =
       h ="<div class='auto-class-title'>Auto Classifications</div>"
       for hts in country_result['hts']
         h += "<div class='auto-class-container'><a href='#' class='hts_option'>"+hts.code+"</a>"
-        h += "&nbsp;[<a href='#' class='lnk_tariff_popup' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>]"
-        h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br /></div>"
+        h += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>" if hts.use_count
+        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-mini' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
+        h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />"
+        h += "</div>"
       target.html(h)
     write cntry for cntry in data
 
@@ -136,13 +154,14 @@ root.Chain =
     h += "</div></form>"
     modal.html(h)
     writeClassification(c) for c in product.classifications
-    OpenChain.enableHtsChecks() #check for HTS values inline
+    Classify.enableHtsChecks() #check for HTS values inline
+    
     RailsHelper.prepRailsForm modal.find("form"), saveUrl, (if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"]) then 'post' else 'put')
     buttons = {
     'Cancel': () ->
       $("#mod_quick_classify").remove()
     'Save': () ->
-      if OpenChain.hasInvalidTariffs()
+      if Classify.hasInvalidTariffs()
         window.alert("Please correct or erase all bad tariff numbers.")
       else
         $("#mod_quick_classify form").submit()
@@ -157,11 +176,13 @@ root.Chain =
     )
     if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"])
       buttons['Advanced'] = () ->
-        modal.find("form").attr("action","/products/bulk_classify")
-        modal.find("form").submit()
+        # $("#mod_quick_classify") = modal (model not reference directly due to circular reference / garbage collection concerns)
+        form = $("#mod_quick_classify").find("form")
+        form.attr("action","/products/bulk_edit")
+        form.submit()
     else
       buttons['Advanced'] = ->
-        window.location = '/products/'+product.id+'/classify'
+        window.location = '/products/'+product.id+'/edit'
     modal.find("form").submit ->
       $("input.hts_field").each ->
         $(@).parents('div[quick-class-content-id]').remove() if $(@).val()==''
@@ -169,7 +190,166 @@ root.Chain =
     modal.dialog(title:"Quick Classify",width:550,buttons:buttons,modal:true)
     modal.dialog('open')
 
-$("a[data-action='auto-classify']").live 'click', (evt) ->
-  evt.preventDefault()
-  Chain.loadAutoClassifications($(@).parent().find('.hts_field').val(),$(@).attr['country'],"div[data-target='auto-classify']")
 
+  # Rails Auth Token accessors
+  setAuthToken : (token) ->
+    # References rails_helper.js.coffee
+    RailsHelper.authToken(token)
+
+  getAuthToken : () ->
+    # References rails_helper.js.coffee
+    RailsHelper.authToken()
+
+  # Controls for enabling and disabling the user message poller.
+  messagePoller :
+    
+    getMessageCount : (url) ->
+      $.getJSON url, (data) ->
+        if data > 0
+          message = " message"
+          if data > 1
+            message += "s"
+          $('#message_envelope').html(data + message).show()
+        else
+          $('#message_envelope').html('').hide()
+    
+    
+    # If pollingSeconds is <=0, no ongoing polling is done.
+    initialize : (user_id, pollingSeconds) ->
+      @url = '/messages/message_count?user_id='+user_id
+      $(document).ready () => 
+        @getMessageCount(@url)
+        if pollingSeconds > 0
+          @startPolling(pollingSeconds)
+    
+
+    startPolling : (pollingSeconds) ->
+      # If there's an interval registration, we're already polling
+      unless @intervalRegistration? || pollingSeconds <= 0
+        @intervalRegistration = setInterval( () => 
+          @getMessageCount @url
+        , pollingSeconds * 1000)
+
+    stopPolling : () ->
+      if @intervalRegistration?
+        reg = @intervalRegistration
+        @intervalRegistration = null
+        clearInterval(reg)
+
+  bindQuickSearchKey : () ->
+    $(document).on 'keyup', null, '/', () ->
+      $("#quick_search_input").focus()
+
+  tariffPopUp : (htsNumber, country_id, country_iso) ->
+    mod = $("#mod_tariff_popup")
+    if(mod.length==0)
+      $("body").append("<div id='mod_tariff_popup'><div id='tariff_popup_content'></div></div>")
+      mod = $("#mod_tariff_popup")
+      mod.dialog(
+        autoOpen:false
+        title:'Tariff Information'
+        width:'400'
+        height:'500'
+        buttons:
+          "Close": () -> 
+            $("#mod_tariff_popup").dialog('close')
+        
+      )
+    
+    c = $("#tariff_popup_content")
+    c.html("Loading tariff information...")
+    mod.dialog('open')
+    url = '/official_tariffs/find?hts='+htsNumber
+    if (country_id) 
+      url += "&cid="+country_id
+    else if (country_iso)
+      url += "&ciso="+country_iso
+
+    htsDataRow = (label, data) ->
+      html = ""
+      if data!=undefined && $.trim(data).length > 0
+        html = "<tr class='hover'><td class='lbl_hts_popup'>"+label+"</td><td>"+data+"</td></tr>"
+      html
+
+    $.ajax(
+      url: url
+      dataType: 'json'
+      error: () ->
+        c.html "We're sorry, an error occurred while trying to load this information."
+
+      success: (data) ->
+        h = "No data was found for tariff "+htsNumber
+        if data != null
+          h = ""
+          o = data.official_tariff
+          h = "<table class='tbl_hts_popup'><tbody>"
+          h += htsDataRow("Country:",o.country.name)
+          h += htsDataRow("Tariff #:",o.hts_code)
+          h += htsDataRow("Common Rate:",o.common_rate)
+          h += htsDataRow("General Rate:",o.general_rate)
+          h += htsDataRow("Chapter:",o.chapter)
+          h += htsDataRow("Heading:",o.heading)
+          h += htsDataRow("Sub-Heading:",o.sub_heading)
+          h += htsDataRow("Text:",o.remaining_description)
+          h += htsDataRow("Special Rates:",o.special_rates)
+          h += htsDataRow("Add Valorem:",o.add_valorem_rate)
+          h += htsDataRow("Per Unit:",o.per_unit_rate)
+          h += htsDataRow("UOM:",o.unit_of_measure)
+          h += htsDataRow("MFN:",o.most_favored_nation_rate)
+          h += htsDataRow("GPT:",o.general_preferential_tariff_rate)
+          h += htsDataRow("Erga Omnes:",o.erga_omnes_rate)
+          h += htsDataRow("Column 2:",o.column_2_rate)
+          h += htsDataRow("Import Regulations:",o.import_regulations)
+          h += htsDataRow("Export Regulations:",o.export_regulations)
+          if o.binding_ruling_url
+            h += htsDataRow("Binding Rulings:","<a href='"+o.binding_ruling_url+"' target='rulings'>Click Here</a>")
+          
+          if o.official_quota!=undefined
+            h += htsDataRow("Quota Category",o.official_quota.category)
+            h += htsDataRow("SME Factor",o.official_quota.square_meter_equivalent_factor)
+            h += htsDataRow("SME UOM",o.official_quota.unit_of_measure)
+          
+          h += htsDataRow("Notes:",o.notes)
+          if o.auto_classify_ignore
+            h += htsDataRow("Ignore For Auto Classify","Yes")
+        
+          h += "</tbody></table>"
+        
+        c.html(h)
+    )
+
+
+$(document).ready () ->
+  Chain.bindQuickSearchKey()
+  $("#lnk_hide_notice").click (evt) ->
+    evt.preventDefault
+    $('#notice').hide()
+
+  $('#notice').slideDown('slow')
+
+  $(document).on 'click', "a.click_sink", (evt) ->
+    evt.preventDefault()
+
+  $(document).on 'click', "a[data-action='auto-classify']", (evt) ->
+    evt.preventDefault()
+    Chain.loadAutoClassifications($(@).parent().find('.hts_field').val(),$(@).attr['country'],"div[data-target='auto-classify']")
+
+  $(document).on 'click', "a.lnk_tariff_popup", (evt) ->
+    evt.preventDefault()
+    hts = $(@).attr('hts')
+    c_id = $(@).attr('country')
+    c_iso = $(@).attr('iso')
+    Chain.tariffPopUp hts, c_id, c_iso
+
+  $(document).on 'click', "a.hts_option", (evt) ->
+    evt.preventDefault()
+    h = $(@).parents(".hts_cell").find("input.hts_field")
+    h.val($(@).html())
+    h.blur()
+
+  $(document).on 'click', '.btn_link', (evt) ->
+    # TODO Pull Key Mapping into this file
+    evt.preventDefault()
+    link = $(@).attr('link_to')
+    if link
+      window.location=link

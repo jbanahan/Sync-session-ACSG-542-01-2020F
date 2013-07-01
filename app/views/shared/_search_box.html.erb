@@ -1,5 +1,5 @@
 <div id='search_box'>
-  <form method="get"> 
+  <form method="get" class='form-horizontal'> 
   <select id='srch_fields' size='1' name='f'>
     <% opts = [] 
       @s_params.each do |k,f|
@@ -11,7 +11,7 @@
   <select id='srch_cond' size='1' name='c'>
   </select> 
   <input id='srch_val' type='text' name='s' value="<%=params[:s]%>"  class="focus_first"/>
-  <input id='srch_submit' type='submit' value='Search' style='padding:2px 4px;' />
+  <input id='srch_submit' type='submit' value='Search' class='btn' />
   </form> 
 </div>
 <%content_for :javascript do %>
