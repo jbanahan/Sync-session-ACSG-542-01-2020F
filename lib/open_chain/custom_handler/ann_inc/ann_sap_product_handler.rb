@@ -16,7 +16,7 @@ module OpenChain
         def process file_content, run_by
           begin
             style_hash = {}
-            CSV.parse(file_content,:col_sep=>'|') do |row|
+            CSV.parse(file_content,{:quote_char=>'|',:col_sep=>'|'}) do |row|
               next if row.blank? || row[1].blank?
               style = row[1].strip
               style_hash[style] ||= []

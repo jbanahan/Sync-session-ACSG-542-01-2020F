@@ -134,9 +134,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
   end
   it "should not create classification if country is not import_location?" do
     cn = Factory(:country,:iso_code=>'CN')
-    data = make_row(:import=>', @userCN')
+    data = make_row(:import=>'CN')
     @h.process data, @user
     Product.first.classifications.should be_empty
+  end
+  it "should pass with quotes in field" do
+    @h.process '7073705|560120|s 3.0 and 3.1|CN|US|        10|07/25/2013|023|M Knits|3924905500| Ladies "batwing" top made of silk|||DDP||||ATS Perfect Pcs|ZNSC', @user
+    Product.first.get_custom_value(@cdefs[:prop_long]).value.should == 'Ladies "batwing" top made of silk'
   end
   it "should find earliest AC Date" do
     data = make_row(:ac_date=>'12/29/2013')
