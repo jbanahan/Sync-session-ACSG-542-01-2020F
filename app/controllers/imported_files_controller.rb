@@ -192,7 +192,7 @@ class ImportedFilesController < ApplicationController
             render :json=>f.preview(current_user) 
           rescue
             $!.log_me ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
-            render :json=>{:error=>true}
+            render :json=>{:error=>$!.message}
           end
         }
         format.html { render :text=>"This page is not accessible for end users."}

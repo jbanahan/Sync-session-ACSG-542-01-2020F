@@ -98,7 +98,11 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
       else
         $scope.showPreviewBox = true
         $http.get('/imported_files/'+$scope.importedFile.id+'/preview').success((data) ->
-          $scope.previewResults = data
+          if data.error
+            $scope.errors.push "There was an error loading the preview: "+data.error
+            $scope.showPreviewBox = false
+          else
+            $scope.previewResults = data
         )
     )
 
