@@ -2,7 +2,7 @@
 
 if [ -f config/dj_count.txt ]; then
   restart_count=`cat ./config/dj_count.txt`
-  if [[ !$restart_count > 0 ]]; then
+  if [[ ! $restart_count > 0 ]]; then
     restart_count=1
   fi
   if [ -f tmp/upgrade_running.txt ]; then
