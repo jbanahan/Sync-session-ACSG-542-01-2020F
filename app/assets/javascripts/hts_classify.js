@@ -134,7 +134,10 @@ var Classify = (function() {
     var wdf = function(data) {  
       if(data!="country not loaded") {
         var t = data.official_tariff;
-        var h = t.remaining_description+"<br />"; 
+        var h = "";
+        if (t.remaining_description) {
+          h += t.remaining_description+"<br />"; 
+        }
         if(t.common_rate) {
           h+="Common Rate: "+t.common_rate+"<br />";
         } else {
@@ -245,6 +248,10 @@ var Classify = (function() {
 
     validateHTS: function(value) {
       return validateHTSFormat(value);
+    },
+
+    removeFieldFromInvalidTariffList: function(hts_field) {
+      removeFromInvalidTariffs(hts_field);
     }
   }
 

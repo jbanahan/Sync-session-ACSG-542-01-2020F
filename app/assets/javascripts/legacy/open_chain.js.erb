@@ -310,8 +310,8 @@ var OpenChain = (function() {
     },
     initClassifyPage: function() {
       $(".tf_remove").live('click',function(ev) {
-        $(this).closest(".tf_row").find(".hts_field").each(function() {Classify.removeFromInvalidTariffs($(this));});
-        $(this).closest(".tf_row").find(".sched_b_field").each(function() {Classify.removeFromInvalidTariffs($(this));});
+        $(this).closest(".tf_row").find(".hts_field").each(function() {Classify.removeFieldFromInvalidTariffList($(this));});
+        $(this).closest(".tf_row").find(".sched_b_field").each(function() {Classify.removeFieldFromInvalidTariffList($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
