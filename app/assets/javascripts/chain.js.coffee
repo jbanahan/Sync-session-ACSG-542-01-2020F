@@ -184,8 +184,21 @@ root.Chain =
       buttons['Advanced'] = ->
         window.location = '/products/'+product.id+'/edit'
     modal.find("form").submit ->
-      $("input.hts_field").each ->
-        $(@).parents('div[quick-class-content-id]').remove() if $(@).val()==''
+      # If every field is blank, don't submit since there's nothing for the server to do here (plus it crashes if you submit a bulk classification with no data), 
+      # just close the classify popup instead.
+      fields = $("input.hts_field")
+      field_count = fields.length
+      blank_count = 0
+      fields.each ->
+        if $(@).val()==''
+          $(@).parents('div[quick-class-content-id]').remove()
+          blank_count++
+
+      should_submit = (blank_count != field_count)
+      if !should_submit
+        $("#mod_quick_classify").remove()
+      should_submit
+      
     Chain.htsAutoComplete()
     modal.dialog(title:"Quick Classify",width:550,buttons:buttons,modal:true)
     modal.dialog('open')
