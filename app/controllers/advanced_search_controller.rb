@@ -97,6 +97,21 @@ class AdvancedSearchController < ApplicationController
         h = execute_query_to_hash(SearchQuery.new(ss,current_user),current_user,page,per_page)
         h[:search_run_id] = sr.id
         render :json=> h
+
+        #load the result cached in another thread so it doesn't block
+        sr_id = sr.id #only reference the id so we get a clean object from the database to avoid threading conflicts
+        Thread.new do
+          #need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
+          ActiveRecord::Base.connection_pool.with_connection do
+            s_run = SearchRun.find sr_id
+            rc = s_run.parent.result_cache
+            if rc
+              rc.update_attributes(object_ids:nil,page:s_run.page,per_page:s_run.per_page)
+              rc.load_current_page
+            end
+          end
+
+        end
       }
     end
   end

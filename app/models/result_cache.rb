@@ -8,6 +8,10 @@ class ResultCache < ActiveRecord::Base
   def next current_object_id
     a = id_array
     idx = a.index current_object_id #find the index of the current object
+    if idx.blank?
+      load_current_page #reset cached if object not found
+      idx = a.index current_object_id #find the index of the current object
+    end
     return nil unless idx #return nil unless the current object was found
     return a[idx+1] unless idx>=a.size-1 #return the next object in the cache unless this is the last object
     load_next_page
@@ -26,6 +30,10 @@ class ResultCache < ActiveRecord::Base
   def previous current_object_id
     a = id_array
     idx = id_array.index current_object_id
+    if idx.blank?
+      load_current_page #reset cached if object not found
+      idx = a.index current_object_id #find the index of the current object
+    end
     return nil unless idx
     return nil if idx==0 && page==1
     return a[idx-1] unless idx==0
@@ -42,16 +50,16 @@ class ResultCache < ActiveRecord::Base
     return a[idx-1]
   end
 
+  def load_current_page
+    self.page = 1 if self.page.blank? || self.page < 1
+    self.object_ids = self.result_cacheable.result_keys(:per_page=>self.per_page,:page=>self.page).to_json
+    self.save!
+  end
   private
   #parse the object_ids into an array of integers
   def id_array
     load_current_page if self.object_ids.blank?
     JSON.parse self.object_ids
-  end
-  def load_current_page
-    self.page = 1 if self.page.blank? || self.page < 1
-    self.object_ids = self.result_cacheable.result_keys(:per_page=>self.per_page,:page=>self.page).to_json
-    self.save!
   end
   def load_next_page
     self.page += 1 unless self.page.blank?

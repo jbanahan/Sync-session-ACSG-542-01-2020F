@@ -33,7 +33,9 @@ describe ResultCache do
       rc.next(p[1]).should be_nil
     end
     it "should return nil if not in cache" do
-      ResultCache.new(:object_ids=>[7,1,5].to_json).next(4).should be_nil
+      rc = ResultCache.new(:object_ids=>[7,1,5].to_json)
+      rc.stub(:load_current_page)
+      rc.next(4).should be_nil
     end
     it "should not return same object id from next page" do
       ss = Factory(:search_setup,:module_type=>"Product")
@@ -74,7 +76,9 @@ describe ResultCache do
       ResultCache.new(:object_ids=>[7,1,5].to_json,:page=>1).previous(7).should be_nil
     end
     it "should return nil if not in cache" do
-      ResultCache.new(:object_ids=>[7,1,5].to_json,:page=>1).previous(4).should be_nil
+      rc = ResultCache.new(:object_ids=>[7,1,5].to_json,:page=>1)
+      rc.stub(:load_current_page)
+      rc.previous(4).should be_nil
     end
     it "should not return same object id from previous page" do
       ss = Factory(:search_setup,:module_type=>"Product")
