@@ -43,9 +43,18 @@ module OpenChain
             invoice.invoice_total += line.charge_amount unless line.charge_type=='D'
           end
 
-          ent = Entry.find_by_source_system_and_broker_reference(invoice.source_system, invoice.broker_reference)
-          invoice.entry = ent if ent
-          invoice.save!
+          ent = Entry.includes(:broker_invoices).find_by_source_system_and_broker_reference(invoice.source_system, invoice.broker_reference)
+          if ent
+            ent.broker_invoices << invoice
+            total_broker_invoice_value = 0.0
+            ent.broker_invoices.each do |inv|
+              total_broker_invoice_value += inv.invoice_total
+            end
+            ent.broker_invoice_total = total_broker_invoice_value
+            ent.save!
+          else
+            invoice.save!
+          end
         end
       end
 
