@@ -26,7 +26,9 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
       evt.preventDefault();
       $(this).parents('tr.permission_row').find(':checkbox').attr('checked','');
     });
-    $("#btn_reports").click(function(evt) { window.location = "<%=user_scheduled_reports_path @user%>"});
+    <% if @user.id -%>
+      $("#btn_reports").click(function(evt) { window.location = "<%=user_scheduled_reports_path @user%>"});
+    <% end -%>
   });
 <%end%>
 <%content_for :action_bar do %>
@@ -35,7 +37,9 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <% if current_user.admin? %>
     <button id='btn_run_as'>Run As</button>
   <% end %>
-<button id="btn_reports">Reports</button>
+  <% if @user.id -%>
+    <button id="btn_reports">Reports</button>
+  <% end -%>
 <%end%>
 <%= form_for([@company, @user], :html=>{:id=>'frm_user'}) do |f| %>
   <%= f.hidden_field :company_id %>
