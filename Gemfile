@@ -20,7 +20,7 @@ gem 'dalli', '2.2.1'
 gem 'postmark-rails', '0.4.1'
 gem 'rubyzip'
 gem 'jquery-rails'
-gem 'newrelic_rpm'
+gem 'newrelic_rpm', '3.6.5.130'
 
 #text processing/encoding stuff
 gem 'RedCloth', '4.2.9'
