@@ -58,10 +58,20 @@ module OpenChain
         begin
           if p.can_classify?(current_user)
             Product.transaction do
+              country_classification_map = {}
               good_count = gc if good_count.nil?
-              #destroy all classifications for countries passed in the hash
+              #destroy all classifications for countries passed in the hash, preserving custom values
               params['product']['classifications_attributes'].each do |k,v|
-                p.classifications.where(:country_id=>v['country_id']).destroy_all
+                p.classifications.where(:country_id=>v['country_id']).each do |cls|
+                  country_classification_map[cls.country_id] = {:cv=>[],:hts=>{}}
+                  cls.custom_values.each {|cv| country_classification_map[cls.country_id][:cv] << cv unless cv.value.blank?}
+                  cls.tariff_records.each do |tr|
+                    vals = []
+                    tr.custom_values.each {|cv| vals << cv unless cv.value.blank?}
+                    country_classification_map[cls.country_id][:hts][tr.line_number] = vals
+                  end
+                  cls.destroy
+                end
               end
               success = lambda {|o| }
               failure = lambda {|o,errors|
@@ -74,6 +84,15 @@ module OpenChain
               }
               before_validate = lambda {|o| 
                 CustomFieldProcessor.new(params).save_classification_custom_fields(o,params['product'])
+                o.classifications.each do |cls|
+                  ccm = country_classification_map[cls.country_id]
+                  if ccm 
+                    apply_custom_values_to_object ccm[:cv], cls
+                    cls.tariff_records.each_with_index do |tr|
+                      apply_custom_values_to_object ccm[:hts][tr.line_number], tr unless ccm[:hts][tr.line_number].blank?
+                    end
+                  end
+                end
                 OpenChain::CoreModuleProcessor.update_status o
               }
               OpenChain::CoreModuleProcessor.validate_and_save_module(params,p,params['product'],success,failure,:before_validate=>before_validate)
@@ -98,6 +117,19 @@ module OpenChain
       messages[:errors] = error_messages
       messages[:good_count] = good_count
       messages
+    end
+    private
+    def self.apply_custom_values_to_object custom_values, obj
+      to_write = []
+      custom_values.each do |cv|
+        new_cv = obj.get_custom_value(cv.custom_definition)
+        if new_cv.value.blank? && !cv.value.blank?
+          new_cv.value = cv.value
+          to_write << new_cv
+        end
+      end
+      CustomValue.batch_write! to_write unless to_write.blank?
+      nil
     end
   end
 
