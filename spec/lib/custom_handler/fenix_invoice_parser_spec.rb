@@ -121,4 +121,19 @@ INV
     bi = BrokerInvoice.find_by_invoice_number_and_source_system 'INV#2', 'Fenix'
     bi.should be_nil
   end
+
+  it "should skip lines that are missing invoice numbers" do
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,brokref,CAD, 4000 , 1 ,,,,,,,,
+
+    01/14/2013,BO
+
+    01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 22 ,BROKERAGE, 37 ,brokref,CAD, 4000 , 1 ,,,,,,,,
+INV
+    @k.parse @content
+
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system '39009', 'Fenix'
+    bi.should_not be_nil
+  end
 end

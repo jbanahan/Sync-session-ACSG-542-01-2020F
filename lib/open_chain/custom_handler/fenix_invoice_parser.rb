@@ -7,8 +7,9 @@ module OpenChain
         last_invoice_number = ''
         rows = []
         CSV.parse(file_content,:headers=>true) do |row|
-          next if row.length==0
-          my_invoice_number = row[3]
+          my_invoice_number = get_invoice_number row
+          next unless my_invoice_number
+          
           if last_invoice_number!=my_invoice_number && !rows.empty?
             process_invoice_rows rows, opts
             rows = []
@@ -28,7 +29,8 @@ module OpenChain
       end
 
       def self.get_invoice_number row
-        row[3].strip
+        val = row[3]
+        val.nil? ? nil : val.strip
       end
       
       #don't call this, use the static parse method
