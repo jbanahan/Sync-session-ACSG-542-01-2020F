@@ -4,6 +4,7 @@ db/*.sqlite3
 db/structure.sql
 db/development_structure.sql
 config/database.yml
+config/dj_count.txt
 spec/support/tmp/*
 .project
 .bundle/*
@@ -13,5 +14,8 @@ coverage/*
 coverage.data
 coverage/*
 .rvmrc*
+.ruby-gemset
+.ruby-version
 .sass-cache/
 public/assets/*
+vendor/

@@ -18,6 +18,31 @@ class XlsMaker
     @no_time = inner_opts[:no_time]
   end
   
+  def make_from_search_query search_query
+    @column_widths = {}
+    ss = search_query.search_setup
+    cols = search_query.search_setup.search_columns.order('rank ASC')
+    wb = prep_workbook cols
+    sheet = wb.worksheet 0
+    row_number = 1
+    base_objects = {}
+    search_query.execute do |row_hash|
+      #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
+      key = row_hash[:row_key]
+      base_objects[key] ||= (@include_links ? ss.core_module.find(key) : nil)
+      process_row sheet, row_number, row_hash[:result], base_objects[key]
+      row_number += 1
+    end
+    wb
+  end
+
+  #delay job friendly version of make_from_search_query
+  def make_from_search_query_by_search_id_and_user_id search_id, user_id
+    sq = SearchQuery.new(SearchSetup.find(search_id),User.find(user_id))
+    make_from_search_query sq
+  end
+  
+  #deprecated
   def make_from_search(current_search, results)
     @column_widths = {}
     cols = current_search.search_columns.order("rank ASC")
@@ -31,6 +56,7 @@ class XlsMaker
     wb
   end
 
+  #deprecated
   def make_from_results results, columns, module_chain, user, search_criterions=[]
     @column_widths = {}
     wb = prep_workbook columns
@@ -44,7 +70,18 @@ class XlsMaker
   end
   
   def self.add_body_row sheet, row_number, row_data, column_widths = [], no_time = false
-    row_data.each_with_index do |cell_base,col| 
+    make_body_row sheet, row_number, 0, row_data, column_widths, {:no_time => no_time}
+  end
+
+  # Method allows insertion of a row data array into a middle column of a spreadsheet row.
+  def self.insert_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], no_time = false
+    make_body_row sheet, row_number, starting_column_number, row_data, column_widths, {:no_time => no_time, :insert=>true}
+  end
+
+  def self.make_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], options = {}
+    row_data.each_with_index do |cell_base, col| 
+      col = starting_column_number + col
+
       cell = nil
       if cell_base.nil?
         cell = ""
@@ -53,11 +90,17 @@ class XlsMaker
       else
         cell = cell_base
       end
-      sheet.row(row_number).push(cell)
+      
+      if options[:insert] == true
+        sheet.row(row_number).insert(col, cell)
+      else
+        sheet.row(row_number).push(cell)
+      end
+
       width = cell.to_s.size + 3
       width = 8 unless width > 8
       if cell.respond_to?(:strftime)
-        if cell.is_a?(Date) || no_time
+        if cell.is_a?(Date) || options[:no_time] == true
           width = 13
           sheet.row(row_number).set_format(col,DATE_FORMAT) 
         else
@@ -66,8 +109,9 @@ class XlsMaker
       end
       width = 23 if width > 23
       XlsMaker.calc_column_width sheet, col, column_widths, width
-    end 
+    end
   end
+  private_class_method :make_body_row
 
   def self.add_header_row sheet, row_number, header_labels, column_widths = []
     header_labels.each_with_index do |label, i|
@@ -83,6 +127,13 @@ class XlsMaker
       sheet.column(col).width = width
       column_widths[col] = width
     end
+  end
+
+  def self.create_workbook sheet_name, headers = []
+    wb = Spreadsheet::Workbook.new
+    sheet = wb.create_worksheet :name=> sheet_name
+    XlsMaker.add_header_row(sheet, 0, headers) if headers.length > 0
+    wb
   end
   
   private

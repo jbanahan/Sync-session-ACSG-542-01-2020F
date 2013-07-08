@@ -8,13 +8,17 @@ class FieldValidatorRulesController < ApplicationController
     mf = ModelField.find_by_uid mf_id
     case mf.data_type
     when :date
-      v = Date.parse v
+      unless v.blank?
+        v = Date.parse(v) rescue msgs << "#{v} is not a valid date format."
+      end
     when :integer
       v = v.to_i
     when :decimal
       v = v.to_f
     when :datetime
-      v = Time.zone.parse v
+      unless v.blank?
+        v = Time.zone.parse(v) rescue msgs << "#{v} is not a valid date time format."
+      end
     end
     rules.each do |r|
       msgs += r.validate_input v

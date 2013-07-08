@@ -5,8 +5,7 @@ class EntriesController < ApplicationController
   end
 
   def index
-    @bulk_actions = CoreModule::ENTRY.bulk_actions current_user
-    advanced_search CoreModule::ENTRY
+    redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
   def show
     e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first

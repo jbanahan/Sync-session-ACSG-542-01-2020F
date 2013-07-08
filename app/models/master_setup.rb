@@ -1,4 +1,5 @@
 class MasterSetup < ActiveRecord::Base
+  cattr_accessor :current
 
   CACHE_KEY = "MasterSetup:setup"
 
@@ -10,10 +11,10 @@ class MasterSetup < ActiveRecord::Base
   end
 
   #get the master setup for this instance, first trying the cache, then trying the DB, then creating and returning a new one
-  def self.get
-    m = nil
+  def self.get use_in_memory_version=true
+    m = (use_in_memory_version ? MasterSetup.current : nil)
     begin
-      m = CACHE.get CACHE_KEY 
+      m = CACHE.get CACHE_KEY unless m 
     rescue
     end
     if m.nil? || !m.is_a?(MasterSetup)
@@ -38,7 +39,7 @@ class MasterSetup < ActiveRecord::Base
   end
 
   def self.need_upgrade?
-    ms = MasterSetup.get
+    ms = MasterSetup.get(false)
     !ms.target_version.blank? && ms.version.strip!=ms.target_version.strip
   end
 

@@ -74,8 +74,8 @@ describe CustomFile do
       f.handler.should be o
     end
     it 'should get handler with module' do
-      f = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloMslPlusHandler')
-      f.handler.should be_instance_of OpenChain::CustomHandler::PoloMslPlusHandler 
+      f = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler')
+      f.handler.should be_instance_of OpenChain::CustomHandler::PoloCsmSyncHandler 
     end
     it 'should process with handler based on file_type name' do
       handler = mock "handler"

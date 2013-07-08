@@ -282,9 +282,42 @@ describe SearchCriterion do
       sc = SearchCriterion.new(:model_field_uid=>:prod_class_count, :operator=>"in", :value=>"1\n0\r\n3")
       sc.apply(Product.where("1=1")).all.should include @product        
     end
+    it "should find something with a blank value provided a blank IN list value" do
+      # Without the added code backing what's in this test, the query produced for a blank IN list value would be IN (null),
+      # but after the change it's IN (''), which is more in line with what the user is requesting if they left the value blank.
+      @product.update_attributes :name => ""
+      sc = SearchCriterion.new(:model_field_uid=>:prod_name, :operator=>"in", :value=>"")
+      sc.apply(Product.where("1=1")).all.should include @product
+    end
   end
   
   context 'date time field' do
+    it "should properly handle not null" do
+      u = Factory(:master_user)
+      cd = Factory(:custom_definition,module_type:'Product',data_type:'date') 
+      @product.update_custom_value! cd, Time.now
+      p2 = Factory(:product)
+      p3 = Factory(:product)
+      p3.custom_values.create!(:custom_definition_id=>cd.id)
+      ss = SearchSetup.new(module_type:'Product',user:u)
+      sc = ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'notnull')
+      sq = SearchQuery.new ss, u
+      h = sq.execute
+      h.collect {|r| r[:row_key]}.should == [@product.id]
+    end
+    it "should properly handle null" do
+      u = Factory(:master_user)
+      cd = Factory(:custom_definition,module_type:'Product',data_type:'date') 
+      @product.update_custom_value! cd, Time.now
+      p2 = Factory(:product)
+      p3 = Factory(:product)
+      p3.custom_values.create!(:custom_definition_id=>cd.id)
+      ss = SearchSetup.new(module_type:'Product',user:u)
+      sc = ss.search_criterions.new(model_field_uid:"*cf_#{cd.id}",operator:'null')
+      sq = SearchQuery.new ss, u
+      h = sq.execute
+      h.collect {|r| r[:row_key]}.sort.should == [p2.id,p3.id]
+    end
     it "should translate datetime values to UTC for lt operator" do
       # Run these as central timezone
       tz = "Hawaii"

@@ -28,7 +28,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should handle timezone conversion for datetime columns" do
-      release_date = Time.now
+      release_date = 0.seconds.ago
       e1 = Factory(:entry,:entry_number=>'12345', :release_date => release_date)
       q = "SELECT release_date 'REL1', date(release_date) as 'Rel2' FROM entries order by entry_number ASC"
       workbook = nil
@@ -76,6 +76,35 @@ describe OpenChain::Report::ReportHelper do
       sheet = workbook.worksheet 0
       sheet.row(0).should == ['Col1', 'Whatever', 'col_3']
       sheet.row(1).should == ['Col1', 'Col2', 'Col3']
+    end
+  end
+
+  context :datetime_translation_lambda do
+    it "should create a lambda that will translate a datetime value into the specified timezone" do
+      conversion = @helper.new.datetime_translation_lambda "Hawaii", false
+
+      now = Time.zone.now.in_time_zone "UTC"
+
+      translated = conversion.call nil, now
+      # Make sure the translated value is using the specified time zone (by comparing offset values)
+      translated.utc_offset.should == ActiveSupport::TimeZone["Hawaii"].utc_offset
+      translated.in_time_zone("UTC").should == now
+    end
+
+    it "should return a date if specified" do
+      conversion = @helper.new.datetime_translation_lambda "Hawaii", true
+
+      # Use a time we know is going to be one date in UTC and a day earlier in HST.
+      now = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 01:00:00"
+
+      translated = conversion.call nil, now
+      translated.is_a?(Date).should be_true
+      translated.to_s.should == "2012-12-31"
+    end
+
+    it "should handle nil times" do
+      conversion = @helper.new.datetime_translation_lambda "Hawaii", false
+      conversion.call(nil, nil).should be_nil
     end
   end
 

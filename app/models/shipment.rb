@@ -52,17 +52,19 @@ class Shipment < ActiveRecord::Base
 	  (!self.carrier.nil? && self.carrier.locked?)
 	end
 	
-
-private
 	def self.search_secure user, base_object
+    base_object.where search_where user
+  end
+
+  def self.search_where user
     if user.company.master
-      return base_object.where("1=1")
+      return "1=1"
     elsif user.company.vendor 
-      return base_object.where(:vendor_id => user.company)
+      return "shipments.vendor_id = #{user.company_id}"
     elsif user.company.carrier
-      return base_object.where(:carrier_id => user.company)
+      return "shipments.carrier_id = #{user.company_id}"
     else
-      return base_object.where("1=0")
+      return "1=0"
     end
   end
 end

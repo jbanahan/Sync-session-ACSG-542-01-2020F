@@ -2,7 +2,7 @@
 $(function() {
   $('#<%=@company.id.nil? ? "new_company" : "edit_company"+@company.id.to_s%>')
     .validate();
-  $('#btn_save').button().click(function() {$("#frm_cmp").submit();});
+  $('#btn_save').click(function() {$("#frm_cmp").submit();});
 });
 <% end %>
 

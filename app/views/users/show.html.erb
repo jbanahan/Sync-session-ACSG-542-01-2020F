@@ -1,16 +1,14 @@
 <% content_for :javascript do %>
   $(function() {
     $( "#btn_edit" )
-      .button()
       .click(function() {
         window.location = '<%=edit_company_user_path(@user.company,@user)%>';
       });
     $( "#btn_<%=@user.active? ? 'disable' : 'enable'%>" )
-      .button()
       .click(function() {
         window.location = '<%=@user.active? ? disable_company_user_path(@user.company,@user) : enable_company_user_path(@user.company,@user) %>';
       });
-    $( "#btn_messages" ).button().click(function() {
+    $( "#btn_messages" ).click(function() {
       window.location = '<%=messages_path%>'
     });
     $("#btn_debug_records").click(function() {

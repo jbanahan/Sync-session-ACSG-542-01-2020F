@@ -19,6 +19,28 @@ describe OpenChain::CustomHandler::ProductGenerator do
     before :each do 
       @p1 = Factory(:product,:name=>'x')
     end
+    context :preprocess_row do
+      before :each do
+        @inst = @base.new
+      end
+      it "should default to not doing anything" do
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+        r.should == [{0=>'UID',1=>'NM'},{0=>@p1.unique_identifier,1=>'x'}]
+      end
+      it "should allow override to create new rows" do
+        def @inst.preprocess_row row
+          [row,row] #double it
+        end
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+        r.should == [{0=>'UID',1=>'NM'},{0=>@p1.unique_identifier,1=>'x'},{0=>@p1.unique_identifier,1=>'x'}]
+      end
+    end
     context :sync_records do
       context :implments_sync_code do
         before :each do
@@ -111,7 +133,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
   end
   describe :sync_fixed_position do
     before :each do 
-      @t = Time.now
+      @t = 0.seconds.ago 
       @p1 = Factory(:product,:name=>'ABCDEFG',:created_at=>@t)
       @b = @base.new
       def @b.query

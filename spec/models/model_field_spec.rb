@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe ModelField do
+  describe :process_query_result do
+    before :each do
+      @u = User.new
+    end
+    it "should pass vlue through for default object" do
+      ModelField.new(10000,:test,CoreModule::PRODUCT,:name).process_query_result("x",@u).should=="x"
+    end
+    it "should override with given lambda" do
+      ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:process_query_result_lambda=>lambda {|v| v.upcase}).process_query_result("x",@u).should=="X"
+    end
+    it "should write HIDDEN if user cannot view column" do
+      ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:can_view_lambda=>lambda {|u| false}).process_query_result("x",@u).should=="HIDDEN"
+    end
+  end
   context :read_only do
     before :each do
       FieldLabel::LABEL_CACHE.clear
@@ -61,6 +75,184 @@ describe ModelField do
     ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
   end
   context "special cases" do
+    context "first hts by country" do
+      before :each do
+        @c = Factory(:country,:iso_code=>'ZY',:import_location=>true)
+        ModelField.reload true
+      end
+      it "should create fields for each import country" do
+        c2 = Factory(:country,:iso_code=>'ZZ',:import_location=>true)
+        c3 = Factory(:country,:iso_code=>'NO',:import_location=>false)
+        ModelField.reload true
+        (1..3).each do |i|
+          c_mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
+          c_mf.label.should == "First HTS #{i} (ZY)"
+          c2_mf = ModelField.find_by_uid "*fhts_#{i}_#{c2.id}"
+          c2_mf.label.should == "First HTS #{i} (ZZ)"
+          ModelField.find_by_uid("*fhts_#{i}_#{c3.id}").should be_nil #don't create because not an import location
+        end
+      end
+      it "should allow import" do
+        ModelField.reload true
+        p = Factory(:product)
+        (1..3).each do |i|
+          Factory(:official_tariff,:country=>@c,:hts_code=>"123456789#{i}")
+          mf = ModelField.find_by_uid "*fhts_#{i}_#{@c.id}"
+          r = mf.process_import(p, "123456789#{i}")
+          r.should == "ZY HTS #{i} set to 1234.56.789#{i}"
+        end
+        p.save!
+        p.should have(1).classifications
+        cls = p.classifications.find_by_country_id(@c.id)
+        cls.should have(1).tariff_records
+        tr = cls.tariff_records.find_by_line_number 1
+        tr.hts_1.should == "1234567891"
+        tr.hts_2.should == "1234567892"
+        tr.hts_3.should == "1234567893"
+      end
+      it "should update existing hts" do
+        Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
+        tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        mf.process_import tr.product, '1234567899'
+        tr.product.save!
+        tr.reload
+        tr.hts_1.should == '1234567899'
+      end
+      it "should strip non numerics from hts" do
+        Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
+        p = Factory(:product)
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        mf.process_import p, '1234.567-899 '
+        p.classifications.first.tariff_records.first.hts_1.should == '1234567899'
+      end
+      it "should not allow import of invalid HTS" do
+        Factory(:official_tariff,:country=>@c,:hts_code=>"1234567899")
+        p = Factory(:product)
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        r = mf.process_import p, '0000000000'
+        r.should == "0000000000 is not valid for ZY HTS 1"
+      end
+      it "should allow any HTS for country withouth official tariffs" do
+        p = Factory(:product)
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        r = mf.process_import p, '0000000000'
+        p.classifications.first.tariff_records.first.hts_1.should == '0000000000'
+      end
+      it "should format export" do
+        tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
+        mf = ModelField.find_by_uid "*fhts_1_#{@c.id}"
+        mf.process_export(tr.product,nil,true).should == '0000000000'.hts_format
+      end
+      it "should work with query" do
+        u = Factory(:master_user)
+        tr = Factory(:tariff_record,classification:Factory(:classification,country:@c),hts_1:'0000000000')
+        ss = SearchSetup.new(module_type:'Product')
+        ss.search_columns.build(model_field_uid:"*fhts_1_#{@c.id}",rank:1)
+        ss.search_criterions.build(model_field_uid:"*fhts_1_#{@c.id}",operator:'eq',value:'0000000000')
+        h = SearchQuery.new(ss,u).execute
+        h.should have(1).record
+        h.first[:row_key].should == tr.product.id
+        h.first[:result].first.should == '0000000000'.hts_format
+      end
+    end
+    context "bill of materials" do
+      before :each do
+        @parent_mf = ModelField.find_by_uid :prod_bom_parents
+        @child_mf = ModelField.find_by_uid :prod_bom_children
+      end
+      it "should not allow imports for parents" do
+        p = Factory(:product)
+        r = @parent_mf.process_import p, 'abc'
+        p.should_not be_on_bill_of_materials
+        r.should == "Bill of Materials ignored, cannot be changed by upload."
+      end
+      it "process_export should return csv of BOM parents" do
+        parent1 = Factory(:product,:unique_identifier=>'bomc1')
+        parent2 = Factory(:product,:unique_identifier=>'bomc2')
+        child = Factory(:product)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id,:quantity=>1)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id,:quantity=>1)
+        output = @parent_mf.process_export child, nil, true
+        output.should == "#{parent1.unique_identifier},#{parent2.unique_identifier}"
+      end
+      it "qualified_field_name should return csv of BOM parents" do
+        parent1 = Factory(:product,:unique_identifier=>'bomc1')
+        parent2 = Factory(:product,:unique_identifier=>'bomc2')
+        child = Factory(:product)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent1.id,:quantity=>1)
+        child.bill_of_materials_parents.create!(:parent_product_id=>parent2.id,:quantity=>1)
+        r = ActiveRecord::Base.connection.execute "SELECT #{@parent_mf.qualified_field_name} FROM products where id = #{child.id}"
+        r.first.first.should == "#{parent1.unique_identifier},#{parent2.unique_identifier}"
+      end
+      it "should not allow imports for children" do
+        p = Factory(:product)
+        r = @child_mf.process_import p, 'abc'
+        p.should_not be_on_bill_of_materials
+        r.should == "Bill of Materials ignored, cannot be changed by upload."
+      end
+      it "should return csv of BOM children" do
+        child1 = Factory(:product,:unique_identifier=>'bomc1')
+        child2 = Factory(:product,:unique_identifier=>'bomc2')
+        parent = Factory(:product)
+        parent.bill_of_materials_children.create!(:child_product_id=>child1.id,:quantity=>1)
+        parent.bill_of_materials_children.create!(:child_product_id=>child2.id,:quantity=>1)
+        output = @child_mf.process_export parent, nil, true
+        output.should == "#{child1.unique_identifier},#{child2.unique_identifier}"
+      end
+      it "qualified_field_name should return csv of BOM children" do
+        child1 = Factory(:product,:unique_identifier=>'bomc1')
+        child2 = Factory(:product,:unique_identifier=>'bomc2')
+        parent = Factory(:product)
+        parent.bill_of_materials_children.create!(:child_product_id=>child1.id,:quantity=>1)
+        parent.bill_of_materials_children.create!(:child_product_id=>child2.id,:quantity=>1)
+        r = ActiveRecord::Base.connection.execute "SELECT #{@child_mf.qualified_field_name} FROM products where id = #{parent.id}"
+        r.first.first.should == "#{child1.unique_identifier},#{child2.unique_identifier}"
+      end
+    end
+    context "classification count" do
+      before :each do
+        @user = Factory(:master_user)
+        @p = Factory(:product)
+        @country = Factory(:country)
+        @ss = SearchSetup.new(:module_type=>'Product')
+      end
+      it "should reflect 0 if no classifications" do
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+      it "should reflect 0 with classificaton and no tariff record" do
+        @p.classifications.create!(:country_id=>@country.id)
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+      it "should reflect 0 with no hts_1" do
+        @p.classifications.create!(:country_id=>@country.id).tariff_records.create!
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'0')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+      it "should reflect proper count with mixed bag" do
+        @p.classifications.create!(:country_id=>@country.id).tariff_records.create! # = 0
+        country_2 = Factory(:country)
+        @p.classifications.create!(:country_id=>country_2.id).tariff_records.create!(:hts_1=>'123') # = 1
+        @p.classifications.find_by_country_id(country_2.id).tariff_records.create!(:hts_1=>'123') # = 0 don't add for second component of same classification
+        @p.classifications.create!(:country_id=>Factory(:country).id).tariff_records.create!(:hts_1=>'123') # = 1
+        @ss.search_criterions.build(:model_field_uid=>'prod_class_count',:operator=>'eq',:value=>'2')
+        sq = SearchQuery.new(@ss,@user)
+        r = sq.execute
+        r.size.should == 1
+        r.first[:row_key].should == @p.id
+      end
+    end
     context "regions" do
       it "should create classification count model fields for existing regions" do
         r = Factory(:region)

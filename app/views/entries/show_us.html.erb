@@ -6,7 +6,7 @@
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
 <%end-%>
-<% cache ["v3",current_user.company,current_user,@entry] do-%>
+<% cache ["v6",current_user.company,current_user,@entry] do-%>
   <style>
   .ent_columns {
     width:99%;
@@ -70,7 +70,7 @@
       <tr>
         <td style="width:33%;">
           <table>
-            <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_arrival_date,:ent_release_date].each do |f|%>
+            <%[:ent_export_date,:ent_docs_received_date,:ent_isf_sent_date,:ent_isf_accepted_date,:ent_first_it_date,:ent_filed_date,:ent_first_entry_sent_date,:ent_eta_date,:ent_arrival_date,:ent_release_date].each do |f|%>
               <%=field_view_row @entry, f %>
             <%end%>
           </table>
@@ -240,7 +240,7 @@
           </tr>
         </tbody>
       </table>
-      <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf,:cil_cotton_fee]%>
+      <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf,:cil_cotton_fee, :cil_contract_amount]%>
       <table class='detail_table'>
         <thead><tr>
           <%fields.each do |f|%>
@@ -254,9 +254,29 @@
                 <td <%="rowspan='2'" if i==0%> <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>><%=field_value(line, f)%></td>
               <%end%>
             </tr>
+            <% 
+            # Don't bother showing CVD or ADD fields if there's no values to show.  We can determine if there's something to show 
+            # by checking if add/cvd case number is non-null, since the Alliance files don't include the CVD/ADD line types 
+            # unless that data is applicable to the invoice.  Even if there's no actual case #, the value in those cases will be '', not nil
+            if ci.commercial_invoice_lines.find {|line| !line.add_case_number.nil?} %>
+              <tr>
+                <td colspan='<%=fields.length%>' style='font-size:111%;'>
+                  <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cil_add_case_number, :cil_add_bond, :cil_add_case_value, :cil_add_duty_amount, :cil_add_case_percent],
+                      :lines=>[line]}%>
+                </td>
+              </tr>
+            <% end %>
+            <% if ci.commercial_invoice_lines.find {|line| !line.cvd_case_number.nil?} %>
+              <tr>
+                <td colspan='<%=fields.length%>' style='font-size:111%;'>
+                  <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cil_cvd_case_number, :cil_cvd_bond, :cil_cvd_case_value, :cil_cvd_duty_amount, :cil_cvd_case_percent],
+                      :lines=>[line]}%>
+                </td>
+              </tr>
+            <% end %>
             <% if line.commercial_invoice_tariffs.count > 0%>
               <tr>
-                <td colspan='8' style='font-size:111%;'>
+                <td colspan='<%=fields.length%>' style='font-size:111%;'>
                   <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:cit_spi_secondary,
                     :cit_classification_qty_1,:cit_classification_uom_1,:cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3,
                     :cit_gross_weight,:cit_tariff_description], :lines=>line.commercial_invoice_tariffs}%>

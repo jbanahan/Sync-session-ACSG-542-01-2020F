@@ -23,8 +23,20 @@ class Attachment < ActiveRecord::Base
   
   #unique name suitable for putting on archive disks
   def unique_file_name
-    "#{self.id}-#{self.attached_file_name}"
+    # Prepend the Document Type (if it exists)
+    name = "#{self.id}-#{self.attached_file_name}"
+    unless self.attachment_type.blank?
+      name = "#{self.attachment_type}-#{name}"
+    end
+    name
   end
+
+  def self.add_original_filename_method attached_object
+    def attached_object.original_filename=(fn); @fn = fn; end
+    def attached_object.original_filename; @fn; end
+    nil
+  end
+
   private
   def no_post
     false

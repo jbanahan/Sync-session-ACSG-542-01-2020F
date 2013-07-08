@@ -4,7 +4,7 @@ class SalesOrdersController < ApplicationController
 	end
   
   def index
-    advanced_search CoreModule::SALE
+    redirect_to advanced_search CoreModule::SALE, params[:force_search]
   end
   def all_open
     if current_user.view_sales_orders?
@@ -79,7 +79,7 @@ class SalesOrdersController < ApplicationController
     action_secure(o.can_edit?(current_user),o,{:verb => "edit", :module_name=>"order"}) {
       success = lambda {|so|
         add_flash :notices, "Sale was updated successfully."
-        redirect_update so
+        redirect_to so
       }
       failure = lambda {|so,errors|
         errors_to_flash so, :now=>true

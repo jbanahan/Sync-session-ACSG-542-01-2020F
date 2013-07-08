@@ -1,49 +1,53 @@
 class ApplicationController < ActionController::Base
-    require 'open_chain/field_logic'
-    require 'yaml'
-    require 'newrelic_rpm'
+  require 'open_chain/field_logic'
+  require 'yaml'
+  require 'newrelic_rpm'
 
-    protect_from_forgery
-    before_filter :new_relic
-    before_filter :require_user
-    before_filter :set_user_time_zone
-    before_filter :log_request
-    before_filter :set_cursor_position
-    before_filter :force_reset
+  protect_from_forgery
+  before_filter :prep_model_fields
+  before_filter :new_relic
+  before_filter :set_master_setup
+  before_filter :require_user
+  before_filter :set_user_time_zone
+  before_filter :log_request
+  before_filter :force_reset
+  before_filter :set_legacy_scripts
 
-    helper_method :current_user
-    helper_method :master_company
-    helper_method :add_flash
-    helper_method :has_messages
-    helper_method :errors_to_flash
-    helper_method :hash_flip
-    helper_method :merge_params
-    helper_method :sortable_search_heading
-    helper_method :master_setup
-   
+  helper_method :current_user
+  helper_method :master_company
+  helper_method :add_flash
+  helper_method :has_messages
+  helper_method :errors_to_flash
+  helper_method :hash_flip
+  helper_method :merge_params
+  helper_method :sortable_search_heading
+  helper_method :master_setup
 
-    def log_request
-      #prep for exception notification
-      request.env["exception_notifier.exception_data"] = {
-        :user => current_user
-      } if current_user
-      #user level application "debug" logging
-      if current_user && current_user.debug_active?
-        DebugRecord.create(:user_id => current_user.id, :request_method => request.method,
-            :request_path => request.fullpath, :request_params => sanitize_params_for_log(params).to_yaml)
-      end
+  after_filter :reset_state_values
+ 
+
+  def log_request
+    #prep for exception notification
+    request.env["exception_notifier.exception_data"] = {
+      :user => current_user
+    } if current_user
+    #user level application "debug" logging
+    if current_user && current_user.debug_active?
+      DebugRecord.create(:user_id => current_user.id, :request_method => request.method,
+          :request_path => request.fullpath, :request_params => sanitize_params_for_log(params).to_yaml)
     end
+  end
 
-    def help
-        Helper.instance
-    end
+  def help
+      Helper.instance
+  end
 
-    class Helper
-        include Singleton
-        include ActionView::Helpers::TextHelper
-        include ActionView::Helpers::UrlHelper
-        include ActionView::Helpers::SanitizeHelper
-    end
+  class Helper
+      include Singleton
+      include ActionView::Helpers::TextHelper
+      include ActionView::Helpers::UrlHelper
+      include ActionView::Helpers::SanitizeHelper
+  end
 
   def master_setup
     MasterSetup.get
@@ -94,33 +98,36 @@ class ApplicationController < ActionController::Base
     attr_accessor :url
   end
 
-  def advanced_search(core_module)
-    @last_run = SearchRun.find_last_run current_user, core_module
-    if params[:force_search] || @last_run.nil? || !@last_run.search_setup_id.nil? || params[:sid]
-      @core_module = core_module
-      @saved_searches = SearchSetup.for_module(@core_module).for_user(current_user).order('name ASC')
-      @current_search = get_search_to_run
-      if @current_search.nil?
-        error_redirect "Search with this ID could not be found."
-      elsif @current_search.user != current_user
-        error_redirect "You cannot run a search that is assigned to a different user."
-      else
-        begin
-          render_search_results
-        rescue Exception => e
-          #logger.error $!, $!.backtrace
-          error_params = {:current_search_id=>@current_search.id, :username=>current_user.username,:current_search_name => @current_search.name}.merge(params)
-          OpenMailer.send_custom_search_error(@current_user, e, error_params).deliver
-          current_user.search_open = true
-          current_user.save
-          add_flash :errors, "There was an error running your search.  Only the setup area is being displayed."
-          render_search_results true #render without the results
-        end
-      end    
-    elsif @last_run.imported_file
-      redirect_to @last_run.imported_file
+  def advanced_search(core_module,force_search=false)
+    search_run = nil
+    if force_search
+      search_run = SearchRun.
+        includes(:search_setup).
+        where("search_setups.module_type = ?",core_module.class_name).
+        where(:user_id=>current_user.id).
+        where("search_setups.user_id = ?",current_user.id).
+        order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
+        first
     else
-      redirect_to @last_run.custom_file
+      search_run = SearchRun.find_last_run current_user, core_module
+    end
+    if search_run.nil?
+      setup = current_user.search_setups.order("updated_at DESC").where(:module_type=>core_module.class_name).limit(1).first
+      setup = core_module.make_default_search(current_user) unless setup
+      search_run = setup.search_runs.create!
+    end
+    page_number = (search_run.page ? search_run.page : nil)
+    page_str = page_number ? "/#{page_number}" : ''
+    parent = search_run.parent
+    case parent.class.to_s
+    when 'SearchSetup'
+      return "/advanced_search#/#{parent.id}#{page_str}"
+    when 'ImportedFile'
+      return "/imported_files/show_angular#/#{parent.id}#{page_str}"
+    when 'CustomFile'
+      return "/custom_files/#{parent.id}"
+    else
+      raise "advanced_search has no routing for class: #{parent.class}"
     end
   end
 
@@ -156,67 +163,52 @@ class ApplicationController < ActionController::Base
     OpenChain::CoreModuleProcessor.update_status statusable
   end
     
-    #subclassed controller must implement secure method that returns searchable object 
-		#and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
-    def build_search(base_field_list,default_search,default_sort,default_sort_order='a')
-				field_list = base_field_list
-				begin
-					field_list = self.root_class.new.respond_to?("custom_definitions") ? base_field_list.merge(custom_field_parameters(root_class.new)) : base_field_list
-				rescue NoMethodError 
-					#this is ok, you just won't get your custom fields
-				end
-        @s_params = field_list
-        @selected_search = params[:f]
-        @s_search = field_list[params[:f]]
-        if @s_search.nil?
-          @s_search = field_list[default_search]
-          @selected_search = default_search 
-        end
-        @s_con = params[:c].nil? ? 'contains' : params[:c]
-        sval = params[:s]
-        sval = true if ['is_null','is_not_null','is_true','is_false'].include? @s_con
-				if @s_search[:custom]
-				  d = CustomDefinition.find(@s_search[:field])
-				  @search = secure.joins(:custom_values).where("custom_values.custom_definition_id = ?",d.id).search("custom_values_#{d.data_column}_#{@s_con}" => sval)
-				else
-					@search = secure.search((@s_search[:field]+'_'+@s_con) => sval)
-				end
-        @s_sort = field_list[params[:sf]]
-        @s_sort = field_list[default_sort] if @s_sort.nil?
-        @s_order = default_sort_order
-        @s_order = params[:so] if !params[:so].nil? && ['a','d'].include?(params[:so])
-        @search.meta_sort = @s_sort[:field]+(@s_order=='d' ? '.desc' : '.asc')
-        return @search
+  #subclassed controller must implement secure method that returns searchable object 
+  #and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
+  def build_search(base_field_list,default_search,default_sort,default_sort_order='a')
+    field_list = base_field_list
+    begin
+      field_list = self.root_class.new.respond_to?("custom_definitions") ? base_field_list.merge(custom_field_parameters(root_class.new)) : base_field_list
+    rescue NoMethodError 
+      #this is ok, you just won't get your custom fields
     end
-		
-		def custom_field_parameters(customizable)
-			r = {}
-			customizable.custom_definitions.each do |d|
-				r["cf_#{d.id}#{d.date? ? "_date" : "_"}"] = {:field => "#{d.id}", :label=> d.label, :custom => true}
-			end
-			r
-		end
-    
-    def render_csv(filename = 'download.csv')
-      if request.env['HTTP_USER_AGENT'] =~ /msie/i
-        headers['Pragma'] = 'public'
-        headers["Content-type"] = "text/plain" 
-        headers['Cache-Control'] = 'no-cache, must-revalidate, post-check=0, pre-check=0'
-        headers['Content-Disposition'] = "attachment; filename=\"#{filename}\"" 
-        headers['Expires'] = "0" 
-      else
-        headers["Content-Type"] ||= 'text/csv'
-        headers["Content-Disposition"] = "attachment; filename=\"#{filename}\"" 
-      end
-    
-      render :text => CsvMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results) 
+    @s_params = field_list
+    @selected_search = params[:f]
+    @s_search = field_list[params[:f]]
+    if @s_search.nil?
+      @s_search = field_list[default_search]
+      @selected_search = default_search 
     end
-
-    def error_redirect(message=nil)
-        add_flash :errors, message unless message.nil?
-        target = request.referrer ? request.referrer : "/"
-        redirect_to target
+    @s_con = params[:c].nil? ? 'contains' : params[:c]
+    sval = params[:s]
+    sval = true if ['is_null','is_not_null','is_true','is_false'].include? @s_con
+    if @s_search[:custom]
+      d = CustomDefinition.find(@s_search[:field])
+      @search = secure.joins(:custom_values).where("custom_values.custom_definition_id = ?",d.id).search("custom_values_#{d.data_column}_#{@s_con}" => sval)
+    else
+      @search = secure.search((@s_search[:field]+'_'+@s_con) => sval)
     end
+    @s_sort = field_list[params[:sf]]
+    @s_sort = field_list[default_sort] if @s_sort.nil?
+    @s_order = default_sort_order
+    @s_order = params[:so] if !params[:so].nil? && ['a','d'].include?(params[:so])
+    @search.meta_sort = @s_sort[:field]+(@s_order=='d' ? '.desc' : '.asc')
+    return @search
+  end
+  
+  def custom_field_parameters(customizable)
+    r = {}
+    customizable.custom_definitions.each do |d|
+      r["cf_#{d.id}#{d.date? ? "_date" : "_"}"] = {:field => "#{d.id}", :label=> d.label, :custom => true}
+    end
+    r
+  end
+  
+  def error_redirect(message=nil)
+    add_flash :errors, message unless message.nil?
+    target = request.referrer ? request.referrer : "/"
+    redirect_to target
+  end
     
   def action_secure(permission_check, obj, options={})
     err_msg = nil
@@ -251,65 +243,6 @@ class ApplicationController < ActionController::Base
     end
   end
   
-  #get the next object from the most recently run search 
-  def next_object(move=true)
-    sr = search_run
-    n = sr.next_object
-    if move && !n.nil?
-      sr.move_forward
-      sr.save
-    end
-    n
-  end
-
-  #get the previous object from the most recenty run search
-  def previous_object(move=true)
-    sr = search_run
-    n = sr.previous_object
-    if move && !n.nil?
-      sr.move_back
-      sr.save
-    end
-    n
-  end
-
-  #action to show next object from search result (supporting next button)
-  def show_next
-    n = next_object
-    if n.nil?
-      error_redirect "No more items in the search list."
-    else
-      redirect_to n
-    end
-  end
-  
-  #action to show previous object from search result (supporting previous button)
-  def show_previous
-    n = previous_object
-    if n.nil?
-      error_redirect "No more items in the search list."
-    else
-      redirect_to n
-    end
-  end
-
-  #add this redirect at the end of your update controller action to support next & previous buttons
-  def redirect_update base_object, action="edit"
-    target = nil
-    if params[:c_next]
-      target = next_object
-      add_flash :errors, "No more items in the search list." if target.nil?
-    elsif params[:c_previous]
-      target = previous_object
-      add_flash :errors, "No more items in the search list." if target.nil?
-    end
-    if target
-      redirect_to send("#{action}_#{base_object.class.to_s.underscore}_path",target)
-    else
-      redirect_to(base_object) 
-    end
-  end
-
   # Strips top level parameter keys from the URI query string.  Note, this method
   # does not support nested parameter names (ala "model[attribute]").
   def strip_uri_params uri_string, *keys
@@ -325,7 +258,7 @@ class ApplicationController < ActionController::Base
   
   def get_search_to_run
     return SearchSetup.for_module(@core_module).for_user(current_user).where(:id=>params[:sid]).first unless params[:sid].nil?
-    s = SearchSetup.find_last_accessed current_user, @core_module
+    s = SearchSetup.last_accessed(current_user, @core_module).first
     s = @core_module.make_default_search current_user if s.nil?
     s
   end
@@ -342,14 +275,22 @@ class ApplicationController < ActionController::Base
     sr
   end
 
+  # If true (default), legacy javascript files will be included in the html rendered.
+  # Override and return false if legacy files are not needed (all angular based pages should return false )
+  def legacy_javascripts?
+    true
+  end
+
+  # Returns true if the user's browser is IE < 9.
+  # Relies on the browser gem to make this calculation
+  def old_ie_version? 
+    return browser.ie? && Integer(browser.version) < 9 rescue true
+  end
+
   private
-  def set_cursor_position
-    cp = params[:c_pos]
-    return unless cp && cp.match(/^[0-9]*$/)
-    sr = search_run
-    return unless sr
-    sr.position = cp.to_i
-    sr.save
+  
+  def set_master_setup
+    MasterSetup.current = MasterSetup.get false 
   end
 
   def force_reset
@@ -359,166 +300,102 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def render_search_results no_results = false
-    if !no_results && @current_search.name == "Extreme latest" && current_user.sys_admin?
-      raise "Extreme latest goes boom!!"
-    end
-    
-    @results = no_results ? @current_search.core_module.klass.where("1=0") : @current_search.search
-    if no_results
-      @current_search.touch
-      @results = @results.paginate(:per_page => 20, :page => params[:page]) 
-      self.formats = [:html]
-      render :layout => 'one_col'
-    else
-      respond_to do |format| 
-        format.html {
-          @current_search.touch
-          @results = Product.where("1=0") if no_results
-          @results = @results.paginate(:per_page => 20, :page => params[:page]) 
-          render :layout => 'one_col'
-        }
-        format.csv {
-          @results = @results.where("1=1") unless no_results
-          if @results.length < 100
-            render_csv("#{@core_module.label}.csv")
-          else
-            ReportResult.run_report! @current_search.name, current_user, 'OpenChain::Report::CSVSearch', :settings=>{ 'search_setup_id'=>@current_search.id }
-            redirect_to '/reports/big_search'
-          end
-        }
-        format.json {
-          @results = @results.paginate(:per_page => 20, :page => params[:page])
-          rval = []
-          cols = @current_search.search_columns.order("rank ASC")
-          GridMaker.new(@results,cols,@current_search.search_criterions,@current_search.module_chain,current_user,20).go do |row,obj| 
-            row_data = []
-            row.each do |c|
-              row_data << c.to_s
-            end
-            rr = ResultRecord.new
-            rr.data=row_data
-            rr.url=url_for obj
-            rval << rr
-          end
-          sr = SearchResult.new
-          sr.columns = []
-          cols.each {|col|
-            sr.columns << model_field_label(col.model_field_uid) 
-          }
-          sr.records = rval
-          sr.name = @current_search.name
-          render :json => sr
-        }
-        format.xls {
-          if @results.length < 100
-            book = XlsMaker.new(:include_links=>@current_search.include_links?,:no_time=>@current_search.no_time?).make_from_search(@current_search,@results.where("1=1")) 
-            spreadsheet = StringIO.new 
-            book.write spreadsheet 
-            send_data spreadsheet.string, :filename => "#{@current_search.name}.xls", :type =>  "application/vnd.ms-excel"
-          else
-            ReportResult.run_report! @current_search.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>@current_search.id }
-            redirect_to '/reports/big_search'
-          end
-        }
+  def sortable_search_heading(f_short)
+    help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
+  end
+
+  def merge_params(p={})
+    params.merge(p).delete_if{|k,v| v.blank?}
+  end
+
+  def errors_to_flash(obj, options={})
+    if obj.errors.any?
+      obj.errors.full_messages.each do |msg|
+        add_flash :errors, msg, options
       end
     end
   end
-    def sortable_search_heading(f_short)
-      help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
-    end
 
-    def merge_params(p={})
-        params.merge(p).delete_if{|k,v| v.blank?}
-    end
+  def has_messages
+    errors = flash[:errors]
+    notices = flash[:notices]
+    return (!errors.nil? && errors.length > 0) || (!notices.nil? && notices.length > 0)
+  end
 
-    def errors_to_flash(obj, options={})
-        if obj.errors.any?
-            obj.errors.full_messages.each do |msg|
-                add_flash :errors, msg, options
-            end
-        end
-    end
-
-    def has_messages
-        errors = flash[:errors]
-        notices = flash[:notices]
-        return (!errors.nil? && errors.length > 0) || (!notices.nil? && notices.length > 0)
-    end
-
-    def add_flash(type,message,options={})
-        now = options[:now] || (request.xhr? ? true : false)
-        if now
-            if flash.now[type].nil?
-                flash.now[type] = []
-            end
-            flash.now[type] << message
-        else
-            if flash[type].nil?
-                flash[type] = []
-            end
-            flash[type] << message
-        end
-    end
-
-    def current_user_session
-        return @current_user_session if defined?(@current_user_session)
-        @current_user_session = UserSession.find
-    end
-
-    def current_user
-        return @current_user unless @current_user.nil?
-        @current_user = current_user_session && current_user_session.record
-        if @current_user && @current_user.run_as
-          @run_as_user = @current_user
-          @current_user = @current_user.run_as
-        end
-        User.current = @current_user
-        @current_user
-    end
-
-    def require_user
-      unless current_user
-        store_location
-        add_flash :errors, "You must be logged in to access this page. #{PublicField.first.nil? ? "" : "Public shipment tracking is available below."}"
-        redirect_to login_path
-        return false
+  def add_flash(type,message,options={})
+    now = options[:now] || (request.xhr? ? true : false)
+    if now
+      if flash.now[type].nil?
+        flash.now[type] = []
       end
+      flash.now[type] << message
+    else
+      if flash[type].nil?
+        flash[type] = []
+      end
+      flash[type] << message
     end
+  end
 
-    def store_location
-      session[:return_to] = request.fullpath unless request.fullpath.match(/message_count/) 
-    end
+  def current_user_session
+    return @current_user_session if defined?(@current_user_session)
+    @current_user_session = UserSession.find
+  end
 
-    def redirect_back_or_default(default)
-        redirect_to(session[:return_to] || default)
-        session[:return_to] = nil
+  def current_user
+    return @current_user unless @current_user.nil?
+    @current_user = current_user_session && current_user_session.record
+    if @current_user && @current_user.run_as
+      @run_as_user = @current_user
+      @current_user = @current_user.run_as
     end
+    User.current = @current_user
+    @current_user
+  end
 
-    def master_company
-        return Company.where({ :master => true }).first()
+  def require_user
+    unless current_user
+      store_location
+      add_flash :errors, "You must be logged in to access this page. #{PublicField.first.nil? ? "" : "Public shipment tracking is available below."}"
+      redirect_to login_path
+      return false
     end
+  end
 
-    def set_user_time_zone
-        Time.zone = current_user.time_zone if logged_in?
-    end
+  def store_location
+    session[:return_to] = request.fullpath unless request.fullpath.match(/message_count/) 
+  end
 
-    def logged_in?
-        return !current_user.nil?
-    end
+  def redirect_back_or_default(default)
+      redirect_to(session[:return_to] || default)
+      session[:return_to] = nil
+  end
 
-    def hash_flip(src)
-        dest = Hash.new
-        src.each {|k,v| dest[v] = k}
-        return dest
-    end
+  def master_company
+      return Company.where({ :master => true }).first()
+  end
+
+  def set_user_time_zone
+      @default_time_zone = Time.zone
+      Time.zone = current_user.time_zone if logged_in?
+  end
+
+  def logged_in?
+      return !current_user.nil?
+  end
+
+  def hash_flip(src)
+      dest = Hash.new
+      src.each {|k,v| dest[v] = k}
+      return dest
+  end
 
   def sanitize_params_for_log(p)
     r = {}
     p.each {|k,v| r[k]=v if v.is_a?(String)}
     r
   end
-def model_field_label(model_field_uid) 
+  def model_field_label(model_field_uid) 
     r = ""
     return "" if model_field_uid.nil?
     mf = ModelField.find_by_uid(model_field_uid)
@@ -532,5 +409,22 @@ def model_field_label(model_field_uid)
       NewRelic::Agent.add_custom_parameters(:system_code=>m.system_code)
       NewRelic::Agent.add_custom_parameters(:user=>current_user.username) unless current_user.nil?
     end
+  end
+  def prep_model_fields
+    ModelField.reload_if_stale
+    ModelField.web_mode = true
+  end
+
+  def set_legacy_scripts
+    @include_legacy_scripts = legacy_javascripts?
+  end
+
+  def reset_state_values
+    # Try and clear any globals that may retain any unwanted state inside the current the process.
+    @current_user = nil
+    User.current = nil
+    MasterSetup.current = nil
+    Time.zone = @default_time_zone
+    @include_legacy_scripts = nil
   end
 end

@@ -1,0 +1,24 @@
+<% current_search = search_query.search_setup-%>
+<% per_page = 100 -%>
+<% current_page = params[:page].blank? ? "1" : params[:page]-%>
+<% last_object = nil %>
+<% parent_objects = {} %>
+<% cursor = per_page * (current_page.to_i-1) #because will_paginate's first page is 1, not 0 %>
+<% search_query.execute(:per_page=>per_page,:page=>current_page) do |r|-%>
+  <% parent_objects[r[:row_key]] ||= current_search.core_module.klass.find r[:row_key]-%>
+  <% obj = parent_objects[r[:row_key]]-%>
+  <tr class='hover pagination_item search_row <%=obj!=last_object ? 'search_row_break' : ''%>'>
+    <% if has_bulk_actions %><td><%=obj!=last_object ? "<input type='checkbox' id='sel_row_#{obj.id}' pk='#{obj.id}' />".html_safe : ""%></td><% end %>
+    <td>
+      <% if obj!=last_object -%>
+        <%=render :partial=>'shared/search_links', :locals=>{:obj=>obj,:cursor=>cursor}-%>
+        <% cursor += 1 -%>
+      <% end -%>
+    </td>
+    <% r[:result].each do |v| -%>
+      <td><%=search_result_value(v,current_search.no_time?)%></td>
+    <% end -%>
+  </tr>
+  <%last_object = obj -%>
+<% end-%>
+

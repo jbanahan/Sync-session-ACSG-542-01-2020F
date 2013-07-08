@@ -13,7 +13,8 @@ class SearchSetup < ActiveRecord::Base
   has_many :search_schedules, :dependent => :destroy
   has_many :imported_files 
   has_many :dashboard_widgets, :dependent => :destroy
-  has_one :search_run, :dependent => :destroy
+  has_many :search_runs, :dependent => :destroy
+  has_one :result_cache, :as=>:result_cacheable, :dependent=>:destroy
 
   belongs_to :user
   
@@ -37,12 +38,22 @@ class SearchSetup < ActiveRecord::Base
     
   scope :for_user, lambda {|u| where(:user_id => u)} 
   scope :for_module, lambda {|m| where(:module_type => m.class_name)}
+  scope :last_accessed, lambda {|u,m| for_user(u).for_module(m).
+    joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id").
+    order("ifnull(search_runs.last_accessed,1900-01-01) DESC") }
   
   def self.find_last_accessed user, core_module
-    SearchSetup.for_user(user).for_module(core_module).
-      joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id").
-      order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
-      first
+    SearchSetup.last_accessed(user,core_module).first
+  end
+
+  #only admins can setup ftp schedules
+  def can_ftp?
+    self.user.admin?
+  end
+
+  #defer to SearchQuery.result_keys seeded with this search
+  def result_keys opts={}
+    SearchQuery.new(self,self.user).result_keys opts
   end
 
   #get all column fields as ModelFields available for the user to add to the search
@@ -75,15 +86,15 @@ class SearchSetup < ActiveRecord::Base
   end
   
   def touch
-    sr = self.search_run
-    sr = self.build_search_run(:position=>0) if sr.nil?
+    sr = self.search_runs.first
+    sr = self.search_runs.build(:page=>1,:per_page=>100) if sr.nil?
     sr.last_accessed = Time.now
     sr.user_id = self.user_id
     sr.save
   end
 
   def last_accessed
-    sr = self.search_run
+    sr = self.search_runs.first
     sr.nil? ? nil : sr.last_accessed
   end
 
@@ -103,11 +114,10 @@ class SearchSetup < ActiveRecord::Base
     CoreModule.find_by_class_name self.module_type
   end
 
-  #does this search have the appropriate columns set to be used as a file upload?
-  #acceptes an optional array that will have any user facing messages appended to it
-  def uploadable? messages=[]
+  #return error message array if search cannot be used as a file upload or an empty array if it can
+  def uploadable_error_messages
     #refactor later to use setup within CoreModule to figure this out instead of hard codes
-    start_messages_count = messages.size
+    messages = []
     cm = core_module 
     messages << "Search's core module not set." if cm.nil?
 
@@ -165,7 +175,14 @@ class SearchSetup < ActiveRecord::Base
         messages << "#{combine_field_names ["ordln_puid","ordln_pname"]} is required to upload Order Lines." unless has_one_of ["ordln_puid","ordln_pname"]
       end
     end
+    messages
+  end
 
+  #does this search have the appropriate columns set to be used as a file upload?
+  #acceptes an optional array that will have any user facing messages appended to it
+  def uploadable? messages=[]
+    start_messages_count = messages.size
+    uploadable_error_messages.each {|m| messages << m}
     return messages.size == start_messages_count
   end
 
@@ -211,11 +228,10 @@ class SearchSetup < ActiveRecord::Base
 
     #rebuild search_run
     unless self.id.nil? #only if in database
-      if self.search_run.nil?
-        self.create_search_run
+      if self.search_runs.empty?
+        self.search_runs.create!
       else
-        self.search_run.reset_cursor
-        self.search_run.save
+        self.search_runs.first.update_attributes(:last_accessed=>Time.now)
       end
     end
     base

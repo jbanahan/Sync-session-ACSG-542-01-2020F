@@ -41,11 +41,11 @@ describe ReportResult do
 
   describe "run report" do
     before :each do
-     @file_location = 'test/assets/sample_report.txt'
-     File.delete @file_location if File.exists? @file_location
-     class SampleReport
+      @file_location = 'spec/support/tmp/sample_report.txt'
+      File.delete @file_location if File.exists? @file_location
+      class SampleReport
         def self.run_report user, opts
-          loc = 'test/assets/sample_report.txt'
+          loc = 'spec/support/tmp/sample_report.txt'
           File.open(loc,'w') {|f| f.write('mystring')}
           File.new loc
         end

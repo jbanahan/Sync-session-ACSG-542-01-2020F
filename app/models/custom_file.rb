@@ -1,6 +1,6 @@
-require 'open_chain/custom_handler/polo_msl_plus_handler'
 require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
+require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
 
 class CustomFile < ActiveRecord::Base

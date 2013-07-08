@@ -64,8 +64,10 @@ describe OpenChain::FenixParser do
     @additional_cargo_control_numbers = ['asdf', 'sdfa']
     @activities = {
       '180' => [Time.new(2013,4,1,10,0), Time.new(2013,4,1,18,0)],
-      '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)]
+      '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
+      '10' => [Date.new(2013,4,2), Date.new(2013,4,3)]
     }
+    @additional_bols = ["123456", "9876542321"]
     @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
       data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, 0 ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
@@ -80,8 +82,14 @@ describe OpenChain::FenixParser do
         
         @activities.each do |activity_number, date_times|
           date_times.each do |date|
-            data += "\r\nSD,#{@barcode},#{activity_number},#{date.strftime('%Y%m%d')},#{date.strftime('%H%M')},USERID,NOTES"
+            # For some reason Fenix adds spaces before and after the activity number
+            time_segment = (date.is_a?(Date) ? "" : date.strftime('%H%M'))
+            data += "\r\nSD,#{@barcode},\" #{activity_number} \",#{date.strftime('%Y%m%d')},#{time_segment},USERID,NOTES"
           end
+        end
+
+        @additional_bols.each do |bol|
+          data += "\r\nBL,#{@barcode},#{bol}"
         end
       end
 
@@ -90,14 +98,18 @@ describe OpenChain::FenixParser do
   end
 
   def do_shared_test entry_data
-    OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'key'}
+    # Make sure the locking mechanism is utilized
+    Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK).and_yield
+    
+    OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by_broker_reference @file_number
     ent.last_file_bucket.should == 'bucket'
-    ent.last_file_path.should == 'key'
+    ent.last_file_path.should == 'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'
     ent.import_country.should == Country.find_by_iso_code('CA')
     ent.entry_number.should == @barcode
     ent.importer_tax_id.should == @importer_tax_id
-    
+    ent.last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+
     ent.ship_terms.should == @ship_terms.upcase
     ent.direct_shipment_date.should == Date.strptime(@direct_shipment_date, @mdy)
     ent.transport_mode_code.should == @transport_mode_code.strip
@@ -203,6 +215,14 @@ describe OpenChain::FenixParser do
     ent.first_do_issued_date.should == @activities['180'][0].in_time_zone(Time.zone)
     # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
     ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
+    ent.eta_date.should == @activities['10'][1]
+
+    # Master Bills should include ones from BL lines
+    bols = ent.master_bills_of_lading.split("\n ")
+    [@bill_of_lading, @additional_bols].flatten.each {|bol|
+      bols.include?(bol).should be_true
+    }
+    
   end
 
   it 'should call link_broker_invoices' do
@@ -308,6 +328,92 @@ describe OpenChain::FenixParser do
     existing_entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
     
     existing_entry.commercial_invoices.length.should == 0
+  end
+
+  it "should skip files with older system export times than current entry" do
+    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+
+    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
+    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958483.1369859062.csv'}
+    entries = Entry.where(:broker_reference=>@file_number)
+    entries.should have(1).entries
+    # Verify the updated last exported date was used
+    entries[0].last_exported_from_source.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58483).seconds
+  end
+
+  it "should process files with same system export times as current entry" do
+    # We want to make sure we do reprocess entries with the same export dates, this allows us to run larger
+    # reprocess processes to get older data, but then only reprocess the most up to date file.
+    export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20130529") + Integer(58482).seconds
+    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    
+    # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
+    OpenChain::FenixParser.parse @entry_lambda.call, {:key=>'b3_detail_rns_114401_2013052958482.1369859062.csv'}
+    entries = Entry.where(:broker_reference=>@file_number)
+    entries.should have(1).entries
+   
+    # All we really need to do is make sure the entry got saved by the parser and not skipped.
+    # Verifying any piece of data not set in the factory is present should be enough to prove this.
+    entries[0].entry_number.should == @barcode
+  end
+
+  it "should process files missing export date only if entry is missing export date" do
+    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    
+    OpenChain::FenixParser.parse @entry_lambda.call
+    entries = Entry.where(:broker_reference=>@file_number)
+    entries.should have(1).entries
+   
+    # All we really need to do is make sure the entry got saved by the parser and not skipped.
+    # Verifying any piece of data not set in the factory is present should be enough to prove this.
+    entries[0].entry_number.should == @barcode
+  end
+
+  it "should handle supporting line types with missing entry numbers in them" do
+    lines = []
+
+    first_entry_number = @barcode
+    first_broker_ref = @file_number
+
+    # Basically, we're splitting the lines up, replacing the 2nd index on non-B3L lines,
+    # and then re-assembling the lines
+    @entry_lambda.call.split("\r\n").each {|line| lines << line.split(",")}
+    lines.each {|line| line[1] == "0000000" if line[0] != "B3L"}
+    lines = lines.collect {|line| line.join(",")}.join("\r\n")
+
+    @barcode = "123456"
+    @file_number = "987654"
+
+    # Add another b3 after the "invalid" lines to make sure it also gets parsed right
+    lines += "\r\n" + @entry_lambda.call(true, false)
+  
+    OpenChain::FenixParser.parse lines
+
+    entries = Entry.order("entries.id ASC").all
+    entries.should have(2).entries
+
+    # The ETA date comes from a SD supporting line, so by checking for it it makes sure we're parsing those lines
+    # even if the entry number doesn't match
+    entries[0].entry_number.should == first_entry_number
+    entries[0].eta_date.should == @activities['10'][1]
+
+    # Make sure we also created that second entry
+    entries[1].entry_number.should == @barcode
+  end
+
+  it "should handle date time values with missing time components" do
+    @release_date = "01/09/2012,"
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.release_date.should == @est.parse_us_base_format(@release_date.gsub(',',' 12:00am'))
+  end
+
+  it "should handle date time values with invalid date times" do
+    @release_date = "192012,"
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.release_date.should be_nil
   end
 
   context 'importer company' do
@@ -427,6 +533,8 @@ describe OpenChain::FenixParser do
         Entry.find_by_broker_reference(@file_number).total_units.should == BigDecimal('68.27')
       end
       it 'bills of lading' do
+        # Disable the additional BL lines
+        @additional_bols = []
         ['x','y'].each_with_index {|b,i| @invoices[i][:bol]=b} 
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).master_bills_of_lading.should == "x\n y"
@@ -475,6 +583,23 @@ describe OpenChain::FenixParser do
       it "invoice numbers" do
         OpenChain::FenixParser.parse @multi_line_lambda.call
         Entry.find_by_broker_reference(@file_number).commercial_invoice_numbers.split("\n ").should == [@invoices[0][:inv_num], @invoices[1][:inv_num]]
+      end
+
+      it "should not use bols that are 15 chars long and are subsets of a BL line number" do
+        # This is a stupid RL workaround to allow them to use more than the max # of chars for a 
+        # master bill.  When they use an extra long BOL, the portion of the number that doesn't overflow
+        # the field is keyed into the standard header level field.  We don't want that value to show
+        # in the system (since it's essentially a nonsense number at this point).
+        @additional_bols = ["abcd", "1234567890123456789"]
+        ["123456789012345",'y'].each_with_index {|b,i| @invoices[i][:bol]=b}
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+        entry = Entry.find_by_broker_reference(@file_number)
+        bols = entry.master_bills_of_lading.split("\n ")
+        [@additional_bols, "y"].flatten.each do |bol|
+          bols.include?(bol).should be_true
+        end
+
+        bols.include?("123456789012345").should be_false
       end
     end
   end

@@ -1,4 +1,7 @@
+#=require hts_classify
 #=require chain
+#=require rails_helper
+
 describe 'Chain', ->
   describe 'loadUserList', ->
     it 'should call default URL', ->
@@ -101,7 +104,7 @@ describe 'Chain', ->
       expect($("form input[name='pk[2]'][type='hidden'][value='9']")).toExist()
     
     it "should not submit form if invalid tariffs", ->
-      spyOn(OpenChain,'hasInvalidTariffs').andReturn(true)
+      spyOn(Classify,'hasInvalidTariffs').andReturn(true)
       spyOn(window,'alert')
       frm = $("#mod_quick_classify form")
       spyOn(frm,'submit')
@@ -119,3 +122,11 @@ describe 'Chain', ->
       expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][hts_1]']").attr("value")).toEqual("")
       expect($("input[name='product[classifications_attributes][0][id]']").attr("value")).toEqual(""+data.classifications[0].id)
       expect($("input[name='product[classifications_attributes][0][tariff_records_attributes][0][id]']")).not.toExist()
+
+  describe 'setAuthToken', ->
+    it 'should set token', ->
+      Chain.setAuthToken 'XX'
+      expect(Chain.getAuthToken()).toEqual('XX')
+    it 'should also set token in Rails Helper', ->
+      Chain.setAuthToken 'YY'
+      expect(RailsHelper.authToken()).toEqual('YY')

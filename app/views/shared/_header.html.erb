@@ -1,186 +1,251 @@
-<!-- quirks mode IE7 -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
 <% 
   no_buttons = false
   no_buttons = true if @no_buttons
   no_buttons = true if !local_assigns[:not_buttons].nil?
+  show_navbar = (!no_buttons && current_user)
   ms = MasterSetup.get
-%>
-<!-- System UUID: <%=ms.uuid%> -->
-<% if current_user && current_user.sys_admin? %>
-<!-- Hostname: <%=`hostname`.strip%> -->
-<% end %>
-<head>
-  <meta http-equiv="Content-Type" content="application/xhtml+xml; charset=utf-8" />
-  <title>chain.io</title>
-  <%= favicon_link_tag %>
-  <%= stylesheet_link_tag    "application", :media => "all" %>
-  <%= javascript_include_tag "application" %>
-  <%= csrf_meta_tags %>
-  <%= yield :head_tags%>
-  <script type='text/javascript'>
-  OpenChain.setAuthToken('<%=form_authenticity_token%>');
-  <% if current_user %>
-    OpenChain.user_id = <%=current_user.id%>;
-  <% end %>
-  <%= yield :javascript%>
-  <% if Rails.env=='development' || current_user.nil?%>
-    $(document).ready(OpenChain.disableMessagePolling);
-  <% end %>
-  </script>
-  <!--[if IE 7]>
-  <style type='text/css'>
-    #two_col_action {width:100%;} 
-  </style>
-  <![endif]-->
-</head>
-<% cache ['v2',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
-  <body>
-  <% if @run_as_user %>
-    <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
-  <% end %>
-  <% if current_user && !no_buttons %>
-    <ul id='nb_r' class='dropdown'>
-      <li><%=link_to current_user.full_name, company_user_path(current_user.company, current_user)%></li>
-      <li id='message_envelope' style='display:none;'><%=link_to image_tag('envelope.png'), "/messages"%></li>
-      <li><a href='#' class='click_sink'>Menu</a>
-        <ul class='sub_menu' id='tools_menu'>
-          <li><a href='/messages'>Messages</a></li>
-          <li><a href='/report_results'>Reports</a></li>
-          <li><a href='/support_tickets'>Support</a></li>
-          <li><a href='/tools'>Tools</a></li>
-          <%if !current_user.imported_files.blank?%>
-            <li><a href='/imported_files'>Uploads</a></li>
-          <%end%>
-          <li><a href='/logout'>Log Out</a></li>
-        </ul>
-      </li>
-    </ul>
-    <ul id='nb_l' class='dropdown'>
-      <li><a href='/'>Dashboard</a></li>
-      <%if current_user.view_products?%>
-        <li><a href='#' class='click_sink'>Products</a>
-          <ul class='sub_menu'>
-            <li><a href='/products?force_search=true'>Search</a></li>
-            <%if current_user.add_products?%>
-              <li><a href='/products/new'>Add</a></li>
-            <%end%>
-          </ul>
-        </li>
-      <%end%>
-      <%if current_user.view_orders?%>
-        <li><a href='#' class='click_sink'>Orders</a>
-          <ul class='sub_menu'>
-            <li><a href='/orders?force_search=true'>Search</a></li>
-            <%if current_user.add_orders?%>
-              <li><a href='/orders/new'>Add</a></li>
-            <%end%>
-          </ul>
-        </li>
-      <%end%>
-      <%if current_user.view_shipments?%>
-        <li><a href='#' class='click_sink'>Shipments</a>
-          <ul class='sub_menu'>
-            <li><a href='/shipments?force_search=true'>Search</a></li>
-            <%if current_user.add_shipments?%>
-              <li><a href='/shipments/new'>Add</a></li>
-            <%end%>
-          </ul>
-        </li>
-      <%end%>
-      <%if current_user.view_sales_orders?%>
-        <li><a href='#' class='click_sink'>Sales</a>
-          <ul class='sub_menu'>
-            <li><a href='/sales_orders?force_search=true'>Search</a></li>
-            <%if current_user.add_sales_orders?%>
-              <li><a href='/sales_orders/new'>Add</a></li>
-            <%end%>
-          </ul>
-        </li>
-      <%end%>
-      <%if current_user.view_deliveries?%>
-        <li><a href='#' class='click_sink'>Deliveries</a>
-          <ul class='sub_menu'>
-            <li><a href='/deliveries?force_search=true'>Search</a></li>
-            <%if current_user.add_deliveries?%>
-              <li><a href='/deliveries/new'>Add</a></li>
-            <%end%>
-          </ul>
-        </li>
-      <%end%>
-      <%if current_user.view_security_filings?-%>
-        <li><a href='#' class='click_sink'>Security Filings</a>
-          <ul class='sub_menu'>
-            <li><a href='/security_filings?force_search=true'>Search</a></li>
-          </ul>
-        </li>
-      <%end-%>
-      <%if current_user.view_entries?%>
-        <li><a href='#' class='click_sink'>Entries</a>
-          <ul class='sub_menu'>
-            <li><a href='/entries?force_search=true'>Search</a></li>
-            <li><a href='/entries/bi'>Snapshots</a></li>
-          </ul>
-        </li>
-      <%end%>
-      <%if current_user.view_broker_invoices?%>
-        <li><a href='#' class='click_sink'>Invoices</a>
-          <ul class='sub_menu'>
-            <li><a href='/broker_invoices?force_search=true'>Search</a></li>
-          </ul>
-        </li>
-      <%end%>
-      <%if current_user.view_drawback?%>
-        <li><a href='#' class='click_sink'>Drawback</a>
-          <ul class='sub_menu'>
-            <li><a href='/drawback_claims'>Claims</a></li>
-            <li><a href='/drawback_upload_files'>Upload</a></li>
-          </ul>
-        </li>
-      <%end%>
-      <%if !current_user.survey_responses.blank? || current_user.view_surveys?%>
-        <li><a href='#' class='click_sink'>Surveys</a>
-          <ul class='sub_menu'>
-            <li><a href='/survey_responses'>View</a></li>
-            <%if current_user.view_surveys? %>
-              <li><%=link_to('Manage', surveys_path)%></li>
-            <%end%>
-          </ul>
-        </li>
-      <%end%>
-    </ul>
-    <div id='nav_bar'>&nbsp;
-    </div>
-  <%end%>
-<%end%>
-<% unless no_buttons %>
-  <% if has_messages || !ms.system_message.blank?%>
-    <div id='notice' class='notices' style='display:none;'>
-      <div id='notice_hide'>
-        <a href="#" id="lnk_hide_notice"><%=image_tag 'x.png', :title=>"close"%></a>
-      </div>
-      <% [:errors,:notices].each do |type| %>
-        <% ary = flash[type].nil? ? [] : flash[type] %>
-        <% ary.each do |m| %>
-          <div class='<%=type%>_message base_msg'><%=m%></div>
+-%>
+  <head>
+    <title><%=@page_title.blank? ? 'VFI Track' : @page_title%></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%= favicon_link_tag -%>
+    <%= stylesheet_link_tag    "application", :media => "all" -%>
+    <%= javascript_include_tag "application" -%>
+    <% if @include_legacy_scripts %>
+      <%= javascript_include_tag "legacy" %>
+    <% end %>
+    <%= csrf_meta_tags -%>
+    <%= yield :head_tags -%>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <%= javascript_include_tag "html5shim" %>
+    <![endif]-->
+    <script type='text/javascript'>
+      Chain.setAuthToken('<%=form_authenticity_token%>');
+      <% if current_user %>
+        Chain.messagePoller.initialize('<%=current_user.id%>', 30)
+        <% if @include_legacy_scripts %>
+          OpenChain.user_id = <%=current_user.id%>;
         <% end %>
       <% end %>
-      <% if ms.system_message %>
-        <div class='system_message base_msg'><%=ms.system_message%></div>
+      <%= yield :javascript -%>
+    </script>
+  </head>
+  <body>
+    <% cache ['v4',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
+      <% if @run_as_user %>
+        <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
       <% end %>
-    </div>
-  <% end %>
-<% end %>
-<div id="header">
-  <div id="top_box">
-    <% if current_user %>
-      <% unless no_buttons %>
-        <div id="corner_links">
-            <div style='text-align:right;'><form action='/quick_search' method='GET'><input type='text' name='v' size='10' id='quick_search_input' title='Tip: Press "/" to jump here.' /><input type='submit' value='Search' id='quick_search_button' /></form></div>
+      <% if show_navbar -%>
+        <div class='navbar' id='topnav'>
+          <div class='navbar-inner'>
+            <div class='container'>
+              <ul class='nav' id='leftnav'>
+                <li><a href='/' id='dash-logo'><%=image_tag(master_setup.logo_image.blank? ? "vfi_logo.png" : master_setup.logo_image, :id=>'dash-logo')%></a></li>
+                <% if current_user.view_products? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Products
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/products?force_search=true'>Search</a></li>
+                      <% if current_user.edit_products?-%>
+                        <li class='dropdown'><a href='/products/new'>New</a></li>
+                      <% end -%>
+                      <% if current_user.view_official_tariffs?-%>
+                        <li class='dropdown'><a href='/official_tariffs?force_search=true'>Tariffs</a></li>
+                      <% end -%>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_orders? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Orders
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/orders?force_search=true'>Search</a></li>
+                      <% if current_user.edit_orders? -%>
+                        <li class='dropdown'><a href='/orders/new'>New</a></li>
+                      <% end -%>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_shipments? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Shipments
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/shipments?force_search=true'>Search</a></li>
+                      <% if current_user.edit_shipments? -%>
+                        <li class='dropdown'><a href='/shipments/new'>New</a></li>
+                      <% end -%>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_sales_orders? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Sales 
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/sales_orders?force_search=true'>Search</a></li>
+                      <% if current_user.edit_sales_orders? -%>
+                        <li class='dropdown'><a href='/sales_orders/new'>New</a></li>
+                      <% end -%>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_deliveries? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Deliveries 
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/deliveries?force_search=true'>Search</a></li>
+                      <% if current_user.edit_deliveries? -%>
+                        <li class='dropdown'><a href='/deliveries/new'>New</a></li>
+                      <% end -%>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_security_filings? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Security Filings 
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/security_filings?force_search=true'>Search</a></li>
+                      <% if current_user.edit_security_filings? -%>
+                        <li class='dropdown'><a href='/security_filings/new'>New</a></li>
+                      <% end -%>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_entries? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Entries 
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/entries'>Search</a></li>
+                      <li class='dropdown'><a href='/entries/bi'>Snapshots</a></li>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_broker_invoices? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Broker Invoices
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/broker_invoices'>Search</a></li>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if current_user.view_drawback? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Drawback
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/drawback_claims'>Claims</a></li>
+                      <li class='dropdown'><a href='/drawback_upload_files'>Upload</a></li>
+                    </ul>
+                  </li>
+                <% end -%>
+                <% if !current_user.survey_responses.blank? || current_user.view_surveys? -%>
+                  <li class='dropdown'>
+                    <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                      Surveys 
+                      <b class='caret'></b>
+                    </a>
+                    <ul class='dropdown-menu' role='menu'>
+                      <li class='dropdown'><a href='/survey_responses'>View</a></li>
+                      <% if current_user.view_surveys? -%>
+                        <li class='dropdown'><a href='/surveys'>Edit</a></li>
+                      <% end -%>
+                    </ul>
+                  </li>
+                <% end -%>
+                <li>
+                  <a href='/messages/'><span class='badge badge-info' id='message_envelope'></span></a>
+                </li>
+              </ul>
+              <ul class='nav pull-right'>
+                <form class='navbar-search' action='/quick_search' method='GET'>
+                  <input type='text' class='search-query' placeholder='Search' name='v' id='quick_search_input' /> 
+                </form>
+                <li class='dropdown' id='menu_dropdown'>
+                  <a class='dropdown-toggle' role='button' data-toggle='dropdown' href='#'>
+                    <%=current_user.full_name%>
+                    <b class='caret'></b>
+                  </a>
+                  <ul class='dropdown-menu' role='menu'>
+                    <li><a class='dropdown' href='/companies/<%=current_user.company_id%>/users/<%=current_user.id%>'>Account</a></li>
+                    <li><a class='dropdown' href='/messages'>Messages</a></li>
+                    <li><a class='dropdown' href='/report_results'>Reports</a></li>
+                    <li><a class='dropdown' href='/support_tickets'>Support</a></li>
+                    <li><a class='dropdown' href='/tools'>Tools</a></li>
+                    <li><a class='dropdown' href='/imported_files'>Uploads</a></li>
+                    <li><a class='dropdown' href='/logout'>Log Out</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
-      <% end %>
-    <% end%>
-    <span id="corner_title"><%=link_to image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :height => "50"), root_path %></span>
-  </div> <!--close top box-->
-</div>
+      <% end -%>
+    <% end -%>
+    <div class='container'>
+      <div class='row'>
+        <%unless flash[:notices].blank?-%>
+          <div class='span12 alert alert-info'>
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <%flash[:notices].each do |msg|-%>
+              <p><%=msg%></p>
+            <%end-%>
+          </div>
+        <%end-%>
+        <%unless flash[:errors].blank?-%>
+          <div class='span12 alert alert-error'>
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <%flash[:errors].each do |msg|-%>
+              <p><%=msg%></p>
+            <%end-%>
+          </div>
+        <%end-%>
+      </div>
+    </div>
+    <div class='container-fluid'>
+      <div class='row-fluid'>
+        <div class='span12'>
+          <%=yield%>
+        </div>
+        <%unless @no_action_bar-%>
+        <div class='navbar navbar-fixed-bottom'>
+          <div class='navbar-inner'>
+            <ul class='nav'>
+              <li id='nav-action-bar'>
+                <%=yield :action_bar%>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <%end-%>
+      </div>
+    </div>
+  </body>
+</html>

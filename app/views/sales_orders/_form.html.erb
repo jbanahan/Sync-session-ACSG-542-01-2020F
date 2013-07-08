@@ -1,18 +1,10 @@
 <%content_for :javascript do %>
 $(function() {
-  setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),<%=@sales_order.customer.nil? ? "'not set'": @sales_order.customer.id%><%=@sales_order.ship_to_id.nil? ? '' : ",#{@sales_order.ship_to_id}"%>);
+  setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),<%=@sales_order.customer.nil? ? "'not set'".html_safe : @sales_order.customer.id%><%=@sales_order.ship_to_id.blank? ? '' : ",#{@sales_order.ship_to_id}"%>);
   $("#sales_order_customer_id").change(function() {
     setupShippingAddress('Customer',$('#sales_order_ship_to_id'),$('#ship_to_ad'),$(this).val());
   });
   $("#btn_save").click(function() {
-    $("#frm_so").submit();
-  });
-  $("#btn_edit_next").click(function() {
-    next_action_to_form($("#frm_so"));
-    $("#frm_so").submit();
-  });
-  $("#btn_edit_previous").click(function() {
-    previous_action_to_form($("#frm_so"));
     $("#frm_so").submit();
   });
   $("#btn_cancel").click(function() {
@@ -20,8 +12,6 @@ $(function() {
   });
   OpenChain.addClickMap('s','Save','btn_save');
   OpenChain.addClickMap('c','Cancel','btn_cancel');
-  OpenChain.addClickMap('n','Next','btn_edit_next');
-  OpenChain.addClickMap('p','Previous','btn_edit_previous');
   OpenChain.activateHotKeys();
 });
 

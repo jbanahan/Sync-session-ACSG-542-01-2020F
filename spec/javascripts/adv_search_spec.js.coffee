@@ -1,4 +1,4 @@
-#=require adv_search
+#=require legacy/adv_search
 
 describe 'OCSearch', ->
   describe 'addBulkHandler', ->

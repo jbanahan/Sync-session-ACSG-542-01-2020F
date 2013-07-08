@@ -1,0 +1,7 @@
+machine:
+  ruby:
+    version: 1.9.3-p392
+dependencies:
+  pre:
+    - mkdir ./tmp
+    - mkdir ./spec/support/tmp

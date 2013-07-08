@@ -19,6 +19,12 @@ class Product < ActiveRecord::Base
   has_many   :sales_order_lines, :dependent => :destroy
   has_many   :shipment_lines, :dependent => :destroy
   has_many   :delivery_lines, :dependent => :destroy
+  has_many   :bill_of_materials_children, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink", 
+    :foreign_key=>:parent_product_id, :include=>:child_product
+  has_many   :bill_of_materials_parents, :dependent=>:destroy, :class_name=>"BillOfMaterialsLink",
+    :foreign_key=>:child_product_id, :include=>:parent_product
+  has_many   :child_products, :through=>:bill_of_materials_children
+  has_many   :parent_products, :through=>:bill_of_materials_parents
 
   accepts_nested_attributes_for :classifications, :allow_destroy => true,
     :reject_if => lambda { |a| a[:country_id].blank?}
@@ -29,6 +35,15 @@ class Product < ActiveRecord::Base
 
   dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier','vendor_id']
 
+  #are there any classifications written to the database
+  def saved_classifications_exist?
+    r = false
+    self.classifications.each do |cls|
+      r = true unless cls.new_record?
+      break if r
+    end
+    r
+  end
 
   def can_view?(user)
     return user.view_products? && company_permission?(user)
@@ -43,7 +58,7 @@ class Product < ActiveRecord::Base
   end
 
   def can_classify?(user)
-    can_edit?(user) && user.edit_classifications?
+    can_view?(user) && user.edit_classifications?
   end
 
   def can_comment? user
@@ -52,6 +67,12 @@ class Product < ActiveRecord::Base
 
   def can_attach? user
     return user.attach_products? && self.can_view?(user)
+  end
+
+
+  # is this product either a parent or child for a bill of materials
+  def on_bill_of_materials?
+    !self.bill_of_materials_children.empty? || !self.bill_of_materials_parents.empty?
   end
 
   def find_same

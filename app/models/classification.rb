@@ -8,6 +8,7 @@ class Classification < ActiveRecord::Base
   belongs_to :instant_classification
   
   validate :one_classification_per_country_product
+  validate :unique_line_numbers_for_tariffs
   validates :country_id, :presence => true
 
   scope :sort_classification_rank, joins(:country).order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
@@ -42,5 +43,19 @@ class Classification < ActiveRecord::Base
     found = Classification.where(:country_id=>self.country_id,:product_id=>self.product_id)
     return if found.empty? || (found.size==1 && found.first.id==self.id)
     self.errors[:base] << "Each product can only have one classification for each country. (#{self.country.name})"
+  end
+
+  #validate this here instead of at the tariff level to handle nested attributes
+  #https://rails.lighthouseapp.com/projects/8994/tickets/2160-nested_attributes-validates_uniqueness_of-fails
+  def unique_line_numbers_for_tariffs
+    max_line_number = 0
+    used_line_numbers = []
+    self.tariff_records.each do |tr|
+      next if tr.marked_for_destruction? || tr.destroyed?
+      tr.line_number = max_line_number +1 if tr.line_number.nil?
+      self.errors.add(:base,"Line number #{tr.line_number} cannot be used more than once.") if used_line_numbers.include?(tr.line_number)
+      used_line_numbers << tr.line_number
+      max_line_number = used_line_numbers.sort.last
+    end
   end
 end

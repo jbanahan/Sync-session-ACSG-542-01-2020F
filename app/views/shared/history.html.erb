@@ -44,11 +44,13 @@
       <div style='margin-left:1em;'>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>d}%>
       </div>
-      <div class='history_actions'>
-        <%=form_for s, :url=>restore_entity_snapshot_path(s), :method=>:post, :html=>{:class=>'frm_restore'} do |f|%>
-          <%=f.submit "Restore"%>
-        <%end%>
-      </div>
+      <% if @base_object.respond_to?(:can_edit?) && @base_object.can_edit?(current_user)-%>
+        <div class='history_actions'>
+          <%=form_for s, :url=>restore_entity_snapshot_path(s), :method=>:post, :html=>{:class=>'frm_restore'} do |f|%>
+            <%=f.submit "Restore"%>
+          <%end%>
+        </div>
+      <% end -%>
     </div>
   <%end%>
   <%if @snapshots.blank? %>

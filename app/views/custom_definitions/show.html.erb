@@ -1,9 +1,7 @@
 <% content_for :javascript do %>
 $(function() {
- $("button").button();
  $("#btn_edit").click(function() {window.location='<%=edit_custom_definition_path @custom_definition%>';});
  $("#back_to_search").click(function() {window.location='<%=custom_definitions_path %>';});
- $("#btn_delete").button();
 });
 <% end %>
 

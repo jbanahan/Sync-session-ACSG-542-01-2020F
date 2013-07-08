@@ -23,8 +23,7 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
     rule = LinkableAttachmentImportRule.where(:path=>original_path).first
     r = nil
     if rule
-      def file.original_filename=(f); @original_filename = f; end
-      def file.original_filename; @original_filename; end
+      Attachment.add_original_filename_method file
       file.original_filename= original_filename
       val = value_override.blank? ? get_value_from_filename(original_filename) : value_override 
       r = LinkableAttachment.create!(:model_field_uid=>rule.model_field_uid,:value=>val)

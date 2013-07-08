@@ -3,14 +3,14 @@
   There aren't any custom features enabled for this system.
 <% else %>
 <% end%>
-<%if enabled_features.include? 'MSL+'%>
-  <%=link_to "MSL+ Upload", '/custom_features/msl_plus'%><br />
-<%end%>
 <%if enabled_features.include? 'CSM Sync'%>
   <%=link_to "CSM Sync", '/custom_features/csm_sync'%><br />
 <%end%>
 <%if enabled_features.include?('Polo Canada') && OpenChain::CustomHandler::PoloCaEntryParser.new(nil).can_view?(current_user)-%>
   <%=link_to "Polo Canada", '/custom_features/polo_canada'%><br />
+<%end-%>
+<%if enabled_features.include?('Polo SAP') && OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user)-%>
+  <%=link_to "SAP Bill of Materials", '/custom_features/polo_sap_bom'%><br />
 <%end-%>
 <%if enabled_features.include?('JCrew Parts')-%>
   <%=link_to "JCrew Parts Upload", '/custom_features/jcrew_parts'%><br />

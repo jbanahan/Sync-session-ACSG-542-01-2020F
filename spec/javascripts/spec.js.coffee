@@ -8,4 +8,6 @@
 #=require jquery
 #=require jquery.cookie
 #=require jquery-ui-1.9.2.custom
+#=require angular
+#=require helpers/angular-mocks
 #=require_tree ./
