@@ -10,21 +10,20 @@ OpenChain::Application.configure do
   config.consider_all_requests_local       = false
   config.action_controller.perform_caching = true
 
-  # Specifies the header that your server uses for sending files
-  config.action_dispatch.x_sendfile_header = "X-Sendfile"
-
-  # For nginx:
-  # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect'
-
   # If you have no front-end server that supports something like X-Sendfile,
   # just comment this out and Rails will serve the files
-
-  # See everything in the log (default is :info)
-  config.log_level = :info
+  # Specifies the header that your server uses for sending files
+  # For nginx:
+  config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect'
 
   # Use a different logger for distributed setups
   # Rotate log files after 100 megabytes and keep 3 most recent files
-  config.logger = Logger.new(Rails.root.join("log", Rails.env + ".log"), 3, 100 * 1024 * 1024)
+  # No need for log file rotation, an external process (logrotate) handles that now.
+
+  #config.logger = Logger.new(Rails.root.join("log", Rails.env + ".log"), 3, 100 * 1024 * 1024)
+  #config.logger.level = Logger::WARN
+  # Only want to see errors in the log (default is :info which shows request information)
+  config.log_level = :warn
 
   # Use a different cache store in production
   config.cache_store = :dalli_store, 'chain-cache.roatcx.0001.use1.cache.amazonaws.com'
