@@ -8,37 +8,9 @@ module OpenChain
       include OpenChain::FtpFileSupport
       include AllianceProductSupport
       
+      J_CREW_CUSTOMER_NUMBER ||= "J0000"
       JCrewProduct = Struct.new(:po, :article, :hts, :description, :country_of_origin, :season, :cost)
-      COLUMN_HEADERS = Set.new ['PO #', 'Season', 'Article', 'HS #', 'Quota', 'Duty %', 'COO', 'FOB', 'PO Cost', 'Binding Ruling']
-      HTS_TRANSLATIONS = {
-        '4602102500' => '4202192500', \
-        '6115110010' => '6115210010', \
-        '6115122000' => '6115220000', \
-        '6203424005' => '6203424006', \
-        '6203424010' => '6203424011', \
-        '6203424015' => '6203424016', \
-        '6203424025' => '6203424026', \
-        '6203424045' => '6203424046', \
-        '6203424050' => '6203424051', \
-        '6203424060' => '6203424061', \
-        '6204624005' => '6204624006', \
-        '6204624020' => '6204624021', \
-        '6204624030' => '6204624031', \
-        '6204624050' => '6204624051', \
-        '6204624055' => '6204624056', \
-        '6204624065' => '6204624066', \
-        '6205202050' => '6205202051', \
-        '6205202060' => '6205202061', \
-        '6205202065' => '6205202066', \
-        '6206303010' => '6206303011', \
-        '6206303030' => '6206303031', \
-        '6206303040' => '6206303041', \
-        '6211310040' => '6211320040', \
-        '6404193560' => '6404193960', \
-        '6505906040' => '6505006040', \
-        '6505908090' => '6505008090', \
-        '6505902060' => '6506002060', \
-        '6601900000' => '6601910000'}
+      COLUMN_HEADERS ||= Set.new ['PO #', 'Season', 'Article', 'HS #', 'Quota', 'Duty %', 'COO', 'FOB', 'PO Cost', 'Binding Ruling']
 
       def self.process_file path
         # Open in binmode (otherwise we tend to run into encoding issues with this file)
@@ -79,25 +51,37 @@ module OpenChain
         Tempfile.open(['JCrewPartsExtract', '.DAT']) do |temp|
           temp.binmode
           generate_product_file(input_io, temp)
+          ftp_file(temp, false)
+          # Not a typo, we need to send the same file multiple times in order to send into 
+          # each JCrew account (each time its sent it gets a different name - see remote_file_name)
           ftp_file(temp)
         end
       end
 
       def remote_file_name
         # Required for AllianceProductSupport for sending the file via FTP
-        "#{Time.now.to_i}-J0000.DAT"
-      end
-
-      def ftp_file file, delete_local=true
-        require 'fileutils'
-        FileUtils.cp(file.path, "tmp/#{remote_file_name}")
-        file.unlink if delete_local
+        # Since we need to send multiple copies of the same file via FTP (one into each JCrew account)
+        # We'll just name the first file as the first account name, and then the second as JCREW.DAT
+        # and track the # of times the file has been FTP'ed.
+        filename = "JCREW.DAT"
+        if !@file_sent
+          filename = "#{J_CREW_CUSTOMER_NUMBER}.DAT"
+          @file_sent = true
+        end  
+        
+        filename
       end
 
       # Reads the IO object containing JCrew part information and writes the translated output
       # data to the output_io stream.
       def generate_product_file input_io, output_io
         product = nil
+
+        j_crew_company = Company.where("alliance_customer_number = ? ", J_CREW_CUSTOMER_NUMBER).first
+
+        unless j_crew_company
+          raise "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number '#{J_CREW_CUSTOMER_NUMBER}'."
+        end
 
         # While this file is named like .xls, it's not an excel file, it's a tab delimited file.
         # There is no quote handling or any of that in the file (since it's tab delimited presumably there's no need to)
@@ -111,7 +95,7 @@ module OpenChain
               # Just in case we get a product without a description and then another line, write the product
               # data sans description in that case.
               if !product.nil?
-                write_product_data output_io, product
+                write_product_data output_io, product, j_crew_company
                 product = nil
               end
 
@@ -119,7 +103,7 @@ module OpenChain
 
             elsif !product.nil? && has_description(line)
               product.description = get_data(line, 5)
-              write_product_data output_io, product
+              write_product_data output_io, product, j_crew_company
               product = nil
             end
           end
@@ -128,13 +112,13 @@ module OpenChain
           raise $!, "#{$!.message} occurred when reading a line at or close to line #{csv.lineno + 1}", $!.backtrace
         end
 
-        write_product_data(output_io, product) unless product.nil?
+        write_product_data(output_io, product, j_crew_company) unless product.nil?
         output_io.flush
         nil
       end
 
       private 
-        def write_product_data io, product
+        def write_product_data io, product, company
           # There's a couple of translations / validations we need to make to the data before writing it
 
           #Blank out invalid countries
@@ -147,13 +131,11 @@ module OpenChain
             product.hts = ""
           end
 
-          # TODO Add the HTS translation here using the xref table for JCrew and US country.
-          if HTS_TRANSLATIONS.has_key?(product.hts)
-            product.hts = HTS_TRANSLATIONS[product.hts]
-          end
+          # J Crew has some out of date HTS #'s they send us which we automatically then translate into 
+          # updated numbers.  Take care of this here.
+          translated_hts = translate_hts_number product.hts, company
 
-          #io << "#{out(product.po, 20)}#{out(product.article, 30)}#{out(product.hts, 10)}#{out(product.description, 40)}#{out(product.country_of_origin, 2)}\r\n"
-          io << "#{out(product.po, 20)}#{out(product.season, 10)}#{out(product.article, 30)}#{out(product.hts, 10)} #{out(product.description, 40)} #{out(product.cost, 10)}#{out(product.country_of_origin, 2)}\r\n"
+          io << "#{out(product.po, 20)}#{out(product.season, 10)}#{out(product.article, 30)}#{out(translated_hts, 10)} #{out(product.description, 40)} #{out(product.cost, 10)}#{out(product.country_of_origin, 2)}\r\n"
         end
 
         def out value, maxlen
@@ -171,9 +153,9 @@ module OpenChain
           product.po = get_data line, 1
           product.season = get_data line, 4
           product.article = get_data line, 5
-          product.hts = get_data line, 6
-          product.country_of_origin = get_data line, 9
-          product.cost = sprintf("%0.2f", BigDecimal.new(get_data(line, 11)))
+          product.hts = get_data(line, 6).gsub(".", "")
+          product.country_of_origin = get_data line, 10
+          product.cost = sprintf("%0.2f", BigDecimal.new(get_data(line, 12)))
 
           product
         end
@@ -203,6 +185,12 @@ module OpenChain
 
         def has_description line
           return has_data(line, 5)
+        end
+
+        def translate_hts_number number, company
+          translated = HtsTranslation.translate_hts_number number, "US", company
+
+          return translated.blank? ? number : translated
         end
     end
   end

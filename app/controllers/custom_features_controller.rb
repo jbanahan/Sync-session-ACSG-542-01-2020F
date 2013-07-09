@@ -1,6 +1,7 @@
 require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
 require 'open_chain/custom_handler/polo_sap_bom_handler'
+require 'open_chain/custom_handler/j_crew_parts_extract_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -117,7 +118,7 @@ class CustomFeaturesController < ApplicationController
   end
 
   def jcrew_parts_index
-    action_secure(OpenChain::CustomHandler::JCrewPartsExtractParser.new(nil).can_view?(current_user),Product,{:verb=>"view",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
+    action_secure(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
       @files = CustomFile.where(:file_type=>JCREW).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
       render :layout => 'one_col'
     }
