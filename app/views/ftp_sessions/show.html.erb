@@ -1,5 +1,6 @@
 <% content_for :action_bar do %>
-  <button class='btn_link' link_to='<%= download_ftp_session_path(@ftp_session) %>'>Download</button>
+
+  <button class='btn_link' link_to='<%= (!@ftp_session.attachment.nil?) ? download_attachment_path(@ftp_session.attachment) : download_ftp_session_path(@ftp_session) %>'>Download</button>
   <button class='btn_link' link_to='<%= ftp_sessions_path %>' key_map='b'>Back</button>
 <% end %>
 
