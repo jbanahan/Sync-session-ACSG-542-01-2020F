@@ -9,6 +9,42 @@ describe ProductsController do
     @user.company.linked_companies << @linked_importer
     UserSession.create! @user
   end
+  describe :next do
+    it "should go to next item" do
+      p = Factory(:product)
+      ResultCache.any_instance.should_receive(:next).with(99).and_return(p.id)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :next_item, :id=>"99"
+      response.should redirect_to "/products/#{p.id}"
+    end
+    it "should redirect to referrer and show error if result cache return nil" do
+      ResultCache.any_instance.should_receive(:next).with(99).and_return(nil)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :next_item, :id=>"99"
+      response.should redirect_to request.referrer
+      flash[:errors].first.should == "Next object could not be found."
+    end
+  end
+  describe :previous do
+    it "should go to the previous item" do
+      p = Factory(:product)
+      ResultCache.any_instance.should_receive(:previous).with(99).and_return(p.id)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :previous_item, :id=>"99"
+      response.should redirect_to "/products/#{p.id}"
+    end
+    it "should redirect to referrer and show error if result cache return nil" do
+      ResultCache.any_instance.should_receive(:previous).with(99).and_return(nil)
+      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss.touch #makes underlying search run
+      get :previous_item, :id=>"99"
+      response.should redirect_to request.referrer
+      flash[:errors].first.should == "Previous object could not be found."
+    end
+  end
   describe :create do
     it "should fail if not master and importer_id is not current company or linked company" do
       post :create, 'product'=>{'unique_identifier'=>'abc123455_pccreate','importer_id'=>@other_importer.id}
@@ -51,6 +87,7 @@ describe ProductsController do
 
   describe :bulk_update do
     it "should bulk update inline for less than 10 products" do
+      OpenChain::BulkUpdateClassification.stub(:go)
       # Several fields are not allowed to be bulk updated (as well as blank values)
       p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => ''}, :utf8 => 'v'}
       pks = {}
@@ -78,6 +115,7 @@ describe ProductsController do
     end
 
     it "should show errors for inline bulk updates" do
+      OpenChain::BulkUpdateClassification.stub(:go)
       p = {:product_cf => {:field => "v", :field2 => ""}, :pk => {"0" => '0'}, :product => {:id => ""}}
       
       Product.should_receive(:batch_bulk_update) do |u, params, options| 
@@ -144,7 +182,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to request.referer
+      response.should redirect_to Product 
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
 
@@ -164,7 +202,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to request.referer
+      response.should redirect_to Product 
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
 
@@ -183,7 +221,7 @@ describe ProductsController do
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to request.referer
+      response.should redirect_to Product
       flash[:notices].first.should == "Test"
       flash[:errors].should == ["A", "B"]
     end
@@ -202,7 +240,7 @@ describe ProductsController do
       request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val" 
       post :bulk_update_classifications, p
       flash[:notices].should == ["These products will be updated in the background.  You will receive a system message when they're ready."]
-      response.should redirect_to("http://www.test.com?key=val")
+      response.should redirect_to Product
     end
     
     it "should redirect to products_path with no referer" do

@@ -33,14 +33,20 @@ Spork.prefork do
     # instead of true.
     config.use_transactional_fixtures = true
     config.before(:all) do
-      DeferredGarbageCollection.start
+      DeferredGarbageCollection.start unless ENV['CIRCLECI']
     end
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"
     end
 
+    config.after(:each, :type => :controller) do
+      # Counteract the application controller setting MasterSetup.current, which bleeds across multiple tests
+      # since it's not unset by the controller.
+      MasterSetup.current = nil
+    end
+
     config.after(:all) do
-      DeferredGarbageCollection.reconsider
+      DeferredGarbageCollection.reconsider unless ENV['CIRCLECI']
     end
   end
 end

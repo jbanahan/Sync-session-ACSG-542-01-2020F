@@ -1,4 +1,5 @@
 class MessagesController < ApplicationController
+  newrelic_ignore :only=>[:message_count]
   skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position,:force_reset, :only=>:message_count
   # GET /messages
   # GET /messages.xml

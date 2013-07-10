@@ -10,18 +10,19 @@ class OfficialTariffsController < ApplicationController
     r = []
     found.each do |k,v|
       hts = []
-      v.each {|ot| hts << {'code'=>ot.hts_code,'desc'=>ot.remaining_description,'rate'=>ot.common_rate}}
+      v.each {|ot| hts << {'code'=>ot.hts_code,'desc'=>ot.remaining_description,'rate'=>ot.common_rate,'use_count'=>ot.use_count}}
       r << {'iso'=>k.iso_code,'country_id'=>k.id,'hts'=>hts}
     end
     r
     render :json => r
   end
   def index
-    advanced_search CoreModule::OFFICIAL_TARIFF
+    redirect_to advanced_search CoreModule::OFFICIAL_TARIFF, params[:force_search]
   end
   
   def show
     @official_tariff = OfficialTariff.find(params[:id])
+    raise ActionController::RoutingError.new('Not Found') unless @official_tariff && @official_tariff.can_view?(current_user)
   end
   
   def find
@@ -55,6 +56,6 @@ class OfficialTariffsController < ApplicationController
 
 
   def secure base_search
-    base_search #no extra security
+    OfficalTariff.search_secure current_user, base_search
   end
 end

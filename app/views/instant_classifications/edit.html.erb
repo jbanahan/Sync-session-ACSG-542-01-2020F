@@ -1,7 +1,11 @@
 <%=render :partial=>'form'%>
 <%content_for :javascript do %>
-$(function() {$('#btn_delete').button();});
+  $(function() {$('#btn_delete_redirect').click(function() {$("#btn_delete").click();});});
 <%end%>
 <%content_for :action_bar do %>
-  <%= button_to "Delete", @instant_classification, :method => :delete, :id=>:btn_delete, :confirm=>"Are you sure you want to delete this?" %>
+  <button id='btn_delete_redirect'>Delete</button>
 <%end%>
+<div style='display:none;'>
+  <%= button_to "Delete", @instant_classification, :method => :delete, :id=>:btn_delete, :confirm=>"Are you sure you want to delete this?" %>
+</div>
+

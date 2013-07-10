@@ -1,7 +1,9 @@
 require 'open_chain/field_logic'
 require 'open_chain/bulk_update'
+require 'open_chain/next_previous_support'
 class ProductsController < ApplicationController
   include Worksheetable
+  include OpenChain::NextPreviousSupport
   before_filter :secure_classifications
 
 	def root_class 
@@ -9,8 +11,7 @@ class ProductsController < ApplicationController
 	end
 
   def index
-    @bulk_actions = CoreModule::PRODUCT.bulk_actions current_user
-    advanced_search CoreModule::PRODUCT
+    redirect_to advanced_search CoreModule::PRODUCT, params[:force_search]
   end
 
   # GET /products/1
@@ -44,8 +45,12 @@ class ProductsController < ApplicationController
 
   # GET /products/1/edit
   def edit
-    p = Product.find(params[:id])
-    action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+    p = Product.includes(:classifications=>[:tariff_records]).find(params[:id])
+    action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
+      used_countries = p.classifications.collect {|cls| cls.country_id}
+      Country.import_locations.sort_classification_rank.each do |c|
+        p.classifications.build(:country => c) unless used_countries.include?(c.id) 
+      end
       @product = p
     }
   end
@@ -86,10 +91,10 @@ class ProductsController < ApplicationController
   # PUT /products/1.xml
   def update
     p = Product.find(params[:id])
-    action_secure(p.can_edit?(current_user),p,{:verb => "edit",:module_name=>"product"}) {
+    action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
       succeed = lambda {|p|
         add_flash :notices, "Product was saved successfully."
-        redirect_update p, (params[:c_classify] ? "classify" : "edit")
+        redirect_to p
       }
       failure = lambda {|p,errors|
         errors_to_flash p
@@ -123,37 +128,36 @@ class ProductsController < ApplicationController
     }
   end
   
-  def classify
-    p = Product.find(params[:id])
-    action_secure(p.can_classify?(current_user),p,{:verb => "classify for",:module_name=>"product"}) {
-      @product = p
-      Country.import_locations.sort_classification_rank.each do |c|
-        p.classifications.build(:country => c) if p.classifications.where(:country_id=>c).empty?
-      end
-    }
-  end
-
   def bulk_edit
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
+    @base_product = Product.new
+    OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
+    json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
   end
 
   def bulk_update
-    action_secure(current_user.edit_products?,Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
+    action_secure((current_user.edit_products? || current_user.edit_classifications?),Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
       [:unique_identifier,:id,:vendor_id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
       params[:product].each {|k,v| params[:product].delete k if v.blank?}
       params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?} if params[:product_cf]
       params.delete :utf8
       if run_delayed params
-        Product.delay.batch_bulk_update(current_user, params)
+        Product.delay.batch_bulk_update(current_user, params) if current_user.edit_products?
+        OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id if current_user.edit_classifications? 
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else
-        messages = Product.batch_bulk_update(current_user, params, :no_email => true)
+        messages = Product.batch_bulk_update(current_user, params, :no_email => true) if current_user.edit_products?
+        cls_messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true if current_user.edit_classifications?
         # Show the user the update message and any errors if there were some
-        add_flash :notices, messages[:message]
-        messages[:errors].each do |e|
-          add_flash :errors, e
-        end if messages[:errors]
+        if messages && messages[:message]
+          add_flash :notices, messages[:message]
+        elsif cls_messages && cls_messages[:message]
+          add_flash :notices, cls_messages[:message]
+        end
+        [messages,cls_messages].each do |hsh|
+          hsh[:errors].each {|e| add_flash(:errors, e)} if hsh && hsh[:errors]
+        end
       end
       redirect_to products_path
     }
@@ -165,11 +169,7 @@ class ProductsController < ApplicationController
     @base_product = Product.new
     @back_to = request.referrer
     OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
-    json = json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
-    respond_to do |format|
-        format.html { render }
-        format.json  { render :json=>json }
-    end
+    render :json=> json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
   end
 
   def bulk_update_classifications
@@ -193,8 +193,6 @@ class ProductsController < ApplicationController
       # so we're stripping the force_search param from the redirect uri
       if !params['back_to'].blank?
         redirect_to strip_uri_params(params['back_to'],'force_search')
-      elsif !request.referer.blank? 
-        redirect_to strip_uri_params(request.referer, "force_search")
       else 
         redirect_to products_path
       end
@@ -214,7 +212,7 @@ class ProductsController < ApplicationController
   def show_bulk_instant_classify
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil 
-    @preview_product = @pks.blank? ? @search_run.current_object : Product.find(@pks.values.first)
+    @preview_product = @pks.blank? ? Product.find(@search_run.parent.result_keys(:page=>1,:per_page=>1).first) : Product.find(@pks.values.first)
     @preview_instant_classification = InstantClassification.find_by_product @preview_product, current_user
   end
     

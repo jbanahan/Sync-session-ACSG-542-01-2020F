@@ -50,6 +50,13 @@ def execute_scheduler
     end
   end
 
+  #Rebuild official tariff use counts
+  scheduler.every '2h' do
+    job_wrapper "OfficialTariff Use Count Update" do
+      OfficialTariff.delay.update_use_count
+    end
+  end
+
   #Rebuild index to capture any saved schedules
   scheduler.every("10m") do
     job_wrapper "Search Schedule" do
@@ -103,11 +110,9 @@ def execute_scheduler
         OpenChain::CustomHandler::FenixProductFileGenerator.new(cn).delay.generate
       end
     end
-=begin
     scheduler.every("240m") do
       OpenChain::CustomHandler::PoloEfocusProductGenerator.new.delay.generate
     end
-=end
   end
 
   if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
@@ -124,6 +129,12 @@ def execute_scheduler
       rescue
         $!.log_me ['Eddie Bauer Fenix File Generator Failed']
       end
+    end
+  end
+
+  if MasterSetup.get.system_code == 'ann' && Rails.env == 'production'
+    scheduler.every("15m") do
+      OpenChain::CustomHandler::Ann::AnnZymProductGenerator.delay.generate
     end
   end
 

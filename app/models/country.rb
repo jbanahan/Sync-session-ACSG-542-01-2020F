@@ -4,6 +4,7 @@ class Country < ActiveRecord::Base
     'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
   
   attr_accessible :import_location, :classification_rank
+  after_save :update_model_fields
   after_commit :update_cache
   
   scope :import_locations, where(:import_location=>true)
@@ -105,6 +106,9 @@ class Country < ActiveRecord::Base
 	end
 
   private
+  def update_model_fields
+    ModelField.reload true
+  end
   def update_cache
     CACHE.set "Country:id:#{self.id}", self
   end

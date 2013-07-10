@@ -6,7 +6,9 @@ describe OpenChain::BulkUpdateClassification do
       ModelField.reload #cleanup from other tests
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
       @p = Factory(:product)
-      @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>Factory(:country).id.to_s}}}} 
+      @country = Factory(:country)
+      @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>@country.id.to_s}}}} 
+      Product.any_instance.stub(:can_classify?).and_return true
     end
     it "should update an existing classification with primary keys" do
       m = OpenChain::BulkUpdateClassification.go(@h,@u)
@@ -26,6 +28,42 @@ describe OpenChain::BulkUpdateClassification do
       OpenChain::BulkUpdateClassification.go(@h,@u, :no_user_message => true)
       Product.find(@p.id).classifications.should have(1).item
       @u.messages.length.should == 0
+    end
+    it "should maintain existing custom values for classification and tariff if not overridden" do
+      Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+      class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+      tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+      tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>@country,:product=>@p))
+      tr.update_custom_value! tr_cd, 'DEF'
+      cls = tr.classification
+      cls.update_custom_value! class_cd, 'ABC'
+      @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => ''}}} #blank classification shouldn't clear
+      @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => ''}}} #black tariff shouldn't clear
+      @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890'}}
+      OpenChain::BulkUpdateClassification.go(@h,@u)
+      @p.reload
+      @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+      cls = @p.classifications.first
+      cls.get_custom_value(class_cd).value.should == 'ABC'
+      cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+    end
+    it "should allow override of classification & tariff custom values" do
+      Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+      class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+      tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+      tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>@country,:product=>@p))
+      tr.update_custom_value! tr_cd, 'DEF'
+      cls = tr.classification
+      cls.update_custom_value! class_cd, 'ABC'
+      @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'CLSOVR'}}} #blank classification shouldn't clear
+      @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'TAROVR'}}}
+      @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'1','line_number'=>'1'}}
+      OpenChain::BulkUpdateClassification.go(@h,@u)
+      @p.reload
+      @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+      cls = @p.classifications.first
+      cls.get_custom_value(class_cd).value.should == 'CLSOVR'
+      cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'TAROVR'
     end
   end
   describe 'build_common_classifications' do
@@ -53,7 +91,7 @@ describe OpenChain::BulkUpdateClassification do
       user = Factory(:user,:admin=>true,:company_id=>Factory(:company,:master=>true).id)
       search_setup = Factory(:search_setup,:module_type=>"Product",:user=>user)
       search_setup.touch #makes search_run
-      OpenChain::BulkUpdateClassification.build_common_classifications search_setup.search_run, @base_product
+      OpenChain::BulkUpdateClassification.build_common_classifications search_setup.search_runs.first, @base_product
       @base_product.classifications.should have(1).item
       classification = @base_product.classifications.first
       classification.country.should == @country

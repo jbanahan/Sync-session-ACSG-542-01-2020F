@@ -4,6 +4,8 @@ module OpenChain
     #
     # If subclass implements `sync_code` then class will write / update sync records after generating the file
     #
+    # If subclass implements `auto_confirm?` and returns false, the sync records will not automatically be marked as confirmed
+    #
     # Subclass must implement `query` ande return a string representing the sql query to build the grid that will become the output file.  
     # The `query` method should check for a @custom_where variable to override the where clause of the query in case someone needs to run the generator for a specific product set
     # The first column in the query MUST be the products.id and will not be output in the file.
@@ -14,6 +16,16 @@ module OpenChain
 
       def initialize(opts={})
         @custom_where = opts[:where]
+      end
+      
+      # do any preprocessing on the row results before passing to the sync_[file_format] methods
+      # returns array of rows so you can add more rows into the process
+      def preprocess_row row
+        [row]
+      end
+
+      def auto_confirm?
+        true
       end
 
       def sync
@@ -28,22 +40,23 @@ module OpenChain
           row = {}
           vals.each_with_index {|v,i| row[i-1] = v unless i==0}
           synced_products << vals[0]
-          yield row
+          processed_rows = preprocess_row row
+          processed_rows.each {|r| yield r}
         end
         if self.respond_to? :sync_code
           synced_products.in_groups_of(100,false) do |uids|
             x = uids
             Product.transaction do
               Product.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{x.join(",")});"
-              Product.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at,confirmed_at,updated_at,created_at,trading_partner) 
-   (select id, \"Product\",now(),now() + INTERVAL 1 MINUTE,now(),now(),\"#{sync_code}\" from products where products.id in (#{x.join(",")}));"
+              Product.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner) 
+   (select id, \"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\" from products where products.id in (#{x.join(",")}));"
             end
           end
         end
       end
 
       #output a csv file or return nil if no rows written
-      def sync_csv include_headers=true
+      def sync_csv include_headers=true, csv_opts={}
         f = Tempfile.new(['ProductSync','.csv'])
         cursor = 0
         sync do |rv|
@@ -56,7 +69,7 @@ module OpenChain
               row << v.to_s
             end
             row = before_csv_write cursor, row
-            f << row.to_csv
+            f << row.to_csv(csv_opts)
           end
           cursor += 1
         end
@@ -163,12 +176,26 @@ module OpenChain
             table_name = 'products'
           when 'Classification'
             table_name = 'classifications'
+          when 'TariffRecord'
+            table_name = 'tariff_records'
           end
           
           "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
         else
           #so report doesn't bomb if custom field is removed from system
           "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+        end
+      end
+      
+      #remove new lines and optionally quotes from string values
+      def clean_string_values values, strip_quotes=false
+        values.each do |v| 
+          next unless v.respond_to?(:gsub!)
+          if strip_quotes
+            v.gsub!(/[\r\n\"]/,' ')
+          else
+            v.gsub!(/[\r\n]/,' ')
+          end
         end
       end
 

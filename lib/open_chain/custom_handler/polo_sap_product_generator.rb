@@ -32,7 +32,7 @@ module OpenChain
           vals[3] = vals[3].hts_format
         end
         vals[8] = vals[8].length==2 ? vals[8].upcase : "" unless vals[8].blank?
-        vals.each {|v| v.gsub!(/[\r\n\"]/," ") if v.respond_to?(:gsub!)}
+        clean_string_values vals, true #true = remove quotes
         vals
       end
       def query

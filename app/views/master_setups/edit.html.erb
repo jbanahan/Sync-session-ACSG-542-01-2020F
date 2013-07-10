@@ -20,71 +20,92 @@ $(function() {
 <button id='btn_upgrade'>Upgrade</button>
 <button id='btn_cancel'>Cancel</button>
 <%end%>
-<%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
-<table>
-  <%=field_row "System UUID", @ms.uuid%>
-  <%=field_row "Version", @ms.version %>
-  <%=field_row "System Code", f.text_field(:system_code) %>
-  <%=field_row "FTP Enabled", f.check_box(:ftp_polling_active) %>
-  <%=field_row "Logo Image", f.text_field(:logo_image) %>
-  <%=field_row "Order Enabled",f.check_box(:order_enabled) %>
-  <%=field_row "Shipment Enabled", f.check_box(:shipment_enabled)%>
-  <%=field_row "Sale Enabled", f.check_box(:sales_order_enabled) %>
-  <%=field_row "Delivery Enabled", f.check_box(:delivery_enabled) %>
-  <%=field_row "Classification Enabled", f.check_box(:classification_enabled) %>
-  <%=field_row "Entry Enabled", f.check_box(:entry_enabled)%>
-  <%=field_row "Security Filing Enabled", f.check_box(:security_filing_enabled)%>
-  <%=field_row "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
-  <%=field_row "Drawback Enabled", f.check_box(:drawback_enabled)%>
-  <%=field_row "Custom Features", f.text_area(:custom_features)%>
-  <% ss = ScheduleServer.first %>
-  <%=field_row "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})" unless ss.nil?%>
-  <%=field_row "Target Version", @ms.target_version%>
-  <%=field_row "Server With Migration Lock", @ms.migration_host%>
-  <%=field_row "Request Host (with port)", f.text_field(:request_host) %>
-</table>
-<%end%>
+<div class='container-fluid'>
+  <div class='row-fluid'>
+    <div class='span5'>
+      <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
+        <table>
+          <%=field_bootstrap "System UUID", @ms.uuid%>
+          <%=field_bootstrap "Version", @ms.version %>
+          <%=field_bootstrap "System Code", f.text_field(:system_code) %>
+          <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>
+          <%=field_bootstrap "Logo Image", f.text_field(:logo_image) %>
+          <%=field_bootstrap "Order Enabled",f.check_box(:order_enabled) %>
+          <%=field_bootstrap "Shipment Enabled", f.check_box(:shipment_enabled)%>
+          <%=field_bootstrap "Sale Enabled", f.check_box(:sales_order_enabled) %>
+          <%=field_bootstrap "Delivery Enabled", f.check_box(:delivery_enabled) %>
+          <%=field_bootstrap "Classification Enabled", f.check_box(:classification_enabled) %>
+          <%=field_bootstrap "Entry Enabled", f.check_box(:entry_enabled)%>
+          <%=field_bootstrap "Security Filing Enabled", f.check_box(:security_filing_enabled)%>
+          <%=field_bootstrap "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
+          <%=field_bootstrap "Drawback Enabled", f.check_box(:drawback_enabled)%>
+          <%=field_bootstrap "Custom Features", f.text_area(:custom_features)%>
+          <% ss = ScheduleServer.first %>
+          <%=field_bootstrap "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})" unless ss.nil?%>
+          <%=field_bootstrap "Target Version", @ms.target_version%>
+          <%=field_bootstrap "Server With Migration Lock", @ms.migration_host%>
+          <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host) %>
+        </table>
+      <%end%>
+    </div>
+    <div class='span7'>
+      <h2>Active Users</h2>
+      <table class='detail_table'>
+      <thead><tr><th>User</th><th>Last Action</th></tr></thead>
+      <tbody>
+        <%User.where("last_request_at > ?",30.minutes.ago).order("last_request_at DESC").each do |u|%>
+          <tr class='hover'><td><%=u.full_name%></td><td><%=u.last_request_at%></td></tr>
+        <%end%>
+      </tbody>
+      </table>
+      <h2>Delayed Job</h2>
+      <p><%= "#{Delayed::Job.count(:conditions => 'locked_at is null and failed_at is null')} jobs not run/#{Delayed::Job.count(:conditions => 'last_error is not null')} jobs with errors" %></p>
+      <table class='detail_table'>
+        <thead>
+          <tr><th>ID</th><th>Priority</th><th>Attempts</th><th>Handler</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Action</th></tr>
+        </thead>
+        <% Delayed::Job.order("created_at ASC").limit(100).each do |dj| %>
+          <tr>
+            <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><textarea width='15'><%=dj.handler%></textarea></td>
+            <td><%=dj.last_error%></td><td><%=dj.run_at%></td><td><%=dj.locked_at%></td><td><%=dj.failed_at%></td><td><%=dj.locked_by%></td>
+            <td><%= link_to "Delete", delayed_job_path(dj), :confirm => 'Are you sure you want to delete this item?', :method => :delete %></td>
+          </tr>
+        <% end %>
+      </table>
 
-<h2>Delayed Job</h2>
-<p><%= "#{Delayed::Job.count(:conditions => 'locked_at is null and failed_at is null')} jobs not run/#{Delayed::Job.count(:conditions => 'last_error is not null')} jobs with errors" %></p>
-<table class='detail_table'>
-  <thead>
-    <tr><th>ID</th><th>Priority</th><th>Attempts</th><th>Handler</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Action</th></tr>
-  </thead>
-  <% Delayed::Job.order("created_at ASC").limit(100).each do |dj| %>
-    <tr>
-      <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><textarea width='15'><%=dj.handler%></textarea></td>
-      <td><%=dj.last_error%></td><td><%=dj.run_at%></td><td><%=dj.locked_at%></td><td><%=dj.failed_at%></td><td><%=dj.locked_by%></td>
-      <td><%= link_to "Delete", delayed_job_path(dj), :confirm => 'Are you sure you want to delete this item?', :method => :delete %></td>
-    </tr>
-  <% end %>
-</table>
+      <h2>Instances</h2>
+      <table class='detail_table'>
+        <thead>
+          <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
+        </thead>
+        <% InstanceInformation.where("last_check_in > ?",10.days.ago).order("last_check_in DESC").each do |ii| %>
+          <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'>
+            <td><%=ii.host%></td>
+            <td><%=ii.version%></td>
+            <td><%=ii.last_check_in%></td>
+            <td>
+              <div class='upgrade_list'>
+                <%ii.upgrade_logs.order("started_at DESC").each do |u|%>
+                  <div>
+                    <%=link_to u.started_at.to_s, u%> (<%=u.to_version%>)
+                    <%= "FAILED" if u.log && u.finished_at && !u.log.include?("Upgrade complete") %>
+                    <%= "Running" if u.log && !u.finished_at && !(u.started_at < 30.minutes.ago) %>
+                  </div>
+                <%end%>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </table>
+    </div>
+  </div>
+</div>
 
-<h2>Instances</h2>
-<table class='detail_table'>
-  <thead>
-    <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
-  </thead>
-  <% InstanceInformation.where("last_check_in > ?",10.days.ago).order("last_check_in DESC").each do |ii| %>
-    <tr class='hover <%=ii.last_check_in < 1.minute.ago ? "error" : ""%>'>
-      <td><%=ii.host%></td>
-      <td><%=ii.version%></td>
-      <td><%=ii.last_check_in%></td>
-      <td>
-        <div class='upgrade_list'>
-          <%ii.upgrade_logs.order("started_at DESC").each do |u|%>
-            <%=link_to u.started_at.to_s, u%><%= " FAILED" if !u.log || !u.log.include?("Upgrade complete") %><br />
-          <%end%>
-        </div>
-      </td>
-    </tr>
-  <% end %>
-</table>
 
 <div id='mod_upgrade' style='display:none;'>
   <%=form_tag '/master_setups/upgrade', :id=>:frm_upgrade do |f| %>
     <table>
-      <%=field_row "Version", text_field_tag(:name) %>
+      <%=field_bootstrap "Version", text_field_tag(:name) %>
     </table>
   <%end%>
 </div>

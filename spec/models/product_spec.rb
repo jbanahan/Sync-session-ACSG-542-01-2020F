@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe Product do
+  context "saved classifications exist" do
+    before :each do
+      @p = Factory(:product)
+    end
+    it "should return false for unsaved classification" do
+      @p.classifications.build
+      @p.saved_classifications_exist?.should be_false
+    end
+    it "should return true for mix" do
+      Factory(:classification,:product=>@p)
+      @p.classifications.build
+      @p.saved_classifications_exist?.should be_true
+    end
+  end
   context "bill of materials" do
     describe :on_bill_of_materials? do
       context "true tests" do

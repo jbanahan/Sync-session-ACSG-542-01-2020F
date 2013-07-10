@@ -1,4 +1,23 @@
 class MasterSetupsController < ApplicationController
+  def perf
+    t = Time.now
+    params[:count].to_i.times {MasterSetup.get}
+    get_time = (Time.now.to_i - t.to_i).to_s
+
+    t = Time.now
+    params[:count].to_i.times {MasterSetup.get false}
+    get_no_current_time = (Time.now.to_i - t.to_i).to_s
+
+    t = Time.now
+    params[:count].to_i.times {MasterSetup.first}
+    first_time = (Time.now.to_i - t.to_i).to_s
+
+
+    render :json=>{
+      :get_time=>get_time,
+      :first_time=>first_time,
+      :get_no_current=>get_no_current_time}
+  end
   def index
     redirect_to edit_master_setup_path MasterSetup.get
   end

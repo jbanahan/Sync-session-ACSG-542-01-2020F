@@ -18,7 +18,6 @@ $(function() {
     }
   });
   $("#btn_cancel").click(function() {window.location = '<%=worksheet_configs_path%>';})
-  $(".button_to").children().children("input:submit").button();
   $(".m_remove").click(function(ev) {
     destroy_nested('m',$(this));
     ev.preventDefault();

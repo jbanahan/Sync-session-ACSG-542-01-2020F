@@ -2,13 +2,17 @@
   <% if current_user.company.master %>
   $(function() {
     $( "#btn_new" )
-      .button()
       .click(function() {
         window.location = '<%=new_company_path%>';
       });
   });
   <% end %>
 <% end %>
+<%content_for :action_bar do-%>
+  <% if current_user.company.master? -%>
+    <button id="btn_new">New</button>
+  <% end -%>
+<% end -%>
 <%= render :partial => 'shared/search_box' %>
 <table class="detail_table">
   <thead>
@@ -41,6 +45,4 @@
   </tr>
 <% end %>
 </table>
-<% if current_user.company.master %>
-<button id="btn_new">New</button>
-<% end %>
+<%=will_paginate @companies%>

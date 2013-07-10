@@ -20,7 +20,7 @@ gem 'dalli', '2.2.1'
 gem 'postmark-rails', '0.4.1'
 gem 'rubyzip'
 gem 'jquery-rails'
-gem 'newrelic_rpm'
+gem 'newrelic_rpm', '3.6.5.130'
 
 #text processing/encoding stuff
 gem 'RedCloth', '4.2.9'
@@ -30,14 +30,9 @@ gem 'RedCloth', '4.2.9'
 gem 'execjs' 
 gem 'libv8', '~> 3.11.8'
 gem 'therubyracer'
-
-# performance profiling (this is auto-disabled in production)
-gem 'rack-mini-profiler'
+gem 'browser'
 
 group :development,:test do
-
-  #very active development so pinning to Github master
-  gem "jasminerice", :git => 'git://github.com/bradphelan/jasminerice.git'
 
   gem 'rspec-rails'
   gem 'factory_girl', '2.5.2', :group=>[:development,:test]

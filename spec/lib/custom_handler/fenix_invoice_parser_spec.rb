@@ -59,6 +59,33 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     @k.parse @content
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
     bi.entry.should == ent
+    bi.entry.broker_invoice_total.should == bi.invoice_total
+  end
+
+  it "should update total broker invoice value from the entry" do
+
+    # Set the broker reference to be the same for each broker invoice
+    # so we're updating the same entry.
+    @content = <<INV
+INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,brokref,CAD, 4000 , 1 ,,,,,,,,
+01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 255 ,HST (ON), 5.85 ,brokref,CAD, 4000 , 1 
+
+01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 21 GST ON B3 ,GST ON IMPORTS, 4523.98 ,brokref,CAD, 3100 , 1 ,RG01, 2 , 4523.98 ,CAD, 3100 , 1 ,11981001052312
+
+01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 22 ,BROKERAGE, 37 ,brokref,CAD, 4000 , 1 ,,,,,,,,
+01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 255 ,HST (ON), 4.81 ,brokref,CAD, 4000 , 1 
+
+01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 34 ,BOND FEE, 10 ,brokref,CAD, 4000 , 1 ,,,,,,,,
+01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 255 ,HST (ON), 1.3 ,brokref,CAD, 4000 , 1 
+
+01/16/2013,ADBAIR, 1 , 39009 , 0 ,11981001157739, 20 DUTY ON B3 ,DUTY ON IMPORTS, 542.57 ,brokref,CAD, 3100 , 1 ,RG01, 2 , 542.57 ,CAD, 3100 , 1 ,11981001157739
+INV
+    ent = Factory(:entry,:source_system=>'Fenix',:broker_reference=>'brokref')
+    @k.parse @content
+    ent.reload
+    ent.broker_invoices.should have(2).items
+    ent.broker_invoice_total.should == ent.broker_invoices.inject(BigDecimal.new("0.0")){|sum, inv| sum += inv.invoice_total}
   end
 
   it "invoice total should not include codes 20 or 21" do

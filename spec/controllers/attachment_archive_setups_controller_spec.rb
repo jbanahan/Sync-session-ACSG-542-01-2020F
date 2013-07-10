@@ -53,7 +53,7 @@ describe AttachmentArchiveSetupsController do
       target_date = Date.new(2011,12,1)
       post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
-      @c.attachment_archive_setup.start_date.should == Date.new(Time.now.year,Time.now.month,Time.now.day)
+      @c.attachment_archive_setup.start_date.should == 0.seconds.ago.to_date 
       response.should redirect_to request.referrer
       flash[:errors].should == ["This company already has an attachment archive setup."]
     end
@@ -84,7 +84,7 @@ describe AttachmentArchiveSetupsController do
       target_date = Date.new(2011,12,1)
       post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
-      @c.attachment_archive_setup.start_date.should == Date.new(Time.now.year,Time.now.month,Time.now.day)
+      @c.attachment_archive_setup.start_date.should == 0.seconds.ago.to_date 
       response.should redirect_to request.referrer
       flash[:errors].should == ["You do not have permission to access this page."]
     end

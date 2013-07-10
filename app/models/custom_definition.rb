@@ -10,9 +10,9 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :field_validator_rules, :dependent => :destroy
   has_many   :milestone_definitions, :dependent => :destroy
   
+  after_save :reset_cache
   after_save :reset_model_field_constants 
   after_save :reset_field_label
-  after_commit :reset_cache
   after_find :set_cache
 
   def self.cached_find id

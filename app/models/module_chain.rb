@@ -35,7 +35,7 @@ class ModuleChain
     idx = @list.index cm
     (idx==0 || idx.nil?) ? nil : @list[idx-1]
   end 
-  #returns the immediate child module in the chian (or nil if you're at the bottom of the chain)
+  #returns the immediate child module in the chain (or nil if you're at the bottom of the chain)
   def child cm
     idx = @list.index cm
     (idx+1>=@list.length || idx.nil?) ? nil : @list[idx+1]

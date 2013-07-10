@@ -66,6 +66,7 @@ module OpenChain
               line_fees = fees(cil).to_f
               r[8] = line_fees 
               r[12] = "#{ent.entry_number}/#{duty_rate*100}/#{ci.invoice_number}"
+              r[13] = Spreadsheet::Link.new(ent.view_url,'Web Link')
 
               #prep summary page data
               statement_hash[business] ||= {:duty=>BigDecimal("0.00"),

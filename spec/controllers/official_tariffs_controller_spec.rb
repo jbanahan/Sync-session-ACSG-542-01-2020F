@@ -4,9 +4,9 @@ describe OfficialTariffsController do
   before :each do
     @us = Factory(:country,:iso_code=>"US")
     @ca = Factory(:country,:iso_code=>"CA")
-    @us_hts_1 = Factory(:official_tariff,:hts_code=>'1234567890',:country=>@us,:remaining_description=>'abc',:general_rate=>'11')
-    @us_hts_2 = Factory(:official_tariff,:hts_code=>'1234567899',:country=>@us,:remaining_description=>'def',:general_rate=>'aa')
-    @ca_hts = Factory(:official_tariff,:hts_code=>'1234567777',:country=>@ca,:remaining_description=>'xyz',:most_favored_nation_rate=>'123')
+    @us_hts_1 = Factory(:official_tariff,:hts_code=>'1234567890',:country=>@us,:remaining_description=>'abc',:general_rate=>'11',:use_count=>5)
+    @us_hts_2 = Factory(:official_tariff,:hts_code=>'1234567899',:country=>@us,:remaining_description=>'def',:general_rate=>'aa',:use_count=>3)
+    @ca_hts = Factory(:official_tariff,:hts_code=>'1234567777',:country=>@ca,:remaining_description=>'xyz',:most_favored_nation_rate=>'123',:use_count=>6)
   end
   describe :auto_complete do
     it "should return array of tariffs for given country" do
@@ -28,10 +28,10 @@ describe OfficialTariffsController do
         case b['iso']
         when 'US'
           b['country_id'].should == @us.id
-          b['hts'].should == [{'code'=>'1234567890','desc'=>'abc','rate'=>'11'},{'code'=>'1234567899','desc'=>'def','rate'=>'aa'}]
+          b['hts'].should == [{'code'=>'1234567890','desc'=>'abc','rate'=>'11','use_count'=>5},{'code'=>'1234567899','desc'=>'def','rate'=>'aa','use_count'=>3}]
         when 'CA'
           b['country_id'].should == @ca.id
-          b['hts'].should == [{'code'=>'1234567777','desc'=>'xyz','rate'=>'123'}]
+          b['hts'].should == [{'code'=>'1234567777','desc'=>'xyz','rate'=>'123','use_count'=>6}]
         else
           fail "Unexpected ISO #{b['iso']}"
         end

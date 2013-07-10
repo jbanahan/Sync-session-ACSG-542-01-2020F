@@ -14,13 +14,13 @@ module OpenChain
     #raises an OpenChain::UpgradeFailure if there are any problems
     def self.upgrade_if_needed
       if MasterSetup.need_upgrade?
-        upgrade MasterSetup.get.target_version
+        upgrade MasterSetup.get(false).target_version
       end
     end
 
     def self.upgrade_delayed_job_if_needed
       if MasterSetup.need_upgrade?
-        Upgrade.new(MasterSetup.get.target_version).go_delayed_job
+        Upgrade.new(MasterSetup.get(false).target_version).go_delayed_job
       end
     end
 
@@ -33,7 +33,7 @@ module OpenChain
     #do not call this directly, use the static #upgrade method instead
     def go
       return "Skipping, upgrade_running.txt exists"if File.exists?("tmp/upgrade_running.txt")
-      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.get.version, :to_version=>@target)
+      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.get(false).version, :to_version=>@target)
       begin
         @log = Logger.new(@log_path)
         capture_and_log "touch tmp/upgrade_running.txt"
@@ -53,7 +53,7 @@ module OpenChain
 
     def go_delayed_job
       return "Skipping, upgrade_running.txt exists" if File.exists?('tmp/upgrade_running.txt')
-      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.get.version, :to_version=>@target)
+      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.get(false).version, :to_version=>@target)
       begin
         @log = Logger.new(@log_path)
         capture_and_log "touch tmp/upgrade_running.txt"

@@ -1,10 +1,13 @@
 <% content_for :javascript do %>
 $(function() {
-  $("#btn_new").button().click(function() {
+  $("#btn_new").click(function() {
     window.location = '<%=new_status_rule_path%>';
   });
 });
 <% end %>
+<%content_for :action_bar do -%>
+  <button id='btn_new'>New</button>
+<%end-%>
 <%= render :partial => 'shared/search_box' %>
 <table class="detail_table">
   <thead>
@@ -22,5 +25,3 @@ $(function() {
 <% end %>
 </table>
 <%= will_paginate @status_rules %>  
-<br />
-<button id='btn_new'>New</button>

@@ -5,7 +5,7 @@ class ShipmentsController < ApplicationController
 	end
 	
   def index
-    advanced_search CoreModule::SHIPMENT
+    redirect_to advanced_search CoreModule::SHIPMENT, params[:force_search]
   end
 
   # GET /shipments/1
@@ -70,7 +70,7 @@ class ShipmentsController < ApplicationController
     action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
       succeed = lambda {|shp|
         add_flash :notices, "Shipment was updated successfully."
-        redirect_update s
+        redirect_to shp
       }
       failure = lambda {|shp,errors|
         errors_to_flash shp, :now=>true

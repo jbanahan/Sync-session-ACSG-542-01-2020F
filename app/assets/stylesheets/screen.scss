@@ -1,0 +1,638 @@
+body {
+  padding-bottom: 40px; //padding to accomodate sticky footer nav bar 
+}
+img {
+  border-style: none;
+}
+#dash-logo {
+  padding: 5px 15px;
+  img {
+    height: 30px;
+  }
+}
+div.clear {
+  clear: both;
+}
+.error, .exception_value {
+    color: red !important;
+}
+.required_empty {
+  background-color: rgb(255, 194, 194);
+}
+.indent {
+  margin-left: 1em;
+}
+.bad_data {
+  background-color: #F2BDBD;
+}
+.unread {
+    font-weight:bolder;
+}
+.read {
+    font-weight:lighter;
+}
+#search_setup_outer {
+  width: 95%;
+  margin-top: 1em;
+}
+#sel_searches {
+  font-size: 200%;
+  border: 1px solid #AAA;
+  width: 75%;
+}
+.section_insert {
+  margin-top: 1em;
+  display: table;
+  width: 100%;
+}
+.section_insert_heading {
+  font-size: 2em; 
+}
+.search_row_break td {
+  border-top: 1px solid #d7d7d7;
+  padding-top: 4px;
+}
+.srch_instruction {
+  text-align: right;
+  font-size: 85%;
+}
+.detail_table {
+  font-size: 90%;
+  width: 95%;
+}
+.detail_table td {
+    vertical-align: top;
+}
+.detail_table th, .date_grid td:hover, .drag_table th {
+    background-color: #151515;
+    color: #FFFFFF;
+    text-align: left;
+}
+.detail_table th {
+  text-align: left;
+}
+.detail_table thead a {
+  color: white;
+  text-decoration: none;
+} 
+.detail_table th:hover {
+  background-color: #1eb816;
+}
+.detail_table a {
+    color: #151515;
+}
+.detail_table .subhead {
+  background-color: gray;
+  font-weight: bold;
+}
+.drag_table {
+  border: 1px solid #ccc;
+  border-collapse: collapse;
+}
+.drag_table td {
+  padding: 1em;
+}
+.drag_table_alt_row {
+  background-color: #eee;
+}
+.dragging {
+  background-color: black;
+  color: white;
+}
+td.drag_handle {
+    background-image: url(/images/drag_handle.gif);
+    background-repeat: no-repeat;
+    background-position: center center;
+    cursor: move;
+}
+.bootstrap-hover {
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
+}
+.bootstrap-hover:hover {
+  border-top: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
+.hover:hover {
+    background-color: #1eb816;
+    color: #FFFFFF;
+}
+.hover:hover a {
+  color:#FFFFFF;
+}
+.date_grid .first_col, .date_grid .first_row {
+    font-weight:bold;
+}
+.date_grid .first_col {
+    text-align: right;
+}
+.date_grid .first_row {
+    text-align: center;
+}
+.date_grid td {
+    padding: 4px;
+}
+.date_grid th {
+    font-weight: normal;
+}
+.date_grid .top_corner {
+    background-color: #FFFFFF;
+}
+.content_head {
+    width: 100%;
+    text-align:center;
+    font-size: 120%;
+    margin-bottom: 1em;
+}
+.content_head_label {
+  font-size: 90%;
+}
+.submit {
+    background-color: #707070;
+    cursor: pointer;
+}
+input, textarea, select {
+    background: #FFFFFF;
+    border: 1px solid #707070;
+}
+input[type="checkbox"] {
+  padding: 0px;
+}
+a {
+    color: #707070;
+}
+.hover a:hover {
+    color: #fff;
+    text-decoration: none;
+}
+h1, h2, h3 {
+    margin: .8em 0 .2em 0;
+    padding: 0;
+}
+p {
+    margin: .4em 0 .8em 0;
+    padding: 0;
+}
+/*
+*/
+/* Header styles */
+.notices {
+  background-color: white;
+  border-bottom: 1px solid black;
+  color: green;
+  padding: 0 0 10px 10px;
+  text-align: center;
+}
+#notice_hide {
+	text-align: right;
+  position: relative;
+  right: 0;
+}
+.base_msg {
+  padding-right: 20px;
+}
+.errors_message {
+    color: red;
+}
+
+.system_message {
+  color: #993300;
+}
+.light_text {
+  color: #707070;
+}
+/* Footer styles */
+#footer {
+    clear: both;
+    float: left;
+    width: 100%;
+}
+#footer p {
+    padding: 10px;
+    margin: 0;
+}
+/* Drag Lists */
+.drag_lists td {
+    vertical-align: top;
+}
+
+  
+.drag_lists li {
+    margin: 0 5px 5px 5px;
+    padding: 5px;
+    cursor: move;
+}
+.drag_lists ul {
+    list-style-type: none;
+    margin: 0;
+    float: left;
+    margin-right: 10px;
+    border: 1px solid #707070;
+    padding:5px;
+    width: 145px;
+}
+.drag_lists th {
+    background-color: #707070;
+}
+.drag_lists_inactive_col li {
+    border: 1px solid #666666;
+}
+.drag_lists_active_col li {
+    border: 1px solid #707070;
+}
+/* jquery toolkit (flowplayer.org) */
+/* simple css-based tooltip */
+.tooltip {
+  background-color:#000;
+  border:1px solid #fff;
+  padding:10px 15px;
+  width:200px;
+  display:none;
+  color:#fff;
+  text-align:left;
+  font-size:12px;
+  /* outline radius for mozilla/firefox only */
+  -moz-box-shadow:0 0 10px #000;
+  -webkit-box-shadow:0 0 10px #000;
+}
+/* will_paginate */
+.pagination {
+  margin: 5px;
+}
+.pagination em {
+  font-style: normal;
+  color: #575757;
+}
+.pagination a {
+  text-decoration: none;
+}
+.pagination .disabled {
+  display: none;
+}
+
+/* Edit tables */
+.label_cell {
+	font-weight: bold;
+  width: 15em;
+  padding-bottom: 5px;
+}
+.field_row select {
+  width: 15em;
+}
+.field_row textarea {
+  width: 14.7em;
+}
+/* Comments boxes */
+
+.comment_input {
+  width: 97%;
+}
+.comment_table {
+  width: 97%;
+}
+.comment_header a {
+  text-decoration: none;
+  font-weight: bold;
+  color: #000;
+}
+.comment_body {
+  display: none;
+}
+.comment_body pre {
+  margin: 0 0 0 .5em;
+  background: none;
+  border-left: 1px dotted #d7d7d7;
+}
+.comment_controls {
+  text-align: right;
+}
+.comment_header_date{
+  text-align: right;
+}
+.comment_edit {
+  display: none;
+}
+/* Bulk Editing */
+.bulk_header_inner {
+  margin: .5em 0 1em 20%;
+  width: 60%;
+  text-align: center;
+  font-size: 110%;
+}
+#bulk_message {
+  margin: .5em 3em .5em 3em;
+  text-align: center;
+}
+/* Milestones */
+.milestones_cont {
+  margin-bottom: 1em;
+}
+.ms_action_links {
+  text-align: right;
+}
+.ms_col_1 {
+  width: 5%;
+}
+.ms_col_2 {
+  width: 35%;
+}
+.ms_col_date {
+  width: 20%;
+}
+.ms_tbl {
+  width: 100%;
+}
+.milestone_subhead td {
+  padding: 3px;
+  text-align: center;
+  font-weight: bold;
+}
+.ms_pending {
+  background-color: green;
+}
+.ms_overdue {
+  background-color: red;
+}
+.ms_missed {
+  background-color: #FF704D;
+}
+.ms_achieved {
+  background-color: #66A366;
+}
+.ms_trouble {
+  background-color: yellow;
+}
+
+/* SCREEN SPECIFIC */
+.ord_det_row td{
+  border-top: 1px solid #d7d7d7;
+}
+.classification_box {
+  width: 95%;
+  margin-bottom: 10px;
+}
+.classification_box td {
+  vertical-align: top;
+}
+.classification_box .class_ctry_name {
+  background-color: black;
+  color: white;
+}
+.class_cntry_name {
+  font-size: 125%;
+}
+.tr_hts {
+  width: 95%;
+  margin-left: 4%;
+}
+.tr_hts td {
+  vertical-align: top;
+  width: 33%;
+}
+.tr_hts th {
+  background-color: #d7d7d7;
+  text-align: left;
+}
+.tf_row {
+  border: 1px solid white;
+  border-top: 1px solid black;
+  margin: 3px;
+}
+.tf_row:hover {
+  border: 1px solid black;
+}
+.tr_add_box {
+  text-align: right;
+}
+.tr_close {
+  margin: 0px;
+  padding: 0px;
+  text-align: right;
+  float: right;
+  display: inline;
+}
+.tf_line_number {
+  width: 2em;
+}
+.hts_field {
+  width: 8em;
+}
+.sched_b_field {
+  width: 8em;
+}
+.sched_b_opt {
+  margin-top: 5px;
+}
+.help_title {
+  display: block;
+  font-size: 200%;
+  font-weight: bold;
+}
+.help_pic {
+  border: 1px solid black;
+}
+#help_links_list {
+  list-style: none;
+}
+#help_links_list li {
+  font-size: 125%;
+  margin-bottom: .5em;
+}
+.tbl_hts_popup {
+  font-size: 14px;
+}
+.lbl_hts_popup {
+  font-weight: bold;
+}
+#main_search_cont {
+  width: 100%;
+  position: relative;
+  overflow-x: auto;
+}
+.permission_row td {
+  border-bottom: 1px solid #d7d7d7;
+  padding: 2px;
+  vertical-align: middle;
+  text-align: center;
+}
+#permissions .label {
+  font-weight: bold;
+}
+#permissions .label_cell {
+  text-align: left;
+}
+#permissions .check_toggles {
+  font-size: 85%;
+}
+#update_mode_help {
+  text-decoration: none;
+}
+.search_row {
+  cursor: pointer;
+}
+.sp_row {
+  vertical-align: top;
+}
+#run_as_box {
+  background-color: #FF4747;
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 1px solid black;
+}
+#show_all_columns {
+  float: right;
+  margin-right: 5%;
+}
+
+/* DROP DOWNS */
+#nav_bar {
+  background-color: black;
+  padding: 1px 0;
+  margin: 0;
+  width: 100%;
+  height: 22px;
+}  
+
+#nb_r {
+  position: absolute;
+  right: 0;
+  z-index: 1000;
+}
+#nb_l {
+  position: absolute;
+  left: 0;
+  z-index: 1000;
+}
+#tools_menu {
+  width: 200px;
+  left: -200px;
+}
+
+/* 
+  LEVEL ONE
+*/
+.dropdown {
+  font-size: 12px;
+}
+ul.dropdown                         { 
+  list-style: none;
+  padding: 0;
+  background-color: black;
+  color: white;
+  margin: 0;
+}
+ul.dropdown li                      { 
+  font-weight: bold; 
+  float: left; 
+  zoom: 1;
+  background-color: black;
+  color: white;
+}
+ul.dropdown li a                    { 
+  display: block; 
+  padding: 4px 8px;
+  border-right: 1px solid #333;
+  text-decoration: none;
+  color: white;
+  font-weight: normal;
+}
+ul.dropdown li:last-child a         { border-right: none; } /* Doesn't work in IE */
+ul.dropdown li.hover,
+ul.dropdown li:hover                { position: relative; }
+
+
+/* 
+  LEVEL TWO
+*/
+ul.dropdown ul            { 
+  /*width: 220px; */
+  visibility: hidden; 
+  position: absolute; 
+  top: 100%; 
+  left: -40px; 
+  /*margin-left: -40px;*/
+  list-style: none;
+}
+ul.dropdown ul li           { 
+  font-weight: normal; 
+  border-bottom: 1px solid #ccc; 
+  float: none; 
+}
+                    
+                                    /* IE 6 & 7 Needs Inline Block */
+ul.dropdown ul li a         { 
+  border-right: none; 
+  width: 100%; 
+  display: inline-block; 
+} 
+
+
+/* 
+  LEVEL THREE
+*/
+ul.dropdown ul ul           { left: 100%; top: 0; 
+  list-style: none;
+}
+ul.dropdown li:hover > ul       { visibility: visible; }
+
+.sub_menu {
+  z-index: 800;
+}
+.sub_menu li a{
+  color: white;
+}
+
+
+.ent_columns {
+  width:99%;
+}
+.ent_columns tbody {
+  vertical-align:top;
+}
+.ent_columns .label_cell {
+  width:0;
+}
+
+/* stuff from scaffold */
+pre.pre-nochrome {
+  padding: 0;
+  word-wrap: break-word;
+  background-color: white;
+  border: none;
+}
+
+div.field, div.actions {
+  margin-bottom: 10px;
+}
+
+
+.field_with_errors {
+  padding: 2px;
+  background-color: red;
+  display: table;
+}
+
+#error_explanation {
+  width: 450px;
+  border: 2px solid red;
+  padding: 7px;
+  padding-bottom: 0;
+  margin-bottom: 20px;
+  background-color: #f0f0f0;
+}
+
+#error_explanation h2 {
+  text-align: left;
+  font-weight: bold;
+  padding: 5px 5px 5px 15px;
+  font-size: 12px;
+  margin: -7px;
+  margin-bottom: 0px;
+  background-color: #c00;
+  color: #fff;
+}
+
+#error_explanation ul li {
+  font-size: 12px;
+  list-style: square;
+}

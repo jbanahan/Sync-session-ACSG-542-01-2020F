@@ -2,14 +2,12 @@
   $(function() {
     <% if current_user.company.master %>
     $( "#btn_edit" )
-      .button()
       .click(function() {
         window.location = '<%=edit_order_path(@order)%>';
       });
       OpenChain.addClickMap('e','Edit','btn_edit');
     <% end %>
     <% if @order.related_shipments.length == 0  && current_user.company.master %>
-    $("#btn_delete").button();
     OpenChain.addClickMap('d','Delete','btn_delete');
     <% end %>
     $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
@@ -17,7 +15,7 @@
       buttons:{"Save":function() {$("#frm_edit_line").submit();},
                "Cancel":function() {window.location = '<%=order_path(@order)%>';}}  
     });
-    $("#btn_add_line").button().click(function() {
+    $("#btn_add_line").click(function() {
       $("#mod_edit_line").dialog('open');
     });
     <% if @line.nil? && @order.can_edit?(current_user)%>
@@ -27,17 +25,18 @@
         buttons:{"Subscribe":function() {$("#frm_sub").submit();}}
       });
     $("#btn_subscriptions")
-      .button()
       .click(function() {
         $("#mod_subscriptions").dialog('open');
       });
-    $("#btn_line_cancel").button().click(function() {
+    $("#btn_line_cancel").click(function() {
       window.location = '<%=order_path(@order)%>';
     });
-    $("#order_line_submit").button();
     <% if @order.can_edit?(current_user) && !@line.nil? %>
       $("#mod_edit_line").dialog('open');
     <% end %>
+    $("#btn_delete_shell").click(function() {
+      $("#btn_delete").click();
+    });
   });
 <% end %>
 
@@ -45,15 +44,14 @@
   <% if current_user.company.master && !@order.locked? %>
   <button id='btn_edit'>Edit</button>
   <% end %>
+  <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? -%>
+    <button class='btn' id='btn_delete_shell'>Delete</button>
+  <% end -%>
   <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
-  <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? %>
-    <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
-  <% end %>
   <% if @line.nil? && @order.can_edit?(current_user)%>
     <button id='btn_add_line'>Add Product</button>
   <% end %>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
-  <%=render :partial => 'shared/show_next_prev', :locals => {:table_name => "orders"} %>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
 
@@ -154,4 +152,8 @@
     <%= ics.check_box :app_message %> Message<br />
     <%= ics.check_box :email %> Email<br />
  <% end %>
+</div>
+<div style='display:none;'>
+  <!--hidden and linked through delete on button bar-->
+  <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
 </div>

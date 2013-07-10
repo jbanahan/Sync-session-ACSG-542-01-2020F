@@ -12,32 +12,27 @@ $(function() {
     });
   <%if current_user.admin? %>
   $( "#btn_edit" )
-    .button()
     .click(function() {
       window.location = '<%=edit_company_path(@company)%>';
     });
   
   $("#btn_users")
-    .button()
     .click(function() {
       window.location = '<%=company_users_path(@company)%>';
     });
   $("#btn_lock")
-    .button()
     .click(function() {
       $("#mod_lock").dialog('open');
     });
-  $("#btn_lock_submit")
-    .button();
-  $("#btn_unlock").button().click(function(){$("#mod_unlock").dialog('open');});
-  $("#btn_poas").button().click(function() {window.location = '<%= company_power_of_attorneys_path(@company) %>'});
+  $("#btn_unlock").click(function(){$("#mod_unlock").dialog('open');});
+  $("#btn_poas").click(function() {window.location = '<%= company_power_of_attorneys_path(@company) %>'});
   <% end %>
 });
 <% end %>
 
 <% content_for :action_bar do %>
   <% if current_user.admin? %>
-    <% unless @company.locked?%><button id='btn_edit'>Edit</button><br /><%end%>
+    <% unless @company.locked?%><button id='btn_edit'>Edit</button><%end%>
     <button id='btn_users'>Users</button>
     <% if !@company.master && !@company.locked%>
       <button id='btn_lock'>Lock</button>

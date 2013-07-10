@@ -5,7 +5,7 @@ class OrdersController < ApplicationController
 		end
 
     def index
-      advanced_search CoreModule::ORDER
+      redirect_to advanced_search CoreModule::ORDER, params[:force_search]
     end
 
     def all_open
@@ -88,7 +88,7 @@ class OrdersController < ApplicationController
       action_secure(current_user.company.master,o,{:module_name=>"order"}) {
         succeed = lambda {|ord|
           add_flash :notices, "Order was updated successfully."
-          redirect_update ord
+          redirect_to ord
         }
         failure = lambda {|ord,errors|
           errors_to_flash ord, :now=>true

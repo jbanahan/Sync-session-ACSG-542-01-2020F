@@ -67,23 +67,12 @@ class FileImportProcessor
     messages = []
     object_map = {}
     begin
+      data_map = make_data_map row, base_column
       ActiveRecord::Base.transaction do
-        data_map = {}
-        @module_chain.to_a.each do |mod|
-          data_map[mod] = {}
-        end
-        columns = get_columns
-        columns.each do |col|
-          mf = col.find_model_field
-          r = row[col.rank + base_column]
-          r = r.value if r.respond_to? :value #get real value for Excel formulas
-          r = r.strip if r.is_a? String
-          data_map[mf.core_module][mf.uid]=r unless mf.uid==:_blank
-        end
         @module_chain.to_a.each do |mod|
           if fields_for_me_or_children? data_map, mod
             parent_mod = @module_chain.parent mod
-            obj = parent_mod.nil? ? mod.new_object : parent_mod.child_objects(mod,object_map[parent_mod]).build
+            obj = find_or_build_by_unique_field data_map, object_map, mod 
             @core_object = obj if parent_mod.nil? #this is the top level object
             object_map[mod] = obj
             custom_fields = {}
@@ -96,8 +85,6 @@ class FileImportProcessor
               end
             end
             obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
-            @core_object = obj unless parent_mod #this is the replaced top level object
-            object_map[mod] = obj
             cv_map = {}
             obj.custom_values.each {|c| cv_map[c.custom_definition_id]=c}
             to_batch_write = []
@@ -145,7 +132,9 @@ class FileImportProcessor
       fire_row row_number, nil, messages, true
       raise $!
     end
-    @core_object
+    r_val = @core_object
+    @core_object = nil
+    r_val
   end
 
   #is this record allowed to be added / updated based on the search_setup's update mode
@@ -188,14 +177,7 @@ class FileImportProcessor
   end
   
   def merge_or_create(base,save,is_top_level,options={})
-    dest = base.find_same
-    if dest.nil?
-      dest = base
-    else
-      base.destroy
-      before_merge base, dest
-      dest.shallow_merge_into base, options
-    end
+    dest = base
     is_new = dest.new_record?
     before_save dest
     dest.save! if save
@@ -219,7 +201,7 @@ class FileImportProcessor
       :Product => ProductRulesProcessor,
       :SalesOrder => SaleRulesProcessor
       }
-      h = p[@import_file.search_setup.module_type.intern]
+      h = p[@import_file.module_type.intern]
       @rules_processor = h.nil? ? RulesProcessor.new : h.new
     end
     @rules_processor
@@ -282,7 +264,14 @@ class FileImportProcessor
         [obj.hts_1,obj.hts_2,obj.hts_3].each_with_index do |h,i|
           unless h.blank?
             ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id 
-            FileImportProcessor.raise_validation_exception top_level_object, "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." if ot.nil?
+            if ot.nil?
+              @countries_without_hts ||= []
+              if !@countries_without_hts.include?(country_id) && !Country.find(country_id).official_tariffs.empty?
+                FileImportProcessor.raise_validation_exception top_level_object, "HTS Number #{h.strip} is invalid for #{Country.find_cached_by_id(country_id).iso_code}." 
+              elsif !@countries_without_hts.include?(country_id)
+                @countries_without_hts << country_id
+              end
+            end
           end
         end
         #make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
@@ -319,7 +308,69 @@ class FileImportProcessor
     end
   end
 
+  class PreviewListener
+    attr_accessor :messages
+    def process_row row_number, object, messages, failed=false
+      self.messages = messages
+    end
+
+    def process_start time
+      #stub
+    end
+
+    def process_end time
+      #stub
+    end
+  end
+
   private
+
+  # find or build a new object based on the unique identfying column optionally scoped by the parent object
+  def find_or_build_by_unique_field data_map, object_map, my_core_module
+
+    search_scope = my_core_module.klass.scoped #search the whole table unless parent is found below
+
+    # get the next core module up the chain
+    parent_core_module = @module_chain.parent my_core_module
+    if parent_core_module
+      parent_object = object_map[parent_core_module]
+      search_scope = parent_core_module.child_objects my_core_module, parent_object
+    end    
+
+    key_model_field = nil
+    key_model_field_value = nil
+    my_core_module.key_model_field_uids.each do |mfuid|
+      key_model_field_value = data_map[my_core_module][mfuid.intern]
+      key_model_field = mfuid.intern unless key_model_field_value.blank?
+      break if key_model_field
+    end
+
+    raise "Cannot load record without key value for #{my_core_module.label}" unless key_model_field
+    
+    obj = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value).first
+
+    obj = search_scope.build if obj.nil?
+
+    obj
+    
+  end
+
+  # map a row from the file into data elements mapped by CoreModule & ModelField.uid
+  def make_data_map row, base_column
+    data_map = {}
+    @module_chain.to_a.each do |mod|
+      data_map[mod] = {}
+    end
+    get_columns.each do |col|
+      mf = col.find_model_field
+      r = row[col.rank + base_column]
+      r = r.value if r.respond_to? :value #get real value for Excel formulas
+      r = r.strip if r.is_a? String
+      data_map[mf.core_module][mf.uid]=r unless mf.uid==:_blank
+    end
+    data_map
+  end
+
   def fire_start
     fire_event :process_start, Time.now
   end
@@ -339,20 +390,6 @@ class FileImportProcessor
     @listeners.each {|ls| ls.send method, data if ls.respond_to?(method) }
   end
 
-  class PreviewListener
-    attr_accessor :messages
-    def process_row row_number, object, messages, failed=false
-      self.messages = messages
-    end
-
-    def process_start time
-      #stub
-    end
-
-    def process_end time
-      #stub
-    end
-  end
 end
 
 

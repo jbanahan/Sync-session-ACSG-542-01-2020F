@@ -1,6 +1,12 @@
 require 'spec_helper'
 
 describe SearchSetup do
+  describe :result_keys do
+    it "should initialize query" do
+      SearchQuery.any_instance.should_receive(:result_keys).and_return "X"
+      SearchSetup.new.result_keys.should == "X"
+    end
+  end
   describe "uploadable?" do
     #there are quite a few tests for this in the old test unit structure
     it 'should always reject ENTRY' do
@@ -39,6 +45,22 @@ describe SearchSetup do
       @s.reload
       @s.name.should == "X" #we shouldn't modify the original object
     end
+    it "should copy to another user including schedules" do
+      @s.search_schedules.build
+      @s.save
+      @s.give_to @u2, true
+      
+      d = SearchSetup.find_by_user_id @u2.id
+      d.name.should == "X (From #{@u.full_name})"
+      d.search_schedules.should have(1).item
+    end
+    it "should strip existing '(From X)' values from search names" do
+      @s.update_attributes :name => "Search (From David St. Hubbins) (From Nigel Tufnel)"
+      @s.give_to @u2
+      d = SearchSetup.find_by_user_id @u2.id
+      d.name.should == "Search (From #{@u.full_name})"
+    end
+
   end
   describe :deep_copy do
     before :each do 
@@ -90,6 +112,44 @@ describe SearchSetup do
       @s.search_schedules.create!
       d = @s.deep_copy "new"
       d.search_schedules.should be_empty
+    end
+    it "should copy schedules when told to do so" do
+      @s.search_schedules.create!
+      d = @s.deep_copy "new", true
+      d.search_schedules.should have(1).item
+    end
+  end
+  describe "values" do
+    it "should work for all model fields in SELECT" do
+      r = Factory(:region)
+      r.countries << Factory(:country)
+      ModelField.reload true
+      CoreModule::CORE_MODULES.each do |cm|
+        cm.klass.stub(:search_where).and_return("1=1")
+        
+        ss = SearchSetup.new(:module_type=>cm.class_name)
+        cm.model_fields.keys.each_with_index do |mfid,i|
+          ss.search_columns.build(:model_field_uid=>mfid,:rank=>i)
+          ss.sort_criterions.build(:model_field_uid=>mfid,:rank=>i)
+          ss.search_criterions.build(:model_field_uid=>mfid,:operator=>'null')
+        end
+        #just making sure each query executes without error
+        SearchQuery.new(ss,User.new).execute
+      end
+    end
+  end
+  context :last_accessed do
+    before :each do 
+      @s = Factory :search_setup
+    end
+
+    it "should return the last_accessed time from an associated search run" do
+      @s.last_accessed.should be_nil
+      now = Time.zone.now
+      @s.search_runs.build :last_accessed=>now
+      @s.save
+
+      @s.last_accessed.to_i == now.to_i
     end
   end
 end

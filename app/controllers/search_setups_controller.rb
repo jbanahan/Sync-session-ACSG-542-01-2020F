@@ -3,7 +3,7 @@ class SearchSetupsController < ApplicationController
   def show
     search_setup = SearchSetup.for_user(current_user).find(params[:id])
     respond_to do |format|
-      format.json { render :json => search_setup.to_json(:include => {:search_columns=>{:only=>[:model_field_uid,:rank]}, 
+      format.json { render :json => search_setup.to_json(:methods=>[:uploadable_error_messages],:include => {:search_columns=>{:only=>[:model_field_uid,:rank]}, 
           :sort_criterions=>{:only=>[:model_field_uid,:rank,:descending]}}) }
     end 
   end
@@ -42,18 +42,32 @@ class SearchSetupsController < ApplicationController
     end
   end
   def give
-    base = SearchSetup.for_user(current_user).find(params[:id])
-    if base.nil?
-      error_redirect "Search with ID #{params[:id]} not found."
+    base = SearchSetup.for_user(current_user).find_by_id(params[:id])
+    raise ActionController::RoutingError.new('Not Found') unless base
+    other_user = User.find(params[:other_user_id])
+    error_message = nil
+    if current_user.company.master? || other_user.company_id==current_user.company_id || other_user.company.master?
+      base.give_to other_user
+      success = true
     else
-      other_user = User.find(params[:other_user_id])
-      if current_user.company.master? || other_user.company_id==current_user.company_id || other_user.company.master?
-        base.give_to other_user
-        add_flash :notices, "Report #{base.name} has been given to #{other_user.full_name}."
-        redirect_to Kernel.const_get(base.module_type)
-      else
-        error_redirect "You do not have permission to give this search to user with ID #{params[:other_user_id]}."
-      end
+      error_message = "You do not have permission to give this search to user with ID #{params[:other_user_id]}."
+    end
+    respond_to do |format|
+      format.html {
+        if error_message.blank?
+          add_flash :notices, "Report #{base.name} has been given to #{other_user.full_name}."
+          redirect_to Kernel.const_get(base.module_type)
+        else
+          error_redirect error_message
+        end
+      }
+      format.json {
+        if error_message.blank?
+          render :json=>{"ok"=>"ok"}
+        else
+          render :json=>{"error"=>error_message}, :status=>422
+        end
+      }
     end
   end
   def destroy

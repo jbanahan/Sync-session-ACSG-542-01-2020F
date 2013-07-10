@@ -9,7 +9,16 @@ module CustomFieldSupport
   end
   
   def get_custom_value custom_definition
-    get_custom_value_by_id custom_definition.id
+    id = custom_definition.id
+    cv = get_custom_value_by_overrides custom_definition
+    return cv if cv
+    cv = self.custom_values.find_by_custom_definition_id id if cv.nil? && !self.lock_custom_values
+    if cv.nil?
+      cv = self.custom_values.build(:custom_definition => custom_definition)
+      cv.value = custom_definition.default_value unless custom_definition.default_value.nil?
+      @custom_value_cache[custom_definition.id] = cv unless @custom_value_cache.nil?
+    end
+    cv
   end
 
   def get_custom_value_by_label label
@@ -38,16 +47,7 @@ module CustomFieldSupport
   end
 
   def get_custom_value_by_id(id)
-    cv = get_custom_value_by_overrides id
-    return cv if cv
-    cv = self.custom_values.find_by_custom_definition_id id if cv.nil? && !self.lock_custom_values
-    if cv.nil?
-      custom_definition = CustomDefinition.find id
-      cv = self.custom_values.build(:custom_definition => custom_definition)
-      cv.value = custom_definition.default_value unless custom_definition.default_value.nil?
-      @custom_value_cache[custom_definition.id] = cv unless @custom_value_cache.nil?
-    end
-    cv
+    get_custom_value CustomDefinition.find id
   end
 
   #when you inject a custom value, it will be the value returned by this instance's get_custom_value methods for the appropriate custom_definition for the life of the object, 
@@ -59,9 +59,14 @@ module CustomFieldSupport
   end
 
   private
-  def get_custom_value_by_overrides(custom_definition_id)
-    return @injected[custom_definition_id] if @injected && @injected[custom_definition_id]
-    return @custom_value_cache[custom_definition_id] unless @custom_value_cache.nil? || @custom_value_cache[custom_definition_id].nil?
+  def get_custom_value_by_overrides(custom_definition)
+    #if we've injected a value, that always wins
+    return @injected[custom_definition.id] if @injected && @injected[custom_definition.id]
+    #if there's a cache and the value is in it, return it
+    return @custom_value_cache[custom_definition.id] unless @custom_value_cache.nil? || @custom_value_cache[custom_definition.id].nil?
+    #if there's a cache then we've already loaded everything, so just build a new one
+    return self.custom_values.build(:custom_definition=>custom_definition) unless @custom_value_cache.blank?
+    #if we got here, there were no overrides
     return nil
   end
 end

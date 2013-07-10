@@ -28,7 +28,6 @@ $(function() {
 <%end%>
 <div id='classifications'>
   <a name='classifications'></a>
-  <h2>Classifications</h2>
   <% classification_count = 0 %>
   <% tariff_view_sequence = 0 %>
   <%= form_obj.fields_for :classifications do |cf| %>
@@ -53,7 +52,7 @@ $(function() {
               <% tariff_count += 1%>
             <% end %>
             <div class='tr_add_box'>
-              <button class='btn_add_component'>Add Component</button>
+              <button class='btn_add_component btn btn-small'>Add Component</button>
             </div>
           </td>
         </tr>
