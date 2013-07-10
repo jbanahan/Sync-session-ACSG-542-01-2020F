@@ -1,11 +1,14 @@
 require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
 require 'open_chain/custom_handler/polo_sap_bom_handler'
+require 'open_chain/custom_handler/j_crew_parts_extract_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
   POLO_SAP_BOM = 'OpenChain::CustomHandler::PoloSapBomHandler'
+  JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
+
   def index
     render :layout=>'one_col'
   end
@@ -110,6 +113,35 @@ class CustomFeaturesController < ApplicationController
   def csm_sync_download
     f = CustomFile.find params[:id] 
     action_secure(current_user.edit_products?,Product,{:verb=>"download",:module_name=>"CSM Sync Files",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def jcrew_parts_index
+    action_secure(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>JCREW_PARTS).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def jcrew_parts_upload
+    f = CustomFile.new(:file_type=>JCREW_PARTS,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/jcrew_parts'
+    }
+  end
+
+  def jcrew_parts_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),Product,{:verb=>"download",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end

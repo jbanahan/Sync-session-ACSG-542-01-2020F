@@ -12,3 +12,6 @@
 <%if enabled_features.include?('Polo SAP') && OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user)-%>
   <%=link_to "SAP Bill of Materials", '/custom_features/polo_sap_bom'%><br />
 <%end-%>
+<%if enabled_features.include?('JCrew Parts')-%>
+  <%=link_to "JCrew Parts Upload", '/custom_features/jcrew_parts'%><br />
+<%end-%>

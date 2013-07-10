@@ -151,6 +151,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/polo_canada" => "custom_features#polo_efocus_index", :via=>:get
   match "/custom_features/polo_canada/upload" => "custom_features#polo_efocus_upload", :via => :post
   match "/custom_features/polo_canada/:id/download" => "custom_features#polo_efocus_download", :via => :get
+  match "/custom_features/jcrew_parts" => "custom_features#jcrew_parts_index", :via=>:get
+  match "/custom_features/jcrew_parts/upload" => "custom_features#jcrew_parts_upload", :via => :post
+  match "/custom_features/jcrew_parts/:id/download" => "custom_features#jcrew_parts_download", :via => :get
 
   #reports
   match "/reports" => "reports#index", :via => :get
