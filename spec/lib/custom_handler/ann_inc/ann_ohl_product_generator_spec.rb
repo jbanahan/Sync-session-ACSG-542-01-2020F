@@ -105,6 +105,18 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       r[0][0].should == p.unique_identifier
       r[0][1].should == "Other long description"
     end
+    it "should not send multiple lines for sets" do
+      p = Factory(:product)
+      cls = p.classifications.create!(:country_id=>@us.id)
+      #creating tariff_records out of order to ensure we always get the lowest line number
+      cls.tariff_records.create!(:hts_1=>"1234444444",:line_number=>2)
+      cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      r = run_to_array
+      r.should have(1).record
+      r[0][0].should == p.unique_identifier
+      r[0][2].should == '1234567890'
+    end
   end
   describe :ftp_credentials do
     it "should send proper credentials" do

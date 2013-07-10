@@ -7,6 +7,7 @@ module OpenChain
         
         SYNC_CODE ||= 'ANN-PDM'
 
+
         #SchedulableJob compatibility
         def self.run_schedulable opts={}
           self.generate opts
@@ -20,6 +21,7 @@ module OpenChain
         def initialize(opts={})
           super(opts)
           @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override]
+          @used_part_countries = []
         end
 
         #superclass requires this method
@@ -33,6 +35,13 @@ module OpenChain
 
         def sync_csv
           super(false) #no headers
+        end
+
+        def preprocess_row row
+          pc_key = "#{row[0]}-#{row[4]}"
+          return [] if @used_part_countries.include? pc_key
+          @used_part_countries << pc_key
+          return [row]
         end
         
         def before_csv_write cursor, vals
@@ -74,7 +83,7 @@ INNER JOIN custom_values AS a_date ON a_date.custom_definition_id = #{@cdefs[:ap
           w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)"
           r << (@custom_where ? @custom_where : w)
           #US must be in file before Canada per OHL spec
-          r << " ORDER BY products.id, classifications.iso_code DESC"
+          r << " ORDER BY products.id, classifications.iso_code DESC, tariff_records.line_number"
           r
         end
       end
