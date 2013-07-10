@@ -111,6 +111,11 @@ module OpenChain
       @entry.po_numbers = detail_pos unless detail_pos.blank?
       @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
       @entry.container_numbers = accumulated_string(:container_numbers)
+      # There's no House bill field in the spec, so we're using the container
+      # number field on Air entries to send the data.
+      if @entry.transport_mode_code == "1"
+        @entry.house_bills_of_lading = accumulated_string(:container_numbers)
+      end
       @entry.origin_country_codes = accumulated_string(:org_country)
       @entry.origin_state_codes = accumulated_string(:org_state)
       @entry.export_country_codes = accumulated_string(:exp_country)

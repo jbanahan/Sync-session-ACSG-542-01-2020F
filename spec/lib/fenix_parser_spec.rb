@@ -223,6 +223,20 @@ describe OpenChain::FenixParser do
       bols.include?(bol).should be_true
     }
     
+    # House Bills should be blank
+    ent.house_bills_of_lading.should be_nil
+  end
+
+  it "should store container numbers in house bills field on air shipments" do
+    @transport_mode_code = "1"
+    ent = do_shared_test @entry_lambda.call
+
+    # We're pulling container from B3L and CON lines
+    house_bills = ent.house_bills_of_lading.split("\n ")
+    house_bills.length.should == @additional_container_numbers.length + 1
+    ([@container] + @additional_container_numbers).each do |n|
+      house_bills.include?(n).should be_true
+    end
   end
 
   it 'should call link_broker_invoices' do
