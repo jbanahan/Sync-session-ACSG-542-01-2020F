@@ -7,7 +7,7 @@ class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
   POLO_SAP_BOM = 'OpenChain::CustomHandler::PoloSapBomHandler'
-  JCREW = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
+  JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
 
   def index
     render :layout=>'one_col'
@@ -119,13 +119,13 @@ class CustomFeaturesController < ApplicationController
 
   def jcrew_parts_index
     action_secure(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user),Product,{:verb=>"view",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
-      @files = CustomFile.where(:file_type=>JCREW).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      @files = CustomFile.where(:file_type=>JCREW_PARTS).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
       render :layout => 'one_col'
     }
   end
 
   def jcrew_parts_upload
-    f = CustomFile.new(:file_type=>JCREW,:uploaded_by=>current_user,:attached=>params[:attached])
+    f = CustomFile.new(:file_type=>JCREW_PARTS,:uploaded_by=>current_user,:attached=>params[:attached])
     action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
       if params[:attached].nil?
         add_flash :errors, "You must select a file to upload." 
