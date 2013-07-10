@@ -3,7 +3,7 @@
 ls_out=`lsof -t ./log/delayed_job.log`
 restart_count=`cat ./config/dj_count.txt`
 
-if [[ !$restart_count > 0 ]]; then
+if [[ ! $restart_count > 0 ]]; then
   restart_count=1
 fi
 
