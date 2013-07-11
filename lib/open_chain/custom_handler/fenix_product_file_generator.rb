@@ -1,10 +1,11 @@
 module OpenChain
   module CustomHandler
     class FenixProductFileGenerator
-      def initialize(fenix_customer_code,product_filter_lambda=lambda {|p| p}) 
+      def initialize(fenix_customer_code, importer_id = nil, additional_where = nil) 
         @fenix_customer_code = fenix_customer_code
         @canada_id = Country.find_by_iso_code('CA').id
-        @product_filter_lambda = product_filter_lambda
+        @importer_id = importer_id
+        @additional_where = additional_where
       end
 
       #automatcially generate file and ftp for trading partner "fenix-#{fenix_customer_code}"
@@ -16,7 +17,16 @@ module OpenChain
         r = Product.
           includes(:classifications=>:tariff_records).
           where("classifications.country_id = #{@canada_id} and length(tariff_records.hts_1) > 6").need_sync("fenix-#{@fenix_customer_code}")
-        @product_filter_lambda.call r
+        
+        if @importer_id
+          r = r.where(:importer_id => @importer_id)
+        end
+
+        if @additional_where
+          r = r.where(@additional_where)
+        end
+
+        r
       end
       
       def make_file products
