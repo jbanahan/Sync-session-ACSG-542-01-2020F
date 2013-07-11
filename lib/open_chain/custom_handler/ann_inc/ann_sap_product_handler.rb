@@ -58,7 +58,7 @@ module OpenChain
               end
               p.update_custom_value! @cdefs[:last_sap_date], 0.days.ago
               agg = aggregate_values rows
-              [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s}
+              [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost}
 
               #don't fill values for the same import country twice
               used_countries = []
@@ -118,8 +118,10 @@ module OpenChain
         def hts_valid? hts_number, country
           !country.official_tariffs.find_by_hts_code(hts_number.gsub(/[^0-9]/,'')).blank?
         end
-        def write_aggregate_value aggregate_vals, product, symbol
-          product.update_custom_value! @cdefs[symbol], aggregate_vals[symbol].compact.join("\n")
+        def write_aggregate_value aggregate_vals, product, symbol, reverse
+          a_vals = aggregate_vals[symbol].compact.sort
+          a_vals.reverse! if reverse
+          product.update_custom_value! @cdefs[symbol], a_vals.join("\n")
         end
         def aggregate_values rows
           r = {:po=>[],:origin=>[],:import=>[],:cost=>[],:dept_num=>[],
@@ -128,7 +130,11 @@ module OpenChain
             r[:po] << clean_string(row[0])
             r[:origin] << clean_string(row[3])
             r[:import] << clean_string(row[4])
-            r[:cost] << clean_string(row[5])
+            cost_str = row[5]
+            while cost_str.length < 5
+              cost_str = "0#{cost_str}"
+            end
+            r[:cost] << clean_string("#{row[4]} - #{cost_str}")
             r[:dept_num] << clean_string(row[7])
             r[:dept_name] << clean_string(row[8])
           end

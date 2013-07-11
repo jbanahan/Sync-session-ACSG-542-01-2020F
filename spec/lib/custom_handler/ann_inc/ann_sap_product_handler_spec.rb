@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(@cdefs[:po]).value.should == h[:po]
     p.get_custom_value(@cdefs[:origin]).value.should == h[:origin]
     p.get_custom_value(@cdefs[:import]).value.should == h[:import]
-    p.get_custom_value(@cdefs[:cost]).value.should == h[:unit_cost]
+    p.get_custom_value(@cdefs[:cost]).value.should == "#{h[:import]} - 0#{h[:unit_cost]}"
     p.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y").should == h[:ac_date]
     p.get_custom_value(@cdefs[:dept_num]).value.should == h[:merch_dept_num]
     p.get_custom_value(@cdefs[:dept_name]).value.should == h[:merch_dept_name]
@@ -149,13 +149,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     @h.process data, @user
     Product.first.get_custom_value(@cdefs[:ac_date]).value.strftime("%m/%d/%Y").should == "12/28/2013"
   end
-  it "should aggregate values" do
-    data = make_row(:unit_cost=>'10.11')
-    data << make_row(:unit_cost=>'12.21')
-    data << make_row(:unit_cost=>'6.14')
-    data << make_row(:unit_cost=>'6.14')
+  it "should aggregate unit cost by country" do
+    data = make_row(:unit_cost=>'10.11',:import=>'CA')
+    data << make_row(:unit_cost=>'12.21',:import=>'CA')
+    data << make_row(:unit_cost=>'6.14',:import=>'CA')
+    data << make_row(:unit_cost=>'6.14',:import=>'CA')
+    data << make_row(:unit_cost=>'6.14',:import=>'US')
     @h.process data, @user
-    Product.first.get_custom_value(@cdefs[:cost]).value.should == "10.11\n12.21\n6.14"
+    Product.first.get_custom_value(@cdefs[:cost]).value.should == "US - 06.14\nCA - 12.21\nCA - 10.11\nCA - 06.14"
   end
   it "should set hts for multiple countries" do
     cn = Factory(:country,:iso_code=>'CN',:import_location=>true)
