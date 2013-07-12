@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'fileutils'
 
 describe OpenChain::Upgrade do
   describe 'upgrade if needed' do
@@ -14,6 +15,26 @@ describe OpenChain::Upgrade do
       OpenChain::Upgrade.should_not_receive(:upgrade)
 
       OpenChain::Upgrade.upgrade_if_needed
+    end
+  end
+
+  context :in_progress? do
+    context :file_present do
+      before :each do 
+        FileUtils.touch 'tmp/upgrade_running.txt'
+      end
+
+      after :each do
+        FileUtils.rm 'tmp/upgrade_running.txt' if File.exist? 'tmp/upgrade_running.txt'
+      end
+
+      it "should report upgrade in progress if tmp/upgrade_running.txt file is present" do  
+        OpenChain::Upgrade.in_progress?.should be_true
+      end  
+    end
+    
+    it "should report no upgrade in progress if upgrade file is missing" do
+      OpenChain::Upgrade.in_progress?.should be_false
     end
   end
 end

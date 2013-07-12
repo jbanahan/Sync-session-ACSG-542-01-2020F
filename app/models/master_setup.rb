@@ -6,8 +6,18 @@ class MasterSetup < ActiveRecord::Base
   after_update :update_cache 
   after_find :update_cache
 
-  def version
-    Rails.root.join("config","version.txt").read
+  def self.current_config_version
+    Rails.root.join("config","version.txt").read.strip
+  end
+
+  # We want to make sure the version # never updates.  The version the config file stated
+  # when this code was loaded is always the version # we care to relay.  This is especially
+  # important during an upgrade when the version number on disk my not exactly match what's
+  # code is currently running.
+  CURRENT_VERSION ||= current_config_version
+
+  def self.current_code_version
+    CURRENT_VERSION
   end
 
   #get the master setup for this instance, first trying the cache, then trying the DB, then creating and returning a new one
@@ -40,7 +50,7 @@ class MasterSetup < ActiveRecord::Base
 
   def self.need_upgrade?
     ms = MasterSetup.get(false)
-    !ms.target_version.blank? && ms.version.strip!=ms.target_version.strip
+    !ms.target_version.blank? && current_code_version.strip!=ms.target_version.strip
   end
 
   def self.release_migration_lock

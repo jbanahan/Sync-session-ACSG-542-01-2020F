@@ -3,7 +3,7 @@ require 'test_helper'
 class MasterSetupTest < ActiveSupport::TestCase
   test "version" do
     v = Rails.root.join("config","version.txt").read
-    assert MasterSetup.first.version==v, "Version should match content of version.txt"
+    assert MasterSetup.current_code_version==v, "Version should match content of version.txt"
   end
 
   test "migration lock local host" do
@@ -38,7 +38,7 @@ class MasterSetupTest < ActiveSupport::TestCase
   end
 
   test "need upgrade" do
-    current_version = MasterSetup.get.version
+    current_version = MasterSetup.current_code_version
 
     #if target_version isn't set, return false
     MasterSetup.get.update_attributes :target_version=>nil

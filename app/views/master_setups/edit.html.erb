@@ -26,7 +26,7 @@ $(function() {
       <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
         <table>
           <%=field_bootstrap "System UUID", @ms.uuid%>
-          <%=field_bootstrap "Version", @ms.version %>
+          <%=field_bootstrap "Version", MasterSetup.current_code_version %>
           <%=field_bootstrap "System Code", f.text_field(:system_code) %>
           <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>
           <%=field_bootstrap "Logo Image", f.text_field(:logo_image) %>
