@@ -125,7 +125,6 @@ module OpenChain
               p.create_snapshot run_by
             end
           rescue
-            debugger
             tmp = Tempfile.new(['AnnFileError','.csv'])
             tmp << file_content
             tmp.flush
