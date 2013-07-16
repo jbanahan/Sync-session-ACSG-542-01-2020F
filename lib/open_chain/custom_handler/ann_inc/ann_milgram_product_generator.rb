@@ -34,7 +34,7 @@ module OpenChain
 
         def sync_csv
           @sets_found = []
-          super(false) #no headers
+          super(false, {:col_sep=>"\t"}) #no headers
         end
 
         def preprocess_row outer_row

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
   def run_to_array generator=described_class.new
     @tmp = generator.sync_csv
-    CSV.read @tmp.path
+    CSV.read @tmp.path, {:col_sep=>"\t"}
   end
   after :each do 
     @tmp.unlink if @tmp
