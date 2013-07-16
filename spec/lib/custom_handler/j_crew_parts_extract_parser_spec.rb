@@ -85,11 +85,14 @@ describe 'JCrewPartsExtractParser' do
 
       @p.should_receive(:ftp_file) {|file, delete|
         file.should == tempfile
+        delete.should_not be_nil
         delete.should be_false
       }
 
-      @p.should_receive(:ftp_file) {|file|
+      @p.should_receive(:ftp_file) {|file, delete|
         file.should == tempfile
+        delete.should_not be_nil
+        delete.should be_false
       }
 
       @p.generate_and_send io
@@ -101,8 +104,8 @@ describe 'JCrewPartsExtractParser' do
     	p = OpenChain::CustomHandler::JCrewPartsExtractParser.new
       p.remote_file_name.should =~ /^J0000.DAT$/
       # Subsequent calls to remote_file_name should get a filename of JCREW.DAT
-      p.remote_file_name.should =~ /^JCREW.DAT$/
-      p.remote_file_name.should =~ /^JCREW.DAT$/
+      p.remote_file_name.should =~ /^JPART.DAT$/
+      p.remote_file_name.should =~ /^JPART.DAT$/
     end
   end
 

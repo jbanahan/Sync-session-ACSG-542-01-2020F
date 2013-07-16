@@ -54,16 +54,18 @@ module OpenChain
           ftp_file(temp, false)
           # Not a typo, we need to send the same file multiple times in order to send into 
           # each JCrew account (each time its sent it gets a different name - see remote_file_name)
-          ftp_file(temp)
+
+          # Keep the file open. Otherwise the tempfile open call above bombs when this block returns.
+          ftp_file(temp, false)
         end
       end
 
       def remote_file_name
         # Required for AllianceProductSupport for sending the file via FTP
         # Since we need to send multiple copies of the same file via FTP (one into each JCrew account)
-        # We'll just name the first file as the first account name, and then the second as JCREW.DAT
-        # and track the # of times the file has been FTP'ed.
-        filename = "JCREW.DAT"
+        # We'll just name the first file as the first account name, and then the second as JPART.DAT
+        # and track the # of times the file has been FTP'ed
+        filename = "JPART.DAT"
         if !@file_sent
           filename = "#{J_CREW_CUSTOMER_NUMBER}.DAT"
           @file_sent = true
