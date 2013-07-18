@@ -102,7 +102,7 @@ INV
   end
 
   it "should handle errors for each invoice individually" do
-    Exception.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # INV#2 from file 'path/to/file'."])
+    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # INV#2 from file 'path/to/file'."])
 
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               # This line fails due to missing invoice date
@@ -113,7 +113,7 @@ INV
   end
 
   it "should raise an error if the broker reference is missing" do
-    Exception.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # INV#2."])
+    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # INV#2."])
     
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               # This line fails due to missing broker reference

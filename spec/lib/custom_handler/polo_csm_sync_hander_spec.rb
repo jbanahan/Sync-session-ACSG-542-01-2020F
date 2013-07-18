@@ -207,14 +207,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
       13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
-    Exception.any_instance.should_receive(:log_me)
+    StandardError.any_instance.should_receive(:log_me)
     @h.process Factory(:user)
     p.get_custom_value(@csm).value.should be_blank 
   end
   it "should not fail for empty lines" do
     @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return({})
-    Exception.any_instance.should_not_receive(:log_me)
+    StandardError.any_instance.should_not_receive(:log_me)
     @h.process Factory(:user)
   end
   it "should fail if user cannot edit products" do
@@ -231,7 +231,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
       13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
-    Exception.any_instance.should_receive(:log_me)
+    StandardError.any_instance.should_receive(:log_me)
     @h.process Factory(:user)
     p.get_custom_value(@csm).value.should be_blank 
   end
