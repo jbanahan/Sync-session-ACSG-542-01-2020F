@@ -50,17 +50,28 @@ module OpenChain
 
               if primary_product_data
                 p.name = clean_string(base_row[2])
-                p.save!
               end
+
+              # If we actually have a missy style, always set it as the unique identifier
+              unless clean_string(base_row[14]).blank?
+                p.unique_identifier = clean_string(base_row[14])
+              end
+
+              p.save!
 
               # We want to set the missy, petite and tall values regardless of if we're pulling in data from 
               # a referenced related product or not. However, we don't want to null out existing related style values.
-              update_related_style_value p, :missy, clean_string(base_row[14])
+              update_related_style_value(p, :missy, clean_string(base_row[14]))
               update_related_style_value p, :petite, clean_string(base_row[15])
               update_related_style_value p, :tall, clean_string(base_row[16])
-              
+
+              # Make sure we maintain the earliest AC date across any date values sent to us for any style (related styles or not)
+              write_earliest_ac_date rows, p.get_custom_value(@cdefs[:ac_date])
+
+              # Every Update from SAP should set this value
+              p.update_custom_value! @cdefs[:last_sap_date], Time.zone.now
+
               if primary_product_data
-                p.update_custom_value! @cdefs[:ac_date], earliest_ac_date(rows)
                 p.update_custom_value! @cdefs[:prop_hts], clean_string(base_row[9])
                 p.update_custom_value! @cdefs[:prop_long], clean_string(base_row[10])
                 p.update_custom_value! @cdefs[:imp_flag], (clean_string(base_row[12])=='X')
@@ -77,8 +88,7 @@ module OpenChain
                   approved_long.value = clean_string(base_row[10])
                   approved_long.save!
                 end
-                p.update_custom_value! @cdefs[:last_sap_date], 0.days.ago
-
+                
                 #don't fill values for the same import country twice
                 used_countries = []
                 rows.each do |row|
@@ -113,7 +123,7 @@ module OpenChain
               end
 
               agg = aggregate_values rows
-              [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost, !primary_product_data}
+              [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost}
 
               unless base_values.empty?
                 SAP_REVISED_PRODUCT_FIELDS.each do |f| 
@@ -145,19 +155,18 @@ module OpenChain
           !country.official_tariffs.find_by_hts_code(hts_number.gsub(/[^0-9]/,'')).blank?
         end
         
-        def write_aggregate_value aggregate_vals, product, symbol, reverse, append_values
+        def write_aggregate_value aggregate_vals, product, symbol, reverse
+          # Append the aggregate values into the existing custom value
           vals = aggregate_vals[symbol]
-          if append_values
-            existing_val = product.get_custom_value(@cdefs[symbol]).value
-            if !existing_val.blank?
-              vals = existing_val.split("\n") + vals
-            end
+          field = product.get_custom_value(@cdefs[symbol])
+          if !field.value.blank?
+            vals = field.value.split("\n") + vals
           end
 
-          a_vals = vals.compact.sort
-          a_vals.uniq! if append_values
+          a_vals = vals.compact.uniq.sort
           a_vals.reverse! if reverse
-          product.update_custom_value! @cdefs[symbol], a_vals.join("\n")
+          field.value = a_vals.join("\n")
+          field.save!
         end
         
         def aggregate_values rows
@@ -167,10 +176,18 @@ module OpenChain
             r[:po] << clean_string(row[0])
             r[:origin] << clean_string(row[3])
             r[:import] << clean_string(row[4])
+
+            # There's probably some sprintf magic that could work here
+            # to do this, but it escapes me.
+            # Essentially, just make sure there's always at least 2 decimal places
+            # and zero pad to at least 4 significant digits (at least 5 chars total with decimal point)
             cost_str = row[5]
-            while cost_str.length < 5
-              cost_str = "0#{cost_str}"
-            end
+            cost_parts = cost_str.split(".")
+            cost_parts = ["0", "0"] if cost_parts.length == 0
+            cost_parts << "0" if cost_parts.length == 1
+            cost_parts[1] = cost_parts[1].ljust(2, "0")
+            cost_str = cost_parts.join(".").rjust(5, "0")
+
             r[:cost] << clean_string("#{row[4]} - #{cost_str}")
             r[:dept_num] << clean_string(row[7])
             r[:dept_name] << clean_string(row[8])
@@ -179,14 +196,16 @@ module OpenChain
           r
         end
 
-        def earliest_ac_date rows
-          r = nil
+        def write_earliest_ac_date rows, ac_date_field
+          r = ac_date_field.value
           rows.each do |row|
             next if row[6].blank?
             ac_date = Date.strptime row[6], "%m/%d/%Y"
             r = ac_date if r.nil? || ac_date < r
           end
-          r
+          
+          ac_date_field.value = r
+          ac_date_field.save!
         end
 
         def extract_related_styles base_row
@@ -212,7 +231,8 @@ module OpenChain
           p = nil
           # This is basically a flag indicating that the current row we're parsing should be considered data for the primary style
           # as opposed to the related product records where we should only parse out the aggregate data from the file fields
-          using_related_style = true
+          update_all_style_information = false
+
           if related_styles.include? :missy
             # Use the missy style's product record as the basis for this one if it exists.  We know that since we've referenced
             # a missy style in this record, that the record itself is NOT a missy style.
@@ -233,7 +253,7 @@ module OpenChain
               p = set_missy_data p, row, style
               # While technically, this is a related style, since the missy data is the "master" we want it's data to be the primary data source
               # on the record.  So we parse all the row's fields instead of just the aggregated columns.
-              using_related_style = false
+              update_all_style_information = true
             end
           elsif related_styles.size > 0
             # At this point, we know our record has either a petite or a tall related style.  Which means we possibly may have a missy style.
@@ -244,17 +264,17 @@ module OpenChain
             if p && style == p.get_custom_value(@cdefs[:missy]).value
               # We can use the found record's data and see if our current record is referenced by it as a missy style.
               p = set_missy_data p, row, style
-              using_related_style = false
+              update_all_style_information = true
             end
           end
 
           if p.nil?
+            update_all_style_information = true
             # So, every other lookup has failed, just use the style as a lookup
             p = Product.find_by_unique_identifier style
-            using_related_style = false
           end
 
-          [p, !using_related_style]
+          [p, update_all_style_information]
         end
 
         def verify_found_products result, styles
