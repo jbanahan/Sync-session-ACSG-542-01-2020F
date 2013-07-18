@@ -18,15 +18,37 @@ module JoinSupport
   end
 
   def add_join(p)
-    mf = find_model_field
-    set_module_chain p if @module_chain.nil?
-    mf_cm = mf.core_module
-    p = add_parent_joins p, @module_chain, mf_cm unless @module_chain.nil?
-    p = p.joins(mf.join_statement) unless mf.join_statement.nil?
+    if @module_chain.nil?
+      set_module_chain p
+    end
+
+    p = add_model_field p, find_model_field
+
+    if respond_to? :secondary_model_field
+      mf_two = secondary_model_field
+      if mf_two
+        p = add_model_field p, mf_two
+      end
+    end
+      
     p
   end
 
   private
+
+  def add_model_field query, mf
+    mf_cm = mf.core_module
+    unless @module_chain.nil?
+      query = add_parent_joins query, @module_chain, mf_cm 
+    end
+
+    unless mf.join_statement.nil?
+      query = query.joins(mf.join_statement) 
+    end
+
+    query
+  end
+
   def add_parent_joins(p,module_chain,target_module)
     add_parent_joins_recursive p, module_chain, target_module, module_chain.first
   end

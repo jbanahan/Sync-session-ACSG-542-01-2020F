@@ -1,6 +1,6 @@
 class CriterionOperator
   attr_reader :key, :label
-  
+
   def initialize(key, query_string, label)
     @key = key
     @query_string = query_string

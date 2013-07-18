@@ -93,7 +93,16 @@ class SearchQuery
     # build a list of all core modules used in the query
     core_modules = Set.new
     @search_setup.search_columns.each {|sc| core_modules << sc.model_field.core_module}
-    @search_setup.search_criterions.each {|sc| core_modules << sc.model_field.core_module}
+    @search_setup.search_criterions.each {|sc| 
+      core_modules << sc.model_field.core_module
+      # Some search criterions can contain references to mutiple model fields, which may
+      # be at different levels.  Make sure we're adding the core modules for these 
+      # secondary fields.
+      mf_two = sc.secondary_model_field
+      if mf_two
+        core_modules << mf_two.core_module
+      end
+    }
     @search_setup.sort_criterions.each {|sc| core_modules << sc.model_field.core_module}
 
     # loop through the chain including all modules used and all of their parents

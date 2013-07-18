@@ -42,7 +42,7 @@
           </div>
         </div>
         <div ng-repeat='crit in importedFile.search_criterions' class='form-horizontal'>
-          <div chain-search-criterion='crit'></div>
+          <div chain-search-criterion='crit' model-fields="importedFile.model_fields"></div>
         </div>
         Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in importedFile.model_fields'>
         </select>
