@@ -1,9 +1,11 @@
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
+require 'open_chain/custom_handler/ann_inc/ann_related_styles_support'
 module OpenChain
   module CustomHandler
     module AnnInc
       class AnnOhlProductGenerator < OpenChain::CustomHandler::ProductGenerator
-        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
+        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
+        include OpenChain::CustomHandler::AnnInc::AnnRelatedStylesSupport
         
         SYNC_CODE ||= 'ANN-PDM'
 
@@ -20,7 +22,7 @@ module OpenChain
 
         def initialize(opts={})
           super(opts)
-          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override]
+          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :petite, :missy, :tall]
           @used_part_countries = []
         end
 
@@ -37,11 +39,17 @@ module OpenChain
           super(false) #no headers
         end
 
-        def preprocess_row row
-          pc_key = "#{row[0]}-#{row[4]}"
-          return [] if @used_part_countries.include? pc_key
-          @used_part_countries << pc_key
-          return [row]
+        def preprocess_row outer_row
+          explode_lines_with_related_styles(outer_row) do |row|
+            pc_key = "#{row[0]}-#{row[4]}"
+            local_row = [row]
+            if @used_part_countries.include? pc_key
+              local_row = []
+            else 
+              @used_part_countries << pc_key  
+            end
+            local_row
+          end
         end
         
         def before_csv_write cursor, vals
@@ -68,7 +76,11 @@ module OpenChain
             'tariff_records.hts_1',
             'ifnull(tariff_records.schedule_b_1,"")',
             'classifications.iso_code',
-            cd_s(@cdefs[:long_desc_override].id)
+            cd_s(@cdefs[:long_desc_override].id),
+            # Make the missy, petite and tall the last three columns always, otherwise you'll have to change the code in before_csv_write
+            cd_s(@cdefs[:missy].id),
+            cd_s(@cdefs[:petite].id),
+            cd_s(@cdefs[:tall].id)
           ]
           r = "SELECT #{fields.join(', ')}
 FROM products

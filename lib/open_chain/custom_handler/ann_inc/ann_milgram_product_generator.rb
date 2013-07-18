@@ -1,9 +1,12 @@
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
+require 'open_chain/custom_handler/ann_inc/ann_related_styles_support'
+
 module OpenChain
   module CustomHandler
     module AnnInc
       class AnnMilgramProductGenerator < OpenChain::CustomHandler::ProductGenerator
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
+        include OpenChain::CustomHandler::AnnInc::AnnRelatedStylesSupport
 
         SYNC_CODE ||= 'ANN-MIL'
         
@@ -19,7 +22,7 @@ module OpenChain
 
         def initialize(opts={})
           super(opts)
-          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty]
+          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty,:petite, :missy, :tall]
         end
 
         def sync_code
@@ -31,32 +34,34 @@ module OpenChain
 
         def sync_csv
           @sets_found = []
-          super(false) #no headers
+          super(false, {:col_sep=>"\t"}) #no headers
         end
 
-        def preprocess_row row
-          r = []
+        def preprocess_row outer_row
+          explode_lines_with_related_styles(outer_row) do |row|
+            r = []
 
-          #set proper Y/N for booleans
-          (6..8).each {|i| row[i] = fix_boolean(row[i])}
+            #set proper Y/N for booleans
+            (6..8).each {|i| row[i] = fix_boolean(row[i])}
 
-          if row[5]=='Y' #handle sets
-            if !@sets_found.include?(row[0]) #we need the header record for this set
-              hr = {}
-              row.each {|k,v| hr[k] = v}
-              hr[1] = '' #no line number
-              hr[3] = '' #no quantity
-              hr[4] = '' #no hts
-              @sets_found << row[0]
-              r << hr
+            if row[5]=='Y' #handle sets
+              if !@sets_found.include?(row[0]) #we need the header record for this set
+                hr = {}
+                row.each {|k,v| hr[k] = v}
+                hr[1] = '' #no line number
+                hr[3] = '' #no quantity
+                hr[4] = '' #no hts
+                @sets_found << row[0]
+                r << hr
+              end
+              r << row
+            else
+              row[1] = '' #only send line number for set details
+              row[3] = '' #only send quantity for set details
+              r << row
             end
-            r << row
-          else
-            row[1] = '' #only send line number for set details
-            row[3] = '' #only send quantity for set details
-            r << row
+            r
           end
-          r
         end
 
         def before_csv_write cursor, vals
@@ -81,7 +86,11 @@ module OpenChain
             cd_s(@cdefs[:oga_flag].id),
             cd_s(@cdefs[:fta_flag].id),
             cd_s(@cdefs[:manual_flag].id),
-            cd_s(@cdefs[:long_desc_override].id)
+            cd_s(@cdefs[:long_desc_override].id),
+            # Make the missy, petite and tall the last three columns always, otherwise you'll have to change the code in before_csv_write
+            cd_s(@cdefs[:missy].id),
+            cd_s(@cdefs[:petite].id),
+            cd_s(@cdefs[:tall].id)
           ]
           r = "SELECT #{fields.join(', ')}
 FROM products

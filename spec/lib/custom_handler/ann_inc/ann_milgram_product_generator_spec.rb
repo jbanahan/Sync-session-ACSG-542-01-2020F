@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
   def run_to_array generator=described_class.new
     @tmp = generator.sync_csv
-    CSV.read @tmp.path
+    CSV.read @tmp.path, {:col_sep=>"\t"}
   end
   after :each do 
     @tmp.unlink if @tmp
@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
     end
     @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty]
+    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty, :missy, :petite, :tall]
   end
 
   context 'query' do
@@ -69,6 +69,26 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       r.should have(1).record
       r.first[2].should == 'LDOV'
     end
+    it "should explode lines that have related styles" do
+      p = Factory(:product)
+      [@ca,Factory(:country,:iso_code=>'US')].each do |cntry|
+        cls = p.classifications.create!(:country_id=>cntry.id)
+        cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
+        cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      end
+      p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
+
+      p.update_custom_value! @cdefs[:missy], p.unique_identifier
+      p.update_custom_value! @cdefs[:petite], "p-style"
+      p.update_custom_value! @cdefs[:tall], "t-style"
+
+      r = run_to_array
+      r.should have(3).records
+      r[0][0].should == p.unique_identifier
+      r[1][0].should == "p-style"
+      r[2][0].should == "t-style"
+    end
+
     context :sets do
       it "should create 3 rows for two component style" do
         p = Factory(:product)

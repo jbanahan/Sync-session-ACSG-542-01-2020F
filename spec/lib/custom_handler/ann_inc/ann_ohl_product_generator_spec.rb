@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
     end
     @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override]
+    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :petite, :missy, :tall]
   end
   describe :sync_csv do
     it "should clean newlines from long description" do
@@ -116,6 +116,23 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       r.should have(1).record
       r[0][0].should == p.unique_identifier
       r[0][2].should == '1234567890'
+    end
+    it "should handle sending multiple lines for related styles" do
+      p = Factory(:product)
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      p.update_custom_value! @cdefs[:missy], "M-Style"
+      p.update_custom_value! @cdefs[:petite], "P-Style"
+      p.update_custom_value! @cdefs[:tall], "T-Style"
+
+      r = run_to_array
+      r.should have(4).records
+      r[0][0].should == p.unique_identifier
+      r[1][0].should == "M-Style"
+      r[2][0].should == "P-Style"
+      r[3][0].should == "T-Style"
     end
   end
   describe :ftp_credentials do

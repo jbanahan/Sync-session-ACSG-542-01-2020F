@@ -16,6 +16,17 @@ class QuickSearchController < ApplicationController
       CoreModule::DELIVERY=>[:del_ref],
       CoreModule::OFFICIAL_TARIFF=>[:ot_hts_code,:ot_full_desc]
     }
+    # Find and add all custom fields that are enabled as quick searchable
+    cds = CustomDefinition.find_all_by_quick_searchable true
+    cds.each do |cd|
+      mf = cd.model_field
+      if mf 
+          field_map = @module_field_map[mf.core_module]
+          if field_map
+            field_map << mf.uid
+          end
+      end
+    end
     @module_field_map.delete_if {|k,v| !k.view?(current_user)}
     @value = params[:v].strip
     render :layout=>'one_col'

@@ -5,6 +5,7 @@ module OpenChain
       # send updated product information to Ann's Zymmetry system
       class AnnZymProductGenerator < OpenChain::CustomHandler::ProductGenerator
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
+        include OpenChain::CustomHandler::AnnInc::AnnRelatedStylesSupport
        
         SYNC_CODE ||= 'ANN-ZYM'
 
@@ -20,7 +21,7 @@ module OpenChain
 
         def initialize opts={}
           super(opts)
-          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article]
+          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article, :petite, :missy, :tall]
         end
 
         def sync_code
@@ -32,15 +33,17 @@ module OpenChain
         def ftp_credentials
           {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/ZYM"}
         end
-        def preprocess_row row
-          r = []
-          origins = row[3].blank? ? [''] : row[3].split("\n")
-          origins.each do |o|
-            x = {}
-            row.each {|k,v| x[k] = (k==3 ? o : v)}
-            r << x
+        def preprocess_row outer_row
+          explode_lines_with_related_styles(outer_row) do |row|
+            r = []
+            origins = row[3].blank? ? [''] : row[3].split("\n")
+            origins.each do |o|
+              x = {}
+              row.each {|k,v| x[k] = (k==3 ? o : v)}
+              r << x
+            end
+            r
           end
-          r
         end
         def before_csv_write cursor, vals
           clean_string_values vals
@@ -67,7 +70,11 @@ module OpenChain
             cd_s(@cdefs[:approved_long].id),
             cd_s(@cdefs[:origin].id),
             'tariff_records.hts_1',
-            cd_s(@cdefs[:long_desc_override].id)
+            cd_s(@cdefs[:long_desc_override].id),
+            # Make the missy, petite and tall the last three columns always, otherwise you'll have to change the code in before_csv_write
+            cd_s(@cdefs[:missy].id),
+            cd_s(@cdefs[:petite].id),
+            cd_s(@cdefs[:tall].id)
           ]
           r = "SELECT #{fields.join(', ')}
 FROM products
