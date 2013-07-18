@@ -62,7 +62,7 @@
         <button class='btn btn-inverse' ng-click='sendEmailCurrent()'>Send</button>
         <button class='btn btn-inverse' ng-click='disableEmailCurrent()'>Cancel</button>
       </span>
-      <button class='btn btn-inverse' ng-show='importedFile.file_import_result.id > 0' href='/file_import_results/{{importedFile.file_import_result.id}}'>Log</button>
+      <button class='btn btn-inverse' ng-show='importedFile.file_import_result.id > 0' ng-click='showLog(importedFile.file_import_result.id);'>Log</button>
     </div>
   </div>
   <div ng-show='showPreviewBox'>

@@ -5,7 +5,7 @@ importedFileApp = angular.module('ImportedFileApp',['ChainComponents']).config([
     when('/:fileId/:page',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'})
 ])
 
-importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', '$location', 'chainSearchOperators', ($scope,$routeParams,$http,$location,chainSearchOperators) ->
+importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', '$http', '$location', 'chainSearchOperators', '$window', ($scope,$routeParams,$http,$location,chainSearchOperators,$window) ->
   
   #find object in array by mfid
   findByMfid = (ary,mfid) ->
@@ -88,6 +88,9 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
     ), (() ->
       $scope.errors.push "There was an error downloading the file. Please contact support."
     )
+
+  $scope.showLog = (id) ->
+    $window.location.href = "/file_import_results/" + id
 
   if($routeParams.fileId>0)
     $http.get('/imported_files/'+parseInt($routeParams.fileId)).success((data) ->
