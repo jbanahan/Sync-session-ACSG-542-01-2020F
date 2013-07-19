@@ -111,11 +111,6 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     tr = cls.tariff_records.first
     tr.hts_1.should == '1234567890'
   end
-  it "should set missy style to unique identifier if present" do
-    data = make_row :missy=>"MISSY"
-    @h.process data, @user
-    Product.first.unique_identifier.should == "MISSY"
-  end
 
   it "should set sap revised date if key field changes" do
     h = default_values
@@ -244,8 +239,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(@cdefs[:import]).value.should == "Import1\nImport2"
     p.get_custom_value(@cdefs[:cost]).value.should == "Import2 - 02.00\nImport1 - 01.23"
     p.get_custom_value(@cdefs[:dept_num]).value.should == "Dept1\nDept2"
-    p.get_custom_value(@cdefs[:dept_name]).value.should == "Name1\nName2"
+    p.get_custom_value(@cdefs[:dept_name]).value.should == "Name1, Name2"
   end
+
 
   it "should normalize the unit cost to at least 2 decimal places and at least 4 significant digits" do
     @h.process make_row(:import=>"Import",:unit_cost=>"0"), @user 
@@ -275,7 +271,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     it "should update existing style records and use missy style as master data (Scenario A)" do
       @h.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>nil, :tall=>"T-ABC"}), @user
       p = Product.first
-      p.unique_identifier.should == "M-ABC"
+      p.unique_identifier.should == "P-ABC"
       p.get_custom_value(@cdefs[:missy]).value.should == "M-ABC"
       p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
       p.get_custom_value(@cdefs[:petite]).value.should be_nil
@@ -285,7 +281,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       # The aggregate fields should have been updated with this new record's data (just use PO # as an example
       # aggregate field)
       p = Product.first
-      p.unique_identifier.should == "M-ABC"
+      p.unique_identifier.should == "P-ABC"
       p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
       p.get_custom_value(@cdefs[:po]).value.should == ["PO-T-ABC", default_values[:po]].sort.join("\n")
 
@@ -320,14 +316,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     it "should update related style for an existing product (Scenario B-2)" do
       @h.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>"", :tall=>"T-ABC"}), @user
       p = Product.first
-      p.unique_identifier.should == "M-ABC"
+      p.unique_identifier.should == "P-ABC"
       p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
       p.get_custom_value(@cdefs[:missy]).value.should == "M-ABC"
 
       @h.process make_row({:style => "T-ABC", :missy=>"M-ABC", :petite=>"P-ABC", :tall=>nil, :po=>"PO-T-ABC"}), @user
 
       p = Product.first
-      p.unique_identifier.should == "M-ABC"
+      p.unique_identifier.should == "P-ABC"
       p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
       p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
       p.get_custom_value(@cdefs[:po]).value.should == ["PO-T-ABC", default_values[:po]].sort.join("\n")
@@ -344,9 +340,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     end
 
     it "should handle records with no related styles (Scenario C-1)" do
-      @h.process make_row({:style => "P-ABC", :missy=>nil, :petite=>nil, :tall=>nil}), @user
+      @h.process make_row({:style => "M-ABC", :missy=>nil, :petite=>nil, :tall=>nil}), @user
       p = Product.first
-      p.unique_identifier.should == "P-ABC"
+      p.unique_identifier.should == "M-ABC"
       p.get_custom_value(@cdefs[:tall]).value.should be_nil
       p.get_custom_value(@cdefs[:missy]).value.should be_nil
       p.get_custom_value(@cdefs[:petite]).value.should be_nil

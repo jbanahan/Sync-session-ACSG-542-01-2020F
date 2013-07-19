@@ -52,16 +52,11 @@ module OpenChain
                 p.name = clean_string(base_row[2])
               end
 
-              # If we actually have a missy style, always set it as the unique identifier
-              unless clean_string(base_row[14]).blank?
-                p.unique_identifier = clean_string(base_row[14])
-              end
-
               p.save!
 
               # We want to set the missy, petite and tall values regardless of if we're pulling in data from 
               # a referenced related product or not. However, we don't want to null out existing related style values.
-              update_related_style_value(p, :missy, clean_string(base_row[14]))
+              update_related_style_value p, :missy, clean_string(base_row[14])
               update_related_style_value p, :petite, clean_string(base_row[15])
               update_related_style_value p, :tall, clean_string(base_row[16])
 
@@ -123,7 +118,7 @@ module OpenChain
               end
 
               agg = aggregate_values rows
-              [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost}
+              [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost, (s==:dept_name ? ", " : "\n")}
 
               unless base_values.empty?
                 SAP_REVISED_PRODUCT_FIELDS.each do |f| 
@@ -155,17 +150,17 @@ module OpenChain
           !country.official_tariffs.find_by_hts_code(hts_number.gsub(/[^0-9]/,'')).blank?
         end
         
-        def write_aggregate_value aggregate_vals, product, symbol, reverse
+        def write_aggregate_value aggregate_vals, product, symbol, reverse, delimiter
           # Append the aggregate values into the existing custom value
           vals = aggregate_vals[symbol]
           field = product.get_custom_value(@cdefs[symbol])
           if !field.value.blank?
-            vals = field.value.split("\n") + vals
+            vals = field.value.split(delimiter) + vals
           end
 
           a_vals = vals.compact.uniq.sort
           a_vals.reverse! if reverse
-          field.value = a_vals.join("\n")
+          field.value = a_vals.join(delimiter)
           field.save!
         end
         
