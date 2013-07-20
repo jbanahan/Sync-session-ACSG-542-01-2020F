@@ -383,6 +383,9 @@
         o = {rows:scope.bulkSelected,all:scope.allSelected}
         $.cookie(cookieIdentifier(scope),JSON.stringify(o))
 
+
+      $scope.selectionCookieRead = false
+
       #load selection state values from cookie
       readSelectionCookie = (scope, searchId) ->
         v = $.cookie(cookieIdentifier(scope))
@@ -392,6 +395,7 @@
           scope.selectAll() if o.all
           for r in scope.searchResult.rows
             r.bulk_selected = true if $.inArray(r.id,scope.bulkSelected)>=0
+        $scope.selectionCookieRead = true
 
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
@@ -503,17 +507,37 @@
 
       registrations.push($scope.$watch 'searchResult', ((newValue,oldValue, cbScope) ->
         if newValue && newValue.rows
-          valsAdded = []
+          selectedIds = []
+          nonSelectedIds = []
           for r in newValue.rows
+          #split the selected and not selected items 
+          #Because not every row has a checkbox, some items will be in both
+          #we'll clean them up in the next step
             if r.bulk_selected
-              unless $.inArray(r.id,cbScope.bulkSelected)>=0
-                cbScope.bulkSelected.push r.id
-                valsAdded.push r.id
-            else if $.inArray(r.id,valsAdded)==-1
-              idx = $.inArray(r.id,cbScope.bulkSelected)
-              cbScope.bulkSelected.splice(idx,1) if idx>=0
-              cbScope.allSelected = false
+              selectedIds.push r.id
+            else
+              nonSelectedIds.push r.id
+
+          # remove the selected ids from the non-selected list
+          for sId in selectedIds
+            idx = $.inArray(sId,nonSelectedIds)
+            nonSelectedIds.splice(idx,1) if idx >= 0
+
+          # remove the non-selected ids from the scope
+          # we can't just clear it because we don't want to lose items from other pages that were loaded
+          # by the cookie
+          for nsId in nonSelectedIds
+            idx = $.inArray(nsId,cbScope.bulkSelected)
+            cbScope.bulkSelected.splice(idx,1) if idx >= 0
+            cbScope.allSelected = false
+
+          # put the selected items into the scope
+          for sId in selectedIds
+            cbScope.bulkSelected.push sId unless $.inArray(sId,cbScope.bulkSelected)>=0
+            
+
         cbScope.selectPageCheck = false
+        writeSelectionCookie cbScope if $scope.selectionCookieRead
         ), true #true means "deep search"
       )
 
