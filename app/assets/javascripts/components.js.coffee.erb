@@ -388,13 +388,16 @@
 
       #load selection state values from cookie
       readSelectionCookie = (scope, searchId) ->
+        usedIds = []
         v = $.cookie(cookieIdentifier(scope))
         if v
           o = $.parseJSON v
           scope.bulkSelected = o.rows
           scope.selectAll() if o.all
           for r in scope.searchResult.rows
-            r.bulk_selected = true if $.inArray(r.id,scope.bulkSelected)>=0
+            if $.inArray(r.id,scope.bulkSelected)>=0 && $.inArray(r.id,usedIds)==-1
+              r.bulk_selected = true
+              usedIds.push r.id
         $scope.selectionCookieRead = true
 
       loadResultPage = (scope, searchId, page) ->
@@ -496,10 +499,6 @@
         $scope.searchResult.page--
 
       registrations = []
-      registrations.push($scope.$watch 'bulkSelected', ((newValue,oldValue, cbScope) ->
-          writeSelectionCookie(cbScope) unless newValue==oldValue
-        ), true
-      )
 
       registrations.push($scope.$watch 'allSelected', (newValue,oldValue, cbScope) ->
         writeSelectionCookie(cbScope) unless newValue==oldValue
