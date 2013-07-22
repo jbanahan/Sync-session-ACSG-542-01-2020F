@@ -113,7 +113,11 @@ module OpenChain
       @entry.container_numbers = accumulated_string(:container_numbers)
       # There's no House bill field in the spec, so we're using the container
       # number field on Air entries to send the data.
-      if @entry.transport_mode_code == "1"
+      # 1 = Air
+      # 2 = Highway (Truck)
+      # 6 = Rail
+      # 9 = Maritime (Ocean)
+      if ["1", "2"].include? @entry.transport_mode_code
         @entry.house_bills_of_lading = accumulated_string(:container_numbers)
       end
       @entry.origin_country_codes = accumulated_string(:org_country)
