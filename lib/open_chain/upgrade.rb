@@ -3,11 +3,11 @@ require 'open3'
 module OpenChain
   class Upgrade
 
-    #Upgrades the current instance to the target git tag
+    #Upgrades the current instance to the target git tag, specifying whether the upgrade is running from a delayed job queue or not.
     #returns the absolute path to the upgrade log file
     #raises an OpenChain::UpgradeFailure if there are any problems
-    def self.upgrade target
-      Upgrade.new(target).go
+    def self.upgrade target, upgrade_delelayed_job = false
+      Upgrade.new(target).go upgrade_delelayed_job
     end
 
     # Check the MasterSetup to see if this instance needs to be upgrade to another version and do so if needed
@@ -20,7 +20,7 @@ module OpenChain
 
     def self.upgrade_delayed_job_if_needed
       if MasterSetup.need_upgrade?
-        Upgrade.new(MasterSetup.get(false).target_version).go_delayed_job
+        upgrade MasterSetup.get(false).target_version, true
       end
     end
 
@@ -41,9 +41,9 @@ module OpenChain
       @target = target
       @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log" 
     end
-    
+
     #do not call this directly, use the static #upgrade method instead
-    def go
+    def go delayed_job_upgrade
       return "Skipping, upgrade_running.txt exists" if Upgrade.in_progress?
       @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target)
       begin
@@ -54,39 +54,20 @@ module OpenChain
         #upgrade_running.txt will stick around if one of the previous methods blew an exception
         #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
         capture_and_log "rm #{upgrade_file_path}" 
-        @log_path
-      rescue
-        @log.error $!.message
-        raise $!
-      ensure
-        finish_upgrade_log 
-      end
-    end
-
-    def go_delayed_job
-      return "Skipping, upgrade_running.txt exists" if Upgrade.in_progress?
-      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target)
-      begin
-        @log = Logger.new(@log_path)
-        capture_and_log "touch #{upgrade_file_path}"
-        get_source 
-        migrate
-        log_me "Migration complete"
-        capture_and_log "rm #{upgrade_file_path}" 
         # Remove the upgrade error file if it is present
-        capture_and_log("rm #{upgrade_error_file_path}") if File.exists?(upgrade_error_file_path)
-        log_me "Upgrade complete"
+        capture_and_log("rm #{upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(upgrade_error_file_path)
         @log_path
       rescue
         # If the delayed job upgrade fails at some point we'll need to remove the upgrade_running.txt file in order to get the upgrade
         # to start again, however, if we do that the dj_monitor.sh script may actually restart delayed job queues prior to the environment being ready for that.
         # Therefore, use the presence of another upgrade_error.txt flag file to tell it not to start the queue.
-        capture_and_log "touch #{upgrade_error_file_path}"
+        capture_and_log "touch #{upgrade_error_file_path}" if delayed_job_upgrade
         @log.error $!.message
         raise $!
       ensure
         finish_upgrade_log 
-        DelayedJobManager.restart
+        # We don't try and restart the delayed job process any longer here.  Instead we have delayed_job callbacks set up to kill queues that are running an
+        # outdated code version and then a background script (script/dj_monitor.sh) that will automatically start queues back up.
       end
     end
 
@@ -117,7 +98,8 @@ module OpenChain
     
     def migrate
       c = 0
-      while !MasterSetup.get_migration_lock && c<30 #5 minute wait
+      #10 minute wait - 5 minute wait proved to be a bit short once or twice when running migrations on data associated with a large table
+      while !MasterSetup.get_migration_lock && c<60 
         log_me "Waiting for #{MasterSetup.get.migration_host} to release migration lock"
         sleep 10
         c += 1
