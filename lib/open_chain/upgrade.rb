@@ -44,24 +44,35 @@ module OpenChain
 
     #do not call this directly, use the static #upgrade method instead
     def go delayed_job_upgrade
-      return "Skipping, upgrade_running.txt exists" if Upgrade.in_progress?
-      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target)
+      # Make sure only a single process is checking for and creating the upgrade file at a time
+      # to avoid multiple upgrades running on the same host/customer instance at a time.
+      @log = nil
+      @upgrade_log = nil
+      Lock.acquire(Lock::UPGRADE_LOCK) do
+        unless Upgrade.in_progress?
+          @log = Logger.new(@log_path)
+          # The log statement for this commeand will get sucked into the upgrade log when it's created
+          capture_and_log "touch #{Upgrade.upgrade_file_path}"
+        end
+      end
+
+      return "Skipping upgrade, #{Upgrade.upgrade_file_path} exists." unless @log
+      
+      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target, :log=>IO.read(@log_path))
       begin
-        @log = Logger.new(@log_path)
-        capture_and_log "touch #{upgrade_file_path}"
         get_source 
         apply_upgrade
         #upgrade_running.txt will stick around if one of the previous methods blew an exception
         #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
-        capture_and_log "rm #{upgrade_file_path}" 
+        capture_and_log "rm #{Upgrade.upgrade_file_path}" 
         # Remove the upgrade error file if it is present
-        capture_and_log("rm #{upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(upgrade_error_file_path)
+        capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(Upgrade.upgrade_error_file_path)
         @log_path
       rescue
         # If the delayed job upgrade fails at some point we'll need to remove the upgrade_running.txt file in order to get the upgrade
         # to start again, however, if we do that the dj_monitor.sh script may actually restart delayed job queues prior to the environment being ready for that.
         # Therefore, use the presence of another upgrade_error.txt flag file to tell it not to start the queue.
-        capture_and_log "touch #{upgrade_error_file_path}" if delayed_job_upgrade
+        capture_and_log "touch #{Upgrade.upgrade_error_file_path}" if delayed_job_upgrade
         @log.error $!.message
         raise $!
       ensure

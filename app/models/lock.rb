@@ -5,6 +5,7 @@
 class Lock < ActiveRecord::Base
 
   FENIX_PARSER_LOCK ||= 'FenixParser'
+  UPGRADE_LOCK ||= 'Upgrade'
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning wahtever
