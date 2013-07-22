@@ -32,7 +32,7 @@ class UsersController < ApplicationController
     # GET /users/1.xml
     def show
       @user = User.find(params[:id])
-      redirect_to edit_company_user_path @user
+      redirect_to edit_company_user_path @user.company, @user
     end
 
     # GET /users/new
