@@ -176,14 +176,16 @@ module OpenChain
             # to do this, but it escapes me.
             # Essentially, just make sure there's always at least 2 decimal places
             # and zero pad to at least 4 significant digits (at least 5 chars total with decimal point)
-            cost_str = row[5]
-            cost_parts = cost_str.split(".")
-            cost_parts = ["0", "0"] if cost_parts.length == 0
-            cost_parts << "0" if cost_parts.length == 1
-            cost_parts[1] = cost_parts[1].ljust(2, "0")
-            cost_str = cost_parts.join(".").rjust(5, "0")
+            cost_str = clean_string(row[5])
+            unless cost_str.blank?
+              cost_parts = cost_str.split(".")
+              cost_parts = ["0", "0"] if cost_parts.length == 0
+              cost_parts << "0" if cost_parts.length == 1
+              cost_parts[1] = cost_parts[1].ljust(2, "0")
+              cost_str = cost_parts.join(".").rjust(5, "0")
+              r[:cost] << clean_string("#{row[4]} - #{cost_str}")
+            end
 
-            r[:cost] << clean_string("#{row[4]} - #{cost_str}")
             r[:dept_num] << clean_string(row[7])
             r[:dept_name] << clean_string(row[8])
           end
