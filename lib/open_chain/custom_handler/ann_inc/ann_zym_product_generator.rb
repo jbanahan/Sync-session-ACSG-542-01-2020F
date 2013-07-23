@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
+require 'open_chain/custom_handler/ann_inc/ann_related_styles_support'
 module OpenChain
   module CustomHandler
     module AnnInc
