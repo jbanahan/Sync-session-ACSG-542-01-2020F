@@ -68,7 +68,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "should send data to Ack Handler if SAP enabled and path containers _from_sap and file starts with zym_ack" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(true)
         OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
-        OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','zym_ack.a.csv','ANN-ZYM')
+        OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','zym_ack.a.csv','ANN-ZYM')
         cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/zym_ack.a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end

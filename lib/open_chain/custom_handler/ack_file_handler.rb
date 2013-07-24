@@ -4,10 +4,15 @@ module OpenChain
     class AckFileHandler
       
       def process_product_ack_file file_content, file_name, sync_code
+        errors = get_ack_file_errors file_content, file_name, sync_code
+        handle_errors errors, file_name unless errors.blank?
+      end
+
+      def get_ack_file_errors file_content, file_name, sync_code
         errors = []
         CSV.parse(file_content,:headers=>true) do |row|
           errors << "Malformed response line: #{row.to_csv}" unless row.size==3
-          prod = Product.find_by_unique_identifier row[0]
+          prod = find_product row
           if prod.nil?
             errors << "Product #{row[0]} confirmed, but it does not exist."
             next
@@ -21,7 +26,7 @@ module OpenChain
           sync.update_attributes(:confirmed_at=>Time.now,:confirmation_file_name=>file_name,:failure_message=>fail_message)
           errors << "Product #{row[0]} failed: #{fail_message}" unless fail_message.blank?
         end
-        handle_errors errors, file_name unless errors.blank?
+        errors
       end
 
       # override this to do custom handling with the given array of error messages
@@ -33,6 +38,11 @@ module OpenChain
           messages += errors
           $!.log_me messages
         end
+      end
+      
+      #override this to do custom handling if a product isn't found in the database
+      def find_product row 
+        Product.find_by_unique_identifier row[0]
       end
     end
   end
