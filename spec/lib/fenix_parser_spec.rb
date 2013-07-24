@@ -12,7 +12,7 @@ describe OpenChain::FenixParser do
     @cargo_control_no = '20134310243091'
     @ship_terms = 'Fob'
     @direct_shipment_date = '12/14/2012'
-    @transport_mode_code = " 2 "
+    @transport_mode_code = " 9 "
     @entry_port_code = '456'
     @carrier_code = '1234'
     @voyage = '19191'
@@ -229,6 +229,18 @@ describe OpenChain::FenixParser do
 
   it "should store container numbers in house bills field on air shipments" do
     @transport_mode_code = "1"
+    ent = do_shared_test @entry_lambda.call
+
+    # We're pulling container from B3L and CON lines
+    house_bills = ent.house_bills_of_lading.split("\n ")
+    house_bills.length.should == @additional_container_numbers.length + 1
+    ([@container] + @additional_container_numbers).each do |n|
+      house_bills.include?(n).should be_true
+    end
+  end
+
+  it "should store container numbers in house bills field on truck shipments" do
+    @transport_mode_code = "2"
     ent = do_shared_test @entry_lambda.call
 
     # We're pulling container from B3L and CON lines
