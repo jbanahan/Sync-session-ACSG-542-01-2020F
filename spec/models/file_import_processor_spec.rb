@@ -44,6 +44,16 @@ describe FileImportProcessor do
       pro.do_row 0, ['uid-abc','name'], true, -1
       Product.find_by_unique_identifier('uid-abc').name.should == 'name'
     end
+    it "should not set blank values" do
+      p = Factory(:product,unique_identifier:'uid-abc',name:'name')
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
+      ])
+      pro.do_row 0, ['uid-abc','  '], true, -1
+      Product.find_by_unique_identifier('uid-abc').name.should == 'name'
+    end
     it "should create children" do
       country = Factory(:country)
       ot = Factory(:official_tariff,:hts_code=>'1234567890',:country=>country)

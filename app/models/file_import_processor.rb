@@ -78,6 +78,10 @@ class FileImportProcessor
             custom_fields = {}
             data_map[mod].each do |uid,data|
               mf = ModelField.find_by_uid uid
+              if data.blank?
+                messages << "Blank value skipped for #{mf.label}"
+                next
+              end
               if mf.custom?
                 custom_fields[mf] = data
               else
