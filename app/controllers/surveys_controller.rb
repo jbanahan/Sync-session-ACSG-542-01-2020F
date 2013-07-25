@@ -110,7 +110,7 @@ class SurveysController < ApplicationController
       redirect_to surveys_path
     else
       errors_to_flash s, :now=>true
-      redirect_to request.referrer
+      redirect_to request.referrer.blank? ? '/' : request.referrer
     end
   end
   def show_assign
@@ -145,6 +145,6 @@ class SurveysController < ApplicationController
         SurveySubscription.create!(:survey_id => @survey.id, :user_id => current_user.id)
       end
     end
-    redirect_to request.referrer
+    redirect_to request.referrer.blank? ? '/' : request.referrer
   end
 end
