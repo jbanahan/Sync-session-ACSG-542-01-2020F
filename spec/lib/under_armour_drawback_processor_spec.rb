@@ -222,6 +222,8 @@ describe OpenChain::UnderArmourDrawbackProcessor do
       cr = ChangeRecord.new
       r = OpenChain::UnderArmourDrawbackProcessor.new.make_drawback_import_lines @c_line, cr
       r.should have(1).line
+      @shipment = Shipment.find @shipment.id
+      @entry = Entry.find @entry.id
       d = r.first
       d.entry_number.should == @entry.entry_number
       d.import_date.should == @entry.arrival_date

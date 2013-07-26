@@ -192,6 +192,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
     @h.process Factory(:user)
+    p = Product.find p.id
     p.get_custom_value(@csm).value.should == "140ABCDEFGHIJKLMNO"
   end
   it "should fail if CSM number is not 18 digits" do

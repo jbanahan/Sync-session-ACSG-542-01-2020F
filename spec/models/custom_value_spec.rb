@@ -99,9 +99,11 @@ describe CustomValue do
       cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
       cv.value = true
       CustomValue.batch_write! [cv], true
+      @p = Product.find @p.id
       @p.get_custom_value(@cd).value.should be_true
       cv.value = false
       CustomValue.batch_write! [cv], true
+      @p = Product.find @p.id
       @p.get_custom_value(@cd).value.should be_false
     end
     it "should handle text" do

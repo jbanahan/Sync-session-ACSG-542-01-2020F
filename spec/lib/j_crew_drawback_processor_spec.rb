@@ -40,6 +40,8 @@ describe OpenChain::JCrewDrawbackProcessor do
   it "should match to shipment by po / style / entry_number" do
     OpenChain::JCrewDrawbackProcessor.process_entries [@entry]
     d = DrawbackImportLine.first
+    @shipment = Shipment.find @shipment.id
+    @entry = Entry.find @entry.id
     d.entry_number.should == @entry.entry_number
     d.import_date.should == @entry.arrival_date.to_date
     d.received_date.should == @shipment.get_custom_value(@cd_del).value
