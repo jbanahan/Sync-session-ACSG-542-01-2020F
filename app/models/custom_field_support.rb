@@ -12,7 +12,7 @@ module CustomFieldSupport
     id = custom_definition.id
     cv = get_custom_value_by_overrides custom_definition
     return cv if cv
-    cv = self.custom_values.find_by_custom_definition_id id if cv.nil? && !self.lock_custom_values
+    cv = self.custom_values.find {|v| v.custom_definition_id == custom_definition.id} if cv.nil? && !self.lock_custom_values
     if cv.nil?
       cv = self.custom_values.build(:custom_definition => custom_definition)
       cv.value = custom_definition.default_value unless custom_definition.default_value.nil?
