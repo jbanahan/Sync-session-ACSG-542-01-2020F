@@ -39,11 +39,15 @@ class SurveyResponsesController < ApplicationController
         end
       end
     end
+    log_message = "Response saved."
     if sr.user==current_user
-      sr.submitted_date = 0.seconds.ago if params[:do_submit]
+      if params[:do_submit]
+        sr.submitted_date = 0.seconds.ago 
+        log_message = "Response submitted."
+      end
     end
     sr.update_attributes params[:survey_response]
-    sr.survey_response_logs.create!(:message=>"Response updated.")
+    sr.survey_response_logs.create!(:message=>log_message,:user_id=>current_user.id)
     OpenMailer.delay.send_survey_user_update(sr) unless sr.user==current_user
     add_flash :notices, "Response saved successfully."
     redirect_to sr

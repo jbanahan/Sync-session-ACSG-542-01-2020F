@@ -14,6 +14,11 @@ class SurveyResponse < ActiveRecord::Base
   before_save :update_status
   after_commit :send_notification
 
+  # last time this user made an action that created a log message
+  def last_logged_by_user u
+    m = self.survey_response_logs.where(user_id:u.id).order('survey_response_logs.created_at DESC').limit(1).first
+    m ? m.created_at : nil
+  end
   # does the survey response or any of its questions have ratings
   def rated?
     !self.rating.blank? || !self.answers.where("rating is not null AND length(rating) > 0").empty?
