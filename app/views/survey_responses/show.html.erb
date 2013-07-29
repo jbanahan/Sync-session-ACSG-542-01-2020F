@@ -46,7 +46,7 @@
       evt.preventDefault();
       ChainSurveyResponse.addAttachment(t,t.attr('uploaded_by_id'),t.attr('answer_index'));
     });
-    $(".a_rem").live('click',function(evt) {
+    $(".a_rem").on('click',function(evt) {
       evt.preventDefault();
       var found = $(this).parent("div.a_line");
       found.fadeOut();
