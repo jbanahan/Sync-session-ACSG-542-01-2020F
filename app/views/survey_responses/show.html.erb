@@ -110,7 +110,7 @@
             <% if @respond_mode && !q.choices.blank? %>
               <div class='q_subhead'>Multiple Choice Answer</div> 
               <div class='comm'>
-                <%=a.select :choice, q.choices.lines.to_a, {:include_blank=>"Select an answer..."},:class=>'resp'%>
+                <%=a.select :choice, q.choices.lines.to_a, {:include_blank=>"Select an answer..."},:class=>'resp multchoice',:answer_id=>ans.id%>
               </div>
             <% elsif !a.object.choice.blank? %>
               <div class='q_subhead'>Multiple Choice Answer</div>

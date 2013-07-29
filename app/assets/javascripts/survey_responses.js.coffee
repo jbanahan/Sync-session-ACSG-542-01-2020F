@@ -10,11 +10,20 @@ root.ChainSurveyResponse =
     localStorage['survey-response-'+responseId+'-logged'] = lastLogged
     $('textarea.a_opt').each(() ->
       if loadCache
-        $(@).val localStorage['survey-answer-'+$(@).attr('answer_id')]
+        $(@).val localStorage['survey-answer-comm-'+$(@).attr('answer_id')]
       else
-        localStorage.removeItem 'survey-answer-'+$(@).attr('answer_id')
+        localStorage.removeItem 'survey-answer-comm-'+$(@).attr('answer_id')
       $(@).on('keyup',() ->
-        localStorage['survey-answer-'+$(@).attr('answer_id')] = $(@).val()
+        localStorage['survey-answer-comm-'+$(@).attr('answer_id')] = $(@).val()
+      )
+    )
+    $('select.multchoice').each(() ->
+      if loadCache
+        $(@).val localStorage['survey-answer-mult-'+$(@).attr('answer_id')]
+      else
+        localStorage.removeItem 'survey-answer-mult-'+$(@).attr('answer_id')
+      $(@).on('change',() ->
+        localStorage['survey-answer-mult-'+$(@).attr('answer_id')] = $(@).val()
       )
     )
 
