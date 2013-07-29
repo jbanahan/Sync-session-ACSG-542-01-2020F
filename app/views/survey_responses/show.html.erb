@@ -17,133 +17,52 @@
 <% end %>
 
 <% content_for :javascript do %>
-var OCSR = (function() {
-  var contactGood = false;
-  var respTrackGood = false;
-  return {
-    updateResponseTrack:function() {
-      var quests = $("div.question");
-      var q_cnt = quests.length;
-      var g_cnt = 0;
-      quests.each(function(i,e) {
-        var q = $(e);
-        var pass = false;
-        if(q.attr('answered')=='y') {
-          g_cnt++;
-        } else {
-          $(e).children(".a_opt, .a_fil").each(function(j,x) {
-            if(!pass && $(x).val().length > 0) {
-              pass = true;
-              g_cnt++;
-            }
-          });
-        }
-      });
-      $("#answr_trk").html(g_cnt+" of "+q_cnt+" questions answered.");
-      respTrackGood = (g_cnt==q_cnt);
-      OCSR.setSubmit();
-    },
-    contactCheck:function() {
-      var pass = true;
-      $(".creq").each(function() {
-        var lPass = $(this).val().length > 0;
-        if(pass) {
-          pass = lPass;
-        }
-        if(!lPass) {
-          $(this).addClass('required_empty');
-        } else {
-          $(this).removeClass('required_empty');
-        }
-      });
-      contactGood = pass;
-      OCSR.setSubmit();
-    },
-    addAttachment: function(link,uploadedById,answerIndex) {
-      var prefix,h,mid;
-      mid = new Date().getTime();
-      prefix = "survey_response[answers_attributes]["+answerIndex+"][attachments_attributes]["+mid+"]"; 
-      h = "<div class='a_line'>";
-      h += "<input type='hidden' name='"+prefix+"[attachable_type]' value='Answer'/>";
-      h += "<input type='hidden' name='"+prefix+"[uploaded_by_id]' value='"+uploadedById+"'/>";
-      h += "<input type='file' class='a_fil' name='"+prefix+"[attached]'>";
-      h += " - <a href='#' class='a_rem'>Remove</a>";
-      h += "</div>";
-      link.before(h);
-    },
-    setSubmit: function() {
-      if(contactGood && respTrackGood) {
-        $("#btn_submit").show();
-      } else {
-        $("#btn_submit").hide();
+  $(function() {
+    $("#s_confirm").dialog({autoOpen:false,title:"Confirm Submit",buttons:{
+      "Continue":function() {
+        $("#frm_sr").append("<input type='hidden' name='do_submit' value='1' />");
+        $("#frm_sr").submit();
+      },
+      "Cancel":function() {$("#s_confirm").dialog('close');}}
+    });
+    $("#btn_submit").click(function() {
+      $("#s_confirm").dialog('open');
+    });
+    $("#s_rating_filter").dialog({autoOpen:false,title:"Filter Ratings",buttons:{
+      "Filter":function() {
+        ChainSurveyResponse.filter();
+        $("#s_rating_filter").dialog('close');
       }
-    },
-    filter: function() {
-      var warnMsg = "Showing responses for: ";
-      $("div.question").hide();
-      $("input.r_filter:checked").each(function() {
-        var val =$(this).val();
-        var warnLbl = val.length > 0 ? val : "Not Rated";
-        $("div.question[rating='"+val+"']").slideDown();
-        warnMsg += warnLbl+", ";
-      });
-      if(warnMsg=="Showing responses for: ") {
-        $("#filter_warn").hide();
-      } else {
-        warnMsg = warnMsg.substr(0,warnMsg.length-2);
-        $("#filter_warn").html(warnMsg);
-        $("#filter_warn").show();
-      }
-    }
-  }
-})();
-$(function() {
-  $("#s_confirm").dialog({autoOpen:false,title:"Confirm Submit",buttons:{
-    "Continue":function() {
-      $("#frm_sr").append("<input type='hidden' name='do_submit' value='1' />");
-      $("#frm_sr").submit();
-    },
-    "Cancel":function() {$("#s_confirm").dialog('close');}}
+    }});
+    $("#btn_filter").click(function() {
+      $("#s_rating_filter").dialog('open');
+    });
+    $("select.resp").change(function() {ChainSurveyResponse.updateResponseTrack();});
+    $(".creq").keyup(function() {ChainSurveyResponse.contactCheck();});
+    $(".a_opt").keyup(function() {ChainSurveyResponse.updateResponseTrack();});
+    $(".a_fil").change(function() {ChainSurveyResponse.updateResponseTrack();});
+    $(".add_attach").click(function(evt) {
+      var t = $(this);
+      evt.preventDefault();
+      ChainSurveyResponse.addAttachment(t,t.attr('uploaded_by_id'),t.attr('answer_index'));
+    });
+    $(".a_rem").on('click',function(evt) {
+      evt.preventDefault();
+      var found = $(this).parent("div.a_line");
+      found.fadeOut();
+      found.remove();
+    });
   });
-  $("#btn_submit").click(function() {
-    $("#s_confirm").dialog('open');
+  <%if @respond_mode%>
+  $(document).ready(function() {
+    <%last_logged = @sr.last_logged_by_user(current_user)-%>
+    ChainSurveyResponse.initLocalStorage('<%=@sr.id%>','<%=last_logged ? last_logged.to_i : 0%>');
+    ChainSurveyResponse.updateResponseTrack();
+    ChainSurveyResponse.contactCheck();
+    ChainSurveyResponse.setSubmit();
   });
-  $("#s_rating_filter").dialog({autoOpen:false,title:"Filter Ratings",buttons:{
-    "Filter":function() {
-      OCSR.filter();
-      $("#s_rating_filter").dialog('close');
-    }
-  }});
-  $("#btn_filter").click(function() {
-    $("#s_rating_filter").dialog('open');
-  });
-  $("select.resp").change(function() {OCSR.updateResponseTrack();});
-  $(".creq").keyup(function() {OCSR.contactCheck();});
-  $(".a_opt").keyup(function() {OCSR.updateResponseTrack();});
-  $(".a_fil").change(function() {OCSR.updateResponseTrack();});
-  $(".add_attach").click(function(evt) {
-    var t = $(this);
-    evt.preventDefault();
-    OCSR.addAttachment(t,t.attr('uploaded_by_id'),t.attr('answer_index'));
-  });
-  $(".a_rem").live('click',function(evt) {
-    evt.preventDefault();
-    var found = $(this).parent("div.a_line");
-    found.fadeOut();
-    found.remove();
-  });
-});
-<%if @respond_mode%>
-$(document).ready(function() {
-  OCSR.updateResponseTrack();
-  OCSR.contactCheck();
-  OCSR.setSubmit();
-});
-<%end%>
+  <%end%>
 <% end %>
-
-<style>
-</style>
 <div id='survey_response_inner'><!--here for style support-->
 <div id='filter_warn' class='c_warn' style='display:none;'></div>
 <%=form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
@@ -191,7 +110,7 @@ $(document).ready(function() {
             <% if @respond_mode && !q.choices.blank? %>
               <div class='q_subhead'>Multiple Choice Answer</div> 
               <div class='comm'>
-                <%=a.select :choice, q.choices.lines.to_a, {:include_blank=>"Select an answer..."},:class=>'resp'%>
+                <%=a.select :choice, q.choices.lines.to_a, {:include_blank=>"Select an answer..."},:class=>'resp multchoice',:answer_id=>ans.id%>
               </div>
             <% elsif !a.object.choice.blank? %>
               <div class='q_subhead'>Multiple Choice Answer</div>
@@ -225,7 +144,7 @@ $(document).ready(function() {
           <% end %>
           <%=a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
             <%=acf.hidden_field :user_id%>
-            <%=acf.text_area :content, :class=>'a_opt'%><br />
+            <%=acf.text_area :content, :class=>'a_opt', :answer_id=>a.object.id%><br />
             <%if @sr.can_view_private_comments?(current_user)%><%=acf.check_box :private%> Private<%end%>
           <% end %>
           <ul>

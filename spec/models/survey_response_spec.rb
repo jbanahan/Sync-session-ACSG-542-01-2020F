@@ -1,6 +1,20 @@
 require 'spec_helper'
 
 describe SurveyResponse do
+  describe :last_logged_by_user do
+    it "should find most recently saved message created_at associated with given user" do
+      u = Factory(:user)
+      t = 3.days.ago
+      sr = Factory(:survey_response)
+      srl = sr.survey_response_logs
+      srl.create!(message:'earlier',user_id:u.id,created_at:10.days.ago)
+      find_me = srl.create!(message:'findme',user_id:u.id,created_at:t)
+      srl.create!(message:'newer no user')
+      srl.create!(message:'newer different user',user_id:Factory(:user).id)
+      sr.reload
+      sr.last_logged_by_user(u).to_i.should == t.to_i
+    end
+  end
   describe :rated? do
     it "should return true if there is a master rating" do
       Factory(:survey_response,:rating=>'abc').should be_rated
