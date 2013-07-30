@@ -2,12 +2,14 @@ require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
 require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
+require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
   POLO_SAP_BOM = 'OpenChain::CustomHandler::PoloSapBomHandler'
   JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
+  POLO_CA_INVOICES = 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
 
   def index
     render :layout=>'one_col'
@@ -142,6 +144,35 @@ class CustomFeaturesController < ApplicationController
   def jcrew_parts_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),Product,{:verb=>"download",:module_name=>"J Crew Parts Extract",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def polo_ca_invoices_index
+    action_secure(OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>POLO_CA_INVOICES).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def polo_ca_invoices_upload
+    f = CustomFile.new(:file_type=>POLO_CA_INVOICES,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/polo_ca_invoices'
+    }
+  end
+
+  def polo_ca_invoices_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end

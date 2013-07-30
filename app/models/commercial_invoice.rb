@@ -4,6 +4,7 @@ class CommercialInvoice < ActiveRecord::Base
   belongs_to :entry, :touch=>true
   belongs_to :vendor, :class_name => "Company"
   belongs_to :importer, :class_name => "Company"
+  belongs_to :consignee, :class_name => "Company"
 
   def can_view? user
     return false unless user.view_commercial_invoices?

@@ -12,6 +12,9 @@
 <%if enabled_features.include?('Polo SAP') && OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user)-%>
   <%=link_to "SAP Bill of Materials", '/custom_features/polo_sap_bom'%><br />
 <%end-%>
-<%if enabled_features.include?('JCrew Parts')-%>
+<%if enabled_features.include?('JCrew Parts') && OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user)-%>
   <%=link_to "JCrew Parts Upload", '/custom_features/jcrew_parts'%><br />
+<%end-%>
+<%if enabled_features.include?('Polo CA Invoices')  && OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil).can_view?(current_user)-%>
+  <%=link_to "Polo CA Invoice Upload", '/custom_features/polo_ca_invoices'%><br />
 <%end-%>
