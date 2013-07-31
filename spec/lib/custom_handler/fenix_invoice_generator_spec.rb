@@ -188,7 +188,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       c[:server].should == "ftp2.vandegriftinc.com"
       c[:username].should == "VFITRack"
       c[:password].should == "RL2VFftp"
-      c[:folder].should == "/to_ecs/fenix_invoices"
+      c[:folder].should == "to_ecs/fenix_invoices"
       c[:remote_file_name].should =~ /^FENIX_CUST_INV_\d+\.txt$/
     end
   end
