@@ -10,7 +10,11 @@ module OpenChain
 
       def get_ack_file_errors file_content, file_name, sync_code
         errors = []
-        CSV.parse(file_content,:headers=>true) do |row|
+        row_count = 0
+        StringIO.new(file_content).each do |line|
+          row_count += 1
+          next if row_count == 1
+          row = CSV.parse_line line.strip
           errors << "Malformed response line: #{row.to_csv}" unless row.size==3
           prod = find_product row
           if prod.nil?

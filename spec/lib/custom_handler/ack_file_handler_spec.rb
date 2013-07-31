@@ -33,4 +33,10 @@ describe OpenChain::CustomHandler::AckFileHandler do
     t.should_receive(:handle_errors).with([msg],'fn')
     t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER'
   end
+  it "should handle extra whitespace" do
+    t = described_class.new
+    msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
+    t.should_receive(:handle_errors).with([msg],'fn')
+    t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER'
+  end
 end
