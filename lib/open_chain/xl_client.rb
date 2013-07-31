@@ -25,10 +25,18 @@ module OpenChain
     end
 
     # wraps the get_cell command
-    # takes the sheet, row, and column numbers
-    def get_cell sheet, row, column
+    # takes the sheet, row, column number, and an optional boolean argument specifying whether to return the value, datatype has 
+    # that xlserver returns or just the value (default is to only return the value)
+    def get_cell sheet, row, column, value_only = true
       c = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>sheet,"row"=>row,"column"=>column}}
-      send c
+      cell = process_cell_response send c
+      # Strip out the outer "cell" hash, there's no point at all to returning it
+      cell = cell["cell"]
+      if cell && value_only
+        cell["value"]
+      else 
+        cell
+      end
     end
 
     # wraps the set_cell command
@@ -67,6 +75,19 @@ module OpenChain
         r[col] = c['cell']
       end
       r
+    end
+
+    def get_row_values sheet, row
+      r = get_row_as_column_hash sheet, row
+
+      # I think, technically, there can be missing index values here (.ie 0,1,2,5), which we'll will want to set as as null values
+      # for the index is the array so its a true representation of the grid in the spreadsheet.
+      values = []
+      (0..r.keys.sort.last).each do |x|
+        values << (r[x] ? r[x]["value"] : nil)
+      end
+
+      values
     end
 
     def copy_row sheet, source_row, destination_row
@@ -146,13 +167,23 @@ module OpenChain
     def process_row_response r
       if r.is_a? Array
         r.each do |cell_set|
-          cell_set['cell']['value'] = Time.at(cell_set['cell']['value']) if cell_set['cell']['datatype'] == "datetime"
+          process_cell_response cell_set
         end
       else
         raise_error r
       end
       r
     end
+
+    def process_cell_response cell
+      if cell["errors"]
+        raise_error cell
+      else
+        cell['cell']['value'] = Time.at(cell['cell']['value']) if cell && cell['cell'] && cell['cell']['datatype'] == "datetime"
+        cell
+      end
+    end
+
     def raise_error r
       error_messages = "Error: " + r.to_s
       error_messages= r['errors'].respond_to?('join') ? r['errors'].join("\n") : r['errors'].to_s if r['errors']

@@ -32,6 +32,7 @@ class Company < ActiveRecord::Base
   scope :vendors, where(:vendor=>true)
   scope :customers, where(:customer=>true)
   scope :importers, where(:importer=>true)
+  scope :consignees, where(:consignee=>true)
   scope :by_name, order("companies.name ASC")
   #find all companies that have attachment_archive_setups that include a start date
   scope :attachment_archive_enabled, joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null")

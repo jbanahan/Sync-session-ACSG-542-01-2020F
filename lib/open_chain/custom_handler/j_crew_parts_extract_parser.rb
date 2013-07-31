@@ -48,15 +48,16 @@ module OpenChain
       def generate_and_send input_io
         # ftp_file is from FtpSupport
         # All ftp options for FTP sending are defined in AllianceProductSupport (except remote_file_name)
-        Tempfile.open(['JCrewPartsExtract', '.DAT']) do |temp|
+        temp = Tempfile.new ['JCrewPartsExtract', '.DAT']
+        begin
           temp.binmode
           generate_product_file(input_io, temp)
-          ftp_file(temp, false)
+          send_ftp temp
           # Not a typo, we need to send the same file multiple times in order to send into 
           # each JCrew account (each time its sent it gets a different name - see remote_file_name)
-
-          # Keep the file open. Otherwise the tempfile open call above bombs when this block returns.
-          ftp_file(temp, false)
+          send_ftp temp
+        ensure
+          temp.close! unless temp.closed?
         end
       end
 
@@ -77,6 +78,8 @@ module OpenChain
       # Reads the IO object containing JCrew part information and writes the translated output
       # data to the output_io stream.
       def generate_product_file input_io, output_io
+        @product_column_mapping = nil
+        @description_column_index = nil
         product = nil
 
         j_crew_company = Company.where("alliance_customer_number = ? ", J_CREW_CUSTOMER_NUMBER).first
@@ -93,7 +96,11 @@ module OpenChain
         csv = CSV.new(input_io, {:col_sep => "\t", :skip_blanks => true, :quote_char=> "\007"})
         begin
           csv.each do |line|
-            if has_product_header_data(line)
+            if @product_column_mapping.nil? && !has_no_column_headers(line)
+              make_column_mapping line
+            elsif @description_column_index.nil? && has_description_header(line)
+              @description_column_index = has_description_header(line)
+            elsif has_product_header_data(line)
               # Just in case we get a product without a description and then another line, write the product
               # data sans description in that case.
               if !product.nil?
@@ -104,7 +111,7 @@ module OpenChain
               product = parse_product_data line, JCrewProduct.new
 
             elsif !product.nil? && has_description(line)
-              product.description = get_data(line, 5)
+              product.description = get_data(line, @description_column_index)
               write_product_data output_io, product, j_crew_company
               product = nil
             end
@@ -152,47 +159,79 @@ module OpenChain
         end
 
         def parse_product_data line, product
-          product.po = get_data line, 1
-          product.season = get_data line, 4
-          product.article = get_data line, 5
-          product.hts = get_data(line, 6).gsub(".", "")
-          product.country_of_origin = get_data line, 10
-          product.cost = sprintf("%0.2f", BigDecimal.new(get_data(line, 12)))
+          unless @product_column_mapping
+            raise "No column headers found prior to first data line."
+          end
+
+          # the numeric value here referes to the header position from the column headers array constant, not the
+          # actual position in the file
+          product.po = get_data line, @product_column_mapping[0]
+          product.season = get_data line, @product_column_mapping[1]
+          product.article = get_data line, @product_column_mapping[2]
+          product.hts = get_data(line, @product_column_mapping[3]).gsub(".", "")
+          product.country_of_origin = get_data line, @product_column_mapping[6]
+          product.cost = sprintf("%0.2f", BigDecimal.new(get_data(line, @product_column_mapping[8])))
 
           product
         end
 
         def get_data line, column
-          data = line[column]
+          data = line[column] unless column.nil?
 
           return data.nil? ? "" : data.strip
         end
 
         def has_product_header_data line
-          # We're looking for at least 12 columns of data with column 1 and 5 having data in them AND
-          # none of the columns containing any header names.
-          return line.length >= 12 && has_data(line, 1) && has_data(line, 5) && has_no_column_headers(line)
+          # We're looking for at least 3 columns with data in them and the article column having something in it
+          # and none of the columns containing any header names.
+          return !@product_column_mapping.nil? && line.select {|v| !v.blank?}.length >= 3 && has_data(line, @product_column_mapping[2]) && has_no_column_headers(line)
+        end
+
+        def make_column_mapping line
+          @product_column_mapping = {}
+          COLUMN_HEADERS.each_with_index do |header, x|
+            index = line.find_index header
+            if index 
+              @product_column_mapping[x] = index
+            end
+          end
+        end
+
+        def has_description_header line
+          line.find_index "Description"
         end
 
         def has_data line, column
-          return !(line[column].blank? || line[column].strip.length == 0)
+          !line[column].blank?
         end
 
         def has_no_column_headers line
           line.each do |col|
-            return false if !col.nil? && COLUMN_HEADERS.include?(col.strip)
+            return false if !col.blank? && COLUMN_HEADERS.include?(col.strip)
           end
-          return true
+          true
         end
 
         def has_description line
-          return has_data(line, 5)
+          !@description_column_index.nil? && has_data(line, @description_column_index)
         end
 
         def translate_hts_number number, company
           translated = HtsTranslation.translate_hts_number number, "US", company
 
           return translated.blank? ? number : translated
+        end
+
+        def send_ftp temp
+          # ftp send closes any stream we pass it here, which causes issues when trying to send the 
+          # same stream twice..so just use a new file object instead.
+          send = File.open temp.path, "rb"
+          begin
+            # Don't delete the tempfile, we have to send twice.
+            ftp_file(send, false) 
+          ensure 
+            send.close unless send.closed?
+          end
         end
     end
   end

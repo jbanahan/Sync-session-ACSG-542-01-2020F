@@ -84,13 +84,17 @@ describe 'JCrewPartsExtractParser' do
       }
 
       @p.should_receive(:ftp_file) {|file, delete|
-        file.should == tempfile
+        file.path == tempfile.path
         delete.should_not be_nil
         delete.should be_false
+
+        # simulate closing the file reference like ftp'ing does so we make sure
+        # we're handling this case
+        file.close
       }
 
       @p.should_receive(:ftp_file) {|file, delete|
-        file.should == tempfile
+        file.path == tempfile.path
         delete.should_not be_nil
         delete.should be_false
       }
@@ -172,6 +176,8 @@ FILE
 
     it "should trim data to the correct lengths and exclude incorrect length values" do
       file = <<FILE
+	PO #			Season	Article	HS #	Quota		Duty %	COO	FOB	PO Cost		Binding Ruling
+					Description
 	123456789012345678901			SP345678910	1234567890123456789012345678901	62046240551	348		16.60	CNX	HK	10000000000
 					98% COTTON 2% SPANDEX TWILL WOMENS WOVEN SHORT
 FILE
@@ -197,6 +203,8 @@ FILE
 
     it "should output header data that's missing description data" do
       file = <<FILE
+	PO #			Season	Article	HS #	Quota		Duty %	COO	FOB	PO Cost		Binding Ruling
+					Description
 	1618733			SP1	48774	6204624055	348		16.60	CN	HK	10.74
 	1621783			SU1	43644	6205904040	840		2.80	CN	CS	22.27
 FILE
@@ -217,6 +225,33 @@ FILE
       expect {
         OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file nil, nil
       }.to raise_error "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number 'J0000'."
+    end
+
+    it "should handle re-arranged header data" do
+     file = <<FILE
+Season	PO #			Article		HS #	Quota	PO Cost	COO	FOB			Binding Ruling		
+				Description											
+SU1	1622461			49592		6202922061	335	21.29	CN	HK					
+				100% Cotton Womens Woven Jacket
+FILE
+      output = StringIO.new ""
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
+      output.rewind
+      line1 = output.read.split("\r\n")[0]
+      # PO
+      line1[0, 20].should == "1622461".ljust(20)
+      # Season
+      line1[20, 10].should == "SU1".ljust(10)
+      # Article #
+      line1[30, 30].should == "49592".ljust(30)
+      # HTS #
+      line1[60, 10].should == "6202922061"
+      # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
+      line1[71, 40].should == "100% Cotton Womens Woven Jacket".ljust(40)
+      # Cost (Also a hardcoded space between description and Cost)
+      line1[112, 10].should == sprintf("%0.2f", BigDecimal.new("21.29")).ljust(10)
+      # Country of Origin
+      line1[122, 2].should == "CN"
     end
   end
 
