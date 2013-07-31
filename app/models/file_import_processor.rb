@@ -132,6 +132,7 @@ class FileImportProcessor
       }
       fire_row row_number, nil, messages, true #true = failed
     rescue
+      $!.log_me ["Imported File ID: #{@import_file.id}"] 
       messages << "SYS ERROR: #{$!.message}"
       fire_row row_number, nil, messages, true
       raise $!
