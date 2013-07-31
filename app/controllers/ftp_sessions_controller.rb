@@ -9,7 +9,7 @@ class FtpSessionsController < ApplicationController
   def index
     sys_admin_secure {
       sp = SEARCH_PARAMS.clone
-      s = build_search(sp, 'c_username', 'c_username')
+      s = build_search(sp, 'c_filename', 'd_createdat', 'd')
       respond_to do |format|
           format.html {
               @ftp_sessions = s.paginate(:per_page => 20, :page => params[:page])
