@@ -5,7 +5,7 @@ describe OpenChain::XLClient do
 
   before :each do 
     @path = 'somepath'
-    @dummy_response = {"my"=>"response"}
+    @dummy_response = {"cell"=>{"my"=>"response"}}
     @client = OpenChain::XLClient.new @path
   end
 
@@ -28,11 +28,35 @@ describe OpenChain::XLClient do
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)
     @client.new.should == @dummy_response
   end
+
   it 'should send a get cell command' do
+    cell_response = {"cell"=>{"value"=>"val", "datatype"=>"string"}}
+    cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
+    @client.should_receive(:send).with(cmd).and_return(cell_response)
+    @client.get_cell( 0, 1, 2 ).should == "val"
+  end
+
+  it 'should send a get cell command and return raw response' do
     cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)
-    @client.get_cell( 0, 1, 2 ).should == @dummy_response
+    @client.get_cell( 0, 1, 2, false ).should == @dummy_response["cell"]
   end
+
+  it 'should send a get cell command and handle errors' do
+    cell_response = {"errors"=>["Error 1", "Error 2"]}
+    cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
+    @client.should_receive(:send).with(cmd).and_return(cell_response)
+    expect{@client.get_cell( 0, 1, 2 )}.to raise_error "Error 1\nError 2"
+  end
+
+  it "should send a get cell command and handle datetime translation" do
+    now = Time.now
+    cell_response = {"cell"=>{"value"=>now.to_i, "datatype"=>"datetime"}}
+    cmd = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>0,"row"=>1,"column"=>2}}
+    @client.should_receive(:send).with(cmd).and_return(cell_response)
+    @client.get_cell( 0, 1, 2 ).to_s.should == now.to_s
+  end
+
   describe "set_cell" do
     after :each do
       cmd = {"command"=>"set_cell","path"=>@path,"payload"=>{"position"=>{"sheet"=>0,"row"=>1,"column"=>2},"cell"=>{"value"=>@value_content,"datatype"=>@datatype}}}
@@ -110,6 +134,17 @@ describe OpenChain::XLClient do
     second_cell['cell']['value'].to_i.should == t.to_i
     second_cell['cell']['datatype'].should == "datetime"
   end
+
+  it "should return a row's cell values as an array" do
+    t = Time.now
+    cmd = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>0,"row"=>10}}
+    return_array = [{"position"=>{"sheet"=>0,"row"=>10,"column"=>0},"cell"=>{"value"=>"abc","datatype"=>"string"}},
+                    {"position"=>{"sheet"=>0,"row"=>10,"column"=>3},"cell"=>{"value"=>t.to_i,"datatype"=>"datetime"}}]
+    @client.should_receive(:send).with(cmd).and_return(return_array)
+    r = @client.get_row_values(0, 10)
+    r.should == ["abc", nil, nil, Time.at(t.to_i)]
+  end
+
   describe 'last_row_number' do
     it 'should return the integer response' do
       cmd = {"command"=>"last_row_number","path"=>@path,"payload"=>{"sheet_index"=>0}}
