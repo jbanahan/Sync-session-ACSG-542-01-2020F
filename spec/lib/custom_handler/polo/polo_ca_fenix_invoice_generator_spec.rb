@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Polo::PoloCaFenixInvoiceGenerator do
       invoice.invoice_number = "INV"
       m[:invoice_number].call(invoice).should == "INV"
 
-      m[:importer].should be_nil
+      m[:importer].should == {}
     end
   end
 
