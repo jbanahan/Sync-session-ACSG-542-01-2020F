@@ -60,7 +60,6 @@ $(function() {
 	<%=field_row "Module", f.select(:module_type, CoreModule.to_a_label_class {|c| c.enabled_lambda},{},:id=>"sel_mod_type",
 		:title=>"The screen you want the field to be on.")%>
     <%=field_row "Data Type", f.select(:data_type, [[CustomDefinition::DATA_TYPE_LABELS[:date],"date"],[CustomDefinition::DATA_TYPE_LABELS[:decimal],"decimal"],[CustomDefinition::DATA_TYPE_LABELS[:integer],"integer"],[CustomDefinition::DATA_TYPE_LABELS[:string],"string"],[CustomDefinition::DATA_TYPE_LABELS[:text],"text"],[CustomDefinition::DATA_TYPE_LABELS[:boolean],"boolean"]], {},{:title=>"The type of information you enter into the field.",:id=>'data_type_select'})%>
-    <%=field_row "Read Only", f.check_box(:read_only) %>
     <%=field_row "Sort Rank", f.text_field(:rank, :title=>"An optional number to tell the system where to put the field on the screen.  Lower numbers appear first.") %>
     <%=field_row "Tip", f.text_field(:tool_tip, :title=>"A note (like this) to help user's understand what to type into the field.") %>
     <%=field_row "Use in Quick Search", f.check_box(:quick_searchable, :title=>"If checked this custom field's data will be searchable via the Quick Search box located at the top of every page.") %>
