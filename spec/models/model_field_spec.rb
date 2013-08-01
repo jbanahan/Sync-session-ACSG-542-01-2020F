@@ -40,14 +40,26 @@ describe ModelField do
       r.should == "Value ignored. PLBL is read only."
     end
     it "should set read_only for custom_defintion that is read only" do
-      cd = Factory(:custom_definition,:read_only=>true)
+      cd = Factory :custom_definition
       ModelField.reload
+      fvr = FieldValidatorRule.new
+      fvr.read_only = true
+      fvr.model_field_uid = "*cf_#{cd.id}"
+      fvr.save!
       ModelField.find_by_uid("*cf_#{cd.id}").should be_read_only
     end
     it "should not set read_only for custom_definition that isn't read only" do
       cd = Factory(:custom_definition)
       ModelField.reload
       ModelField.find_by_uid("*cf_#{cd.id}").should_not be_read_only
+    end
+
+    it "should set read_only for normal read_only field" do
+      mf = ModelField.find_by_uid :prod_uid
+      mf.should_not be_read_only
+      fvr = FieldValidatorRule.create!(model_field_uid: :prod_uid, read_only: true)
+      mf = ModelField.find_by_uid :prod_uid
+      mf.should be_read_only
     end
 
   end

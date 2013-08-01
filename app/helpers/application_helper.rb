@@ -38,6 +38,16 @@ module ApplicationHelper
     result_value
   end
 
+  # if the ModelField is read only then this method returns the output of process_export on the model field
+  # otherwise it returns the result of the yield
+  def read_only_wrap object, model_field_uid
+    mf = ModelField.find_by_uid model_field_uid
+    if mf.read_only?
+      mf.process_export object, current_user
+    else
+      yield
+    end
+  end
   #render view of field in table row form
   def field_view_row object, model_field_uid, show_prefix=nil
     l = lambda {|label,field,never_hide,model_field| field_row(label,field,never_hide,model_field)}
@@ -76,13 +86,17 @@ module ApplicationHelper
   #will write a select box if the field's validators include a .one_of validation
   def model_text_field form_object, field_name, model_field_uid, opts={}
     inner_opts = opts_for_model_text_field model_field_uid, opts
+    mf = ModelField.find_by_uid(model_field_uid)
+    if mf.read_only?
+      return content_tag(:span,mf.process_export(form_object.object,current_user))
+    end
     r = FieldValidatorRule.find_cached_by_model_field_uid model_field_uid
     if r.size>0 && r[0].one_of_array.size > 0
       inner_opts.delete :size
       inner_opts.delete "size"
-      form_object.select(field_name,r[0].one_of_array,{:include_blank=>true},inner_opts)
+      return form_object.select(field_name,r[0].one_of_array,{:include_blank=>true},inner_opts)
     else
-      form_object.text_field(field_name,inner_opts)
+      return form_object.text_field(field_name,inner_opts)
     end
   end
 

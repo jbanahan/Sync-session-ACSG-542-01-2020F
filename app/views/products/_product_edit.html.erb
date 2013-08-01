@@ -9,7 +9,7 @@ $(function() {
 <table id='product_header'>
   <%unless hide_no_bulk_fields%>
     <%=field_row field_label(:prod_uid), model_text_field(form_obj,:unique_identifier,:prod_uid)%>
-    <%=field_row field_label(:prod_ven_name), form_obj.collection_select(:vendor_id, Company.vendors.not_locked.order('companies.name ASC'), :id, :name, {:prompt => "Select a vendor"}) %>
+    <%=field_row field_label(:prod_ven_name), read_only_wrap(form_obj.object,:prod_ven_name) {form_obj.collection_select(:vendor_id, Company.vendors.not_locked.order('companies.name ASC'), :id, :name, {:prompt => "Select a vendor"})} %>
   <%end%>
   <%=field_row field_label(:prod_name), model_text_field(form_obj,:name,:prod_name) %>
   <%imps = []-%>
@@ -19,15 +19,15 @@ $(function() {
     <%imps << current_user.company if current_user.company.importer?%>
     <%imps = imps + current_user.company.linked_companies.importers.not_locked.by_name.to_a -%>
   <%end-%>
-  <%=field_row field_label(:prod_imp_name), form_obj.collection_select(:importer_id, imps, :id, :name, {:prompt => "Select an importer"}) %>
+  <%=field_row field_label(:prod_imp_name), read_only_wrap(form_obj.object,:prod_imp_name) {form_obj.collection_select(:importer_id, imps, :id, :name, {:prompt => "Select an importer"})} %>
   <%
     entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name).order('name ASC')
     if entity_types.size > 0
   %>
-    <%=field_row field_label(:prod_ent_type), form_obj.collection_select(:entity_type_id, entity_types,:id,:name, {:include_blank=>true}, {:class=>"entity_type"}), true%>
+    <%=field_row field_label(:prod_ent_type), read_only_wrap(form_obj.object,:prod_ent_type) {form_obj.collection_select(:entity_type_id, entity_types,:id,:name, {:include_blank=>true}, {:class=>"entity_type"})}, true%>
   <% end %>
   <%=field_row field_label(:prod_uom), model_text_field(form_obj,:unit_of_measure,:prod_uom,:id=>'txt_uom')%>
-  <%=field_row field_label(:prod_div_name), form_obj.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}) %>
+  <%=field_row field_label(:prod_div_name), read_only_wrap(form_obj.object,:prod_div_name) {form_obj.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"})} %>
   <%=show_custom_fields form_obj.object, {:form=>true, :table=>true}%>
   <%=field_row field_label(:prod_changed_at),@product.changed_at unless hide_no_bulk_fields%>
 </table>	

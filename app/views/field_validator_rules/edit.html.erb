@@ -17,6 +17,7 @@ $(function() {
   <%=field_row "Field", @rule.model_field.label%>
   <%=field_row "Comment", content_tag(:span,f.text_area(:comment,:rows=>5)+tag("br")+"Put notes here, they won't change how the rule works.")%>
   <%=field_row "Custom Error Message", f.text_field(:custom_message)%>
+  <%=field_row "Read Only", f.check_box(:read_only) %>
   <%=field_row "Required", f.check_box(:required) %>
   <% if [:decimal,:integer].include? mf.data_type%>
     <%=field_row "Greater Than", f.text_field(:greater_than,:class=>mf.data_type)%>

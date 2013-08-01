@@ -8,7 +8,7 @@
   <%=link_to "Delete", '#', :class=>'tf_remove btn btn-mini'%>
 </div>
   <table>
-    <%=field_row field_label(:hts_line_number,false), model_text_field(f,:line_number, :hts_line_number, {:class=>'tf_line_number'})%> 
+    <%=field_row field_label(:hts_line_number,false), read_only_wrap(f.object,:hts_line_number) {model_text_field(f,:line_number, :hts_line_number, {:class=>'tf_line_number'})}%> 
     <%=show_custom_fields f.object, {:form=>true, :show_prefix=>false, :table=>true, :parent_name=>"tariff_custom[#{tariff_view_sequence}]"} %>
   </table>
   <table class='tr_hts'>
@@ -22,17 +22,17 @@
     <tbody>
       <tr>
         <td class='hts_cell'>
-          <%= f.text_field :hts_1, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>1%>
+          <%= read_only_wrap(f.object,:hts_hts_1) {f.text_field :hts_1, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>1}%>
           <div class='tariff_result'></div>
           <div class='auto_class_results class_col_1 cntry_<%=iso%>'></div>
         </td>
         <td class='hts_cell'>
-          <%= f.text_field :hts_2, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>2%>
+          <%= read_only_wrap(f.object,:hts_hts_2) {f.text_field :hts_2, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>2}%>
           <div class='tariff_result'></div>
           <div class='auto_class_results class_col_2 cntry_<%=iso%>'></div>
         </td>
         <td class='hts_cell'>
-          <%= f.text_field :hts_3, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>3%>
+          <%= read_only_wrap(f.object,:hts_hts_3) {f.text_field :hts_3, :class=>"hts_field", :country=>country_id, :country_iso=>iso,:col=>3}%>
           <div class='tariff_result'></div>
           <div class='auto_class_results class_col_3 cntry_<%=iso%>'></div>
         </td>
@@ -40,9 +40,9 @@
      <%if f.object.has_schedule_b? || is_us %>
       <tr><th>Schedule B 1</th><th>Schedule B 2</th><th>Schedule B 3</th></tr>
       <tr>
-        <td><%=f.text_field :schedule_b_1, :class=>:sched_b_field, :col=>1, :country=>country_id%></td>
-        <td><%=f.text_field :schedule_b_2, :class=>:sched_b_field, :col=>2, :country=>country_id%></td>
-        <td><%=f.text_field :schedule_b_3, :class=>:sched_b_field, :col=>3, :country=>country_id%></td>
+        <td><%=read_only_wrap(f.object,:hts_hts_1_schedb) {f.text_field :schedule_b_1, :class=>:sched_b_field, :col=>1, :country=>country_id}%></td>
+        <td><%=read_only_wrap(f.object,:hts_hts_2_schedb) {f.text_field :schedule_b_2, :class=>:sched_b_field, :col=>2, :country=>country_id}%></td>
+        <td><%=read_only_wrap(f.object,:hts_hts_3_schedb) {f.text_field :schedule_b_3, :class=>:sched_b_field, :col=>3, :country=>country_id}%></td>
       </tr>
      <%end%>
     </tbody>

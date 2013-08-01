@@ -1,6 +1,7 @@
 class FieldValidatorRule < ActiveRecord::Base
   include HoldsCustomDefinition
   before_validation :set_module_type
+  after_save :reset_model_fields
   after_commit :update_cache
   validates :model_field_uid, :presence=>true, :uniqueness => true
   validates :module_type, :presence=>true
@@ -149,5 +150,9 @@ class FieldValidatorRule < ActiveRecord::Base
     m = self.custom_message.blank? ? base_message : self.custom_message
     m = "#{@mf.core_module.label}: #{m}" if @nested
     m
+  end
+
+  def reset_model_fields
+    ModelField.reload true #true resets cache
   end
 end

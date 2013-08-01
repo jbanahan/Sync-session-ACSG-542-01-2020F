@@ -35,7 +35,6 @@ class ModelField
     @sort_rank = rank
     @model = core_module.class_name.intern unless core_module.nil?
     @field_name = field
-    @read_only = o[:read_only]
     @import_lambda = o[:import_lambda]
     @export_lambda = o[:export_lambda]
     @can_view_lambda = o[:can_view_lambda]
@@ -54,6 +53,8 @@ class ModelField
     @query_parameter_lambda = o[:query_parameter_lambda]
     @custom_definition = CustomDefinition.find_by_id @custom_id if @custom_id
     @process_query_result_lambda = o[:process_query_result_lambda]
+    fvr = FieldValidatorRule.find_by_model_field_uid @uid
+    @read_only = o[:read_only] || (fvr && fvr.read_only?)
   end
 
   # do post processing on raw sql query result generated using qualified_field_name
@@ -534,7 +535,8 @@ class ModelField
     base_class.new.custom_definitions.each_with_index do |d,index|
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",:read_only=>d.read_only?,
+      fvr = FieldValidatorRule.find_by_custom_definition_id d.id
+      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",:read_only=>(fvr && fvr.read_only?),
         :qualified_field_name=>"(SELECT IFNULL(#{d.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{d.id})"
       }))
       model_hash[mf.uid.to_sym] = mf
