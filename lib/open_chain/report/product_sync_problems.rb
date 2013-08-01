@@ -24,6 +24,7 @@ module OpenChain
           row.push r.confirmed_at
           row.push r.confirmation_file_name
           row.push r.failure_message
+          row_cursor += 1
         end
 
         t = Tempfile.new(['product_sync_problems','.xls'])
