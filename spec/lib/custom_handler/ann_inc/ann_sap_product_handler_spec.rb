@@ -40,6 +40,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     CustomDefinition.destroy_all
   end
   before :each do
+    FieldValidatorRule.any_instance.stub :reset_model_fields
     @us = Factory(:country,:iso_code=>'US',:import_location=>true)
     @good_hts = OfficialTariff.create(:hts_code=>'1234567890',:country=>@us)
     @user = Factory(:user)
@@ -52,29 +53,34 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         :inco_terms,:missy,:petite,:tall,:season,:article,:approved_long,
         :first_sap_date,:last_sap_date,:sap_revised_date
       ]
+    ModelField.reload true
   end
   it "should create custom fields" do 
-    CustomDefinition.where(:label=>"PO Numbers",:data_type=>:text,:module_type=>"Product",:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Origin Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Import Countries",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Unit Costs",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Earliest AC Date",:data_type=>:date,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Merch Dept Number",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Merch Dept Name",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Proposed HTS",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Proposed Long Description",:data_type=>:text,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Other Agency Flag",:data_type=>:boolean,:module_type=>'Classification',:read_only=>false).first.should_not be_nil
-    CustomDefinition.where(:label=>"SAP Import Flag",:data_type=>:boolean,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"INCO Terms",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Missy Style",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Petite Style",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Tall Style",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Season",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Article Type",:data_type=>:string,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product',:read_only=>false).first.should_not be_nil
-    CustomDefinition.where(:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product',:read_only=>true).first.should_not be_nil
-    CustomDefinition.where(:label=>"SAP Revised Date",:data_type=>:date,:module_type=>'Product',:read_only=>true).first.should_not be_nil
+    read_onlys = []
+    read_onlys << CustomDefinition.where(:label=>"PO Numbers",:data_type=>:text,:module_type=>"Product").first
+    read_onlys << CustomDefinition.where(:label=>"Origin Countries",:data_type=>:text,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Import Countries",:data_type=>:text,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Unit Costs",:data_type=>:text,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Earliest AC Date",:data_type=>:date,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Merch Dept Number",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Merch Dept Name",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Proposed HTS",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Proposed Long Description",:data_type=>:text,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"SAP Import Flag",:data_type=>:boolean,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"INCO Terms",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Missy Style",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Petite Style",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Tall Style",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Season",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Article Type",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"SAP Revised Date",:data_type=>:date,:module_type=>'Product').first
+    CustomDefinition.where(:label=>"Other Agency Flag",:data_type=>:boolean,:module_type=>'Classification').first.should_not be_nil
+    CustomDefinition.where(:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product').first.should_not be_nil
+    read_onlys.each do |cd| 
+      cd.model_field.should be_read_only
+    end
   end
   it "should create new product" do
     data = make_row

@@ -5,11 +5,15 @@ module OpenChain
     class PoloCsmSyncHandler
       def initialize(custom_file,file_received_at=0.seconds.ago)
         @custom_file = custom_file
-        @csm_cd = CustomDefinition.find_or_create_by_label("CSM Number",:module_type=>'Product',:data_type=>'text',:read_only=>true)
-        @dept_cd = CustomDefinition.find_or_create_by_label("CSM Department",:module_type=>'Product',:data_type=>'text',:read_only=>true)
-        @season_cd = CustomDefinition.find_or_create_by_label('CSM Season',:module_type=>'Product',:data_type=>'text',:read_only=>true)
-        @first_csm_date_cd = CustomDefinition.find_or_create_by_label('CSM Received Date (First)',:module_type=>'Product',:data_type=>'date',:read_only=>true)  
-        @last_csm_date_cd = CustomDefinition.find_or_create_by_label('CSM Received Date (Last)',:module_type=>'Product',:data_type=>'date',:read_only=>true)  
+        @csm_cd = CustomDefinition.find_or_create_by_label("CSM Number",:module_type=>'Product',:data_type=>'text')
+        @dept_cd = CustomDefinition.find_or_create_by_label("CSM Department",:module_type=>'Product',:data_type=>'text')
+        @season_cd = CustomDefinition.find_or_create_by_label('CSM Season',:module_type=>'Product',:data_type=>'text')
+        @first_csm_date_cd = CustomDefinition.find_or_create_by_label('CSM Received Date (First)',:module_type=>'Product',:data_type=>'date')  
+        @last_csm_date_cd = CustomDefinition.find_or_create_by_label('CSM Received Date (Last)',:module_type=>'Product',:data_type=>'date')
+        [@csm_cd,@dept_cd,@season_cd,@first_csm_date_cd,@last_csm_date_cd].each do |cd|
+          fvr = FieldValidatorRule.where(custom_definition_id:cd.id,model_field_uid:"*cf_#{cd.id}",module_type:cd.module_type).first_or_create!(read_only:true)
+          fvr.update_attributes(read_only:true) unless fvr.read_only?
+        end
         @received_date = file_received_at 
       end
 

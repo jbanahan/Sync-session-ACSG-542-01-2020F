@@ -96,7 +96,8 @@ describe FileImportProcessor do
       Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value.should == 'cval'
     end
     it "should not set read only custom values" do
-      cd = Factory(:custom_definition,:read_only=>true,:module_type=>"Product",:data_type=>"string")
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
+      FieldValidatorRule.create!(:model_field_uid=>"*cf_#{cd.id}",:custom_definition_id=>cd.id,:read_only=>true)
       pro = FileImportProcessor.new(@f,nil,[])
       pro.stub(:get_columns).and_return([
         SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
