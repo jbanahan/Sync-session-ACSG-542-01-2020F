@@ -22,7 +22,7 @@ module OpenChain
 
         def initialize opts={}
           super(opts)
-          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article, :petite, :missy, :tall]
+          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article,:related_styles]
         end
 
         def sync_code
@@ -72,10 +72,7 @@ module OpenChain
             cd_s(@cdefs[:origin].id),
             'tariff_records.hts_1',
             cd_s(@cdefs[:long_desc_override].id),
-            # Make the missy, petite and tall the last three columns always, otherwise you'll have to change the code in before_csv_write
-            cd_s(@cdefs[:missy].id),
-            cd_s(@cdefs[:petite].id),
-            cd_s(@cdefs[:tall].id)
+            cd_s(@cdefs[:related_styles].id)
           ]
           r = "SELECT #{fields.join(', ')}
 FROM products

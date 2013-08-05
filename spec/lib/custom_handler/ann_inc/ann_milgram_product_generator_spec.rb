@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
     end
     @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty, :missy, :petite, :tall]
+    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty, :related_styles]
   end
 
   context 'query' do
@@ -78,9 +78,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       end
       p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
 
-      p.update_custom_value! @cdefs[:missy], p.unique_identifier
-      p.update_custom_value! @cdefs[:petite], "p-style"
-      p.update_custom_value! @cdefs[:tall], "t-style"
+      p.update_custom_value! @cdefs[:related_styles], "#{p.unique_identifier}\np-style\nt-style" #uid should not duplicate
 
       r = run_to_array
       r.should have(3).records

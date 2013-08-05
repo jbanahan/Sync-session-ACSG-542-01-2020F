@@ -22,7 +22,7 @@ module OpenChain
 
         def initialize(opts={})
           super(opts)
-          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty,:petite, :missy, :tall]
+          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty,:related_styles]
         end
 
         def sync_code
@@ -68,7 +68,7 @@ module OpenChain
           clean_string_values vals
 
           #long description override
-          vals[2] = vals[9] unless vals[9].blank?
+          vals[2] = vals.last unless vals.last.blank?
           vals.pop
 
           vals
@@ -87,10 +87,7 @@ module OpenChain
             cd_s(@cdefs[:fta_flag].id),
             cd_s(@cdefs[:manual_flag].id),
             cd_s(@cdefs[:long_desc_override].id),
-            # Make the missy, petite and tall the last three columns always, otherwise you'll have to change the code in before_csv_write
-            cd_s(@cdefs[:missy].id),
-            cd_s(@cdefs[:petite].id),
-            cd_s(@cdefs[:tall].id)
+            cd_s(@cdefs[:related_styles].id)
           ]
           r = "SELECT #{fields.join(', ')}
 FROM products

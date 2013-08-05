@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
     end
     @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :petite, :missy, :tall]
+    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :related_styles]
   end
   describe :sync_csv do
     it "should clean newlines from long description" do
@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     end
   end
   describe :query do
-    it "should sort US then CA and not include other companies" do
+    it "should sort US then CA and not include other countries" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:approved_long], "My Long Description"
       [@ca,@us,Factory(:country,:iso_code=>'CN')].each_with_index do |cntry,i|
@@ -123,16 +123,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
 
-      p.update_custom_value! @cdefs[:missy], "M-Style"
-      p.update_custom_value! @cdefs[:petite], "P-Style"
-      p.update_custom_value! @cdefs[:tall], "T-Style"
+      p.update_custom_value! @cdefs[:related_styles], "T-Style\nP-Style"
 
       r = run_to_array
-      r.should have(4).records
+      r.should have(3).records
       r[0][0].should == p.unique_identifier
-      r[1][0].should == "M-Style"
+      r[1][0].should == "T-Style"
       r[2][0].should == "P-Style"
-      r[3][0].should == "T-Style"
     end
   end
   describe :ftp_credentials do
