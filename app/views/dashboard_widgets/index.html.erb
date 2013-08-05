@@ -1,20 +1,15 @@
 <%content_for :javascript do -%>
 $(function() {
   $(document).ready(function() {
-    <%unless current_user.hide_message?('wh1')-%>
+    <%if current_user.view_official_tariffs? && !current_user.hide_message?('wh2')-%>
+
       $("#what-happened").modal();
       $("#never-show").click(function() {
         $("#what-happened").modal('hide');
-        Chain.hideMessage('wh1');
+        Chain.hideMessage('wh2');
       });
-      $("#show-tour").click(function() {
+      $("#what-happened-close").click(function() {
         $("#what-happened").modal('hide');
-        bootstro.start('',{items:[
-           {selector:'#leftnav',placement:'bottom',content:'Move between system modules and build custom searches here.'},
-           {selector:'#menu_dropdown',placement:'bottom',content:'Manage your account and access extra settings here.'},
-           {selector:'#quick_search_input',placement:'bottom',content:'Search for items here.'},
-           {selector:'#nav-help-anchor',placement:'top',content:"Each page's action buttons are down here.",width:'400px'}
-          ]});
       });
     <%end-%>
     $("#btn_tour").click(function() {
@@ -66,24 +61,29 @@ $(function() {
     <%end -%>
   <%end -%>
 </div>
-<%unless current_user.hide_message?('wh1')-%>
+<%if current_user.view_official_tariffs? && !current_user.hide_message?('wh2')-%>
   <div id='what-happened' class='modal hide fade'>
     <div class='modal-header'>
       <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-      <h3>DON'T PANIC</h3>
+      <h3>New Feature: Tariff Update Subscriptions</h3>
     </div>
     <div class='modal-body'>
-      <p>We've made a bunch of improvements to the user interface.</p>
+      <p>
+        You can now elect to receive an email notification every time the tariff database is updated with new regulatory information: 
+      </p>
+      <p>
+        To subscribe to notifications:
+      </p>
       <ul>
-        <li>The top navigation bar is simpler and takes up less space.</li>
-        <li>Buttons have been moved from the right to the bottom of the page.</li>
-        <li>The search setup screen is easier to use.</li>
+        <li>Click on your name at the top right corner of the screen</li>
+        <li>Click Account</li>
+        <li>Check the <em>Email Me When Tariffs Are Updated</em> box</li>
+        <li>Click Save</li>
       </ul>
-      <p>Don't worry, all the stuff under the hood still works the same.</p>
     </div>
     <div class='modal-footer'>
       <button class='btn' id='never-show'>Never Show This Again</button>
-      <button class='btn btn-primary' id='show-tour'>Give Me A Tour</button>
+      <button class='btn btn-primary' id='what-happened-close'>Close</button>
     </div>
   </div>
 <%end-%>

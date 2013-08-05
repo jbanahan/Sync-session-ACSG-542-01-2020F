@@ -17,6 +17,7 @@ class TariffSet < ActiveRecord::Base
       if user
         user.messages.create(:subject=>"Tariff Set #{self.label} activated.",:body=>"Tariff Set #{self.label} has been successfully activated.")
       end
+      User.where(tariff_subscribed:true).each {|u| OpenMailer.send_tariff_set_change_notification(self, u).deliver}
     end
   end
 

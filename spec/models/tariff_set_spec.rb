@@ -47,6 +47,19 @@ describe TariffSet do
       ts.activate u
       u.messages.should have(1).item
     end
+
+    it "sends notifications to subscribed users" do
+      u = Factory(:user)
+      u2 = Factory(:user,tariff_subscribed:true)
+      u3 = Factory(:user,tariff_subscribed:true)
+      c = Country.first
+      ts = TariffSet.create!(:country_id => c.id, :label => "newts")
+      ts.activate u
+      m = ActionMailer::Base.deliveries.pop
+      m.to.should == [u3.email]
+      m = ActionMailer::Base.deliveries.pop 
+      m.to.should == [u2.email]
+    end
   end
   
   context 'compare' do

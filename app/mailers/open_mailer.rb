@@ -252,6 +252,13 @@ EOS
     end
   end
 
+  def send_tariff_set_change_notification tariff_set, user
+    @ts = tariff_set
+    mail(to:user.email,subject:"[chain.io] Tariff Update - #{tariff_set.country.name}") do |format|
+      format.text
+    end
+  end
+
   private
 
     def save_large_attachment(file, registered_emails)

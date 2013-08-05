@@ -20,7 +20,8 @@ class User < ActiveRecord::Base
     :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
     :support_agent,
     :password_reset,
-    :simple_entry_mode
+    :simple_entry_mode,
+    :tariff_subscribed
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
