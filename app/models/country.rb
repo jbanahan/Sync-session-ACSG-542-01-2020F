@@ -1,37 +1,6 @@
 class Country < ActiveRecord::Base
   
-  @@eu_iso_codes = ['AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV',
-    'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
-  
-  attr_accessible :import_location, :classification_rank
-  after_save :update_model_fields
-  after_commit :update_cache
-  
-  scope :import_locations, where(:import_location=>true)
-  scope :sort_name, order("name ASC") 
-  
-	has_many :addresses
-  has_many :tariff_sets
-	has_many :official_tariffs
-  has_and_belongs_to_many :regions
-	
-  scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
-
-	validates_uniqueness_of :iso_code
-
-  def european_union?
-    @@eu_iso_codes.include?(self.iso_code)
-  end
-
-  def self.find_cached_by_id country_id
-    c = CACHE.get("Country:id:#{country_id}")
-    c = Country.find country_id if c.nil?
-    CACHE.set("Country:id:#{country_id}", c) unless c.nil?
-    c
-  end
-	
-	def self.load_default_countries
-    all_countries = [["AFGHANISTAN","AF"],["ALAND ISLANDS","AX"],["ALBANIA","AL"],["ALGERIA","DZ"],
+  ALL_COUNTRIES ||= [["AFGHANISTAN","AF"],["ALAND ISLANDS","AX"],["ALBANIA","AL"],["ALGERIA","DZ"],
     ["AMERICAN SAMOA","AS"],["ANDORRA","AD"],["ANGOLA","AO"],["ANGUILLA","AI"],["ANTARCTICA","AQ"],
     ["ANTIGUA AND BARBUDA","AG"],["ARGENTINA","AR"],["ARMENIA","AM"],["ARUBA","AW"],["AUSTRALIA","AU"],
     ["AUSTRIA","AT"],["AZERBAIJAN","AZ"],["BAHAMAS","BS"],["BAHRAIN","BH"],["BANGLADESH","BD"],
@@ -90,16 +59,45 @@ class Country < ActiveRecord::Base
     ["VANUATU","VU"],["VATICAN CITY STATE","VA"],["VENEZUELA, BOLIVARIAN REPUBLIC OF","VE"],
     ["VIET NAM","VN"],["VIRGIN ISLANDS, BRITISH","VG"],["VIRGIN ISLANDS, U.S.","VI"],
     ["WALLIS AND FUTUNA","WF"],["WESTERN SAHARA","EH"],["YEMEN","YE"],["ZAMBIA","ZM"],["ZIMBABWE","ZW"]]
-    all_countries.each do |c_array|
+
+  @@eu_iso_codes = ['AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV',
+    'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
+  
+  attr_accessible :import_location, :classification_rank
+  after_save :update_model_fields
+  after_commit :update_cache
+  
+  scope :import_locations, where(:import_location=>true)
+  scope :sort_name, order("name ASC") 
+  
+	has_many :addresses
+  has_many :tariff_sets
+	has_many :official_tariffs
+  has_and_belongs_to_many :regions
+	
+  scope :sort_classification_rank, order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC")
+
+	validates_uniqueness_of :iso_code
+
+  def european_union?
+    @@eu_iso_codes.include?(self.iso_code)
+  end
+
+  def self.find_cached_by_id country_id
+    c = CACHE.get("Country:id:#{country_id}")
+    c = Country.find country_id if c.nil?
+    CACHE.set("Country:id:#{country_id}", c) unless c.nil?
+    c
+  end
+	
+	def self.load_default_countries force_load = false
+    return if Country.count == ALL_COUNTRIES.size && !force_load
+    ALL_COUNTRIES.each do |c_array|
       raise "Country array should have been 2 elements, was #{c_array.length}.  #{c_array.length>0 ? "First element: "+c_array[0] : ""}" unless c_array.length == 2
-      c = Country.where(:iso_code => c_array[1]).first
-      if c.nil?
-        c = Country.new
-        c.iso_code = c_array[1]
-      end
-      unless c.name == c_array[0]
-        c.name = c_array[0] 
-        c.save
+      c = Country.where(:iso_code => c_array[1]).first_or_initialize
+      unless c.name==c_array[0]
+        c.name = c_array[0]
+        c.save!
       end
     end
     return nil
