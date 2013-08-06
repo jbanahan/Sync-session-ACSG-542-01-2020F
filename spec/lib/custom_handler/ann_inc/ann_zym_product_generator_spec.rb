@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
     end
     @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article, :petite, :missy, :tall]
+    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article, :related_styles]
   end
   describe :sync_csv do
     it "should clean newlines from long description" do
@@ -129,26 +129,23 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
 
     it "should handle sending multiple lines for related styles" do
-      p = Factory(:product)
+      p = Factory(:product,unique_identifier:'M-Style')
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
 
-      p.update_custom_value! @cdefs[:missy], "M-Style"
-      p.update_custom_value! @cdefs[:petite], "P-Style"
-      p.update_custom_value! @cdefs[:tall], "T-Style"
+      p.update_custom_value! @cdefs[:related_styles], "P-Style\nT-Style"
 
       r = run_to_array
-      r.should have(4).records
+      r.should have(3).records
       r[0][0].should == p.unique_identifier
-      r[1][0].should == "M-Style"
-      r[2][0].should == "P-Style"
-      r[3][0].should == "T-Style"
+      r[1][0].should == "P-Style"
+      r[2][0].should == "T-Style"
     end
 
     it "should handle sending multiple lines for related styles and countries" do
-      p = Factory(:product)
+      p = Factory(:product,unique_identifier:'M-Style')
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       # Use the country split as well so we make sure both line explosions are working together
       p.update_custom_value! @cdefs[:origin], "MX\nCN"
@@ -156,20 +153,16 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       cls.tariff_records.create!(:hts_1=>"1234567890")
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
 
-      p.update_custom_value! @cdefs[:missy], "M-Style"
-      p.update_custom_value! @cdefs[:petite], "P-Style"
-      p.update_custom_value! @cdefs[:tall], "T-Style"
+      p.update_custom_value! @cdefs[:related_styles], "P-Style\nT-Style"
 
       r = run_to_array
-      r.should have(8).records
-      r[0][0].should == p.unique_identifier
-      r[1][0].should == p.unique_identifier
-      r[2][0].should == "M-Style"
-      r[3][0].should == "M-Style"
-      r[4][0].should == "P-Style"
-      r[5][0].should == "P-Style"
-      r[6][0].should == "T-Style"
-      r[7][0].should == "T-Style"
+      r.should have(6).records
+      r[0][0].should == "M-Style"
+      r[1][0].should == "M-Style"
+      r[2][0].should == "P-Style"
+      r[3][0].should == "P-Style"
+      r[4][0].should == "T-Style"
+      r[5][0].should == "T-Style"
     end
   end
   it "should have sync code" do

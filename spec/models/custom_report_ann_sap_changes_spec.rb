@@ -58,7 +58,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should write difference columns" do
       p = make_eligible_product
-      diffs = [:origin,:import,:missy,:petite,:tall,:cost]
+      diffs = [:origin,:import,:related_styles,:cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "OLD-#{d}" }
       es = p.create_snapshot @u
       es.update_attributes(created_at:3.days.ago)
@@ -106,7 +106,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should handle records with no snapshots before approved date" do
       p = make_eligible_product
-      diffs = [:origin,:import,:missy,:petite,:tall,:cost]
+      diffs = [:origin,:import,:related_styles,:cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "OLD-#{d}" }
       es = p.create_snapshot @u
       diffs.each {|d| p.update_custom_value! @cdefs[d], "NEW-#{d}" }
@@ -116,7 +116,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should use most recent snapshot before approved date" do
       p = make_eligible_product
-      diffs = [:origin,:import,:missy,:petite,:tall,:cost]
+      diffs = [:origin,:import,:related_styles,:cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "REALYOLD-#{d}" }
       es = p.create_snapshot @u
       es.update_attributes(created_at:1.year.ago)

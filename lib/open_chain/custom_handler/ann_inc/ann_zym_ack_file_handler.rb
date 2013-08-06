@@ -7,16 +7,13 @@ module OpenChain
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
         
         def initialize
-          @cdefs = prep_custom_definitions [:petite,:tall,:missy]
+          @cdefs = prep_custom_definitions [:related_styles]
         end
         def find_product row
           p = Product.find_by_unique_identifier row[0]
           return p unless p.nil?
-          @cdefs.each do |k,v|
-            cv = CustomValue.where(:custom_definition_id=>v.id,:string_value=>row[0]).first
-            p = cv.customizable if cv
-            return p unless p.nil?
-          end
+          cv = CustomValue.where(:custom_definition_id=>@cdefs[:related_styles].id).where("text_value like ?","%#{row[0]}%").first
+          p = cv.customizable if cv
           p
         end
       end

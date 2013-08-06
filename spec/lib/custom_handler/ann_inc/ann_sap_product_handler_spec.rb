@@ -50,12 +50,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     @helper = helper_class.new
     @cdefs = @helper.prep_custom_definitions [:po,:origin,:import,:cost,
         :ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
-        :inco_terms,:missy,:petite,:tall,:season,:article,:approved_long,
+        :inco_terms,:related_styles,:season,:article,:approved_long,
         :first_sap_date,:last_sap_date,:sap_revised_date
       ]
     ModelField.reload true
   end
-#TODO fix this, not sure what's going on and need to move on
   it "should create custom fields" do 
     read_onlys = []
     read_onlys << CustomDefinition.where(:label=>"PO Numbers",:data_type=>:text,:module_type=>"Product").first
@@ -69,9 +68,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     read_onlys << CustomDefinition.where(:label=>"Proposed Long Description",:data_type=>:text,:module_type=>'Product').first
     read_onlys << CustomDefinition.where(:label=>"SAP Import Flag",:data_type=>:boolean,:module_type=>'Product').first
     read_onlys << CustomDefinition.where(:label=>"INCO Terms",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Missy Style",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Petite Style",:data_type=>:string,:module_type=>'Product').first
-    read_onlys << CustomDefinition.where(:label=>"Tall Style",:data_type=>:string,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Related Styles",:data_type=>:text,:module_type=>'Product').first
     read_onlys << CustomDefinition.where(:label=>"Season",:data_type=>:string,:module_type=>'Product').first
     read_onlys << CustomDefinition.where(:label=>"Article Type",:data_type=>:string,:module_type=>'Product').first
     read_onlys << CustomDefinition.where(:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product').first
@@ -103,15 +100,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(@cdefs[:prop_long]).value.should == h[:proposed_long_description]
     p.get_custom_value(@cdefs[:imp_flag]).value.should == ( h[:import_indicator] == 'X')
     p.get_custom_value(@cdefs[:inco_terms]).value.should == h[:inco_terms]
-    p.get_custom_value(@cdefs[:missy]).value.should == h[:missy]
-    p.get_custom_value(@cdefs[:petite]).value.should == h[:petite]
-    p.get_custom_value(@cdefs[:tall]).value.should == h[:tall]
+    p.get_custom_value(@cdefs[:related_styles]).value.should == "#{h[:petite]}\n#{h[:tall]}"
     p.get_custom_value(@cdefs[:season]).value.should == h[:season]
     p.get_custom_value(@cdefs[:article]).value.should == h[:article_type]
     p.get_custom_value(@cdefs[:approved_long]).value.should == h[:proposed_long_description]
-    p.get_custom_value(@cdefs[:first_sap_date]).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
-    p.get_custom_value(@cdefs[:last_sap_date]).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
-    p.get_custom_value(@cdefs[:sap_revised_date]).value.should be_nil
+    p.get_custom_value(@cdefs[:first_sap_date]).value.should == 0.days.ago.to_date
+    p.get_custom_value(@cdefs[:last_sap_date]).value.should == 0.days.ago.to_date
+    p.get_custom_value(@cdefs[:sap_revised_date]).value.should == 0.days.ago.to_date
     p.should have(1).classifications
     cls = p.classifications.find_by_country_id @us.id
     cls.get_custom_value(@cdefs[:oga_flag]).value.should == (h[:fw]=='X')
@@ -120,15 +115,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     tr.hts_1.should == '1234567890'
   end
 
-  it "should set sap revised date if key field changes" do
+  it "should change sap revised date if key field changes" do
     h = default_values
-    p = Factory(:product,unique_identifier:h[:style])
-    p.update_custom_value! @cdefs[:missy], 'oldvalue'
+    @h.process make_row, @user
+    p = Product.first
+    p.update_custom_value! @cdefs[:sap_revised_date], 1.year.ago
+    p.update_custom_value! @cdefs[:origin], 'somethingelse'
     @h.process make_row, @user
     p = Product.find p.id
-    p.get_custom_value(@cdefs[:sap_revised_date]).value.strftime("%y%m%d").should == 0.days.ago.strftime("%y%m%d")
+    p.get_custom_value(@cdefs[:sap_revised_date]).value.should == 0.days.ago.to_date
   end
-  it "should not set sap revised date if no key fields change" do
+  it "should not chage sap revised date if no key fields change" do
     h = default_values
     @h.process make_row, @user
     p = Product.first
@@ -198,7 +195,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
   it "should handle multiple products" do
     h = default_values
     data = make_row
-    data << make_row(:style=>'STY2',:ac_date=>'10/30/2015')
+    data << make_row(:style=>'STY2',:ac_date=>'10/30/2015',:petite=>'p2',:tall=>'t2')
     @h.process data, @user
     Product.count.should == 2
     p1 = Product.find_by_unique_identifier(h[:style])
@@ -273,110 +270,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.get_custom_value(@cdefs[:cost]).value.should == "Import - 120.001\nImport - 12.00\nImport - 02.00\nImport - 01.00\nImport - 00.00"
   end
 
-  # Scenarios here refer to the "Related Styles Logic" design doc
-  context "related styles scenarios" do
+  it "should update existing style records and use missy style as master data" do
+    @h.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>nil, :tall=>"T-ABC"}), @user
+    p = Product.first
+    p.unique_identifier.should == "M-ABC"
+    p.get_custom_value(@cdefs[:related_styles]).value.split.sort.should == ['P-ABC','T-ABC']
 
-    it "should update existing style records and use missy style as master data (Scenario A)" do
-      @h.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>nil, :tall=>"T-ABC"}), @user
-      p = Product.first
-      p.unique_identifier.should == "P-ABC"
-      p.get_custom_value(@cdefs[:missy]).value.should == "M-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
-      p.get_custom_value(@cdefs[:petite]).value.should be_nil
-
-      @h.process make_row({:style => "T-ABC", :missy=>"M-ABC", :petite=>"P-ABC", :tall=>nil, :po=>"PO-T-ABC"}), @user
-
-      # The aggregate fields should have been updated with this new record's data (just use PO # as an example
-      # aggregate field)
-      p = Product.first
-      p.unique_identifier.should == "P-ABC"
-      p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
-      p.get_custom_value(@cdefs[:po]).value.should == ["PO-T-ABC", default_values[:po]].sort.join("\n")
-
-      @h.process make_row({:style => "M-ABC", :missy=>nil, :petite=>"P-ABC", :tall=>"T-ABC", :po=>"PO-M-ABC"}), @user
-
-      p = Product.first
-      # The style on the product should have been changed to the missy style (ie. the last one we sent)
-      p.unique_identifier.should == "M-ABC"
-      p.get_custom_value(@cdefs[:missy]).value.should == "M-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
-      p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
-
-      # The aggregate values should have the missy po data appended into them
-      p.get_custom_value(@cdefs[:po]).value.should == ["PO-M-ABC", "PO-T-ABC", default_values[:po]].sort.join("\n")
-    end
-
-    it "should update related style for an existing product (Scenario B-1)" do
-      @h.process make_row({:style => "P-ABC", :missy=>"", :petite=>"", :tall=>"T-ABC"}), @user
-      p = Product.first
-      p.unique_identifier.should == "P-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
-
-      @h.process make_row({:style => "T-ABC", :missy=>nil, :petite=>"P-ABC", :tall=>nil, :po=>"PO-T-ABC"}), @user
-
-      p = Product.first
-      p.unique_identifier.should == "P-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
-      p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
-      p.get_custom_value(@cdefs[:po]).value.should == ["PO-T-ABC", default_values[:po]].sort.join("\n")
-    end
-
-    it "should update related style for an existing product (Scenario B-2)" do
-      @h.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>"", :tall=>"T-ABC"}), @user
-      p = Product.first
-      p.unique_identifier.should == "P-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
-      p.get_custom_value(@cdefs[:missy]).value.should == "M-ABC"
-
-      @h.process make_row({:style => "T-ABC", :missy=>"M-ABC", :petite=>"P-ABC", :tall=>nil, :po=>"PO-T-ABC"}), @user
-
-      p = Product.first
-      p.unique_identifier.should == "P-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
-      p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
-      p.get_custom_value(@cdefs[:po]).value.should == ["PO-T-ABC", default_values[:po]].sort.join("\n")
-
-      @h.process make_row({:style => "M-ABC", :missy=>"    ", :petite=>"P-ABC", :tall=>"T-ABC", :po=>"PO-M-ABC"}), @user
-
-      p = Product.first
-      p.unique_identifier.should == "M-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should == "T-ABC"
-      p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
-      p.get_custom_value(@cdefs[:missy]).value.should == "M-ABC"
-
-      p.get_custom_value(@cdefs[:po]).value.should == ["PO-M-ABC", "PO-T-ABC", default_values[:po]].sort.join("\n")
-    end
-
-    it "should handle records with no related styles (Scenario C-1)" do
-      @h.process make_row({:style => "M-ABC", :missy=>nil, :petite=>nil, :tall=>nil}), @user
-      p = Product.first
-      p.unique_identifier.should == "M-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should be_nil
-      p.get_custom_value(@cdefs[:missy]).value.should be_nil
-      p.get_custom_value(@cdefs[:petite]).value.should be_nil
-    end
-
-    it "should handle updating an existing style with a record identified as a missy style (Scenario C-2)" do
-      @h.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>nil, :tall=>nil}), @user
-      @h.process make_row({:style => "M-ABC", :missy=>nil, :petite=>"P-ABC", :tall=>nil}), @user
-      p = Product.first
-      p.unique_identifier.should == "M-ABC"
-      p.get_custom_value(@cdefs[:tall]).value.should be_nil
-      p.get_custom_value(@cdefs[:missy]).value.should == "M-ABC"
-      p.get_custom_value(@cdefs[:petite]).value.should == "P-ABC"
-    end
-
-    it "should error if multiple records exist with related petite and tall styles" do
-      tall = Factory(:product, :unique_identifier=> "T-ABC")
-      petite = Factory(:product, :unique_identifier=>"P-ABC")
-
-      # Not sure how we could actually assert we're getting the expected log message, for now it's
-      # good enough to know we're raising an error if there's an issue.
-      # Also make sure that we do end up actually processing the next line too
-      StandardError.any_instance.should_receive(:log_me)
-      rows = make_row({:style => "E-ABC", :missy=>nil, :petite=>"P-ABC", :tall=>"T-ABC"}) + make_row({:style => "M-ABC", :missy=>nil, :petite=>nil, :tall=>nil})
-      @h.process rows, @user
-      p = Product.find_by_unique_identifier("M-ABC").should_not be_nil
-    end
   end
+
 end
