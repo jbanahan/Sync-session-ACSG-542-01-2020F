@@ -128,7 +128,7 @@ module OpenChain
             end
             base_val = base_val.compact.uniq.sort
             base_val.reverse! if cd==@aggregate_defs[:cost]
-            cv.value = base_val.join("\n")
+            cv.value = base_val.join(@aggregate_defs[:dept_name] == cd ? ', ' : "\n")
             cv.save!
           end
         end
