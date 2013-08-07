@@ -3,9 +3,14 @@
 <p>
   Import Lines Not Sent To Duty Calc: <%=@import_lines_not_in_duty_calc.count%>
 </p>
-<p>
-  Export Lines Not Sent To Duty Calc: <%=@export_lines_not_in_duty_calc.count%>
-</p>
+<div>
+  Export Lines Not Sent To Duty Calc:
+  <ul>
+    <%@export_lines_not_in_duty_calc.each do |comp,cnt|-%>
+      <li><%=comp.name%> - <%=cnt%></li>
+    <%end-%>
+  </ul>
+</div>
 <%if MasterSetup.get.custom_feature?("LE Drawback")-%>
   <h2>Lands End</h2>
   <h3>Lands End B3 Export Files</h3>

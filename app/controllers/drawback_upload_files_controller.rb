@@ -1,7 +1,9 @@
 class DrawbackUploadFilesController < ApplicationController
   def index 
     if current_user.view_drawback?
-      @export_lines_not_in_duty_calc = DutyCalcExportFileLine.where("duty_calc_export_file_id IS NULL")
+      exports = DutyCalcExportFileLine.select("importer_id, count(*) as total_lines").where("duty_calc_export_file_id IS NULL").group('importer_id')
+      @export_lines_not_in_duty_calc = {}
+      exports.each {|f| @export_lines_not_in_duty_calc[Company.find(f.importer_id)] = f.total_lines}
       @import_lines_not_in_duty_calc = DrawbackImportLine.not_in_duty_calc_file
       render :layout=>'one_col'
     else
