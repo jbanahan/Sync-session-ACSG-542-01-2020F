@@ -167,7 +167,11 @@ module OpenChain
         end
 
         def make_tariff_array cls
-          cls.tariff_records.collect {|tr| {ln:tr.line_number,h1:tr.hts_1,h2:tr.hts_2,h3:tr.hts_3}}
+          cls.tariff_records.collect {|tr| {ln:blank_to_empty_string(tr.line_number),h1:blank_to_empty_string(tr.hts_1),h2:blank_to_empty_string(tr.hts_2),h3:blank_to_empty_string(tr.hts_3)}}
+        end
+
+        def blank_to_empty_string str
+          str.blank? ? '' : str
         end
       end
     end
