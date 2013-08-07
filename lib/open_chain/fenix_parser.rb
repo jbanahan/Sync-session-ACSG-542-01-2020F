@@ -150,8 +150,8 @@ module OpenChain
       entry_number = str_val(line[0])
       file_number = line[1]
       tax_id = str_val line[3]
-      
-      entry = find_entry file_number, entry_number, tax_id, current_export_date
+      importer_name = str_val line[108]
+      entry = find_entry file_number, entry_number, tax_id, importer_name, current_export_date
 
       return if entry.nil?
 
@@ -189,6 +189,8 @@ module OpenChain
       if file_logged_str && file_logged_str.length==10
         entry.file_logged_date = parse_date_time([file_logged_str,"12:00am"],0)
       end
+      entry.customer_name = importer_name
+      entry.customer_number = str_val line[107]
 
       entry
     end
@@ -386,13 +388,24 @@ module OpenChain
       return "" unless @accumulated_strings && @accumulated_strings[string_code]
       @accumulated_strings[string_code].to_a.join("\n ")
     end
-    def importer tax_id
-      imp = Company.find_by_fenix_customer_number tax_id
-      imp = Company.create!(:name=>tax_id,:fenix_customer_number=>tax_id,:importer=>true) if imp.nil?
-      imp
+    def importer tax_id, importer_name
+      if importer_name.blank?
+        importer_name = tax_id
+      end
+
+      c = Company.where(:fenix_customer_number=>tax_id).first_or_create!(:name=>importer_name, :importer=>true)
+
+      # Change the importer account's name to be the actual name if it's currently the tax id.
+      # This code can be taken out at some point in the future when we've updated all/most of the existing importer
+      # records.
+      if c && tax_id != importer_name && c.name == tax_id
+        c.name = importer_name
+        c.save!
+      end
+      c
     end
 
-    def find_entry file_number, entry_number, tax_id, source_system_export_date
+    def find_entry file_number, entry_number, tax_id, importer_name, source_system_export_date
       # Make sure we aquire a cross process lock to prevent multiple job queues from executing this 
       # at the same time (prevents duplicate entries from being created).
       Lock.acquire(Lock::FENIX_PARSER_LOCK) do 
@@ -408,7 +421,7 @@ module OpenChain
         if entry.nil?
           # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
           # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
-          entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer(tax_id).id, :last_exported_from_source=>source_system_export_date) 
+          entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer(tax_id, importer_name).id, :last_exported_from_source=>source_system_export_date) 
         elsif source_system_export_date
           # Make sure we also update the source system export date while locked too so we prevent other processes from 
           # processing the same entry with stale data.
