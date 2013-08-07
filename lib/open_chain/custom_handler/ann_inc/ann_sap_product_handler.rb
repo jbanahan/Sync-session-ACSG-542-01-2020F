@@ -113,7 +113,7 @@ module OpenChain
                 end
               rescue
                 tmp = Tempfile.new(['AnnFileError','.csv'])
-                rows.each {|r| tmp << r}
+                rows.each {|r| tmp << r.to_csv}
                 tmp.flush
                 $!.log_me ["Error processing Ann Inc SAP rows.","NOTE: Original rows converted to CSV from pipe delimited."], [tmp.path]
                 tmp.unlink
