@@ -3,6 +3,7 @@ require 'open_chain/ohl_drawback_parser'
 require 'open_chain/under_armour_drawback_processor'
 require 'open_chain/under_armour_export_parser'
 require 'open_chain/custom_handler/j_crew_shipment_parser'
+require 'open_chain/lands_end_export_parser'
 
 #file uploaded from web to be processed to create drawback data
 class DrawbackUploadFile < ActiveRecord::Base

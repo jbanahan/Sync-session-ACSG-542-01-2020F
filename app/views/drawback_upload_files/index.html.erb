@@ -6,6 +6,12 @@
 <p>
   Export Lines Not Sent To Duty Calc: <%=@export_lines_not_in_duty_calc.count%>
 </p>
+<%if MasterSetup.get.custom_feature?("LE Drawback")-%>
+  <h2>Lands End</h2>
+  <h3>Lands End B3 Export Files</h3>
+  <p><em>.txt file</em></p>
+  <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_EXPORTS}%>
+<%end-%>
 <%if MasterSetup.get.custom_feature?("UA Drawback")-%>
   <h2>Under Armour</h2>
   <h3>DH Inbound Files (last 10)</h3>
