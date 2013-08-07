@@ -141,7 +141,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr1.classification.update_custom_value! @appr, 1.day.ago
       tr2 = Factory(:tariff_record,hts_1:'1234567891',classification:Factory(:classification,country:@country))
       tr2.classification.update_custom_value! @appr, 1.day.ago
-      lambda {@c.set_best_classifications tr1.product, [tr1.product,tr2.product]}.should raise_error "Cannot merge classifications with different tariffs."
+      lambda {@c.set_best_classifications tr1.product, [tr1.product,tr2.product]}.should raise_error /Cannot merge classifications with different tariffs/
     end
     it "should not raise exception for different tariff if not approved" do
       tr1 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
       tr2 = Factory(:tariff_record,hts_1:'1234567891',classification:Factory(:classification,country:@country))
       tr3 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
       tr3.classification.update_custom_value! @appr, 1.day.ago
-      lambda {@c.set_best_classifications tr1.product, [tr1.product,tr2.product,tr3.product]}.should_not raise_error "Cannot merge classifications with different tariffs."
+      lambda {@c.set_best_classifications tr1.product, [tr1.product,tr2.product,tr3.product]}.should_not raise_error /Cannot merge classifications with different tariffs/
     end
     it "should use the most recent approval date" do
       tr1 = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,country:@country))
