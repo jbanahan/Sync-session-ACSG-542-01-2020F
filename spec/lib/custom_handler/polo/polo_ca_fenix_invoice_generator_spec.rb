@@ -9,11 +9,6 @@ describe OpenChain::CustomHandler::Polo::PoloCaFenixInvoiceGenerator do
 
       m = described_class.new.invoice_header_map
       m[:invoice_number].call(invoice).should == "VFI-#{invoice.id}"
-
-      invoice.invoice_number = "INV"
-      m[:invoice_number].call(invoice).should == "INV"
-
-      m[:importer].should == {}
     end
   end
 
