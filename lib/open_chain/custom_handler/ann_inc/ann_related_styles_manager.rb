@@ -163,7 +163,7 @@ module OpenChain
 
         def validate_tariffs_same! classifications
           base = make_tariff_array classifications.first
-          classifications.each {|cls| raise "Cannot merge classifications with different tariffs." unless base==make_tariff_array(cls)}
+          classifications.each {|cls| raise "Cannot merge classifications with different tariffs for classification IDS #{cls.id}/#{classifications.first.id}. #{base.to_json} vs #{make_tariff_array(cls)}" unless base==make_tariff_array(cls)}
         end
 
         def make_tariff_array cls
