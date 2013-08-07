@@ -101,7 +101,7 @@ module OpenChain
             to_use = with_newest_approval_date.sort {|a,b| a.updated_at <=> b.updated_at}.reverse.first unless to_use
             existing = product_to_use.classifications.find {|cls| cls.country_id == c.id}
             if existing!=to_use
-              existing.destroy
+              existing.destroy unless existing.nil?
               to_use.product_id = product_to_use.id
               to_use.save!
               product_to_use.reload
