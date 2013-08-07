@@ -8,7 +8,9 @@ describe OpenChain::FenixParser do
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @barcode = '11981000774460'
     @file_number = '234812'
-    @importer_tax_id ='833764202RM0001' 
+    @importer_tax_id ='833764202RM0001'
+    @importer_number = "IMPSOSO"
+    @importer_name = "Importer So-And-So"
     @cargo_control_no = '20134310243091'
     @ship_terms = 'Fob'
     @direct_shipment_date = '12/14/2012'
@@ -70,7 +72,7 @@ describe OpenChain::FenixParser do
     @additional_bols = ["123456", "9876542321"]
     @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
-      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, 0 ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68"
+      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, 0 ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"\", 1 ,        967.68,,#{@importer_number},#{@importer_name}"
       if new_style && multi_line
         @additional_container_numbers.each do |container|
           data += "\r\nCON,#{@barcode},#{container}"
@@ -133,6 +135,8 @@ describe OpenChain::FenixParser do
     ent.employee_name.should == @employee_name
     ent.file_logged_date.should == @est.parse_us_base_format("#{@file_logged_date},12:00am")
     ent.po_numbers.should == @header_po
+    ent.customer_number.should == @importer_number
+    ent.customer_name.should == @importer_name
     
     ent.vendor_names.should == @vendor_name
     ent.total_invoiced_value.should == @line_value
@@ -447,15 +451,24 @@ describe OpenChain::FenixParser do
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by_broker_reference @file_number
       imp = ent.importer
-      imp.name.should == @importer_tax_id
+      imp.name.should == @importer_name
       imp.fenix_customer_number.should == @importer_tax_id
       imp.should be_importer
     end
     it "should link to existing importer" do
-      imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true)
+      # Make sure we're not updating importer names that aren't tax ids
+      imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>"Test")
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by_broker_reference @file_number
       ent.importer.should == imp
+      imp.name.should == "Test"
+    end
+    it "should update an existing importer's name if the name is the tax id" do
+      imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>@importer_tax_id)
+      OpenChain::FenixParser.parse @entry_lambda.call
+      ent = Entry.find_by_broker_reference @file_number
+      ent.importer.id.should == imp.id
+      ent.importer.name.should == @importer_name
     end
   end
   context 'multi line' do

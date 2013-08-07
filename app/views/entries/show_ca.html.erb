@@ -50,7 +50,7 @@
     <tr>
       <td style="width:33%;">
         <table>
-          <%[:ent_entry_num,:ent_brok_ref,:ent_importer_tax_id,:ent_cargo_control_number,
+          <%[:ent_entry_num,:ent_brok_ref,:ent_cust_num, :ent_cust_name, :ent_importer_tax_id,:ent_cargo_control_number,
           :ent_ca_entry_type,:ent_po_numbers,
           :ent_vendor_names,:ent_total_units,:ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst].each do |f|%>
             <%=field_view_row @entry, f %>
