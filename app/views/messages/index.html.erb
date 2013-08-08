@@ -1,5 +1,6 @@
 <% content_for :javascript do %>
   $(function() {
+    $('.mbody a').addClass('btn btn-small');
     $( "#accordion" ).accordion({
       collapsible: true,
       active: false,
@@ -58,10 +59,10 @@
 <div id="accordion" style='width:98%;'>
 <% @messages.each do |message| %>
   <h3 id='mhead_h3_<%=message.id%>' class='message_subject'><a href='#'><span id='mhead_<%=message.id%>' class='<%=message.viewed ? 'read' : 'unread'%>' ><%=(message.subject.empty? ? '[No Subject]' : message.subject)%> - <%= message.created_at%></span></a></h3>
-  <div id='<%=message.id%>'>
-    <p><%= raw message.body%></p>
-    <p>
-      <button class='btn_delete' id='btn_delete_<%=message.id%>'>Delete</button>
+  <div id='<%=message.id%>' class='mbody'>
+    <%= raw message.body%>
+    <p class='text-right'>
+      <button class='btn_delete btn-small btn btn-danger' id='btn_delete_<%=message.id%>'>Delete</button>
     </p>
   </div>
 <% end %>
