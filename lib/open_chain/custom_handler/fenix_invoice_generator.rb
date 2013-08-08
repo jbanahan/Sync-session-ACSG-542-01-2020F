@@ -72,7 +72,8 @@ module OpenChain; module CustomHandler
       {:field => :tariff_description, :length => 50},
       {:field => :quantity, :length => 15},
       {:field => :unit_price, :length => 15},
-      {:field => :po_number, :length => 50}
+      {:field => :po_number, :length => 50},
+      {:field => :tariff_treatment, :length=> 10}
     ]
 
     def generate_file id
@@ -140,9 +141,13 @@ module OpenChain; module CustomHandler
         :total_value => lambda {|i| i.invoice_value ? i.invoice_value : BigDecimal.new("0")},
         :shipper => lambda {|i| convert_company_to_hash(i.vendor)},
         :consignee => lambda {|i| convert_company_to_hash(i.consignee)},
-        :importer => lambda {|i| convert_company_to_hash(i.importer)},
         :po_number => lambda {|i| i.commercial_invoice_lines.first.nil? ? "" : i.commercial_invoice_lines.first.po_number},
-        :mode_of_transportation => "2"
+        :mode_of_transportation => "2",
+        # We should be sending just "GENERIC" as the importer name in the default case
+        # which then will force the ops people to associate the importer account manually as the pull them
+        # into the system.  This partially needs to be done based on the way edi in feninx handling is done on a 
+        # per file directory basis.  This avoids extra setup when we just want to pull a generic invoice into the system.
+        :importer => {:name=>"GENERIC"}
       }
     end
 
@@ -150,11 +155,16 @@ module OpenChain; module CustomHandler
       {
         :part_number => lambda {|i, line, tariff| line.part_number},
         :country_origin_code => lambda {|i, line, tariff| line.country_origin_code},
-        :hts_code => lambda {|i, line, tariff| tariff.hts_code},
+        # Operations asked us to send a value that would easily let them know the HTS value was
+        # invalid for cases where there's no HTS number we could find in the value.  Randy
+        # suggested that a value of 0 would always trip any validations and it would 
+        # force them to address each invalid line if we did this.
+        :hts_code => lambda {|i, line, tariff| (tariff.hts_code.blank?) ? "0" : tariff.hts_code},
         :tariff_description => lambda {|i, line, tariff| tariff.tariff_description},
         :quantity => lambda {|i, line, tariff| line.quantity},
         :unit_price => lambda {|i, line, tariff| line.unit_price},
-        :po_number => lambda {|i, line, tariff| line.po_number}
+        :po_number => lambda {|i, line, tariff| line.po_number},
+        :tariff_treatment => "2"
       }
     end
 

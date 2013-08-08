@@ -18,9 +18,10 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
                     :importer => importer, :vendor => vendor, :consignee => consignee)
 
     @line_1 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "ABC", :country_origin_code=>"CN", :quantity=>100, :unit_price=>1, :po_number => "PO NUMBER")
-    @line_1.commercial_invoice_tariffs << CommercialInvoiceTariff.new(:hts_code => "1234567890", :tariff_description=>"Stuff")
+    @line_1.commercial_invoice_tariffs.create :hts_code => "1234567890", :tariff_description=>"Stuff"
+
     @line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "DEF", :country_origin_code=>"TW", :quantity=>1, :unit_price=>0.1, :po_number => "PO NUMBER")
-    @line_2.commercial_invoice_tariffs << CommercialInvoiceTariff.new(:hts_code => "09876543210", :tariff_description=>"More Stuff")
+    @line_2.commercial_invoice_tariffs.create :hts_code => "09876543210", :tariff_description=>"More Stuff"
 
     base = Class.new do
       include OpenChain::CustomHandler::FenixInvoiceGenerator
@@ -70,7 +71,8 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       h[105..119].should == @i.invoice_value.to_s.ljust(15)
       verify_company_fields h, 120, @i.vendor
       verify_company_fields h, 470, @i.consignee
-      verify_company_fields h, 820, @i.importer
+      # Importer data (which is just listed as "GENERIC" in the general case)
+      h[820..1169].should == "GENERIC".ljust(350)
       h[1170..1219].should == @i.commercial_invoice_lines.first.po_number.to_s.ljust(50)
       h[1220].should == "2"
 
@@ -87,6 +89,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
         o[123..137].should == l.quantity.to_s.ljust(15)
         o[138..152].should == l.unit_price.to_s.ljust(15)
         o[153..202].should == l.po_number.to_s.ljust(50)
+        o[203..212].should == "2".ljust(10)
       end
     end
 
@@ -178,6 +181,22 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       contents.length.should == 3
       h = contents[0]
       h[1..25].should == "1234567890123456789012345"
+    end
+
+    it "should convert nil hts codes to 0 for output" do 
+      # I can't figure out why if I just change a tariff record and save the tariff model directly that the 
+      # database value isn't updated..that's the sole reason for destroying and recreating the invoice in the test
+      @i.commercial_invoice_lines.destroy_all
+
+      @i.commercial_invoice_lines.create
+      @i.commercial_invoice_lines.first.commercial_invoice_tariffs.create :hts_code => nil
+
+      @f = @generator.generate_file @i.id
+      @f.rewind
+      contents = @f.read.split("\r\n")
+      contents.length.should == 2
+      h = contents[1]
+      h[61..72].should == "0".ljust(12)
     end
   end
 

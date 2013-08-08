@@ -7,14 +7,10 @@ module OpenChain; module CustomHandler; module Polo
     RL_CA_FACTORY_STORE_TAX_ID ||= "806167003RM0002"
 
     def invoice_header_map
-      # The commercial invoice we get from Polo may not have an actual invoice number.
-      # If that's the case, just make one up.
+      # At least for the moment, the commercial invoice we get from Polo doesn't really have actual invoice numbers
+      # Just make one up that should be unique at least to get it into the system.
       default_invoice_header_map.merge({
-        :invoice_number => lambda {|i| i.invoice_number.blank? ? "VFI-#{i.id}" : i.invoice_number},
-        # There's an issue in Fenix with attaching importer information to these things for now and 
-        # the system is importing the data into the wrong account. Until it's resolved, we're going to leave
-        # the importer information blank in the file.
-        :importer => {}
+        :invoice_number => lambda {|i| "VFI-#{i.id}"},
       })
     end
 
