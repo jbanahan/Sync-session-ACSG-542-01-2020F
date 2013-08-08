@@ -106,6 +106,8 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
             $scope.showPreviewBox = false
           else
             $scope.previewResults = data
+        ).error(() ->
+          $scope.errors.push "There was an error processing this file. Please contact support."
         )
     )
 
