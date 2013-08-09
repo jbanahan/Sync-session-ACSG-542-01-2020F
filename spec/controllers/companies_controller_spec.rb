@@ -92,7 +92,7 @@ describe CompaniesController do
       dj_state = Delayed::Worker.delay_jobs
       begin
         Delayed::Worker.delay_jobs = false
-        OpenChain::CustomHandler::GenericAllianceProductGenerator.should_receive(:sync).with(instance_of(Company))
+        OpenChain::CustomHandler::GenericAllianceProductGenerator.should_receive(:sync).with(@c.id)
         post :push_alliance_products, :id=>@c.id
         response.should redirect_to @c
         flash[:notices].should have(1).message

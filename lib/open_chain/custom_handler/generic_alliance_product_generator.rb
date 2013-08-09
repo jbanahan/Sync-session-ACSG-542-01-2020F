@@ -16,6 +16,11 @@ module OpenChain
       end
 
       def initialize importer
+        # Anything other than a company we'll assume is suitable to be used to lookup a company
+        unless importer.nil? || importer.is_a?(Company)
+          importer = Company.where(:id => importer).first
+        end
+
         raise ArgumentError, "Importer is required and must have an alliance customer number" unless importer && !importer.alliance_customer_number.blank?
         @importer = importer
       end

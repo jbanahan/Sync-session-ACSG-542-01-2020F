@@ -151,7 +151,7 @@ class CompaniesController < ApplicationController
       elsif c.last_alliance_product_push_at && c.last_alliance_product_push_at > 10.minutes.ago
         add_flash :errors, "Cannot push file because last push was less than 10 minutes ago."
       else
-        OpenChain::CustomHandler::GenericAllianceProductGenerator.delay.sync(c)
+        OpenChain::CustomHandler::GenericAllianceProductGenerator.delay.sync(c.id)
         c.update_attributes :last_alliance_product_push_at => 0.seconds.ago
         add_flash :notices, "Product file has been queued to be sent to alliance."
       end

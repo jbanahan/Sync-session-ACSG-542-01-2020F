@@ -30,6 +30,28 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
     end
   end
 
+  describe :new do 
+    it "should initialize with a company id" do
+      g = described_class.new(@c.id)
+      # Just use remote filename as the check if the importer loaded correctly
+      g.remote_file_name.end_with?("#{@c.alliance_customer_number}.DAT").should be_true
+    end
+
+    it "should initialize with a company record" do
+      g = described_class.new(@c)
+      g.remote_file_name.end_with?("#{@c.alliance_customer_number}.DAT").should be_true
+    end
+
+    it "should error if importer has no alliance number" do
+      @c.update_attributes :alliance_customer_number => ""
+      expect{described_class.new(@c)}.to raise_error "Importer is required and must have an alliance customer number"
+    end
+
+    it "should error if importer is not found" do
+      expect{described_class.new(-1)}.to raise_error "Importer is required and must have an alliance customer number"
+    end
+  end
+
   context "with data" do
     before :each do
       @coo, @pn = ["Country of Origin","Part Number"].collect do |nm|
