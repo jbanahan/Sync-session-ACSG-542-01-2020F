@@ -165,6 +165,7 @@ describe OpenChain::AllianceParser do
       {:invoice_number=>'19319111',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
+        :total_quantity=>"000000000012", :total_quantity_uom=>"CTNS",
         :lines=>[
         {:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("144.214",3),:units_uom=>'PCS',
           :po_number=>'abcdefg',:part_number=>'1291010', :department=>"123456",
@@ -194,11 +195,13 @@ describe OpenChain::AllianceParser do
       {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
+        :total_quantity=>"000000000001", :total_quantity_uom=>"BINDLE",
         :lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X",:part_number=>'123918',:mpf=>BigDecimal('100.00',2), :contract_amount => BigDecimal('0')}
         ]},
       {:invoice_number=>'ff30101ffz',:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
+        :total_quantity=>"000000000099", :total_quantity_uom=>"BOTTLE",
         :lines=>[{:export_country_code=>'TW',:origin_country_code=>'AU',:vendor_name=>'v2',:units=>BigDecimal("2.116",3),:units_uom=>'DOZ',:po_number=>'jfdaila',:part_number=>'fjasjds', :contract_amount =>""}
         ]}
     ] 
@@ -209,6 +212,7 @@ describe OpenChain::AllianceParser do
         ci00 << "#{convert_cur.call(ci[:invoice_value_foreign],13)}#{convert_cur.call(ci[:invoiced_value],13)}#{ci[:country_origin_code].ljust(2)}"
         ci00 << "#{ci[:gross_weight].rjust(12)}#{convert_cur.call(ci[:total_charges],11)}#{ci[:invoice_date]}#{ci[:mfid].ljust(15)}"
         rows << ci00
+        rows << "CI01#{ci[:total_quantity].rjust(12, '0')}#{ci[:total_quantity_uom].ljust(6)}"
         ci[:lines].each do |line|
           [:mid,:po_number,:department].each {|k| line[k]='' unless line[k]}
           # Note: Contract Amount specifically is not using the convert_cur lambda because the test files for this value DID have decimal points in the values.
@@ -532,6 +536,8 @@ describe OpenChain::AllianceParser do
       inv.gross_weight.should == ci[:gross_weight].to_i
       inv.invoice_date.strftime("%Y%m%d").should == ci[:invoice_date]
       inv.mfid.should == ci[:mfid]
+      inv.total_quantity.should == BigDecimal.new(ci[:total_quantity])
+      inv.total_quantity_uom.should == ci[:total_quantity_uom]
     end
 
     ent.total_invoiced_value.should == expected_invoiced_value

@@ -97,6 +97,8 @@ module OpenChain
                 process_su01 r
               when "CI00"
                 process_ci00 r
+              when "CI01"
+                process_ci01 r
               when "CL00"
                 process_cl00 r
               when "CL01"
@@ -288,6 +290,15 @@ module OpenChain
       invoice_value = parse_currency r[50,13]
       @c_invoice.invoice_value = invoice_value
       @entry.total_invoiced_value += parse_currency r[50,13]
+    end
+
+    # commercial invoice header optional data
+    def process_ci01 r
+      # Just straight parse this field as a BigDecimal, we'll want to keep the full value the user input here.
+      # This field doesn't not have an implicit decimal value like others in this file (if it even supports one at all, 
+      # which isn't real clear)
+      @c_invoice.total_quantity = BigDecimal.new r[4, 12]
+      @c_invoice.total_quantity_uom = r[16, 6].strip
     end
 
     # commercial invoice line
