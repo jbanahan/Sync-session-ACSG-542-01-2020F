@@ -4,6 +4,10 @@ module OpenChain
       # THIS PARSER CAN ONLY BE CALLED ONCE PER FILE!!!
       #
       # It increments quantities, so calling multiple times will put too much data in the drawback database
+      #
+      # This is based on a CSV created from the Import By Entry report from FedEx which must be reformatted to match the layout below
+      #
+      # Entry Number, Port Code, Import Date, Received Date, HTS Code, Part - Description, Quantity, UOM, Unit Price, Duty Rate
       class LeDrawbackImportParser
         def initialize lands_end_company
           @company = lands_end_company
@@ -15,6 +19,7 @@ module OpenChain
           #reprocessed
           ActiveRecord::Base.transaction do
             CSV.parse(data,headers:true) do |row|
+              next if row.blank?
               part_number = row[5].split('-').first.strip
               q = DrawbackImportLine.where(importer_id:@company.id,
                 entry_number:row[0],part_number:part_number)
