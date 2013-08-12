@@ -14,6 +14,7 @@
             } else {
               $('#message_envelope').hide();
             }
+            Chain.messagePoller.getMessageCount('/messages/message_count?user_id=<%=current_user.id%>');
           });
         }
       }
@@ -26,6 +27,7 @@
           $(this).removeClass("unread");
           $(this).addClass("read");
         });
+        Chain.messagePoller.getMessageCount('/messages/message_count?user_id=<%=current_user.id%>');
       });
     $(".btn_delete").each(function() {
       id = $(this).attr("id").substring(11,$(this).attr("id").length);
@@ -36,6 +38,7 @@
                 type: 'post',
                 data: { '_method': 'delete' }
             });            
+            Chain.messagePoller.getMessageCount('/messages/message_count?user_id=<%=current_user.id%>');
             $("#"+id).effect('fade');
             $("#mhead_h3_"+id).effect('fade', function() {
               $("#"+id).remove();
