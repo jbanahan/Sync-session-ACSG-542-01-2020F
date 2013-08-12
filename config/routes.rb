@@ -388,6 +388,12 @@ OpenChain::Application.routes.draw do
   end
   
   resources :drawback_upload_files, :only=>[:index,:create]
+  resources :duty_calc_import_files, :only=>[:create] do
+    get 'download', on: :member
+  end
+  resources :duty_calc_export_files, :only=>[:create] do
+    get 'download', on: :member
+  end
   resources :drawback_claims
 
   resources :error_log_entries, :only => [:index, :show]
