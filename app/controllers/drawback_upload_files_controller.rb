@@ -1,10 +1,13 @@
 class DrawbackUploadFilesController < ApplicationController
   def index 
     if current_user.view_drawback?
-      exports = DutyCalcExportFileLine.select("importer_id, count(*) as total_lines").where("duty_calc_export_file_id IS NULL").group('importer_id')
+      exports = DutyCalcExportFileLine.select("importer_id, count(*) as 'total_lines'").where("duty_calc_export_file_id IS NULL").group('importer_id')
       @export_lines_not_in_duty_calc = {}
       exports.each {|f| @export_lines_not_in_duty_calc[Company.find(f.importer_id)] = f.total_lines}
-      @import_lines_not_in_duty_calc = DrawbackImportLine.not_in_duty_calc_file
+
+      imports = DrawbackImportLine.select("importer_id, count(*) as 'total_lines'").not_in_duty_calc_file.group('importer_id')
+      @import_lines_not_in_duty_calc = {}
+      imports.each {|f| @import_lines_not_in_duty_calc[Company.find(f.importer_id)] = f.total_lines}
       render :layout=>'one_col'
     else
       add_flash :errors, "You cannot view this page because you do not have permission to view Drawback."

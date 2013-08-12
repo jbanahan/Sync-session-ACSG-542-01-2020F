@@ -5,12 +5,12 @@ class DrawbackImportLine < ActiveRecord::Base
   has_many :duty_calc_import_file_lines, :dependent=>:destroy
 
   scope :not_in_duty_calc_file, lambda { joins("left outer join duty_calc_import_file_lines on drawback_import_lines.id = duty_calc_import_file_lines.drawback_import_line_id").where("duty_calc_import_file_lines.id is null") }
-  # Output a string matching the DutyCalc ASCII import format
-  def duty_calc_line
+  # return an array suitable for passing to duty calc
+  def duty_calc_line_array
     [
       self.entry_number,
-      self.import_date.strftime("%m/%d/%Y"),
-      self.received_date.strftime("%m/%d/%Y"),
+      self.import_date.blank? ? "" : self.import_date.strftime("%m/%d/%Y"),
+      self.received_date.blank? ? "" : self.received_date.strftime("%m/%d/%Y"),
       "",
       self.port_code,
       "%0.2f" % float_or_zero(self.box_37_duty),
@@ -47,7 +47,11 @@ class DrawbackImportLine < ActiveRecord::Base
       "7",
       "",
       (self.ocean? ? "Y" : "")
-    ].to_csv
+    ]
+  end
+  # Output a string matching the DutyCalc ASCII import format
+  def duty_calc_line
+    duty_calc_line_array.to_csv
   end
 
 

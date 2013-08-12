@@ -259,6 +259,12 @@ end
 Factory.define :duty_calc_export_file_line do |f|
 
 end
+Factory.define :duty_calc_import_file do |f|
+  f.association :importer, :factory => :company
+end
+Factory.define :duty_calc_export_file do |f|
+  f.association :importer, :factory => :company
+end
 Factory.define :charge_code do |f|
   f.sequence :code
   f.description "cc description"
