@@ -51,12 +51,12 @@ $(function() {
     <div class='span7'>
       <h2>Active Users</h2>
       <table class='detail_table'>
-      <thead><tr><th>User</th><th>Last Action</th></tr></thead>
-      <tbody>
-        <%User.where("last_request_at > ?",30.minutes.ago).order("last_request_at DESC").each do |u|%>
-          <tr class='hover'><td><%=link_to u.full_name, [u.company,u]%></td><td><%=u.last_request_at%></td></tr>
-        <%end%>
-      </tbody>
+        <thead><tr><th>User</th><th>Company</th><th>Last Action</th></tr></thead>
+        <tbody>
+          <%User.where("last_request_at > ?",30.minutes.ago).order("last_request_at DESC").each do |u|%>
+            <tr class='hover'><td><%=link_to u.full_name, [u.company,u]%></td><td><%=link_to u.company.name, u.company%></td><td><%=u.last_request_at%></td></tr>
+          <%end%>
+        </tbody>
       </table>
       <h2>Delayed Job</h2>
       <p><%= "#{Delayed::Job.count(:conditions => 'locked_at is null and failed_at is null')} jobs not run/#{Delayed::Job.count(:conditions => 'last_error is not null')} jobs with errors" %></p>
