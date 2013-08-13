@@ -984,7 +984,9 @@ and classifications.product_id = products.id
         [8,:ci_total_charges,:total_charges,"Charges",{:data_type=>:decimal,:currency=>:usd}],
         [9,:ci_invoice_date,:invoice_date,"Invoice Date",{:data_type=>:date}],
         [10,:ci_mfid,:mfid,"MID",{:data_type=>:string}],
-        [11,:ci_exchange_rate,:exchange_rate,"Exchange Rate",{:data_type=>:decimal}]
+        [11,:ci_exchange_rate,:exchange_rate,"Exchange Rate",{:data_type=>:decimal}],
+        [12,:ci_total_quantity, :total_quantity, "Quantity",{:data_type=>:decimal}],
+        [13,:ci_total_quantity_uom, :total_quantity_uom, "Quantity UOM",{:data_type=>:string}],
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
         [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],

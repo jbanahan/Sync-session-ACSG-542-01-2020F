@@ -6,7 +6,7 @@
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
 <%end-%>
-<% cache ["v6",current_user.company,current_user,@entry] do-%>
+<% cache ["v7",current_user.company,current_user,@entry] do-%>
   <style>
   .ent_columns {
     width:99%;
@@ -232,7 +232,7 @@
             </td>
             <td style='width:50%;'>
               <table>
-                <%[:ci_invoice_value,:ci_total_charges,:ci_invoice_value_foreign,:ci_currency].each do |f|%>
+                <%[:ci_invoice_value,:ci_total_charges,:ci_invoice_value_foreign,:ci_currency, :ci_total_quantity, :ci_total_quantity_uom].each do |f|%>
                   <%=field_view_row ci,f,false%>
                 <%end%>
               </table>
