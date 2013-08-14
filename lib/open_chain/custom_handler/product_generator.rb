@@ -6,6 +6,8 @@ module OpenChain
     #
     # If subclass implements `sync_code` then class will write / update sync records after generating the file
     #
+    # If subcless implements `trim_fingerprint` then class will pass in the raw SQL result array and expect back an array where the first position is the record's fingerprint and the second is the row array with the fingerprint removed
+    #
     # If subclass implements `auto_confirm?` and returns false, the sync records will not automatically be marked as confirmed
     #
     # Subclass must implement `query` ande return a string representing the sql query to build the grid that will become the output file.  
@@ -32,7 +34,8 @@ module OpenChain
       end
 
       def sync
-        synced_products = []
+        has_fingerprint = self.respond_to? :trim_fingerprint
+        synced_products = {} 
         rt = Product.connection.execute query
         row = {}
         rt.fields.each_with_index do |f,i|
@@ -40,19 +43,28 @@ module OpenChain
         end
         yield row if rt.count > 0
         rt.each_with_index do |vals,i|
+          fingerprint = nil
+          if has_fingerprint
+            fingerprint, clean_vals = trim_fingerprint(vals) 
+          else
+            clean_vals = vals
+          end
           row = {}
-          vals.each_with_index {|v,i| row[i-1] = v unless i==0}
-          synced_products << vals[0]
+          clean_vals.each_with_index {|v,i| row[i-1] = v unless i==0}
+          synced_products[clean_vals[0]] = fingerprint
           processed_rows = preprocess_row row
           processed_rows.each {|r| yield r}
         end
         if self.respond_to? :sync_code
-          synced_products.in_groups_of(100,false) do |uids|
-            x = uids
+          synced_products.keys.in_groups_of(100,false) do |uids|
             Product.transaction do
-              Product.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{x.join(",")});"
-              Product.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner) 
-   (select id, \"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\" from products where products.id in (#{x.join(",")}));"
+              ActiveRecord::Base.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{uids.join(",")}); "
+              inserts = uids.collect do |y|
+                fp = synced_products[y]
+                "(#{y},\"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\",#{has_fingerprint ? "\"#{fp}\"" : 'null'})"
+              end
+              ActiveRecord::Base.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner,fingerprint)
+                VALUES #{inserts.join(",")}; "
             end
           end
         end

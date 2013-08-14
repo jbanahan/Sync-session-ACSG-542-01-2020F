@@ -164,6 +164,30 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       r[4][0].should == "T-Style"
       r[5][0].should == "T-Style"
     end
+
+    it "should not output same record twice based on fingerprint" do
+      p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      p2 = Factory(:product)
+      p2.update_custom_value! @cdefs[:article], 'ZSCR'
+      cls2 = p2.classifications.create!(:country_id=>@us.id)
+      cls2.tariff_records.create!(:hts_1=>"1234567890")
+      cls2.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      r = run_to_array
+      r.should have(2).records
+
+      p.update_attributes(updated_at:1.day.from_now) #shouldn't matter because hash doesn't change
+      cls2.tariff_records.first.update_attributes(hts_1:'987654321') #should change hash forcing new record
+
+      r = run_to_array
+      r.should have(1).records
+      r[0][0].should == p.unique_identifier
+    end
   end
   it "should have sync code" do
     described_class.new.sync_code.should == 'ANN-ZYM'
