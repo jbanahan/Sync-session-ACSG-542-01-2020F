@@ -6,7 +6,7 @@ require 'tempfile'
 module OpenChain; module Events; module EntryEvents
   class LandedCostReportAttacherListener
 
-    def accept? event, entry
+    def accepts? event, entry
       process = false
       if entry
         process = jjill_with_0600_charges entry
@@ -42,7 +42,7 @@ module OpenChain; module Events; module EntryEvents
     private 
 
       def jjill_with_0600_charges entry
-        if entry.customer_name == "JILL"
+        if entry.customer_number == "JILL"
           # Make sure we have a broker invoice charge with a code of '0600'
           entry.broker_invoices.each do |inv|
             inv.broker_invoice_lines.each do |line|

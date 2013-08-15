@@ -2,26 +2,26 @@ require 'spec_helper'
 
 describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
-  describe :accept? do
+  describe :accepts? do
     context "J JILL Logic" do
       before :each do
-        @entry = Factory(:entry, :customer_name => "JILL")
+        @entry = Factory(:entry, :customer_number => "JILL")
         @broker_invoice = Factory(:broker_invoice, :entry => @entry)
         @broker_invoice_line = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_code => "0600")
       end
 
       it "should accept a J JILL entry with a Broker Invoice containing a charge code of '0600'" do
-        described_class.new.accept?(nil, @entry).should be_true
+        described_class.new.accepts?(nil, @entry).should be_true
       end 
 
       it "should not accept non-JJILL entries with 0600 code" do
-        @entry.update_attributes :customer_name => "Blargh!!"
-        described_class.new.accept?(nil, @entry).should be_false
+        @entry.update_attributes :customer_number => "Blargh!!"
+        described_class.new.accepts?(nil, @entry).should be_false
       end
 
       it "should not accept JJILL entries without a 0600 code" do
         @broker_invoice_line.update_attributes :charge_code => "1234"
-        described_class.new.accept?(nil, @entry).should be_false
+        described_class.new.accepts?(nil, @entry).should be_false
       end
     end
   end

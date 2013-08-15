@@ -79,7 +79,7 @@ describe OpenChain::Events::EventHandler do
       @h.should_receive(:listeners).and_return [l1, l2]
       @h.should_receive(:find).with(@e).and_return @object
 
-      StandardError.any_instance.should_receive(:log_me)
+      RuntimeError.any_instance.should_receive(:log_me)
       @h.handle(@e).should be_nil
     end
   end
