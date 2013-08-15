@@ -3,6 +3,7 @@ module CoreObjectSupport
     base.instance_eval("include CustomFieldSupport")
     base.instance_eval("include ShallowMerger")
     base.instance_eval("include EntitySnapshotSupport")
+    base.instance_eval("include BroadcastsEvents")
     base.instance_eval("has_many   :histories, :dependent => :destroy")
     base.instance_eval("has_many   :comments, :as => :commentable, :dependent => :destroy")
     base.instance_eval("has_many   :attachments, :as => :attachable, :dependent => :destroy") 	

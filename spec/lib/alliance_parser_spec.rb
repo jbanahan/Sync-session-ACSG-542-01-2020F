@@ -250,6 +250,14 @@ describe OpenChain::AllianceParser do
     }
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @split_string = "\n "
+
+    # Because there's no public concept of unstubbing in rspec, this stub is primarily a hack to avoid 
+    # introducing a new context around the existing classes to be able to stub this call for those, 
+    # and then a secondary context to allow us to make and expectation on the call the verify it's called.
+    # Any test that wants to verify broadcast event was called should just check the @event_type variable.
+    Entry.any_instance.stub(:broadcast_event) do |event_type|
+      @event_type = event_type
+    end
   end
   it 'should clear dates that have previously been written but are not retransmitted' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}"
@@ -547,6 +555,8 @@ describe OpenChain::AllianceParser do
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0
+
+    @event_type.should == :save
   end
 
   it "should write a comment" do
@@ -704,16 +714,20 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     Entry.count.should == 1
     Entry.find(ent.id).customer_number.should == 'ABC'
+    @event_type.should == :save
   end
   it 'should not update entry if older than last update' do
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     old_cust_num = @cust_num
     @cust_num = "nochange"
     @extract_date_str = '199901011226'  #make older
+    @event_type = nil
     #send file w/ older date & different cust num which should be ignored
     OpenChain::AllianceParser.parse @make_entry_lambda.call
     Entry.count.should == 1
     Entry.first.customer_number.should == old_cust_num
+    # If we didn't update the entry, an event shouldn't have been broadcast
+    @event_type.should be_nil
   end
   it 'should populate entry header tracking fields' do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_si_lambda.call}"
