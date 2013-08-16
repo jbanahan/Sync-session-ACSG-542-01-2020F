@@ -54,15 +54,10 @@ module OpenChain; module Events
 
         # Listeners can modify the object passed to them and return it so 
         # it can be used further down the call chain.
-        begin
-          obj = process_listener listener, event, module_object
+        obj = process_listener listener, event, module_object
 
-          if obj
-            module_object = obj
-          end
-        rescue 
-          # Don't let an errant issue in a listener blow up the whole chain
-          $!.log_me
+        if obj
+          module_object = obj
         end
       end
     end

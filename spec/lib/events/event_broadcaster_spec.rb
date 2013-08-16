@@ -25,6 +25,12 @@ describe OpenChain::Events::EventBroadcaster do
       described_class.new.broadcast :event_type, "Class", 1
     end
 
+    it "should rescue errors from process_event" do
+      OpenChain::Events::EventProcessor.any_instance.should_receive(:process_event).and_raise "Error!"
+      RuntimeError.any_instance.should_receive(:log_me)
+      described_class.new.broadcast :event_type, "Class", 1
+    end
+
   end
 
 end

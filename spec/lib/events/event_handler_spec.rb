@@ -66,22 +66,6 @@ describe OpenChain::Events::EventHandler do
 
       @h.handle(@e).should be_nil
     end
-
-    it "should rescue errors raised from listeners" do
-      l1 = double("Listener1")
-      l1.should_receive(:accepts?).with(@e, @object).and_return true
-      l2 = double("Listener1")
-      l2.should_receive(:accepts?).with(@e, @object).and_return true
-
-      l1.should_receive(:receive).with(@e, @object).and_raise "Error"
-      l2.should_receive(:receive).with(@e, @object).and_return nil
-
-      @h.should_receive(:listeners).and_return [l1, l2]
-      @h.should_receive(:find).with(@e).and_return @object
-
-      RuntimeError.any_instance.should_receive(:log_me)
-      @h.handle(@e).should be_nil
-    end
   end
 
   context :find do

@@ -12,7 +12,11 @@ module OpenChain; module Events
     end
 
     def broadcast event_type, object_class, object_id, event_context = nil
-      @processor.process_event make_event(event_type, object_class, object_id, event_context)
+      begin
+        @processor.process_event make_event(event_type, object_class, object_id, event_context)
+      rescue
+        $!.log_me
+      end
     end
 
     private 
