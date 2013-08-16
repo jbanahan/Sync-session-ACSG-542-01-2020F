@@ -15,21 +15,6 @@ module OpenChain; module Report
       generate_data find_entries entry
     end
 
-    # Generates landed cost data for all the entries described the the params.
-    # Importer_id must be the id of the importer to generate landed cost data for.  This report is styled in such a way
-    # that only 1 importer's data is allowed.
-    # SQL may be an activerecord (arel) sql object or just a string SQL where clause.
-    def landed_cost_data_for_entries importer_id, sql
-      query = Entry.where(:importer_id=>importer_id)
-      if sql.is_a? String
-        query = query.where sql
-      else
-        query = query.merge sql
-      end
-
-      generate_data find_entries query
-    end
-
     private 
 
       def find_entries query
@@ -53,8 +38,12 @@ module OpenChain; module Report
           ed[:totals] = initialize_charge_columns
           ed[:per_unit] = initialize_charge_columns
           ed[:percentage] = initialize_charge_columns
-
+          ed[:release_date] = entry.release_date
+          ed[:transport_mode_code] = entry.transport_mode_code
+          ed[:entry_number] = entry.entry_number
           ed[:broker_reference] = entry.broker_reference
+          ed[:customer_reference] = entry.customer_references.split("\n")
+
           # We're going to include all PO #'s as customer references as well (making sure not to include them twice since po# could also be a customer reference value)
           ed[:customer_references] = (entry.po_numbers.split("\n") | entry.customer_references.split("\n")).select {|v| !v.blank?}
 
@@ -122,8 +111,16 @@ module OpenChain; module Report
               l[:mid] = line.mid
               l[:quantity] = (line.quantity ? line.quantity : BigDecimal.new("0"))
 
+              # Gather all the unique tariff numbers for this line
+              hts = []
+              line.commercial_invoice_tariffs.each {|t| hts << t.hts_code unless t.hts_code.blank?}
+              l[:hts_code] = hts.uniq
+
               l[:entered_value] = line.value
               l[:duty] = calculate_duty_per_line line
+              l[:hmf] = line.hmf ? line.hmf : BigDecimal.new("0")
+              l[:mpf] = line.mpf ? line.mpf : BigDecimal.new("0")
+              l[:cotton_fee] = line.cotton_fee ? line.cotton_fee : BigDecimal.new("0")
               l[:fee] = calculate_fees_per_line line
               l[:brokerage] = invoice_line_prorations[line.id][:brokerage] ? invoice_line_prorations[line.id][:brokerage] : BigDecimal.new("0")
               l[:inland_freight] = invoice_line_prorations[line.id][:inland_freight] ? invoice_line_prorations[line.id][:inland_freight] : BigDecimal.new("0")
