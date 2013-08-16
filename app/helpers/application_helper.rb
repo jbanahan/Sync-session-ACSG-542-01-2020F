@@ -65,14 +65,18 @@ module ApplicationHelper
   def field_value object, model_field
     mf = model_field.class==ModelField ? model_field : ModelField.find_by_uid(model_field)
     val = mf.process_export object, User.current
-    if val && mf.currency
-      case mf.currency
-      when :usd
-        val = number_to_currency val
-      else
-        val = number_to_currency val, {:format=>"%n",:negative_format=>"-%n"}
+    if val 
+      if mf.currency
+        case mf.currency
+        when :usd
+          val = number_to_currency val
+        else
+          val = number_to_currency val, {:format=>"%n",:negative_format=>"-%n"}
+        end
+      elsif mf.data_type == :decimal
+        # Using precision 5 since that'll cover pretty much every decimal field in the system.
+        val = number_with_precision val, :precision => 5, :strip_insignificant_zeros => true
       end
-
     end
     val
   end
