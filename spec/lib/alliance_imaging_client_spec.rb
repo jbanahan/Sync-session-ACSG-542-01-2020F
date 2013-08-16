@@ -79,6 +79,64 @@ describe OpenChain::AllianceImagingClient do
       entry.attachments[0].attachment_type.should == @hash["doc_desc"]
       entry.attachments[0].source_system_timestamp.should_not be_nil
     end
+
+    context "Fenix B3 Files" do
+      before :each do 
+        @hash["source_system"] = 'Fenix'
+        @e1.update_attributes :source_system => 'Fenix', :entry_number => "#{@hash['file_number']}", :broker_reference => '654321'
+        @hash["doc_desc"] = "Automated"
+      end
+
+      it "should recognize B3 Automated Fenix files and attach the images as B3 records" do
+        @hash['file_name'] = "File_cdc_123128.pdf"
+        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry.attachments.size.should == 1
+        entry.attachments[0].attached_file_name.should == @hash['file_name']
+        entry.attachments[0].attachment_type.should == "B3"
+      end
+
+      it "should retain only 1 B3 attachment" do
+        existing = @e1.attachments.build
+        existing.attached_file_name = "existing.pdf"
+        existing.attachment_type = "B3"
+        existing.save
+
+        @hash['file_name'] = "File_cdc_123128.pdf"
+        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry.attachments.size.should == 1
+        entry.attachments[0].attached_file_name.should == @hash['file_name']
+        entry.attachments[0].attachment_type.should == "B3"
+      end
+
+      it "should recognize RNS Automated Fenix files and attach the images as RNS records" do
+        @hash['file_name'] = "File_rns_123128.pdf"
+        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry.attachments.size.should == 1
+        entry.attachments[0].attached_file_name.should == @hash['file_name']
+        entry.attachments[0].attachment_type.should == "Customs Release Notice"
+      end
+
+      it "should retain only 1 RNS attachment" do
+        existing = @e1.attachments.build
+        existing.attached_file_name = "existing.pdf"
+        existing.attachment_type = "Customs Release Notice"
+        existing.save
+
+        @hash['file_name'] = "File_rns_123128.pdf"
+        OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+
+        entry = Entry.find_by_entry_number_and_source_system @hash["file_number"], 'Fenix'
+        entry.attachments.size.should == 1
+        entry.attachments[0].attached_file_name.should == @hash['file_name']
+        entry.attachments[0].attachment_type.should == "Customs Release Notice"
+      end
+    end
   end
 
   describe :consume_images do
