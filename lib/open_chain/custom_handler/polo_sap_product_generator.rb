@@ -26,11 +26,7 @@ module OpenChain
         {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/sap_#{@env==:qa ? 'qa' : 'prod'}"}
       end
       def before_csv_write cursor, vals
-        if vals[9]=='X'
-          vals[3] = ''
-        else
-          vals[3] = vals[3].hts_format
-        end
+        vals[3] = vals[3].hts_format
         vals[8] = vals[8].length==2 ? vals[8].upcase : "" unless vals[8].blank?
         clean_string_values vals, true #true = remove quotes
         vals

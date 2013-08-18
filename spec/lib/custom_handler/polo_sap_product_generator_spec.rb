@@ -105,12 +105,6 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       @vals[3] = '1234.56.7890'
       r.should == @vals
     end
-    it "should clear HTS if set type indicator is X" do
-      @vals[9] = 'X'
-      r = @g.before_csv_write 1, @vals
-      @vals[3] = ''
-      r.should == @vals
-    end
     it "should capitalize country of origin" do
       @vals[8] = 'us'
       r = @g.before_csv_write 1, @vals
