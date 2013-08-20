@@ -21,7 +21,7 @@ describe OpenChain::Report::LandedCostReport do
     it "should run a landed cost report" do
       start_date = (Time.zone.now - 2.days).strftime("%Y-%m-%d")
       end_date = (Time.zone.now + 1.day).strftime("%Y-%m-%d")
-      c = described_class.new @user, :customer_number=>"CUST", :start_date => start_date, :end_date => end_date
+      c = described_class.new @user, 'customer_number'=>"CUST", 'start_date' => start_date, 'end_date' => end_date
       OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@entry1.id).and_return(generator_data(@entry1))
       OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@entry2.id).and_return(generator_data(@entry2))
 
@@ -74,7 +74,7 @@ describe OpenChain::Report::LandedCostReport do
     it "should not find an entry for different customer" do
       start_date = (Time.zone.now - 2.days).strftime("%Y-%m-%d")
       end_date = (Time.zone.now + 1.day).strftime("%Y-%m-%d")
-      c = described_class.new @user, :customer_number=>"DIFFERENT", :start_date => start_date, :end_date => end_date
+      c = described_class.new @user, 'customer_number'=>"DIFFERENT", 'start_date' => start_date, 'end_date' => end_date
       @tempfile = c.run
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet 0
@@ -84,7 +84,7 @@ describe OpenChain::Report::LandedCostReport do
     it "should not find an entry outside date range" do
       start_date = (Time.zone.now - 3.days).strftime("%Y-%m-%d")
       end_date = (Time.zone.now - 2.days).strftime("%Y-%m-%d")
-      c = described_class.new @user, :customer_number=>"CUST", :start_date => start_date, :end_date => end_date
+      c = described_class.new @user, 'customer_number'=>"CUST", 'start_date' => start_date, 'end_date' => end_date
       @tempfile = c.run
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet 0
@@ -97,7 +97,7 @@ describe OpenChain::Report::LandedCostReport do
 
       start_date = (Time.zone.now - 2.days).strftime("%Y-%m-%d")
       end_date = (Time.zone.now + 1.day).strftime("%Y-%m-%d")
-      c = described_class.new user, :customer_number=>"CUST", :start_date => start_date, :end_date => end_date
+      c = described_class.new user, 'customer_number'=>"CUST", 'start_date' => start_date, 'end_date' => end_date
       @tempfile = c.run
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet 0

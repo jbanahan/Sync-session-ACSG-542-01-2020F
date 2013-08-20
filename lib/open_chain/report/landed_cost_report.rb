@@ -7,10 +7,10 @@ module OpenChain; module Report
 
     def initialize run_by, parameters
       @run_by = run_by
-      @alliance_customer_number = parameters[:customer_number]
+      @alliance_customer_number = parameters['customer_number']
       # The date parameters should be formatted like YYYY-MM-DD
-      @release_date_start = parameters[:start_date]
-      @release_date_end = parameters[:end_date]
+      @release_date_start = parameters['start_date']
+      @release_date_end = parameters['end_date']
     end
 
     def self.run_report run_by, opts = {}
@@ -77,7 +77,7 @@ module OpenChain; module Report
         end
       end
 
-      workbook_to_tempfile wb, "Landed Cost #{@alliance_customer_number}"
+      workbook_to_tempfile wb, "Landed Cost #{@alliance_customer_number} "
     end
 
   end
