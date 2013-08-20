@@ -1116,7 +1116,14 @@ and classifications.product_id = products.id
         [56,:bi_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
         [57,:bi_source_system,:source_system,"Source System",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
         make_broker_invoice_entry_field(58,:bi_ent_part_numbers,:part_numbers,"Part Numbers",:text,lambda {|entry| entry.part_numbers}),
-        make_broker_invoice_entry_field(59,:bi_ent_commercial_invoice_numbers,:commercial_invoice_numbers,"Commercial Invoice Numbers",:text,lambda {|entry| entry.commercial_invoice_numbers})
+        make_broker_invoice_entry_field(59,:bi_ent_commercial_invoice_numbers,:commercial_invoice_numbers,"Commercial Invoice Numbers",:text,lambda {|entry| entry.commercial_invoice_numbers}),
+        make_broker_invoice_entry_field(60,:bi_ent_total_gst, :total_gst, "Total GST", :decimal, lambda {|entry| entry.total_gst}),
+        make_broker_invoice_entry_field(61,:bi_ent_total_duty_gst, :total_duty_gst, "Total Duty & GST", :decimal, lambda {|entry| entry.total_duty_gst}),
+        make_broker_invoice_entry_field(62,:bi_ent_direct_shipment_date, :direct_shipment_date, "Direct Shipment Date", :date, lambda {|entry| entry.direct_shipment_date}),
+        make_broker_invoice_entry_field(63,:bi_ent_across_sent_date, :across_sent_date, "ACROSS Sent Date", :datetime, lambda {|entry| entry.across_sent_date}),
+        make_broker_invoice_entry_field(64,:bi_ent_pars_ack_date, :pars_ack_date, "PARS ACK Date", :datetime, lambda {|entry| entry.pars_ack_date}),
+        make_broker_invoice_entry_field(65,:bi_ent_cadex_accept_date, :cadex_accept_date, "CADEX Accept Date", :datetime, lambda {|entry| entry.cadex_accept_date}),
+        make_broker_invoice_entry_field(66,:bi_ent_cadex_sent_date, :cadex_sent_date, "CADEX Sent Date", :datetime, lambda {|entry| entry.cadex_sent_date})
       ]
       add_fields CoreModule::BROKER_INVOICE_LINE, [
         [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
