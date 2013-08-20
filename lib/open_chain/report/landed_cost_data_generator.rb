@@ -116,7 +116,7 @@ module OpenChain; module Report
               line.commercial_invoice_tariffs.each {|t| hts << t.hts_code unless t.hts_code.blank?}
               l[:hts_code] = hts.uniq
 
-              l[:entered_value] = line.value
+              l[:entered_value] = calculate_entered_value_per_line line
               l[:duty] = calculate_duty_per_line line
               l[:hmf] = line.hmf ? line.hmf : BigDecimal.new("0")
               l[:mpf] = line.mpf ? line.mpf : BigDecimal.new("0")
@@ -219,6 +219,12 @@ module OpenChain; module Report
       def calculate_duty_per_line line
         total = BigDecimal.new "0"
         line.commercial_invoice_tariffs.each {|t| total += t.duty_amount if t.duty_amount}
+        total
+      end
+
+      def calculate_entered_value_per_line line
+        total = BigDecimal.new "0"
+        line.commercial_invoice_tariffs.each {|t| total += t.entered_value if t.entered_value}
         total
       end
 

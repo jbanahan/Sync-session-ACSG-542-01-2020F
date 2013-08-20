@@ -12,14 +12,14 @@ describe OpenChain::Report::LandedCostDataGenerator do
     @bi_line_inland = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"T", :charge_amount => BigDecimal.new("100"))
 
     @ci = Factory(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV1")
-    @ci_line_1 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part1", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID1", :country_origin_code=>"CN", :value => BigDecimal.new("1000"),
-                          :hmf => BigDecimal.new("25"), :mpf => BigDecimal.new("25"), :cotton_fee =>  BigDecimal.new("50"), :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"), :hts_code=>"1234567890")])
+    @ci_line_1 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part1", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID1", :country_origin_code=>"CN",
+                          :hmf => BigDecimal.new("25"), :mpf => BigDecimal.new("25"), :cotton_fee =>  BigDecimal.new("50"), :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("1000"))])
 
-    @ci_line_2 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part2", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW", :value => BigDecimal.new("750"),
-                          :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"))])
+    @ci_line_2 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part2", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW",
+                          :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :entered_value=>BigDecimal.new("750"))])
 
-    @ci_line_3 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part3", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW", :value => BigDecimal.new("1000"),
-                          :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"9876543210"), CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"1234567890")])
+    @ci_line_3 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part3", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW",
+                          :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"9876543210", :entered_value=>BigDecimal.new("500")), CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("500"))])
   end
 
   context :landed_cost_data_for_entry do
@@ -55,7 +55,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
       # We gave each charge the same amount so we could just use the same per_unit proration for all checks
       per_unit = BigDecimal.new("100") / BigDecimal.new("33")
 
-      l[:entered_value].should == @ci_line_1.value
+      l[:entered_value].should == @ci_line_1.commercial_invoice_tariffs.first.entered_value
       l[:duty].should == @ci_line_1.commercial_invoice_tariffs.first.duty_amount
       l[:fee].should == @ci_line_1.hmf + @ci_line_1.mpf + @ci_line_1.cotton_fee
       l[:brokerage].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
@@ -67,7 +67,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
       l[:mpf].should == @ci_line_1.mpf
       l[:cotton_fee].should == @ci_line_1.cotton_fee
 
-      l[:per_unit][:entered_value].should == (@ci_line_1.value / @ci_line_1.quantity)
+      l[:per_unit][:entered_value].should == (l[:entered_value] / @ci_line_1.quantity)
       l[:per_unit][:duty].should == (l[:duty] / @ci_line_1.quantity)
       l[:per_unit][:fee].should == (l[:fee] / @ci_line_1.quantity)
       l[:per_unit][:brokerage].should == (l[:brokerage] / @ci_line_1.quantity)
@@ -89,7 +89,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
       # on 1 cent and the way we're summing multiple tariff lines
       l = i[:commercial_invoice_lines][2]
 
-      l[:entered_value].should == @ci_line_3.value
+      l[:entered_value].should == @ci_line_3.commercial_invoice_tariffs.inject(BigDecimal.new("0")){|s, v| s + v.entered_value}
       l[:duty].should == BigDecimal.new("500") # add two tariff lines together
       l[:fee].should == BigDecimal.new("0")
       l[:brokerage].should == BigDecimal.new("33.34")
