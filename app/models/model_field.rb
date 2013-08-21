@@ -1211,6 +1211,12 @@ and classifications.product_id = products.id
             product.child_products.pluck(:unique_identifier).uniq.sort.join(",")
           },
           :qualified_field_name => "(select group_concat(distinct unique_identifier SEPARATOR ',') FROM bill_of_materials_links INNER JOIN products par on par.id = bill_of_materials_links.child_product_id where bill_of_materials_links.parent_product_id = products.id)"
+        }],
+        [17, :prod_attachment_count, :attachment_count, "Attachment Count", {
+          :import_lambda=>lambda {|obj,data| "Attachment Count ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.attachments.count},
+          :qualified_field_name=>"(select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id)",
+          :data_type=>:integer
         }]
       ]
       add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
