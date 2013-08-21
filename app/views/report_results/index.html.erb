@@ -66,6 +66,10 @@
     <tr class='hover'><td><%=link_to "KitchenCraft Billing", reports_show_kitchencraft_billing_path%></td>
     <td>KitchenCraft Monthly Billing Report</td></tr>
   <%end-%>
+  <%if OpenChain::Report::LandedCostReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Landed Cost", reports_show_landed_cost_path%></td>
+    <td>Assembles Per Unit Landed Cost Data for a single customer over a specified time span.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

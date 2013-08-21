@@ -146,6 +146,7 @@ module OpenChain
             @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
             OpenChain::AllianceImagingClient.request_images @entry.broker_reference if inner_opts[:imaging]
           end
+          @entry.broadcast_event(:save) unless @skip_entry
           @skip_entry = false
         end
       rescue

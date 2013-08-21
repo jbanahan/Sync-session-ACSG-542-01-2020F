@@ -17,7 +17,7 @@ $(function() {
 <%end-%>
 <% content_for :action_bar do %>
   <button class="form_to" form_id="frm_run">Run Report</button>
-  <button class="link_btn" link_to="<%=request.referrer%>">Back</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
 <%end%>
 <h2>Foot Locker US Billing Summary</h2>
 <%=form_tag reports_run_foot_locker_billing_summary_path, :id=>'frm_run' do -%>

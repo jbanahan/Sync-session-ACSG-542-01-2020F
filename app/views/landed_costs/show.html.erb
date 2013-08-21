@@ -1,0 +1,187 @@
+<% content_for :head_tags do %>
+  <title>Landed Cost Report</title>
+<% end %>
+<% content_for :css do %>
+  <style type="text/css">
+    body, td, th {font-family: serif; font-size: 12px;}
+    th {font-size: 10px;}
+    table {empty-cells: show; border-collapse: collapse; border-spacing: 0; width: 100%;}
+    thead th {background-color: #eeeeee;}
+    .num {text-align: right;}
+    .header {text-align: center; vertical-align: top; text-decoration: underline;}
+    .header tr:first-child th:first-child {border-top: 1px solid black; border-left: 1px solid black;}
+    .header tr:first-child th:last-child {border-top: 1px solid black;  border-right: 1px solid black;}
+    .header tr:first-child th {border-top: 1px solid black;}
+    .header tr:last-child th:first-child {border-bottom: 1px solid black; border-left: 1px solid black;}
+    .header tr:last-child th:last-child {border-bottom: 1px solid black; border-right: 1px solid black;}
+    .header tr:last-child th {border-bottom: 1px solid black;}
+    .header tr th:first-child {border-left: 1px solid black;}
+    .header tr th:last-child {border-right: 1px solid black;}
+    .header tr:first-child th {padding-top: 3px;}
+    .header tr:last-child th {padding-bottom: 3px;}
+    .broker-reference {font-weight: bold; font-size: 150%;}
+    .customer-refs {vertical-align: top}
+    tbody td {padding: 5px}
+    .total-per-entry {border-top: 1px solid black;}
+    tfoot tr td {border-top: 1px solid black; padding-top: 30px;}
+    .last-line-row td {padding-bottom: 30px; }
+    .line-count, .entry-count {font-weight: bold}
+    .nowrap {white-space: nowrap;}
+    @media print {
+      body, td, th {font-size: 6pt;}
+      tbody td, tfoot td {font-size: 8pt;}
+      <%-# This is a workaround to force chrome to print the background shading in the table header -%>
+      th {-webkit-print-color-adjust: exact;}
+    }
+  </style>
+<% end %>
+<h2>Landed Cost Report by line for <%=@landed_cost[:customer_name]%></h2>
+<p>International Freight, Brokerage and Other Charges Prorated by Invoice Quantity</p>
+<table>
+  <thead class="header">
+    <tr>
+      <th>Importer Ref</th>
+      <th>CI No</th>
+      <th></th>
+      <th>C/O</th>
+      <th>First Logged</th>
+      <th colspan="9"></th>
+    </tr>
+    <tr>
+      <th colspan="2"></th>
+      <th>Manufacturer ID</th>
+      <th></th>
+      <th>Customer Ref</th>
+      <th>Qty</th>
+      <th>Entered Value</th>
+      <th>Duty Total</th>
+      <th>Fee Total</th>
+      <th>Int&apos;l Freight</th>
+      <th>Inland Freight</th>
+      <th>Brokerage</th>
+      <th>Other Charges</th>
+      <th>Landed Cost</th>
+    </tr>
+    <tr>
+      <th colspan="2"></th>
+      <th>Part Number</th>
+      <th colspan="11"></th>
+    </tr>
+  </thead>
+  <tfoot>
+    <tr>
+      <td class="entry-count"><%=@landed_cost[:entries].size%> <%="Entry".pluralize(@landed_cost[:entries].size)%></td>
+      <td colspan="5">&nbsp;</td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:entered_value], :unit=>""%></td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:duty], :unit=>""%></td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:fee], :unit=>""%></td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:international_freight], :unit=>""%></td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:inland_freight], :unit=>""%></td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:brokerage], :unit=>""%></td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:other], :unit=>""%></td>
+      <td class="num"><%=number_to_currency @landed_cost[:totals][:landed_cost], :unit=>""%></td>
+    </tr>
+  </tfoot>
+  <tbody>
+    <%@landed_cost[:entries].each do |entry| %>
+      <tr>
+        <td colspan="14" class="broker-reference">Broker Reference - <%=entry[:broker_reference]%></td>
+      </tr>
+      <% 
+        output_customer_refs = true 
+        entry[:commercial_invoices].each do |inv|
+          inv[:commercial_invoice_lines].each do |line| %>
+            <tr class="first-line-row">
+            <% if output_customer_refs %>
+              <td class="customer-refs" rowspan="<%=(entry[:number_of_invoice_lines] + 1) * 3%>"><% entry[:customer_references].each do |ref| %><%=ref%><br><% end %></td>
+              <% output_customer_refs = false %>
+            <% end %>
+              <td><%=inv[:invoice_number]%></td>
+              <td>&nbsp;</td>
+              <td><%=line[:country_origin_code]%></td>
+              <td><%=inv[:first_logged].try(:strftime, '%m/%d/%Y')%></td>
+              <td class="num"><%=number_with_precision line[:quantity], :delimiter=>",", :strip_insignificant_zeros=>true %></td>
+              <td class="num"><%=number_to_currency line[:entered_value], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:duty], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:fee], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:international_freight], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:inland_freight], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:brokerage], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:other], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:landed_cost], :unit=>"" %></td>
+            </tr>
+            <tr>
+              <%-# Rowspan from customer refs fills first column -%>
+              <td>&nbsp;</td>
+              <td><%=line[:mid]%></td>
+              <td>&nbsp;</td>
+              <td><%=line[:po_number]%></td>
+              <td class="nowrap">Per Unit</td>
+              <td class="num"><%=number_to_currency line[:per_unit][:entered_value], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:per_unit][:duty], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:per_unit][:fee], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:per_unit][:international_freight], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:per_unit][:inland_freight], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:per_unit][:brokerage], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:per_unit][:other], :unit=>"" %></td>
+              <td class="num"><%=number_to_currency line[:per_unit][:landed_cost], :unit=>"" %></td>
+            </tr>
+            <tr class="last-line-row">
+              <%-# Rowspan from customer refs fills first column -%>
+              <td>&nbsp;</td>
+              <td><%=line[:part_number]%></td>
+              <td>&nbsp;</td>
+              <td colspan="2" class="nowrap">Percentage of Landed Cost</td>
+              <td class="num"><%=number_with_precision line[:percentage][:entered_value], :precision=>4 %></td>
+              <td class="num"><%=number_with_precision line[:percentage][:duty], :precision=>4 %></td>
+              <td class="num"><%=number_with_precision line[:percentage][:fee], :precision=>4 %></td>
+              <td class="num"><%=number_with_precision line[:percentage][:international_freight], :precision=>4 %></td>
+              <td class="num"><%=number_with_precision line[:percentage][:inland_freight], :precision=>4 %></td>
+              <td class="num"><%=number_with_precision line[:percentage][:brokerage], :precision=>4 %></td>
+              <td class="num"><%=number_with_precision line[:percentage][:other], :precision=>4 %></td>
+              <td class="num">&nbsp;</td>
+            </tr>
+          <% end %>
+      <% end %>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td class="total-per-entry nowrap" colspan="3">Total Per Broker Reference</td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:entered_value], :unit=>"" %></td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:duty], :unit=>"" %></td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:fee], :unit=>"" %></td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:international_freight], :unit=>"" %></td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:inland_freight], :unit=>"" %></td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:brokerage], :unit=>"" %></td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:other], :unit=>"" %></td>
+        <td class="num total-per-entry"><%=number_to_currency entry[:totals][:landed_cost], :unit=>"" %></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td colspan="3" class="nowrap">Total Per Unit</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+        <td class="num"><%=number_to_currency entry[:per_unit][:international_freight], :unit=>"" %></td>
+        <td class="num"><%=number_to_currency entry[:per_unit][:inland_freight], :unit=>"" %></td>
+        <td class="num"><%=number_to_currency entry[:per_unit][:brokerage], :unit=>"" %></td>
+        <td class="num"><%=number_to_currency entry[:per_unit][:other], :unit=>"" %></td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td class="line-count"><%=entry[:number_of_invoice_lines]%> <%="Line".pluralize(entry[:number_of_invoice_lines])%></td>
+        <td>&nbsp;</td>
+        <td colspan="3" class="nowrap">Percentage of Total Landed Cost</td>
+        <td class="num"><%=number_with_precision entry[:percentage][:entered_value], :precision=>4%></td>
+        <td class="num"><%=number_with_precision entry[:percentage][:duty], :precision=>4%></td>
+        <td class="num"><%=number_with_precision entry[:percentage][:fee], :precision=>4%></td>
+        <td class="num"><%=number_with_precision entry[:percentage][:international_freight], :precision=>4%></td>
+        <td class="num"><%=number_with_precision entry[:percentage][:inland_freight], :precision=>4 %></td>
+        <td class="num"><%=number_with_precision entry[:percentage][:brokerage], :precision=>4%></td>
+        <td class="num"><%=number_with_precision entry[:percentage][:other], :precision=>4%></td>
+        <td class="num">&nbsp;</td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

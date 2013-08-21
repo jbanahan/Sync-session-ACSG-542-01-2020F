@@ -197,6 +197,28 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_landed_cost
+    if OpenChain::Report::LandedCostReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_landed_cost
+    if OpenChain::Report::LandedCostReport.permission? current_user
+      customer = Company.where(:alliance_customer_number => params[:customer_number]).first
+      if customer && customer.can_view?(current_user)
+        settings = {:start_date=>params[:start_date],:end_date=>params[:end_date], :customer_number => params[:customer_number]}  
+        run_report "Landed Cost Report", OpenChain::Report::LandedCostReport, settings, ["Release Date on or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
+      else
+        error_redirect "You do not have permission to view this company"
+      end
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

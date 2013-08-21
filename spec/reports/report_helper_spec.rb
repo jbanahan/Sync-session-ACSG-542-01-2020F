@@ -108,4 +108,16 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  context :write_val do
+    it "should take a format value and utilize it" do
+      wb = Spreadsheet::Workbook.new
+      s = wb.create_worksheet :name=>'x'
+      row = s.row 0
+
+      # Use datetime value so we're sure that the passed in format overrides any default ones
+      @helper.new.write_val s, row, 0, 0, Time.zone.now, :format => Spreadsheet::Format.new(:number_format=>'MM/DD/YYYY')
+      row.format(0).number_format.should == "MM/DD/YYYY"
+    end
+  end
+
 end
