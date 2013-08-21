@@ -7,7 +7,7 @@ class InstanceInformation < ActiveRecord::Base
     h = hostname.blank? ? `hostname`.strip : hostname
     ii = InstanceInformation.find_or_initialize_by_host h
     ii.last_check_in = 0.seconds.ago
-    ii.version = MasterSetup.get.version
+    ii.version = MasterSetup.current_code_version
     ii.save
     ii
   end

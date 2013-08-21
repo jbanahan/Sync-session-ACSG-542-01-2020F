@@ -38,7 +38,9 @@ def execute_scheduler
     job_wrapper "Upgrade Check" do
       if Rails.env=='production'
         OpenChain::Upgrade.upgrade_if_needed 
-        OpenChain::Upgrade.delay.upgrade_delayed_job_if_needed
+        # Make sure the upgrades are set to be the "highest" priority so they jump to the 
+        # front of the queue.  The lower the value, the higher priority the job gets in delayed_job
+        OpenChain::Upgrade.delay(:priority=>-100).upgrade_delayed_job_if_needed
       end
     end
   end

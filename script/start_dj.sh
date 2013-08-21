@@ -7,6 +7,8 @@ if [ -f config/dj_count.txt ]; then
   fi
   if [ -f tmp/upgrade_running.txt ]; then
     echo "$(date) - Skipping $(pwd) because tmp/upgrade_running.txt exists."
+  elif [ -f tmp/upgrade_error.txt ]; then
+    echo "$(date) - Skipping $(pwd) because tmp/upgrade_error.txt exists."
   else
     echo "$(date) - Starting DJ with $restart_count jobs."
     ./script/delayed_job start -n $restart_count
