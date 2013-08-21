@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <%= yield :head_tags -%>
+    <%= yield :css -%>
+    <%= yield :javascript -%>
+  </head>
+  <body>
+    <%= yield %>
+  </body>
+</html>

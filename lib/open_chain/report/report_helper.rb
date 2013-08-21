@@ -3,6 +3,8 @@ module OpenChain
     module ReportHelper
       DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
       DATE_TIME_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD HH:MM'
+      CURRENCY_FORMAT = Spreadsheet::Format.new :number_format=>'#,##0.00'
+      DATE_FORMAT_MMDDYY = Spreadsheet::Format.new :number_format=>'MM/DD/YYYY'
 
       # Writes the results of the query including headings into the sheet starting at cell A1
       # +sheet+ - the excel spreadsheet to output the query data into
@@ -32,7 +34,7 @@ module OpenChain
       end
 
       # Writes the value provided to the Excel spreadsheet.
-      def write_val sheet, row, row_num, col_num, val
+      def write_val sheet, row, row_num, col_num, val, options = {}
         if val.nil?
           val = ''
         elsif val.is_a?(BigDecimal)
@@ -52,6 +54,10 @@ module OpenChain
           else
             sheet.row(row_num).set_format(col_num, DATE_TIME_FORMAT)
           end
+        end
+
+        if options[:format]
+          sheet.row(row_num).set_format(col_num, options[:format])
         end
       end
 
