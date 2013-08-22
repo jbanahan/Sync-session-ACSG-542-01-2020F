@@ -333,6 +333,9 @@ OpenChain::Application.routes.draw do
       resources :debug_records, :only => [:index, :show] do
         get :destroy_all, :on => :collection
       end
+      get :show_bulk_upload, :on=>:collection
+      post :preview_bulk_upload, :on=>:collection
+      post :bulk_upload, :on=>:collection
 		end
     resources :charge_categories, :only => [:index, :create, :destroy]
 		get :shipping_address_list, :on => :member

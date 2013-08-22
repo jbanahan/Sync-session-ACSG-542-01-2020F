@@ -1,0 +1,55 @@
+<%content_for :javascript do -%>
+$(function() {
+  $('#btn-preview').click(function() {
+    $("#preview-modal").modal('show')
+    ChainBulkUser.preview(<%=@company.id%>,$("#bulk-user-csv").val(),$("#preview-body"));
+  });
+  $("#btn-save").click(function() {$("#frm_user").submit();});
+  $("#frm_user").on('ajax:success',function(event,data,status,xhr) {
+    $("#bulk-user-csv").val('');
+    window.alert(data.count+' users saved successfully!');
+  });
+  $("#frm_user").on('ajax:error',function(event,xhr,status,error) {
+    if(xhr.status == 400) {
+      window.alert("Please fix: "+$.parseJSON(xhr.responseText).error);
+    } else {
+      window.alert("Server error, please contact support.");
+    }
+  });
+});
+<%end-%>
+<style>
+  #preview-table, #preview-table td, #preview-table th { border: 1px solid black; }
+</style>
+<%content_for :action_bar do -%>
+  <button id='btn-preview'>Preview</a>
+<%end-%>
+<h1>Bulk Upload For <%=@company.name%></h1>
+<%= form_for([@company,@user], :method=>'POST', :url=>bulk_upload_company_users_path(@company), :html=>{:id=>'frm_user'}, :remote=>true) do |f| -%>
+  <div>username,email,firstname,lastname,password</div>
+  <textarea id='bulk-user-csv' name='bulk_user_csv'></textarea>
+  <table>
+    <%=field_row "Time Zone", f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones) %>
+    <%=field_row "Email Format", f.select(:email_format,["html","text"])%>
+    <%=field_row "Email Me When Tariffs Are Updated", f.check_box(:tariff_subscribed)-%>
+    <%=field_row "Reset Password", raw("<input type='checkbox' name='password_reset' id='password_reset' value='true' #{@user.password_reset ? "checked='true'" : ""} />")%>
+  </table>
+  <%=render :partial=>'permissions', :locals=>{:user=>@user,:f=>f} -%>
+<%end-%>
+<div id="preview-modal" class="modal hide" tabindex="-1" role="dialog"  aria-hidden="true">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="myModalLabel">Upload Preview</h3>
+  </div>
+  <div class="modal-body">
+    <table id='preview-table'>
+      <thead><tr><th>Username</th><th>Email</th><th>First</th><th>Last</th><th>Password</th></tr></thead>
+      <tbody id='preview-body'>
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+    <button class="btn btn-primary" id='btn-save' data-dismiss="modal" aria-hidden="true">Save</button>
+  </div>
+</div>

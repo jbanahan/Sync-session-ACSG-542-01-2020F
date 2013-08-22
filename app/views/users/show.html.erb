@@ -14,7 +14,7 @@
     $("#btn_debug_records").click(function() {
       window.location = '<%=company_user_debug_records_path @user.company, @user%>';
     });
-  })
+  });
 <% end %>
 <% content_for :action_bar do %>
   <%if @user.can_edit?(current_user) && !@user.company.locked?%>
