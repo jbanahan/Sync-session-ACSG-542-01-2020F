@@ -5,9 +5,9 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     @le_company = Factory(:company)
     @p = described_class.new @le_company
     @data = "\"IMPORT / CM ENTRY / NO.\",\"PORT CODE\",\"IMPORT DATE\",\"DATE REC'D\",HTS,DESCRIPTION OF MERCHANDISE,Quantity,Column16,UNIT VALUE,Duty Rate
-23105002004,3901,10/10/2009,10/11/2009,6106100030,2740747 - SHIRT,1,EA,5,19.70%
-23105002004,3901,10/10/2009,10/11/2009,6110202079,2769247 - PULLOVER,1,EA,5.01,16.50%
-23105002004,3901,10/10/2009,10/11/2009,6110202079,2769247 - PULLOVER,1,EA,5.01,16.50%
+23105002004,3901,10/10/2009,10/11/2009,6106100030,2740747 - SHIRT,1,EA,$5,19.70%
+23105002004,3901,10/10/2009,10/11/2009,6110202079,2769247 - PULLOVER,1,EA,$5.01,16.50%
+23105002004,3901,10/10/2009,10/11/2009,6110202079,2769247 - PULLOVER,1,EA,$5.01,16.50%
 23105002005,3901,10/10/2009,10/11/2009,6110202079,2769247 - PULLOVER,1,EA,5.01,16.50%"
   end
   it "should create line" do
@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     d1.quantity.should == 1
     d1.unit_of_measure.should == 'EA'
     d1.unit_price.should == 5
-    d1.rate.should == 19.7
+    d1.rate.should == BigDecimal("0.197")
   end
   it "should update line with incremented quantity" do
     @p.parse @data

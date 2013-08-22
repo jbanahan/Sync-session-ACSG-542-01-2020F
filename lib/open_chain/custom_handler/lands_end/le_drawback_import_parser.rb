@@ -32,8 +32,8 @@ module OpenChain
                 hts_code:row[4],
                 quantity:0,
                 unit_of_measure:row[7],
-                unit_price:row[8],
-                rate:row[9].gsub('%','')
+                unit_price:row[8].gsub('$',''),
+                rate:( BigDecimal(row[9].gsub('%',''))*BigDecimal('0.01') )
               )
               d.quantity += BigDecimal(row[6])
               key = "#{d.entry_number}-#{d.part_number}"

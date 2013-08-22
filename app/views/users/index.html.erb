@@ -3,12 +3,16 @@
     $( "#btn_new" )
       .click(function() {
         window.location = '<%=new_company_user_path(@company)%>';
-      });
+        });
+    $("#btn_bulk").click(function() {window.location = '<%=show_bulk_upload_company_users_path(@company)%>';});
   });
 <% end %>
 <% content_for :action_bar do -%>
   <% unless @company.locked? %>
     <button id='btn_new'>New</button>
+    <%if current_user.admin? -%>
+      <button id='btn_bulk'>Bulk</button>
+    <%end-%>
   <% end %>
 <% end -%>
 <h1><%=@company.name%> Users</h1>
