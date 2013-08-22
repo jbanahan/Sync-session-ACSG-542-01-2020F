@@ -11,7 +11,7 @@
   <% end %>
 <%end-%>
 <% attachments = (attachable.respond_to?('all_attachments') ? attachable.all_attachments : attachable.attachments)-%>
-<% unless attachable.attachments.blank?-%>
+<% unless attachments.blank?-%>
   <div class='container-fluid'>
     <div class='row-fluid text-center'>
       <div class='span12'>
