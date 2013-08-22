@@ -152,7 +152,52 @@ class UsersController < ApplicationController
     end
   end
 
+  def show_bulk_upload
+    admin_secure("Only administrators can create users.") {
+      @company = Company.find(params[:company_id])
+      @user = @company.users.build
+    }
+  end
+
+  def preview_bulk_upload
+    @company = Company.find(params[:company_id])
+    begin
+      render json: {results: parse_bulk_csv(params['bulk_user_csv'])}
+    rescue
+      render json: {error: $!.message}, status: 400
+    end
+  end
+  def bulk_upload
+    admin_secure("Only administrators can create users.") {
+      count = 0
+      company = Company.find(params[:company_id])
+      results = parse_bulk_csv(params['bulk_user_csv'])
+      begin
+        User.transaction do 
+          results.each do |res|
+            res['password_confirmation'] = res['password']
+            res.merge! params[:user]
+            u = company.users.create!(res)
+            count += 1
+          end
+        end
+        render json: {count:count}
+      rescue
+        render json: {error:$!.message}, status: 400
+      end
+    }
+  end
+
   private
+  def parse_bulk_csv data
+    rval = []
+    CSV.parse(data) do |row|
+      next if row.empty?
+      raise "Every row must have 5 elements." unless row.size == 5
+      rval << {'username'=>row[0],'email'=>row[1],'first_name'=>row[2],'last_name'=>row[3],'password'=>row[4]}
+    end
+    rval
+  end
   def set_debug_expiration(u)
     if current_user.sys_admin? && !params[:debug_expiration_hours].blank?
       u.debug_expires = params[:debug_expiration_hours].to_i.hours.from_now

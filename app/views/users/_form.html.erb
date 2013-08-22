@@ -52,7 +52,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <%=field_row "Confirm Pasword", f.password_field(:password_confirmation, :title=>"Enter your new password into both password fields. If you don't need to change your password, you can leave this blank.") %>
   <%=field_row "Time Zone", f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones) %>
   <%=field_row "Email Format", f.select(:email_format,["html","text"])%>
-  <% if current_user.view_official_tariffs? -%>
+  <% if current_user.admin? || current_user.view_official_tariffs? -%>
     <%=field_row "Email Me When Tariffs Are Updated", f.check_box(:tariff_subscribed)-%>
   <% end -%>
   <% if current_user.admin? %>
@@ -71,125 +71,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   </table>
 
   <% if current_user.admin? %>
-  <h2>Permissions</h2>
-  <% ms = MasterSetup.get%>
-  <table id='permissions' class='detail_table'>
-    <thead><tr><th width='20%'>Module</th><th width='15%'>View</th><th width='15%'>Add / Edit</th><th width='15%'>Delete</th><th width='15%'>Manage Comments</th><th width='15%'>Manage Attachments</th></tr></thead>
-    <tbody>
-      <% if ms.order_enabled? %>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::ORDER.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_orders?', :order_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_orders?', :order_edit, f %></td>
-          <td class='hover'><%= permission_box @user, 'delete_orders?', :order_delete, f %></td>
-          <td class='hover'><%= permission_box @user, 'comment_orders?', :order_comment, f %></td>
-          <td class='hover'><%= permission_box @user, 'attach_orders?', :order_attach, f %></td>
-        </tr>
-      <% end %>
-      <% if ms.shipment_enabled? %>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::SHIPMENT.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_shipments?', :shipment_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_shipments?', :shipment_edit, f %></td>
-          <td class='hover'><%= permission_box @user, 'delete_shipments?', :shipment_delete, f %></td>
-          <td class='hover'><%= permission_box @user, 'comment_shipments?', :shipment_comment, f %></td>
-          <td class='hover'><%= permission_box @user, 'attach_shipments?', :shipment_attach, f %></td>
-        </tr>
-      <% end %>
-      <% if ms.sales_order_enabled? %>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::SALE.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_sales_orders?', :sales_order_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_sales_orders?', :sales_order_edit, f %></td>
-          <td class='hover'><%= permission_box @user, 'delete_sales_orders?', :sales_order_delete, f %></td>
-          <td class='hover'><%= permission_box @user, 'comment_sales_orders?', :sales_order_comment, f %></td>
-          <td class='hover'><%= permission_box @user, 'attach_sales_orders?', :sales_order_attach, f %></td>
-        </tr>
-      <% end %>
-      <% if ms.delivery_enabled? %>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::DELIVERY.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_deliveries?', :delivery_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_deliveries?', :delivery_edit, f %></td>
-          <td class='hover'><%= permission_box @user, 'delete_deliveries?', :delivery_delete, f %></td>
-          <td class='hover'><%= permission_box @user, 'comment_deliveries?', :delivery_comment, f %></td>
-          <td class='hover'><%= permission_box @user, 'attach_deliveries?', :delivery_attach, f %></td>
-        </tr>
-      <% end %>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::PRODUCT.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_products?', :product_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_products?', :product_edit, f %></td>
-          <td class='hover'><%= permission_box @user, 'delete_products?', :product_delete, f %></td>
-          <td class='hover'><%= permission_box @user, 'comment_products?', :product_comment, f %></td>
-          <td class='hover'><%= permission_box @user, 'attach_products?', :product_attach, f %></td>
-        </tr>
-      <% if ms.classification_enabled? %>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::CLASSIFICATION.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><%= permission_box @user, 'edit_classifications?', :classification_edit, f %></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-        </tr>
-      <% end %>
-      <% if ms.security_filing_enabled? -%>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::SECURITY_FILING.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_security_filings?', :security_filing_view, f %></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><%= permission_box @user, 'comment_security_filings?', :security_filing_comment, f%></td>
-          <td class='hover'><%= permission_box @user, 'attach_security_filings?', :security_filing_attach, f%></td>
-        </tr>
-      <% end -%>
-      <% if ms.entry_enabled? %>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::ENTRY.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_entries?', :entry_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_entries?', :entry_edit, f %></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><%= permission_box @user, 'comment_entries?', :entry_comment, f%></td>
-          <td class='hover'><%= permission_box @user, 'attach_entries?', :entry_attach, f%></td>
-        </tr>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::BROKER_INVOICE.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_broker_invoices?', :broker_invoice_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_broker_invoices?', :broker_invoice_edit, f %></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-        </tr>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'><%=CoreModule::COMMERCIAL_INVOICE.label%></div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_commercial_invoices?', :commercial_invoice_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_commercial_invoices?', :commercial_invoice_edit, f %></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-        </tr>
-      <% end %>
-      <% if ms.drawback_enabled? -%>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'>Drawback</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_drawback?', :drawback_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_drawback?', :drawback_edit, f %></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-        </tr>
-      <% end -%>
-        <tr class='permission_row'>
-          <td class='hover label_cell'><div class='label'>Survey</div><div class='check_toggles'><a href='#' class='check_all'>all</a> / <a href='#' class='check_none'>none</a></div></td>
-          <td class='hover'><%= permission_box @user, 'view_surveys?', :survey_view, f %></td>
-          <td class='hover'><%= permission_box @user, 'edit_surveys?', :survey_edit, f %></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-          <td class='hover'><span class='light_text'>n/a</span></td>
-        </tr>
-    </tbody>
-  </table>
+    <%=render :partial=>'permissions', :locals=>{:user=>@user,:f=>f} -%>
   <% end %>
 <% end %>
 <br />

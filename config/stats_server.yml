@@ -1,0 +1,6 @@
+development:
+  base_url: "http://localhost:3001"
+test:
+  base_url: "http://localhost:3001"
+production:
+  base_url: "https://stats.vfitrack.net"
