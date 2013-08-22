@@ -40,6 +40,7 @@ describe FtpSender do
       sess.last_server_response.should == "500"
       
       FtpSession.first.id.should == sess.id
+      @file.closed?.should be_true
     end
     it "should log message if error is not raised" do
       @ftp.stub(:last_response).and_return "200"
@@ -60,6 +61,7 @@ describe FtpSender do
       file_contents.should == "xyz"
       file_name.should == File.basename(@file)
       sess.last_server_response.should == "200"
+      @file.closed?.should be_true
     end
 
     it "should utilize remote_file_name option to send file under a different name" do
@@ -114,7 +116,7 @@ describe FtpSender do
       attachment = double("Attachment")
       FtpSession.any_instance.should_receive(:create_attachment).and_return attachment
       attachment.should_receive(:attached=)
-      @ftp.should_receive(:putbinaryfile).with(@file, File.basename(@file))
+      @ftp.should_receive(:putbinaryfile).with(@file.path, File.basename(@file))
       FtpSender.send_file @server, @username, "pwd", @file
     end
 
@@ -123,7 +125,7 @@ describe FtpSender do
       attachment = double("Attachment")
       FtpSession.any_instance.should_receive(:create_attachment).and_return attachment
       attachment.should_receive(:attached=)
-      @ftp.should_receive(:puttextfile).with(@file, File.basename(@file))
+      @ftp.should_receive(:puttextfile).with(@file.path, File.basename(@file))
       FtpSender.send_file @server, @username, "pwd", @file, {:binary => false}
     end
 

@@ -38,11 +38,15 @@ class FtpSender
             log << "Changed to folder #{my_opts[:folder]}" 
           end
           data = nil
+
+          # We need to use the file path since the ftp send always closes
+          # the file handle it is passed, and we need to keep that handle open 
+          # so the ftp session attachment will get saved off.
           if my_opts[:binary]
-            f.putbinaryfile file, remote_name
+            f.putbinaryfile file.path, remote_name
             log << "Put binary file #{file.path} as #{remote_name}"
           else
-            f.puttextfile file, remote_name
+            f.puttextfile file.path, remote_name
             log << "Put text file #{file.path} as #{remote_name}"
           end
           log << "Session completed successfully."
@@ -72,7 +76,8 @@ class FtpSender
 
         session.save!
       ensure
-        file.close if local_file_creation
+        # Always close the file, this is expected since a straight ftp send from the standard ruby libs does the same thing.
+        file.close unless file.closed?
       end
 
       return session
