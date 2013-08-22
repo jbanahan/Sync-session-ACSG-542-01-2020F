@@ -1214,8 +1214,8 @@ and classifications.product_id = products.id
         }],
         [17, :prod_attachment_count, :attachment_count, "Attachment Count", {
           :import_lambda=>lambda {|obj,data| "Attachment Count ignored. (read only)"},
-          :export_lambda=>lambda {|obj| obj.attachments.count},
-          :qualified_field_name=>"(select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id)",
+          :export_lambda=>lambda {|obj| obj.respond_to?(:all_attachments) ? obj.all_attachments.count : obj.attachments.count},
+          :qualified_field_name=>"((select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id) + (select count(*) from linked_attachments where attachable_type = 'Product' and attachable_id = products.id))",
           :data_type=>:integer
         }]
       ]
