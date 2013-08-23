@@ -33,11 +33,40 @@ def execute_scheduler
     end
   end
 
-  #check for upgrades
-  scheduler.every '30s' do
+  #check for upgrades for the web servers (allow overlapping is supposed to only allow a single instance of this job to run on this scheduler)
+  upgrade_job_options = {:tags => "Upgrade", :allow_overlapping => false}
+  scheduler.every '30s', upgrade_job_options do
     job_wrapper "Upgrade Check" do
       if Rails.env=='production'
-        OpenChain::Upgrade.upgrade_if_needed 
+        upgrade_running = lambda do
+          # Unschedule all job except the upgrade ones - this doesn't stop jobs in progress, just effectively
+          # stops the scheduler from running re-running them after this moment
+          jobs = scheduler.all_jobs.values
+          jobs.each_entry {|j| j.unschedule unless j.try(:tags).try(:include?, upgrade_job_options[:tags])}
+
+          # Wait till all running jobs aside from Upgrade jobs are completed.
+          upgrade_job_ids = jobs.collect {|j| j.try(:tags).try(:include?, upgrade_job_options[:tags]) ? j.job_id : nil}.compact
+          # Sleep for at most 10 seconds...there's really no job below that should run for more than a second or two
+          # since they're all pretty much just kicking off delayed jobs anyway
+          sleep_iterations = 0
+          while sleep_iterations < 20 && jobs.select {|j| j.running && !upgrade_job_ids.include?(j.job_id)}.length > 0
+            sleep 0.5
+            sleep_iterations += 1
+          end
+        end
+
+        # Don't kick off another upgrade if we've already upgraded
+        unless OpenChain::Upgrade.upgraded?
+          OpenChain::Upgrade.upgrade_if_needed running: upgrade_running
+        end
+      end
+    end
+  end
+
+  # Check for upgrade to delayed job server
+  scheduler.every '30s', upgrade_job_options do
+    job_wrapper "Delayed Job Upgrade Check" do
+      if Rails.env=='production'
         # Make sure the upgrades are set to be the "highest" priority so they jump to the 
         # front of the queue.  The lower the value, the higher priority the job gets in delayed_job
         OpenChain::Upgrade.delay(:priority=>-100).upgrade_delayed_job_if_needed
@@ -101,8 +130,8 @@ def execute_scheduler
 
   scheduler.cron '0 23 * * *' do
     job_wrapper "Purges" do
-      Message.purge_messages
-      ReportResults.purge
+      Message.delay.purge_messages
+      ReportResults.delay.purge
     end
   end
   

@@ -3,25 +3,40 @@ require 'open3'
 module OpenChain
   class Upgrade
 
+    @@upgraded = false
+
+    # This method is just a flag to denote if and upgrade completed in this process, it's largely useless
+    # to anything other than jobs that initiate an upgrade.  It's here to attempt to prevent
+    # doing a second upgrade after one has already occurred.
+    def self.upgraded?
+      @@upgraded
+    end
+
     #Upgrades the current instance to the target git tag, specifying whether the upgrade is running from a delayed job queue or not.
     #returns the absolute path to the upgrade log file
     #raises an OpenChain::UpgradeFailure if there are any problems
-    def self.upgrade target, upgrade_delelayed_job = false
-      Upgrade.new(target).go upgrade_delelayed_job
+    def self.upgrade target, upgrade_delelayed_job = false, callbacks = {}
+      Upgrade.new(target).go upgrade_delelayed_job, callbacks
     end
 
     # Check the MasterSetup to see if this instance needs to be upgrade to another version and do so if needed
     #raises an OpenChain::UpgradeFailure if there are any problems
-    def self.upgrade_if_needed
+    def self.upgrade_if_needed callbacks = {}
+      result = false
       if MasterSetup.need_upgrade?
-        upgrade MasterSetup.get(false).target_version
+        result = upgrade MasterSetup.get(false).target_version, false, callbacks
       end
+      result
     end
 
+    # Don't change the argument order ro method name without also consulting 
+    # delayed_jobs_intializers.
     def self.upgrade_delayed_job_if_needed
+      result = false
       if MasterSetup.need_upgrade?
-        upgrade MasterSetup.get(false).target_version, true
+        result = upgrade MasterSetup.get(false).target_version, true
       end
+      result
     end
 
     def self.in_progress?
@@ -43,23 +58,27 @@ module OpenChain
     end
 
     #do not call this directly, use the static #upgrade method instead
-    def go delayed_job_upgrade
+    def go delayed_job_upgrade, callbacks = {}
       # Make sure only a single process is checking for and creating the upgrade file at a time
       # to avoid multiple upgrades running on the same host/customer instance at a time.
       @log = nil
       @upgrade_log = nil
-      Lock.acquire(Lock::UPGRADE_LOCK) do
-        unless Upgrade.in_progress?
-          @log = Logger.new(@log_path)
-          # The log statement for this commeand will get sucked into the upgrade log when it's created
-          capture_and_log "touch #{Upgrade.upgrade_file_path}"
+      unless Upgrade.upgraded?
+        Lock.acquire(Lock::UPGRADE_LOCK) do
+          unless Upgrade.in_progress?
+            @log = Logger.new(@log_path)
+            # The log statement for this commeand will get sucked into the upgrade log when it's created
+            capture_and_log "touch #{Upgrade.upgrade_file_path}"
+          end
         end
       end
 
-      return "Skipping upgrade, #{Upgrade.upgrade_file_path} exists." unless @log
+      return false unless @log
       
-      @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target, :log=>IO.read(@log_path))
+      execute_callback(callbacks, :running)
+      upgrade_completed = false
       begin
+        @upgrade_log = InstanceInformation.check_in.upgrade_logs.create(:started_at=>0.seconds.ago, :from_version=>MasterSetup.current_code_version, :to_version=>@target, :log=>IO.read(@log_path))
         get_source 
         apply_upgrade
         #upgrade_running.txt will stick around if one of the previous methods blew an exception
@@ -67,7 +86,8 @@ module OpenChain
         capture_and_log "rm #{Upgrade.upgrade_file_path}" 
         # Remove the upgrade error file if it is present
         capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exists?(Upgrade.upgrade_error_file_path)
-        @log_path
+        @@upgraded = true
+        upgrade_completed = true
       rescue
         # If the delayed job upgrade fails at some point we'll need to remove the upgrade_running.txt file in order to get the upgrade
         # to start again, however, if we do that the dj_monitor.sh script may actually restart delayed job queues prior to the environment being ready for that.
@@ -77,9 +97,9 @@ module OpenChain
         raise $!
       ensure
         finish_upgrade_log 
-        # We don't try and restart the delayed job process any longer here.  Instead we have delayed_job callbacks set up to kill queues that are running an
-        # outdated code version and then a background script (script/dj_monitor.sh) that will automatically start queues back up.
       end
+
+      upgrade_completed
     end
 
     private
@@ -138,6 +158,21 @@ module OpenChain
       @upgrade_log.update_attributes(:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exists?(@log_path)
     end
 
+    def execute_callback callback_list, event
+      if callback_list && callback_list[event]
+        cb_list = callback_list[event]
+        to_run = []
+        if cb_list.respond_to? :entries 
+          to_run = cb_list.entries 
+        else
+          to_run << cb_list
+        end
+
+        to_run.each do |callback|
+          callback.call
+        end
+      end
+    end
   end
 
   class UpgradeFailure < StandardError

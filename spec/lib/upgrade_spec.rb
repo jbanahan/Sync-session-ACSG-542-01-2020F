@@ -6,7 +6,7 @@ describe OpenChain::Upgrade do
     it 'should run upgrade if need_upgrade? returns true' do
       MasterSetup.should_receive(:need_upgrade?).and_return(true)
       MasterSetup.any_instance.should_receive(:target_version).at_least(1).times.and_return('x')
-      OpenChain::Upgrade.should_receive(:upgrade).with('x')
+      OpenChain::Upgrade.should_receive(:upgrade).with('x', false, {})
 
       OpenChain::Upgrade.upgrade_if_needed
     end

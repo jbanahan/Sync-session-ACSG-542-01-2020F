@@ -25,6 +25,13 @@ class ChainDelayedJobPlugin < Delayed::Plugin
     OpenChain::Upgrade.in_progress? || (MasterSetup.current_code_version != MasterSetup.current_config_version)
   end
 
+  def self.number_of_running_queues
+    # This command will give us the a \n delimited list of the pids with file handles open on the delayed job log
+    # Every different worker opens a file handler here as defined in the delayed job command.rb file which is
+    # run from the script/delayed_job file we use.
+    `lsof -t #{File.join(Rails.root, 'log', 'delayed_job.log')}`.chomp.split("\n").size
+  end
+
   callbacks do |lifecycle|
     # FYI..this call is currently made from delayed_job's worker.rb via the run_callbacks call.  Args passed to that method
     # (after the callback's identifier symbol) are what are passed into this block. args splat is here just in 
@@ -34,8 +41,9 @@ class ChainDelayedJobPlugin < Delayed::Plugin
       # This is used in conjunction with the dj_monitor.sh script to ensure only job queues running the most up 
       # to date version of the code stay running.  If we kill off outdated queues, the monitor script will then
       # restart the job queues.
-      if MasterSetup.need_upgrade? && !is_upgrade_delayed_job?(job)
-        raise "Should have run upgrade: #{is_upgrade_delayed_job?(job)}" if job.id == 17
+      upgrade_job = is_upgrade_delayed_job?(job)
+      if Rails.env == "production" && MasterSetup.need_upgrade? && !upgrade_job
+        
         # We can actually save off this job just by rescheduling it, that way after the upgrade is complete it will
         # run with any updated code.  The job attempts reset is to prevent the reschedule from running too many times and
         # having it kill the job.
@@ -49,34 +57,34 @@ class ChainDelayedJobPlugin < Delayed::Plugin
         # We can actually tell the worker to stop, which will shut down this current worker process after it 
         # handles any cleanup on this job.
 
-        # We only want to stop the worker if we know an update has already been started, othewise, it's possible
+        # We only want to stop the worker if we know an update has already been started, otherwise, it's possible
         # if there's enough jobs in the queue ahead of the delayed job upgrade job that we'll kill off all the workers
         # prior to the actual upgrade job being run.
-        worker.stop if ChainDelayedJobPlugin.upgrade_started?
+        Lock.acquire(Lock::UPGRADE_LOCK) do
+          # Don't stop if we're the very last queue
+          if ChainDelayedJobPlugin.number_of_running_queues > 1 && ChainDelayedJobPlugin.upgrade_started?
+            worker.stop
+          end
+        end 
 
         # We're going to purposefully NOT forward to anything in the callback chain since we're, in effect, cancelling
         # this job's run.
         false
       else
         # Call through to any other plugins that may be attached to this callback chain, the last 
-        # callback in the chain is always the execution of the job
-        block.call(worker, job, *args)
-      end
-    end
+        # callback in the chain is always the execution of the job (which will return true if the job ran without error
+        # and false if it errored).
+        result = false
+        # We really shouldn't have a case where we're getting an upgrade job in this process after we've already
+        # run one, but since it's so easy to guard against we'll handle it just in case.
+        unless OpenChain::Upgrade.upgraded?
+          result = block.call(worker, job, *args)
 
-    # The loop callback occurs in the delayed_job worker before it attempts to even start checking for jobs to run.
-    # We can listen on that callback and tell it to not bother doing the job lookups and kill ourself if we're already
-    # in the process of upgrading.
-    lifecycle.around(:loop) do |worker, *args, &block|
-      # Check if an upgrade was initiated, and then determine if an update was actually started already 
-      # (and thus we should commit sepuku) by seeing if the config file's code version on disk 
-      # doesn't match our process' current code version - which would mean an update to the new source code 
-      # version occurred (ergo an update is already running in a new version).
-      if MasterSetup.need_upgrade? && ChainDelayedJobPlugin.upgrade_started? 
-        worker.stop
-        nil
-      else
-        block.call(worker, *args)
+          if upgrade_job
+            worker.stop if OpenChain::Upgrade.upgraded?
+          end
+        end
+        result
       end
     end
   end
