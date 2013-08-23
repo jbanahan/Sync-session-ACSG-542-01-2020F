@@ -1,11 +1,7 @@
 class PasswordResetsController < ApplicationController
-  before_filter :ensure_logged_out, :except => [:forced]
   before_filter :load_user_using_perishable_token, :only => [:edit, :update]
-  skip_before_filter :require_user, :except => [:forced]
-  skip_before_filter :force_reset, :only => [:update, :forced]
-  
-  def new
-  end
+  skip_before_filter :require_user
+  skip_before_filter :force_reset
 
   def create
     @user = User.find_by_email(params[:email])
@@ -35,27 +31,22 @@ class PasswordResetsController < ApplicationController
     end
   end
 
-  def forced
-    @no_buttons = true
-    @user = current_user
-    respond_to do |format|
-      format.html { render :action=>:edit }
-    end
-  end
-
   private
   def load_user_using_perishable_token
     unless @user
+      # This method used to also fall back to using the user's id to find by, this is very insecure because user id's are easily guessed since they're
+      # a numerical sequence.  So, having a lookup on id here effectively provides a means for DOS'ing user accounts - changing random passwords.  The lookups need to be
+      # non-deterministic, which is what perishable token attempts to be.
       @user = User.find_using_perishable_token(params[:id])
-      @user = User.find_by_id(params[:id]) unless @user
+
       unless @user
-        add_flash :errors, "We're sorry, but we could not locate your account."
+        add_flash :errors, "We're sorry, but we could not locate your account.  Please retry resetting your password from the login page."
+        # There's a case here where the user may click a password reset link (probably from an old email) while they already have a live session...probably thinking they
+        # can use the password as a shortcut for resetting their password - which doesn't work.  So, we'll log the user out and then redirect them which will allow them
+        # to use the password reset link on the login page to generate a new reset.
+        force_logout
         redirect_to new_user_session_path
       end
     end
-  end
-  def ensure_logged_out
-    u = UserSession.find
-    u.destroy if u
   end
 end

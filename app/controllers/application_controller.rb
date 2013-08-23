@@ -287,6 +287,11 @@ class ApplicationController < ActionController::Base
     return browser.ie? && Integer(browser.version) < 9 rescue true
   end
 
+  def force_logout
+    u = UserSession.find
+    u.destroy if u
+  end
+
   private
   
   def set_master_setup
@@ -295,7 +300,14 @@ class ApplicationController < ActionController::Base
 
   def force_reset
     if logged_in? && current_user.password_reset
-      redirect_to(forced_password_reset_path(current_user))
+      # Basically, we're just going to redirect the user to the standard password resets page using the
+      # authlogic perishable token.
+
+      # Logout the user to prevent the session from being looked up on the redirect and the
+      # users perishable token from being updated.
+      force_logout
+      current_user.reset_password_prep
+      redirect_to edit_password_reset_path current_user.perishable_token
       return false
     end
   end

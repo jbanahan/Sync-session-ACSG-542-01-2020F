@@ -281,4 +281,18 @@ describe User do
       u.hide_message?('HX').should be_true
     end
   end
+
+  describe :reset_password_prep do
+    it "should update updated_at and change the perishable token" do
+      @u = Factory(:user)
+
+      updated = @u.updated_at
+      token = @u.perishable_token
+      sleep 0.5
+
+      @u.reset_password_prep
+      @u.perishable_token.should_not == updated
+      @u.perishable_token.should_not == token
+    end
+  end
 end

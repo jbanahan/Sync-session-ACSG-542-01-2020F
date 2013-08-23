@@ -75,8 +75,11 @@ EOS
         )
   end
 
-  def send_password_reset(user)
+  def send_password_reset(user, expires_at)
     @user = user
+    # Make sure the expiration time is presented in the user's timezone
+    @expires_at = expires_at.in_time_zone(user.time_zone) rescue expires_at
+
     mail(:to => user.email, :subject => "[chain.io] Password Reset") do |format| 
       format.text
     end
