@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     it "should apply additional_where filters" do
       @to_find_1.update_attributes(:name=>'XYZ')
-      h = @h.class.new(@code, nil, "products.name = 'XYZ'")
+      h = @h.class.new(@code, nil, nil, "products.name = 'XYZ'")
       h.find_products.to_a.should == [@to_find_1]
     end
     it "should not find products that don't have canada classifications but need sync" do
