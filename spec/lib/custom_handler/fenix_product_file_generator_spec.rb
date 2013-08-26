@@ -58,6 +58,13 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @t = @h.make_file [@p] 
       IO.read(@t.path).should == "#{"N".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"myuid".ljust(40)}1234567890\r\n"
     end
+    it "should generate output file using part number" do
+      pn_def = CustomDefinition.create! label: "Part Number", module_type: "Product", data_type: "string"
+      @p.update_custom_value! pn_def, "ABC123"
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, nil, true)
+      @t = @h.make_file [@p] 
+      IO.read(@t.path).should == "#{"N".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"ABC123".ljust(40)}1234567890\r\n"
+    end
     it "should write sync records with dummy confirmation date" do
       @t = @h.make_file [@p] 
       @p.reload

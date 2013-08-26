@@ -127,7 +127,7 @@ def execute_scheduler
     scheduler.every('60m') do
       begin
         eb = Company.find_by_alliance_customer_number 'EDDIE' #the product database is tied to the US importer
-        OpenChain::CustomHandler::FenixProductFileGenerator.new('EDDIEBR', eb.id).delay.generate
+        OpenChain::CustomHandler::FenixProductFileGenerator.new('EDDIEBR', eb.id, true).delay.generate
       rescue
         $!.log_me ['Eddie Bauer Fenix File Generator Failed']
       end
