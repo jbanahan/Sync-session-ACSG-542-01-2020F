@@ -5,6 +5,9 @@
         window.location = '<%=new_company_user_path(@company)%>';
         });
     $("#btn_bulk").click(function() {window.location = '<%=show_bulk_upload_company_users_path(@company)%>';});
+    $("#btn_send_email").click(function() {
+      $("#users_form").submit();
+    });
   });
 <% end %>
 <% content_for :action_bar do -%>
@@ -14,12 +17,17 @@
       <button id='btn_bulk'>Bulk</button>
     <%end-%>
   <% end %>
+  <% if current_user.sys_admin -%>
+    <button id="btn_send_email" title="Send a welcome email to selected users with their login and a new, random password.">Send Invite Email</button>
+  <% end %>
 <% end -%>
 <h1><%=@company.name%> Users</h1>
 
+<%=form_tag bulk_invite_company_users_path(@company), id: "users_form" do %>
 <table class='detail_table'>
   <thead>
     <tr>
+      <th>&nbsp;</th>
       <th>Full Name</th>
       <th>Username</th>
       <th>Email</th>
@@ -30,6 +38,7 @@
 <tbody>
 <% @users.each do |user| %>
   <tr class='hover'>
+    <td><%= check_box_tag 'id', user.id %></td>
     <td><%= link_to user.full_name, edit_company_user_path(user.company_id,user.id) %><%unless user.active? %> <span class='exception_value'>[Locked]</span><%end%></td>
     <td><%= user.username %></td>
     <td><%= user.email %></td>
@@ -38,4 +47,5 @@
 <% end %>
 </tbody>
 </table>
+<% end %>
 

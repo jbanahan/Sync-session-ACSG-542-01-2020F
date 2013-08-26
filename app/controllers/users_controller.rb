@@ -188,6 +188,19 @@ class UsersController < ApplicationController
     }
   end
 
+  def bulk_invite
+    admin_secure("Only administrators can send invites to users.") {
+      if params[:id].blank?
+        add_flash :errors, "Please select at least one user."
+      else
+        User.delay.send_invite_emails params[:id]
+        add_flash :notices, "The user invite #{"email".pluralize(params[:id].length)} will be sent out shortly."
+      end
+
+      redirect_to company_users_path params[:company_id]
+    }
+  end
+
   private
   def parse_bulk_csv data
     rval = []

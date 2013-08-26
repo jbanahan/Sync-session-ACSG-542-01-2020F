@@ -90,4 +90,38 @@ describe UsersController do
       response.status.should == 400
     end
   end
+
+  describe :bulk_invite do
+
+    it "should invite multiple users" do
+      @user.admin = true
+      @user.save
+
+      User.should_receive(:delay).and_return User
+      User.should_receive(:send_invite_emails).with ["1", "2", "3"]
+      post :bulk_invite, id: [1, 2, 3], company_id: @user.company_id
+
+      response.should redirect_to company_users_path @user.company_id
+      flash[:notices].first.should == "The user invite emails will be sent out shortly."
+    end
+
+    it "should only allow admins access" do
+      @user.admin = false
+      @user.save
+
+      post :bulk_invite, id: [1, 2, 3], company_id: @user.company_id
+
+      response.should redirect_to "/"
+      flash[:errors].first.should == "Only administrators can send invites to users."
+    end
+
+    it "should verify at least one user selected" do
+      @user.admin = true
+      @user.save
+
+      post :bulk_invite, company_id: @user.company_id
+      response.should redirect_to company_users_path @user.company_id
+      flash[:errors].first.should == "Please select at least one user."
+    end
+  end
 end

@@ -330,6 +330,7 @@ OpenChain::Application.routes.draw do
 		resources :users do
 		  get :disable, :on => :member
 		  get :enable, :on => :member
+      post :bulk_invite, :on => :collection
       resources :debug_records, :only => [:index, :show] do
         get :destroy_all, :on => :collection
       end

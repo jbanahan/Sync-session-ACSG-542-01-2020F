@@ -225,4 +225,22 @@ EMAIL
       end
     end
   end
+
+  context :send_invite do
+    before :each do
+      MasterSetup.get.update_attributes request_host: "localhost"
+      @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
+    end
+
+    it "should send an invite email" do
+      pwd = "password"
+      mail = OpenMailer.send_invite @user, pwd
+      mail.subject.should eq "[chain.io] Welcome, Joe Schmoe!"
+      mail.to.should eq [@user.email]
+
+      mail.body.raw_source.should match /Username: #{@user.username}/
+      mail.body.raw_source.should match /Temporary Password: #{pwd}/
+      mail.body.raw_source.should match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: 'https')}/
+    end
+  end
 end

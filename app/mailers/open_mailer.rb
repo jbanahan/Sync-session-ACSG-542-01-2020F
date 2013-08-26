@@ -259,6 +259,16 @@ EOS
     end
   end
 
+  def send_invite user, temporary_password
+    @user = user
+    @temporary_password = temporary_password
+    @login_url = url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: 'https')
+
+    mail(to:user.email,subject:"[chain.io] Welcome, #{user.first_name} #{user.last_name}!") do |format|
+      format.html
+    end
+  end
+
   private
 
     def save_large_attachment(file, registered_emails)

@@ -281,4 +281,33 @@ describe User do
       u.hide_message?('HX').should be_true
     end
   end
+  context :send_invite_emails do
+    it "should send an invite email to a user" do
+      e = double("Email")
+      e.should_receive(:deliver)
+      u = Factory(:user)
+
+      OpenMailer.should_receive(:send_invite) do |user, password| 
+        user.id.should == u.id
+        # Make sure the password was updated and user was set to force
+        # reset password
+        user.crypted_password.should_not == u.crypted_password
+        user.password_reset.should be_true
+        user.perishable_token.should_not == u.perishable_token
+
+        e
+      end
+      
+      User.send_invite_emails u.id
+    end
+
+    it "should send an invite email to multiple users" do
+      e = double("email")
+      e.should_receive(:deliver).twice
+      OpenMailer.should_receive(:send_invite).twice.and_return(e)
+
+      u = Factory(:user)
+      User.send_invite_emails [u.id, u.id]
+    end
+  end
 end

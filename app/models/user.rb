@@ -1,3 +1,5 @@
+require 'securerandom'
+
 class User < ActiveRecord::Base
   cattr_accessor :current
 
@@ -62,6 +64,24 @@ class User < ActiveRecord::Base
   def deliver_password_reset_instructions!
     reset_perishable_token!
     OpenMailer.send_password_reset(self).deliver
+  end
+
+  # Sends each user id listed an email informing them of their account login / temporary password
+  def self.send_invite_emails ids
+    unless ids.respond_to? :each_entry
+      ids = [ids]
+    end
+
+    ids.each_entry do |id|
+      user = User.where(id: id).first
+      if user
+        # Because we only store hashed versions of passwords, if we're going to relay users their temporary 
+        # password in an email, the only way we can send them a cleartext password is if we generate one here.
+        password = update_with_random_password user
+        OpenMailer.send_invite(user, password).deliver
+      end
+    end
+    nil
   end
   
   # is an administrator within the application (as opposed to a sys_admin who is an Aspect 9 employee with master control)
@@ -377,4 +397,19 @@ class User < ActiveRecord::Base
     true
   end
 
+  # Generates a random password, saves it into the user, forces password reset and returns the cleartext version of the password
+  # that was generated.
+  def self.update_with_random_password user
+    # Generates a purely random 8 character password
+    cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
+
+    user.password = cleartext
+    user.password_confirmation = cleartext
+    user.password_reset = true
+    user.save!
+    user.reset_perishable_token!
+
+    cleartext
+  end
+  private_class_method :update_with_random_password
 end
