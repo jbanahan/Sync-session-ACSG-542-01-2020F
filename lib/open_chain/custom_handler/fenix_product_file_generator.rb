@@ -61,10 +61,13 @@ module OpenChain
       end
 
       def identifier_field p
-        unless @part_number_def 
-          @part_number_def = CustomDefinition.find_by_label_and_module_type("Part Number","Product")
+        if @use_part_number
+          @part_number_def ||= CustomDefinition.find_by_label_and_module_type("Part Number","Product")
+
+          p.get_custom_value(@part_number_def).value
+        else
+          p.unique_identifier
         end
-        @use_part_number ? p.get_custom_value(@part_number_def).value : p.unique_identifier
       end
     end
   end
