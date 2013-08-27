@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     it "should apply additional_where filters" do
       @to_find_1.update_attributes(:name=>'XYZ')
-      h = @h.class.new(@code, nil, "products.name = 'XYZ'")
+      h = @h.class.new(@code, nil, nil, "products.name = 'XYZ'")
       h.find_products.to_a.should == [@to_find_1]
     end
     it "should not find products that don't have canada classifications but need sync" do
@@ -57,6 +57,13 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     it "should generate output file with given products" do
       @t = @h.make_file [@p] 
       IO.read(@t.path).should == "#{"N".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"myuid".ljust(40)}1234567890\r\n"
+    end
+    it "should generate output file using part number" do
+      pn_def = CustomDefinition.create! label: "Part Number", module_type: "Product", data_type: "string"
+      @p.update_custom_value! pn_def, "ABC123"
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, nil, true)
+      @t = @h.make_file [@p] 
+      IO.read(@t.path).should == "#{"N".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"ABC123".ljust(40)}1234567890\r\n"
     end
     it "should write sync records with dummy confirmation date" do
       @t = @h.make_file [@p] 
