@@ -70,7 +70,9 @@ class DelayedJobManager
     real_error_count = 0
     max_message_length = 500
     begin
-      errored_jobs = Delayed::Job.where("last_error IS NOT NULL").order("created_at DESC")
+      # Don't show requeue messages, they're not actual errors.
+      errored_jobs = Delayed::Job.where("last_error IS NOT NULL AND last_error NOT LIKE '%This job queue was running the outdated code version%'")
+                      .order("created_at DESC")
       real_error_count = errored_jobs.length
       errored_jobs.each_with_index do |job, i| 
         break if i >= 50

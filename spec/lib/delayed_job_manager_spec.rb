@@ -37,10 +37,10 @@ describe DelayedJobManager do
   before :each do 
     @job = Delayed::Job.new
     @job.last_error = "error!"
-    @job.created_at = Time.now
+    @job.created_at = Time.zone.now
     @job.save
 
-    @one_hour_ago = 1.hour.ago
+    @one_hour_ago = Time.zone.now - 1.hour
     MasterSetup.get.update_attributes(:last_delayed_job_error_sent => @one_hour_ago)
   end
   it 'should send an email if any errors are found on the delayed job queue' do
@@ -100,6 +100,16 @@ describe DelayedJobManager do
     # Since @job has already been saved above and is the oldest job record, it should
     # not appear in our messages
     email.body.raw_source.should_not include "Job Error: " + @job.last_error
+  end
+  it "should ignore delayed job upgrade requeue messages" do
+    @job.last_error = "This job queue was running the outdated code version"
+    @job.save
+    
+    RuntimeError.any_instance.should_not_receive(:log_me)
+    DelayedJobManager.report_delayed_job_error
+
+    # Verify that master setup was not updated 
+    MasterSetup.get.last_delayed_job_error_sent.to_s(:db).should eq @one_hour_ago.to_s(:db)
   end
  end
 end
