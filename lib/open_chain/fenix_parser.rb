@@ -260,6 +260,10 @@ module OpenChain
       t.value_for_duty_code = str_val(line[33])
       t.entered_value = dec_val(line[45])
       @total_entered_value += t.entered_value if t.entered_value
+      # Duty Rate is sent as 5.55 instead of .0555...we want it to be the latter so
+      # the data is stored in the same manner we handle duty rate in alliance
+      t.duty_rate = dec_val(line[46])
+      t.duty_rate = (t.duty_rate / 100) unless t.duty_rate.nil? || t.duty_rate.zero?
       t.duty_amount = dec_val(line[47])
       @total_duty += t.duty_amount if t.duty_amount
       t.gst_rate_code = str_val(line[48])
