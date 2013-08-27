@@ -144,11 +144,13 @@ class ProductsController < ApplicationController
       params.delete :utf8
       if run_delayed params
         Product.delay.batch_bulk_update(current_user, params) if current_user.edit_products?
-        OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id if current_user.edit_classifications? 
+        # classification params will be missing if the user didn't enter anything in the classification fields on the screen
+        OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id if current_user.edit_classifications? && !params['product']['classifications_attributes'].nil?
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else
         messages = Product.batch_bulk_update(current_user, params, :no_email => true) if current_user.edit_products?
-        cls_messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true if current_user.edit_classifications?
+        # classification params will be missing if the user didn't enter anything in the classification fields on the screen
+        cls_messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true if current_user.edit_classifications? && !params['product']['classifications_attributes'].nil?
         # Show the user the update message and any errors if there were some
         if messages && messages[:message]
           add_flash :notices, messages[:message]

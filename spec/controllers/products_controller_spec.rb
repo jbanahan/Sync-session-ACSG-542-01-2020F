@@ -87,9 +87,15 @@ describe ProductsController do
 
   describe :bulk_update do
     it "should bulk update inline for less than 10 products" do
-      OpenChain::BulkUpdateClassification.stub(:go)
+      OpenChain::BulkUpdateClassification.should_receive(:go) do |params, user, opts| 
+        params['product']['classifications_attributes'].should == {"us" => "1"}
+        user.id.should == @user.id
+        opts[:no_user_message].should be_true
+
+        nil
+      end
       # Several fields are not allowed to be bulk updated (as well as blank values)
-      p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => ''}, :utf8 => 'v'}
+      p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => '', :classifications_attributes=>{"us"=>"1"}}, :utf8 => 'v'}
       pks = {}
       (0..9).each do |i|
         pks[i.to_s] = i.to_s
@@ -166,6 +172,34 @@ describe ProductsController do
       post :bulk_update, p
       response.should redirect_to products_path
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
+    end
+
+    it "should not bulk update classifications if no classification data is sent" do
+      OpenChain::BulkUpdateClassification.should_not_receive(:go)
+      # Several fields are not allowed to be bulk updated (as well as blank values)
+      p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => ''}, :utf8 => 'v'}
+      pks = {}
+      (0..9).each do |i|
+        pks[i.to_s] = i.to_s
+      end
+      p[:pk] = pks
+
+      Product.should_receive(:batch_bulk_update) do |u, params, options| 
+        u.id.should == @user.id
+        params[:product][:uniqe_identifier].should be_nil
+        params[:product][:id].should be_nil
+        params[:product][:vendor_id].should be_nil
+        params[:product][:field2].should be_nil
+        params[:utf8].should be_nil
+        params[:pk]["0"].should == "0"
+        params[:pk]["9"].should == "9"
+        options[:no_email].should be_true
+        {:message => "Test"}
+      end
+      
+      post :bulk_update, p
+      response.should redirect_to products_path
+      flash[:notices].first.should == "Test"
     end
   end
 
