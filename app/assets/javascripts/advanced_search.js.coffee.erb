@@ -145,12 +145,32 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   $scope.give = (targetId) ->
     $scope.givePrompt = false
+    $scope.giveUserId = null
     $http.post('/search_setups/'+$scope.searchSetup.id+'/give',{'other_user_id':targetId}).success((data) ->
-      $scope.notices.push "Report given to user."
+      if data.given_to
+        $scope.notices.push "Report given to " + data.given_to + "."
+      else
+        $scope.notices.push "Report given to user."
     ).error((data) ->
       $scope.errors.push "Error giving this report, please try again."
     )
 
+  $scope.copyReportName = null
+  $scope.copyPrompt = false
+
+  $scope.copy = (copyName) ->
+    $scope.copyPrompt = false
+    $scope.copyReportName = null
+    $http.post('/search_setups/'+$scope.searchSetup.id+'/copy',{'new_name':copyName}).success((data) ->
+      $scope.notices.push "A copy of this report has been created as " + data.name + "."
+      $location.path '/'+data.id+'/1'
+    ).error((data) ->
+      $scope.copyPrompt = true
+      if data.error
+        $scope.errors.push data.error
+      else
+        $scope.errors.push "Error copying this report, please try again."
+    )
 
   #stateful view settings
   $scope.showSetup = false

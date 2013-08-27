@@ -369,6 +369,7 @@ OpenChain::Application.routes.draw do
     end
     member do
       get 'copy'
+      post 'copy'
       get 'give'
       post 'give'
       get 'attachments'

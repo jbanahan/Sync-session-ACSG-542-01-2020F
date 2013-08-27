@@ -56,7 +56,9 @@ describe SearchSetupsController do
       u2 = Factory(:user,:company=>@u.company)
       post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
       response.should be_success
-      JSON.parse(response.body)['ok'].should=='ok'
+      r = JSON.parse(response.body)
+      r["ok"].should_not be_nil
+      r["given_to"].should == u2.full_name
     end
     it "should 404 if search not found" do
       u2 = Factory(:user,:company=>@u.company)
@@ -67,6 +69,42 @@ describe SearchSetupsController do
       u2 = Factory(:user)
       post :give, :id=>@ss.id, :other_user_id=>u2.id, :format=>:json
       response.status.should == 422
+      r = JSON.parse(response.body)
+      r["error"].should == "You do not have permission to give this search to user with ID #{u2.id}."
+    end
+  end
+
+  describe 'copy' do
+    before do
+      request.accept = "application/json"
+    end
+
+    it "should make a copy of the search for the user" do
+      post :copy, id: @ss.id
+
+      response.should be_success
+      r = JSON.parse(response.body)
+      r["ok"].should_not be_nil
+      SearchSetup.where(id: r["id"]).first.should_not be_nil
+      r["name"].should == "Copy of #{@ss.name}" 
+    end
+
+    it "should accept copy name from requst" do
+      post :copy, id: @ss.id, new_name: "New Name"
+
+      response.should be_success
+      r = JSON.parse(response.body)
+      r["ok"].should_not be_nil
+      SearchSetup.where(name: "New Name").first.should_not be_nil
+      r["name"].should == "New Name" 
+    end
+
+    it "should not allow creating duplicate search names" do
+      post :copy, id: @ss.id, new_name: @ss.name
+
+      response.status.should == 422
+      r = JSON.parse(response.body)
+      r["error"].should == "A search with the name '#{@ss.name}' already exists.  Please use a different name or rename the existing report."
     end
   end
 end
