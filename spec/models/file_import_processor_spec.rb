@@ -137,6 +137,54 @@ describe FileImportProcessor do
         p.should have(1).classification
         p.classifications.where(:country_id=>c.id).first.tariff_records.first.hts_1.should == '1234567890'
       end
+      it "should convert Float and BigDecimal values to string, trimming off trailing decimal point and zero" do
+        # The product set here recreates the issue we saw with the import we're trying to resolve
+        # However, the MySQL version (or configuration) on our dev machines sort of handles a 
+        # translation of 'where unique_identifier = 1.0' casting a string value of '1' to 1.0 
+        # (albeit with warnings for any unique id that couldn't be cast)
+        # whereas our current production version does not do an implicit cast...so we're not getting an exact 
+        # test scenario.  However, as long as we test that the unique identifier value isn't 
+        # 1.0 after the update and that we did update the existing record then we should be good.
+        p = Product.create! unique_identifier: "1", name: "ABC"
+
+        pro = FileImportProcessor.new(@f,nil,[])
+        pro.stub(:get_columns).and_return([
+          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+          SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+          SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
+        ])
+        pro.do_row 0, [1.0,2.0, BigDecimal("3.0")], true, -1
+        delta_p = Product.find_by_unique_identifier('1')
+        delta_p.should_not be_nil
+        delta_p.id.should == p.id
+        delta_p.name.should == "2"
+        delta_p.unit_of_measure.should == "3"
+      end
+      it "should convert Float and BigDecimal values to string, retaining decimal point values" do
+        pro = FileImportProcessor.new(@f,nil,[])
+        pro.stub(:get_columns).and_return([
+          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+          SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+          SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
+        ])
+        pro.do_row 0, [1,2.1, BigDecimal("3.10")], true, -1
+        p = Product.find_by_unique_identifier('1')
+        p.name.should == "2.1"
+        p.unit_of_measure.should == "3.1"
+      end
+      it "should NOT convert numbers for numeric fields" do
+        ss = SearchSetup.new(:module_type=>"Entry")
+        f = ImportedFile.new(:search_setup=>ss,:module_type=>"Entry") 
+
+        pro = FileImportProcessor.new(f,nil,[])
+        pro.stub(:get_columns).and_return([
+          SearchColumn.new(:model_field_uid=>"ent_brok_ref",:rank=>1),
+          SearchColumn.new(:model_field_uid=>"ent_total_packages",:rank=>2)
+        ])
+        pro.do_row 0, [1,2.0], true, -1
+        e = Entry.where(:broker_reference => "1").first
+        e.total_packages.should == 2
+      end
     end
   end
 end

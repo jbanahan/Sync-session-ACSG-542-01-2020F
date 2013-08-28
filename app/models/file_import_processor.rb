@@ -371,9 +371,39 @@ class FileImportProcessor
       r = row[col.rank + base_column]
       r = r.value if r.respond_to? :value #get real value for Excel formulas
       r = r.strip if r.is_a? String
-      data_map[mf.core_module][mf.uid]=r unless mf.uid==:_blank
+      data_map[mf.core_module][mf.uid] = sanitize_file_data(r, mf) unless mf.uid==:_blank
     end
     data_map
+  end
+
+  def sanitize_file_data value, mf
+    # Primarily we're concerned here when the data type is a string and we get back a numeric from the file reader.
+    # What seems to happen is that the rails query interface handles taking the numeric value, say 1.0, 
+    # and when used in a where clause for something like a find_by_unique_identifier clause produces
+    # "where unique_identifier = 1.0", but then when you actually go to save the product record,
+    # the data is converted to a string to be "1" and used in an insert caluse, which can end up causing primary 
+    # key validation errors.
+    # We'll handle turning decimal -> string data here by trimming out any trailing zeros / decimal points.
+    if value
+      if model_field_character_type?(mf) && numeric?(value)
+        # BigDecimal to_s uses engineering notation (stupidly) by default
+        value = value.is_a?(BigDecimal) ? value.to_s("F") : value.to_s
+        trailing_zeros = value.index /\.0+$/
+        if trailing_zeros 
+          value = value[0, trailing_zeros]
+        end
+      end
+    end
+
+    value
+  end
+
+  def model_field_character_type? mf
+    mf.data_type == :string || mf.data_type == :text
+  end
+
+  def numeric? value
+    value.is_a?(Float) || value.is_a?(BigDecimal)
   end
 
   def fire_start
