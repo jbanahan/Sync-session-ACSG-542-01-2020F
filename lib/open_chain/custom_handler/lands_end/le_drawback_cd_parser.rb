@@ -12,10 +12,11 @@ module OpenChain
         def parse data
           CSV.parse(data,headers:true) do |row|
             next if row.blank?
+            duty_per_unit = BigDecimal(row[9],2) / BigDecimal(row[6],2)
             h = {
               entry_number:row[1],
               part_number:row[5].split('-').first.strip,
-              duty_per_unit:row[9]
+              duty_per_unit:duty_per_unit
             }
             KeyJsonItem.lands_end_cd("#{h[:entry_number]}-#{h[:part_number]}").first_or_create!(json_data:h.to_json)
             DrawbackImportLine.where(importer_id:@company.id,entry_number:h[:entry_number],part_number:h[:part_number]).update_all(h)

@@ -50,7 +50,9 @@ module OpenChain
           raw[dash+2,raw.length - dash+2]
         end
         def format_date d
-          Date.new(d.split('/').last.to_i,
+          yr = d.split('/').last.to_i
+          yr += 2000 if yr < 100
+          Date.new(yr,
             d.split('/').first.to_i,
             d.split('/')[1].to_i).strftime("%Y%m%d")
         end
