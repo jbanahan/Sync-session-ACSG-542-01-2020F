@@ -22,7 +22,8 @@ module OpenChain
               next if row.blank?
               part_number = row[5].split('-').first.strip
               q = DrawbackImportLine.where(importer_id:@company.id,
-                entry_number:row[0],part_number:part_number)
+                entry_number:row[0],part_number:part_number).
+                where("id NOT IN (select drawback_import_line_id from duty_calc_import_file_lines)")
               d = q.first_or_create!(
                 product_id:Product.where(unique_identifier:"LANDSEND-#{part_number}").first_or_create!.id,
                 description:description(row[5]),

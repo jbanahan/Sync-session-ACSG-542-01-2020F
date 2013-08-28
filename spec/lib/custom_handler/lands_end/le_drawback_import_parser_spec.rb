@@ -32,6 +32,16 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     r.count.should == 1
     r.first.quantity.should == 2
   end
+  it "should not update line already put in a download file" do
+    @p.parse @data
+    d = Factory(:duty_calc_import_file)
+    DrawbackImportLine.all.each {|dil| d.duty_calc_import_file_lines.create!(drawback_import_line_id:dil.id)}
+    @p.parse @data
+    r = DrawbackImportLine.where(importer_id:@le_company.id,part_number:'2769247',entry_number:'23105002004')
+    r.count.should == 2
+    r.first.quantity.should == 2
+    r.last.quantity.should == 2
+  end
   it "should not update line for different company" do
     p = Factory(:product,unique_identifier:'LANDSEND-2740747')
     d = DrawbackImportLine.create(importer_id:Factory(:company).id,product_id:p.id,part_number:'2740747',entry_number:'23105002004',quantity:10)
