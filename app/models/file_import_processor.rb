@@ -403,7 +403,7 @@ class FileImportProcessor
   end
 
   def numeric? value
-    value.is_a?(Numeric) && (value.is_a?(Float) || value.is_a?(BigDecimal))
+    value.is_a?(Float) || value.is_a?(BigDecimal)
   end
 
   def fire_start
