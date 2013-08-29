@@ -120,4 +120,20 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  context :sanitize_date_string do
+    it "should return a date string" do
+      s = @helper.new.sanitize_date_string "20130101"
+      s.should == "2013-01-01"
+    end
+
+    it "should error on invalid strings" do
+      expect{@helper.new.sanitize_date_string "notadate"}.to raise_error
+    end
+
+    it "should convert date to UTC date time string" do
+      s = @helper.new.sanitize_date_string "20130101", "Hawaii"
+      s.should == "2013-01-01 10:00:00"
+    end
+  end
+
 end
