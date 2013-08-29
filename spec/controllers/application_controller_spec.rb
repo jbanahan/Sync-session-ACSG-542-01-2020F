@@ -94,4 +94,65 @@ describe ApplicationController do
     end
   end
 
+  describe :force_logout do 
+    it "should destroy the UserSession" do
+      session = double("UserSession")
+      UserSession.should_receive(:find).and_return session
+      session.should_receive(:destroy)
+      controller.force_logout
+    end
+
+    it "should handle non-logged in users" do
+      UserSession.should_receive(:find).and_return nil
+      controller.force_logout
+    end
+  end
+
+  describe :force_reset do 
+
+    # Create an anonymous rspec controller, allows testing only the
+    # filter mentioned in it
+    controller do
+      before_filter :force_reset
+
+      def show
+        render :text => "Rendered"
+      end
+    end
+
+    before :each do 
+      @u = Factory(:master_user)
+      activate_authlogic
+      UserSession.create! @u
+      # Since we're using an anonymous controller we also need to define a route
+      # for the password resets..ideally we'd be able to use the full rails routes
+      # but I'm not sure how
+      @routes.draw {
+        resources :anonymous
+        resources :password_resets
+      }
+    end
+
+    it "should not do anything when a user is logged in and doesn't have password reset forced" do
+      get :show, :id => 1
+      response.code.should eq "200"
+      response.body.should == "Rendered"
+    end
+
+    it "should not do anything if the user was not logged in" do
+      controller.stub(:logged_in?).and_return false
+      get :show, :id => 1
+      response.code.should eq "200"
+    end
+
+    it "should redirect to password reset page if user has password reset checked" do
+      @u.update_attributes password_reset: true
+      controller.should_receive(:force_logout)
+      User.any_instance.should_receive(:reset_password_prep)
+      User.any_instance.stub(:perishable_token).and_return "ABC"
+      get :show, :id => 1
+      response.should redirect_to edit_password_reset_path "ABC"
+    end
+  end
+
 end

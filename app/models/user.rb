@@ -3,7 +3,10 @@ require 'securerandom'
 class User < ActiveRecord::Base
   cattr_accessor :current
 
-  acts_as_authentic
+  acts_as_authentic do |config|
+    # By default, authlogic expires password resets after 10 minutes...that's too short, allow an hour
+    config.perishable_token_valid_for 1.hour
+  end
   
   attr_accessible :username, :email, :password, 
     :password_confirmation, :time_zone, 
@@ -60,10 +63,21 @@ class User < ActiveRecord::Base
   def debug_active?
     !self.debug_expires.blank? && self.debug_expires>Time.now
   end
+
   #send password reset email to user
   def deliver_password_reset_instructions!
+    reset_password_prep
+    OpenMailer.send_password_reset(self, self.updated_at + 1.hour).deliver
+  end
+
+  # Preparations needed for resetting a users password.
+  def reset_password_prep
+    # The reason we're touching ourselves is because authlogic uses 'updated_at' to implement an expiration time on the
+    # perishable token.  However, since we've disabled setting updated_at for caching reasons (perishable token is reset every request)
+    # if only perishable_token is updated (as happens below on 'reset_perishable_token!') then, unless the user account has been 
+    # updated within the last hour, the user won't be able to use the password reset email because his token will be considered out of date already.
+    self.touch
     reset_perishable_token!
-    OpenMailer.send_password_reset(self).deliver
   end
 
   # Sends each user id listed an email informing them of their account login / temporary password

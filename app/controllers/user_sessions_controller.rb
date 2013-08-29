@@ -39,7 +39,6 @@ class UserSessionsController < ApplicationController
         
         History.create({:history_type => 'login', :user_id => c.id, :company_id => c.company_id})
         format.html do 
-          add_flash :notices, "Login successful."
           redirect_back_or_default(:root)
         end
         format.json { head :ok }

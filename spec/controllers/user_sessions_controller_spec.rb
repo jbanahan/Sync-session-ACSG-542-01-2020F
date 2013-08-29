@@ -43,7 +43,6 @@ describe UserSessionsController do
       post :create, :user_session => {'username'=>@user.username, 'password'=>"password"}
       
       response.should redirect_to root_path
-      flash[:notices].should == ["Login successful."]
       assigns["user_session"].should == session
     end
 

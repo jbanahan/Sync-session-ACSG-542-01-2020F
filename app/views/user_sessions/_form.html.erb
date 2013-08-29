@@ -1,40 +1,75 @@
+<%content_for :javascript do %>
+$(function() {
+  $("#forgot_password_dialog").dialog({autoOpen:false, modal:true, title: "Reset Password"})
+  $("#forgot_password").click(function(evt) {
+    $("#forgot_password_dialog").dialog('open');
+  });
+});
+<%end%>
+<% content_for :head_tags do %>
+<style type="text/css">
+  #new_user_session .small-margin {margin-bottom: 5px;}
+  #new_user_session {margin-bottom: 0;}
+  #forgot_password {font-size: small;}
+  #forgot_password_dialog p {font-size: smaller;}
+</style>
+<% end %>
 <div class='container'>
   <div class='row'>
     <div class='text-center'>
       <%=image_tag(master_setup.logo_image.blank? ? "vfi_logo.png" : master_setup.logo_image, :id=>'dash-logo')%>
     </div>
     <h2 class='text-center'>Welcome To VFI Track</h2>
-    <div class='hero-unit'>
-      <div id='login'>
-        <%= form_for(@user_session) do |f| %>
-          <%=f.label(:username)%>
-          <%=f.text_field(:username,"class"=>"focus_first")%>
-          <%=f.label(:password)%>
-          <%=f.password_field(:password)%><br />
-          <%=f.check_box(:remember_me)%>
-          <%=f.label(:remember_me)%>
-          <%=f.submit 'Log In', :class=>'btn btn-primary' %>
-        <% end %>
+  </div>
+</div>
+<div class='well well-small'>
+  <div id='login'>
+    <%= form_for(@user_session, html: {class: "form-horizontal"}) do |f| %>
+      <div class="control-group small-margin">
+        <%=f.label(:username, class: "control-label")%>
+        <div class="controls"><%=f.text_field(:username, :class=>"focus_first input-xlarge")%></div>
       </div>
-    </div>
-    <div class='hero-unit'>
-      <%unless PublicField.scoped.empty?-%>
-        <h2>Public Shipment Tracking</h>
-        <%=render :partial=>'shared/tracker' %>
-      <%end-%>
-    </div>
-    <div class='hero-unit'>
-      <%if MasterSetup.get.custom_feature? 'fenix'-%>
-        <h2>PARS Check - Canada Imports</h2>
-        <button class='btn_link btn' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
-      <%end-%>
-    </div>
-    <div class='hero-unit'>
-      <h2>Lost Password</h2>
-      <%=form_tag password_resets_path do %>
-        <label for='email'>Enter Your Email</label> <%=text_field_tag("email")-%><br />
-        <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn' -%>
+      <div class="control-group small-margin">
+        <%=f.label(:password, class: "control-label")%>
+        <div class="controls"><%=f.password_field(:password, :class=>"input-xlarge")%></div>
+      </div>
+      <div class="control-group">
+        <div class="controls">
+          <%=f.check_box(:remember_me, style: "display: inline;")%>
+          <%=f.label(:remember_me, style: "display: inline;")%><br>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="controls">
+          <div><%=f.submit 'Log In', class: 'btn btn-primary' %></div>
+        </div>
+      </div>
+      <div class="control-group small-margin">
+        <div class="controls">
+          <a id="forgot_password" href="javascript:void(0)">Forgot your password?</a>
+        </div>
+      </div>
+    <% end %>
+    <div id='forgot_password_dialog' style='display:none;'>
+      <p>Enter your email and we'll send you instructions for resetting your password.</p>
+      <%=form_tag password_resets_path, id: "password_reset_form" do %>
+        <%=text_field_tag("email", "", :class=>"input-xlarge")-%><br />
+        <div class="text-center">
+          <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn' -%>
+        </div>
       <% end %>
     </div>
   </div>
 </div>
+<%unless PublicField.scoped.empty?-%>
+<div class='well'>
+    <h2>Public Shipment Tracking</h>
+    <%=render :partial=>'shared/tracker' %>
+</div>
+<%end-%>
+<%if MasterSetup.get.custom_feature? 'fenix'-%>
+<div class='well'>
+    <h2>PARS Check - Canada Imports</h2>
+    <button class='btn_link btn' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
+</div>
+<%end-%>
