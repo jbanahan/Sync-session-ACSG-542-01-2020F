@@ -304,11 +304,12 @@
         </div>
         <hr />
         <div id='search-setup-actions' class='row text-center'>
-          <div class='btn-group' ng-hide='deletePrompt==true || givePrompt==true'>
+          <div class='btn-group' ng-hide='deletePrompt==true || givePrompt==true || copyPrompt==true'>
             <button class='btn btn-large btn-success' ng-click='saveSetup()'>Save</button>
             <button class='btn btn-large' ng-click='newSetup()'>New</button>
+            <button class='btn btn-large' ng-click='copyPrompt=true'>Copy</button>
             <button class='btn btn-large' ng-click='givePrompt=true'>Give</button>
-            <button class='btn btn-large' ng-click='deletePrompt=true'>Delete</button>
+            <button class='btn btn-large btn-danger' ng-click='deletePrompt=true'>Delete</button>
           </div>
           <div class='span12 form-horizontal' ng-show='givePrompt==true'>
             Select User
@@ -320,6 +321,11 @@
             Really Delete?
             <a class='btn btn-danger' ng-click='deleteSetup()'>Yes</a>
             <a class='btn' ng-click='deletePrompt=false'>No</a>
+          </div>
+          <div class='span12 form-horizontal' ng-show="copyPrompt==true">
+            Copy As <input type="text" ng-model="copyReportName" class="input-xxlarge" placeholder="Enter copy name...">
+            <a class='btn btn-large btn-primary' ng-click='copy(copyReportName)'>Copy</a>
+            <a class='btn btn-large' ng-click='copyPrompt=false; copyReportName=""'>Cancel</a>
           </div>
         </div>
       </div>

@@ -33,12 +33,44 @@ class SearchSetupsController < ApplicationController
   def copy
     base = SearchSetup.for_user(current_user).find(params[:id])
     if base.nil?
-      error_redirect "Search with ID #{params[:id]} not found."
+      error_message = "Search with ID #{params[:id]} not found."
+      respond_to do |format|
+        format.html {
+          error_redirect error_message
+        }
+        format.json {
+          render :json=>{"error"=>error_message}, :status=>422
+        }
+      end
     else
       new_name = params[:new_name]
-      new_name = "Copy of #{base.name}" if new_name.empty?
-      base.deep_copy(new_name).touch
-      redirect_to Kernel.const_get(base.module_type)
+      new_name = "Copy of #{base.name}" if new_name.blank?
+      # Make sure there's no report that already has this name..
+      existing = SearchSetup.for_user(current_user).where(module_type: base.module_type, name: new_name).first
+      if existing
+        error_message = "A search with the name '#{new_name}' already exists.  Please use a different name or rename the existing report."
+        respond_to do |format|
+          format.html {
+            add_flash :errors, error_message
+            redirect_to Kernel.const_get(base.module_type)
+          }
+          format.json {
+            render :json=>{"error"=>error_message}, :status=>422
+          }
+        end
+      else
+        copy = base.deep_copy(new_name)
+        copy.touch
+        respond_to do |format|
+          format.html {
+            add_flash :notices, "A copy of this report has been created as '" + copy.name + "'."
+            redirect_to Kernel.const_get(copy.module_type)
+          }
+          format.json {
+            render :json=>{"ok"=>"ok", "id"=>copy.id, "name"=>copy.name}
+          }
+        end
+      end
     end
   end
   def give
@@ -63,7 +95,7 @@ class SearchSetupsController < ApplicationController
       }
       format.json {
         if error_message.blank?
-          render :json=>{"ok"=>"ok"}
+          render :json=>{"ok"=>"ok", "given_to" => other_user.full_name }
         else
           render :json=>{"error"=>error_message}, :status=>422
         end
