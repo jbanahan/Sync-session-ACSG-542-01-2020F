@@ -48,7 +48,10 @@ class SurveyResponsesController < ApplicationController
     end
     sr.update_attributes params[:survey_response]
     sr.survey_response_logs.create!(:message=>log_message,:user_id=>current_user.id)
-    OpenMailer.delay.send_survey_user_update(sr) unless sr.user==current_user
+    # Don't send update notifications to the assignee if they're the person editting the survey response or if the
+    # survey response is in the middle of being rated
+    
+    OpenMailer.delay.send_survey_user_update(sr) unless sr.user==current_user || sr.status == SurveyResponse::STATUSES[:needs_rating]
     add_flash :notices, "Response saved successfully."
     redirect_to sr
   end

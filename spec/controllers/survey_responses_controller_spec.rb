@@ -129,6 +129,25 @@ describe SurveyResponsesController do
         post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
         SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
       end
+      it "should not send update email if response is not finished being rated" do
+        OpenMailer.should_not_receive :delay
+        UserSession.create! @survey_user
+        @sr.submitted_date = Time.now
+        @sr.save!
+
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
+      end
+      it "should send and update email if response is finished being rated" do
+        m = double("mailer")
+        OpenMailer.should_receive(:delay).and_return m
+        m.should_receive(:send_survey_user_update)
+        
+        UserSession.create! @survey_user
+        @sr.submitted_date = Time.now
+        @sr.save!
+        
+        post :update, :id=>@sr.id, :survey_response=>{"rating" => "X"}
+      end
     end
     describe 'invite' do
       it "should allow survey company to send invite" do

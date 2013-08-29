@@ -14,6 +14,8 @@ class SurveyResponse < ActiveRecord::Base
   before_save :update_status
   after_commit :send_notification
 
+  STATUSES ||= {:incomplete => "Incomplete", :needs_rating => "Needs Rating", :rated => "Rated"}
+
   # last time this user made an action that created a log message
   def last_logged_by_user u
     m = self.survey_response_logs.where(user_id:u.id).order('survey_response_logs.created_at DESC').limit(1).first
@@ -55,9 +57,9 @@ class SurveyResponse < ActiveRecord::Base
 
   private
   def update_status
-    s = "Incomplete"
+    s = STATUSES[:incomplete]
     if self.submitted_date
-      s = self.rating.blank? ? "Needs Rating" : "Rated"
+      s = self.rating.blank? ? STATUSES[:needs_rating] : STATUSES[:rated]
     end
     self.status = s
   end
