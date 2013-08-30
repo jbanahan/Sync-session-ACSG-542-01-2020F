@@ -17,6 +17,10 @@ class SurveysController < ApplicationController
       return
     end
 
+    if params[:show_archived_responses] == "true" && @survey.can_edit?(current_user)
+      @show_archived = true
+    end
+
     respond_to do |format|
       format.html
       format.xls do 

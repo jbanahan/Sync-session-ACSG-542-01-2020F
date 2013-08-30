@@ -7,6 +7,7 @@
       "OK":function() {window.location="/surveys/<%=@survey.id%>/copy"},"Cancel":function() {$("#mod_copy").dialog('close');}
     }}); 
     $("#btn_cpy").click(function() {$("#mod_copy").dialog('open');});
+    $("#btn_show_archived").click(function() {window.location="<%=survey_path @survey%>?show_archived_responses=true"});
   });
   google.load('visualization', '1.0', {'packages':['corechart']});
   var respC = function drawChart() {
@@ -16,9 +17,9 @@
     data.addColumn('number', 'Count');
     data.addRows([
       <%@survey.rating_values.each_with_index do |rv,i|%>
-        ['<%=rv%>',<%=@survey.survey_responses.where(:rating=>rv).count%>],
+        ['<%=rv%>',<%=@survey.survey_responses.was_archived(false).where(:rating=>rv).count%>],
       <%end%>
-      ['Not Rated',<%=@survey.survey_responses.where("rating is null OR length(rating)=0").count%>]
+      ['Not Rated',<%=@survey.survey_responses.was_archived(false).where("rating is null OR length(rating)=0").count%>]
     ]);
 
     var options = {'title':'Surveys by Rating',
@@ -33,10 +34,10 @@
     data.addColumn('number', 'Count');
     data.addRows([
       <%[:incomplete, :needs_rating, :rated].each do |st|
-        status = SurveyResponse::STATUSES[:st]
+        status = SurveyResponse::STATUSES[st]
         isRated = status == SurveyResponse::STATUSES[:rated]
       %>
-      ['<%=status%>',<%=@survey.survey_responses.where(:status=>status).count%>]<%=isRated ? "" : ","%>
+      ['<%=status%>',<%=@survey.survey_responses.was_archived(false).where(:status=>status).count%>]<%=isRated ? "" : ","%>
       <%end%>
     ]);
     var options = {'title':'Surveys by Status',
@@ -59,13 +60,25 @@
   <% if @survey.can_edit?(current_user)%>
     <button id='btn_cpy'>Copy Survey</button>
   <% end %>
+  <% if @survey.can_edit?(current_user) && @survey.survey_responses.was_archived(true).count > 0 %>
+    <button id='btn_show_archived'>Show Archived Responses</button>
+  <% end %>
 <%end%>
 <h1><%=@survey.name%></h1>
 
 <div id='stat_chart' style='text-align:center; width:45%; margin:0; float:right;'></div>
 <div id='resp_chart' style='text-align:center; width:45%; margin:0;'></div>
 <div style='clear:both'></div>
-<%=render :partial=>'response_status'%>
+<h3>Survey Responses</h3>
+<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(false), show_archive_control: true} %>
+<%- archived = @survey.survey_responses.was_archived(true).count -%> 
+<% if @show_archived && archived > 0 %>
+<h3>Archived Responses</h3>
+<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(true), show_restore_control: true} %>
+<% else %>
+<p><%= "#{archived} survey #{"response".pluralize(archived)} #{"has".pluralize(archived)}"%> been archived.</p>
+<% end %>
+
 <h2>Questions</h2>
 <table class='detail_table'>
   <thead><tr><th>Question</th><th>Answered</th>
@@ -77,9 +90,9 @@
     <%@survey.questions.each do |q|%>
       <tr class='hover'>
         <td><%=RedCloth.new(q.content).to_html.html_safe%></td>
-        <td><%=@survey.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").count%></td>
+        <td><%=@survey.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").merge(SurveyResponse.was_archived(false)).count%></td>
         <%@survey.rating_values.each do |rv|%>
-          <td><%=@survey.answers.where(:question_id=>q.id,:rating=>rv).count%></td>
+          <td><%=@survey.answers.where(:question_id=>q.id,:rating=>rv).merge(SurveyResponse.was_archived(false)).count%></td>
         <%end%>
       </tr>
     <%end%>

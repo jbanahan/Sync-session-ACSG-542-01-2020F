@@ -87,6 +87,16 @@ describe SurveysController do
       
       get :show, {:id=>@s.id,  :format=>:xls}
     end
+    it "should enable showing archived responses" do
+      get :show, {:id=>@s.id, "show_archived_responses"=>"true"}
+      assigns(:show_archived).should be_true
+    end
+
+    it "should not enable showing archived responses for users with no edit privs" do
+      @u.update_attributes :survey_edit => false
+      get :show, {:id=>@s.id, "show_archived_responses"=>"true"}
+      assigns(:show_archived).should be_false
+    end
 
   end
   describe "edit" do

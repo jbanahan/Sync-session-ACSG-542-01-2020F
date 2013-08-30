@@ -67,7 +67,7 @@ class Survey < ActiveRecord::Base
     XlsMaker.add_header_row sheet, row, cols, col_widths
     row += 1
 
-    self.survey_responses.each do |r|
+    self.survey_responses.was_archived(false).each do |r|
       cols = []
       cols << r.user.company.name
       cols << r.subtitle
@@ -104,10 +104,10 @@ class Survey < ActiveRecord::Base
       # The question content is actually textile markup, which is converted to HTML when viewed
       # by the browser.  Excel doesn't support that, so we're just displaying the raw text.
       cols << q.content
-      cols << self.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").count
+      cols << self.answers.where(:question_id=>q.id).where("survey_responses.submitted_date is not null").merge(SurveyResponse.was_archived(false)).count
       self.rating_values.each do |value|
         # This may be a bug, we're limiting answer counts only for 
-        cols << self.answers.where(:question_id=>q.id, :rating=>value).count
+        cols << self.answers.where(:question_id=>q.id, :rating=>value).merge(SurveyResponse.was_archived(false)).count
       end
       
       XlsMaker.add_body_row sheet, row, cols, col_widths, true

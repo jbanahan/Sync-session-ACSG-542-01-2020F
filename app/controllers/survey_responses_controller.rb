@@ -59,6 +59,30 @@ class SurveyResponsesController < ApplicationController
   def index
     @survey_responses = SurveyResponse.where(:user_id=>current_user.id)
   end
+
+  def archive
+    sr = SurveyResponse.find params[:id]
+    if sr.survey.can_edit? current_user
+      sr.archived = true
+      sr.save!
+      add_flash :notices, "The Survey Response for #{sr.user.full_name} has been archived."
+      redirect_to sr.survey
+    else
+      error_redirect "You do not have permission to work with this survey."
+    end
+  end
+
+  def restore
+    sr = SurveyResponse.find params[:id]
+    if sr.survey.can_edit? current_user
+      sr.archived = false
+      sr.save!
+      add_flash :notices, "The Survey Response for #{sr.user.full_name} has been restored."
+      redirect_to sr.survey
+    else
+      error_redirect "You do not have permission to work with this survey."
+    end
+  end
   
   #send user invite
   def invite

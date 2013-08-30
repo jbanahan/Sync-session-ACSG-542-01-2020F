@@ -56,4 +56,4 @@ $(function() {
 </p>
 
 <h3>Current Surveys</h3>
-<%=render :partial=>'response_status'%>
+<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(false)} %>
