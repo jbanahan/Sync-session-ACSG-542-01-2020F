@@ -26,24 +26,25 @@ describe OpenChain::StatClient do
       @api_key = ms.stats_api_key
       @uuid = ms.uuid
       @http = mock('http')
-      pst = mock('post')
+      @pst = mock('post')
       @path = '/api/something'
-      Net::HTTP::Post.should_receive(:new).with(@path).and_return(pst)
-      pst.should_receive(:set_content_type).with('application/json')
-      pst.should_receive(:body=).with({mykey:'myval',api_key:@api_key,uuid:@uuid}.to_json)
-      @http.should_receive(:request).with pst
+      Net::HTTP::Post.should_receive(:new).with(@path).and_return(@pst)
+      @pst.should_receive(:set_content_type).with('application/json')
+      @pst.should_receive(:set_form_data).with({mykey:'myval',api_key:@api_key,uuid:@uuid})
     end
     it "should add api_key and uuid" do
       resp = mock('resp')
       resp.should_receive(:code).and_return '200'
-      Net::HTTP.should_receive(:start).with('localhost',3001).and_yield(@http).and_return(resp)
+      Net::HTTP.should_receive(:new).with('localhost',3001).and_return(@http)
+      @http.should_receive(:request).with(@pst).and_return(resp)
       described_class.post_json! @path, {mykey:'myval'}
     end
     it "should raise exception for non 200 responses" do
       resp = mock('resp')
       resp.should_receive(:code).and_return '400'
       resp.should_receive(:body).and_return({:error=>'my error'}.to_json)
-      Net::HTTP.should_receive(:start).with('localhost',3001).and_yield(@http).and_return(resp)
+      Net::HTTP.should_receive(:new).with('localhost',3001).and_return(@http)
+      @http.should_receive(:request).with(@pst).and_return(resp)
       lambda {described_class.post_json! @path, {mykey:'myval'}}.should raise_error 'Request Error: my error'
     end
   end
