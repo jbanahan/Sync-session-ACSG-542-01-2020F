@@ -15,7 +15,8 @@
       <div class='tab-pane' id='crocs'>
         <div cass='well'>
           <h3>Export Details File</h3>
-          <em>coming soon</em>
+          <p><em>.csv file from Crocs IT department</em></p>
+          <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_CROCS_EXPORTS}%>
         </div>
       </div>
       <%if MasterSetup.get.custom_feature?("LE Drawback")-%>

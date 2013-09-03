@@ -80,5 +80,11 @@ describe DrawbackUploadFile do
       OpenChain::LandsEndExportParser.should_receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
       d.process(@user).should == 'abc'
     end
+    it "should route Crocs Export file" do
+      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"CROCS")
+      d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_CROCS_EXPORTS)
+      OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser.should_receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
+      d.process(@user).should == 'abc'
+    end
   end
 end
