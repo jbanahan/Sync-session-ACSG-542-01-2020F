@@ -19,8 +19,10 @@ module OpenChain; class StatClient
     ms = MasterSetup.get
     json_hash[:api_key] = ms.stats_api_key
     json_hash[:uuid] = ms.uuid
-    req.body = json_hash.to_json
-    res = Net::HTTP.start(uri.host,uri.port) {|http| http.request req}
+    req.set_form_data json_hash
+    http = Net::HTTP.new(uri.host,uri.port)
+    http.use_ssl = true if @@base_url =~ /^https/
+    res =  http.request req
     case res.code
     when '200'
       return true
