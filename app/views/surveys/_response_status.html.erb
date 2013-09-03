@@ -1,11 +1,22 @@
 <table class='detail_table'>
   <thead><tr><th>Company</th><th>Label</th><th>Responder</th><th>Status</th><th>Rating</th><th>Invited</th><th>Opened</th><th>Submitted</th><th>Last Updated</th></tr></thead>
   <tbody>
-    <%@survey.survey_responses.each do |sr| %>
+    <%survey_responses.each do |sr| %>
       <tr>
         <td><%=link_to sr.user.company.name, sr%></td>
         <td><%=sr.subtitle%></td>
-        <td><%=sr.user.full_name%></td>
+        <td><%=sr.user.full_name%>
+          <%- if defined?(show_archive_control) && show_archive_control && sr.survey.can_edit?(current_user)-%>
+            <%=form_for sr, url: archive_survey_response_path(sr), html: {style: "display: inline;"} do |f|%>
+              <button type="submit" class="btn btn-mini">Archive</button>
+            <%- end -%>
+          <%- end -%>
+          <%- if defined?(show_restore_control) && show_restore_control && sr.survey.can_edit?(current_user)-%>
+            <%=form_for sr, url: restore_survey_response_path(sr), html: {style: "display: inline;"}  do |f|%>
+              <button type="submit" class="btn btn-mini">Restore</button>
+            <%- end -%>
+          <%- end -%>
+        </td>
         <td><%=sr.status%></td>
         <td><%=sr.rating%></td>
         <td><%=sr.email_sent_date%></td>

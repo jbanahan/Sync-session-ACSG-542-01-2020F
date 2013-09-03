@@ -387,6 +387,8 @@ OpenChain::Application.routes.draw do
   end
   resources :survey_responses do
     get 'invite', :on=>:member
+    put 'archive', :on=>:member
+    put 'restore', :on=>:member
     resources :survey_response_logs, :only=>[:index]
   end
   

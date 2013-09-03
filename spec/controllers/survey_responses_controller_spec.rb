@@ -64,7 +64,7 @@ describe SurveyResponsesController do
   context 'authenticated' do
     before :each do
       activate_authlogic
-      @survey_user = Factory(:user)
+      @survey_user = Factory(:user, survey_edit: true)
       @survey = Factory(:survey,:company=>@survey_user.company)
       @survey.questions.create!(:content=>'1234567890123456')
       @response_user = Factory(:user)
@@ -129,6 +129,25 @@ describe SurveyResponsesController do
         post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
         SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
       end
+      it "should not send update email if response is not finished being rated" do
+        OpenMailer.should_not_receive :delay
+        UserSession.create! @survey_user
+        @sr.submitted_date = Time.now
+        @sr.save!
+
+        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
+      end
+      it "should send and update email if response is finished being rated" do
+        m = double("mailer")
+        OpenMailer.should_receive(:delay).and_return m
+        m.should_receive(:send_survey_user_update)
+        
+        UserSession.create! @survey_user
+        @sr.submitted_date = Time.now
+        @sr.save!
+        
+        post :update, :id=>@sr.id, :survey_response=>{"rating" => "X"}
+      end
     end
     describe 'invite' do
       it "should allow survey company to send invite" do
@@ -142,6 +161,41 @@ describe SurveyResponsesController do
         SurveyResponse.any_instance.should_not_receive(:invite_user!)
         get :invite, :id=>@sr.id
         response.should redirect_to request.referrer
+      end
+    end
+
+    describe "archive" do
+      it "should allow survey user to archive a survey response" do
+        put :archive, :id => @sr.id
+        @sr.reload.archived.should be_true
+        flash[:notices].first.should == "The Survey Response for #{@response_user.full_name} has been archived."
+        response.should redirect_to @survey
+      end
+
+      it "should not allow a user without edit privs to archive a survey response" do
+        @survey_user.update_attributes survey_edit: false
+        put :archive, :id => @sr.id
+        @sr.reload.archived.should be_false
+        flash[:errors].first.should == "You do not have permission to work with this survey."
+      end
+    end
+
+    describe "restore" do
+      it "should allow survey user to restore a survey response" do
+        put :restore, :id => @sr.id
+        @sr.reload.archived.should be_false
+        flash[:notices].first.should == "The Survey Response for #{@response_user.full_name} has been restored."
+        response.should redirect_to @survey
+      end
+
+      it "should not allow a user without edit privs to archive a survey response" do
+        @sr.archived = true
+        @sr.save!
+        
+        @survey_user.update_attributes survey_edit: false
+        put :restore, :id => @sr.id
+        @sr.reload.archived.should be_true
+        flash[:errors].first.should == "You do not have permission to work with this survey."
       end
     end
   end
