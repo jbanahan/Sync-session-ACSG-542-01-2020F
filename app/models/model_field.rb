@@ -970,7 +970,9 @@ and classifications.product_id = products.id
         [128,:ent_first_do_issued_date,:first_do_issued_date,"First DO Date",{:data_type=>:datetime}],
         [129,:ent_part_numbers,:part_numbers,"Part Numbers",{:data_type=>:text}],
         [130,:ent_commercial_invoice_numbers,:commercial_invoice_numbers,"Commercial Invoice Numbers",{:data_type=>:text}],
-        [131,:ent_eta_date,:eta_date,"ETA Date",{:data_type=>:date}]
+        [131,:ent_eta_date,:eta_date,"ETA Date",{:data_type=>:date}],
+        [132,:ent_delivery_order_pickup_date,:delivery_order_pickup_date,"Delivery Order Pickup Date",{:data_type=>:datetime}],
+        [133,:ent_freight_pickup_date,:freight_pickup_date,"Freight Pickup Date",{:data_type=>:datetime}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [
