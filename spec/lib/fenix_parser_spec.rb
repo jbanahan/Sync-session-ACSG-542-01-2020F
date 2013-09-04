@@ -56,7 +56,7 @@ describe OpenChain::FenixParser do
     @currency = 'USD'
     @exchange_rate = BigDecimal("1.01")
     @entered_value = BigDecimal('14652.01')
-    @duty_amount = BigDecimal("1.27")
+    @duty_amount = BigDecimal("813.19")
     @gst_rate_code = '5'
     @gst_amount = BigDecimal("5.05")
     @sima_amount = BigDecimal("8.20")
@@ -460,6 +460,19 @@ describe OpenChain::FenixParser do
     OpenChain::FenixParser.parse @entry_lambda.call
     ent = Entry.find_by_broker_reference @file_number
     ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate.should be_nil
+  end
+
+  it "should handle specific duty" do 
+    # Make sure we're not translating specific duty values like we do for adval duties
+    @duty_rate = "1.23"
+    @hts_qty = "100.50"
+    @duty_amount = "123.62"
+
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate.should == BigDecimal(@duty_rate)
+    # Make sure we're not truncating the classification quantity
+    ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.classification_qty_1.should == BigDecimal(@hts_qty)
   end
 
   context 'importer company' do
