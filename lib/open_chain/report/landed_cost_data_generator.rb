@@ -119,7 +119,7 @@ module OpenChain; module Report
               l[:entered_value] = calculate_entered_value_per_line line
               l[:duty] = calculate_duty_per_line line
               l[:hmf] = line.hmf ? line.hmf : BigDecimal.new("0")
-              l[:mpf] = line.mpf ? line.mpf : BigDecimal.new("0")
+              l[:mpf] = line.prorated_mpf ? line.prorated_mpf : BigDecimal.new("0")
               l[:cotton_fee] = line.cotton_fee ? line.cotton_fee : BigDecimal.new("0")
               l[:fee] = calculate_fees_per_line line
               l[:brokerage] = invoice_line_prorations[line.id][:brokerage] ? invoice_line_prorations[line.id][:brokerage] : BigDecimal.new("0")
@@ -210,7 +210,7 @@ module OpenChain; module Report
       def calculate_fees_per_line line
         fee = BigDecimal.new "0"
         fee += line.hmf if line.hmf
-        fee += line.mpf if line.mpf
+        fee += line.prorated_mpf if line.prorated_mpf
         fee += line.cotton_fee if line.cotton_fee
 
         fee

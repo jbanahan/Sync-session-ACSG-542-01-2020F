@@ -30,7 +30,7 @@ module OpenChain; module Report
       row.default_format = XlsMaker::HEADER_FORMAT
       [:ent_brok_ref, :ent_entry_num, :ent_release_date, :ent_transport_mode_code, :ent_customer_references, 
         :cit_hts_code, :cil_po_number, :cil_units, :cit_entered_value, "Entry Fee", "Other Fees", "Actual Freight", 
-        :cil_hmf, :cil_mpf, :cil_cotton_fee, :cit_duty_amount, "Total Per Line", "Total Per Unit"].each_with_index do |v, i|
+        :cil_hmf, :cil_prorated_mpf, :cil_cotton_fee, :cit_duty_amount, "Total Per Line", "Total Per Unit"].each_with_index do |v, i|
 
         write_val sheet, row, row_counter, i, ((v.is_a? String) ? v : ModelField.find_by_uid(v).label(false))
       end 
