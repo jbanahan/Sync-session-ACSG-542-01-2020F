@@ -131,10 +131,14 @@ describe Survey do
       @r1 = Factory(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now)
       @r2 = Factory(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub2", :submitted_date=>Time.now)
       @r3 = Factory(:survey_response, :survey_id=>@survey.id, :submitted_date=>nil)
+      # Add archived response, which who's answer shouldn't show in the stats tested below
+      @r4 = Factory(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now, :archived=>true)
+
 
       @a1 = Factory(:answer, :question_id=>@q1.id, :rating=>"1", :survey_response_id=>@r1.id)
       @a2 = Factory(:answer, :question_id=>@q2.id, :rating=>"2", :survey_response_id=>@r2.id)
       @a3 = Factory(:answer, :question_id=>@q1.id, :rating=>"2", :survey_response_id=>@r3.id)
+      @a4 = Factory(:answer, :question_id=>@q1.id, :rating=>"1", :survey_response_id=>@r4.id)
     end
 
     it "should create an excel file" do

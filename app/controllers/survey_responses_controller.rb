@@ -48,13 +48,40 @@ class SurveyResponsesController < ApplicationController
     end
     sr.update_attributes params[:survey_response]
     sr.survey_response_logs.create!(:message=>log_message,:user_id=>current_user.id)
-    OpenMailer.delay.send_survey_user_update(sr) unless sr.user==current_user
+    # Don't send update notifications to the assignee if they're the person editting the survey response or if the
+    # survey response is in the middle of being rated
+    
+    OpenMailer.delay.send_survey_user_update(sr) unless sr.user==current_user || sr.status == SurveyResponse::STATUSES[:needs_rating]
     add_flash :notices, "Response saved successfully."
     redirect_to sr
   end
 
   def index
     @survey_responses = SurveyResponse.where(:user_id=>current_user.id)
+  end
+
+  def archive
+    sr = SurveyResponse.find params[:id]
+    if sr.survey.can_edit? current_user
+      sr.archived = true
+      sr.save!
+      add_flash :notices, "The Survey Response for #{sr.user.full_name} has been archived."
+      redirect_to sr.survey
+    else
+      error_redirect "You do not have permission to work with this survey."
+    end
+  end
+
+  def restore
+    sr = SurveyResponse.find params[:id]
+    if sr.survey.can_edit? current_user
+      sr.archived = false
+      sr.save!
+      add_flash :notices, "The Survey Response for #{sr.user.full_name} has been restored."
+      redirect_to sr.survey
+    else
+      error_redirect "You do not have permission to work with this survey."
+    end
   end
   
   #send user invite

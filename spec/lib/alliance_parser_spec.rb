@@ -27,6 +27,8 @@ describe OpenChain::AllianceParser do
     @fda_release_str = "201203170614"
     @fda_review_str = "201203151621"
     @fda_transmit_str = "201203141421"
+    @delivery_order_pickup_str = "201308071318"
+    @freight_pickup_str = "201308081318"
     @docs_rec_str = "20120414"
     @docs_rec2_str = @docs_rec_str #this will be an override tested later
     @eta_date_str = "201305291340"
@@ -113,6 +115,8 @@ describe OpenChain::AllianceParser do
       r << "SD0099310#{@monthly_stmt_received_str}1826                                                                            "
       r << "SD0099311#{@monthly_stmt_paid_str}1826                                                                            "
       r << "SD0000011#{@eta_date_str}                                                                                "
+      r << "SD0000025#{@delivery_order_pickup_str}                                                                                "
+      r << "SD0000026#{@freight_pickup_str}                                                                                "
       r << "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       r << "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       r << "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
@@ -429,6 +433,8 @@ describe OpenChain::AllianceParser do
     ent.monthly_statement_paid_date.strftime("%Y%m%d").should == @monthly_stmt_paid_str
     ent.monthly_statement_number.should == @monthly_stmt_number
     ent.eta_date.strftime("%Y%m%d").should == @eta_date_str[0, 8]
+    ent.freight_pickup_date.should == @est.parse(@freight_pickup_str)
+    ent.delivery_order_pickup_date.should == @est.parse(@delivery_order_pickup_str)
 
     ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
 

@@ -31,7 +31,9 @@ module OpenChain
       '99311'=>:monthly_statement_paid_date,
       '00048'=>:daily_statement_due_date,
       '00121'=>:daily_statement_approved_date,
-      '00011'=>:eta_date
+      '00011'=>:eta_date,
+      '00025'=>:delivery_order_pickup_date,
+      '00026'=>:freight_pickup_date
     }
 
     def self.integration_folder

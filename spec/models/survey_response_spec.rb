@@ -151,4 +151,32 @@ describe SurveyResponse do
       last_delivery.body.raw_source.should include "<a href='http://a.b.c/survey_responses/#{@response.id}'>http://a.b.c/survey_responses/#{@response.id}</a>"
     end
   end
+  describe :was_archived do
+    before :each do
+      @survey = Factory(:question).survey
+      @u = Factory(:user)
+      @response = @survey.generate_response! @u
+    end
+
+    it "should return survey responses that are not archived" do
+      SurveyResponse.was_archived(false).first.id.should == @response.id
+    end
+
+    it "should return survey responses that are archived" do
+      SurveyResponse.was_archived(true).first.should be_nil
+      @response.archived= true
+      @response.save!
+      SurveyResponse.was_archived(true).first.id.should == @response.id
+    end
+
+    it "should return survey responses when run over the survey's collection" do
+      @survey.survey_responses.where("1=1").merge(SurveyResponse.was_archived(false)).first.id.should == @response.id
+      @survey.survey_responses.where("1=1").merge(SurveyResponse.was_archived(true)).first.should be_nil
+
+      @response.archived= true
+      @response.save!
+      @survey.survey_responses.where("1=1").merge(SurveyResponse.was_archived(true)).first.id.should == @response.id
+      @survey.survey_responses.where("1=1").merge(SurveyResponse.was_archived(false)).first.should be_nil
+    end
+  end
 end

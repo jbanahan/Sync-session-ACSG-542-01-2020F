@@ -1,5 +1,5 @@
 class SurveyResponse < ActiveRecord::Base
-  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date
+  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived
   belongs_to :user
   belongs_to :survey
   has_many :answers, :inverse_of=>:survey_response
@@ -13,6 +13,10 @@ class SurveyResponse < ActiveRecord::Base
 
   before_save :update_status
   after_commit :send_notification
+
+  STATUSES ||= {:incomplete => "Incomplete", :needs_rating => "Needs Rating", :rated => "Rated"}
+
+  scope :was_archived, lambda {|ar| ar == true ? where("survey_responses.archived = ?", true) : where("survey_responses.archived IS NULL OR survey_responses.archived = ?", false)}
 
   # last time this user made an action that created a log message
   def last_logged_by_user u
@@ -55,9 +59,9 @@ class SurveyResponse < ActiveRecord::Base
 
   private
   def update_status
-    s = "Incomplete"
+    s = STATUSES[:incomplete]
     if self.submitted_date
-      s = self.rating.blank? ? "Needs Rating" : "Rated"
+      s = self.rating.blank? ? STATUSES[:needs_rating] : STATUSES[:rated]
     end
     self.status = s
   end
