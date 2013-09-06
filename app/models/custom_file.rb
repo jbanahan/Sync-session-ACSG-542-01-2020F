@@ -16,6 +16,7 @@ class CustomFile < ActiveRecord::Base
     :fog_public => false,
     :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/custom_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
+  before_create :sanitize
   before_post_process :no_post
 
   # process the attached file using the appropriate handler
@@ -58,5 +59,8 @@ class CustomFile < ActiveRecord::Base
   private
   def no_post
     false
+  end
+  def sanitize
+    Attachment.sanitize_filename self, :attached
   end
 end

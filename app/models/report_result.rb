@@ -12,6 +12,7 @@ class ReportResult < ActiveRecord::Base
     :fog_public => false,
     :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.uuid}/report_result/:id/:filename"
+  before_create :sanitize
   before_post_process :no_post
 
   scope :eligible_for_purge, where('run_at < ?',PURGE_WEEKS.weeks.ago)
@@ -99,6 +100,10 @@ class ReportResult < ActiveRecord::Base
   private
   def no_post
     false
+  end
+  
+  def sanitize
+    Attachment.sanitize_filename self, :report_data
   end
 
 end

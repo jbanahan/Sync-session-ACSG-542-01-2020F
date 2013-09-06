@@ -5,6 +5,7 @@ class Attachment < ActiveRecord::Base
     :fog_public => false,
     :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.uuid}/attachment/:id/:filename"
+  before_create :sanitize
   before_post_process :no_post
   
   belongs_to :uploaded_by, :class_name => "User"
@@ -37,8 +38,34 @@ class Attachment < ActiveRecord::Base
     nil
   end
 
-  private
-  def no_post
-    false
+  def self.sanitize_filename model, paperclip_name
+    instance = paperclip_instance model, paperclip_name
+    filename = instance.instance_read(:file_name)
+
+    if filename
+      # This encodes to latin1 converting unknown chars along the way to _, then back to UTF-8.
+      # The encoding translation is necessitated only because our charsets in the database for the filename are latin1
+      # instead of utf8, and converting them to utf8 is a process we don't want to deal with at the moment.
+      filename = filename.encode("ISO-8859-1", :replace=>"_", :invalid=>:replace, :undef=>:replace).encode("UTF-8")
+
+      # We also want to underscore'ize invalid windows chars from the filename (in cases where you upload a file from
+      # a mac and then try to download on windows - browser can't be relied upon do do this for us at this point).
+      character_filter_regex = /[\x00-\x1F\/\\:\*\?\"<>\|]/u
+      instance.instance_write(:file_name, filename.gsub(character_filter_regex, "_"))
+    end
   end
+
+  private
+    def no_post
+      false
+    end
+
+    def sanitize
+      Attachment.sanitize_filename self, :attached
+    end
+
+    def self.paperclip_instance model, paperclip_name
+      model.send(paperclip_name)
+    end
+    private_class_method :paperclip_instance
 end

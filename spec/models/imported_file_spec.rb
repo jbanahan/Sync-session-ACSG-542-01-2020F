@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 
 describe ImportedFile do
@@ -194,4 +195,12 @@ describe ImportedFile do
     end
   end
 
+  describe "sanitize callback" do
+    it "should sanitize the attached filename" do
+      i = ImportedFile.new :module_type => "Product", :starting_row => 1, :starting_column => 1, :update_mode => "any"
+      i.attached_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
+      i.save
+      i.attached_file_name.should == "___________________________________.jpg"
+    end
+  end
 end

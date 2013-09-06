@@ -13,6 +13,7 @@ class ImportedFile < ActiveRecord::Base
     :fog_public => false,
     :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/imported_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
+  before_create :sanitize
   before_post_process :no_post
   
   belongs_to :search_setup
@@ -207,6 +208,10 @@ class ImportedFile < ActiveRecord::Base
   private
   def no_post
     false
+  end
+
+  def sanitize
+    Attachment.sanitize_filename self, :attached
   end
 
   def make_imported_file_download_from_s3_path s3_path, user, additional_countries=[]
