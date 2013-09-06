@@ -13,7 +13,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
 
     @ci = Factory(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV1")
     @ci_line_1 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part1", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID1", :country_origin_code=>"CN",
-                          :hmf => BigDecimal.new("25"), :mpf => BigDecimal.new("25"), :cotton_fee =>  BigDecimal.new("50"), :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("1000"))])
+                          :hmf => BigDecimal.new("25"), :prorated_mpf => BigDecimal.new("25"), :cotton_fee =>  BigDecimal.new("50"), :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"), :hts_code=>"1234567890", :entered_value=>BigDecimal.new("1000"))])
 
     @ci_line_2 = Factory(:commercial_invoice_line, :commercial_invoice=>@ci, :part_number=>"Part2", :quantity=>BigDecimal.new("11"), :po_number=>"PO2", :mid=>"MID2", :country_origin_code=>"TW",
                           :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("250"), :entered_value=>BigDecimal.new("750"))])
@@ -57,14 +57,14 @@ describe OpenChain::Report::LandedCostDataGenerator do
 
       l[:entered_value].should == @ci_line_1.commercial_invoice_tariffs.first.entered_value
       l[:duty].should == @ci_line_1.commercial_invoice_tariffs.first.duty_amount
-      l[:fee].should == @ci_line_1.hmf + @ci_line_1.mpf + @ci_line_1.cotton_fee
+      l[:fee].should == @ci_line_1.hmf + @ci_line_1.prorated_mpf + @ci_line_1.cotton_fee
       l[:brokerage].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
       l[:other].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
       l[:international_freight].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
       l[:inland_freight].should == (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
       l[:landed_cost].should == (l[:entered_value] + l[:duty] + l[:fee] + l[:international_freight] + l[:inland_freight] + l[:brokerage]  + l[:other])
       l[:hmf].should == @ci_line_1.hmf
-      l[:mpf].should == @ci_line_1.mpf
+      l[:mpf].should == @ci_line_1.prorated_mpf
       l[:cotton_fee].should == @ci_line_1.cotton_fee
 
       l[:per_unit][:entered_value].should == (l[:entered_value] / @ci_line_1.quantity)
