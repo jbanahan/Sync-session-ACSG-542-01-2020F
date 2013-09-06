@@ -255,12 +255,51 @@ module OpenChain
       t.spi_primary = str_val(line[28])
       t.hts_code = str_val(line[29])
       t.tariff_provision = str_val(line[30])
-      t.classification_qty_1 = int_val(line[31])
+      t.classification_qty_1 = dec_val(line[31])
       t.classification_uom_1 = str_val(line[32]) 
       t.value_for_duty_code = str_val(line[33])
       t.entered_value = dec_val(line[45])
       @total_entered_value += t.entered_value if t.entered_value
+      # For duty rate, we'll either get the specific duty rate (ie. 1.45 / KG) OR
+      # the advalorem rate (ie. 5% of Entered Value).  Ad Val rate is the overwhelming
+      # majority case.  However, Fenix sends us ad val rates as whole number values 
+      # (5.55% instead of .0555) and specific rates as the plain rates....we want ad val rates to be stored 
+      # as decimal quantities so the rates are equivalent to how alliance is storing the data.
+      # So, we'll use the quantity * duty rate and value * (duty rate / 100) and see which 
+      # amount is closer to the actual value sent before setting the value.  Ad Val wins if
+      # there's any ambiguity.
+      # I ruled out looking up the tariff record and seeing what it says for calculating the duty
+      # because we'd run into possible issues when re-running older entry data files and rates have been 
+      # changed.
+
       t.duty_amount = dec_val(line[47])
+
+      duty_rate = dec_val(line[46])
+      if duty_rate.try(:nonzero?) && t.entered_value.try(:nonzero?)
+        adjusted_duty_rate = (duty_rate / BigDecimal(100))
+
+        # if no classification quantity was present we'll assume we got an adval rate
+        if t.classification_qty_1.try(:nonzero?)
+          ad_val = t.entered_value * adjusted_duty_rate
+          specific_duty = t.classification_qty_1 * duty_rate
+
+          # Just figure out whatever is closest to the actual reported duty amount, which will tell us 
+          # whether we need to use the adjusted amount or not
+          vals = [(t.duty_amount - ad_val).abs, (t.duty_amount - specific_duty).abs]
+          
+          if ad_val.nonzero? && vals.min == vals[0]
+            t.duty_rate = adjusted_duty_rate
+          else
+            t.duty_rate = duty_rate
+          end
+        else
+          t.duty_rate = adjusted_duty_rate
+        end
+
+      else
+        t.duty_rate = duty_rate
+      end
+
       @total_duty += t.duty_amount if t.duty_amount
       t.gst_rate_code = str_val(line[48])
       t.gst_amount = dec_val(line[49])
