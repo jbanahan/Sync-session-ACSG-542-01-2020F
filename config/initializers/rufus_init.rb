@@ -33,12 +33,21 @@ def execute_scheduler
     end
   end
 
+  #send stats to stats.vfitrack.net
+  if Rails.env.production?
+    scheduler.every '4h' do
+      job_wrapper "StatClient" do
+        StatClient.delay.run unless MasterSetup.get.stats_api_key.blank?
+      end
+    end
+  end
+
   #check for upgrades for the web servers (allow overlapping is supposed to only allow a single instance of this job to run on this scheduler)
   upgrade_job_options = {:tags => "Upgrade", :allow_overlapping => false}
   scheduler.every '30s', upgrade_job_options do
     job_wrapper "Upgrade Check" do
       if Rails.env=='production'
-        upgrade_running = lambda do
+        upgrade_runnin' = lambda do
           # Unschedule all job except the upgrade ones - this doesn't stop jobs in progress, just effectively
           # stops the scheduler from running re-running them after this moment
           jobs = scheduler.all_jobs.values
