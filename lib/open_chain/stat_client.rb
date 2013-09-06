@@ -23,7 +23,9 @@ module OpenChain; class StatClient
     emails = Set.new
     SearchSchedule.scoped.pluck(:email_addresses).each do |addresses|
       next if addresses.blank?
-      addresses.split(",").each {|e| emails << e.strip unless e.blank? or e =~ /vandegriftinc\.com/}
+      addresses.split(",").each do |interim_e| 
+        interim_e.split(';').each {|e| emails << e.strip unless e.blank? or e =~ /vandegriftinc\.com/}
+      end
     end
     total_count 'rep_recipients', emails
   end

@@ -43,9 +43,9 @@ describe OpenChain::StatClient do
   end
   describe :collect_report_recipients do
     it "should only report unique addresses" do
-      Factory(:search_schedule,email_addresses:'joe@sample.com, mary@sample.com')
+      Factory(:search_schedule,email_addresses:'joe@sample.com, jim@sample.com; mary@sample.com')
       Factory(:search_schedule,email_addresses:'fred@sample.com,joe@sample.com')
-      described_class.should_receive(:add_numeric).with('rep_recipients',3,prep_time)
+      described_class.should_receive(:add_numeric).with('rep_recipients',4,prep_time)
       described_class.collect_report_recipients
     end
     it "should not include vandegriftinc.com addresses" do
