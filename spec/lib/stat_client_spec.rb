@@ -56,11 +56,10 @@ describe OpenChain::StatClient do
   end
   describe :collect_active_users do
     it "should call add_numeric with appropriate params" do
-      User.scoped.destroy_all # some other test case may be leaving a record behind
-      Factory(:user,last_request_at:8.days.ago) #too old
-      Factory(:user) #never requested
-      Factory(:user,last_request_at:5.days.ago)
-      Factory(:user,last_request_at:3.days.ago)
+      Factory(:user,username:'ca2',last_request_at:Time.zone.now)
+      Factory(:user,username:'ca1',last_request_at:8.days.ago) #too old
+      Factory(:user,username:'ca3',last_request_at:5.days.ago)
+      Factory(:user,username:'ca4',last_request_at:nil) #never requested
       described_class.should_receive(:add_numeric).with('u_act_7',2,prep_time)
       described_class.collect_active_users
     end
