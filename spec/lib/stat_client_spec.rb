@@ -56,6 +56,7 @@ describe OpenChain::StatClient do
   end
   describe :collect_active_users do
     it "should call add_numeric with appropriate params" do
+      User.scoped.destroy_all # some other test case may be leaving a record behind
       Factory(:user,last_request_at:8.days.ago) #too old
       Factory(:user) #never requested
       Factory(:user,last_request_at:5.days.ago)
