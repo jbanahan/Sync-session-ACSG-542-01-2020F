@@ -37,7 +37,7 @@ def execute_scheduler
   if Rails.env.production?
     scheduler.every '4h' do
       job_wrapper "StatClient" do
-        StatClient.delay.run unless MasterSetup.get.stats_api_key.blank?
+        StatClient.delay.run if MasterSetup.get.stats_api_key.blank?
       end
     end
   end
@@ -47,7 +47,7 @@ def execute_scheduler
   scheduler.every '30s', upgrade_job_options do
     job_wrapper "Upgrade Check" do
       if Rails.env=='production'
-        upgrade_runnin' = lambda do
+        upgrade_running = lambda do
           # Unschedule all job except the upgrade ones - this doesn't stop jobs in progress, just effectively
           # stops the scheduler from running re-running them after this moment
           jobs = scheduler.all_jobs.values
