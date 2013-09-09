@@ -45,6 +45,7 @@ $(function() {
           <%=field_bootstrap "Target Version", @ms.target_version%>
           <%=field_bootstrap "Server With Migration Lock", @ms.migration_host%>
           <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host) %>
+          <%=field_bootstrap "Stats API Key", f.text_field(:stats_api_key) %>
         </table>
       <%end%>
     </div>
