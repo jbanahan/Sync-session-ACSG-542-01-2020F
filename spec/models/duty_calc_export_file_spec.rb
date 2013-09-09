@@ -5,7 +5,7 @@ require 'spec_helper'
 describe DutyCalcExportFile do
   before :each do
     @importer = Factory(:company,:importer=>true)
-    2.times {DutyCalcExportFileLine.create!(:importer_id=>@importer.id)}
+    2.times {DutyCalcExportFileLine.create!(importer_id:@importer.id,export_date:Date.new(2013,9,10))}
     DutyCalcExportFileLine.any_instance.stub(:make_line_array).and_return(["a","b"])
     @zip_path = 'spec/support/tmp/dce.zip'
     File.delete(@zip_path) if File.exist?(@zip_path)
@@ -24,12 +24,12 @@ describe DutyCalcExportFile do
       dcef = DutyCalcExportFile.create!(importer_id:imp.id)
       att = mock('attachment')
       Attachment.should_receive(:add_original_filename_method).with(zip)
-      DutyCalcExportFile.should_receive(:generate_excel_zip).with(imp,'tmp/abc.txt').and_return([dcef,zip])
+      DutyCalcExportFile.should_receive(:generate_excel_zip).with(imp,'tmp/abc.txt','AND 1=1').and_return([dcef,zip])
       dcef.should_receive(:build_attachment).and_return att
       att.should_receive(:attached=).with(zip)
       att.should_receive(:save!).and_return(true)
       u = Factory(:user)
-      out_obj, out_file = DutyCalcExportFile.generate_for_importer imp, u, 'tmp/abc.txt'
+      out_obj, out_file = DutyCalcExportFile.generate_for_importer imp, u, 'tmp/abc.txt', 'AND 1=1'
       out_obj.should == dcef
       out_file.should == zip
       u.reload
@@ -70,10 +70,17 @@ describe DutyCalcExportFile do
     end
     it "should not output csv for different importer" do
       other_company = Factory(:company,:importer=>true)
+      DutyCalcExportFileLine.create!(:importer_id=>other_company.id)
       d, t = DutyCalcExportFile.generate_csv @importer
       d.should have(2).duty_calc_export_file_lines
       CSV.read(t.path).should have(2).rows
-      DutyCalcExportFileLine.create!(:importer_id=>other_company.id)
+    end
+    it "should restrict by extra where clause" do
+      w = "AND duty_calc_export_file_lines.export_date between '2013-01-01' AND '2013-01-05'"
+      l = DutyCalcExportFileLine.create!(importer_id:@importer.id,export_date:Date.new(2013,1,2))
+      d, t = DutyCalcExportFile.generate_csv @importer, Tempfile.new(['dcef','.csv']), w
+      d.duty_calc_export_file_lines.to_a.should == [l]
+      CSV.read(t.path).should have(1).rows
     end
   end
 end
