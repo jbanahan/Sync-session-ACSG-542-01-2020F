@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 
 describe CustomFile do
@@ -98,6 +99,15 @@ describe CustomFile do
       mail.stub(:deliver!).and_return(nil)
       OpenMailer.should_receive(:send_s3_file).with(@u,to,cc,subject,body,'chain-io',s3,f.attached_file_name).and_return(mail)
       f.email_updated_file @u, to, cc, subject, body
+    end
+  end
+
+  describe "sanitize callback" do
+    it "should sanitize the attached filename" do
+      c = CustomFile.new
+      c.attached_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
+      c.save
+      c.attached_file_name.should == "___________________________________.jpg"
     end
   end
 end

@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 
 describe ReportResult do
@@ -167,4 +168,12 @@ describe ReportResult do
     end
   end
 
+  describe "sanitize callback" do
+    it "should sanitize the attached filename" do
+      r = ReportResult.new
+      r.report_data_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
+      r.save
+      r.report_data_file_name.should == "___________________________________.jpg"
+    end
+  end
 end
