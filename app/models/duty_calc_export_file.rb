@@ -16,7 +16,7 @@ class DutyCalcExportFile < ActiveRecord::Base
         fn = File.basename(file_path)
         fp = file_path
       end
-      f, z = generate_excel_zip importer, fp, extra_where
+      f, z = generate_excel_zip importer, fp, 65000, extra_where
       Attachment.add_original_filename_method z
       z.original_filename = fn 
       att = f.build_attachment

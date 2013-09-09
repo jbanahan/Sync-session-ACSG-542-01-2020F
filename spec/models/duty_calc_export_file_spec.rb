@@ -24,7 +24,7 @@ describe DutyCalcExportFile do
       dcef = DutyCalcExportFile.create!(importer_id:imp.id)
       att = mock('attachment')
       Attachment.should_receive(:add_original_filename_method).with(zip)
-      DutyCalcExportFile.should_receive(:generate_excel_zip).with(imp,'tmp/abc.txt','AND 1=1').and_return([dcef,zip])
+      DutyCalcExportFile.should_receive(:generate_excel_zip).with(imp,'tmp/abc.txt', 65000, 'AND 1=1').and_return([dcef,zip])
       dcef.should_receive(:build_attachment).and_return att
       att.should_receive(:attached=).with(zip)
       att.should_receive(:save!).and_return(true)
