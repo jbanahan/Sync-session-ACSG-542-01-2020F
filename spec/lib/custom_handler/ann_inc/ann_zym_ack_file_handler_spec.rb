@@ -2,12 +2,11 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler do
   it "should not report error for missing style if it's a related style" do
-    h = described_class.new 
-    cdefs = h.prep_custom_definitions [:related_styles]
+    cdefs = described_class.prep_custom_definitions [:related_styles]
     p = Factory(:product) 
     p.sync_records.create!(trading_partner:'XYZ')
     p.update_custom_value! cdefs[:related_styles], 'REL123'
-    h.process_product_ack_file "h,h,h\nREL123,2013060191051,OK", 'fn.csv', 'XYZ'
+    described_class.new.process_product_ack_file "h,h,h\nREL123,2013060191051,OK", 'fn.csv', 'XYZ'
     p.reload
     sr = p.sync_records.first
     sr.confirmed_at.should > 1.minute.ago

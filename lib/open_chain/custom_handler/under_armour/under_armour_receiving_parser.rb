@@ -1,13 +1,14 @@
 require 'open_chain/xl_client'
 module OpenChain; module CustomHandler; module UnderArmour
   class UnderArmourReceivingParser
+    include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
 
     #These custom definitions will be automatically created in if they don't already exist
     CUSTOM_DEFINITIONS = {
-      'Country of Origin'=>['string','ShipmentLine',3],
-      'PO Number'=>['string','ShipmentLine',5],
-      'Size'=>['string','ShipmentLine',11],
-      'Delivery Date'=>['date','Shipment',7]
+      'Country of Origin'=>[:coo,3],
+      'PO Number'=>[:po,5],
+      'Size'=>[:size,11],
+      'Delivery Date'=>[:del_date,7]
     }
 
     def self.validate_s3 s3_path
@@ -72,8 +73,9 @@ module OpenChain; module CustomHandler; module UnderArmour
     #find or create custom definitions required by the parser
     def init_custom_definitions
       @custom_definitions = {}
+      cdefs = self.class.prep_custom_definitions(CUSTOM_DEFINITIONS.values.collect{|v| v[0]})
       CUSTOM_DEFINITIONS.each do |k,v|
-        @custom_definitions[k] = CustomDefinition.find_or_create_by_module_type_and_label(v[1],k,:data_type=>v[0])
+        @custom_definitions[k] = cdefs[v[0]] 
       end
     end
     def process_header row
@@ -103,7 +105,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       CUSTOM_DEFINITIONS.each do |k,v|
         base = (k=='Delivery Date' ? @shipment : line)
         cv = base.get_custom_value @custom_definitions[k]
-        cv.value = k!='Delivery Date' ? trim_numeric(row[v[2]]) : row[v[2]]
+        cv.value = k!='Delivery Date' ? trim_numeric(row[v[1]]) : row[v[1]]
         cv.save!
       end
     end

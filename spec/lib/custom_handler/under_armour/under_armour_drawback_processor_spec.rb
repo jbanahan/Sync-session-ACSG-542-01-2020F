@@ -2,10 +2,7 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
   before :each do
-    @cd_po = Factory(:custom_definition,:label=>"PO Number",:module_type=>"ShipmentLine",:data_type=>"string")
-    @cd_del = Factory(:custom_definition,:label=>"Delivery Date",:module_type=>"Shipment",:data_type=>"date")
-    @cd_coo = Factory(:custom_definition,:label=>"Country of Origin",:module_type=>"ShipmentLine",:data_type=>"string")
-    @cd_size = Factory(:custom_definition,:label=>"Size",:module_type=>"ShipmentLine",:data_type=>"string")
+    @cdefs = described_class.prep_custom_definitions [:po,:del_date,:coo,:size]
     @product = Factory(:product)
   end
   describe "process_entries" do
@@ -22,8 +19,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
         :classification_uom_1 => "PCS"
       )
       @s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
-      @s_line.shipment.update_custom_value! @cd_del, 0.days.ago
-      @s_line.update_custom_value! @cd_po, @c_line.po_number
+      @s_line.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
+      @s_line.update_custom_value! @cdefs[:po], @c_line.po_number
       @s_line.shipment.update_attributes(:importer_id=>@importer.id)
     end
     it 'should match and generate import line for a good link' do
@@ -66,8 +63,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       @c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago,:importer_id=>@importer.id)
       @s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       @s_line.shipment.update_attributes(:importer_id=>@importer.id)
-      @s_line.shipment.update_custom_value! @cd_del, 0.days.ago
-      @s_line.update_custom_value! @cd_po, @c_line.po_number
+      @s_line.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
+      @s_line.update_custom_value! @cdefs[:po], @c_line.po_number
     end
     it 'should match one entry to one shipment line by po / style' do
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
@@ -96,8 +93,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       @c_line.update_attributes(:quantity=>30)
       @s_line2 = Factory(:shipment_line,:quantity=>20,:product=>@product)
       @s_line2.shipment.update_attributes(:importer_id=>@importer.id)
-      @s_line2.shipment.update_custom_value! @cd_del, 0.days.ago
-      @s_line2.update_custom_value! @cd_po, @c_line.po_number
+      @s_line2.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
+      @s_line2.update_custom_value! @cdefs[:po], @c_line.po_number
       described_class.new.link_commercial_invoice_line @c_line, @cr
       found = PieceSet.where(:commercial_invoice_line_id=>@c_line.id)
       found.should have(2).piece_sets
@@ -112,8 +109,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       @c_line_used.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
       @s_line_used = Factory(:shipment_line,:quantity=>20,:product=>@product)
       [@s_line,@s_line_used].each do |s|
-        s.shipment.update_custom_value! @cd_del, 0.days.ago
-        s.update_custom_value! @cd_po, @c_line.po_number
+        s.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
+        s.update_custom_value! @cdefs[:po], @c_line.po_number
       end
       PieceSet.create!(:commercial_invoice_line_id=>@c_line_used.id,:shipment_line_id=>@s_line_used.id,:quantity=>20)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
@@ -160,8 +157,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     it "should consider previous matches to determine how much invoice quantity is available to match" do
       @c_line.update_attributes(:quantity=>8)
       @s_line_used = Factory(:shipment_line,:quantity=>6,:product=>@product)
-      @s_line_used.shipment.update_custom_value! @cd_del, 0.days.ago
-      @s_line_used.update_custom_value! @cd_po, @c_line.po_number
+      @s_line_used.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
+      @s_line_used.update_custom_value! @cdefs[:po], @c_line.po_number
       PieceSet.create!(:commercial_invoice_line_id=>@c_line.id,:shipment_line_id=>@s_line_used.id,:quantity=>6)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
       r.should have(1).shipment_line
@@ -176,7 +173,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       it 'should not match to a shipment received in the past' do
         @c_line.update_attributes(:quantity=>10)
         @c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
-        @s_line.shipment.update_custom_value! @cd_del, 10.days.ago
+        @s_line.shipment.update_custom_value! @cdefs[:del_date], 10.days.ago
         described_class.new.link_commercial_invoice_line @c_line
         PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).should be_empty
       end
@@ -209,11 +206,11 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       )
       @s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       @shipment = @s_line.shipment
-      @shipment.update_custom_value! @cd_del, 1.days.from_now
+      @shipment.update_custom_value! @cdefs[:del_date], 1.days.from_now
       @shipment.update_attributes(:importer_id=>@importer.id)
-      @s_line.update_custom_value! @cd_coo, 'TW'
-      @s_line.update_custom_value! @cd_po, @c_line.po_number
-      @s_line.update_custom_value! @cd_size, "XXL"
+      @s_line.update_custom_value! @cdefs[:coo], 'TW'
+      @s_line.update_custom_value! @cdefs[:po], @c_line.po_number
+      @s_line.update_custom_value! @cdefs[:size], "XXL"
     end
 
     it "should make line with combined data for one shipment line" do
@@ -227,12 +224,12 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       d = r.first
       d.entry_number.should == @entry.entry_number
       d.import_date.should == @entry.arrival_date
-      d.received_date.should == @shipment.get_custom_value(@cd_del).value
+      d.received_date.should == @shipment.get_custom_value(@cdefs[:del_date]).value
       d.port_code.should == @entry.entry_port_code
       d.box_37_duty.should == @entry.total_duty
       d.box_40_duty.should == @entry.total_duty_direct
       d.country_of_origin_code.should == @c_line.country_origin_code
-      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cd_size).value}+#{@c_line.country_origin_code}"
+      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cdefs[:size]).value}+#{@c_line.country_origin_code}"
       d.hts_code.should == @c_tar.hts_code
       d.description.should == @entry.merchandise_description 
       d.unit_of_measure.should == "EA" #hard code to eaches
@@ -263,10 +260,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       s_line2 = Factory(:shipment_line,:quantity=>2,:product=>@product)
       s2 = s_line2.shipment
       s2.update_attributes(:importer_id=>@importer.id)
-      s2.update_custom_value! @cd_del, 1.days.from_now
-      s_line2.update_custom_value! @cd_coo, 'CA'
-      s_line2.update_custom_value! @cd_po, @c_line.po_number
-      s_line2.update_custom_value! @cd_size, "SM"
+      s2.update_custom_value! @cdefs[:del_date], 1.days.from_now
+      s_line2.update_custom_value! @cdefs[:coo], 'CA'
+      s_line2.update_custom_value! @cdefs[:po], @c_line.po_number
+      s_line2.update_custom_value! @cdefs[:size], "SM"
 
       @c_line.update_attributes(:quantity=>12)
       
@@ -291,7 +288,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       described_class.new.link_commercial_invoice_line @c_line
       cr = ChangeRecord.new
       d = described_class.new.make_drawback_import_lines(@c_line, cr).first
-      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cd_size).value}+#{@s_line.get_custom_value(@cd_coo).value}"
+      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cdefs[:size]).value}+#{@s_line.get_custom_value(@cdefs[:coo]).value}"
     end
     it "should not make line where line has already been made" do
       described_class.new.link_commercial_invoice_line @c_line

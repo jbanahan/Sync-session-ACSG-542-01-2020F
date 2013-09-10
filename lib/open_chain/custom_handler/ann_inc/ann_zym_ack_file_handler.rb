@@ -7,7 +7,7 @@ module OpenChain
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
         
         def initialize
-          @cdefs = prep_custom_definitions [:related_styles]
+          @cdefs = self.class.prep_custom_definitions [:related_styles]
         end
         def find_product row
           p = Product.find_by_unique_identifier row[0]

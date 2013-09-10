@@ -22,7 +22,7 @@ module OpenChain
 
         def initialize(opts={})
           super(opts)
-          @cdefs = prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :related_styles]
+          @cdefs = self.class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :related_styles]
           @used_part_countries = []
         end
 
