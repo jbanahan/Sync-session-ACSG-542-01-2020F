@@ -1,4 +1,4 @@
-module OpenChain
+module OpenChain; module CustomHandler; module UnderArmour
   # Creates import lines for FTZ shipments that ALREADY HAVE existing duty_calc_export_file_lines based on the 
   # delivery number matching reference 1 in the export line
   class UnderArmourFtzParser
@@ -48,4 +48,4 @@ module OpenChain
       @export_cache[delivery_number]
     end
   end
-end
+end; end; end

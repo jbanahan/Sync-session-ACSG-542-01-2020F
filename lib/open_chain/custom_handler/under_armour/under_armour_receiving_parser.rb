@@ -1,5 +1,5 @@
 require 'open_chain/xl_client'
-module OpenChain
+module OpenChain; module CustomHandler; module UnderArmour
   class UnderArmourReceivingParser
 
     #These custom definitions will be automatically created in if they don't already exist
@@ -127,4 +127,4 @@ module OpenChain
       !val.blank? && val.to_s.ends_with?('.0') ? val.to_s[0,val.to_s.size-2] : val
     end
   end
-end
+end; end; end

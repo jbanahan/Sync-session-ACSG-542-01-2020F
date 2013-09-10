@@ -1,6 +1,12 @@
 require 'open_chain/drawback_processor'
-module OpenChain
+require 'open_chain/custom_handler/custom_definition_support'
+module OpenChain; module CustomHandler; module UnderArmour
   class UnderArmourDrawbackProcessor < OpenChain::DrawbackProcessor
+    include ::OpenChain::CustomHandler::CustomDefinitionSupport
+
+    def initialize
+      
+    end
 
     def find_shipment_lines commercial_invoice_line
       entry = commercial_invoice_line.entry
@@ -36,4 +42,4 @@ module OpenChain
       @size_custom_def ||= CustomDefinition.find_by_label_and_module_type "Size", "ShipmentLine"
     end
   end
-end
+end; end; end

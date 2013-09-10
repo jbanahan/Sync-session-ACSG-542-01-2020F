@@ -1,7 +1,7 @@
-require 'open_chain/under_armour_receiving_parser'
+require 'open_chain/custom_handler/under_armour/under_armour_receiving_parser'
 require 'open_chain/ohl_drawback_parser'
-require 'open_chain/under_armour_drawback_processor'
-require 'open_chain/under_armour_export_parser'
+require 'open_chain/custom_handler/under_armour/under_armour_drawback_processor'
+require 'open_chain/custom_handler/under_armour/under_armour_export_parser'
 require 'open_chain/custom_handler/j_crew_shipment_parser'
 require 'open_chain/lands_end_export_parser'
 require 'open_chain/custom_handler/lands_end/le_drawback_import_parser'
@@ -30,7 +30,7 @@ class DrawbackUploadFile < ActiveRecord::Base
     r = []
     case self.processor
     when PROCESSOR_UA_WM_IMPORTS
-      r = OpenChain::UnderArmourReceivingParser.validate_s3 self.attachment.attached.path 
+      r = OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser.validate_s3 self.attachment.attached.path 
     end
     r
   end
@@ -38,13 +38,13 @@ class DrawbackUploadFile < ActiveRecord::Base
   def process user
     r = nil
     p_map = {
-      PROCESSOR_UA_WM_IMPORTS=>lambda {OpenChain::UnderArmourReceivingParser.parse_s3 self.attachment.attached.path},
+      PROCESSOR_UA_WM_IMPORTS=>lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser.parse_s3 self.attachment.attached.path},
       PROCESSOR_OHL_ENTRY => lambda {
         OpenChain::OhlDrawbackParser.parse tempfile.path
-        OpenChain::UnderArmourDrawbackProcessor.process_entries Entry.where("arrival_date > ?",90.days.ago)
+        OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor.process_entries Entry.where("arrival_date > ?",90.days.ago)
       },
-      PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)},
-      PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
+      PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)},
+      PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
       PROCESSOR_JCREW_SHIPMENTS => lambda {OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path},
       PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")},
       PROCESSOR_LANDS_END_IMPORTS => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},

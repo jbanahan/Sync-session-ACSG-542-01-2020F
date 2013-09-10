@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe OpenChain::UnderArmourReceivingParser do
+describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
   before :each do
     @importer = Factory(:company,:importer=>true)
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
@@ -61,7 +61,7 @@ describe OpenChain::UnderArmourReceivingParser do
         [19,'Delivery Value','string']
       ]
       @make_line_lambda.call(0,good)
-      OpenChain::UnderArmourReceivingParser.validate_s3(@s3_path).should == []
+      described_class.validate_s3(@s3_path).should == []
     end
     it "should fail with bad headings" do
       bad = [
@@ -87,7 +87,7 @@ describe OpenChain::UnderArmourReceivingParser do
         [19,'Delivery Value','string']
       ]
       @make_line_lambda.call(0,bad)
-      OpenChain::UnderArmourReceivingParser.validate_s3(@s3_path).should == ["Heading at position 3 should be Ship From Country and was Ctry."]
+      described_class.validate_s3(@s3_path).should == ["Heading at position 3 should be Ship From Country and was Ctry."]
     end
   end
   it "should create custom definitions if they don't exist" do
@@ -95,7 +95,7 @@ describe OpenChain::UnderArmourReceivingParser do
       'Size'=>'string'}
     @xl_client.should_receive(:last_row_number).with(0).and_return(1)
     @make_line_lambda.call(1,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     CustomDefinition.count.should == 4
     CustomDefinition.all.each do |cd|
       custom_defs.keys.should include cd.label
@@ -106,7 +106,7 @@ describe OpenChain::UnderArmourReceivingParser do
   it 'should parse single line' do
     @xl_client.should_receive(:last_row_number).with(0).and_return(1)
     @make_line_lambda.call(1,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     vendors = Company.where(:vendor=>true,:system_code=>'20005')
     vendors.should have(1).item
     vendors.first.name.should == 'COACO (PERU)'
@@ -129,7 +129,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @line_array[11][1] = "6.0"
     @xl_client.should_receive(:last_row_number).with(0).and_return(1)
     @make_line_lambda.call(1,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     Shipment.first.shipment_lines.first.get_custom_value(CustomDefinition.find_by_label('Size')).value.should == "6"
   end
   it 'should parse multi-line shipment' do
@@ -139,7 +139,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @line_array[9][1] = 'my_style'
     @line_array[15][1] = 10
     @make_line_lambda.call(2,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     Shipment.count.should == 1
     s = Shipment.first
     s.should have(2).shipment_lines
@@ -158,7 +158,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @make_line_lambda.call(1,@line_array)
     @line_array[5][1] = "123456"
     @make_line_lambda.call(2,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     s = Shipment.first
     s.should have(2).shipment_lines
     line_1 = s.shipment_lines.where(:line_number=>1).first
@@ -171,7 +171,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @make_line_lambda.call(1,@line_array)
     @line_array[11][1] = "SM"
     @make_line_lambda.call(2,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     s = Shipment.first
     s.should have(2).shipment_lines
     line_1 = s.shipment_lines.where(:line_number=>1).first
@@ -187,7 +187,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @line_array[9][1] = 'my_style'
     @line_array[15][1] = 10
     @make_line_lambda.call(2,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     Shipment.count.should == 2
     s = Shipment.find_by_reference '180075781'
     s.should have(1).shipment_lines
@@ -209,7 +209,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @line_array[15][1] = 6 #second line is same style, size, ibd, w different quantity
     @make_line_lambda.call(2,@line_array)
     @xl_client.should_receive(:last_row_number).with(0).and_return(2)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     Shipment.count.should == 1
     s = Shipment.find_by_reference @line_array[6][1]
     s.should have(1).shipment_lines
@@ -224,7 +224,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @line_array[9][1] = 'P2'
     @make_line_lambda.call(3,@line_array)
     @xl_client.should_receive(:last_row_number).with(0).and_return(3)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     Shipment.count.should == 2
     s = Shipment.find_by_reference original_ibd
     s.should have(2).shipment_lines
@@ -239,7 +239,7 @@ describe OpenChain::UnderArmourReceivingParser do
     @line_array[6][1] = '181.0' #ibd
     @xl_client.should_receive(:last_row_number).with(0).and_return(1)
     @make_line_lambda.call(1,@line_array)
-    OpenChain::UnderArmourReceivingParser.parse_s3(@s3_path)
+    described_class.parse_s3(@s3_path)
     s = Shipment.find_by_reference '181'
     s.shipment_lines.first.get_custom_value(CustomDefinition.find_by_label('PO Number')).value.should == '9999'
     s.vendor.system_code.should == '1'
