@@ -245,6 +245,26 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         sheet.row(3).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
         sheet.row(4).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line3.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
       end
+
+      it "should generate a credit FFI invoice" do
+        # Skip the duty/gst lines so only the invoice lines are accounted for, this is how it'll end up being invoiced
+        # for real anyway.
+        @gen.stub(:previously_invoiced?).with(@entry).and_return true
+        @broker_invoice_line1.update_attributes :charge_amount => BigDecimal("-5.00")
+        @broker_invoice_line2.update_attributes :charge_amount => BigDecimal("-4.00")
+
+        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+
+        mail = ActionMailer::Base.deliveries.pop
+        sheet = get_workbook_sheet mail.postmark_attachments.first
+        now = ExportJob.all.first.start_time.strftime("%m/%d/%Y")
+
+        sheet.row(1).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KG', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "21", "100023825", nil, BigDecimal.new("10.00"), "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "49999999", nil, @entry.entry_number, nil]
+
+        sheet.row(2).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KG', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "50", "23101900", nil, @broker_invoice_line1.charge_amount.abs, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line1.charge_description[0, 50]]
+        sheet.row(3).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KG', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "50", "23101900", nil, @broker_invoice_line2.charge_amount.abs, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
+        sheet.row(4).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KG', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "50", "23101900", nil, @broker_invoice_line3.charge_amount.abs, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
+      end
     end
 
     context :multiple_invoices_same_entry do

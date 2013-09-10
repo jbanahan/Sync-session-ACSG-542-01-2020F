@@ -393,6 +393,17 @@ module OpenChain
             total_amount = rows.inject(BigDecimal.new("0.00")) {|sum, row| sum + row[12]}
 
             rows.insert(0, create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "100023825", "49999999", total_amount, "", :total, broker_invoice.entry.entry_number))
+
+            # For any invoices where the total invoice amount is a credit (ie. total_amount < 0) we need to assign different document types and posting keys
+            # and ensure all amounts are positive values
+            if total_amount <= 0
+              rows.each do |row|
+                row[1] = "KG"
+                row[9] = ((row[9] == "31") ? "21" : "50")
+                row[12] = row[12].abs
+              end
+            end
+
             rows
           end
 
