@@ -34,8 +34,8 @@ describe PowerOfAttorneysController do
           post :create, :company_id => @poa.company, :power_of_attorney => {:start_date => @poa.start_date,
             :expiration_date => @poa.expiration_date,
             :company_id => @poa.company.id,
-            :attachment => '/tmp/sample_attachment.jpg',
-            :attachment_file_name => "SampleAttachment.jpg"}
+            :attachment => fixture_file_upload('/files/attorney.png', 'image/png'),
+            :attachment_file_name => "SampleAttachment.png"}
         }.to change(PowerOfAttorney, :count).by(1)
       end
 
@@ -43,8 +43,8 @@ describe PowerOfAttorneysController do
         post :create, :company_id => @poa.company, :power_of_attorney => {:start_date => @poa.start_date,
           :expiration_date => @poa.expiration_date,
           :company_id => @poa.company.id,
-          :attachment => '/tmp/sample_attachment.jpg',
-          :attachment_file_name => "SampleAttachment.jpg"}
+          :attachment => fixture_file_upload('/files/attorney.png', 'image/png'),
+          :attachment_file_name => "SampleAttachment.png"}
         assigns(:power_of_attorney).should be_a(PowerOfAttorney)
         assigns(:power_of_attorney).should be_persisted
       end
@@ -53,8 +53,8 @@ describe PowerOfAttorneysController do
         post :create, :company_id => @poa.company.id, :power_of_attorney => {:start_date => @poa.start_date,
           :expiration_date => @poa.expiration_date,
           :company_id => @poa.company.id,
-          :attachment => '/tmp/sample_attachment.jpg',
-          :attachment_file_name => "SampleAttachment.jpg"}
+          :attachment => fixture_file_upload('/files/attorney.png', 'image/png'),
+          :attachment_file_name => "SampleAttachment.png"}
         response.should redirect_to(:action => 'index')
       end
     end

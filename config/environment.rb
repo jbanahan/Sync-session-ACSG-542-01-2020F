@@ -6,12 +6,6 @@ require 'open_chain/cache_wrapper'
 GC::Profiler.enable
 
 # Initialize the rails application
-AWS_CREDENTIALS = YAML::load_file 'config/s3.yml'
-FOG_S3 = {:aws_access_key_id=>AWS_CREDENTIALS['access_key_id'],
-      :aws_secret_access_key=>AWS_CREDENTIALS['secret_access_key'],
-      :provider=>'AWS'
-      }
-
 CACHE = CacheWrapper.new(Rails.env=='test' ? TestExtensions::MockCache.new : CacheWrapper.get_production_client)
 OpenChain::Application.initialize!
 

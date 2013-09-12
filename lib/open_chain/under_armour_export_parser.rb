@@ -27,7 +27,7 @@ module OpenChain
     def self.parse_fmi_csv_file file_path
       count = 0
       importer = Company.where(:importer=>true).first
-      File.new(file_path).lines do |line|
+      File.new(file_path).each_line do |line|
         parse_fmi_csv_line line unless count == 0
         count += 1
       end

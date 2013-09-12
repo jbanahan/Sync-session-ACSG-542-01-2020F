@@ -55,9 +55,17 @@ describe OpenMailer do
       @bucket = 'mybucket'
       @s3_path = "my/path/#{@filename}"
       @s3_content = 'some content here'
+
+      @tempfile = Tempfile.new ["s3_content", ".txt"]
+      @tempfile.binmode
+      @tempfile << @s3_content
+      @tempfile.rewind
       
       #mock s3 handling
-      OpenChain::S3.should_receive(:get_data).with(@bucket,@s3_path).and_return(@s3_content)
+      OpenChain::S3.should_receive(:download_to_tempfile).with(@bucket,@s3_path).and_return(@tempfile)
+    end
+    after :each do
+      @tempfile.close!
     end
     it 'should attach file from s3' do
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path).deliver
@@ -66,19 +74,17 @@ describe OpenMailer do
       mail.to.should == [@to]
       mail.cc.should == [@cc]
       mail.subject.should == @subject
-      mail.postmark_attachments.should have(1).item
-      pa = mail.postmark_attachments.first
-      pa["Name"].should == @filename
-      pa["Content"].should == Base64.encode64(@s3_content)
-      pa["ContentType"].should == "application/octet-stream"
+      mail.attachments[@filename].should_not be_nil
+      pa = mail.attachments[@filename]
+      pa.content_type.should == "application/octet-stream; charset=UTF-8"
+      pa.read.should == @s3_content
+      
     end
     it 'should take attachment_name parameter' do
       alt_name = 'x.y'
       OpenMailer.send_s3_file(@user, @to, @cc, @subject, @body, @bucket, @s3_path,alt_name).deliver
       mail = ActionMailer::Base.deliveries.pop
-      mail.postmark_attachments.should have(1).item
-      pa = mail.postmark_attachments.first
-      pa["Name"].should == alt_name
+      mail.attachments[alt_name].should_not be_nil
     end
   end
 
@@ -94,11 +100,11 @@ describe OpenMailer do
         mail.to.should == ["me@there.com"]
         mail.subject.should == "Subject"
         mail.body.raw_source.should match("&lt;p&gt;Body&lt;/p&gt;")
-        mail.postmark_attachments.should have(1).item
-        pa = mail.postmark_attachments.first
-        pa["Name"].should == File.basename(f)
-        pa["Content"].should == Base64.encode64(File.read(f))
-        pa["ContentType"].should == "application/octet-stream"
+
+        pa = mail.attachments[File.basename(f)]
+        pa.should_not be_nil
+        pa.read.should == File.read(f)
+        pa.content_type.should == "application/octet-stream"
       end
     end
 
@@ -117,17 +123,17 @@ describe OpenMailer do
           mail.to.should == ["me@there.com"]
           mail.subject.should == "Subject"
           mail.body.raw_source.should match("<p>Body</p>")
-          mail.postmark_attachments.should have(2).item
+          mail.attachments.should have(2).items
 
-          pa = mail.postmark_attachments.first
-          pa["Name"].should == File.basename(f)
-          pa["Content"].should == Base64.encode64(File.read(f))
-          pa["ContentType"].should == "application/octet-stream"
+          pa = mail.attachments[File.basename(f)]
+          pa.should_not be_nil
+          pa.read.should == File.read(f)
+          pa.content_type.should == "application/octet-stream"
 
-          pa = mail.postmark_attachments.second
-          pa["Name"].should == File.basename(f2)
-          pa["Content"].should == Base64.encode64(File.read(f2))
-          pa["ContentType"].should == "application/octet-stream"
+          pa = mail.attachments[File.basename(f2)]
+          pa.should_not be_nil
+          pa.read.should == File.read(f2)
+          pa.content_type.should == "application/octet-stream"
         end
       end
     end
@@ -150,12 +156,12 @@ describe OpenMailer do
           OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
 
           mail = ActionMailer::Base.deliveries.pop
-          mail.postmark_attachments.should have(1).item
+          mail.attachments.should have(1).item
 
-          pa = mail.postmark_attachments.first
-          pa["Name"].should == File.basename(f2)
-          pa["Content"].should == Base64.encode64(File.read(f2))
-          pa["ContentType"].should == "application/octet-stream"
+          pa = mail.attachments[File.basename(f2)]
+          pa.should_not be_nil
+          pa.read.should == File.read(f2)
+          pa.content_type.should == "application/octet-stream"
 
           ea = EmailAttachment.all.first
           ea.should_not be_nil
@@ -181,10 +187,10 @@ EMAIL
         OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>", f).deliver
 
         mail = ActionMailer::Base.deliveries.pop
-        pa = mail.postmark_attachments.first
-        pa["Name"].should == "test.txt"
-        pa["Content"].should == Base64.encode64(File.read(f))
-        pa["ContentType"].should == "application/octet-stream"
+        pa = mail.attachments['test.txt']
+        pa.should_not be_nil
+        pa.read.should == File.read(f)
+        pa.content_type.should == "application/octet-stream"
       end
     end
   end
@@ -210,7 +216,7 @@ EMAIL
         OpenMailer.send_generic_exception(e, ["Test", "Test2"], "Error Message", nil, [f.path]).deliver
 
         mail = ActionMailer::Base.deliveries.pop
-        pa = mail.postmark_attachments.length.should == 0
+        pa = mail.attachments.size.should == 0
 
         ea = EmailAttachment.all.first
         ea.should_not be_nil
@@ -241,6 +247,39 @@ EMAIL
       mail.body.raw_source.should match /Username: #{@user.username}/
       mail.body.raw_source.should match /Temporary Password: #{pwd}/
       mail.body.raw_source.should match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: 'https')}/
+    end
+  end
+
+  context :send_uploaded_items do
+    before :each do
+      @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
+    end
+
+    it "should send imported file data" do
+      data = "This is my data, there are many like it but this one is mine."
+      imported_file = double("ImportedFile")
+      imported_file.stub(:attached_file_name).and_return "test.txt"
+      imported_file.stub(:module_type).and_return "Product"
+
+      m = OpenMailer.send_uploaded_items "you@there.com", imported_file, data, @user
+      m.to.should eq ["you@there.com"]
+      m.reply_to.should eq [@user.email]
+      m.subject.should eq "[chain.io] Product File Result"
+
+      m.attachments["test.txt"].should_not be_nil
+      m.attachments["test.txt"].read.should eq data
+    end
+
+    it "should not add attachment if data is too large" do
+      data = "This is my data, there are many like it but this one is mine."
+      imported_file = double("ImportedFile")
+      imported_file.stub(:attached_file_name).and_return "test.txt"
+      imported_file.stub(:module_type).and_return "Product"
+
+      OpenMailer.any_instance.should_receive(:save_large_attachment).and_return true
+
+      m = OpenMailer.send_uploaded_items "you@there.com", imported_file, data, @user
+      m.attachments["test.txt"].should be_nil
     end
   end
 end

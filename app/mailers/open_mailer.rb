@@ -17,7 +17,7 @@ EOS
     end
   end
 
-  #send a very simple HTML email (attachments are expected to answer as File objects )
+  #send a very simple HTML email (attachments are expected to answer as File objects or paths )
   def send_simple_html to, subject, body, file_attachments = []
     @body_content = body
     @attachment_messages = []
@@ -25,18 +25,19 @@ EOS
     pm_attachments = []
 
     file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
-    
+    # Something funky happens with the mail if you use the 'attachments' global prior to creating a mail object
+    # instead of the mail.attachments attribute.  The mail content ends up being untestable for some reason I think
+    # is related to messed up/out of order MIME hierarchies in the email.
+    local_attachments = {}
     file_attachments.each do |file|
       
       save_large_attachment(file, to) do |email_attachment, attachment_text|
         if email_attachment
           @attachment_messages << attachment_text
         else
-          pm_attachments << {
-            "Name"        => ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename(file.path)),
-            "Content"     => Base64.encode64(File.read(file.path)),
-            "ContentType" => "application/octet-stream"
-          }
+          # Use original_filename if the object answers to the method, else use the path's basename.
+          filename = ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
+          local_attachments[filename] = create_attachment(file)
         end
       end
       
@@ -45,7 +46,8 @@ EOS
     m = mail(:to=>to,:subject=>subject) do |format|
       format.html
     end
-    m.postmark_attachments = pm_attachments
+
+    local_attachments.each {|name, content| m.attachments[name] = content}
     m
   end
 
@@ -106,30 +108,34 @@ EOS
     m = mail(:to => to,
       :subject => "[chain.io] #{search_name} Result",
       :from => 'do-not-reply@chain.io')
-    m.postmark_attachments = {
-      "Name"        => file_path.split('/').last,
-      "Content"     => Base64.encode64(File.read(file_path)),
-      "ContentType" => "application/octet-stream"
-    } unless attachment_saved
+    unless attachment_saved
+      m.attachments[File.basename(file_path)] = create_attachment file_path
+    end
     m
   end
 
   def send_uploaded_items(to,imported_file,data,current_user)
     @current_user = current_user
-    data_to_send = [data].pack("m")
-    data_file_path = File.join("/tmp", imported_file.attached_file_name)
-    File.open(data_file_path, "w") { |f| f.write data_to_send } if data_to_send.length > ATTACHMENT_LIMIT
+    data_file_path = Tempfile.new([File.basename(imported_file.attached_file_name, ".*"), File.extname(imported_file.attached_file_name)])
+    data_file_path.binmode
+    Attachment.add_original_filename_method data_file_path
+    data_file_path.original_filename = imported_file.attached_file_name
+    data_file_path.write data
+    data_file_path.rewind
+
     attachment_saved = save_large_attachment(data_file_path, to)
-    
+
     m = mail(:to=>to,
       :reply_to=>current_user.email,
       :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
-    m.postmark_attachments = {
-      "Name" => imported_file.attached_file_name,
-      "Content" => data_to_send,
-      "ContentType" => "application/octet-stream"
-    } unless attachment_saved
+
+    unless attachment_saved
+      m.attachments[imported_file.attached_file_name] = create_attachment data_file_path
+    end
+
     m
+  ensure
+    data_file_path.unlink if data_file_path
   end
 
   # Send a file that is currently on s3
@@ -142,12 +148,13 @@ EOS
     # Concatenate passed message with the text set when large file is saved
     # to S3 for direct download
     @body_text = body_text + @body_text
-    m = mail(:to=>to, :cc=>cc, :reply_to=>current_user.email, :subject => subject)
-    m.postmark_attachments = {
-      "Name" => a_name,
-      "Content" => Base64.encode64(File.read(t.path)),
-      "ContentType"=> "application/octet-stream"
-    } unless attachment_saved
+    m = mail(:to=>to, :reply_to=>current_user.email, :subject => subject)
+    # Postmark does not handle blank CC / BCC fields any longer without erroring (dumb)
+    m.cc = cc unless cc.blank?
+
+    unless attachment_saved
+      m.attachments[a_name] = create_attachment(t)
+    end
     m
   end
 
@@ -198,19 +205,21 @@ EOS
     @backtrace = backtrace ? backtrace : e.backtrace
     @backtrace = [] unless @backtrace
     @additional_messages = additional_messages.nil? ? [] : additional_messages
-    attachment_files = []
+    local_attachments = {}
     attachment_paths.each do |ap|
       if save_large_attachment ap, 'bug@aspect9.com' 
         @additional_messages << @body_text
       else
-        attachment_files << File.open(ap) 
+        local_attachments[File.basename(ap)] = create_attachment ap
       end
     end  
-    mail(:to=>"bug@aspect9.com",
-      :subject =>"[chain.io Exception] - #{@error_message}",
-      :postmark_attachments => attachment_files) do |format|
+    m = mail(:to=>"bug@aspect9.com", :subject =>"[chain.io Exception] - #{@error_message}") do |format|
       format.text
     end
+
+    local_attachments.each {|name, content| m.attachments[name] = content}
+
+    m
   end
 
   #send survey response invite
@@ -304,5 +313,15 @@ EOS
 
     def large_attachment? file
       File.exist?(file) && File.size(file) > ATTACHMENT_LIMIT
+    end
+
+    def create_attachment data, data_is_file = true
+      if data_is_file
+        data = File.open((data.respond_to?(:path) ? data.path : data), "rb") {|io| io.read}
+      end
+      # When using the native Rails mail attachments you no longer have to base64 encode the data, the 
+      # postmark library handles that behind the scenes for us now.
+      {content: data,
+        mime_type: "application/octet-stream"}
     end
 end

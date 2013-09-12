@@ -45,7 +45,7 @@ describe OpenChain::SearchQueryControllerHelper do
             {'label'=>'Edit','url'=>"/products/#{@p.id}/edit"}
           ],
         'vals'=>
-          [@p.unique_identifier,@p.name, ActiveSupport::TimeZone[@user.time_zone].at(@p.changed_at).to_s]}]
+          [@p.unique_identifier,@p.name, @p.changed_at.in_time_zone(@user.time_zone).to_s]}]
     expected_bulk_actions = []
     CoreModule::PRODUCT.bulk_actions(@user).each do |k,v|
       h = {"label"=>k.to_s}
@@ -131,7 +131,7 @@ describe OpenChain::SearchQueryControllerHelper do
             {'label'=>'Edit','url'=>"/products/#{@p.id}/edit"}
           ],
         'vals'=>
-          [ActiveSupport::TimeZone[@user.time_zone].at(@p.changed_at).to_s]
+          [@p.changed_at.in_time_zone(@user.time_zone).to_s]
       }]
   end
 end

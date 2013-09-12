@@ -8,10 +8,6 @@ class ImportedFile < ActiveRecord::Base
   UPDATE_MODES = {"any"=>"Add or Update","add"=>"Add Only","update"=>"Update Only"}
 
   has_attached_file :attached,
-    :storage => :fog,
-    :fog_credentials => FOG_S3,
-    :fog_public => false,
-    :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/imported_file/:id/:filename" #conditional on MasterSetup to allow migrations to run
   before_post_process :no_post
   
@@ -194,14 +190,13 @@ class ImportedFile < ActiveRecord::Base
   
   
   def attachment_as_workbook
-    t = OpenChain::S3.download_to_tempfile attached.options.fog_directory, attached.path
+    t = OpenChain::S3.download_to_tempfile attached.options[:bucket], attached.path
     Spreadsheet.open t
   end
 
   def attachment_data
     return @a_data unless @a_data.nil?
-    s3 = AWS::S3.new AWS_CREDENTIALS
-    s3.buckets[attached.options.fog_directory].objects[attached.path].read
+    OpenChain::S3.get_data attached.options[:bucket], attached.path
   end
   
   private

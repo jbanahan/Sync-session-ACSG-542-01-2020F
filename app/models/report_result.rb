@@ -7,10 +7,6 @@ class ReportResult < ActiveRecord::Base
   belongs_to :run_by, :class_name=>"User"
   belongs_to :custom_report
   has_attached_file :report_data,
-    :storage => :fog,
-    :fog_credentials => FOG_S3,
-    :fog_public => false,
-    :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.uuid}/report_result/:id/:filename"
   before_post_process :no_post
 
@@ -89,11 +85,11 @@ class ReportResult < ActiveRecord::Base
 
   def report_content
     return nil unless report_data.path
-    AWS::S3.new(AWS_CREDENTIALS).buckets[report_data.options.fog_directory].objects[report_data.path].read
+    OpenChain::S3.get_data report_data.options[:bucket], report_data.path
   end
 
   def secure_url(expires_in=10.seconds)
-    AWS::S3.new(AWS_CREDENTIALS).buckets[report_data.options.fog_directory].objects[report_data.path].url_for(:read,:expires=>expires_in,:secure=>true).to_s
+    OpenChain::S3.url_for report_data.options[:bucket], report_data.path, expires_in
   end
 
   private
