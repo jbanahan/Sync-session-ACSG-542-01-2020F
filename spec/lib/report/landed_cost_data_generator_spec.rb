@@ -168,5 +168,33 @@ describe OpenChain::Report::LandedCostDataGenerator do
       l[:international_freight].should == (BigDecimal.new("100") + (global_freight_proration * ci_2_line_1.quantity)).round(2, BigDecimal::ROUND_HALF_UP)
       lc[:totals][:international_freight].should == BigDecimal.new("200")
     end
+
+    it "should prorate international freight against a single invoice if specified - fuzzy freight invoice matching" do
+      # Create a second invoice and move one of the other lines to the new invoice
+      ci_2 = Factory(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV2")
+      ci_2_line_1 = Factory(:commercial_invoice_line, :commercial_invoice=>ci_2, :part_number=>"Part4", :quantity=>BigDecimal.new("11"), :po_number=>"PO", :mid=>"MID4", :country_origin_code=>"CN", :value => BigDecimal.new("1000"),
+                            :commercial_invoice_tariffs=>[CommercialInvoiceTariff.new(:duty_amount=>BigDecimal.new("500"))])
+
+      @bi.broker_invoice_lines.create :charge_type=>"F", :charge_amount => BigDecimal.new("100"), :charge_description=> "Test#{ci_2.invoice_number}", :charge_code=>"0600"
+
+      
+      lc = described_class.new.landed_cost_data_for_entry @entry.id
+
+      e = lc[:entries].first
+      e[:commercial_invoices].should have(2).items
+      i = e[:commercial_invoices].first
+      l = i[:commercial_invoice_lines]
+      l.should have(3).items
+
+      i = e[:commercial_invoices].second
+      l = i[:commercial_invoice_lines]
+      l.should have(1).item
+      l = i[:commercial_invoice_lines].first
+
+      # The second item should have had all the new int'l freight charge applied to it as well as its share of the "global" int'l freight charge
+      global_freight_proration = (@bi_line_freight.charge_amount / BigDecimal.new("44"))
+      l[:international_freight].to_s("F").should == (BigDecimal.new("100") + (global_freight_proration * ci_2_line_1.quantity)).round(2, BigDecimal::ROUND_HALF_UP).to_s("F")
+      lc[:totals][:international_freight].should == BigDecimal.new("200")
+    end
   end
 end
