@@ -457,10 +457,13 @@ module OpenChain
           entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE 
         end
 
+        # This call may create new importers, so we want it inside our parser lock block
+        importer = importer(tax_id, importer_name)
+        
         if entry.nil?
           # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
           # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
-          entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer(tax_id, importer_name).id, :last_exported_from_source=>source_system_export_date) 
+          entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer.id, :last_exported_from_source=>source_system_export_date) 
         elsif source_system_export_date
           # Make sure we also update the source system export date while locked too so we prevent other processes from 
           # processing the same entry with stale data.
@@ -475,6 +478,13 @@ module OpenChain
           else
             entry = nil
           end
+        end
+
+        # Fenix can actually change the importer the entry is associated with so we need to handle updating the importer as well.
+        # Not sure if this is an operational error or if its something like pre-keying invoice data prior to actually knowing what
+        # entity is importing the goods.  Either way we need to make sure the entry is associated with the correct importer company
+        if entry && importer && importer.id != entry.importer_id
+          entry.importer = importer
         end
 
         entry

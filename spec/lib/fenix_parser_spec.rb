@@ -499,6 +499,15 @@ describe OpenChain::FenixParser do
       ent.importer.id.should == imp.id
       ent.importer.name.should == @importer_name
     end
+    it "should change the entry's importer id on an update if the importer changed" do
+      imp = Factory(:company, fenix_customer_number: "ABC", importer: true)
+      updated_imp = Factory(:company, fenix_customer_number: @importer_tax_id,importer: true)
+      ent = Factory(:entry, broker_reference: @file_number, source_system: "Fenix", importer: imp)
+
+      OpenChain::FenixParser.parse @entry_lambda.call
+      ent = Entry.find_by_broker_reference @file_number
+      ent.importer.id.should == updated_imp.id
+    end
   end
   context 'multi line' do
     before :each do
