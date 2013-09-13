@@ -27,12 +27,12 @@ $(function() {
 <h1>Bulk Upload For <%=@company.name%></h1>
 <%= form_for([@company,@user], :method=>'POST', :url=>bulk_upload_company_users_path(@company), :html=>{:id=>'frm_user'}, :remote=>true) do |f| -%>
   <div>username,email,firstname,lastname,password</div>
-  <textarea id='bulk-user-csv' name='bulk_user_csv'></textarea>
+  <textarea id='bulk-user-csv' name='bulk_user_csv' class="input-xxlarge"></textarea>
   <table>
     <%=field_row "Time Zone", f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones) %>
     <%=field_row "Email Format", f.select(:email_format,["html","text"])%>
     <%=field_row "Email Me When Tariffs Are Updated", f.check_box(:tariff_subscribed)-%>
-    <%=field_row "Reset Password", raw("<input type='checkbox' name='password_reset' id='password_reset' value='true' #{@user.password_reset ? "checked='true'" : ""} />")%>
+    <%=field_row "Reset Password", raw("<input type='checkbox' name='user[password_reset]' id='user_password_reset' value='true' #{@user.password_reset ? "checked='true'" : ""} />")%>
   </table>
   <%=render :partial=>'permissions', :locals=>{:user=>@user,:f=>f} -%>
 <%end-%>
