@@ -224,6 +224,14 @@ EMAIL
         mail.body.raw_source.should match(body)
       end
     end
+
+    it "should truncate message subject at 2000 chars" do
+      message_subject = "This is a subject."
+      message_subject += message_subject while message_subject.length < 200
+      e = (raise "Error" rescue $!)
+      m = OpenMailer.send_generic_exception(e, ["Test", "Test2"], message_subject)
+      m.subject.should eq ("[chain.io Exception] - #{message_subject}")[0..99]
+    end
   end
 
   context :send_invite do
