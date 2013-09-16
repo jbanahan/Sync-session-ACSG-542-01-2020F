@@ -1,5 +1,6 @@
 #CODE COPIED FROM: https://github.com/jmettraux/rufus-scheduler/issues/10/
 require 'rufus/scheduler'
+require 'mono_logger'
 require 'open_chain/delayed_job_manager'
 require 'open_chain/upgrade'
 require 'open_chain/integration_client'
@@ -23,7 +24,7 @@ end
 def execute_scheduler
   # Create your scheduler here
   scheduler = Rufus::Scheduler.start_new  
-  logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
+  logger = MonoLogger.new(Rails.root.join("log", "scheduler.log"))
 
   # Set an exception handler to just call the exception's log_me method so we can
   # track down issues
@@ -177,7 +178,7 @@ def execute_scheduler
 end
 
 # Create the main logger and set some useful variables.
-main_logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
+main_logger = MonoLogger.new(Rails.root.join("log", "scheduler.log"))
 
 if !File.directory?(Rails.root.to_s + "/tmp")
   Dir.mkdir(Rails.root.to_s + "/tmp")

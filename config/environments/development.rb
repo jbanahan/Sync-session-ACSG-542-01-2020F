@@ -1,6 +1,9 @@
 require 'dalli'
+require 'mono_logger'
+
 OpenChain::Application.configure do
   # Settings specified here will take precedence over those in config/environment.rb
+  config.logger = MonoLogger.new(Rails.root.join("log", Rails.env + ".log"))
 
   # In the development environment your application's code is reloaded on
   # every request.  This slows down response time but is perfect for development

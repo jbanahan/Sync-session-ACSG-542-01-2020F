@@ -2,4 +2,10 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
 require 'delayed/command'
+
+# We need to use MonoLogger instead of the standard ruby logger used by the command class 
+# because in ruby 2.0 you cannot use mutexes in signal traps due to potential deadlock issues 
+# with re-entrant signal handlers.  Standard logger uses a mutex resulting in exceptions
+# in delayed job worker's INT/TERM signal traps and an unclean shutdown.
+Delayed::Worker.logger = MonoLogger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 Delayed::Command.new(ARGV).daemonize
