@@ -64,33 +64,57 @@ class SearchCriterion < ActiveRecord::Base
     
     mf = find_model_field
     table_name = mf.join_alias
+    clause = nil
+
     if custom_field? 
       c_def_id = mf.custom_id
       cd = CustomDefinition.cached_find(c_def_id)
+      
       if boolean_field?
         clause = "custom_values.boolean_value = ?"
         if self.include_empty || !sql_value
           clause = "(#{clause} OR custom_values.boolean_value IS NULL)"
         end
-        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
+        clause = "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
       elsif self.operator=='null'
-        return "#{table_name}.id NOT IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+        clause = "#{table_name}.id NOT IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
       elsif self.operator=='notnull'
-        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+        clause = "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
       else
-        return "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
+        clause = "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
       end
+
+      # The core object may not actually have custom value rows yet for a particualr custom definition 
+      # if a new custom definition was added to the system.  To account for this we'll also find any 
+      # results that are missing fields if "Include Empty" is checked.
+      if self.include_empty
+        clause += " OR (#{table_name}.id NOT IN (select custom_values.customizable_id from custom_values where custom_values.custom_definition_id = #{c_def_id}))"
+      end
+
+      clause
     else
       if boolean_field?
         clause = "#{mf.qualified_field_name} = ?"
         if self.include_empty || !sql_value
-          return "(#{clause} OR #{mf.qualified_field_name} IS NULL)"
+          clause = "(#{clause} OR #{mf.qualified_field_name} IS NULL)"
         end
-        return clause
       else
-        return CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name, mf.data_type, self.include_empty)
+        clause = CriterionOperator.find_by_key(self.operator).query_string(mf.qualified_field_name, mf.data_type, self.include_empty)
       end
     end
+
+    if self.include_empty && mf.core_module
+      # For "Include Empty" we also need to be able to catch cases where we're seaching over child tables
+      # that may not have records for the field we're searching over.  .ie Product Search with a search criterion
+      # of Classification ISO Code of Is Empty.  The result needs to include every product that doesn't have 
+      # classifications.
+
+      # Technically, this is only really needed for child tables, but there's no harm in including the clause even for parent ones
+      # since the real primary key (ie id) columns are being referenced
+      clause += " OR #{mf.core_module.table_name}.#{mf.core_module.klass.primary_key} IS NULL"
+    end
+
+    clause
   end
   
   def boolean_field?

@@ -363,6 +363,22 @@ describe SearchCriterion do
           v = sc.apply(Product.where("1=1"))
           v.all.should include @product
         end
+
+        it "should find something with include_empty that doesn't have a custom value record for custom field" do
+          @definition = Factory(:custom_definition,:data_type=>'integer')
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
+          sc.include_empty = true
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
+
+        it "should find something with include_empty that doesn't have a custom value record for the child object's custom field" do
+          @definition = Factory(:custom_definition,:data_type=>'integer', :module_type=>"Classification")
+          sc = SearchCriterion.new(:model_field_uid=>"*cf_#{@definition.id}",:operator=>"eq",:value=>1)
+          sc.include_empty = true
+          v = sc.apply(Product.where("1=1"))
+          v.all.should include @product
+        end
       end
       context :normal_field do
         it "should find something created last month with val = 1" do
@@ -452,6 +468,13 @@ describe SearchCriterion do
           #Leave some whitespace in so we know it's getting trimmed out
           sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"notin", :value=>"#{@product.unique_identifier}   ")
           sc.apply(Product.where("1=1")).all.should_not include @product
+        end
+
+        it "should find something with an include empty search parameter on a child object, even if the child object doesn't exist" do
+          entry = Factory(:entry)
+          sc = SearchCriterion.new(:model_field_uid=>:ci_invoice_number,:operator=>"eq",:value=>"1")
+          sc.include_empty = true
+          sc.apply(Entry.where("1=1")).all.should include entry
         end
       end
     end
