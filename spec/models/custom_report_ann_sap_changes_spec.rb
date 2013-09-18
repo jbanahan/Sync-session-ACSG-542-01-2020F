@@ -41,7 +41,7 @@ describe CustomReportAnnSapChanges do
       @rc = described_class.new
       @rc.search_columns.build(:model_field_uid=>:prod_uid,:rank=>1)
       @rc.search_columns.build(:model_field_uid=>:class_cntry_iso,:rank=>2)
-      @cdefs = @rc.prep_custom_definitions OpenChain::CustomHandler::AnnInc::AnnSapProductHandler::SAP_REVISED_PRODUCT_FIELDS + [:sap_revised_date,:approved_date]
+      @cdefs = described_class.prep_custom_definitions OpenChain::CustomHandler::AnnInc::AnnSapProductHandler::SAP_REVISED_PRODUCT_FIELDS + [:sap_revised_date,:approved_date]
       @appr = @cdefs[:approved_date]
       @sap = @cdefs[:sap_revised_date]
     end
