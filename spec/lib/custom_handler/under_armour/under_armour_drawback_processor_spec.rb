@@ -2,13 +2,14 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
   before :each do
-    @cdefs = described_class.prep_custom_definitions [:po,:del_date,:coo,:size]
-    @product = Factory(:product)
+    @cdefs = described_class.prep_custom_definitions [:po,:del_date,:coo,:size,:color]
+    @product = Factory(:product,unique_identifier:'1234567')
   end
   describe "process_entries" do
     before :each do
+      @color = '888'
       @importer = Factory(:company,:importer=>true)
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345',:quantity=>10)
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345',:quantity=>10)
       @entry = @c_line.commercial_invoice.entry
       @entry.update_attributes(:arrival_date=>0.days.ago,:importer_id=>@importer.id)
       @c_tar = @c_line.commercial_invoice_tariffs.create!(
@@ -21,6 +22,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       @s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       @s_line.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
       @s_line.update_custom_value! @cdefs[:po], @c_line.po_number
+      @s_line.update_custom_value! @cdefs[:color], @color
       @s_line.shipment.update_attributes(:importer_id=>@importer.id)
     end
     it 'should match and generate import line for a good link' do
@@ -58,12 +60,14 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
   describe "link_commercial_invoice_line" do
     before :each do
       @cr = ChangeRecord.new
+      @color = '777'
       @importer = Factory(:company,:importer=>true)
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345')
       @c_line.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago,:importer_id=>@importer.id)
       @s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
       @s_line.shipment.update_attributes(:importer_id=>@importer.id)
       @s_line.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
+      @s_line.update_custom_value! @cdefs[:color], @color
       @s_line.update_custom_value! @cdefs[:po], @c_line.po_number
     end
     it 'should match one entry to one shipment line by po / style' do
@@ -95,6 +99,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       @s_line2.shipment.update_attributes(:importer_id=>@importer.id)
       @s_line2.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
       @s_line2.update_custom_value! @cdefs[:po], @c_line.po_number
+      @s_line2.update_custom_value! @cdefs[:color], @color
       described_class.new.link_commercial_invoice_line @c_line, @cr
       found = PieceSet.where(:commercial_invoice_line_id=>@c_line.id)
       found.should have(2).piece_sets
@@ -105,12 +110,13 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it 'should not match to a shipment that is already on another piece set matched to a ci_line' do
       @c_line.update_attributes(:quantity=>30)
-      @c_line_used = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line_used = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345')
       @c_line_used.commercial_invoice.entry.update_attributes(:arrival_date=>0.days.ago)
       @s_line_used = Factory(:shipment_line,:quantity=>20,:product=>@product)
       [@s_line,@s_line_used].each do |s|
         s.shipment.update_custom_value! @cdefs[:del_date], 0.days.ago
         s.update_custom_value! @cdefs[:po], @c_line.po_number
+        s.update_custom_value! @cdefs[:color], @color
       end
       PieceSet.create!(:commercial_invoice_line_id=>@c_line_used.id,:shipment_line_id=>@s_line_used.id,:quantity=>20)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
@@ -135,7 +141,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
     end
     it "should allocate shipment remainders to another invoice line if left over" do
       @c_line.update_attributes(:quantity=>8)
-      @c_line_2 = Factory(:commercial_invoice_line,:quantity=>8,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line_2 = Factory(:commercial_invoice_line,:quantity=>8,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345')
       @c_line_2.entry.update_attributes(:arrival_date=>0.days.ago,:importer_id=>@importer.id)
       r = described_class.new.link_commercial_invoice_line @c_line, @cr
       r.should have(1).shipment_line
@@ -181,8 +187,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
   end
   describe "make_drawback_import_lines" do
     before :each do
+      @color = '777'
       @importer = Factory(:company,:importer=>true)
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345',:country_origin_code=>'CN')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345',:country_origin_code=>'CN')
       @c_line.entry.update_attributes(
         :entry_number=>"12345678901",
         :arrival_date=>0.days.ago,
@@ -210,6 +217,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       @shipment.update_attributes(:importer_id=>@importer.id)
       @s_line.update_custom_value! @cdefs[:coo], 'TW'
       @s_line.update_custom_value! @cdefs[:po], @c_line.po_number
+      @s_line.update_custom_value! @cdefs[:color], @color
       @s_line.update_custom_value! @cdefs[:size], "XXL"
     end
 
@@ -229,7 +237,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       d.box_37_duty.should == @entry.total_duty
       d.box_40_duty.should == @entry.total_duty_direct
       d.country_of_origin_code.should == @c_line.country_origin_code
-      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cdefs[:size]).value}+#{@c_line.country_origin_code}"
+      d.part_number.should == "#{@product.unique_identifier}-#{@color}-#{@s_line.get_custom_value(@cdefs[:size]).value}+#{@c_line.country_origin_code}"
       d.hts_code.should == @c_tar.hts_code
       d.description.should == @entry.merchandise_description 
       d.unit_of_measure.should == "EA" #hard code to eaches
@@ -263,6 +271,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       s2.update_custom_value! @cdefs[:del_date], 1.days.from_now
       s_line2.update_custom_value! @cdefs[:coo], 'CA'
       s_line2.update_custom_value! @cdefs[:po], @c_line.po_number
+      s_line2.update_custom_value! @cdefs[:color], @color
       s_line2.update_custom_value! @cdefs[:size], "SM"
 
       @c_line.update_attributes(:quantity=>12)
@@ -288,7 +297,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       described_class.new.link_commercial_invoice_line @c_line
       cr = ChangeRecord.new
       d = described_class.new.make_drawback_import_lines(@c_line, cr).first
-      d.part_number.should == "#{@product.unique_identifier}-#{@s_line.get_custom_value(@cdefs[:size]).value}+#{@s_line.get_custom_value(@cdefs[:coo]).value}"
+      d.part_number.should == "#{@product.unique_identifier}-#{@color}-#{@s_line.get_custom_value(@cdefs[:size]).value}+#{@s_line.get_custom_value(@cdefs[:coo]).value}"
     end
     it "should not make line where line has already been made" do
       described_class.new.link_commercial_invoice_line @c_line
@@ -308,7 +317,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor do
       r.first.should_not be_ocean
     end
     it "should write error if no matches found" do
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>@product.unique_identifier,:po_number=>'12345')
+      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>"#{@product.unique_identifier}-#{@color}",:po_number=>'12345')
       cr = ChangeRecord.new
       r = described_class.new.make_drawback_import_lines @c_line, cr
       r.should be_blank

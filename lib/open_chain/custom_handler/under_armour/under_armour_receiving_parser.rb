@@ -8,7 +8,8 @@ module OpenChain; module CustomHandler; module UnderArmour
       'Country of Origin'=>[:coo,3],
       'PO Number'=>[:po,5],
       'Size'=>[:size,11],
-      'Delivery Date'=>[:del_date,7]
+      'Delivery Date'=>[:del_date,7],
+      'Color'=>[:color,9]
     }
 
     def self.validate_s3 s3_path
@@ -105,7 +106,16 @@ module OpenChain; module CustomHandler; module UnderArmour
       CUSTOM_DEFINITIONS.each do |k,v|
         base = (k=='Delivery Date' ? @shipment : line)
         cv = base.get_custom_value @custom_definitions[k]
-        cv.value = k!='Delivery Date' ? trim_numeric(row[v[1]]) : row[v[1]]
+        val = nil
+        case v[0]
+        when :del_date
+          val = row[7]
+        when :color
+          val = row[9].split('-').last
+        else
+          val = trim_numeric(row[v[1]])
+        end
+        cv.value = val 
         cv.save!
       end
     end
@@ -116,7 +126,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     end
 
     def product row
-      uid = row[9]
+      uid = row[9].split('-').first
       p = @product_cache[uid]
       if p.blank?
         p = Product.find_or_create_by_unique_identifier(uid,:vendor_id=>@shipment.vendor_id)

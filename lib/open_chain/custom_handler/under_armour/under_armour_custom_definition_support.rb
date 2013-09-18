@@ -5,6 +5,7 @@ module OpenChain; module CustomHandler; module UnderArmour; module UnderArmourCu
     po: {label:'PO Number',data_type: :string, module_type: 'ShipmentLine'},
     del_date: {label:'Delivery Date',data_type: :date, module_type: 'Shipment'},
     coo: {label:'Country of Origin',data_type: :string, module_type: 'ShipmentLine'},
+    color: {label:'Color',data_type: :string, module_type: 'ShipmentLine'},
     size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'}
   } 
   def self.included(base)
