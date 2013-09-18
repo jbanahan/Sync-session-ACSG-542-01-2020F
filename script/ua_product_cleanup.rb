@@ -10,9 +10,9 @@ class UaProductCleanup
       puts "#{cursor} / #{total}" if (cursor % 500) == 0
       p_id = sl.product_id
       color = cache[p_id]
-      if color.nil? && 
+      if color.nil?  
         p = sl.product
-        if p.unique_identifier =~ '-/d{3}'
+        if p.unique_identifier =~ /-\d{3}$/
           color = p.split('-').last 
           cache[p_id] = color
         end
