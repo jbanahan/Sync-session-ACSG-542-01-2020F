@@ -405,5 +405,8 @@ OpenChain::Application.routes.draw do
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
   resources :ports, :only => [:index, :update, :create, :destroy]
   resources :security_filings, :only=>[:index, :show]
+  resources :sync_records do
+    post 'resend', :on=>:member
+  end
   root :to => "dashboard_widgets#index"
 end
