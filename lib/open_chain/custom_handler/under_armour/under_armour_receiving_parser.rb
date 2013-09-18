@@ -1,4 +1,5 @@
 require 'open_chain/xl_client'
+require 'open_chain/custom_handler/under_armour/under_armour_custom_definition_support'
 module OpenChain; module CustomHandler; module UnderArmour
   class UnderArmourReceivingParser
     include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
