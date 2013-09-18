@@ -205,9 +205,13 @@ EOS
       else
         attachment_files << File.open(ap) 
       end
-    end  
+    end
+
+    # Emails subjects need to get truncated at 2000 chars for postmark.  Otherwise they throw an exception.
+    # Honestly, anything more than 100 chars is just pointless, especially since the message is in the
+    # email anyway.
     mail(:to=>"bug@aspect9.com",
-      :subject =>"[chain.io Exception] - #{@error_message}",
+      :subject =>"[chain.io Exception] - #{@error_message}"[0..99],
       :postmark_attachments => attachment_files) do |format|
       format.text
     end

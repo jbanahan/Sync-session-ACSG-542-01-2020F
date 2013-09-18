@@ -264,10 +264,23 @@ module OpenChain; module Report
       end
 
       def calculate_freight_proration total_units, entry, invoice_lines, invoice_freight_mapping
-        flattened_freight_mapping = invoice_freight_mapping.keys
+        freight_invoice_numbers = invoice_freight_mapping.keys
         calculate_broker_invoice_charge_proration total_units, entry, invoice_lines, :international_freight do |line|
-          (line.charge_type == "F") && line.charge_amount && !flattened_freight_mapping.include?(line.charge_description)
+          (line.charge_type == "F") && line.charge_amount && !charge_description_matches_invoice?(line.charge_description, freight_invoice_numbers)
         end
+      end
+
+      def charge_description_matches_invoice? charge_description, invoice_numbers
+        # The invoice number and the charge description are supposed to be the house bill number.
+        # Sometimes ops puts a scac code in the charge description in front of the house bill number, account for that here.
+        desc = charge_description.upcase
+
+        invoice_numbers.each do |num|
+          number = num.upcase
+          return true if desc.include?(number)
+        end
+
+        false
       end
 
       def find_per_invoice_freight_charges entry, *invoice_numbers
@@ -276,7 +289,7 @@ module OpenChain; module Report
           matches = []
           entry.broker_invoices.each do |b|
             b.broker_invoice_lines.each do |l|
-              matches << l.charge_amount if ("0600" == l.charge_code) && l.charge_description && l.charge_amount && l.charge_description.upcase.include?(inv)
+              matches << l.charge_amount if ("0600" == l.charge_code) && l.charge_description && l.charge_amount && charge_description_matches_invoice?(l.charge_description, [inv])
             end
           end
           # Sum all the matching invoice values
