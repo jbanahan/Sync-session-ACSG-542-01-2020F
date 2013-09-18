@@ -75,11 +75,20 @@ class SearchSchedule < ActiveRecord::Base
       cm = CoreModule.find_by_class_name srch_setup.module_type
       extension = self.download_format.nil? || self.download_format.downcase=='csv' ? "csv" : "xls"
       attachment_name = "#{sanitize_filename(srch_setup.name)}.#{extension}"
-      t = extension=="csv" ? write_csv(srch_setup) : write_xls(srch_setup)
-      send_email srch_setup.name, t, attachment_name, log
-      send_ftp srch_setup.name, t, attachment_name, log
-      self.update_attributes(:last_finish_time => Time.now)
-      log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+      Tempfile.open(["scheduled_search_run", ".#{extension}"]) do |t|
+        t.binmode
+        if extension == "csv"
+          write_csv(srch_setup, t) 
+        else 
+          write_xls(srch_setup, t)
+        end
+
+        send_email srch_setup.name, t, attachment_name, log
+        send_ftp srch_setup.name, t, attachment_name, log
+        self.update_attributes(:last_finish_time => Time.now)
+        log.info "#{Time.now}: Search schedule #{self.id} complete." if log
+      end
+      
     end
     
   end
@@ -109,17 +118,17 @@ class SearchSchedule < ActiveRecord::Base
     end
   end
 
-  def write_csv srch_setup
-    t = Tempfile.open(["scheduled_search_run",".csv"])
-    t.write CsvMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search(srch_setup,srch_setup.search)
-    t.close
-    t 
+  def write_csv srch_setup, t
+    t.write CsvMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search_query SearchQuery.new(srch_setup, srch_setup.user)
+    t.flush
+    nil
   end
 
-  def write_xls srch_setup
-    t = Tempfile.new(["scheduled_search_run",".xls"])
-    XlsMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search(srch_setup,srch_setup.search).write t
-    t
+  def write_xls srch_setup, t
+    m = XlsMaker.new(:include_links=>srch_setup.include_links?,:no_time=>srch_setup.no_time?).make_from_search_query SearchQuery.new(srch_setup, srch_setup.user)
+    m.write t
+    t.flush
+    nil
   end
 
   def send_email name, temp_file,attachment_name, log=nil

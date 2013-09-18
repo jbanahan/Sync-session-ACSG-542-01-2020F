@@ -41,20 +41,6 @@ class XlsMaker
     sq = SearchQuery.new(SearchSetup.find(search_id),User.find(user_id))
     make_from_search_query sq
   end
-  
-  #deprecated
-  def make_from_search(current_search, results)
-    @column_widths = {}
-    cols = current_search.search_columns.order("rank ASC")
-    wb = prep_workbook cols
-    sheet = wb.worksheet 0
-    row_number = 1
-    GridMaker.new(results,cols,current_search.search_criterions,current_search.module_chain,current_search.user).go do |row,obj|
-        process_row sheet, row_number, row, obj
-      row_number += 1
-    end
-    wb
-  end
 
   #deprecated
   def make_from_results results, columns, module_chain, user, search_criterions=[]

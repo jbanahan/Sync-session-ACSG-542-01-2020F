@@ -28,14 +28,13 @@ describe SearchSchedule do
 
       # Use the block version here so we can also verify that User.current and Time.zone is set to the 
       # search setup's user in the context of the write_csv call
-      @ss.should_receive(:write_csv) {|setup|
+      @ss.should_receive(:write_csv) {|setup, tempfile|
         setup.should == @setup
         User.current.should == @setup.user
         Time.zone.should == ActiveSupport::TimeZone[@setup.user.time_zone]
-        @temp
       }
-      @ss.stub(:send_email).with(@setup.name, @temp, '-_t_e_s_t_._t_x_t.csv', log)
-      @ss.should_receive(:send_ftp).with(@setup.name, @temp, '-_t_e_s_t_._t_x_t.csv', log)
+      @ss.stub(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
+      @ss.should_receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
       
       @ss.run log 
 
@@ -105,15 +104,14 @@ describe SearchSchedule do
       log = double
       log.should_receive(:info).exactly(3).times
 
-      @ss.should_receive(:write_csv) { |setup|
+      @ss.should_receive(:write_csv) { |setup, tempfile|
         setup.should == @setup
         User.current.should == @setup.user
         Time.zone.should == ActiveSupport::TimeZone[@setup.user.time_zone]
-        @temp
       }
 
-      @ss.stub(:send_email).with(@setup.name, @temp, '-_t_e_s_t_._t_x_t.csv', log)
-      @ss.should_receive(:send_ftp).with(@setup.name, @temp, '-_t_e_s_t_._t_x_t.csv', log)
+      @ss.stub(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
+      @ss.should_receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
 
       @report.stub(:user) {@u}
       # We tested a full sanitization earlier, just double check that it's still being done here too

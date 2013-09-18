@@ -629,7 +629,7 @@ class ModelField
               #and we don't want to hit the database again
               cls = nil
               p.classifications.each do |cl|
-                cls = cl if cl.country_id = c.id
+                cls = cl if cl.country_id == c.id
                 break if cls
               end
               return "" unless cls && cls.tariff_records.first

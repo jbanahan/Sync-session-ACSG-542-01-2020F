@@ -9,14 +9,29 @@ class CsvMaker
     @include_links = inner_opts[:include_links]
     @no_time = inner_opts[:no_time]
   end
-  
-  def make_from_search(current_search, results)
-    columns = current_search.search_columns.order("rank ASC")
-    generate results, columns, current_search.search_criterions, current_search.module_chain, current_search.user
-  end
 
   def make_from_results results, columns, module_chain, user, search_criterions = []
     generate results, columns, search_criterions, module_chain, user
+  end
+
+  def make_from_search_query search_query
+    ss = search_query.search_setup
+    columns = search_query.search_setup.search_columns.order('rank ASC')
+    row_number = 1
+    base_objects = {}
+    CSV.generate(prep_opts(columns)) do |csv|
+      search_query.execute do |row_hash|
+        #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
+        key = row_hash[:row_key]
+        base_objects[key] ||= (self.include_links ? ss.core_module.find(key) : nil)
+
+        row = []
+        row_hash[:result].each {|v| row << format_value(v) }
+        row << (base_objects[key] ? base_objects[key].view_url : "") if self.include_links
+        
+        csv << row
+      end
+    end
   end
 
   private
