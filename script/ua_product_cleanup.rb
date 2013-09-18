@@ -2,24 +2,11 @@ require 'open_chain/custom_handler/under_armour/under_armour_custom_definition_s
 class UaProductCleanup
   include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
   def self.color_cleanup
-    cursor = 0
-    total = ShipmentLine.count
-    cd = self.prep_custom_definitions([:color])
-    cache = {}
-    ShipmentLine.scoped.each do |sl|
-      puts "#{cursor} / #{total}" if (cursor % 500) == 0
-      p_id = sl.product_id
-      color = cache[p_id]
-      if color.nil?  
-        p = sl.product
-        if p.unique_identifier =~ /-\d{3}$/
-          color = p.split('-').last 
-          cache[p_id] = color
-        end
-      end
-      sl.update_custom_value! cd, color unless color.blank?
-      cursor += 1
-    end
+    cd = self.prep_custom_definitions([:color]).first.id
+    ActiveRecord::Base.connection.execute "INSERT INTO custom_values (customizable_id, customizable_type, string_value, created_at, updated_at, custom_definition_id)
+(SELECT shipment_lines.id, 'ShipmentLine', right(products.unique_identifier,#{cd}), now(), now(), 1
+FROM shipment_lines INNER JOIN products on products.id = shipment_lines.product_id
+WHERE products.unique_identifier REGEXP '-[[:digit:]]{3}$')"
   end
 
   def self.product_merge
