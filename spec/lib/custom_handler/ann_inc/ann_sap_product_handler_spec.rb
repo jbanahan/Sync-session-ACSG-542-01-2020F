@@ -44,11 +44,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     @us = Factory(:country,:iso_code=>'US',:import_location=>true)
     @good_hts = OfficialTariff.create(:hts_code=>'1234567890',:country=>@us)
     @user = Factory(:user)
-    helper_class = Class.new do
-      include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
-    end
-    @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:po,:origin,:import,:cost,
+    @cdefs = described_class.prep_custom_definitions [:po,:origin,:import,:cost,
         :ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
         :inco_terms,:related_styles,:season,:article,:approved_long,
         :first_sap_date,:last_sap_date,:sap_revised_date

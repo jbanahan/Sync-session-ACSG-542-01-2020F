@@ -1,3 +1,4 @@
+require 'open_chain/custom_handler/custom_definition_support'
 module OpenChain
   module CustomHandler
     module AnnInc
@@ -28,26 +29,16 @@ module OpenChain
           :set_qty=>{:label=>'Set Quantity',:data_type=>:integer,:module_type=>'TariffRecord'},
           :related_styles=>{:label=>'Related Styles', :data_type=>:text, :module_type=>"Product", :read_only=>true}
         }
-        #find or create all given custom definitions based on the CUSTOM_DEFINITION_INSTRUCTIONS
-        def prep_custom_definitions fields
-          custom_definitions = {}
-          cloned_instructions = CUSTOM_DEFINITION_INSTRUCTIONS.clone
-          fields.each do |code|
-            # Clone the instructions so we can modify the read_only value without impacting future runs
-            # this prevents weird behavior with multiple calls (like test case runs).
-            cdi = CUSTOM_DEFINITION_INSTRUCTIONS[code].clone
-            read_only = cdi[:read_only]
-            cdi.delete :read_only
-            custom_definitions[code] = CustomDefinition.where(cdi).first_or_create! if cdi
-            if read_only
-              fvr = FieldValidatorRule.where(custom_definition_id:custom_definitions[code].id,module_type:cdi[:module_type],model_field_uid:"*cf_#{custom_definitions[code].id}").first_or_create!
-              unless fvr.read_only?
-                fvr.read_only = true
-                fvr.save!
-              end
-            end
+        
+        def self.included(base)
+          base.extend(::OpenChain::CustomHandler::CustomDefinitionSupport)
+          base.extend(ClassMethods)
+        end 
+
+        module ClassMethods
+          def prep_custom_definitions fields
+            prep_custom_defs fields, CUSTOM_DEFINITION_INSTRUCTIONS
           end
-          custom_definitions
         end
       end
     end

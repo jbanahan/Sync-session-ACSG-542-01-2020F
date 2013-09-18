@@ -7,7 +7,7 @@ module OpenChain
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
         SAP_REVISED_PRODUCT_FIELDS = [:origin,:import,:related_styles,:cost]
         def initialize
-          @cdefs = prep_custom_definitions [:po,:origin,:import,:cost,
+          @cdefs = self.class.prep_custom_definitions [:po,:origin,:import,:cost,
             :ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
             :inco_terms,:related_styles,:season,:article,:approved_long,
             :first_sap_date,:last_sap_date,:sap_revised_date

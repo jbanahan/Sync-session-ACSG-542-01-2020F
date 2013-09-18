@@ -9,11 +9,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     @tmp.unlink if @tmp
   end
   before :each do
-    helper_class = Class.new do
-      include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
-    end
-    @helper = helper_class.new
-    @cdefs = @helper.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty, :related_styles]
+    @cdefs = described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty, :related_styles]
   end
 
   context 'query' do

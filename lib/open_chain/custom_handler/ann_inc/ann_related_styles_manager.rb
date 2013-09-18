@@ -23,10 +23,10 @@ module OpenChain
           @missy = missy
           @petite = petite
           @tall = tall
-          @related_cd = prep_custom_definitions([:related_styles]).values.first
-          @aggregate_defs = prep_custom_definitions AGGREGATE_FIELDS
-          @ac_date_cd = prep_custom_definitions([:ac_date]).values.first
-          @approved_cd = prep_custom_definitions([:approved_date]).values.first
+          @related_cd = self.class.prep_custom_definitions([:related_styles]).values.first
+          @aggregate_defs = self.class.prep_custom_definitions AGGREGATE_FIELDS
+          @ac_date_cd = self.class.prep_custom_definitions([:ac_date]).values.first
+          @approved_cd = self.class.prep_custom_definitions([:approved_date]).values.first
         end
 
         #find all styles that could be a match

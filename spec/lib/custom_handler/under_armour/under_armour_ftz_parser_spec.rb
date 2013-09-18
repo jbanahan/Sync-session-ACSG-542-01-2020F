@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe OpenChain::UnderArmourFtzParser do
+describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
 
   before :each do
     @line = "1600,113-4873420-0,85075306,1200739-001,7,285,ID,6402992760,892.05,26.7615,0.03,0,0,UA LOCKER SLIDE - BLK/SLV" 
@@ -10,7 +10,7 @@ describe OpenChain::UnderArmourFtzParser do
     @total_value = 102
     @total_mpf = 103
     @entered_date = 1.day.ago
-    @parser = OpenChain::UnderArmourFtzParser.new(@total_value, @total_mpf,
+    @parser = described_class.new(@total_value, @total_mpf,
       @entered_date, @port_code, @box_37, @box_40)
   end
 

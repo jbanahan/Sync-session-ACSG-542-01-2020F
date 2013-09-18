@@ -26,7 +26,7 @@ class CustomReportAnnSapChanges < CustomReport
     raise "User #{run_by.username} does not have permission to view this report." unless self.class.can_view?(run_by) 
     left_columns_count = 0
     rpf = OpenChain::CustomHandler::AnnInc::AnnSapProductHandler::SAP_REVISED_PRODUCT_FIELDS
-    cdefs = prep_custom_definitions rpf + [:approved_date,:sap_revised_date]
+    cdefs = self.class.prep_custom_definitions rpf + [:approved_date,:sap_revised_date]
     qry = "
 #{make_select(cdefs)}
 FROM products

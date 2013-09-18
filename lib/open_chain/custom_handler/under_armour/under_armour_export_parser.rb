@@ -1,5 +1,5 @@
 require 'open_chain/drawback_export_parser'
-module OpenChain
+module OpenChain; module CustomHandler; module UnderArmour
   class UnderArmourExportParser < DrawbackExportParser
 
     # parses line and returns a new DutyCalcExportFileLine
@@ -113,4 +113,4 @@ module OpenChain
       end
     end
   end
-end
+end; end; end
