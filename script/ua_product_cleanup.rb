@@ -4,7 +4,7 @@ class UaProductCleanup
   def self.color_cleanup
     cd = self.prep_custom_definitions([:color]).first.id
     ActiveRecord::Base.connection.execute "INSERT INTO custom_values (customizable_id, customizable_type, string_value, created_at, updated_at, custom_definition_id)
-(SELECT shipment_lines.id, 'ShipmentLine', right(products.unique_identifier,#{cd}), now(), now(), 1
+(SELECT shipment_lines.id, 'ShipmentLine', right(products.unique_identifier,3), now(), now(), #{cd}
 FROM shipment_lines INNER JOIN products on products.id = shipment_lines.product_id
 WHERE products.unique_identifier REGEXP '-[[:digit:]]{3}$')"
   end
