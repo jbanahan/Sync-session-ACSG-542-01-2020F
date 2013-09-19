@@ -43,6 +43,10 @@ module OpenChain
       File.exists?(upgrade_file_path)
     end
 
+    def self.errored?
+      File.exists?(upgrade_error_file_path)
+    end
+
     def self.upgrade_file_path
       "tmp/upgrade_running.txt"
     end
