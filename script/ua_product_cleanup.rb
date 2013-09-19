@@ -2,7 +2,7 @@ require 'open_chain/custom_handler/under_armour/under_armour_custom_definition_s
 class UaProductCleanup
   include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
   def self.color_cleanup
-    cd = self.prep_custom_definitions([:color]).first.id
+    cd = self.prep_custom_definitions([:color])[:color].id
     ActiveRecord::Base.connection.execute "INSERT INTO custom_values (customizable_id, customizable_type, string_value, created_at, updated_at, custom_definition_id)
 (SELECT shipment_lines.id, 'ShipmentLine', right(products.unique_identifier,3), now(), now(), #{cd}
 FROM shipment_lines INNER JOIN products on products.id = shipment_lines.product_id
