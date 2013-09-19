@@ -102,7 +102,7 @@ class ChainDelayedJobPlugin < Delayed::Plugin
       # We need to make sure that we allow for cases where the upgrade ran and errored out - which leaves the running flag file in place.
       # We want to keep at least a single queue alive when this happens so that when we fix the issue and clear the 
       # upgrade_running.txt file the upgrade will automatically pick up and go without us having to manually spin up a delayed job queue.
-      if Upgrade.in_progress? && !Upgrade.errored?
+      if OpenChain::Upgrade.in_progress? && !OpenChain::Upgrade.errored?
         worker.stop
       end
     end
