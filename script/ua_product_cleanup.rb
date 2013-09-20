@@ -17,7 +17,7 @@ WHERE products.unique_identifier REGEXP '-[[:digit:]]{3}$')"
       style = p.unique_identifier.split('-').first
       Product.transaction do 
         p.update_attributes(unique_identifier:style)
-        other_prods = Product.where("unique_identifier like ?","#{style}%")
+        other_prods = Product.where("unique_identifier like ?","#{style}-%")
         other_prods.each do |op|
           ShipmentLine.where(product_id:op.id).update_all(product_id:p.id)
           op.destroy
