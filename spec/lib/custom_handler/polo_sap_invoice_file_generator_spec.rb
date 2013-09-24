@@ -112,6 +112,17 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         sheet.row(1)[19, 7].should == ["1", "52111200", @broker_invoice_line2.charge_amount, "S", "1017", @broker_invoice_line2.charge_description, @profit_center.value]
         sheet.row(2)[19, 7].should == ["2", "52111200", @broker_invoice_line3.charge_amount.abs, "H", "1017", @broker_invoice_line3.charge_description, @profit_center.value]
       end
+
+      it "should use different GL account for Brokerage fees" do
+        @broker_invoice_line1.update_attributes(:charge_code => "22")
+
+        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+
+        mail = ActionMailer::Base.deliveries.pop
+        mail.should_not be_nil
+        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet.row(2)[19, 7].should == ["2", "52111300", @broker_invoice_line1.charge_amount, "S", "1017", @broker_invoice_line1.charge_description, @profit_center.value]
+      end
     end
 
     context :FFI_Invoices do

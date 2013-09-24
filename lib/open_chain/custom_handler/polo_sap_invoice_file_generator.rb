@@ -282,9 +282,22 @@ module OpenChain
               next if line.duty_charge_type?
               hst_line = line.hst_gst_charge_code?
 
+              gl_account = (
+                if hst_line 
+                  "14311000"
+                elsif line.charge_code == "22"
+                  # 22 is the Brokerage charge code.  RL stated they only wanted us to send this account for the $55 brokerage
+                  # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that 
+                  # will probably change at some point in the future, I'm using the code.
+                  "52111300"
+                else
+                  "52111200"
+                end
+              )
+
               row = []
               row << "#{counter += 1}"
-              row << (hst_line ? "14311000" : "52111200") # HST Lines have different G/L account than brokerage fees.
+              row << gl_account
               # All charge amounts should be positive amounts (stupid accounting systems)
               row << line.charge_amount.abs
               row << ((line.charge_amount > BigDecimal.new("0")) ? "S" : "H")
