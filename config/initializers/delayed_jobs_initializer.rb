@@ -87,6 +87,25 @@ class ChainDelayedJobPlugin < Delayed::Plugin
         result
       end
     end
+
+    # The loop callback occurs in the delayed_job worker before it attempts to even start checking for jobs to run.
+    # We can listen on that callback and tell it to stop our current worker process if another worker process is
+    # in the process of upgrading.
+
+    # This callback is pretty much entirely here to make sure all the other job queues are shut down as the update is concurrently running.
+    # If this isn't done then it's very possible if no other jobs are queued during the upgrade one of the waiting queues will start 
+    # another upgrade process after the other is completed (since the above callback to stop the queues only runs if a job is picked up).
+    # It relies on the sleep time between job checks for the worker (Delayed::Worker.sleep_dealy) to be set in such a manner that there's 
+    # no way a queue can be sleeping during the entirety of the upgrade process. By default, the sleep time is 1 second.
+    lifecycle.before(:loop) do |worker, *args|
+
+      # We need to make sure that we allow for cases where the upgrade ran and errored out - which leaves the running flag file in place.
+      # We want to keep at least a single queue alive when this happens so that when we fix the issue and clear the 
+      # upgrade_running.txt file the upgrade will automatically pick up and go without us having to manually spin up a delayed job queue.
+      if OpenChain::Upgrade.in_progress? && !OpenChain::Upgrade.errored?
+        worker.stop
+      end
+    end
   end
 end
 

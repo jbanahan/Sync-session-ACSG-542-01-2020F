@@ -37,4 +37,20 @@ describe OpenChain::Upgrade do
       OpenChain::Upgrade.in_progress?.should be_false
     end
   end
+
+  context :errored? do
+    after :each do
+      FileUtils.rm('tmp/upgrade_error.txt') if File.exist?('tmp/upgrade_error.txt')
+    end
+
+    it "should report upgrade errors if the file is present" do
+      FileUtils.touch 'tmp/upgrade_error.txt'
+      OpenChain::Upgrade.errored?.should be_true
+    end
+
+    it "should not report upgrade errors if the file is not present" do
+      OpenChain::Upgrade.errored?.should be_false
+    end
+    
+  end
 end
