@@ -1,5 +1,5 @@
 <table class='detail_table'>
-  <thead><tr><th>Company</th><th>Label</th><th>Responder</th><th>Status</th><th>Rating</th><th>Invited</th><th>Opened</th><th>Submitted</th><th>Last Updated</th></tr></thead>
+  <thead><tr><th>Company</th><th>Label</th><th>Responder</th><th>Status</th><th>Rating</th><th>Invited</th><th>Opened</th><th>Submitted</th><th>Last Updated</th><th><abbr title='Corrective Action Plan'>CAP</abbr></th></tr></thead>
   <tbody>
     <%survey_responses.each do |sr| %>
       <tr>
@@ -23,6 +23,7 @@
         <td><%=sr.response_opened_date%></td>
         <td><%=sr.submitted_date%></td>
         <td><%=sr.updated_at%></td>
+        <td><%=sr.corrective_action_plan ? link_to(sr.corrective_action_plan.status,[sr,sr.corrective_action_plan]) : ''%></td>
       </tr>
     <% end%>
   </tbody>

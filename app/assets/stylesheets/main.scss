@@ -11,6 +11,12 @@ a.action_link {
 .action_link:hover {
   cursor: pointer;
 }
+.inline-button-to {
+  display: inline;
+  div {
+    display: inline
+  }
+}
 div.section_box {
   border-radius: 10px;
   border: 1px solid black;

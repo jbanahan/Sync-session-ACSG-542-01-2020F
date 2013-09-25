@@ -1,0 +1,32 @@
+capApp = angular.module('CorrectiveActionPlanApp',[])
+
+capApp.controller 'CorrectiveActionPlanController', ['$scope','$http',($scope,$http) ->
+
+  $scope.viewMode = 'loading'
+
+  url = '/survey_responses/'+$scope.survey_response_id+'/corrective_action_plans/'+$scope.corrective_action_plan_id+'.json'
+  updateData = (data) ->
+    $scope.cap = data.corrective_action_plan
+    $scope.canEdit = data.can_edit
+    $scope.canUpdateActions = data.can_update_actions
+    $scope.viewMode = 'edit'
+
+  $http.get(url).success((data) ->
+    updateData(data)
+  ).error(() ->
+    $scope.viewMode = 'error'
+  )
+
+  $scope.addIssue = () ->
+    $scope.cap.corrective_issues.push {}
+
+  $scope.save = () ->
+    $scope.viewMode = 'saving'
+    $http.put(url,{comment:$scope.comment,corrective_action_plan:$scope.cap}).success((data) ->
+      $scope.comment = ''
+      updateData(data)
+    ).error(() ->
+      $scope.viewMode = 'error'
+    )
+
+]

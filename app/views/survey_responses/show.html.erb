@@ -6,9 +6,15 @@
   <% if @sr.rated? %>
     <button id='btn_filter'>Filter</button>
   <% end %>
-  <% if @sr.survey.company_id == current_user.company_id%>
+  <% if @sr.can_edit?(current_user)%>
     <button class='btn_link' link_to='<%=invite_survey_response_path(@sr)%>'>Resend Invite Email</button>
+    <%-if @sr.corrective_action_plan.nil?-%>
+    <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-inverse', :form_class=>'inline-button-to'%>
+    <%-end-%>
   <%end%>
+  <%-if @sr.corrective_action_plan && @sr.corrective_action_plan.can_view?(current_user) -%>
+    <button class='btn_link <%if @sr.corrective_action_plan.status==CorrectiveActionPlan::STATUSES[:open]%>btn-danger<%end%>' link_to='<%=survey_response_corrective_action_plan_path(@sr,@sr.corrective_action_plan)%>'>Corrective Action Plan</button>
+  <%-end-%>
   <button class='btn_link' link_to='<%=survey_response_survey_response_logs_path(@sr)%>'>Logs</button>
   <button class='btn_link' link_to='<%=@sr.user == current_user ? survey_responses_path : survey_path(@sr.survey)%>'>Back</button>
   <div id='answr_trk'>

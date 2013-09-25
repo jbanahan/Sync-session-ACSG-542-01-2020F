@@ -5,6 +5,7 @@ class SurveyResponse < ActiveRecord::Base
   has_many :answers, :inverse_of=>:survey_response
   has_many :questions, :through=>:survey
   has_many :survey_response_logs, :dependent=>:destroy
+  has_one :corrective_action_plan, :dependent=>:destroy
 
   validates_presence_of :survey
   validates_presence_of :user
@@ -30,8 +31,11 @@ class SurveyResponse < ActiveRecord::Base
 
   def can_view? user
     return true if user.id==self.user_id
-    return true if self.survey.company_id == user.company_id && user.edit_surveys?
-    false
+    can_edit? user
+  end
+  
+  def can_edit? user
+    self.survey.company_id == user.company_id && user.edit_surveys?
   end
 
   #can the user view private comments for this survey
@@ -49,8 +53,8 @@ class SurveyResponse < ActiveRecord::Base
     self.survey_response_logs.create(:message=>"Invite sent to #{self.user.email}")
   end
 
-  def notify_subscribers
-    OpenMailer.send_survey_subscription_update(self).deliver! unless self.survey.survey_subscriptions.blank?
+  def notify_subscribers corrective_action_plan = false
+    OpenMailer.send_survey_subscription_update(self,corrective_action_plan).deliver! unless self.survey.survey_subscriptions.blank?
   end
 
   def send_notification

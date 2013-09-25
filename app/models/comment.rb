@@ -5,4 +5,9 @@ class Comment < ActiveRecord::Base
   validates :user, :presence => true
 
   default_scope :order => 'created_at DESC'
+
+  # translates markdown body to HTML
+  def html_body
+    RedCloth.new(self.body).to_html.html_safe
+  end
 end

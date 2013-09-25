@@ -1,0 +1,151 @@
+<%-content_for :action_bar do -%>
+  <button class='btn' onclick='$("#hidden-save").click();'>Save</button>
+  <%-if @cap.status!=@cap.class::STATUSES[:active] && @cap.can_edit?(current_user) -%>
+    <%=button_to 'Activate', activate_survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:put, :form_class=>"inline-button-to", :class=>'btn btn-inverse'%>
+  <%-end-%>
+  <%-if @cap.can_delete?(current_user)-%>
+    <%=button_to 'Delete', survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:delete, :form_class=>'inline-button-to', :class=>'btn btn-inverse'%>
+  <%-end-%>
+  <%-if @cap.status==@cap.class::STATUSES[:active] && @cap.can_edit?(current_user)-%>
+    <%=button_to 'Resolve', resolve_survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:put, :form_class=>"inline-button-to", :class=>'btn btn-inverse'%>
+  <%-end-%>
+<%-end-%>
+<style>
+  #ca-form label {
+    font-weight: bold;
+  }
+  #ca-form textarea {
+    width: 95%;
+  }
+  #ca-form fieldset {
+    padding-bottom: 20px;
+  }
+  div.comment-container {
+    padding-bottom: 20px;
+  }
+  div.comment-container pre {
+    width: 100%;
+  }
+</style>
+<div class='container' ng-app='CorrectiveActionPlanApp' ng-init='survey_response_id = <%=@cap.survey_response_id%>; corrective_action_plan_id= <%=@cap.id%>;'>
+  <div ng-controller='CorrectiveActionPlanController'>
+    <div class='row'>
+      <div class='span12' style='padding-bottom:2em;'>
+        <h1>Corrective Action Plan</h1>
+      </div>
+    </div>
+    <!-- HEADER -->
+    <div class='row'>
+      <div class='span6'>
+        <div class='row-fluid'>
+          <div class='span4'>
+            <strong>Survey:</strong>
+          </div>
+          <div class='span8'>
+            <%=link_to @cap.survey_response.survey.name, @cap.survey_response%>
+          </div>
+        </div>
+        <div class='row-fluid'>
+          <div class='span4'>
+            <strong>Status:</strong>
+          </div>
+          <div class='span8'>
+            <%=@cap.status%>
+          </div>
+        </div>
+      </div>
+      <div class='span6'>
+        <div class='row-fluid'>
+          <div class='span4'>
+            <strong>Assigned To:</strong>
+          </div>
+          <div class='span8'>
+            <%=@cap.survey_response.user.full_name%>
+          </div>
+        </div>
+        <div class='row-fluid'>
+          <div class='span4'>
+            <strong>Created At:</strong>
+          </div>
+          <div class='span8'>
+            <%=l @cap.created_at.to_date%>
+          </div>
+        </div>
+        <div class='row-fluid'>
+          <div class='span4'>
+            <strong>Created By:</strong>
+          </div>
+          <div class='span8'>
+            <%=@cap.created_by.full_name%>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- END HEADER -->
+    <div class='row text-center' ng-show='viewMode=="loading"'>
+      <div class='span12'>
+        <img src='/images/ajax_load_64.gif' title='Loading...' />
+        Loading corrective action plan data...
+      </div>
+    </div>
+    <div class='row text-center' ng-show='viewMode=="saving"'>
+      <div class='span12'>
+        <img src='/images/ajax_load_64.gif' title='Loading...' />
+        Saving your update...
+      </div>
+    </div>
+    <div class='row text-center' ng-show='viewMode=="error"'>
+      <div class='span12'>
+        There was an error processing your request. Please reload the page.
+      </div>
+    </div>
+    <form id='ca-form' ng-show='viewMode=="edit"'>
+      <!-- COMMENTS -->
+      <div class='row'>
+        <div class='span12'>
+          <legend class='text-info'>Comments</legend>
+        </div>
+      </div>
+      <div class='row comment-container' ng-repeat='comm in cap.comments'>
+        <div class='span12 muted'>
+          <strong>{{comm.user.full_name}}</strong> wrote:
+        </div>
+        <div class='span12' ng-bind-html-unsafe='comm.html_body'>
+        </div>
+      </div>
+      <%-unless @cap.status==@cap.class::STATUSES[:resolved]-%>
+        <div class='row'>
+          <div class='span12'>
+            <label for='new_comment'>New Comment:</label'>
+            <textarea id='new_comment' ng-model='comment' rows='5'></textarea>
+          </div>
+        </div>
+      <%-end-%>
+      <!-- END COMMENTS -->
+      <!-- ISSUES -->
+      <div class='row' ng-repeat='ci in cap.corrective_issues'>
+        <div class='span12'>
+          <fieldset>
+            <legend class='text-info'>Issue</legend>
+            <label for='issue-text-{{ci.id}}'>Description</label>
+            <div ng-hide='canEdit' ng-bind-html-unsafe='ci.html_description'></div>
+            <textarea rows='6' ng-show='canEdit' id='issue-text-{{ci.id}}' ng-model='ci.description'></textarea>
+            <label for='suggest-{{ci.id}}'>Suggested Action</label>
+            <div ng-hide='canEdit' ng-bind-html-unsafe='ci.html_suggested_action'></div>
+            <textarea rows='6' ng-show='canEdit' id='suggest-{{ci.id}}' ng-model='ci.suggested_action'></textarea>
+            <label for='action-{{ci.id}}'>Action Taken</label>
+            <div ng-hide='canUpdateActions' ng-bind-html-unsafe='ci.html_action_taken'></div>
+            <textarea rows='6' ng-show='canUpdateActions' id='action-{{ci.id}}' ng-model='ci.action_taken'></textarea>
+          </fieldset>
+        </div>
+      </div>
+      <%-if @cap.can_edit?(current_user) && @cap.status!=@cap.class::STATUSES[:resolved]-%>
+        <div class='row'>
+          <button ng-click='addIssue()' class='btn'>Add Issue</button>
+        </div>
+      <%-end-%>
+      <!-- END ISSUES -->
+    </form>
+    <button style='display:none' ng-click='save()' id='hidden-save'>Save</button>
+  </div>
+</div>

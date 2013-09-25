@@ -386,9 +386,15 @@ OpenChain::Application.routes.draw do
     end
   end
   resources :survey_responses do
-    get 'invite', :on=>:member
-    put 'archive', :on=>:member
-    put 'restore', :on=>:member
+    member do
+      get 'invite'
+      put 'archive'
+      put 'restore'
+    end
+    resources :corrective_action_plans, :only=>[:show,:create,:destroy,:update] do
+      put 'activate', on: :member
+      put 'resolve', on: :member
+    end
     resources :survey_response_logs, :only=>[:index]
   end
   
