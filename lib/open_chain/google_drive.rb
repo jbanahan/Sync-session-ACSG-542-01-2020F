@@ -106,6 +106,15 @@ module OpenChain
     end
     private_class_method :delete_object
 
+    def self.delete_by_id user_email, object_id
+      delete_object_id get_client(user_email), object_id
+    end
+
+    def self.delete_object_id client, object_id
+      client.delete_object object_id
+    end
+    private_class_method :delete_object_id
+
     # Use this method to pre-set up access to a user account for drive information
     # from the specified chain_account. The ONLY time this should be needed is when
     # you intend to add new user accounts to push/pull Drive files to/from - .ie only run
@@ -349,7 +358,7 @@ module OpenChain
         # Find or create the folder we're going to put this file in
         parent_folder_id = find_object_id folder_path, nil, :folder, true
 
-        options = {:overwrite_existing => false}.merge(options)
+        options = {:overwrite_existing => true}.merge(options)
         mime_type = file_mime_type(file_name)
 
         # If we want to update an existing file instead of just throwing out a copy of

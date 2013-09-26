@@ -30,6 +30,11 @@ module OpenChain; module Events; module EntryEvents
         # Delete any other existing landed cost report
         entry.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
 
+        # Run this as a delayed job since downloading from S3 / Pushing to google will delay processing
+        # for at least a second or two.  In the interest of keeping the execution time of this thing
+        # down, we'll just push doing this off to another queue.
+        Attachment.delay.push_to_google_drive "JJill Landed Cost", att.id
+
         # Reload the entry attachments so we have the correct attachments list for anyhting later in the 
         # listener call chain
         entry.attachments.reload

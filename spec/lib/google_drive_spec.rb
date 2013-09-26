@@ -24,6 +24,16 @@ describe OpenChain::GoogleDrive do
       OpenChain::GoogleDrive.delete_folder @user_email, @test_folder
     end
 
+    before :each do
+      @cleanup = []
+    end
+
+    after :each do
+      @cleanup.each do |id|
+        OpenChain::GoogleDrive.delete_by_id @user_email, id
+      end
+    end
+
     context :upload_file do
       it "should upload data to a folder" do
         @file_id.should_not be_nil
@@ -34,7 +44,7 @@ describe OpenChain::GoogleDrive do
         # Basically, we just want to make sure we don't create multiple 
         # copies of the file..if the file exists, we're updating it.
         data = StringIO.new "This is the file contents.\r\nUpdated."
-        second_id = OpenChain::GoogleDrive.upload_file @user_email, @path, data, overwrite_existing: true
+        second_id = OpenChain::GoogleDrive.upload_file @user_email, @path, data
         second_id.should eq @file_id
 
         # Verify the updated contents
@@ -43,6 +53,13 @@ describe OpenChain::GoogleDrive do
         end
         data.rewind
         contents.should eq data.read
+      end
+
+      it "should upload data to a folder at add a second identical file" do
+        data = StringIO.new "This is the file contents.\r\nUpdated."
+        second_id = OpenChain::GoogleDrive.upload_file @user_email, @path, data, overwrite_existing: false
+        @cleanup << second_id
+        second_id.should_not eq @file_id
       end
     end
 
