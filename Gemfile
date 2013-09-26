@@ -31,6 +31,7 @@ gem 'execjs'
 gem 'libv8', '~> 3.11.8'
 gem 'therubyracer'
 gem 'browser'
+gem "google-api-client", "0.6.4"
 
 group :development,:test do
 
