@@ -20,7 +20,7 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
   # returns LinkableAttachment if created, otherwise nil
   def self.import file_obj, original_filename, original_path, value_override = nil
     file = file_obj.respond_to?(:exists?) ? file_obj : File.new(file_obj)
-    rule = LinkableAttachmentImportRule.where(:path=>original_path).first
+    rule = find_import_rule(original_path)
     r = nil
     if rule
       Attachment.add_original_filename_method file
@@ -32,6 +32,10 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
       a.save!
     end
     r
+  end
+
+  def self.find_import_rule original_path
+    LinkableAttachmentImportRule.where(:path=>original_path).first
   end
 
   private

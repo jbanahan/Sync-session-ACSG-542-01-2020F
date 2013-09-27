@@ -93,4 +93,22 @@ describe LinkableAttachmentImportRule do
       end
     end
   end
+
+  describe 'find_import_rule' do
+    before :each do
+      @path = '/path/found'
+      @original_file_name = 'ofn.csv'
+      @rule = Factory(:linkable_attachment_import_rule, :path=>@path)
+    end
+
+    it "should return an import rule matching the path" do
+      rule = LinkableAttachmentImportRule.find_import_rule @path
+      rule.id.should eq @rule.id
+    end
+
+    it "should not find a rule if the path doesn't match" do
+      rule = LinkableAttachmentImportRule.find_import_rule "a/#{@path}"
+      rule.should be_nil
+    end
+  end
 end

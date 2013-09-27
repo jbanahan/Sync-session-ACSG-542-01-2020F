@@ -1,10 +1,12 @@
 require 'bigdecimal'
 require 'tempfile'
 require 'csv'
+require 'open_chain/custom_handler/polo/polo_business_logic'
 
 module OpenChain
   module CustomHandler
     class PoloSapInvoiceFileGenerator
+      include Polo::PoloBusinessLogic
 
       RL_CANADA_TAX_IDS ||= ['806167003RM0001'] # This is ONLY the RL Canada importer, other RL accounts are done by hand for now
       EMAIL_INVOICES_TO ||= ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
@@ -618,10 +620,6 @@ module OpenChain
 
         def extract_po_numbers entry
           entry.po_numbers.nil? ? [] : entry.po_numbers.split(/\s*\n\s*/)
-        end
-
-        def sap_po? po_number
-          po_number =~ /^\s*47/
         end
 
         def build_export_job format
