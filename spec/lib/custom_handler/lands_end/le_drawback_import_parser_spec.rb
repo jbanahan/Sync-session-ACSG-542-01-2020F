@@ -26,6 +26,10 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     d1.unit_price.should == 5
     d1.rate.should == BigDecimal("0.197")
   end
+  it "should not call LinkableAttachmentImportRule" do
+    LinkableAttachmentImportRule.should_not_receive(:exists_for_class?).with(Product)
+    @p.parse @data
+  end
   it "should update line with incremented quantity" do
     @p.parse @data
     r = DrawbackImportLine.where(importer_id:@le_company.id,part_number:'2769247',entry_number:'23105002004')
