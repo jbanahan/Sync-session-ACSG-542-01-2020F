@@ -44,7 +44,8 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
   def self.reload_cache
     @@link_cache ||= nil
     @@link_cache_updated_at ||= nil
-    return if !@@link_cache.nil? && (@@link_cache_updated_at == LinkableAttachmentImportRule.order('updated_at DESC').first.updated_at)
+    last_rule = LinkableAttachmentImportRule.order('updated_at DESC').first
+    return if !@@link_cache.nil? && (last_rule.nil? || @@link_cache_updated_at == last_rule.updated_at)
     load_cache
   end
 
