@@ -18,6 +18,12 @@ describe CoreObjectSupport do
       LinkedAttachment.should_not_receive(:create_from_attachable)
       Product.create!(:unique_identifier=>"PLA")
     end
+    it "should not kick off job if don't process linked attachments = true" do
+      LinkedAttachment.should_not_receive(:create_from_attachable)
+      o = Order.new(order_number:'onum',vendor_id:Factory(:company,:vendor=>true).id)
+      o.dont_process_linked_attachments = true
+      o.save!
+    end
   end
   describe :need_sync do
     before :each do

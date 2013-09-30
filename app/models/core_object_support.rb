@@ -1,5 +1,6 @@
 module CoreObjectSupport
   def self.included(base)
+    base.instance_eval("attr_accessor :dont_process_linked_attachments")
     base.instance_eval("include CustomFieldSupport")
     base.instance_eval("include ShallowMerger")
     base.instance_eval("include EntitySnapshotSupport")
@@ -33,7 +34,7 @@ module CoreObjectSupport
   end
 
   def process_linked_attachments
-    LinkedAttachment.delay.create_from_attachable(self) if LinkableAttachmentImportRule.exists_for_class?(self.class)
+    LinkedAttachment.delay.create_from_attachable(self) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
   end
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded file links)

@@ -5,12 +5,8 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
 
   # Are there any linkable attachment import rules for model fields associated with the given class
   def self.exists_for_class? klass
-    LinkableAttachmentImportRule.all.each do |r|
-      mf = ModelField.find_by_uid(r.model_field_uid)
-      next unless mf
-      return true if mf.core_module.klass == klass
-    end
-    false
+    reload_cache
+    @@link_cache.include?(klass)
   end
   # import the give file to create a LinkableAttachment based on the first matching rule
   # file_obj = the file or file's path
@@ -43,5 +39,24 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
     split = filename.split('.')
     return split.first if split.size > 1
     return filename 
+  end
+
+  def self.reload_cache
+    @@link_cache ||= nil
+    @@link_cache_updated_at ||= nil
+    last_rule = LinkableAttachmentImportRule.order('updated_at DESC').first
+    return if !@@link_cache.nil? && (last_rule.nil? || @@link_cache_updated_at == last_rule.updated_at)
+    load_cache
+  end
+
+  def self.load_cache
+    @@link_cache = Set.new
+    @@link_cache_updated_at = nil
+    LinkableAttachmentImportRule.scoped.each do |r|
+      @@link_cache_updated_at = r.updated_at if @@link_cache_updated_at.nil? || r.updated_at > @@link_cache_updated_at
+      mf = ModelField.find_by_uid(r.model_field_uid)
+      next unless mf
+      @@link_cache << mf.core_module.klass
+    end
   end
 end
