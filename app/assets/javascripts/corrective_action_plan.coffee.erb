@@ -7,6 +7,10 @@ capApp.controller 'CorrectiveActionPlanController', ['$scope','$http',($scope,$h
   url = '/survey_responses/'+$scope.survey_response_id+'/corrective_action_plans/'+$scope.corrective_action_plan_id+'.json'
   updateData = (data) ->
     $scope.cap = data.corrective_action_plan
+    if data.can_edit && (!$scope.cap.corrective_issues || $scope.cap.corrective_issues.length == 0)
+      $scope.cap.corrective_action_plan = []
+      $scope.addIssue()
+
     $scope.canEdit = data.can_edit
     $scope.canUpdateActions = data.can_update_actions
     $scope.viewMode = 'edit'
@@ -29,4 +33,10 @@ capApp.controller 'CorrectiveActionPlanController', ['$scope','$http',($scope,$h
       $scope.viewMode = 'error'
     )
 
+  $scope.remove = (issue) ->
+    toRem = $.inArray(issue,$scope.cap.corrective_issues)
+    if toRem >= 0
+      $scope.cap.corrective_issues.splice(toRem,1)
+    else
+      console.log(issue + "is not in array.")
 ]
