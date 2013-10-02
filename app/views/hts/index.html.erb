@@ -1,14 +1,22 @@
-<style>
-  .clickable {
-    cursor: pointer;
-  }
-</style>
 <div class='container' ng-app='HtsApp' style='margin-top:20px;'>
   <div ng-controller='HtsCtrl'>
     <div class='row'>
       <div class='span12 text-center'>
-        <%=image_tag 'vfi_logo.png', :alt_text=>'Logo', :width=>'120px'%>
+        <%=link_to image_tag('vfi_logo.png', :alt_text=>'Logo', :width=>'120px'), '/'%>
         <h1>Vandegrift HTS Lookup</h1>
+      </div>
+    </div>
+    <div class='row'>
+      <div class='span12 well'>
+        <p>
+          <strong>Welcome</strong>
+        </p> 
+        <p>
+          Use this screen to browse the US and Canadian tariff listings.
+        </p>
+        <p>
+          For more information on Vandegrift's full Global Classification system, email us at <a href='mailto:corpcomm@vandegriftinc.com'>corpcomm@vandegriftinc.com</a>.
+        </p>
       </div>
     </div>
     <div class='row' style='margin-top:20px; margin-bottom:20px;'>
@@ -21,7 +29,7 @@
       <div class='hero-unit'>
         <div>
           <h2>
-            For more information on the {{country.name}} or any other tariff, email us at <a href='mailto:support@vandegriftinc.com'>support@vandegriftinc.com</a>.
+            For more information on the {{country.name}} or any other tariff, email us at <a href='mailto:corpcomm@vandegriftinc.com'>corpcomm@vandegriftinc.com</a>.
           </h2>
         </div>
       </div>
@@ -49,15 +57,15 @@
       <div ng-repeat='ch in chapters'>
         <div class='row-fluid'>
           <div class='span12'>
-            <button class='btn btn-mini clickable' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
-            <button class='btn btn-mini clickable' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
+            <button class='btn btn-mini ' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
+            <button class='btn btn-mini ' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
             {{ch.num}}. {{ch.name}} 
           </div>
           <div ng-repeat='h in ch.headings'>
             <div class='row-fluid'>
               <div class='span10 offset1'>
-                <button class='btn btn-mini clickable' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
-                <button class='btn btn-mini clickable' ng-show='h.sub_headings.length>0' ng-click='h.sub_headings = []'>-</button>
+                <button class='btn btn-mini ' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
+                <button class='btn btn-mini ' ng-show='h.sub_headings.length>0' ng-click='h.sub_headings = []'>-</button>
                 {{h.num}}. {{h.name}}
               </div>
             </div>
