@@ -1,3 +1,8 @@
+<style>
+  .clickable {
+    cursor: pointer;
+  }
+</style>
 <div class='container' ng-app='HtsApp' style='margin-top:20px;'>
   <div ng-controller='HtsCtrl'>
     <div class='row'>
@@ -43,12 +48,16 @@
       </div>
       <div ng-repeat='ch in chapters'>
         <div class='row-fluid'>
-          <div class='span12' ng-click='loadChapter(country,ch)'>
-            {{ch.num}}. {{ch.name}}
+          <div class='span12'>
+            <button class='btn btn-mini clickable' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
+            <button class='btn btn-mini clickable' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
+            {{ch.num}}. {{ch.name}} 
           </div>
           <div ng-repeat='h in ch.headings'>
             <div class='row-fluid'>
-              <div class='span11 offset1' ng-click='loadHeading(country,ch,h)'>
+              <div class='span10 offset1'>
+                <button class='btn btn-mini clickable' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
+                <button class='btn btn-mini clickable' ng-show='h.sub_headings.length>0' ng-click='h.sub_headings = []'>-</button>
                 {{h.num}}. {{h.name}}
               </div>
             </div>
