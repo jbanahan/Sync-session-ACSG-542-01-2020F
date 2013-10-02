@@ -1,0 +1,86 @@
+<div class='container' ng-app='HtsApp' style='margin-top:20px;'>
+  <div ng-controller='HtsCtrl'>
+    <div class='row'>
+      <div class='span12 text-center'>
+        <%=image_tag 'vfi_logo.png', :alt_text=>'Logo', :width=>'120px'%>
+        <h1>Vandegrift HTS Lookup</h1>
+      </div>
+    </div>
+    <div class='row' style='margin-top:20px; margin-bottom:20px;'>
+      <div class='span12 text-center'>
+        <select id='sel-country' ng-model='country' ng-options='c.name for c in countries'>
+        </select>
+      </div>
+    </div>
+    <div ng-show="viewMode=='more-info'" class='row'>
+      <div class='hero-unit'>
+        <div>
+          <h2>
+            For more information on the {{country.name}} tariff, email us at <a href='mailto:support@vandegriftinc.com'>support@vandegriftinc.com</a>.
+          </h2>
+        </div>
+      </div>
+    </div>
+    <div ng-show="viewMode=='base'">
+      <div class='row' ng-show='chapters.length == 0'>
+        <div class='hero-unit'>
+          Loading data
+        </div>
+      </div>
+      <div ng-show='chapters.length > 0' class='row' style='font-weight:bold;'>
+        <div class='span1 offset6 '>
+          Unit of Measure
+        </div>
+        <div class='span1 '>
+          Common Rate
+        </div>
+        <div class='span1 '>
+          Special Rates
+        </div>
+        <div class='span1 '>
+          Col 2 Rate
+        </div>
+      </div>
+      <div ng-repeat='ch in chapters'>
+        <div class='row-fluid'>
+          <div class='span12' ng-click='loadChapter(country,ch)'>
+            {{ch.num}}. {{ch.name}}
+          </div>
+          <div ng-repeat='h in ch.headings'>
+            <div class='row-fluid'>
+              <div class='span11 offset1' ng-click='loadHeading(country,ch,h)'>
+                {{h.num}}. {{h.name}}
+              </div>
+            </div>
+            <div ng-repeat='s in h.sub_headings'>
+              <div class='row-fluid'>
+                <div class='span10 offset2'>
+                  {{s.num}}. {{s.name}}
+                </div>
+              </div>
+              <div ng-repeat='d in s.remaining_descriptions'>
+                <div class='row-fluid'>
+                  <div class='span3 offset3'>
+                    {{d.num}}. {{d.name}}
+                  </div>
+                  <div class='span1 '>
+                    {{d.uom}}
+                  </div>
+                  <div class='span1 '>
+                    {{d.general}}
+                  </div>
+                  <div class='span1 '>
+                    {{d.special}}
+                  </div>
+                  <div class='span1 '>
+                    {{d.col2}}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

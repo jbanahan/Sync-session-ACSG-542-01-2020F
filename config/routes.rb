@@ -1,4 +1,8 @@
 OpenChain::Application.routes.draw do
+  match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
+  match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
+  match '/hts/:iso' => 'hts#country', :via=>:get
+  match '/hts' => 'hts#index', :via=>:get
   
   resources :delayed_jobs, :only => [:destroy]
   resources :ftp_sessions, :only => [:index, :show] do
