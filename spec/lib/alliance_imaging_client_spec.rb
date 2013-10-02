@@ -28,7 +28,13 @@ describe OpenChain::AllianceImagingClient do
   describe :process_image_file do
     before :each do
       @e1 = Factory(:entry,:broker_reference=>'123456',:source_system=>'Alliance')
+      # We need to start w/ an actual pdf file as paperclip no longer just uses the file's
+      # filename to discover mime type.
       @tempfile = Tempfile.new ["file", ".pdf"]
+      @tempfile.binmode
+      File.open("#{Rails.root}/spec/fixtures/files/sample.pdf", "rb") do |f|
+        @tempfile << f.read
+      end
       @hash = {"file_name"=>"file.pdf", "file_number"=>"123456", "doc_desc"=>"Testing", 
                 "suffix"=>"123456", "doc_date"=>Time.now}
     end

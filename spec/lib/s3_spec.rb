@@ -36,6 +36,24 @@ describe OpenChain::S3 do
     it 'should get data' do
       OpenChain::S3.get_data(@bucket,@key).should == @content
     end
+
+    it "should retry failed downloads 3 times" do
+      file = double("S3Object")
+      OpenChain::S3.should_receive(:s3_file).exactly(3).times.and_return file
+      file.should_receive(:read).exactly(3).times.and_raise "Failure"
+
+      expect {OpenChain::S3.get_data(@bucket,@key)}.to raise_error "Failure"
+    end
+
+    it "should retry failed downloads 3 times and rewind file arguments in between times" do
+      output_to = double("S3Object")
+      output_to.should_receive(:write).exactly(3).times.and_raise "Failure"
+      # The third time we don't rewind since we're not actually retrying
+      output_to.should_receive(:rewind).exactly(2).times
+
+      expect {OpenChain::S3.get_data(@bucket, @key, output_to)}.to raise_error "Failure"
+    end
+
     it 'should round trip a file to tempfile' do
       new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key
       begin
@@ -46,6 +64,12 @@ describe OpenChain::S3 do
       ensure
         new_tempfile.close!
       end
+    end
+
+    it 'should stream data file to IO object' do
+      io = StringIO.new
+      OpenChain::S3.get_data(@bucket, @key, io).should be_nil
+      io.read.should == @content
     end
 
     it 'should ensure the tempfile is unlinked if an error occurs while downloading' do
@@ -85,20 +109,18 @@ describe OpenChain::S3 do
     end
 
     it 'should not fail if file key is missing a file extension' do
-      @key = "test"
-      OpenChain::S3.should_receive(:get_data).and_return("test")
-      
-      new_tempfile = OpenChain::S3.download_to_tempfile @bucket, @key
+      new_key = "test"
+      AWS::S3.new(AWS_CREDENTIALS).buckets[@bucket].objects[@key].rename_to new_key
+      new_tempfile = OpenChain::S3.download_to_tempfile @bucket, new_key
       begin
         File.exist?(new_tempfile.path).should be_true
-        IO.read(new_tempfile.path).should == "test"
+        IO.read(new_tempfile.path).should == @content
         new_tempfile.path.should =~ /\/tmp\/.*/
         File.basename(new_tempfile.path).should =~ /^test.+/
         File.extname(new_tempfile.path).should == ""
       ensure
         new_tempfile.close!
       end
-      
     end
     
     describe 'exists?' do
@@ -126,13 +148,20 @@ describe OpenChain::S3 do
         @my_keys.each {|my_key| OpenChain::S3.delete @bucket, my_key}
       end
       it 'should get keys from integration bucket by date ordered by last modified date' do
+        # Last modified has a 1 second precision, so sleep at least 2 seconds to make sure
+        # this doesn't randomly fail.  Not ideal, but I don't know how to actually force an 
+        # out of band last modified date update on an s3_object.
+
+        # Bizarrely, if I put the sleep AFTER doing the integration keys call the upload_file call below
+        # (specifically the s3_object.write method) blocks for like 20 seconds.  Possible aws-sdk bug or ruby 2
+        # bug with leaking socket handle or something?  This wasn't happening w/ 1.9.3.
+        sleep 2
         OpenChain::S3.should_receive(:integration_bucket_name).at_least(2).times.and_return(@bucket)
         found_keys = []
         OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
         found_keys[0].should == @my_keys[0]
         found_keys[1].should == @my_keys[1]
 
-        sleep 1
         Tempfile.open('test') do |f|
           f.binmode
           f << "Test"
@@ -148,6 +177,29 @@ describe OpenChain::S3 do
           found_keys[1].should == @my_keys[0]
         end
       end
+    end
+  end
+
+  describe :url_for do
+    it "should return a url for the specified bucket / key" do
+      url = OpenChain::S3.url_for "bucket", "path/to/file.txt"
+      url.should match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
+
+      # Expires should be default be 1 minute
+      expires_at = url.match(/Expires=(.*)&/)[1].to_i
+      (expires_at - Time.now.to_i).should <= 60
+    end
+
+    it "should return a url for the specified bucket / key, allow expires_in to be set, and accept options" do
+      url = OpenChain::S3.url_for "bucket", "path/to/file.txt", 10.minutes, {:response_content_type => "application/pdf"}
+      url.should match /^https:\/\/bucket.+\/path\/to\/file\.txt.+Expires/
+
+      expires_at = url.match(/Expires=(.*)&/)[1].to_i
+      time = (expires_at - Time.now.to_i)
+      time.should <= 600
+      time.should >= 595
+
+      url.should match "response-content-type=application%2Fpdf"
     end
   end
 

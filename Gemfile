@@ -1,40 +1,46 @@
-source 'http://rubygems.org'
+source 'https://rubygems.org'
 
 gem 'rails', '3.2.12'
-gem 'mysql2', '0.3.11'
-gem 'mongrel', '1.2.0.pre2'
+gem 'mysql2', '0.3.13'
 gem 'sqlite3'
-gem 'fog'
-gem 'aws-sdk'
-gem 'authlogic', '3.0.3'
+# AWS-SDK prior to 1.15 has a timeout bug in Ruby 2 on s3_object.write
+gem 'aws-sdk', '1.17.0'
+gem 'authlogic', '3.3.0'
+# Meta_Search is deprecated, replaced by Ransack - not API compatible, same concept though.
 gem 'meta_search', '1.1.3'
-gem 'will_paginate', '3.0.3'
-gem 'paperclip', '2.4.5'
-gem 'uuidtools', '2.1.0'
-gem 'spreadsheet', '0.6.5.9'
-gem 'exception_notification_rails3', :require => 'exception_notifier'
-gem 'rufus-scheduler', '2.0.8'
+gem 'will_paginate', '3.0.4'
+gem 'paperclip', '3.5.1'
+gem 'uuidtools', '2.1.4'
+gem 'spreadsheet', '0.8.8'
+gem 'exception_notification', '4.0.0'
+gem 'rufus-scheduler', '2.0.24'
 gem 'delayed_job_active_record', '0.4.4'
 gem 'delayed_job', '3.0.5'
-gem 'dalli', '2.2.1'
-gem 'postmark-rails', '0.4.1'
-gem 'rubyzip'
+# daemons is needed for the delayed job command line
+gem 'daemons', '1.1.9'
+gem 'dalli', '2.6.4'
+gem 'postmark-rails', '0.5.2'
+# rubyzip API changed in 1.0, need to pin to version prior to 1.0 until we fix files referencing 'zip/zip'
+gem 'rubyzip', '< 1.0.0'
 gem 'jquery-rails'
-gem 'newrelic_rpm', '3.6.5.130'
+gem 'newrelic_rpm', '~> 3.6.7'
 
 #text processing/encoding stuff
 gem 'RedCloth', '4.2.9'
 
 #javascript environment, we will compile assets during deployment
 #so we need these on the production servers as well
-gem 'execjs' 
-gem 'libv8', '~> 3.11.8'
-gem 'therubyracer'
+gem 'execjs', '2.0.1'
+gem 'therubyracer', '0.12.0', :require => 'v8'
 gem 'browser'
 
-group :development,:test do
+# Standard ruby logger uses mutexes for writing / rotation which we don't need and
+# causes issues since Ruby 2.0 doesn't allow mutexes in signal traps - delayed_job specifically
+# needs this.
+gem "mono_logger", '1.1.0'
 
-  gem 'rspec-rails'
+group :development,:test do
+  gem 'rspec-rails', '~> 2.12'
   gem 'factory_girl', '2.5.2', :group=>[:development,:test]
   gem 'spork'
   gem 'debugger'

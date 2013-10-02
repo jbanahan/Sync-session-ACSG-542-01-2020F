@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   end
 
   def decode_attachment_to_string attachment
-    StringIO.new(Base64.decode64(attachment["Content"]))
+    StringIO.new(attachment.read)
   end
 
   def make_sap_po 
@@ -64,10 +64,10 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail.subject.should == "[chain.io] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoices as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        mail.postmark_attachments.should have(1).item
-        mail.postmark_attachments.first["Name"].should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"
+        at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"]
+        at.should_not be_nil
 
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet = get_workbook_sheet at
         sheet.name.should == "MMGL"
         # Verify the invoice header information
         sheet.row(1)[0, 12].should == ["X", @broker_invoice.invoice_date.strftime("%Y%m%d"), @broker_invoice.invoice_number, '1017', '100023825', 'CAD', BigDecimal.new("18.99"), nil, '0001', job.start_time.strftime("%Y%m%d"), @broker_invoice.entry.entry_number, "V"]
@@ -108,7 +108,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
 
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet = get_workbook_sheet mail.attachments.first
         sheet.row(1)[19, 7].should == ["1", "52111200", @broker_invoice_line2.charge_amount, "S", "1017", @broker_invoice_line2.charge_description, @profit_center.value]
         sheet.row(2)[19, 7].should == ["2", "52111200", @broker_invoice_line3.charge_amount.abs, "H", "1017", @broker_invoice_line3.charge_description, @profit_center.value]
       end
@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet = get_workbook_sheet mail.attachments.first
         sheet.row(2)[19, 7].should == ["2", "52111300", @broker_invoice_line1.charge_amount, "S", "1017", @broker_invoice_line1.charge_description, @profit_center.value]
       end
     end
@@ -155,11 +155,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail.subject.should == "[chain.io] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoices as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        mail.postmark_attachments.should have(2).items
-        mail.postmark_attachments.first["Name"].should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"
-        mail.postmark_attachments.second["Name"].should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.txt"
+        mail.attachments.should have(2).items
 
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"].should_not be_nil
+        mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.txt"].should_not be_nil
+
+        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
         sheet.name.should == "FFI"
         now = job.start_time.strftime("%m/%d/%Y")
         rows = []
@@ -178,7 +179,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         sheet.row(6).should == rows[5]
 
         # Verify the csv file is the same data as xls file
-        csv_string = decode_attachment_to_string mail.postmark_attachments.second
+        csv_string = decode_attachment_to_string mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.txt"]
 
         csv_rows = []
         # CSV is tab delimited with windows newlines, also Convert the stringified BigDecimal back to BD's (so we can use same row expectations as xls file)
@@ -202,7 +203,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
 
         mail = ActionMailer::Base.deliveries.pop
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet = get_workbook_sheet mail.attachments.first
         sheet.name.should == "FFI"
         now = job.start_time.strftime("%m/%d/%Y")
 
@@ -223,7 +224,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
 
         mail = ActionMailer::Base.deliveries.pop
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet = get_workbook_sheet mail.attachments.first
         now = job.start_time.strftime("%m/%d/%Y")
 
         # Because we've sent an invoice for the entry already, we don't include duty or GST in the total or in the charge lines
@@ -246,7 +247,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
 
         mail = ActionMailer::Base.deliveries.pop
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet = get_workbook_sheet mail.attachments.first
         now = job.start_time.strftime("%m/%d/%Y")
 
         # Because we've sent an invoice for the entry already, we don't include duty or GST in the total or in the charge lines
@@ -267,7 +268,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
 
         mail = ActionMailer::Base.deliveries.pop
-        sheet = get_workbook_sheet mail.postmark_attachments.first
+        sheet = get_workbook_sheet mail.attachments.first
         now = ExportJob.all.first.start_time.strftime("%m/%d/%Y")
 
         sheet.row(1).should == [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KG', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "21", "100023825", nil, BigDecimal.new("10.00"), "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "49999999", nil, @entry.entry_number, nil]
@@ -296,14 +297,14 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.should_not be_nil
 
         mail = ActionMailer::Base.deliveries.pop
-        mail.postmark_attachments.should have(3).items
+        mail.attachments.should have(3).items
 
-        sheet = get_workbook_sheet mail.postmark_attachments.find {|a| a["Name"] =~ /_MM_/}
+        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"]
 
         # Just check enough to make sure we have the right invoices in each file (other tests are already ensuring data integrity)
         sheet.row(1)[2].should == @broker_invoice.invoice_number
 
-        sheet = get_workbook_sheet mail.postmark_attachments.find {|a| a["Name"] =~ /_FFI_.*\.xls/}
+        sheet =  get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
 
         sheet.row(1)[8].should == @broker_invoice2.invoice_number
       end

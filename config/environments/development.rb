@@ -1,6 +1,9 @@
 require 'dalli'
+require 'mono_logger'
+
 OpenChain::Application.configure do
   # Settings specified here will take precedence over those in config/environment.rb
+  config.logger = MonoLogger.new(Rails.root.join("log", Rails.env + ".log"))
 
   # In the development environment your application's code is reloaded on
   # every request.  This slows down response time but is perfect for development
@@ -15,7 +18,11 @@ OpenChain::Application.configure do
 #  config.action_view.debug_rjs             = true
 
   config.action_controller.perform_caching = false #on for testing cache, turn this OFF
-  config.cache_store = :dalli_store, 'localhost'
+  # Use a different cache store in production
+  # We want to to make sure to namespace the data based on the instance name of the app to
+  # definitively avoid all potential key collision and cross contamination of cache keys
+  memcache_namespace = "Chain-#{Rails.root.basename.to_s}"
+  config.cache_store = :dalli_store, 'localhost', {:namespace => memcache_namespace, :compress=>true}
 
   # Don't care if the mailer can't send
   config.action_mailer.raise_delivery_errors = false
