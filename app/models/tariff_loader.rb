@@ -15,18 +15,23 @@ class TariffLoader
     o.export_regulations = s.strip
   }
 
+  SUB_HEADING_LAMBDA = lambda {|o,d| o.sub_heading = d}
+  UOM_HEADING_LAMBDA = lambda {|o,d| o.unit_of_measure = d},
+
   FIELD_MAP = {
     "HSCODE" => lambda {|o,d| o.hts_code = d},
     "FULL_DESC" => lambda {|o,d| o.full_description = d},
     "SPC_RATES" => lambda {|o,d| parse_spc_rates(o, d)},
     "SR1" => lambda {|o,d| o.special_rates = d},
-    "UNITCODE" => lambda {|o,d| o.unit_of_measure = d},
+    "UNITCODE" => UOM_HEADING_LAMBDA,
+    "UOM" => UOM_HEADING_LAMBDA,
     "GENERAL" => lambda {|o,d| o.general_rate = d},
     "GENERAL_RATE" => lambda {|o,d| o.general_rate = d},
     "GR1" => lambda {|o,d| o.general_rate = d},
     "CHAPTER" => lambda {|o,d| o.chapter = d},
     "HEADING" => lambda {|o,d| o.heading = d},
-    "SUBHEADING" => lambda {|o,d| o.sub_heading = d},
+    "SUBHEADING" => SUB_HEADING_LAMBDA,
+    "SUBHEAD" => SUB_HEADING_LAMBDA,
     "REST_DESC" => lambda {|o,d| o.remaining_description = d},
     "ADDVALOREMRATE" => lambda {|o,d| o.add_valorem_rate = d},
     "PERUNIT" => lambda {|o,d| o.per_unit_rate = d},
