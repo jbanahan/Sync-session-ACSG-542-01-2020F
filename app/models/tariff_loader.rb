@@ -16,7 +16,7 @@ class TariffLoader
   }
 
   SUB_HEADING_LAMBDA = lambda {|o,d| o.sub_heading = d}
-  UOM_HEADING_LAMBDA = lambda {|o,d| o.unit_of_measure = d},
+  UOM_HEADING_LAMBDA = lambda {|o,d| o.unit_of_measure = d}
 
   FIELD_MAP = {
     "HSCODE" => lambda {|o,d| o.hts_code = d},
