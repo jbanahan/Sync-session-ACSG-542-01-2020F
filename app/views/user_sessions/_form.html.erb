@@ -22,9 +22,10 @@ $(function() {
     <h2 class='text-center'>Welcome To VFI Track</h2>
   </div>
 </div>
-<div class='well well-small'>
-  <div id='login'>
-    <%= form_for(@user_session, html: {class: "form-horizontal"}) do |f| %>
+<div class='container'>
+  <div class='well well-small'>
+    <div id='login'>
+      <%= form_for(@user_session, html: {class: "form-horizontal"}) do |f| %>
       <div class="control-group small-margin">
         <%=f.label(:username, class: "control-label")%>
         <div class="controls"><%=f.text_field(:username, :class=>"focus_first input-xlarge")%></div>
@@ -49,27 +50,34 @@ $(function() {
           <a id="forgot_password" href="javascript:void(0)">Forgot your password?</a>
         </div>
       </div>
-    <% end %>
-    <div id='forgot_password_dialog' style='display:none;'>
-      <p>Enter your email and we'll send you instructions for resetting your password.</p>
-      <%=form_tag password_resets_path, id: "password_reset_form" do %>
+      <% end %>
+      <div id='forgot_password_dialog' style='display:none;'>
+        <p>Enter your email and we'll send you instructions for resetting your password.</p>
+        <%=form_tag password_resets_path, id: "password_reset_form" do %>
         <%=text_field_tag("email", "", :class=>"input-xlarge")-%><br />
         <div class="text-center">
           <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn' -%>
         </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   </div>
-</div>
-<%unless PublicField.scoped.empty?-%>
-<div class='well'>
+  <%-if MasterSetup.get.custom_feature? 'public hts'-%>
+  <div class='well'>
+    <h2>Public HTS Database</h2>
+    <a href='/hts' class='btn'>Click Here</a>
+  </div>
+  <%-end-%>
+  <%unless PublicField.scoped.empty?-%>
+  <div class='well'>
     <h2>Public Shipment Tracking</h>
-    <%=render :partial=>'shared/tracker' %>
-</div>
-<%end-%>
-<%if MasterSetup.get.custom_feature? 'fenix'-%>
-<div class='well'>
-    <h2>PARS Check - Canada Imports</h2>
-    <button class='btn_link btn' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
-</div>
-<%end-%>
+      <%=render :partial=>'shared/tracker' %>
+    </div>
+    <%end-%>
+    <%if MasterSetup.get.custom_feature? 'fenix'-%>
+    <div class='well'>
+      <h2>PARS Check - Canada Imports</h2>
+      <button class='btn_link btn' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
+    </div>
+    <%end-%>
+  </div>
