@@ -1,4 +1,6 @@
 require 'dalli'
+require 'mono_logger'
+
 OpenChain::Application.configure do
   # Settings specified here will take precedence over those in config/environment.rb
 
@@ -16,17 +18,18 @@ OpenChain::Application.configure do
   # For nginx:
   config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect'
 
-  # Use a different logger for distributed setups
-  # Rotate log files after 100 megabytes and keep 3 most recent files
+  # Use MonoLogger, which is a non-locking Logger implementation, needed since
+  # mutexes are no longer allowed in signal traps in ruby 2.0.
   # No need for log file rotation, an external process (logrotate) handles that now.
-
-  #config.logger = Logger.new(Rails.root.join("log", Rails.env + ".log"), 3, 100 * 1024 * 1024)
-  #config.logger.level = Logger::WARN
+  config.logger = MonoLogger.new(Rails.root.join("log", Rails.env + ".log"))
   # Only want to see errors in the log (default is :info which shows request information)
   config.log_level = :warn
 
   # Use a different cache store in production
-  config.cache_store = :dalli_store, 'chain-cache.roatcx.0001.use1.cache.amazonaws.com'
+  # We want to to make sure to namespace the data based on the instance name of the app
+  # to definitively avoid all potential collision and cross contamination of cache keys
+  memcache_namespace = "Chain-#{Rails.root.basename.to_s}"
+  config.cache_store = :dalli_store, 'chain-cache.roatcx.0001.use1.cache.amazonaws.com', {:namespace => memcache_namespace, :compress=>true}
 
   # Disable Rails's static asset server
   # In production, Apache or nginx will already do this

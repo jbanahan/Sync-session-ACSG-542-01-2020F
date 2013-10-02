@@ -3,10 +3,6 @@ class PowerOfAttorney < ActiveRecord::Base
   belongs_to :user, :foreign_key => :uploaded_by, :class_name => "User"
 
   has_attached_file :attachment,
-    :storage => :fog,
-    :fog_credentials => FOG_S3,
-    :fog_public => false,
-    :fog_directory => 'chain-io',
     :path => "#{MasterSetup.get.nil? ? "UNKNOWN" : MasterSetup.get.uuid}/power_of_attorney/:id/:filename" #conditional on MasterSetup to allow migrations to run
 
   validates_attachment_presence :attachment
@@ -16,7 +12,6 @@ class PowerOfAttorney < ActiveRecord::Base
   validates :expiration_date, :presence => true
 
   def attachment_data
-    s3 = AWS::S3.new AWS_CREDENTIALS
-    s3.buckets[attachment.options.fog_directory].objects[attachment.path].read
+    OpenChain::S3.get_data attachment.options[:bucket], attachment.path
   end
 end

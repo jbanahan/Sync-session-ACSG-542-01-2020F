@@ -4,10 +4,61 @@ module OpenChain
     BUCKETS = {:test => 'chain-io-test', :development=>'chain-io-dev', :production=>'chain-io'}
 
     def self.upload_file bucket, key, file
-      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].write(:file=>file.path)
+      s3_action_with_retries do
+        s3_obj = s3_file bucket, key
+        s3_obj.write Pathname.new(file.path)
+      end
     end
-    def self.get_data bucket, key
-      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].read
+
+    # Retrieves the data specified by the bucket/key descriptor.
+    # If the IO parameter is defined, the object is expected to be an IO-like object
+    # (answering to write, flush and rewind) and all data is streamed directly to 
+    # this object and nothing is returned.
+    #
+    # If no io object is provided, the full file content is returned.
+    def self.get_data bucket, key, io = nil
+      retry_lambda = lambda {
+        io.rewind if io
+      }
+      s3_action_with_retries 3, retry_lambda do
+        s3_file = s3_file(bucket, key)
+        if io
+          s3_file.read {|chunk| io.write chunk}
+          # Flush the data and reset the read/write pointer to the beginning of the IO object 
+          # so the caller can then actually read from the file.
+          io.flush
+          io.rewind
+          nil
+        else
+          s3_file.read
+        end
+      end
+    end
+
+    def self.s3_file bucket, key
+      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key]
+    end
+    private_class_method :s3_file
+
+    def self.s3_action_with_retries total_attempts = 3, retry_lambda = nil
+      begin
+        yield
+      rescue 
+        total_attempts -= 1
+        if total_attempts > 0
+          sleep 0.25
+          retry_lambda.call if retry_lambda
+          retry
+        else
+          raise
+        end
+      end
+    end
+    private_class_method :s3_action_with_retries
+
+    def self.url_for bucket, key, expires_in=1.minute, options = {}
+      options = {:expires=>expires_in, :secure=>true}.merge options
+      AWS::S3.new(AWS_CREDENTIALS).buckets[bucket].objects[key].url_for(:read, options).to_s
     end
     
     # Downloads the AWS S3 data specified by the bucket and key.  The tempfile
@@ -25,12 +76,7 @@ module OpenChain
         # Use the key's filename as the basis for the tempfile name
         t = create_tempfile key
         t.binmode
-        t.write OpenChain::S3.get_data bucket, key
-        t.flush
-
-        # Reset the read/write pointer to the beginning of the file so we can actually read from the file
-        # as an IO object. 
-        t.rewind
+        OpenChain::S3.get_data bucket, key, t
 
         # pass the tempfile to any given block
         if block_given?

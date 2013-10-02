@@ -1,5 +1,6 @@
 #CODE COPIED FROM: https://github.com/jmettraux/rufus-scheduler/issues/10/
 require 'rufus/scheduler'
+require 'mono_logger'
 require 'open_chain/delayed_job_manager'
 require 'open_chain/upgrade'
 require 'open_chain/integration_client'
@@ -10,11 +11,10 @@ require 'open_chain/custom_handler/polo_efocus_product_generator'
 require 'open_chain/custom_handler/fenix_product_file_generator'
 
 def job_wrapper job_name, &block
-  begin
-    yield unless Rails.env=='test'
-  rescue
-    OpenMailer.send_generic_exception $!, ["Scheduled Job: #{job_name}"]
-  end
+  # Removed the exception handling since we're relying on the built in scheduler exception handling
+  # Not going to get the job name in the scheduler's exception, but the backtrace should be plenty of info
+  # to track the issue down.
+  yield unless Rails.env=='test'
 end
 
 def if_active_server &block
@@ -24,7 +24,13 @@ end
 def execute_scheduler
   # Create your scheduler here
   scheduler = Rufus::Scheduler.start_new  
-  logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
+  logger = MonoLogger.new(Rails.root.join("log", "scheduler.log"))
+
+  # Set an exception handler to just call the exception's log_me method so we can
+  # track down issues
+  def scheduler.handle_exception(job, exception) 
+    exception.log_me
+  end
 
   #register to be active server
   scheduler.every '10s' do 
@@ -127,7 +133,7 @@ def execute_scheduler
   #make sure we're receiving files as expected
   if Rails.env == 'production'
     scheduler.every '30m' do
-      OpenChain::FeedMonitor.monitor
+      OpenChain::FeedMonitor.delay.monitor
     end
   end
 
@@ -181,7 +187,7 @@ def execute_scheduler
 end
 
 # Create the main logger and set some useful variables.
-main_logger = Logger.new(Rails.root.to_s + "/log/scheduler.log")
+main_logger = MonoLogger.new(Rails.root.join("log", "scheduler.log"))
 
 if !File.directory?(Rails.root.to_s + "/tmp")
   Dir.mkdir(Rails.root.to_s + "/tmp")

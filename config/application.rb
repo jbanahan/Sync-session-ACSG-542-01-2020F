@@ -46,10 +46,13 @@ module OpenChain
     # Configure sensitive parameters which will be filtered from the log file.
     config.filter_parameters += [:password]
 
-    config.middleware.use ExceptionNotifier,
-      :email_prefix => "[chain.io Exception] ",
-      :sender_address => %{"Exception Notifier" <bug@chain.io>},
-      :exception_recipients => %w{bug@aspect9.com}
+    config.middleware.use ExceptionNotification::Rack,
+      :email => {
+        :email_prefix => "[chain.io Exception] ",
+        :sender_address => %{"Exception Notifier" <bug@chain.io>},
+        :exception_recipients => %w{bug@vandegriftinc.com}
+      }
+      
     config.active_record.schema_format = :sql
     if Rails.env.test? 
       initializer :after => :initialize_dependency_mechanism do 
@@ -64,10 +67,20 @@ module OpenChain
     config.assets.version = '1.0'
 
     config.action_mailer.delivery_method = :postmark
-
     
     email_settings = YAML::load(File.open("#{::Rails.root.to_s}/config/email.yml"))
     postmark_api_key = email_settings[::Rails.env][:postmark_api_key] unless email_settings[::Rails.env].nil?
     config.action_mailer.postmark_settings = { :api_key => postmark_api_key }
+    
+    ::AWS_CREDENTIALS = YAML::load_file 'config/s3.yml'
+
+    config.paperclip_defaults = {
+      :storage => :s3, 
+      :s3_credentials => ::AWS_CREDENTIALS,
+      :s3_permissions => :private,
+      :bucket => 'chain-io',
+      # Anything matching this regular expression is turned into an underscore
+      :restricted_characters => /[\x00-\x1F\/\\:\*\?\"<>\|]/u
+    }
   end
 end

@@ -3,7 +3,7 @@ module OpenChain
     def self.parse_csv_file file_path, importer
       count = 0
       f = File.new(file_path)
-      f.lines do |line|
+      f.each_line do |line|
         unless count == 0
           ln = line.encode(Encoding.find("US-ASCII"),:undef=>:replace, :replace=>' ', :fallback=>' ')
           CSV.parse(ln) do |r|
