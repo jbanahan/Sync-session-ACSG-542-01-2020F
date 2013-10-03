@@ -51,6 +51,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       @success_hash = {'response_type'=>'remote_file','status'=>'success'}
       @ws = Delayed::Worker.delay_jobs
       Delayed::Worker.delay_jobs = false
+      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_yield @t
     end
     after(:each) do
       Delayed::Worker.delay_jobs = @ws
@@ -60,14 +61,12 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "should send data to Ann Inc SAP Product Handler if feature enabled and path contains _from_sap" do
         Factory(:user,:username=>'integration')
         MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(true)
-        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
         OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.any_instance.should_receive(:process).with('abcdefg',instance_of(User))
         cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
       it "should send data to Ack Handler if SAP enabled and path containers _from_sap and file starts with zym_ack" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(true)
-        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
         OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','zym_ack.a.csv','ANN-ZYM')
         cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/zym_ack.a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
@@ -77,7 +76,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do
         ack = mock("ack_file")
         MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
-        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
         cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a.csv','remote_path'=>'12345'}
         OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:process).with('abcdefg').and_return(ack)
         OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:send_and_delete_ack_file).with(ack,'a.csv')
@@ -85,7 +83,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
       it "should handle ack files" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
-        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
         OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','a-ack.csv','MSLE')
         cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a-ack.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
@@ -93,7 +90,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
     end
     it 'should process CSM Acknowledgements' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('CSM Sync').and_return(true)
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','ACK1234567890.csv','csm_product')
       cmd = {'request_type'=>'remote_file','path'=>'/_from_csm/ACK1234567890.csv','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
@@ -104,7 +100,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
       CustomFile.any_instance.should_receive(:attached=).with(@t).and_return(@t)
       OpenChain::CustomHandler::PoloCsmSyncHandler.any_instance.should_receive(:process)
       cmd = {'request_type'=>'remote_file','path'=>'/_csm_sync/a.xls','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
       f = CustomFile.first
       f.uploaded_by.should == User.find_by_username('rbjork')
@@ -114,19 +109,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       OpenChain::CustomHandler::KewillIsfXmlParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_kewill_isf/x.y','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end
     it 'should send data to Fenix parser if custom feature enabled and path contains _fenix but not _fenix_invoices' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('fenix').and_return(true)
       OpenChain::FenixParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end
     it 'should not send data to Fenix parser if custom feature is not enabled' do
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix/x.y','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_fenix/x.y"} 
     end
     it 'should send data to Fenix invoice parser if feature enabled and path contains _fenix_invoices' do
@@ -134,7 +126,6 @@ describe OpenChain::IntegrationClientCommandProcessor do
       OpenChain::CustomHandler::FenixInvoiceParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       OpenChain::FenixParser.should_not_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_fenix_invoices/x.y','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end
     it 'should not send data to Fenix invoice parser if custom feature is not enabled' do
@@ -146,18 +137,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('alliance').and_return(true)
       OpenChain::AllianceParser.should_receive(:process_from_s3).with(OpenChain::S3.integration_bucket_name,'12345')
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
     end
     it 'should not send data to alliance parser if custom feature is not enabled' do
       cmd = {'request_type'=>'remote_file','path'=>'/_alliance/x.y','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {"response_type"=>"error", "message"=>"Can't figure out what to do for path /_alliance/x.y"} 
     end
     it 'should create linkable attachment if linkable attachment rule match' do
       LinkableAttachmentImportRule.create!(:path=>'/path/to',:model_field_uid=>'prod_uid')
       cmd = {'request_type'=>'remote_file','path'=>'/path/to/this.csv','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash 
       attachment = LinkableAttachment.last
       attachment.attachment.attached_file_name.should == 'this.csv'
@@ -165,22 +153,30 @@ describe OpenChain::IntegrationClientCommandProcessor do
     it 'should return error if linkable attachment cannot be created' do
       failed_attachment = LinkableAttachment.new
       failed_attachment.errors[:base] = 'errmsg'
+      LinkableAttachmentImportRule.should_receive(:find_import_rule).and_return double("rule")
       LinkableAttachmentImportRule.should_receive(:import).with(@t,'this.csv','/path/to').and_return(failed_attachment)
       cmd = {'request_type'=>'remote_file','path'=>'/path/to/this.csv','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {'response_type'=>'error','message'=>'errmsg'}
     end
+
+    it "should send to VF 850 Parser" do
+      p = double("parser")
+      OpenChain::CustomHandler::Polo::Polo850VandegriftParser.should_receive(:delay).and_return p
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_polo_850/file.xml','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+    end
+
     context 'imported_file' do
       before(:each) do
         @search_setup = Factory(:search_setup)
         @user = @search_setup.user
         @path = "/#{@user.username}/to_chain/#{@search_setup.module_type.downcase}/#{@search_setup.name}/myfile.csv"
-        LinkableAttachmentImportRule.should_receive(:import).and_return(nil)
+        LinkableAttachmentImportRule.should_receive(:find_import_rule).and_return(nil)
       end
       it 'should create if path contains to_chain' do
         ImportedFile.any_instance.should_receive(:process).with(@user,{:defer=>true}).and_return(nil)
         cmd = {'request_type'=>'remote_file','path'=>@path,'remote_path'=>'12345'}
-        OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
         imp = ImportedFile.where(:user_id=>@user.id,:search_setup_id=>@search_setup.id).first
         imp.module_type.should == @search_setup.module_type
@@ -189,27 +185,23 @@ describe OpenChain::IntegrationClientCommandProcessor do
       context 'errors' do
         it 'should fail on bad user' do
           cmd = {'request_type'=>'remote_file','path'=>'/baduser/to_chain/product/search/file.csv','remote_path'=>'12345'}
-          OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
           lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, 'Username baduser not found.'
         end
         it 'should fail on bad search setup name' do
           cmd = {'request_type'=>'remote_file','path'=>"/#{@user.username}/to_chain/product/badsearch/file.csv",'remote_path'=>'12345'}
-          OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
           lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, 'Search named badsearch not found for module product.'
         end
         it 'should fail on locked user' do
           @user.disabled = true
           @user.save!
           cmd = {'request_type'=>'remote_file','path'=>@path,'remote_path'=>'12345'}
-          OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
           lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, "User #{@user.username} is locked."
         end
       end
     end
     it 'should return error if not imported_file or linkable_attachment' do
-      LinkableAttachmentImportRule.should_receive(:import).and_return(nil)
+      LinkableAttachmentImportRule.should_receive(:find_import_rule).and_return(nil)
       cmd = {'request_type'=>'remote_file','path'=>'/some/invalid/path','remote_path'=>'12345'}
-      OpenChain::S3.stub(:download_to_tempfile).with(OpenChain::S3.integration_bucket_name,'12345').and_return(@t)
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == {'response_type'=>'error','message'=>"Can't figure out what to do for path #{cmd['path']}"}
     end
   end
