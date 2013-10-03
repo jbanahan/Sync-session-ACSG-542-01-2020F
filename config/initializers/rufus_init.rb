@@ -9,6 +9,7 @@ require 'open_chain/feed_monitor'
 require 'open_chain/custom_handler/polo_ca_efocus_generator'
 require 'open_chain/custom_handler/polo_efocus_product_generator'
 require 'open_chain/custom_handler/fenix_product_file_generator'
+require 'open_chain/stat_client'
 
 def job_wrapper job_name, &block
   # Removed the exception handling since we're relying on the built in scheduler exception handling
@@ -43,7 +44,7 @@ def execute_scheduler
   if Rails.env.production?
     scheduler.every '4h' do
       job_wrapper "StatClient" do
-        StatClient.delay.run unless MasterSetup.get.stats_api_key.blank?
+        OpenChain::StatClient.delay.run unless MasterSetup.get.stats_api_key.blank?
       end
     end
   end
