@@ -8,6 +8,7 @@ require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
 require 'open_chain/custom_handler/ack_file_handler'
+require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
 
 module OpenChain
   class IntegrationClient
@@ -91,46 +92,60 @@ module OpenChain
         status_msg = 'success'
         response_type = 'remote_file'
       elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
-        tmp = get_tempfile(bucket,remote_path,command['path']) 
-        if fname.to_s.match /-ack/
-          OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'MSLE')
-        else
-          h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
-          h.send_and_delete_ack_file h.process(IO.read(tmp)), fname.to_s
-        end
-        status_msg = 'success'
-        response_type = 'remote_file'
-      elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
-        cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
-        cf.attached = get_tempfile(bucket,remote_path,command['path'])
-        cf.save!
-        cf.delay.process(cf.uploaded_by)
-        status_msg = 'success'
-        response_type = 'remote_file'
-      elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
-        tmp = get_tempfile(bucket,remote_path,command['path']) 
-        OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'csm_product')
-        status_msg = 'success'
-        response_type = 'remote_file'
-      elsif linkable = LinkableAttachmentImportRule.import(get_tempfile(bucket,remote_path,command['path']), fname.to_s, dir.to_s)
-        if linkable.errors.blank?
+        get_tempfile(bucket,remote_path,command['path']) do |tmp|
+          if fname.to_s.match /-ack/
+            OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'MSLE')
+          else
+            h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
+            h.send_and_delete_ack_file h.process(IO.read(tmp)), fname.to_s
+          end
           status_msg = 'success'
           response_type = 'remote_file'
-        else
-          status_msg = linkable.errors.full_messages.join("\n")
         end
-      elsif command['path'].include? '/to_chain/'
-        status_msg = process_imported_file command, get_tempfile(bucket,remote_path,command['path'])
-        response_type = 'remote_file' if status_msg == 'success'
+      elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
+        get_tempfile(bucket,remote_path,command['path']) do |tmp|
+          cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
+          cf.attached = tmp
+          cf.save!
+          cf.delay.process(cf.uploaded_by)
+          status_msg = 'success'
+          response_type = 'remote_file'
+        end
+      elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
+        get_tempfile(bucket,remote_path,command['path']) do |tmp|
+          OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'csm_product')
+          status_msg = 'success'
+          response_type = 'remote_file'
+        end
       elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
-        tmp = get_tempfile(bucket,remote_path,command['path']) 
-        if fname.to_s.match /^zym_ack/
-          OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'ANN-ZYM')
-        else
-          OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+        get_tempfile(bucket,remote_path,command['path']) do |tmp|
+          if fname.to_s.match /^zym_ack/
+            OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'ANN-ZYM')
+          else
+            OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+          end
         end
         status_msg = 'success'
         response_type = 'remote_file'
+      elsif command['path'].include? '/_polo_850/'
+        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.delay.process_from_s3 bucket, remote_path
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
+        get_tempfile(bucket,remote_path,command['path']) do |temp|
+          linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)
+          if linkable.errors.blank?
+            status_msg = 'success'
+            response_type = 'remote_file'
+          else
+            status_msg = linkable.errors.full_messages.join("\n")
+          end
+        end
+      elsif command['path'].include? '/to_chain/'
+        get_tempfile(bucket,remote_path,command['path']) do |temp|
+          status_msg = process_imported_file command, temp
+          response_type = 'remote_file' if status_msg == 'success'
+        end
       else
         status_msg = "Can't figure out what to do for path #{command['path']}"
       end
@@ -157,11 +172,12 @@ module OpenChain
     end
 
     def self.get_tempfile bucket, remote_path, original_path
-      dir, fname = Pathname.new(original_path).split
-      t = OpenChain::S3.download_to_tempfile(bucket,remote_path)
-      Attachment.add_original_filename_method t
-      t.original_filename= fname.to_s
-      t
+      OpenChain::S3.download_to_tempfile(bucket,remote_path) do |t|
+        dir, fname = Pathname.new(original_path).split
+        Attachment.add_original_filename_method t
+        t.original_filename= fname.to_s
+        yield t
+      end
     end
   end
 end
