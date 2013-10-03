@@ -1177,8 +1177,8 @@ and classifications.product_id = products.id
             }
             r
           },
-          :qualified_field_name => "(SELECT COUNT(*) FROM classifications pcc_cls WHERE 
-            (select count(*) FROM tariff_records pcc_tr where pcc_tr.classification_id = pcc_cls.id and length(pcc_tr.hts_1)) > 0 AND pcc_cls.product_id = products.id)",
+          :qualified_field_name => "(SELECT COUNT(distinct pcc_cls.id) FROM classifications pcc_cls 
+            INNER JOIN tariff_records pcc_tr ON pcc_tr.classification_id = pcc_cls.id AND LENGTH( pcc_tr.hts_1 ) > 0 WHERE products.id = pcc_cls.product_id)",
           :data_type => :integer
         }],
         [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true}],
