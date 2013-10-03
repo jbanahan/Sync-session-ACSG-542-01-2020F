@@ -1,0 +1,32 @@
+# The production/development/testing allows forces us to utilize different 
+# authorizations for different environments.  Which then prevents us from accidently
+# putting / pulling files from production accounts in testing and vice versa.
+production:
+  application_name: VFI Track
+  application_version: 1
+  client_id: 77914895035.apps.googleusercontent.com
+  client_secret: SQsYhVwfebohOKHngD_sE12x
+
+development:
+  application_name: VFI Track Development
+  application_version: 1
+  client_id: 77914895035-kvh5fsht7v2rkvbrmf8m2r37bfmpack0.apps.googleusercontent.com
+  client_secret: twHmvX9wz405C03zy9Z5PjcG
+
+test:
+  application_name: VFI Track Testing
+  application_version: 1
+  client_id: 77914895035-kvh5fsht7v2rkvbrmf8m2r37bfmpack0.apps.googleusercontent.com
+  client_secret: twHmvX9wz405C03zy9Z5PjcG
+
+# The outer level here is the google account name
+integration@vandegriftinc.com:
+  production:
+    refresh_token: 1/ROFzHoD6YppiobZQQRzbwx_dMw5OJdi6xQx3aWPpI0Q
+
+integration-dev@vandegriftinc.com:
+  test:
+    refresh_token: 1/xfitfHWkigC1D4aMNI-FS6frFxRFUfpwbwnP_Zaoac0
+  development:
+    refresh_token: 1/xfitfHWkigC1D4aMNI-FS6frFxRFUfpwbwnP_Zaoac0
+

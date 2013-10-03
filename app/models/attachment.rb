@@ -1,3 +1,5 @@
+require 'open_chain/google_drive'
+
 class Attachment < ActiveRecord::Base
   has_attached_file :attached,
     :path => "#{MasterSetup.get.uuid}/attachment/:id/:filename"
@@ -48,6 +50,19 @@ class Attachment < ActiveRecord::Base
       # a mac and then try to download on windows - browser can't be relied upon do do this for us at this point).
       character_filter_regex = /[\x00-\x1F\/\\:\*\?\"<>\|]/u
       instance.instance_write(:file_name, filename.gsub(character_filter_regex, "_"))
+    end
+  end
+
+  # Downloads attachment data from S3 and pushes it to the google drive account, path given.
+  # drive_folder - if nil, file is placed in root of drive account
+  # attachmend_id - the attachment id to push
+  # drive_account - if nil, default account is used
+  # upload_options - any applicable drive upload options
+  def self.push_to_google_drive drive_folder, attachment_id, drive_account = nil, upload_options = {}
+    a = Attachment.find attachment_id
+    drive_path = File.join((drive_folder ? drive_folder : ""), a.attached_file_name)
+    OpenChain::S3.download_to_tempfile(a.attached.options.fog_directory, a.attached.path) do |temp|
+      OpenChain::GoogleDrive.upload_file drive_account, drive_path, temp, upload_options
     end
   end
 

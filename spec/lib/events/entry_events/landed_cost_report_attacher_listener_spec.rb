@@ -34,6 +34,10 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
     it "should generate a report and create an entry attachment" do
       LocalLandedCostsController.any_instance.should_receive(:show).with(@e.id).and_return "Landed Cost Report"
+      attachment = double("attachment")
+      Attachment.should_receive(:delay).and_return attachment
+      attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
+
       entry = described_class.new.receive nil, @e
       entry.id.should == @e.id
 
@@ -50,6 +54,10 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
       @e.attachments.reload
 
       LocalLandedCostsController.any_instance.should_receive(:show).with(@e.id).and_return "Landed Cost Report"
+      attachment = double("attachment")
+      Attachment.should_receive(:delay).and_return attachment
+      attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
+      
       entry = described_class.new.receive nil, @e
       entry.id.should == @e.id
 
