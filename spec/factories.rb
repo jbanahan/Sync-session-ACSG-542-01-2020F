@@ -233,6 +233,9 @@ Factory.define :survey_response do |f|
   f.fax '1234567890'
   f.email 'a@b.com'
 end
+Factory.define :corrective_action_plan do |f|
+  f.association :survey_response
+end
 Factory.define :answer do |f|
   f.association :question
   f.association :survey_response

@@ -11,7 +11,7 @@ class SurveyResponsesController < ApplicationController
         @sr.save
       end
       @respond_mode = true unless @sr.submitted_date
-    elsif @sr.submitted_date && current_user.edit_surveys? && @sr.survey.company_id == current_user.company_id
+    elsif @sr.submitted_date && @sr.can_edit?(current_user) 
       @rate_mode = true
     end
   end
@@ -26,7 +26,7 @@ class SurveyResponsesController < ApplicationController
       params[:survey_response][:answers_attributes].values.each do |v|
         
         #remove ratings if not survey owner company
-        v.delete "rating" if sr.survey.company_id!=current_user.company_id
+        v.delete "rating" unless sr.can_edit?(current_user) 
         
         #remove choices if current_user!=sr.user 
         v.delete "choice" if sr.user!=current_user
@@ -87,7 +87,7 @@ class SurveyResponsesController < ApplicationController
   #send user invite
   def invite
     sr = SurveyResponse.find params[:id]
-    if sr.survey.company_id!=current_user.company_id
+    if !sr.can_edit?(current_user) 
       error_redirect "You do not have permission to send invites for this survey."
       return
     else

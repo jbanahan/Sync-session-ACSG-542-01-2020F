@@ -233,16 +233,18 @@ EOS
   end
 
   #send survey update notification
-  def send_survey_subscription_update survey_response
+  def send_survey_subscription_update survey_response, corrective_action_plan = false
+    @cap_mode = corrective_action_plan
     @link_addr = "http://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
     to = survey_response.survey.survey_subscriptions.map {|ss| ss.user.email}.join(',')
-    mail(:to=>to, :subject=>"Survey updated") do |format|
+    mail(:to=>to, :subject=>"Survey Updated") do |format|
       format.html
     end
   end
 
   #send survey update to survey response assigned user
-  def send_survey_user_update survey_response
+  def send_survey_user_update survey_response, corrective_action_plan = false
+    @cap_mode = corrective_action_plan
     @link_addr = "http://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
     mail(:to=>survey_response.user.email, :subject=>"#{survey_response.survey.name} - Updated") do |format|
       format.html

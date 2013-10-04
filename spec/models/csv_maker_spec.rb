@@ -1,7 +1,9 @@
 require 'spec_helper'
 
 describe CsvMaker do
-  
+  before :each do 
+    Time.zone = 'Etc/UTC'
+  end
   context :make_from_search_query do
     before :each do
       @logged_date = 1.minute.ago

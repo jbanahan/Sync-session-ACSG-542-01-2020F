@@ -1,3 +1,7 @@
-<p>The survey you have been subscribed to has been updated.</p>
+<%if @cap_mode%>
+<p>A corrective action plan associated with one of your surveys has been updated.</p>
+<%else%>
+<p>A survey you have been subscribed to has been updated.</p>
+<%end%>
 
 <p>To view the survey follow this link: <a href='<%=@link_addr%>'><%=@link_addr%></a></p>

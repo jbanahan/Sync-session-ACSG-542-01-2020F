@@ -98,16 +98,33 @@ describe SurveyResponse do
     it "should pass if user is response user" do
       @sr.can_view?(@response_user).should be_true
     end
+    it "should pass if user can_edit?" do
+      u = Factory(:user)
+      @sr.should_receive(:can_edit?).with(u).and_return true
+      @sr.can_view?(u).should be_true
+    end
+    it "should fail if user cannot edit?" do 
+      u = Factory(:user)
+      @sr.should_receive(:can_edit?).with(u).and_return false
+      @sr.can_view?(u).should be_false
+    end
+  end
+  describe "can_edit?" do
+    before :each do 
+      @survey = Factory(:survey)
+      @response_user = Factory(:user)
+      @sr = @survey.generate_response! @response_user
+    end
     it "should pass if user is from the survey company and can edit surveys" do
       u = Factory(:user,:company=>@survey.company,:survey_edit=>true)
-      @sr.can_view?(u).should be_true
+      @sr.can_edit?(u).should be_true
     end
     it "should fail if user is from the survey company and cannot edit surveys" do
       u = Factory(:user,:company=>@survey.company,:survey_edit=>false)
-      @sr.can_view?(u).should be_false
+      @sr.can_edit?(u).should be_false
     end
-    it "should fail if user is not from the survey company and is not the response user" do
-      @sr.can_view?(Factory(:user)).should be_false
+    it "should fail if user is not from the survey company" do
+      @sr.can_edit?(Factory(:user,survey_edit:true)).should be_false
     end
   end
   describe "can_view_private_comments?" do
