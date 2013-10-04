@@ -70,9 +70,9 @@ describe Attachment do
 
       # mock the attached call, which fails unless we actually upload a file
       attached = double("attached")
+      options = {:bucket => "bucket"}
       Attachment.any_instance.stub(:attached).and_return attached
-      attached.should_receive(:options).and_return attached
-      attached.should_receive(:fog_directory).and_return  "s3_bucket"
+      attached.should_receive(:options).and_return options
       attached.should_receive(:path).and_return "s3_path"
 
       temp = double("Tempfile")
@@ -80,7 +80,7 @@ describe Attachment do
       path = "folder/subfolder"
       options = {}
 
-      OpenChain::S3.should_receive(:download_to_tempfile).with("s3_bucket", "s3_path").and_yield temp
+      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "s3_path").and_yield temp
       OpenChain::GoogleDrive.should_receive(:upload_file).with(account, "#{path}/file.txt", temp, options)
 
       Attachment.push_to_google_drive path, a.id, account, options
