@@ -147,7 +147,7 @@ def execute_scheduler
   scheduler.cron '0 23 * * *' do
     job_wrapper "Purges" do
       Message.delay.purge_messages
-      ReportResults.delay.purge
+      ReportResult.delay.purge
     end
   end
   
