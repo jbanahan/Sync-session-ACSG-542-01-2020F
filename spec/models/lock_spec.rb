@@ -97,4 +97,69 @@ describe Lock do
       (end_time - start_time).should <= 1.0
     end
   end
+
+  context :retry_lock_aquire do
+
+    it "should attempt to acquire lock multiple times" do
+      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
+      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
+      Lock.should_receive(:acquired_lock).and_return true
+
+      started = false
+      Lock.acquire 'LockSpec', 2 do
+        started = true
+      end
+
+      started.should be_true
+    end
+
+    it "should not attempt to retry and aquire locks when a lock wait timeout occurs inside the yielded block" do
+      Lock.should_not_receive(:lock_wait_timeout?)
+
+      started = false
+      expect {
+        Lock.acquire 'LockSpec', 5 do
+          started = true
+          raise ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
+        end
+      }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
+
+      started.should be_true
+      Lock.definitely_acquired?('LockSpec').should be_false
+    end
+
+    it "should not attempt to retry lock acquisition on other errors" do 
+      Lock.should_receive(:acquired_lock).and_raise ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
+
+      started = false
+      expect {
+        Lock.acquire 'LockSpec', 5 do
+          started = true
+        end
+      }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"
+
+      started.should be_false
+    end
+  end
+
+  context :lock_wait_timeout? do
+    it "should identify a lock wait timeout exception by the message" do
+      object = double()
+      object.stub(:message).and_return "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
+
+      Lock.lock_wait_timeout?(object).should be_true
+    end
+
+    it "should not-identify other exeptions as timeouts" do
+      object = double()
+      object.stub(:message).and_return "Runtime error"
+      Lock.lock_wait_timeout?(object).should be_false
+    end
+
+    it "should be defensive about the error object" do
+      object = double()
+      object.stub(:message).and_return nil
+      Lock.lock_wait_timeout?(object).should be_false
+    end
+  end
 end

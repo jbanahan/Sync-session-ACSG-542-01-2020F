@@ -102,7 +102,7 @@ describe OpenChain::FenixParser do
 
   def do_shared_test entry_data
     # Make sure the locking mechanism is utilized
-    Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK).and_yield
+    Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK, 3).and_yield
     
     OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by_broker_reference @file_number
@@ -473,6 +473,11 @@ describe OpenChain::FenixParser do
     ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate.should == BigDecimal(@duty_rate)
     # Make sure we're not truncating the classification quantity
     ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.classification_qty_1.should == BigDecimal(@hts_qty)
+  end
+
+  it "should retry with_lock 5 times and re-raise error if failed after that" do
+    Entry.any_instance.should_receive(:with_lock).exactly(5).times.with("LOCK IN SHARE MODE").and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+    expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error ActiveRecord::StatementInvalid
   end
 
   context 'importer company' do
