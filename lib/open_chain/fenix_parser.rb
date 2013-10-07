@@ -12,17 +12,18 @@ module OpenChain
       # mapped values intentially use symbols that don't map to actual entry property setter methods
       '180' => :do_issued_date_first,
       '490' => :docs_received_date_first,
-      '10' => :eta_date=
+      '10' => :eta_date=,
+      '868' => :release_date=,
+      '1270' => :cadex_sent_date=,
+      '1274' => :cadex_accept_date=,
+      '1280' => :k84_receive_date=
     }
 
     SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']
+    LVS_LINE_TYPE = "LVS"
 
     def self.integration_folder
       "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
-    end
-
-    def self.parse_path path
-      parse path.read, {:bucket => 'no-bucket', :key => path.to_s}
     end
 
     # take the text from a Fenix CSV output file and create entries
@@ -34,8 +35,10 @@ module OpenChain
           # The "supporting" lines in the new format all have less than 10 file positions 
           # So, don't skip the line if we're proc'ing one of those.
           supporting_line_type = SUPPORTING_LINE_TYPES.include?(line[0])
-          next if (line.size < 10 && !supporting_line_type) || line[0]=='Barcode'
-          
+
+          # LVS Lines have < 10 indexes so we can't skip those either
+          next if (line.size < 10 && (!supporting_line_type && line[0] != LVS_LINE_TYPE)) || line[0]=='Barcode'
+
           # We'll never encounter a situation where if we have a "new-style" line type where we need to start
           # a new entry.  Therefore, don't even consider creating a new entry unless we have an old-style header
           # line or a new style header
@@ -85,79 +88,85 @@ module OpenChain
       @total_gst = BigDecimal('0.00')
       @total_duty = BigDecimal('0.00')
 
-      accumulated_dates = Hash.new {|h, k| h[k] = []}
+      if lines.first[0] == LVS_LINE_TYPE
+        process_lvs_entry lines
+        nil
+      else
+        accumulated_dates = Hash.new {|h, k| h[k] = []}
 
-      # Gather entry header information needed to find the entry
-      info = entry_information lines.first
+        # Gather entry header information needed to find the entry
+        info = entry_information lines.first
 
-      find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path)) do |entry|
-        # Entry is only yieled here if we need to process one (ie. it's not outdated)
-        # This whole block is also already inside a transaction, so no need to bother with opening another one
-        @entry = entry
+        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path)) do |entry|
+          # Entry is only yieled here if we need to process one (ie. it's not outdated)
+          # This whole block is also already inside a transaction, so no need to bother with opening another one
+          @entry = entry
 
-        process_header lines.first, entry
+          process_header lines.first, entry
 
-        lines.each do |line| 
+          lines.each do |line| 
 
-          case line[0]
-          when "SD"
-            process_activity_line line, accumulated_dates
-          when "CCN"
-            process_cargo_control_line line
-          when "CON"
-            process_container_line line
-          when "BL"
-            process_bill_of_lading_line line
-          else 
-            process_invoice line
-            process_invoice_line line
+            case line[0]
+            when "SD"
+              process_activity_line line, accumulated_dates
+            when "CCN"
+              process_cargo_control_line line
+            when "CON"
+              process_container_line line
+            when "BL"
+              process_bill_of_lading_line line
+            else 
+              process_invoice line
+              process_invoice_line line
+            end
           end
+
+          detail_pos = accumulated_string(:po_numbers)
+          @entry.last_file_bucket = s3_bucket
+          @entry.last_file_path = s3_path
+          @entry.total_invoiced_value = @total_invoice_val
+          @entry.total_units = @total_units
+          @entry.total_duty = @total_duty
+          @entry.total_gst = @total_gst
+          @entry.total_duty_gst = @total_duty + @total_gst
+          @entry.po_numbers = detail_pos unless detail_pos.blank?
+          @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
+          @entry.container_numbers = accumulated_string(:container_numbers)
+          # There's no House bill field in the spec, so we're using the container
+          # number field on Air entries to send the data.
+          # 1 = Air
+          # 2 = Highway (Truck)
+          # 6 = Rail
+          # 9 = Maritime (Ocean)
+          if ["1", "2"].include? @entry.transport_mode_code
+            @entry.house_bills_of_lading = accumulated_string(:container_numbers)
+          end
+          @entry.origin_country_codes = accumulated_string(:org_country)
+          @entry.origin_state_codes = accumulated_string(:org_state)
+          @entry.export_country_codes = accumulated_string(:exp_country)
+          @entry.export_state_codes = accumulated_string(:exp_state)
+          @entry.vendor_names = accumulated_string(:vendor_names)
+          @entry.part_numbers = accumulated_string(:part_number)
+          @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
+          @entry.cargo_control_number = accumulated_string(:cargo_control_number)
+          @entry.entered_value = @total_entered_value
+
+          @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
+
+          @commercial_invoices.each do |inv_num, inv|
+            inv.invoice_value = @ci_invoice_val[inv_num]
+          end
+
+          set_entry_dates @entry, accumulated_dates
+
+          @entry.save!
+          #match up any broker invoices that might have already been loaded
+          @entry.link_broker_invoices
+          #write time to process without reprocessing hooks
+          @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
+
         end
-
-        detail_pos = accumulated_string(:po_numbers)
-        @entry.last_file_bucket = s3_bucket
-        @entry.last_file_path = s3_path
-        @entry.total_invoiced_value = @total_invoice_val
-        @entry.total_units = @total_units
-        @entry.total_duty = @total_duty
-        @entry.total_gst = @total_gst
-        @entry.total_duty_gst = @total_duty + @total_gst
-        @entry.po_numbers = detail_pos unless detail_pos.blank?
-        @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
-        @entry.container_numbers = accumulated_string(:container_numbers)
-        # There's no House bill field in the spec, so we're using the container
-        # number field on Air entries to send the data.
-        # 1 = Air
-        # 2 = Highway (Truck)
-        # 6 = Rail
-        # 9 = Maritime (Ocean)
-        if ["1", "2"].include? @entry.transport_mode_code
-          @entry.house_bills_of_lading = accumulated_string(:container_numbers)
-        end
-        @entry.origin_country_codes = accumulated_string(:org_country)
-        @entry.origin_state_codes = accumulated_string(:org_state)
-        @entry.export_country_codes = accumulated_string(:exp_country)
-        @entry.export_state_codes = accumulated_string(:exp_state)
-        @entry.vendor_names = accumulated_string(:vendor_names)
-        @entry.part_numbers = accumulated_string(:part_number)
-        @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
-        @entry.cargo_control_number = accumulated_string(:cargo_control_number)
-        @entry.entered_value = @total_entered_value
-
-        @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
-
-        @commercial_invoices.each do |inv_num, inv|
-          inv.invoice_value = @ci_invoice_val[inv_num]
-        end
-
-        set_entry_dates @entry, accumulated_dates
-
-        @entry.save!
-        #match up any broker invoices that might have already been loaded
-        @entry.link_broker_invoices
-        #write time to process without reprocessing hooks
-        @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
-
+        nil
       end
     end
 
@@ -535,6 +544,35 @@ module OpenChain
       end
 
       nil
+    end
+
+    def process_lvs_entry lines
+      # We're going to force any created entry to be canadian origin, which will force them to show on screen
+      # on the Canadian entry view.
+      canada = Country.find_by_iso_code('CA')
+
+      # Extract all the activity lines for each child entry listed, then we can use the standard set_entry_dates method to fill the date values
+      accumulated_entry_dates = {}
+      lines.each do |line|
+        accumulated_entry_dates[line[2]] ||= {}
+        date_key = ACTIVITY_DATE_MAP[line[3]]
+        if date_key 
+          accumulated_entry_dates[line[2]][date_key] ||= []
+          # parse date time above expects times in MM/dd/yyyy format
+          accumulated_entry_dates[line[2]][date_key] << time_zone.parse(line[4])
+        end
+      end
+
+      accumulated_entry_dates.each do |entry_number, dates|
+        entry = nil
+        Lock.acquire(Lock::FENIX_PARSER_LOCK, 3) do 
+          # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
+          entry = Entry.where(:entry_number => entry_number, :source_system => SOURCE_CODE).first_or_create! :import_country => canada
+        end
+
+        set_entry_dates entry, dates
+        entry.save!
+      end
     end
 
     def lock_retry max_retry_count = 5

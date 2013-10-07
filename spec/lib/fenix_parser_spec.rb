@@ -703,4 +703,75 @@ describe OpenChain::FenixParser do
       OpenChain::FenixParser.process_day d
     end
   end
+
+  context :lvs_entries do
+
+    before :each do
+      @parent_entry = "1234567"
+      @child_entries = ["987654", "159753"]
+
+      @dates = {
+        @child_entries[0] => {
+          '868' => '20131001',
+          '1270' => '20131002',
+          '1274' => '20131003',
+          '1280' => '20131004'
+        },
+        @child_entries[1] => {
+          '868' => '20131005',
+          '1270' => '20131006',
+          '1274' => '20131007',
+          '1280' => '20131008'
+        },
+      }
+      @time_zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
+    end
+
+    def build_lvs_file
+      file = ""
+      @child_entries.each do |child_entry|
+        @dates[child_entry].each do |activities|
+          file += "LVS,#{@parent_entry},#{child_entry},#{activities[0]},#{activities[1]}\r\n"
+        end
+      end
+      file
+    end
+
+    it "should process an lvs entry" do
+      OpenChain::FenixParser.parse build_lvs_file
+
+      entry = Entry.where(:entry_number => @child_entries[0], :source_system=>"Fenix").first
+      entry.should_not be_nil
+      entry.import_country.iso_code.should eq "CA"
+      entry.release_date.should eq @time_zone.parse '20131001'
+      entry.cadex_sent_date.should eq @time_zone.parse '20131002'
+      entry.cadex_accept_date.should eq @time_zone.parse '20131003'
+      entry.k84_receive_date.should eq Date.parse '20131004'
+
+      entry = Entry.where(:entry_number => @child_entries[1], :source_system=>"Fenix").first
+      entry.should_not be_nil
+      entry.import_country.iso_code.should eq "CA"
+      entry.release_date.should eq @time_zone.parse '20131005'
+      entry.cadex_sent_date.should eq @time_zone.parse '20131006'
+      entry.cadex_accept_date.should eq @time_zone.parse '20131007'
+      entry.k84_receive_date.should eq Date.parse '20131008'
+    end
+
+    it "should update lvs entries" do
+      # We shouldn't be updating the country - on setting it on create
+      e = Factory(:entry, :entry_number => @child_entries[0], :source_system=>"Fenix")
+
+      OpenChain::FenixParser.parse build_lvs_file
+
+      entry = Entry.where(:entry_number => @child_entries[0], :source_system=>"Fenix").first
+      entry.should_not be_nil
+      entry.id.should eq e.id
+      entry.import_country.should be_nil
+      
+      entry.release_date.should eq @time_zone.parse '20131001'
+      entry.cadex_sent_date.should eq @time_zone.parse '20131002'
+      entry.cadex_accept_date.should eq @time_zone.parse '20131003'
+      entry.k84_receive_date.should eq Date.parse '20131004'
+    end
+  end
 end
