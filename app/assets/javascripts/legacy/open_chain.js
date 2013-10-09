@@ -1,6 +1,6 @@
 var OpenChain = (function() {
   //private stuff
-  var mappedKeys = new Object();'
+  var mappedKeys = new Object();
   var keyMapPopUp = null;
 
   var initRemoteValidate = function() {
