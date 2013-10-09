@@ -42,9 +42,10 @@ gem "mono_logger", '1.1.0'
 
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
-  gem 'factory_girl', '2.5.2', :group=>[:development,:test]
+  gem 'factory_girl', '2.5.2'
   gem 'spork'
   gem 'debugger'
+  gem 'jasmine-rails'
 end
 
 group :test do

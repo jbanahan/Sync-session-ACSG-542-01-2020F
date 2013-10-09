@@ -418,5 +418,10 @@ OpenChain::Application.routes.draw do
   resources :sync_records do
     post 'resend', :on=>:member
   end
+
+  #Jasmine test runner
+  mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
+
   root :to => "dashboard_widgets#index"
+
 end

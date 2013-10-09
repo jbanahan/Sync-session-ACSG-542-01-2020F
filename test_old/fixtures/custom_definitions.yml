@@ -1,6 +1,0 @@
-ProductApproval:
-  id: 1
-  label: Approved
-  data_type: boolean
-  rank: 1
-  module_type: Product

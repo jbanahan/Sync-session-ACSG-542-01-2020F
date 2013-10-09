@@ -61,7 +61,7 @@ class Attachment < ActiveRecord::Base
   def self.push_to_google_drive drive_folder, attachment_id, drive_account = nil, upload_options = {}
     a = Attachment.find attachment_id
     drive_path = File.join((drive_folder ? drive_folder : ""), a.attached_file_name)
-    OpenChain::S3.download_to_tempfile(a.attached.options.fog_directory, a.attached.path) do |temp|
+    OpenChain::S3.download_to_tempfile(a.attached.options[:bucket], a.attached.path) do |temp|
       OpenChain::GoogleDrive.upload_file drive_account, drive_path, temp, upload_options
     end
   end

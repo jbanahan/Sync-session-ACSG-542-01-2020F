@@ -1,7 +1,0 @@
-one:
-  id: 1
-  carrier_id: 5
-  reference: MyString
-  mode: MyString
-  customer_id: 6
-
