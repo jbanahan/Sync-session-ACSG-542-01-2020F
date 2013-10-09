@@ -17,33 +17,33 @@ describe EmailAttachmentsController do
       it "sends file when mails are separated with comma" do
         @ea.email = "foo@example.com,bar@example.com,baz@example.com"
         @ea.save
-        controller.expects("send_data").returns(:success)
+        Attachment.any_instance.should_receive(:secure_url).and_return "http://test.com"
         get 'download', :id => @ea.id, :email => "foo@example.com"
-        response.should be_success
+        response.should redirect_to "http://test.com"
       end
 
       it "sends file when mails are separated with semicolon" do
         @ea.email = "foo@example.com;bar@example.com;baz@example.com"
         @ea.save
-        controller.expects("send_data").returns(:success)
+        Attachment.any_instance.should_receive(:secure_url).and_return "http://test.com"
         get 'download', :id => @ea.id, :email => "bar@example.com"
-        response.should be_success
+        response.should redirect_to "http://test.com"
       end
 
       it "sends file when mails are separated with mixed separators" do
         @ea.email = "foo@example.com,bar@example.com;baz@example.com"
         @ea.save
-        controller.expects("send_data").returns(:success)
+        Attachment.any_instance.should_receive(:secure_url).and_return "http://test.com"
         get 'download', :id => @ea.id, :email => "baz@example.com"
-        response.should be_success
+        response.should redirect_to "http://test.com"
       end
 
       it "sends file when mixed casing is present" do
         @ea.email = "foo@example.com,bar@example.com;baz@example.com"
         @ea.save
-        controller.expects("send_data").returns(:success)
+        Attachment.any_instance.should_receive(:secure_url).and_return "http://test.com"
         get 'download', :id => @ea.id, :email => "BaZ@Example.COM"
-        response.should be_success
+        response.should redirect_to "http://test.com"
       end
     end
 
