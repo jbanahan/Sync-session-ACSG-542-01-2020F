@@ -1,6 +1,6 @@
 var OpenChain = (function() {
   //private stuff
-  var mappedKeys = new Object();
+  var mappedKeys = new Object();'
   var keyMapPopUp = null;
 
   var initRemoteValidate = function() {
@@ -28,7 +28,7 @@ var OpenChain = (function() {
     }
 
     field.nextAll(".val_status").remove();
-    field.after("<img src='<%=asset_path 'ajax_load_64.gif'%>' class='val_status' title='Validating...' style='display:none;' height='16' width='16'/>");
+    field.after("<img src='/assets/ajax_load_64.gif' class='val_status' title='Validating...' style='display:none;' height='16' width='16'/>");
     field.next().fadeIn();
     $.getJSON('/field_validator_rules/validate',{mf_id: mf_id, value: field.val()},function(data) {
       field.nextAll(".val_status").remove();
@@ -36,7 +36,7 @@ var OpenChain = (function() {
         var m = "";
         $.each(data,function(i,v) {m += v+"<br />"});
         field.addClass("error");
-        field.after("<img src='<%=asset_path 'error.png'%>' alt='Field Error' class='val_status'/>");
+        field.after("<img src='/assets/error.png' alt='Field Error' class='val_status'/>");
         field.parent().tooltip("option", "content", m);
       } else {
         field.removeClass("error");
@@ -415,7 +415,7 @@ var OCSurvey = (function() {
       if(id && id < 10000000) {
         h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][id]' value='"+mid+"' />";
       }
-      h += "<div id='qb-"+mid+"'><img src='<%=asset_path 'drag_handle.gif'%>' alt='move' class='question_handle'/>Question Body:</div><textarea id='q_"+mid+"' class='q_area' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
+      h += "<div id='qb-"+mid+"'><img src='/assets/drag_handle.gif' alt='move' class='question_handle'/>Question Body:</div><textarea id='q_"+mid+"' class='q_area' name='survey[questions_attributes]["+mid+"][content]' rows='8'>"+content+"</textarea><br/>";
       h += "<a href='#' class='q_preview' qid='"+mid+"'>Preview</a><br />";
       h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
@@ -453,7 +453,7 @@ var OCInvoice = (function() {
       h+="<td><input type='text' size='30' class='inv_det_fld desc_fld' name='"+namePre+"[charge_description]'/></td>";
       h+= "<td><input type='text' size='30' class='inv_det_fld decimal' name='"+namePre+"[charge_amount]'/></td>";
       h+= "<td><input type='text' size='30' class='inv_det_fld decimal hst_fld' name='"+namePre+"[hst_percent]'/></td>";
-      h+= "<td><a href='#' class='inv_det_del'><img src='<%=asset_path 'x.png'%>' alt='delete'/></a></td></tr>";
+      h+= "<td><a href='#' class='inv_det_del'><img src='/assets/x.png' alt='delete'/></a></td></tr>";
       $(parentTable+" tbody").append(h);
       $(".decimal").jStepper();
     }
@@ -647,7 +647,7 @@ function addHiddenFormField(parentForm,name,value,id,style_class) {
     .appendTo(parentForm);
 }
 function loading(wrapper) {
-  wrapper.html("<img src='<%=asset_path 'ajax_load_64.gif'%>' alt='loading' height='16' width='16'/>");
+  wrapper.html("<img src='/assets/ajax_load_64.gif' alt='loading' height='16' width='16'/>");
 }
 
 //address setup
