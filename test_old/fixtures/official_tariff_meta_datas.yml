@@ -1,9 +1,0 @@
-# Read about fixtures at http://ar.rubyonrails.org/classes/Fixtures.html
-
-one:
-  auto_classify_ignore: false
-  notes: MyText
-
-two:
-  auto_classify_ignore: false
-  notes: MyText

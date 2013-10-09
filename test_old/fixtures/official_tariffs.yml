@@ -1,9 +1,0 @@
-us:
-  hts_code: 9999990000
-  country: us
-  full_description: abcd
-
-china:
-  hts_code: 0000009999
-  country: china
-  full_description: defg
