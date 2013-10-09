@@ -2,6 +2,8 @@ require 'spec_helper'
 
 describe DataCrossReference do
 
+
+
   context :load_cross_references do
     it "should load csv cross reference data from an IO object" do
       # Make sure we're also updating existing xrefs
@@ -33,6 +35,23 @@ describe DataCrossReference do
       DataCrossReference.create :key=>"po#", :value=>"brand", :cross_reference_type=>DataCrossReference::RL_PO_TO_BRAND
 
       DataCrossReference.find_rl_brand_by_po('po#').should == "brand"
+    end
+  end
+
+  context :find_ua_plant_to_iso do
+    it "should find" do
+      described_class.create!(key:'x',value:'y',cross_reference_type:described_class::UA_PLANT_TO_ISO)
+      described_class.find_ua_plant_to_iso('x').should == 'y'
+    end
+  end
+  context :add_xref! do
+    it "should add" do
+      d = described_class.add_xref! described_class::UA_PLANT_TO_ISO, 'x', 'y', 1
+      d = described_class.find d.id
+      d.cross_reference_type.should == described_class::UA_PLANT_TO_ISO
+      d.key.should == 'x'
+      d.value.should == 'y'
+      d.company_id.should == 1
     end
   end
 end

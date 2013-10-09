@@ -77,9 +77,23 @@ module OpenChain
       r
     end
 
+    # call get_row_values for all rows in sheet and yield each row's resulting array
+    def all_row_values sheet_number
+      r = block_given? ? nil : []
+      lrn = last_row_number(sheet_number) 
+      (0..lrn).each do |i|
+        if block_given?
+          yield get_row_values(sheet_number,i)
+        else
+          r << get_row_values(sheet_number,i)
+        end
+      end
+      r
+    end
+
     def get_row_values sheet, row
       r = get_row_as_column_hash sheet, row
-
+      return [] if r.blank?
       # I think, technically, there can be missing index values here (.ie 0,1,2,5), which we'll will want to set as as null values
       # for the index is the array so its a true representation of the grid in the spreadsheet.
       values = []
