@@ -1,182 +1,95 @@
-<% content_for :action_bar do %>
-  <button class='form_to' form_id="frm_sr">Save</button>
-  <% if @sr.user == current_user && @sr.submitted_date.nil? %>
-    <button id='btn_submit' style='display:none'>Submit</button>
-  <% end %>
-  <% if @sr.rated? %>
-    <button id='btn_filter'>Filter</button>
-  <% end %>
-  <% if @sr.can_edit?(current_user)%>
-    <button class='btn_link' link_to='<%=invite_survey_response_path(@sr)%>'>Resend Invite Email</button>
-    <%-if @sr.submitted_date && @sr.corrective_action_plan.nil?-%>
-    <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-inverse', :form_class=>'inline-button-to'%>
-    <%-end-%>
-  <%end%>
-  <%-if @sr.submitted_date && @sr.corrective_action_plan && @sr.corrective_action_plan.can_view?(current_user) -%>
-    <button class='btn_link <%if @sr.corrective_action_plan.status==CorrectiveActionPlan::STATUSES[:active]%>btn-danger<%end%>' link_to='<%=survey_response_corrective_action_plan_path(@sr,@sr.corrective_action_plan)%>'>Corrective Action Plan</button>
-  <%-end-%>
-  <button class='btn_link' link_to='<%=survey_response_survey_response_logs_path(@sr)%>'>Logs</button>
-  <button class='btn_link' link_to='<%=@sr.user == current_user ? survey_responses_path : survey_path(@sr.survey)%>'>Back</button>
-  <div id='answr_trk'>
-    
-  </div>
-<% end %>
-
-<% content_for :javascript do %>
-  $(function() {
-    $("#s_confirm").dialog({autoOpen:false,title:"Confirm Submit",buttons:{
-      "Continue":function() {
-        $("#frm_sr").append("<input type='hidden' name='do_submit' value='1' />");
-        $("#frm_sr").submit();
-      },
-      "Cancel":function() {$("#s_confirm").dialog('close');}}
-    });
-    $("#btn_submit").click(function() {
-      $("#s_confirm").dialog('open');
-    });
-    $("#s_rating_filter").dialog({autoOpen:false,title:"Filter Ratings",buttons:{
-      "Filter":function() {
-        ChainSurveyResponse.filter();
-        $("#s_rating_filter").dialog('close');
-      }
-    }});
-    $("#btn_filter").click(function() {
-      $("#s_rating_filter").dialog('open');
-    });
-    $("select.resp").change(function() {ChainSurveyResponse.updateResponseTrack();});
-    $(".creq").keyup(function() {ChainSurveyResponse.contactCheck();});
-    $(".a_opt").keyup(function() {ChainSurveyResponse.updateResponseTrack();});
-    $(".a_fil").change(function() {ChainSurveyResponse.updateResponseTrack();});
-    $(".add_attach").click(function(evt) {
-      var t = $(this);
-      evt.preventDefault();
-      ChainSurveyResponse.addAttachment(t,t.attr('uploaded_by_id'),t.attr('answer_index'));
-    });
-    $(".a_rem").on('click',function(evt) {
-      evt.preventDefault();
-      var found = $(this).parent("div.a_line");
-      found.fadeOut();
-      found.remove();
-    });
-  });
-  <%if @respond_mode%>
-  $(document).ready(function() {
-    <%last_logged = @sr.last_logged_by_user(current_user)-%>
-    ChainSurveyResponse.initLocalStorage('<%=@sr.id%>','<%=last_logged ? last_logged.to_i : 0%>');
-    ChainSurveyResponse.updateResponseTrack();
-    ChainSurveyResponse.contactCheck();
-    ChainSurveyResponse.setSubmit();
-  });
-  <%end%>
-<% end %>
-<div id='survey_response_inner'><!--here for style support-->
-<div id='filter_warn' class='c_warn' style='display:none;'></div>
-<%=form_for @sr, :html=>{:id=>'frm_sr',:multipart=>true} do |f|%>
-  <h1><%=@sr.survey.name%> <%if @sr.user!=current_user%> - <%=@sr.user.full_name%><%end%> </h1>
-  <h3><%=@sr.subtitle%></h3>
-  <%if @rate_mode || !@sr.rating.blank?-%>
-    <div class='section_box'>
-      <div class='q_head'>Rating</div>
-      <div class='q_inner'>
-        <div class='comm'>
-          <%if @rate_mode -%> 
-            <%=f.select(:rating, @sr.survey.rating_values, {:include_blank=>"Select a master rating..."})%>
-          <%elsif @sr.rating -%>
-            <%=@sr.rating%>
-          <%end-%>
-        </div>
+<style>
+  label {
+    font-weight: bold;
+  }
+</style>
+<div ng-app='SurveyResponseApp'>
+  <div class='container' ng-controller='srController'>
+    <div class='row text-center' style='margin-bottom:20px;'>
+      <div class='span12'>
+        <h1>{{resp.survey.name}} <span ng-show='resp.subtitle.length>0'> - {{resp.subtitle}}</span></h1>
       </div>
     </div>
-  <%end-%>
-  <div id='contact' class='section_box'>
-    <div class='q_head'>Contact Information</div>
-    <table>
-      <%=field_row "Name", @rate_mode ? @sr.name : f.text_field(:name,:class=>:creq)%>
-      <%=field_row "Address", @rate_mode ? @sr.address : f.text_area(:address,:class=>:creq)%>
-      <%=field_row "Phone", @rate_mode ? @sr.phone : f.text_field(:phone,:class=>:creq)%>
-      <%=field_row "Email", @rate_mode ? @sr.email : f.text_field(:email,:class=>:creq)%>
-      <%=field_row "Fax", @rate_mode ? @sr.fax : f.text_field(:fax)%>
-    </table>
-  </div>
-  </table>
-  <%q_idx = 1%>
-  <%@sr.answers.each_with_index do |ans,a_idx|%>
-    <%=f.fields_for :answers, ans do |a|%>
-      <%q = a.object.question%>
-      <div class='question section_box' answered='<%=a.object.answered? ? "y" : "n"%>' rating='<%=a.object.rating%>'>
-        <div class='q_head'>Question #<%=q_idx%></div>
-        <%if !@rate_mode && a.object.question.warning? && a.object.answer_comments.empty? && a.object.attachments.empty?%> 
-          <div class='c_warn'>This question requires a comment or attachment.  Your submission may be rejected if this is not included.</div>
-        <%end%>
-        <%q_idx += 1%>
-        <div class='q_inner'>
-          <div class='q_subhead'>Question</div>
-          <div class='q_content'><%=RedCloth.new(q.content).to_html.html_safe%></div>
-          <p>
-            <% if @respond_mode && !q.choices.blank? %>
-              <div class='q_subhead'>Multiple Choice Answer</div> 
-              <div class='comm'>
-                <%=a.select :choice, q.choices.lines.to_a, {:include_blank=>"Select an answer..."},:class=>'resp multchoice',:answer_id=>ans.id%>
-              </div>
-            <% elsif !a.object.choice.blank? %>
-              <div class='q_subhead'>Multiple Choice Answer</div>
-              <div class='comm'>
-                <%=a.object.choice%>
-              </div>
-            <% end %>
-          </p>
-          <p>
-          <% if @rate_mode %>
-            <div class='q_subhead'>Rating</div> 
-            <div class='comm'>
-              <%=a.select :rating, @sr.survey.rating_values, :include_blank=>"Select a rating..." %>
-            </div>
-          <% elsif !a.object.rating.blank? %>
-            <div class='q_subhead'>Rating</div> 
-            <div class='comm'>
-              <%=a.object.rating%>
-            </div>
-          <% end %>
-          </p>
-          <div class='q_subhead'>Comments</div>
-          <% a.object.answer_comments.each do |ac|%>
-            <% next if ac.private? && !@sr.can_view_private_comments?(current_user) -%>
-            <div class='comm'>
-              <em><%=ac.user.full_name%> - <%=ac.created_at%> <%=ac.private? ? " - PRIVATE" : ""%></em><br/>
-              <pre>
-<%=ac.content-%>
-              </pre>
-            </div>
-          <% end %>
-          <%=a.fields_for :answer_comments, a.object.answer_comments.build(:user=>current_user) do |acf|%>
-            <%=acf.hidden_field :user_id%>
-            <%=acf.text_area :content, :class=>'a_opt', :answer_id=>a.object.id%><br />
-            <%if @sr.can_view_private_comments?(current_user)%><%=acf.check_box :private%> Private<%end%>
-          <% end %>
-          <ul>
-          <% a.object.attachments.each do |att|%>
-            <li><%=link_to att.attached_file_name, download_attachment_path(att)%></li>
-          <% end %>
-          </ul>
-          <div class='attach_box' id='attach_box_<%=a.object.id%>'>
-            <a href='#' class='add_attach' uploaded_by_id='<%=current_user.id%>' answer_index='<%=a_idx%>'>Attach File</a>
+    <div class='row'>
+      <div class='span2'>
+        <strong>Rating:</strong>
+      </div>
+      <div class='span10'>
+        <span ng-hide='resp.can_rate'>{{resp.rating}}</span>
+        <span ng-hide='resp.rating.length>0 || resp.can_rate'>Not Rated</span>
+        <select ng-show='resp.can_rate' ng-model='resp.rating' ng-options='v for v in resp.survey.rating_values'></select>
+      </div>
+    </div>
+    <fieldset>
+      <div class='row'>
+        <div class='span12'>
+          <legend class='text-info'>
+            Contact Information (required)
+          </legend>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='span6'>
+          <label for='ci-name'>Your Name</label>
+          <input id='ci-name' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer' />
+          <label for='ci-address'>Address</label>
+          <textarea id='ci-address' ng-model='resp.address' ng-disabled='!resp.can_answer'></textarea>
+        </div>
+        <div class='span6'>
+          <label for='ci-phone'>Phone</label>
+          <input id='ci-phone' type='tel' ng-model='resp.phone' ng-disabled='!resp.can_answer' />
+          <label for='ci-email'>Email</label>
+          <input id='ci-email' type='email' ng-model='resp.email' ng-disabled='!resp.can_answer' />
+          <label for='ci-fax'>Fax</label>
+          <input id='ci-fax' type='tel' ng-model='resp.fax' ng-disabled='!resp.can_answer' />
+        </div>
+      </div>
+    </fieldset>
+    <div ng-repeat='answer in resp.answers'>
+      <div class='row'>
+        <div class='span12'>
+          <legend class='text-info'>
+            Question #{{answer.sort_number}}
+          </legend>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='span12'>
+          <span ng-bind-html-unsafe='answer.question.html_content'></span>
+        </div>
+      </div>
+      <div class='row' style='margin-bottom:15px;'>
+        <div class='span6' ng-show='answer.question.choices.length>0'>
+          <label>Multiple Choice Answer</label>
+          <span ng-hide='resp.can_answer'>{{answer.choice}}</span>
+          <select ng-show='resp.can_answer' ng-model='answer.choice' ng-options='c for c in answer.question.choices'></select>
+        </div>
+        <div class='span6' ng-show='answer.question.choices.length>0'>
+          <label>Rating</label>
+          <span ng-hide='resp.can_rate'>{{answer.rating}}</span>
+          <select ng-show='resp.can_rate' ng-model='answer.rating' ng-options='v for v in resp.survey.rating_values'></select>
+        </div>
+      </div>
+      <div class='row' ng-repeat='com in answer.answer_comments'>
+        <div class='span12 muted'>
+          <strong>{{com.user.full_name}}</strong> wrote at {{com.created_at}}:
+        </div>
+        <div class='span12'>
+          {{com.content}}
+        </div>
+      </div>
+      <div class='row'>
+        <div class='span12'>
+          <label for='new_comment'>New Comment:</label>
+          <textarea id='new_comment' ng-model='answer.new_comment' rows='5' style='width:100%;'></textarea>
+          <div class='pull-right'>
+            <input type='checkbox' ng-model='answer.new_comment_private' /> private
+          </div>
+          <div>
+            <button class='btn btn-small' ng-click='addComment(answer)'>Add</button>
           </div>
         </div>
       </div>
-    <%end%>
-  <%end%>
-<%end%>
-</div>
-<div id='s_confirm' style='display:none;'>
-  <p>Submitting this survey will lock all answers notify the survey owner.</p>
-  <p>You will <span style='color:red'>NOT</span> be able to change your answers after clicking the Continue button below.</p>
-  <p>Please click Continue to finish submitting or Cancel to go back..</p>
-</div>
-
-<div id='s_rating_filter' style='display:none;'>
-  <div>Select the ratings you want to see.</div>
-  <%@sr.survey.rating_values.each do |rv|%>
-    <input type='checkbox' value='<%=rv%>' class='r_filter' /> <%=rv%><br />
-  <%end%>
-    <input type='checkbox' value='' class='r_filter' /> Show Not Rated
+    </div>
+  </div>
 </div>
