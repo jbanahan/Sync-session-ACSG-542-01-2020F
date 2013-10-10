@@ -182,7 +182,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
 
       r = run_to_array
       r.should have(1).records
-      r[0][0].should == p.unique_identifier
+      r[0][0].should == p2.unique_identifier
     end
   end
   it "should have sync code" do

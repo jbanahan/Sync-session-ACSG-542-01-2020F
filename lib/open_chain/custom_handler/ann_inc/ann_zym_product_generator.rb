@@ -99,7 +99,7 @@ LEFT OUTER JOIN sync_records on sync_records.syncable_type = 'Product' and sync_
 INNER JOIN custom_values AS a_date ON a_date.custom_definition_id = #{@cdefs[:approved_date].id} AND a_date.customizable_id = classifications.id and a_date.date_value is not null
 INNER JOIN custom_values AS a_type ON a_type.custom_definition_id = #{@cdefs[:article].id} AND a_type.customizable_id = products.id and a_type.string_value = 'ZSCR'
 "
-          w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at) AND (sync_records.fingerprint is null OR sync_records.fingerprint = '' OR sync_records.fingerprint = convert(#{md5} using latin1))"
+          w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at) AND (sync_records.fingerprint is null OR sync_records.fingerprint = '' OR sync_records.fingerprint <> convert(#{md5} using latin1))"
           r << (@custom_where ? @custom_where : w)
           r
         end
