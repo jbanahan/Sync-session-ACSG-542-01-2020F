@@ -179,12 +179,6 @@ def execute_scheduler
     end
   end
 
-  if MasterSetup.get.system_code == 'ann' && Rails.env == 'production'
-    scheduler.every("15m") do
-      OpenChain::CustomHandler::Ann::AnnZymProductGenerator.delay.generate
-    end
-  end
-
 end
 
 # Create the main logger and set some useful variables.
