@@ -481,28 +481,59 @@ module OpenChain
           params
         end
 
-        def execute_single_method params
+        def execute_single_method params, max_retries = 10
           execute params, false
         end
 
-        def execute_single_method! params
+        def execute_single_method! params, max_retries = 10
           execute params, true
         end
 
-        def execute params, raise_errors
-          start = Time.now
+        def execute params, raise_errors, max_retries = 10
           # What we get back here is information about the HTTP Response 
-          # and then the actual JSON response data in the result.data object
-          result = raise_errors ? @client.execute!(params) : @client.execute(params)
+          # and then the actual JSON response data in the result.data object          
+          result = execute_with_retry params, raise_errors
 
           if result.data?
             # This data should be the actual JSON data returned by the google API call
             # formatted into a drive schema object.
             result.data
-          elsif result.error?
-            raise
           else
-            nil
+            result
+          end
+        end
+
+        # Google Drive queries randomly fail with 500 Internal Errors randomly - supposedly at a rate around .5%.
+        # Apparently people think this is an acceptable failure rate and tell you to just retry the request
+        # after a set delay.  So, that's what we're doing here.
+        def execute_with_retry params, raise_errors, max_retries = 5
+          retry_count = 0
+          result = nil
+          begin
+            # Google recommands a backoff of 1 + random milleseconds
+            # (not implementing the exponential backoff, yet)
+            sleep(Random.rand + 1) if retry_count > 0
+
+            result = @client.execute(params)
+          end while result.response.status == 500 && (retry_count += 1) <= max_retries
+
+          if raise_errors && result && result.error?
+            #This error handling is pretty much just lifted from the google API client's execute! method
+            error_message = result.error_message
+            case result.response.status
+              when 400...500
+                exception_type = Google::APIClient::ClientError
+                error_message ||= "A client error has occurred."
+              when 500...600
+                exception_type = Google::APIClient::ServerError
+                error_message ||= "A server error has occurred."
+              else
+                exception_type = Google::APIClient::TransmissionError
+                error_message ||= "A transmission error has occurred."
+            end
+            raise exception_type, error_message
+          else
+            result
           end
         end
 

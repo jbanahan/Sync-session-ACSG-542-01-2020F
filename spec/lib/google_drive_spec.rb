@@ -31,7 +31,7 @@ describe OpenChain::GoogleDrive do
     after :each do
       @cleanup.each do |id|
         OpenChain::GoogleDrive.delete_by_id @user_email, id
-      end
+      end if @cleanup
     end
 
     context :upload_file do
