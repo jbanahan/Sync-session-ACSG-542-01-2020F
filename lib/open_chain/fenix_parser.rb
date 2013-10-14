@@ -508,7 +508,7 @@ module OpenChain
           # Be careful, the with_lock call actually reloads the entry object's data
           # That's why the last exported check is in here since time spent waiting on this
           # lock may have resulting in a more updated version of the entry coming in.
-          entry.with_lock("LOCK IN SHARE MODE") do
+          entry.with_lock do
             if source_system_export_date
               # Make sure we also update the source system export date while locked too so we prevent other processes from 
               # processing the same entry with stale data.
