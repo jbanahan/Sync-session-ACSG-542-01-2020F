@@ -205,6 +205,9 @@ EOS
     @backtrace = backtrace ? backtrace : e.backtrace
     @backtrace = [] unless @backtrace
     @additional_messages = additional_messages.nil? ? [] : additional_messages
+    @time = Time.now.in_time_zone("Eastern Time (US & Canada)").inspect
+    @hostname = Socket.gethostname
+    @process_id = Process.pid
     local_attachments = {}
     attachment_paths.each do |ap|
       if save_large_attachment ap, 'bug@aspect9.com' 
