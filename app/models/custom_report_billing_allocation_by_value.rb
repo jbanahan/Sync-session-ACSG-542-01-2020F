@@ -20,6 +20,13 @@ class CustomReportBillingAllocationByValue < CustomReport
     user.view_broker_invoices?
   end
 
+  def self.get_columns_renamed fields
+    invoice_total = fields.find {|field| field.uid == :bi_invoice_total}
+    invoice_total.label = "#{invoice_total.label} (not prorated)"
+
+    fields
+  end
+
   def run run_by, row_limit = nil
     row_cursor = 0
     col_cursor = 0
@@ -42,6 +49,7 @@ class CustomReportBillingAllocationByValue < CustomReport
     search_criterions.each {|sc| invoices = sc.apply(invoices)}
     invoices = BrokerInvoice.search_secure run_by, invoices
     invoices.includes(:entry=>[:commercial_invoice_lines])
+    invoices.order("entries.entry_number, entries.broker_reference, broker_invoices.invoice_date")
 
     invoices.each do |bi|
       charge_totals = {}
