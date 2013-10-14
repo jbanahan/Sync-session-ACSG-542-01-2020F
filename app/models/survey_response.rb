@@ -10,8 +10,6 @@ class SurveyResponse < ActiveRecord::Base
   validates_presence_of :survey
   validates_presence_of :user
 
-  accepts_nested_attributes_for :answers, :allow_destroy=>false
-
   before_save :update_status
   after_commit :send_notification
 

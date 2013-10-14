@@ -60,6 +60,48 @@ describe SurveyResponsesController do
       assigns(:sr).should == sr
       assigns(:respond_mode).should be_false
     end
+    context :json do 
+      it "should load json response" do
+        q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb"))
+        sr = q.survey.generate_response! @u, 'subt'
+        get :show, :id=>sr.id, :format=>:json
+        response.should be_success
+        j = JSON.parse response.body
+        srj = j['survey_response']
+        srj['survey']['name'].should == sr.survey.name
+        srj['survey']['rating_values'].should == ['a','b']
+      end
+
+      it "should remove private comments if user cannot edit" do
+        SurveyResponse.any_instance.stub(:can_view?).and_return true
+        SurveyResponse.any_instance.stub(:can_edit?).and_return false
+        q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb"))
+        sr = q.survey.generate_response! @u, 'subt'
+        sr.answers.first.answer_comments.create!(content:'mycomment',private:false,user:@u)
+        sr.answers.first.answer_comments.create!(content:'pcomment',private:true,user:@u)
+        get :show, :id=>sr.id, :format=>:json
+        response.should be_success
+        j = JSON.parse response.body
+        ac = j['survey_response']['answers'].first['answer_comments']
+        ac.size.should == 1
+        ac.first['content'].should == 'mycomment'
+      end
+
+      it "should leave private comments if user can edit" do
+        SurveyResponse.any_instance.stub(:can_view?).and_return true
+        SurveyResponse.any_instance.stub(:can_edit?).and_return true
+        q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb"))
+        sr = q.survey.generate_response! @u, 'subt'
+        sr.answers.first.answer_comments.create!(content:'mycomment',private:false,user:@u)
+        sr.answers.first.answer_comments.create!(content:'pcomment',private:true,user:@u)
+        get :show, :id=>sr.id, :format=>:json
+        response.should be_success
+        j = JSON.parse response.body
+        ac = j['survey_response']['answers'].first['answer_comments']
+        ac.size.should == 2
+        ac.collect {|c| c['content']}.should == ['mycomment','pcomment']
+      end
+    end
   end
   context 'authenticated' do
     before :each do
@@ -72,61 +114,21 @@ describe SurveyResponsesController do
       @sr.answers.create!(:question=>@survey.questions.first)
     end
     describe 'update' do
-      it "should not change ratings if user is not from survey company" do
-        UserSession.create! @response_user
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
-        response.should redirect_to survey_response_path(@sr)
-        flash[:notices].should have(1).message
-        answers = SurveyResponse.find(@sr.id).answers
-        answers.should have(1).answer
-        a = answers.first
-        a.choice.should == "a"
-        a.rating.should be_nil
-      end
       it "should not save if user is not from survey company or the user assigned to the response" do
         UserSession.create! Factory(:user)
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
+        post :update, :id=>@sr.id
         response.should redirect_to root_path
         flash[:errors].should have(1).msg
         SurveyResponse.find(@sr.id).answers.first.choice.should be_nil
       end
-      it "should not change choices if survey_response.user != current_user" do
-        UserSession.create! @survey_user
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
-        response.should redirect_to survey_response_path(@sr)
-        flash[:notices].should have(1).message
-        answers = SurveyResponse.find(@sr.id).answers
-        answers.should have(1).answer
-        a = answers.first
-        a.choice.should be_nil
-        a.rating.should == "x"
-      end
-      it "should add comments" do
-        UserSession.create! @response_user
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
-          "answer_comments_attributes"=>{"1"=>{"user_id"=>@response_user.id,"content"=>"abc"}}}}}
-        response.should redirect_to survey_response_path @sr
-        flash[:notices].should have(1).message
-        ac = SurveyResponse.find(@sr.id).answers.first.answer_comments.first
-        ac.content.should == "abc"
-        ac.user.should == @response_user
-      end
-      it "should not add comments if comment.user != current_user" do
-        UserSession.create! @response_user
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,
-          "answer_comments_attributes"=>{"1"=>{"user_id"=>@survey_user.id,"content"=>"abc"}}}}}
-        response.should redirect_to survey_response_path @sr
-        flash[:notices].should have(1).message
-        SurveyResponse.find(@sr.id).answers.first.answer_comments.should be_empty
-      end
       it "should not update submitted date if survey_response.user != current_user" do
         UserSession.create! @survey_user
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
+        post :update, :id=>@sr.id, :do_submit=>"1"
         SurveyResponse.find(@sr.id).submitted_date.should be_nil 
       end
       it "should update submitted date if flag set and survey_response.user == current_user" do
         UserSession.create! @response_user
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}, :do_submit=>"1"
+        post :update, :id=>@sr.id, :do_submit=>"1"
         SurveyResponse.find(@sr.id).submitted_date.should > 10.seconds.ago
       end
       it "should not send update email if response is not finished being rated" do
@@ -135,7 +137,7 @@ describe SurveyResponsesController do
         @sr.submitted_date = Time.now
         @sr.save!
 
-        post :update, :id=>@sr.id, :survey_response=>{"answers_attributes"=>{"1"=>{"choice"=>"a","id"=>@sr.answers.first.id.to_s,"rating"=>"x"}}}
+        post :update, :id=>@sr.id 
       end
       it "should send and update email if response is finished being rated" do
         m = double("mailer")

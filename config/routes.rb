@@ -401,6 +401,9 @@ OpenChain::Application.routes.draw do
     end
     resources :survey_response_logs, :only=>[:index]
   end
+  resources :answers, only:[:update] do
+    resources :answer_comments, only:[:create]
+  end
   
   resources :drawback_upload_files, :only=>[:index,:create]
   resources :duty_calc_import_files, :only=>[:create] do

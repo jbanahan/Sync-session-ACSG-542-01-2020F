@@ -2,6 +2,28 @@
 require 'spec_helper'
 
 describe Attachment do
+  describe "attachments_as_json" do
+    it "should create json" do
+      u = Factory(:user,first_name:'Jim',last_name:'Kirk')
+      o = Factory(:order)
+      a1 = o.attachments.create!(attached_file_name:'1.txt',attached_file_size:200,attachment_type:'mytype',uploaded_by_id:u.id)
+      a2 = o.attachments.create!(attached_file_name:'2.txt',attached_file_size:1000000,attachment_type:'2type',uploaded_by_id:u.id)
+      h = Attachment.attachments_as_json o
+      h[:attachable][:id].should == o.id
+      h[:attachable][:type].should == "Order"
+      ha = h[:attachments]
+      ha.size.should == 2
+      ha1 = ha.first
+      {a1=>ha[0],a2=>ha[1]}.each do |k,v|
+        v[:name].should == k.attached_file_name
+        v[:size].should == ActionController::Base.helpers.number_to_human_size(k.attached_file_size)
+        v[:type].should == k.attachment_type
+        v[:user][:id].should == u.id
+        v[:user][:full_name].should == u.full_name
+        v[:id].should == k.id
+      end
+    end
+  end
   describe "unique_file_name" do
     it "should generate unique name" do
       a = Attachment.create(:attached_file_name=>"a.txt")

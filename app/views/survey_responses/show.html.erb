@@ -3,54 +3,84 @@
     font-weight: bold;
   }
 </style>
-<div ng-app='SurveyResponseApp'>
+<div ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
   <div class='container' ng-controller='srController'>
+    <button chain-action-button ng-click='submitSurvey()' chain-show='showSubmit()' id='btn-submit'>Submit</button>
     <div class='row text-center' style='margin-bottom:20px;'>
       <div class='span12'>
         <h1>{{resp.survey.name}} <span ng-show='resp.subtitle.length>0'> - {{resp.subtitle}}</span></h1>
       </div>
     </div>
     <div class='row'>
-      <div class='span2'>
-        <strong>Rating:</strong>
-      </div>
-      <div class='span10'>
-        <span ng-hide='resp.can_rate'>{{resp.rating}}</span>
-        <span ng-hide='resp.rating.length>0 || resp.can_rate'>Not Rated</span>
-        <select ng-show='resp.can_rate' ng-model='resp.rating' ng-options='v for v in resp.survey.rating_values'></select>
+      <div ng-show='resp.error_message' class='span12 alert alert-error'>
+        {{resp.error_message}}
       </div>
     </div>
-    <fieldset>
+    <div>
+      <div class='span12'>
+        <span ng-show='resp.saving' class='label label-info'>Saving...</span>&nbsp;
+      </div>
+    </div>
+    <div class='row'>
+      <div class='span6'>
+        <strong>Rating:</strong><br />
+        <span ng-hide='resp.can_rate'>{{resp.rating}}</span>
+        <span ng-hide='resp.rating.length>0 || resp.can_rate'>Not Rated</span>
+        <select ng-change='srService.saveRating(resp)' ng-disabled='resp.error_message' ng-show='resp.can_rate' ng-model='resp.rating' ng-options='v for v in resp.survey.rating_values'></select>
+      </div>
+      <div class='span6'>
+        <strong>Question Filter</strong><br/>
+        <select ng-model='srService.settings.filterMode' ng-options='r for r in srService.filterModes'></select>
+      </div>
+    </div>
+    <form name='contact_form'>
+      <fieldset>
+        <div class='row'>
+          <div class='span12'>
+            <legend class='text-info'>
+              Contact Information (required) 
+            </legend>
+          </div>
+        </div>
+        <div class='row'>
+          <div class='span6'>
+            <div class='control-group' ng-class="{error: contact_form.name.$invalid}">
+              <label for='ci-name'>Your Name</label>
+              <input id='ci-name' name='name' ng-blur='srService.saveContactInfo(resp)' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer || resp.error_message' required />
+            </div>
+            <div class='control-group' ng-class="{error: contact_form.address.$invalid}">
+              <label for='ci-address'>Address</label>
+              <textarea id='ci-address' name='address' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.address' ng-disabled='!resp.can_answer || resp.error_message' required></textarea>
+            </div>
+          </div>
+          <div class='span6'>
+            <div class='control-group' ng-class="{error: contact_form.phone.$invalid}">
+              <label for='ci-phone'>Phone</label>
+              <input id='ci-phone' name='phone' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.phone' ng-disabled='!resp.can_answer || resp.error_message' required />
+            </div>
+            <div class='control-group' ng-class="{error: contact_form.email_add.$invalid}">
+              <label for='ci-email'>Email</label>
+              <input id='ci-email' name='email_add' type='email' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.email' ng-disabled='!resp.can_answer || resp.error_message' required />
+            </div>
+            <div class='control-group'>
+              <label for='ci-fax'>Fax</label>
+              <input id='ci-fax' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.fax' ng-disabled='!resp.can_answer || resp.error_message' />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+    <div ng-repeat='answer in (resp.answers | answerFilter:srService.settings.filterMode)' style='margin-bottom:20px;'>
       <div class='row'>
         <div class='span12'>
           <legend class='text-info'>
-            Contact Information (required)
+            Question #{{answer.sort_number}} <span ng-show='answer.saving' class='label label-info'>Saving...</span>
           </legend>
         </div>
       </div>
-      <div class='row'>
-        <div class='span6'>
-          <label for='ci-name'>Your Name</label>
-          <input id='ci-name' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer' />
-          <label for='ci-address'>Address</label>
-          <textarea id='ci-address' ng-model='resp.address' ng-disabled='!resp.can_answer'></textarea>
-        </div>
-        <div class='span6'>
-          <label for='ci-phone'>Phone</label>
-          <input id='ci-phone' type='tel' ng-model='resp.phone' ng-disabled='!resp.can_answer' />
-          <label for='ci-email'>Email</label>
-          <input id='ci-email' type='email' ng-model='resp.email' ng-disabled='!resp.can_answer' />
-          <label for='ci-fax'>Fax</label>
-          <input id='ci-fax' type='tel' ng-model='resp.fax' ng-disabled='!resp.can_answer' />
-        </div>
-      </div>
-    </fieldset>
-    <div ng-repeat='answer in resp.answers'>
-      <div class='row'>
-        <div class='span12'>
-          <legend class='text-info'>
-            Question #{{answer.sort_number}}
-          </legend>
+      <div class='row' ng-show='showWarning(answer)'>
+        <div class='span10 alert'>
+          This is a required question.  You must provide an answer or comment or your response may be rejected.
         </div>
       </div>
       <div class='row'>
@@ -58,21 +88,29 @@
           <span ng-bind-html-unsafe='answer.question.html_content'></span>
         </div>
       </div>
+      <div class='row' ng-show='answer.error_message'>
+        <div class='span12 alert alert-error'>{{answer.error_message}}</div>
+      </div>
       <div class='row' style='margin-bottom:15px;'>
-        <div class='span6' ng-show='answer.question.choices.length>0'>
+        <div class='span6' ng-show='answer.question.choice_list.length>0'>
           <label>Multiple Choice Answer</label>
           <span ng-hide='resp.can_answer'>{{answer.choice}}</span>
-          <select ng-show='resp.can_answer' ng-model='answer.choice' ng-options='c for c in answer.question.choices'></select>
+          <select ng-change='srService.saveAnswer(answer)' ng-show='resp.can_answer' ng-model='answer.choice' ng-options='c for c in answer.question.choice_list' ng-disabled='answer.error_message'></select>
         </div>
-        <div class='span6' ng-show='answer.question.choices.length>0'>
+        <div class='span6' ng-show='resp.can_rate || answer.rating'>
           <label>Rating</label>
           <span ng-hide='resp.can_rate'>{{answer.rating}}</span>
-          <select ng-show='resp.can_rate' ng-model='answer.rating' ng-options='v for v in resp.survey.rating_values'></select>
+          <select ng-change='srService.saveAnswer(answer)' ng-show='resp.can_rate' ng-model='answer.rating' ng-options='v for v in resp.survey.rating_values' ng-disabled='answer.error_message'></select>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='span12'>
+          <h4>Comments</h4>
         </div>
       </div>
       <div class='row' ng-repeat='com in answer.answer_comments'>
         <div class='span12 muted'>
-          <strong>{{com.user.full_name}}</strong> wrote at {{com.created_at}}:
+          <span ng-show='com.private' class='label label-success'>private</span> <strong>{{com.user.full_name}}</strong> wrote at {{com.created_at}}: 
         </div>
         <div class='span12'>
           {{com.content}}
@@ -82,12 +120,32 @@
         <div class='span12'>
           <label for='new_comment'>New Comment:</label>
           <textarea id='new_comment' ng-model='answer.new_comment' rows='5' style='width:100%;'></textarea>
-          <div class='pull-right'>
-            <input type='checkbox' ng-model='answer.new_comment_private' /> private
+          <div ng-hide='answer.error_message'>
+            <div class='pull-right' ng-show='resp.can_make_private_comment'>
+              <input type='checkbox' ng-model='answer.new_comment_private' /> private
+            </div>
+            <div>
+              <button ng-hide='answer.error_message' class='btn btn-small' ng-click='addComment(answer)'>Add</button>
+            </div>
+            <div ng-show='answer.error_message' class='alert alert-error'>
+              {{answer.error_message}}
+            </div>
           </div>
-          <div>
-            <button class='btn btn-small' ng-click='addComment(answer)'>Add</button>
-          </div>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='span12'>
+          <h4>Attachments</h4>
+        </div>
+      </div>
+      <div class='row' ng-repeat='att in answer.attachments'>
+        <div class='span12'>
+          <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='span12'>
+          <div chain-attach='answer' attachable-type='Answer' attachable-id='{{answer.id}}'></div>
         </div>
       </div>
     </div>
