@@ -6,7 +6,7 @@ describe OpenChain::GoogleDrive do
 
   before :all do
     @user_email = "integration-dev@vandegriftinc.com"
-    @test_folder = "spec"
+    @test_folder = "spec-" + Random.rand(1000000).to_s
   end
 
   context :actions_on_existing_files do
