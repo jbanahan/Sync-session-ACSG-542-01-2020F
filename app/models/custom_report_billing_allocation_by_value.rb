@@ -20,28 +20,26 @@ class CustomReportBillingAllocationByValue < CustomReport
     user.view_broker_invoices?
   end
 
-  def self.get_columns_renamed fields
-    invoice_total = fields.find {|field| field.uid == :bi_invoice_total}
-    invoice_total.label = "#{invoice_total.label} (not prorated)"
-
-    fields
-  end
-
   def run run_by, row_limit = nil
     row_cursor = 0
-    col_cursor = 0
+    col_cursor = -1
+
+    if self.include_links?
+      write row_cursor, (col_cursor += 1), "Web Links"
+    end
+    
+
     self.search_columns.each do |sc|
-      write row_cursor, col_cursor, sc.model_field.label
-      col_cursor += 1
+      write row_cursor, (col_cursor += 1), sc.model_field.label
     end
     hard_code_fields = [:bi_brok_ref,:bi_invoice_date,:bi_invoice_total].collect {|x| ModelField.find_by_uid(x)}
     hard_code_fields.each do |mf|
-      write row_cursor, col_cursor, mf.label
-      col_cursor += 1
+      write row_cursor, (col_cursor += 1), (mf.uid == :bi_invoice_total) ? "#{mf.label} (not prorated)": mf.label
     end
+    write row_cursor, (col_cursor += 1), "Broker Invoice - Prorated Line Total"
     charge_start_column = col_cursor
     
-    col_cursor = 0
+    col_cursor = -1
     row_cursor = 1
     
     bill_columns = []
@@ -78,8 +76,7 @@ class CustomReportBillingAllocationByValue < CustomReport
         line_value = line.value
         line_value = line.commercial_invoice_tariffs.first.nil? ? 0 : line.commercial_invoice_tariffs.first.entered_value if use_hts_value
         if self.include_links?
-          write_hyperlink row_cursor, col_cursor, entry.view_url,"Web View"
-          col_cursor += 1
+          write_hyperlink row_cursor, (col_cursor += 1), entry.view_url,"Web View"
         end
         self.search_columns.each do |sc|
           mf = sc.model_field
@@ -94,16 +91,15 @@ class CustomReportBillingAllocationByValue < CustomReport
           when CoreModule::COMMERCIAL_INVOICE_TARIFF
             obj_to_proc = line.commercial_invoice_tariffs.first
           end
-          write row_cursor, col_cursor, (obj_to_proc ? mf.process_export(obj_to_proc,run_by) : "")
-          col_cursor += 1
+          write row_cursor, (col_cursor += 1), (obj_to_proc ? mf.process_export(obj_to_proc,run_by) : "")
         end
-        write row_cursor, col_cursor, ModelField.find_by_uid(:ent_brok_ref).process_export(entry,run_by)
-        col_cursor += 1
-        write row_cursor, col_cursor, ModelField.find_by_uid(:bi_invoice_date).process_export(bi,run_by)
-        col_cursor += 1
-        write row_cursor, col_cursor, ModelField.find_by_uid(:bi_invoice_total).process_export(bi,run_by)
-        col_cursor += 1
-          
+        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:ent_brok_ref).process_export(entry,run_by)
+        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_date).process_export(bi,run_by)
+        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_total).process_export(bi,run_by)
+        
+        prorated_row_total = BigDecimal.new(0)
+        bill_column_values = []
+
         bill_columns.each do |cd|
           content = ""
           if charge_totals[cd]
@@ -114,22 +110,27 @@ class CustomReportBillingAllocationByValue < CustomReport
               diff = charge_totals[cd]-running_totals[cd]
               content = content + diff
             end
+            prorated_row_total += content
           else
             content = ""
           end
-          write row_cursor, col_cursor, content
-          col_cursor += 1
+          bill_column_values << content
+        end
+
+        write row_cursor, (col_cursor += 1), prorated_row_total
+        bill_column_values.each do |value|
+          write row_cursor, (col_cursor += 1), value
         end
 
         row_cursor += 1
-        col_cursor = 0
+        col_cursor = -1
       end
     end
 
     col_cursor = charge_start_column
     bill_columns.each do |label|
-      write 0, col_cursor, label
-      col_cursor += 1
+      write 0, (col_cursor += 1), label
+      
     end
     heading_row 0
   end
