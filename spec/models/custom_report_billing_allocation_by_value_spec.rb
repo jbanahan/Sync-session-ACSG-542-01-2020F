@@ -50,10 +50,10 @@ describe CustomReportBillingAllocationByValue do
       it "should use charge categories if they exist" do
         arrays = @klass.new.to_arrays @u
         heading_row = arrays.first
-        heading_row.should have(4).headings
-        heading_row[3].should == "X"
+        heading_row.should have(5).headings
+        heading_row[4].should == "X"
         [10,40].each_with_index do |val,i|
-          arrays[i+1][3].should == val
+          arrays[i+1][4].should == val
         end
       end
       it "should total amounts into categories across multiple codes" do
@@ -61,33 +61,34 @@ describe CustomReportBillingAllocationByValue do
         @bi.broker_invoice_lines.create!(:charge_description=>"something",:charge_amount=>250,:charge_code=>'CC2')
         arrays = @klass.new.to_arrays @u
         heading_row = arrays.first
-        heading_row.should have(4).headings
-        heading_row[3].should == "X"
+        heading_row.should have(5).headings
+        heading_row[4].should == "X"
         [60,240].each_with_index do |val,i|
-          arrays[i+1][3].should == val
+          arrays[i+1][4].should == val
         end
       end
       it "should put uncategoriezed amounts into Other Charges category" do
         @bi.broker_invoice_lines.create!(:charge_description=>"something",:charge_amount=>250,:charge_code=>'CC2')
         arrays = @klass.new.to_arrays @u
         heading_row = arrays.first
-        heading_row.should have(5).headings
-        heading_row[3].should == "X"
-        heading_row[4].should == "Other Charges"
+        heading_row.should have(6).headings
+        heading_row[4].should == "X"
+        heading_row[5].should == "Other Charges"
         [[10,50],[40,200]].each_with_index do |val,i|
-          arrays[i+1][3].should == val[0]
-          arrays[i+1][4].should == val[1]
+          arrays[i+1][4].should == val[0]
+          arrays[i+1][5].should == val[1]
         end
       end
     end
     it "should include base headings" do
       arrays = @klass.new.to_arrays @u
       heading_row = arrays.first
-      heading_row.should have(4).headings
+      heading_row.should have(5).headings
       heading_row[0].should == ModelField.find_by_uid(:bi_brok_ref).label
       heading_row[1].should == ModelField.find_by_uid(:bi_invoice_date).label
-      heading_row[2].should == ModelField.find_by_uid(:bi_invoice_total).label
-      heading_row[3].should == "C1"
+      heading_row[2].should == "#{ModelField.find_by_uid(:bi_invoice_total).label} (not prorated)"
+      heading_row[3].should == "Broker Invoice - Prorated Line Total"
+      heading_row[4].should == "C1"
     end
     it "should include custom column headings" do
       rpt = @klass.new
@@ -95,7 +96,7 @@ describe CustomReportBillingAllocationByValue do
       rpt.search_columns.build(:rank=>1,:model_field_uid=>:cil_line_number)
       arrays = rpt.to_arrays @u
       heading_row = arrays.first
-      heading_row.should have(6).headings
+      heading_row.should have(7).headings
       heading_row[0].should == ModelField.find_by_uid(:ent_entry_num).label
       heading_row[1].should == ModelField.find_by_uid(:cil_line_number).label
       heading_row[2].should == ModelField.find_by_uid(:bi_brok_ref).label
@@ -148,12 +149,15 @@ describe CustomReportBillingAllocationByValue do
       arrays = rpt.to_arrays @u
       arrays.should have(3).rows
       arrays[1][0].should == "5555"
-      arrays[1][3].should == 500
+      arrays[1][3].should == BigDecimal.new(625)
+      arrays[1][4].should == 500
+      arrays[1][5].should == 125
     end
     it "should include hyperlinks" do
       MasterSetup.get.update_attributes(:request_host=>"http://xxxx")
       arrays = @klass.new(:include_links=>true).to_arrays @u
       arrays.should have(3).rows
+      arrays[0][0].should eq "Web Links"
       (1..2).each {|i| arrays[i][0].should == @ent.view_url}
     end
     it "should subtract rounding allocation extra penny from last line" do
@@ -185,9 +189,9 @@ describe CustomReportBillingAllocationByValue do
     it "should not include charge type D" do
       @bi.broker_invoice_lines.create!(:charge_type=>"D",:charge_description=>"CD2",:charge_amount=>7)
       arrays = @klass.new.to_arrays @u
-      arrays.first.should have(4).columns
+      arrays.first.should have(5).columns
       arrays.first.last.should == "C1"
-      arrays[1].should have(4).columns
+      arrays[1].should have(5).columns
       arrays[1].last.should == 10 
     end
     it "should use tariff quantity if value is nil or 0" do
@@ -211,8 +215,8 @@ describe CustomReportBillingAllocationByValue do
         commercial_invoice_lines.create!(:value=>100)
       arrays = @klass.new.to_arrays imp_user #should not include entry from before(:each)
       arrays.should have(2).rows
-      arrays[0][3].should == "CDX"
-      arrays[1][3].should == 20
+      arrays[0][4].should == "CDX"
+      arrays[1][4].should == 20
     end
     it "should accumulate multiple broker invoice lines with the same charge description" do
       @bi.broker_invoice_lines.create(:charge_description=>@bil_1.charge_description,:charge_amount=>10)
@@ -231,7 +235,7 @@ describe CustomReportBillingAllocationByValue do
       @bi.broker_invoice_lines.create(:charge_description=>"ISF #8855858",:charge_amount=>10)
       arrays = @klass.new.to_arrays @u
       arrays.should have(3).rows
-      arrays.first.should have(4).columns
+      arrays.first.should have(5).columns
       arrays.first.last.should == "ISF"
       arrays[1][3].should == 12
       arrays[2][3].should == 48
