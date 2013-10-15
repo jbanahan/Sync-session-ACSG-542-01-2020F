@@ -157,6 +157,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/polo_ca_invoices" => "custom_features#polo_ca_invoices_index", :via=>:get
   match "/custom_features/polo_ca_invoices/upload" => "custom_features#polo_ca_invoices_upload", :via => :post
   match "/custom_features/polo_ca_invoices/:id/download" => "custom_features#polo_ca_invoices_download", :via => :get
+  match "/custom_features/ua_tbd" => "custom_features#ua_tbd_report_index", :via=>:get
+  match "/custom_features/ua_tbd/upload" => "custom_features#ua_tbd_report_upload", :via => :post
+  match "/custom_features/ua_tbd/:id/download" => "custom_features#ua_tbd_report_download", :via => :get
 
   #reports
   match "/reports" => "reports#index", :via => :get

@@ -6,8 +6,12 @@ module OpenChain; module CustomHandler; module UnderArmour; module UnderArmourCu
     del_date: {label:'Delivery Date',data_type: :date, module_type: 'Shipment'},
     coo: {label:'Country of Origin',data_type: :string, module_type: 'ShipmentLine'},
     color: {label:'Color',data_type: :string, module_type: 'ShipmentLine'},
+    colors: {label:'Colors',data_type: :text, module_type: 'Product'},
+    plant_codes: {label:'Plant Codes',data_type: :text, module_type: 'Product'},
+    import_countries: {label:'Import Countries',data_type: :text, module_type: 'Product'},
     size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'}
   } 
+  
   def self.included(base)
     base.extend(::OpenChain::CustomHandler::CustomDefinitionSupport)
     base.extend(ClassMethods)

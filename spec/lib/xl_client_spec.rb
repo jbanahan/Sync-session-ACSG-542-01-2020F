@@ -23,6 +23,26 @@ describe OpenChain::XLClient do
       @client.send(cmd).should == resp
     end
   end
+  describe :all_row_values do
+    it "should yield for all rows based on last_row_number" do
+      @client.should_receive(:last_row_number).with(0).and_return(2)
+      @client.should_receive(:get_row_values).with(0,0).and_return('a')
+      @client.should_receive(:get_row_values).with(0,1).and_return('b')
+      @client.should_receive(:get_row_values).with(0,2).and_return('c')
+      v = []
+      @client.all_row_values(0) do |r|
+        v << r
+      end
+      v.should == ['a','b','c']
+    end
+    it "should return array of arrays if no block given" do
+      @client.should_receive(:last_row_number).with(0).and_return(2)
+      @client.should_receive(:get_row_values).with(0,0).and_return(['a'])
+      @client.should_receive(:get_row_values).with(0,1).and_return(['b'])
+      @client.should_receive(:get_row_values).with(0,2).and_return(['c'])
+      @client.all_row_values(0).should == [['a'],['b'],['c']]
+    end
+  end
   it 'should send a new command' do
     cmd = {"command"=>"new","path"=>@path}
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)
@@ -143,6 +163,10 @@ describe OpenChain::XLClient do
     @client.should_receive(:send).with(cmd).and_return(return_array)
     r = @client.get_row_values(0, 10)
     r.should == ["abc", nil, nil, Time.at(t.to_i)]
+  end
+  it "should return empty array if get_row_as_column_hash returns empty hash" do
+    @client.should_receive(:get_row_as_column_hash).with(0,10).and_return({})
+    @client.get_row_values(0,10).should == []
   end
 
   describe 'last_row_number' do

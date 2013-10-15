@@ -1,0 +1,15 @@
+<h1>TBD Report</h1>
+<h2>Upload</h2>
+<%= form_tag '/custom_features/ua_tbd/upload', :multipart => true, :class=>'form-horizontal' do %>
+  <%= file_field_tag :attached %> <%=submit_tag 'Upload', :id=>'btn_upload', :class=>'btn' %>
+<% end %>
+<h2>Existing Files</h2>
+<table class='detail_table'>
+  <thead><tr><th>File Name</th><th>Uploaded By</th><th>Uploaded At</th></tr></thead>
+  <tbody>
+    <%@files.each do |f|%>
+      <tr><td><%=link_to f.attached_file_name, "/custom_features/ua_tbd/#{f.id}/download"%></td><td><%=f.uploaded_by ? f.uploaded_by.full_name : ""%></td><td><%=f.created_at%></td></tr>
+    <%end%>
+  </tbody>
+</table>
+<%= will_paginate @files %>
