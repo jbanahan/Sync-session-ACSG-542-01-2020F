@@ -23,7 +23,9 @@ OpenChain::Application.configure do
   # No need for log file rotation, an external process (logrotate) handles that now.
   config.logger = MonoLogger.new(Rails.root.join("log", Rails.env + ".log"))
   # Only want to see errors in the log (default is :info which shows request information)
-  config.log_level = :warn
+  # For some reason the standard rails logger level symbol and log_level won't work when you 
+  # use a different logging implementation (MonoLogger)
+  config.logger.level = Logger::WARN
 
   # Use a different cache store in production
   # We want to to make sure to namespace the data based on the instance name of the app
