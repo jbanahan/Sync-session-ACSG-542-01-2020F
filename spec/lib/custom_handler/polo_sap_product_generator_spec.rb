@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::PoloSapProductGenerator do
@@ -82,6 +84,20 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       a.should have(3).item
       a.collect {|x| x[0]}.should == [p1.unique_identifier,p2.unique_identifier,p3.unique_identifier]
     end
+
+    it "should sync and skip product with invalid UTF-8 data" do
+      p1 = Factory(:product)
+      p2 = Factory(:product, :unique_identifier => "Ænema")
+      [p1, p2].each do |p|
+        p.update_custom_value! @sap_brand_cd, true
+        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))
+      end
+      
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
+      a = CSV.parse(IO.read(@tmp.path),:headers=>true)
+      a.should have(1).item
+      a.collect {|x| x[0]}.should == [p1.unique_identifier]
+    end
   end
 
   describe :ftp_credentials do
@@ -126,5 +142,69 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
   end
 
+  describe :preprocess_row do
+    it "should handle converting UTF-8 'EN-DASH' characters to hyphens" do
+      # Note the "long hyphen" character...it's the unicode 2013 char
+      r = @g.preprocess_row(0 => "This is a – test.")
+      r.should eq [{0=>"This is a - test."}]
+    end
+
+    it "should handle converting UTF-8 'EM-DASH' characters to hyphens" do
+      # Note the "long hyphen" character...it's the unicode 2014 char
+      r = @g.preprocess_row(0 => "This is a — test.")
+      r.should eq [{0=>"This is a - test."}]
+    end
+
+    it "should convert tab characters to spaces" do
+      r = @g.preprocess_row(0 => "This\tis\ta\ttest.")
+      r.should eq [{0 => "This is a test."}]
+    end
+
+    it "should handle non-string data" do
+      v = {
+        0 => BigDecimal.new(123),
+        1 => 123, 
+        2 => 123.4, 
+        3 => Time.now, 
+        4 => nil
+      }
+
+      r = @g.preprocess_row v
+      r.should eq [v]
+    end
+
+    context :invalid_ascii_chars do 
+      before :each do
+        StandardError.any_instance.should_receive(:log_me) do |arg|
+          @error_message = arg
+        end
+      end
+
+      it "should log an error for non-printing chars" do
+        # Just use any non-printing char
+        r = @g.preprocess_row(0=>1, 2=>"\v")
+        r.should be_nil
+
+        @error_message.should eq ["Invalid character data found in product with unique_identifier '1'."]
+      end
+
+      it "should fail on delete char" do
+        # Delete char is ASCII 127 and is not a printable character
+        # Only reason it's in a test here is that there had to be special handling since it's ascii 127
+        r = @g.preprocess_row(0=>1, 2 => "␡")
+        r.should be_nil
+
+        @error_message.should eq ["Invalid character data found in product with unique_identifier '1'."]
+      end
+
+      it "should log an error for non-ASCII chars" do
+        r = @g.preprocess_row(0=>1, 2 =>"Æ")
+        r.should be_nil
+
+        @error_message.should eq ["Invalid character data found in product with unique_identifier '1'."]
+      end
+
+    end
+  end
 
 end
