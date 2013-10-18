@@ -1,0 +1,24 @@
+<%-content_for :javascript do -%>
+$(function() {
+  $('#btn_submit').click(function() {
+    $('#myfrm').submit();
+  });
+});
+<%-end-%>
+<%-content_for :action_bar do -%>
+  <button id='btn_submit'>Send</button>
+<%-end-%>
+<div class='container'>
+  <div class='row'>
+    <div class='span12'>
+      <h1>UA Winshuttle Report Generator</h1>
+    </div>
+  </div>
+  <div class='row'>
+    <div class='span12'>
+      <form id='myfrm' method='POST' action='/custom_features/ua_winshuttle'>
+        <label for='email'>Send To: </label><input type='email' name='email' value='<%=current_user.email%>'/>
+      </form>
+    </div>
+  </div>
+</div>

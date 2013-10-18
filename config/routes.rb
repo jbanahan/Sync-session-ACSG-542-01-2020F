@@ -140,6 +140,8 @@ OpenChain::Application.routes.draw do
 
   #custom features
   match "/custom_features" => "custom_features#index", :via => :get
+  match "/custom_features/ua_winshuttle" => "custom_features#ua_winshuttle_index", :via=>:get
+  match "/custom_features/ua_winshuttle" => "custom_features#ua_winshuttle_send", :via=>:post
   match "/custom_features/csm_sync" => "custom_features#csm_sync_index", :via=>:get
   match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
   match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get
