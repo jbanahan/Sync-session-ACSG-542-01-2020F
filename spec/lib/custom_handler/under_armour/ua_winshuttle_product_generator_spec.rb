@@ -32,6 +32,22 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       @cn = Factory(:country,iso_code:'CN')
       @mx = Factory(:country,iso_code:'MX')
     end
+    it "should elminiate items that don't need sync via query" do
+      #prepping data
+      p = Factory(:product)
+      p.update_custom_value! @plant_cd, "0010\n0011"
+      Factory(:tariff_record,hts_1:"12345678",classification:Factory(:classification,country_id:@us.id,product:p))
+      rows = []
+      described_class.new.sync {|row| rows << row}
+      rows.size.should == 2
+
+      #running a second time shouldn't result in any rows from query to be processed
+      rows = []
+      g = described_class.new
+      g.should_not_receive(:preprocess_row)
+      g.sync {|r| rows << r}
+      rows.should be_empty
+    end
     it "should match plant to country" do
       p = Factory(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
@@ -71,6 +87,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       rows = []
       described_class.new.sync {|row| rows << row}
       rows.size.should == 3
+      p.update_attributes(updated_at:2.minutes.from_now)
       p.reload
       p.classifications.find_by_country_id(@ca.id).tariff_records.first.update_attributes(hts_1:'987654321')
       rows = []
