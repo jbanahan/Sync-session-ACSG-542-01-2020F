@@ -2,6 +2,7 @@ require 'open_chain/custom_handler/product_generator'
 module OpenChain
   module CustomHandler
     class PoloSapProductGenerator < ProductGenerator
+
       #SchedulableJob compatibility
       def self.run_schedulable opts={}
         g = self.new(opts)
@@ -19,18 +20,64 @@ module OpenChain
         @no_brand_restriction = params[:no_brand_restriction]
         raise "SAP Brand custom definition does not exist." unless @sap_brand
       end
+
       def sync_code 
         'polo_sap'
       end
+
       def ftp_credentials
         {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/sap_#{@env==:qa ? 'qa' : 'prod'}"}
       end
+
+      def preprocess_row row
+        row.each do |key, val|
+          row[key] = convert_to_ascii(val)
+        end
+
+        [row]
+      rescue ArgumentError, Encoding::UndefinedConversionError => e
+        # In cases of errors, we're just sending out error emails to ourselves at this point since
+        # we don't really think we'll encounter this very often.
+
+        # The product generator trims off the id, so the first value in the row is the unique_identifier.
+        e.log_me ["Invalid character data found in product with unique_identifier '#{row[0]}'."]
+        return nil
+      end
+
+      def convert_to_ascii value
+        if value && value.is_a?(String)
+          allowed_conversions = {
+            "\u{2013}" => "-",
+            "\u{2014}" => "-"
+          }
+          # First convert the UTF-8 text to ascii w/ our conversion table
+          value = value.encode("US-ASCII", :fallback => allowed_conversions)
+
+          # Convert tab chars to spaces
+          value = value.gsub("\t", " ")
+
+          # Now fail if there are any non-printing chars (aside from newlines ASCII 10 && 13)
+          # ie. ASCII chars < 32 or > 126.  (Extended ASCII range is not allowed - it shouldn't even get translated in the encode call anyway.)
+          # I'm sure there's a way to write a regular expression using ascii codepoints, but I'm not seeing
+          # it, so I'm just going to loop the characters and check them all manually.
+          value.each_codepoint do |code|
+            if (code < 32 || code > 126) && ![10, 13].include?(code)
+              raise ArgumentError, "Non-printing ASCII code '#{code}' found in the value #{value}."
+            end
+          end
+
+        end
+
+        value
+      end
+
       def before_csv_write cursor, vals
         vals[3] = vals[3].hts_format
         vals[8] = vals[8].length==2 ? vals[8].upcase : "" unless vals[8].blank?
         clean_string_values vals, true #true = remove quotes
         vals
       end
+
       def query
         q = "SELECT products.id,
 products.unique_identifier, 

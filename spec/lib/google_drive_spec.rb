@@ -6,7 +6,7 @@ describe OpenChain::GoogleDrive do
 
   before :all do
     @user_email = "integration-dev@vandegriftinc.com"
-    @test_folder = "spec"
+    @test_folder = "spec-" + Random.rand(1000000).to_s
   end
 
   context :actions_on_existing_files do
@@ -31,7 +31,7 @@ describe OpenChain::GoogleDrive do
     after :each do
       @cleanup.each do |id|
         OpenChain::GoogleDrive.delete_by_id @user_email, id
-      end
+      end if @cleanup
     end
 
     context :upload_file do

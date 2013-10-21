@@ -12,16 +12,21 @@ module OpenChain
       # mapped values intentially use symbols that don't map to actual entry property setter methods
       '180' => :do_issued_date_first,
       '490' => :docs_received_date_first,
-      '10' => :eta_date=
+      '10' => :eta_date=,
+      '868' => :release_date=,
+      '1270' => :cadex_sent_date=,
+      '1274' => :cadex_accept_date=,
+      '1280' => :k84_receive_date=
     }
 
     SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']
+    LVS_LINE_TYPE = "LVS"
 
     def self.integration_folder
       "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
     end
 
-    # take the text from a Fenix CSV output file a create entries
+    # take the text from a Fenix CSV output file and create entries
     def self.parse file_content, opts={}
       begin
         entry_lines = []
@@ -30,8 +35,10 @@ module OpenChain
           # The "supporting" lines in the new format all have less than 10 file positions 
           # So, don't skip the line if we're proc'ing one of those.
           supporting_line_type = SUPPORTING_LINE_TYPES.include?(line[0])
-          next if (line.size < 10 && !supporting_line_type) || line[0]=='Barcode'
-          
+
+          # LVS Lines have < 10 indexes so we can't skip those either
+          next if (line.size < 10 && (!supporting_line_type && line[0] != LVS_LINE_TYPE)) || line[0]=='Barcode'
+
           # We'll never encounter a situation where if we have a "new-style" line type where we need to start
           # a new entry.  Therefore, don't even consider creating a new entry unless we have an old-style header
           # line or a new style header
@@ -57,6 +64,11 @@ module OpenChain
         end
         FenixParser.new.parse_entry entry_lines, opts unless entry_lines.empty?
       rescue
+        # The logging here obscures issues in non-production environments (.ie specs) and we don't really
+        # care about lock wait errors because these are run in delayed jobs and they'll get picked up
+        # later and reprocessed
+        raise $! if Rails.env != 'production' || Lock.lock_wait_timeout?($!)
+
         tmp = Tempfile.new(['fenix_error_','.txt'])
         tmp << file_content
         tmp.flush
@@ -64,10 +76,11 @@ module OpenChain
       end
     end
 
-    def parse_entry lines, opts={} 
+    def parse_entry lines, opts = {}
       s3_bucket = opts[:bucket]
       s3_path = opts[:key]
       start_time = Time.now
+      @entry = nil
       @commercial_invoices = {}
       @total_invoice_val = BigDecimal('0.00')
       @total_units = BigDecimal('0.00')
@@ -75,95 +88,108 @@ module OpenChain
       @total_gst = BigDecimal('0.00')
       @total_duty = BigDecimal('0.00')
 
-      accumulated_dates = Hash.new {|h, k| h[k] = []}
+      if lines.first[0] == LVS_LINE_TYPE
+        process_lvs_entry lines
+        nil
+      else
+        accumulated_dates = Hash.new {|h, k| h[k] = []}
 
-      #get header info from first line
-      @entry = process_header lines.first, find_source_system_export_time(s3_path)
+        # Gather entry header information needed to find the entry
+        info = entry_information lines.first
 
-      # If the parse header returned nil, it means we shouldn't continue parsing the files lines
-      return if @entry.nil?
+        find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path)) do |entry|
+          # Entry is only yieled here if we need to process one (ie. it's not outdated)
+          # This whole block is also already inside a transaction, so no need to bother with opening another one
+          @entry = entry
 
-      lines.each do |line| 
+          process_header lines.first, entry
 
-        case line[0]
-        when "SD"
-          process_activity_line line, accumulated_dates
-        when "CCN"
-          process_cargo_control_line line
-        when "CON"
-          process_container_line line
-        when "BL"
-          process_bill_of_lading_line line
-        else 
-          process_invoice line
-          process_invoice_line line
+          lines.each do |line| 
+
+            case line[0]
+            when "SD"
+              process_activity_line line, accumulated_dates
+            when "CCN"
+              process_cargo_control_line line
+            when "CON"
+              process_container_line line
+            when "BL"
+              process_bill_of_lading_line line
+            else 
+              process_invoice line
+              process_invoice_line line
+            end
+          end
+
+          detail_pos = accumulated_string(:po_numbers)
+          @entry.last_file_bucket = s3_bucket
+          @entry.last_file_path = s3_path
+          @entry.total_invoiced_value = @total_invoice_val
+          @entry.total_units = @total_units
+          @entry.total_duty = @total_duty
+          @entry.total_gst = @total_gst
+          @entry.total_duty_gst = @total_duty + @total_gst
+          @entry.po_numbers = detail_pos unless detail_pos.blank?
+          @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
+          @entry.container_numbers = accumulated_string(:container_numbers)
+          # There's no House bill field in the spec, so we're using the container
+          # number field on Air entries to send the data.
+          # 1 = Air
+          # 2 = Highway (Truck)
+          # 6 = Rail
+          # 9 = Maritime (Ocean)
+          if ["1", "2"].include? @entry.transport_mode_code
+            @entry.house_bills_of_lading = accumulated_string(:container_numbers)
+          end
+          @entry.origin_country_codes = accumulated_string(:org_country)
+          @entry.origin_state_codes = accumulated_string(:org_state)
+          @entry.export_country_codes = accumulated_string(:exp_country)
+          @entry.export_state_codes = accumulated_string(:exp_state)
+          @entry.vendor_names = accumulated_string(:vendor_names)
+          @entry.part_numbers = accumulated_string(:part_number)
+          @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
+          @entry.cargo_control_number = accumulated_string(:cargo_control_number)
+          @entry.entered_value = @total_entered_value
+
+          @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
+
+          @commercial_invoices.each do |inv_num, inv|
+            inv.invoice_value = @ci_invoice_val[inv_num]
+          end
+
+          set_entry_dates @entry, accumulated_dates
+
+          @entry.save!
+          #match up any broker invoices that might have already been loaded
+          @entry.link_broker_invoices
+          #write time to process without reprocessing hooks
+          @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
+
         end
+        nil
       end
-
-      detail_pos = accumulated_string(:po_numbers)
-      @entry.last_file_bucket = s3_bucket
-      @entry.last_file_path = s3_path
-      @entry.total_invoiced_value = @total_invoice_val
-      @entry.total_units = @total_units
-      @entry.total_duty = @total_duty
-      @entry.total_gst = @total_gst
-      @entry.total_duty_gst = @total_duty + @total_gst
-      @entry.po_numbers = detail_pos unless detail_pos.blank?
-      @entry.master_bills_of_lading = retrieve_valid_bills_of_lading
-      @entry.container_numbers = accumulated_string(:container_numbers)
-      # There's no House bill field in the spec, so we're using the container
-      # number field on Air entries to send the data.
-      # 1 = Air
-      # 2 = Highway (Truck)
-      # 6 = Rail
-      # 9 = Maritime (Ocean)
-      if ["1", "2"].include? @entry.transport_mode_code
-        @entry.house_bills_of_lading = accumulated_string(:container_numbers)
-      end
-      @entry.origin_country_codes = accumulated_string(:org_country)
-      @entry.origin_state_codes = accumulated_string(:org_state)
-      @entry.export_country_codes = accumulated_string(:exp_country)
-      @entry.export_state_codes = accumulated_string(:exp_state)
-      @entry.vendor_names = accumulated_string(:vendor_names)
-      @entry.part_numbers = accumulated_string(:part_number)
-      @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
-      @entry.cargo_control_number = accumulated_string(:cargo_control_number)
-      @entry.entered_value = @total_entered_value
-
-      @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
-
-      @commercial_invoices.each do |inv_num, inv|
-        inv.invoice_value = @ci_invoice_val[inv_num]
-      end
-
-      set_entry_dates @entry, accumulated_dates
-      @entry.save!
-      #match up any broker invoices that might have already been loaded
-      @entry.link_broker_invoices
-      #write time to process without reprocessing hooks
-      @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
     end
 
     private
 
-    def process_header line, current_export_date
-      entry_number = str_val(line[0])
-      file_number = line[1]
-      tax_id = str_val line[3]
-      importer_name = str_val line[108]
-      entry = find_entry file_number, entry_number, tax_id, importer_name, current_export_date
+    def entry_information line
+      {
+        :entry_number =>  str_val(line[0]),
+        :broker_reference => line[1],
+        :importer_tax_id => str_val(line[3]),
+        :importer_name => str_val(line[108])
+      }
+    end
 
-      return if entry.nil?
+    def process_header line, entry
+      info = entry_information(line)
 
       # Shell records won't have broker references, so make sure to set it
-      entry.broker_reference = file_number
+      entry.broker_reference = info[:broker_reference]
 
-      #clear commercial invoices
-      entry.commercial_invoices.destroy_all
-
-      entry.entry_number = entry_number
+      entry.entry_number = info[:entry_number]
       entry.import_country = Country.find_by_iso_code('CA')
-      entry.importer_tax_id = tax_id
+      entry.importer_tax_id = info[:importer_tax_id]
       accumulate_string :cargo_control_number, str_val(line[12])
       accumulate_string :master_bills_of_lading, str_val(line[13])
       accumulate_string :container_numbers, str_val(line[8])
@@ -189,7 +215,7 @@ module OpenChain
       if file_logged_str && file_logged_str.length==10
         entry.file_logged_date = parse_date_time([file_logged_str,"12:00am"],0)
       end
-      entry.customer_name = importer_name
+      entry.customer_name = info[:importer_name]
       entry.customer_number = str_val line[107]
 
       entry
@@ -444,10 +470,12 @@ module OpenChain
       c
     end
 
-    def find_entry file_number, entry_number, tax_id, importer_name, source_system_export_date
+    def find_and_process_entry file_number, entry_number, tax_id, importer_name, source_system_export_date
       # Make sure we aquire a cross process lock to prevent multiple job queues from executing this 
       # at the same time (prevents duplicate entries from being created).
-      Lock.acquire(Lock::FENIX_PARSER_LOCK) do 
+      entry = nil
+      importer = nil
+      Lock.acquire(Lock::FENIX_PARSER_LOCK, 3) do 
         entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
 
         # Because the Fenix shell records created by the imaging client only have an entry number in them,
@@ -464,31 +492,102 @@ module OpenChain
           # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
           # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
           entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer.id, :last_exported_from_source=>source_system_export_date) 
-        elsif source_system_export_date
-          # Make sure we also update the source system export date while locked too so we prevent other processes from 
-          # processing the same entry with stale data.
+        end
+      end
 
-          # We want to utilize the last exported from source date to determine if the
-          # file we're processing is stale / out of date or if we should process it
+      # The is a bit of an optimization..there's no point waiting on the 
+      # lock if we're just going to abort because we're looking at old data
+      if process_file? entry, source_system_export_date
 
-          # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
-          # current entry's (entries may have nil exported dates if they were created by the imaging client)
-          if entry.last_exported_from_source.nil? || (entry.last_exported_from_source <= source_system_export_date)
-            entry.update_attributes(:last_exported_from_source=>source_system_export_date)
-          else
-            entry = nil
+        # Once we've got the entry we're looking for we'll lock it for updates so we don't have
+        # a really course grained lock in place while we're updating some values in the entry to prep 
+        # it for replacement.  By locking the entry here, we can ensure that only a single instance
+        # of the parser will run the updates in here at a single time.
+        lock_retry do 
+
+          # Be careful, the with_lock call actually reloads the entry object's data
+          # That's why the last exported check is in here since time spent waiting on this
+          # lock may have resulting in a more updated version of the entry coming in.
+          entry.with_lock do
+            if source_system_export_date
+              # Make sure we also update the source system export date while locked too so we prevent other processes from 
+              # processing the same entry with stale data.
+
+              # We want to utilize the last exported from source date to determine if the
+              # file we're processing is stale / out of date or if we should process it
+
+              # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
+              # current entry's (entries may have nil exported dates if they were created by the imaging client)
+              if process_file? entry, source_system_export_date
+                entry.update_attributes(:last_exported_from_source=>source_system_export_date)
+              else
+                break
+              end
+            end
+
+            # Fenix can actually change the importer the entry is associated with so we need to handle updating the importer as well.
+            # Not sure if this is an operational error or if its something like pre-keying invoice data prior to actually knowing what
+            # entity is importing the goods.  Either way we need to make sure the entry is associated with the correct importer company
+            if importer && importer.id != entry.importer_id
+              entry.importer = importer
+            end
+
+            # Destroy invoices since the file we get is a full replacement of the invoice values, not an update.
+            # Large entries with lots of invoices can take quite a while to delete (upwards of a minute), which may result in other processes
+            # timing out with a lock wait error - hence the lock_rety.  Even if there's some timeouts, at least the 
+            # files will get reparsed via delayed job retries.
+            entry.commercial_invoices.destroy_all
+
+            yield entry
           end
         end
+      end
 
-        # Fenix can actually change the importer the entry is associated with so we need to handle updating the importer as well.
-        # Not sure if this is an operational error or if its something like pre-keying invoice data prior to actually knowing what
-        # entity is importing the goods.  Either way we need to make sure the entry is associated with the correct importer company
-        if entry && importer && importer.id != entry.importer_id
-          entry.importer = importer
+      nil
+    end
+
+    def process_lvs_entry lines
+      # We're going to force any created entry to be canadian origin, which will force them to show on screen
+      # on the Canadian entry view.
+      canada = Country.find_by_iso_code('CA')
+
+      # Extract all the activity lines for each child entry listed, then we can use the standard set_entry_dates method to fill the date values
+      accumulated_entry_dates = {}
+      lines.each do |line|
+        accumulated_entry_dates[line[2]] ||= {}
+        date_key = ACTIVITY_DATE_MAP[line[3]]
+        if date_key 
+          accumulated_entry_dates[line[2]][date_key] ||= []
+          # parse date time above expects times in MM/dd/yyyy format
+          accumulated_entry_dates[line[2]][date_key] << time_zone.parse(line[4])
+        end
+      end
+
+      accumulated_entry_dates.each do |entry_number, dates|
+        entry = nil
+        Lock.acquire(Lock::FENIX_PARSER_LOCK, 3) do 
+          # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
+          entry = Entry.where(:entry_number => entry_number, :source_system => SOURCE_CODE).first_or_create! :import_country => canada
         end
 
-        entry
+        set_entry_dates entry, dates
+        entry.save!
       end
+    end
+
+    def lock_retry max_retry_count = 5
+      counter = 0
+      begin
+        return yield
+      rescue ActiveRecord::StatementInvalid => e
+        retry if Lock.lock_wait_timeout?(e) && ((counter += 1) < max_retry_count)
+
+        raise e
+      end
+    end
+
+    def process_file? entry, source_system_export_date
+      entry.last_exported_from_source.nil? || (entry.last_exported_from_source <= source_system_export_date)
     end
 
     def find_source_system_export_time file_path

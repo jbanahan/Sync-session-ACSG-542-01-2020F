@@ -25,6 +25,9 @@ module OpenChain
       
       # do any preprocessing on the row results before passing to the sync_[file_format] methods
       # returns array of rows so you can add more rows into the process
+      #
+      # If nil or a blank array is returned then this row of sync data is skipped and will not be included
+      # in the output, nor will the product be marked as synced.
       def preprocess_row row
         [row]
       end
@@ -37,11 +40,11 @@ module OpenChain
         has_fingerprint = self.respond_to? :trim_fingerprint
         synced_products = {} 
         rt = Product.connection.execute query
-        row = {}
+        header_row = {}
         rt.fields.each_with_index do |f,i|
-          row[i-1] = f unless i==0
+          header_row[i-1] = f unless i==0
         end
-        yield row if rt.count > 0
+
         rt.each_with_index do |vals,i|
           fingerprint = nil
           if has_fingerprint
@@ -51,9 +54,21 @@ module OpenChain
           end
           row = {}
           clean_vals.each_with_index {|v,i| row[i-1] = v unless i==0}
-          synced_products[clean_vals[0]] = fingerprint
           processed_rows = preprocess_row row
-          processed_rows.each {|r| yield r}
+          # Allow for preprocess_row to "reject" the row and not process it in this sync pass.
+          # Allows for more complicated code based handling of sync data that might not be able to be
+          # done via the query.
+          if processed_rows && processed_rows.length > 0
+            # Don't send a header row until we actually have confirmed we have something to send out
+            unless header_row.blank?
+              yield header_row
+              header_row = nil
+            end
+            
+            synced_products[clean_vals[0]] = fingerprint
+            processed_rows.each {|r| yield r}
+          end
+          
         end
         if self.respond_to? :sync_code
           synced_products.keys.in_groups_of(100,false) do |uids|

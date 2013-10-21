@@ -40,6 +40,32 @@ describe OpenChain::CustomHandler::ProductGenerator do
         end
         r.should == [{0=>'UID',1=>'NM'},{0=>@p1.unique_identifier,1=>'x'},{0=>@p1.unique_identifier,1=>'x'}]
       end
+
+      it "should skip preprocess rows that return nil" do
+        def @inst.preprocess_row row
+          nil
+        end
+
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+
+        r.blank?.should be_true
+      end
+
+      it "should skip preprocess rows that return blank arrays" do
+        def @inst.preprocess_row row
+          []
+        end
+
+        r = []
+        @inst.sync do |row|
+          r << row
+        end
+
+        r.blank?.should be_true
+      end
     end
     context :sync_records do
       context :implments_sync_code do

@@ -1,9 +1,10 @@
 Error: <%=@exception%>
 Message: <%=@error_message%>
 Master UUID: <%=MasterSetup.get.uuid%>
-Time: <%=Time.now%>
+Time: <%=@time%>
 Root: <%=Rails.root.to_s%>
-Host: <%=`hostname`.strip%>
+Host: <%= @hostname %>
+Process ID: <%= @process_id %>
 
 Additional Messages:
 <%@additional_messages.each do |m|%>

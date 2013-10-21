@@ -17,7 +17,7 @@ class Lock < ActiveRecord::Base
   #
   # In other words, use this locking mechanism judiciously and keep the execution time low for the 
   # block you pass in.
-  def self.acquire(name)
+  def self.acquire(name, retry_lock_aquire_count = 0)
     already_acquired = definitely_acquired?(name)
 
     result = nil
@@ -30,12 +30,21 @@ class Lock < ActiveRecord::Base
         # concurrent create is okay since there's a unique index on the name attribute
       end
 
+      counter = 0
       begin
         transaction do
           find_by_name(name, :lock => true) # this is the call that will block in concurrent Lock.acquire attempts
           acquired_lock(name)
           result = yield
         end
+      rescue ActiveRecord::StatementInvalid => e
+        # We only want to retry acquiring the lock, we don't want to retry the 
+        # actual code inside the yielded block.
+        unless definitely_acquired?(name)
+          retry if lock_wait_timeout?(e) && (counter += 1) <= retry_lock_aquire_count
+        end
+
+        raise e
       ensure
         maybe_released_lock(name) 
       end
@@ -51,15 +60,19 @@ class Lock < ActiveRecord::Base
   end
 
   def self.acquired_lock(name)
-    logger.debug("Acquired lock '#{name}'")
     Thread.current[:definitely_acquired_locks] ||= {}
     Thread.current[:definitely_acquired_locks][name] = true
   end
 
   def self.maybe_released_lock(name)
-    logger.debug("Released lock '#{name}' (if we are not in a bigger transaction)")
     Thread.current[:definitely_acquired_locks] ||= {}
     Thread.current[:definitely_acquired_locks].delete(name)
+  end
+
+  def self.lock_wait_timeout? exception
+    # Unfortunately, active record (or mysql adapter) uses a single error for all database errors
+    # so the only real way of determining issues is by examing the error message
+    exception.message && !(exception.message =~ /Error: Lock wait timeout exceeded/).nil?
   end
 
   private_class_method :acquired_lock, :maybe_released_lock

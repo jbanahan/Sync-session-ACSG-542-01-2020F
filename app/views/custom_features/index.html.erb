@@ -1,20 +1,71 @@
-<% enabled_features = MasterSetup.get.custom_features_list%>
-<%if enabled_features.blank?%>
-  There aren't any custom features enabled for this system.
-<% else %>
-<% end%>
-<%if enabled_features.include? 'CSM Sync'%>
-  <%=link_to "CSM Sync", '/custom_features/csm_sync'%><br />
-<%end%>
-<%if enabled_features.include?('Polo Canada') && OpenChain::CustomHandler::PoloCaEntryParser.new(nil).can_view?(current_user)-%>
-  <%=link_to "Polo Canada", '/custom_features/polo_canada'%><br />
-<%end-%>
-<%if enabled_features.include?('Polo SAP') && OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user)-%>
-  <%=link_to "SAP Bill of Materials", '/custom_features/polo_sap_bom'%><br />
-<%end-%>
-<%if enabled_features.include?('JCrew Parts') && OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user)-%>
-  <%=link_to "JCrew Parts Upload", '/custom_features/jcrew_parts'%><br />
-<%end-%>
-<%if enabled_features.include?('Polo CA Invoices')  && OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil).can_view?(current_user)-%>
-  <%=link_to "Polo CA Invoice Upload", '/custom_features/polo_ca_invoices'%><br />
-<%end-%>
+<style>
+  #cf_wrap .row {
+    margin-bottom: 10px;
+  }
+</style>
+<%-enabled_features = MasterSetup.get.custom_features_list-%>
+<div class='container' id='cf_wrap'>
+  <div class='row'>
+    <div class='span12 text-center'>
+      <h1>Custom Features</h1>
+    </div>
+  </div>
+  <%-if enabled_features.blank?-%>
+  <div class='row'>
+    <div class='span12'>
+      There aren't any custom features enabled for this system.
+    </div>
+  </div>
+  <%-end-%>
+  <%-if enabled_features.include? 'CSM Sync'%>
+  <div class='row'>
+    <div class='span4 offset4'>
+      <%=link_to "CSM Sync", '/custom_features/csm_sync', :class=>'btn btn-large btn-block'%>
+    </div>
+  </div>
+  <%-end%>
+  <%-if enabled_features.include?('Polo Canada') && OpenChain::CustomHandler::PoloCaEntryParser.new(nil).can_view?(current_user)-%>
+  <div class='row'>
+    <div class='span4 offset4'>
+      <%=link_to "Polo Canada", '/custom_features/polo_canada', :class=>'btn btn-large btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
+  <%-if enabled_features.include?('Polo SAP') && OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user)-%>
+  <div class='row'>
+    <div class='span4 offset4'>
+      <%=link_to "SAP Bill of Materials", '/custom_features/polo_sap_bom', :class=>'btn btn-large btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
+  <%-if enabled_features.include?('JCrew Parts') && OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user)-%>
+  <div class='row'>
+    <div class='span4 offset4'>
+      <%=link_to "JCrew Parts Upload", '/custom_features/jcrew_parts', :class=>'btn btn-large btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
+  <%-if enabled_features.include?('Polo CA Invoices') && OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil).can_view?(current_user)-%>
+  <div class='row'>
+    <div class='span4 offset4'>
+      <%=link_to "Polo CA Invoice Upload", '/custom_features/polo_ca_invoices', :class=>'btn btn-large btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
+  <%-if enabled_features.include?('UA SAP')-%>
+    <%-if OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil).can_view?(current_user)-%>
+      <div class='row'>
+        <div class='span4 offset4'>
+          <%=link_to "TBD Report Upload", '/custom_features/ua_tbd', :class=>'btn btn-large btn-block'%>
+        </div>
+      </div>
+    <%-end-%>
+    <%-if OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil).can_view?(current_user)-%>
+      <div class='row'>
+        <div class='span4 offset4'>
+          <%=link_to "Winshuttle Email", '/custom_features/ua_winshuttle', :class=>'btn btn-large btn-block'%>
+        </div>
+      </div>
+    <%-end-%>
+  <%-end-%>
+</div>

@@ -197,6 +197,49 @@ EMAIL
 
   context :send_generic_exception do
     it "should send an exception email" do
+      error = StandardError.new "Test"
+      error.set_backtrace ["Backtrace", "Line 1", "Line 2"]
+
+      Tempfile.open(["file", "txt"]) do |f|
+        f << "Test File"
+        f.flush
+        f.rewind
+
+        OpenMailer.send_generic_exception(error, ["My Message"], nil, nil, [f.path]).deliver
+
+        mail = ActionMailer::Base.deliveries.pop
+        source = mail.body.raw_source
+        source.should include("Error: #{error}")
+        source.should include("Message: #{error.message}")
+        source.should include("Master UUID: #{MasterSetup.get.uuid}")
+        source.should include("Root: #{Rails.root.to_s}")
+        source.should include("Host: #{Socket.gethostname}")
+        source.should include("Process ID: #{Process.pid}")
+        source.should include("Additional Messages:")
+        source.should include("My Message")
+        source.should include("Backtrace:")
+        source.should include(error.backtrace.join("\n"))
+
+        mail.attachments[File.basename(f.path)].read.should eq "Test File"
+      end
+    end
+
+    it "should send an exception email using argument overrides" do
+      # error message and backtrace should come from the method arguments and not the exception itself
+      error = StandardError.new "Test"
+      error.set_backtrace ["Backtrace", "Line 1", "Line 2"]
+
+      OpenMailer.send_generic_exception(error, ["My Message"], "Override Message", ["Fake", "Backtrace"]).deliver
+
+      mail = ActionMailer::Base.deliveries.pop
+      source = mail.body.raw_source
+      source.should_not include(error.backtrace.join("\n"))
+      source.should_not include("Message: #{error.message}")
+      source.should include("Fake\nBacktrace")
+      source.should include("Message: Override Message")
+    end
+
+    it "should send an exception email with a large attachment warning" do
       # This is just primarily a test to make sure regressions weren't introduced
       # when the save_large_attachment method was modified
       MasterSetup.get.update_attributes(:request_host=>"host.xxx")
