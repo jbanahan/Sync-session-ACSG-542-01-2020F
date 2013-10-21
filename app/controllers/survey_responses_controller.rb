@@ -15,7 +15,9 @@ class SurveyResponsesController < ApplicationController
       @rate_mode = true
     end
     respond_to do |format|
-      format.html {}
+      format.html {
+        @no_action_bar = true
+      }
 
       format.json { 
         h = @sr.as_json(include: [
@@ -105,10 +107,16 @@ class SurveyResponsesController < ApplicationController
     if !sr.can_edit?(current_user) 
       error_redirect "You do not have permission to send invites for this survey."
       return
-    else
-      sr.invite_user!
-      add_flash :notices, "Invite will be resent to the user at #{sr.user.email}"
-      redirect_to sr
+    end
+    sr.invite_user!
+    respond_to do |format|
+      format.html {
+        add_flash :notices, "Invite will be resent to the user at #{sr.user.email}"
+        redirect_to sr
+      }
+      format.json {
+        render json: {ok: 'ok'}
+      }
     end
   end
 

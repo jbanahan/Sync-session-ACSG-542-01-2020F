@@ -5,17 +5,17 @@
 </style>
 <div ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
   <div class='container' ng-controller='srController'>
-    <button chain-action-button ng-click='submitSurvey()' chain-show='showSubmit()' id='btn-submit'>Submit</button>
+    <div chain-action-bar>
+      <button class='btn btn-inverse' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
+      <button class='btn btn-inverse' ng-click='srService.invite(resp)'>Resend Email Invite</button>
+    </div>
     <div class='row text-center' style='margin-bottom:20px;'>
       <div class='span12'>
         <h1>{{resp.survey.name}} <span ng-show='resp.subtitle.length>0'> - {{resp.subtitle}}</span></h1>
       </div>
     </div>
-    <div class='row'>
-      <div ng-show='resp.error_message' class='span12 alert alert-error'>
-        {{resp.error_message}}
-      </div>
-    </div>
+    <div chain-modal-message='resp.success_message' title='Success' clear-on-close='true'></div>
+    <div chain-modal-message='resp.error_message' title='Error' clear-on-close='true'></div>
     <div>
       <div class='span12'>
         <span ng-show='resp.saving' class='label label-info'>Saving...</span>&nbsp;
@@ -23,10 +23,17 @@
     </div>
     <div class='row'>
       <div class='span6'>
-        <strong>Rating:</strong><br />
-        <span ng-hide='resp.can_rate'>{{resp.rating}}</span>
-        <span ng-hide='resp.rating.length>0 || resp.can_rate'>Not Rated</span>
-        <select ng-change='srService.saveRating(resp)' ng-disabled='resp.error_message' ng-show='resp.can_rate' ng-model='resp.rating' ng-options='v for v in resp.survey.rating_values'></select>
+        <div>
+          <strong>Status:</strong><br />
+          {{resp.status}}
+        </div>
+        <div>
+          <strong>Rating:</strong><br />
+          <span ng-hide='resp.can_rate'>{{resp.rating}}</span>
+          <span ng-hide='resp.rating.length>0 || resp.can_rate'>Not Rated</span>
+          <select ng-change='srService.saveRating(resp)' ng-disabled='resp.error_message' ng-show='resp.can_rate' ng-model='resp.rating' ng-options='v for v in resp.survey.rating_values'></select>
+        </div>
+        
       </div>
       <div class='span6'>
         <strong>Question Filter</strong><br/>
@@ -70,7 +77,12 @@
         </div>
       </fieldset>
     </form>
-    <div ng-repeat='answer in (resp.answers | answerFilter:srService.settings.filterMode)' style='margin-bottom:20px;'>
+    <div class='row'>
+      <div class='span8 offset2 text-center alert alert-info' ng-hide='filteredAnswers.length == resp.answers.length'>
+        Showing {{filteredAnswers.length}} of {{resp.answers.length}} questions.
+      </div>
+    </div>
+    <div ng-repeat='answer in filteredAnswers' style='margin-bottom:20px;'>
       <div class='row'>
         <div class='span12'>
           <legend class='text-info'>

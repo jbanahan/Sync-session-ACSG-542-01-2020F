@@ -10,6 +10,47 @@
         fn(scope, {$event:event})
 ])
 
+# Shows the message from the given binding in a modal every time it changes. 
+# Closes the modal if the message is changed to blank, nil or undefined
+# The title attribute becomes the modal header title
+@components.directive 'chainModalMessage', [() ->
+  {
+    scope:{
+      chainModalMessage:'='
+      clearOnClose:'='
+    }
+    template:"<div class='modal hide fade'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h3>{{title}}</h3></div>
+      <div class='modal-body'><p>{{chainModalMessage}}</p></div>
+      <div class='modal-footer'><button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button></div>
+      </div>"
+    link: (scope,el,attrs) ->
+      scope.title = attrs.title
+
+      if scope.clearOnClose
+        el.find('.modal').on 'hide', () ->
+          scope.chainModalMessage = ''
+
+      scope.$watch 'chainModalMessage', (newVal,oldVal) ->
+        if newVal && newVal.length > 0
+          el.find('.modal').modal('show')
+        else
+          el.find('.modal').modal('hide')
+      @
+  }
+]
+# Full action bar replacement that loads up the action bar with the transcluded content.
+# Use in conjunction with the @no_action_bar = true option in the rails controller which will hide the normal action bar in the layout
+@components.directive 'chainActionBar', [() ->
+  {
+    transclude:true
+    template:"<div class='navbar navbar-fixed-bottom'><div class='navbar-inner'><ul class='nav'><li><span ng-transclude></span></li></ul></div></div>"
+    replace: true
+    link: (scope,el,attrs) ->
+      @
+  }
+]
+
+
 # file upload form based on: http://hayageek.com/ajax-file-upload-jquery/
 # requires: jquery.form.js
 @components.directive 'chainAttach', [() ->

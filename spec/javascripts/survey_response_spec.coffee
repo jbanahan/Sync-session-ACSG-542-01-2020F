@@ -28,6 +28,15 @@ describe "SurveyResponseApp", () ->
         http.flush()
         expect(svc.settings.viewMode).toEqual('view')
 
+    describe 'invite', () ->
+      it "should make send invite call", () ->
+        resp = {id:7}
+        http.expectGET('/survey_responses/7/invite.json').respond({ok:'ok'})
+        svc.invite resp
+        expect(resp.success_message).toEqual 'Sending invite.'
+        http.flush()
+        expect(resp.success_message).toEqual 'Invite sent successfully.'
+        
     describe 'addAnswerComment', () ->
       
       it "should add the comment to the answer_comments for the appropriate answer", () ->
@@ -104,6 +113,18 @@ describe "SurveyResponseApp", () ->
         expect(d.saving).toBe(false)
         expect(d.error_message).toBe("There was an error saving your data. Please reload the page.")
 
+    describe "submit", () ->
+      it "should save", () ->
+        resp = {ok:'ok'}
+        http.expectPUT('/survey_responses/1',{do_submit:true}).respond(resp)
+        d = {id:1,address:'addr',phone:'5555555555',fax:'5554443333',email:'sample@sample.com',name:'myname',can_submit:true}
+        svc.submit(d)
+        expect(d.saving).toBe(true)
+        http.flush()
+        expect(d.saving).toBe(false)
+        expect(d.success_message).toEqual 'Your survey has been submitted successfully.'
+        expect(d.can_submit).toBe(false)
+
     describe "saveRating", () ->
       it "should save", () ->
         resp = {ok:'ok'}
@@ -125,27 +146,43 @@ describe "SurveyResponseApp", () ->
         expect(d.saving).toBe(false)
         expect(d.error_message).toBe("There was an error saving your data. Please reload the page.")
 
-    describe "answerFilter", () ->
-      answers = null
-      
-      beforeEach () ->
+#
+# FILTER TESTS
+#
+  describe "answerFilter", () ->
+    filter = answers = null
+
+    beforeEach inject((answerFilter) ->
+      filter = answerFilter
+    )
+    
+    beforeEach () ->
       answers = [
         {id:1,rating:'x'}
         {id:2}
         {id:3,rating:null}
+        {id:4,rating:'x',choice:'y'}
+        {id:5,rating:'x',answer_comments:['x']}
         ]
-      it "should show all when filter mode is 'All'", () ->
-        svc.settings.filterMode = 'All'
-        results = []
-        results.push(svc.answerFilter(a)) for a in answers
-        expect(results).toEqual([true,true,true])
 
-      it "should show all without rating when filter mode is 'Not Rated'", () ->
-        svc.settings.filterMode = 'Not Rated'
-        results = []
-        results.push(svc.answerFilter(a)) for a in answers
-        expect(results).toEqual([false,true,true])
+    it "should show all when filter mode is 'All'", () ->
+      expect(filter(answers,'All')).toEqual(answers)
 
+    it "should show all without rating when filter mode is 'Not Rated'", () ->
+      results = filter(answers,'Not Rated')
+      x = []
+      x.push r.id for r in results
+      expect(x).toEqual([2,3])
+
+    it "should show all without answer when filter mode is 'Not Answered'", () ->
+      results = filter(answers,'Not Answered')
+      x = []
+      x.push r.id for r in results
+      expect(x).toEqual([1,2,3])
+      
+#
+# CONTROLLER TESTS
+#
   describe "srController", () ->
     ctrl = svc = $scope = null
 
@@ -155,6 +192,32 @@ describe "SurveyResponseApp", () ->
       ctrl = $controller('srController',{$scope:$scope,srService:svc})
     )
 
+    describe "submit", () ->
+      frm = null
+      beforeEach () ->
+        spyOn(svc,'submit')
+
+      it "should delegate to service if form is valid", () ->
+        $scope.contact_form = { $valid: true }
+        $scope.submit()
+        expect(svc.submit).toHaveBeenCalledWith(svc.resp)
+
+      it "should not call service if form is not valid", () ->
+        $scope.contact_form = { $valid: false }
+        $scope.submit()
+        expect(svc.submit.calls.length).toEqual(0)
+        expect(svc.resp.error_message).toEqual 'You must complete all contact fields before submitting.'
+
+      it "should not call service if all questions aren't answered", () ->
+        $scope.resp.answers = []
+        $scope.resp.answers.push {id:1,answer_comments:[]}
+        $scope.contact_form = { $valid: true }
+        $scope.submit()
+
+        expect(svc.submit.calls.length).toEqual(0)
+        expect(svc.resp.error_message).toEqual 'You must select an answer or add a comment for every question before submitting. Use the Not Answered filter to identify any questions that still need answers.'
+
+        
     it "should delegate add comment", () ->
       spyOn(svc,'addAnswerComment').andCallFake (a,c,p,e) ->
         e(answer) #execute callback

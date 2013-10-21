@@ -1,11 +1,12 @@
 srApp = angular.module 'SurveyResponseApp', ['ChainComponents']
 
 srApp.factory 'srService', ['$http',($http) ->
-  saveResponse = (r,buildData) ->
+  saveResponse = (r,buildData,success) ->
     r.saving = true
     promise = $http.put('/survey_responses/'+r.id,buildData(r))
     promise.then(((response) ->
       r.saving = false
+      success(response) if success
     ),((response) ->
       r.saving = false
       r.error_message = "There was an error saving your data. Please reload the page."
@@ -69,11 +70,23 @@ srApp.factory 'srService', ['$http',($http) ->
     saveRating: (r) ->
       saveResponse r, (sr) ->
         {survey_response:{id:sr.id,rating:sr.rating}}
+    
+    submit: (r) ->
+      saveResponse r, ((sr) ->
+        {do_submit:true}
+      ), (resp) ->
+        r.success_message = 'Your survey has been submitted successfully.'
+        r.can_submit = false
 
+    invite: (r) ->
+      r.success_message = 'Sending invite.'
+      $http.get('/survey_responses/'+r.id+'/invite.json').then(((response) ->
+        r.success_message = 'Invite sent successfully.'
+      ))
   }
 ]
 
-srApp.controller('srController',['$scope','srService',($scope,srService) ->
+srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,srService) ->
   $scope.logme = () ->
     console.log 'x'
   $scope.showSubmit = () ->
@@ -85,6 +98,16 @@ srApp.controller('srController',['$scope','srService',($scope,srService) ->
       a.new_comment = null
       a.new_comment_private = null
 
+  # set response's submitted state to true on server
+  $scope.submit = () ->
+    if !$scope.contact_form.$valid
+      $scope.resp.error_message = 'You must complete all contact fields before submitting.'
+    else if $filter('answer')($scope.resp.answers,'Not Answered').length > 0
+      $scope.resp.error_message = 'You must select an answer or add a comment for every question before submitting. Use the Not Answered filter to identify any questions that still need answers.'
+    else
+      $scope.srService.submit($scope.resp)
+
+
   $scope.showWarning = (answer) ->
     return false unless answer.question.warning
     return false if answer.choice && answer.choice.length > 0
@@ -95,12 +118,20 @@ srApp.controller('srController',['$scope','srService',($scope,srService) ->
     true
 
   $scope.srService.load($scope.response_id) if $scope.response_id
+
+  filterAnswers = () ->
+    $scope.filteredAnswers = $filter('answer')($scope.resp.answers,srService.settings.filterMode)
+
   $scope.$watch 'srService.resp', (newVal,oldVal) ->
     $scope.resp = newVal
+    filterAnswers()
+  
+  $scope.$watch 'srService.settings.filterMode', (newVal,oldVal) ->
+    filterAnswers()
   @
 ])
 
-srApp.filter 'answerFilter', () ->
+srApp.filter 'answer', () ->
   (answers, mode) ->
     r = []
     return r unless answers
