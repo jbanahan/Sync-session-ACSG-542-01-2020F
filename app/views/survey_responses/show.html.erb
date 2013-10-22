@@ -8,6 +8,12 @@
     <div chain-action-bar>
       <button class='btn btn-inverse' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
       <button class='btn btn-inverse' ng-click='srService.invite(resp)'>Resend Email Invite</button>
+      <%-if @sr.can_edit?(current_user) && @sr.submitted_date && @sr.corrective_action_plan.nil?-%>
+        <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-inverse', :form_class=>'inline-button-to', :class=>'btn btn-inverse'%>
+      <%-end-%>
+      <%-if @sr.submitted_date && @sr.corrective_action_plan && @sr.corrective_action_plan.can_view?(current_user) -%>
+        <button class='btn_link btn <%= @sr.corrective_action_plan.status==CorrectiveActionPlan::STATUSES[:active] ? 'btn-danger' : 'btn-inverse'%>' link_to='<%=survey_response_corrective_action_plan_path(@sr,@sr.corrective_action_plan)%>'>Corrective Action Plan</button>
+      <%-end-%>
     </div>
     <div class='row text-center' style='margin-bottom:20px;'>
       <div class='span12'>
