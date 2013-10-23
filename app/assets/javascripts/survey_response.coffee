@@ -39,7 +39,7 @@ srApp.factory 'srService', ['$http',($http) ->
         answer.error_message = "There was an error saving your comment. Please reload the page."
       ))
 
-    saveAnswer: (a) ->
+    saveAnswer: (a,successCallback) ->
       a.saving = true
       promise = $http.put('/answers/'+a.id, {
         answer: {
@@ -50,6 +50,7 @@ srApp.factory 'srService', ['$http',($http) ->
       })
       promise.then(((response) ->
         a.saving = false
+        successCallback response if successCallback
       ), ((response) ->
         a.saving = false
         a.error_message = "There was an error saving your data. Please reload the page."
@@ -77,6 +78,7 @@ srApp.factory 'srService', ['$http',($http) ->
       ), (resp) ->
         r.success_message = 'Your survey has been submitted successfully.'
         r.can_submit = false
+        r.status = 'Needs Rating'
 
     invite: (r) ->
       r.success_message = 'Sending invite.'
@@ -87,12 +89,13 @@ srApp.factory 'srService', ['$http',($http) ->
 ]
 
 srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,srService) ->
-  $scope.logme = () ->
-    console.log 'x'
   $scope.showSubmit = () ->
     $scope.srService.resp.can_submit
   $scope.srService = srService
   $scope.resp = srService.resp
+  $scope.saveAnswer = (answer) ->
+    $scope.srService.saveAnswer answer
+    
   $scope.addComment = (answer) ->
     $scope.srService.addAnswerComment answer, answer.new_comment, answer.new_comment_private, (a) ->
       a.new_comment = null
@@ -118,9 +121,12 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
     true
 
   $scope.srService.load($scope.response_id) if $scope.response_id
+  
 
   filterAnswers = () ->
     $scope.filteredAnswers = $filter('answer')($scope.resp.answers,srService.settings.filterMode)
+
+  $scope.filterAnswers = filterAnswers
 
   $scope.$watch 'srService.resp', (newVal,oldVal) ->
     $scope.resp = newVal

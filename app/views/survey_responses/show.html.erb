@@ -8,6 +8,9 @@
     <div chain-action-bar>
       <button class='btn btn-inverse' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
       <button class='btn btn-inverse' ng-click='srService.invite(resp)'>Resend Email Invite</button>
+      <%-if @sr.survey.can_edit?(current_user)-%>
+        <button class='btn_link btn btn-inverse' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
+      <%-end-%>
       <%-if @sr.can_edit?(current_user) && @sr.submitted_date && @sr.corrective_action_plan.nil?-%>
         <%=button_to 'Corrective Action Plan', survey_response_corrective_action_plans_path(@sr), :method=>'POST', :class=>'btn btn-inverse', :form_class=>'inline-button-to', :class=>'btn btn-inverse'%>
       <%-end-%>
@@ -41,9 +44,10 @@
         </div>
         
       </div>
-      <div class='span6'>
+      <div class='span6 form-inline'>
         <strong>Question Filter</strong><br/>
         <select ng-model='srService.settings.filterMode' ng-options='r for r in srService.filterModes'></select>
+        <button class='btn btn-mini' ng-click='filterAnswers()'>Apply Filter</button>
       </div>
     </div>
     <form name='contact_form'>
@@ -57,34 +61,34 @@
         </div>
         <div class='row'>
           <div class='span6'>
-            <div class='control-group' ng-class="{error: contact_form.name.$invalid}">
+            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.name.$invalid}">
               <label for='ci-name'>Your Name</label>
-              <input id='ci-name' name='name' ng-blur='srService.saveContactInfo(resp)' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer || resp.error_message' required />
+              <input id='ci-name' name='name' ng-blur='srService.saveContactInfo(resp)' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
             </div>
-            <div class='control-group' ng-class="{error: contact_form.address.$invalid}">
+            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.address.$invalid}">
               <label for='ci-address'>Address</label>
-              <textarea id='ci-address' name='address' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.address' ng-disabled='!resp.can_answer || resp.error_message' required></textarea>
+              <textarea id='ci-address' name='address' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.address' ng-disabled='!resp.can_answer || resp.error_message.length>0' required></textarea>
             </div>
           </div>
           <div class='span6'>
-            <div class='control-group' ng-class="{error: contact_form.phone.$invalid}">
+            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.phone.$invalid}">
               <label for='ci-phone'>Phone</label>
-              <input id='ci-phone' name='phone' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.phone' ng-disabled='!resp.can_answer || resp.error_message' required />
+              <input id='ci-phone' name='phone' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.phone' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
             </div>
-            <div class='control-group' ng-class="{error: contact_form.email_add.$invalid}">
+            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.email_add.$invalid}">
               <label for='ci-email'>Email</label>
-              <input id='ci-email' name='email_add' type='email' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.email' ng-disabled='!resp.can_answer || resp.error_message' required />
+              <input id='ci-email' name='email_add' type='email' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.email' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
             </div>
             <div class='control-group'>
               <label for='ci-fax'>Fax</label>
-              <input id='ci-fax' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.fax' ng-disabled='!resp.can_answer || resp.error_message' />
+              <input id='ci-fax' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.fax' ng-disabled='!resp.can_answer || resp.error_message.length>0' />
             </div>
           </div>
         </div>
       </fieldset>
     </form>
     <div class='row'>
-      <div class='span8 offset2 text-center alert alert-info' ng-hide='filteredAnswers.length == resp.answers.length'>
+      <div class='span8 offset2 text-center alert alert-info' ng-hide='srService.settings.filterMode=="All"'>
         Showing {{filteredAnswers.length}} of {{resp.answers.length}} questions.
       </div>
     </div>
@@ -113,7 +117,7 @@
         <div class='span6' ng-show='answer.question.choice_list.length>0'>
           <label>Multiple Choice Answer</label>
           <span ng-hide='resp.can_answer'>{{answer.choice}}</span>
-          <select ng-change='srService.saveAnswer(answer)' ng-show='resp.can_answer' ng-model='answer.choice' ng-options='c for c in answer.question.choice_list' ng-disabled='answer.error_message'></select>
+          <select ng-change='saveAnswer(answer)' ng-show='resp.can_answer' ng-model='answer.choice' ng-options='c for c in answer.question.choice_list' ng-disabled='answer.error_message'></select>
         </div>
         <div class='span6' ng-show='resp.can_rate || answer.rating'>
           <label>Rating</label>
@@ -128,7 +132,7 @@
       </div>
       <div class='row' ng-repeat='com in answer.answer_comments'>
         <div class='span12 muted'>
-          <span ng-show='com.private' class='label label-success'>private</span> <strong>{{com.user.full_name}}</strong> wrote at {{com.created_at}}: 
+          <span ng-show='com.private' class='label label-success'>private</span> <strong>{{com.user.full_name}}</strong> wrote at {{com.created_at | date:'yyyy-MM-dd HH:mm'}}: 
         </div>
         <div class='span12'>
           {{com.content}}
@@ -143,7 +147,7 @@
               <input type='checkbox' ng-model='answer.new_comment_private' /> private
             </div>
             <div>
-              <button ng-hide='answer.error_message' class='btn btn-small' ng-click='addComment(answer)'>Add</button>
+              <button ng-hide='answer.error_message' class='btn btn-small btn-success' ng-click='addComment(answer)' ng-show='answer.new_comment.length'>Add Comment</button>
             </div>
             <div ng-show='answer.error_message' class='alert alert-error'>
               {{answer.error_message}}

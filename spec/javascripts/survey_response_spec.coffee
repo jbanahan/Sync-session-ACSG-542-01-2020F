@@ -82,6 +82,17 @@ describe "SurveyResponseApp", () ->
         http.flush()
         expect(d.saving).toBe(false)
         expect(d.error_message).toBe(undefined)
+    
+      it "should fire success callback", () ->
+        cbVal = false
+        cb = (response) ->
+          cbVal = true
+        resp = {ok:'ok'}
+        http.expectPUT('/answers/2',{answer:{id:2,choice:'x',rating:'y'}}).respond(resp)
+        d = {id:2,choice:'x',rating:'y'}
+        svc.saveAnswer(d,cb)
+        http.flush()
+        expect(cbVal).toBe true
 
       it "should show error if save fails", () ->
         resp = {ok:'ok'}
@@ -124,6 +135,7 @@ describe "SurveyResponseApp", () ->
         expect(d.saving).toBe(false)
         expect(d.success_message).toEqual 'Your survey has been submitted successfully.'
         expect(d.can_submit).toBe(false)
+        expect(d.status).toBe('Needs Rating')
 
     describe "saveRating", () ->
       it "should save", () ->
@@ -218,6 +230,15 @@ describe "SurveyResponseApp", () ->
         expect(svc.resp.error_message).toEqual 'You must select an answer or add a comment for every question before submitting. Use the Not Answered filter to identify any questions that still need answers.'
 
         
+    it "should delegate saveAnswer", () ->
+      spyOn(svc,'saveAnswer').andCallFake (a,c) ->
+        c({my:'response'}) #execute callback
+      
+      ans = {id:1,choice:'x'}
+      $scope.resp.answers = []
+      $scope.resp.answers.push ans
+      $scope.saveAnswer(ans)
+
     it "should delegate add comment", () ->
       spyOn(svc,'addAnswerComment').andCallFake (a,c,p,e) ->
         e(answer) #execute callback

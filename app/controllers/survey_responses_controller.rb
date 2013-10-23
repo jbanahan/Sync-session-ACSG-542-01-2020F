@@ -23,7 +23,7 @@ class SurveyResponsesController < ApplicationController
         h = @sr.as_json(include: [
           {answers:{include: {
             question:{methods:[:html_content,:choice_list], only:[:id,:warning]},
-            answer_comments:{only:[:content,:private],include:[{user:{only:[:id],methods:[:full_name]}}]}
+            answer_comments:{only:[:content,:private,:created_at],include:[{user:{only:[:id],methods:[:full_name]}}]}
           }}},
           {survey:{only:[:id,:name],methods:[:rating_values]}},
           {user:{only:[:id],methods:[:full_name]}}

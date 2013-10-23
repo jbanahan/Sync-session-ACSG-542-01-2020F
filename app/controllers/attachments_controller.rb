@@ -1,7 +1,6 @@
 class AttachmentsController < ApplicationController
   def create
     att = nil
-    raise "x"
     begin
       if att = Attachment.create(params[:attachment])
         attachable = att.attachable
