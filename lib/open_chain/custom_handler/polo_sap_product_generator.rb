@@ -47,6 +47,7 @@ module OpenChain
       def convert_to_ascii value
         if value && value.is_a?(String)
           allowed_conversions = {
+            "\u{00A0}" => " ", #non breaking space
             "\u{2013}" => "-",
             "\u{2014}" => "-"
           }
