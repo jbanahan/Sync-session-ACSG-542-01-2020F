@@ -68,4 +68,11 @@
       </div>
     <%-end-%>
   <%-end-%>
+  <%-if enabled_features.include?('Fenix CI Upload') && OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler.new(nil).can_view?(current_user)-%>
+  <div class='row'>
+    <div class='span4 offset4'>
+      <%=link_to "Fenix Commerical Invoice Upload", '/custom_features/fenix_ci_load', :class=>'btn btn-large btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
 </div>

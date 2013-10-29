@@ -4,6 +4,7 @@ require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
+require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records
