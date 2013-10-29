@@ -16,7 +16,7 @@
   });
   <%unless current_user.hide_message?('prodlayout1')-%>
     $(document).ready(function() {
-      $("#prodlayout1").modal()
+      $("#prodlayout1").modal();
       $("#never-show").click(function() {
         $("#prodlayout1").modal('hide');
         Chain.hideMessage('prodlayout1');
