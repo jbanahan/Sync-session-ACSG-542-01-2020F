@@ -149,6 +149,7 @@ module OpenChain
           @entry.part_numbers = accumulated_string(:part_number)
           @entry.commercial_invoice_numbers = accumulated_string(:invoice_number)
           @entry.cargo_control_number = accumulated_string(:cargo_control_number)
+          @entry.customer_references = accumulated_string(:customer_references)
           @entry.entered_value = @total_entered_value
 
           @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
@@ -272,10 +273,12 @@ module OpenChain
       inv_ln.country_origin_code = org[0]
       inv_ln.state_origin_code = org[1]
       inv_ln.unit_price = dec_val(line[39])
+      inv_ln.customer_reference = line[103] unless line[103].blank?
       accumulate_string :exp_country, exp[0]
       accumulate_string :exp_state, exp[1]
       accumulate_string :org_country, org[0]
       accumulate_string :org_state, org[1]
+      accumulate_string :customer_references, inv_ln.customer_reference
 
       t = inv_ln.commercial_invoice_tariffs.build
       t.spi_primary = str_val(line[28])
@@ -541,6 +544,10 @@ module OpenChain
             yield entry
           end
         end
+        # Broadcast the save event outside the locks.  No need for any business logic running to generate 
+        # stuff from the file to contribute to the transaction length here.  Most logic should be delayed
+        # out to a background queue anyway.
+        entry.broadcast_event :save
       end
 
       nil
