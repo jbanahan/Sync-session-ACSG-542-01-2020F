@@ -41,13 +41,21 @@ class TariffLoader
     "COL2_RATE" => lambda {|o,d| o.column_2_rate = d},
     "RATE2" => lambda {|o,d| o.column_2_rate = d},
     "Import Reg 1" => IMPORT_REG_LAMBDA,
+    "IMP_REG1" => IMPORT_REG_LAMBDA,
     "Import Reg 2" => IMPORT_REG_LAMBDA,
+    "IMP_REG2" => IMPORT_REG_LAMBDA,
     "Import Reg 3" => IMPORT_REG_LAMBDA,
+    "IMP_REG3" => IMPORT_REG_LAMBDA,
     "Import Reg 4" => IMPORT_REG_LAMBDA,
+    "IMP_REG4" => IMPORT_REG_LAMBDA,
     "Export Reg 1" => EXPORT_REG_LAMBDA,
+    "EXP_REG1" => EXPORT_REG_LAMBDA,
     "Export Reg 2" => EXPORT_REG_LAMBDA,
+    "EXP_REG2" => EXPORT_REG_LAMBDA,
     "Export Reg 3" => EXPORT_REG_LAMBDA,
+    "EXP_REG3" => EXPORT_REG_LAMBDA,
     "Export Reg 4" => EXPORT_REG_LAMBDA,
+    "EXP_REG4" => EXPORT_REG_LAMBDA,
 #ignored fields
     "CALCULATIONMETHOD" => lambda {|o,d|}
   }
