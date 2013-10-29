@@ -1,0 +1,44 @@
+<h1><%=title%></h1>
+<%= form_tag "/custom_features/#{custom_feature}/upload", :multipart => true, :class=>'form-horizontal' do %>
+<% if content_for? :upload_form %>
+  <%= yield :upload_form %>
+<% end %>
+  <%# Bootstrap standard input widths (input-large, etc) don't seem to work on file inputs #%>
+  <%= file_field_tag :attached, :style => "width: 500px !important;"%> <%=submit_tag 'Upload', :id=>'btn_upload', :class=>'btn' %>
+<% end %>
+<h2>Existing Files</h2>
+<table class='detail_table'>
+  <thead>
+      <tr>
+          <th>File Name</th>
+          <th>Uploaded By</th>
+          <th>Uploaded At</th>
+          <th>Start</th>
+          <th>Finish</th>
+        <% if defined?(show_error) && show_error %>
+          <th>Error</th>
+        <% end %>
+        <% if defined?(allow_reprocess) && allow_reprocess %>
+          <th>&nbsp;</th>
+        <% end %>
+      </tr>
+  </thead>
+  <tbody>
+    <%@files.each do |f|%>
+    <tr>
+      <td><%=link_to f.attached_file_name, "/custom_features/#{custom_feature}/#{f.id}/download"%></td>
+      <td><%=f.uploaded_by ? f.uploaded_by.full_name : ""%></td>
+      <td><%=f.created_at%></td>
+      <td><%=f.start_at%></td>
+      <td><%=f.finish_at%></td>
+    <% if defined?(show_error) && show_error %>
+      <td><%=f.error_message%></td>
+    <% end %>
+    <% if defined?(allow_reprocess) && allow_reprocess %>
+      <td><%=link_to 'Reprocess', "/custom_features/#{custom_feature}/#{f.id}/reprocess"%></td>
+    <% end %>
+    </tr>
+    <%end%>
+  </tbody>
+</table>
+<%= will_paginate @files %>

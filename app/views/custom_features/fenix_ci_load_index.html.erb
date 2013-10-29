@@ -1,0 +1,5 @@
+<% content_for :upload_form do %>
+<h2>Upload ONLY Excel Commercial Invoice Files</h2>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Fenix Commercial Invoice Spreadsheet Upload", custom_feature: "fenix_ci_load"} %>

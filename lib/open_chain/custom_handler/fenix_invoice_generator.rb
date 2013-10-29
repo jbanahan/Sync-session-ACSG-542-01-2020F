@@ -3,34 +3,11 @@ require 'bigdecimal'
 require 'open_chain/ftp_file_support'
 
 module OpenChain; module CustomHandler
-  module FenixInvoiceGenerator
+  class FenixInvoiceGenerator
     include OpenChain::FtpFileSupport
 
-    # If you include this module you must implement the following methods:
-    #
-    # invoice_header_map - 
-    # This method should return a mapping of the fields utilized to send header level invoice data to a lambda, method name, or a constant object
-    # lambdas will be called using instance_exec giving access to local methods and objects returned will be
-    # used directly as an output value.
-    #
-    # The mapping field values are: :invoice_number, :invoice_date, :country_origin_code, :country_ultimate_destination, :currency, 
-    # :number_of_cartons, :gross_weight, :total_units, :total_charges, :shipper, :consignee, :importer, :po_number, :mode_of_transportation
-    #
-    # Shipper, Consignee and Importer are expected to return hashes consisting of any or all of the following keys:
-    # :name, :name_2, :address_1, :address_2, :city, :state, :postal_codereturns a mapping of 
-    # 
-    # You can use the hash returned from default_invoice_header_map as a merge point for any customer specific data points.
-    #
-    #
-    # invoice_detail_map - 
-    # This method works identical to invoice_header_map with the following fields:
-    # This method should return a mapping of the fields utilized to send detail level invoice data
-    # These fields are: :part_number, :country_origin_code, :hts_code, :tariff_description, :quantity, :unit_price, , :po_number
-    # The values passed to lamdas defined in the map are invoice, line, and tariff.
-    #
-    # You can use the hash returned from default_invoice_detail_map as a merge point for any customer specific data points.
-    #
-    # fenix_customer_code - return the customer code for the specific customer we're sending data for
+    # If you extend this class you may want to extend the following methods to provide custom data to the output mappings:
+    # invoice_header_map, invoice_detail_map
     #
     # Additional optional method implementations:
     # rollup_detail_lines_by -
@@ -86,7 +63,7 @@ module OpenChain; module CustomHandler
 
         #File should use \r\n newlines and be straight ASCII chars
         #Ack: MRI Ruby 1.9 has a bug in tempfile that doesn't allow you to use string :mode option here
-        t = Tempfile.new(["#{fenix_customer_code()}_fenix_invoice",'.txt'], {:external_encoding =>"ASCII"})
+        t = Tempfile.new(["#{fenix_customer_code(invoice)}_fenix_invoice",'.txt'], {:external_encoding =>"ASCII"})
         begin
           # Write out the header information
           write_fields t, "H", FenixInvoiceGenerator::HEADER_OUTPUT_FORMAT, header_map, invoice
@@ -124,12 +101,25 @@ module OpenChain; module CustomHandler
     end
 
     def ftp_credentials 
-      {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRack',:password=>'RL2VFftp',:folder=>'to_ecs/fenix_invoices',:remote_file_name=>"#{fenix_customer_code()}_INV_#{Time.now.to_i}.txt"}
+      {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRack',:password=>'RL2VFftp',:folder=>'to_ecs/fenix_invoices'}
     end
 
-    def default_invoice_header_map
+
+    # This method should return a mapping of the fields utilized to send header level invoice data to a lambda, method name, or a constant object
+    # lambdas will be called using instance_exec giving access to local methods and objects returned will be
+    # used directly as an output value.
+    #
+    # The mapping field values are: :invoice_number, :invoice_date, :country_origin_code, :country_ultimate_destination, :currency, 
+    # :number_of_cartons, :gross_weight, :total_units, :total_charges, :shipper, :consignee, :importer, :po_number, :mode_of_transportation
+    #
+    # Shipper, Consignee and Importer are expected to return hashes consisting of any or all of the following keys:
+    # :name, :name_2, :address_1, :address_2, :city, :state, :postal_codereturns a mapping of 
+    # 
+    # You can override this method and use the hash returned as a merge point for any customer specific data points.
+
+    def invoice_header_map
       {
-        :invoice_number => lambda {|i| i.invoice_number},
+        :invoice_number => lambda {|i| i.invoice_number.blank? ? "VFI-#{i.id}" : i.invoice_number },
         :invoice_date => lambda {|i| i.invoice_date ? i.invoice_date.strftime("%Y%m%d") : ""},
         :country_origin_code => lambda {|i| i.country_origin_code},
         # There's no actual invoice field for this value, but I don't know when this value would ever not be CA since we're sending to Fenix
@@ -138,7 +128,7 @@ module OpenChain; module CustomHandler
         :number_of_cartons => lambda {|i| (i.total_quantity_uom =~ /CTN/i) ? i.total_quantity : BigDecimal.new("0")},
         :gross_weight => lambda {|i| i.gross_weight},
         :total_units => lambda {|i| i.commercial_invoice_lines.inject(BigDecimal.new("0.00")) {|sum, line| line.quantity ? (sum + line.quantity) : sum}},
-        :total_value => lambda {|i| i.invoice_value ? i.invoice_value : BigDecimal.new("0")},
+        :total_value => lambda {|i| calculate_invoice_value(i)},
         :shipper => lambda {|i| convert_company_to_hash(i.vendor)},
         :consignee => lambda {|i| convert_company_to_hash(i.consignee)},
         :po_number => lambda {|i| i.commercial_invoice_lines.first.nil? ? "" : i.commercial_invoice_lines.first.po_number},
@@ -151,7 +141,14 @@ module OpenChain; module CustomHandler
       }
     end
 
-    def default_invoice_detail_map
+    # invoice_detail_map - 
+    # This method works identical to invoice_header_map with the following fields:
+    # This method should return a mapping of the fields utilized to send detail level invoice data
+    # These fields are: :part_number, :country_origin_code, :hts_code, :tariff_description, :quantity, :unit_price, , :po_number
+    # The values passed to lamdas defined in the map are invoice, line, and tariff.
+    #
+    # You can override this method and use the hash returned as a merge point for any customer specific data points.
+    def invoice_detail_map
       {
         :part_number => lambda {|i, line, tariff| line.part_number},
         :country_origin_code => lambda {|i, line, tariff| line.country_origin_code},
@@ -164,8 +161,13 @@ module OpenChain; module CustomHandler
         :quantity => lambda {|i, line, tariff| line.quantity},
         :unit_price => lambda {|i, line, tariff| line.unit_price},
         :po_number => lambda {|i, line, tariff| line.po_number},
-        :tariff_treatment => "2"
+        :tariff_treatment => lambda {|i, line, tariff| tariff.tariff_provision ? tariff.tariff_provision : "2"}
       }
+    end
+
+    def fenix_customer_code invoice
+      code = invoice.try(:importer).try(:fenix_customer_number)
+      code.blank? ? "GENERIC" : code
     end
 
     def convert_company_to_hash company, address = nil
@@ -194,6 +196,39 @@ module OpenChain; module CustomHandler
       end
       
       h
+    end
+
+    def self.generate invoice_id
+      FenixInvoiceGenerator.new.generate_and_send invoice_id
+    end
+
+    # If no header level invoice_value is set, sums the values from the line level.  If any line
+    # does not have BOTH a quantity and unit_price, then the valuation is abandonded and a value
+    # of zero is returned.
+    def calculate_invoice_value invoice
+      value = BigDecimal.new("0.00")
+
+      # If there's any value at all set at the header level, use that..otherwise
+      # attempt to sum the invoice lines.
+      if invoice.invoice_value
+        value = invoice.invoice_value
+      else
+        sum_value = BigDecimal.new("0.00")
+        invalid = false
+        invoice.commercial_invoice_lines.each do |line|
+          # We have to abondon the summing if any line is missing a quantity or unit price value
+          # since that's an error and will throw off the header calculation.  We'd rather ops
+          # have to calculate out the value then proceed with an invalid valuation in this case.
+          if line.quantity && line.unit_price
+            sum_value += (line.quantity * line.unit_price)
+          else
+            invalid = true
+            break
+          end
+        end
+      end
+
+      value
     end
 
     private
