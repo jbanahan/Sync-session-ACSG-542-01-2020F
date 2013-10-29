@@ -48,6 +48,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       r.first.should == [p.unique_identifier,'US','LD','MX','1234567890'] 
       r.last.should ==  [p.unique_identifier,'US','LD','CN','1234567890']
     end
+    it "should only return one hts" do
+      p = Factory(:product)
+      p.update_custom_value! @cdefs[:article], 'ZSCR'
+      p.update_custom_value! @cdefs[:origin], "MX"
+      p.update_custom_value! @cdefs[:approved_long], 'LD'
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890",line_number:1)
+      cls.tariff_records.create!(:hts_1=>"0987654321",line_number:2)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      r = run_to_array
+      r.should have(1).records
+      r.first.should == [p.unique_identifier,'US','LD','MX','1234567890'] 
+    end
     it "should not output style without ZSCR article type" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:article], 'ZSCR'
