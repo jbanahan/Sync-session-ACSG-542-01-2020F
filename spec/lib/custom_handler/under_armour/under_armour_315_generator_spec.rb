@@ -121,5 +121,18 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
       REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/Shipment/Event/@DateTime").value.should eq @entry_data[:date].in_time_zone("GMT").iso8601[0..-7]
     end
   end
+
+  describe "generate_file" do
+    it "should generate data to a file and return the file" do
+      entry_data = {shipment_identifier: "IO", event_code: "EVENT_CODE", date: Time.zone.now}
+      g = described_class.new
+
+      f = g.generate_file entry_data
+      doc = REXML::Document.new(IO.read(f.path))
+
+      # just verify some piece of data is there..the whole file is already validated in another test
+      REXML::XPath.first(doc, "/tXML/Message/MANH_TPM_Shipment/@Id").value.should eq entry_data[:shipment_identifier]
+    end
+  end
   
 end

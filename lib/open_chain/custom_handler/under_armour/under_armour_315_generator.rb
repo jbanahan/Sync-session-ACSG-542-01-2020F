@@ -35,6 +35,13 @@ module OpenChain; module CustomHandler; module UnderArmour
     end
 
     def generate_and_send data
+     generate_file(data) {|f| ftp_file f, false}     
+    end
+
+    # Generates data to a tempfile, yielding the file to any
+    # given block.  Returns the closed tempfile.  
+    # (you can read from the closed file via IO.read(f.path) if you need the data).
+    def generate_file data
       # Create a hash of the data values to send as the unique event id
       data_hash = Digest::SHA1.hexdigest(data.values.join)
 
@@ -54,14 +61,15 @@ module OpenChain; module CustomHandler; module UnderArmour
   </Message>
 </tXML>
 XML
+
       Tempfile.open(["Vandegrift_Event_#{data[:shipment_identifier]}", ".xml"]) do |f|
         f.binmode
         f << xml
         f.flush
 
-        ftp_file f, false
+        yield(f) if block_given?
+        f
       end
-      nil
     end
 
     def ftp_credentials
