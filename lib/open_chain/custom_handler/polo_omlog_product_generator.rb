@@ -76,10 +76,10 @@ FROM products
 LEFT OUTER JOIN classifications ON classifications.product_id = products.id
 LEFT OUTER JOIN tariff_records ON tariff_records.classification_id = classifications.id 
 LEFT OUTER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id from custom_definitions where label = 'CSM Number') and customizable_id = products.id 
-LEFT OUTER JOIN sync_records on sync_records.syncable_id = products.id AND sync_records.trading_partner = '#{sync_code}' " 
+#{Product.need_sync_join_clause(sync_code)} " 
         w = "WHERE classifications.country_id = (SELECT id FROM countries WHERE iso_code = 'IT')
-AND length(tariff_records.hts_1) > 0 and length(csm_v.text_value) > 0 AND
-(sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)"
+AND length(tariff_records.hts_1) > 0 and length(csm_v.text_value) > 0 
+AND #{Product.need_sync_where_clause()}"
         q << (@custom_where ? @custom_where : w)
         q
       end

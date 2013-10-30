@@ -132,13 +132,13 @@ module OpenChain
 FROM products 
 INNER JOIN classifications on classifications.product_id = products.id and classifications.country_id = (select id from countries where iso_code = \"US\" LIMIT 1)
 LEFT OUTER JOIN tariff_records on tariff_records.classification_id = classifications.id
-LEFT OUTER JOIN sync_records on sync_records.syncable_type = 'Product' and sync_records.syncable_id = products.id and sync_records.trading_partner = '#{sync_code}'
+#{Product.need_sync_join_clause(sync_code)} 
 "
 # The WHERE clause below generates files that need to be synced
 # && Have an HTS 1, 2, or 3 value OR are 'RL' Sets 
 # && have Barthco Customer IDs
 # && DO NOT have a 'Test Style' value, 
-        w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)
+        w = "WHERE #{Product.need_sync_where_clause()} 
 AND (length(tariff_records.hts_1) > 0 OR length(tariff_records.hts_2) > 0 OR length(tariff_records.hts_3) > 0 OR #{cd_s(131, true)} = 'RL')
 AND (select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Barthco Customer ID\")) > 0
 AND ifnull((select length(string_value) from custom_values where customizable_id = products.id and custom_definition_id = (select id from custom_definitions where label = \"Test Style\")),0) = 0
