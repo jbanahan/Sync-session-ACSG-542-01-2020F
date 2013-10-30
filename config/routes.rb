@@ -118,6 +118,7 @@ OpenChain::Application.routes.draw do
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/help" => "chain_help#index"
+  match '/users/email/:email' => "users#find_by_email"
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
