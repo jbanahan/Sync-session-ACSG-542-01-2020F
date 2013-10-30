@@ -12,6 +12,9 @@ class CorrectiveActionPlan < ActiveRecord::Base
   STATUSES ||= {new:'New',active:'Active',resolved:'Resolved'}
 
   STATUS_DEFINITIONS ||= {new:"The survey recipient cannot see the plan and does not get email notifications.",active:"The survey recipient is notified about the plan and can respond.",resolved:"The plan has been completed."}
+  def log_update user
+    self.survey_response.log_update(user) if self.status == STATUSES[:active]
+  end
   def can_view? user
     self.survey_response.can_view?(user) && show_if_new?(user)
   end

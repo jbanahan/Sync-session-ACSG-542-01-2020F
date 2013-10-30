@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe Answer do
+  
+  describe :log_update do
+    it "should create survey_response_update" do
+      answer = Factory(:answer)
+      u = Factory(:user)
+      answer.log_update u
+      answer.survey_response.survey_response_updates.first.user.should == u
+    end
+  end
   describe :can_attach? do
     before :each do
       @a = Answer.new 

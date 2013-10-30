@@ -10,6 +10,7 @@ class AttachmentsController < ApplicationController
         end
         att.uploaded_by = current_user
         att.save
+        attachable.log_update(current_user) if attachable.respond_to?(:log_update)
         respond_to do |format|
           format.html {redirect_to attachable}
           format.json {render json: Attachment.attachments_as_json(attachable)}

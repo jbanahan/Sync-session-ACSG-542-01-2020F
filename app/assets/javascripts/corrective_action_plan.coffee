@@ -1,4 +1,4 @@
-capApp = angular.module('CorrectiveActionPlanApp',[])
+capApp = angular.module 'CorrectiveActionPlanApp', ['ChainComponents']
 
 capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
   {
@@ -11,9 +11,6 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
     #base corrective aciton plan object
     cap: {}
 
-    #comment to be added
-    comment: ''
-
     #load settings from a server response
     setSettings:(data) ->
       @.settings.canEdit = data.can_edit
@@ -21,7 +18,29 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
     
     #add new issue to the plan
     addIssue:() ->
-      @.cap.corrective_issues.push {}
+      cap = @.cap
+      $http.post('/corrective_issues',{corrective_action_plan_id:cap.id}).then(((resp)->
+        cap.corrective_issues.push resp.data.corrective_issue
+      ),((resp) ->
+        svc.settings.viewMode = 'error'
+      ))
+
+    #add comment to the plan
+    addComment: (comment, cap, surveyResponseId,successCallback) ->
+      return if $.trim(comment).length == 0 #don't send empty comments
+      svc = @
+      svc.settings.newCommentSaving = true
+      $http.post('/survey_responses/'+surveyResponseId+'/corrective_action_plans/'+cap.id+'/add_comment',{comment:comment}).then(((resp) ->
+        #good response
+        svc.settings.newCommentSaving = false
+        cap.comments = [] if cap.comments==undefined
+        cap.comments.push resp.data.comment
+        successCallback resp.data unless successCallback==undefined
+      ),(resp) ->
+        #bad response
+        svc.settings.newCommentSaving = false
+        svc.settings.viewMode = 'error'
+      )
 
     #load the plan from a server response
     setCorrectiveActionPlan: (data) ->
@@ -42,17 +61,31 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
         svc.settings.viewMode = 'error'
       )
 
+    saveIssue: (issue) ->
+      issue.saving = true
+      svc = @
+      $http.put('/corrective_issues/'+issue.id,{corrective_issue:issue}).then(((resp) ->
+        #good
+        issue.saving = false
+      ),(resp) ->
+        #bad
+        issue.saving = false
+        svc.viewMode = 'error'
+      )
+
     removeIssue: (issue) ->
       toRem = $.inArray(issue,@.cap.corrective_issues)
-      @.cap.corrective_issues.splice(toRem,1) if toRem >= 0
+      cap = @.cap
+      if toRem >= 0
+        $http.delete('/corrective_issues/'+issue.id).then(((resp) ->
+          cap.corrective_issues.splice(toRem,1)
+        ), ((resp) ->
+          svc.settings.viewMode = 'error'
+        ))
 
     load: (surveyResponseId,correctiveActionPlanId) ->
       @.setDataFromPromise $http.get(@.makeUrl(surveyResponseId,correctiveActionPlanId))
 
-    save: (surveyResponseId,correctiveActionPlanId) ->
-      @.settings.viewMode = 'saving'
-      @.setDataFromPromise $http.put(@.makeUrl(surveyResponseId,correctiveActionPlanId),{comment:@.comment,corrective_action_plan:@.cap}), (svc) ->
-        svc.comment = ''
   }
 ]
 
@@ -65,8 +98,13 @@ capApp.controller 'CorrectiveActionPlanController', ['$scope','$http','correctiv
   $scope.addIssue = () ->
     $scope.capService.addIssue()
 
-  $scope.save = () ->
-    $scope.capService.save($scope.survey_response_id,$scope.corrective_action_plan_id)
+  $scope.saveIssue = (issue) ->
+    $scope.capService.saveIssue(issue)
+
+  $scope.addComment = () ->
+    $scope.capService.addComment($scope.comment,$scope.capService.cap,$scope.survey_response_id,(data) ->
+      $scope.comment = '' #clear on success
+    )
 
   $scope.remove = (issue) ->
     $scope.capService.removeIssue(issue)

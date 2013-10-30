@@ -26,6 +26,11 @@ describe AnswerCommentsController do
       j['answer_comment']['private'].should be_true
       j['answer_comment']['content'].should == 'mytext'
     end
+    it "should create update record" do
+      SurveyResponse.any_instance.stub(:can_edit?).and_return true
+      post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext','private'=>'true'}
+      @answer.survey_response.survey_response_updates.first.user.should == @user
+    end
     it "should strip private flag if user cannot edit survey response" do
       SurveyResponse.any_instance.stub(:can_edit?).and_return false 
       post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext','private'=>'true'}

@@ -7,6 +7,7 @@ class AnswerCommentsController < ApplicationController
       :private=>(sr.can_edit?(current_user) ? params['comment']['private'] : false),
       :content=>params['comment']['content']
     )
+    answer.log_update current_user
     render json: ac.to_json(:include=>{:user=>{:only=>[:id],:methods=>[:full_name]}})
   end
 end

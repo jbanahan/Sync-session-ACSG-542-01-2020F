@@ -8,6 +8,12 @@ describe AnswersController do
       UserSession.create! @u
       @answer = Factory(:answer)
     end
+    it 'should log update' do
+      SurveyResponse.any_instance.stub(:can_view?).and_return true
+      Answer.any_instance.should_receive(:log_update).with @u
+      put :update, id: @answer.id, answer:{choice:'abc'}, format: :json
+    end
+
     it 'should allow survey user to save choice' do
       @answer.survey_response.user = @u
       @answer.survey_response.save!

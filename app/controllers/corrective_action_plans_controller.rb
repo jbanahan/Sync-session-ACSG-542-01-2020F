@@ -7,23 +7,7 @@ class CorrectiveActionPlansController < ApplicationController
     cap = CorrectiveActionPlan.find params[:id]
     unless params[:comment].blank? || !cap.can_view?(current_user)
       cap.comments.create!(body:params[:comment],user:current_user)
-    end
-    cap_params = params[:corrective_action_plan]
-    if cap_params && cap_params[:corrective_issues]
-      c_edit = cap.can_edit?(current_user)
-      c_upd_act = cap.can_update_actions?(current_user)
-      cap_params[:corrective_issues].each do |cip|
-        next if cip['id'].blank? && !c_edit
-        ci = cip['id'].blank? ? cap.corrective_issues.build : cap.corrective_issues.find(cip['id'])
-        ci.description = cip['description'] if c_edit
-        ci.suggested_action = cip['suggested_action'] if c_edit
-        ci.action_taken = cip['action_taken'] if c_upd_act
-        ci.save!
-      end
-    end
-    if cap.status == cap.class::STATUSES[:active]
-      OpenMailer.delay.send_survey_user_update(cap.survey_response,true) unless cap.assigned_user?(current_user)
-      cap.survey_response.delay.notify_subscribers(true)
+      cap.log_update current_user
     end
     do_show(cap)
   end
@@ -54,6 +38,22 @@ class CorrectiveActionPlansController < ApplicationController
     redirect_to sr
   end
 
+  # adds a comment returning the comment json unless the comment submitted was blank, then it returns
+  # a json like {error:'Empty comment not added'} with 400 status
+  def add_comment
+    cap = CorrectiveActionPlan.find params[:id]
+    if params[:comment].blank?
+      render json: {error: 'Empty comment not added'}, status: 400
+      return
+    end
+    if !cap.can_view? current_user
+      render json: {error: 'Permission denied.'}, status: 401
+      return
+    end
+    c = cap.comments.create! user: current_user, body: params[:comment]
+    render json: c.to_json(methods:[:html_body],include:{user:{methods:[:full_name],only:[:email]}})
+  end
+
   private
   def update_status status, verb_present, verb_past
     sr = SurveyResponse.find(params[:survey_response_id])
@@ -68,7 +68,7 @@ class CorrectiveActionPlansController < ApplicationController
     end
     cap.update_attributes(status: CorrectiveActionPlan::STATUSES[status])
     add_flash :notices, "Plan #{verb_past}."
-    OpenMailer.delay.send_survey_user_update(cap.survey_response,true) unless cap.assigned_user?(current_user)
+    cap.log_update current_user
     redirect_to [sr,cap]
   end
   def do_show cap
@@ -88,14 +88,15 @@ class CorrectiveActionPlansController < ApplicationController
               methods:[:html_body],
               include:{
                 user:{
-                  methods:[:full_name]
+                  methods:[:full_name],
+                  only:[:email]
                 }
               }
             }
           }
         )
-        j[:can_edit] = cap.can_edit?(current_user)
-        j[:can_update_actions] = cap.can_update_actions?(current_user)
+        j[:can_edit] = cap.can_edit?(current_user) && cap.status!=CorrectiveActionPlan::STATUSES[:resolved]
+        j[:can_update_actions] = cap.can_update_actions?(current_user) && !cap.status!=CorrectiveActionPlan::STATUSES[:resolved]
         render json: j
       }
     end

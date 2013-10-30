@@ -3,6 +3,37 @@
     font-weight: bold;
   }
 </style>
+<%-unless current_user.hide_message?('survey_response_1') || current_user.created_at.to_date > Date.new(2013,11,1)-%>
+  <script>
+    $(document).ready(function() {
+      $('#survey_response_1').modal('show');
+      $('#sr1_never_show').click(function() {
+        $('#survey_response_1').modal('hide');
+        Chain.hideMessage('survey_response_1');
+      });
+      $('#sr1_hide').click(function() {
+        $('#survey_response_1').modal('hide');
+      });
+    });
+  </script>
+  <div id='survey_response_1' class='modal hide fade'>
+    <div class='modal-header'>
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      <h3>New Survey Updates</h3>
+    </div>
+    <div class='modal-body'>
+      <p>Welcome to the new survey screen. We've made some improvements!</p>
+      <ul>
+        <li>We've removed the save button. Everything is now automatically saved each time you leave a field.</li>
+        <li>If someone is making changes, you'll only receive notifications once per hour.</li>
+      </ul>
+    </div>
+    <div class='modal-footer'>
+      <button class='btn' id='sr1_never_show'>Never Show This Again</button>
+      <button class='btn btn-primary' id='sr1_hide'>OK</button>
+    </div>
+  </div>
+<%-end-%>
 <div ng-app='SurveyResponseApp' ng-init='response_id = <%=@sr.id%>'>
   <div class='container' ng-controller='srController'>
     <div chain-action-bar>

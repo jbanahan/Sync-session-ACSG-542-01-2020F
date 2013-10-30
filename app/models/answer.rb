@@ -26,4 +26,8 @@ class Answer < ActiveRecord::Base
   def can_attach? user
     can_view? user
   end
+
+  def log_update user
+    self.survey_response.log_update user
+  end
 end

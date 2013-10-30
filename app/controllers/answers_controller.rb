@@ -6,6 +6,7 @@ class AnswersController < ApplicationController
     answer.choice = params[:answer][:choice] if sr.user == current_user
     answer.rating = params[:answer][:rating] if sr.can_edit?(current_user)
     answer.save!
+    answer.log_update current_user
     render json: {ok:'ok'}
   end
 end

@@ -232,7 +232,7 @@ describe "SurveyResponseApp", () ->
         
     it "should delegate saveAnswer", () ->
       spyOn(svc,'saveAnswer').andCallFake (a,c) ->
-        c({my:'response'}) #execute callback
+        c({my:'response'}) if c #execute callback
       
       ans = {id:1,choice:'x'}
       $scope.resp.answers = []
