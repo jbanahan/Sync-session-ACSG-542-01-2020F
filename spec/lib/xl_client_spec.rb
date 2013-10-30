@@ -263,4 +263,27 @@ describe OpenChain::XLClient do
     end
   end
 
+  describe "string_value" do
+
+    it "should convert numeric values to string, trimming trailing zeros" do
+      OpenChain::XLClient.string_value(123.0).should eq "123"
+      OpenChain::XLClient.string_value(BigDecimal.new("123.0")).should eq "123"
+      OpenChain::XLClient.string_value(123).should eq "123"
+
+      OpenChain::XLClient.string_value(123.10).should eq "123.1"
+      OpenChain::XLClient.string_value(BigDecimal.new("123.10")).should eq "123.1"
+    end
+
+    it "should passthrough string values" do
+      # It shouldn't even touch string objects - straight pass-through
+      a = "1"
+      OpenChain::XLClient.string_value(a).should be a
+    end
+
+    it "should to_s non-Numeric/non-String values" do
+      OpenChain::XLClient.string_value(Date.new(2013,8,10)).should eq Date.new(2013,8,10).to_s
+      OpenChain::XLClient.string_value({:test=>"test"}).should eq ({:test=>"test"}).to_s
+    end
+  end
+
 end

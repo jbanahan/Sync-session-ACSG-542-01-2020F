@@ -124,6 +124,25 @@ module OpenChain
       end
       nil
     end
+
+    # This method coerces the given value into the String equivalent
+    # to be used for active model attributes.  In essence, the method
+    # trims trailing zeros from all numeric values - which tend to get sent
+    # in Excel files for string model attributes.
+    def self.string_value value
+      if value.is_a? Numeric
+        # BigDecimal to_s uses engineering notation (stupidly) by default
+        value = value.is_a?(BigDecimal) ? value.to_s("F") : value.to_s
+        trailing_zeros = value.index /\.0+$/
+        if trailing_zeros 
+          value = value[0, trailing_zeros]
+        end
+      elsif !value.is_a? String
+        value = value.to_s
+      end
+      
+      value
+    end
     
     private
     def private_send command
@@ -217,6 +236,7 @@ module OpenChain
       r
     end
   end
+
   class XLClientError < RuntimeError
     
   end

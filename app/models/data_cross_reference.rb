@@ -7,6 +7,7 @@ class DataCrossReference < ActiveRecord::Base
   RL_PO_TO_BRAND ||= 'po_to_brand'
   UA_PLANT_TO_ISO ||= 'uap2i'
   UA_WINSHUTTLE ||= 'uawin'
+  UA_315_MILESTONE_EVENT ||= 'ua-315'
 
   def self.find_rl_profit_center_by_brand brand
     find_unique where(:cross_reference_type => RL_BRAND_TO_PROFIT_CENTER, :key => brand)
@@ -22,6 +23,10 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_ua_winshuttle_hts material_plant
     find_unique where(cross_reference_type:UA_WINSHUTTLE, key:material_plant)
+  end
+
+  def self.find_ua_315_milestone ua_shipment_identifier, event_code
+    find_unique where(cross_reference_type: UA_315_MILESTONE_EVENT, key: make_compound_key(ua_shipment_identifier, event_code))
   end
 
   def self.find_unique relation
@@ -51,6 +56,17 @@ class DataCrossReference < ActiveRecord::Base
     csv.each do |row|
       add_xref! cross_reference_type, row[0], row[1], company_id
     end
+  end
+
+  def self.make_compound_key *args
+    # Join the values on a character sequence which should never be found in the actual key values.
+    # Ideally, we could use some non-printing char but there seems to be issues with that somewhere between activerecord
+    # and mysql.
+    args.join("*~*")
+  end
+
+  def self.decode_compound_key cross_reference
+    cross_reference.key.split("*~*")
   end
 
 end

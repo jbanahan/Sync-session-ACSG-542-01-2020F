@@ -1,24 +1,5 @@
-<% content_for :javascript do %>
-  $(function() {$('#btn_upload').button();});
-<% end %>
-<h1>J Crew Parts Files</h1>
+<% content_for :upload_form do %>
 <h2>Upload</h2>
-<%= form_tag '/custom_features/jcrew_parts/upload', :multipart => true do %>
-  <%= file_field_tag :attached %> <%=submit_tag 'Upload', :id=>'btn_upload' %>
 <% end %>
-<h2>Existing Files</h2>
-<table class='detail_table'>
-  <thead><tr><th>File Name</th><th>Uploaded By</th><th>Uploaded At</th><th>Start</th><th>Finish</th></tr></thead>
-  <tbody>
-    <%@files.each do |f|%>
-    <tr>
-      <td><%=link_to f.attached_file_name, "/custom_features/jcrew_parts/#{f.id}/download"%></td>
-      <td><%=f.uploaded_by ? f.uploaded_by.full_name : ""%></td>
-      <td><%=f.created_at%></td>
-      <td><%=f.start_at%></td>
-      <td><%=f.finish_at%></td>
-    </tr>
-    <%end%>
-  </tbody>
-</table>
-<%= will_paginate @files %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "J Crew Parts Files", custom_feature: "jcrew_parts"} %>

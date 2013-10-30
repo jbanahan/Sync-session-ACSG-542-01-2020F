@@ -7,9 +7,10 @@ describe OpenChain::Events::EntryEvents::EntryEventHandler do
       event = double("Event")
       event.stub(:event_type).and_return :save
       listeners = described_class.new.listeners event
-      listeners.should have(1).item
+      listeners.should have(2).items
 
       listeners.first.class.name.should == OpenChain::Events::EntryEvents::LandedCostReportAttacherListener.name
+      listeners[1].class.name.should == OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator.name
     end
 
     it "should return a blank list for event types it doesn't care about" do

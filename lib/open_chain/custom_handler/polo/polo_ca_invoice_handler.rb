@@ -5,6 +5,8 @@ require 'open_chain/custom_handler/polo/polo_ca_fenix_invoice_generator'
 module OpenChain; module CustomHandler; module Polo
   class PoloCaInvoiceHandler
 
+    RL_CA_FACTORY_STORE_TAX_ID ||= "806167003RM0002"
+
     def initialize custom_file
       @custom_file = custom_file
     end
@@ -57,9 +59,9 @@ module OpenChain; module CustomHandler; module Polo
       end
 
       def parse_header xl
-        importer = Company.where(:fenix_customer_number => PoloCaFenixInvoiceGenerator::RL_CA_FACTORY_STORE_TAX_ID, :importer => true).first
+        importer = Company.where(:fenix_customer_number => RL_CA_FACTORY_STORE_TAX_ID, :importer => true).first
         unless importer
-          raise "No Importer company exists with Tax ID #{PoloCaFenixInvoiceGenerator::RL_CA_FACTORY_STORE_TAX_ID}.  This company must exist before RL CA invoices can be created against it."
+          raise "No Importer company exists with Tax ID #{RL_CA_FACTORY_STORE_TAX_ID}.  This company must exist before RL CA invoices can be created against it."
         end
 
         invoice = find_invoice get_cell_value(xl, 1, 4), importer
