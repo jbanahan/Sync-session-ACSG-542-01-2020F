@@ -53,8 +53,14 @@ end
 
 Spork.each_run do
   # Requires everything in lib
-  load "#{Rails.root}/config/routes.rb"
-  Dir[Rails.root.join("lib/**/*.rb")].each {|f| load f}
-  ModelField.reload
+  warn_level = $VERBOSE
+  begin
+    $VERBOSE = nil
+    load "#{Rails.root}/config/routes.rb"
+    Dir[Rails.root.join("lib/**/*.rb")].each {|f| load f}
+    ModelField.reload
+  ensure
+    $VERBOSE = warn_level
+  end
 end
 
