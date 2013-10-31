@@ -116,4 +116,33 @@ describe CoreObjectSupport do
       r[3].should == fourth
     end
   end
+
+  context :TestCoreObject do
+    before :each do
+      class TestCoreObject < ActiveRecord::Base
+        include CoreObjectSupport
+
+        def self.name 
+          "Class' Name"
+        end
+      end
+    end
+
+    describe :need_sync_join_clause do
+      it "should generate sql for joining to sync_records table" do
+        sql = TestCoreObject.need_sync_join_clause "Trading's Partner"
+        sql.should include ".syncable_type = 'Class\\' Name'"
+        sql.should include "sync_records.syncable_id = test_core_objects"
+        sql.should include "sync_records.trading_partner = 'Trading\\'s Partner'"
+      end
+    end
+
+    describe :need_sync_where_clause do
+      it "should generate sql for joining to sync_records table" do
+        sql = TestCoreObject.need_sync_where_clause
+        sql.should include "test_core_objects.updated_at"
+      end
+    end
+  end
+  
 end
