@@ -2,7 +2,7 @@ require 'open_chain/drawback_processor'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Crocs
-  class CrocsDrawbackProcessor
+  class CrocsDrawbackProcessor < OpenChain::DrawbackProcessor
     include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
     def self.process_entries_by_arrival_date start_date, end_date
