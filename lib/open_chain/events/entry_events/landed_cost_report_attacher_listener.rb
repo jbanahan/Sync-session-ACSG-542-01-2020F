@@ -72,33 +72,20 @@ module OpenChain; module Events; module EntryEvents
       per_unit_columns_to_copy = [:entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other].sort
 
       # First, copy all the data we're after to a new structure.
-      lc_copy = {}
-      lc_copy[:entries] = []
+      lc_data = ""
       landed_cost_data[:entries].sort_by{|e| e[:broker_reference]}.each do |entry_data|
-        lc_copy[:entries] << {}
-        lc_copy[:broker_reference] = entry_data[:broker_reference]
-        lc_copy[:commercial_invoices] = []
+        lc_data << entry_data[:broker_reference].to_s
         entry_data[:commercial_invoices].sort_by{|ci| ci[:invoice_number]}.each do |invoice_data|
-          inv_copy = {}
-          lc_copy[:commercial_invoices] << inv_copy
-          inv_copy[:invoice_number] = invoice_data[:invoice_number]
-          inv_copy[:commercial_invoice_lines] = []
+          lc_data << invoice_data[:invoice_number].to_s
           invoice_data[:commercial_invoice_lines].sort_by {|l| l[:po_number].to_s + l[:part_number].to_s + l[:quantity].to_s}.each do |line_data|
-            line_copy = {}
-            inv_copy[:commercial_invoice_lines] << line_copy
-
             per_unit_columns_to_copy.each do |c|
-              line_copy[c] = line_data[:per_unit][c]
+              lc_data << line_data[:per_unit][c].to_s("F")
             end
           end
         end
       end
 
-      # Be careful, if anyting about the to_json implementation's encoded output is changed then the checksum here
-      # is going to change too - for instance the recent ActiveSupport::JSON change to no longer escape unicode 
-      # characters like \uXXXX would cause different checksums if there were unicode characters in the data 
-      # stream (there won't be though since the data is from alliance and alliance doesn't support non-ascii charsets).
-      Digest::SHA1.hexdigest(lc_copy.to_json)
+      Digest::SHA1.hexdigest(lc_data)
     end
 
     private 
