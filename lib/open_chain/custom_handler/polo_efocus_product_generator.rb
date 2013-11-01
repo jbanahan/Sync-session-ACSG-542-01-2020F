@@ -14,8 +14,12 @@ module OpenChain
         ftp_file sync_xls
       end
 
+      def auto_confirm?
+        false
+      end
+
       def ftp_credentials
-        {:server=>'ftp.freightek.com',:username=>'polo',:password=>'polo541xm',:folder=>'/ProductUpload'}
+        {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/efocus_products"}
       end
     
       def query
