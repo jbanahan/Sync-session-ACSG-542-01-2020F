@@ -119,9 +119,18 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       sl2.get_custom_value(defs[:shpln_coo]).value.should == 'CN'
       sl2.get_custom_value(defs[:shpln_received_date]).value.to_date.should == Time.now.to_date 
     end
-    it "should fail if shipment / po / sku / received date / coo already exists" do
+    it "should merge like rows in same shipment" do
       rows = [
         ['1','PO1','SKU1','STY1','COL1','SIZE1','DESC1','CN',10,Time.now.to_date],
+        ['1','PO1','SKU1','STY1','COL1','SIZE1','DESC1','CN',10,Time.now.to_date]
+      ]
+      #this one should be ok
+      described_class.new.parse_shipment rows
+      ShipmentLine.first.quantity.should == 20
+    end
+    it "should fail if shipment / po / sku / received date / coo already exists" do
+      rows = [
+        ['1','PO1','SKU1','STY1','COL1','SIZE1','DESC1','CN',10,Time.now.to_date]
       ]
       #this one should be ok
       described_class.new.parse_shipment rows

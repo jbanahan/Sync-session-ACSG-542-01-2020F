@@ -75,8 +75,18 @@ module OpenChain; module CustomHandler; module Crocs
       Shipment.transaction do
         cvals = []
         shipment = Shipment.where(importer_id:@company.id,reference:ship_num).first_or_create!(vendor_id:@vendor.id)
+        row_hash = {}
         rows.each do |r|
           r.each_with_index {|x,i| r[i] = clean_str x}
+          key = "#{r[1]}-#{r[2]}-#{r[9]}-#{r[7]}"
+          v = row_hash[key]
+          if v
+            v[8] += r[8]
+          else
+            row_hash[key] = r
+          end
+        end
+        row_hash.values.each do |r|
           raise "Duplicate receipts #{ship_num}, #{r[1]}, #{r[2]}, #{r[9]}, #{r[7]}" if record_exists? shipment, r[1], r[2], r[9], r[7]
           part_uid = "CROCS-#{r[3]}"
           product = @part_cache[part_uid]
