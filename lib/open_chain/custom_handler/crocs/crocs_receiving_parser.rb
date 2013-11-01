@@ -77,7 +77,7 @@ module OpenChain; module CustomHandler; module Crocs
         shipment = Shipment.where(importer_id:@company.id,reference:ship_num).first_or_create!(vendor_id:@vendor.id)
         rows.each do |r|
           r.each_with_index {|x,i| r[i] = clean_str x}
-          raise "Duplicate receipts #{ship_num}, #{r[1]}, #{r[2]}, #{r[9]}" if record_exists? shipment, r[1], r[2], r[9]
+          raise "Duplicate receipts #{ship_num}, #{r[1]}, #{r[2]}, #{r[9]}, #{r[7]}" if record_exists? shipment, r[1], r[2], r[9], r[7]
           part_uid = "CROCS-#{r[3]}"
           product = @part_cache[part_uid]
           if product.nil?
@@ -96,11 +96,12 @@ module OpenChain; module CustomHandler; module Crocs
     end
 
     private 
-    def record_exists? shipment, po, sku, received_date
+    def record_exists? shipment, po, sku, received_date, coo
       r = ShipmentLine.joins("
         INNER JOIN custom_values p ON p.custom_definition_id = #{@defs[:shpln_po].id} AND p.customizable_id = shipment_lines.id AND p.string_value = '#{po}'
         INNER JOIN custom_values k ON k.custom_definition_id = #{@defs[:shpln_sku].id} AND k.customizable_id = shipment_lines.id AND k.string_value = '#{sku}'
         INNER JOIN custom_values r ON r.custom_definition_id = #{@defs[:shpln_received_date].id} AND r.customizable_id = shipment_lines.id AND r.date_value = '#{received_date.year}-#{received_date.month}-#{received_date.day}'
+        INNER JOIN custom_values c ON c.custom_definition_id = #{@defs[:shpln_coo].id} AND c.customizable_id = shipment_lines.id AND c.string_value = '#{coo}' 
       ").where(shipment_id:shipment.id)
       !r.empty?
     end

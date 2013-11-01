@@ -119,7 +119,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       sl2.get_custom_value(defs[:shpln_coo]).value.should == 'CN'
       sl2.get_custom_value(defs[:shpln_received_date]).value.to_date.should == Time.now.to_date 
     end
-    it "should fail if shipment / po / sku / received date already exists" do
+    it "should fail if shipment / po / sku / received date / coo already exists" do
       rows = [
         ['1','PO1','SKU1','STY1','COL1','SIZE1','DESC1','CN',10,Time.now.to_date],
       ]
@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
 
       lambda {
         described_class.new.parse_shipment rows
-      }.should raise_error "Duplicate receipts CROCS-1, PO1, SKU1, #{Time.now.to_date.to_s}"
+      }.should raise_error "Duplicate receipts CROCS-1, PO1, SKU1, #{Time.now.to_date.to_s}, CN"
     end
   end
 
