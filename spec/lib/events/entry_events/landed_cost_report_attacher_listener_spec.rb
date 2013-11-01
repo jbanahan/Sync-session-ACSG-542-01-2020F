@@ -26,42 +26,211 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
     end
   end
 
-  context :receive do
-
+  context :using_checksum do 
     before :each do
-      @e = Factory(:entry)
+      @landed_cost_data = {
+        entries: [
+          {
+            broker_reference: "Broker Ref",
+            commercial_invoices: [
+              {
+                invoice_number: "INV #1",
+                commercial_invoice_lines: [
+                  {
+                    po_number: "PO #1",
+                    part_number: "Part #1",
+                    quantity: BigDecimal.new(1),
+                    per_unit: {
+                      entered_value: BigDecimal.new("1.20"), 
+                      duty: BigDecimal.new("3.20"), 
+                      fee: BigDecimal.new("4.20"),
+                      international_freight: BigDecimal.new("5.20"), 
+                      inland_freight: BigDecimal.new("6.20"), 
+                      brokerage: BigDecimal.new("7.20"), 
+                      other: BigDecimal.new("8.20")
+                    }
+                  },
+                  {
+                    po_number: "PO #2",
+                    part_number: "Part #2",
+                    quantity: BigDecimal.new(2),
+                    per_unit: {
+                      entered_value: BigDecimal.new("1.20"), 
+                      duty: BigDecimal.new("3.20"), 
+                      fee: BigDecimal.new("4.20"),
+                      international_freight: BigDecimal.new("5.20"), 
+                      inland_freight: BigDecimal.new("6.20"), 
+                      brokerage: BigDecimal.new("7.20"), 
+                      other: BigDecimal.new("8.20")
+                    }
+                  }
+                ]
+              },
+              {
+                invoice_number: "INV #2",
+                commercial_invoice_lines: [
+                  {
+                    po_number: "PO #3",
+                    part_number: "Part #3",
+                    quantity: BigDecimal.new(3),
+                    per_unit: {
+                      entered_value: BigDecimal.new("1.20"), 
+                      duty: BigDecimal.new("3.20"), 
+                      fee: BigDecimal.new("4.20"),
+                      international_freight: BigDecimal.new("5.20"), 
+                      inland_freight: BigDecimal.new("6.20"), 
+                      brokerage: BigDecimal.new("7.20"), 
+                      other: BigDecimal.new("8.20")
+                    }
+                  },
+                  {
+                    po_number: "PO #4",
+                    part_number: "Part #4",
+                    quantity: BigDecimal.new(4),
+                    per_unit: {
+                      entered_value: BigDecimal.new("1.20"), 
+                      duty: BigDecimal.new("3.20"), 
+                      fee: BigDecimal.new("4.20"),
+                      international_freight: BigDecimal.new("5.20"), 
+                      inland_freight: BigDecimal.new("6.20"), 
+                      brokerage: BigDecimal.new("7.20"), 
+                      other: BigDecimal.new("8.20")
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    end
+    
+    describe :receive do
+      before :each do
+        @e = Factory(:entry)
+      end
+
+      it "should generate a report and create an entry attachment" do
+        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        LocalLandedCostsController.any_instance.should_receive(:show_landed_cost_data).with(@landed_cost_data).and_return "Landed Cost Report"
+        attachment = double("attachment")
+        Attachment.should_receive(:delay).and_return attachment
+        attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
+
+        entry = described_class.new.receive nil, @e
+        entry.id.should == @e.id
+
+        entry.attachments.should have(1).item
+        a = entry.attachments.first
+        a.attached_file_name.should == "Landed Cost - #{@e.broker_reference}.html"
+        a.attachment_type.should == "Landed Cost Report"
+      end
+
+      it "should replace any existing landed cost reports with the new one" do
+        # Saving without a checksum will ensure the new report is attached (since the checksum won't match)
+        att = @e.attachments.build
+        att.attachment_type = "Landed Cost Report"
+        att.save!
+        @e.attachments.reload
+
+        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        LocalLandedCostsController.any_instance.should_receive(:show_landed_cost_data).with(@landed_cost_data).and_return "Landed Cost Report"
+        attachment = double("attachment")
+        Attachment.should_receive(:delay).and_return attachment
+        attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
+        
+        entry = described_class.new.receive nil, @e
+        entry.id.should == @e.id
+
+        entry.attachments.should have(1).item
+      end
+
+      it "should not update the attachment if the checksum is the same" do
+        c = described_class.new
+        att = @e.attachments.build
+        att.attachment_type = "Landed Cost Report"
+        att.checksum = c.calculate_landed_cost_checksum @landed_cost_data
+        att.save!
+        @e.attachments.reload
+
+        OpenChain::Report::LandedCostDataGenerator.any_instance.should_receive(:landed_cost_data_for_entry).with(@e).and_return @landed_cost_data
+        entry = c.receive nil, @e
+
+        entry.attachments.should have(1).item
+        entry.attachments.first.id.should eq att.id
+      end
     end
 
-    it "should generate a report and create an entry attachment" do
-      LocalLandedCostsController.any_instance.should_receive(:show).with(@e.id).and_return "Landed Cost Report"
-      attachment = double("attachment")
-      Attachment.should_receive(:delay).and_return attachment
-      attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
+    describe :calculate_landed_cost_checksum do
+      it "should generate the same checksum for identical sets of landed cost data" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        checksum.should eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
 
-      entry = described_class.new.receive nil, @e
-      entry.id.should == @e.id
+      it "should not take invoice ordering into account when calculating checksums" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
 
-      entry.attachments.should have(1).item
-      a = entry.attachments.first
-      a.attached_file_name.should == "Landed Cost - #{@e.broker_reference}.html"
-      a.attachment_type.should == "Landed Cost Report"
-    end
+        # Just change the order of the invoices
+        @landed_cost_data[:entries][0][:commercial_invoices] << @landed_cost_data[:entries][0][:commercial_invoices][0]
+        @landed_cost_data[:entries][0][:commercial_invoices] = @landed_cost_data[:entries][0][:commercial_invoices].drop 1
 
-    it "should replace any existing landed cost reports with the new one" do
-      att = @e.attachments.build
-      att.attachment_type = "Landed Cost Report"
-      att.save!
-      @e.attachments.reload
+        checksum.should eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
 
-      LocalLandedCostsController.any_instance.should_receive(:show).with(@e.id).and_return "Landed Cost Report"
-      attachment = double("attachment")
-      Attachment.should_receive(:delay).and_return attachment
-      attachment.should_receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
-      
-      entry = described_class.new.receive nil, @e
-      entry.id.should == @e.id
+      it "should not take invoice line ordering into account when calculating checksums" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines] << @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0]
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines] = @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines].drop 1
+        checksum.should eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
 
-      entry.attachments.should have(1).item
+      it "should generate different checksum if broker reference is different" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:broker_reference] = "Changed"
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
+
+      it "should generate different checksum if entered value changes" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:entered_value] = BigDecimal.new("100")
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
+
+      it "should generate different checksum if duty changes" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:duty] = BigDecimal.new("100")
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
+
+      it "should generate different checksum if fee changes" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:fee] = BigDecimal.new("100")
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
+
+      it "should generate different checksum if int'l freight changes" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:international_freight] = BigDecimal.new("100")
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
+
+      it "should generate different checksum if inland freight changes" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:inland_freight] = BigDecimal.new("100")
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
+
+      it "should generate different checksum if brokerage changes" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:brokerage] = BigDecimal.new("100")
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
+
+      it "should generate different checksum if other changes" do
+        checksum = described_class.new.calculate_landed_cost_checksum @landed_cost_data
+        @landed_cost_data[:entries][0][:commercial_invoices][0][:commercial_invoice_lines][0][:per_unit][:other] = BigDecimal.new("100")
+        checksum.should_not eq described_class.new.calculate_landed_cost_checksum @landed_cost_data
+      end
     end
   end
 end
