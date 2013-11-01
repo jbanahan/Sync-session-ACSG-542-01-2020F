@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Crocs
       po = base_po.strip.gsub(/[^a-zA-Z0-9]/,'') #clear non alphanumerics
       return po[3,7] if po.match /^[a-zA-Z]{3}[0-9]{7}$/ #country prefix format
       o_idx = po.index('O')
-      return po[o_idx-7,7] if o_idx>=7 #warehouse formats
+      return po[o_idx-7,7] if o_idx && o_idx>=7 #warehouse formats
       nil
     end
 
