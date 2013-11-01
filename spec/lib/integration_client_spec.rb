@@ -67,7 +67,10 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
       it "should send data to Ack Handler if SAP enabled and path containers _from_sap and file starts with zym_ack" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('Ann SAP').and_return(true)
-        OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','zym_ack.a.csv','ANN-ZYM')
+
+        p = double("parser")
+        OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.any_instance.should_receive(:delay).and_return p
+        p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => 'ANN-ZYM'}
         cmd = {'request_type'=>'remote_file','path'=>'/_from_sap/zym_ack.a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
@@ -83,15 +86,20 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
       it "should handle ack files" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
-        OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','a-ack.csv','MSLE')
+
+        p = double("parser")
+        OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:delay).and_return p
+        p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => 'MSLE'}
         cmd = {'request_type'=>'remote_file','path'=>'/_from_msl/a-ack.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
     end
     it 'should process CSM Acknowledgements' do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('CSM Sync').and_return(true)
-      OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with('abcdefg','ACK1234567890.csv','csm_product')
-      cmd = {'request_type'=>'remote_file','path'=>'/_from_csm/ACK1234567890.csv','remote_path'=>'12345'}
+      p = double("parser")
+      OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:delay).and_return p
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => 'csm_product'}
+      cmd = {'request_type'=>'remote_file','path'=>'_from_csm/ACK-file.csv','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
     it 'should send data to CSM Sync custom handler if feature enabled and path contains _csm_sync' do
@@ -164,6 +172,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       OpenChain::CustomHandler::Polo::Polo850VandegriftParser.should_receive(:delay).and_return p
       p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
       cmd = {'request_type'=>'remote_file','path'=>'/_polo_850/file.xml','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+    end
+
+    it "should send efocus ack files to ack handler" do 
+      MasterSetup.any_instance.should_receive(:custom_feature?).with('e-Focus Products').and_return(true)
+      p = double("parser")
+      OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:delay).and_return p
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE}
+      cmd = {'request_type'=>'remote_file','path'=>'/_efocus_ack/file.csv','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
 

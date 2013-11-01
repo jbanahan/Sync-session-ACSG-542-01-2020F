@@ -92,16 +92,16 @@ module OpenChain
         status_msg = 'success'
         response_type = 'remote_file'
       elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          if fname.to_s.match /-ack/
-            OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'MSLE')
-          else
+        if fname.to_s.match /-ack/
+          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE'
+        else
+          get_tempfile(bucket,remote_path,command['path']) do |tmp|
             h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
             h.send_and_delete_ack_file h.process(IO.read(tmp)), fname.to_s
           end
-          status_msg = 'success'
-          response_type = 'remote_file'
         end
+        status_msg = 'success'
+        response_type = 'remote_file'
       elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
         get_tempfile(bucket,remote_path,command['path']) do |tmp|
           cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
@@ -112,16 +112,18 @@ module OpenChain
           response_type = 'remote_file'
         end
       elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          OpenChain::CustomHandler::AckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'csm_product')
-          status_msg = 'success'
-          response_type = 'remote_file'
-        end
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product'
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif command['path'].include?('/_efocus_ack/') && MasterSetup.get.custom_feature?("e-Focus Products")
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE
+        status_msg = 'success'
+        response_type = 'remote_file'
       elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          if fname.to_s.match /^zym_ack/
-            OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.process_product_ack_file(IO.read(tmp),fname.to_s,'ANN-ZYM')
-          else
+        if fname.to_s.match /^zym_ack/
+          OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'ANN-ZYM'
+        else
+          get_tempfile(bucket,remote_path,command['path']) do |tmp|
             OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
           end
         end
