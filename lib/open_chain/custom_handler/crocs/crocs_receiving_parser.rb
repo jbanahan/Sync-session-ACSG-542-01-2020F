@@ -32,16 +32,22 @@ module OpenChain; module CustomHandler; module Crocs
       r
     end
 
+    # returns array with earliest & latest received dates processed across all rows
     def self.parse_s3 s3_path
       v = validate_s3 s3_path
       raise "Validation errors: #{v.join(' ')}" unless v.empty? 
       shipment_rows = []
       last_shipment_number = nil
+      earliest_date = nil 
+      latest_date = nil 
       cursor = 0
       parser = self.new
       OpenChain::XLClient.new(s3_path).all_row_values(0) do |r|
         cursor += 1
         next if cursor == 1
+        received_date = r[9].to_date
+        earliest_date = received_date if earliest_date.nil? || received_date < earliest_date
+        latest_date = received_date if latest_date.nil? || received_date > latest_date
         shipment_number = r.first
         if shipment_number!=last_shipment_number && !shipment_rows.blank?
           parser.parse_shipment shipment_rows
@@ -51,7 +57,7 @@ module OpenChain; module CustomHandler; module Crocs
         last_shipment_number = shipment_number
       end
       parser.parse_shipment shipment_rows unless shipment_rows.empty?
-      true #don't return garbage value from previous line
+      [earliest_date,latest_date]
     end
 
 

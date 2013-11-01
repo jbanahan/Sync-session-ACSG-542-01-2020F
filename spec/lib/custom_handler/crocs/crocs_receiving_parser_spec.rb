@@ -51,20 +51,30 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       described_class.should_receive(:validate_s3).with(@s3_path).and_return []
       @xl_client.should_receive(:all_row_values).with(0).
         and_yield(['HEADING']).
-        and_yield(['1']).
-        and_yield(['1']).
-        and_yield(['2']).
-        and_yield(['2'])
-      described_class.any_instance.should_receive(:parse_shipment).with([['1'],['1']])
-      described_class.any_instance.should_receive(:parse_shipment).with([['2'],['2']])
+        and_yield(['1','','','','','','','','',Date.new(2013,1,1)]).
+        and_yield(['1','','','','','','','','',Date.new(2011,1,1)]).
+        and_yield(['2','','','','','','','','',Date.new(2012,1,1)]).
+        and_yield(['2','','','','','','','','',Date.new(2010,1,1)])
+      described_class.any_instance.should_receive(:parse_shipment).with([['1','','','','','','','','',Date.new(2013,1,1)],['1','','','','','','','','',Date.new(2011,1,1)]])
+      described_class.any_instance.should_receive(:parse_shipment).with([['2','','','','','','','','',Date.new(2012,1,1)],['2','','','','','','','','',Date.new(2010,1,1)]])
       described_class.parse_s3 @s3_path
+    end
+    it "should return earliest and latest received dates" do
+      described_class.should_receive(:validate_s3).with(@s3_path).and_return []
+      @xl_client.should_receive(:all_row_values).with(0).
+        and_yield(['HEADING']).
+        and_yield(['1','','','','','','','','',Date.new(2013,1,1)]).
+        and_yield(['1','','','','','','','','',Date.new(2011,1,1)]).
+        and_yield(['2','','','','','','','','',Date.new(2012,1,1)]).
+        and_yield(['2','','','','','','','','',Date.new(2010,1,1)])
+      described_class.any_instance.stub(:parse_shipment)
+      described_class.parse_s3(@s3_path).should == [Date.new(2010,1,1),Date.new(2013,1,1)]
     end
   end
 
   describe :parse_shipment do
     before :each do 
       @importer = Factory(:company,importer:true,alliance_customer_number:'CROCS')
-
     end
     it "should create a new shipment" do
       rows = [

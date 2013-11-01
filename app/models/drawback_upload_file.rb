@@ -7,6 +7,7 @@ require 'open_chain/lands_end_export_parser'
 require 'open_chain/custom_handler/lands_end/le_drawback_import_parser'
 require 'open_chain/custom_handler/lands_end/le_drawback_cd_parser'
 require 'open_chain/custom_handler/crocs/crocs_drawback_export_parser'
+require 'open_chain/custom_handler/crocs/crocs_drawback_processor'
 require 'open_chain/custom_handler/crocs/crocs_receiving_parser'
 
 #file uploaded from web to be processed to create drawback data
@@ -51,8 +52,11 @@ class DrawbackUploadFile < ActiveRecord::Base
       PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")},
       PROCESSOR_LANDS_END_IMPORTS => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},
       PROCESSOR_LANDS_END_CD => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},
-      PROCESSOR_CROCS_RECEIVING=>lambda {OpenChain::CustomHandler::Crocs::CrocsReceivingParser.parse_s3 self.attachment.attached.path},
-      PROCESSOR_CROCS_EXPORTS => lambda {OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("CROCS")}
+      PROCESSOR_CROCS_RECEIVING=>lambda {
+        start_date, end_date = OpenChain::CustomHandler::Crocs::CrocsReceivingParser.parse_s3 self.attachment.attached.path
+        OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor.process_entries_by_arrival_date start_date, end_date
+      },
+      PROCESSOR_CROCS_EXPORTS => lambda { OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("CROCS")}
     }
     to_run = p_map[self.processor]
     raise "Processor #{self.processor} not found." if to_run.nil?

@@ -28,8 +28,8 @@ module OpenChain; module CustomHandler; module UnderArmour
       !commercial_invoice_line.country_origin_code.blank? ? commercial_invoice_line.country_origin_code : shipment_line.get_custom_value(@cdefs[:coo]).value
     end
 
-    def get_received_date(shipment)
-      shipment.get_custom_value(@cdefs[:del_date]).value
+    def get_received_date(shipment_line)
+      shipment_line.shipment.get_custom_value(@cdefs[:del_date]).value
     end
   end
 end; end; end

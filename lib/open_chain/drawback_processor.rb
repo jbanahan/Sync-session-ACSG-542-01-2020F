@@ -1,4 +1,10 @@
 module OpenChain
+  # ABSTRACT CLASS
+  # Subclasses must implement interface:
+  # `find_shipment_lines(commercial_invoice_line)` - yielding shipment lines
+  # `get_country_of_origin(shipment_line, commercial_invoice_line)` - returning country of origin that should be written to the DrawbackImportLine 
+  # `get_part_number(shipment_line, commercial_invoice_line)` - returning part number that should be written to the DrawbackImportLine
+  # `get_received_date(shipment_line)` - returning received_date that should be written to DrawbackImportLine
   class DrawbackProcessor
     
     DOZENS_LABELS = ["DOZ","DPR"]
@@ -72,10 +78,9 @@ module OpenChain
       end
       piece_sets.each do |ps|
         ship_line = ps.shipment_line
-        shipment = ship_line.shipment
         d = DrawbackImportLine.new(:entry_number=>entry.entry_number,
           :import_date=>entry.arrival_date,
-          :received_date=>get_received_date(shipment),
+          :received_date=>get_received_date(ship_line),
           :port_code=>entry.entry_port_code,
           :box_37_duty => entry.total_duty,
           :box_40_duty => entry.total_duty_direct,
