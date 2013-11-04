@@ -23,6 +23,13 @@ class LinkedAttachment < ActiveRecord::Base
     r
   end
 
+  # calls create_from_attachabe for given object using the given class' find method on the id
+  # this is better for delayed_job since you don't have to serialize the object and you'll get the object's 
+  # latest state when the job is called from the queue
+  def self.create_from_attachable_by_class_and_id k, id
+    create_from_attachable k.find id
+  end
+
   # creates new LinkedAttachment objects to join the given object to existing LinkableAttachments
   # Returns any LinkedAttachments that were created or an empty array
   def self.create_from_attachable a

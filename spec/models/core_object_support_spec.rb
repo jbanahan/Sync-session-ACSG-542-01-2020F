@@ -11,15 +11,15 @@ describe CoreObjectSupport do
       Delayed::Worker.delay_jobs = @ws
     end
     it "should kick off job if import rule exists for this module" do
-      LinkedAttachment.should_receive(:create_from_attachable).with(instance_of(Order))
+      LinkedAttachment.should_receive(:create_from_attachable_by_class_and_id).with(Order,instance_of(Fixnum))
       Order.create!(:order_number=>'onum',:vendor_id=>Factory(:company,:vendor=>true).id)
     end
     it "should not kick off job if only import rules are for another module" do
-      LinkedAttachment.should_not_receive(:create_from_attachable)
+      LinkedAttachment.should_not_receive(:create_from_attachable_by_class_and_id)
       Product.create!(:unique_identifier=>"PLA")
     end
     it "should not kick off job if don't process linked attachments = true" do
-      LinkedAttachment.should_not_receive(:create_from_attachable)
+      LinkedAttachment.should_not_receive(:create_from_attachable_by_class_and_id)
       o = Order.new(order_number:'onum',vendor_id:Factory(:company,:vendor=>true).id)
       o.dont_process_linked_attachments = true
       o.save!

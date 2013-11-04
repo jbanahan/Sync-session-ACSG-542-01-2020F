@@ -22,6 +22,15 @@ describe LinkedAttachment do
       non_matching_attachable = Factory(:product)
     end
 
+
+    describe 'create_from_attachable_by_class_and_id' do
+      it "should load object and pass" do
+        prod_id = Factory(:product).id
+        LinkedAttachment.should_receive(:create_from_attachable).with(instance_of(Product)).and_return('x')
+        LinkedAttachment.create_from_attachable_by_class_and_id Product, prod_id
+      end
+    end
+
     describe 'create_from_attachable' do
       before(:each) do 
         @product = Factory(:product,:unit_of_measure=>'uom')

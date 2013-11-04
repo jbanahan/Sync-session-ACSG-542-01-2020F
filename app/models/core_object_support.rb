@@ -35,7 +35,7 @@ module CoreObjectSupport
   end
 
   def process_linked_attachments
-    LinkedAttachment.delay.create_from_attachable(self) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
+    LinkedAttachment.delay.create_from_attachable_by_class_and_id(self.class,self.id) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
   end
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded file links)
