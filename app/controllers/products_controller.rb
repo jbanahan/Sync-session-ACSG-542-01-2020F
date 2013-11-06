@@ -177,10 +177,10 @@ class ProductsController < ApplicationController
   def bulk_update_classifications
     action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
       if run_delayed params
-        OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id 
+        OpenChain::BulkUpdateClassification.delay.quick_classify params.to_json, current_user
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
       else 
-        messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true
+        messages = OpenChain::BulkUpdateClassification.quick_classify params, current_user, :no_user_message => true
         add_flash :notices, messages[:message]
         if messages[:errors]
           messages[:errors].each do |e|

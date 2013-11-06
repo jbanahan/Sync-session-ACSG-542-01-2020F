@@ -179,11 +179,13 @@ root.Chain =
         # $("#mod_quick_classify") = modal (model not reference directly due to circular reference / garbage collection concerns)
         form = $("#mod_quick_classify").find("form")
         form.attr("action","/products/bulk_edit")
+        form.data('trigger', 'advanced_button')
         form.submit()
     else
       buttons['Advanced'] = ->
         window.location = '/products/'+product.id+'/edit'
     modal.find("form").submit ->
+
       # If every field is blank, don't submit since there's nothing for the server to do here (plus it crashes if you submit a bulk classification with no data), 
       # just close the classify popup instead.
       fields = $("input.hts_field")
@@ -194,7 +196,7 @@ root.Chain =
           $(@).parents('div[quick-class-content-id]').remove()
           blank_count++
 
-      should_submit = (blank_count != field_count)
+      should_submit = (blank_count != field_count) || $(@).data('trigger') == 'advanced_button'
       if !should_submit
         $("#mod_quick_classify").remove()
       should_submit
