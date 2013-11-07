@@ -6,7 +6,6 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
     fields_to_init.each do |code|
       # Clone the instructions so we can modify the read_only value without impacting future runs
       # this prevents weird behavior with multiple calls (like test case runs).
-      debugger if available_fields[code].nil?
       cdi = available_fields[code].clone
       read_only = cdi[:read_only]
       cdi.delete :read_only
