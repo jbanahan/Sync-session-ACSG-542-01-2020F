@@ -27,7 +27,9 @@ module OpenChain
           :manual_flag=>{:label=>'Manual Entry Processing',:data_type=>:boolean,:module_type=>'Classification'},
           :fta_flag=>{:label=>'FTA Eligible',:data_type=>:boolean,:module_type=>'Classification'},
           :set_qty=>{:label=>'Set Quantity',:data_type=>:integer,:module_type=>'TariffRecord'},
-          :related_styles=>{:label=>'Related Styles', :data_type=>:text, :module_type=>"Product", :read_only=>true}
+          :related_styles=>{:label=>'Related Styles', :data_type=>:text, :module_type=>"Product", :read_only=>true},
+          :minimum_cost=>{:label=>'Minimum Cost', :data_type=>:decimal, :module_type=>'Classification', :read_only=>true},
+          :maximum_cost=>{:label=>'Maximum Cost', :data_type=>:decimal, :module_type=>'Classification', :read_only=>true}
         }
         
         def self.included(base)
