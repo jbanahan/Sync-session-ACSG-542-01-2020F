@@ -11,7 +11,12 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
   end
   describe :ftp_credentials do
     it "should send credentials" do
-      described_class.new.ftp_credentials.should == {:username=>'polo',:password=>'polo541xm',:server=>'ftp.freightek.com',:folder=>'/ProductUpload'}
+      described_class.new.ftp_credentials.should == {:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products'}
+    end
+  end
+  describe :auto_confirm? do
+    it "should not autoconfirm" do
+      described_class.new.auto_confirm?.should be_false
     end
   end
   describe :query do

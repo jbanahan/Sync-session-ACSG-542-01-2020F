@@ -39,4 +39,23 @@ describe OpenChain::CustomHandler::AckFileHandler do
     t.should_receive(:handle_errors).with([msg],'fn')
     t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER'
   end
+
+  describe "parse" do
+    it "should parse a file" do
+      @p.sync_records.create!(:trading_partner=>'XYZ')
+      described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", :sync_code=>"XYZ"}
+      @p.reload
+      @p.should have(1).sync_records
+      sr = @p.sync_records.first
+      sr.confirmation_file_name.should == 'file.csv'
+    end
+
+    it "should error if key is missing" do
+      expect{described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:sync_code=>"XYZ"}}.to raise_error ArgumentError, "Opts must have an s3 :key hash key."
+    end
+
+    it "should error if sync_code is missing" do
+      expect{described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv",}}.to raise_error ArgumentError, "Opts must have a :sync_code hash key."
+    end
+  end
 end

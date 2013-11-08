@@ -2,6 +2,14 @@ module OpenChain
   module CustomHandler
     # Process CSV Acknowledgements
     class AckFileHandler
+      include IntegrationClientParser
+
+      def parse file_contents, opts = {}
+        raise ArgumentError, "Opts must have a :sync_code hash key." unless opts[:sync_code]
+        raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
+
+        process_product_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code]
+      end
       
       def process_product_ack_file file_content, file_name, sync_code
         errors = get_ack_file_errors file_content, file_name, sync_code
