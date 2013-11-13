@@ -86,4 +86,20 @@ describe Attachment do
       Attachment.push_to_google_drive path, a.id, account, options
     end
   end
+
+  describe "download_to_tempfile" do
+    it "should use S3 to download to tempfile and yield the given block" do
+      a = Attachment.new
+      a.stub(:attached).and_return a
+      a.should_receive(:path).and_return "path/to/file.txt"
+
+      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', "path/to/file.txt").and_yield "Test"
+
+      a.download_to_tempfile do |f|
+        f.should eq "Test"
+
+        "Pass"
+      end.should eq "Pass"
+    end
+  end
 end

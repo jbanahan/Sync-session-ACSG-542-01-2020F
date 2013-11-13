@@ -3,27 +3,53 @@ require 'spec_helper'
 describe FtpSession do
 
   context :successful? do
-    it "should report ftp codes starting with 2 followed by other digits as successful" do
-      f = FtpSession.new
-      [200..299].each do |i|
-        f.last_server_response = "#{i} This is a test."
-        f.successful?.should be_true
-      end
+    before :each do 
+      @f = FtpSession.new
     end
 
-    it "should report all non 2xx codes as unsuccesful" do
-      f = FtpSession.new
-      f.successful?.should be_false
-      f.last_server_response = ""
-      f.successful?.should be_false
-      f.last_server_response = "400 Error"
-      f.successful?.should be_false
-      f.last_server_response = "500 Error"
-      f.successful?.should be_false
-      f.last_server_response = "2 Error"
-      f.successful?.should be_false
-      f.last_server_response = "20 Error"
-      f.successful?.should be_false
+    context :ftp do 
+      before :each do
+        @f.protocol = "ftp"
+      end
+
+      it "should report ftp codes starting with 2 followed by other digits as successful" do
+        [200..299].each do |i|
+          @f.last_server_response = "#{i} This is a test."
+          @f.successful?.should be_true
+        end
+      end
+
+      it "should report all non 2xx codes as unsuccesful" do
+        @f.successful?.should be_false
+        @f.last_server_response = ""
+        @f.successful?.should be_false
+        @f.last_server_response = "400 Error"
+        @f.successful?.should be_false
+        @f.last_server_response = "500 Error"
+        @f.successful?.should be_false
+        @f.last_server_response = "2 Error"
+        @f.successful?.should be_false
+        @f.last_server_response = "20 Error"
+        @f.successful?.should be_false
+      end
+    end
+    
+
+    context :sftp do
+      before :each do
+        @f.protocol = "sftp"
+      end
+
+      it "should report status codes starting with 0 as successful, all others as failed" do
+        @f.last_server_response = ""
+        @f.successful?.should be_false
+        @f.last_server_response = "0 Yeah!"
+        @f.successful?.should be_true
+        (1..31).each do |x|
+          @f.last_server_response = "#{x} Boo!"
+          @f.successful?.should be_false
+        end
+      end
     end
   end
 

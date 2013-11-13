@@ -66,6 +66,15 @@ class Attachment < ActiveRecord::Base
     end
   end
 
+  def download_to_tempfile
+    if attached
+      # Attachments are always in chain-io bucket regardless of environment
+      OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
+        yield f
+      end
+    end
+  end
+
   private
     def no_post
       false
