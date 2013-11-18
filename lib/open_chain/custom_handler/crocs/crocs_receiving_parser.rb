@@ -87,7 +87,7 @@ module OpenChain; module CustomHandler; module Crocs
           end
         end
         row_hash.values.each do |r|
-          raise "Duplicate receipts #{ship_num}, #{r[1]}, #{r[2]}, #{r[9]}, #{r[7]}" if record_exists? shipment, r[1], r[2], r[9], r[7]
+#          raise "Duplicate receipts #{ship_num}, #{r[1]}, #{r[2]}, #{r[9]}, #{r[7]}" if record_exists? shipment, r[1], r[2], r[9], r[7]
           part_uid = "CROCS-#{r[3]}"
           product = @part_cache[part_uid]
           if product.nil?

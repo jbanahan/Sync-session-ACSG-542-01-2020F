@@ -128,6 +128,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       described_class.new.parse_shipment rows
       ShipmentLine.first.quantity.should == 20
     end
+=begin
     it "should fail if shipment / po / sku / received date / coo already exists" do
       rows = [
         ['1','PO1','SKU1','STY1','COL1','SIZE1','DESC1','CN',10,Time.now.to_date]
@@ -139,6 +140,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
         described_class.new.parse_shipment rows
       }.should raise_error "Duplicate receipts CROCS-1, PO1, SKU1, #{Time.now.to_date.to_s}, CN"
     end
+=end
   end
 
 end
