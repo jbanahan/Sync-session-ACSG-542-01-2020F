@@ -49,7 +49,6 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
       (13..last_row).each do |row_number|
         row = sheet.row row_number
 
-
         if has_item_data? row
           data[:items] << parse_item_data(row)
         elsif order_balance_row? row
@@ -58,6 +57,9 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
           break
         end
       end
+
+      # Pull up the first warehouse code value from the details to the header
+      data[:warehouse_code] = data[:items].find {|i| i[:warehouse_code].blank? ? nil : i[:warehouse_code]}.try(:[], :warehouse_code)
 
       data
     end
@@ -73,6 +75,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
       add_element root, "ExpectedDeliveryDate", date_string(po[:expected_delivery_date])
       add_element root, "PaymentTerms", po[:payment_terms]
       add_element root, "OrderBalance", po[:order_balance]
+      add_element root, "WarehouseCode", po[:warehouse_code]
       add_party_xml root, po[:vendor]
       add_party_xml root, po[:factory]
       add_party_xml root, po[:forwarder]
@@ -165,7 +168,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
       end
 
       def order_balance_row? row
-        row && row[8].is_a?(String) && row[8].upcase == "ORDER BALANCE"
+        row && row[8].is_a?(String) && row[8].upcase =~ /ORDER BALANCE/
       end
 
   end

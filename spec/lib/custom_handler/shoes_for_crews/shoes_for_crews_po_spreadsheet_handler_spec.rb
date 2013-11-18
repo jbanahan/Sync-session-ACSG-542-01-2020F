@@ -1,4 +1,3 @@
-
 describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler do
 
   def defaults overrides={}
@@ -116,7 +115,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     end
 
     row = sht.row (13 + counter + 8)
-    row[8] = "Order Balance"
+    row[8] = "Order Balance:"
     row[10] = data[:order_balance]
 
     out = StringIO.new
@@ -140,6 +139,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       s[:expected_delivery_date].should eq d[:expected_delivery_date]
       s[:payment_terms].should eq d[:payment_terms]
       s[:order_balance].should eq d[:order_balance]
+      s[:warehouse_code].should eq d[:items][0][:warehouse_code]
 
       s[:vendor][:type].should eq "Vendor"
       s[:vendor][:number].should eq d[:vendor_id]
@@ -198,6 +198,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       REXML::XPath.first(x, "/PurchaseOrder/ExpectedDeliveryDate").text.should eq s[:expected_delivery_date].strftime("%Y-%m-%d")
       REXML::XPath.first(x, "/PurchaseOrder/PaymentTerms").text.should eq s[:payment_terms]
       REXML::XPath.first(x, "/PurchaseOrder/OrderBalance").text.should eq s[:order_balance].to_s
+      REXML::XPath.first(x, "/PurchaseOrder/WarehouseCode").text.should eq s[:warehouse_code].to_s
 
       REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Number").text.should eq s[:vendor][:number]
       REXML::XPath.first(x, "/PurchaseOrder/Party[Type = 'Vendor']/Name").text.should eq s[:vendor][:name]
