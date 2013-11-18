@@ -352,6 +352,10 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     r = r.substr(0,r.length-2) if r.match /, $/
     return r
 
+  $scope.scheduleProtocol = (s) ->
+    protocol = s?.protocol
+    if protocol && protocol.length > 0 then protocol.toUpperCase() else "FTP"
+
   $scope.descendingLabel = (bool) ->
     if bool then " (Z -> A)" else ""
 

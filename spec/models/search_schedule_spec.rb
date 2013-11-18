@@ -132,4 +132,77 @@ describe SearchSchedule do
     end
 
   end
+
+  describe "send_ftp" do
+    before :each do
+      @s = SearchSchedule.new ftp_server: "server", ftp_username: "user", ftp_password: "pwd"
+    end
+
+    it "should send ftp" do
+      tf = double("Tempfile")
+      tf.should_receive(:path).and_return "path"
+      FtpSender.should_receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt")
+      m = @s.send(:send_ftp, "Setup Name", tf, "file.txt")
+      m.should match /: FTP complete/
+    end
+
+    it "should send sftp" do
+      @s.protocol = 'sftp'
+
+      tf = double("Tempfile")
+      tf.should_receive(:path).and_return "path"
+      FtpSender.should_receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt", protocol: 'sftp')
+      m = @s.send(:send_ftp, "Setup Name", tf, "file.txt")
+      m.should match /: SFTP complete/
+    end
+
+    it "should send to a subdirectory" do
+      @s.ftp_subfolder = "subdir"
+
+      tf = double("Tempfile")
+      tf.should_receive(:path).and_return "path"
+      FtpSender.should_receive(:send_file).with("server", "user", "pwd", "path", remote_file_name: "file.txt", folder: 'subdir')
+      m = @s.send(:send_ftp, "Setup Name", tf, "file.txt")
+      m.should match /: FTP complete/
+    end
+
+    it "should not send if server, user, or password is blank" do
+      FtpSender.should_not_receive(:send_file)
+      @s.ftp_server = ""
+
+      @s.send(:send_ftp, "Setup Name", double("Tempfile"), "file.txt").should be_nil
+      @s.ftp_server = "server"
+      @s.ftp_username = ""
+      @s.send(:send_ftp, "Setup Name", double("Tempfile"), "file.txt").should be_nil
+      @s.ftp_username = "user"
+      @s.ftp_password = ""
+      @s.send(:send_ftp, "Setup Name", double("Tempfile"), "file.txt").should be_nil
+    end
+
+    context :errors do
+      before :each do
+        @u = Factory(:user)
+        @setup = SearchSetup.new(:user=>@u, :name=>"Search Setup")
+        @s.search_setup = @setup
+      end
+
+      it "should send and email and create user message" do
+        FtpSender.should_receive(:send_file).and_raise IOError, "Error!"
+        m = double("mail")
+        m.should_receive("deliver")
+        OpenMailer.should_receive(:send_search_fail).with(@u.email, @setup.name, "Error!", @s.ftp_server, @s.ftp_username, @s.ftp_subfolder).and_return m
+        tf = double("Tempfile")
+        tf.should_receive(:path)
+        @s.send(:send_ftp, "Setup Name", tf, "file.txt")
+
+        @u.messages.first.subject.should eq "Search Transmission Failure"
+        @u.messages.first.body.should eq "Search Name: #{@setup.name}<br>"+
+          "Protocol: FTP<br>" +
+          "Server Name: #{@s.ftp_server}<br>"+
+          "Account: #{@s.ftp_username}<br>"+
+          "Subfolder: #{@s.ftp_subfolder}<br>"+
+          "Error Message: Error!"
+      end
+    end
+  end
 end

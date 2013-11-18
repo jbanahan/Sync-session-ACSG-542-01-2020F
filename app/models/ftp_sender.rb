@@ -248,7 +248,7 @@ class FtpSender
       handle_exception e
     end
 
-    def post_login opts={}
+    def after_login opts={}
       # at this point, this is a no-op
     end
 
