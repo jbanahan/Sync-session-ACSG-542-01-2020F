@@ -43,8 +43,15 @@ class ImportedFile < ActiveRecord::Base
   #return keys from last file import result
   def result_keys opts={}
     qry = "select distinct recordable_id from change_records inner join (select id from file_import_results where imported_file_id = #{self.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id"
-    ActiveRecord::Base.connection.execute(qry).collect {|r| r[0]}
+    execute_query(qry).collect {|r| r[0]}
   end
+
+  def execute_query query
+    # This method is solely for testing purposes to avoid stubbing the connection, which interferes with any transactional fixture
+    # handling.
+    ActiveRecord::Base.connection.execute(query)
+  end
+  private :execute_query
 
   def sorted_columns
     self.search_columns.order("rank ASC")
@@ -164,21 +171,17 @@ class ImportedFile < ActiveRecord::Base
   end
 
   def process(user,options={})
-    begin
-      self.save! if self.new_record? #make sure we're actually in the database
-      import_search_columns      
-      @a_data = options[:attachment_data] if !options[:attachment_data].nil?
-      fj = FileImportProcessJob.new(self,user)
-      if options[:defer]
-        self.delay.process user
-      else
-        fj.call nil
-      end
-    rescue => e 
-      self.errors[:base] << "There was an error processing the file: #{e.message}"
-      e.log_me ["Imported File ID: #{self.id}"]
+    self.save! if self.new_record? #make sure we're actually in the database
+    import_search_columns
+    @a_data = options[:attachment_data] if !options[:attachment_data].nil?
+    fj = FileImportProcessJob.new(self,user)
+    if options[:defer]
+      # Run the job via the delayed job processor
+      fj.enqueue_job
+    else
+      fj.perform
     end
-    OpenMailer.send_imported_file_process_fail(self, self.search_setup.user).deliver if self.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
+    # The perform call sets info into the imported files errors hash (which is only useful if the process isn't delayed)
     return self.errors.size == 0
   end
   
@@ -259,7 +262,40 @@ class ImportedFile < ActiveRecord::Base
     end
 
     def call job
-      FileImportProcessor.process @imported_file, [FileImportProcessorListener.new(@imported_file,@user_id)]
+      perform
+    end
+
+    # Conform to DelayedJob job interface
+    def perform
+      # If there's a delayed job already running this particular imported file, then we're going to just requeue
+      # this file until we see that other one is completed.
+      if another_instance_running?
+        # Requeue to run at a random interval sometime between 3 and 3.5 minutes from now
+        # This is just to help combat any situation where multiple of the same file may run at nearly identical times.  They both should
+        # show as processing here, but then the next run, given the random wait period one should run before the other and win out.
+        enqueue_job (Time.zone.now + (Random.rand(180..210)).seconds)
+      else
+        begin
+          FileImportProcessor.process @imported_file, [FileImportProcessorListener.new(@imported_file,@user_id)]
+        rescue => e
+          @imported_file.errors[:base] << "There was an error processing the file: #{e.message}"
+          e.log_me ["Imported File ID: #{@imported_file.id}"]
+        end
+        OpenMailer.send_imported_file_process_fail(@imported_file, @imported_file.search_setup.user).deliver if @imported_file.errors.size>0 && MasterSetup.get.custom_feature?('LogImportedFileErrors')
+      end
+    end
+
+    def enqueue_job run_at = nil
+      options = {}
+      if run_at
+        options[:run_at] = run_at
+      end
+      Delayed::Job.enqueue self, options
+    end
+
+    def another_instance_running? 
+      # Since this class is also currently running and will have the filename in it, we're looking for more than one instance running.
+      Delayed::Job.where("locked_at IS NOT NULL AND locked_by IS NOT NULL").where("handler like ?", "%#{@imported_file.attached_file_name}%").count > 1
     end
   end
   

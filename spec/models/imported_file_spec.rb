@@ -3,7 +3,20 @@ require 'spec_helper'
 
 describe ImportedFile do
   describe :result_keys_where do
-    it "should build proper where clause"
+    it "should build proper where clause" do
+      f = ImportedFile.new :id => 25
+
+      results = [1,2,3]
+      query = nil
+      f.should_receive(:execute_query) do |q|
+        query = q
+        [[1], [2], [3]]
+      end
+
+      result_keys = f.result_keys
+      query.should eq "select distinct recordable_id from change_records inner join (select id from file_import_results where imported_file_id = #{f.id} order by finished_at DESC limit 1) as fir ON change_records.file_import_result_id = fir.id"
+      result_keys.should eq [1, 2, 3]
+    end
   end
   describe :result_keys do
     it "should return empty array if no file import results" do
@@ -201,6 +214,94 @@ describe ImportedFile do
       i.attached_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
       i.save
       i.attached_file_name.should == "___________________________________.jpg"
+    end
+  end
+
+  describe "process" do
+    before :each do
+      @u = Factory(:user)
+      @i = Factory(:imported_file, :search_setup => Factory(:search_setup))
+    end
+    it "should process an imported file" do
+    
+      @i.search_setup.search_columns.create! model_field_uid: :unique_identifier
+
+
+      ImportedFile::FileImportProcessJob.any_instance.should_receive(:perform)
+      r = @i.process @u
+      r.should be_true
+
+      # Make sure the imported file had search columns imported
+      @i.search_columns.size.should eq 1
+      @i.search_columns.first.model_field_uid.should eq "unique_identifier"
+    end
+
+    it "should process an imported file on delayed job queue" do
+      
+      ImportedFile::FileImportProcessJob.any_instance.should_receive(:enqueue_job)
+      r = @i.process @u, defer: true
+      r.should be_true
+    end
+
+    it "should return false if errors were found while processing" do
+      ImportedFile::FileImportProcessJob.any_instance.should_receive(:perform) do
+        @i.errors[:base] << "Error"
+        nil
+      end
+
+      r = @i.process @u
+      r.should be_false
+    end
+  end
+
+  describe "FileImportProcessJob#perform" do
+    before :each do
+      @u = Factory(:user)
+      @i = Factory(:imported_file, :search_setup => Factory(:search_setup), :attached_file_name => "test.txt")
+    end
+
+    it "should call process on FileImportProcessor" do 
+      FileImportProcessor.should_receive(:process) do |file, listener|
+        file.should be @i
+        listener[0].class.should eq ImportedFile::FileImportProcessorListener
+      end
+
+      ImportedFile::FileImportProcessJob.new(@i, @u).perform
+    end
+
+    it "should requeue if another job with the same file is running" do
+      # Need to create two here to get real conditions, current job + another running same file
+      Delayed::Job.enqueue ImportedFile::FileImportProcessJob.new(@i, @u)
+      Delayed::Job.enqueue ImportedFile::FileImportProcessJob.new(@i, @u)
+      ActiveRecord::Base.connection.execute("update delayed_jobs set locked_by = 'test', locked_at = now()")
+      FileImportProcessor.should_not_receive(:process)
+
+      ImportedFile::FileImportProcessJob.new(@i, @u).perform
+
+      jobs = Delayed::Job.where("run_at > ?", Time.zone.now).all
+      jobs.size.should eq 1
+
+      # Make sure we're enqueueing the file to be run (fuzzily) between around 3 and 3.5 minutes later.
+      jobs[0].run_at.should >= (Time.zone.now + 175.seconds)
+      jobs[0].run_at.should <= (Time.zone.now + 215.seconds)
+    end
+
+    it "should email if errors were encountered" do
+      error =StandardError.new "Test"
+      FileImportProcessor.should_receive(:process) do 
+        raise error
+      end
+
+      error.should_receive(:log_me).with ["Imported File ID: #{@i.id}"]
+
+      ms = double("MasterSetup")
+      MasterSetup.should_receive(:get).and_return ms
+      ms.should_receive(:custom_feature?).with("LogImportedFileErrors").and_return true
+
+      mail = double("mail")
+      mail.should_receive :deliver
+      OpenMailer.should_receive(:send_imported_file_process_fail).with(@i, @i.search_setup.user).and_return mail
+      ImportedFile::FileImportProcessJob.new(@i, @u).perform
     end
   end
 end
