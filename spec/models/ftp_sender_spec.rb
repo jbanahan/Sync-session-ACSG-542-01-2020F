@@ -108,7 +108,7 @@ describe FtpSender do
 
           nil
         end
-        StandardError.any_instance.should_receive(:log_me).with ["This exception email is only a warning. This ftp send attempt will be automatically retried."]
+        RuntimeError.any_instance.should_receive(:log_me).with ["This exception email is only a warning. This ftp send attempt will be automatically retried."]
         
         sess = FtpSender.send_file @server, @username, @password, @file
         sess.username.should == @username
