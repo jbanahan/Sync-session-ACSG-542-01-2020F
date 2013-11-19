@@ -162,4 +162,39 @@ describe Lock do
       Lock.lock_wait_timeout?(object).should be_false
     end
   end
+
+  context :locK_with_retry do
+    it "should lock an object and yield" do
+      e = Factory(:entry)
+      v = Lock.with_lock_retry(e) do 
+        e.update_attributes :entry_number => "123"
+        "return val"
+      end
+      v.should == "return val"
+      e.reload
+      e.entry_number.should == "123"
+    end
+
+    it "should passthrough lock clause directory to with_lock call" do
+      model = double("MyModel")
+      model.should_receive(:with_lock).with("lock_clause")
+      Lock.with_lock_retry(model, "lock_clause")
+    end
+
+    it "should retry lock aquisition 5 times by default" do
+      e = double("MyModel")
+      e.should_receive(:with_lock).exactly(4).times.ordered.and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      e.should_receive(:with_lock).once.ordered
+
+      Lock.with_lock_retry(e)
+    end
+
+    it "should throw an error if it retries too many times" do
+      # This also ensures that we're using the retry parameter
+      e = double("MyModel")
+      e.should_receive(:with_lock).exactly(3).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+
+      expect{Lock.with_lock_retry(e, true, 2)}.to raise_error ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+    end
+  end
 end

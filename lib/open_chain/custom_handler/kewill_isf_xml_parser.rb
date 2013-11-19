@@ -4,6 +4,7 @@ module OpenChain
   module CustomHandler
     class KewillIsfXmlParser
       extend OpenChain::IntegrationClientParser
+
       SYSTEM_NAME = "Kewill"
       NO_NOTES_EVENTS = [10,19,20,21]
   
@@ -12,69 +13,83 @@ module OpenChain
       end
 
       def self.parse data, opts={}
-        self.new(REXML::Document.new data).parse_dom opts[:bucket], opts[:key]
+        self.new.process_file data, opts[:bucket], opts[:key]
       end
 
-      def initialize dom
-        @dom = dom
-      end
       # process REXML document
-      def parse_dom s3_bucket=nil, s3_key=nil
+      def process_file data, s3_bucket=nil, s3_key=nil
+        dom = REXML::Document.new data
+        r = dom.root
+        host_system_file_number = et r, 'ISF_SEQ_NBR'
+        raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
+        # Raises an error if filename doesn't have the last exported from source time in it
+        last_exported_from_source = extract_last_exported_from_filename s3_key
+        # sf may be nil here if we're skipping this file (if data is out of date, for example)
+        sf = find_security_filing SYSTEM_NAME, host_system_file_number, last_exported_from_source
+        
+        if sf
+          Lock.with_lock_retry(sf) do
+            # Since the data is reloaded from the db by the lock call, make sure we're
+            # still not dealing w/ outdated exported from source data
+            if parse_file? sf, last_exported_from_source
+              parse_dom dom, sf, s3_bucket, s3_key
+            end
+          end
+        end
+      end
+
+      def parse_dom dom, sf, s3_bucket = nil, s3_key = nil
         @po_numbers = Set.new 
         @used_line_numbers = []
         @notes = []
+        @dom = dom
+        @sf = sf
         r = @dom.root
-        host_system_file_number = et r, 'ISF_SEQ_NBR'
-        raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
-        @sf = SecurityFiling.where(:host_system=>SYSTEM_NAME, :host_system_file_number=>host_system_file_number).first_or_create!
         
-        SecurityFiling.transaction do
-          start_time = Time.now
-          new_last_event = last_event_time(r)
-          if @sf.last_event && (new_last_event < @sf.last_event)
-            return
-          else
-            @sf.last_event = new_last_event
-          end
-          tx_num = et r, 'ISF_TX_NBR'
-          @sf.last_file_bucket = s3_bucket
-          @sf.last_file_path = s3_key
-          @sf.transaction_number = tx_num.gsub('-','') unless tx_num.nil?
-          @sf.importer_account_code = et r, 'IMPORTER_ACCT_CD'
-          @sf.broker_customer_number = et r, 'IMPORTER_BROKERAGE_ACCT_CD'
-          @sf.importer_tax_id = et r, 'IRS_NBR'
-          @sf.transport_mode_code = et r, 'MOT_CD'
-          @sf.scac = et r, 'SCAC_CD'
-          @sf.booking_number = et r, 'BOOKING_NBR'
-          @sf.vessel = et r, 'VESSEL_NAME'
-          @sf.voyage = et r, 'VOYAGE_NBR'
-          @sf.lading_port_code = et r, 'PORT_LADING_CD'
-          @sf.unlading_port_code = et r, 'PORT_UNLADING_CD'
-          @sf.entry_port_code = et r, 'PORT_ENTRY_CD'
-          @sf.status_code = et r, 'STATUS_CD'
-          @sf.late_filing = (et(r,'IS_SUBMIT_LATE')=='Y')
-          process_bills_of_lading r
-          process_container_numbers r
-          process_broker_references r
-          process_events r
-          process_lines r
-          @sf.po_numbers = @po_numbers.to_a.compact.join("\n")
-          @sf.security_filing_lines.each do |ln|
-            ln.destroy unless @used_line_numbers.include?(ln.line_number)
-          end
-          @sf.notes = @notes.join("\n")
-          if @sf.broker_customer_number
-            importer = Company.find_by_alliance_customer_number @sf.broker_customer_number
-            if importer.nil?
-              cn = @sf.broker_customer_number
-              importer = Company.create!(:name=>cn,:alliance_customer_number=>cn,:importer=>true)
-            end
-            @sf.importer = importer
-          end
-          @sf.save!
-          # The way we should probably do this after a Rails > 3.2 upgrade is via an update_column call
-          @sf.connection.execute "UPDATE security_filings SET time_to_process = #{((Time.now - start_time) * 1000).to_i} WHERE id = #{@sf.id}"
+        start_time = Time.now
+        new_last_event = last_event_time(r)
+        if @sf.last_event && (new_last_event < @sf.last_event)
+          return
+        else
+          @sf.last_event = new_last_event
         end
+        tx_num = et r, 'ISF_TX_NBR'
+        @sf.last_file_bucket = s3_bucket
+        @sf.last_file_path = s3_key
+        @sf.transaction_number = tx_num.gsub('-','') unless tx_num.nil?
+        @sf.importer_account_code = et r, 'IMPORTER_ACCT_CD'
+        @sf.broker_customer_number = et r, 'IMPORTER_BROKERAGE_ACCT_CD'
+        @sf.importer_tax_id = et r, 'IRS_NBR'
+        @sf.transport_mode_code = et r, 'MOT_CD'
+        @sf.scac = et r, 'SCAC_CD'
+        @sf.booking_number = et r, 'BOOKING_NBR'
+        @sf.vessel = et r, 'VESSEL_NAME'
+        @sf.voyage = et r, 'VOYAGE_NBR'
+        @sf.lading_port_code = et r, 'PORT_LADING_CD'
+        @sf.unlading_port_code = et r, 'PORT_UNLADING_CD'
+        @sf.entry_port_code = et r, 'PORT_ENTRY_CD'
+        @sf.status_code = et r, 'STATUS_CD'
+        @sf.late_filing = (et(r,'IS_SUBMIT_LATE')=='Y')
+        process_bills_of_lading r
+        process_container_numbers r
+        process_broker_references r
+        process_events r
+        process_lines r
+        @sf.po_numbers = @po_numbers.to_a.compact.join("\n")
+        @sf.security_filing_lines.each do |ln|
+          ln.destroy unless @used_line_numbers.include?(ln.line_number)
+        end
+        @sf.notes = @notes.join("\n")
+        if @sf.broker_customer_number
+          importer = Company.find_by_alliance_customer_number @sf.broker_customer_number
+          if importer.nil?
+            cn = @sf.broker_customer_number
+            importer = Company.create!(:name=>cn,:alliance_customer_number=>cn,:importer=>true)
+          end
+          @sf.importer = importer
+        end
+        @sf.save!
+        @sf.update_column(:time_to_process, ((Time.now - start_time) * 1000).to_i)
       end
 
       private 
@@ -197,7 +212,44 @@ module OpenChain
       #get date from element
       def ed parent, element_name
         txt = et parent, element_name
-        txt.blank? ? nil : Time.iso8601(txt) #DateTime.strptime(txt,DATE_FORMAT)
+        txt.blank? ? nil : Time.iso8601(txt)
+      end
+
+      def find_security_filing host_system, host_system_file_number, last_exported_from_source
+        # Use a DB lock so only a single ISF parser process is looking up security filings at a time
+        # This way we can guarantee that we don't get duplicate records created and ensure the last exported
+        # from source date is set right away in an atomic manner as well.
+        sf = nil
+        Lock.acquire(Lock::ISF_PARSER_LOCK, 3) do
+          local_sf = SecurityFiling.where(:host_system=>SYSTEM_NAME, :host_system_file_number=>host_system_file_number).first_or_create! :last_exported_from_source => last_exported_from_source
+
+          if parse_file? local_sf, last_exported_from_source
+
+            # We only need to update the last exported from source if it's not equal (will be equal if we just created this isf record)
+            if local_sf.last_exported_from_source != last_exported_from_source
+              local_sf.update_attributes :last_exported_from_source => last_exported_from_source
+            end
+
+            sf = local_sf
+          end
+        end
+
+        sf        
+      end
+
+      def extract_last_exported_from_filename s3_path
+        timestamp = nil
+        name = s3_path.blank? ? nil : File.basename(s3_path)
+        if name =~ /isf_\d+_\d+_(\d+)\.\d+\.xml/i
+          timestamp = ActiveSupport::TimeZone['UTC'].parse($1)
+        else 
+          raise "File name '#{name}' does not appear to contain a processing timestamp.  All ISF files must have one."
+        end
+        timestamp
+      end
+
+      def parse_file? sf, last_exported_from_source
+        sf.last_exported_from_source.nil? || sf.last_exported_from_source <= last_exported_from_source
       end
     end
   end

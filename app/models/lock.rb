@@ -6,6 +6,7 @@ class Lock < ActiveRecord::Base
 
   FENIX_PARSER_LOCK ||= 'FenixParser'
   UPGRADE_LOCK ||= 'Upgrade'
+  ISF_PARSER_LOCK ||= 'IsfParser'
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning wahtever
@@ -76,5 +77,25 @@ class Lock < ActiveRecord::Base
   end
 
   private_class_method :acquired_lock, :maybe_released_lock
+
+  # This method basically just attempts to call with_lock on the passed in object
+  # up to max_retry_count times handling any lock wait timeouts that may occur in the 
+  # time being.
+  # Be careful, the with_lock call used here WILL RELOAD the locked object's data fresh from the DB
+  # and it WILL overwrite any unsaved data you have in the object at the time this method is called.
+  #
+  # See ActiveRecord::Locking::Pessimistic.lock! for explanation of lock_clause
+  def self.with_lock_retry object_to_lock, lock_clause = true, max_retry_count = 5
+    counter = 0
+    begin
+      object_to_lock.with_lock(lock_clause) do 
+        return yield
+      end
+    rescue ActiveRecord::StatementInvalid => e
+      retry if Lock.lock_wait_timeout?(e) && ((counter += 1) <= max_retry_count)
+
+      raise e
+    end
+  end
 
 end
