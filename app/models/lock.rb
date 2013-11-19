@@ -85,7 +85,7 @@ class Lock < ActiveRecord::Base
   # and it WILL overwrite any unsaved data you have in the object at the time this method is called.
   #
   # See ActiveRecord::Locking::Pessimistic.lock! for explanation of lock_clause
-  def self.with_lock_retry object_to_lock, lock_clause = true, max_retry_count = 5
+  def self.with_lock_retry object_to_lock, lock_clause = true, max_retry_count = 4
     counter = 0
     begin
       object_to_lock.with_lock(lock_clause) do 

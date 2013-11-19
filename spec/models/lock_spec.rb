@@ -181,9 +181,12 @@ describe Lock do
       Lock.with_lock_retry(model, "lock_clause")
     end
 
-    it "should retry lock aquisition 5 times by default" do
+    it "should retry lock aquisition 4 times by default" do
       e = double("MyModel")
-      e.should_receive(:with_lock).exactly(4).times.ordered.and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      e.should_receive(:with_lock).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
       e.should_receive(:with_lock).once.ordered
 
       Lock.with_lock_retry(e)
