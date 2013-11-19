@@ -196,7 +196,6 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     p.get_custom_value(@csm).value.should == "140ABCDEFGHIJKLMNO"
   end
   it "should fail if CSM number is not 18 digits" do
-    @cf.stub(:id).and_return(1)
     p = Factory(:product)
     @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
@@ -208,9 +207,11 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
       13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
-    StandardError.any_instance.should_receive(:log_me)
-    @h.process Factory(:user)
+    u = Factory(:user)
+    @h.process u
     p.get_custom_value(@csm).value.should be_blank 
+    u.messages.should have(1).item
+    u.messages[0].body.should include("File failed: CSM Number at row 1 was not 18 digits \"140XXABCDEFGHIJKLMNO\"")
   end
   it "should not fail for empty lines" do
     @xlc.should_receive(:last_row_number).and_return(1)
@@ -221,7 +222,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
   it "should fail if user cannot edit products" do
     Product.any_instance.stub(:can_edit?).and_return false
     p = Factory(:product)
-    @cf.stub(:id).and_return(1)
+    
     @xlc.should_receive(:last_row_number).and_return(1)
     @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
       0=>{'value'=>'seas','datatype'=>'string'},
@@ -232,10 +233,35 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
       13=>{'value'=>'CSMDEPT','datatype'=>'string'}
     )
-    StandardError.any_instance.should_receive(:log_me)
-    @h.process Factory(:user)
+    u = Factory(:user)
+    @h.process u
     p.get_custom_value(@csm).value.should be_blank 
+    u.messages.should have(1).item
+    u.messages[0].body.should include("File failed: #{u.full_name} can't edit product #{p.unique_identifier}")
   end
+
+  it "should utilize field logic validations" do
+    p = Factory(:product)
+    rule = FieldValidatorRule.create! model_field_uid: :prod_uid, module_type: 'Product', starts_with: 'ABC'
+    @xlc.should_receive(:last_row_number).and_return(1)
+    @xlc.should_receive(:get_row_as_column_hash).with(0,1).and_return(
+      0=>{'value'=>'seas','datatype'=>'string'},
+      2=>{'value'=>'140','datatype'=>'string'},
+      3=>{'value'=>'ABCDE','datatype'=>'string'},
+      4=>{'value'=>'FGHIJ','datatype'=>'string'},
+      5=>{'value'=>'KLMNO','datatype'=>'string'},
+      8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
+      13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+    )
+    u = Factory(:user)
+    @h.process u
+    p.get_custom_value(@csm).value.should be_blank 
+    u.messages.should have(1).item
+    # Don't bother trying to determine what the error will be..
+    u.messages[0].body.should include("<p>The following CSM data errors were encountered:<ul><li>")
+    u.messages[0].body.should end_with("</li></ul></p>")
+  end
+
   context :dates do
     it "should create csm date custom fields" do
       id = @first_csm_date_cd.id

@@ -111,7 +111,7 @@ module OpenChain
       return passed
     end
     def self.validate! record
-      raise ValidationLogicError unless validate record
+      raise ValidationLogicError.new(record) unless validate record
     end
   end
 
