@@ -28,7 +28,7 @@ module OpenChain
       begin
         base_object.transaction do 
           base_object.update_attributes!(object_parameters)
-          if opts[:parse_custom_fields]
+          if inner_opts[:parse_custom_fields]
             customizable_parent_params = all_params["#{base_object.class.to_s.downcase}_cf"]
             OpenChain::CoreModuleProcessor.update_custom_fields base_object, customizable_parent_params
           end
