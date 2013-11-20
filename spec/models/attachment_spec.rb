@@ -10,6 +10,10 @@ describe Attachment do
       a.update_attributes(:attachment_type=>"type")
       a.unique_file_name.should == "type-#{a.id}-a.txt"      
     end
+    it 'should sanitize the filename' do
+      a = Attachment.create(:attached_file_name=>"a.txt", :attachment_type => "Doc / Type")
+      a.unique_file_name.should == "Doc _ Type-#{a.id}-a.txt"
+    end
   end
 
   describe "add_original_filename_method" do
@@ -23,33 +27,20 @@ describe Attachment do
     end
   end
 
-  describe "sanitize_filename" do
+  describe "get_santized_filename" do
     it "should change non-latin1 chars to _" do
-      a = Attachment.new
-      a.attached_file_name = "照片 014.jpg"
-      Attachment.sanitize_filename a, :attached
-      a.attached_file_name.should == "__ 014.jpg"
+      f = Attachment.get_sanitized_filename "照片 014.jpg"
+      f.should == "__ 014.jpg"
     end
 
     it "should convert invalid windows filename characters to _" do
-      a = Attachment.new
-      a.attached_file_name = "\/:*?\"<>|.jpg"
-      Attachment.sanitize_filename a, :attached
-      a.attached_file_name.should == "________.jpg"
+      f = Attachment.get_sanitized_filename "\/:*?\"<>|.jpg"
+      f.should == "________.jpg"
     end
 
     it "should convert non-printing ascii characters to _" do
-      a = Attachment.new
-      a.attached_file_name = "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
-      Attachment.sanitize_filename a, :attached
-      a.attached_file_name.should == "_________________________.jpg"
-    end
-
-    it "should work for non-Attachment based models" do
-      r = ReportResult.new
-      r.report_data_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
-      Attachment.sanitize_filename r, :report_data
-      r.report_data_file_name.should == "___________________________________.jpg"
+      f = Attachment.get_sanitized_filename "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
+      f.should == "_________________________.jpg"
     end
   end
 
@@ -59,6 +50,22 @@ describe Attachment do
       a.attached_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
       a.save
       a.attached_file_name.should == "___________________________________.jpg"
+    end
+  end
+
+  describe "sanitize_filename" do
+    it "should sanitize filename and update the filename attribute" do
+      a = Attachment.new
+      a.attached_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
+      Attachment.sanitize_filename a, :attached
+      a.attached_file_name.should == "___________________________________.jpg"
+    end
+
+    it "should work for non-Attachment based models" do
+      r = ReportResult.new
+      r.report_data_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
+      Attachment.sanitize_filename r, :report_data
+      r.report_data_file_name.should == "___________________________________.jpg"
     end
   end
 
