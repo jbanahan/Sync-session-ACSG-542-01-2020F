@@ -218,6 +218,9 @@ module OpenChain
       end
       entry.customer_name = info[:importer_name]
       entry.customer_number = str_val line[107]
+      entry.total_packages = int_val line[109]
+      entry.total_packages_uom = "PKGS" unless entry.total_packages.blank?
+      entry.gross_weight = int_val line[110]
 
       entry
     end
@@ -450,6 +453,22 @@ module OpenChain
       # last SD date value from the file.
       entry.first_do_issued_date = first_accumulated_date(accumulated_dates, :do_issued_date_first)
       entry.docs_received_date = first_accumulated_date(accumulated_dates, :docs_received_date_first)
+
+      entry.k84_month = calculate_k84_month entry
+    end
+
+    def calculate_k84_month entry
+      month = nil
+      if entry.cadex_accept_date
+        date = entry.cadex_accept_date
+        month = date.month 
+        # Anything after the 24th is the next month
+        month += 1 if  date.day > 24
+        # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber), 
+        # so loop back to 1
+        month = (month % 12) if month > 12
+      end
+      month
     end
 
     def accumulated_string string_code

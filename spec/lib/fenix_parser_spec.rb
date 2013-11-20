@@ -72,9 +72,11 @@ describe OpenChain::FenixParser do
     @additional_bols = ["123456", "9876542321"]
     @duty_rate = BigDecimal.new "5.55"
     @customer_reference = "REFERENCE #"
+    @number_of_pieces = "99"
+    @gross_weight = "25.50"
     @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
-      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"#{@customer_reference}\", 1 ,        967.68,,#{@importer_number},#{@importer_name}"
+      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"#{@customer_reference}\", 1 ,        967.68,,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight}"
       if new_style && multi_line
         @additional_container_numbers.each do |container|
           data += "\r\nCON,#{@barcode},#{container}"
@@ -136,6 +138,7 @@ describe OpenChain::FenixParser do
     ent.release_date.should == @est.parse_us_base_format(@release_date.gsub(',',' '))
     ent.cadex_sent_date.should == @est.parse_us_base_format(@cadex_sent_date.gsub(',',' '))
     ent.cadex_accept_date.should == @est.parse_us_base_format(@cadex_accept_date.gsub(',',' '))
+    ent.k84_month.should == 1
     ent.origin_country_codes.should == @country_origin_code
     ent.export_country_codes.should == @country_export_code
     ent.release_type.should == @release_type
@@ -152,7 +155,10 @@ describe OpenChain::FenixParser do
     ent.time_to_process.should be > 0
     ent.source_system.should == OpenChain::FenixParser::SOURCE_CODE
     ent.entered_value.should == @entered_value
-    ent.commercial_invoice_numbers == @invoice_number
+    ent.commercial_invoice_numbers.should == @invoice_number
+    ent.gross_weight.should == @gross_weight.to_i
+    ent.total_packages.should == @number_of_pieces.to_i
+    ent.total_packages_uom.should == "PKGS"
 
     #commercial invoice header
     ent.commercial_invoices.should have(1).invoice
@@ -487,6 +493,28 @@ describe OpenChain::FenixParser do
   it "should retry with_lock 5 times and re-raise error if failed after that" do
     Entry.any_instance.should_receive(:with_lock).exactly(5).times.and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
     expect {OpenChain::FenixParser.parse @entry_lambda.call}.to raise_error ActiveRecord::StatementInvalid
+  end
+
+  it "should not set total packages uom if total packages is blank" do
+    @number_of_pieces = ""
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.total_packages.should be_nil
+    ent.total_packages_uom.should be_nil
+  end
+
+  it "should set k84 month to next month if cadex accept is 25th or later" do
+    @cadex_accept_date = "01/25/2012,01:13pm"
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.k84_month.should eq 2
+  end
+
+  it "should set k84 month to 1 if cadex accept is after Dec 24th" do
+    @cadex_accept_date = "12/25/2012,01:13pm"
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by_broker_reference @file_number
+    ent.k84_month.should eq 1
   end
 
   context 'importer company' do
