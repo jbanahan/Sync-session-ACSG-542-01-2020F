@@ -22,16 +22,16 @@ module OpenChain
         r = dom.root
         host_system_file_number = et r, 'ISF_SEQ_NBR'
         raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
-        # Raises an error if filename doesn't have the last exported from source time in it
-        last_exported_from_source = extract_last_exported_from_filename s3_key
+        # Raises an error if there is no last event time
+        last_event_time = last_event_time(r)
         # sf may be nil here if we're skipping this file (if data is out of date, for example)
-        sf = find_security_filing SYSTEM_NAME, host_system_file_number, last_exported_from_source
+        sf = find_security_filing SYSTEM_NAME, host_system_file_number, last_event_time
         
         if sf
           Lock.with_lock_retry(sf) do
             # Since the data is reloaded from the db by the lock call, make sure we're
-            # still not dealing w/ outdated exported from source data
-            if parse_file? sf, last_exported_from_source
+            # still not dealing w/ outdated event time data
+            if parse_file? sf, last_event_time
               parse_dom dom, sf, s3_bucket, s3_key
             end
           end
@@ -47,12 +47,6 @@ module OpenChain
         r = @dom.root
         
         start_time = Time.now
-        new_last_event = last_event_time(r)
-        if @sf.last_event && (new_last_event < @sf.last_event)
-          return
-        else
-          @sf.last_event = new_last_event
-        end
         tx_num = et r, 'ISF_TX_NBR'
         @sf.last_file_bucket = s3_bucket
         @sf.last_file_path = s3_key
@@ -147,6 +141,7 @@ module OpenChain
           time_stamp = ed el, 'EVENT_DATE'
           r = pick_date(r,time_stamp,true)
         end
+        raise "At least one 'events' element with an 'EVENT_DATE' child must be present in the XML." unless r
         r
       end
       def process_events parent
@@ -215,19 +210,19 @@ module OpenChain
         txt.blank? ? nil : Time.iso8601(txt)
       end
 
-      def find_security_filing host_system, host_system_file_number, last_exported_from_source
+      def find_security_filing host_system, host_system_file_number, last_event_time
         # Use a DB lock so only a single ISF parser process is looking up security filings at a time
-        # This way we can guarantee that we don't get duplicate records created and ensure the last exported
-        # from source date is set right away in an atomic manner as well.
+        # This way we can guarantee that we don't get duplicate records created and ensure the last event time
+        # is set right away in an atomic manner as well.
         sf = nil
         Lock.acquire(Lock::ISF_PARSER_LOCK, 3) do
-          local_sf = SecurityFiling.where(:host_system=>SYSTEM_NAME, :host_system_file_number=>host_system_file_number).first_or_create! :last_exported_from_source => last_exported_from_source
+          local_sf = SecurityFiling.where(:host_system=>SYSTEM_NAME, :host_system_file_number=>host_system_file_number).first_or_create! :last_event => last_event_time
 
-          if parse_file? local_sf, last_exported_from_source
+          if parse_file? local_sf, last_event_time
 
-            # We only need to update the last exported from source if it's not equal (will be equal if we just created this isf record)
-            if local_sf.last_exported_from_source != last_exported_from_source
-              local_sf.update_attributes :last_exported_from_source => last_exported_from_source
+            # We only need to update the last event time if it's not equal (will be equal if we just created this isf record)
+            if local_sf.last_event != last_event_time
+              local_sf.update_attributes :last_event => last_event_time
             end
 
             sf = local_sf
@@ -237,19 +232,8 @@ module OpenChain
         sf        
       end
 
-      def extract_last_exported_from_filename s3_path
-        timestamp = nil
-        name = s3_path.blank? ? nil : File.basename(s3_path)
-        if name =~ /isf_\d+_\d+_(\d+)\.\d+\.xml/i
-          timestamp = ActiveSupport::TimeZone['UTC'].parse($1)
-        else 
-          raise "File name '#{name}' does not appear to contain a processing timestamp.  All ISF files must have one."
-        end
-        timestamp
-      end
-
-      def parse_file? sf, last_exported_from_source
-        sf.last_exported_from_source.nil? || sf.last_exported_from_source <= last_exported_from_source
+      def parse_file? sf, last_event_time
+        sf.last_event.nil? || sf.last_event <= last_event_time
       end
     end
   end

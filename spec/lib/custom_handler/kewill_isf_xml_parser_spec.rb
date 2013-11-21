@@ -26,25 +26,24 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   end
   describe :parse do
     it 'should process from text' do
-      @k.parse IO.read(@path), :key => "path/to/file/isf_2435412_20210914_20131118145402586.1384804944.xml"
+      @k.parse IO.read(@path)
       sf = SecurityFiling.first
       sf.host_system_file_number.should == '1870446'
       sf.host_system.should == "Kewill"
-      sf.last_exported_from_source.to_i.should == Time.zone.parse("20131118145402586").to_i
+      sf.last_event.to_i.should == Time.iso8601("2012-11-27T10:14:02.475-05:00").to_i
     end
-    it "should not process files with outdated filename timestamps" do
-      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_exported_from_source=>Time.zone.parse("20131118145402586"))
-      updated_at = sf.updated_at
-      @k.parse IO.read(@path), :key => "isf_2435412_20210914_20131118140000000.1384804944.xml"
+    it "should not process files with outdated event times" do
+      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      @k.parse IO.read(@path)
       # Just pick a piece of informaiton from the file that's not in the Factory create and ensure it's not there
       sf = SecurityFiling.first
       sf.transaction_number.should be_nil
     end
     it "should update existing security filing and replace lines" do
-      # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call
-      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_exported_from_source=>Time.zone.parse("20131118145402586"))
+      # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call (timestamp manually extracted from test file)
+      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T10:13:36.627-05:00"))
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
-      @k.parse IO.read(@path), :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
+      @k.parse IO.read(@path)
       sf.reload
       sf.booking_number.should == 'BKING'
       sf.should have(2).security_filing_lines
@@ -56,18 +55,18 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       sf.last_file_bucket.should == 'bucket'
       sf.last_file_path.should == 'isf_2435412_20210914_20131118145402586.1384804944.xml'
     end
-    it "should raise an error if the filename is missing" do
-      expect{@k.parse IO.read(@path)}.to raise_error "File name '' does not appear to contain a processing timestamp.  All ISF files must have one."
-    end
-    it "should raise an error if the filename is not formatted correctly" do
-      expect{@k.parse IO.read(@path), :key=>"filename.xml"}.to raise_error "File name 'filename.xml' does not appear to contain a processing timestamp.  All ISF files must have one."
-    end
     it "should lock entry for update" do
       Lock.should_receive(:acquire).with(Lock::ISF_PARSER_LOCK, 3).and_yield()
       Lock.should_receive(:with_lock_retry).with(kind_of(SecurityFiling)).and_yield()
 
-      @k.parse IO.read(@path), :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
+      @k.parse IO.read(@path)
       SecurityFiling.first.should_not be_nil
+    end
+    it "should raise exception if host_system_file_number is blank" do
+      dom = REXML::Document.new File.new(@path)
+      dom.root.elements['ISF_SEQ_NBR'].text=''
+
+      expect{@k.parse dom.to_s}.to raise_error "ISF_SEQ_NBR is required."
     end
   end
   describe :parse_dom do
@@ -143,32 +142,6 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         "2012-11-27 10:14 EST: Submission Type - 1 : Importer Security Filing 10 (ISF-10)"
       ]
     end
-    it "should not update if last event is older than previous last event" do
-      @dom.root.elements['events/EVENT_DATE'].text=Time.now.iso8601
-      @k.new.parse_dom @dom, @sf
-      sf = SecurityFiling.first
-      sf.last_event.should > 10.seconds.ago
-      u_time = 1.day.ago
-      sf.update_attributes(:updated_at=>u_time)
-
-      #reprocess
-      @dom = REXML::Document.new File.new(@path)
-      @dom.root.elements['SCAC_CD'].text = 'NEW SCAC'
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.all.should have(1).filing
-      sf = SecurityFiling.first
-      sf.scac.should == 'KKLU'
-      sf.updated_at.to_i.should == u_time.to_i
-    end
-    it "should update if last event is same as previous last event" do
-      @k.new.parse_dom @dom, @sf
-      sf = SecurityFiling.first
-      @dom.root.elements['SCAC_CD'].text = 'NEW SCAC'
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.all.should have(1).filing
-      sf = SecurityFiling.first
-      sf.scac.should == 'NEW SCAC'
-    end
     it "should handle multiple brokerrefs segments" do
       ref = @dom.root.add_element("brokerrefs")
       ref.add_element("BROKER_FILER_CD").text="316"
@@ -199,10 +172,6 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       @k.new.parse_dom @dom, @sf
       SecurityFiling.first.should be_late_filing
     end
-    # it "should raise exception if host_system_file_number is blank" do
-    #   @dom.root.elements['ISF_SEQ_NBR'].text=''
-    #   lambda {@k.new.parse_dom @dom, @sf}.should raise_error "ISF_SEQ_NBR is required."
-    # end
     it "should remove lines not in updated xml" do
       @k.new.parse_dom @dom, @sf
       sf = SecurityFiling.first
