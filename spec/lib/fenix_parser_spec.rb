@@ -503,20 +503,6 @@ describe OpenChain::FenixParser do
     ent.total_packages_uom.should be_nil
   end
 
-  it "should set k84 month to next month if cadex accept is 25th or later" do
-    @cadex_accept_date = "01/25/2012,01:13pm"
-    OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
-    ent.k84_month.should eq 2
-  end
-
-  it "should set k84 month to 1 if cadex accept is after Dec 24th" do
-    @cadex_accept_date = "12/25/2012,01:13pm"
-    OpenChain::FenixParser.parse @entry_lambda.call
-    ent = Entry.find_by_broker_reference @file_number
-    ent.k84_month.should eq 1
-  end
-
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
