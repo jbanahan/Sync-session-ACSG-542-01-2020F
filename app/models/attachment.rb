@@ -25,7 +25,7 @@ class Attachment < ActiveRecord::Base
     # Prepend the Document Type (if it exists)
     name = "#{self.id}-#{self.attached_file_name}"
     unless self.attachment_type.blank?
-      name = "#{self.attachment_type}-#{name}"
+      name = Attachment.get_sanitized_filename "#{self.attachment_type}-#{name}"
     end
     name
   end
@@ -41,16 +41,20 @@ class Attachment < ActiveRecord::Base
     filename = instance.instance_read(:file_name)
 
     if filename
-      # This encodes to latin1 converting unknown chars along the way to _, then back to UTF-8.
-      # The encoding translation is necessitated only because our charsets in the database for the filename are latin1
-      # instead of utf8, and converting them to utf8 is a process we don't want to deal with at the moment.
-      filename = filename.encode("ISO-8859-1", :replace=>"_", :invalid=>:replace, :undef=>:replace).encode("UTF-8")
-
-      # We also want to underscore'ize invalid windows chars from the filename (in cases where you upload a file from
-      # a mac and then try to download on windows - browser can't be relied upon do do this for us at this point).
-      character_filter_regex = /[\x00-\x1F\/\\:\*\?\"<>\|]/u
-      instance.instance_write(:file_name, filename.gsub(character_filter_regex, "_"))
+      instance.instance_write(:file_name, get_sanitized_filename(filename))
     end
+  end
+
+  def self.get_sanitized_filename filename
+    # This encodes to latin1 converting unknown chars along the way to _, then back to UTF-8.
+    # The encoding translation is necessitated only because our charsets in the database for the filename are latin1
+    # instead of utf8, and converting them to utf8 is a process we don't want to deal with at the moment.
+    filename = filename.encode("ISO-8859-1", :replace=>"_", :invalid=>:replace, :undef=>:replace).encode("UTF-8")
+
+    # We also want to underscore'ize invalid windows chars from the filename (in cases where you upload a file from
+    # a mac and then try to download on windows - browser can't be relied upon do do this for us at this point).
+    character_filter_regex = /[\x00-\x1F\/\\:\*\?\"<>\|]/u
+    filename.gsub(character_filter_regex, "_")
   end
 
   # Downloads attachment data from S3 and pushes it to the google drive account, path given.
@@ -63,6 +67,15 @@ class Attachment < ActiveRecord::Base
     drive_path = File.join((drive_folder ? drive_folder : ""), a.attached_file_name)
     OpenChain::S3.download_to_tempfile(a.attached.options[:bucket], a.attached.path) do |temp|
       OpenChain::GoogleDrive.upload_file drive_account, drive_path, temp, upload_options
+    end
+  end
+
+  def download_to_tempfile
+    if attached
+      # Attachments are always in chain-io bucket regardless of environment
+      OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
+        yield f
+      end
     end
   end
 

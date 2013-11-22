@@ -218,6 +218,9 @@ module OpenChain
       end
       entry.customer_name = info[:importer_name]
       entry.customer_number = str_val line[107]
+      entry.total_packages = int_val line[109]
+      entry.total_packages_uom = "PKGS" unless entry.total_packages.blank?
+      entry.gross_weight = int_val line[110]
 
       entry
     end
@@ -506,44 +509,43 @@ module OpenChain
         # a really course grained lock in place while we're updating some values in the entry to prep 
         # it for replacement.  By locking the entry here, we can ensure that only a single instance
         # of the parser will run the updates in here at a single time.
-        lock_retry do 
 
-          # Be careful, the with_lock call actually reloads the entry object's data
-          # That's why the last exported check is in here since time spent waiting on this
-          # lock may have resulting in a more updated version of the entry coming in.
-          entry.with_lock do
-            if source_system_export_date
-              # Make sure we also update the source system export date while locked too so we prevent other processes from 
-              # processing the same entry with stale data.
+        # Be careful, the with_lock call actually reloads the entry object's data
+        # That's why the last exported check is in here since time spent waiting on this
+        # lock may have resulting in a more updated version of the entry coming in.
+        Lock.with_lock_retry(entry) do
+          if source_system_export_date
+            # Make sure we also update the source system export date while locked too so we prevent other processes from 
+            # processing the same entry with stale data.
 
-              # We want to utilize the last exported from source date to determine if the
-              # file we're processing is stale / out of date or if we should process it
+            # We want to utilize the last exported from source date to determine if the
+            # file we're processing is stale / out of date or if we should process it
 
-              # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
-              # current entry's (entries may have nil exported dates if they were created by the imaging client)
-              if process_file? entry, source_system_export_date
-                entry.update_attributes(:last_exported_from_source=>source_system_export_date)
-              else
-                break
-              end
+            # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
+            # current entry's (entries may have nil exported dates if they were created by the imaging client)
+            if process_file? entry, source_system_export_date
+              entry.update_attributes(:last_exported_from_source=>source_system_export_date)
+            else
+              break
             end
-
-            # Fenix can actually change the importer the entry is associated with so we need to handle updating the importer as well.
-            # Not sure if this is an operational error or if its something like pre-keying invoice data prior to actually knowing what
-            # entity is importing the goods.  Either way we need to make sure the entry is associated with the correct importer company
-            if importer && importer.id != entry.importer_id
-              entry.importer = importer
-            end
-
-            # Destroy invoices since the file we get is a full replacement of the invoice values, not an update.
-            # Large entries with lots of invoices can take quite a while to delete (upwards of a minute), which may result in other processes
-            # timing out with a lock wait error - hence the lock_rety.  Even if there's some timeouts, at least the 
-            # files will get reparsed via delayed job retries.
-            entry.commercial_invoices.destroy_all
-
-            yield entry
           end
+
+          # Fenix can actually change the importer the entry is associated with so we need to handle updating the importer as well.
+          # Not sure if this is an operational error or if its something like pre-keying invoice data prior to actually knowing what
+          # entity is importing the goods.  Either way we need to make sure the entry is associated with the correct importer company
+          if importer && importer.id != entry.importer_id
+            entry.importer = importer
+          end
+
+          # Destroy invoices since the file we get is a full replacement of the invoice values, not an update.
+          # Large entries with lots of invoices can take quite a while to delete (upwards of a minute), which may result in other processes
+          # timing out with a lock wait error - hence the lock_rety.  Even if there's some timeouts, at least the 
+          # files will get reparsed via delayed job retries.
+          entry.commercial_invoices.destroy_all
+
+          yield entry
         end
+
         # Broadcast the save event outside the locks.  No need for any business logic running to generate 
         # stuff from the file to contribute to the transaction length here.  Most logic should be delayed
         # out to a background queue anyway.
@@ -579,17 +581,6 @@ module OpenChain
 
         set_entry_dates entry, dates
         entry.save!
-      end
-    end
-
-    def lock_retry max_retry_count = 5
-      counter = 0
-      begin
-        return yield
-      rescue ActiveRecord::StatementInvalid => e
-        retry if Lock.lock_wait_timeout?(e) && ((counter += 1) < max_retry_count)
-
-        raise e
       end
     end
 

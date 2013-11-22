@@ -10,7 +10,7 @@ module OpenChain
           @cdefs = self.class.prep_custom_definitions [:po,:origin,:import,:cost,
             :ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
             :inco_terms,:related_styles,:season,:article,:approved_long,
-            :first_sap_date,:last_sap_date,:sap_revised_date
+            :first_sap_date,:last_sap_date,:sap_revised_date, :minimum_cost, :maximum_cost
           ]
         end
 
@@ -75,34 +75,35 @@ module OpenChain
                     iso = clean_string(row[4])
                     next if used_countries.include? iso
                     used_countries << iso
-                    country = Country.find_by_iso_code_and_import_location iso, true
+                    country = get_country iso
                     next unless country #don't write classification for country that isn't setup or isn't an import location
 
                     #build the classfiication
                     hts = clean_string(row[9])
-                    cls = p.classifications.find_by_country_id country.id 
-                    oga_val = nil
+                    cls = get_or_create_classification p, country
+                    # Classification may be nil if the iso code isn't enabled as an import country
                     if cls
                       oga_val = cls.get_custom_value(@cdefs[:oga_flag]).value
-                    else
-                      cls = p.classifications.build(:country_id=>country.id) unless cls
+
+                      unless hts.blank?
+                        tr = cls.tariff_records.first
+                        tr = cls.tariff_records.build unless tr
+                        tr.hts_1 = hts.gsub(/[^0-9]/,'') if tr.hts_1.blank? && hts_valid?(row[9],country)
+                      end
+                      cls.save!
+
+                      new_oga_value = (clean_string(row[11])=='X')
+                      cls.update_custom_value! @cdefs[:oga_flag], new_oga_value
+                      if !oga_val.nil?
+                        update_sap_revised_date = true if oga_val!=new_oga_value
+                      end
                     end
-                    unless hts.blank?
-                      tr = cls.tariff_records.first
-                      tr = cls.tariff_records.build unless tr
-                      tr.hts_1 = hts.gsub(/[^0-9]/,'') if tr.hts_1.blank? && hts_valid?(row[9],country)
-                    end
-                    cls.save!
-                    
-                    new_oga_value = (clean_string(row[11])=='X')
-                    cls.update_custom_value! @cdefs[:oga_flag], new_oga_value
-                    if !oga_val.nil?
-                      update_sap_revised_date = true if oga_val!=new_oga_value
-                    end
+                  
                   end
 
                   agg = aggregate_values rows
                   [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost, (s==:dept_name ? ", " : "\n")}
+                  set_min_max_cost_values(p, agg[:min_max_per_country]) if agg[:min_max_per_country]
 
                   SAP_REVISED_PRODUCT_FIELDS.each do |f| 
                     update_sap_revised_date = true if base_values[f] != p.get_custom_value(@cdefs[f]).value
@@ -158,10 +159,14 @@ module OpenChain
         def aggregate_values rows
           r = {:po=>[],:origin=>[],:import=>[],:cost=>[],:dept_num=>[],
             :dept_name=>[]}
+
+          min_max_per_country = {}
           rows.each do |row|
             r[:po] << clean_string(row[0])
             r[:origin] << clean_string(row[3])
-            r[:import] << clean_string(row[4])
+            import_country = clean_string(row[4])
+            r[:import] << import_country
+            min_max_per_country[import_country] ||= {:min=>nil, :max=>nil} unless import_country.blank?
 
             # There's probably some sprintf magic that could work here
             # to do this, but it escapes me.
@@ -169,6 +174,17 @@ module OpenChain
             # and zero pad to at least 4 significant digits (at least 5 chars total with decimal point)
             cost_str = clean_string(row[5])
             unless cost_str.blank?
+              cost = BigDecimal.new(cost_str) rescue nil
+              unless cost.nil? || import_country.nil?
+                if min_max_per_country[import_country][:min].nil? || min_max_per_country[import_country][:min] > cost
+                  min_max_per_country[import_country][:min] = cost
+                end
+
+                if min_max_per_country[import_country][:max].nil? || min_max_per_country[import_country][:max] < cost
+                  min_max_per_country[import_country][:max] = cost
+                end
+              end
+
               cost_parts = cost_str.split(".")
               cost_parts = ["0", "0"] if cost_parts.length == 0
               cost_parts << "0" if cost_parts.length == 1
@@ -181,6 +197,7 @@ module OpenChain
             r[:dept_name] << clean_string(row[8])
           end
           r.each {|k,v| v.uniq!}
+          r[:min_max_per_country] = min_max_per_country if min_max_per_country.size > 0
           r
         end
 
@@ -203,6 +220,55 @@ module OpenChain
           related_styles[:tall] = clean_string(base_row[16]) unless base_row[16].blank?
 
           related_styles
+        end
+
+        def get_country iso
+          # Only return valid import countries
+          Country.import_locations.where(:iso_code => iso).first
+        end
+
+        def get_or_create_classification product, country
+          if country.is_a? String
+            #This should be the country ISO code
+            country = get_country country
+          end
+
+          classification = nil
+          if country
+            # Find the classification that correlates to this country
+            classification = product.classifications.find {|c| c.country_id == country.id}
+            unless classification
+              classification = product.classifications.create! country: country
+            end
+          end
+
+          classification
+        end
+
+        def set_min_max_cost_values product, min_max_per_country
+          min_max_per_country.each do |iso, min_max|
+            next unless min_max[:min] || min_max[:max]
+
+            classification = get_or_create_classification product, iso
+           
+            if classification
+              if min_max[:min]
+                field = classification.get_custom_value(@cdefs[:minimum_cost])
+                if field.value.nil? || field.value > min_max[:min]
+                  field.value = min_max[:min]
+                  field.save!
+                end
+              end
+
+              if min_max[:max]
+                field = classification.get_custom_value(@cdefs[:maximum_cost])
+                if field.value.nil? || field.value < min_max[:max]
+                  field.value = min_max[:max]
+                  field.save!
+                end
+              end
+            end
+          end
         end
 
       end
