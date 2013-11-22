@@ -151,7 +151,7 @@
                     <strong>As:</strong> {{sched.download_format}} 
                   </p>
                   <p>
-                    <span ng-show='sched.ftp_server'><strong>FTP Server:</strong> {{sched.ftp_server}}<br /></span>
+                    <span ng-show='sched.ftp_server'><strong>{{scheduleProtocol(sched)}} Server:</strong> {{sched.ftp_server}}<br /></span>
                   </p>
                   <div class='text-center'>
                     <button class='btn' ng-click='editSchedule(sched)'>Edit</button> <button class='btn' ng-click='removeSchedule(sched)'>Remove</button>
@@ -269,25 +269,31 @@
               <div class='span6'>
                 <fieldset ng-show='searchSetup.allow_ftp'>
                   <div class='control-group'>
-                    <label class='control-label' for='sched-f-server'>FTP Server</label>
+                    <label class='control-label' for='sched-f-protocol'>Use SFTP?</label>
+                    <div class='controls'>
+                      <input id='sched-f-protocol' type='checkbox' ng-model='scheduleToEdit.protocol' ng-true-value="sftp" ng-false-value="ftp"/>
+                    </div>
+                  </div>
+                  <div class='control-group'>
+                    <label class='control-label' for='sched-f-server'>{{scheduleProtocol(scheduleToEdit)}} Server</label>
                     <div class='controls'>
                       <input id='sched-f-server' type='text' ng-model='scheduleToEdit.ftp_server'/>
                     </div>
                   </div>
                   <div class='control-group'>
-                    <label class='control-label' for='sched-f-user'>FTP User</label>
+                    <label class='control-label' for='sched-f-user'>{{scheduleProtocol(scheduleToEdit)}} User</label>
                     <div class='controls'>
                       <input id='sched-f-user' type='text' ng-model='scheduleToEdit.ftp_username' />
                     </div>
                   </div>
                   <div class='control-group'>
-                    <label class='control-label' for='sched-f-pass'>FTP Password</label>
+                    <label class='control-label' for='sched-f-pass'>{{scheduleProtocol(scheduleToEdit)}} Password</label>
                     <div class='controls'>
                       <input id='sched-f-pass' type='text' ng-model='scheduleToEdit.ftp_password' />
                     </div>
                   </div>
                   <div class='control-group'>
-                    <label class='control-label' for='sched-f-folder'>FTP Folder</label>
+                    <label class='control-label' for='sched-f-folder'>{{scheduleProtocol(scheduleToEdit)}} Folder</label>
                     <div class='controls'>
                       <input id='sched-f-folder' type='text' ng-model='scheduleToEdit.ftp_subfolder' />
                     </div>

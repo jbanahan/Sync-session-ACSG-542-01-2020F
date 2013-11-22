@@ -101,7 +101,7 @@ describe AdvancedSearchController do
       put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[
         {:email_addresses=>'b@example.com',:run_hour=>6,:day_of_month=>1,:download_format=>'xls',
           :run_monday=>true,:run_tuesday=>false,:run_wednesday=>false,:run_thursday=>false,:run_friday=>false,:run_saturday=>false,:run_sunday=>false},
-        {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub'}
+        {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub', :protocol=>"test"}
       ]}
       response.should be_success
       @ss.reload
@@ -122,6 +122,7 @@ describe AdvancedSearchController do
       ftp.ftp_username.should == 'user'
       ftp.ftp_password.should == 'pass'
       ftp.ftp_subfolder.should == '/sub'
+      ftp.protocol.should == 'test'
     end
     it "should recreate criterions" do
       @ss.search_criterions.create!(:model_field_uid=>:prod_uid,:operator=>:sw,:value=>'X')
@@ -145,13 +146,26 @@ describe AdvancedSearchController do
       get :last_search_id
       JSON.parse(response.body)['id'].should == ss_first.id.to_s
     end
-    it "should return last search created if no search_runs" do
-      SearchSetup.destroy_all #not sure why test was failing without this
-      ss_first = Factory(:search_setup,:user=>@user,:updated_at=>1.day.ago)
-      ss_second = Factory(:search_setup,:user=>@user,:updated_at=>2.years.ago)
-      get :last_search_id
-      JSON.parse(response.body)['id'].should == ss_first.id.to_s
+    context :no_record_timestamps do
+      before :each do
+        @record_timestamps = SearchSetup.record_timestamps
+        SearchSetup.record_timestamps = false
+      end
+      after :each do
+        SearchSetup.record_timestamps = @record_timestamps
+      end
+
+      it "should return last search created if no search_runs" do
+        # updated_at is overwritten from the attribute hash internally by an activerecord
+        # save hook unless record timestamps is unset
+        # For some reason, the DB in Circle CI requires created_at...none of our local or prod dbs do
+        ss_first = Factory(:search_setup,:user=>@user,:updated_at=>1.day.ago, :created_at=>Time.zone.now)
+        ss_second = Factory(:search_setup,:user=>@user,:updated_at=>2.years.ago, :created_at=>Time.zone.now)
+        get :last_search_id
+        JSON.parse(response.body)['id'].should == ss_first.id.to_s
+      end
     end
+   
     it "should return 0 if no search setups" do
       get :last_search_id
       JSON.parse(response.body)['id'].should == "0"
@@ -177,7 +191,8 @@ describe AdvancedSearchController do
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11)
+      # Include ftp information to make sure we're not actually including it by default for non-admin users
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
       get :setup, :id=>@ss.id, :format=>'json'
       response.should be_success
       h = JSON.parse response.body
@@ -216,6 +231,27 @@ describe AdvancedSearchController do
         x
       }
       h['model_fields'].should == expected_model_fields
+    end
+    it "should write response for json and include ftp information for admins" do
+      @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
+        :include_links=>true,:no_time=>true,:module_type=>"Product")
+      @ss.search_columns.create!(:rank=>1,:model_field_uid=>:prod_uid)
+      @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
+      @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
+      @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11, 
+                                  :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol")
+      SearchSetup.any_instance.stub(:can_ftp?).and_return true
+
+      get :setup, :id=>@ss.id, :format=>'json'
+      response.should be_success
+      h = JSON.parse response.body
+      h['allow_ftp'].should be_true
+      h['search_schedules'].should == [
+        {"email_addresses"=>"x@example.com","run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
+          "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
+          "download_format"=>"xls","day_of_month"=>11, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", "ftp_subfolder"=>"subf", "protocol"=>"protocol"}
+      ]
     end
     it "should set include empty for criterions" do
       @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',

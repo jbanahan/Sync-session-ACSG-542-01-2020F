@@ -39,6 +39,7 @@ gem "google-api-client", "0.6.4"
 # causes issues since Ruby 2.0 doesn't allow mutexes in signal traps - delayed_job specifically
 # needs this.
 gem "mono_logger", '1.1.0'
+gem "net-sftp", '2.1.2'
 
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'
