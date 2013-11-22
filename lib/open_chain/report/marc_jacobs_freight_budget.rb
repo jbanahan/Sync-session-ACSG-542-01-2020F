@@ -3,7 +3,7 @@ module OpenChain
     class MarcJacobsFreightBudget
 
       def self.permission? u
-        u.company.master? && u.view_broker_invoices?
+        (u.company.master? && u.view_broker_invoices?) || u.company_id == marc_jacobs_importer_id
       end
       def self.run_report run_by, settings={}
         inner_settings={'year'=>Time.now.year,'month'=>Time.now.month}.merge(settings)
@@ -26,10 +26,9 @@ module OpenChain
           r[i] = lbl
         end
         cursor += 1
-        importer = Company.find_by_alliance_customer_number("MARJAC")
         entries = Entry.
           where("YEAR(release_date) = ? AND MONTH(release_date) = ?",@year,@month).
-          where(:importer_id=>(importer ? importer.id : -1))
+          where(:importer_id=>MarcJacobsFreightBudget.marc_jacobs_importer_id)
         entries.each do |ent|
 
           raise "You do not have permission to view the entries on this report." unless ent.can_view?(@run_by)
@@ -77,6 +76,11 @@ module OpenChain
         t
       end
 
+      def self.marc_jacobs_importer_id 
+        importer = Company.where(:alliance_customer_number => 'MARJAC').first
+        importer ? importer.id : -1
+      end
+      
     end
   end
 end

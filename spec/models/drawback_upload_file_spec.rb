@@ -86,5 +86,15 @@ describe DrawbackUploadFile do
       OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser.should_receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
       d.process(@user).should == 'abc'
     end
+    it "should route Crocs Receiving file" do
+      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"CROCS")
+      d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_CROCS_RECEIVING)
+      s3_att = mock("S3 Attachment")
+      s3_att.stub(:path).and_return('xyz')
+      @mock_attachment.stub(:attached).and_return(s3_att)
+      OpenChain::CustomHandler::Crocs::CrocsReceivingParser.should_receive(:parse_s3).with('xyz').and_return([Date.new(2011,1,1),Date.new(2012,1,1)])
+      OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor.should_receive(:process_entries_by_arrival_date).with(Date.new(2011,1,1),Date.new(2012,1,1)).and_return 'abc'
+      d.process(@user).should == 'abc'
+    end
   end
 end

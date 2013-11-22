@@ -43,11 +43,13 @@ class CustomReportBillingAllocationByValue < CustomReport
     row_cursor = 1
     
     bill_columns = []
-    invoices = BrokerInvoice.select("distinct broker_invoices.*").where("1=1")
+    invoices = BrokerInvoice.select("distinct broker_invoices.*")
+                .includes(:entry=>[:commercial_invoice_lines])
+                .joins("INNER JOIN entries ON entries.id = broker_invoices.entry_id")
+                .order("entries.entry_number, entries.broker_reference, broker_invoices.invoice_date")
+                .where("1=1")
     search_criterions.each {|sc| invoices = sc.apply(invoices)}
     invoices = BrokerInvoice.search_secure run_by, invoices
-    invoices.includes(:entry=>[:commercial_invoice_lines])
-    invoices.order("entries.entry_number, entries.broker_reference, broker_invoices.invoice_date")
 
     invoices.each do |bi|
       charge_totals = {}

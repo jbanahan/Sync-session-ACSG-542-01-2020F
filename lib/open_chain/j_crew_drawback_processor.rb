@@ -10,8 +10,8 @@ module OpenChain
         where("shipments.reference = ?",entry.entry_number)
     end
 
-    def get_received_date(shipment)
-      shipment.get_custom_value(delivery_custom_def).value
+    def get_received_date(shipment_line)
+      shipment_line.shipment.get_custom_value(delivery_custom_def).value
     end
     
     def get_country_of_origin(shipment_line, commercial_invoice_line) 

@@ -18,8 +18,9 @@ module OpenChain
       end
 
       def process user, first_row = 1
-        had_errors = false
+        system_errors = false
         current_style = ''
+        csm_errors = []
         begin
           xlc = XLClient.new(@custom_file.attached.path)
           xlc.raise_errors = true
@@ -33,7 +34,7 @@ module OpenChain
             us_style = (us_style_cell.blank? || us_style_cell['value'].blank?) ? nil : us_style_cell['value']
             csm = get_csm_number row_hash
             next if csm.blank? || us_style.blank?
-            raise "File failed: CSM Number at row #{n} was not 18 digits \"#{csm}\"" unless csm.size == 18
+            raise(CsmError, "File failed: CSM Number at row #{n} was not 18 digits \"#{csm}\"") unless csm.size == 18
 
             style_map[us_style] ||= Set.new
             style_map[us_style] << csm
@@ -46,24 +47,59 @@ module OpenChain
           end
           style_map.each do |us_style,csm_set|
             current_style = us_style
-            p = Product.where(:unique_identifier=>us_style).first_or_create!
-            raise "File failed: #{user.full_name} can't edit product #{p.unique_identifier}" unless p.can_edit?(user)
-            p.update_custom_value! @csm_cd, csm_set.to_a.join("\n")
-            p.update_custom_value! @dept_cd, dept_map[us_style]
-            update_season p, season_map[us_style]
-            update_first_csm_date p
-            update_last_csm_date p
+            begin
+              Product.transaction do 
+                p = Product.where(:unique_identifier=>us_style).first_or_create!
+                raise(CsmError, "File failed: #{user.full_name} can't edit product #{p.unique_identifier}") unless p.can_edit?(user)
+                p.update_custom_value! @csm_cd, csm_set.to_a.join("\n")
+                p.update_custom_value! @dept_cd, dept_map[us_style]
+                update_season p, season_map[us_style]
+                update_first_csm_date p
+                update_last_csm_date p
+
+                OpenChain::FieldLogicValidator.validate!(p) 
+              end
+            rescue OpenChain::ValidationLogicError => e
+              # Prefix the errors with the style so the user knows which one needs to be fixed
+              if e.base_object.errors[:base]
+                e.base_object.errors[:base].each do |err|
+                  csm_errors << "Style: #{current_style} - #{err}"
+                end
+              end
+            end
           end
+        rescue CsmError => e
+          # Since RL wants us to detect field validation errors, we're going to route those (above) and other logic issues
+          # with the file into user messages that they will have to deal with themselves so we don't have to foward emails any longer.
+          csm_errors << e.message
         rescue
-          had_errors = true
+          system_errors = true
           $!.log_me ["Custom File ID: #{@custom_file.id}","Style: #{current_style}"]
         end
-        if had_errors
-          user.messages.create(:subject=>"CSM Sync Complete with Errors",:body=>"<p>Your CSM Sync job has completed.  You can download the updated file <a href='/custom_features/csm_sync'>here</a>.</p><p>Support has received notification regarding the errors in your file and will be researching them.</p>")
-        else
-          user.messages.create(:subject=>"CSM Sync Complete",:body=>"Your CSM Sync job has completed.  You can download the updated file <a href='/custom_features/csm_sync'>here</a>.")
+         
+        subject = "CSM Sync Complete"
+        if system_errors || csm_errors.size > 0
+          subject += " with Errors"
         end
+
+        body = "<p>Your CSM Sync job has completed.  You can download the updated file <a href='/custom_features/csm_sync'>here</a>.</p>"
+        if system_errors
+          body += "<p>Support has received notification regarding system errors in your file and will be researching them.</p>"
+        end
+
+        if csm_errors.size > 0
+          user_errors_message = ""
+          csm_errors.each do |e|
+            user_errors_message += "<li>#{e}</li>"
+          end
+          user_errors_message = "<p>The following CSM data errors were encountered:<ul>#{user_errors_message}</ul></p>"
+
+          body += user_errors_message
+        end
+
+        user.messages.create(subject: subject, body: body)
       end
+
       private
       def get_csm_number row_hash
         r = ""
@@ -104,6 +140,9 @@ module OpenChain
           cv.save!
         end
       end
+
+      class CsmError < StandardError; end
+
     end
   end
 end

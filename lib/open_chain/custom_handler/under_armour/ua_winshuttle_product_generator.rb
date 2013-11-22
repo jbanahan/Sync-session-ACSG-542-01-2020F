@@ -65,13 +65,13 @@ module OpenChain; module CustomHandler; module UnderArmour
       tr.hts_1 as 'HTS Code',
       classifications.country_id as ''
       FROM products
-      LEFT OUTER JOIN sync_records on products.id = sync_records.syncable_id AND sync_records.syncable_type = 'Product' AND sync_records.trading_partner = '#{sync_code}'
+      #{Product.need_sync_join_clause(sync_code)} 
       INNER JOIN classifications on products.id = classifications.product_id AND classifications.country_id in (select countries.id from countries inner join data_cross_references on data_cross_references.cross_reference_type = '#{DataCrossReference::UA_PLANT_TO_ISO}' AND countries.iso_code = data_cross_references.value)
       INNER JOIN (select * FROM tariff_records where line_number = 1) as tr on classifications.id = tr.classification_id
       INNER JOIN custom_values on custom_values.customizable_type = 'Product' AND custom_values.customizable_id = products.id AND custom_values.custom_definition_id = #{@plant_cd.id} AND length(text_value) > 0
       "
       if @custom_where.blank?
-        q << "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)"
+        q << "WHERE #{Product.need_sync_where_clause()}"
       else
         q << @custom_where
       end

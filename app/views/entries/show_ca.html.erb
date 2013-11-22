@@ -52,7 +52,7 @@
         <table>
           <%[:ent_entry_num,:ent_brok_ref,:ent_cust_num, :ent_cust_name, :ent_importer_tax_id,:ent_cargo_control_number,
           :ent_ca_entry_type,:ent_po_numbers,
-          :ent_vendor_names,:ent_total_units,:ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst].each do |f|%>
+          :ent_vendor_names, :ent_customer_references, :ent_total_units,:ent_total_packages, :ent_total_packages_uom, :ent_gross_weight, :ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>
@@ -132,7 +132,7 @@
         </tr>
       </tbody>
     </table>
-    <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:ent_unit_price,:cil_value,:cil_country_origin_code,:ent_state_origin_code,:cil_country_export_code,:ent_state_export_code]%>
+    <%fields = [:cil_part_number,:cil_po_number,:cil_customer_reference, :cil_units,:cil_uom,:ent_unit_price,:cil_value,:cil_country_origin_code,:ent_state_origin_code,:cil_country_export_code,:ent_state_export_code]%>
     <table class='detail_table'>
       <thead><tr>
         <%fields.each do |f|%>

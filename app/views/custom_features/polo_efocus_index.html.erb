@@ -1,15 +1,5 @@
-<h1>Polo Canada Files</h1>
+<% content_for :upload_form do %>
 <h2>Upload</h2>
-<%= form_tag '/custom_features/polo_canada/upload', :multipart => true, :class=>'form-horizontal' do %>
-  <%= file_field_tag :attached %> <%=submit_tag 'Upload', :id=>'btn_upload', :class=>'btn' %>
 <% end %>
-<h2>Existing Files</h2>
-<table class='detail_table'>
-  <thead><tr><th>File Name</th><th>Uploaded By</th><th>Uploaded At</th></tr></thead>
-  <tbody>
-    <%@files.each do |f|%>
-      <tr><td><%=link_to f.attached_file_name, "/custom_features/polo_canada/#{f.id}/download"%></td><td><%=f.uploaded_by ? f.uploaded_by.full_name : ""%></td><td><%=f.created_at%></td></tr>
-    <%end%>
-  </tbody>
-</table>
-<%= will_paginate @files %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Polo Canada Files", custom_feature: "polo_canada"} %>

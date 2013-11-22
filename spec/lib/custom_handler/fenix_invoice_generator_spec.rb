@@ -18,19 +18,12 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
                     :importer => importer, :vendor => vendor, :consignee => consignee)
 
     @line_1 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "ABC", :country_origin_code=>"CN", :quantity=>100, :unit_price=>1, :po_number => "PO NUMBER")
-    @line_1.commercial_invoice_tariffs.create :hts_code => "1234567890", :tariff_description=>"Stuff"
+    @line_1.commercial_invoice_tariffs.create :hts_code => "1234567890", :tariff_description=>"Stuff", :tariff_provision => "1"
 
     @line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "DEF", :country_origin_code=>"TW", :quantity=>1, :unit_price=>0.1, :po_number => "PO NUMBER")
-    @line_2.commercial_invoice_tariffs.create :hts_code => "09876543210", :tariff_description=>"More Stuff"
+    @line_2.commercial_invoice_tariffs.create :hts_code => "09876543210", :tariff_description=>"More Stuff", :tariff_provision => "2"
 
-    base = Class.new do
-      include OpenChain::CustomHandler::FenixInvoiceGenerator
-      def invoice_header_map; default_invoice_header_map; end
-      def invoice_detail_map; default_invoice_detail_map; end
-      def fenix_customer_code; "FENIX_CUST"; end
-    end
-
-    @generator = base.new
+    @generator = OpenChain::CustomHandler::FenixInvoiceGenerator.new
   end
 
   context :generate_file do
@@ -54,6 +47,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
     end
 
     it "should generate an invoice file" do
+      # Tests all the default header / detail mappings
       @f = @generator.generate_file @i.id
       @f.rewind
       contents = @f.read.split("\r\n")
@@ -89,8 +83,28 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
         o[123..137].should == l.quantity.to_s.ljust(15)
         o[138..152].should == l.unit_price.to_s.ljust(15)
         o[153..202].should == l.po_number.to_s.ljust(50)
-        o[203..212].should == "2".ljust(10)
+        o[203..212].should == t.tariff_provision.ljust(10)
       end
+    end
+
+    it "should use defaults for missing data" do
+      # Default output handles missing data in Invoice Number, Cartons, Units, Value, HTS Code, tariff treatment
+      @i.update_attributes! invoice_number: nil, total_quantity_uom: nil, invoice_value: nil
+      @line_1.commercial_invoice_tariffs.first.update_attributes! hts_code: nil, tariff_provision: nil
+
+      @f = @generator.generate_file @i.id
+      @f.rewind
+      contents = @f.read.split("\r\n")
+      contents.length.should == 3
+      h = contents[0]
+
+      h[1..25].should == "VFI-#{@i.id}".ljust(25)
+      h[60..74].should == BigDecimal.new("0").to_s.ljust(15)
+      h[105..119].should == BigDecimal.new("0").to_s.ljust(15)
+
+      d = contents[1]
+      d[61..72].should == "0".ljust(12)
+      d[203..212].should == "2".ljust(10)
     end
 
     it "should handle nils in all default field values" do
@@ -110,13 +124,13 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
     end
 
     it "should handle lambdas and constants in mappings" do
-      map = @generator.default_invoice_header_map
+      map = @generator.invoice_header_map
       # leave the @generator context off the method call here to ensure the 
       # lambda is executed within the context of the generator
 
       # Verify the correct parameters were fed to the lambdas too
       l_inv = nil
-      map[:invoice_number] = lambda {|h| l_inv = h; fenix_customer_code()}
+      map[:invoice_number] = lambda {|h| l_inv = h; fenix_customer_code(h)}
       map[:invoice_date] = "20130101"
 
       detail_map = @generator.invoice_detail_map
@@ -125,20 +139,20 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       dl_tar = []
 
       call_count = 0;
-      detail_map[:part_number] = lambda {|h, l, t| dl_inv<< h; dl_line<<l; dl_tar<<t; fenix_customer_code() + (call_count+=1).to_s}
+      detail_map[:part_number] = lambda {|h, l, t| dl_inv<< h; dl_line<<l; dl_tar<<t; fenix_customer_code(h) + (call_count+=1).to_s}
 
-      @generator.should_receive(:default_invoice_header_map).and_return map
-      @generator.should_receive(:default_invoice_detail_map).and_return detail_map
+      @generator.should_receive(:invoice_header_map).and_return map
+      @generator.should_receive(:invoice_detail_map).and_return detail_map
 
       @f = @generator.generate_file @i.id
       @f.rewind
       contents = @f.read.split("\r\n")
       contents.length.should == 3
 
-      contents[0][1..25].should == @generator.fenix_customer_code.ljust(25)
+      contents[0][1..25].should == @generator.fenix_customer_code(@i).ljust(25)
       contents[0][26..35].should == "20130101".ljust(10)
-      contents[1][1..50].should == "#{@generator.fenix_customer_code}1".ljust(50)
-      contents[2][1..50].should == "#{@generator.fenix_customer_code}2".ljust(50)
+      contents[1][1..50].should == "#{@generator.fenix_customer_code(@i)}1".ljust(50)
+      contents[2][1..50].should == "#{@generator.fenix_customer_code(@i)}2".ljust(50)
 
       l_inv.should == @i
       dl_inv[0].should == @i
@@ -208,7 +222,6 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       c[:username].should == "VFITRack"
       c[:password].should == "RL2VFftp"
       c[:folder].should == "to_ecs/fenix_invoices"
-      c[:remote_file_name].should =~ /^FENIX_CUST_INV_\d+\.txt$/
     end
   end
 

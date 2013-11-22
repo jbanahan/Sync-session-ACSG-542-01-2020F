@@ -973,7 +973,8 @@ and classifications.product_id = products.id
         [131,:ent_eta_date,:eta_date,"ETA Date",{:data_type=>:date}],
         [132,:ent_delivery_order_pickup_date,:delivery_order_pickup_date,"Delivery Order Pickup Date",{:data_type=>:datetime}],
         [133,:ent_freight_pickup_date,:freight_pickup_date,"Freight Pickup Date",{:data_type=>:datetime}],
-        [134,:ent_k84_receive_date, :k84_receive_date, "K84 Received Date", {:data_type=>:date}]
+        [134,:ent_k84_receive_date, :k84_receive_date, "K84 Received Date", {:data_type=>:date}],
+        [135,:ent_k84_month, :k84_month, "K84 Month", {:data_type=>:integer}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -1023,7 +1024,8 @@ and classifications.product_id = products.id
         [30,:cil_cvd_bond,:cvd_bond,"CVD Bond",{:data_type=>:boolean}],
         [31,:cil_cvd_case_value,:cvd_case_value,"CVD Value",{:data_type=>:decimal,:currency=>:other}],
         [32,:cil_cvd_duty_amount,:cvd_duty_amount,"CVD Duty",{:data_type=>:decimal,:currency=>:other}],
-        [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}]
+        [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}],
+        [34,:cil_customer_reference, :customer_reference, "Customer Reference",{:data_tyep=>:string}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],

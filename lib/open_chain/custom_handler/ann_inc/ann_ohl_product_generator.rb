@@ -86,10 +86,10 @@ INNER JOIN (SELECT classifications.id, classifications.product_id, countries.iso
   INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (\"US\",\"CA\")
 ) as classifications on classifications.product_id = products.id
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
-LEFT OUTER JOIN sync_records on sync_records.syncable_type = 'Product' and sync_records.syncable_id = products.id and sync_records.trading_partner = '#{sync_code}'
+#{Product.need_sync_join_clause(sync_code)}
 INNER JOIN custom_values AS a_date ON a_date.custom_definition_id = #{@cdefs[:approved_date].id} AND a_date.customizable_id = classifications.id and a_date.date_value is not null
 "
-          w = "WHERE (sync_records.confirmed_at IS NULL OR sync_records.sent_at > sync_records.confirmed_at OR  sync_records.sent_at < products.updated_at)"
+          w = "WHERE #{Product.need_sync_where_clause()}"
           r << (@custom_where ? @custom_where : w)
           #US must be in file before Canada per OHL spec
           r << " ORDER BY products.id, classifications.iso_code DESC, tariff_records.line_number"

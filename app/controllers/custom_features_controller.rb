@@ -5,6 +5,7 @@ require 'open_chain/custom_handler/j_crew_parts_extract_parser'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
+require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -13,6 +14,7 @@ class CustomFeaturesController < ApplicationController
   JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
   POLO_CA_INVOICES = 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
   UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
+  FENIX_CI_UPLOAD = 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
 
   def index
     render :layout=>'one_col'
@@ -219,6 +221,35 @@ class CustomFeaturesController < ApplicationController
   def polo_ca_invoices_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def fenix_ci_load_index
+    action_secure(OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>FENIX_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def fenix_ci_load_upload
+    f = CustomFile.new(:file_type=>FENIX_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/fenix_ci_load'
+    }
+  end
+
+  def fenix_ci_load_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end

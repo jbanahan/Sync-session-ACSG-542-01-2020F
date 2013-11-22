@@ -51,6 +51,7 @@ class AdvancedSearchController < ApplicationController
             sched.ftp_username = sc[:ftp_username]
             sched.ftp_password = sc[:ftp_password]
             sched.ftp_subfolder = sc[:ftp_subfolder]
+            sched.protocol = sc[:protocol]
           end
         end
       end
@@ -161,8 +162,17 @@ class AdvancedSearchController < ApplicationController
           :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>c.model_field.label,:rank=>c.rank,:descending=>c.descending?}},
           :search_criterions=>ss.search_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>c.model_field.label,:operator=>c.operator,:value=>c.value,:datatype=>c.model_field.data_type,:include_empty=>c.include_empty?}},
           :search_schedules=>ss.search_schedules.collect {|s|
-            {:email_addresses=>s.email_addresses, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
+            f = {:email_addresses=>s.email_addresses, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
             :run_saturday=>s.run_saturday?, :run_sunday=>s.run_sunday?, :run_hour=>s.run_hour, :day_of_month=> s.day_of_month, :download_format=>s.download_format}
+
+            if ss.can_ftp?
+              f[:ftp_server] = s.ftp_server
+              f[:ftp_username] = s.ftp_username
+              f[:ftp_password] = s.ftp_password
+              f[:ftp_subfolder] = s.ftp_subfolder
+              f[:protocol] = s.protocol
+            end
+            f
           },
           :model_fields => ModelField.sort_by_label(ss.core_module.model_fields_including_children(current_user).values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
         }

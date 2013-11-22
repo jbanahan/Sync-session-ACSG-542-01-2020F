@@ -15,6 +15,10 @@ describe OpenChain::Report::MarcJacobsFreightBudget do
     Entry.any_instance.stub(:can_view?).and_return(false)
     lambda {described_class.run_report @u}.should raise_error "You do not have permission to view the entries on this report." 
   end
+  it "should allow Marc Jacobs users access to the report" do
+    @u.update_attributes! company_id: @good_entry.importer_id
+    described_class.permission?(@u).should be_true
+  end
   it "should default to current year if not set" do
     mr = mock('report')
     mr.stub(:run).and_return('x')

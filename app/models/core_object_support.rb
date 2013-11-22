@@ -1,5 +1,6 @@
 module CoreObjectSupport
   def self.included(base)
+    base.extend ClassMethods
     base.instance_eval("attr_accessor :dont_process_linked_attachments")
     base.instance_eval("include CustomFieldSupport")
     base.instance_eval("include ShallowMerger")
@@ -15,7 +16,7 @@ module CoreObjectSupport
     base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy")
     base.instance_eval("after_save :process_linked_attachments")
 
-    base.instance_eval("scope :need_sync, lambda {|trading_partner| joins(\"LEFT OUTER JOIN sync_records ON sync_records.syncable_type = '\#{self.name}' and sync_records.syncable_id = \#{self.table_name}.id and sync_records.trading_partner = '\#{trading_partner}'\").where(\"sync_records.id is NULL OR sync_records.sent_at is NULL or sync_records.confirmed_at is NULL or sync_records.sent_at > sync_records.confirmed_at or \#{self.table_name}.updated_at > sync_records.sent_at \")}")
+    base.instance_eval("scope :need_sync, lambda {|trading_partner| joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause())}")
     base.instance_eval("scope :has_attachment, joins(\"LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '\#{self.name}' AND linked_attachments.attachable_id = \#{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '\#{self.name}' AND attachments.attachable_id = \#{self.table_name}.id\").where('attachments.id is not null OR linked_attachments.id is not null').uniq")
   end
 
@@ -34,7 +35,7 @@ module CoreObjectSupport
   end
 
   def process_linked_attachments
-    LinkedAttachment.delay.create_from_attachable(self) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
+    LinkedAttachment.delay.create_from_attachable_by_class_and_id(self.class,self.id) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
   end
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded file links)
@@ -55,4 +56,14 @@ module CoreObjectSupport
     "http://#{@@req_host}/redirect.html?page=#{relative_url}"
   end
 
+  module ClassMethods
+    def need_sync_join_clause trading_partner
+      sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{table_name}.id and sync_records.trading_partner = ?"
+      sanitize_sql_array([sql, name, trading_partner])
+    end
+
+    def need_sync_where_clause 
+      "(sync_records.id is NULL OR sync_records.sent_at is NULL or sync_records.confirmed_at is NULL or sync_records.sent_at > sync_records.confirmed_at or #{table_name}.updated_at > sync_records.sent_at)"
+    end
+  end
 end

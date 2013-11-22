@@ -11,15 +11,15 @@ describe CoreObjectSupport do
       Delayed::Worker.delay_jobs = @ws
     end
     it "should kick off job if import rule exists for this module" do
-      LinkedAttachment.should_receive(:create_from_attachable).with(instance_of(Order))
+      LinkedAttachment.should_receive(:create_from_attachable_by_class_and_id).with(Order,instance_of(Fixnum))
       Order.create!(:order_number=>'onum',:vendor_id=>Factory(:company,:vendor=>true).id)
     end
     it "should not kick off job if only import rules are for another module" do
-      LinkedAttachment.should_not_receive(:create_from_attachable)
+      LinkedAttachment.should_not_receive(:create_from_attachable_by_class_and_id)
       Product.create!(:unique_identifier=>"PLA")
     end
     it "should not kick off job if don't process linked attachments = true" do
-      LinkedAttachment.should_not_receive(:create_from_attachable)
+      LinkedAttachment.should_not_receive(:create_from_attachable_by_class_and_id)
       o = Order.new(order_number:'onum',vendor_id:Factory(:company,:vendor=>true).id)
       o.dont_process_linked_attachments = true
       o.save!
@@ -116,4 +116,33 @@ describe CoreObjectSupport do
       r[3].should == fourth
     end
   end
+
+  context :TestCoreObject do
+    before :each do
+      class TestCoreObject < ActiveRecord::Base
+        include CoreObjectSupport
+
+        def self.name 
+          "Class' Name"
+        end
+      end
+    end
+
+    describe :need_sync_join_clause do
+      it "should generate sql for joining to sync_records table" do
+        sql = TestCoreObject.need_sync_join_clause "Trading's Partner"
+        sql.should include ".syncable_type = 'Class\\' Name'"
+        sql.should include "sync_records.syncable_id = test_core_objects"
+        sql.should include "sync_records.trading_partner = 'Trading\\'s Partner'"
+      end
+    end
+
+    describe :need_sync_where_clause do
+      it "should generate sql for joining to sync_records table" do
+        sql = TestCoreObject.need_sync_where_clause
+        sql.should include "test_core_objects.updated_at"
+      end
+    end
+  end
+  
 end

@@ -129,4 +129,129 @@ describe OpenChain::BulkUpdateClassification do
       tr.line_number.should == 1
     end
   end
+
+  describe "quick_classify" do
+    before :each do 
+      @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true, :product_view=> true)
+      @products = 2.times.collect {Factory(:product)}
+      @country = Factory(:country, :iso_code => "US")
+      @hts = '1234567890'
+      
+
+      @parameters = {
+        'pk' => ["#{@products[0].id}", "#{@products[1].id}"],
+        'product' => {
+            'classifications_attributes' => {
+              "0" => {
+                  'country_id' => "#{@country.id}",
+                  'tariff_records_attributes' => {
+                      "0" => {
+                        "hts_1" => @hts
+                      }
+                  }
+              }
+            }
+        }
+      }
+    end
+
+    it "should create new classifications on products" do
+      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
+
+      @products.each do |p|
+        p.reload
+        p.classifications.should have(1).item
+        p.classifications[0].country_id.should eq @country.id
+
+        p.classifications[0].tariff_records.should have(1).item
+        p.classifications[0].tariff_records[0].hts_1.should eq @hts
+      end
+
+      messages[:message].should eq "Classification Job Complete."
+      messages[:errors].should have(0).items
+      messages[:good_count].should eq 2
+
+      @u.messages.should have(1).item
+      @u.messages[0].subject.should eq "Classification Job Complete."
+      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>Products saved: 2</p><p>Messages:<br></p>"
+    end
+
+    it "should create new classifications on products using json string" do
+      OpenChain::BulkUpdateClassification.quick_classify @parameters.to_json, @u
+
+      @products.each do |p|
+        p.reload
+        p.classifications.should have(1).item
+        p.classifications[0].country_id.should eq @country.id
+
+        p.classifications[0].tariff_records.should have(1).item
+        p.classifications[0].tariff_records[0].hts_1.should eq @hts
+      end
+    end
+
+    it "should update existing classification and tariff records on a product" do
+      p = @products[0]
+      p.classifications.create!(:country_id=>@country.id).tariff_records.create! hts_1: "75315678"
+
+      @parameters['pk'] = ["#{@products[0].id}"]
+      @parameters['product']['classifications_attributes']["0"]["id"] = "#{p.classifications[0].id}"
+      @parameters['product']['classifications_attributes']["0"]["tariff_records_attributes"]["0"]["id"] = "#{p.classifications[0].tariff_records[0].id}"
+
+      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
+
+      p.reload
+      p.classifications.should have(1).item
+      p.classifications[0].country_id.should eq @country.id
+
+      p.classifications[0].tariff_records.should have(1).item
+      p.classifications[0].tariff_records[0].hts_1.should eq @hts
+    end
+
+    it "should handle errors in product updates" do 
+      # An easy way to force an error is to set the value to blank
+      OpenChain::FieldLogicValidator.stub(:validate) do |o|
+        o.errors[:base] << "Error"
+        raise OpenChain::ValidationLogicError
+      end
+      p = @products[0]
+      @parameters['pk'] = ["#{@products[0].id}"]
+
+      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
+
+      @u.messages.should have(1).item
+      @u.messages[0].subject.should eq "Classification Job Complete (1 Error)."
+      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>Products saved: 0</p><p>Messages:<br>Error saving product #{p.unique_identifier}: Error</p>"
+
+      messages[:message].should eq "Classification Job Complete (1 Error)."
+      messages[:good_count].should eq 0
+      messages[:errors].should have(1).item
+      messages[:errors][0].should eq "Error saving product #{p.unique_identifier}: Error"
+    end
+
+    it "should verify user can classify product" do
+      p = @products[0]
+      @parameters['pk'] = ["#{@products[0].id}"]
+
+      @u.update_attributes product_view: false
+      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
+
+      @u.messages.should have(1).item
+      @u.messages[0].subject.should eq "Classification Job Complete (1 Error)."
+
+      messages[:message].should eq "Classification Job Complete (1 Error)."
+      messages[:good_count].should eq 0
+      messages[:errors].should have(1).item
+      messages[:errors][0].should eq "You do not have permission to classify product #{p.unique_identifier}."
+    end
+
+    it "should not log user messages if specified" do
+      p = @products[0]
+      @parameters['pk'] = ["#{@products[0].id}"]
+
+      @u.update_attributes product_view: false
+      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u, no_user_message: true
+
+      @u.messages.should have(0).items
+    end
+  end
 end

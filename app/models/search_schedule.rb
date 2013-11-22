@@ -144,24 +144,28 @@ class SearchSchedule < ActiveRecord::Base
       self.ftp_username.blank?,
       self.ftp_password.blank?,
     ].include? true
-      log.info "#{Time.now}: Attempting to send FTP to #{self.ftp_server}" if log
+      protocol = self.protocol.blank? ? "FTP" : self.protocol.upcase
+
+      log.info "#{Time.now}: Attempting to send #{protocol} to #{self.ftp_server}" if log
       opts = {:remote_file_name => attachment_name}
       opts[:folder] = self.ftp_subfolder unless self.ftp_subfolder.blank?
+      opts[:protocol] = self.protocol unless self.protocol.blank?
       begin
         FtpSender.send_file self.ftp_server, self.ftp_username, self.ftp_password, temp_file.path, opts
       rescue IOError => e
         #do email & internal message here
+        # The FtpSender already logs all errors emanating from it, and automatically retries to send so there's no point in calling log_me on the error again here
         log.error e.message if log
         search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
         OpenMailer.send_search_fail(user.email,search_name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver
-        user.messages.create(:subject=>"Search Transmission Failure",:body=>"Search Name: #{search_name}\r"+
-          "Server Name: #{self.ftp_server}\r"+
-          "Account: #{self.ftp_username}\r"+
-          "Subfolder: #{self.ftp_subfolder}\r"+
+        user.messages.create(:subject=>"Search Transmission Failure",:body=>"Search Name: #{search_name}<br>"+
+          "Protocol: #{protocol}<br>" +
+          "Server Name: #{self.ftp_server}<br>"+
+          "Account: #{self.ftp_username}<br>"+
+          "Subfolder: #{self.ftp_subfolder}<br>"+
           "Error Message: #{e.message}")
-        e.log_me ["FTP TO: #{self.ftp_server}","FTP USER: #{self.ftp_username}","FTP OPTS: #{opts}","User: #{user}"]
       end
-      "#{Time.now}: FTP complete"
+      "#{Time.now}: #{protocol} complete"
     end
   end
   

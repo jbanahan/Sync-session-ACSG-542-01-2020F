@@ -209,8 +209,8 @@ describe ProductsController do
 
       b = double
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(b)
-      b.should_receive(:go_serializable) do |json, id|
-        id.should == @user.id
+      b.should_receive(:quick_classify) do |json, id|
+        id.should == @user
         params = ActiveSupport::JSON.decode json
         params["sr_id"].should == "1"
       end
@@ -229,8 +229,8 @@ describe ProductsController do
       
       b = double
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(b)
-      b.should_receive(:go_serializable) do |json, id|
-        id.should == @user.id
+      b.should_receive(:quick_classify) do |json, id|
+        id.should == @user
         params = ActiveSupport::JSON.decode json
         params["pk"].length.should == 11
       end
@@ -247,8 +247,8 @@ describe ProductsController do
       end
       p = {:pk => pks}
       
-      OpenChain::BulkUpdateClassification.should_receive(:go) do |params, u, options|
-        u.id.should == @user.id
+      OpenChain::BulkUpdateClassification.should_receive(:quick_classify) do |params, u, options|
+        u.should == @user
         params[:pk].length.should == 10
         options[:no_user_message].should be_true
         {:message => "Test", :errors =>["A", "B"]}
@@ -264,11 +264,11 @@ describe ProductsController do
       delay = double
       p = {"k1"=>"v1", "k2"=>"v2", :sr_id=>"1"}
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
-      delay.should_receive(:go_serializable) do |args, id| 
+      delay.should_receive(:quick_classify) do |args, id| 
         json = JSON.parse(args)
         json["k1"].should == "v1"
         json["k2"].should == "v2"
-        id.should == @user.id
+        id.should == @user
       end
 
       request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=val" 
@@ -281,7 +281,7 @@ describe ProductsController do
       delay = double
       p = {:sr_id => "1"}
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
-      delay.should_receive(:go_serializable)
+      delay.should_receive(:quick_classify)
       request.env["HTTP_REFERER"] = nil
       post :bulk_update_classifications, p
       response.should redirect_to(products_path)
@@ -291,7 +291,7 @@ describe ProductsController do
       request.env["HTTP_REFERER"] = "http://www.test.com?force_search=true&key=x" 
       delay = double
       OpenChain::BulkUpdateClassification.should_receive(:delay).and_return delay
-      delay.should_receive(:go_serializable)
+      delay.should_receive(:quick_classify)
       post :bulk_update_classifications, {'back_to'=>'/somewhere?force_search=true&key=val', :sr_id=>"1"}
       response.should redirect_to("http://test.host/somewhere?key=val")
     end

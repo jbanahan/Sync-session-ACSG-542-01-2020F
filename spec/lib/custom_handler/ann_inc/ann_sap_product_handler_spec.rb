@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     @cdefs = described_class.prep_custom_definitions [:po,:origin,:import,:cost,
         :ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
         :inco_terms,:related_styles,:season,:article,:approved_long,
-        :first_sap_date,:last_sap_date,:sap_revised_date
+        :first_sap_date,:last_sap_date,:sap_revised_date, :maximum_cost, :minimum_cost
       ]
     ModelField.reload true
   end
@@ -70,6 +70,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     read_onlys << CustomDefinition.where(:label=>"First SAP Received Date",:data_type=>:date,:module_type=>'Product').first
     read_onlys << CustomDefinition.where(:label=>"Last SAP Received Date",:data_type=>:date,:module_type=>'Product').first
     read_onlys << CustomDefinition.where(:label=>"SAP Revised Date",:data_type=>:date,:module_type=>'Product').first
+    read_onlys << CustomDefinition.where(:label=>"Minimum Cost",:data_type=>:decimal,:module_type=>'Classification').first
+    read_onlys << CustomDefinition.where(:label=>"Maximum Cost",:data_type=>:decimal,:module_type=>'Classification').first
     CustomDefinition.where(:label=>"Other Agency Flag",:data_type=>:boolean,:module_type=>'Classification').first.should_not be_nil
     CustomDefinition.where(:label=>"Approved Long Description",:data_type=>:text,:module_type=>'Product').first.should_not be_nil
     read_onlys.each do |cd| 
@@ -106,6 +108,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
     p.should have(1).classifications
     cls = p.classifications.find_by_country_id @us.id
     cls.get_custom_value(@cdefs[:oga_flag]).value.should == (h[:fw]=='X')
+    cls.get_custom_value(@cdefs[:maximum_cost]).value.should == BigDecimal.new(h[:unit_cost])
+    cls.get_custom_value(@cdefs[:minimum_cost]).value.should == BigDecimal.new(h[:unit_cost])
     cls.should have(1).tariff_records
     tr = cls.tariff_records.first
     tr.hts_1.should == '1234567890'
@@ -274,4 +278,50 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
   end
 
+  it "should update maximum cost if the unit_price is higher and NOT update minimum cost" do
+    @h.process make_row, @user
+
+    unit_cost = (BigDecimal.new(default_values[:unit_cost]) + 1)
+    row = make_row unit_cost: unit_cost.to_s
+    @h.process row, @user
+
+    p = Product.first
+    p.classifications.first.get_custom_value(@cdefs[:maximum_cost]).value.should eq unit_cost
+    p.classifications.first.get_custom_value(@cdefs[:minimum_cost]).value.should eq BigDecimal.new(default_values[:unit_cost])
+  end
+
+  it "should NOT update maximum cost if the unit_price is lower and update minimum cost" do
+    @h.process make_row, @user
+
+    unit_cost = (BigDecimal.new(default_values[:unit_cost]) - 1)
+    row = make_row unit_cost: unit_cost.to_s
+    @h.process row, @user
+
+    p = Product.first
+    p.classifications.first.get_custom_value(@cdefs[:maximum_cost]).value.should eq BigDecimal.new(default_values[:unit_cost])
+    p.classifications.first.get_custom_value(@cdefs[:minimum_cost]).value.should eq unit_cost
+  end
+
+  it "should add a new classification to hold max/min cost for import locations" do
+    @h.process make_row, @user
+
+    other_country = Factory(:country, import_location: true, iso_code: 'XX')
+    row = make_row import: "XX"
+    @h.process row, @user
+
+    p = Product.first
+    c = p.classifications.find {|c| c.country_id == other_country.id}
+    c.get_custom_value(@cdefs[:maximum_cost]).value.should eq BigDecimal.new(default_values[:unit_cost])
+    c.get_custom_value(@cdefs[:minimum_cost]).value.should eq BigDecimal.new(default_values[:unit_cost])
+  end
+
+  it "should not add new classification to hold max/min cost for countries not marked as import locations" do
+    @h.process make_row, @user
+
+    other_country = Factory(:country, import_location: false, iso_code: 'XX')
+    row = make_row import: "XX"
+    @h.process row, @user
+
+    Product.first.classifications.find {|c| c.country_id == other_country.id}.should be_nil    
+  end
 end

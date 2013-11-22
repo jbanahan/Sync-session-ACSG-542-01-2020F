@@ -200,6 +200,17 @@ class UsersController < ApplicationController
       redirect_to company_users_path params[:company_id]
     }
   end
+  
+  def find_by_email
+    admin_secure "Only admins can use this page" do
+      u = User.find_by_email request.path.split('/').last
+      if u.nil?
+        render text: "User not found."
+        return
+      end
+      redirect_to [u.company,u]
+    end 
+  end
 
   private
   def parse_bulk_csv data

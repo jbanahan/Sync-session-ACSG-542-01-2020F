@@ -240,5 +240,19 @@ describe CustomReportBillingAllocationByValue do
       arrays[1][3].should == 12
       arrays[2][3].should == 48
     end
+    it "should order by entry number" do
+      @ent_2 = Entry.create!(:entry_number=>"11111",:broker_reference=>"11111")
+      @ci_2 = @ent_2.commercial_invoices.create!(:invoice_number=>"ci_2")
+      @cil_2_1 = @ci_2.commercial_invoice_lines.create!(:line_number=>"1",:value=>100)
+      @bi_2 = @ent_2.broker_invoices.create!(:invoice_date=>0.seconds.ago,:invoice_total=>100,:invoice_number=>'bi_2')
+      
+      rpt = @klass.new
+      rpt.search_criterions.build(:model_field_uid=>:bi_entry_num,:operator=>"in",:value=>"#{@ent.entry_number}\n#{@ent_2.entry_number}")
+      arrays = rpt.to_arrays @u
+      
+      arrays.should have(4).rows
+      arrays[1][0].should == @ent_2.broker_reference
+      arrays[2][0].should == @ent.broker_reference
+    end
   end
 end

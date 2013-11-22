@@ -118,6 +118,7 @@ OpenChain::Application.routes.draw do
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/help" => "chain_help#index"
+  match '/users/email/:email' => "users#find_by_email"
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
@@ -162,6 +163,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/ua_tbd" => "custom_features#ua_tbd_report_index", :via=>:get
   match "/custom_features/ua_tbd/upload" => "custom_features#ua_tbd_report_upload", :via => :post
   match "/custom_features/ua_tbd/:id/download" => "custom_features#ua_tbd_report_download", :via => :get
+  match "/custom_features/fenix_ci_load" => "custom_features#fenix_ci_load_index", :via=>:get
+  match "/custom_features/fenix_ci_load/upload" => "custom_features#fenix_ci_load_upload", :via => :post
+  match "/custom_features/fenix_ci_load/:id/download" => "custom_features#fenix_ci_load_download", :via => :get
 
   #reports
   match "/reports" => "reports#index", :via => :get
