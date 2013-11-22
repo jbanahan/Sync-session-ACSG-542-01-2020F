@@ -9,6 +9,7 @@ describe CorrectiveActionPlansController do
   describe :add_comment do
     before :each do
       @cap = Factory(:corrective_action_plan)
+      CorrectiveActionPlan.any_instance.stub(:can_view?).and_return true 
     end
     it "should fail if user cannot view" do
       CorrectiveActionPlan.any_instance.stub(:can_view?).and_return false 
@@ -17,7 +18,6 @@ describe CorrectiveActionPlansController do
       @cap.comments.should be_empty
     end
     it "should add comment and return comment json" do
-      CorrectiveActionPlan.any_instance.stub(:can_view?).and_return true 
       post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
       response.should be_success
       c = @cap.comments.first
@@ -29,11 +29,24 @@ describe CorrectiveActionPlansController do
       j['user']['full_name'].should == @u.full_name
     end
     it "should ignore blank submissions" do
-      CorrectiveActionPlan.any_instance.stub(:can_view?).and_return true 
       post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'', format: :json
       response.status.should == 400
       j = JSON.parse(response.body)['error'].should == 'Empty comment not added'
       @cap.comments.should be_empty
+    end
+    it "should log update if not new" do
+      @cap.update_attributes(status: CorrectiveActionPlan::STATUSES[:active])
+      post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
+      response.should be_success
+      sru = SurveyResponseUpdate.first
+      sru.survey_response.should == @cap.survey_response
+      sru.user.should == @u
+    end
+    it "should not log update if new" do
+      @cap.update_attributes(status: CorrectiveActionPlan::STATUSES[:new])
+      post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
+      response.should be_success
+      SurveyResponseUpdate.all.should be_empty
     end
   end
   describe :show do

@@ -51,6 +51,7 @@ class CorrectiveActionPlansController < ApplicationController
       return
     end
     c = cap.comments.create! user: current_user, body: params[:comment]
+    cap.log_update current_user
     render json: c.to_json(methods:[:html_body],include:{user:{methods:[:full_name],only:[:email]}})
   end
 
