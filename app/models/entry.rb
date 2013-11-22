@@ -15,6 +15,8 @@ class Entry < ActiveRecord::Base
   belongs_to :us_exit_port, :class_name=>'Port', :foreign_key=>'us_exit_port_code', :primary_key=>'schedule_d_code'
   belongs_to :import_country, :class_name=>"Country"
 
+  before_save :update_k84_month
+
   def locked?
     false
   end
@@ -77,5 +79,18 @@ class Entry < ActiveRecord::Base
   private
   def company_permission? user
     self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)
+  end
+
+  def update_k84_month 
+    unless self.cadex_accept_date.blank?
+      date = self.cadex_accept_date
+      month = date.month 
+      # Anything after the 24th is the next month
+      month += 1 if  date.day > 24
+      # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber), 
+      # so loop back to 1
+      month = (month % 12) if month > 12
+      self.k84_month = month
+    end
   end
 end

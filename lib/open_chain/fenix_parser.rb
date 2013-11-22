@@ -218,6 +218,9 @@ module OpenChain
       end
       entry.customer_name = info[:importer_name]
       entry.customer_number = str_val line[107]
+      entry.total_packages = int_val line[109]
+      entry.total_packages_uom = "PKGS" unless entry.total_packages.blank?
+      entry.gross_weight = int_val line[110]
 
       entry
     end

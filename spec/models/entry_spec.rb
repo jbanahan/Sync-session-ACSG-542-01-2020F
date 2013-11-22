@@ -133,4 +133,25 @@ describe Entry do
       Factory(:entry,:us_exit_port_code=>@port.schedule_d_code).us_exit_port.should == @port
     end
   end
+
+  context :update_k84_month do
+    before :each do
+      @entry = Factory(:entry)
+    end
+
+    it "should set k84 month" do
+      @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-01-01")
+      @entry.k84_month.should eq 1
+    end
+
+    it "should set k84 month to next month if cadex accept is 25th or later" do
+      @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-01-25")
+      @entry.k84_month.should eq 2
+    end
+
+    it "should set k84 month to 1 if cadex accept is after Dec 24th" do
+      @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-12-25")
+      @entry.k84_month.should eq 1
+    end
+  end
 end
