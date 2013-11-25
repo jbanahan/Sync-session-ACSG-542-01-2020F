@@ -57,4 +57,52 @@ describe EntriesController do
     end
 
   end
+
+  describe "show" do
+    it "should raise a 404 if not found" do
+      get :show, :id => -20
+      response.should redirect_to("/")
+      flash[:errors].should eq ["Entry with id -20 not found."]
+    end
+
+    it "should show a US entry" do
+      entry = Factory(:entry)
+      get :show, :id => entry.id
+
+      response.status.should == 200
+      assigns(:entry).id.should eq entry.id
+      response.should render_template("show_us")
+    end
+
+    it "should show a US simple entry" do
+      @u.update_attributes! :simple_entry_mode => true
+      entry = Factory(:entry)
+      get :show, :id => entry.id
+
+      response.status.should == 200
+      assigns(:entry).id.should eq entry.id
+      response.should render_template("show_us_simple")
+    end
+
+    it "should show a CA entry" do
+      country = Factory(:country, :iso_code => 'CA')
+      entry = Factory(:entry, :import_country => country)
+
+      get :show, :id => entry.id
+
+      response.status.should == 200
+      assigns(:entry).id.should eq entry.id
+      response.should render_template("show_ca")
+    end
+
+    it "should redirect if user can't view" do
+      Entry.any_instance.should_receive(:can_view?).and_return false
+
+      entry = Factory(:entry)
+      get :show, :id => entry.id
+      response.should redirect_to("/")
+      flash[:errors].should eq ["You do not have permission to view this entry."]
+
+    end
+  end
 end
