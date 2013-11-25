@@ -5,20 +5,21 @@ class SurveyResponse < ActiveRecord::Base
   has_many :answers, :inverse_of=>:survey_response
   has_many :questions, :through=>:survey
   has_many :survey_response_logs, :dependent=>:destroy
+  has_many :survey_response_updates, :dependent=>:destroy
   has_one :corrective_action_plan, :dependent=>:destroy
 
   validates_presence_of :survey
   validates_presence_of :user
 
-  accepts_nested_attributes_for :answers, :allow_destroy=>false
-
   before_save :update_status
-  after_commit :send_notification
 
   STATUSES ||= {:incomplete => "Incomplete", :needs_rating => "Needs Rating", :rated => "Rated"}
 
   scope :was_archived, lambda {|ar| ar == true ? where("survey_responses.archived = ?", true) : where("survey_responses.archived IS NULL OR survey_responses.archived = ?", false)}
 
+  def log_update user
+    self.survey_response_updates.where(user_id:user.id).first_or_create
+  end
   # last time this user made an action that created a log message
   def last_logged_by_user u
     m = self.survey_response_logs.where(user_id:u.id).order('survey_response_logs.created_at DESC').limit(1).first
@@ -51,14 +52,6 @@ class SurveyResponse < ActiveRecord::Base
       self.save
     end
     self.survey_response_logs.create(:message=>"Invite sent to #{self.user.email}")
-  end
-
-  def notify_subscribers corrective_action_plan = false
-    OpenMailer.send_survey_subscription_update(self,corrective_action_plan).deliver! unless self.survey.survey_subscriptions.blank?
-  end
-
-  def send_notification
-    self.delay.notify_subscribers if self.submitted_date
   end
 
   private

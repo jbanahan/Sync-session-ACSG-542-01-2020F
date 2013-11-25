@@ -22,4 +22,12 @@ class Answer < ActiveRecord::Base
   def can_view? user
     self.survey_response && self.survey_response.can_view?(user)
   end
+
+  def can_attach? user
+    can_view? user
+  end
+
+  def log_update user
+    self.survey_response.log_update user
+  end
 end

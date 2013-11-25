@@ -405,11 +405,16 @@ OpenChain::Application.routes.draw do
       put 'restore'
     end
     resources :corrective_action_plans, :only=>[:show,:create,:destroy,:update] do
+      post 'add_comment', on: :member
       put 'activate', on: :member
       put 'resolve', on: :member
     end
     resources :survey_response_logs, :only=>[:index]
   end
+  resources :answers, only:[:update] do
+    resources :answer_comments, only:[:create]
+  end
+  resources :corrective_issues, :only=>[:create,:update,:destroy]
   
   resources :drawback_upload_files, :only=>[:index,:create]
   resources :duty_calc_import_files, :only=>[:create] do

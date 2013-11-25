@@ -5,6 +5,18 @@ describe CorrectiveActionPlan do
     @cap = Factory(:corrective_action_plan)
     @u = Factory(:user) 
   end
+  describe :log_update do
+    it "should log against survey_response if cap is active" do
+      @cap.status = described_class::STATUSES[:active]
+      @cap.survey_response.should_receive(:log_update).with @u
+      @cap.log_update @u
+    end
+    it "should not log against survey_response if cap is inactive" do
+      @cap.status = described_class::STATUSES[:new]
+      @cap.survey_response.should_not_receive(:log_update).with @u
+      @cap.log_update @u
+    end
+  end
   describe :can_update_actions? do
     it "should allow if user == survey_response.user" do
       sr = @cap.survey_response

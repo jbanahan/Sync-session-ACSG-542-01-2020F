@@ -97,6 +97,11 @@ def execute_scheduler
     end
   end
 
+  scheduler.every '1h' do
+    job_wrapper 'Survey Response Updates' do
+      SurveyResponseUpdate.delay.run_updates
+    end
+  end
   #Rebuild official tariff use counts
   scheduler.every '2h' do
     job_wrapper "OfficialTariff Use Count Update" do

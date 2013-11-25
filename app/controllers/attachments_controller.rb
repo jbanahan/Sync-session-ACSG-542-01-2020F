@@ -1,18 +1,31 @@
 class AttachmentsController < ApplicationController
   def create
-    if att = Attachment.create(params[:attachment])
-      attachable = att.attachable
-      unless attachable.can_attach?(current_user)
-        att.destroy
-        add_flash :errors, "You do not have permission to attach items to this object."
+    att = nil
+    begin
+      if att = Attachment.create(params[:attachment])
+        attachable = att.attachable
+        unless attachable.can_attach?(current_user)
+          att.destroy
+          add_flash :errors, "You do not have permission to attach items to this object."
+        end
+        att.uploaded_by = current_user
+        att.save
+        attachable.log_update(current_user) if attachable.respond_to?(:log_update)
+        respond_to do |format|
+          format.html {redirect_to attachable}
+          format.json {render json: Attachment.attachments_as_json(attachable)}
+        end
+      else
+        errors_to_flash att
+        respond_to do |format|
+          format.html {redirect_to attachable}
+          format.json {render json: {errors:flash[:errors]}, status: 400}
+        end
       end
-      att.uploaded_by = current_user
-      att.save
-    else
-      errors_to_flash att
+    rescue
+      att.destroy unless att.blank?
+      raise $!
     end
-    
-    redirect_to attachable
   end
   
   def destroy
