@@ -39,8 +39,10 @@
     <div class='history_entry'>
       <% d = s.diff_vs_previous %>
       <div class='history_title'>
-        <%unless s.imported_file.nil?  %>
-        <div style='float:right'>(Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %>) </div>
+        <%if s.imported_file_id%>
+        <div style='float:right'>(Created By File: <%= link_to s.imported_file.attached_file_name, s.imported_file  %>)</div>
+        <%elsif s.bulk_process_log_id%>
+        <div style='float:right'>(Created By <%= link_to s.bulk_process_log.bulk_type, s.bulk_process_log  %>)</div>
         <%end  %>
         <div style='float:left'><%=s.created_at %>: <%=s.user.full_name%></div>
         <div style='clear:both'></div> 

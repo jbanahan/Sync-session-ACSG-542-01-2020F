@@ -385,7 +385,7 @@ class FileImportProcessor
     # key validation errors.
     # We'll handle turning decimal -> string data here by trimming out any trailing zeros / decimal points.
     if value
-      if model_field_character_type?(mf) && numeric?(value)
+      if model_field_character_type?(mf) && value.is_a?(Numeric)
         # BigDecimal to_s uses engineering notation (stupidly) by default
         value = value.is_a?(BigDecimal) ? value.to_s("F") : value.to_s
         trailing_zeros = value.index /\.0+$/
@@ -400,10 +400,6 @@ class FileImportProcessor
 
   def model_field_character_type? mf
     mf.data_type == :string || mf.data_type == :text
-  end
-
-  def numeric? value
-    value.is_a?(Float) || value.is_a?(BigDecimal)
   end
 
   def fire_start

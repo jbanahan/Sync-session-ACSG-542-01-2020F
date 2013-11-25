@@ -367,4 +367,7 @@ $(document).ready () ->
     evt.preventDefault()
     link = $(@).attr('link_to')
     if link
-      window.location=link
+      if link == "back"
+        window.history.back()
+      else
+        window.location=link

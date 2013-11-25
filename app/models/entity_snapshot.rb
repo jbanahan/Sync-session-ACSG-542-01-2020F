@@ -2,6 +2,8 @@ class EntitySnapshot < ActiveRecord::Base
   belongs_to :recordable, :polymorphic=>true
   belongs_to :user
   belongs_to :imported_file
+  belongs_to :change_record, :inverse_of => :entity_snapshot
+  belongs_to :bulk_process_log
 
   validates :recordable, :presence => true
   validates :user, :presence => true
