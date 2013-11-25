@@ -37,6 +37,13 @@ Factory.define :admin_user, :parent=>:master_user do |f|
     u.save!
   end
 end
+Factory.define :sys_admin_user, :parent=>:master_user do |f|
+  f.after_create do |u|
+    u.admin = true
+    u.sys_admin = true
+    u.save!
+  end
+end
 Factory.define :broker_user, :parent=>:user do |f|
   f.entry_view true
   f.broker_invoice_view true
@@ -278,4 +285,7 @@ Factory.define :drawback_claim do |f|
 end
 Factory.define :security_filing do |f|
   f.association :importer, :factory => :company
+end
+Factory.define :schedulable_job do |f|
+  
 end
