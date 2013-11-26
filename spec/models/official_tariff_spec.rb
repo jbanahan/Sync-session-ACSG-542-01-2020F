@@ -22,6 +22,16 @@ describe OfficialTariff do
       ot2.use_count.should == 1
       ot3.use_count.should == 0
     end
+    it "should clear use count for unused tariff" do
+      ot = Factory(:official_tariff,hts_code:'21345',use_count:10,updated_at:1.day.ago)
+      # we need to have a classificaiton against the country
+      Factory(:tariff_record,:hts_1=>'9999999',
+        :classification=>Factory(:classification,:country=>ot.country)
+        )
+      OfficialTariff.update_use_count
+      ot.reload
+      ot.use_count.should == 0
+    end
   end
   describe :can_view? do
     it "should allow if user can view official tariffs" do

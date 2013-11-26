@@ -27,13 +27,11 @@ group by hts_#{i}"
           hts_hash[row[0]] += row[1]
         end
       end
-      ActiveRecord::Base.transaction do
-        conn.execute "UPDATE official_tariffs SET use_count = null WHERE country_id = #{c.id};"
-        hts_hash.each do |k,v|
-           conn.execute "UPDATE official_tariffs SET use_count = #{v} WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
-        end
-        conn.execute "UPDATE official_tariffs SET use_count = 0 WHERE country_id = #{c.id} AND use_count is null;"
+      job_start = conn.execute("SELECT now()").first.first     
+      hts_hash.each do |k,v|
+         conn.execute "UPDATE official_tariffs SET use_count = #{v}, updated_at = now() WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
       end
+      qr = OfficialTariff.where(country_id:c.id).where("use_count is null OR updated_at < ?",job_start).update_all(use_count:0)
     end
   end
 
