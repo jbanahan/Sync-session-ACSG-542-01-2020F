@@ -1,3 +1,4 @@
+require 'open_chain/stat_client'
 class OfficialTariff < ActiveRecord::Base
 
   after_commit :update_cache
@@ -13,25 +14,27 @@ class OfficialTariff < ActiveRecord::Base
   
   #update the database with the total number of times that each official tariff has been used
   def self.update_use_count
-    conn = ActiveRecord::Base.connection
-    countries = Country.where("id IN (SELECT DISTINCT country_id from classifications)")
-    countries.each do |c|
-      hts_hash = {}
-      (1..3).each do |i|
-        r = conn.execute "select hts_#{i} as \"HTS\", count(*) from tariff_records
-inner join classifications on classifications.id = tariff_records.classification_id
-where length(hts_#{i}) > 0 and classifications.country_id = #{c.id}
-group by hts_#{i}"
-        r.each do |row|
-          hts_hash[row[0]] ||= 0
-          hts_hash[row[0]] += row[1]
+    OpenChain::StatClient.wall_time('ot_use') do
+      conn = ActiveRecord::Base.connection
+      countries = Country.where("id IN (SELECT DISTINCT country_id from classifications)")
+      countries.each do |c|
+        hts_hash = {}
+        (1..3).each do |i|
+          r = conn.execute "select hts_#{i} as \"HTS\", count(*) from tariff_records
+  inner join classifications on classifications.id = tariff_records.classification_id
+  where length(hts_#{i}) > 0 and classifications.country_id = #{c.id}
+  group by hts_#{i}"
+          r.each do |row|
+            hts_hash[row[0]] ||= 0
+            hts_hash[row[0]] += row[1]
+          end
         end
+        job_start = conn.execute("SELECT now()").first.first     
+        hts_hash.each do |k,v|
+           conn.execute "UPDATE official_tariffs SET use_count = #{v}, updated_at = now() WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
+        end
+        qr = OfficialTariff.where(country_id:c.id).where("use_count is null OR updated_at < ?",job_start).update_all(use_count:0)
       end
-      job_start = conn.execute("SELECT now()").first.first     
-      hts_hash.each do |k,v|
-         conn.execute "UPDATE official_tariffs SET use_count = #{v}, updated_at = now() WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
-      end
-      qr = OfficialTariff.where(country_id:c.id).where("use_count is null OR updated_at < ?",job_start).update_all(use_count:0)
     end
   end
 

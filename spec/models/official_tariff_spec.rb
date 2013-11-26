@@ -2,6 +2,9 @@ require 'spec_helper'
 
 describe OfficialTariff do
   describe :update_use_count do
+    before :each do
+      OpenChain::StatClient.stub(:wall_time).and_yield
+    end
     it "should update with counts from all 3 hts code locations for the right country" do
       c = Factory(:country)
       Factory(:tariff_record,:hts_1=>'123456',:hts_2=>'123456',:hts_3=>'1111111',

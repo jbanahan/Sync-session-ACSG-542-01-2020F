@@ -30,7 +30,14 @@ module OpenChain; class StatClient
     total_count 'rep_recipients', emails
   end
 
-  def self.add_numeric stat_code, value, collected_at
+  # Measures the total time of the statment in the passed in block and passes it to the stat code
+  def self.wall_time stat_code
+    s = Time.now.to_i
+    yield
+    add_numeric stat_code, Time.now.to_i - s
+  end
+
+  def self.add_numeric stat_code, value, collected_at=Time.now
     h = {stat_code:stat_code,value:value,collected_at:collected_at}
     post_json! '/api/v1/stat_collector/add_numeric', h
   end

@@ -41,6 +41,13 @@ describe OpenChain::StatClient do
       described_class.run
     end
   end
+  describe :wall_time do
+    it "should measure wall time for process using Time.now" do
+      Time.stub(:now).and_return(20,30)
+      described_class.should_receive(:add_numeric).with('mycode',10)
+      described_class.wall_time('mycode') { nil }
+    end
+  end
   describe :collect_report_recipients do
     it "should only report unique addresses" do
       Factory(:search_schedule,email_addresses:'joe@sample.com, jim@sample.com; mary@sample.com')
