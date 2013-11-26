@@ -9,6 +9,11 @@ class EntriesController < ApplicationController
   end
   def show
     e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first
+    unless e
+      error_redirect "Entry with id #{params[:id]} not found."
+      return
+    end
+
     action_secure(e.can_view?(current_user),e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
       current_user.update_attributes(:simple_entry_mode=>false) if params[:mode]=='detail' && current_user.simple_entry_mode?
       current_user.update_attributes(:simple_entry_mode=>true) if params[:mode]=='simple' && !current_user.simple_entry_mode?
