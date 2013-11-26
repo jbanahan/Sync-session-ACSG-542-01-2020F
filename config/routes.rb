@@ -433,6 +433,7 @@ OpenChain::Application.routes.draw do
     post 'resend', :on=>:member
   end
 
+  resources :schedulable_jobs, except: [:show]
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 
