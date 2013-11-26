@@ -236,10 +236,11 @@ EOS
   end
 
   #send survey update notification
-  def send_survey_subscription_update survey_response, corrective_action_plan = false
+  def send_survey_subscription_update survey_subscriptions, corrective_action_plan = false
+    survey = survey_subscriptions.first.survey
     @cap_mode = corrective_action_plan
-    @link_addr = "http://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
-    to = survey_response.survey.survey_subscriptions.map {|ss| ss.user.email}.join(',')
+    @link_addr = "http://#{MasterSetup.get.request_host}/surveys/#{survey.id}"
+    to = survey_subscriptions.map {|ss| ss.user.email}.join(',')
     mail(:to=>to, :subject=>"Survey Updated") do |format|
       format.html
     end

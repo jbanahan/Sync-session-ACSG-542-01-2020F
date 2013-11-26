@@ -3,8 +3,51 @@ require 'spec_helper'
 describe CorrectiveActionPlansController do
   before :each do
     activate_authlogic
-    @u = Factory(:user)
+    @u = Factory(:user,first_name:'joe',last_name:'user')
     UserSession.create! @u
+  end
+  describe :add_comment do
+    before :each do
+      @cap = Factory(:corrective_action_plan)
+      CorrectiveActionPlan.any_instance.stub(:can_view?).and_return true 
+    end
+    it "should fail if user cannot view" do
+      CorrectiveActionPlan.any_instance.stub(:can_view?).and_return false 
+      post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
+      response.status.should == 401
+      @cap.comments.should be_empty
+    end
+    it "should add comment and return comment json" do
+      post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
+      response.should be_success
+      c = @cap.comments.first
+      c.user.should == @u
+      c.body.should == 'xyz'
+      j = JSON.parse(response.body)['comment']
+      j['id'].should == c.id
+      j['html_body'].should == '<p>xyz</p>'
+      j['user']['full_name'].should == @u.full_name
+    end
+    it "should ignore blank submissions" do
+      post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'', format: :json
+      response.status.should == 400
+      j = JSON.parse(response.body)['error'].should == 'Empty comment not added'
+      @cap.comments.should be_empty
+    end
+    it "should log update if not new" do
+      @cap.update_attributes(status: CorrectiveActionPlan::STATUSES[:active])
+      post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
+      response.should be_success
+      sru = SurveyResponseUpdate.first
+      sru.survey_response.should == @cap.survey_response
+      sru.user.should == @u
+    end
+    it "should not log update if new" do
+      @cap.update_attributes(status: CorrectiveActionPlan::STATUSES[:new])
+      post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
+      response.should be_success
+      SurveyResponseUpdate.all.should be_empty
+    end
   end
   describe :show do
     before :each do
@@ -66,61 +109,9 @@ describe CorrectiveActionPlansController do
       @cap.reload
       @cap.comments.should be_empty
     end
-    it "should update nested issues for editor" do
-      ci = @cap.corrective_issues.create!(description:'d',suggested_action:'sa',action_taken:'at')
-      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(true)
-      CorrectiveActionPlan.any_instance.stub(:can_update_actions?).and_return(false)
-      post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, 'corrective_action_plan'=>{'corrective_issues'=>[{'id'=>ci.id.to_s,'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}]}, :format=> 'json'
-      response.should be_success 
-      @cap.reload
-      @cap.should have(1).corrective_issues
-      ci.reload
-      ci.description.should == 'nd'
-      ci.suggested_action.should == 'ns'
-      ci.action_taken.should == 'at' #not updated because of permissions
-    end
-    it "should update nested issues for asssigned user" do
-      ci = @cap.corrective_issues.create!(description:'d',suggested_action:'sa',action_taken:'at')
-      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(false)
-      CorrectiveActionPlan.any_instance.stub(:can_update_actions?).and_return(true)
-      post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, 'corrective_action_plan'=>{'corrective_issues'=>[{'id'=>ci.id.to_s,'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}]}, :format=> 'json'
-      response.should be_success 
-      @cap.reload
-      @cap.should have(1).corrective_issues
-      ci.reload
-      ci.action_taken.should == 'na'
-      ci.description.should == 'd' #not updated because of permissions
-      ci.suggested_action.should == 'sa' #not updated because of permissions
-    end
-    it "should create issues for editor" do
-      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(true)
-      post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, 'corrective_action_plan'=>{'corrective_issues'=>[{'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}]}, :format=> 'json'
-      @cap.should have(1).corrective_issues
-      ci = @cap.corrective_issues.first
-      ci.description.should == 'nd'
-      ci.suggested_action.should == 'ns'
-    end
-    it "should not create issues for user who can't edit" do
-      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(false)
-      post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, 'corrective_action_plan'=>{'corrective_issues'=>[{'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}]}, :format=> 'json'
-      @cap.reload
-      @cap.corrective_issues.should be_empty
-    end
-    it "should trigger email when status is Active" do
-      Delayed::Worker.delay_jobs = false
-      @cap.status = CorrectiveActionPlan::STATUSES[:active]
-      @cap.save!
-      ds = double('deliver stub')
-      ds.stub(:deliver)
-      OpenMailer.should_receive(:send_survey_user_update).with(@cap.survey_response,true).and_return(ds)
-      post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, 'corrective_action_plan'=>{'corrective_issues'=>[{'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}]}, :format=> 'json'
-    end
-    it "should not trigger email when status is not active" do
-      Delayed::Worker.delay_jobs = false
-      @cap.status = CorrectiveActionPlan::STATUSES[:new]
-      @cap.save!
-      OpenMailer.should_not_receive(:send_survey_user_update)
-      post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, 'corrective_action_plan'=>{'corrective_issues'=>[{'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}]}, :format=> 'json'
+    it "should log update" do
+      CorrectiveActionPlan.any_instance.should_receive(:log_update).with(@u)
+      post :update, :survey_response_id=>@sr_id.to_s, :id=>@cap.id.to_s, :comment=>'xyz', :format=> 'json'
     end
   end
   describe :create do
@@ -160,11 +151,8 @@ describe CorrectiveActionPlansController do
       @cap.reload
       @cap.status.should == CorrectiveActionPlan::STATUSES[:new]
     end
-    it 'should trigger email to assigned' do
-      Delayed::Worker.delay_jobs = false
-      ds = double('deliver stub')
-      ds.stub(:deliver)
-      OpenMailer.should_receive(:send_survey_user_update).with(@cap.survey_response,true).and_return(ds)
+    it 'should log update' do
+      CorrectiveActionPlan.any_instance.should_receive(:log_update).with(@u)
       CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(true)
       put :activate, survey_response_id:@cap.survey_response_id.to_s, id: @cap.id.to_s
     end

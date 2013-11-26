@@ -1,7 +1,7 @@
 <%-content_for :javascript do -%>
 $(function() {
   <%- cmsg = @cap.can_edit?(current_user) ? 'caped' : 'capvw'-%>
-  <%-if @cap.can_edit?(current_user) && !current_user.hide_message?('caped')-%>
+  <%-if cmsg=='caped' && !current_user.hide_message?('caped')-%>
   $('document').ready(function() { $('#tour-prompt').modal(); });
   $('#show-tour').click(function() {
     $('#tour-prompt').modal('hide');
@@ -17,7 +17,7 @@ $(function() {
       {selector:'#btn-save',placement:'top',content:"Don't forget to save your changes."}
     ]});
   });
-  <%-elsif !current_user.hide_message?('capvw')-%>
+  <%-elsif cmsg=='capvw' && !current_user.hide_message?('capvw')-%>
   $('document').ready(function() { $('#tour-prompt').modal(); });
   $('#show-tour').click(function() {
     $('#tour-prompt').modal('hide');
@@ -32,13 +32,12 @@ $(function() {
   <%-end-%>
   $('#never-show').click(function() {
     $('#tour-prompt').modal('hide');
-    Chain.hideMessage(<%=cmsg%>);
+    Chain.hideMessage('<%=cmsg%>');
   });
 });
 <%-end-%>
 <%-content_for :action_bar do -%>
   <button class='btn btn_link' link_to='<%=url_for survey_response_path(@cap.survey_response)%>'>Back</button>
-  <button class='btn' onclick='$("#hidden-save").click();' id='btn-save'>Save</button>
   <%-if @cap.status!=@cap.class::STATUSES[:active] && @cap.can_edit?(current_user) -%>
   <%=button_to 'Activate', activate_survey_response_corrective_action_plan_path(@cap.survey_response,@cap), :method=>:put, :form_class=>"inline-button-to", :class=>'btn btn-inverse', :id=>'btn-activate'%>
   <%-end-%>
@@ -66,7 +65,7 @@ $(function() {
     width: 100%;
   }
 </style>
-<div class='container' ng-app='CorrectiveActionPlanApp' ng-init='survey_response_id = <%=@cap.survey_response_id%>; corrective_action_plan_id= <%=@cap.id%>;'>
+<div class='container' ng-app='CorrectiveActionPlanApp' ng-init='survey_response_id = <%=@cap.survey_response_id%>; corrective_action_plan_id= <%=@cap.id%>; autoload=true'>
   <div ng-controller='CorrectiveActionPlanController'>
     <div class='row'>
       <div class='span12' style='padding-bottom:2em;'>
@@ -121,24 +120,24 @@ $(function() {
       </div>
     </div>
     <!-- END HEADER -->
-    <div class='row text-center' ng-show='viewMode=="loading"'>
+    <div class='row text-center' ng-show='settings.viewMode=="loading"'>
       <div class='span12'>
         <img src='/images/ajax_load_64.gif' title='Loading...' />
         Loading corrective action plan data...
       </div>
     </div>
-    <div class='row text-center' ng-show='viewMode=="saving"'>
+    <div class='row text-center' ng-show='settings.viewMode=="saving"'>
       <div class='span12'>
         <img src='/images/ajax_load_64.gif' title='Loading...' />
         Saving your update...
       </div>
     </div>
-    <div class='row text-center' ng-show='viewMode=="error"'>
+    <div class='row text-center' ng-show='settings.viewMode=="error"'>
       <div class='span12'>
         There was an error processing your request. Please reload the page.
       </div>
     </div>
-    <form id='ca-form' ng-show='viewMode=="edit"'>
+    <form id='ca-form' ng-show='settings.viewMode=="edit"'>
       <!-- COMMENTS -->
       <div class='row'>
         <div class='span12'>
@@ -159,6 +158,11 @@ $(function() {
             <textarea id='new_comment' ng-model='comment' rows='5'></textarea>
           </div>
         </div>
+        <div class='row'>
+          <div class='span12'>
+            <button ng-show='comment.length>0' ng-click='addComment()' class='btn btn-success btn-small'>Add Comment</button>
+          </div>
+        </div>
       <%-end-%>
       <!-- END COMMENTS -->
       <!-- ISSUES -->
@@ -167,18 +171,23 @@ $(function() {
           <fieldset>
             <legend class='text-info issue-legend'>
               Issue
-              <button ng-hide='ci.id > 0' ng-click='remove(ci)' class=' pull-right btn btn-small btn-danger'>Remove Issue</button>
+              <span ng-show='resp.saving' class='label label-info'>Saving...</span>
             </legend>
+            <div class='row'>
+              <div class='span12'>
+                <button ng-show='cap.status=="New"' ng-click='remove(ci)' class='pull-right btn btn-small btn-danger'>Remove Issue</button>
+              </div>
+            </div>
             <label for='issue-text-{{ci.id}}'>Description</label>
-            <div ng-hide='canEdit' ng-bind-html-unsafe='ci.html_description'></div>
-            <textarea rows='6' ng-show='canEdit' id='issue-text-{{ci.id}}' ng-model='ci.description'></textarea>
+            <div ng-hide='settings.canEdit' ng-bind-html-unsafe='ci.html_description'></div>
+            <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canEdit' id='issue-text-{{ci.id}}' ng-model='ci.description'></textarea>
             <label for='suggest-{{ci.id}}'>Suggested Action</label>
-            <div ng-hide='canEdit' ng-bind-html-unsafe='ci.html_suggested_action'></div>
-            <textarea rows='6' ng-show='canEdit' id='suggest-{{ci.id}}' ng-model='ci.suggested_action'></textarea>
+            <div ng-hide='settings.canEdit' ng-bind-html-unsafe='ci.html_suggested_action'></div>
+            <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canEdit' id='suggest-{{ci.id}}' ng-model='ci.suggested_action'></textarea>
             <label for='action-{{ci.id}}'>Action Taken</label>
-            <div ng-hide='canUpdateActions' ng-bind-html-unsafe='ci.html_action_taken'></div>
-            <div ng-show='!canUpdateActions && ci.html_action_taken.length==0'><em>Survey recipient has not added information yet.</em></div>
-            <textarea rows='6' ng-show='canUpdateActions' id='action-{{ci.id}}' ng-model='ci.action_taken'></textarea>
+            <div ng-hide='settings.canUpdateActions' ng-bind-html-unsafe='ci.html_action_taken'></div>
+            <div ng-show='!settings.canUpdateActions && ci.html_action_taken.length==0'><em>Survey recipient has not added information yet.</em></div>
+            <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canUpdateActions' id='action-{{ci.id}}' ng-model='ci.action_taken'></textarea>
           </fieldset>
         </div>
       </div>

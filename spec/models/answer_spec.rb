@@ -1,6 +1,29 @@
 require 'spec_helper'
 
 describe Answer do
+  
+  describe :log_update do
+    it "should create survey_response_update" do
+      answer = Factory(:answer)
+      u = Factory(:user)
+      answer.log_update u
+      answer.survey_response.survey_response_updates.first.user.should == u
+    end
+  end
+  describe :can_attach? do
+    before :each do
+      @a = Answer.new 
+      @u = User.new
+    end
+    it "should allow if user can view" do
+      @a.should_receive(:can_view?).with(@u).and_return true
+      @a.can_attach?(@u).should be_true
+    end
+    it "should not allow if user cannot view" do
+      @a.should_receive(:can_view?).with(@u).and_return false
+      @a.can_attach?(@u).should be_false
+    end
+  end
   describe :answered? do
     it 'should not be answered as default' do
       Factory(:answer).should_not be_answered

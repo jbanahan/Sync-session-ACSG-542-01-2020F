@@ -30,6 +30,23 @@ class Attachment < ActiveRecord::Base
     name
   end
 
+  # create a hash suitable for json rendering containing all attachments for the given attachable
+  def self.attachments_as_json attachable
+    r = {attachable:{id:attachable.id,type:attachable.class.to_s},attachments:[]}
+    ra = r[:attachments]
+    attachable.attachments.each do |att|
+      x = {
+        name:att.attached_file_name,
+        size:ActionController::Base.helpers.number_to_human_size(att.attached_file_size),
+        type:att.attachment_type,
+        id:att.id
+      }
+      x[:user] = {id:att.uploaded_by.id,full_name:att.uploaded_by.full_name} if att.uploaded_by
+      ra << x
+    end
+    r
+  end
+
   def self.add_original_filename_method attached_object
     def attached_object.original_filename=(fn); @fn = fn; end
     def attached_object.original_filename; @fn; end

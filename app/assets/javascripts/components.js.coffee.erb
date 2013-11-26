@@ -1,17 +1,156 @@
 @components = angular.module 'ChainComponents', []
 
+# based on: http://coding-issues.blogspot.in/2013/10/angularjs-blur-directive.html
+# should be able to remove this when we upgrade to a newer angularjs version that supports this natively
+@components.directive('ngBlur', ['$parse', ($parse) ->
+  (scope, element, attr) ->
+    fn = $parse(attr['ngBlur'])
+    element.bind 'blur', (event) ->
+      scope.$apply () ->
+        fn(scope, {$event:event})
+])
+
+# Shows the message from the given binding in a modal every time it changes. 
+# Closes the modal if the message is changed to blank, nil or undefined
+# The title attribute becomes the modal header title
+@components.directive 'chainModalMessage', ['$timeout',($timeout) ->
+  {
+    scope:{
+      chainModalMessage:'='
+      clearOnClose:'='
+    }
+    template:"<div class='modal hide fade'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h3>{{title}}</h3></div>
+      <div class='modal-body'><p>{{chainModalMessage}}</p></div>
+      <div class='modal-footer'><button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button></div>
+      </div>"
+    link: (scope,el,attrs) ->
+      scope.title = attrs.title
+
+      if scope.clearOnClose
+        el.find('.modal').on 'hide', () ->
+          $timeout () -> #prevents $digest already in progress error while also making sure $apply is called
+            scope.chainModalMessage = ''
+
+      scope.$watch 'chainModalMessage', (newVal,oldVal) ->
+        if newVal && newVal.length > 0
+          el.find('.modal').modal('show')
+        else
+          el.find('.modal').modal('hide')
+      @
+  }
+]
+# Full action bar replacement that loads up the action bar with the transcluded content.
+# Use in conjunction with the @no_action_bar = true option in the rails controller which will hide the normal action bar in the layout
+@components.directive 'chainActionBar', [() ->
+  {
+    transclude:true
+    template:"<div class='navbar navbar-fixed-bottom'><div class='navbar-inner'><ul class='nav'><li><span ng-transclude></span></li></ul></div></div>"
+    replace: true
+    link: (scope,el,attrs) ->
+      @
+  }
+]
+
+
+# file upload form based on: http://hayageek.com/ajax-file-upload-jquery/
+# requires: jquery.form.js
+@components.directive 'chainAttach', [() ->
+  {
+    restrict: 'A'
+    scope:{
+      chainAttach:'='
+      attachableId:'@'
+      attachableType:'@'
+    }
+    template:"<form action='/attachments' method='post' enctype='multipart/form-data'>
+      <input type='hidden' name='attachment[attachable_type]' value='{{attachableType}}' />
+      <input type='hidden' name='attachment[attachable_id]' value='{{attachableId}}' />
+      <input type='file' size='60' name='attachment[attached]' /> 
+      <input type='submit' value='Upload' class='btn btn-small btn-success' style='display:none;'>
+    </form>
+    <div class='progress progress-striped active'>
+      <div class='bar'></div>
+    </div>
+    <div class='att-msg'></div>
+      "
+    link: (scope,el,attrs) ->
+      el.find('form div.progress').hide()
+      fileEl = el.find('form input[type="file"]')
+      fileEl.on('change', () ->
+        if $(@).val()
+          el.find('form input[type="submit"]').show()
+        else
+          el.find('form input[type="submit"]').hide()
+      )
+      options = {
+        dataType: 'json'
+        beforeSend: () ->
+          if el.find('form input[type="file"]').val()
+            el.find('form').hide()
+            el.find('.progress').show()
+            #clear everything
+            el.find('div.progress').show()
+            el.find('div.progress div.bar').width('0%')
+            el.find('div.att-msg').html('Upload starting')
+          else
+            el.find('div.att-msg').html('You must select a file to upload.')
+        uploadProgress: (event, position, total, percentComplete) ->
+          el.find('div.progress div.bar').width(percentComplete+"%")
+          if percentComplete == 100
+            el.find('div.att-msg').html("processing upload")
+          else
+            el.find('div.att-msg').html(percentComplete+'% uploaded')
+        success: (data) ->
+          el.find('div.att-msg').html('')
+          el.find('form input[type="file"]').val('')
+          el.find('form').show()
+          scope.chainAttach.attachments = data.attachments
+          scope.$apply()
+        complete: (response) ->
+          el.find('div.progress').hide()
+        error: () ->
+          el.find('div.att-msg').addClass('error').html('There was an error uploading this file. Please reload the page.')
+      }
+      el.find('form').ajaxForm(options)
+  }
+]
+
+@components.directive 'chainActionButton', ['$parse',($parse) ->
+  {
+    restrict:'A'
+    link: (scope,el,attrs) ->
+      bId = el.attr('id')
+      newButton = $('#nav-action-bar #chain-action-button-'+bId)
+      if newButton.length == 0
+        el.hide()
+        actionBar = $('#nav-action-bar')
+        actionBar.append("<button class='btn btn-inverse' id='chain-action-button-"+bId+"'>"+el.html()+"</button>")
+        newButton = actionBar.find('#chain-action-button-'+bId)
+        newButton.on('click',() ->
+          $('#'+bId).click()
+        )
+
+      if attrs.chainShow
+        scope.$watch $parse(attrs.chainShow)(scope), (newVal,oldVal)->
+          if newVal
+            newButton.show()
+          else
+            newButton.hide()
+      
+  }
+]
 # moves the transcluded content into the action bar
 # each instance must have a unique ID attribute
 @components.directive 'chainActionBarItem', [() ->
   {
     transclude:true
-    template:"<div class='chainActionBarWrap' ng-transclude></div>"
+    template:"<div class='chainActionBarWrap' style='display:inline;' ng-transclude></div>"
     link: (scope,el,attrs) ->
       d = el.find('div.chainActionBarWrap')
       d.attr('action-bar-item-id',el.attr('id'))
-      existingEl = $('div.action_container div.chainActionBarWrap[action-bar-item-id="'+el.attr('id')+'"]')
+      existingEl = $('#nav-action-bar div.chainActionBarWrap[action-bar-item-id="'+el.attr('id')+'"]')
       existingEl.remove()
-      $("div.action_container").append(d)
+      $("#nav-action-bar").append(d)
       d.find('button').button()
     }
 ]

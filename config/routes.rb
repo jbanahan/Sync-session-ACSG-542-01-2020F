@@ -118,7 +118,7 @@ OpenChain::Application.routes.draw do
   match "/feedback" => "feedback#send_feedback"
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/help" => "chain_help#index"
-  match '/users/email/:email' => "users#find_by_email"
+  match '/users/email/*email' => "users#find_by_email"
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
@@ -405,11 +405,16 @@ OpenChain::Application.routes.draw do
       put 'restore'
     end
     resources :corrective_action_plans, :only=>[:show,:create,:destroy,:update] do
+      post 'add_comment', on: :member
       put 'activate', on: :member
       put 'resolve', on: :member
     end
     resources :survey_response_logs, :only=>[:index]
   end
+  resources :answers, only:[:update] do
+    resources :answer_comments, only:[:create]
+  end
+  resources :corrective_issues, :only=>[:create,:update,:destroy]
   
   resources :drawback_upload_files, :only=>[:index,:create]
   resources :duty_calc_import_files, :only=>[:create] do

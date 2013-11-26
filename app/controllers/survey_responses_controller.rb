@@ -14,6 +14,35 @@ class SurveyResponsesController < ApplicationController
     elsif @sr.submitted_date && @sr.can_edit?(current_user) 
       @rate_mode = true
     end
+    respond_to do |format|
+      format.html {
+        @no_action_bar = true
+      }
+
+      format.json { 
+        h = @sr.as_json(include: [
+          {answers:{include: {
+            question:{methods:[:html_content,:choice_list], only:[:id,:warning]},
+            answer_comments:{only:[:content,:private,:created_at],include:[{user:{only:[:id],methods:[:full_name]}}]}
+          }}},
+          {survey:{only:[:id,:name],methods:[:rating_values]}},
+          {user:{only:[:id],methods:[:full_name]}}
+        ])
+        h['survey_response']['can_rate'] = @rate_mode
+        h['survey_response']['can_answer'] = @respond_mode
+        h['survey_response']['can_submit'] = @respond_mode && @sr.submitted_date.blank?
+        h['survey_response']['can_make_private_comment'] = @sr.can_edit?(current_user)
+        h['survey_response'][:answers].each_with_index do |a,i| 
+          a['sort_number'] = (i+1)
+          if a[:answer_comments] && !@sr.can_edit?(current_user)
+            a[:answer_comments].delete_if {|ac| ac['private']}
+          end
+          a[:attachments] = Attachment.attachments_as_json(Answer.find(a['id']))[:attachments]
+        end
+        
+        render json: h
+      }
+    end
   end
   
   def update
@@ -22,38 +51,23 @@ class SurveyResponsesController < ApplicationController
       error_redirect "You do not have permission to work with this survey."
       return
     end
-    if params[:survey_response][:answers_attributes]
-      params[:survey_response][:answers_attributes].values.each do |v|
-        
-        #remove ratings if not survey owner company
-        v.delete "rating" unless sr.can_edit?(current_user) 
-        
-        #remove choices if current_user!=sr.user 
-        v.delete "choice" if sr.user!=current_user
-
-        aca = v[:answer_comments_attributes]
-        if aca
-          aca.each do |k,cv|
-            aca.delete k unless cv[:user_id].to_s==current_user.id.to_s
-          end
-        end
-      end
-    end
     log_message = "Response saved."
     if sr.user==current_user
       if params[:do_submit]
         sr.submitted_date = 0.seconds.ago 
+        sr.save!
         log_message = "Response submitted."
       end
     end
-    sr.update_attributes params[:survey_response]
+    sr.update_attributes params[:survey_response] unless params[:survey_response].blank?
     sr.survey_response_logs.create!(:message=>log_message,:user_id=>current_user.id)
-    # Don't send update notifications to the assignee if they're the person editting the survey response or if the
-    # survey response is in the middle of being rated
-    
-    OpenMailer.delay.send_survey_user_update(sr) unless sr.user==current_user || sr.status == SurveyResponse::STATUSES[:needs_rating]
+    sr.log_update current_user
     add_flash :notices, "Response saved successfully."
-    redirect_to sr
+    respond_to do |format|
+      format.html {redirect_to sr}
+      format.json {render json: {ok:'ok'}}
+    end
+    
   end
 
   def index
@@ -90,10 +104,16 @@ class SurveyResponsesController < ApplicationController
     if !sr.can_edit?(current_user) 
       error_redirect "You do not have permission to send invites for this survey."
       return
-    else
-      sr.invite_user!
-      add_flash :notices, "Invite will be resent to the user at #{sr.user.email}"
-      redirect_to sr
+    end
+    sr.invite_user!
+    respond_to do |format|
+      format.html {
+        add_flash :notices, "Invite will be resent to the user at #{sr.user.email}"
+        redirect_to sr
+      }
+      format.json {
+        render json: {ok: 'ok'}
+      }
     end
   end
 

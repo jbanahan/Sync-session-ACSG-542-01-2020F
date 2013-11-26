@@ -7,6 +7,14 @@ class Question < ActiveRecord::Base
 
   default_scope :order => "questions.rank ASC, questions.id ASC"
 
+  def html_content
+    RedCloth.new(self.content).to_html.html_safe
+  end
+  def choice_list
+    r = []
+    r = self.choices.lines.collect {|l| l.strip.blank? ? nil : l.strip}.compact unless self.choices.blank?
+    r
+  end
   private
   def parent_lock
     errors[:base] << "Cannot save question because survey is missing or locked." if self.survey && self.survey.locked?

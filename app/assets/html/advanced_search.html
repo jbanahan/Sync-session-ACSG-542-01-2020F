@@ -39,11 +39,15 @@
             </div>
             <div class='row-fluid'>
               <div class='span12 text-center'>
-                <select multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns'>
+                <select multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns | filter:columnFilter'>
                 </select>
-                <br />
-                <a ng-show='columnsToAdd' class='btn' ng-click='addColumns()'>Add</a> 
-                <a class='btn' ng-click='addBlank()'>Add Blank</a>&nbsp;
+                <div>
+                  <input type='text' ng-model='columnFilter' placeholder='Search columns...' />
+                </div>
+                <div>
+                  <a ng-show='columnsToAdd' class='btn' ng-click='addColumns()'>Add</a> 
+                  <a class='btn' ng-click='addBlank()'>Add Blank</a>&nbsp;
+                </div>
               </div>
             </div>
           </div>
@@ -83,11 +87,16 @@
             </div>
             <div class='row-fluid'>
               <div class='span12 text-center'>
-                <select id='availableSorts' multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts'>
+                <select id='availableSorts' multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts | filter:sortFilter'>
                 </select>
-                <div ng-hide='sortsToAdd'>&nbsp;</div>
-                <div ng-show='sortsToAdd'>
-                  <a ng-show='sortsToAdd' class='btn' ng-click='addSorts()'>Add</a>
+                <div>
+                  <input type="text" ng-model="sortFilter" placeholder="Search sorts...">
+                </div>
+                <div>
+                  <div ng-hide='sortsToAdd'>&nbsp;</div>
+                  <div ng-show='sortsToAdd'>
+                    <a ng-show='sortsToAdd' class='btn' ng-click='addSorts()'>Add</a>
+                  </div>
                 </div>
               </div>
             </div>

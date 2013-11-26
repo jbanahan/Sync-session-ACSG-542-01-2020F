@@ -203,9 +203,10 @@ class UsersController < ApplicationController
   
   def find_by_email
     admin_secure "Only admins can use this page" do
-      u = User.find_by_email request.path.split('/').last
+      email = request.path.split('/').last
+      u = User.find_by_email email 
       if u.nil?
-        render text: "User not found."
+        render text: "User with email '#{email}' not found."
         return
       end
       redirect_to [u.company,u]
