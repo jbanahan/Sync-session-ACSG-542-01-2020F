@@ -24,30 +24,32 @@ $(function() {
 </div>
 <div class='container'>
   <div class='well well-small'>
-    <div id='login'>
+    <div id='login' class='row'>
       <%= form_for(@user_session, html: {class: "form-horizontal"}) do |f| %>
-      <div class="control-group small-margin">
-        <%=f.label(:username, class: "control-label")%>
-        <div class="controls"><%=f.text_field(:username, :class=>"focus_first input-xlarge")%></div>
-      </div>
-      <div class="control-group small-margin">
-        <%=f.label(:password, class: "control-label")%>
-        <div class="controls"><%=f.password_field(:password, :class=>"input-xlarge")%></div>
-      </div>
-      <div class="control-group">
-        <div class="controls">
-          <%=f.check_box(:remember_me, style: "display: inline;")%>
-          <%=f.label(:remember_me, style: "display: inline;")%><br>
+      <div class='col-md-6'>
+        <div class="form-group small-margin">
+          <%=f.label(:username, class: "control-label")%>
+          <div class="controls"><%=f.text_field(:username, :class=>"focus_first input-lg form-control")%></div>
         </div>
-      </div>
-      <div class="control-group">
-        <div class="controls">
-          <div><%=f.submit 'Log In', class: 'btn btn-primary' %></div>
+        <div class="form-group small-margin">
+          <%=f.label(:password, class: "control-label")%>
+          <div class="controls"><%=f.password_field(:password, :class=>"input-lg form-control")%></div>
         </div>
-      </div>
-      <div class="control-group small-margin">
-        <div class="controls">
-          <a id="forgot_password" href="javascript:void(0)">Forgot your password?</a>
+        <div class="form-group">
+          <div class="controls">
+            <%=f.check_box(:remember_me, style: "display: inline;")%>
+            <%=f.label(:remember_me, style: "display: inline;")%><br>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="controls">
+            <div><%=f.submit 'Log In', class: 'btn btn-primary' %></div>
+          </div>
+        </div>
+        <div class="form-group small-margin">
+          <div class="controls">
+            <a id="forgot_password" href="javascript:void(0)">Forgot your password?</a>
+          </div>
         </div>
       </div>
       <% end %>
@@ -55,8 +57,8 @@ $(function() {
         <p>Enter your email and we'll send you instructions for resetting your password.</p>
         <%=form_tag password_resets_path, id: "password_reset_form" do %>
         <%=text_field_tag("email", "", :class=>"input-xlarge")-%><br />
-        <div class="text-center">
-          <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn' -%>
+        <div style='margin-top:5px;'>
+          <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn btn-primary' -%>
         </div>
         <% end %>
       </div>
@@ -65,19 +67,19 @@ $(function() {
   <%-if MasterSetup.get.custom_feature? 'public hts'-%>
   <div class='well'>
     <h2>Public HTS Database</h2>
-    <a href='/hts' class='btn'>Click Here</a>
+    <a href='/hts' class='btn btn-default'>Click Here</a>
   </div>
   <%-end-%>
   <%unless PublicField.scoped.empty?-%>
   <div class='well'>
-    <h2>Public Shipment Tracking</h>
+    <h2>Public Shipment Tracking</h2>
       <%=render :partial=>'shared/tracker' %>
     </div>
     <%end-%>
     <%if MasterSetup.get.custom_feature? 'fenix'-%>
     <div class='well'>
       <h2>PARS Check - Canada Imports</h2>
-      <button class='btn_link btn' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
+      <button class='btn_link btn btn-default' style='text-align:left;' link_to='http://www.parslookup.com?vcu'>Click Here To Check Canada PARS Status</button>
     </div>
     <%end-%>
   </div>

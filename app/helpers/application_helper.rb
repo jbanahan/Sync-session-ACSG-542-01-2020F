@@ -224,7 +224,7 @@ module ApplicationHelper
         :class=>'span4'
       ) +
       content_tag(:div,field_content,:class=>'span8'),
-      :class=>'row-fluid bootstrap-hover'
+      :class=>'row bootstrap-hover'
     )
   end
   

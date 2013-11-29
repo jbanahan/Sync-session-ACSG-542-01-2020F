@@ -1,6 +1,6 @@
 <% content_for :javascript do %>
-  $(function() {
   <% if @product.can_edit?(current_user) || @product.can_classify?(current_user)%>
+  $(function() {
     $( "#btn_edit" )
       .click(function() {
         window.location = '<%=edit_product_path(@product)%>';
@@ -12,27 +12,8 @@
     OpenChain.addClickMap('e',"Edit","btn_edit");
     OpenChain.addClickMap('l',"Classify","btn_classify");
     OpenChain.activateHotKeys();
-  <% end %>
   });
-  <%unless current_user.hide_message?('prodlayout1')-%>
-    $(document).ready(function() {
-      $("#prodlayout1").modal();
-      $("#never-show").click(function() {
-        $("#prodlayout1").modal('hide');
-        Chain.hideMessage('prodlayout1');
-      });
-      $("#show-tour").click(function() {
-        $("#prodlayout1").modal('hide');
-        bootstro.start('',{items:[
-        {selector:'#prod_attr',content:'Product attributes are here. Empty fields are hidden.',placement:'right'},
-        {selector:'#prod_class',content:'Product classifications, attachments, and comments are here.',placement:'left'}
-        <% if (@product.can_edit?(current_user) || @product.can_classify?(current_user)) && !@product.locked? -%>
-          ,{selector:'#btn_edit',content:'If you have permission, edit allows you to simultaneously modify attributes and classifications.'}
-        <% end -%>
-        ]});
-      })
-    });
-  <%end-%>
+  <% end %>
 <% end %>
 
 <% content_for :action_bar do %>
@@ -44,8 +25,8 @@
   <%=render :partial => 'shared/show_next_prev', :locals => {:obj=>@product} %>
   <button class='btn_link' link_to='<%=history_product_path(@product)%>' key_map='h'>History</button>
 <% end %>
-<div class='container-fluid'>
-  <div class='row-fluid'>
+<div class='container'>
+  <div class='row'>
     <div class='span6' id='prod_attr'>
       <h3 class='text-center'>Attributes</h3>
       <%=render :partial => 'product_view', :locals => {:product => @product} %>
@@ -53,7 +34,7 @@
     <div class='span6' id='prod_class'>
       <h3 class='text-center'>Classifications</h3>
       <% if !@product.saved_classifications_exist? && @product.can_classify?(current_user)-%>
-        <div class='hero-unit'>
+        <div class='jumbotron'>
           <p>You don't have any classifications for this product.  Click the classify button to add some.</p>
         </div>
       <% else -%>
@@ -88,26 +69,3 @@
     </div>
   </div>
 </div>
-<%unless current_user.hide_message?('prodlayout1')-%>
-  <div id='prodlayout1' class='modal hide fade'>
-    <div class='modal-header'>
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-      <h3>New Product Layout</h3>
-    </div>
-    <div class='modal-body'>
-      <p>Welcome to the new product screens.</p>
-      <ul>
-        <li>The classification section is now on the right.</li>
-        <li>Empty product attributes are hidden.</p>
-        <%if @product.can_edit?(current_user) || @product.can_classify?(current_user)-%>
-          <li>The advanced classification screen has been combined with the edit screen so you can edit product attributes and classifications at the same time. (If you have the appropriate permissions, of course.)</li>
-        <%end-%>
-      </ul>
-      <p>Don't worry, all the stuff under the hood still works the same.</p>
-    </div>
-    <div class='modal-footer'>
-      <button class='btn' id='never-show'>Never Show This Again</button>
-      <button class='btn btn-primary' id='show-tour'>Give Me A Tour</button>
-    </div>
-  </div>
-<%end-%>

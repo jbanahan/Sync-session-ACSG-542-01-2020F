@@ -19,10 +19,10 @@
       chainModalMessage:'='
       clearOnClose:'='
     }
-    template:"<div class='modal hide fade'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h3>{{title}}</h3></div>
+    template:"<div class='modal fade'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h3>{{title}}</h3></div>
       <div class='modal-body'><p>{{chainModalMessage}}</p></div>
       <div class='modal-footer'><button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button></div>
-      </div>"
+      </div></div></div>"
     link: (scope,el,attrs) ->
       scope.title = attrs.title
 
@@ -44,9 +44,11 @@
 @components.directive 'chainActionBar', [() ->
   {
     transclude:true
-    template:"<div class='navbar navbar-fixed-bottom'><div class='navbar-inner'><ul class='nav'><li><span ng-transclude></span></li></ul></div></div>"
+    template:"<div class='navbar navbar-default navbar-fixed-bottom'><ul class='nav navbar-nav'><li><span ng-transclude></span></li></ul></div>"
     replace: true
     link: (scope,el,attrs) ->
+      scope.$evalAsync () ->
+        el.find('button').addClass('navbar-btn')
       @
   }
 ]
@@ -124,7 +126,7 @@
       if newButton.length == 0
         el.hide()
         actionBar = $('#nav-action-bar')
-        actionBar.append("<button class='btn btn-inverse' id='chain-action-button-"+bId+"'>"+el.html()+"</button>")
+        actionBar.append("<button class='btn btn-default' id='chain-action-button-"+bId+"'>"+el.html()+"</button>")
         newButton = actionBar.find('#chain-action-button-'+bId)
         newButton.on('click',() ->
           $('#'+bId).click()

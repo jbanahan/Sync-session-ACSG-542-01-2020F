@@ -37,7 +37,7 @@ $(function() {
   <%if @widgets.blank? -%>
     <div class='container'>
       <div class='row'>
-        <div class='span12 hero-unit'>
+        <div class='span12 jumbotron'>
           <h1>Welcome!</h1>
           <% if current_user.search_setups.empty? -%>
             <p>This is your personal dashboard. Once you've setup some searches, you'll be able to add them here.</p>
@@ -62,28 +62,32 @@ $(function() {
   <%end -%>
 </div>
 <%if current_user.view_official_tariffs? && !current_user.hide_message?('wh2')-%>
-  <div id='what-happened' class='modal hide fade'>
-    <div class='modal-header'>
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-      <h3>New Feature: Tariff Update Subscriptions</h3>
-    </div>
-    <div class='modal-body'>
-      <p>
-        You can now elect to receive an email notification every time the tariff database is updated with new regulatory information: 
-      </p>
-      <p>
-        To subscribe to notifications:
-      </p>
-      <ul>
-        <li>Click on your name at the top right corner of the screen</li>
-        <li>Click Account</li>
-        <li>Check the <em>Email Me When Tariffs Are Updated</em> box</li>
-        <li>Click Save</li>
-      </ul>
-    </div>
-    <div class='modal-footer'>
-      <button class='btn' id='never-show'>Never Show This Again</button>
-      <button class='btn btn-primary' id='what-happened-close'>Close</button>
+  <div id='what-happened' class='modal fade'>
+    <div class='modal-dialog'>
+      <div class='modal-content'>
+        <div class='modal-header'>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h3>New Feature: Tariff Update Subscriptions</h3>
+        </div>
+        <div class='modal-body'>
+          <p>
+            You can now elect to receive an email notification every time the tariff database is updated with new regulatory information: 
+          </p>
+          <p>
+            To subscribe to notifications:
+          </p>
+          <ul>
+            <li>Click on your name at the top right corner of the screen</li>
+            <li>Click Account</li>
+            <li>Check the <em>Email Me When Tariffs Are Updated</em> box</li>
+            <li>Click Save</li>
+          </ul>
+        </div>
+        <div class='modal-footer'>
+          <button class='btn' id='never-show'>Never Show This Again</button>
+          <button class='btn btn-primary' id='what-happened-close'>Close</button>
+        </div>
+      </div>
     </div>
   </div>
 <%end-%>

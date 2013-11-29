@@ -26,7 +26,7 @@
       </div>
     </div>
     <div ng-show="viewMode=='more-info'" class='row'>
-      <div class='hero-unit'>
+      <div class='jumbotron'>
         <div>
           <h2>
             For more information on the {{country.name}} or any other tariff, email us at <a href='mailto:corpcomm@vandegriftinc.com'>corpcomm@vandegriftinc.com</a>.
@@ -36,7 +36,7 @@
     </div>
     <div ng-show="viewMode=='base'">
       <div class='row' ng-show='chapters.length == 0'>
-        <div class='hero-unit'>
+        <div class='jumbotron'>
           Loading data
         </div>
       </div>
@@ -55,14 +55,14 @@
         </div>
       </div>
       <div ng-repeat='ch in chapters'>
-        <div class='row-fluid'>
+        <div class='row'>
           <div class='span12'>
             <button class='btn btn-mini ' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
             <button class='btn btn-mini ' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
             {{ch.num}}. {{ch.name}} 
           </div>
           <div ng-repeat='h in ch.headings'>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span10 offset1'>
                 <button class='btn btn-mini ' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
                 <button class='btn btn-mini ' ng-show='h.sub_headings.length>0' ng-click='h.sub_headings = []'>-</button>
@@ -70,13 +70,13 @@
               </div>
             </div>
             <div ng-repeat='s in h.sub_headings'>
-              <div class='row-fluid'>
+              <div class='row'>
                 <div class='span10 offset2'>
                   {{s.num}}. {{s.name}}
                 </div>
               </div>
               <div ng-repeat='d in s.remaining_descriptions'>
-                <div class='row-fluid'>
+                <div class='row'>
                   <div class='span3 offset3'>
                     {{d.num}}. {{d.name}}
                   </div>

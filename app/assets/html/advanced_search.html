@@ -11,13 +11,13 @@
           <h2>Setup</h2>
         </div>
       </div>
-      <div class='hero-unit'>
-        <div class='row-fluid'>
+      <div class='jumbotron'>
+        <div class='row'>
           <div class='span12'>
             <input id='search-setup-name-box' type='text' ng-model='searchSetup.name' />
           </div>
         </div>
-        <div class='row-fluid'>
+        <div class='row'>
           <div class='span12'>
             <input type='checkbox' ng-model='searchSetup.include_links'/> Include Links In Download
             <br />
@@ -25,19 +25,19 @@
           </div>
         </div>
         <!--column setup-->
-        <div class='row-fluid'>
+        <div class='row'>
           <div class='span12 text-center'>
             <h3>Columns</h3>
           </div>
         </div>
-        <div class='row-fluid'>
+        <div class='row'>
           <div class='span6'>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <h5>Available</h5>
               </div>
             </div>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <select multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns | filter:columnFilter'>
                 </select>
@@ -52,12 +52,12 @@
             </div>
           </div>
           <div class='span6'>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <h5>Included</h5>
               </div>
             </div>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <select multiple='multiple' size='10' ng-model='columnsToRemove' ng-options='s.mfid as s.label for s in searchSetup.search_columns'>
                 </select>
@@ -73,19 +73,19 @@
           </div>
         </div>  
         <!--sort setup-->
-        <div class='row-fluid'>
+        <div class='row'>
           <div class='span12 text-center'>
             <h3>Sorts</h3>
           </div>
         </div>
-        <div class='row-fluid'>
+        <div class='row'>
           <div class='span6'>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <h5>Available</h5>
               </div>
             </div>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <select id='availableSorts' multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts | filter:sortFilter'>
                 </select>
@@ -102,12 +102,12 @@
             </div>
           </div>
           <div class='span6'>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <h5>Included</h5>
               </div>
             </div>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span12 text-center'>
                 <select multiple='multiple' size='10' ng-model='sortsToRemove' ng-options='s.mfid as s.label + descendingLabel(s.descending) for s in searchSetup.sort_criterions'>
                 </select>
@@ -145,7 +145,7 @@
             <h3>Schedules</h3>
           </div>
         </div>
-        <div class='row-fluid'>
+        <div class='row'>
           <div ng-hide='scheduleToEdit'>
             <ul class='thumbnails'>
               <li class='span6' ng-repeat='sched in searchSetup.search_schedules'>
@@ -175,7 +175,7 @@
             </div>
           </div>
           <div class='form-horizontal' ng-show='scheduleToEdit'>
-            <div class='row-fluid'>
+            <div class='row'>
               <div class='span6'>
                 <div class='control-group'>
                   <label class='control-label' for='sched-email-addresses'>Email</label>
@@ -347,12 +347,12 @@
     </div>
   </div>
   <div chain-search-result='searchResult' page='page' errors='errors' src='/advanced_search/'>
-    <button class='btn btn-inverse' ng-click='toggleSetup()' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</button>
-    <button class='btn btn-inverse' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</button> 
-    <a class='btn btn-inverse' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
-    <a class='btn btn-inverse' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</a>
+    <button class='btn btn-default' ng-click='toggleSetup()' ng-show='searchSetup'> <span ng-show='showSetup'>Hide</span><span ng-hide='showSetup'>Show</span> Setup</button>
+    <button class='btn btn-default' ng-show='searchResult.total_pages>1' ng-click='backgroundDownload()'>Download</button> 
+    <a class='btn btn-default' ng-show='searchResult.total_pages<=1' href='/advanced_search/{{searchSetup.id}}/download.xls'>Download</a>
+    <a class='btn btn-default' ng-show='searchSetup.uploadable_error_messages.length == 0' href='/search_setups/{{searchSetup.id}}/imported_files/new'>Upload</a>
     <span ng-show='searchSetup.uploadable_error_messages.length > 0'>
-      <span chain-message-box title="'Upload'" as-button='true' extra-class="'btn-inverse'">
+      <span chain-message-box title="'Upload'" as-button='true' extra-class="'btn-default'">
         <div ng-repeat='s in searchSetup.uploadable_error_messages'>
           {{s}}
         </div>

@@ -17,7 +17,7 @@
 <div chain-action-bar-item id='imported-file-action-buttons'>
 </div>
 <div ng-hide='showEmailCurrent'>
-  <div class='container-fluid'>
+  <div class='container'>
     <div ng-hide='importedFile.file_name'>
       <img src='/images/ajax_load_64.gif' title='Loading...' />
     </div>
@@ -56,13 +56,13 @@
   <hr />
   <div ng-show='importedFile.last_processed.length>0'>
     <div chain-search-result='searchResult' page='page' src='/imported_files_results/'>
-      <button class='btn btn-inverse' ng-click='downloadOriginal()' ng-show='importedFile.file_name && !showEmailCurrent'>Download Original</button>
-      <button class='btn btn-inverse' ng-click='enableEmailCurrent()' ng-hide='showEmailCurrent'>Email Current</button>
+      <button class='btn btn-default' ng-click='downloadOriginal()' ng-show='importedFile.file_name && !showEmailCurrent'>Download Original</button>
+      <button class='btn btn-default' ng-click='enableEmailCurrent()' ng-hide='showEmailCurrent'>Email Current</button>
       <span ng-show='showEmailCurrent'>
-        <button class='btn btn-inverse' ng-click='sendEmailCurrent()'>Send</button>
-        <button class='btn btn-inverse' ng-click='disableEmailCurrent()'>Cancel</button>
+        <button class='btn btn-default' ng-click='sendEmailCurrent()'>Send</button>
+        <button class='btn btn-default' ng-click='disableEmailCurrent()'>Cancel</button>
       </span>
-      <button class='btn btn-inverse' ng-show='importedFile.file_import_result.id > 0' ng-click='showLog(importedFile.file_import_result.id);'>Log</button>
+      <button class='btn btn-default' ng-show='importedFile.file_import_result.id > 0' ng-click='showLog(importedFile.file_import_result.id);'>Log</button>
     </div>
   </div>
   <div ng-show='showPreviewBox'>
@@ -79,7 +79,7 @@
         </li>
       </ul>
       <span chain-action-bar-item>
-        <button class="btn btn-inverse" ng-click='process()' ng-show='previewResults.length > 0 && showPreviewBox'>Process File</a>
+        <button class="btn btn-default" ng-click='process()' ng-show='previewResults.length > 0 && showPreviewBox'>Process File</a>
       </span>
     </div>
   </div>
