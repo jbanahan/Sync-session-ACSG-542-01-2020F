@@ -1,10 +1,10 @@
 <div class='container'>
   <div class='row'>
-    <div class='alert alert-info span6 offset3' ng-show='notices.length > 0'>
+    <div class='alert alert-info alert-dismissable col-md-6 col-md-offset-3' ng-show='notices.length > 0'>
       <button type="button" class="close" ng-click='notices=[]'>&times;</button>
       <p ng-repeat='n in notices'>{{n}}</p>
     </div>
-    <div class='alert alert-error span6 offset3' ng-show='errors.length > 0'>
+    <div class='alert alert-danger alert-dismissable col-md-6 col-md-offset-3' ng-show='errors.length > 0'>
       <button type="button" class="close" ng-click='errors=[]'>&times;</button>
       <p ng-repeat='e in errors'>{{e}}</p>
     </div>

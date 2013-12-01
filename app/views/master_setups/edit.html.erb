@@ -22,7 +22,7 @@ $(function() {
 <%end%>
 <div class='container'>
   <div class='row'>
-    <div class='span5'>
+    <div class='col-md-5'>
       <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
         <table>
           <%=field_bootstrap "System UUID", @ms.uuid%>
@@ -49,7 +49,7 @@ $(function() {
         </table>
       <%end%>
     </div>
-    <div class='span7'>
+    <div class='col-md-7'>
       <h2>Active Users</h2>
       <table class='detail_table'>
         <thead><tr><th>User</th><th>Company</th><th>Last Action</th></tr></thead>

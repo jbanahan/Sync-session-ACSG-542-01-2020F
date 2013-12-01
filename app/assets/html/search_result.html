@@ -5,12 +5,12 @@
   <div ng-show='searchResult.rows!=undefined' class='search_result'>
     <div class='container search-result-bulk-controls' ng-show='bulkSelected.length>0 || allSelected'>
       <div class='row text-center' ng-show='allSelected'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <strong>All {{searchResult.total_objects}} selected</strong>
         </div>
       </div>
       <div class='row text-center' ng-hide='allSelected'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <strong>{{bulkSelected.length}} selected</strong>
         </div>
       </div>
@@ -56,7 +56,7 @@
             <td class='action_cell min_width'>
               <div class='btn-group' ng-show='newObjectRow($index)'>
                 <span ng-repeat='l in row.links'>
-                  <a class='btn btn-mini' href='{{l.url}}'>{{l.label}}</a>&nbsp;
+                  <a class='btn btn-sm btn-link' href='{{l.url}}'>{{l.label}}</a>
                 </span>
               </div>
             </td>

@@ -27,11 +27,11 @@
 <% end %>
 <div class='container'>
   <div class='row'>
-    <div class='span6' id='prod_attr'>
+    <div class='col-md-6' id='prod_attr'>
       <h3 class='text-center'>Attributes</h3>
       <%=render :partial => 'product_view', :locals => {:product => @product} %>
     </div>
-    <div class='span6' id='prod_class'>
+    <div class='col-md-6' id='prod_class'>
       <h3 class='text-center'>Classifications</h3>
       <% if !@product.saved_classifications_exist? && @product.can_classify?(current_user)-%>
         <div class='jumbotron'>

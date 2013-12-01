@@ -1,30 +1,31 @@
-<div class='row text-center'>
-  <h1>Drawback</h1>
-</div>
+<div class='container'>
+  <div class='row text-center'>
+    <h1>Drawback</h1>
+  </div>
 
-<div class='row'>
-  <div class='span6'>
-    <h2 class='text-center'>Uploads</h2>
-    <ul class='nav nav-tabs' id='uploadTabs'>
-      <%if MasterSetup.get.custom_feature?('Crocs Drawback')%><li><a href='#crocs' data-toggle='tab'>Crocs</a></li><%end%>
-      <%if MasterSetup.get.custom_feature?('J Crew Drawback')%><li><a href='#j_crew' data-toggle='tab'>J Crew</a></li><%end%>
-      <%if MasterSetup.get.custom_feature?('LE Drawback')%><li><a href='#lands_end' data-toggle='tab'>Lands End</a></li><%end%>
-      <%if MasterSetup.get.custom_feature?('UA Drawback')%><li><a href='#under_armour' data-toggle='tab'>Under Armour</a></li><%end%>
-    </ul>
-    <div class='tab-content'>
-      <div class='tab-pane' id='crocs'>
-        <div cass='well'>
-          <h3>Receiving File</h3>
-          <p><em>.xlsx file from Crocs IT department</em></p>
-          <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_CROCS_RECEIVING}%>
+  <div class='row'>
+    <div class='col-md-12'>
+      <h2 class='text-center'>Uploads</h2>
+      <ul class='nav nav-tabs' id='uploadTabs'>
+        <%if MasterSetup.get.custom_feature?('Crocs Drawback')%><li><a href='#crocs' data-toggle='tab'>Crocs</a></li><%end%>
+        <%if MasterSetup.get.custom_feature?('J Crew Drawback')%><li><a href='#j_crew' data-toggle='tab'>J Crew</a></li><%end%>
+        <%if MasterSetup.get.custom_feature?('LE Drawback')%><li><a href='#lands_end' data-toggle='tab'>Lands End</a></li><%end%>
+        <%if MasterSetup.get.custom_feature?('UA Drawback')%><li><a href='#under_armour' data-toggle='tab'>Under Armour</a></li><%end%>
+      </ul>
+      <div class='tab-content'>
+        <div class='tab-pane' id='crocs'>
+          <div cass='well'>
+            <h3>Receiving File</h3>
+            <p><em>.xlsx file from Crocs IT department</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_CROCS_RECEIVING}%>
+          </div>
+          <div cass='well'>
+            <h3>Export Details File</h3>
+            <p><em>.csv file from Crocs IT department</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_CROCS_EXPORTS}%>
+          </div>
         </div>
-        <div cass='well'>
-          <h3>Export Details File</h3>
-          <p><em>.csv file from Crocs IT department</em></p>
-          <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_CROCS_EXPORTS}%>
-        </div>
-      </div>
-      <%if MasterSetup.get.custom_feature?("LE Drawback")-%>
+        <%if MasterSetup.get.custom_feature?("LE Drawback")-%>
         <div class='tab-pane' id='lands_end'>
           <div class='well'>
             <h3>Lands End B3 Export Files</h3>
@@ -37,8 +38,8 @@
               .csv file manually built by reformatting the Duty Calc Imports By Entry report you get from FedEx into the folowing order (with headers)
             </p>
             <pre>
-        Entry Number, Port Code, Import Date, Received Date, HTS Code, Part - Description, Quantity, UOM, Unit Price, Duty Rate
-              </pre>
+          Entry Number, Port Code, Import Date, Received Date, HTS Code, Part - Description, Quantity, UOM, Unit Price, Duty Rate
+                </pre>
             <p class='text-error'>It is VERY important that you only process each file once.  This uploader adds quantities to existing records, so processing twice will double the import values and will result in invalid claims! If you have issues uploading the file, contact support immediately.</p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_IMPORTS}%>
           </div>
@@ -48,20 +49,20 @@
               .csv file manually built by reformatting the Duty Calc Certificate of Delivery report you get from FedEx into the folowing order (with headers)
             </p>
             <pre>
-        [ignore],Entry Number,[ignore],[ignore],[ignore],Part - Description,[ignore],[ignore],[ignore],100% Duty Per Line 
-              </pre>
+          [ignore],Entry Number,[ignore],[ignore],[ignore],Part - Description,[ignore],[ignore],[ignore],100% Duty Per Line 
+                </pre>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_CD}%>
           </div>
         </div>
-      <%end-%>
-      <%if MasterSetup.get.custom_feature?("J Crew Drawback")-%>
+        <%end-%>
+        <%if MasterSetup.get.custom_feature?("J Crew Drawback")-%>
         <div class='tab-pane' id='j_crew'>
           <h3>PO Correlation File (last 10)</h3>
           <p><em>.csv file from Frank Genus @ J Crew</em></p>
           <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS}%>
         </div>
-      <%end-%>
-      <%if MasterSetup.get.custom_feature?("UA Drawback")-%>
+        <%end-%>
+        <%if MasterSetup.get.custom_feature?("UA Drawback")-%>
         <div class='tab-pane' id='under_armour'>
           <div class='well'>
             <h3>DH Inbound Files (last 10)</h3>
@@ -84,23 +85,24 @@
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_FMI_EXPORTS}%>
           </div>
         </div>
-      <%end-%>
+        <%end-%>
+      </div>
     </div>
   </div>
-  <div class='span6'>
-    <h2 class='text-center'>Downloads</h2>
-    <div class='well'>
+  <div class='row'>
+    <div class='col-md-12'>
+      <h2 class='text-center'>Downloads</h2>
       <div>
         Import Lines Not Sent To Duty Calc:
         <ul>
           <%@import_lines_not_in_duty_calc.each do |comp,cnt|-%>
-            <li>
-              <form action='/duty_calc_import_files' method='POST'>
+          <li>
+            <form action='/duty_calc_import_files' method='POST'>
               <%=comp.name%> - <%=cnt%> 
-                <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
-                <input type='submit' class='btn btn-mini' value='Make File'/>
-              </form>
-            </li>
+              <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
+              <input type='submit' class='btn btn-mini' value='Make File'/>
+            </form>
+          </li>
           <%end-%>
         </ul>
       </div>
@@ -108,48 +110,44 @@
         Export Lines Not Sent To Duty Calc:
         <ul>
           <%@export_lines_not_in_duty_calc.each do |comp,cnt|-%>
-            <li>
-              <form action='/duty_calc_export_files' method='POST'>
+          <li>
+            <form action='/duty_calc_export_files' method='POST'>
               <%=comp.name%> - <%=cnt%> 
-                <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
-                <input type='submit' class='btn btn-mini' value='Make File'/>
-              </form>
-            </li>
+              <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
+              <input type='submit' class='btn btn-mini' value='Make File'/>
+            </form>
+          </li>
           <%end-%>
         </ul>
       </div>
-    </div>
-    <div class='well'>
       <h3>Import Files</h3>
       <ul>
         <%DutyCalcImportFile.order("updated_at DESC").limit(10).each do |f|-%>
-          <li>
-            <%if f.attachment.blank?-%>
-              No Attachment
-            <%else-%>
-              <a href='/duty_calc_import_files/<%=f.id%>/download'><%=f.attachment.attached_file_name%></a></li>
-            <%end-%>
-            -
-            <%=f.importer.name%>
-            -
-            <%=f.created_at%>
+        <li>
+          <%if f.attachment.blank?-%>
+          No Attachment
+          <%else-%>
+          <a href='/duty_calc_import_files/<%=f.id%>/download'><%=f.attachment.attached_file_name%></a></li>
+        <%end-%>
+        -
+        <%=f.importer.name%>
+        -
+        <%=f.created_at%>
         <%end-%>
       </ul>
-    </div>
-    <div class='well'>
       <h3>Export Files</h3>
       <ul>
         <%DutyCalcExportFile.order("updated_at DESC").limit(10).each do |f|-%>
-          <li>
-            <%if f.attachment.blank?-%>
-              No Attachment
-            <%else-%>
-              <a href='/duty_calc_export_files/<%=f.id%>/download'><%=f.attachment.attached_file_name%></a></li>
-            <%end-%>
-            -
-            <%=f.importer.name%>
-            -
-            <%=f.created_at%>
+        <li>
+          <%if f.attachment.blank?-%>
+          No Attachment
+          <%else-%>
+          <a href='/duty_calc_export_files/<%=f.id%>/download'><%=f.attachment.attached_file_name%></a></li>
+        <%end-%>
+        -
+        <%=f.importer.name%>
+        -
+        <%=f.created_at%>
         <%end-%>
       </ul>
     </div>

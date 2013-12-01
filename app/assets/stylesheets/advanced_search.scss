@@ -2,11 +2,20 @@ div.schedule-display {
   border-color: black;
 }
 #select_search {
-  width: 90%;
+  margin-bottom:10px;
 }
 #search-setup-name-box {
   width: 90%;
 }
 #search-setup-actions {
   margin-top: 1em;
+}
+table.search_result_table tbody td {
+  vertical-align: middle !important;
+}
+table.search_result_table tbody td.min_width {
+  width: 30px !important;
+}
+table.search_result_table tbody td.action_cell a {
+  padding: 0px 3px;
 }

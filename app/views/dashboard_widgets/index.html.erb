@@ -37,7 +37,7 @@ $(function() {
   <%if @widgets.blank? -%>
     <div class='container'>
       <div class='row'>
-        <div class='span12 jumbotron'>
+        <div class='col-md-12 jumbotron'>
           <h1>Welcome!</h1>
           <% if current_user.search_setups.empty? -%>
             <p>This is your personal dashboard. Once you've setup some searches, you'll be able to add them here.</p>

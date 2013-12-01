@@ -69,7 +69,7 @@ root.Chain =
       for hts in country_result['hts']
         h += "<div class='auto-class-container'><a href='#' class='hts_option'>"+hts.code+"</a>"
         h += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>" if hts.use_count
-        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-mini' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
+        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-xs btn-link' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
         h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />"
         h += "</div>"
       target.html(h)
@@ -127,7 +127,7 @@ root.Chain =
         r += "<input type='hidden' value='"+c.id+"' name='product[classifications_attributes]["+classificationIndex+"][id]' />"
       if c.tariff_records[0]?.id
         r += "<input type='hidden' value='"+c.tariff_records[0].id+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][id]' />"
-      r += "&nbsp;<a href='#' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
+      r += "&nbsp;<a href='#' class='btn btn-sm btn-default' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
       r += "</div>"
       r += "<div data-target='auto-classify' country='"+c.country_id+"'></div>"
       if c.country.iso_code=='US'

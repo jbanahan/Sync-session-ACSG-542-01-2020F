@@ -219,7 +219,7 @@
     <div class='container'>
       <div class='row'>
         <%unless flash[:notices].blank?-%>
-          <div class='span12 alert alert-info'>
+          <div class='col-md-12 alert alert-info alert-dismissable'>
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <%flash[:notices].each do |msg|-%>
               <p><%=msg%></p>
@@ -227,7 +227,7 @@
           </div>
         <%end-%>
         <%unless flash[:errors].blank?-%>
-          <div class='span12 alert alert-error'>
+          <div class='col-md-12 alert alert-danger alert-dismissable'>
             <button type="button" class="close" data-dismiss="alert">&times;</button>
             <%flash[:errors].each do |msg|-%>
               <p><%=msg%></p>
@@ -236,13 +236,11 @@
         <%end-%>
       </div>
     </div>
-    <div class='container'>
-      <div class='row'>
-        <div class='col-md-12'>
-          <%=yield%>
-        </div>
-      </div>
+
+    <div id='main-content'>
+      <%=yield%>
     </div>
+
     <%unless @no_action_bar-%>
       <div class='navbar navbar-default navbar-fixed-bottom'>
         <ul class='nav'>

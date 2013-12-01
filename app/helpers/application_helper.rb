@@ -221,9 +221,9 @@ module ApplicationHelper
     content_tag(:div, 
       content_tag(:div,
         label.blank? ? '' : label,
-        :class=>'span4'
+        :class=>'col-md-4', :style=>'font-weight:bold;'
       ) +
-      content_tag(:div,field_content,:class=>'span8'),
+      content_tag(:div,field_content,:class=>'col-md-8'),
       :class=>'row bootstrap-hover'
     )
   end
@@ -254,14 +254,14 @@ module ApplicationHelper
   def show_tariff hts_number, country_id, with_popup_link=true
     return "" if hts_number.blank?
     if with_popup_link
-      content_tag :span, (hts_number.hts_format + " " + link_to('info', "#", {:class=>'lnk_tariff_popup btn btn-mini',:hts=>hts_number,:country=>country_id})).html_safe
+      content_tag :span, (hts_number.hts_format + " " + link_to('info', "#", {:class=>'lnk_tariff_popup btn btn-xs btn-link',:hts=>hts_number,:country=>country_id})).html_safe
     else
       return hts_number.hts_format
     end
   end
 
   def tariff_more_info hts_number, country_id
-    link_to "info", "#", {:class=>'lnk_tariff_popup',:hts=>hts_number,:country=>country_id}
+    link_to "info", "#", {:class=>'lnk_tariff_popup btn btn-link btn-xs',:hts=>hts_number,:country=>country_id}
   end
 
   def secure_link obj, user

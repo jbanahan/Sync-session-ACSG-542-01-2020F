@@ -10,12 +10,12 @@ $(function() {
 <%-end-%>
 <div class='container'>
   <div class='row'>
-    <div class='span12'>
+    <div class='col-md-12'>
       <h1>UA Winshuttle Report Generator</h1>
     </div>
   </div>
   <div class='row'>
-    <div class='span12'>
+    <div class='col-md-12'>
       <form id='myfrm' method='POST' action='/custom_features/ua_winshuttle'>
         <label for='email'>Send To: </label><input type='email' name='email' value='<%=current_user.email%>'/>
       </form>

@@ -54,19 +54,19 @@
       <%-end-%>
     </div>
     <div class='row text-center' style='margin-bottom:20px;'>
-      <div class='span12'>
+      <div class='col-md-12'>
         <h1>{{resp.survey.name}} <span ng-show='resp.subtitle.length>0'> - {{resp.subtitle}}</span></h1>
       </div>
     </div>
     <div chain-modal-message='resp.success_message' title='Success' clear-on-close='true'></div>
     <div chain-modal-message='resp.error_message' title='Error' clear-on-close='true'></div>
     <div>
-      <div class='span12'>
+      <div class='col-md-12'>
         <span ng-show='resp.saving' class='label label-info'>Saving...</span>&nbsp;
       </div>
     </div>
     <div class='row'>
-      <div class='span6'>
+      <div class='col-md-6'>
         <div>
           <strong>Status:</strong><br />
           {{resp.status}}
@@ -79,102 +79,101 @@
         </div>
         
       </div>
-      <div class='span6 form-inline'>
+      <div class='col-md-6 form-inline'>
         <strong>Question Filter</strong><br/>
-        <select ng-model='srService.settings.filterMode' ng-options='r for r in srService.filterModes'></select>
-        <button class='btn btn-mini' ng-click='filterAnswers()'>Apply Filter</button>
+        <select class='form-control' ng-model='srService.settings.filterMode' ng-options='r for r in srService.filterModes' ng-change='filterAnswers()'></select>
       </div>
     </div>
     <form name='contact_form'>
       <fieldset>
         <div class='row'>
-          <div class='span12'>
+          <div class='col-md-12'>
             <legend class='text-info'>
               Contact Information (required) 
             </legend>
           </div>
         </div>
         <div class='row'>
-          <div class='span6'>
-            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.name.$invalid}">
+          <div class='col-md-6'>
+            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.name.$invalid}">
               <label for='ci-name'>Your Name</label>
-              <input id='ci-name' name='name' ng-blur='srService.saveContactInfo(resp)' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
+              <input class='form-control' id='ci-name' name='name' ng-blur='srService.saveContactInfo(resp)' type='text' ng-model='resp.name' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
             </div>
-            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.address.$invalid}">
+            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.address.$invalid}">
               <label for='ci-address'>Address</label>
-              <textarea id='ci-address' name='address' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.address' ng-disabled='!resp.can_answer || resp.error_message.length>0' required></textarea>
+              <textarea class='form-control' id='ci-address' name='address' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.address' ng-disabled='!resp.can_answer || resp.error_message.length>0' required></textarea>
             </div>
           </div>
-          <div class='span6'>
-            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.phone.$invalid}">
+          <div class='col-md-6'>
+            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.phone.$invalid}">
               <label for='ci-phone'>Phone</label>
-              <input id='ci-phone' name='phone' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.phone' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
+              <input class='form-control' id='ci-phone' name='phone' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.phone' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
             </div>
-            <div class='control-group' ng-class="{error: contact_form.$dirty && contact_form.email_add.$invalid}">
+            <div class='form-group' ng-class="{error: contact_form.$dirty && contact_form.email_add.$invalid}">
               <label for='ci-email'>Email</label>
-              <input id='ci-email' name='email_add' type='email' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.email' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
+              <input class='form-control' id='ci-email' name='email_add' type='email' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.email' ng-disabled='!resp.can_answer || resp.error_message.length>0' required />
             </div>
-            <div class='control-group'>
+            <div class='form-group'>
               <label for='ci-fax'>Fax</label>
-              <input id='ci-fax' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.fax' ng-disabled='!resp.can_answer || resp.error_message.length>0' />
+              <input class='form-control' id='ci-fax' type='tel' ng-blur='srService.saveContactInfo(resp)' ng-model='resp.fax' ng-disabled='!resp.can_answer || resp.error_message.length>0' />
             </div>
           </div>
         </div>
       </fieldset>
     </form>
     <div class='row'>
-      <div class='span8 offset2 text-center alert alert-info' ng-hide='srService.settings.filterMode=="All"'>
+      <div class='col-md-8 col-md-offset-2 text-center alert alert-info' ng-hide='srService.settings.filterMode=="All"'>
         Showing {{filteredAnswers.length}} of {{resp.answers.length}} questions.
       </div>
     </div>
     <div ng-repeat='answer in filteredAnswers' style='margin-bottom:20px;'>
       <div class='row'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <legend class='text-info'>
             Question #{{answer.sort_number}} <span ng-show='answer.saving' class='label label-info'>Saving...</span>
           </legend>
         </div>
       </div>
       <div class='row' ng-show='showWarning(answer)'>
-        <div class='span10 alert'>
+        <div class='col-md-10 alert'>
           This is a required question.  You must provide an answer or comment or your response may be rejected.
         </div>
       </div>
       <div class='row'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <span ng-bind-html-unsafe='answer.question.html_content'></span>
         </div>
       </div>
       <div class='row' ng-show='answer.error_message'>
-        <div class='span12 alert alert-error'>{{answer.error_message}}</div>
+        <div class='col-md-12 alert alert-error'>{{answer.error_message}}</div>
       </div>
       <div class='row' style='margin-bottom:15px;'>
-        <div class='span6' ng-show='answer.question.choice_list.length>0'>
+        <div class='col-md-6' ng-show='answer.question.choice_list.length>0'>
           <label>Multiple Choice Answer</label>
           <span ng-hide='resp.can_answer'>{{answer.choice}}</span>
           <select ng-change='saveAnswer(answer)' ng-show='resp.can_answer' ng-model='answer.choice' ng-options='c for c in answer.question.choice_list' ng-disabled='answer.error_message'></select>
         </div>
-        <div class='span6' ng-show='resp.can_rate || answer.rating'>
+        <div class='col-md-6' ng-show='resp.can_rate || answer.rating'>
           <label>Rating</label>
           <span ng-hide='resp.can_rate'>{{answer.rating}}</span>
           <select ng-change='srService.saveAnswer(answer)' ng-show='resp.can_rate' ng-model='answer.rating' ng-options='v for v in resp.survey.rating_values' ng-disabled='answer.error_message'></select>
         </div>
       </div>
       <div class='row'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <h4>Comments</h4>
         </div>
       </div>
       <div class='row' ng-repeat='com in answer.answer_comments'>
-        <div class='span12 muted'>
+        <div class='col-md-12 muted'>
           <span ng-show='com.private' class='label label-success'>private</span> <strong>{{com.user.full_name}}</strong> wrote at {{com.created_at | date:'yyyy-MM-dd HH:mm'}}: 
         </div>
-        <div class='span12'>
+        <div class='col-md-12'>
           {{com.content}}
         </div>
       </div>
       <div class='row'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <label for='new_comment'>New Comment:</label>
           <textarea id='new_comment' ng-model='answer.new_comment' rows='5' style='width:100%;'></textarea>
           <div ng-hide='answer.error_message'>
@@ -191,17 +190,17 @@
         </div>
       </div>
       <div class='row'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <h4>Attachments</h4>
         </div>
       </div>
       <div class='row' ng-repeat='att in answer.attachments'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
         </div>
       </div>
       <div class='row'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <div chain-attach='answer' attachable-type='Answer' attachable-id='{{answer.id}}'></div>
         </div>
       </div>

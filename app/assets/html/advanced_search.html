@@ -2,43 +2,48 @@
   <div chain-messages errors='errors' notices='notices'></div>
   <div ng-show='searchSetup.id'>
     <div class='container'>
-      <select ng-hide='showSetup' id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>
-      </select>
+      <div class='row text-center'>
+        <div class='col-md-12'>
+          <select class='form-control input-lg' ng-hide='showSetup' id='select_search' ng-model='searchId' ng-change='changeSearch(searchId)' ng-options='s.id as s.name for s in searchSetup.search_list'>
+          </select>
+        </div>
+      </div>
     </div>
     <div id='search_setup_controls' ng-show='showSetup' class='container'>
       <div class='row text-center'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <h2>Setup</h2>
         </div>
       </div>
       <div class='jumbotron'>
         <div class='row'>
-          <div class='span12'>
-            <input id='search-setup-name-box' type='text' ng-model='searchSetup.name' />
+          <div class='col-md-12'>
+            <input id='search-setup-name-box' type='text' ng-model='searchSetup.name' class='form-control' />
           </div>
         </div>
         <div class='row'>
-          <div class='span12'>
+          <div class='col-md-6'>
             <input type='checkbox' ng-model='searchSetup.include_links'/> Include Links In Download
-            <br />
+          </div>
+          <div class='col-md-6'>
             <input type='checkbox' ng-model='searchSetup.no_time'/> Hide Time
           </div>
         </div>
         <!--column setup-->
         <div class='row'>
-          <div class='span12 text-center'>
+          <div class='col-md-12 text-center'>
             <h3>Columns</h3>
           </div>
         </div>
         <div class='row'>
-          <div class='span6'>
+          <div class='col-md-6'>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <h5>Available</h5>
               </div>
             </div>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <select multiple='multiple' size='10' ng-model='columnsToAdd' ng-options='s.mfid as s.label for s in availableColumns | filter:columnFilter'>
                 </select>
                 <div>
@@ -51,14 +56,14 @@
               </div>
             </div>
           </div>
-          <div class='span6'>
+          <div class='col-md-6'>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <h5>Included</h5>
               </div>
             </div>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <select multiple='multiple' size='10' ng-model='columnsToRemove' ng-options='s.mfid as s.label for s in searchSetup.search_columns'>
                 </select>
                 <br />
@@ -74,19 +79,19 @@
         </div>  
         <!--sort setup-->
         <div class='row'>
-          <div class='span12 text-center'>
+          <div class='col-md-12 text-center'>
             <h3>Sorts</h3>
           </div>
         </div>
         <div class='row'>
-          <div class='span6'>
+          <div class='col-md-6'>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <h5>Available</h5>
               </div>
             </div>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <select id='availableSorts' multiple='multiple' size='10' ng-model='sortsToAdd' ng-options='s.mfid as s.label for s in availableSorts | filter:sortFilter'>
                 </select>
                 <div>
@@ -101,14 +106,14 @@
               </div>
             </div>
           </div>
-          <div class='span6'>
+          <div class='col-md-6'>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <h5>Included</h5>
               </div>
             </div>
             <div class='row'>
-              <div class='span12 text-center'>
+              <div class='col-md-12 text-center'>
                 <select multiple='multiple' size='10' ng-model='sortsToRemove' ng-options='s.mfid as s.label + descendingLabel(s.descending) for s in searchSetup.sort_criterions'>
                 </select>
                 <br />
@@ -125,7 +130,7 @@
         </div>  
         <!-- Parameter setup-->
         <div class='row'>
-          <div class='span12 text-center'>
+          <div class='col-md-12 text-center'>
             <h3>Parameters</h3>
           </div>
         </div>
@@ -133,7 +138,7 @@
           <div chain-search-criterion='crit' model-fields="searchSetup.model_fields"></div>
         </div>
         <div class='row'>
-          <div class='span12 form-horizontal'>
+          <div class='col-md-12 form-horizontal'>
             Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in searchSetup.model_fields'>
             </select>
             <button ng-show='criterionToAdd' class='btn' ng-click='addCriterion(criterionToAdd)'>Add</button>
@@ -141,14 +146,14 @@
         </div>
         <!-- Schedule Setup -->
         <div class='row'>
-          <div class='span12 text-center'>
+          <div class='col-md-12 text-center'>
             <h3>Schedules</h3>
           </div>
         </div>
         <div class='row'>
           <div ng-hide='scheduleToEdit'>
             <ul class='thumbnails'>
-              <li class='span6' ng-repeat='sched in searchSetup.search_schedules'>
+              <li class='col-md-6' ng-repeat='sched in searchSetup.search_schedules'>
                 <div class='thumbnail schedule-display'>
                   <p>
                     <strong>To:</strong> {{sched.email_addresses}}
@@ -169,14 +174,14 @@
               </li>
             </ul>
             <div class='row text-center'>
-              <div class='span12'>
+              <div class='col-md-12'>
                 <a class='btn' ng-click='addSchedule()'>Add Schedule</a>
               </div>
             </div>
           </div>
           <div class='form-horizontal' ng-show='scheduleToEdit'>
             <div class='row'>
-              <div class='span6'>
+              <div class='col-md-6'>
                 <div class='control-group'>
                   <label class='control-label' for='sched-email-addresses'>Email</label>
                   <div class='controls'>
@@ -275,7 +280,7 @@
                   </div>
                 </div>
               </div>
-              <div class='span6'>
+              <div class='col-md-6'>
                 <fieldset ng-show='searchSetup.allow_ftp'>
                   <div class='control-group'>
                     <label class='control-label' for='sched-f-protocol'>Use SFTP?</label>
@@ -326,18 +331,18 @@
             <button class='btn btn-large' ng-click='givePrompt=true'>Give</button>
             <button class='btn btn-large btn-danger' ng-click='deletePrompt=true'>Delete</button>
           </div>
-          <div class='span12 form-horizontal' ng-show='givePrompt==true'>
+          <div class='col-md-12 form-horizontal' ng-show='givePrompt==true'>
             Select User
             <div style='display:inline;' chain-user-list='giveUserId'></div>
             <a class='btn btn-primary' ng-click='give(giveUserId)' ng-show='giveUserId'>Give</a>
             <a class='btn' ng-click='givePrompt=false'>Cancel</a>
           </div>
-          <div class='span12 form-horizontal' ng-show='deletePrompt==true'>
+          <div class='col-md-12 form-horizontal' ng-show='deletePrompt==true'>
             Really Delete?
             <a class='btn btn-danger' ng-click='deleteSetup()'>Yes</a>
             <a class='btn' ng-click='deletePrompt=false'>No</a>
           </div>
-          <div class='span12 form-horizontal' ng-show="copyPrompt==true">
+          <div class='col-md-12 form-horizontal' ng-show="copyPrompt==true">
             Copy As <input type="text" ng-model="copyReportName" class="input-xxlarge" placeholder="Enter copy name...">
             <a class='btn btn-large btn-primary' ng-click='copy(copyReportName)'>Copy</a>
             <a class='btn btn-large' ng-click='copyPrompt=false; copyReportName=""'>Cancel</a>

@@ -64,19 +64,24 @@
       attachableId:'@'
       attachableType:'@'
     }
-    template:"<form action='/attachments' method='post' enctype='multipart/form-data'>
-      <input type='hidden' name='attachment[attachable_type]' value='{{attachableType}}' />
-      <input type='hidden' name='attachment[attachable_id]' value='{{attachableId}}' />
-      <input type='file' size='60' name='attachment[attached]' /> 
-      <input type='submit' value='Upload' class='btn btn-small btn-success' style='display:none;'>
+    template:"<form class='form-inline' role='form' action='/attachments' method='post' enctype='multipart/form-data'>
+      <div class='row'><div class='col-xs-4'>
+        <input type='hidden' name='attachment[attachable_type]' value='{{attachableType}}' />
+        <input type='hidden' name='attachment[attachable_id]' value='{{attachableId}}' />
+        <input type='file' size='60' name='attachment[attached]' class='form-control' /> 
+      </div><div class='col-xs-2'>
+        <input type='submit' value='Upload' class='btn btn-sm btn-success' style='display:none;'>
+      </div>
     </form>
     <div class='progress progress-striped active'>
-      <div class='bar'></div>
+      <div class='progress-bar' role='progress-bar'>
+        <span class='sr-only'>Uploading</span>
+      </div>
     </div>
     <div class='att-msg'></div>
       "
     link: (scope,el,attrs) ->
-      el.find('form div.progress').hide()
+      el.find('div.progress').hide()
       fileEl = el.find('form input[type="file"]')
       fileEl.on('change', () ->
         if $(@).val()
@@ -89,15 +94,15 @@
         beforeSend: () ->
           if el.find('form input[type="file"]').val()
             el.find('form').hide()
-            el.find('.progress').show()
+            el.children('div.progress').show()
             #clear everything
             el.find('div.progress').show()
-            el.find('div.progress div.bar').width('0%')
+            el.find('div.progress div.progress-bar').width('0%')
             el.find('div.att-msg').html('Upload starting')
           else
             el.find('div.att-msg').html('You must select a file to upload.')
         uploadProgress: (event, position, total, percentComplete) ->
-          el.find('div.progress div.bar').width(percentComplete+"%")
+          el.find('div.progress div.progressbar').width(percentComplete+"%")
           if percentComplete == 100
             el.find('div.att-msg').html("processing upload")
           else

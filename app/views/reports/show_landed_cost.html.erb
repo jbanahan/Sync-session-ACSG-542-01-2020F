@@ -23,10 +23,10 @@ $(function() {
 <%=form_tag reports_run_landed_cost_path, :id=>'frm_run' do -%>
 <div class="container">
   <div class="row">
-    <span class="span12"><%=ModelField.find_by_uid(:ent_cust_num).label(false)%> <%=text_field_tag :customer_number %></span>
+    <span class="col-md-12"><%=ModelField.find_by_uid(:ent_cust_num).label(false)%> <%=text_field_tag :customer_number %></span>
   </div>
   <div class="row">
-    <span class="span12">
+    <span class="col-md-12">
   Release Date on or after <%=text_field_tag :start_date, (Time.zone.today - 1.month).at_beginning_of_month.strftime("%Y-%m-%d"), :class=>'isdate ', :size=>10%> and prior to
   <%=text_field_tag :end_date, Time.zone.today.at_beginning_of_month.strftime("%Y-%m-%d"), :class=>'isdate', :size=>10%>.
     </span>

@@ -68,52 +68,52 @@ $(function() {
 <div class='container' ng-app='CorrectiveActionPlanApp' ng-init='survey_response_id = <%=@cap.survey_response_id%>; corrective_action_plan_id= <%=@cap.id%>; autoload=true'>
   <div ng-controller='CorrectiveActionPlanController'>
     <div class='row'>
-      <div class='span12' style='padding-bottom:2em;'>
+      <div class='col-md-12' style='padding-bottom:2em;'>
         <h1 id='plan-title'>Corrective Action Plan</h1>
       </div>
     </div>
     <!-- HEADER -->
     <div class='row'>
-      <div class='span6'>
+      <div class='col-md-6'>
         <div class='row'>
-          <div class='span4'>
+          <div class='col-md-4'>
             <strong>Survey:</strong>
           </div>
-          <div class='span8'>
+          <div class='col-md-8'>
             <%=link_to @cap.survey_response.survey.name, @cap.survey_response%>
           </div>
         </div>
         <div class='row' id='status-display'>
-          <div class='span4'>
+          <div class='col-md-4'>
             <strong>Status:</strong>
           </div>
-          <div class='span8'>
+          <div class='col-md-8'>
             <%=@cap.status%>
           </div>
         </div>
       </div>
-      <div class='span6'>
+      <div class='col-md-6'>
         <div class='row'>
-          <div class='span4'>
+          <div class='col-md-4'>
             <strong>Assigned To:</strong>
           </div>
-          <div class='span8'>
+          <div class='col-md-8'>
             <%=@cap.survey_response.user.full_name%>
           </div>
         </div>
         <div class='row'>
-          <div class='span4'>
+          <div class='col-md-4'>
             <strong>Created At:</strong>
           </div>
-          <div class='span8'>
+          <div class='col-md-8'>
             <%=l @cap.created_at.to_date%>
           </div>
         </div>
         <div class='row'>
-          <div class='span4'>
+          <div class='col-md-4'>
             <strong>Created By:</strong>
           </div>
-          <div class='span8'>
+          <div class='col-md-8'>
             <%=@cap.created_by.full_name%>
           </div>
         </div>
@@ -121,45 +121,45 @@ $(function() {
     </div>
     <!-- END HEADER -->
     <div class='row text-center' ng-show='settings.viewMode=="loading"'>
-      <div class='span12'>
+      <div class='col-md-12'>
         <img src='/images/ajax_load_64.gif' title='Loading...' />
         Loading corrective action plan data...
       </div>
     </div>
     <div class='row text-center' ng-show='settings.viewMode=="saving"'>
-      <div class='span12'>
+      <div class='col-md-12'>
         <img src='/images/ajax_load_64.gif' title='Loading...' />
         Saving your update...
       </div>
     </div>
     <div class='row text-center' ng-show='settings.viewMode=="error"'>
-      <div class='span12'>
+      <div class='col-md-12'>
         There was an error processing your request. Please reload the page.
       </div>
     </div>
     <form id='ca-form' ng-show='settings.viewMode=="edit"'>
       <!-- COMMENTS -->
       <div class='row'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <legend id='comments-title' class='text-info'>Comments</legend>
         </div>
       </div>
       <div class='row comment-container' ng-repeat='comm in cap.comments'>
-        <div class='span12 muted'>
+        <div class='col-md-12 muted'>
           <strong>{{comm.user.full_name}}</strong> wrote:
         </div>
-        <div class='span12' ng-bind-html-unsafe='comm.html_body'>
+        <div class='col-md-12' ng-bind-html-unsafe='comm.html_body'>
         </div>
       </div>
       <%-unless @cap.status==@cap.class::STATUSES[:resolved]-%>
         <div class='row'>
-          <div class='span12'>
+          <div class='col-md-12'>
             <label for='new_comment'>New Comment:</label'>
             <textarea id='new_comment' ng-model='comment' rows='5'></textarea>
           </div>
         </div>
         <div class='row'>
-          <div class='span12'>
+          <div class='col-md-12'>
             <button ng-show='comment.length>0' ng-click='addComment()' class='btn btn-success btn-small'>Add Comment</button>
           </div>
         </div>
@@ -167,14 +167,14 @@ $(function() {
       <!-- END COMMENTS -->
       <!-- ISSUES -->
       <div class='row' ng-repeat='ci in cap.corrective_issues'>
-        <div class='span12'>
+        <div class='col-md-12'>
           <fieldset>
             <legend class='text-info issue-legend'>
               Issue
               <span ng-show='resp.saving' class='label label-info'>Saving...</span>
             </legend>
             <div class='row'>
-              <div class='span12'>
+              <div class='col-md-12'>
                 <button ng-show='cap.status=="New"' ng-click='remove(ci)' class='pull-right btn btn-small btn-danger'>Remove Issue</button>
               </div>
             </div>
@@ -193,7 +193,7 @@ $(function() {
       </div>
       <%-if @cap.can_edit?(current_user) && @cap.status!=@cap.class::STATUSES[:resolved]-%>
         <div class='row'>
-          <div class='span12'>
+          <div class='col-md-12'>
             <button ng-click='addIssue()' class='btn' id='add-issue'>Add Issue</button>
           </div>
         </div>

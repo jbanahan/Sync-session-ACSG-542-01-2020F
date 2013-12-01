@@ -27,18 +27,18 @@ $(function() {
   <%= hidden_field_tag :user_id, @user.id %>
   <div class='container'>
     <div class='row text-center'>
-      <div class='span12'>
+      <div class='col-md-12'>
         <h1>Give <%= @user.first_name %> <%= @user.last_name %>'s Reports to Another User</h1>
       </div>
     </div>
     <div class='row text-center'>
-      <div class='span6'>
+      <div class='col-md-6'>
         <h3>Report - Last Run Time</h3>
         <div><%=select_tag :search_setup_id, grouped_options_for_select(@reports), :multiple=>true, :size=>10, :style=>"width: auto;"%></div>
         <div><em>Reports with an '*' have schedules.</em></div>
         <div><em>(Select one or more)</em></div>
       </div>
-      <div class='span6'>
+      <div class='col-md-6'>
         <h3>Assign To User(s)</h3>
         <div><%=select_tag :assign_to_user_id, "", :multiple=>true, :size=>10, :style=>"width: auto;" %></div>
         <div>Copy Schedules? : <%=check_box_tag :copy_schedules, true, true %>

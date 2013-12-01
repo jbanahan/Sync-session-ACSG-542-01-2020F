@@ -14,14 +14,14 @@
 <% unless attachments.blank?-%>
   <div class='container'>
     <div class='row text-center'>
-      <div class='span12'>
+      <div class='col-md-12'>
         <h3>Attachments</h3>
       </div>
     </div>
     <div class='row'>
       <ul class='thumbnails'>
         <% attachments.each do |att| %>
-          <li class='span4'>
+          <li class='col-md-4'>
             <div class='thumbnail text-center'>
               <div class='attachment_delete'>
                 <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>

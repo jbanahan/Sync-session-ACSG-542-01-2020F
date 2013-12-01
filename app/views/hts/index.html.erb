@@ -1,13 +1,13 @@
 <div class='container' ng-app='HtsApp' style='margin-top:20px;'>
   <div ng-controller='HtsCtrl'>
     <div class='row'>
-      <div class='span12 text-center'>
+      <div class='col-md-12 text-center'>
         <%=link_to image_tag('vfi_logo.png', :alt_text=>'Logo', :width=>'120px'), '/'%>
         <h1>Vandegrift HTS Lookup</h1>
       </div>
     </div>
     <div class='row'>
-      <div class='span12 well'>
+      <div class='col-md-12 jumbotron'>
         <p>
           <strong>Welcome</strong>
         </p> 
@@ -20,8 +20,8 @@
       </div>
     </div>
     <div class='row' style='margin-top:20px; margin-bottom:20px;'>
-      <div class='span12 text-center'>
-        <select id='sel-country' ng-model='country' ng-options='c.name for c in countries'>
+      <div class='col-md-12 text-center'>
+        <select class='form-control input-lg' id='sel-country' ng-model='country' ng-options='c.name for c in countries'>
         </select>
       </div>
     </div>
@@ -41,29 +41,29 @@
         </div>
       </div>
       <div ng-show='chapters.length > 0' class='row' style='font-weight:bold;'>
-        <div class='span1 offset6 '>
+        <div class='col-md-1 col-md-offset-6 '>
           Unit of Measure
         </div>
-        <div class='span1 '>
+        <div class='col-md-1 '>
           Common Rate
         </div>
-        <div class='span1 '>
+        <div class='col-md-1 '>
           Special Rates
         </div>
-        <div class='span1 '>
+        <div class='col-md-1 '>
           Col 2 Rate
         </div>
       </div>
       <div ng-repeat='ch in chapters'>
         <div class='row'>
-          <div class='span12'>
+          <div class='col-md-12'>
             <button class='btn btn-mini ' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
             <button class='btn btn-mini ' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
             {{ch.num}}. {{ch.name}} 
           </div>
           <div ng-repeat='h in ch.headings'>
             <div class='row'>
-              <div class='span10 offset1'>
+              <div class='col-md-10 col-md-offset-1'>
                 <button class='btn btn-mini ' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
                 <button class='btn btn-mini ' ng-show='h.sub_headings.length>0' ng-click='h.sub_headings = []'>-</button>
                 {{h.num}}. {{h.name}}
@@ -71,25 +71,25 @@
             </div>
             <div ng-repeat='s in h.sub_headings'>
               <div class='row'>
-                <div class='span10 offset2'>
+                <div class='col-md-10 col-md-offset-2'>
                   {{s.num}}. {{s.name}}
                 </div>
               </div>
               <div ng-repeat='d in s.remaining_descriptions'>
                 <div class='row'>
-                  <div class='span3 offset3'>
+                  <div class='col-md-3 col-md-offset-3'>
                     {{d.num}}. {{d.name}}
                   </div>
-                  <div class='span1 '>
+                  <div class='col-md-1 '>
                     {{d.uom}}
                   </div>
-                  <div class='span1 '>
+                  <div class='col-md-1 '>
                     {{d.general}}
                   </div>
-                  <div class='span1 '>
+                  <div class='col-md-1 '>
                     {{d.special}}
                   </div>
-                  <div class='span1 '>
+                  <div class='col-md-1 '>
                     {{d.col2}}
                   </div>
                 </div>
