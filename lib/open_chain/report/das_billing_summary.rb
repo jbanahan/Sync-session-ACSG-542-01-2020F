@@ -23,14 +23,16 @@ module OpenChain
       def run run_by, settings
         start_date = sanitize_date_string settings['start_date'], run_by.time_zone
         end_date = sanitize_date_string settings['end_date'], run_by.time_zone
+        # The case statement in the inner query for the LVS is there so that we still are reporting historical entries using the old $1600 LVS limit
+        # and going forward utilize the $2500 limit
         summary_qry = <<QRY
 select `Entry Number`, `Total Value By Entry`, `Invoice Lines`, `Billable Lines`, (`Billable Lines` * if(`lvs`,0.4,0.5)) as "Line Charge", 
 if(`lvs`,45,85) as `Brokerage Charge`, `Total Duty`, `Total GST`
 from (
 select `Id`, `Entry Number`, `Entered Value` as `Total Value By Entry`, count(*) as `Invoice Lines`,
-if(count(*)>10,count(*)-10,0) as "Billable Lines", if(`Entered Value` > 1600,false,true) as "lvs", `Total Duty`, `Total GST`
+if(count(*)>10,count(*)-10,0) as "Billable Lines", (CASE WHEN `Cadex Sent` > '2013-12-02 05:00' THEN if(`Entered Value` > 2500,false,true) ELSE if(`Entered Value` > 1600,false,true) END) as "lvs", `Total Duty`, `Total GST`
 from (
-select distinct cil.country_origin_code, ent.id as `Id`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST` 
+select distinct cil.country_origin_code, ent.id as `Id`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST`, ent.cadex_sent_date as `Cadex Sent`
 from entries ent
 inner join commercial_invoices ci on ci.entry_id = ent.id
 inner join commercial_invoice_lines cil on cil.commercial_invoice_id = ci.id
