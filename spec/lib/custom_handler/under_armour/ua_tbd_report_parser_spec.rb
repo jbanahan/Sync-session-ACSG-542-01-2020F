@@ -44,6 +44,14 @@ describe OpenChain::CustomHandler::UnderArmour::UaTbdReportParser do
       described_class.prep_plant_code('17.0').should == '0017'
     end
   end
+  describe :write_material_color_plant_xrefs do
+    it "should write XREFS" do
+      rows = [['','12345-001','71'],['','12345-001','71'],['','12345-002','73']]
+      described_class.write_material_color_plant_xrefs rows
+      DataCrossReference.find_ua_material_color_plant('12345','001','0071').should == '1'
+      DataCrossReference.find_ua_material_color_plant('12345','002','0073').should == '1'
+    end
+  end
   describe :valid_material? do
     it "should not validate materials that contain DELETE" do
       described_class.valid_material?('this material is DELETED already').should be_false

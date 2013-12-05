@@ -16,7 +16,9 @@ module OpenChain; module CustomHandler; module UnderArmour
     end
 
     def initialize options = {}
-      @plant_cd = self.class.prep_custom_definitions([:plant_codes])[:plant_codes]
+      defs = self.class.prep_custom_definitions([:plant_codes,:colors])
+      @plant_cd = defs[:plant_codes]
+      @colors_cd = defs[:colors]
       @plant_code_country_map = {}
       DataCrossReference.hash_for_type(DataCrossReference::UA_PLANT_TO_ISO).each do |k,v|
         @plant_code_country_map[k] = Country.find_by_iso_code(v).id
@@ -52,7 +54,15 @@ module OpenChain; module CustomHandler; module UnderArmour
         good_row[2] = pc
         # format hts values
         good_row[3] = good_row[3].hts_format
-        r << good_row
+        color_list = good_row.delete(5)
+        next if color_list.blank?
+        colors = color_list.split("\n")
+        colors.each do |c|
+          next unless DataCrossReference.find_ua_material_color_plant good_row[1], c, pc
+          to_write = good_row.clone
+          to_write[1] = "#{to_write[1]}-#{c}"
+          r << to_write
+        end
       end
       r
     end
@@ -63,7 +73,8 @@ module OpenChain; module CustomHandler; module UnderArmour
       products.unique_identifier as 'Material Number',
       custom_values.text_value as 'Plant', 
       tr.hts_1 as 'HTS Code',
-      classifications.country_id as ''
+      classifications.country_id as '',
+      (SELECT text_value FROM custom_values where custom_definition_id = #{@colors_cd.id} AND customizable_id = products.id) as ''
       FROM products
       #{Product.need_sync_join_clause(sync_code)} 
       INNER JOIN classifications on products.id = classifications.product_id AND classifications.country_id in (select countries.id from countries inner join data_cross_references on data_cross_references.cross_reference_type = '#{DataCrossReference::UA_PLANT_TO_ISO}' AND countries.iso_code = data_cross_references.value)

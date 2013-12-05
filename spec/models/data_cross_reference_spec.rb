@@ -57,6 +57,18 @@ describe DataCrossReference do
       described_class.find_ua_winshuttle_hts('x').should == 'y'
     end
   end
+  context :find_ua_material_color_plant do
+    it "should find" do
+      described_class.create!(key:'x-y-z',value:'a',cross_reference_type:described_class::UA_MATERIAL_COLOR_PLANT)
+      described_class.find_ua_material_color_plant('x','y','z').should == 'a'
+    end
+  end
+  context :create_ua_material_color_plant! do
+    it "should create" do
+      described_class.create_ua_material_color_plant! 'x','y','z'
+      described_class.find_ua_material_color_plant('x','y','z').should == '1'
+    end
+  end
   context :add_xref! do
     it "should add" do
       d = described_class.add_xref! described_class::UA_PLANT_TO_ISO, 'x', 'y', 1
