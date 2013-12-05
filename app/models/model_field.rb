@@ -1128,7 +1128,8 @@ and classifications.product_id = products.id
         make_broker_invoice_entry_field(63,:bi_ent_across_sent_date, :across_sent_date, "ACROSS Sent Date", :datetime, lambda {|entry| entry.across_sent_date}),
         make_broker_invoice_entry_field(64,:bi_ent_pars_ack_date, :pars_ack_date, "PARS ACK Date", :datetime, lambda {|entry| entry.pars_ack_date}),
         make_broker_invoice_entry_field(65,:bi_ent_cadex_accept_date, :cadex_accept_date, "CADEX Accept Date", :datetime, lambda {|entry| entry.cadex_accept_date}),
-        make_broker_invoice_entry_field(66,:bi_ent_cadex_sent_date, :cadex_sent_date, "CADEX Sent Date", :datetime, lambda {|entry| entry.cadex_sent_date})
+        make_broker_invoice_entry_field(66,:bi_ent_cadex_sent_date, :cadex_sent_date, "CADEX Sent Date", :datetime, lambda {|entry| entry.cadex_sent_date}),
+        make_broker_invoice_entry_field(67,:bi_ent_k84_month, :k84_month, "K84 Month", :integer, lambda {|entry| entry.k84_month})
       ]
       add_fields CoreModule::BROKER_INVOICE_LINE, [
         [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
