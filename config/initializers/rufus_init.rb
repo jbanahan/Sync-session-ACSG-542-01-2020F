@@ -33,8 +33,8 @@ def execute_scheduler
     exception.log_me
   end
 
-  #register to be active server
-  scheduler.every '10s' do 
+  # This solely controls which job instance can run the integration client front-end.
+  scheduler.every '1m' do 
     job_wrapper "Schedule Check In" do
       ScheduleServer.check_in if DelayedJobManager.should_be_running?
     end
@@ -91,7 +91,7 @@ def execute_scheduler
   end
 
   #check in for Instance Information table
-  scheduler.every '30s' do
+  scheduler.in '1m' do
     job_wrapper "Instance Check In" do
       InstanceInformation.check_in
     end
@@ -110,21 +110,32 @@ def execute_scheduler
   end
 
   #Rebuild index to capture any saved schedules
+  # Only queue those jobs that actually need to be run
   scheduler.every("10m") do
     job_wrapper "Search Schedule" do
       if Rails.env == "production"
-        logger.info "#{Time.now}: Rebuilding search schedule jobs "
-        SearchSchedule.all.each {|ss| ss.delay.run_if_needed logger}
+        logger.info "#{Time.now}: Rebuilding search schedule jobs"
+        # Work progressively through the search schedule list instead of all at once to cut down on 
+        # duplicate job queueing across multiple schedulers
+        SearchSchedule.find_in_batches(batch_size: 5) do |schedules|
+          schedules.each {|ss| ss.delay.run_if_needed if ss.needs_to_run?}
+        end
       else
         logger.info "Skipping scheduled job rebuild: Not production"
       end
     end
   end
 
+  # Only queue those jobs that actually need to be run
   scheduler.every("3m") do
     job_wrapper "Schedulable Jobs" do
       if Rails.env == 'production'
-        SchedulableJob.all.each {|sj| sj.delay.run_if_needed logger}
+        logger.info "#{Time.now}: Rebuilding scheduled jobs"
+        # Work progressively through the scheduled job list instead of all at once to cut down on 
+        # duplicate job queueing across multiple schedulers
+        SchedulableJob.find_in_batches(batch_size: 5) do |schedules|
+          schedules.each {|sj| sj.delay.run_if_needed if sj.needs_to_run?}
+        end
       end
     end
   end
