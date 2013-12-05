@@ -80,12 +80,16 @@ module OpenChain
 
     #run the job if it should be run (next scheduled time < now & not already run by another thread)
     def run_if_needed log=nil
-      if self.next_run_time < Time.now.utc
+      if needs_to_run?
         update_count = self.class.where(:id=>self.id,:last_start_time=>self.last_start_time).update_all(["last_start_time = ?",Time.now])
         if update_count == 1
           self.run log
         end
       end
+    end
+
+    def needs_to_run? 
+      self.next_run_time < Time.now.utc
     end
     
     #is a run day set in the file

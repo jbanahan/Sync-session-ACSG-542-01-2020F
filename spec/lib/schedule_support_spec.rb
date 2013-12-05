@@ -28,6 +28,23 @@ describe OpenChain::ScheduleSupport do
       @ss.run_if_needed
     end
   end
+
+  describe "needs_to_run?" do
+    before :each do
+      @ss = Factory(:search_schedule,:last_start_time=>1.year.ago) 
+    end
+
+    it "needs to run if next run time before now" do
+      @ss.stub(:next_run_time).and_return 1.hour.ago.utc
+      expect(@ss.needs_to_run?).to be_true
+    end
+
+    it "does not need to run if next runtime is in the future" do
+      @ss.stub(:next_run_time).and_return 1.hour.from_now.utc
+      expect(@ss.needs_to_run?).to be_false
+    end
+  end
+
   describe "next_run_time" do
     before :each do
       @u = User.new
