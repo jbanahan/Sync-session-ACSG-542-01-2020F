@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module UnderArmour
         collected_rows = []
         CSV.foreach(tmp.path,col_sep:"\t",encoding:"UTF-16LE:UTF-8",quote_char:"\0") do |r|
           next unless self.class.valid_row?(r)
-          my_style = r[1].split('-').first
+          my_style = self.class.get_style r
           if my_style!=last_style
             process_rows collected_rows, user unless collected_rows.empty?
             collected_rows = []
@@ -48,11 +48,11 @@ module OpenChain; module CustomHandler; module UnderArmour
 
     def process_rows array_of_rows, user
       first_row = array_of_rows.first
-      style = first_row[1].split('-').first
+      style = self.class.get_style first_row
       desc = first_row[9].strip
       p = Product.where(unique_identifier:style).first_or_create!
       p.load_custom_values
-      write_aggregate_values! p.get_custom_value(@cdefs[:colors]), array_of_rows, lambda {|r| r[1].split('-').last}
+      write_aggregate_values! p.get_custom_value(@cdefs[:colors]), array_of_rows, lambda {|r| self.class.get_color r}
       write_aggregate_values! p.get_custom_value(@cdefs[:plant_codes]), array_of_rows, lambda {|r| r[2].blank? ? '' : self.class.prep_plant_code(r[2])}
       write_aggregate_values! p.get_custom_value(@cdefs[:import_countries]), array_of_rows, lambda {|r| 
         k = r[2]
@@ -62,6 +62,15 @@ module OpenChain; module CustomHandler; module UnderArmour
       p.name = desc
       p.save!
       p.create_snapshot user
+      self.class.write_material_color_plant_xrefs array_of_rows
+    end
+
+    def self.get_style row
+      row[1].split('-').first
+    end
+
+    def self.get_color row
+      row[1].split('-').last
     end
 
     def self.valid_style? style
@@ -100,6 +109,15 @@ module OpenChain; module CustomHandler; module UnderArmour
         s = "0#{s}"
       end
       s
+    end
+
+    def self.write_material_color_plant_xrefs rows 
+      rows.each do |r|
+        s = get_style r
+        c = get_color r
+        p = prep_plant_code r[2]
+        DataCrossReference.create_ua_material_color_plant! s, c, p
+      end
     end
 
     private

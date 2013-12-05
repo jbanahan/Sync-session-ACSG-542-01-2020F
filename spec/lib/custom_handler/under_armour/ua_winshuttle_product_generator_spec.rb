@@ -26,6 +26,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
   describe :sync do
     before :each do
       @plant_cd = described_class.prep_custom_definitions([:plant_codes])[:plant_codes]
+      @colors_cd = described_class.prep_custom_definitions([:colors])[:colors]
       DataCrossReference.load_cross_references StringIO.new("0010,US\n0011,CA\n0012,CN"), DataCrossReference::UA_PLANT_TO_ISO
       @ca = Factory(:country,iso_code:'CA')
       @us = Factory(:country,iso_code:'US')
@@ -36,6 +37,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       #prepping data
       p = Factory(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
+      p.update_custom_value! @colors_cd, '001'
+      DataCrossReference.stub(:find_ua_material_color_plant).and_return('1')
       Factory(:tariff_record,hts_1:"12345678",classification:Factory(:classification,country_id:@us.id,product:p))
       rows = []
       described_class.new.sync {|row| rows << row}
@@ -51,6 +54,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
     it "should match plant to country" do
       p = Factory(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
+      p.update_custom_value! @colors_cd, '001'
+      DataCrossReference.stub(:find_ua_material_color_plant).and_return('1')
       [@ca,@us,@cn,@mx].each do |c|
         #create a classification with tariff for all countries
         Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
@@ -60,7 +65,28 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       rows.size.should == 3
       [rows[1],rows[2]].each do |r|
         r[0].should be_blank
-        r[1].should == p.unique_identifier
+        r[1].should == "#{p.unique_identifier}-001"
+        ['0010','0011'].include?(r[2]).should be_true
+        r[3].should == "#{r[2]=='0010' ? @us.id: @ca.id}12345678".hts_format
+      end
+    end
+    it "should write color codes that are in the xref" do
+      p = Factory(:product)
+      p.update_custom_value! @plant_cd, "0010\n0011"
+      p.update_custom_value! @colors_cd, "001\n002"
+      DataCrossReference.create_ua_material_color_plant! p.unique_identifier, '001', '0010'
+      DataCrossReference.create_ua_material_color_plant! p.unique_identifier, '002', '0011'
+      [@ca,@us].each do |c|
+        #create a classification with tariff for relevant countries
+        Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
+      end
+      rows = []
+      described_class.new.sync {|row| rows << row}
+      rows.size.should == 3
+      [rows[1],rows[2]].each do |r|
+        r.should have(4).elements
+        r[0].should be_blank
+        r[1].should == "#{p.unique_identifier}-#{r[2]=='0010' ? '001' : '002'}"
         ['0010','0011'].include?(r[2]).should be_true
         r[3].should == "#{r[2]=='0010' ? @us.id: @ca.id}12345678".hts_format
       end
@@ -68,6 +94,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
     it "should write headers" do
       p = Factory(:product)
       p.update_custom_value! @plant_cd, "0010"
+      p.update_custom_value! @colors_cd, '001'
+      DataCrossReference.stub(:find_ua_material_color_plant).and_return('1')
       Factory(:tariff_record,hts_1:"12345678",classification:Factory(:classification,country_id:@us.id,product:p))
       rows = []
       described_class.new.sync {|row| rows << row}
@@ -80,6 +108,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
     it "should only send changed tariff codes since the last send" do
       p = Factory(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
+      p.update_custom_value! @colors_cd, '001'
+      DataCrossReference.stub(:find_ua_material_color_plant).and_return('1')
       [@ca,@us].each do |c|
         #create a classification with tariff for all countries
         Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
@@ -95,7 +125,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       rows.size.should == 2
       r = rows.last
       r[0].should be_blank
-      r[1].should == p.unique_identifier
+      r[1].should == "#{p.unique_identifier}-001"
       r[2].should == '0011'
       r[3].should == '987654321'.hts_format
     end
