@@ -211,7 +211,7 @@ var OpenChain = (function() {
             if(hts.use_count > 0) {
               html += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>";
             }
-            html += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-mini' iso='"+iso+"' hts='"+hts.code+"'>info</a>";
+            html += "&nbsp;<a href='#' class='lnk_tariff_popup btn-default btn btn-xs' iso='"+iso+"' hts='"+hts.code+"'>info</a>";
             html += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />";
           }
           $("div.auto_class_results.class_col_"+column+".cntry_"+iso).html(html);

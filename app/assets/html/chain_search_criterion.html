@@ -3,7 +3,7 @@
     {{crit.label}}
   </div>
   <div class='col-md-3'>
-    <select style="width:auto;" ng-model='crit.operator' ng-options='o.operator as o.label for o in operators[crit.datatype]'>
+    <select class='form-control' ng-model='crit.operator' ng-options='o.operator as o.label for o in operators[crit.datatype]'>
     </select>
   </div>
   <div class='col-md-3'>
@@ -14,7 +14,7 @@
       <input type='checkbox' ng-model='crit.include_empty'/> Include Empty
     </div>
     <div>
-      <button ng-click='remove(crit)' class='btn'>Remove</button>
+      <button ng-click='remove(crit)' class='btn btn-default'>Remove</button>
     </div>
   </div>
 </div>

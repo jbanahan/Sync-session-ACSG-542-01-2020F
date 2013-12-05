@@ -23,7 +23,7 @@
         <tbody>
           <%-@schedulable_jobs.each do |sj|-%>
           <tr class='hover'>
-            <td><%=link_to 'Edit', edit_schedulable_job_path(sj), {class:'btn btn-mini'}%></td>
+            <td><%=link_to 'Edit', edit_schedulable_job_path(sj), {class:'btn btn-xs'}%></td>
             <td><%=sj.run_class%></td>
             <td><%=sj.run_hour%>:<%=sj.run_minute%> <%=sj.time_zone_name%></td>
             <td>

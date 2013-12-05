@@ -209,9 +209,14 @@
             </ul>
             <form class='navbar-form navbar-right' role='search' action='/quick_search' method='GET'>
               <div class='form-group'>
-                <input type='text' class='search-query form-control' placeholder='Search shortcut = /' name='v' id='quick_search_input' /> 
+                <input type='text' class='search-query form-control' placeholder='enter search term' data-toggle='tooltip' title='press / to jump here' name='v' id='quick_search_input' /> 
               </div>
             </form>
+            <ul class="nav navbar-nav navbar-right">
+              <li>
+                <a href='/messages/'><span class='label label-primary' id='message_envelope'></span></a>
+              </li>
+            </ul>
           </div>
         </div>
       <% end -%>

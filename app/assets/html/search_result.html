@@ -29,7 +29,7 @@
       <form class='navbar-form pull-right btn-group' ng-hide='noChrome'>
         <button class='btn btn-default' ng-show='searchResult.page>1' ng-click='firstPage()'>&lt;&lt;</button>
         <button class='btn btn-default' ng-show='searchResult.page>1' ng-click='previousPage()'>&lt;</button>
-        <select class='btn btn-default input-mini' ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
+        <select class='btn btn-default' ng-model='searchResult.page' ng-options='n for n in pageNumberArray()'>
         </select>
         <button class='btn btn-default' ng-show='searchResult.page<searchResult.total_pages' ng-click='nextPage()'>&gt;</button></li>
         <button class='btn btn-default' ng-show='searchResult.page<searchResult.total_pages' ng-click='lastPage()'>&gt;&gt;</button></li>
@@ -56,7 +56,7 @@
             <td class='action_cell min_width'>
               <div class='btn-group' ng-show='newObjectRow($index)'>
                 <span ng-repeat='l in row.links'>
-                  <a class='btn btn-sm btn-link' href='{{l.url}}'>{{l.label}}</a>
+                  <a class='btn btn-sm btn-default' href='{{l.url}}'>{{l.label}}</a>
                 </span>
               </div>
             </td>

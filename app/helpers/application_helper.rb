@@ -83,6 +83,8 @@ module ApplicationHelper
 
   #build a select box with all model_fields grouped by module.
   def select_model_fields_tag(name,selected,opts={})
+    opts[:class] ||= ''
+    opts[:class] << ' form-control'
     select_tag name, grouped_options_for_select(CoreModule.grouped_options,selected,"Select a Field"), opts
   end
 
@@ -177,7 +179,7 @@ module ApplicationHelper
           when 'boolean'
             field = hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:title=>"#{d.tool_tip}",:class=>"cv_chkbx #{field_tip_class} #{data_type_class(mf)}", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
           when 'text'
-            field = model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{field_tip_class} #{data_type_class(mf)}",:rows=>5, :cols=>24})
+            field = model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{field_tip_class} #{data_type_class(mf)}",:rows=>5})
           else
             field = model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{data_type_class(mf)} #{field_tip_class}", :size=>"30"})
           end
@@ -192,7 +194,7 @@ module ApplicationHelper
           when 'boolean'
             z << hidden_field_tag(name,c_val,:id=>"hdn_"+name.gsub(/[\[\]]/, '_')) + check_box_tag('ignore_me', "1", c_val, {:title=>"#{d.tool_tip}",:class=>"cv_chkbx #{field_tip_class} #{data_type_class(mf)}", :id=>"cbx_"+name.gsub(/[\[\]]/, '_')})
           when 'text'
-            z << model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{field_tip_class} #{data_type_class(mf)}",:rows=>5, :cols=>24})
+            z << model_text_area_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{field_tip_class} #{data_type_class(mf)}",:rows=>5})
           else
             z << model_text_field_tag(name, d.model_field_uid, c_val, {:title=>"#{d.tool_tip}", :class=>"#{d.date? ? "isdate" : ""} #{field_tip_class}"})
           end
@@ -254,14 +256,14 @@ module ApplicationHelper
   def show_tariff hts_number, country_id, with_popup_link=true
     return "" if hts_number.blank?
     if with_popup_link
-      content_tag :span, (hts_number.hts_format + " " + link_to('info', "#", {:class=>'lnk_tariff_popup btn btn-xs btn-link',:hts=>hts_number,:country=>country_id})).html_safe
+      content_tag :span, (hts_number.hts_format + " " + tariff_more_info(hts_number,country_id)).html_safe
     else
       return hts_number.hts_format
     end
   end
 
   def tariff_more_info hts_number, country_id
-    link_to "info", "#", {:class=>'lnk_tariff_popup btn btn-link btn-xs',:hts=>hts_number,:country=>country_id}
+    link_to "info", "#", {:class=>'lnk_tariff_popup btn btn-xs btn-default',:hts=>hts_number,:country=>country_id}
   end
 
   def secure_link obj, user
@@ -287,7 +289,7 @@ module ApplicationHelper
   end
 
   def opts_for_model_text_field model_field_uid, opts
-    inner_opts = {:class=>val_class(model_field_uid),:mf_id=>model_field_uid}
+    inner_opts = {:class=>"form-control #{val_class(model_field_uid)}",:mf_id=>model_field_uid}
     passed_class = opts.delete(:class)
     inner_opts[:class] << " " << passed_class unless passed_class.blank?
     inner_opts.merge! opts

@@ -57,15 +57,15 @@
       <div ng-repeat='ch in chapters'>
         <div class='row'>
           <div class='col-md-12'>
-            <button class='btn btn-mini ' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
-            <button class='btn btn-mini ' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
+            <button class='btn btn-xs ' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
+            <button class='btn btn-xs ' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
             {{ch.num}}. {{ch.name}} 
           </div>
           <div ng-repeat='h in ch.headings'>
             <div class='row'>
               <div class='col-md-10 col-md-offset-1'>
-                <button class='btn btn-mini ' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
-                <button class='btn btn-mini ' ng-show='h.sub_headings.length>0' ng-click='h.sub_headings = []'>-</button>
+                <button class='btn btn-xs ' ng-hide='h.sub_headings.length>0' ng-click='loadHeading(country,ch,h)'>+</button>
+                <button class='btn btn-xs ' ng-show='h.sub_headings.length>0' ng-click='h.sub_headings = []'>-</button>
                 {{h.num}}. {{h.name}}
               </div>
             </div>

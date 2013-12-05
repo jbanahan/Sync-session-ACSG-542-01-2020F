@@ -113,6 +113,10 @@ td.drag_handle {
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
 }
+div.row.bootstrap-hover {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
 .hover:hover {
     background-color: #1eb816;
     color: #FFFFFF;
@@ -151,9 +155,8 @@ td.drag_handle {
     background-color: #707070;
     cursor: pointer;
 }
-input, textarea, select {
+select {
     background: #FFFFFF;
-    border: 1px solid #707070;
 }
 input[type="checkbox"] {
   padding: 0px;
@@ -275,12 +278,6 @@ p {
 	font-weight: bold;
   width: 15em;
   padding-bottom: 5px;
-}
-.field_row select {
-  width: 15em;
-}
-.field_row textarea {
-  width: 14.7em;
 }
 /* Comments boxes */
 
@@ -410,9 +407,6 @@ p {
   text-align: right;
   float: right;
   display: inline;
-}
-.tf_line_number {
-  width: 2em;
 }
 .hts_field {
   width: 8em;

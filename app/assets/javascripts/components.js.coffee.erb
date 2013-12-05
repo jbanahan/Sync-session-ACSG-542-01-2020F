@@ -249,7 +249,7 @@
             scope.chainDatePicker = text
         showOn: 'button'
         }
-      ).next(".ui-datepicker-trigger").addClass("btn")
+      ).next(".ui-datepicker-trigger").addClass("btn btn-default")
       #add watch to update
       deregister = scope.$watch 'chainDatePicker', (newVal) ->
         el.find('input').val(newVal)
@@ -300,21 +300,21 @@
       $scope.renderTextInput = (opr) ->
         switch opr
           when "in", "notin"
-            return "<textarea rows='8' ng-model='crit.value' /><div><small class='muted'>Enter one value per line.</small></div>"
+            return "<textarea rows='8' ng-model='crit.value' class='form-control'/><div><small class='muted'>Enter one value per line.</small></div>"
           when "null", "notnull"
             return ""
 
-        return "<input type='text' ng-model='crit.value' />"
+        return "<input type='text' ng-model='crit.value' class='form-control' />"
 
       $scope.renderInput = (rScope, el) ->
         dateStepper = false #true means apply jStepper to a relative date field
-        v_str = "<input type='text' ng-model='crit.value' />"
+        v_str = "<input type='text' ng-model='crit.value' class='form-control' />"
         switch rScope.crit.datatype
           when "string", "integer", "fixnum", "decimal"
             v_str = rScope.renderTextInput rScope.crit.operator
           when "date", "datetime"
             if chainSearchOperators.isRelative rScope.crit.datatype, rScope.crit.operator
-              v_str = "<input type='text' ng-model='crit.value' />"
+              v_str = "<input type='text' ng-model='crit.value' class='form-control' />"
               dateStepper = true
             else if rScope.modelFields && chainSearchOperators.isFieldRelative rScope.crit.datatype, rScope.crit.operator
               # Angular doesn't appear to have a way to select the first option from the select box as a default, so using a new scope
@@ -323,13 +323,13 @@
               if rScope.matchingModelFields.length > 0 && !rScope.findByMfid(rScope.matchingModelFields, rScope.crit.value)
                 rScope.crit.value = rScope.matchingModelFields[0].mfid
 
-              v_str = "<select ng-model='crit.value' ng-options='f.mfid as f.label for f in matchingModelFields'></select>"
+              v_str = "<select ng-model='crit.value' ng-options='f.mfid as f.label for f in matchingModelFields' class='form-control'></select>"
             else
               v_str = "<div style='display:inline;' chain-date-picker='crit.value'></div>"
           when "boolean"
             v_str = ""
           when "text"
-            v_str = "<textarea ng-model='crit.value' />"
+            v_str = "<textarea ng-model='crit.value' class='form-control' />"
 
         v = $compile(v_str)(rScope)
         va = $(el).find(".value_area")

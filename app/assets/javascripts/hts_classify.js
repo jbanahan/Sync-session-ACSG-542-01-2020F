@@ -40,7 +40,7 @@ var Classify = (function() {
           sb = data[i].official_schedule_b_code
           h += "<div class='sched_b_opt'><a href='#' class='sched_b_option'>"+sb.hts_code+"</a><br />";
           h += sb.short_description+"<br />";
-          h += "<a href='#' class='lnk_schedb_popup btn btn-mini' schedb='"+sb.hts_code+"'>info</a>";
+          h += "<a href='#' class='lnk_schedb_popup btn btn-xs btn-default' schedb='"+sb.hts_code+"'>info</a>";
         }
         to_write.html(h);
         $(document).on('click',"a.sched_b_option",function(ev) {
@@ -122,7 +122,7 @@ var Classify = (function() {
       if(data) {
         t = data.official_schedule_b_code;
         h = t.short_description+"<br />"
-        h += "<a href='#' class='lnk_schedb_popup btn btn-mini' schedb='"+t.hts_code+"'>info</a>";
+        h += "<a href='#' class='lnk_schedb_popup btn btn-default btn-xs' schedb='"+t.hts_code+"'>info</a>";
       }
       return h;
     }
@@ -160,7 +160,7 @@ var Classify = (function() {
         if(t.export_regulations) {
           h+="Export Regulations: "+t.export_regulations+"<br />";
         }
-        h+="<a href='#' class='lnk_tariff_popup btn btn-mini' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
+        h+="<a href='#' class='lnk_tariff_popup btn-default btn btn-xs' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
       }
       return h;
     }

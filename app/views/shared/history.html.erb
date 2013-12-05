@@ -18,9 +18,9 @@
   </thead>
   <tbody class="table-hover">
     <%@base_object.sync_records.each do |sr|-%>
-    <tr class='<%=sr.problem? ? 'error' : sr.sent_at.nil? ? 'warning' : 'success' %>'>
+    <tr class='<%=sr.problem? ? 'danger' : sr.sent_at.nil? ? 'warning' : 'success' %>'>
       <td><%=form_for sr, :url=>resend_sync_record_path(sr), :method=>:post do |f| %>
-          <%=sr.sent_at.nil? ? "Awaiting Sync" : "<button class='btn btn-mini'>Resend</button>".html_safe%>
+          <%=sr.sent_at.nil? ? "Awaiting Sync" : "<button class='btn btn-xs'>Resend</button>".html_safe%>
           <% end %>
       </td>
       <td><%=sr.trading_partner%></td>
