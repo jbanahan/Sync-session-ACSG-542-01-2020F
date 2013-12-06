@@ -19,11 +19,13 @@
       <ul class='nav navbar-nav'>
         <li>
           <span ng-transclude></span>
-          <span ng-repeat='b in searchResult.bulk_actions'>
+          <span ng-repeat='b in searchResult.bulk_actions' ng-show='bulkSelected.length > 0'>
             <button class='btn navbar-btn btn-default' ng-click='executeBulkAction(b)'>{{b.label}}</button>
           </span>
-          <button ng-hide='allSelected' ng-click='selectAll()' class='btn navbar-btn btn-default'>Select All ({{searchResult.total_objects}})</button>
-          <button ng-click='selectNone()' class='btn navbar-btn btn-default'>Clear</button>
+          <span ng-show='bulkSelected.length>0 || allSelected'>
+            <button ng-hide='allSelected' ng-click='selectAll()' class='btn navbar-btn btn-default'>Select All ({{searchResult.total_objects}})</button>
+            <button ng-click='selectNone()' class='btn navbar-btn btn-default'>Clear</button>
+          </span>
         </li>
       </ul>
       <form class='navbar-form pull-right btn-group' ng-hide='noChrome'>
