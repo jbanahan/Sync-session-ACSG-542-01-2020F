@@ -74,6 +74,12 @@ describe DrawbackUploadFile do
       OpenChain::CustomHandler::JCrewShipmentParser.should_receive(:parse_merged_entry_file).with('tmppath').and_return('abc')
       d.process(@user).should == 'abc'
     end
+    it "should route J Crew Canada Export file" do
+      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"JCREW")
+      d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_JCREW_CANADA_EXPORTS)
+      OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser.should_receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
+      d.process(@user).should == 'abc'
+    end
     it "should route Lands End Export file" do
       imp = Factory(:company,:importer=>true,:alliance_customer_number=>"LANDS")
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_EXPORTS)

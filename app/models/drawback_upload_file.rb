@@ -3,6 +3,7 @@ require 'open_chain/ohl_drawback_parser'
 require 'open_chain/custom_handler/under_armour/under_armour_drawback_processor'
 require 'open_chain/custom_handler/under_armour/under_armour_export_parser'
 require 'open_chain/custom_handler/j_crew_shipment_parser'
+require 'open_chain/custom_handler/j_crew/j_crew_drawback_export_parser'
 require 'open_chain/lands_end_export_parser'
 require 'open_chain/custom_handler/lands_end/le_drawback_import_parser'
 require 'open_chain/custom_handler/lands_end/le_drawback_cd_parser'
@@ -12,16 +13,17 @@ require 'open_chain/custom_handler/crocs/crocs_receiving_parser'
 
 #file uploaded from web to be processed to create drawback data
 class DrawbackUploadFile < ActiveRecord::Base
-  PROCESSOR_UA_WM_IMPORTS = 'ua_wm_imports'
-  PROCESSOR_UA_DDB_EXPORTS = 'ua_ddb_exports'
-  PROCESSOR_UA_FMI_EXPORTS = 'ua_fmi_exports'
-  PROCESSOR_OHL_ENTRY = 'ohl_entry'
-  PROCESSOR_JCREW_SHIPMENTS = 'j_crew_shipments'
-  PROCESSOR_LANDS_END_EXPORTS = 'lands_end_exports'
-  PROCESSOR_LANDS_END_IMPORTS = 'lands_end_imports'
-  PROCESSOR_LANDS_END_CD = 'lands_end_cd'
-  PROCESSOR_CROCS_EXPORTS = 'crocs_exports'
-  PROCESSOR_CROCS_RECEIVING = 'crocs_receiving'
+  PROCESSOR_UA_WM_IMPORTS ||= 'ua_wm_imports'
+  PROCESSOR_UA_DDB_EXPORTS ||= 'ua_ddb_exports'
+  PROCESSOR_UA_FMI_EXPORTS ||= 'ua_fmi_exports'
+  PROCESSOR_OHL_ENTRY ||= 'ohl_entry'
+  PROCESSOR_JCREW_SHIPMENTS ||= 'j_crew_shipments'
+  PROCESSOR_JCREW_CANADA_EXPORTS ||= 'j_crew_canada'
+  PROCESSOR_LANDS_END_EXPORTS ||= 'lands_end_exports'
+  PROCESSOR_LANDS_END_IMPORTS ||= 'lands_end_imports'
+  PROCESSOR_LANDS_END_CD ||= 'lands_end_cd'
+  PROCESSOR_CROCS_EXPORTS ||= 'crocs_exports'
+  PROCESSOR_CROCS_RECEIVING ||= 'crocs_receiving'
   has_one :attachment, :as=>:attachable
 
   accepts_nested_attributes_for :attachment, :reject_if => lambda {|q|
@@ -49,6 +51,7 @@ class DrawbackUploadFile < ActiveRecord::Base
       PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_csv_file tempfile.path, Company.find_by_importer(true)},
       PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
       PROCESSOR_JCREW_SHIPMENTS => lambda {OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path},
+      PROCESSOR_JCREW_CANADA_EXPORTS => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("JCREW")},
       PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")},
       PROCESSOR_LANDS_END_IMPORTS => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},
       PROCESSOR_LANDS_END_CD => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},

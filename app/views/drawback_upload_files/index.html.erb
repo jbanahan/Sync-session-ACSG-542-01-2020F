@@ -57,9 +57,16 @@
         <%end-%>
         <%if MasterSetup.get.custom_feature?("J Crew Drawback")-%>
         <div class='tab-pane' id='j_crew'>
-          <h3>PO Correlation File (last 10)</h3>
-          <p><em>.csv file from Frank Genus @ J Crew</em></p>
-          <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS}%>
+          <div class='well'>
+            <h3>PO Correlation File (last 10)</h3>
+            <p><em>.csv file from Frank Genus @ J Crew</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS}%>
+          </div>
+          <div class='well'>
+            <h3>Canada Export File (last 10)</h3>
+            <p><em>167 column .csv file from Arvind @ J Crew</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_CANADA_EXPORTS}%>
+          </div>
         </div>
         <%end-%>
         <%if MasterSetup.get.custom_feature?("UA Drawback")-%>
