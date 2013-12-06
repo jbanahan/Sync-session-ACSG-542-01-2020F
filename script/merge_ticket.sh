@@ -14,6 +14,7 @@ set -e
 # with a good exit code.
 
 git checkout $2
+git pull origin $2
 git merge $1
 git push origin $2
 git branch -d $1
