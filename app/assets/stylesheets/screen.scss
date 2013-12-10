@@ -214,35 +214,6 @@ p {
     padding: 10px;
     margin: 0;
 }
-/* Drag Lists */
-.drag_lists td {
-    vertical-align: top;
-}
-
-  
-.drag_lists li {
-    margin: 0 5px 5px 5px;
-    padding: 5px;
-    cursor: move;
-}
-.drag_lists ul {
-    list-style-type: none;
-    margin: 0;
-    float: left;
-    margin-right: 10px;
-    border: 1px solid #707070;
-    padding:5px;
-    width: 145px;
-}
-.drag_lists th {
-    background-color: #707070;
-}
-.drag_lists_inactive_col li {
-    border: 1px solid #666666;
-}
-.drag_lists_active_col li {
-    border: 1px solid #707070;
-}
 /* jquery toolkit (flowplayer.org) */
 /* simple css-based tooltip */
 .tooltip {
@@ -500,80 +471,6 @@ p {
 #tools_menu {
   width: 200px;
   left: -200px;
-}
-
-/* 
-  LEVEL ONE
-*/
-.dropdown {
-  font-size: 12px;
-}
-ul.dropdown                         { 
-  list-style: none;
-  padding: 0;
-  background-color: black;
-  color: white;
-  margin: 0;
-}
-ul.dropdown li                      { 
-  font-weight: bold; 
-  float: left; 
-  zoom: 1;
-  background-color: black;
-  color: white;
-}
-ul.dropdown li a                    { 
-  display: block; 
-  padding: 4px 8px;
-  border-right: 1px solid #333;
-  text-decoration: none;
-  color: white;
-  font-weight: normal;
-}
-ul.dropdown li:last-child a         { border-right: none; } /* Doesn't work in IE */
-ul.dropdown li.hover,
-ul.dropdown li:hover                { position: relative; }
-
-
-/* 
-  LEVEL TWO
-*/
-ul.dropdown ul            { 
-  /*width: 220px; */
-  visibility: hidden; 
-  position: absolute; 
-  top: 100%; 
-  left: -40px; 
-  /*margin-left: -40px;*/
-  list-style: none;
-}
-ul.dropdown ul li           { 
-  font-weight: normal; 
-  border-bottom: 1px solid #ccc; 
-  float: none; 
-}
-                    
-                                    /* IE 6 & 7 Needs Inline Block */
-ul.dropdown ul li a         { 
-  border-right: none; 
-  width: 100%; 
-  display: inline-block; 
-} 
-
-
-/* 
-  LEVEL THREE
-*/
-ul.dropdown ul ul           { left: 100%; top: 0; 
-  list-style: none;
-}
-ul.dropdown li:hover > ul       { visibility: visible; }
-
-.sub_menu {
-  z-index: 800;
-}
-.sub_menu li a{
-  color: white;
 }
 
 
