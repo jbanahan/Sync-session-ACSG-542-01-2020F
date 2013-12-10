@@ -1,6 +1,29 @@
 require 'spec_helper'
 
 describe Product do
+  describe :validate_tariff_numbers do
+    it "should pass" do
+      ot = Factory(:official_tariff)
+      p = Product.new
+      p.classifications.build(country:ot.country).tariff_records.build(hts_1:ot.hts_code)
+      p.validate_tariff_numbers
+      p.errors[:base].should be_empty
+    end
+    it "should pass if not tariffs for country in OfficialTariff" do
+      c = Factory(:country)
+      p = Product.new
+      p.classifications.build(country:c).tariff_records.build(hts_1:'123')
+      p.validate_tariff_numbers
+      p.errors[:base].should be_empty
+    end
+    it "should fail if tariff doesn't exist" do
+      ot = Factory(:official_tariff)
+      p = Product.new
+      p.classifications.build(country:ot.country).tariff_records.build(hts_1:"#{ot.hts_code}9")
+      p.validate_tariff_numbers
+      p.errors[:base].first.should == "Tariff number #{ot.hts_code}9 is invalid for #{ot.country.iso_code}"
+    end
+  end
   context "saved classifications exist" do
     before :each do
       @p = Factory(:product)

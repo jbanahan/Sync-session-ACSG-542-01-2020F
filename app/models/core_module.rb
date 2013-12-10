@@ -12,6 +12,7 @@ class CoreModule
       :changed_at_parents_lambda, #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers,
       :object_from_piece_set_lambda, #lambda returning the appropriate object for this module based on the given PieceSet (or nil)
       :entity_json_lambda, #lambda return hash suitable for conversion into json containing all model fields
+      :business_logic_validations, #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
       :enabled_lambda, #is the module enabled in master setup
       :key_model_field_uids #the uids represented by this array of model_field_uids can be used to find a unique record in the database
   attr_accessor :default_module_chain #default module chain for searches, needs to be read/write because all CoreModules need to be initialized before setting
@@ -26,6 +27,7 @@ class CoreModule
           end
           ss
         },
+        :business_logic_validations => lambda {|base_object| true},
         :bulk_actions_lambda => lambda {|current_user| return Hash.new},
         :changed_at_parents_lambda => lambda {|base_object| []},
         :show_field_prefix => false,
@@ -74,9 +76,14 @@ class CoreModule
     @unique_id_field_name = o[:unique_id_field_name]
     @object_from_piece_set_lambda = o[:object_from_piece_set_lambda]
     @enabled_lambda = o[:enabled_lambda]
+    @business_logic_validations = o[:business_logic_validations]
     @key_model_field_uids = o[:key_model_field_uids]
   end
   
+  #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
+  def validate_business_logic base_object
+    @business_logic_validations.call(base_object)
+  end
   #returns the appropriate object for the core module based on the piece set given
   def object_from_piece_set piece_set
     @object_from_piece_set_lambda.call piece_set
@@ -307,6 +314,11 @@ class CoreModule
         bulk_actions
       },
       :changed_at_parents_lambda=>lambda {|p| [p]},#only update self
+      :business_logic_validations=>lambda {|p|
+        c = p.errors[:base].size
+        p.validate_tariff_numbers
+        c==p.errors[:base].size
+      },
       :unique_id_field_name=>:prod_uid,
       :key_model_field_uids => [:prod_uid]
   })

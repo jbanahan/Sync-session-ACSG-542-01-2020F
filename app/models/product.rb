@@ -140,6 +140,19 @@ class Product < ActiveRecord::Base
     end
   end
 
+  # validate all tariff numbers against official tariff and add errors to error[:base]
+  def validate_tariff_numbers
+    self.classifications.each do |cls|
+      country = cls.country
+      next if country.official_tariffs.empty? #skip if we don't have the database loaded for this country
+      cls.tariff_records.each do |tr|
+        self.errors[:base] << "Tariff number #{tr.hts_1} is invalid for #{country.iso_code}" if !tr.hts_1.blank? && !tr.hts_1_official_tariff 
+        self.errors[:base] << "Tariff number #{tr.hts_2} is invalid for #{country.iso_code}" if !tr.hts_2.blank? && !tr.hts_2_official_tariff 
+        self.errors[:base] << "Tariff number #{tr.hts_3} is invalid for #{country.iso_code}" if !tr.hts_3.blank? && !tr.hts_3_official_tariff 
+      end
+    end
+  end
+
   private
 
   def default_division

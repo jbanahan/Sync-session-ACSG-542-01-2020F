@@ -16,6 +16,23 @@ describe CoreModule do
       CoreModule::PRODUCT.default_module_chain.top?(CoreModule::SHIPMENT).should be_false
     end
   end
+  describe :validate_business_logic do
+    it "should validate business logic" do
+      p = Product.new
+      x = double('my validation')
+      x.should_receive(:validation_call).with(p)
+      l = lambda {|obj| x.validation_call(obj)}
+      cm = CoreModule.new('Product','Product',{business_logic_validations:l})
+      cm.validate_business_logic p
+    end
+    it "should call Product.validate_tariff_numbers" do
+      ot = Factory(:official_tariff)
+      p = Product.new
+      p.classifications.build(country:ot.country).tariff_records.build(hts_1:"#{ot.hts_code}X")
+      CoreModule::PRODUCT.validate_business_logic(p).should be_false
+      p.errors[:base].first.should == "Tariff number #{ot.hts_code}X is invalid for #{ot.country.iso_code}"
+    end
+  end
   describe 'key_columns' do
     it 'should return for entry' do
       uids = CoreModule::ENTRY.key_model_field_uids
