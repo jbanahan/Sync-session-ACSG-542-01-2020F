@@ -91,7 +91,7 @@ def execute_scheduler
   end
 
   #check in for Instance Information table
-  scheduler.in '1m' do
+  scheduler.in '24h' do
     job_wrapper "Instance Check In" do
       InstanceInformation.check_in
     end
