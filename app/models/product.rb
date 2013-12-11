@@ -158,47 +158,6 @@ class Product < ActiveRecord::Base
   def default_division
     self.division = Division.first if self.division.nil? && self.division_id.nil?
   end
-
-  def self.batch_bulk_update(user, parameters = {}, options = {})
-    original_user = User.current
-    messages = {}
-    begin
-      User.current = user #needed because validate_and_save_module expects User.current to be set but it won't be if coming from Delayed_job.
-      update_errors = []
-      success_count = 0
-      OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT, parameters[:sr_id], parameters[:pk]) do |gc, p|
-        good_count = gc if good_count.nil?
-        if p.can_edit?(user)
-          success = lambda {|o| success_count += 1}
-          failure = lambda {|o, errors|
-            errors.full_messages.each {|m| update_errors << "Error updating product #{o.unique_identifier}: #{m}"}
-          }
-          before_validate = lambda {|o| OpenChain::CoreModuleProcessor.update_status o}
-          OpenChain::CoreModuleProcessor.validate_and_save_module parameters, p, parameters[:product], success, failure, :before_validate=>before_validate
-        else
-          update_errors << "You do not have permission to edit product #{p.unique_identifier}."
-        end
-      end
-
-      subject = body = ""
-      if update_errors.empty?
-        subject = body = "Product update complete - #{ApplicationController::Helper.instance.pluralize success_count, CoreModule::PRODUCT.label.downcase}."
-      else
-        # Create message for errors (without the upcase passing "ERROR" to pluralize results in "ERRORs")
-        subject = "Product update complete - #{(ApplicationController::Helper.instance.pluralize update_errors.length, "error").upcase}."
-        body = update_errors.join("\n")
-      end
-        
-      messages[:errors] = update_errors if update_errors.length > 0
-      messages[:message] = subject
-
-      Message.create(:user=>user, :subject=>subject, :body=>body) unless options[:no_email]
-    ensure
-      User.current = original_user #put the user back to what it was
-    end
-
-    messages
-  end
   
   def company_permission? user
     self.importer_id==user.company_id || self.vendor_id == user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer) || user.company.linked_companies.include?(self.vendor)

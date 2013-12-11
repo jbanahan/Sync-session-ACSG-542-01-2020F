@@ -11,6 +11,7 @@ class ProductsController < ApplicationController
 	end
 
   def index
+    flash.keep
     redirect_to advanced_search CoreModule::PRODUCT, params[:force_search]
   end
 
@@ -132,7 +133,6 @@ class ProductsController < ApplicationController
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new
-    OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
     json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
   end
 
@@ -143,23 +143,16 @@ class ProductsController < ApplicationController
       params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?} if params[:product_cf]
       params.delete :utf8
       if run_delayed params
-        Product.delay.batch_bulk_update(current_user, params) if current_user.edit_products?
-        # classification params will be missing if the user didn't enter anything in the classification fields on the screen
-        OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id if current_user.edit_classifications? && !params['product']['classifications_attributes'].nil?
-        add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
+        if current_user.edit_products? || current_user.edit_classifications?
+          OpenChain::BulkUpdateClassification.delay.go_serializable params.to_json, current_user.id
+          add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
+        end 
       else
-        messages = Product.batch_bulk_update(current_user, params, :no_email => true) if current_user.edit_products?
-        # classification params will be missing if the user didn't enter anything in the classification fields on the screen
-        cls_messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true if current_user.edit_classifications? && !params['product']['classifications_attributes'].nil?
+        messages = OpenChain::BulkUpdateClassification.go params, current_user, :no_user_message => true
         # Show the user the update message and any errors if there were some
-        if messages && messages[:message]
-          add_flash :notices, messages[:message]
-        elsif cls_messages && cls_messages[:message]
-          add_flash :notices, cls_messages[:message]
-        end
-        [messages,cls_messages].each do |hsh|
-          hsh[:errors].each {|e| add_flash(:errors, e)} if hsh && hsh[:errors]
-        end
+        add_flash :notices, messages[:message] if messages[:message]
+        messages[:errors].each {|e| add_flash :errors, e}
+
       end
       redirect_to products_path
     }

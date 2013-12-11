@@ -28,6 +28,6 @@ $(function() {
   <% end %>
   <%=field_row field_label(:prod_uom), model_text_field(form_obj,:unit_of_measure,:prod_uom,:id=>'txt_uom')%>
   <%=field_row field_label(:prod_div_name), read_only_wrap(form_obj.object,:prod_div_name) {form_obj.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}, {:class=>'form-control'})} %>
-  <%=show_custom_fields form_obj.object, {:form=>true, :table=>true}%>
+  <%=show_custom_fields form_obj.object, {:form=>true, :table=>true, :display_read_only=>!(hide_no_bulk_fields == true)}%>
   <%=field_row field_label(:prod_changed_at),@product.changed_at unless hide_no_bulk_fields%>
 </table>	

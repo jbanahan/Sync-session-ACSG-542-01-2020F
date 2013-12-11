@@ -41,6 +41,7 @@ root.Chain =
 
   htsAutoComplete : ->
     $("input.hts_field").each((inp) ->
+      return if $(@).is(':data(autocomplete)')
       country = $(@).attr('country')
       $(@).autocomplete({
         source:(req,add) ->

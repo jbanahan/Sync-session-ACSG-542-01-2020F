@@ -210,23 +210,30 @@ module OpenChain
       error_messages = []
       error_count = 0
       
+      has_classifications = !params['product']['classifications_attributes'].nil?
       OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
         begin
-          if p.can_classify?(current_user)
+          if p.can_edit?(current_user) && (!has_classifications || p.can_classify?(current_user))
             Product.transaction do
               country_classification_map = {}
               good_count = gc if good_count.nil?
-              #destroy all classifications for countries passed in the hash, preserving custom values
-              params['product']['classifications_attributes'].each do |k,v|
-                p.classifications.where(:country_id=>v['country_id']).each do |cls|
-                  country_classification_map[cls.country_id] = {:cv=>[],:hts=>{}}
-                  cls.custom_values.each {|cv| country_classification_map[cls.country_id][:cv] << cv unless cv.value.blank?}
-                  cls.tariff_records.each do |tr|
-                    vals = []
-                    tr.custom_values.each {|cv| vals << cv unless cv.value.blank?}
-                    country_classification_map[cls.country_id][:hts][tr.line_number] = vals
+              # classification attributes won't be present if the user didn't set any classification or tariff level
+              # values on screen.
+              if has_classifications
+                # Destroy all classifications for countries passed in the hash, preserving custom values.
+                # The classfication/tariff level values are then re-added via the update_attributes 
+                # call and the custom values manually added back to the classifications in the before_lambda below
+                params['product']['classifications_attributes'].each do |k,v|
+                  p.classifications.where(:country_id=>v['country_id']).each do |cls|
+                    country_classification_map[cls.country_id] = {:cv=>[],:hts=>{}}
+                    cls.custom_values.each {|cv| country_classification_map[cls.country_id][:cv] << cv unless cv.value.blank?}
+                    cls.tariff_records.each do |tr|
+                      vals = []
+                      tr.custom_values.each {|cv| vals << cv unless cv.value.blank?}
+                      country_classification_map[cls.country_id][:hts][tr.line_number] = vals
+                    end
+                    cls.destroy
                   end
-                  cls.destroy
                 end
               end
               success = lambda {|o| }
@@ -255,7 +262,8 @@ module OpenChain
             end
           else
             error_count += 1
-            error_messages << "You do not have permission to classify product #{p.unique_identifier}."
+            # If the user can't edit the product then that's the reason for the error here, otherwise it's because they can't classify.
+            error_messages << "You do not have permission to #{p.can_edit?(current_user) ? "classify" : "edit"} product #{p.unique_identifier}."
             good_count = gc if good_count.nil?
             good_count += -1
           end
@@ -282,14 +290,14 @@ module OpenChain
     private_class_method :apply_custom_values_to_object
 
     def self.create_bulk_user_message current_user, good_count, error_count, error_messages, options
-      title = "Classification Job Complete"
+      title = "Update Complete"
       if error_count > 0
         title += " (#{error_count} #{"Error".pluralize(error_count)})" 
       end
       title += "."
 
       begin
-        body = "<p>Your classification job has completed.</p><p>Products saved: #{good_count}</p><p>Messages:<br>#{error_messages.join("<br />")}</p>"
+        body = "<p>Your product update job has completed.</p><p>Products saved: #{good_count}</p><p>Messages:<br>#{error_messages.join("<br />")}</p>"
         current_user.messages.create(:subject=>title, :body=>body)
       end unless options[:no_user_message]
       messages = {}
