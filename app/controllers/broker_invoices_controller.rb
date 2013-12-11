@@ -3,6 +3,7 @@ class BrokerInvoicesController < ApplicationController
     BrokerInvoice
   end
   def index
+    flash.keep
     redirect_to advanced_search CoreModule::BROKER_INVOICE, params[:force_search]
   end
   def show

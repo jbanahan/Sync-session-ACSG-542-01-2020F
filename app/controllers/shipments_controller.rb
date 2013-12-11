@@ -5,6 +5,7 @@ class ShipmentsController < ApplicationController
 	end
 	
   def index
+    flash.keep
     redirect_to advanced_search CoreModule::SHIPMENT, params[:force_search]
   end
 
