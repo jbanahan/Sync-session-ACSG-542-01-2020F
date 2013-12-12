@@ -357,6 +357,13 @@ OpenChain::Application.routes.draw do
       get 'messages'
     end
   end
+
+  resources :bulk_process_logs, :only => [:show] do
+    member do
+      get 'messages'
+    end
+  end
+
   resources :imported_files, :only => [:index, :show, :destroy] do
     member do
       get 'preview'

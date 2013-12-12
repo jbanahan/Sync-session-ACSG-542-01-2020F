@@ -98,8 +98,8 @@ module OpenChain
         end
 
         good_count = nil
-        error_messages = []
         error_count = 0
+        total_objects = 0
 
         # We don't want to modify the actual request params here, so the only way we can really handle that
         # is via a deep_dup (deep clone) operation.
@@ -121,101 +121,118 @@ module OpenChain
           end
         end
 
+        log = BulkProcessLog.create! user: current_user, started_at: Time.zone.now, bulk_type: BulkProcessLog::BULK_TYPES[:classify]
+        record_sequence = 0
         OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
-
+          record_sequence += 1
           begin
-            good_count = gc if good_count.nil?
+            good_count = total_objects = gc if good_count.nil?
 
             if p.can_classify? current_user
-              # When quick classify is run for a single product, the classification attributes
-              # will contain the id of the classification that should be updated.
+              Product.transaction do 
+                # When quick classify is run for a single product, the classification attributes
+                # will contain the id of the classification that should be updated.
 
-              # The params here are standard rack/rails query params that may or may not have
-              # an id indicating the classification record to update.  If a param for a 
-              # classification does not have an id (id's are only present when quick classifying 
-              # a single product), then we'll use the country_id to find which
-              # classification to append the data to.  If it doesn't exist then we can leave the 
-              # parameters alone and they will append a new classification to the product.
+                # The params here are standard rack/rails query params that may or may not have
+                # an id indicating the classification record to update.  If a param for a 
+                # classification does not have an id (id's are only present when quick classifying 
+                # a single product), then we'll use the country_id to find which
+                # classification to append the data to.  If it doesn't exist then we can leave the 
+                # parameters alone and they will append a new classification to the product.
 
-              # deep_dup is required because if clone/dup is used the 'classification_attributes' hash will
-              # be a reference to the same object for each bulk object iteration
-              classification_params = params.deep_dup
-              classification_params['product']['classifications_attributes'].each do |index, class_attr|
+                # deep_dup is required because if clone/dup is used the 'classification_attributes' hash will
+                # be a reference to the same object for each bulk object iteration
+                classification_params = params.deep_dup
+                classification_params['product']['classifications_attributes'].each do |index, class_attr|
 
-                # Because of the way rail's update_attributes method will create new child objects
-                # when no id values are present, we don't have to worry at all about cases where
-                # the classification record isn't present or the tariff record isn't found.
-                # Rails will create those records for us.
-                classification = nil
-                if class_attr['id']
-                  id = class_attr['id'].to_i
-                  classification = p.classifications.find {|c| c.id == id}
-                else
-                  country_id = class_attr['country_id'].to_i
-                  classification = p.classifications.find {|c| c.country_id == country_id}
+                  # Because of the way rail's update_attributes method will create new child objects
+                  # when no id values are present, we don't have to worry at all about cases where
+                  # the classification record isn't present or the tariff record isn't found.
+                  # Rails will create those records for us.
+                  classification = nil
+                  if class_attr['id']
+                    id = class_attr['id'].to_i
+                    classification = p.classifications.find {|c| c.id == id}
+                  else
+                    country_id = class_attr['country_id'].to_i
+                    classification = p.classifications.find {|c| c.country_id == country_id}
 
-                  if classification
-                    class_attr['id'] = classification.id
+                    if classification
+                      class_attr['id'] = classification.id
+                    end
                   end
-                end
 
-                # We'll now set the tariff record's id if it's not already set.  We'll use the index value 
-                # as the indicator for which tariff row we're going to update if there is no id value.
-                # This also allows for expansion of the quick classify to support sending multiple tariff lines
-                # should we want to implement that in the future.
-                if classification
-                  class_attr['tariff_records_attributes'].each do |index, tariff_attr|
+                  # We'll now set the tariff record's id if it's not already set.  We'll use the index value 
+                  # as the indicator for which tariff row we're going to update if there is no id value.
+                  # This also allows for expansion of the quick classify to support sending multiple tariff lines
+                  # should we want to implement that in the future.
+                  if classification
+                    class_attr['tariff_records_attributes'].each do |index, tariff_attr|
 
-                    unless tariff_attr['id']
-                      tariff = classification.tariff_records[index.to_i]
-                      if tariff
-                        tariff_attr['id'] = tariff.id
+                      unless tariff_attr['id']
+                        tariff = classification.tariff_records[index.to_i]
+                        if tariff
+                          tariff_attr['id'] = tariff.id
+                        end
                       end
                     end
                   end
                 end
+
+                success = lambda {|o, snapshot| 
+                  snapshot.bulk_process_log = log
+                  log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: false, entity_snapshot: snapshot
+                }
+                failure = lambda {|o,errors|
+                  raise OpenChain::ValidationLogicError.new(o)
+                }
+                before_validate = lambda {|o| OpenChain::CoreModuleProcessor.update_status(o)}
+
+                # Purposefully NOT sending all params to avoid any external processing since we're really ONLY expecting
+                # classification values to be set.
+                OpenChain::CoreModuleProcessor.validate_and_save_module(nil,p,classification_params['product'],success,failure, before_validate: before_validate, parse_custom_fields: false)
               end
-
-              success = lambda {|o| }
-              failure = lambda {|o,errors|
-                good_count -= 1
-                errors.full_messages.each do |m| 
-                  error_messages << "Error saving product #{o.unique_identifier}: #{m}"
-                  error_count += 1
-                end
-                raise OpenChain::ValidationLogicError
-              }
-              before_validate = lambda {|o| OpenChain::CoreModuleProcessor.update_status(o)}
-
-              # Purposefully NOT sending all params to avoid any external processing since we're really ONLY expecting
-              # classification values to be set.
-              OpenChain::CoreModuleProcessor.validate_and_save_module(nil,p,classification_params['product'],success,failure, before_validate: before_validate, parse_custom_fields: false)
             else
               error_count += 1
-              error_messages << "You do not have permission to classify product #{p.unique_identifier}."
+              log.change_records.create!(recordable: p, record_sequence_number: record_sequence, failed: true).add_message("You do not have permission to classify product #{p.unique_identifier}.", true).save!
               good_count -= 1
             end
-          rescue OpenChain::ValidationLogicError
-            #ok to do nothing here since this error is handled internally and the message appended to the error messages already
+          rescue OpenChain::ValidationLogicError => e
+            # This ends up needing to be done outside of the failure lambda due to how that lambda must throw the 
+            # logic error to force a rollback.
+            o = e.base_object
+            good_count -= 1
+            cr = log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: true
+            o.errors.full_messages.each do |m| 
+              cr.add_message "Error saving product #{o.unique_identifier}: #{m}", true
+              error_count += 1
+            end
+            cr.save!
           end
         end
-
-        create_bulk_user_message current_user, good_count, error_count, error_messages, options
+        log.update_attributes total_object_count: total_objects, changed_object_count: good_count, finished_at: Time.zone.now
+        create_bulk_user_message current_user, good_count, error_count, log, options
       end
     end
 
     def self.go params, current_user, options = {}
       User.current = current_user if User.current.nil? #set this in case we're not in a web environment (like delayed_job)
       good_count = nil
-      error_messages = []
       error_count = 0
-      
+      total_objects = nil
+
+      log = BulkProcessLog.create! user: current_user, started_at: Time.zone.now, bulk_type: BulkProcessLog::BULK_TYPES[:update]
+      record_sequence = 0
+
       OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
+        record_sequence += 1
+
         begin
+          good_count = total_objects = gc if good_count.nil?
+
           if p.can_classify?(current_user)
             Product.transaction do
               country_classification_map = {}
-              good_count = gc if good_count.nil?
               #destroy all classifications for countries passed in the hash, preserving custom values
               params['product']['classifications_attributes'].each do |k,v|
                 p.classifications.where(:country_id=>v['country_id']).each do |cls|
@@ -229,14 +246,13 @@ module OpenChain
                   cls.destroy
                 end
               end
-              success = lambda {|o| }
+              success = lambda {|o, snapshot| 
+                snapshot.bulk_process_log = log
+                log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: false, entity_snapshot: snapshot
+              }
+
               failure = lambda {|o,errors|
-                good_count += -1
-                errors.full_messages.each do |m| 
-                  error_messages << "Error saving product #{o.unique_identifier}: #{m}"
-                  error_count += 1
-                end
-                raise OpenChain::ValidationLogicError
+                raise OpenChain::ValidationLogicError.new(o)
               }
               before_validate = lambda {|o| 
                 CustomFieldProcessor.new(params).save_classification_custom_fields(o,params['product'])
@@ -255,16 +271,25 @@ module OpenChain
             end
           else
             error_count += 1
-            error_messages << "You do not have permission to classify product #{p.unique_identifier}."
-            good_count = gc if good_count.nil?
+            log.change_records.create!(recordable: p, record_sequence_number: record_sequence, failed: true).add_message("You do not have permission to classify product #{p.unique_identifier}.", true).save!
             good_count += -1
           end
-        rescue OpenChain::ValidationLogicError
-          #ok to do nothing here
+        rescue OpenChain::ValidationLogicError => e
+          # This ends up needing to be done outside of the failure lambda due to how that lambda must throw the 
+          # logic error to force a rollback.
+          o = e.base_object
+          good_count += -1
+          cr = log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: true
+          o.errors.full_messages.each do |m| 
+            cr.add_message"Error saving product #{o.unique_identifier}: #{m}", true
+            error_count += 1
+          end
+          cr.save!
         end
       end
       
-      create_bulk_user_message current_user, good_count, error_count, error_messages, options
+      log.update_attributes total_object_count: total_objects, changed_object_count: good_count, finished_at: Time.zone.now
+      create_bulk_user_message current_user, good_count, error_count, log, options
     end
 
     def self.apply_custom_values_to_object custom_values, obj
@@ -281,19 +306,30 @@ module OpenChain
     end
     private_class_method :apply_custom_values_to_object
 
-    def self.create_bulk_user_message current_user, good_count, error_count, error_messages, options
-      title = "Classification Job Complete"
+    def self.create_bulk_user_message current_user, good_count, error_count, bulk_log, options
+      title = "#{bulk_log.bulk_type} Job Complete"
       if error_count > 0
         title += " (#{error_count} #{"Error".pluralize(error_count)})" 
       end
       title += "."
 
       begin
-        body = "<p>Your classification job has completed.</p><p>Products saved: #{good_count}</p><p>Messages:<br>#{error_messages.join("<br />")}</p>"
+        # Ideally, we use url_for here but it's a real pain to do so outside of a controller/view
+        url = "https://#{MasterSetup.get.request_host}/bulk_process_logs/#{bulk_log.id}"
+        body = "<p>Your classification job has completed.</p><p>#{good_count} #{"Product".pluralize(good_count)} saved.</p><p>The full update log is available <a href=\"#{url}\">here</a>.</p>"
         current_user.messages.create(:subject=>title, :body=>body)
       end unless options[:no_user_message]
+
       messages = {}
       messages[:message] = title
+      error_messages = []
+      bulk_log.change_records.each do |cr|
+        if cr.failed
+          cr.change_record_messages.each do |m|
+            error_messages << m.message
+          end
+        end
+      end
       messages[:errors] = error_messages
       messages[:good_count] = good_count
       messages

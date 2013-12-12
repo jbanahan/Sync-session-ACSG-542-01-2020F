@@ -4,6 +4,8 @@ describe OpenChain::BulkUpdateClassification do
   describe "go" do
     before :each do
       ModelField.reload #cleanup from other tests
+      @ms = MasterSetup.new :request_host => "localhost"
+      MasterSetup.stub(:get).and_return @ms
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
       @p = Factory(:product)
       @country = Factory(:country)
@@ -13,12 +15,42 @@ describe OpenChain::BulkUpdateClassification do
     it "should update an existing classification with primary keys" do
       m = OpenChain::BulkUpdateClassification.go(@h,@u)
       Product.find(@p.id).classifications.should have(1).item
+
+      log = BulkProcessLog.first
+      log.total_object_count.should eq 1
+      log.changed_object_count.should eq 1
+      log.change_records.should have(1).item
+      log.change_records.first.failed.should be_false
+      log.change_records.first.entity_snapshot.should_not be_nil
+
       @u.messages.length.should == 1
-      @u.messages[0].subject.should == "Classification Job Complete."
-      @u.messages[0].body.should == "<p>Your classification job has completed.</p><p>Products saved: 1</p><p>Messages:<br></p>"
-      m[:message].should == "Classification Job Complete."
+      @u.messages[0].subject.should == "Bulk Update Job Complete."
+      @u.messages[0].body.should == "<p>Your classification job has completed.</p><p>1 Product saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+      m[:message].should == "Bulk Update Job Complete."
       m[:errors].should == []
       m[:good_count].should == 1
+    end
+    it "should record validation errors in update log and messages" do
+      # Create field validator rule to reject on 
+      FieldValidatorRule.create! starts_with: "A", module_type: "Product", model_field_uid: "prod_uid"
+
+      @h['product']['unique_identifier'] = 'BBB'
+      m = OpenChain::BulkUpdateClassification.go(@h,@u)
+
+      log = BulkProcessLog.first
+      log.total_object_count.should eq 1
+      log.changed_object_count.should eq 0
+      log.change_records.should have(1).item
+      log.change_records.first.failed.should be_true
+      log.change_records.first.entity_snapshot.should be_nil
+      log.change_records.first.messages[0].should match /^Error saving product/
+
+      @u.messages.length.should == 1
+      @u.messages[0].subject.should == "Bulk Update Job Complete (1 Error)."
+      @u.messages[0].body.should == "<p>Your classification job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+      m[:message].should == "Bulk Update Job Complete (1 Error)."
+      m[:errors][0].should match /^Error saving product/
+      m[:good_count].should == 0
     end
     it "should update using serializable version of method" do
       OpenChain::BulkUpdateClassification.go_serializable(@h.to_json,@u.id)
@@ -47,19 +79,26 @@ describe OpenChain::BulkUpdateClassification do
       cls.get_custom_value(class_cd).value.should == 'ABC'
       cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
     end
-    it "should allow override of classification & tariff custom values" do
+    it "should allow override of product, classification & tariff custom values" do
       Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
       class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
       tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+      prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
+
       tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>@country,:product=>@p))
       tr.update_custom_value! tr_cd, 'DEF'
       cls = tr.classification
       cls.update_custom_value! class_cd, 'ABC'
+      @p.update_custom_value! prod_cd, "BLAH"
+
       @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'CLSOVR'}}} #blank classification shouldn't clear
       @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'TAROVR'}}}
       @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'1','line_number'=>'1'}}
+      @h['product_cf'] = {prod_cd.id.to_s => "PRODCR"}
+
       OpenChain::BulkUpdateClassification.go(@h,@u)
       @p.reload
+      @p.get_custom_value(prod_cd).value.should == "PRODCR"
       @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
       cls = @p.classifications.first
       cls.get_custom_value(class_cd).value.should == 'CLSOVR'
@@ -136,7 +175,8 @@ describe OpenChain::BulkUpdateClassification do
       @products = 2.times.collect {Factory(:product)}
       @country = Factory(:country, :iso_code => "US")
       @hts = '1234567890'
-      
+      @ms = MasterSetup.new :request_host => "localhost"
+      MasterSetup.stub(:get).and_return @ms
 
       @parameters = {
         'pk' => ["#{@products[0].id}", "#{@products[1].id}"],
@@ -156,6 +196,7 @@ describe OpenChain::BulkUpdateClassification do
     end
 
     it "should create new classifications on products" do
+
       messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
       @products.each do |p|
@@ -167,13 +208,19 @@ describe OpenChain::BulkUpdateClassification do
         p.classifications[0].tariff_records[0].hts_1.should eq @hts
       end
 
-      messages[:message].should eq "Classification Job Complete."
+      log = BulkProcessLog.first
+      log.change_records.should have(2).items
+      log.change_records.each do |cr|
+        cr.entity_snapshot.should_not be_nil
+      end
+
+      messages[:message].should eq "Bulk Classify Job Complete."
       messages[:errors].should have(0).items
       messages[:good_count].should eq 2
 
       @u.messages.should have(1).item
-      @u.messages[0].subject.should eq "Classification Job Complete."
-      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>Products saved: 2</p><p>Messages:<br></p>"
+      @u.messages[0].subject.should eq "Bulk Classify Job Complete."
+      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>2 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
     end
 
     it "should create new classifications on products using json string" do
@@ -211,18 +258,24 @@ describe OpenChain::BulkUpdateClassification do
       # An easy way to force an error is to set the value to blank
       OpenChain::FieldLogicValidator.stub(:validate) do |o|
         o.errors[:base] << "Error"
-        raise OpenChain::ValidationLogicError
+        raise OpenChain::ValidationLogicError.new o
       end
       p = @products[0]
       @parameters['pk'] = ["#{@products[0].id}"]
 
       messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
-      @u.messages.should have(1).item
-      @u.messages[0].subject.should eq "Classification Job Complete (1 Error)."
-      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>Products saved: 0</p><p>Messages:<br>Error saving product #{p.unique_identifier}: Error</p>"
+      log = BulkProcessLog.first
+      log.change_records.should have(1).item
+      log.change_records.first.failed.should be_true
+      log.change_records.first.messages[0].should eq "Error saving product #{p.unique_identifier}: Error"
+      log.change_records.first.entity_snapshot.should be_nil
 
-      messages[:message].should eq "Classification Job Complete (1 Error)."
+      @u.messages.should have(1).item
+      @u.messages[0].subject.should eq "Bulk Classify Job Complete (1 Error)."
+      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+
+      messages[:message].should eq "Bulk Classify Job Complete (1 Error)."
       messages[:good_count].should eq 0
       messages[:errors].should have(1).item
       messages[:errors][0].should eq "Error saving product #{p.unique_identifier}: Error"
@@ -236,9 +289,9 @@ describe OpenChain::BulkUpdateClassification do
       messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
       @u.messages.should have(1).item
-      @u.messages[0].subject.should eq "Classification Job Complete (1 Error)."
+      @u.messages[0].subject.should eq "Bulk Classify Job Complete (1 Error)."
 
-      messages[:message].should eq "Classification Job Complete (1 Error)."
+      messages[:message].should eq "Bulk Classify Job Complete (1 Error)."
       messages[:good_count].should eq 0
       messages[:errors].should have(1).item
       messages[:errors][0].should eq "You do not have permission to classify product #{p.unique_identifier}."
