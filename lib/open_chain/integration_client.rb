@@ -9,6 +9,7 @@ require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
 require 'open_chain/custom_handler/ack_file_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
+require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadsheet_handler'
 
 module OpenChain
   class IntegrationClient
@@ -131,6 +132,10 @@ module OpenChain
         response_type = 'remote_file'
       elsif command['path'].include? '/_polo_850/'
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.delay.process_from_s3 bucket, remote_path
+        status_msg = 'success'
+        response_type = 'remote_file'
+      elsif command['path'].include? '/_shoes_po/'
+        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
         status_msg = 'success'
         response_type = 'remote_file'
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)

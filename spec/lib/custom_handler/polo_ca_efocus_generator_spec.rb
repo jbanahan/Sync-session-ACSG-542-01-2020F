@@ -211,12 +211,26 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       3.times do |i| 
         t = Tempfile.new(["tf#{i}",".xml"])
         @tempfiles << t
-        FtpSender.should_receive(:send_file,).with('ftp2.vandegriftinc.com','VFITRack','RL2VFftp',t,{:folder=>'to_ecs/Ralph_Lauren/efocus_ca_dev',:remote_file_name=>'xyz.xml'})
+        @h.should_receive(:ftp_file).with t
       end
       @h.ftp_xml_files @tempfiles
     end
     it "should set remote file name" do
       @h.remote_file_name.should match /VFITRACK.*\.xml/
+    end
+  end
+
+  describe :ftp_credentials do 
+    it "should use the ftp2 credentials" do
+      g = OpenChain::CustomHandler::PoloCaEfocusGenerator.new
+      g.should_receive(:remote_file_name).and_return 'xyz.xml'
+
+      c = g.ftp_credentials
+      c[:server].should eq 'ftp2.vandegriftinc.com'
+      c[:username].should eq 'VFITRACK'
+      c[:password].should eq 'RL2VFftp'
+      c[:folder].should eq 'to_ecs/Ralph_Lauren/efocus_ca_dev'
+      c[:remote_file_name].should eq 'xyz.xml'
     end
   end
 end

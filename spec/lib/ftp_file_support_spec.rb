@@ -49,4 +49,21 @@ describe "FtpFileSupport" do
       ftp.ftp_file @t
     end
   end
+
+  describe :ftp2_vandegrift_inc do
+
+    it "should use the correct credentials for ftp2 server" do
+      c = FtpSupportImpl.new.ftp2_vandegrift_inc 'folder'
+      c[:server].should eq 'ftp2.vandegriftinc.com'
+      c[:username].should eq 'VFITRACK'
+      c[:password].should eq 'RL2VFftp'
+      c[:folder].should eq 'folder'
+      c[:remote_file_name].should be_nil
+    end
+
+    it "should add remote filename when given" do
+      c = FtpSupportImpl.new.ftp2_vandegrift_inc 'folder', 'remotefile.txt'
+      c[:remote_file_name].should eq 'remotefile.txt'
+    end
+  end
 end
