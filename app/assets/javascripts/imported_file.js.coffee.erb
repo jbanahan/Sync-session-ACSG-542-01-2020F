@@ -96,7 +96,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
     $http.get('/imported_files/'+parseInt($routeParams.fileId)).success((data) ->
       $scope.importedFile = data
       $scope.emailCurrentSettings.to = $scope.importedFile.current_user.email
-      if $scope.importedFile.last_processed && $scope.importedFile.last_processed.length>0
+      if $scope.importedFile.total_rows && $scope.importedFile.total_rows > 0
         $scope.searchResult.id = data.id
       else
         $scope.showPreviewBox = true
