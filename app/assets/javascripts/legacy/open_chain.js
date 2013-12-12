@@ -335,19 +335,6 @@ var OpenChain = (function() {
           return false;
         }
         removeEmptyClassifications();
-        $(".tf_row").each(function() {
-          var has_data = false;
-          $(this).find(".hts_field, .sched_b_field").each(function() {
-            if(!has_data) {
-              has_data = $(this).val().length>0;
-            }
-          });
-          if(!has_data) {
-            $(this).find(".tf_remove").each(function() {
-              destroy_nested('tf',$(this));
-            });
-          }
-        });
       });
       Classify.enableHtsChecks(); 
       Chain.htsAutoComplete();

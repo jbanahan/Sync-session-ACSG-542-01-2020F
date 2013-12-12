@@ -211,28 +211,84 @@ module OpenChain
       error_count = 0
       
       has_classifications = !params['product']['classifications_attributes'].nil?
+
+      # clear all product, classification and tariff attributes that are blank..if they're blank, the user didn't input any
+      # value into the fields and they shouldn't update any of values setting them to blank
+      params['product'].each do |p_key, p_value|
+        if p_key == 'classifications_attributes'
+          p_value.each_value do |class_attrs|
+            class_attrs.each do |c_key, c_value|
+              if c_key == 'tariff_records_attributes'
+                c_value.each_value do |tariff_attrs|
+                  tariff_attrs.each do |t_key, t_value|
+                    tariff_attrs.delete(t_key) if t_value.blank?
+                  end
+                end
+              else
+                class_attrs.delete(c_key) if c_value.blank?
+              end
+            end 
+          end
+        else
+          params['product'].delete(p_key) if p_value.blank?
+        end
+      end
+      # Clearing classification / tariff level custom fields are handled in the classification custom values setter below
+      params['product_cf'].each do |id, value|
+        params['product_cf'].delete(id) if value.blank?
+      end if params['product_cf']
+
       OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
         begin
           if p.can_edit?(current_user) && (!has_classifications || p.can_classify?(current_user))
+            dup_params = params.deep_dup
             Product.transaction do
               country_classification_map = {}
               good_count = gc if good_count.nil?
               # classification attributes won't be present if the user didn't set any classification or tariff level
               # values on screen.
               if has_classifications
-                # Destroy all classifications for countries passed in the hash, preserving custom values.
-                # The classfication/tariff level values are then re-added via the update_attributes 
-                # call and the custom values manually added back to the classifications in the before_lambda below
-                params['product']['classifications_attributes'].each do |k,v|
-                  p.classifications.where(:country_id=>v['country_id']).each do |cls|
-                    country_classification_map[cls.country_id] = {:cv=>[],:hts=>{}}
-                    cls.custom_values.each {|cv| country_classification_map[cls.country_id][:cv] << cv unless cv.value.blank?}
-                    cls.tariff_records.each do |tr|
-                      vals = []
-                      tr.custom_values.each {|cv| vals << cv unless cv.value.blank?}
-                      country_classification_map[cls.country_id][:hts][tr.line_number] = vals
+
+                # Each classifications_attributes is going to have a country id, what we're going to
+                # do is find which specific classification record for the product matches that country id
+                # and then set that classification back into the dup_params hash.  This will allow the
+                # update_attributes call done from the validate_and_save_module to know exactly which 
+                # classification / tariff record should be updated.
+
+                dup_params['product']['classifications_attributes'].each do |index, class_attr|
+                  country_class = p.classifications.find {|c| c.country_id.to_s == class_attr['country_id']}
+                  if country_class
+                    class_attr['id'] = country_class.id
+
+                    tariffs = class_attr['tariff_records_attributes']
+                    if tariffs
+                      # Now we should find which tariff records to update based on the line_number values.
+                      # If that value isn't there, we'll fall back to using the display order (ie. attribute index counts).
+
+                      # The keys are the the indexes these records appeared at on screen, so by sorting them
+                      # we can process loop through these and process them in the order they appeared on screen.
+                      # Which would, baring the line number being manually entered, naturally be the way the users 
+                      # would want to also have them be displayed.
+                      tariffs.keys.sort.each_with_index do |t_index, x|
+                        tariff_attr = tariffs[t_index]
+                        tariff_record = nil
+
+                        # If someone actually entered a line number then we'll want to use that value
+                        # (creating a new record if that line number didn't already exist).
+                        # Otherwise, use the index count as the line # to find the tariff record associated with this classification
+                        tariff_attr['line_number'] = (x+1).to_s if tariff_attr['line_number'].blank? 
+                        if tariff_attr['line_number']
+                          tariff_record = country_class.tariff_records.find {|t| t.line_number == tariff_attr['line_number'].to_i}
+                        end
+
+                        if tariff_record
+                          tariff_attr['id'] = tariff_record.id
+                          # It's possible that if there's no hts/schedule b values the the tariff records won't accept the update attributes
+                          # so just make sure we always set the view_sequence otherwise custom values won't get set correctly
+                          tariff_record.view_sequence = tariff_attr['view_sequence']
+                        end
+                      end
                     end
-                    cls.destroy
                   end
                 end
               end
@@ -246,19 +302,10 @@ module OpenChain
                 raise OpenChain::ValidationLogicError
               }
               before_validate = lambda {|o| 
-                CustomFieldProcessor.new(params).save_classification_custom_fields(o,params['product'])
-                o.classifications.each do |cls|
-                  ccm = country_classification_map[cls.country_id]
-                  if ccm 
-                    apply_custom_values_to_object ccm[:cv], cls
-                    cls.tariff_records.each_with_index do |tr|
-                      apply_custom_values_to_object ccm[:hts][tr.line_number], tr unless ccm[:hts][tr.line_number].blank?
-                    end
-                  end
-                end
+                CustomFieldProcessor.new(dup_params).save_classification_custom_fields(o,dup_params['product'])
                 OpenChain::CoreModuleProcessor.update_status o
               }
-              OpenChain::CoreModuleProcessor.validate_and_save_module(params,p,params['product'],success,failure,:before_validate=>before_validate)
+              OpenChain::CoreModuleProcessor.validate_and_save_module(dup_params,p,dup_params['product'],success,failure,:before_validate=>before_validate)
             end
           else
             error_count += 1
@@ -343,7 +390,14 @@ module OpenChain
         unless classification.destroyed?
           product_params['classifications_attributes'].each do |k,v|
             if v['country_id'] == classification.country_id.to_s
-              OpenChain::CoreModuleProcessor.update_custom_fields classification, @params['classification_custom'][k.to_s]['classification_cf']
+
+              # Strip blank custom values
+              custom_values = @params['classification_custom'][k.to_s]['classification_cf']
+              custom_values.each do |k, v|
+                custom_values.delete(k) if v.blank?
+              end
+
+              OpenChain::CoreModuleProcessor.update_custom_fields classification, custom_values
             end  
           end
         end
@@ -359,7 +413,13 @@ module OpenChain
           vs = tr.view_sequence
           custom_container = @params['tariff_custom'][vs]
           unless custom_container.blank?
-            OpenChain::CoreModuleProcessor.update_custom_fields tr, custom_container['tariffrecord_cf']
+            # Strip blank custom values
+            custom_values = custom_container['tariffrecord_cf']
+            custom_values.each do |k, v|
+              custom_values.delete(k) if v.blank?
+            end
+
+            OpenChain::CoreModuleProcessor.update_custom_fields tr, custom_values
           end
         end
       end

@@ -5,7 +5,7 @@ describe OpenChain::BulkUpdateClassification do
     before :each do
       ModelField.reload #cleanup from other tests
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
-      @p = Factory(:product)
+      @p = Factory(:product, :unit_of_measure=>"UOM")
       @country = Factory(:country)
       @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>@country.id.to_s}}}} 
     end
@@ -34,20 +34,18 @@ describe OpenChain::BulkUpdateClassification do
         Product.find(@p.id).classifications.should have(1).item
         @u.messages.length.should == 0
       end
-      it "should maintain existing custom values for classification and tariff if not overridden" do
+      it "creates new classification and tariff records" do
         Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
         class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
         tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
         prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
-        tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>@country,:product=>@p))
-        tr.update_custom_value! tr_cd, 'DEF'
-        cls = tr.classification
-        cls.update_custom_value! class_cd, 'ABC'
-        @p.update_custom_value! prod_cd, "PROD"
+        
 
-        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => ''}}} #blank classification shouldn't clear
-        @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => ''}}} #black tariff shouldn't clear
-        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890'}}
+        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'ABC'}}}
+        @h['tariff_custom'] = {'987654321' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'DEF'}}}
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890', 'view_sequence'=>'987654321'}}
+        @h['product']['classifications_attributes']['0']['country_id'] = @country.id.to_s
+
         # Set a product value and a product custom value to make sure they're also being set
         @h['product']['unit_of_measure'] = "UOM"
         @h['product_cf'] = {prod_cd.id.to_s => "PROD_UPDATE"}
@@ -56,11 +54,50 @@ describe OpenChain::BulkUpdateClassification do
 
         @p.unit_of_measure.should == "UOM"
         @p.get_custom_value(prod_cd).value.should == "PROD_UPDATE"
-        @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+        
         cls = @p.classifications.first
+        cls.country_id.should == @country.id
         cls.get_custom_value(class_cd).value.should == 'ABC'
+        cls.tariff_records.first.line_number.should == 1
+        cls.tariff_records.first.hts_1.should == '1234567890'
         cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
       end
+
+      it "does not use blank attributes and custom values from product, classification, and tariff parameters" do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+        tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+        prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
+        tr = Factory(:tariff_record,:hts_2=>'1234567890', :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr.update_custom_value! tr_cd, 'DEF'
+        classification = tr.classification
+        classification.update_custom_value! class_cd, 'ABC'
+        @p.update_custom_value! prod_cd, "PROD"
+
+        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => ''}}} #blank classification shouldn't clear
+        @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => ''}}} #blank tariff shouldn't clear
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890', 'hts_2' => ''}}
+        # Set a product value and a product custom value to make sure they're also being set
+        @h['product']['unit_of_measure'] = ""
+        @h['product_cf'] = {prod_cd.id.to_s => ""}
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        # Validate product level blank attributes / custom values aren't used
+        @p.unit_of_measure.should == "UOM"
+        @p.get_custom_value(prod_cd).value.should == "PROD"
+        
+        cls = @p.classifications.first
+
+        # Make sure we're updating the same actual classification and tariff records and not tearing down and rebuilding them
+        cls.id.should == classification.id
+        cls.get_custom_value(class_cd).value.should == 'ABC'
+        cls.tariff_records.first.id.should == tr.id
+        cls.tariff_records.first.hts_1.should == '1234567890'
+        cls.tariff_records.first.hts_2.should == '1234567890'
+        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+      end
+      
       it "should allow override of classification & tariff custom values" do
         Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
         class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
@@ -104,6 +141,57 @@ describe OpenChain::BulkUpdateClassification do
         cls = @p.classifications.first
         cls.get_custom_value(class_cd).value.should == 'ABC'
         cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+      end
+
+      it 'uses tariff line number, when present, to identify which tariff record to update' do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'9876543210')
+        tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+
+        # Note the long index value for the second tariff line, this is how the screen effectively sends updates when the users adds second hts lines on the bulk screen
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'0','line_number'=>'2'}, '1234567890'=>{'hts_1' => '9876543210','view_sequence'=>'1234567890','line_number'=>'1'}}
+
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.classifications.first.tariff_records.second.line_number.should eq 2
+        @p.classifications.first.tariff_records.first.hts_1.should eq '9876543210'
+        @p.classifications.first.tariff_records.second.hts_1.should eq '1234567890'
+      end
+
+      it 'does not remove existing tariff lines if updating only the first tariff record in a set' do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'9876543210')
+        tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '9876543210','view_sequence'=>'0'}}
+
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.classifications.first.tariff_records.should have(2).items
+        @p.classifications.first.tariff_records.first.line_number.should eq 1
+        @p.classifications.first.tariff_records.first.hts_1.should eq '9876543210'
+      end
+
+      it 'does not remove existing tariff lines if updating only the second tariff record in a set' do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'9876543210')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1111111111')
+        tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1111111111','view_sequence'=>'0', 'line_number'=>'2'}}
+
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.classifications.first.tariff_records.should have(2).items
+        @p.classifications.first.tariff_records.first.line_number.should eq 1
+        @p.classifications.first.tariff_records.first.hts_1.should eq '1234567890'
+        @p.classifications.first.tariff_records.second.hts_1.should eq '1111111111'
       end
     end
 
