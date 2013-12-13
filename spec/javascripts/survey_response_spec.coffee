@@ -180,6 +180,12 @@ describe "SurveyResponseApp", () ->
     it "should show all when filter mode is 'All'", () ->
       expect(filter(answers,'All')).toEqual(answers)
 
+    it "should filter by rating if filter mode starts with 'Rating: '", () ->
+      results = filter(answers,'Rating: x')
+      x = []
+      x.push r.id for r in results
+      expect(x).toEqual([1,4,5])
+
     it "should show all without rating when filter mode is 'Not Rated'", () ->
       results = filter(answers,'Not Rated')
       x = []

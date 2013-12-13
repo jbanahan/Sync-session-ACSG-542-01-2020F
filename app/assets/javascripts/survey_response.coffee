@@ -19,7 +19,7 @@ srApp.factory 'srService', ['$http',($http) ->
       filterMode: 'All'
     }
 
-    filterModes: ['All','Not Answered','Not Rated']
+    filterModes: []
     
     load: (responseId) ->
       svc = @
@@ -27,6 +27,8 @@ srApp.factory 'srService', ['$http',($http) ->
       $http.get('/survey_responses/'+responseId+'.json').then(((resp) ->
         svc.resp = resp.data.survey_response
         svc.settings.viewMode = 'view'
+        svc.filterModes = ['All','Not Answered','Not Rated']
+        svc.filterModes.push("Rating: "+m) for m in svc.resp.survey.rating_values
       ))
 
     addAnswerComment: (answer,content,isPrivate,extraCallback) ->
@@ -148,5 +150,9 @@ srApp.filter 'answer', () ->
         when 'Not Answered'
           r.push a if (!a.choice || a.choice.length == 0) && (a.answer_comments==undefined || a.answer_comments.length==0)
         else
-          r.push a
+          if mode.indexOf('Rating: ')==0
+            targetRating = mode.slice(8,mode.length)
+            r.push a if a.rating && a.rating == targetRating
+          else
+            r.push a
      r
