@@ -427,6 +427,7 @@ module OpenChain
       line.charge_code = r[4,4].strip
       accumulate_string :charge_codes, line.charge_code
       line.charge_description = r[8,35].strip
+      line.charge_description = "NO DESCRIPTION" if line.charge_description.blank?
       line.charge_amount = parse_currency r[43,11]
       line.vendor_name = r[54,30].strip
       line.vendor_reference = r[84,15].strip

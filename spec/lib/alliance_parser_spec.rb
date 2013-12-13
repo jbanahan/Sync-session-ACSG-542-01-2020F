@@ -865,6 +865,13 @@ describe OpenChain::AllianceParser do
     comment.generated_at.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("201305152300")
   end
 
+  it 'sets charge description to "NO DESCRIPTION" if blank' do
+    @invoice_lines[0][:desc] = ""
+    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
+    ent = Entry.first
+    expect(ent.broker_invoices.first.broker_invoice_lines.first.charge_description).to eq "NO DESCRIPTION"
+  end
+
   describe 'process_past_days' do
     it "should delay processing" do
       OpenChain::AllianceParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)
