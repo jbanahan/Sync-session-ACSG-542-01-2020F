@@ -203,13 +203,15 @@ class UsersController < ApplicationController
   
   def find_by_email
     admin_secure "Only admins can use this page" do
-      email = request.path.split('/').last
-      u = User.find_by_email email 
-      if u.nil?
-        render text: "User with email '#{email}' not found."
-        return
+      email = params[:email]
+      if !email.blank?
+        u = User.find_by_email email 
+        if u.nil?
+          add_flash :errors, "User not found with email: #{email}"
+        else
+          redirect_to [u.company,u]
+        end
       end
-      redirect_to [u.company,u]
     end 
   end
 
