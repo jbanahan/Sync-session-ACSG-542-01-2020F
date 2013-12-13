@@ -19,6 +19,8 @@ module OpenChain
     class ProductGenerator
       include OpenChain::FtpFileSupport
 
+      attr_reader :row_count
+
       def initialize(opts={})
         @custom_where = opts[:where]
       end
@@ -37,6 +39,7 @@ module OpenChain
       end
 
       def sync
+        @row_count = 0
         has_fingerprint = self.respond_to? :trim_fingerprint
         synced_products = {} 
         rt = Product.connection.execute query
@@ -62,11 +65,15 @@ module OpenChain
             # Don't send a header row until we actually have confirmed we have something to send out
             unless header_row.blank?
               yield header_row
+              @row_count += 1
               header_row = nil
             end
             
             synced_products[clean_vals[0]] = fingerprint
-            processed_rows.each {|r| yield r}
+            processed_rows.each do |r| 
+              yield r
+              @row_count += 1
+            end
           end
           
         end
