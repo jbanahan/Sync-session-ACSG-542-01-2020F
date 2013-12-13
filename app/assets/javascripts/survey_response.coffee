@@ -1,4 +1,4 @@
-srApp = angular.module 'SurveyResponseApp', ['ChainComponents']
+srApp = angular.module 'SurveyResponseApp', ['ChainComponents','angularMoment']
 
 srApp.factory 'srService', ['$http',($http) ->
   saveResponse = (r,buildData,success) ->
@@ -11,6 +11,10 @@ srApp.factory 'srService', ['$http',($http) ->
       r.saving = false
       r.error_message = "There was an error saving your data. Please reload the page."
     ))
+
+  touch = (o) ->
+    o.updated_at = new Date().toISOString()
+    o.hours_since_last_update = 0 if o.hours_since_last_update
 
   return {
     resp: {}
@@ -36,6 +40,7 @@ srApp.factory 'srService', ['$http',($http) ->
       promise.then(((resp) ->
         answer.answer_comments = [] if answer.answer_comments == undefined
         answer.answer_comments.push resp.data.answer_comment
+        touch answer
         extraCallback(answer) if extraCallback
       ), ((resp) ->
         answer.error_message = "There was an error saving your comment. Please reload the page."
@@ -52,6 +57,7 @@ srApp.factory 'srService', ['$http',($http) ->
       })
       promise.then(((response) ->
         a.saving = false
+        touch a
         successCallback response if successCallback
       ), ((response) ->
         a.saving = false
