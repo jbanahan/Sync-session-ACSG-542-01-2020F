@@ -121,14 +121,22 @@ describe OpenChain::StatClient do
       ms.update_attributes(stats_api_key:'sapi')
       @api_key = ms.stats_api_key
       @uuid = ms.uuid
+      @path = '/api/something'
+    end
+    def enable_http_mocks
       @http = mock('http')
       @pst = mock('post')
-      @path = '/api/something'
       Net::HTTP::Post.should_receive(:new).with(@path).and_return(@pst)
       @pst.should_receive(:set_content_type).with('application/json')
       @pst.should_receive(:set_form_data).with({mykey:'myval',api_key:@api_key,uuid:@uuid})
     end
+    it 'should not do anything if stats_api_key is not set' do
+      MasterSetup.get.update_attributes(stats_api_key:nil)
+      Net::HTTP::Post.should_not_receive(:new)
+      described_class.post_json! @path, {mykey:'myval'}
+    end
     it "should add api_key and uuid" do
+      enable_http_mocks
       resp = mock('resp')
       resp.should_receive(:code).and_return '200'
       Net::HTTP.should_receive(:new).with('localhost',3001).and_return(@http)
@@ -136,6 +144,7 @@ describe OpenChain::StatClient do
       described_class.post_json! @path, {mykey:'myval'}
     end
     it "should raise exception for non 200 responses" do
+      enable_http_mocks
       resp = mock('resp')
       resp.should_receive(:code).and_return '400'
       resp.should_receive(:body).and_return({:error=>'my error'}.to_json)

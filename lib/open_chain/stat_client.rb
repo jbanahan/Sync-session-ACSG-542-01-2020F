@@ -43,12 +43,17 @@ module OpenChain; class StatClient
   end
 
   def self.post_json! url, json_hash
+    ms = MasterSetup.get
+
+    # If the stats API key is not set, then do nothing silently
+    return nil if ms.stats_api_key.blank?
+
+    raise "URL was blank" if url.blank?
     @@base_url ||= YAML.load(IO.read('config/stats_server.yml'))[Rails.env]['base_url']
     full_url = @@base_url + url
     uri = URI(full_url)
     req = Net::HTTP::Post.new(uri.path)
     req.set_content_type 'application/json'
-    ms = MasterSetup.get
     json_hash[:api_key] = ms.stats_api_key
     json_hash[:uuid] = ms.uuid
     req.set_form_data json_hash

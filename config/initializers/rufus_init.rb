@@ -44,7 +44,7 @@ def execute_scheduler
   if Rails.env.production?
     scheduler.every '4h' do
       job_wrapper "StatClient" do
-        OpenChain::StatClient.delay.run unless MasterSetup.get.stats_api_key.blank?
+        OpenChain::StatClient.delay.run
       end
     end
   end
