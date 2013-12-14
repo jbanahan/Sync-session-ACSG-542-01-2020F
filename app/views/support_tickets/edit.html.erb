@@ -3,9 +3,6 @@
 <%end%>
 <%content_for :javascript do %>
   $(function() {
-    if($("#sel_requestor").length>0) {
-      OpenChain.loadUserList($("#sel_requestor"),"<%=@ticket.requestor_id%>");
-    }
     $("#preview_link").click(function(evt) {
       evt.preventDefault();
       OpenChain.previewTextile("#tx_entr","Comment Preview");
@@ -19,7 +16,7 @@
 
 <%=form_for @ticket, :html=>{:id=>"frm_t",:multipart=>true} do |f| %>
   <table>
-    <%=field_row "User", current_user.support_agent? ? f.select(:requestor_id, ["Loading..."], {}, :id=>"sel_requestor") : @ticket.requestor.full_name %>
+    <%=field_row "User", current_user.support_agent? ? f.grouped_collection_select(:requestor_id, current_user.company.visible_companies_with_users.order(:name), :users, :name, :id, :full_name) : @ticket.requestor.full_name %>
     <%if current_user.support_agent?%>
       <%=field_row "Agent Assigned", f.collection_select(:agent_id, User.where(:support_agent=>true), :id, :full_name, {:include_blank=>:true})%>
     <%end%>

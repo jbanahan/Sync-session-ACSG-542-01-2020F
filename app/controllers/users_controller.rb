@@ -14,15 +14,7 @@ class UsersController < ApplicationController
           end
         }
         format.json {
-          companies = []
-          if current_user.company.master?
-            companies = Company.select("DISTINCT companies.*").joins(:users)
-          else
-            companies = current_user.company.linked_companies.select("DISTINCT companies.*").joins(:users)
-            companies << current_user.company
-            master = Company.where(:master=>true).first
-            companies << master unless companies.include?(master)
-          end
+          companies = current_user.company.visible_companies_with_users
           render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
         }
       end
