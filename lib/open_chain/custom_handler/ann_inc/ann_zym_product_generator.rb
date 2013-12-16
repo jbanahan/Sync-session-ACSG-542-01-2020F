@@ -17,7 +17,9 @@ module OpenChain
         
         def self.generate opts={}
           g = self.new(opts)
-          g.ftp_file g.sync_csv
+          begin
+            g.ftp_file g.sync_csv
+          end while g.row_count > 500
         end
 
         def initialize opts={}
@@ -102,6 +104,7 @@ INNER JOIN custom_values AS a_type ON a_type.custom_definition_id = #{@cdefs[:ar
           w = "WHERE #{Product.need_sync_where_clause()} AND (sync_records.fingerprint is null OR sync_records.fingerprint = '' OR sync_records.fingerprint <> convert(#{md5} using latin1))"
           r << (@custom_where ? @custom_where : w)
           r << " AND tariff_records.line_number = (select min(tr.line_number) from tariff_records tr where tr.classification_id = tariff_records.classification_id)"
+          r << " LIMIT 500"
           r
         end
       end
