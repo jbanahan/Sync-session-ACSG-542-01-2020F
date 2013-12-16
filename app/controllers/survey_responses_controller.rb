@@ -21,7 +21,7 @@ class SurveyResponsesController < ApplicationController
 
       format.json { 
         h = @sr.as_json(include: [
-          {answers:{include: {
+          {answers:{methods:[:hours_since_last_update],include: {
             question:{methods:[:html_content,:choice_list], only:[:id,:warning]},
             answer_comments:{only:[:content,:private,:created_at],include:[{user:{only:[:id],methods:[:full_name]}}]}
           }}},

@@ -19,6 +19,20 @@ describe OpenChain::CustomHandler::ProductGenerator do
     before :each do 
       @p1 = Factory(:product,:name=>'x')
     end
+    context :row_count do
+      before :each do
+        @inst = @base.new
+      end
+      it "should report rows written" do
+        @inst.sync {|r| nil} #don't need to do anything with the rows
+        @inst.row_count.should == 2
+      end
+      it "should count exploded rows" do
+        def @inst.preprocess_row r; [r,r]; end
+        @inst.sync {|r| nil} #don't need to do anything with the rows
+        @inst.row_count.should == 3
+      end
+    end
     context :preprocess_row do
       before :each do
         @inst = @base.new

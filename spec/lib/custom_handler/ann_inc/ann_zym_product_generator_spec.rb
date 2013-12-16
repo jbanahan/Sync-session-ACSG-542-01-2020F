@@ -11,6 +11,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article, :related_styles]
   end
+  describe :generate do
+    it "should call FTP whenever row_count > 500" do
+      described_class.any_instance.stub(:row_count).and_return(501,501,200)
+      described_class.any_instance.should_receive(:ftp_file).exactly(3).times
+      described_class.generate
+    end
+  end
   describe :sync_csv do
     it "should clean newlines from long description" do
       header_row = {0=>'uid',1=>'imp',2=>'ldesc',3=>'org',4=>'hts'}

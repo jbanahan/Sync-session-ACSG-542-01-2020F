@@ -30,4 +30,10 @@ class Answer < ActiveRecord::Base
   def log_update user
     self.survey_response.log_update user
   end
+
+  # Number of hours since last update
+  def hours_since_last_update
+    return 0 unless self.updated_at
+    ((0.seconds.ago.to_i - self.updated_at.to_i) / 3600).to_i
+  end
 end

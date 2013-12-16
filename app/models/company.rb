@@ -71,6 +71,18 @@ class Company < ActiveRecord::Base
 	  Company.where(:master => true).first
 	end
 
+  def visible_companies
+    if self.master?
+      Company.scoped
+    else
+      Company.where("companies.id = ? OR companies.master = ? OR companies.id IN (select child_id from linked_companies where parent_id = ?)",self.id,true,self.id)
+    end
+  end
+
+  def visible_companies_with_users
+    visible_companies.where('companies.id IN (SELECT company_id FROM users)')
+  end
+
 
   #permissions
   def view_security_filings?
