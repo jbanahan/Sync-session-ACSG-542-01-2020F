@@ -1025,7 +1025,8 @@ and classifications.product_id = products.id
         [31,:cil_cvd_case_value,:cvd_case_value,"CVD Value",{:data_type=>:decimal,:currency=>:other}],
         [32,:cil_cvd_duty_amount,:cvd_duty_amount,"CVD Duty",{:data_type=>:decimal,:currency=>:other}],
         [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}],
-        [34,:cil_customer_reference, :customer_reference, "Customer Reference",{:data_tyep=>:string}]
+        [34,:cil_customer_reference, :customer_reference, "Customer Reference",{:data_type=>:string}],
+        [35,:cil_vendor_name, :vendor_name, "Vendor Name",{:data_type=>:string}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
