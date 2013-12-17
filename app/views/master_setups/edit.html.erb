@@ -1,3 +1,4 @@
+<% ss = ScheduleServer.first %>
 <%content_for :javascript do %>
 $(function() {
   $("#btn_save").click(function() {
@@ -24,29 +25,26 @@ $(function() {
   <div class='row'>
     <div class='col-md-5'>
       <%=form_for @ms, :html=>{:id=>'frm_ms'} do |f| %>
-        <table>
-          <%=field_bootstrap "System UUID", @ms.uuid%>
-          <%=field_bootstrap "Version", MasterSetup.current_code_version %>
-          <%=field_bootstrap "System Code", f.text_field(:system_code) %>
-          <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>
-          <%=field_bootstrap "Logo Image", f.text_field(:logo_image) %>
-          <%=field_bootstrap "Order Enabled",f.check_box(:order_enabled) %>
-          <%=field_bootstrap "Shipment Enabled", f.check_box(:shipment_enabled)%>
-          <%=field_bootstrap "Sale Enabled", f.check_box(:sales_order_enabled) %>
-          <%=field_bootstrap "Delivery Enabled", f.check_box(:delivery_enabled) %>
-          <%=field_bootstrap "Classification Enabled", f.check_box(:classification_enabled) %>
-          <%=field_bootstrap "Entry Enabled", f.check_box(:entry_enabled)%>
-          <%=field_bootstrap "Security Filing Enabled", f.check_box(:security_filing_enabled)%>
-          <%=field_bootstrap "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
-          <%=field_bootstrap "Drawback Enabled", f.check_box(:drawback_enabled)%>
-          <%=field_bootstrap "Custom Features", f.text_area(:custom_features)%>
-          <% ss = ScheduleServer.first %>
-          <%=field_bootstrap "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})" unless ss.nil?%>
-          <%=field_bootstrap "Target Version", @ms.target_version%>
-          <%=field_bootstrap "Server With Migration Lock", @ms.migration_host%>
-          <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host) %>
-          <%=field_bootstrap "Stats API Key", f.text_field(:stats_api_key) %>
-        </table>
+        <%=field_bootstrap "System UUID", @ms.uuid%>
+        <%=field_bootstrap "Version", MasterSetup.current_code_version %>
+        <%=field_bootstrap "Target Version", @ms.target_version%>
+        <%=field_bootstrap "System Code", f.text_field(:system_code) %>
+        <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host) %>
+        <%=field_bootstrap "Stats API Key", f.text_field(:stats_api_key) %>
+        <%=field_bootstrap "Logo Image", f.text_field(:logo_image) %>
+        <%=field_bootstrap "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})" unless ss.nil?%>
+        <%=field_bootstrap "Server With Migration Lock", @ms.migration_host%>
+        <%=field_bootstrap "Custom Features", f.text_area(:custom_features, cols:20)%>
+        <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>
+        <%=field_bootstrap "Order Enabled",f.check_box(:order_enabled) %>
+        <%=field_bootstrap "Shipment Enabled", f.check_box(:shipment_enabled)%>
+        <%=field_bootstrap "Sale Enabled", f.check_box(:sales_order_enabled) %>
+        <%=field_bootstrap "Delivery Enabled", f.check_box(:delivery_enabled) %>
+        <%=field_bootstrap "Classification Enabled", f.check_box(:classification_enabled) %>
+        <%=field_bootstrap "Entry Enabled", f.check_box(:entry_enabled)%>
+        <%=field_bootstrap "Security Filing Enabled", f.check_box(:security_filing_enabled)%>
+        <%=field_bootstrap "Invoice Enabled", f.check_box(:broker_invoice_enabled)%>
+        <%=field_bootstrap "Drawback Enabled", f.check_box(:drawback_enabled)%>
       <%end%>
     </div>
     <div class='col-md-7'>
@@ -67,9 +65,9 @@ $(function() {
         </thead>
         <% Delayed::Job.order("created_at ASC").limit(100).each do |dj| %>
           <tr>
-            <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><textarea width='15'><%=dj.handler%></textarea></td>
+            <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><pre style='max-height:150px;overflow:auto;'><%=dj.handler%></pre></td>
             <td><%=dj.last_error%></td><td><%=dj.run_at%></td><td><%=dj.locked_at%></td><td><%=dj.failed_at%></td><td><%=dj.locked_by%></td>
-            <td><%= link_to "Delete", delayed_job_path(dj), :confirm => 'Are you sure you want to delete this item?', :method => :delete %></td>
+            <td><%= link_to "Delete", delayed_job_path(dj), :confirm => 'Are you sure you want to delete this item?', :method => :delete, :class=>'btn btn-sm btn-danger' %></td>
           </tr>
         <% end %>
       </table>
