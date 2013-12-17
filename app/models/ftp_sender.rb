@@ -20,7 +20,7 @@ class FtpSender
     get_file_to_ftp(arg_file, opts) do |file|
       log = ["Attempting to send FTP file to #{server} with username #{username}."]
       
-      my_opts = default_options(file).merge(opts).with_indifferent_access
+      my_opts = default_options(arg_file, file).merge(opts).with_indifferent_access
       remote_name = my_opts[:remote_file_name]
       store_sent_file = false
       ftp_client = nil
@@ -88,8 +88,14 @@ class FtpSender
     end
   end
 
-  def self.default_options file
-    {:binary=>true,:passive=>true,:remote_file_name=>File.basename(file),
+  def self.default_options arg_file, local_file
+    # arg_file is the originally file that was passed into the send method
+    # local file is the file object that's actually being used to send the data
+    # use arg_file because that's the only thing that may have an original_filename method associated with it
+    # since we generally won't have gotten that same object to send (for a variety of reasons - see get_file_to_ftp)
+    filename = arg_file.respond_to?(:original_filename) ? arg_file.original_filename : File.basename(local_file)
+   
+    {:binary=>true,:passive=>true,:remote_file_name=>filename,
             :force_empty=>false, :protocol=>"ftp"}
   end
 

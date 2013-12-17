@@ -1,3 +1,5 @@
+require "rexml/document"
+
 module OpenChain
   module XmlBuilder
 

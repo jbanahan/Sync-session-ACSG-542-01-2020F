@@ -1,12 +1,14 @@
 require 'bigdecimal'
 require 'tempfile'
 require 'csv'
+require 'open_chain/xml_builder'
 require 'open_chain/custom_handler/polo/polo_business_logic'
 
 module OpenChain
   module CustomHandler
     class PoloSapInvoiceFileGenerator
       include Polo::PoloBusinessLogic
+      include OpenChain::FtpFileSupport
 
       # These are the ONLY the RL Canada importer accounts we're doing automatically, other RL accounts are done by hand for now
       RL_INVOICE_CONFIGS ||= {
@@ -20,7 +22,9 @@ module OpenChain
       }
 
       def initialize env = :prod, custom_where = nil
-        # env == :qa will send the invoices to a "test" directory
+        # you can use a non-:prod env to prevent the documents from being emailed / ftp'ed and then use the export job attachments created
+        # to pull the files if you need to examine them.  This also prevents the export jobs from being marked as completed, thus meaning
+        # the next prod run the data from the files will be included in generated data.
         @env = env
         @custom_where = custom_where
       end
@@ -69,26 +73,36 @@ module OpenChain
       def generate_and_send_invoices rl_company, start_time, broker_invoices
        # Send them 
         if broker_invoices.length > 0
-          files = []
+          files = {}
           begin
             invoice_output = generate_invoice_output rl_company, broker_invoices
 
             export_jobs = []
 
             invoice_output.each_pair do |format, output_hash|
-              files << output_hash[:files] if output_hash[:files] # no file for exception format
-              export_jobs << output_hash[:export_job] if output_hash[:export_job]  # export job may be nil if running in qa mode
+              output_hash[:files].each_pair do |send_format, send_files|
+                files[send_format] ||= []
+                files[send_format] += send_files
+              end
+              # might be a missing export job if the format encountered an exception
+              export_jobs << output_hash[:export_job] if output_hash[:export_job]
             end
-            files.flatten!
 
             # Email the files that were created
             delivered = false
             begin
-              # Only deliver the emails if we're in prod mode (other modes can grab the file via ec2)
+              # Only ftp or deliver emails if we're in prod mode (other modes can grab the file via ec2)
               if @env == :prod
-                conf = RL_INVOICE_CONFIGS[rl_company]
-                OpenMailer.send_simple_html(conf[:email_to], "[VFI Track] Vandegrift, Inc. #{conf[:name]} Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(conf[:name], broker_invoices, start_time), files).deliver!
+                unless files[:ftp].blank?
+                  files[:ftp].each {|f| ftp_file f}
+                end
+                # If the FTP worked, I'm considering them delivered.  The email is purely for informational purposes now.
                 delivered = true
+
+                unless files[:email].blank?
+                  conf = RL_INVOICE_CONFIGS[rl_company]
+                  OpenMailer.send_simple_html(conf[:email_to], "[VFI Track] Vandegrift, Inc. #{conf[:name]} Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(conf[:name], broker_invoices, start_time), files[:email]).deliver!
+                end
               end
             ensure
               export_jobs.each do |export_job|
@@ -102,7 +116,7 @@ module OpenChain
             end
           ensure 
             # remove the tempfiles 
-            files.each do |f|
+            files.values.flatten.each do |f|
               f.close!
             end
           end
@@ -166,36 +180,52 @@ module OpenChain
         brand
       end
 
+      def ftp_credentials
+        ftp2_vandegrift_inc 'to_ecs/Ralph_Lauren/sap_invoices'
+      end
+
       class PoloMmglInvoiceWriter
+        include OpenChain::XmlBuilder
        
        def initialize generator, config
           @inv_generator = generator
           @config = config
 
-          @starting_row ||= 1
-          @workbook ||= XlsMaker.create_workbook 'MMGL', ['Indicator_Post_invoice_or_credit_memo','Document_date_of_incoming_invoice',
+          @starting_row = 1
+          @workbook = XlsMaker.create_workbook 'MMGL', ['Indicator_Post_invoice_or_credit_memo','Document_date_of_incoming_invoice',
             'Reference_document_number','Company_code','Different_invoicing_party','Currency_key','Gross_invoice_amount_in_document_currency','Payee',
             'Terms_of_payment_key','Baseline_date_for_due_date_calculation','Document_header_text','Lot_Number','Invoice_line_number','Purchase_order_number',
             'Material_Number','Amount_in_document_currency','Quantity','Condition_Type','Item_text','Invoice_line_number','GL_Account','Amount',
             'Debit_credit_indicator','Company_code','GL_Line_Item_Text','Profit_Center']
-          @sheet ||= @workbook.worksheet(0)
+          @sheet = @workbook.worksheet(0)
+
+          @document, @root = build_xml_document "Invoices"
+          @errors = []
         end
 
-        # Appends the invoice information specified here to the excel file currently being generated
+        # Appends the invoice information specified here to the excel/xml files currently being generated
         # Preserve this method name for duck-typing compatibility with the other invoice output generator
         def add_invoices commercial_invoices, broker_invoice
           header_info = get_header_information broker_invoice, commercial_invoices
           XlsMaker.add_body_row @sheet, @starting_row, header_info
 
+          inv_el = add_element @root, "Invoice"
+          write_header_xml inv_el, header_info
+
           commercial_invoice_info = get_commercial_invoice_information commercial_invoices
           broker_invoice_info = get_broker_invoice_information broker_invoice
 
+          items_el = add_element inv_el, "Items"
           commercial_invoice_info.each_with_index do |row, i|
+            # We needed to tack on some extra information for the commercial invoices ()
             XlsMaker.insert_body_row @sheet, @starting_row + i, 12, row
+            write_commercial_invoice_line_xml items_el, row, header_info[5]
           end
 
+          gl_el = add_element inv_el, "GLAccounts"
           broker_invoice_info.each_with_index do |row, i|
             XlsMaker.insert_body_row @sheet, @starting_row + i, 19, row
+            write_broker_invoice_line_xml gl_el, row
           end
 
           # Commercial and broker invoice data is highly likely to have
@@ -205,20 +235,97 @@ module OpenChain
           nil
         end
 
+        def write_header_xml parent_el, h
+          header_el = add_element parent_el, "HeaderData"
+          add_element header_el, "Indicator", h[0]
+          add_element header_el, "DocumentType", "RE"
+          add_element header_el, "DocumentDate", h[1]
+          add_element header_el, "PostingDate", h[9]
+          add_element header_el, "Reference", h[2]
+          add_element header_el, "CompanyCode", h[3]
+          add_element header_el, "DifferentInvoicingParty", h[4]
+          add_element header_el, "CurrencyCode", h[5]
+          add_element header_el, "Amount", h[6]
+          add_element header_el, "PaymentTerms", h[8]
+          add_element header_el, "BaseLineDate", h[9]
+          nil
+        end
+
+        def write_commercial_invoice_line_xml parent_el, l, currency
+          po_number, line_number = @inv_generator.split_sap_po_line_number l[1]
+
+          item_el = add_element parent_el, "ItemData"
+          add_element item_el, "InvoiceDocumentNumber", l[0]
+          add_element item_el, "PurchaseOrderNumber", po_number
+          add_element item_el, "PurchasingDocumentItemNumber", line_number
+          add_element item_el, "AmountDocumentCurrency", l[3]
+          add_element item_el, "Currency", currency
+          add_element item_el, "Quantity", l[4]
+          add_element item_el, "ConditionType", l[5]
+          nil
+        end
+
+        def write_broker_invoice_line_xml parent_el, l
+          gl_el = add_element parent_el, "GLAccountData"
+
+          add_element gl_el, "GLVendorCustomer", l[1]
+          add_element gl_el, "Amount", l[2]
+          add_element gl_el, "DocumentType", l[3]
+          add_element gl_el, "CompanyCode", l[4]
+          add_element gl_el, "LineItemText", l[5]
+          add_element gl_el, "ProfitCenter", l[6]
+          nil
+        end
+
         def write_file
+          output_files = {}
+
           filename = "Vandegrift_#{Time.zone.now.strftime("%Y%m%d")}_MM_Invoice"
           file = Tempfile.new([filename, ".xls"])
           file.binmode
           @workbook.write file
+          Attachment.add_original_filename_method file
+          file.original_filename = "#{filename}.xls"
+          emails = [file]
+
+          # Generate an exception log email from the collected errors regarding missing Tradecard invoice or Chain product records
+          unless @errors.blank?
+            workbook = XlsMaker.create_workbook 'MMGL Exceptions', ["Entry #", "Commercial Invoice #", "PO #", "SAP Line #", "Error"]
+            sheet = workbook.worksheet(0)
+            row_num = 0
+            @errors.each do |row|
+              XlsMaker.add_body_row sheet, (row_num += 1), row
+            end
+
+            exception_file = "#{filename}_Exceptions"
+            file = Tempfile.new([exception_file, ".xls"])
+            file.binmode
+            workbook.write file
+            Attachment.add_original_filename_method file
+            file.original_filename = "#{exception_file}.xls"
+            emails << file
+          end
+
+          output_files[:email] = emails
+
+          xml_file = Tempfile.new([filename, ".xml"])
+          xml_file.binmode
+          @document.write xml_file
+          xml_file.flush
+          Attachment.add_original_filename_method xml_file
+          xml_file.original_filename = "#{filename}.xml"
+          output_files[:ftp] = [xml_file]
           
           # Blank these variables, just to prevent weirdness if the writer is attempted to be re-used...they're incapable
           # of being re-used so I want this to fail hard.
           @starting_row = nil
           @workbook = nil
           @sheet = nil
-          Attachment.add_original_filename_method file
-          file.original_filename = "#{filename}.xls"
-          [file]
+          @document = nil
+          @root = nil
+          @errors = nil
+         
+          output_files
         end
 
         private 
@@ -254,24 +361,141 @@ module OpenChain
           end
 
           def get_commercial_invoice_information commercial_invoices
+            
+            # For each line, we need to find the corresponding Tradecard 810 line 
+            # and use the quantity value (IT102) found on there for all lines (except non-prepack / non-set lines).
+
+            # For any Tradecard 810 lines that have IT103 == "AS" (unit of measure) we'll need to combine
+            # all lines together that have the same SAP PO / Line numbers, sum'ing the 
+            # duty amounts for the single line sent.  These are prepacks that have been split 
+            # onto multiple invoice lines and need to be recombined.
+
+            # For Tradecard 810 lines that have IT103 != "AS". Look up the product
+            # by part number and find out if it's a set by looking at the CA classification
+            # for a non-blank Set Type custom field.
+
+            # If it is not a set, then sum the quantity values from the commercial invoice lines
+            # If it is a set, use the Tradecard 810 IT102 quantity value and sum the duty amount
+            invoices_with_tradecard_line = {}
+            commercial_invoices.each do |inv|
+              tradecard_invoice = find_tradecard_invoice inv.invoice_number
+
+              inv.commercial_invoice_lines.each do |line|
+                tradecard_line = find_tradecard_line(tradecard_invoice, line.po_number) if tradecard_invoice
+
+                invoices_with_tradecard_line[line.po_number] ||= {inv_lines: []}
+
+                invoices_with_tradecard_line[line.po_number][:inv_lines] << line
+                invoices_with_tradecard_line[line.po_number][:tradecard_line] ||= tradecard_line
+              end
+            end
+
             rows = []
             counter = 0
-            commercial_invoices.each do |inv|
-              inv.commercial_invoice_lines.each do |line|
-                row = []
-                row << "#{counter += 1}"
-                row << line.po_number
-                row << line.part_number
-                row << line.commercial_invoice_tariffs.inject(BigDecimal.new("0.00")) {|sum, t| sum + t.duty_amount}
-                row << line.quantity
-                row << "ZDTY"
-                row << ""
+            invoices_with_tradecard_line.each do |po_line_number, values|
+              if @inv_generator.prepack_indicator? values[:tradecard_line].try(:unit_of_measure)
+                rows << create_mmgl_line((counter += 1), values[:tradecard_line].quantity, values[:inv_lines])
+              else
+                # We need to look up the product here from the RL VFITrack instance to determine if it's a set or not
+                # If we can't find the product, we'll continue like it's not a set but we need to generate some sort
+                # of error reference indicating that the product couldn't be found.
+                line = values[:inv_lines].first
+                set_product = set? line.part_number
 
-                rows << row
+                # There's two things we need to error on..
+                  # 1) Missing product definition
+                  # 2) Missing tradecard record
+
+                # For now, nil indicates a lookup failure 
+                if set_product.nil?
+                  @errors << create_errors_line(values, :missing_product)
+                elsif values[:tradecard_line].nil? 
+                  @errors << create_errors_line(values, :missing_810)
+                end
+
+                if set_product && values[:tradecard_line]
+                  # Since this is a set and we have a tradecard line, we need to use the tradecard invoice's quantity value
+                  rows << create_mmgl_line((counter += 1), values[:tradecard_line].quantity, values[:inv_lines])
+                else
+                  # Since this isn't a set (or product / tradecard information is missing), the product is the sum of the entered quantity for the invoice lines
+                  quantity = values[:inv_lines].inject(BigDecimal.new("0.00")) {|sum, line| sum + line.quantity}
+                  rows << create_mmgl_line((counter += 1), quantity, values[:inv_lines])
+                end
               end
             end
 
             rows
+          end
+
+          def find_tradecard_invoice invoice_number
+            CommercialInvoice.where(invoice_number: invoice_number, vendor_name: "Tradecard").includes(:commercial_invoice_lines).first
+          end
+
+          def find_tradecard_line tradecard_invoice, commercial_invoice_po
+            inv_po, inv_po_line_number = @inv_generator.split_sap_po_line_number commercial_invoice_po
+
+            tradecard_invoice.commercial_invoice_lines.find do |line|
+              po_number, line_number = @inv_generator.split_sap_po_line_number line.po_number
+
+              inv_po == po_number && inv_po_line_number == line_number
+            end
+          end
+
+          def create_errors_line values, error_type
+            po, line = @inv_generator.split_sap_po_line_number values[:inv_lines][0].po_number
+            row = []
+            row[0] = values[:inv_lines][0].entry.entry_number
+            row[1] = values[:inv_lines][0].commercial_invoice.invoice_number
+            row[2] = po
+            row[3] = line
+            row[4] = (error_type == :missing_810) ? "No Tradecard Invoice line found for PO # #{po} / SAP Line #{line}" : "No Chain.IO product found for style #{values[:inv_lines][0].part_number}."
+
+            row
+          end
+
+          def create_mmgl_line counter, quantity, invoice_lines
+            total_duty = invoice_lines.collect{|l| l.commercial_invoice_tariffs}.flatten.inject(BigDecimal.new("0.00")) {|sum, t| sum + t.duty_amount}
+
+            line = invoice_lines.first
+
+            row = []
+            row << "#{counter}"
+            row << line.po_number
+            row << line.part_number
+            row << total_duty
+            row << quantity
+            row << "ZDTY"
+            row << ""
+
+            row
+          end
+
+          def set? part_number
+            is_set = nil
+            #TODO This should throw an error if no product is found rather than return nil
+            response = find_rl_product part_number
+            if response && response['product']
+              is_set = false
+
+              product = response['product']
+              if product && product['classifications']
+                product['classifications'].each do |c|
+                  if c['class_cntry_iso'] == "CA"
+                    is_set = !c['*cdef_131'].nil? && c['*cdef_131'] == true
+                    break
+                  end
+                end
+              end
+            end
+            
+            is_set
+          rescue 
+            nil
+          end
+
+          def find_rl_product part_number
+            #TODO Plug in the API client for calling between multiple instances.
+            {}
           end
 
           def get_broker_invoice_information broker_invoice
@@ -329,28 +553,54 @@ module OpenChain
       end
 
       class PoloFfiInvoiceWriter
+        include OpenChain::XmlBuilder
 
         def initialize generator, rl_company, config
           @inv_generator = generator
           @rl_company = rl_company
           @config = config
+          @document_lines ||= []
+          @document, root = build_xml_document "Invoices"
         end
 
         # Appends the invoice information specified here to the excel file currently being generated
         # Preserve this method name for duck-typing compatibility with the other invoice output generator
         def add_invoices commercial_invoices, broker_invoice
-          @document_lines ||= []
-
           lines = get_invoice_information broker_invoice
-          if lines
+
+          unless lines.blank?
             lines.each {|line| @document_lines << line}
+            inv_el = add_element @document.root, "Invoice"
+            header_el = add_element inv_el, "HeaderData"
+            # The header data is always the first line
+            header = lines.first
+            add_element header_el, "COMPANYCODE", header[2]
+            add_element header_el, "DOCUMENTTYPE", header[1]
+            add_element header_el, "DOCUMENTDATE", header[0]
+            add_element header_el, "POSTINGDATE", header[3]
+            add_element header_el, "REFERENCE", header[26]
+            add_element header_el, "INVOICINGPARTY", header[10]
+            add_element header_el, "AMOUNT", header[12]
+            add_element header_el, "CURRENCYCODE", header[4]
+            add_element header_el, "BASELINEDATE", header[3]
+
+            accounts_el = add_element inv_el, "GLAccountDatas"
+            lines[1..-1].each do |line|
+              gl_el = add_element accounts_el, "GLAccountData"
+              add_element gl_el, "COMPANYCODE", line[2]
+              add_element gl_el, "GLVENDORCUSTOMER", line[10]
+              # KR = Debit charge type (.ie we're charging them)
+              add_element gl_el, "CreditDebitIndicator", (line[1] == "KR" ? "S" : "H")
+              add_element gl_el, "AMOUNT", line[12]
+              add_element gl_el, "PROFITCENTER", line[24]
+            end
           end
           
           nil
         end
 
         def write_file
-          output_files = []
+          output_files = {}
           return output_files unless @document_lines && @document_lines.length > 0
 
           filename = "Vandegrift_#{Time.zone.now.strftime("%Y%m%d")}_FFI_Invoice"
@@ -373,22 +623,18 @@ module OpenChain
           workbook.write xls_file
           Attachment.add_original_filename_method xls_file
           xls_file.original_filename = "#{filename}.xls"
-          output_files << xls_file
+          output_files[:email] = [xls_file]
 
-          # Now create a tab delimited text file of the same data (sans headers)
-          # The tab delimited file is fed into RL's computer system, which apparently can't accept the xls one.
-          # The xls one is for human consumption
-          tab_file = Tempfile.new([filename, ".txt"])
-          CSV.open(tab_file, "wb", {:col_sep=>"\t", :row_sep=>"\r\n"}) do |csv|
-            @document_lines.each do |row|
-              csv << row
-            end
-            csv.flush
-          end
-          Attachment.add_original_filename_method tab_file
-          tab_file.original_filename = "#{filename}.txt"
-          output_files << tab_file
+          xml_file = Tempfile.new([filename, ".xml"])
+          xml_file.binmode
+          @document.write xml_file
+          xml_file.flush
+          Attachment.add_original_filename_method xml_file
+          xml_file.original_filename = "#{filename}.xml"
+          output_files[:ftp] = [xml_file]
 
+          @document = nil
+          @root = nil
           @document_lines = nil
           output_files
         end
@@ -554,26 +800,28 @@ module OpenChain
 
                 @invoiced_entries << broker_invoice.entry.broker_reference
               end
-            rescue
+            rescue => e
               # Catch any errors and write them out using another writer format
               writer = create_writer(rl_company, :exception)
               writers[:exception] ||= writer
-              writer.add_invoice broker_invoice, $!
+              writer.add_invoice broker_invoice, e
+
             end
            
           end
 
           invoice_output = {}
-
           writers.each_pair do |format, writer|
             output_files = writer.write_file
             export_job = export_jobs[format]
 
             # Some outputs purposefully may not result in export jobs or files (.ie the exception report)
             if export_job && output_files
-              output_files.each do |file|
-                attachment = export_job.attachments.build
-                attachment.attached = file
+              output_files.each do |type, files|
+                files.each do |file|
+                  attachment = export_job.attachments.build
+                  attachment.attached = file
+                end
               end
             
               export_job.save!
@@ -583,7 +831,7 @@ module OpenChain
             # look up the output data again via the export job attachments,
             # but it's much more efficient (though slightly clumsier) to 
             # pass the file back and send it directly
-            invoice_output[format] = {:export_job => export_job, :files=>output_files}
+            invoice_output[format] = {:export_job => export_job, :files=>output_files} if log_job?(format)
           end
 
           @output_writers = nil
