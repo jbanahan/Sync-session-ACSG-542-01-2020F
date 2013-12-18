@@ -65,8 +65,21 @@ $(function() {
         </thead>
         <% Delayed::Job.order("created_at ASC").limit(100).each do |dj| %>
           <tr>
-            <td><%=dj.id%></td><td><%=dj.priority%></td><td><%=dj.attempts%></td><td><pre style='max-height:150px;overflow:auto;'><%=dj.handler%></pre></td>
-            <td><%=dj.last_error%></td><td><%=dj.run_at%></td><td><%=dj.locked_at%></td><td><%=dj.failed_at%></td><td><%=dj.locked_by%></td>
+            <td><%=dj.id%></td>
+            <td><%=dj.priority%></td>
+            <td><%=dj.attempts%></td>
+            <td>
+              <pre style='height:150px;overflow:auto;resize:both;'><%=dj.handler%></pre>
+            </td>
+            <td>
+              <%-unless dj.last_error.blank?-%>
+                <pre style='height:150px;overflow:auto;resize:both;'><%=dj.last_error%></pre>
+              <%-end-%>
+            </td>
+            <td><%=dj.run_at%></td>
+            <td><%=dj.locked_at%></td>
+            <td><%=dj.failed_at%></td>
+            <td><%=dj.locked_by%></td>
             <td><%= link_to "Delete", delayed_job_path(dj), :confirm => 'Are you sure you want to delete this item?', :method => :delete, :class=>'btn btn-sm btn-danger' %></td>
           </tr>
         <% end %>
@@ -107,4 +120,20 @@ $(function() {
       <%=field_bootstrap "Version", text_field_tag(:name) %>
     </table>
   <%end%>
+</div>
+
+<div class="modal hide">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id='dj-err-title'></h3>
+      </div>
+      <div class="modal-body">
+        <pre style='resize:both;overflow:auto;' id='dj-err-stack'></pre>
+      </div>
+      <div class="modal-footer">
+        <button class='btn btn-primary' data-dismiss='modal'>Close</button>
+      </div>
+    </div>
+  </div>
 </div>
