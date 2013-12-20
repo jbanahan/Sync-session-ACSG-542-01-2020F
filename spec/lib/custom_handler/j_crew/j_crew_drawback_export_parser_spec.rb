@@ -35,9 +35,6 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
       r << 'another column'
       lambda {described_class.parse_csv_line r, 1, @imp}.should raise_error /Line 1 had 168 elements/
     end
-    it "should skip lines with 0 quantity" do
-      described_class.parse_csv_line(make_row({quantity:'0'}),1,@imp).should be_nil
-    end
     it "should create line" do
       vals = default_vals
       d = described_class.parse_csv_line(make_row,1,@imp)
