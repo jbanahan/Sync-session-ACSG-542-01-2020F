@@ -24,7 +24,7 @@ $(function() {
     entity_types = EntityType.where(:module_type=>CoreModule::PRODUCT.class_name).order('name ASC')
     if entity_types.size > 0
   %>
-    <%=field_row field_label(:prod_ent_type), read_only_wrap(form_obj.object,:prod_ent_type) {form_obj.collection_select(:entity_type_id, entity_types,:id,:name, {:include_blank=>true}, {:class=>"entity_type"}, {:class=>'form-control'})}, true%>
+    <%=field_row field_label(:prod_ent_type), read_only_wrap(form_obj.object,:prod_ent_type) {form_obj.collection_select(:entity_type_id, entity_types,:id,:name, {:include_blank=>true}, {:class=>"entity_type form-control"})}, true%>
   <% end %>
   <%=field_row field_label(:prod_uom), model_text_field(form_obj,:unit_of_measure,:prod_uom,:id=>'txt_uom')%>
   <%=field_row field_label(:prod_div_name), read_only_wrap(form_obj.object,:prod_div_name) {form_obj.collection_select(:division_id, Division.all, :id, :name, options ={:prompt => "Select a division"}, {:class=>'form-control'})} %>
