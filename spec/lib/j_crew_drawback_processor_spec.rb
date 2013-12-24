@@ -63,4 +63,9 @@ describe OpenChain::JCrewDrawbackProcessor do
     d.total_mpf.should == @entry.mpf
     PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).should have(1).result
   end
+  it "should only match shipments received after import" do
+    @shipment.update_custom_value! @cd_del, 1.day.ago
+    OpenChain::JCrewDrawbackProcessor.process_entries [@entry]
+    DrawbackImportLine.first.should be_nil
+  end
 end
