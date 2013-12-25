@@ -32,7 +32,8 @@ srApp.factory 'srService', ['$http',($http) ->
         svc.resp = resp.data.survey_response
         svc.settings.viewMode = 'view'
         svc.filterModes = ['All','Not Answered','Not Rated']
-        svc.filterModes.push("Rating: "+m) for m in svc.resp.survey.rating_values
+        if svc.resp.survey && svc.resp.survey.rating_values
+          svc.filterModes.push("Rating: "+m) for m in svc.resp.survey.rating_values
       ))
 
     addAnswerComment: (answer,content,isPrivate,extraCallback) ->
