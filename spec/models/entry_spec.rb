@@ -1,6 +1,40 @@
 require 'spec_helper'
 
 describe Entry do
+  context :where_clauses do
+    before :each do
+      @dt = Time.now.utc 
+    end
+    it "should match week" do
+      ent = Factory(:entry,release_date:1.day.ago)
+      Factory(:entry,release_date:1.day.from_now)
+      Factory(:entry,release_date:2.weeks.ago)
+      Entry.where(Entry.week_clause(@dt)).to_a.should == [ent]
+    end
+    it "should match 4 week" do
+      ent = Factory(:entry,release_date:1.day.ago)
+      Factory(:entry,release_date:1.day.from_now)
+      ent2 = Factory(:entry,release_date:2.weeks.ago)
+      Factory(:entry,release_date:8.weeks.ago)
+      Entry.where(Entry.four_week_clause(@dt)).order(:id).to_a.should == [ent,ent2]
+    end
+    it "should match open" do
+      Factory(:entry) #don't find not filed & not released
+      ent1 = Factory(:entry,entry_filed_date:1.day.ago) #find filed not released
+      ent2 = Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.from_now) #find filed and released in future
+      Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.ago) #don't find filed & released
+      Entry.where(Entry.open_clause(@dt)).order(:id).to_a.should == [ent1,ent2]
+    end
+    it "should match ytd" do
+      Factory(:entry) #don't find not filed & not released
+      ent1 = Factory(:entry,entry_filed_date:1.day.ago) #find filed not released
+      ent2 = Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.from_now) #find filed and released in future
+      ent3 = Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.ago) #find filed & released
+      Factory(:entry,entry_filed_date:1.day.ago,release_date:Date.new(Time.now.year-1,12,31)) #don't find released last year
+      Entry.where(Entry.ytd_clause(@dt)).order(:id).to_a.should == [ent1,ent2,ent3]
+      
+    end
+  end
   describe "link_broker_invoices" do
     before :each do
       @ent = Factory(:entry,:broker_reference=>'5555',:source_system=>'ABC')
@@ -41,6 +75,7 @@ describe Entry do
       @importer = Factory(:company,:importer=>true)
       @entry = Factory(:entry,:importer_id=>@importer.id)
       @importer_user = Factory(:user,:company_id=>@importer.id)
+      @importer_user.stub(:view_entries?).and_return true
     end
     describe :can_view_importer? do
       it "should allow same company" do
@@ -50,6 +85,7 @@ describe Entry do
         Entry.can_view_importer?(Factory(:company), @importer_user).should be_false
       end
       it "should allow master" do
+        User.any_instance.stub(:view_entries?).and_return(true)
         Entry.can_view_importer?(@importer, Factory(:master_user)).should be_true
       end
       it "should allow linked" do
@@ -112,6 +148,7 @@ describe Entry do
     it 'should allow user to comment' do
       u = Factory(:user,:entry_comment=>true)
       u.company.update_attributes(:master=>true)
+      u.stub(:view_entries?).and_return true
       Factory(:entry).can_comment?(u).should be_true
     end
     it 'should not allow user w/o permission to comment' do
@@ -122,6 +159,7 @@ describe Entry do
     it 'should allow user to attach' do
       u = Factory(:user,:entry_attach=>true)
       u.company.update_attributes(:master=>true)
+      u.stub(:view_entries?).and_return true
       Factory(:entry).can_attach?(u).should be_true
     end
     it 'should not allow user w/o permisstion to attach' do

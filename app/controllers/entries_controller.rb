@@ -7,7 +7,44 @@ class EntriesController < ApplicationController
   def index
     redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
+  def us_activity_summary
+    params[:importer_id] ||= current_user.company.master? ? Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number).first.id : current_user.company_id
+    @imp = Company.find params[:importer_id]
+    unless Entry.can_view_importer?(@imp,current_user)
+      error_redirect "You do not have permission to view this page."
+    end
+    @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
+    error_redirect 'This importer does not have any entries.' unless @last_entry
+  end
   def by_entry_port
+    @imp = Company.find params[:importer_id]
+    action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp,current_user),nil,{lock_check:false,verb:'view',module_name:'entry'}) {
+
+    }
+  end
+  def by_release_range
+    @imp = Company.find params[:importer_id]
+    action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp,current_user),nil,{lock_check:false,verb:'view',module_name:'entry'}) {
+      @where_clause = nil
+      @range_descriptions = [
+        ["Released In The Last Week",'1w'],
+        ["Released In The Last 4 Weeks",'4w'],
+        ["Filed and Not Released",'op'],
+        ["Released Year To Date",'ytd']
+      ]
+      case params[:release_range]
+      when '1w'
+        @where_clause = Entry.week_clause(Time.now.utc)
+      when '4w'
+        @where_clause = Entry.four_week_clause(Time.now.utc)
+      when 'op'
+        @where_clause = Entry.open_clause(Time.now.utc)
+      when 'ytd'
+        @where_clause = Entry.ytd_clause(Time.now.utc)
+      else
+        error_redirect "'#{params[:release_range]}' is an invalid release range.  Valid values are '1w', '4w', 'op', 'ytd'."
+      end
+    }
   end
   def show
     e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first

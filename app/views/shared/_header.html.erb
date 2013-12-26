@@ -34,7 +34,7 @@
     </script>
   </head>
   <body>
-    <% cache ['v5',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
+    <% cache ['v6',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
       <% if @run_as_user %>
         <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
       <% end %>
@@ -147,6 +147,7 @@
                     <b class='caret'></b>
                   </a>
                   <ul class='dropdown-menu' role='menu'>
+                    <li><a href='/entries/activity_summary/us'>Browse</a></li>
                     <li ><a href='/entries'>Search</a></li>
                     <li ><a href='/entries/bi'>Snapshots</a></li>
                   </ul>

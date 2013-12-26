@@ -160,19 +160,19 @@ limit 3"
     
     # generate a where clause for the previous 1 week 
     def self.week_clause base_date_utc
-      "release_date > DATE_ADD('#{base_date_utc}',INTERVAL -1 WEEK) and release_date < '#{base_date_utc}'"
+      Entry.week_clause base_date_utc
     end
     # generate a where clause for the previous 4 weeks
     def self.four_week_clause base_date_utc
-      "release_date > DATE_ADD('#{base_date_utc}',INTERVAL -4 WEEK) and release_date < '#{base_date_utc}'"
+      Entry.four_week_clause base_date_utc
     end
     # generate a where clause for open entries
     def self.open_clause base_date_utc
-      "entry_filed_date is not null AND (release_date is null OR release_date > '#{base_date_utc}')"
+      Entry.open_clause base_date_utc
     end
     # genereate a where clause for Year to Date
     def self.ytd_clause base_date_utc
-      "(entries.entry_filed_date is not null AND (entries.release_date IS NULL OR entries.release_date > '#{base_date_utc}')) OR (entries.release_date > DATE_ADD('#{base_date_utc}', INTERVAL -1 YEAR) AND release_date <= '#{base_date_utc}')"
+      Entry.ytd_clause base_date_utc 
     end
     def self.base_date_utc base_date
       EST.local(base_date.year,base_date.month,base_date.day).utc
