@@ -42,6 +42,22 @@ describe Entry do
       @entry = Factory(:entry,:importer_id=>@importer.id)
       @importer_user = Factory(:user,:company_id=>@importer.id)
     end
+    describe :can_view_importer? do
+      it "should allow same company" do
+        Entry.can_view_importer?(@importer, @importer_user).should be_true
+      end
+      it "should not allow different company" do
+        Entry.can_view_importer?(Factory(:company), @importer_user).should be_false
+      end
+      it "should allow master" do
+        Entry.can_view_importer?(@importer, Factory(:master_user)).should be_true
+      end
+      it "should allow linked" do
+        c = Factory(:company)
+        @importer.linked_companies << c
+        Entry.can_view_importer?(c, @importer_user).should be_true
+      end
+    end
     context 'search secure' do
       before :each do
         @entry_2 = Factory(:entry,:importer_id=>Factory(:company,:importer=>true).id)

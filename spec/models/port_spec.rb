@@ -106,4 +106,29 @@ describe Port do
       Port.find_by_schedule_k_code("01530").name.should == "Mississauga, ONT, Canada"
     end
   end
+
+  describe :entry_country do
+    it "should match for schedule d or CBSA" do 
+      Port.new(schedule_d_code:'0123').entry_country.should == 'United States'
+      Port.new(cbsa_port:'0123').entry_country.should == 'Canada'
+      Port.new(schedule_k_code:'0123').entry_country.should be_nil
+    end
+  end
+
+  describe :search_friendly_port_code do
+    it "should return truncated cbsa_port to match Fenix output" do
+      Port.new(cbsa_port:'0123').search_friendly_port_code.should == '123'
+    end
+    it "should not truncate schedule d" do
+      Port.new(schedule_d_code:'0123').search_friendly_port_code.should == '0123'
+    end
+    it "should not truncate schedule k" do
+      Port.new(schedule_k_code:'0123').search_friendly_port_code.should == '0123'
+    end
+    it "should not truncate unlocode" do
+      Port.new(unlocode:'0123').search_friendly_port_code.should == '0123'
+    end
+  end
+
+
 end

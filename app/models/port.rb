@@ -6,6 +6,40 @@ class Port < ActiveRecord::Base
   validates :cbsa_sublocation, :format => {:with=>/^[0-9]{4}$/, :message=>"CBSA Sublocation code must be 4 digits", :if=>:cbsa_sublocation?}
   validates :unlocode, :format => {:with=>/^[A-Z]{5}$/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
 
+
+  # Find the country who's port of entry this represents (or nil)
+  def entry_country
+    return 'United States' unless schedule_d_code.blank?
+    return 'Canada' unless cbsa_port.blank?
+    nil
+  end
+
+  # Returns array of arrays for option groups of schedule_d & cbsa ports
+  def self.grouped_by_entry_country
+    r = [['United States',[]],['Canada',[]]]
+    Port.where('schedule_d_code is not null OR cbsa_port is not null').order(:name).each do |p|
+      a = ["#{p.name} (#{p.search_friendly_port_code})",p.search_friendly_port_code]
+      case p.entry_country
+      when 'United States'
+        r[0][1] << a
+      when 'Canada'
+        r[1][1] << a
+      end
+    end
+    r
+  end
+
+  # Get a version of the port code that will match the Entry module (because Fenix truncates leading zeroes from port codes)
+  def search_friendly_port_code
+    return schedule_d_code unless schedule_d_code.blank?
+    return schedule_k_code unless schedule_k_code.blank?
+    return unlocode unless unlocode.blank?
+    unless cbsa_port.blank?
+      return cbsa_port.match(/^0/) ? cbsa_port[1,3] : cbsa_port
+    end
+    nil
+  end
+
   # loads schedule d ports from the US standard at http://www.census.gov/foreign-trade/schedules/d/dist3.txt
   def self.load_schedule_d data
     Port.transaction do

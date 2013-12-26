@@ -1,4 +1,5 @@
 OpenChain::Application.routes.draw do
+  match '/test/activity_summary' => 'activity_summaries#entry', :via=>:get
   match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
   match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
   match '/hts/:iso' => 'hts#country', :via=>:get
@@ -11,6 +12,7 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  match '/entries/importer/:importer_id/entry_port/:port_code' => 'entries#by_entry_port', :via => :get
   match "/entries/bi" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get

@@ -21,6 +21,11 @@ class Entry < ActiveRecord::Base
     false
   end
 
+  # can the given user view entries for the given importer
+  def self.can_view_importer? importer, user
+    user.company.master? || importer.id==user.company_id || user.company.linked_companies.include?(importer)
+  end
+
   #find any broker invoices by source system and broker reference and link them to this entry
   #will replace any existing entry link in the invoices
   def link_broker_invoices
@@ -56,7 +61,12 @@ class Entry < ActiveRecord::Base
 
   # where clause for search secure
   def self.search_where user
-    user.company.master? ?  "1=1" : "entries.importer_id = #{user.company_id} or entries.importer_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
+    search_where_by_company_id user.company_id
+  end
+
+  def self.search_where_by_company_id company_id
+    c = Company.find company_id
+    c.master? ? "1=1" : "entries.importer_id = #{c.id} or entries.importer_id IN (select child_id from linked_companies where parent_id = #{c.id})"
   end
 
   #has liquidation fields
@@ -78,7 +88,7 @@ class Entry < ActiveRecord::Base
   end
   private
   def company_permission? user
-    self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)
+    Entry.can_view_importer? self.importer, user
   end
 
   def update_k84_month 

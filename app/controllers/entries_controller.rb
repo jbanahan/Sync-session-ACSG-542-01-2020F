@@ -7,6 +7,8 @@ class EntriesController < ApplicationController
   def index
     redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
+  def by_entry_port
+  end
   def show
     e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first
     unless e
