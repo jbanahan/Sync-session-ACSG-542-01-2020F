@@ -1,4 +1,5 @@
 require 'open_chain/alliance_imaging_client'
+require 'open_chain/activity_summary'
 class EntriesController < ApplicationController
   def root_class
     Entry 
