@@ -36,7 +36,7 @@
           <% 
             imp_list = []
             if current_user.company.master?
-              imp_list = Company.select('companies.id, companies.name, companies.alliance_customer_number').where('length(companies.alliance_customer_number) > 0 OR (select count(*) from linked_companies inner join companies c on c.id = linked_companies.child_id and length(c.alliance_customer_number) > 0 WHERE linked_companies.parent_id = companies.id) > 0').order('companies.alliance_customer_number, companies.name').collect {|c| ["#{c.name} (#{c.alliance_customer_number})",c.id]}
+              imp_list = Company.select('companies.id, companies.name, companies.alliance_customer_number').where('length(companies.alliance_customer_number) > 0 OR (select count(*) from linked_companies inner join companies c on c.id = linked_companies.child_id and length(c.alliance_customer_number) > 0 WHERE linked_companies.parent_id = companies.id) > 0').order('companies.name,companies.alliance_customer_number').collect {|c| ["#{c.name} (#{c.alliance_customer_number})",c.id]}
             else
               comps = [current_user.company] + current_user.company.linked_companies.where('length(companies.alliance_customer_number) > 0').order('name').to_a
               imp_list = comps.collect {|c| ["#{c.name} (#{c.alliance_customer_number})",c.id]}

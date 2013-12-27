@@ -146,7 +146,7 @@ limit 3"
     def self.generate_summary_line importer_id, date_clause
       w = Entry.search_where_by_company_id importer_id
       sql = "select count(*), sum(total_duty), sum(total_fees), sum(entered_value), sum(total_invoiced_value), sum(total_units)  from entries 
-      where #{date_clause} AND (#{w})"
+      where (#{date_clause}) AND (#{w})"
       result_row = ActiveRecord::Base.connection.execute(sql).first
       {
         'count'=>result_row[0],
