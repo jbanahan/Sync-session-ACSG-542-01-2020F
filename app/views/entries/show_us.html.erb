@@ -98,9 +98,11 @@
       <tr>
         <td style="width:33%;">
           <table>
-            <%[:ent_type,:ent_mfids,
-              :ent_lading_port_name, :ent_unlading_port_name, :ent_entry_port_name,:ent_destination_state,
-              :ent_export_country_codes,:ent_origin_country_codes,:ent_spis,:ent_vessel,:ent_voyage
+            <%e_port_name_f = ModelField.find_by_uid(:ent_entry_port_name)%>
+            <%=field_row e_port_name_f.label(false), "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{e_port_name_f.process_export(@entry,current_user)}<span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe%>
+            <%[
+              :ent_lading_port_name, :ent_unlading_port_name, :ent_destination_state,
+              :ent_type,:ent_mfids,:ent_export_country_codes,:ent_origin_country_codes,:ent_spis,:ent_vessel,:ent_voyage
             ].each do |f|%>
               <%=field_view_row @entry, f %>
             <%end%>
