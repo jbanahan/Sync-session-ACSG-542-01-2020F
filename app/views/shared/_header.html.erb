@@ -147,7 +147,10 @@
                     <b class='caret'></b>
                   </a>
                   <ul class='dropdown-menu' role='menu'>
-                    <li><a href='/entries/activity_summary/us'>Browse</a></li>
+                    <%if current_user.admin? #remove this when ready for production%>
+                    <li><a href='/entries/activity_summary/us'>Browse - US</a></li>
+                    <li><a href='/entries/activity_summary/ca'>Browse - Canada</a></li>
+                    <%end%>
                     <li ><a href='/entries'>Search</a></li>
                     <li ><a href='/entries/bi'>Snapshots</a></li>
                   </ul>

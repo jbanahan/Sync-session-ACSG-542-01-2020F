@@ -21,6 +21,10 @@ class Entry < ActiveRecord::Base
     false
   end
 
+  # generate a where clause to restrict import country
+  def self.import_country_clause iso_code
+    "(entries.import_country_id = #{Country.find_by_iso_code(iso_code).id})"
+  end
   # generate a where clause for the previous 1 week 
   def self.week_clause base_date_utc
     "(release_date > DATE_ADD('#{base_date_utc}',INTERVAL -1 WEEK) and release_date < '#{base_date_utc}')"

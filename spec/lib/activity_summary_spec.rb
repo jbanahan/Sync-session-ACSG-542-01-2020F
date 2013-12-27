@@ -3,21 +3,25 @@ require 'spec_helper'
 describe OpenChain::ActivitySummary do
   describe :generate_entry_summary do
     it "should make json" do
-      ent = Factory(:entry,importer_id:Factory(:company).id,release_date:1.day.ago)
+      @us = Factory(:country,iso_code:'US')
+      ent = Factory(:entry,import_country_id:@us.id,importer_id:Factory(:company).id,release_date:1.day.ago)
       h = described_class.generate_entry_summary(ent.importer_id)
       h['activity_summary']['summary']['1w']['count'].should == 1
     end
   end
 
-  describe OpenChain::ActivitySummary::EntrySummaryGenerator do
+  describe OpenChain::ActivitySummary::USEntrySummaryGenerator do
+    before :each do 
+      @us = Factory(:country,iso_code:'US')
+    end
     describe :generate_hash do
       it "should create summary section" do
         importer = Factory(:company)
-        ent = Factory(:entry,importer_id:importer.id,release_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
-        ent2 = Factory(:entry,importer_id:importer.id,release_date:10.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
-        ent3 = Factory(:entry,importer_id:importer.id,entry_filed_date:1.week.ago,total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
-        ent2 = Factory(:entry,importer_id:importer.id,release_date:367.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
-        h = described_class::EntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        ent = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
+        ent2 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:10.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        ent3 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_filed_date:1.week.ago,total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
+        ent2 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:367.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
         h['summary']['1w']['count'].should == 1
         h['summary']['1w']['duty'].should == 100 
         h['summary']['1w']['fees'].should == 50
@@ -46,13 +50,13 @@ describe OpenChain::ActivitySummary do
 
       it "should create statments section" do
         importer = Factory(:company)
-        not_paid = Factory(:entry,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,12,25),monthly_statement_paid_date:nil,total_duty:100,total_fees:50)
-        paid1 = Factory(:entry,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
-        paid2 = Factory(:entry,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
-        paid3 = Factory(:entry,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,10,25),monthly_statement_paid_date:Date.new(2013,10,24),total_duty:200,total_fees:100)
+        not_paid = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,12,25),monthly_statement_paid_date:nil,total_duty:100,total_fees:50)
+        paid1 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        paid2 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        paid3 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,10,25),monthly_statement_paid_date:Date.new(2013,10,24),total_duty:200,total_fees:100)
         #next line won't be included since we only return 3 records
-        Factory(:entry,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,9,25),monthly_statement_paid_date:Date.new(2013,9,24),total_duty:200,total_fees:100)
-        h = described_class::EntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,9,25),monthly_statement_paid_date:Date.new(2013,9,24),total_duty:200,total_fees:100)
+        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
         statements = h['pms']
         statements.should have(3).records
         statements[0]['due'].should == Date.new(2013,12,25)
@@ -71,32 +75,32 @@ describe OpenChain::ActivitySummary do
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,release_date:1.week.ago,importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,release_date:1.week.ago,importer_id:importer.id)
             )
           )
         ).commercial_invoice_line.commercial_invoice_tariffs.create!(entered_value:150)
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,release_date:2.week.ago,importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,release_date:2.week.ago,importer_id:importer.id)
             )
           )
         )
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V2',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,release_date:2.week.ago,importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,release_date:2.week.ago,importer_id:importer.id)
             )
           )
         )
         Factory(:commercial_invoice_tariff,entered_value:100,
           commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
             commercial_invoice:Factory(:commercial_invoice,
-              entry:Factory(:entry,release_date:2.years.ago,importer_id:importer.id)
+              entry:Factory(:entry,import_country_id:@us.id,release_date:2.years.ago,importer_id:importer.id)
             )
           )
         )
-        h = described_class::EntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
         v = h['vendors_ytd']
         v.should have(2).records
         v[0]['name'].should == 'V1'
@@ -108,11 +112,11 @@ describe OpenChain::ActivitySummary do
         importer = Factory(:company)
         Port.create!(:name=>'P1',schedule_d_code:'0001')
         Port.create!(:name=>'P2',schedule_d_code:'0002')
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:3.days.ago)
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:10.days.ago)
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:10.days.ago)
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:2.days.ago,release_date:nil)
-        h = described_class::EntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:3.days.ago)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:10.days.ago)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:10.days.ago)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:2.days.ago,release_date:nil)
+        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
         p = h['ports_ytd']
         p.should have(2).entries
         p[0]['name'].should == 'P1'
@@ -126,11 +130,11 @@ describe OpenChain::ActivitySummary do
         importer = Factory(:company)
         Port.create!(:name=>'P1',schedule_d_code:'0001')
         Port.create!(:name=>'P2',schedule_d_code:'0002')
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:3.days.ago)
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:10.days.ago)
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:10.days.ago)
-        Factory(:entry,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:2.days.ago,release_date:nil)
-        h = described_class::EntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:3.days.ago)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:10.days.ago)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:10.days.ago)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:2.days.ago,release_date:nil)
+        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
         bp = h['by_port']
         bp.should have(3).ports
         bp.first['name'].should == 'P1'
@@ -157,7 +161,7 @@ describe OpenChain::ActivitySummary do
             #everything for 1 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,importer_id:importer.id,release_date:2.days.ago)
+                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:2.days.ago)
               )
             )
           )
@@ -165,7 +169,7 @@ describe OpenChain::ActivitySummary do
             #every other for 4 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,importer_id:importer.id,release_date:10.days.ago)
+                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:10.days.ago)
               )
             )
           ) if i%2 == 0
@@ -173,12 +177,12 @@ describe OpenChain::ActivitySummary do
             #first for open
             commercial_invoice_line:Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,importer_id:importer.id,entry_filed_date:1.day.ago)
+                Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_filed_date:1.day.ago)
               )
             )
           ) if i == 0
         end
-        h = described_class::EntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
         bh = h['by_hts']
         bh.should have(4).records
         bh[0]['name'].should == '61'
@@ -198,11 +202,6 @@ describe OpenChain::ActivitySummary do
         bh[3]['4w'].should == 9
         bh[3]['open'].should == 1
       end
-
-      it "should return empty section if no monthly statements due"
-      it "should only show due dates 30 days after base_date"
-
-      it "should base dates on base_date at 00:00 EST"
     end
   end
 end

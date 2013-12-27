@@ -1,10 +1,10 @@
 module OpenChain; class ActivitySummary
 
   def self.generate_entry_summary company_id, base_date=0.days.ago.to_date
-    {'activity_summary'=>EntrySummaryGenerator.generate_hash(company_id, base_date)}
+    {'activity_summary'=>USEntrySummaryGenerator.generate_hash(company_id, base_date)}
   end
 
-  class EntrySummaryGenerator
+  class USEntrySummaryGenerator
     EST = ActiveSupport::TimeZone['Eastern Time (US & Canada)']
     def self.generate_hash company_id, base_date
       b_utc = base_date_utc base_date
@@ -28,7 +28,7 @@ module OpenChain; class ActivitySummary
       qry = "
       select monthly_statement_due_date, monthly_statement_paid_date, sum(total_duty) + sum(total_fees) as 'Duty & Fees' 
 from entries where monthly_statement_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 30 DAY) 
-and (#{Entry.search_where_by_company_id importer_id})
+and (#{Entry.search_where_by_company_id importer_id}) and (#{Entry.import_country_clause 'US'})
 group by monthly_statement_due_date, monthly_statement_paid_date
 order by monthly_statement_due_date desc
 limit 3"
@@ -57,7 +57,7 @@ limit 3"
       sql = "SELECT ports.name, ports.schedule_d_code, count(*) 
       FROM entries
       INNER JOIN ports on ports.schedule_d_code = entries.entry_port_code
-      WHERE (#{Entry.search_where_by_company_id importer_id}) AND (#{date_clause})
+      WHERE (#{Entry.search_where_by_company_id importer_id}) AND (#{date_clause}) and (#{Entry.import_country_clause 'US'})
       GROUP BY ports.name, ports.schedule_d_code"
       r = {}
       ActiveRecord::Base.connection.execute(sql).each do |row|
@@ -75,7 +75,7 @@ limit 3"
       INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id
       INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id
       INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id
-      WHERE (#{Entry.search_where_by_company_id importer_id}) AND (#{date_clause})
+      WHERE (#{Entry.search_where_by_company_id importer_id}) AND (#{date_clause}) and (#{Entry.import_country_clause 'US'})
       GROUP BY left(commercial_invoice_tariffs.hts_code,2)"
       r = {}
       ActiveRecord::Base.connection.execute(sql).each do |row|
@@ -116,7 +116,7 @@ limit 3"
       INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id
       INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id
       INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id
-      WHERE (#{Entry.search_where_by_company_id importer_id}) AND (#{ytd_clause(base_date_utc)})
+      WHERE (#{Entry.search_where_by_company_id importer_id}) AND (#{ytd_clause(base_date_utc)}) and (#{Entry.import_country_clause 'US'})
       GROUP BY commercial_invoice_lines.vendor_name
       ORDER BY sum(commercial_invoice_tariffs.entered_value) DESC
       LIMIT 5"
@@ -146,7 +146,7 @@ limit 3"
     def self.generate_summary_line importer_id, date_clause
       w = Entry.search_where_by_company_id importer_id
       sql = "select count(*), sum(total_duty), sum(total_fees), sum(entered_value), sum(total_invoiced_value), sum(total_units)  from entries 
-      where (#{date_clause}) AND (#{w})"
+      where (#{date_clause}) AND (#{w}) and (#{Entry.import_country_clause 'US'})"
       result_row = ActiveRecord::Base.connection.execute(sql).first
       {
         'count'=>result_row[0],

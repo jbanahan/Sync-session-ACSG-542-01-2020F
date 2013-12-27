@@ -1,7 +1,15 @@
 require 'spec_helper'
 
 describe Entry do
-  context :where_clauses do
+  
+  context :import_country_where_clause do
+    it "should find country twice (to check caching)" do
+      c = Factory(:country,iso_code:'ZA')
+      Entry.import_country_clause('za').should == "(entries.import_country_id = #{c.id})"
+      Entry.import_country_clause('za').should == "(entries.import_country_id = #{c.id})"
+    end
+  end
+  context :date_where_clauses do
     before :each do
       @dt = Time.now.utc 
     end
