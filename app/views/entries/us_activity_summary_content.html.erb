@@ -1,38 +1,10 @@
-<%cache ['v1','entry_activity_summary',@imp,@last_entry] do-%>
-  <style>
-    h3.activity-title {
-      color: white;
-      background-color: #000066;
-      padding-bottom: 5px;
-      padding-top: 5px;
-      margin:0;
-    }
-    h4.activity-title {
-      color: black;
-      background-color: #ccc;
-      padding-bottom: 5px;
-      padding-top: 5px;
-      margin:0;
-    }
-    div.activty-pane {
-      padding-bottom: 20px;
-      padding-top: 20px;
-    }
-    td.numeric {
-      text-align: right;
-      font-family: Consolas, ‘Andale Mono WT’, ‘Andale Mono’, ‘Lucida Console’, ‘Lucida Sans Typewriter’, ‘DejaVu Sans Mono’, ‘Bitstream Vera Sans Mono’, ‘Liberation Mono’, ‘Nimbus Mono L’, Monaco, ‘Courier New’, Courier, monospace;
-    }
-    table.tablesorter thead th:hover {
-      cursor: pointer;
-    }
-  </style>
+<%cache ['v2','us_entry_activity_summary',@imp,@last_entry] do-%>
   <%bd = 0.days.ago%>
-  <%hsh = OpenChain::ActivitySummary.generate_entry_summary(@imp.id, bd)['activity_summary']%>
+  <%hsh = OpenChain::ActivitySummary.generate_us_entry_summary(@imp.id, bd)['activity_summary']%>
   <div class="container">
     <div class="row" style='margin-bottom:20px;'>
       <div class="col-md-12 text-center">
         <h1>US Entry Activity</h1>
-        <select id='impselect'>
           <% 
             imp_list = []
             if current_user.company.master?
@@ -42,8 +14,13 @@
               imp_list = comps.collect {|c| ["#{c.name} (#{c.alliance_customer_number})",c.id]}
             end
           %>
-          <%=options_for_select imp_list%>
-        </select>
+          <% if imp_list.size > 1 %>
+            <select id='impselect' class='form-control'>
+              <%=options_for_select imp_list%>
+            </select>
+          <% else %>
+            <h4><%=@imp.name%></h4>
+          <% end %>
       </div>
     </div>
     <div class="row">
@@ -290,13 +267,4 @@
       </div>
     </div>
   </div>
-  <script type='text/javascript'>
-    $(document).ready(function() {
-        $('table.tablesorter').tablesorter();
-        $('#impselect').val(<%=@imp.id%>);
-        $('#impselect').on('change',function() {
-          window.location = '/entries/importer/'+$(this).val()+'/activity_summary/us'
-        });
-    });
-  </script>
 <%-end-%>

@@ -15,7 +15,7 @@ describe OpenChain::FenixParser do
     @ship_terms = 'Fob'
     @direct_shipment_date = '12/14/2012'
     @transport_mode_code = " 9 "
-    @entry_port_code = '456'
+    @entry_port_code = '0456'
     @carrier_code = '1234'
     @voyage = '19191'
     @exit_port_code = '0708'
@@ -281,6 +281,12 @@ describe OpenChain::FenixParser do
     Entry.where(:broker_reference=>@file_number).should have(1).record
     Entry.find_by_broker_reference(@file_number).should have(1).commercial_invoices
   end
+  it "should zero pad port codes" do
+    @entry_port_code = '1'
+    OpenChain::FenixParser.parse @entry_lambda.call
+    Entry.first.entry_port_code.should == '0001'
+  end
+
 
   it 'should handle blank date time' do
     @across_sent_date = ','

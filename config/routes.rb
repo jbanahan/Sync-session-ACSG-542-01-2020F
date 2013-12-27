@@ -14,6 +14,12 @@ OpenChain::Application.routes.draw do
 
   match '/entries/activity_summary/us' => 'entries#us_activity_summary', :via => :get
   match '/entries/importer/:importer_id/activity_summary/us' => 'entries#us_activity_summary', :via => :get
+  match '/entries/importer/:importer_id/activity_summary/us/content' => 'entries#us_activity_summary_content', :via => :get
+
+  match '/entries/activity_summary/ca' => 'entries#ca_activity_summary', :via => :get
+  match '/entries/importer/:importer_id/activity_summary/ca' => 'entries#ca_activity_summary', :via => :get
+  match '/entries/importer/:importer_id/activity_summary/ca/content' => 'entries#ca_activity_summary_content', :via => :get
+
   match '/entries/importer/:importer_id/entry_port/:port_code' => 'entries#by_entry_port', :via => :get
   match '/entries/importer/:importer_id/release_range/:release_range' => 'entries#by_release_range', :via=>:get
   match "/entries/bi" => "entries#bi_three_month", :via=>:get

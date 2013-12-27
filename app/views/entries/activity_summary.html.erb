@@ -1,0 +1,51 @@
+<style>
+  h3.activity-title {
+    color: white;
+    background-color: #000066;
+    padding-bottom: 5px;
+    padding-top: 5px;
+    margin:0;
+  }
+  h4.activity-title {
+    color: black;
+    background-color: #ccc;
+    padding-bottom: 5px;
+    padding-top: 5px;
+    margin:0;
+  }
+  div.activty-pane {
+    padding-bottom: 20px;
+    padding-top: 20px;
+  }
+  td.numeric {
+    text-align: right;
+    font-family: Consolas, ‘Andale Mono WT’, ‘Andale Mono’, ‘Lucida Console’, ‘Lucida Sans Typewriter’, ‘DejaVu Sans Mono’, ‘Bitstream Vera Sans Mono’, ‘Liberation Mono’, ‘Nimbus Mono L’, Monaco, ‘Courier New’, Courier, monospace;
+  }
+  table.tablesorter thead th:hover {
+    cursor: pointer;
+  }
+</style>
+<div id='activity-container'>
+  <div class="container">
+    <div class="panel panel-primary">
+      <div class="panel-heading">
+        <h3 class='panel-title'>
+          Content Loading
+        </h3>
+      </div>
+      <div class="panel-body">Your real time dashboard is being generated.</div>
+    </div>
+  </div>
+</div>
+<script>
+$(document).ready(function() {
+  $.get('/entries/importer/<%=params[:importer_id]%>/activity_summary/<%=@iso%>/content').success(function(data) {
+    $('#activity-container').html(data);
+    $('table.tablesorter').tablesorter();
+    $('#impselect').val(<%=params[:importer_id]%>);
+    $('#impselect').on('change',function() {
+      window.location = '/entries/importer/'+$(this).val()+'/activity_summary/<%=@iso%>'
+    });
+  });
+});
+</script>

@@ -1,15 +1,89 @@
 require 'spec_helper'
 
 describe OpenChain::ActivitySummary do
-  describe :generate_entry_summary do
+  describe :generate_us_entry_summary do
     it "should make json" do
       @us = Factory(:country,iso_code:'US')
       ent = Factory(:entry,import_country_id:@us.id,importer_id:Factory(:company).id,release_date:1.day.ago)
-      h = described_class.generate_entry_summary(ent.importer_id)
+      h = described_class.generate_us_entry_summary(ent.importer_id)
+      h['activity_summary']['summary']['1w']['count'].should == 1
+    end
+  end
+  describe :generate_ca_entry_summary do
+    it "should make json" do
+      @ca = Factory(:country,iso_code:'CA')
+      ent = Factory(:entry,import_country_id:@ca.id,importer_id:Factory(:company).id,release_date:1.day.ago)
+      h = described_class.generate_ca_entry_summary(ent.importer_id)
       h['activity_summary']['summary']['1w']['count'].should == 1
     end
   end
 
+  describe OpenChain::ActivitySummary::CAEntrySummaryGenerator do
+    before :each do
+      @ca = Factory(:country,iso_code:'ca')
+    end
+
+    it "should create summary section" do
+      importer = Factory(:company)
+      ent = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,release_date:2.day.ago,total_duty:100,total_gst:50,total_duty_gst:150,entered_value:1000,total_invoiced_value:1100,total_units:70)
+      ent2 = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,release_date:10.days.ago,total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
+      ent3 = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,file_logged_date:1.week.ago,total_duty:50,total_gst:40,total_duty_gst:90,entered_value:60,total_invoiced_value:66,total_units:3)
+      ent2 = Factory(:entry,import_country_id:@ca.id,importer_id:importer.id,release_date:367.days.ago,total_duty:200,total_gst:75,total_duty_gst:275,entered_value:1500,total_invoiced_value:1600,total_units:40)
+      h = described_class::CAEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
+      h['summary']['1w']['count'].should == 1
+      h['summary']['1w']['duty'].should == 100 
+      h['summary']['1w']['gst'].should == 50
+      h['summary']['1w']['duty_gst'].should == 150
+      h['summary']['1w']['entered'].should == 1000 
+      h['summary']['1w']['invoiced'].should == 1100
+      h['summary']['1w']['units'].should == 70
+      h['summary']['4w']['count'].should == 2
+      h['summary']['4w']['duty'].should == 300
+      h['summary']['4w']['gst'].should == 125
+      h['summary']['4w']['duty_gst'].should == 425
+      h['summary']['4w']['entered'].should == 2500
+      h['summary']['4w']['invoiced'].should == 2700
+      h['summary']['4w']['units'].should == 110
+      h['summary']['open']['count'].should == 1
+      h['summary']['open']['duty'].should == 50
+      h['summary']['open']['gst'].should == 40
+      h['summary']['open']['duty_gst'].should == 90
+      h['summary']['open']['entered'].should == 60
+      h['summary']['open']['invoiced'].should == 66
+      h['summary']['open']['units'].should == 3
+      h['summary']['ytd']['count'].should == 3
+      h['summary']['ytd']['duty'].should == 350
+      h['summary']['ytd']['gst'].should == 165
+      h['summary']['ytd']['duty_gst'].should == 515
+      h['summary']['ytd']['entered'].should == 2560
+      h['summary']['ytd']['invoiced'].should == 2766
+      h['summary']['ytd']['units'].should == 113
+    end
+    it "should create k84 section" do
+      importer = Factory(:company)
+      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,2,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      Factory(:entry,k84_due_date:Date.new(2013,3,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      #only find last 3, so don't find this one
+      Factory(:entry,k84_due_date:Date.new(2012,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
+      h = described_class::CAEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
+      k = h['k84']
+      k.should have(3).results
+      k[0]['due'].should == Date.new(2013,3,25)
+      k[0]['amount'].should == 400
+      k[1]['due'].should == Date.new(2013,2,25)
+      k[1]['amount'].should == 300
+      k[2]['due'].should == Date.new(2013,1,25)
+      k[2]['amount'].should == 300
+    end
+  end
   describe OpenChain::ActivitySummary::USEntrySummaryGenerator do
     before :each do 
       @us = Factory(:country,iso_code:'US')
@@ -17,11 +91,13 @@ describe OpenChain::ActivitySummary do
     describe :generate_hash do
       it "should create summary section" do
         importer = Factory(:company)
-        ent = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
-        ent2 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:10.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
-        ent3 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_filed_date:1.week.ago,total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
-        ent2 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:367.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
-        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:10.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_filed_date:1.week.ago,total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
+        Factory(:entry,import_country_id:@us.id,importer_id:importer.id,release_date:367.days.ago,total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
+        #don't find for wrong country
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,release_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
+        h = described_class::USEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
         h['summary']['1w']['count'].should == 1
         h['summary']['1w']['duty'].should == 100 
         h['summary']['1w']['fees'].should == 50
@@ -56,7 +132,9 @@ describe OpenChain::ActivitySummary do
         paid3 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,10,25),monthly_statement_paid_date:Date.new(2013,10,24),total_duty:200,total_fees:100)
         #next line won't be included since we only return 3 records
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,9,25),monthly_statement_paid_date:Date.new(2013,9,24),total_duty:200,total_fees:100)
-        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        #don't find for wrong country
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,10,25),monthly_statement_paid_date:Date.new(2013,10,24),total_duty:200,total_fees:100)
+        h = described_class::USEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
         statements = h['pms']
         statements.should have(3).records
         statements[0]['due'].should == Date.new(2013,12,25)
@@ -100,7 +178,15 @@ describe OpenChain::ActivitySummary do
             )
           )
         )
-        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        # don't find for wrong country
+        Factory(:commercial_invoice_tariff,entered_value:100,
+          commercial_invoice_line:Factory(:commercial_invoice_line,vendor_name:'V1',
+            commercial_invoice:Factory(:commercial_invoice,
+              entry:Factory(:entry,import_country_id:Factory(:country).id,release_date:1.week.ago,importer_id:importer.id)
+            )
+          )
+        )
+        h = described_class::USEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
         v = h['vendors_ytd']
         v.should have(2).records
         v[0]['name'].should == 'V1'
@@ -116,7 +202,9 @@ describe OpenChain::ActivitySummary do
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:10.days.ago)
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:10.days.ago)
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:2.days.ago,release_date:nil)
-        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        # don't find for wrong country
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:3.days.ago)
+        h = described_class::USEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
         p = h['ports_ytd']
         p.should have(2).entries
         p[0]['name'].should == 'P1'
@@ -134,7 +222,9 @@ describe OpenChain::ActivitySummary do
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:10.days.ago)
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:10.days.ago)
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:2.days.ago,release_date:nil)
-        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        #don't find for wrong country
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:2.days.ago,release_date:nil)
+        h = described_class::USEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
         bp = h['by_port']
         bp.should have(3).ports
         bp.first['name'].should == 'P1'
@@ -181,8 +271,16 @@ describe OpenChain::ActivitySummary do
               )
             )
           ) if i == 0
+          Factory(:commercial_invoice_tariff,hts_code:h,
+            #wrong country
+            commercial_invoice_line:Factory(:commercial_invoice_line,
+              commercial_invoice:Factory(:commercial_invoice,entry:
+                Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_filed_date:1.day.ago)
+              )
+            )
+          ) if i == 0
         end
-        h = described_class::USEntrySummaryGenerator.generate_hash importer.id, 0.days.ago.to_date
+        h = described_class::USEntrySummaryGenerator.new.generate_hash importer.id, 0.days.ago.to_date
         bh = h['by_hts']
         bh.should have(4).records
         bh[0]['name'].should == '61'

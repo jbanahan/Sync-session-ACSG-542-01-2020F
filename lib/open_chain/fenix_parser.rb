@@ -197,7 +197,7 @@ module OpenChain
       entry.ship_terms = str_val(line[17]) {|val| val.upcase}
       entry.direct_shipment_date = parse_date(line[42])
       entry.transport_mode_code = str_val(line[4])
-      entry.entry_port_code = str_val(line[5])
+      entry.entry_port_code = prep_port_code(str_val(line[5]))
       entry.carrier_code = str_val(line[6])
       entry.voyage = str_val(line[7])
       entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4,'0')}
@@ -607,6 +607,14 @@ module OpenChain
       end
 
       export_time
+    end
+    def prep_port_code str
+      return nil if str.blank?
+      r = str
+      while r.length < 4
+        r = "0#{r}"
+      end
+      r
     end
   end
 end

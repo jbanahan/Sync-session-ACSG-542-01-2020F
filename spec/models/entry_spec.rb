@@ -2,6 +2,50 @@ require 'spec_helper'
 
 describe Entry do
   
+  context :tracking_status do
+    context :fenix do
+      it "should default to created" do
+        Factory(:entry,source_system:'Fenix').tracking_status.should == Entry::TRACKING_STATUS_CREATED
+      end
+      it "should use open for all non-V type entries with across_sent_date" do
+        Factory(:entry,source_system:'Fenix',across_sent_date:Time.now).tracking_status.should == Entry::TRACKING_STATUS_OPEN
+      end
+      it "should use open for all V type entries" do
+        Factory(:entry,source_system:'Fenix',entry_type:'V').tracking_status.should == Entry::TRACKING_STATUS_OPEN
+      end
+      it "should not override closed" do
+        ent = Factory(:entry,source_system:'Fenix',tracking_status:Entry::TRACKING_STATUS_CLOSED) 
+        ent.release_date = Time.now
+        ent.save!
+        ent.tracking_status.should == Entry::TRACKING_STATUS_CLOSED
+      end
+    end
+    context :alliance do
+      it "should use created for base entry" do
+        Factory(:entry,source_system:'Alliance').tracking_status == Entry::TRACKING_STATUS_CREATED
+      end
+      it "should use open for entries that have been filed" do
+        Factory(:entry,source_system:'Alliance',entry_filed_date:Time.now).tracking_status == Entry::TRACKING_STATUS_OPEN
+      end
+      it "should not override closed" do
+        ent = Factory(:entry,source_system:'Alliance',tracking_status:Entry::TRACKING_STATUS_CLOSED)
+        ent.entry_filed_date = Time.now
+        ent.save!
+        ent.tracking_status.should == Entry::TRACKING_STATUS_CLOSED
+      end
+    end
+    context :other do
+      it "should default to open" do
+        Factory(:entry).tracking_status.should == Entry::TRACKING_STATUS_OPEN
+      end
+      it "should not override closed" do
+        ent = Factory(:entry,tracking_status:Entry::TRACKING_STATUS_CLOSED)
+        ent.entry_filed_date = Time.now
+        ent.save!
+        ent.tracking_status.should == Entry::TRACKING_STATUS_CLOSED
+      end
+    end
+  end
   context :import_country_where_clause do
     it "should find country twice (to check caching)" do
       c = Factory(:country,iso_code:'ZA')
@@ -26,19 +70,17 @@ describe Entry do
       Factory(:entry,release_date:8.weeks.ago)
       Entry.where(Entry.four_week_clause(@dt)).order(:id).to_a.should == [ent,ent2]
     end
-    it "should match open" do
-      Factory(:entry) #don't find not filed & not released
-      ent1 = Factory(:entry,entry_filed_date:1.day.ago) #find filed not released
-      ent2 = Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.from_now) #find filed and released in future
-      Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.ago) #don't find filed & released
-      Entry.where(Entry.open_clause(@dt)).order(:id).to_a.should == [ent1,ent2]
+    it "should match not_released" do
+      ent1 = Factory(:entry) #find filed not released
+      ent2 = Factory(:entry,release_date:1.day.from_now) #find filed and released in future
+      Factory(:entry,release_date:1.day.ago) #don't find filed & released
+      Entry.where(Entry.not_released_clause(@dt)).order(:id).to_a.should == [ent1,ent2]
     end
     it "should match ytd" do
-      Factory(:entry) #don't find not filed & not released
-      ent1 = Factory(:entry,entry_filed_date:1.day.ago) #find filed not released
-      ent2 = Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.from_now) #find filed and released in future
-      ent3 = Factory(:entry,entry_filed_date:1.day.ago,release_date:1.day.ago) #find filed & released
-      Factory(:entry,entry_filed_date:1.day.ago,release_date:Date.new(Time.now.year-1,12,31)) #don't find released last year
+      ent1 = Factory(:entry) #find filed
+      ent2 = Factory(:entry,release_date:1.day.from_now) #find released in future
+      ent3 = Factory(:entry,release_date:1.day.ago) #find released
+      Factory(:entry,release_date:Date.new(Time.now.year-1,12,31)) #don't find released last year
       Entry.where(Entry.ytd_clause(@dt)).order(:id).to_a.should == [ent1,ent2,ent3]
       
     end
@@ -204,15 +246,18 @@ describe Entry do
     it "should set k84 month" do
       @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-01-01")
       @entry.k84_month.should eq 1
+      @entry.k84_due_date.to_date.should == Date.new(2013,1,25)
     end
 
     it "should set k84 month to next month if cadex accept is 25th or later" do
       @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-01-25")
       @entry.k84_month.should eq 2
+      @entry.k84_due_date.to_date.should == Date.new(2013,2,25)
     end
 
     it "should set k84 month to 1 if cadex accept is after Dec 24th" do
       @entry.update_attributes cadex_accept_date: Time.zone.parse("2013-12-25")
+      @entry.k84_due_date.to_date.should == Date.new(2014,1,25)
       @entry.k84_month.should eq 1
     end
   end
