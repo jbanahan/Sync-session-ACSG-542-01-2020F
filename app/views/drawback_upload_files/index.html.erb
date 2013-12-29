@@ -85,6 +85,15 @@
             <p><em>.csv file from Frank Genus @ J Crew</em></p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_SHIPMENTS}%>
           </div>
+          <div>
+            <h3>Create Import Lines</h3>
+            <p><em>Trigger entry match processing to generate lines combining entries and the data from the PO Correlation File</em></p>
+            <%=form_tag '/drawback_upload_files/process_j_crew_entries', method: :put do %>
+              <div>Start Date: <input type='date' name='start_date' /></div>
+              <div>End Date: <input type='date' name='end_date' /></div>
+              <input type='submit' value='Go' class='btn btn-primary' />
+            <%-end-%>
+          </div>
           <div >
             <h3>Canada Export File (last 10)</h3>
             <p><em>167 column .csv file from Arvind @ J Crew</em></p>
@@ -183,3 +192,8 @@
     </div>
   </div>
 </div>
+<script>
+  $(document).ready(function() {
+    $('#uploadTabs a:first').tab('show');    
+  });
+</script>

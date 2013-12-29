@@ -2,6 +2,16 @@ require 'open_chain/drawback_processor'
 module OpenChain
   class JCrewDrawbackProcessor < OpenChain::DrawbackProcessor
     
+    def self.process_date_range arrival_date_start, arrival_date_end, user=nil
+      ['J0000','JCREW'].each do |cnum|
+        imp = Company.find_by_alliance_customer_number cnum
+        self.process_entries Entry.where(importer_id:imp.id).where('entries.arrival_date between ? and ?',arrival_date_start,arrival_date_end)
+      end
+      if user
+        u = user.is_a?(Fixnum) ? User.find(user) : user
+        u.messages.create!(body:"J Crew drawback processing complete for date range #{arrival_date_start} - #{arrival_date_end}",subject:'J Crew Drawback Processing Complete')
+      end
+    end
     def find_shipment_lines commercial_invoice_line
       entry = commercial_invoice_line.entry
       po_search = SearchCriterion.new(:model_field_uid=>"*cf_#{po_custom_def.id}",:operator=>"eq",:value=>commercial_invoice_line.po_number)

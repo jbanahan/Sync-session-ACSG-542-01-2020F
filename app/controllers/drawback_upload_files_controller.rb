@@ -1,3 +1,4 @@
+require 'open_chain/j_crew_drawback_processor'
 class DrawbackUploadFilesController < ApplicationController
   def index 
     if current_user.view_drawback?
@@ -37,6 +38,19 @@ class DrawbackUploadFilesController < ApplicationController
       end
     else
       add_flash :errors, "You cannot upload files because you do not have permission to edit Drawback."
+    end
+    redirect_to drawback_upload_files_path 
+  end
+  def process_j_crew_entries
+    if current_user.edit_drawback?
+      if params[:start_date].blank? || params[:end_date].blank?
+        error_redirect "Start & End dates are required."
+        return
+      end
+      OpenChain::JCrewDrawbackProcessor.delay.process_date_range params[:start_date], params[:end_date], current_user.id
+      add_flash :notices, "Entries are being processed.  You'll receive a system message when they are complete."
+    else
+      error_redirect "You do not have permission to process drawback."
     end
     redirect_to drawback_upload_files_path 
   end

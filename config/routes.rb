@@ -423,7 +423,9 @@ OpenChain::Application.routes.draw do
   end
   resources :corrective_issues, :only=>[:create,:update,:destroy]
   
-  resources :drawback_upload_files, :only=>[:index,:create]
+  resources :drawback_upload_files, :only=>[:index,:create] do
+    put 'process_j_crew_entries', on: :collection
+  end
   resources :duty_calc_import_files, :only=>[:create] do
     get 'download', on: :member
   end
