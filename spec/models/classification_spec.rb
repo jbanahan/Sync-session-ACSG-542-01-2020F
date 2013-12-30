@@ -33,4 +33,74 @@ describe Classification do
       new_one.find_same.should be_nil
     end
   end
+
+  describe "accepts_nested_attributes_for tariff_records" do
+    before :each do
+      @c = Factory(:classification)
+      @params = {
+        tariff_records_attributes: {
+            '0' => {
+              line_number: 1,
+              view_sequence: 1
+            }
+         }
+      }
+    end
+
+    it 'rejects attributes unless specific values are present' do
+      @c.update_attributes! @params
+      @c.tariff_records.should have(0).items
+    end
+
+    it 'does not reject when hts 1 values are present' do
+      @params[:tariff_records_attributes]['0'][:hts_1] = "1"
+      @c.update_attributes! @params
+      @c.tariff_records.should have(1).item
+    end
+
+    it 'does not reject when hts 2 values are present' do
+      @params[:tariff_records_attributes]['0'][:hts_2] = "1"
+      @c.update_attributes! @params
+      @c.tariff_records.should have(1).item
+    end
+
+    it 'does not reject when hts 3 values are present' do
+      @params[:tariff_records_attributes]['0'][:hts_3] = "1"
+      @c.update_attributes! @params
+      @c.tariff_records.should have(1).item
+    end
+
+    it 'does not reject when schedule b 1 values are present' do
+      @params[:tariff_records_attributes]['0'][:schedule_b_1] = "1"
+      @c.update_attributes! @params
+      @c.tariff_records.should have(1).item
+    end
+
+    it 'does not reject when schedule b 2 values are present' do
+      @params[:tariff_records_attributes]['0'][:schedule_b_2] = "1"
+      @c.update_attributes! @params
+      @c.tariff_records.should have(1).item
+    end
+
+    it 'does not reject when schedule b 3 values are present' do
+      @params[:tariff_records_attributes]['0'][:schedule_b_3] = "1"
+      @c.update_attributes! @params
+      @c.tariff_records.should have(1).item
+    end
+
+    it 'does not reject when no values are present for destroys' do
+      r = @c.tariff_records.create! :hts_1 => "1"
+      @params[:tariff_records_attributes]['0'][:id] = r.id
+      @params[:tariff_records_attributes]['0'][:_destroy] = "true"
+      @c.update_attributes! @params
+      @c.tariff_records.should have(0).items
+    end
+
+    it "rejects on false destroys when no values are present" do
+      @params[:tariff_records_attributes]['0'][:_destroy] = "false"
+
+      @c.update_attributes! @params
+      @c.tariff_records.should have(0).items
+    end
+  end
 end

@@ -92,7 +92,15 @@ describe ProductsController do
         user.id.should == @user.id
         opts[:no_user_message].should be_true
 
-        nil
+        params[:product][:uniqe_identifier].should be_nil
+        params[:product][:id].should be_nil
+        params[:product][:vendor_id].should be_nil
+        params[:product][:field2].should be_nil
+        params[:utf8].should be_nil
+        params[:pk]["0"].should == "0"
+        params[:pk]["9"].should == "9"
+
+        {:message => "Test", :errors => ["1", "2"]}
       end
       # Several fields are not allowed to be bulk updated (as well as blank values)
       p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => '', :classifications_attributes=>{"us"=>"1"}}, :utf8 => 'v'}
@@ -101,36 +109,7 @@ describe ProductsController do
         pks[i.to_s] = i.to_s
       end
       p[:pk] = pks
-
-      Product.should_receive(:batch_bulk_update) do |u, params, options| 
-        u.id.should == @user.id
-        params[:product][:uniqe_identifier].should be_nil
-        params[:product][:id].should be_nil
-        params[:product][:vendor_id].should be_nil
-        params[:product][:field2].should be_nil
-        params[:utf8].should be_nil
-        params[:pk]["0"].should == "0"
-        params[:pk]["9"].should == "9"
-        options[:no_email].should be_true
-        {:message => "Test"}
-      end
       
-      post :bulk_update, p
-      response.should redirect_to products_path
-      flash[:notices].first.should == "Test"
-    end
-
-    it "should show errors for inline bulk updates" do
-      OpenChain::BulkUpdateClassification.stub(:go)
-      p = {:product_cf => {:field => "v", :field2 => ""}, :pk => {"0" => '0'}, :product => {:id => ""}}
-      
-      Product.should_receive(:batch_bulk_update) do |u, params, options| 
-        params[:product_cf][:field2].should be_nil
-        options[:no_email].should be_true
-  
-        {:message => "Test", :errors => ["1", "2"]}
-      end
-
       post :bulk_update, p
       response.should redirect_to products_path
       flash[:notices].first.should == "Test"
@@ -146,12 +125,13 @@ describe ProductsController do
       end
       p[:pk] = pks
     
-      prod = double
-      Product.should_receive(:delay).and_return(prod)
-      prod.should_receive(:batch_bulk_update) do |u, params| 
-        u.id.should == @user.id
-        params[:pk].length.should == 11
-        params[:product][:field].should == "value"
+      bulk = double("OpenChain::BulkUpdateClassification")
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(bulk)
+      bulk.should_receive(:go_serializable) do |params, id| 
+        id.should == @user.id
+        params = JSON.parse params
+        params['pk'].length.should == 11
+        params['product']['field'].should == "value"
       end
 
       post :bulk_update, p
@@ -161,45 +141,19 @@ describe ProductsController do
 
     it "should delay bulk updates for search runs" do
       p = {:product => {:field => "value"}, :sr_id => 1, :pk => {"0" => "0"}}
-      prod = double
-      Product.should_receive(:delay).and_return(prod)
-      prod.should_receive(:batch_bulk_update) do |u, params| 
-        u.id.should == @user.id
-        params[:sr_id].should == "1"
-        params[:product][:field].should == "value"
+      
+      bulk = double("OpenChain::BulkUpdateClassification")
+      OpenChain::BulkUpdateClassification.should_receive(:delay).and_return(bulk)
+      bulk.should_receive(:go_serializable) do |params, id| 
+        id.should == @user.id
+        params = JSON.parse params
+        params['sr_id'].should == "1"
+        params['product']['field'].should == "value"
       end
 
       post :bulk_update, p
       response.should redirect_to products_path
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
-    end
-
-    it "should not bulk update classifications if no classification data is sent" do
-      OpenChain::BulkUpdateClassification.should_not_receive(:go)
-      # Several fields are not allowed to be bulk updated (as well as blank values)
-      p = {:product => {:field => "value", :unique_identifier => "v", :id=>"id", :vendor_id=>"id", :field2 => ''}, :utf8 => 'v'}
-      pks = {}
-      (0..9).each do |i|
-        pks[i.to_s] = i.to_s
-      end
-      p[:pk] = pks
-
-      Product.should_receive(:batch_bulk_update) do |u, params, options| 
-        u.id.should == @user.id
-        params[:product][:uniqe_identifier].should be_nil
-        params[:product][:id].should be_nil
-        params[:product][:vendor_id].should be_nil
-        params[:product][:field2].should be_nil
-        params[:utf8].should be_nil
-        params[:pk]["0"].should == "0"
-        params[:pk]["9"].should == "9"
-        options[:no_email].should be_true
-        {:message => "Test"}
-      end
-      
-      post :bulk_update, p
-      response.should redirect_to products_path
-      flash[:notices].first.should == "Test"
     end
   end
 

@@ -16,9 +16,11 @@ class Classification < ActiveRecord::Base
   has_many :tariff_records, :dependent => :destroy, :before_add => :set_nested
    
   accepts_nested_attributes_for :tariff_records, :allow_destroy => true, 
-    :reject_if => lambda { |a| a[:hts_1].blank? && a[:schedule_b_1].blank? && (a[:_destroy].blank? || a[:_destroy]=="false")}
-
-
+    :reject_if => lambda { |a| 
+      # Reject if all attributes are blank and _destroy is false
+      values = [:hts_1, :hts_2, :hts_3, :schedule_b_1, :schedule_b_2, :schedule_b_3].collect {|k| a[k].blank?}.uniq
+      (values.length < 2 && values[0] == true) && (a[:_destroy].blank? || a[:_destroy]=="false")
+    }
   dont_shallow_merge :Classification, ['id','created_at','updated_at','country_id','product_id','instant_classification_id']
     
   def find_same

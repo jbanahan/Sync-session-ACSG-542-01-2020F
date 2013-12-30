@@ -3,6 +3,7 @@ class SecurityFilingsController < ApplicationController
     SecurityFiling
   end
   def index
+    flash.keep
     redirect_to advanced_search CoreModule::SECURITY_FILING, params[:force_search]
   end
   def show

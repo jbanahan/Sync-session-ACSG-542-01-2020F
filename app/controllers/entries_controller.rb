@@ -5,6 +5,7 @@ class EntriesController < ApplicationController
   end
 
   def index
+    flash.keep
     redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
   def show

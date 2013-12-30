@@ -36,7 +36,7 @@ $(function() {
       <%end-%>
       <%if current_user.edit_classifications? -%>
         <div class='col-md-6'>
-          <%=render :partial=> 'classify', :locals=>{:form_obj => f}%>
+          <%=render :partial=> 'classify', :locals=>{:form_obj => f, :display_read_only=>false}%>
         </div>
       <%end-%>
     </div>

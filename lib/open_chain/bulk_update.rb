@@ -223,27 +223,91 @@ module OpenChain
 
       log = BulkProcessLog.create! user: current_user, started_at: Time.zone.now, bulk_type: BulkProcessLog::BULK_TYPES[:update]
       record_sequence = 0
+    
+      has_classifications = !params['product']['classifications_attributes'].nil?
+
+      # clear all product, classification and tariff attributes that are blank..if they're blank, the user didn't input any
+      # value into the fields and they shouldn't update any of values setting them to blank
+      params['product'].each do |p_key, p_value|
+        if p_key == 'classifications_attributes'
+          p_value.each_value do |class_attrs|
+            class_attrs.each do |c_key, c_value|
+              if c_key == 'tariff_records_attributes'
+                c_value.each_value do |tariff_attrs|
+                  tariff_attrs.each do |t_key, t_value|
+                    tariff_attrs.delete(t_key) if t_value.blank?
+                  end
+                end
+              else
+                class_attrs.delete(c_key) if c_value.blank?
+              end
+            end 
+          end
+        else
+          params['product'].delete(p_key) if p_value.blank?
+        end
+      end
+      # Clearing classification / tariff level custom fields are handled in the classification custom values setter below
+      params['product_cf'].each do |id, value|
+        params['product_cf'].delete(id) if value.blank?
+      end if params['product_cf']
 
       OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT,params['sr_id'],params['pk']) do |gc, p|
         record_sequence += 1
+        good_count = total_objects = gc if good_count.nil?
 
         begin
-          good_count = total_objects = gc if good_count.nil?
-
-          if p.can_classify?(current_user)
+          
+          if p.can_edit?(current_user) && (!has_classifications || p.can_classify?(current_user))
+            dup_params = params.deep_dup
             Product.transaction do
               country_classification_map = {}
-              #destroy all classifications for countries passed in the hash, preserving custom values
-              params['product']['classifications_attributes'].each do |k,v|
-                p.classifications.where(:country_id=>v['country_id']).each do |cls|
-                  country_classification_map[cls.country_id] = {:cv=>[],:hts=>{}}
-                  cls.custom_values.each {|cv| country_classification_map[cls.country_id][:cv] << cv unless cv.value.blank?}
-                  cls.tariff_records.each do |tr|
-                    vals = []
-                    tr.custom_values.each {|cv| vals << cv unless cv.value.blank?}
-                    country_classification_map[cls.country_id][:hts][tr.line_number] = vals
+
+              # classification attributes won't be present if the user didn't set any classification or tariff level
+              # values on screen.
+              if has_classifications
+
+                # Each classifications_attributes is going to have a country id, what we're going to
+                # do is find which specific classification record for the product matches that country id
+                # and then set that classification back into the dup_params hash.  This will allow the
+                # update_attributes call done from the validate_and_save_module to know exactly which 
+                # classification / tariff record should be updated.
+
+                dup_params['product']['classifications_attributes'].each do |index, class_attr|
+                  country_class = p.classifications.find {|c| c.country_id.to_s == class_attr['country_id']}
+                  if country_class
+                    class_attr['id'] = country_class.id
+
+                    tariffs = class_attr['tariff_records_attributes']
+                    if tariffs
+                      # Now we should find which tariff records to update based on the line_number values.
+                      # If that value isn't there, we'll fall back to using the display order (ie. attribute index counts).
+
+                      # The keys are the the indexes these records appeared at on screen, so by sorting them
+                      # we can process loop through these and process them in the order they appeared on screen.
+                      # Which would, baring the line number being manually entered, naturally be the way the users 
+                      # would want to also have them be displayed.
+                      tariffs.keys.sort.each_with_index do |t_index, x|
+                        tariff_attr = tariffs[t_index]
+                        tariff_record = nil
+
+                        # If someone actually entered a line number then we'll want to use that value
+                        # (creating a new record if that line number didn't already exist).
+                        # Otherwise, use the index count as the line # to find the tariff record associated with this classification
+                        tariff_attr['line_number'] = (x+1).to_s if tariff_attr['line_number'].blank? 
+                        if tariff_attr['line_number']
+                          tariff_record = country_class.tariff_records.find {|t| t.line_number == tariff_attr['line_number'].to_i}
+                        end
+
+                        if tariff_record
+                          tariff_attr['id'] = tariff_record.id
+                          # It's possible that if there's no hts/schedule b values the the tariff records won't accept the update attributes
+                          # so just make sure we always set the view_sequence otherwise custom values won't get set correctly
+                          tariff_record.view_sequence = tariff_attr['view_sequence']
+                        end
+                      end
+                    end
                   end
-                  cls.destroy
                 end
               end
               success = lambda {|o, snapshot| 
@@ -255,23 +319,15 @@ module OpenChain
                 raise OpenChain::ValidationLogicError.new(o)
               }
               before_validate = lambda {|o| 
-                CustomFieldProcessor.new(params).save_classification_custom_fields(o,params['product'])
-                o.classifications.each do |cls|
-                  ccm = country_classification_map[cls.country_id]
-                  if ccm 
-                    apply_custom_values_to_object ccm[:cv], cls
-                    cls.tariff_records.each_with_index do |tr|
-                      apply_custom_values_to_object ccm[:hts][tr.line_number], tr unless ccm[:hts][tr.line_number].blank?
-                    end
-                  end
-                end
+                CustomFieldProcessor.new(dup_params).save_classification_custom_fields(o,dup_params['product'])
                 OpenChain::CoreModuleProcessor.update_status o
               }
-              OpenChain::CoreModuleProcessor.validate_and_save_module(params,p,params['product'],success,failure,:before_validate=>before_validate)
+              OpenChain::CoreModuleProcessor.validate_and_save_module(dup_params,p,dup_params['product'],success,failure,:before_validate=>before_validate)
             end
           else
             error_count += 1
-            log.change_records.create!(recordable: p, record_sequence_number: record_sequence, failed: true).add_message("You do not have permission to classify product #{p.unique_identifier}.", true).save!
+            # If the user can't edit the product then that's the reason for the error here, otherwise it's because they can't classify.
+            log.change_records.create!(recordable: p, record_sequence_number: record_sequence, failed: true).add_message("You do not have permission to #{p.can_edit?(current_user) ? "classify" : "edit"} product #{p.unique_identifier}.", true).save!
             good_count += -1
           end
         rescue OpenChain::ValidationLogicError => e
@@ -316,7 +372,7 @@ module OpenChain
       begin
         # Ideally, we use url_for here but it's a real pain to do so outside of a controller/view
         url = "https://#{MasterSetup.get.request_host}/bulk_process_logs/#{bulk_log.id}"
-        body = "<p>Your classification job has completed.</p><p>#{good_count} #{"Product".pluralize(good_count)} saved.</p><p>The full update log is available <a href=\"#{url}\">here</a>.</p>"
+        body = "<p>Your #{bulk_log.bulk_type} job has completed.</p><p>#{good_count} #{"Product".pluralize(good_count)} saved.</p><p>The full update log is available <a href=\"#{url}\">here</a>.</p>"
         current_user.messages.create(:subject=>title, :body=>body)
       end unless options[:no_user_message]
 
@@ -371,7 +427,14 @@ module OpenChain
         unless classification.destroyed?
           product_params['classifications_attributes'].each do |k,v|
             if v['country_id'] == classification.country_id.to_s
-              OpenChain::CoreModuleProcessor.update_custom_fields classification, @params['classification_custom'][k.to_s]['classification_cf']
+
+              # Strip blank custom values
+              custom_values = @params['classification_custom'][k.to_s]['classification_cf']
+              custom_values.each do |k, v|
+                custom_values.delete(k) if v.blank?
+              end
+
+              OpenChain::CoreModuleProcessor.update_custom_fields classification, custom_values
             end  
           end
         end
@@ -387,7 +450,13 @@ module OpenChain
           vs = tr.view_sequence
           custom_container = @params['tariff_custom'][vs]
           unless custom_container.blank?
-            OpenChain::CoreModuleProcessor.update_custom_fields tr, custom_container['tariffrecord_cf']
+            # Strip blank custom values
+            custom_values = custom_container['tariffrecord_cf']
+            custom_values.each do |k, v|
+              custom_values.delete(k) if v.blank?
+            end
+
+            OpenChain::CoreModuleProcessor.update_custom_fields tr, custom_values
           end
         end
       end

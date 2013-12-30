@@ -22,6 +22,7 @@ $(function() {
     var vs = tf_row.children('[name$="[view_sequence]"]');
     vs.attr('value',seed);
     $(this).parent().before(tf_row);
+    Chain.htsAutoComplete();
     tf_row.show();
   });
 });
@@ -39,7 +40,11 @@ $(function() {
             <div class='cf_box'>
               <table>
                 <%=cf.hidden_field :country_id, :class=>"hdn_country_id"%>
-                <%=show_custom_fields cf.object, {:form=>true, :table=>true, :show_prefix=>false, :parent_name=>"classification_custom[#{classification_count}]"}%>
+                <%- 
+                  show_custom_options = {:form=>true, :table=>true, :show_prefix=>false, :parent_name=>"classification_custom[#{classification_count}]"}
+                  show_custom_options[:display_read_only] = display_read_only if defined?(display_read_only)
+                -%>
+                <%=show_custom_fields cf.object, show_custom_options%>
               </table>
             </div>
             <% if cf.object.tariff_records.blank? %>

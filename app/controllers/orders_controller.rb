@@ -5,6 +5,7 @@ class OrdersController < ApplicationController
 		end
 
     def index
+      flash.keep
       redirect_to advanced_search CoreModule::ORDER, params[:force_search]
     end
 

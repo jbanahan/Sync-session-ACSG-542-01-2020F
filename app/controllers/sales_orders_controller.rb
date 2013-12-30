@@ -4,6 +4,7 @@ class SalesOrdersController < ApplicationController
 	end
   
   def index
+    flash.keep
     redirect_to advanced_search CoreModule::SALE, params[:force_search]
   end
   def all_open

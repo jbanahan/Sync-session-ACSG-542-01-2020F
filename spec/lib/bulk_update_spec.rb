@@ -7,103 +7,257 @@ describe OpenChain::BulkUpdateClassification do
       @ms = MasterSetup.new :request_host => "localhost"
       MasterSetup.stub(:get).and_return @ms
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true)
-      @p = Factory(:product)
+      @p = Factory(:product, :unit_of_measure=>"UOM")
       @country = Factory(:country)
       @h = {"pk"=>{ "1"=>@p.id.to_s },"product"=>{"classifications_attributes"=>{"0"=>{"country_id"=>@country.id.to_s}}}} 
-      Product.any_instance.stub(:can_classify?).and_return true
     end
-    it "should update an existing classification with primary keys" do
+
+    context "can_classify" do
+      before :each do 
+        Product.any_instance.stub(:can_classify?).and_return true
+      end
+
+      it "should update an existing classification with primary keys" do
+        m = OpenChain::BulkUpdateClassification.go(@h,@u)
+        Product.find(@p.id).classifications.should have(1).item
+
+        log = BulkProcessLog.first
+        log.total_object_count.should eq 1
+        log.changed_object_count.should eq 1
+        log.change_records.should have(1).item
+        log.change_records.first.failed.should be_false
+        log.change_records.first.entity_snapshot.should_not be_nil
+
+        @u.messages.length.should == 1
+        @u.messages[0].subject.should == "Bulk Update Job Complete."
+        @u.messages[0].body.should == "<p>Your Bulk Update job has completed.</p><p>1 Product saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+        m[:message].should == "Bulk Update Job Complete."
+        m[:errors].should == []
+        m[:good_count].should == 1
+      end
+      it "should record validation errors in update log and messages" do
+        # Create field validator rule to reject on 
+        FieldValidatorRule.create! starts_with: "A", module_type: "Product", model_field_uid: "prod_uid"
+
+        @h['product']['unique_identifier'] = 'BBB'
+        m = OpenChain::BulkUpdateClassification.go(@h,@u)
+
+        log = BulkProcessLog.first
+        log.total_object_count.should eq 1
+        log.changed_object_count.should eq 0
+        log.change_records.should have(1).item
+        log.change_records.first.failed.should be_true
+        log.change_records.first.entity_snapshot.should be_nil
+        log.change_records.first.messages[0].should match /^Error saving product/
+
+        @u.messages.length.should == 1
+        @u.messages[0].subject.should == "Bulk Update Job Complete (1 Error)."
+        @u.messages[0].body.should == "<p>Your Bulk Update job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+        m[:message].should == "Bulk Update Job Complete (1 Error)."
+        m[:errors][0].should match /^Error saving product/
+        m[:good_count].should == 0
+      end
+      it "should update using serializable version of method" do
+        OpenChain::BulkUpdateClassification.go_serializable(@h.to_json,@u.id)
+        Product.find(@p.id).classifications.should have(1).item
+      end
+      it "should update but not make user messages" do
+        OpenChain::BulkUpdateClassification.go(@h,@u, :no_user_message => true)
+        Product.find(@p.id).classifications.should have(1).item
+        @u.messages.length.should == 0
+      end
+      it "creates new classification and tariff records" do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+        tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+        prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
+        
+
+        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'ABC'}}}
+        @h['tariff_custom'] = {'987654321' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'DEF'}}}
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890', 'view_sequence'=>'987654321'}}
+        @h['product']['classifications_attributes']['0']['country_id'] = @country.id.to_s
+
+        # Set a product value and a product custom value to make sure they're also being set
+        @h['product']['unit_of_measure'] = "UOM"
+        @h['product_cf'] = {prod_cd.id.to_s => "PROD_UPDATE"}
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.unit_of_measure.should == "UOM"
+        @p.get_custom_value(prod_cd).value.should == "PROD_UPDATE"
+        
+        cls = @p.classifications.first
+        cls.country_id.should == @country.id
+        cls.get_custom_value(class_cd).value.should == 'ABC'
+        cls.tariff_records.first.line_number.should == 1
+        cls.tariff_records.first.hts_1.should == '1234567890'
+        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+      end
+
+      it "does not use blank attributes and custom values from product, classification, and tariff parameters" do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+        tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+        prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
+        tr = Factory(:tariff_record,:hts_2=>'1234567890', :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr.update_custom_value! tr_cd, 'DEF'
+        classification = tr.classification
+        classification.update_custom_value! class_cd, 'ABC'
+        @p.update_custom_value! prod_cd, "PROD"
+
+        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => ''}}} #blank classification shouldn't clear
+        @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => ''}}} #blank tariff shouldn't clear
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890', 'hts_2' => ''}}
+        # Set a product value and a product custom value to make sure they're also being set
+        @h['product']['unit_of_measure'] = ""
+        @h['product_cf'] = {prod_cd.id.to_s => ""}
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        # Validate product level blank attributes / custom values aren't used
+        @p.unit_of_measure.should == "UOM"
+        @p.get_custom_value(prod_cd).value.should == "PROD"
+        
+        cls = @p.classifications.first
+
+        # Make sure we're updating the same actual classification and tariff records and not tearing down and rebuilding them
+        cls.id.should == classification.id
+        cls.get_custom_value(class_cd).value.should == 'ABC'
+        cls.tariff_records.first.id.should == tr.id
+        cls.tariff_records.first.hts_1.should == '1234567890'
+        cls.tariff_records.first.hts_2.should == '1234567890'
+        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+      end
+      
+      it "should allow override of classification & tariff custom values" do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+        tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+        tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr.update_custom_value! tr_cd, 'DEF'
+        cls = tr.classification
+        cls.update_custom_value! class_cd, 'ABC'
+        @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'CLSOVR'}}} #blank classification shouldn't clear
+        @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'TAROVR'}}}
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'1','line_number'=>'1'}}
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+        @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+        cls = @p.classifications.first
+        cls.get_custom_value(class_cd).value.should == 'CLSOVR'
+        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'TAROVR'
+      end
+
+      it "skips classification and tariff values without overwriting them when no classification parameters are sent" do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
+        tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
+        prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
+        tr = Factory(:tariff_record,:hts_1=>'1234567890', :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr.update_custom_value! tr_cd, 'DEF'
+        cls = tr.classification
+        cls.update_custom_value! class_cd, 'ABC'
+        @p.update_custom_value! prod_cd, "PROD"
+
+        @h['product'].delete 'classifications_attributes'
+        @h['product']['unit_of_measure'] = "UOM"
+        @h['product_cf'] = {prod_cd.id.to_s => "PROD_UPDATE"}
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.unit_of_measure.should == "UOM"
+        @p.get_custom_value(prod_cd).value.should == "PROD_UPDATE"
+
+        @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
+        cls = @p.classifications.first
+        cls.get_custom_value(class_cd).value.should == 'ABC'
+        cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+      end
+
+      it 'uses tariff line number, when present, to identify which tariff record to update' do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'9876543210')
+        tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+
+        # Note the long index value for the second tariff line, this is how the screen effectively sends updates when the users adds second hts lines on the bulk screen
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'0','line_number'=>'2'}, '1234567890'=>{'hts_1' => '9876543210','view_sequence'=>'1234567890','line_number'=>'1'}}
+
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.classifications.first.tariff_records.second.line_number.should eq 2
+        @p.classifications.first.tariff_records.first.hts_1.should eq '9876543210'
+        @p.classifications.first.tariff_records.second.hts_1.should eq '1234567890'
+      end
+
+      it 'does not remove existing tariff lines if updating only the first tariff record in a set' do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'9876543210')
+        tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '9876543210','view_sequence'=>'0'}}
+
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.classifications.first.tariff_records.should have(2).items
+        @p.classifications.first.tariff_records.first.line_number.should eq 1
+        @p.classifications.first.tariff_records.first.hts_1.should eq '9876543210'
+      end
+
+      it 'does not remove existing tariff lines if updating only the second tariff record in a set' do
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'9876543210')
+        Factory(:official_tariff,:country=>@country,:hts_code=>'1111111111')
+        tr = Factory(:tariff_record,:hts_1=>'1234567890', :line_number => 1, :classification=>Factory(:classification,:country=>@country,:product=>@p))
+        tr2 = Factory(:tariff_record,:hts_1=>'9876543210', :line_number => 2, :classification=>tr.classification)
+
+        @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1111111111','view_sequence'=>'0', 'line_number'=>'2'}}
+
+        OpenChain::BulkUpdateClassification.go(@h,@u)
+        @p.reload
+
+        @p.classifications.first.tariff_records.should have(2).items
+        @p.classifications.first.tariff_records.first.line_number.should eq 1
+        @p.classifications.first.tariff_records.first.hts_1.should eq '1234567890'
+        @p.classifications.first.tariff_records.second.hts_1.should eq '1111111111'
+      end
+    end
+
+    it "errors if user cannot classify" do
+      Product.any_instance.stub(:can_classify?).and_return false
+
       m = OpenChain::BulkUpdateClassification.go(@h,@u)
-      Product.find(@p.id).classifications.should have(1).item
+      m[:errors].should have(1).item
 
-      log = BulkProcessLog.first
-      log.total_object_count.should eq 1
-      log.changed_object_count.should eq 1
-      log.change_records.should have(1).item
-      log.change_records.first.failed.should be_false
-      log.change_records.first.entity_snapshot.should_not be_nil
-
-      @u.messages.length.should == 1
-      @u.messages[0].subject.should == "Bulk Update Job Complete."
-      @u.messages[0].body.should == "<p>Your classification job has completed.</p><p>1 Product saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
-      m[:message].should == "Bulk Update Job Complete."
-      m[:errors].should == []
-      m[:good_count].should == 1
+      m[:errors].first.should eq "You do not have permission to classify product #{@p.unique_identifier}."
     end
-    it "should record validation errors in update log and messages" do
-      # Create field validator rule to reject on 
-      FieldValidatorRule.create! starts_with: "A", module_type: "Product", model_field_uid: "prod_uid"
 
-      @h['product']['unique_identifier'] = 'BBB'
+    it "errors if user cannot edit products" do
+      Product.any_instance.stub(:can_edit?).and_return false
+
       m = OpenChain::BulkUpdateClassification.go(@h,@u)
+      m[:errors].should have(1).item
 
-      log = BulkProcessLog.first
-      log.total_object_count.should eq 1
-      log.changed_object_count.should eq 0
-      log.change_records.should have(1).item
-      log.change_records.first.failed.should be_true
-      log.change_records.first.entity_snapshot.should be_nil
-      log.change_records.first.messages[0].should match /^Error saving product/
+      m[:errors].first.should eq "You do not have permission to edit product #{@p.unique_identifier}."
+    end
 
-      @u.messages.length.should == 1
-      @u.messages[0].subject.should == "Bulk Update Job Complete (1 Error)."
-      @u.messages[0].body.should == "<p>Your classification job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
-      m[:message].should == "Bulk Update Job Complete (1 Error)."
-      m[:errors][0].should match /^Error saving product/
-      m[:good_count].should == 0
-    end
-    it "should update using serializable version of method" do
-      OpenChain::BulkUpdateClassification.go_serializable(@h.to_json,@u.id)
-      Product.find(@p.id).classifications.should have(1).item
-    end
-    it "should update but not make user messages" do
-      OpenChain::BulkUpdateClassification.go(@h,@u, :no_user_message => true)
-      Product.find(@p.id).classifications.should have(1).item
-      @u.messages.length.should == 0
-    end
-    it "should maintain existing custom values for classification and tariff if not overridden" do
-      Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
-      class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
-      tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
-      tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>@country,:product=>@p))
-      tr.update_custom_value! tr_cd, 'DEF'
-      cls = tr.classification
-      cls.update_custom_value! class_cd, 'ABC'
-      @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => ''}}} #blank classification shouldn't clear
-      @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => ''}}} #black tariff shouldn't clear
-      @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890'}}
+    it "does not error if user can edit but cannot classify if there are no classification attributes" do
+      Product.any_instance.stub(:can_edit?).and_return true
+      Product.any_instance.stub(:can_classify?).and_return false
+
+      @h['product'].delete 'classifications_attributes'
+      @h['product']['unit_of_measure'] = "UOM"
+
       OpenChain::BulkUpdateClassification.go(@h,@u)
       @p.reload
-      @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
-      cls = @p.classifications.first
-      cls.get_custom_value(class_cd).value.should == 'ABC'
-      cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'DEF'
+
+      @p.unit_of_measure.should == "UOM"
     end
-    it "should allow override of product, classification & tariff custom values" do
-      Factory(:official_tariff,:country=>@country,:hts_code=>'1234567890')
-      class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
-      tr_cd = Factory(:custom_definition,:module_type=>'TariffRecord',:data_type=>:string)
-      prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
 
-      tr = Factory(:tariff_record,:classification=>Factory(:classification,:country=>@country,:product=>@p))
-      tr.update_custom_value! tr_cd, 'DEF'
-      cls = tr.classification
-      cls.update_custom_value! class_cd, 'ABC'
-      @p.update_custom_value! prod_cd, "BLAH"
-
-      @h['classification_custom'] = {'0'=>{'classification_cf'=>{class_cd.id.to_s => 'CLSOVR'}}} #blank classification shouldn't clear
-      @h['tariff_custom'] = {'1' => {'tariffrecord_cf' => {tr_cd.id.to_s => 'TAROVR'}}}
-      @h['product']['classifications_attributes']['0']['tariff_records_attributes'] = {'0'=>{'hts_1' => '1234567890','view_sequence'=>'1','line_number'=>'1'}}
-      @h['product_cf'] = {prod_cd.id.to_s => "PRODCR"}
-
-      OpenChain::BulkUpdateClassification.go(@h,@u)
-      @p.reload
-      @p.get_custom_value(prod_cd).value.should == "PRODCR"
-      @p.classifications.first.tariff_records.first.hts_1.should == '1234567890'
-      cls = @p.classifications.first
-      cls.get_custom_value(class_cd).value.should == 'CLSOVR'
-      cls.tariff_records.first.get_custom_value(tr_cd).value.should == 'TAROVR'
-    end
   end
   describe 'build_common_classifications' do
     before :each do
@@ -220,7 +374,7 @@ describe OpenChain::BulkUpdateClassification do
 
       @u.messages.should have(1).item
       @u.messages[0].subject.should eq "Bulk Classify Job Complete."
-      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>2 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+      @u.messages[0].body.should eq "<p>Your Bulk Classify job has completed.</p><p>2 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
     end
 
     it "should create new classifications on products using json string" do
@@ -273,7 +427,7 @@ describe OpenChain::BulkUpdateClassification do
 
       @u.messages.should have(1).item
       @u.messages[0].subject.should eq "Bulk Classify Job Complete (1 Error)."
-      @u.messages[0].body.should eq "<p>Your classification job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
+      @u.messages[0].body.should eq "<p>Your Bulk Classify job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
 
       messages[:message].should eq "Bulk Classify Job Complete (1 Error)."
       messages[:good_count].should eq 0

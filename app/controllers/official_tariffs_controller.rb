@@ -17,6 +17,7 @@ class OfficialTariffsController < ApplicationController
     render :json => r
   end
   def index
+    flash.keep
     redirect_to advanced_search CoreModule::OFFICIAL_TARIFF, params[:force_search]
   end
   
