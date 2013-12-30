@@ -97,6 +97,11 @@ module OpenChain
         # Gather entry header information needed to find the entry
         info = entry_information lines.first
 
+        # The very first B3 for an entry record from Fenix appears to have all zeros as the transaction/entry number.
+        # This causes issues with our shell image matching, so we'll just skip these as we should be getting B3's
+        # with valid entry numbers shortly
+        return nil unless valid_entry_number? info[:entry_number]
+
         find_and_process_entry(info[:broker_reference], info[:entry_number], info[:importer_tax_id], info[:importer_name], find_source_system_export_time(s3_path)) do |entry|
           # Entry is only yieled here if we need to process one (ie. it's not outdated)
           # This whole block is also already inside a transaction, so no need to bother with opening another one
@@ -607,6 +612,11 @@ module OpenChain
       end
 
       export_time
+    end
+
+    def valid_entry_number? number
+      # Match anything that's got 1-9 in it somewhere
+      (number =~ /[1-9]/) != nil
     end
   end
 end

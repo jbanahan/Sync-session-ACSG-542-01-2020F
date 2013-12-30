@@ -358,11 +358,11 @@ describe OpenChain::FenixParser do
   end
 
   it 'should fall back to using entry number and source system lookup to find imaging shell records' do
-    existing_entry = Factory(:entry,:entry_number=>@entry_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    existing_entry = Factory(:entry,:entry_number=>@barcode, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
     
     #extra commas added to pass the line length check
     entry_data = lambda {
-      data = "\"#{@entry_number}\",12345,\"My Company\",TAXID,,,,,,,,"
+      data = "\"#{@barcode}\",12345,\"My Company\",TAXID,,,,,,,,"
       data 
     }
 
@@ -370,7 +370,7 @@ describe OpenChain::FenixParser do
     existing_entry.reload
 
     existing_entry.broker_reference.should == "12345"
-    existing_entry.entry_number.should == @entry_number
+    existing_entry.entry_number.should == @barcode
     existing_entry.importer_tax_id.should == "TAXID"
     existing_entry.file_logged_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.midnight
     
@@ -705,6 +705,13 @@ describe OpenChain::FenixParser do
         end
 
         bols.include?("123456789012345").should be_false
+      end
+
+      it 'skips entry numbers that are all zeros' do
+        @barcode = '00000000000000'
+        OpenChain::FenixParser.parse @multi_line_lambda.call
+
+        expect(Entry.find_by_broker_reference(@file_number)).to be_nil
       end
     end
   end
