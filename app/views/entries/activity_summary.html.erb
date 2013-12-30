@@ -39,13 +39,15 @@
 </div>
 <script>
 $(document).ready(function() {
-  $.get('/entries/importer/<%=params[:importer_id]%>/activity_summary/<%=@iso%>/content').success(function(data) {
+  $.get('/entries/importer/<%=params[:importer_id]%>/activity_summary/<%=@iso%>/content').done(function(data) {
     $('#activity-container').html(data);
     $('table.tablesorter').tablesorter();
     $('#impselect').val(<%=params[:importer_id]%>);
     $('#impselect').on('change',function() {
       window.location = '/entries/importer/'+$(this).val()+'/activity_summary/<%=@iso%>'
     });
+  }).fail(function() {
+    $('#activity-container').html(Chain.makeErrorPanel('There was an error loading your dashboard.  Please contact <a href="mailto:support@vandegriftinc.com">support@vandegriftinc.com</a> if the problem continues.'));
   });
 });
 </script>

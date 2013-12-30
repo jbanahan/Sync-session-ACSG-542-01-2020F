@@ -17,6 +17,10 @@ root.Chain =
     t.html h
     $('select.pagechanger').on 'change', () ->
       window.location = baseUrl+'?page='+$(this).val()
+
+  # generates html string for  a bootstrap error panel
+  makeErrorPanel: (message) ->
+    "<div class='container'><div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>"+message+"</div></div></div>"
   
   #prep the attachments partial
   initAttachments: () ->
