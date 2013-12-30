@@ -1,6 +1,27 @@
 root = exports ? this
 root.Chain =
   
+  # add pagination widget to target
+  # currently, baseUrl cannot have other querystring parameters, but this 
+  # can be added pretty easily if needed in the future
+  addPagination: (target,baseUrl,currentPage,totalPages) ->
+    t = $(target)
+    h = ''
+    h += '<a class="btn btn-default" href="'+baseUrl+'?page=1">&lt;&lt;</a>' unless currentPage==1
+    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+(currentPage-1)+'">&lt;</a>' unless currentPage==1
+    h += '<select class="pagechanger btn btn-default">'
+    h += '<option value="'+n+'"'+(if n==currentPage then ' selected="selected"' else '')+'>'+n+'</option>' for n in [1..totalPages]
+    h += '</select>'
+    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+(currentPage+1)+'">&gt;</a>' unless currentPage==totalPages
+    h += '<a class="btn btn-default" href="'+baseUrl+'?page='+totalPages+'">&gt;&gt;</a>' unless currentPage==totalPages
+    t.html h
+    $('select.pagechanger').on 'change', () ->
+      window.location = baseUrl+'?page='+$(this).val()
+
+  # generates html string for  a bootstrap error panel
+  makeErrorPanel: (message) ->
+    "<div class='container'><div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>"+message+"</div></div></div>"
+  
   #prep the attachments partial
   initAttachments: () ->
     $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{

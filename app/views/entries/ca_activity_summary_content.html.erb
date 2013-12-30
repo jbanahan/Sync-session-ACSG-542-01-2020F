@@ -1,0 +1,277 @@
+<%cache ['v2','ca_entry_activity_summary',@imp,@last_entry] do-%>
+  <%bd = 0.days.ago%>
+  <%hsh = OpenChain::ActivitySummary.generate_ca_entry_summary(@imp.id, bd)['activity_summary']%>
+  <div class="container">
+    <div class="row" style='margin-bottom:20px;'>
+      <div class="col-md-12 text-center">
+        <h1>Canada Entry Activity</h1>
+          <% 
+            imp_list = []
+            if current_user.company.master?
+              imp_list = Company.select('companies.id, companies.name, companies.fenix_customer_number').where('length(companies.fenix_customer_number) > 0 OR (select count(*) from linked_companies inner join companies c on c.id = linked_companies.child_id and length(c.fenix_customer_number) > 0 WHERE linked_companies.parent_id = companies.id) > 0').order('companies.name,companies.fenix_customer_number').collect {|c| ["#{c.name} (#{c.fenix_customer_number})",c.id]}
+            else
+              comps = [current_user.company] + current_user.company.linked_companies.where('length(companies.fenix_customer_number) > 0').order('name').to_a
+              imp_list = comps.collect {|c| ["#{c.name} (#{c.fenix_customer_number})",c.id]}
+            end
+          %>
+          <% if imp_list.size > 1 %>
+            <select id='impselect' class='form-control'>
+              <%=options_for_select imp_list%>
+            </select>
+          <% else %>
+            <h4><%=@imp.name%></h4>
+          <% end %>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12 activity-pane">
+        <h3 class='text-center activity-title'>Summary</h3>
+        <table class='table table-striped table-bordered table-hover'>
+          <thead>
+            <tr>
+              <th>&nbsp;</th>
+              <th># of Entries</th>
+              <th>Duty</th>
+              <th>GST</th>
+              <th>Duty/GST</th>
+              <th>Entered Value</th>
+              <th>Invoiced Value</th>
+              <th>Units</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href='/entries/importer/<%=@imp.id%>/release_range/1w'>Released Last Week <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td class='numeric'><%=number_with_delimiter hsh['summary']['1w']['count']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['1w']['duty']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['1w']['gst']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['1w']['duty_gst']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['1w']['entered']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['1w']['invoiced']%></td>
+              <td class='numeric'><%=number_with_precision(hsh['summary']['1w']['units'],precision:2,delimiter:',')%></td>
+            </tr>
+            <tr>
+              <td><a href='/entries/importer/<%=@imp.id%>/release_range/4w'>Released Last 4 Weeks <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td class='numeric'><%=number_with_delimiter hsh['summary']['4w']['count']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['4w']['duty']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['4w']['gst']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['4w']['duty_gst']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['4w']['entered']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['4w']['invoiced']%></td>
+              <td class='numeric'><%=number_with_precision(hsh['summary']['4w']['units'],precision:2,delimiter:',')%></td>
+            </tr>
+            <tr>
+              <td><a href='/entries/importer/<%=@imp.id%>/release_range/op'>Open Shipments <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td class='numeric'><%=number_with_delimiter hsh['summary']['open']['count']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['open']['duty']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['open']['gst']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['open']['duty_gst']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['open']['entered']%></td>
+              <td class='numeric'><%=number_to_currency hsh['summary']['open']['invoiced']%></td>
+              <td class='numeric'><%=number_with_precision(hsh['summary']['open']['units'],precision:2,delimiter:',')%></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="row">
+          <div class="col-md-12 activity-pane">
+            <h3 class='text-center activity-title'>Estimated K84 Statement</h3>
+            <div class='text-muted text-center'>
+              <small>For planning purposes only.  A final K84 statment will be issued by your account team each month.</small>
+            </div>
+            <table class='table table-striped table-hover'>
+              <thead>
+                <tr>
+                  <th>Due</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%-hsh['k84'].each do |stmt|-%>
+                  <tr>
+                    <td><%=stmt['due']%></td>
+                    <td><%=number_to_currency stmt['amount']%></td>
+                  </tr>
+                <%-end-%>
+              </tbody>
+            </table>
+          </div>
+          <div class="col-md-12">
+            <h3 class="text-center activity-title">Entry Breakouts</h3>
+          </div>
+          <div class="col-md-12 activity-pane">
+            <h4 class="text-center activity-title">Entries by Port</h4>
+            <table class="table tablesorter table-striped table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>Port</th>
+                  <th>1 Week</th>
+                  <th>4 Weeks</th>
+                  <th>Open</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%-hsh['by_port'].each do |bp|-%>
+                  <%next if bp['name']=='TOTAL'%>
+                  <tr>
+                    <td>
+                      <%if bp['code'] %>
+                      <a href='/entries/importer/<%=@imp.id%>/entry_port/<%=bp['code']%>'>
+                        <%=bp['name']%>
+                        <span class="glyphicon glyphicon-link" style='font-size:80%;'></span>
+                      </a>
+                      <%else%>
+                        <%=bp['name']%>
+                      <%end%>
+                    </td>
+                    <td class="numeric"><%=bp['1w']%></td>
+                    <td class="numeric"><%=bp['4w']%></td>
+                    <td class="numeric"><%=bp['open']%></td>
+                  </tr>
+                <%-end-%>
+              </tbody>
+              <tfoot>
+                <%-hsh['by_port'].each do |bp|-%>
+                  <%next unless bp['name']=='TOTAL'%>
+                  <tr>
+                    <td>
+                      <%=bp['name']%>
+                    </td>
+                    <td class="numeric"><%=bp['1w']%></td>
+                    <td class="numeric"><%=bp['4w']%></td>
+                    <td class="numeric"><%=bp['open']%></td>
+                  </tr>
+                <%-end-%>
+              </tfoot>
+            </table>
+          </div>
+          <div class="col-md-12 activity-pane">
+            <h4 class="text-center activity-title">Lines by Chapter</h4>
+            <table class="table tablesorter table-striped table-bordered table-hover">
+              <thead>
+                <tr>
+                  <th>Chapter</th>
+                  <th>1 Week</th>
+                  <th>4 Weeks</th>
+                  <th>Open</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%-hsh['by_hts'].each do |bp|-%>
+                  <%next if bp['name']=='TOTAL'%>
+                  <tr>
+                    <td><%=bp['name']%></td>
+                    <td class="numeric"><%=bp['1w']%></td>
+                    <td class="numeric"><%=bp['4w']%></td>
+                    <td class="numeric"><%=bp['open']%></td>
+                  </tr>
+                <%-end-%>
+              </tbody>
+              <tfoot>
+                <%-hsh['by_hts'].each do |bp|-%>
+                  <%next unless bp['name']=='TOTAL'%>
+                  <tr>
+                    <td><%=bp['name']%></td>
+                    <td class="numeric"><%=bp['1w']%></td>
+                    <td class="numeric"><%=bp['4w']%></td>
+                    <td class="numeric"><%=bp['open']%></td>
+                  </tr>
+                <%-end-%>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h3 class='text-center activity-title'>Year To Date</h3>
+        <div class="row">
+          <div class='col-md-12 activity-pane'>
+            <h4 class='text-center activity-title'>Summary</h4>
+            <table class="table table-striped table-hover">
+              <tbody>
+                <tr>
+                  <td><a href='/entries/importer/<%=@imp.id%>/release_range/ytd'>Entries <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+                  <td class="numeric"><%=number_with_delimiter hsh['summary']['ytd']['count']%></td>
+                </tr>
+                <tr>
+                  <td>Duty</td>
+                  <td class="numeric"><%=number_to_currency hsh['summary']['ytd']['duty']%></td>
+                </tr>
+                <tr>
+                  <td>GST</td>
+                  <td class="numeric"><%=number_to_currency hsh['summary']['ytd']['gst']%></td>
+                </tr>
+                <tr>
+                  <td>Duty/GST</td>
+                  <td class="numeric"><%=number_to_currency hsh['summary']['ytd']['duty_gst']%></td>
+                </tr>
+                <tr>
+                  <td>Entered Value</td>
+                  <td class="numeric"><%=number_to_currency hsh['summary']['ytd']['entered']%></td>
+                </tr>
+                <tr>
+                  <td>Invoiced Value</td>
+                  <td class="numeric"><%=number_to_currency hsh['summary']['ytd']['invoiced']%></td>
+                </tr>
+                <tr>
+                  <td>Units</td>
+                  <td class="numeric"><%=number_with_precision(hsh['summary']['ytd']['units'],precision:2,delimiter:',')%></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class='col-md-12 activity-pane'>
+            <h4 class="text-center activity-title">Top 5 Vendors</h4>
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>&nbsp;</th>
+                  <th class='text-right'>Entered Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%-hsh['vendors_ytd'].each do |v|-%>
+                  <tr>
+                    <td><%=v['name']%></td>
+                    <td class="numeric"><%=number_to_currency v['entered']%></td>
+                  </tr>
+                <%-end-%>
+              </tbody>
+            </table>
+          </div>
+          <div class='col-md-12 activity-pane'>
+            <h4 class="text-center activity-title">Ports</h4>
+            <table class="table table-striped table-hover">
+              <thead>
+                <tr>
+                  <th>&nbsp;</th>
+                  <th class='text-right'>Shipments</th>
+                </tr>
+              </thead>
+              <tbody>
+                <%-hsh['ports_ytd'].each do |p|-%>
+                  <tr>
+                    <td>
+                      <%if p['code'] %>
+                      <a href='/entries/importer/<%=@imp.id%>/entry_port/<%=p['code']%>'>
+                        <%=p['name']%>
+                        <span class="glyphicon glyphicon-link" style='font-size:80%;'></span>
+                      </a>
+                      <%else%>
+                        <%=p['name']%>
+                      <%end%>
+                    </td>
+                    <td class="numeric"><%=p['count']%></td>
+                  </tr>
+                <%-end-%>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<%-end-%>

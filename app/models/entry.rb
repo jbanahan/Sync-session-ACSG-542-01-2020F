@@ -1,6 +1,14 @@
 class Entry < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
+
+  # Tracking status is about whether an entry has been fully prepared
+  # It does not report on release status, just whether the entry has been
+  # prepared for presentation to customs
+  TRACKING_STATUS_CREATED ||= 0 #Entry has been keyed but not sent to customs
+  TRACKING_STATUS_OPEN ||= 1 #Entry has been sent to customs
+  TRACKING_STATUS_CLOSED ||= 2 #Entry will never be sent to customs
+
   has_many :broker_invoices, :dependent => :destroy
   has_many :broker_invoice_lines, :through => :broker_invoices
   has_many :commercial_invoices, :dependent => :destroy
@@ -15,11 +23,38 @@ class Entry < ActiveRecord::Base
   belongs_to :us_exit_port, :class_name=>'Port', :foreign_key=>'us_exit_port_code', :primary_key=>'schedule_d_code'
   belongs_to :import_country, :class_name=>"Country"
 
-  before_save :update_k84_month
+  before_save :update_k84
+  before_save :update_tracking_status
 
   def locked?
     false
   end
+
+  # generate a where clause to restrict import country
+  def self.import_country_clause iso_code
+    "(entries.import_country_id = #{Country.find_by_iso_code(iso_code).id})"
+  end
+  # generate a where clause for the previous 1 week 
+  def self.week_clause base_date_utc
+    "(release_date > DATE_ADD('#{base_date_utc}',INTERVAL -1 WEEK) and release_date < '#{base_date_utc}')"
+  end
+  # generate a where clause for the previous 4 weeks
+  def self.four_week_clause base_date_utc
+    "(release_date > DATE_ADD('#{base_date_utc}',INTERVAL -4 WEEK) and release_date < '#{base_date_utc}')"
+  end
+  # generate a where clause for open entries that are not released
+  def self.not_released_clause base_date_utc
+    "(entries.release_date is null OR entries.release_date > '#{base_date_utc}')"
+  end
+  # genereate a where clause for Year to Date
+  def self.ytd_clause base_date_utc
+    "((entries.release_date IS NULL OR entries.release_date > '#{base_date_utc}') OR (entries.release_date >= '#{base_date_utc.year}-01-01' AND release_date <= '#{base_date_utc}'))"
+  end
+  # can the given user view entries for the given importer
+  def self.can_view_importer? importer, user
+    user.view_entries? && (user.company.master? || importer.id==user.company_id || user.company.linked_companies.include?(importer))
+  end
+
 
   #find any broker invoices by source system and broker reference and link them to this entry
   #will replace any existing entry link in the invoices
@@ -56,7 +91,12 @@ class Entry < ActiveRecord::Base
 
   # where clause for search secure
   def self.search_where user
-    user.company.master? ?  "1=1" : "entries.importer_id = #{user.company_id} or entries.importer_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
+    search_where_by_company_id user.company_id
+  end
+
+  def self.search_where_by_company_id company_id
+    c = Company.find company_id
+    c.master? ? "1=1" : "(entries.importer_id = #{c.id} or entries.importer_id IN (select child_id from linked_companies where parent_id = #{c.id}))"
   end
 
   #has liquidation fields
@@ -78,10 +118,34 @@ class Entry < ActiveRecord::Base
   end
   private
   def company_permission? user
-    self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)
+    Entry.can_view_importer? self.importer, user
   end
 
-  def update_k84_month 
+  def update_tracking_status
+    #never automatically override closed
+    return true if self.tracking_status == Entry::TRACKING_STATUS_CLOSED
+
+    case self.source_system
+    when 'Fenix'
+      if self.across_sent_date # Open if sent to customs electronically
+        self.tracking_status = Entry::TRACKING_STATUS_OPEN
+      elsif self.entry_type && self.entry_type.capitalize == 'V'
+        self.tracking_status = Entry::TRACKING_STATUS_OPEN
+      else
+        self.tracking_status = Entry::TRACKING_STATUS_CREATED
+      end
+    when 'Alliance'
+      if self.entry_filed_date # Open if sent to customs
+        self.tracking_status = Entry::TRACKING_STATUS_OPEN
+      else
+        self.tracking_status = Entry::TRACKING_STATUS_CREATED
+      end
+    else
+      self.tracking_status = Entry::TRACKING_STATUS_OPEN
+    end
+    true
+  end
+  def update_k84
     unless self.cadex_accept_date.blank?
       date = self.cadex_accept_date
       month = date.month 
@@ -90,7 +154,9 @@ class Entry < ActiveRecord::Base
       # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber), 
       # so loop back to 1
       month = (month % 12) if month > 12
+      year = month==1 && date.month == 12 ? date.year + 1 : date.year
       self.k84_month = month
+      self.k84_due_date = Date.new(year,month,25)
     end
   end
 end
