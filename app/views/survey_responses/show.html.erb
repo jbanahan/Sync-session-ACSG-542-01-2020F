@@ -184,7 +184,7 @@
               <input type='checkbox' ng-model='answer.new_comment_private' /> private
             </div>
             <div>
-              <button ng-hide='answer.error_message' class='btn btn-small btn-success' ng-click='addComment(answer)' ng-show='answer.new_comment.length'>Add Comment</button>
+              <button ng-show='answer.new_comment && answer.new_comment.length > 0 && !answer.error_message' class='btn btn-small btn-success' ng-click='addComment(answer)'>Add Comment</button>
             </div>
             <div ng-show='answer.error_message' class='alert alert-error'>
               {{answer.error_message}}
