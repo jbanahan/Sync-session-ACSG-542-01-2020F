@@ -60,10 +60,17 @@
         </div>
       </div>
     <%-end-%>
-    <%-if OpenChain::CustomHandler::UnderArmour::UaTbdReportParser.new(nil).can_view?(current_user)-%>
+    <%-if OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator.new.can_view?(current_user)-%>
       <div class='row'>
         <div class='col-md-4 col-md-offset-4'>
-          <%=link_to "Winshuttle Email", '/custom_features/ua_winshuttle', :class=>'btn btn-lg btn-default btn-block'%>
+          <%=link_to "Winshuttle HTS Email", '/custom_features/ua_winshuttle', :class=>'btn btn-lg btn-default btn-block'%>
+        </div>
+      </div>
+    <%-end-%>
+    <%-if OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.new.can_view?(current_user)-%>
+      <div class='row'>
+        <div class='col-md-4 col-md-offset-4'>
+          <%=link_to "Winshuttle Schedule B Email", '/custom_features/ua_winshuttle_b', :class=>'btn btn-lg btn-default btn-block'%>
         </div>
       </div>
     <%-end-%>
