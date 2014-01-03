@@ -58,15 +58,23 @@ class CustomReportsController < ApplicationController
     if rpt.user_id != current_user.id
       error_redirect "You cannot edit reports assigned to another user."
     else
-      rpt.search_columns.destroy_all
-      #strip fields not accessible to user
-      sca = params[:custom_report][:search_columns_attributes]
-      strip_fields sca unless sca.blank?
-      scp = params[:custom_report][:search_criterions_attributes]
-      strip_fields scp unless scp.blank?
+      CustomReport.transaction do
+        rpt.search_columns.destroy_all
+        #strip fields not accessible to user
+        sca = params[:custom_report][:search_columns_attributes]
+        strip_fields sca unless sca.blank?
+        scp = params[:custom_report][:search_criterions_attributes]
+        strip_fields scp unless scp.blank?
 
-      rpt.update_attributes(params[:custom_report])
+        rpt.update_attributes(params[:custom_report])
 
+        if rpt.errors.any?
+          errors_to_flash rpt
+          flash.keep
+          raise ActiveRecord::Rollback
+        end
+      end
+      
       redirect_to custom_report_path(rpt)
     end
   end

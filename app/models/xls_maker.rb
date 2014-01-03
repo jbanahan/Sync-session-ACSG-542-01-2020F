@@ -64,37 +64,50 @@ class XlsMaker
     make_body_row sheet, row_number, starting_column_number, row_data, column_widths, {:no_time => no_time, :insert=>true}
   end
 
+  def self.insert_cell_value sheet, row_number, column_number, cell_base, column_widths = [], options = {}
+    set_cell_value sheet, row_number, column_number, cell_base, column_widths, {insert: true}.merge(options)
+  end
+
+  def self.set_cell_value sheet, row_number, column_number, cell_base, column_widths = [], options = {}
+    cell = nil
+    if cell_base.nil?
+      cell = ""
+    elsif cell_base.is_a?(BigDecimal)
+      cell = cell_base.to_s.to_f #fix BigDecimal bad decimal points bug #629
+    else
+      cell = cell_base
+    end
+    
+    if options[:insert] == true
+      sheet.row(row_number).insert(column_number, cell)
+    else
+      # If insert is false, we're effectively ignoring the passed in column number
+      # so we need to make sure we're going to be updating the format/sizing
+      # for the actual column we've pushed the data into
+      row = sheet.row(row_number)
+      row.push(cell)
+      column_number = (row.length - 1)
+    end
+
+    width = cell.to_s.size + 3
+    width = 8 unless width > 8
+    if cell.respond_to?(:strftime)
+      if (cell.is_a?(Date) && !cell.is_a?(DateTime)) || options[:no_time] == true
+        width = 13
+        sheet.row(row_number).set_format(column_number,DATE_FORMAT) 
+      else
+        sheet.row(row_number).set_format(column_number,DATE_TIME_FORMAT)
+      end
+    end
+    width = 23 if width > 23
+    XlsMaker.calc_column_width sheet, column_number, column_widths, width
+  end
+  private_class_method :set_cell_value
+
   def self.make_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], options = {}
     row_data.each_with_index do |cell_base, col| 
       col = starting_column_number + col
-
-      cell = nil
-      if cell_base.nil?
-        cell = ""
-      elsif cell_base.is_a?(BigDecimal)
-        cell = cell_base.to_s.to_f #fix BigDecimal bad decimal points bug #629
-      else
-        cell = cell_base
-      end
-      
-      if options[:insert] == true
-        sheet.row(row_number).insert(col, cell)
-      else
-        sheet.row(row_number).push(cell)
-      end
-
-      width = cell.to_s.size + 3
-      width = 8 unless width > 8
-      if cell.respond_to?(:strftime)
-        if cell.is_a?(Date) || options[:no_time] == true
-          width = 13
-          sheet.row(row_number).set_format(col,DATE_FORMAT) 
-        else
-          sheet.row(row_number).set_format(col,DATE_TIME_FORMAT)
-        end
-      end
-      width = 23 if width > 23
-      XlsMaker.calc_column_width sheet, col, column_widths, width
+      set_cell_value sheet, row_number, col, cell_base, column_widths, options
     end
   end
   private_class_method :make_body_row

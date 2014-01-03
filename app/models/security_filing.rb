@@ -6,6 +6,7 @@ class SecurityFiling < ActiveRecord::Base
   has_many :piece_sets, :through=>:security_filing_lines
 
   validates_uniqueness_of :host_system_file_number, {:scope=>:host_system, :if=>lambda {!self.host_system_file_number.blank?}}
+  scope :not_matched, where(:status_code=>"ACCNOMATCH")
 
   def can_view? user
     user.view_security_filings? && company_permission?(user) 
