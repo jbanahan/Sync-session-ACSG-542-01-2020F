@@ -1,6 +1,5 @@
 <%
-entries = Entry.search_secure(current_user,Entry.where(@where_clause)).where(Entry.search_where_by_company_id(@imp.id))
-newest_entry = entries.order('updated_at DESC').first
+newest_entry = @entries.order('updated_at DESC').first
 params[:page] ||= '1'
 %>
 <%-cache ['v1','entries_by_release_range',newest_entry,params[:release_range],params[:page]] do-%>
@@ -14,8 +13,9 @@ params[:page] ||= '1'
       </div>
     </div>
   </div>
-  <%=render :partial=>'entry_list', locals:{entries:entries}%>
-<script type='text/javascript'> <%# needs to be javascript so it executes inside of cache, can't use content_for%>
+  <%=render :partial=>'entry_list', locals:{entries:@entries}%>
+  <%#- needs to be javascript so it executes inside of cache, can't use content_for -%>
+<script type='text/javascript'> 
   $(document).ready(function() {
     $("#rangeselect").val('<%=params[:release_range]%>');
     $("#rangeselect").on('change',function() {

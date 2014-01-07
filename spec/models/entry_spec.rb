@@ -46,45 +46,6 @@ describe Entry do
       end
     end
   end
-  context :import_country_where_clause do
-    it "should find country twice (to check caching)" do
-      c = Factory(:country,iso_code:'ZA')
-      Entry.import_country_clause('za').should == "(entries.import_country_id = #{c.id})"
-      Entry.import_country_clause('za').should == "(entries.import_country_id = #{c.id})"
-    end
-  end
-  context :date_where_clauses do
-    before :each do
-      @dt = Time.now.utc 
-    end
-    it "should match week" do
-      ent = Factory(:entry,release_date:1.day.ago)
-      Factory(:entry,release_date:1.day.from_now)
-      Factory(:entry,release_date:2.weeks.ago)
-      Entry.where(Entry.week_clause(@dt)).to_a.should == [ent]
-    end
-    it "should match 4 week" do
-      ent = Factory(:entry,release_date:1.day.ago)
-      Factory(:entry,release_date:1.day.from_now)
-      ent2 = Factory(:entry,release_date:2.weeks.ago)
-      Factory(:entry,release_date:8.weeks.ago)
-      Entry.where(Entry.four_week_clause(@dt)).order(:id).to_a.should == [ent,ent2]
-    end
-    it "should match not_released" do
-      ent1 = Factory(:entry) #find filed not released
-      ent2 = Factory(:entry,release_date:1.day.from_now) #find filed and released in future
-      Factory(:entry,release_date:1.day.ago) #don't find filed & released
-      Entry.where(Entry.not_released_clause(@dt)).order(:id).to_a.should == [ent1,ent2]
-    end
-    it "should match ytd" do
-      ent1 = Factory(:entry) #find filed
-      ent2 = Factory(:entry,release_date:1.day.from_now) #find released in future
-      ent3 = Factory(:entry,release_date:1.day.ago) #find released
-      Factory(:entry,release_date:Date.new(Time.now.year-1,12,31)) #don't find released last year
-      Entry.where(Entry.ytd_clause(@dt)).order(:id).to_a.should == [ent1,ent2,ent3]
-      
-    end
-  end
   describe "link_broker_invoices" do
     before :each do
       @ent = Factory(:entry,:broker_reference=>'5555',:source_system=>'ABC')

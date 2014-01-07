@@ -15,17 +15,7 @@ class EntriesController < ApplicationController
     render :activity_summary
   end
   def ca_activity_summary_content
-    @imp = Company.find params[:importer_id]
-    unless Entry.can_view_importer?(@imp,current_user)
-      render partial: 'shared/error_panel', locals:{message:"You do not have permission to view this page."}
-      return 
-    end
-    @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
-    unless @last_entry
-      render partial: 'shared/error_panel', locals:{message:'This importer does not have any entries.'}
-      return 
-    end
-    render layout: false
+    activity_summary_content
   end
   def us_activity_summary
     params[:importer_id] ||= current_user.company.master? ? Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number).first.id : current_user.company_id
@@ -33,47 +23,30 @@ class EntriesController < ApplicationController
     render :activity_summary
   end
   def us_activity_summary_content
-    @imp = Company.find params[:importer_id]
-    unless Entry.can_view_importer?(@imp,current_user)
-      render partial: 'shared/error_panel', locals:{message:"You do not have permission to view this page."}
-      return 
-    end
-    @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
-    unless @last_entry
-      render partial: 'shared/error_panel', locals:{message:'This importer does not have any entries.'}
-      return 
-    end
-    render layout: false
+    activity_summary_content
   end
   def by_entry_port
     @imp = Company.find params[:importer_id]
     action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp,current_user),nil,{lock_check:false,verb:'view',module_name:'entry'}) {
-
+      # We've already established the user can view the importer so we don't have to further secure the Entry query at the user level
+      @entries = Entry.where(entry_port_code:params[:port_code]).where(Entry.search_where_by_company_id(@imp.id))
     }
   end
   def by_release_range
     @imp = Company.find params[:importer_id]
     action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp,current_user),nil,{lock_check:false,verb:'view',module_name:'entry'}) {
-      @where_clause = nil
       @range_descriptions = [
         ["Released In The Last Week",'1w'],
         ["Released In The Last 4 Weeks",'4w'],
-        ["Not Released",'op'],
-        ["Released Year To Date",'ytd']
+        ["Filed / Not Released",'op'],
+        ["Filed Year To Date",'ytd']
       ]
-      case params[:release_range]
-      when '1w'
-        @where_clause = Entry.week_clause(Time.now.utc)
-      when '4w'
-        @where_clause = Entry.four_week_clause(Time.now.utc)
-      when 'op'
-        @where_clause = Entry.not_released_clause(Time.now.utc)
-      when 'ytd'
-        @where_clause = Entry.ytd_clause(Time.now.utc)
-      else
-        error_redirect "'#{params[:release_range]}' is an invalid release range.  Valid values are '1w', '4w', 'op', 'ytd'."
+
+      begin
+        @entries = OpenChain::ActivitySummary.create_by_release_range_query(@imp.id, params[:iso_code], params[:release_range])
+      rescue ArgumentError => e
+        error_redirect e.message
       end
-      @where_clause = "(#{@where_clause} AND NOT entries.tracking_status = #{Entry::TRACKING_STATUS_CLOSED})"
     }
   end
   def show
@@ -196,6 +169,20 @@ class EntriesController < ApplicationController
       current_user.company.linked_companies.order("companies.name ASC").each {|c| r << c if c.importer}
     end
     r
+  end
+
+  def activity_summary_content
+    @imp = Company.find params[:importer_id]
+    unless Entry.can_view_importer?(@imp,current_user)
+      render partial: 'shared/error_panel', locals:{message:"You do not have permission to view this page."}
+      return 
+    end
+    @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
+    unless @last_entry
+      render partial: 'shared/error_panel', locals:{message:'This importer does not have any entries.'}
+      return 
+    end
+    render layout: false
   end
 
 end
