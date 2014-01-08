@@ -246,17 +246,19 @@ module OpenChain; class ActivitySummary
     def generate_k84_section importer_id, base_date_utc
       r = [] 
       qry = "
-      select k84_due_date, sum(ifnull(total_duty_gst, 0))
-from entries where k84_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
+      select k84_due_date, sum(ifnull(total_duty_gst, 0)), importer_id, companies.name
+from entries 
+inner join companies on companies.id = entries.importer_id
+where k84_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
 and k84_due_date >= DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) 
 and (#{Entry.search_where_by_company_id importer_id}) 
       AND #{tracking_open_clause} AND #{country_clause}
-group by k84_due_date
-order by k84_due_date desc"
+group by importer_id, k84_due_date
+order by importer_id, k84_due_date desc"
       results = ActiveRecord::Base.connection.execute qry
       return r if results.first.nil? || results.first.first.nil?
       results.each do |row|
-        r << {'due'=>row[0],'amount'=>row[1]}
+        r << {'due'=>row[0],'amount'=>row[1],'importer_name'=>row[3]}
       end
       r
     end
@@ -279,17 +281,20 @@ order by k84_due_date desc"
     def generate_pms_section importer_id, base_date_utc
       r = [] 
       qry = "
-      select monthly_statement_due_date, monthly_statement_paid_date, sum(ifnull(total_duty, 0)) + sum(ifnull(total_fees, 0)) as 'Duty & Fees' 
-from entries where monthly_statement_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
+      select monthly_statement_due_date, monthly_statement_paid_date, sum(ifnull(total_duty, 0)) + sum(ifnull(total_fees, 0)) as 'Duty & Fees',
+      importer_id, companies.name
+from entries 
+inner join companies on companies.id = entries.importer_id
+where monthly_statement_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
 and monthly_statement_due_date >= DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) 
 and (#{Entry.search_where_by_company_id importer_id}) 
       AND #{tracking_open_clause} AND #{country_clause}
-group by monthly_statement_due_date, monthly_statement_paid_date
-order by monthly_statement_due_date desc"
+group by importer_id, monthly_statement_due_date, monthly_statement_paid_date
+order by importer_id, monthly_statement_due_date desc"
       results = ActiveRecord::Base.connection.execute qry
       return r if results.first.nil? || results.first.first.nil?
       results.each do |row|
-        r << {'due'=>row[0],'paid'=>row[1],'amount'=>row[2]}
+        r << {'due'=>row[0],'paid'=>row[1],'amount'=>row[2], 'importer_name'=>row[4]}
       end
       r
     end

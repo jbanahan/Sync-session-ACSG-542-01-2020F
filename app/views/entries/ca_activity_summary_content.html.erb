@@ -84,6 +84,7 @@
             <table class='table table-striped table-hover'>
               <thead>
                 <tr>
+                  <th>Name</th>
                   <th>Due</th>
                   <th>Amount</th>
                 </tr>
@@ -91,6 +92,7 @@
               <tbody>
                 <%-hsh['k84'].each do |stmt|-%>
                   <tr>
+                    <td><%=stmt['importer_name']%></td>
                     <td><%=stmt['due']%></td>
                     <td><%=number_to_currency stmt['amount']%></td>
                   </tr>
@@ -183,6 +185,19 @@
             </table>
           </div>
         </div>
+        <% if !@imp.linked_companies.blank? %>
+          <div class="col-md-12">
+            <h3 class="text-center activity-title">Companies Included</h3>
+          </div>
+          <div class='col-md-12 activity-pane'>
+            <ul style='margin-top:10px;'>
+              <li><%=@imp.name%> (<%=@imp.fenix_customer_number%>)</li>
+              <% @imp.linked_companies.each do |lc| %>
+                <li><%=lc.name%> (<%=lc.fenix_customer_number%>)</li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
       </div>
       <div class="col-md-6">
         <h3 class='text-center activity-title'>Year To Date</h3>

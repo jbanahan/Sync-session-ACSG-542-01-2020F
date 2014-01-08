@@ -65,7 +65,7 @@ describe OpenChain::ActivitySummary do
       h['summary']['ytd']['units'].should == 113
     end
     it "should create k84 section" do
-      importer = Factory(:company)
+      importer = Factory(:company,name:'IMP')
       Factory(:entry,k84_due_date:Date.new(2012,12,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
       Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
       Factory(:entry,k84_due_date:Date.new(2013,1,25),total_duty_gst:100,import_country_id:@ca.id,importer_id:importer.id)
@@ -82,12 +82,16 @@ describe OpenChain::ActivitySummary do
       h = described_class::CAEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-02-25 16:00:00 UTC')
       k = h['k84']
       k.should have(4).results
+      k[0]['importer_name'].should == 'IMP'
       k[0]['due'].should == Date.new(2013,3,25)
       k[0]['amount'].should == 400
+      k[1]['importer_name'].should == 'IMP'
       k[1]['due'].should == Date.new(2013,2,25)
       k[1]['amount'].should == 300
+      k[2]['importer_name'].should == 'IMP'
       k[2]['due'].should == Date.new(2013,1,25)
       k[2]['amount'].should == 300
+      k[3]['importer_name'].should == 'IMP'
       k[3]['due'].should == Date.new(2012,12,25)
       k[3]['amount'].should == 100
     end
@@ -131,7 +135,7 @@ describe OpenChain::ActivitySummary do
       end
 
       it "should create statments section" do
-        importer = Factory(:company)
+        importer = Factory(:company,name:'IMP')
         not_paid = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,12,25),monthly_statement_paid_date:nil,total_duty:100,total_fees:50)
         paid1 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
         paid2 = Factory(:entry,import_country_id:@us.id,importer_id:importer.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
@@ -144,17 +148,38 @@ describe OpenChain::ActivitySummary do
         h = described_class::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-11-25 16:00:00 UTC')
         statements = h['pms']
         statements.should have(4).records
+        statements[0]['importer_name'].should == 'IMP'
         statements[0]['due'].should == Date.new(2013,12,25)
         statements[0]['paid'].should be_nil
         statements[0]['amount'].should == 150
+        statements[1]['importer_name'].should == 'IMP'
         statements[1]['due'].should == Date.new(2013,11,25)
         statements[1]['paid'].should == Date.new(2013,11,24)
         statements[1]['amount'].should == 600
+        statements[2]['importer_name'].should == 'IMP'
         statements[2]['due'].should == Date.new(2013,10,25)
         statements[2]['paid'].should == Date.new(2013,10,24)
         statements[2]['amount'].should == 300
+        statements[3]['importer_name'].should == 'IMP'
         statements[3]['paid'].should == Date.new(2013,9,24)
         statements[3]['amount'].should == 300
+      end
+
+      it "should create separate lines per importer_id" do
+        imp1 = Factory(:company,name:'imp1')
+        Factory(:entry,import_country_id:@us.id,importer_id:imp1.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        imp2 = Factory(:company,name:'imp2') #linked
+        Factory(:entry,import_country_id:@us.id,importer_id:imp2.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        imp3 = Factory(:company,name:'imp3') #not linked
+        Factory(:entry,import_country_id:@us.id,importer_id:imp3.id,monthly_statement_due_date:Date.new(2013,11,25),monthly_statement_paid_date:Date.new(2013,11,24),total_duty:200,total_fees:100)
+        imp1.linked_companies << imp2
+        h = described_class::USEntrySummaryGenerator.new.generate_hash imp1.id, Time.parse('2013-11-25 16:00:00 UTC')
+        statements = h['pms']
+        expect(statements.length).to eq 2
+        expect(statements[0]['importer_name']).to eq 'imp1'
+        expect(statements[0]['amount']).to eq 300
+        expect(statements[1]['importer_name']).to eq 'imp2'
+        expect(statements[1]['amount']).to eq 300
       end
 
       it "should create top 5 vendors YTD" do
