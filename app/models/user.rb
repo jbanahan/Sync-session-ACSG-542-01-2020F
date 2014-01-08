@@ -19,6 +19,7 @@ class User < ActiveRecord::Base
     :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
     :entry_view, :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
     :survey_view, :survey_edit,
+    :project_view, :project_edit,
     :broker_invoice_view, :broker_invoice_edit,
     :classification_view, :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
@@ -359,7 +360,15 @@ class User < ActiveRecord::Base
   def edit_classifications?
     add_classifications?
   end
-  
+
+  def view_projects?
+    self.project_view && self.master_company?
+  end
+  def edit_projects?
+    self.project_edit && self.master_company?
+  end
+
+
   def edit_milestone_plans?
     self.admin?
   end
@@ -369,7 +378,7 @@ class User < ActiveRecord::Base
   end
 
   def master_company?
-    @mc = self.company.master? if @mc.nil?
+    @mc ||= self.company.master?
     @mc
   end
 

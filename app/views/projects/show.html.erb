@@ -1,0 +1,60 @@
+<div ng-app='ProjectApp' ng-init='projectId = <%=@project_id%>'>
+  <div ng-controller='ProjectCtrl'>
+    <chain-panel panel-title='Loading' panel-type='panel-primary' panel-message='svc.loadingMessage'></chain-panel>
+    <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
+    <div class="container" ng-show='svc.project'>
+      <div class="row" ng-show='svc.project.red_messages && svc.project.red_messages.length > 0'>
+        <div class="col-md-8 col-md-offset-2">
+          <div class="alert alert-danger">
+            <p ng-repeat='m in svc.project.red_messages'>
+              {{m}}
+            </p>
+          </div>
+        </div>
+      </div>
+      <form class='form-horizontal' role='form'>
+        <div ng-show='svc.project.closed_at'>
+          <chain-panel panel-title='Closed' panel-type='panel-info' panel-message='"Project is closed."'></chain-panel>
+        </div>
+        <div class='row'>
+          <div class='col-md-12'>
+            &nbsp;<span class='label label-info' ng-show='svc.project.saving'>Saving</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="inpName">Name</label>
+          <div class='col-sm-10'>
+            <input ng-blur='saveProject()' class="form-control input-lg" id='inpName' type="text" ng-model="svc.project.name" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="inpDue">Due</label>
+          <div class='col-sm-10'>
+            <input ng-blur='saveProject()' class='form-control' type="date" ng-model='svc.project.due' id='inpDue' />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="inpObjective">Objective</label>
+          <div class='col-sm-10'>
+            <textarea ng-blur='saveProject()' class='form-control' ng-model='svc.project.objective' id='inpObjective'></textarea>
+          </div>
+        </div>
+      </form>
+      <div class="col-md-12">
+        <h2>Updates</h2>
+        <div>
+          <textarea id="" name="" cols="30" rows="10" ng-model="addUpdateBody" class='form-control'></textarea>
+          <button ng-click="addProjectUpdate()" ng-show="addUpdateBody.length>0" class='btn btn-primary'>Add Update</button>
+        </div>
+        <div ng-repeat="u in svc.project.project_updates">
+          <pre>{{u.body}}</pre>
+          <span>{{u.created_by_name}} - {{u.updated_at}}</span>
+        </div>
+      </div>
+    </div>
+    <div chain-action-bar>
+      <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Back</button> 
+      <button class='btn btn-default' ng-click='toggleClose()' ng-show='svc.project'>{{svc.project && svc.project.closed_at | ifTrue : 'Re-open' : 'Close'}} Project</button>
+    </div>
+  </div>
+</div>

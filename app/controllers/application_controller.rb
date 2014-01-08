@@ -26,6 +26,11 @@ class ApplicationController < ActionController::Base
   after_filter :reset_state_values
  
 
+  # render generic json error message
+  def render_json_error message, response_code=500
+    render json: {error:message}, status: response_code
+    true
+  end
   def log_request
     #prep for exception notification
     request.env["exception_notifier.exception_data"] = {

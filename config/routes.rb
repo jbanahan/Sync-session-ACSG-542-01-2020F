@@ -455,6 +455,10 @@ OpenChain::Application.routes.draw do
     post 'resend', :on=>:member
   end
 
+  resources :projects, except: [:destroy] do
+    resources :project_updates, only: [:index,:update,:create]
+    put 'toggle_close', on: :member
+  end
   resources :schedulable_jobs, except: [:show]
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?

@@ -32,6 +32,24 @@ describe User do
         Factory(:user).should_not be_view_official_tariffs
       end
     end
+    context "projects" do
+      it "should allow master company user with permission" do
+        u = Factory(:master_user)
+        expect(u.view_projects?).to be_false
+        expect(u.edit_projects?).to be_false
+        u.project_view = true
+        expect(u.view_projects?).to be_true
+        u.project_edit = true
+        expect(u.edit_projects?).to be_true
+      end
+      it "should not allow non master company user" do
+        u = Factory(:user)
+        u.project_view = true
+        u.project_edit = true
+        expect(u.view_projects?).to be_false
+        expect(u.edit_projects?).to be_false
+      end
+    end
     context "attachment_archives" do
       it "should allow for master user who can view entries" do
         u = Factory(:user,:company=>Factory(:company,:master=>true))

@@ -178,5 +178,22 @@ describe Company do
         Company.new.should_not be_edit_commercial_invoices
       end
     end
+    context 'projects' do
+      it 'should allow for master company' do
+        MasterSetup.get.update_attributes(project_enabled:true)
+        expect(Company.new(master:true).view_projects?).to be_true
+        expect(Company.new(master:true).edit_projects?).to be_true
+      end
+      it 'should not allow for non-master Company' do
+        MasterSetup.get.update_attributes(project_enabled:true)
+        expect(Company.new(master:false).view_projects?).to be_false
+        expect(Company.new(master:false).edit_projects?).to be_false
+      end
+      it "should not allow if module disabled" do
+        MasterSetup.get.update_attributes(project_enabled:false)
+        expect(Company.new(master:true).view_projects?).to be_false
+        expect(Company.new(master:true).edit_projects?).to be_false
+      end
+    end
   end
 end

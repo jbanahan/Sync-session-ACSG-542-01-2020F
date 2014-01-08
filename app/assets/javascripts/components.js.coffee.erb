@@ -1,5 +1,28 @@
 @components = angular.module 'ChainComponents', []
 
+# Boolean filter for writing text, works similar to a ternary operator like:
+# <div>{{x==1 | ifTrue : "I'm True" : "I'm not true"}}
+@components.filter 'ifTrue', () ->
+  (input,tVal,fVal) ->
+    if input then tVal else fVal
+
+# creates a bootstrap panel like:
+# <chain-panel panel-title='Errors' panel-message="obj.error_message" panel-type='panel-danger' />
+#
+# auto hides / shows if message is set
+@components.directive 'chainPanel', [() ->
+  {
+    restrict: 'AE'
+    scope: {
+      panelTitle:'@'
+      panelMessage:'='
+      panelType:'@'
+    }
+    template:"<div class='container' ng-show='panelMessage && panelMessage.length>0'><div class='panel' ng-class='panelType'><div class='panel-heading'><h3 class='panel-title'>{{panelTitle}}</h3></div><div class='panel-body'><p>{{panelMessage}}</p></div></div></div>"
+    link: (scope,el,attrs) ->
+      @
+  }
+]
 # based on: http://coding-issues.blogspot.in/2013/10/angularjs-blur-directive.html
 # should be able to remove this when we upgrade to a newer angularjs version that supports this natively
 @components.directive('ngBlur', ['$parse', ($parse) ->

@@ -239,6 +239,13 @@ class Company < ActiveRecord::Base
     return add_classifications?
   end
 
+  def view_projects?
+    self.master? && master_setup.project_enabled?
+  end
+  def edit_projects?
+    self.master? && master_setup.project_enabled?
+  end
+
 	
 	private 
 

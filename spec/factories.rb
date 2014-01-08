@@ -292,3 +292,9 @@ end
 Factory.define :schedulable_job do |f|
   
 end
+Factory.define :project do |f|
+
+end
+Factory.define :project_update do |f|
+  f.association :project
+end
