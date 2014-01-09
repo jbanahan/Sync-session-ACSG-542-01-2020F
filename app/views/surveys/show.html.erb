@@ -70,11 +70,11 @@
 <div id='resp_chart' style='text-align:center; width:45%; margin:0;'></div>
 <div style='clear:both'></div>
 <h3>Survey Responses</h3>
-<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(false), show_archive_control: true} %>
+<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(false).order('survey_responses.updated_at DESC'), show_archive_control: true} %>
 <%- archived = @survey.survey_responses.was_archived(true).count -%> 
 <% if @show_archived && archived > 0 %>
 <h3>Archived Responses</h3>
-<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(true), show_restore_control: true} %>
+<%=render :partial=>'response_status', locals: {survey_responses: @survey.survey_responses.was_archived(true).order('survey_responses.updated_at DESC'), show_restore_control: true} %>
 <% else %>
 <p><%= "#{archived} survey #{"response".pluralize(archived)} #{"has".pluralize(archived)}"%> been archived.</p>
 <% end %>
