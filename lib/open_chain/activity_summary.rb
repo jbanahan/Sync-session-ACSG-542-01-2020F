@@ -1,15 +1,30 @@
 module OpenChain; class ActivitySummary
 
-  def self.generate_us_entry_summary company_id, base_date=0.days.ago.to_date
-    {'activity_summary'=>USEntrySummaryGenerator.new.generate_hash(company_id, base_date)}
+  def self.generate_us_entry_summary company_id, base_date=Time.zone.now.midnight
+    {'activity_summary'=>generator_for_country("US").generate_hash(company_id, base_date)}
   end
-  def self.generate_ca_entry_summary company_id, base_date=0.days.ago.to_date
-    {'activity_summary'=>CAEntrySummaryGenerator.new.generate_hash(company_id, base_date)}
+  def self.generate_ca_entry_summary company_id, base_date=Time.zone.now.midnight
+    {'activity_summary'=>generator_for_country("CA").generate_hash(company_id, base_date)}
   end
+
+  def self.create_by_release_range_query company_id, country_iso, range, base_date=Time.zone.now.midnight
+    generator_for_country(country_iso).by_release_range_query company_id, base_date, range
+  end
+
+  def self.generator_for_country iso
+    case iso.upcase
+    when 'US'
+      return USEntrySummaryGenerator.new
+    when 'CA'
+      return CAEntrySummaryGenerator.new
+    else
+      raise ArgumentError, "Invalid iso code of #{iso} specified."
+    end
+  end
+  private_class_method :generator_for_country
 
   # abstract summary builder, subclassed below for each country
   class EntrySummaryGenerator
-    EST = ActiveSupport::TimeZone['Eastern Time (US & Canada)']
 
     # build the hash with the elements that are common between both countries
     def generate_common_hash company_id, b_utc
@@ -25,9 +40,38 @@ module OpenChain; class ActivitySummary
       h['ports_ytd'] = generate_ports_ytd company_id, b_utc
       h
     end
+
+    def by_release_range_query importer_id, base_date, range
+      date_clause = nil
+      base_date = base_date_utc base_date
+
+      case range
+      when '1w'
+        date_clause = week_clause base_date
+      when '4w'
+        date_clause = four_week_clause base_date
+      when 'op'
+        date_clause = not_released_clause base_date
+      when 'ytd'
+        date_clause = ytd_clause base_date
+      else
+        raise ArgumentError, "Invalid date range of #{range} specified. Valid values are '1w', '4w', 'op', 'ytd'."
+      end
+
+      Entry.where(date_clause)
+            .where(Entry.search_where_by_company_id(importer_id))
+            .where(tracking_open_clause)
+            .where(country_clause)
+    end
+
+    protected
+      def timezone
+        ActiveSupport::TimeZone['Eastern Time (US & Canada)']
+      end
+
     private 
     def base_date_utc base_date
-      EST.local(base_date.year,base_date.month,base_date.day).utc
+      timezone.local(base_date.year,base_date.month,base_date.day).utc
     end
     def generate_week_summary importer_id, base_date_utc
       generate_summary_line importer_id, week_clause(base_date_utc)
@@ -135,25 +179,29 @@ module OpenChain; class ActivitySummary
 
     # generate a where clause for the previous 1 week 
     def week_clause base_date_utc
-      Entry.week_clause base_date_utc
+      "(release_date > DATE_ADD('#{base_date_utc}',INTERVAL -1 WEEK) and release_date < '#{end_of_day(base_date_utc)}')"
     end
     # generate a where clause for the previous 4 weeks
     def four_week_clause base_date_utc
-      Entry.four_week_clause base_date_utc
+      "(release_date > DATE_ADD('#{base_date_utc}',INTERVAL -4 WEEK) and release_date < '#{end_of_day(base_date_utc)}')"
     end
-    # generate a where clause for open entries
+    # generate a where clause for open entries that are not released
     def not_released_clause base_date_utc
-      Entry.not_released_clause base_date_utc
+      "(entries.release_date is null OR entries.release_date > '#{base_date_utc}')"
     end
     # genereate a where clause for Year to Date
     def ytd_clause base_date_utc
-      Entry.ytd_clause base_date_utc 
+      "((entries.release_date IS NULL OR entries.release_date > '#{base_date_utc}') OR (entries.release_date >= '#{base_date_utc.year}-01-01' AND release_date <= '#{end_of_day(base_date_utc)}'))"
     end
+    def end_of_day base_date_utc
+      (base_date_utc + 1.day).midnight - 1.second
+    end
+
     def tracking_open_clause
       "(entries.tracking_status = #{Entry::TRACKING_STATUS_OPEN})"
     end
     def country_clause
-      "(entries.import_country_id = #{@country_id})"
+      "(entries.import_country_id = #{country_id})"
     end
   end
   # summary builder for Canadian entries
@@ -164,6 +212,11 @@ module OpenChain; class ActivitySummary
       h = generate_common_hash company_id, b_utc
       h['k84'] = generate_k84_section company_id, b_utc
       h
+    end
+
+    def country_id
+      @country_id ||= Country.find_by_iso_code('CA').id
+      @country_id
     end
 
     def port_code_field
@@ -193,17 +246,19 @@ module OpenChain; class ActivitySummary
     def generate_k84_section importer_id, base_date_utc
       r = [] 
       qry = "
-      select k84_due_date, sum(total_duty_gst)
-from entries where k84_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
+      select k84_due_date, sum(ifnull(total_duty_gst, 0)), importer_id, companies.name
+from entries 
+inner join companies on companies.id = entries.importer_id
+where k84_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
+and k84_due_date >= DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) 
 and (#{Entry.search_where_by_company_id importer_id}) 
       AND #{tracking_open_clause} AND #{country_clause}
-group by k84_due_date
-order by k84_due_date desc
-limit 3"
+group by importer_id, k84_due_date
+order by importer_id, k84_due_date desc"
       results = ActiveRecord::Base.connection.execute qry
       return r if results.first.nil? || results.first.first.nil?
       results.each do |row|
-        r << {'due'=>row[0],'amount'=>row[1]}
+        r << {'due'=>row[0],'amount'=>row[1],'importer_name'=>row[3]}
       end
       r
     end
@@ -211,32 +266,38 @@ limit 3"
   # summary builder for US entries
   class USEntrySummaryGenerator < EntrySummaryGenerator
     def generate_hash company_id, base_date
-      @country_id = Country.find_by_iso_code('US').id
       b_utc = base_date_utc base_date
       h = generate_common_hash company_id, b_utc
       h['pms'] = generate_pms_section company_id, b_utc
       h
     end
 
+    def country_id
+      @country_id ||= Country.find_by_iso_code('US').id
+      @country_id
+    end
+
     private 
     def generate_pms_section importer_id, base_date_utc
       r = [] 
       qry = "
-      select monthly_statement_due_date, monthly_statement_paid_date, sum(total_duty) + sum(total_fees) as 'Duty & Fees' 
-from entries where monthly_statement_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 30 DAY) 
+      select monthly_statement_due_date, monthly_statement_paid_date, sum(ifnull(total_duty, 0)) + sum(ifnull(total_fees, 0)) as 'Duty & Fees',
+      importer_id, companies.name
+from entries 
+inner join companies on companies.id = entries.importer_id
+where monthly_statement_due_date <= DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) 
+and monthly_statement_due_date >= DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) 
 and (#{Entry.search_where_by_company_id importer_id}) 
       AND #{tracking_open_clause} AND #{country_clause}
-group by monthly_statement_due_date, monthly_statement_paid_date
-order by monthly_statement_due_date desc
-limit 3"
+group by importer_id, monthly_statement_due_date, monthly_statement_paid_date
+order by importer_id, monthly_statement_due_date desc"
       results = ActiveRecord::Base.connection.execute qry
       return r if results.first.nil? || results.first.first.nil?
       results.each do |row|
-        r << {'due'=>row[0],'paid'=>row[1],'amount'=>row[2]}
+        r << {'due'=>row[0],'paid'=>row[1],'amount'=>row[2], 'importer_name'=>row[4]}
       end
       r
     end
-
 
     def port_code_field
       'schedule_d_code'
@@ -245,7 +306,6 @@ limit 3"
     def vendor_field
       'commercial_invoice_lines.vendor_name'
     end
-
 
     def generate_summary_line importer_id, date_clause
       w = Entry.search_where_by_company_id importer_id
@@ -261,8 +321,5 @@ limit 3"
         'units'=>result_row[5]
       }
     end
-    
-
-
   end
 end; end

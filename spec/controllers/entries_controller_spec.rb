@@ -105,4 +105,58 @@ describe EntriesController do
 
     end
   end
+
+  describe "by_release_range" do
+    before :each do 
+      @country = Factory(:country, iso_code: 'US')
+    end
+
+    it "validates access and creates a release range query object" do
+      get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: '1w'
+
+      response.should be_success
+      expect(assigns(:range_descriptions)).to eq [
+        ["Released In The Last Week",'1w'],
+        ["Released In The Last 4 Weeks",'4w'],
+        ["Filed / Not Released",'op'],
+        ["Filed Year To Date",'ytd']
+      ]
+
+      expect(assigns(:entries).to_sql).to match /SELECT.*FROM/i
+    end
+
+    it "handles argument error raised from query call" do
+      OpenChain::ActivitySummary.should_receive(:create_by_release_range_query).and_raise ArgumentError.new("Testing")
+
+      get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: '1w'
+
+      response.should redirect_to("/")
+      flash[:errors].should eq ["Testing"]
+    end
+
+    it "secures action" do
+      Entry.should_receive(:can_view_importer?).and_return false
+
+      get :by_release_range, importer_id: @u.company.id, iso_code: 'US', release_range: '1w'
+      response.should redirect_to("/")
+      flash[:errors].should eq ["You do not have permission to view this entry."]
+    end
+  end
+
+  describe "by_entry_port" do
+    it "validates access and creates an entry port query" do
+      get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id
+
+      response.should be_success
+      expect(assigns(:entries).to_sql).to match /SELECT.*FROM/i
+    end
+
+    it "secures action" do
+      Entry.should_receive(:can_view_importer?).and_return false
+
+      get :by_entry_port, port_code: 'ABC', importer_id: @u.company.id
+      response.should redirect_to("/")
+      flash[:errors].should eq ["You do not have permission to view this entry."]
+    end
+  end
 end

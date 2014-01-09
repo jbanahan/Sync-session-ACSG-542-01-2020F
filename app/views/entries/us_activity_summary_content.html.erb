@@ -1,6 +1,5 @@
-<%cache ['v2','us_entry_activity_summary',@imp,@last_entry] do-%>
-  <%bd = 0.days.ago%>
-  <%hsh = OpenChain::ActivitySummary.generate_us_entry_summary(@imp.id, bd)['activity_summary']%>
+<%cache ['v3','us_entry_activity_summary',@imp,@last_entry] do-%>
+  <%hsh = OpenChain::ActivitySummary.generate_us_entry_summary(@imp.id)['activity_summary']%>
   <div class="container">
     <div class="row" style='margin-bottom:20px;'>
       <div class="col-md-12 text-center">
@@ -40,7 +39,7 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href='/entries/importer/<%=@imp.id%>/release_range/1w'>Released Last Week <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/1w'>Released Last Week <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
               <td class='numeric'><%=number_with_delimiter hsh['summary']['1w']['count']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['1w']['duty']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['1w']['fees']%></td>
@@ -49,7 +48,7 @@
               <td class='numeric'><%=number_with_precision(hsh['summary']['1w']['units'],precision:2,delimiter:',')%></td>
             </tr>
             <tr>
-              <td><a href='/entries/importer/<%=@imp.id%>/release_range/4w'>Released Last 4 Weeks <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/4w'>Released Last 4 Weeks <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
               <td class='numeric'><%=number_with_delimiter hsh['summary']['4w']['count']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['4w']['duty']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['4w']['fees']%></td>
@@ -58,7 +57,7 @@
               <td class='numeric'><%=number_with_precision(hsh['summary']['4w']['units'],precision:2,delimiter:',')%></td>
             </tr>
             <tr>
-              <td><a href='/entries/importer/<%=@imp.id%>/release_range/op'>Open Shipments <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/op'>Filed / Not Released <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
               <td class='numeric'><%=number_with_delimiter hsh['summary']['open']['count']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['open']['duty']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['open']['fees']%></td>
@@ -79,6 +78,7 @@
               <table class='table table-striped table-hover'>
                 <thead>
                   <tr>
+                    <th>Company</th>
                     <th>Due</th>
                     <th>Paid</th>
                     <th>Amount</th>
@@ -87,6 +87,7 @@
                 <tbody>
                   <%-hsh['pms'].each do |stmt|-%>
                     <tr>
+                      <td><%=stmt['importer_name']%></td>
                       <td><%=stmt['due']%></td>
                       <td><%=stmt['paid']%></td>
                       <td><%=number_to_currency stmt['amount']%></td>
@@ -181,6 +182,19 @@
             </table>
           </div>
         </div>
+        <% if !@imp.linked_companies.blank? %>
+          <div class="col-md-12">
+            <h3 class="text-center activity-title">Companies Included</h3>
+          </div>
+          <div class='col-md-12 activity-pane'>
+            <ul style='margin-top:10px;'>
+              <li><%=@imp.name%> (<%=@imp.alliance_customer_number%>)</li>
+              <% @imp.linked_companies.each do |lc| %>
+                <li><%=lc.name%> (<%=lc.alliance_customer_number%>)</li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
       </div>
       <div class="col-md-6">
         <h3 class='text-center activity-title'>Year To Date</h3>
@@ -190,7 +204,7 @@
             <table class="table table-striped table-hover">
               <tbody>
                 <tr>
-                  <td><a href='/entries/importer/<%=@imp.id%>/release_range/ytd'>Entries <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+                  <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/ytd'>Entries <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
                   <td class="numeric"><%=number_with_delimiter hsh['summary']['ytd']['count']%></td>
                 </tr>
                 <tr>

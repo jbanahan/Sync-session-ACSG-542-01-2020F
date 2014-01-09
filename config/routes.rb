@@ -21,7 +21,7 @@ OpenChain::Application.routes.draw do
   match '/entries/importer/:importer_id/activity_summary/ca/content' => 'entries#ca_activity_summary_content', :via => :get
 
   match '/entries/importer/:importer_id/entry_port/:port_code' => 'entries#by_entry_port', :via => :get
-  match '/entries/importer/:importer_id/release_range/:release_range' => 'entries#by_release_range', :via=>:get
+  match '/entries/importer/:importer_id/country/:iso_code/release_range/:release_range' => 'entries#by_release_range', :via=>:get
   match "/entries/bi" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month" => "entries#bi_three_month", :via=>:get
   match "/entries/bi/three_month_hts" => "entries#bi_three_month_hts", :via=>:get

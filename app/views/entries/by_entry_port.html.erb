@@ -1,6 +1,5 @@
 <%
-entries = Entry.search_secure(current_user,Entry.where(entry_port_code:params[:port_code])).where(Entry.search_where_by_company_id(@imp.id))
-newest_entry = entries.order('updated_at DESC').first
+newest_entry = @entries.order('updated_at DESC').first
 newest_port = Port.order('updated_at DESC').first
 params[:page] ||= '1'
 %>
@@ -23,7 +22,7 @@ params[:page] ||= '1'
       </div>
     </div>
   </div>
-  <%=render :partial=>'entry_list', locals:{entries:entries}%>
+  <%=render :partial=>'entry_list', locals:{entries:@entries}%>
 <script type='text/javascript'> <%# needs to be javascript so it executes inside of cache, can't use content_for%>
   $(document).ready(function() {
     $("#portselect").val('<%=params[:port_code]%>');
