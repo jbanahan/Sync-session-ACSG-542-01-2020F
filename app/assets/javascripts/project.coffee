@@ -97,9 +97,9 @@ projectApp.filter 'deliverableSort', [() ->
       return x unless x==0
 
       # sort by id
-      a.id ?= 999999
-      b.id ?= 999998
-      x = a.id - b.id
+      a_id = if a.id then a.id else 999999
+      b_id = if b.id then b.id else 999998
+      x = a_id - b_id
       return x
 
 ]
