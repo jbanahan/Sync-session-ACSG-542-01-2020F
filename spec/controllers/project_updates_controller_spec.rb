@@ -7,26 +7,6 @@ describe ProjectUpdatesController do
     activate_authlogic
     UserSession.create! @u
   end
-  describe :index do
-    it "should show all updates by project" do
-      Project.any_instance.stub(:can_view?).and_return true
-      pu1 = Factory(:project_update)
-      pu2 = Factory(:project_update,project:pu1.project)
-      Factory(:project_update)
-      get :index, project_id:pu1.project.id
-      expect(response).to be_success
-      r = JSON.parse response.body
-      expect(r['project_updates'].size).to eq 2
-      r['project_updates'].each {|pu| expect(pu['project_id']).to eq pu1.project.id}
-    end
-    it "should return 401 if user cannot view project" do
-      Project.any_instance.stub(:can_view?).and_return false
-      pu1 = Factory(:project_update)
-      get :index, project_id:pu1.project.id
-      expect(response.status).to eq 401
-      expect(JSON.parse(response.body)['error']).to match /permission/
-    end
-  end
   describe :create do
     it "should set created_by" do
       Project.any_instance.stub(:can_edit?).and_return true
@@ -57,13 +37,20 @@ describe ProjectUpdatesController do
   end
   describe :update do
     it "should reject if user is not created_by" do
+      pu = Factory(:project_update,created_by:Factory(:user),body:'x')
+      put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id,body:'y'}
+      expect(response.status).to eq 401
+      expect(JSON.parse(response.body)['error']).to eq "You cannot edit updates unless you created them."
+      pu.reload
+      expect(pu.body).to eq 'x'
+    end
+    it "should update if user is created_by" do
       pu = Factory(:project_update,created_by:@u,body:'x')
-      put :update, project_id:p.id, id:pu.id, project_update:{id:pu.id,body:'y'}
+      put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id,body:'y'}
       pu.reload
       expect(pu.body).to eq 'y'
       expect(response).to be_success
       expect(JSON.parse(response.body)['project_update']['body']).to eq 'y'
     end
-    it "should update if user is created_by"
   end
 end

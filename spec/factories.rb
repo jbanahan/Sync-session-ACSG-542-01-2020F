@@ -298,3 +298,6 @@ end
 Factory.define :project_update do |f|
   f.association :project
 end
+Factory.define :project_deliverable do |f|
+  f.association :project
+end

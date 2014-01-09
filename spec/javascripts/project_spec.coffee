@@ -54,6 +54,19 @@ describe "ProjectApp", () ->
         expect(proj.saving).toBeFalsy()
         expect(proj.project_updates[0]).toEqual resp.project_update
 
+    describe "editProjectUpdate", () ->
+      it "should save and replace in array", () ->
+        project = {id:2,project_updates:[{id:3},{id:1},{id:2}]}
+        pu = {id:1,project_id:2,body:'x'}
+        resp = {project_update:{id:1,project_id:2,body:'y'}}
+        http.expectPUT('/projects/2/project_updates/1.json',{project_update:pu}).respond resp
+        svc.editProjectUpdate project, pu
+        expect(pu.saving).toBe(true)
+        http.flush()
+        expect(project.project_updates[0]).toEqual({id:3}) # don't replace
+        expect(project.project_updates[1]).toEqual(resp.project_update) # replace because IDs match
+        expect(project.project_updates[1].saving).toBeFalsy()
+
     describe "toggleClose", () ->
       it "should toggle and reload", () ->
         resp = {project:{id:99}}
@@ -87,3 +100,11 @@ describe "ProjectApp", () ->
       spyOn svc, 'toggleClose'
       $scope.toggleClose()
       expect(svc.toggleClose).toHaveBeenCalledWith p
+
+    it "should delegate editProjectUpdate", () ->
+      p = {id:1}
+      svc.project = p
+      pu = {id:2}
+      spyOn svc, 'editProjectUpdate'
+      $scope.editProjectUpdate(pu)
+      expect(svc.editProjectUpdate).toHaveBeenCalledWith(p,pu)

@@ -1,4 +1,4 @@
-<div ng-app='ProjectApp' ng-init='projectId = <%=@project_id%>'>
+<div ng-app='ProjectApp' ng-init='projectId = <%=@project_id%>; userId=<%=current_user.id%>'>
   <div ng-controller='ProjectCtrl'>
     <chain-panel panel-title='Loading' panel-type='panel-primary' panel-message='svc.loadingMessage'></chain-panel>
     <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
@@ -40,15 +40,53 @@
           </div>
         </div>
       </form>
-      <div class="col-md-12">
-        <h2>Updates</h2>
-        <div>
-          <textarea id="" name="" cols="30" rows="10" ng-model="addUpdateBody" class='form-control'></textarea>
-          <button ng-click="addProjectUpdate()" ng-show="addUpdateBody.length>0" class='btn btn-primary'>Add Update</button>
+      <div class='row'>
+        <div class="col-md-6">
+          <h2>Updates</h2>
+          <div>
+            <textarea id="" name="" cols="30" rows="10" ng-model="addUpdateBody" class='form-control' placeholder='Enter new update'></textarea>
+            <button ng-click="addProjectUpdate()" ng-show="addUpdateBody.length>0" class='btn btn-primary'>Add Update</button>
+          </div>
+          <div ng-repeat="u in svc.project.project_updates">
+            <div><span ng-show='u.saving' class='label label-info'>Saving</span>&nbsp;</div>
+            <pre ng-hide='u.edit'>{{u.body}}</pre>
+            <textarea ng-model='u.body' ng-show='u.edit' class='form-control'></textarea>
+            <span>{{u.created_by_name}} - {{u.updated_at}}</span>
+            <button ng-click='u.edit=true' ng-show='userId==u.created_by_id && !u.edit'>Edit</button>
+            <button ng-click='editProjectUpdate(u)' ng-show='u.edit'>Save</button>
+            <button ng-click='u.edit=false' ng-show='u.edit'>Cancel</button>
+          </div>
         </div>
-        <div ng-repeat="u in svc.project.project_updates">
-          <pre>{{u.body}}</pre>
-          <span>{{u.created_by_name}} - {{u.updated_at}}</span>
+        <div class="col-md-6">
+          <h2>Deliverables</h2>
+          <div ng-repeat='d in svc.project.project_deliverables | deliverableSort'> 
+            <div>
+              <span ng-class="{'strike':d.complete}">{{d.description}}</span> <span class='label label-default'>{{d.assigned_to_name}}</span> <span class='label label-primary'>{{d.due_date}}</span> <button class='btn btn-sm btn-default' ng-click='d.edit=!d.edit'>Edit</button>
+            </div>
+            <div ng-show='d.edit' class='panel' ng-class="{'panel-default': d.complete, 'panel-primary': !d.complete}">
+              <div class='panel-body'>
+                <input type='text' ng-model='d.description' class='form-control' />
+                Assigned To:
+                <div chain-user-list='d.assigned_to_id'></div>
+                Due:
+                <input type='date' ng-model='d.due_date' class='form-control' />
+                Start:
+                <input type='date' ng-model='d.start_date' class='form-control' />
+                End:
+                <input type='date' ng-model='d.end_date' class='form-control' />
+                Estimated Hours:
+                <input type='number' ng-model='d.estimated_hours' min='0' step='1' class='form-control' />
+                Complete:
+                <input type='checkbox' ng-model='d.complete' />
+              </div>
+              <div class='panel-footer'>
+                <button ng-click='saveDeliverable(d)' class='btn btn-default btn-sm'>Save</button>
+                &nbsp;
+                <span class='label label-info' ng-show='d.saving'>Saving</span>
+              </div>
+            </div>
+          </div>
+          <div><button ng-click="addDeliverable()" class='btn btn-primary'>Add</button></div>
         </div>
       </div>
     </div>

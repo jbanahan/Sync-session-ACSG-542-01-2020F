@@ -14,4 +14,8 @@
     <h2><a href='/official_tariffs'>Tariff Database</a></h2>
     <p>Search the tariff regulations database.</p>
   <%end-%>
+  <% if current_user.view_projects?%>
+    <h2><a href='/projects'>Projects</a></h2>
+    <p>View the project portfolio</p>
+  <% end %>
 </div>

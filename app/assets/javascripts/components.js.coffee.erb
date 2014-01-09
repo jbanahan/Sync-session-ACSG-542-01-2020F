@@ -224,28 +224,41 @@
     }
 ]
 
+
+@components.service 'userListCache', ['$http',($http) ->
+  
+  {
+    users: []
+    waiting: false
+    getListForCurrentUser: (callback) ->
+      if @.users.length == 0
+        svc = @
+        $http.get('/users.json').success((data) ->
+          svc.users = []
+          for c in data
+            cName = c.company.name
+            for u in c.company.users
+              u.company_name = cName
+              svc.users.push u
+          callback(svc.users)
+        )
+      else
+        callback(@.users)
+      
+  }
+]
 # shows the user a drop down to select a user and sets the 
 # selected user id into the passed in object
 # <div user-list="myUserIdVariable"></div>
-@components.directive 'chainUserList', ['$parse','$http',($parse,$http) ->
+@components.directive 'chainUserList', ['$parse','$http','userListCache',($parse,$http,userListCache) ->
   {
     scope: {
       chainUserList:"="
     },
     template:"<select ng-model='chainUserList' ng-options='u.id as u.full_name group by u.company_name for u in users'></select>",
-    controller: ['$scope',($scope) ->
-      $scope.update_users = (data) -> 
-        @.users = []
-        for c in data
-          cName = c.company.name
-          for u in c.company.users
-            u.company_name = cName
-            @.users.push u
-    ],
     link: (scope,el,attrs) ->
-      $http.get('/users.json').success((data) ->
-        scope.update_users(data)
-      )
+      userListCache.getListForCurrentUser (users) ->
+        scope.users = users
     }
 ]
 @components.directive 'chainMessages', [() ->

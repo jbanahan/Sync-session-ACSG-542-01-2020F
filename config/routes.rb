@@ -456,7 +456,8 @@ OpenChain::Application.routes.draw do
   end
 
   resources :projects, except: [:destroy] do
-    resources :project_updates, only: [:index,:update,:create]
+    resources :project_updates, only: [:update,:create]
+    resources :project_deliverables, only: [:update,:create]
     put 'toggle_close', on: :member
   end
   resources :schedulable_jobs, except: [:show]
