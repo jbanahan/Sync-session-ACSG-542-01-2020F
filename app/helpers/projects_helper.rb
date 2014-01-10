@@ -24,7 +24,7 @@ module ProjectsHelper
 
   def sanitize_project_params p
     r = {}
-    [:name,:due,:objective].each {|k| r[k] = p[k]}
+    [:name,:due,:objective,:drive_folder].each {|k| r[k] = p[k]}
     r
   end
 

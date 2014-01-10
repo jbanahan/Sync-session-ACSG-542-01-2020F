@@ -36,7 +36,16 @@
         <div class="form-group">
           <label class="col-sm-2 control-label" for="inpObjective">Objective</label>
           <div class='col-sm-10'>
-            <textarea ng-blur='saveProject()' class='form-control' ng-model='svc.project.objective' id='inpObjective'></textarea>
+            <textarea ng-blur='saveProject()' class='form-control' placeholder="The project will be done when..." ng-model='svc.project.objective' id='inpObjective'></textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label" for="inpDriveFolder">Google Drive Folder</label>
+          <div class='col-sm-9'>
+            <input ng-blur='saveProject()' class='form-control' placeholder="Enter hyperlink address to Google Drive folder for this project's documents" type="url" ng-model='svc.project.drive_folder' id='inpDriveFolder' />
+          </div>
+          <div class='col-sm-1'>
+            <a ng-href='{{svc.project.drive_folder}}' target='_blank' ng-show='svc.project.drive_folder.length > 0'><span class="glyphicon glyphicon-link"></span></a>
           </div>
         </div>
       </form>
