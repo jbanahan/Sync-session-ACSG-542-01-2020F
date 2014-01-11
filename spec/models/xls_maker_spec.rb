@@ -178,5 +178,91 @@ describe XlsMaker do
       @sheet.row(1).formats[0].should == XlsMaker::DATE_FORMAT
     end
   end
+
+  describe "insert_cell_value" do
+    before :each do
+      @wb = Spreadsheet::Workbook.new
+      @sheet = @wb.create_worksheet :name => "Sheet"
+    end
+
+    it "adds a cell to the sheet" do
+      widths = []
+      XlsMaker.insert_cell_value @sheet, 0, 0, "Test12", widths
+      expect(@sheet.row(0)[0]).to eq "Test12"
+      expect(widths[0]).to eq 9
+    end
+
+    it "makes all widths be at least 8" do
+      widths = []
+      XlsMaker.insert_cell_value @sheet, 0, 0, "T", widths
+      expect(@sheet.row(0)[0]).to eq "T"
+      expect(widths[0]).to eq 8
+    end
+
+    it "maxes out widths at 23" do
+      widths = []
+      XlsMaker.insert_cell_value @sheet, 0, 0, "1234567890123456789012345", widths
+      expect(@sheet.row(0)[0]).to eq "1234567890123456789012345"
+      expect(widths[0]).to eq 23
+    end
+
+    it "doesn't change widths when new width is smaller than an existing stored one" do
+      widths = [10]
+      XlsMaker.insert_cell_value @sheet, 0, 0, "T", widths
+      expect(@sheet.row(0)[0]).to eq "T"
+      expect(widths[0]).to eq 10
+    end
+
+    it "adds a blank value to the sheet for nil" do
+      XlsMaker.insert_cell_value @sheet, 0, 0, nil
+      expect(@sheet.row(0)[0]).to eq ""
+    end
+
+    it "formats dates correctly" do
+      XlsMaker.insert_cell_value @sheet, 0, 0, Date.new(2014, 01, 01)
+      expect(@sheet.row(0)[0].to_s).to eq Date.new(2014, 01, 01).to_s
+      expect(@sheet.row(0).formats[0].number_format).to eq "YYYY-MM-DD"
+    end
+
+    it "formats times correctly" do
+      XlsMaker.insert_cell_value @sheet, 0, 0, Time.new(2014, 01, 01)
+      expect(@sheet.row(0)[0].to_s).to eq Time.new(2014, 01, 01).to_s
+      expect(@sheet.row(0).formats[0].number_format).to eq "YYYY-MM-DD HH:MM"
+    end
+
+    it "formats DateTimes correctly" do
+      XlsMaker.insert_cell_value @sheet, 0, 0, DateTime.new(2014, 01, 01)
+      expect(@sheet.row(0)[0].to_s).to eq DateTime.new(2014, 01, 01).to_s
+      expect(@sheet.row(0).formats[0].number_format).to eq "YYYY-MM-DD HH:MM"
+    end
+
+    it "respects the no_time option" do 
+      XlsMaker.insert_cell_value @sheet, 0, 0, Time.new(2014, 01, 01), [], {no_time: true}
+      expect(@sheet.row(0)[0].to_s).to eq Time.new(2014, 01, 01).to_s
+      expect(@sheet.row(0).formats[0].number_format).to eq "YYYY-MM-DD"
+    end
+
+    it "shifts existing data to the right" do
+      @sheet.row(0)[0] = "Test"
+      XlsMaker.insert_cell_value @sheet, 0, 0, "Test2"
+      expect(@sheet.row(0)[0]).to eq "Test2"
+      expect(@sheet.row(0)[1]).to eq "Test"
+    end
+
+    it "appends to the end of the row if insert is false" do
+      @sheet.row(0)[0] = "Test"
+      XlsMaker.insert_cell_value @sheet, 0, 0, "Test2", [], {:insert=> false}
+      expect(@sheet.row(0)[0]).to eq "Test"
+      expect(@sheet.row(0)[1]).to eq "Test2"
+    end
+
+    it "handles appending date formats correctly and updating column widths" do
+      widths = []
+      @sheet.row(0)[0] = "Test"
+      XlsMaker.insert_cell_value @sheet, 0, 0, Time.new(2014, 01, 01), widths, {:insert=> false}
+      expect(widths[1]).to eq 19
+      expect(@sheet.row(0).formats[1].number_format).to eq "YYYY-MM-DD HH:MM"
+    end
+  end
 end
 

@@ -11,7 +11,7 @@ class ReportResultsController < ApplicationController
     @customizable_reports = []
     [
       CustomReportEntryInvoiceBreakdown, CustomReportBillingAllocationByValue, CustomReportBillingStatementByPo, 
-      CustomReportContainerListing, CustomReportEntryBillingBreakdownByPo, CustomReportAnnSapChanges
+      CustomReportContainerListing, CustomReportEntryBillingBreakdownByPo, CustomReportAnnSapChanges, CustomReportIsfStatus
     ].each do |rpt|
       @customizable_reports << rpt if rpt.can_view?(current_user)
     end
