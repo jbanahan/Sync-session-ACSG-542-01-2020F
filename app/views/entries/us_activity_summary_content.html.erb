@@ -189,7 +189,7 @@
           <div class='col-md-12 activity-pane'>
             <ul style='margin-top:10px;'>
               <li><%=@imp.name%> (<%=@imp.alliance_customer_number%>)</li>
-              <% @imp.linked_companies.each do |lc| %>
+              <% @imp.linked_companies.where('length(alliance_customer_number) > 0').each do |lc| %>
                 <li><%=lc.name%> (<%=lc.alliance_customer_number%>)</li>
               <% end %>
             </ul>
