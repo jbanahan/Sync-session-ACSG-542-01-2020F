@@ -189,9 +189,9 @@ module OpenChain; class ActivitySummary
     def not_released_clause base_date_utc
       "(entries.release_date is null OR entries.release_date > '#{base_date_utc}')"
     end
-    # genereate a where clause for Year to Date
+    # genereate a where clause for Released Year to Date
     def ytd_clause base_date_utc
-      "((entries.release_date IS NULL OR entries.release_date > '#{base_date_utc}') OR (entries.release_date >= '#{base_date_utc.year}-01-01' AND release_date <= '#{end_of_day(base_date_utc)}'))"
+      "(entries.release_date BETWEEN '#{base_date_utc.year}-01-01 00:00' AND '#{base_date_utc.year}-12-31 11:59:59.999')"
     end
     def end_of_day base_date_utc
       (base_date_utc + 1.day).midnight - 1.second

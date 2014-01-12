@@ -1,5 +1,4 @@
 OpenChain::Application.routes.draw do
-  match '/test/activity_summary' => 'activity_summaries#entry', :via=>:get
   match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
   match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
   match '/hts/:iso' => 'hts#country', :via=>:get

@@ -39,7 +39,7 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/1w'>Released Last Week <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/1w'>Released Last 7 Days <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
               <td class='numeric'><%=number_with_delimiter hsh['summary']['1w']['count']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['1w']['duty']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['1w']['fees']%></td>
@@ -48,7 +48,7 @@
               <td class='numeric'><%=number_with_precision(hsh['summary']['1w']['units'],precision:2,delimiter:',')%></td>
             </tr>
             <tr>
-              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/4w'>Released Last 4 Weeks <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
+              <td><a href='/entries/importer/<%=@imp.id%>/country/us/release_range/4w'>Released Last 28 Days <span class="glyphicon glyphicon-link" style='font-size:80%;'></span></a></td>
               <td class='numeric'><%=number_with_delimiter hsh['summary']['4w']['count']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['4w']['duty']%></td>
               <td class='numeric'><%=number_to_currency hsh['summary']['4w']['fees']%></td>
@@ -197,7 +197,7 @@
         <% end %>
       </div>
       <div class="col-md-6">
-        <h3 class='text-center activity-title'>Year To Date</h3>
+        <h3 class='text-center activity-title'>Released Year To Date</h3>
         <div class="row">
           <div class='col-md-12 activity-pane'>
             <h4 class='text-center activity-title'>Summary</h4>

@@ -39,7 +39,7 @@ class EntriesController < ApplicationController
         ["Released In The Last Week",'1w'],
         ["Released In The Last 4 Weeks",'4w'],
         ["Filed / Not Released",'op'],
-        ["Filed Year To Date",'ytd']
+        ["Released Year To Date",'ytd']
       ]
 
       begin

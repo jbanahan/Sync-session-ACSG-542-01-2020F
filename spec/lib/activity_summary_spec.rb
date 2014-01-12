@@ -56,13 +56,13 @@ describe OpenChain::ActivitySummary do
       h['summary']['open']['entered'].should == 60
       h['summary']['open']['invoiced'].should == 66
       h['summary']['open']['units'].should == 3
-      h['summary']['ytd']['count'].should == 3
-      h['summary']['ytd']['duty'].should == 350
-      h['summary']['ytd']['gst'].should == 165
-      h['summary']['ytd']['duty_gst'].should == 515
-      h['summary']['ytd']['entered'].should == 2560
-      h['summary']['ytd']['invoiced'].should == 2766
-      h['summary']['ytd']['units'].should == 113
+      h['summary']['ytd']['count'].should == 2
+      h['summary']['ytd']['duty'].should == 300
+      h['summary']['ytd']['gst'].should == 125
+      h['summary']['ytd']['duty_gst'].should == 425
+      h['summary']['ytd']['entered'].should == 2500
+      h['summary']['ytd']['invoiced'].should == 2700
+      h['summary']['ytd']['units'].should == 110
     end
     it "should create k84 section" do
       importer = Factory(:company,name:'IMP')
@@ -126,12 +126,12 @@ describe OpenChain::ActivitySummary do
         h['summary']['open']['entered'].should == 60
         h['summary']['open']['invoiced'].should == 66
         h['summary']['open']['units'].should == 3
-        h['summary']['ytd']['count'].should == 3
-        h['summary']['ytd']['duty'].should == 350
-        h['summary']['ytd']['fees'].should == 165
-        h['summary']['ytd']['entered'].should == 2560
-        h['summary']['ytd']['invoiced'].should == 2766
-        h['summary']['ytd']['units'].should == 113
+        h['summary']['ytd']['count'].should == 2
+        h['summary']['ytd']['duty'].should == 300
+        h['summary']['ytd']['fees'].should == 125
+        h['summary']['ytd']['entered'].should == 2500
+        h['summary']['ytd']['invoiced'].should == 2700
+        h['summary']['ytd']['units'].should == 110
       end
 
       it "should create statments section" do
@@ -235,6 +235,7 @@ describe OpenChain::ActivitySummary do
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:'2013-12-25 16:00:00 UTC')
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,release_date:'2013-12-18 16:00:00 UTC')
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,release_date:'2013-12-18 16:00:00 UTC')
+        # don't find not released
         Factory(:entry,import_country_id:@us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',release_date:nil)
         # don't find for wrong country
         Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:100,release_date:'2013-12-24 16:00:00 UTC')
@@ -242,7 +243,7 @@ describe OpenChain::ActivitySummary do
         p = h['ports_ytd']
         p.should have(2).entries
         p[0]['name'].should == 'P1'
-        p[0]['count'].should == 3
+        p[0]['count'].should == 2
         p[0]['code'].should == '0001'
         p[1]['name'].should == 'P2'
         p[1]['count'].should == 1
