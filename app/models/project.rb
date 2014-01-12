@@ -18,6 +18,12 @@ class Project < ActiveRecord::Base
   end
 
   #permissions
+	def self.search_secure user, base_object
+    base_object.where(search_where(user))
+  end
+  def self.search_where user
+    "1=1" #no security yet
+  end
   def can_view? user
     user.view_projects?
   end

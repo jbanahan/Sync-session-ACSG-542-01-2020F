@@ -459,6 +459,7 @@ OpenChain::Application.routes.draw do
     resources :project_deliverables, only: [:update,:create]
     put 'toggle_close', on: :member
   end
+  resources :project_deliverables, only: [:index]
   resources :schedulable_jobs, except: [:show]
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?

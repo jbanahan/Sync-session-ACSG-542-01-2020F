@@ -2,6 +2,7 @@
   <%if current_user.edit_projects?%>
     <button class='btn btn-default' id='btn-new'>New</button>
   <%end%>
+  <button class='btn btn-default btn_link' link_to='<%=project_deliverables_path%>'>Deliverables</button>
 <%-end-%>
 <%-cache ['project_index_v1',Project.select('projects.id, projects.updated_at').order('updated_at DESC').first] do-%>
 <h1 class="text-center">Projects</h1>

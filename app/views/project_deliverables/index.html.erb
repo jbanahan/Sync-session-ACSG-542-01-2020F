@@ -1,0 +1,28 @@
+<%content_for :action_bar do%>
+  <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Projects</button>
+<%end%>
+<% cache ['v1',ProjectDeliverable.order('updated_at DESC').first] do %>
+<div class="container">
+  <div class="row">
+    <div class='col-md-12'>
+      <h1>Project Deliverables</h1>
+    </div>
+  </div>
+  <%deliverables_by_user(@deliverables).each do |user,dels|%>
+  <div class="row">
+    <div class="col-md-12">
+      <h2><%=user ? user.full_name : 'Not Assigned'%></h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <ul>
+        <%dels.each do |d|%>
+        <li><%=d.description%> <span class='label label-primary'><%=d.due_date%></span> - <%=link_to d.project.name, d.project%></li>
+        <%end%>
+      </ul>
+    </div>
+  </div>
+  <%end%>
+</div>
+<% end %>

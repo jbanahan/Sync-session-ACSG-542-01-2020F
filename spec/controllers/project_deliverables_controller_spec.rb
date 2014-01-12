@@ -7,6 +7,32 @@ describe ProjectDeliverablesController do
     activate_authlogic
     UserSession.create! @u
   end
+  describe :index do
+    before :each do
+      @d1 = Factory(:project_deliverable)
+      @d2 = Factory(:project_deliverable)
+      @d3 = Factory(:project_deliverable,complete:true)
+    end
+    it "should return all incomplete" do
+      get :index
+      expect(response).to be_success
+      d = assigns(:deliverables)
+      expect(d.order(:id).to_a).to eq [@d1,@d2]
+    end
+    it "should error if user cannot view projects" do
+      User.any_instance.stub(:view_projects?).and_return false
+      get :index
+      expect(response).to be_redirect
+      expect(flash[:errors].first).to match /permission/
+    end
+    it "should secure by project_deliverable" do
+      ProjectDeliverable.stub(:search_secure).and_return ProjectDeliverable.where(id:@d1.id)
+      get :index
+      expect(response).to be_success
+      d = assigns(:deliverables)
+      expect(d.to_a).to eq [@d1]
+    end
+  end
   describe :create do
     it "should create" do
       Project.any_instance.stub(:can_edit?).and_return true

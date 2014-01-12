@@ -1,5 +1,10 @@
 class ProjectDeliverablesController < ApplicationController
   include ProjectsHelper
+  def index
+    return error_redirect "You do not have permission to view projects." unless current_user.view_projects? 
+    @deliverables = ProjectDeliverable.search_secure current_user, ProjectDeliverable.incomplete.order("due_date ASC")
+    #don't map by user here so we don't execute the relation if the view will be cached
+  end
   def create
     p = Project.find params[:project_id]
     unless p.can_edit? current_user

@@ -38,4 +38,14 @@ module ProjectsHelper
     end
     r
   end
+
+  # convert deliverables into hash by users
+  def deliverables_by_user deliverables
+    r = {}
+    deliverables.each do |d|
+      r[d.assigned_to] ||= []
+      r[d.assigned_to] << d
+    end
+    r
+  end
 end
