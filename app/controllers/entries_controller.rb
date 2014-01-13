@@ -36,8 +36,8 @@ class EntriesController < ApplicationController
     @imp = Company.find params[:importer_id]
     action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp,current_user),nil,{lock_check:false,verb:'view',module_name:'entry'}) {
       @range_descriptions = [
-        ["Released In The Last Week",'1w'],
-        ["Released In The Last 4 Weeks",'4w'],
+        ["Released In The Last 7 Days",'1w'],
+        ["Released In The Last 28 Days",'4w'],
         ["Filed / Not Released",'op'],
         ["Released Year To Date",'ytd']
       ]

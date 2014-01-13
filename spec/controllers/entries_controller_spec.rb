@@ -116,10 +116,10 @@ describe EntriesController do
 
       response.should be_success
       expect(assigns(:range_descriptions)).to eq [
-        ["Released In The Last Week",'1w'],
-        ["Released In The Last 4 Weeks",'4w'],
+        ["Released In The Last 7 Days",'1w'],
+        ["Released In The Last 28 Days",'4w'],
         ["Filed / Not Released",'op'],
-        ["Filed Year To Date",'ytd']
+        ["Released Year To Date",'ytd']
       ]
 
       expect(assigns(:entries).to_sql).to match /SELECT.*FROM/i
