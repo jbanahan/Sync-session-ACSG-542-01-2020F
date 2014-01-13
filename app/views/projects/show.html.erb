@@ -100,7 +100,7 @@
       </div>
     </div>
     <div chain-action-bar>
-      <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Back</button> 
+      <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Projects</button> 
       <button class='btn btn-default' ng-click='toggleClose()' ng-show='svc.project'>{{svc.project && svc.project.closed_at | ifTrue : 'Re-open' : 'Close'}} Project</button>
     </div>
   </div>
