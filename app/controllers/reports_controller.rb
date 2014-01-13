@@ -219,6 +219,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_jcrew_billing
+    if OpenChain::Report::JCrewBillingReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_jcrew_billing
+    if OpenChain::Report::JCrewBillingReport.permission? current_user
+      settings = {:start_date => params[:start_date].to_date, :end_date => params[:end_date].to_date}
+      run_report "J Crew Billing Report", OpenChain::Report::JCrewBillingReport, settings, ["Invoice Date on or after #{settings[:start_date]} thru #{settings[:end_date]}."]
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

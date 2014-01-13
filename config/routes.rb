@@ -215,6 +215,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_kitchencraft_billing" => "reports#run_kitchencraft_billing", :via=>:post
   match "/reports/show_landed_cost" => "reports#show_landed_cost", :via=>:get
   match "/reports/run_landed_cost" => "reports#run_landed_cost", :via=>:post
+  match "/reports/show_jcrew_billing" => "reports#show_jcrew_billing", :via=>:get
+  match "/reports/run_jcrew_billing" => "reports#run_jcrew_billing", :via=>:post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
