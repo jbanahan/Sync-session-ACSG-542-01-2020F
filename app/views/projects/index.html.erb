@@ -5,6 +5,7 @@
   <button class='btn btn-default btn_link' link_to='<%=project_deliverables_path%>'>Deliverables</button>
 <%-end-%>
 <%-cache ['project_index_v1',Project.select('projects.id, projects.updated_at').order('updated_at DESC').first] do-%>
+<%@projects = @projects.order('closed_at ASC, name ASC, due ASC')%>
 <h1 class="text-center">Projects</h1>
 <table class="table table-striped table-collapse table-hover">
   <thead>
@@ -12,6 +13,7 @@
       <th>&nbsp;</th>
       <th>Name</th>
       <th>Due</th>
+      <th>Incomplete Deliverables</th>
     </tr>
   </thead>
   <tbody>
@@ -20,6 +22,7 @@
       <td><%=link_to 'View', p, :class=>'btn btn-xs btn-default'%></td>
       <td><%=p.name%><%=p.closed_at ? ' <span class="label label-default">closed</span> '.html_safe : ''%></td>
       <td><%=p.due%></td>
+      <td><%=p.project_deliverables.incomplete.count%></td>
     </tr>
     <%-end-%>
   </tbody>

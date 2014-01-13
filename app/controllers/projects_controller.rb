@@ -5,7 +5,7 @@ class ProjectsController < ApplicationController
       error_redirect "You do not have permission to view projects."
       return
     end
-    @projects = Project.all
+    @projects = Project.scoped
   end
 
   def show

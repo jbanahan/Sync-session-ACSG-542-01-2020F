@@ -6,6 +6,50 @@
   (input,tVal,fVal) ->
     if input then tVal else fVal
 
+@components.directive 'chainTextileView', [() ->
+  {
+    restrict: 'AE'
+    scope: {
+      ngModel:'='
+    }
+    template:"<div class='textile-view'></div>"
+    link: (scope,el,attrs) ->
+      if scope.ngModel && scope.ngModel.length > 0
+        $(el).html(textile.convert(scope.ngModel))
+      else
+        $(el).html('')
+
+  }
+]
+
+@components.directive 'chainTextileEdit', [() ->
+  {
+    restrict: 'AE'
+    scope: {
+      ngModel:'='
+      defaultView:'@'
+    }
+    template:"<div>
+      <div ng-show='showPreview' class='text-prev'>
+      </div>
+      <div ng-hide='showPreview'>
+        <textarea class='form-control' ng-model='ngModel'></textarea>
+      </div>
+      <div class='text-right'>
+        <div ng-hide='showPreview'><a class='btn btn-xs btn-default' href='' ng-click='togglePreview()'>preview</a></div>
+        <div ng-show='showPreview'><a class='btn btn-xs btn-default' href='' ng-click='togglePreview()'>close preview</a></div>
+      </div>
+    </div>"
+    link: (scope,el,attrs) ->
+      scope.showPreview = scope.defaultView == 'preview'
+      scope.togglePreview = () ->
+        scope.showPreview = !scope.showPreview
+      scope.$watch 'ngModel', (newVal,oldVal) ->
+        $(el).find('div.text-prev').html(textile.convert(newVal))
+      @
+  }
+]
+
 # creates a bootstrap panel like:
 # <chain-panel panel-title='Errors' panel-message="obj.error_message" panel-type='panel-danger' />
 #

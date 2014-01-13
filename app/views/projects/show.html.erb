@@ -52,18 +52,28 @@
       <div class='row'>
         <div class="col-md-6">
           <h2>Updates</h2>
-          <div>
+          <div style='margin-bottom:20px;'>
             <textarea id="" name="" cols="30" rows="10" ng-model="addUpdateBody" class='form-control' placeholder='Enter new update'></textarea>
             <button ng-click="addProjectUpdate()" ng-show="addUpdateBody.length>0" class='btn btn-primary'>Add Update</button>
           </div>
-          <div ng-repeat="u in svc.project.project_updates">
-            <div><span ng-show='u.saving' class='label label-info'>Saving</span>&nbsp;</div>
-            <pre ng-hide='u.edit'>{{u.body}}</pre>
-            <textarea ng-model='u.body' ng-show='u.edit' class='form-control'></textarea>
-            <span>{{u.created_by_name}} - {{u.updated_at}}</span>
-            <button ng-click='u.edit=true' ng-show='userId==u.created_by_id && !u.edit'>Edit</button>
-            <button ng-click='editProjectUpdate(u)' ng-show='u.edit'>Save</button>
-            <button ng-click='u.edit=false' ng-show='u.edit'>Cancel</button>
+          <div ng-repeat="u in svc.project.project_updates" class='panel panel-default'>
+            <div class='panel-heading'>
+              <span>{{u.created_by_name}} - {{u.updated_at}}</span>
+            </div>
+            <div class='panel-body'>
+              <div><span ng-show='u.saving' class='label label-info'>Saving</span>&nbsp;</div>
+              <div ng-hide='u.edit'>
+                <chain-textile-view ng-model='u.body'></chain-textile-view>
+              </div>
+              <div ng-show='u.edit'>
+                <chain-textile-edit ng-model='u.body'></chain-textile-edit>
+              </div>
+            </div>
+            <div class='panel-footer'>
+              <button class='btn btn-sm btn-default' ng-click='u.edit=true' ng-show='userId==u.created_by_id && !u.edit'>Edit</button>
+              <button class='btn btn-sm btn-success' ng-click='editProjectUpdate(u)' ng-show='u.edit'>Save</button>
+              <button class='btn btn-sm btn-default' ng-click='u.edit=false' ng-show='u.edit'>Cancel</button>
+            </div>
           </div>
         </div>
         <div class="col-md-6">
@@ -89,7 +99,7 @@
                 <input type='checkbox' ng-model='d.complete' />
               </div>
               <div class='panel-footer'>
-                <button ng-click='saveDeliverable(d)' class='btn btn-default btn-sm'>Save</button>
+                <button ng-click='saveDeliverable(d)' class='btn btn-success btn-sm'>Save</button>
                 &nbsp;
                 <span class='label label-info' ng-show='d.saving'>Saving</span>
               </div>
