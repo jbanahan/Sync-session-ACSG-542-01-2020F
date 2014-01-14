@@ -51,5 +51,9 @@ describe Project do
     it "should be red if due in the past" do
       expect(Project.new(due:1.day.ago).red_messages.join).to match /overdue/
     end
+    it "should be red if any incomplete tasks exist" do
+      d = Factory(:project_deliverable,due_date:1.day.ago)
+      expect(d.project.red_messages.join).to match /1 deliverable overdue/
+    end
   end
 end

@@ -14,6 +14,8 @@ class Project < ActiveRecord::Base
     r = []
     r << "Project is overdue." if self.due && self.due < 0.days.ago.to_date
     r << "Project hasn't been updated for more than 10 days." if self.updated_at && self.updated_at < 10.days.ago
+    overdue_count = self.project_deliverables.overdue.count
+    r << "#{ActionController::Base.helpers.pluralize(overdue_count, 'deliverable')} overdue." if overdue_count > 0
     r
   end
 

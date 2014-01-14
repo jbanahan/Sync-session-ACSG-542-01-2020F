@@ -4,6 +4,7 @@ class ProjectDeliverable < ActiveRecord::Base
   attr_accessible :description, :due_date, :end_date, :estimated_hours, :start_date, :assigned_to_id, :complete
 
   scope :incomplete, where('complete is null or complete = ?',false)
+  scope :overdue, incomplete.where('due_date < ?',0.seconds.ago.to_date)
 
   def can_view? u
     self.project.can_view? u
