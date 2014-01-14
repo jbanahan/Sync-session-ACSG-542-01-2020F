@@ -3,7 +3,7 @@ root.Chain =
   
   # runs the onwindowunload properly handling IE duplicate call issues
   # expects passed in function to return a string if user should be prompted
-  # or null if no prompt is needed
+  # or undefined if no prompt is needed
   onBeforeUnload: (f) ->
     root.runChainUnload = true
     enableUnload = () ->
@@ -15,8 +15,9 @@ root.Chain =
 
     window.onbeforeunload = () ->
       if root.runChainUnload
-        return f()
+        r = f()
         disableUnload()
+        return r
 
   # add pagination widget to target
   # currently, baseUrl cannot have other querystring parameters, but this 

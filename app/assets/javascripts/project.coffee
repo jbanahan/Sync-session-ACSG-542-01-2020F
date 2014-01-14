@@ -124,5 +124,9 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
   $scope.saveDeliverable = (d) ->
     projectSvc.saveDeliverable projectSvc.project, d
 
+  $scope.unloadWarning = () ->
+    return "You have not added your update." if $scope.addUpdateBody.length > 0
+    return undefined
+
   $scope.svc.load $scope.projectId if $scope.projectId
 ]

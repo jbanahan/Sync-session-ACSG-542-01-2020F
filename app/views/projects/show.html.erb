@@ -118,12 +118,7 @@
 <script>
   $(document).ready(function() {
     Chain.onBeforeUnload(function(evt) {
-      var ub;
-      ub = $('div[ng-controller]').scope().addUpdateBody;
-      if(ub && ub.length > 0) {
-        return "You have not added your update."
-      }
-      return null;
+      return $('div[ng-controller]').scope().unloadWarning(); 
     });
   });
 </script>
