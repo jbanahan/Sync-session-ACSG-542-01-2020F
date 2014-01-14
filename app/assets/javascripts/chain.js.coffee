@@ -1,6 +1,23 @@
 root = exports ? this
 root.Chain =
   
+  # runs the onwindowunload properly handling IE duplicate call issues
+  # expects passed in function to return a string if user should be prompted
+  # or null if no prompt is needed
+  onBeforeUnload: (f) ->
+    root.runChainUnload = true
+    enableUnload = () ->
+      root.runChainUnload = true
+
+    disableUnload = () ->
+      root.runChainUnload = false
+      setTimeout enableUnload, 100
+
+    window.onbeforeunload = () ->
+      if root.runChainUnload
+        return f()
+        disableUnload()
+
   # add pagination widget to target
   # currently, baseUrl cannot have other querystring parameters, but this 
   # can be added pretty easily if needed in the future
