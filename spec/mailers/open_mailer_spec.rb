@@ -279,7 +279,7 @@ EMAIL
       message_subject += message_subject while message_subject.length < 200
       e = (raise "Error" rescue $!)
       m = OpenMailer.send_generic_exception(e, ["Test", "Test2"], message_subject)
-      m.subject.should eq ("[chain.io Exception] - #{message_subject}")[0..99]
+      m.subject.should eq ("[VFI Track Exception] - #{message_subject}")[0..99]
     end
   end
 
@@ -292,7 +292,7 @@ EMAIL
     it "should send an invite email" do
       pwd = "password"
       mail = OpenMailer.send_invite @user, pwd
-      mail.subject.should eq "[chain.io] Welcome, Joe Schmoe!"
+      mail.subject.should eq "[VFI Track] Welcome, Joe Schmoe!"
       mail.to.should eq [@user.email]
 
       mail.body.raw_source.should match /Username: #{@user.username}/
@@ -315,7 +315,7 @@ EMAIL
       m = OpenMailer.send_uploaded_items "you@there.com", imported_file, data, @user
       m.to.should eq ["you@there.com"]
       m.reply_to.should eq [@user.email]
-      m.subject.should eq "[chain.io] Product File Result"
+      m.subject.should eq "[VFI Track] Product File Result"
 
       m.attachments["test.txt"].should_not be_nil
       m.attachments["test.txt"].read.should eq data

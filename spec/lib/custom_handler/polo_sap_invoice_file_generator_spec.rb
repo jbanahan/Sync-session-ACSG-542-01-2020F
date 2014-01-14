@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
         mail.to.should == ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
-        mail.subject.should == "[chain.io] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
+        mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoices as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"]
@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
-        mail.subject.should == "[chain.io] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
+        mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoices as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         mail.attachments.should have(2).items

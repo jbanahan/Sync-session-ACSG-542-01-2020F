@@ -1,4 +1,4 @@
 development:
-  :postmark_api_key: 40b1d84f-de58-4ce6-9872-579a7ae8cf38
+  :postmark_api_key: 725c82b3-6844-4377-a984-45d277573342
 production:
-  :postmark_api_key: 40b1d84f-de58-4ce6-9872-579a7ae8cf38
+  :postmark_api_key: 725c82b3-6844-4377-a984-45d277573342

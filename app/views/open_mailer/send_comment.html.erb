@@ -1,0 +1,19 @@
+<p>
+  The following comment has been sent to you through the VFI Track system by <%=@user.full_name%>:
+</p>
+
+<p>
+  Subject: <%=@comment.subject%><br />
+  Comment Created: <%=@comment.created_at%>
+</p>
+
+<p>
+  <%=@comment.body%>
+</p>
+
+<%unless @link.nil? %>
+<p>
+If you have a VFI Track account, you can view this item by clicking this link:
+<%=@link%>
+</p>
+<% end %>
