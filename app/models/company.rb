@@ -23,6 +23,7 @@ class Company < ActiveRecord::Base
   has_many  :charge_categories, :dependent => :destroy
   has_many  :attachment_archives
   has_many  :attachment_archive_manifests, :dependent=>:destroy
+  has_many  :surveys, dependent: :destroy
 
   has_one :attachment_archive_setup, :dependent => :destroy
 
@@ -63,6 +64,12 @@ class Company < ActiveRecord::Base
 	  end
 	end
 	
+  #migrate all users and surveys to the target company
+  def migrate_accounts target_company
+    self.users.update_all(company_id:target_company.id,updated_at:Time.now)
+    self.surveys.update_all(company_id:target_company.id,updated_at:Time.now)
+  end
+
 	def self.not_locked
 	  Company.where("locked = ? OR locked is null",false)
 	end

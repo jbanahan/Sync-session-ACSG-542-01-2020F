@@ -1,6 +1,31 @@
 require 'spec_helper'
 
 describe Company do
+  describe :migrate_accounts do
+    before :each do
+      @c1 = Factory(:company)
+      @c2 = Factory(:company)
+    end
+    it "should move user accounts" do
+      u1 = Factory(:user,company_id:@c1.id,updated_at:10.days.ago)
+      u2 = Factory(:user,company_id:@c1.id)
+      Factory(:user)
+      @c1.migrate_accounts @c2
+      @c2.reload
+      expect(@c2.users.order(:id).count).to eq 2
+      u1.reload
+      u2.reload
+      expect(u1.company).to eq @c2
+      expect(u1.updated_at).to > 5.seconds.ago
+      expect(u2.company).to eq @c2
+    end
+    it "should move surveys" do
+      s = Factory(:survey,company_id:@c1.id)
+      @c1.migrate_accounts @c2
+      s.reload
+      expect(s.company).to eq @c2
+    end
+  end
   describe :attachment_archive_enabled do
     before :each do
       @c = Factory(:company)
