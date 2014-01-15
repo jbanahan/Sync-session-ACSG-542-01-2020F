@@ -1,12 +1,12 @@
 <%content_for :javascript do -%>
 $(function() {
   $(document).ready(function() {
-    <%if current_user.view_official_tariffs? && !current_user.hide_message?('wh2')-%>
+    <%if current_user.view_entries? && !current_user.hide_message?('wh3')-%>
 
       $("#what-happened").modal();
       $("#never-show").click(function() {
         $("#what-happened").modal('hide');
-        Chain.hideMessage('wh2');
+        Chain.hideMessage('wh3');
       });
       $("#what-happened-close").click(function() {
         $("#what-happened").modal('hide');
@@ -61,27 +61,29 @@ $(function() {
     <%end -%>
   <%end -%>
 </div>
-<%if current_user.view_official_tariffs? && !current_user.hide_message?('wh2')-%>
+<%if current_user.view_entries? && !current_user.hide_message?('wh3')-%>
   <div id='what-happened' class='modal fade'>
     <div class='modal-dialog'>
       <div class='modal-content'>
         <div class='modal-header'>
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h3>New Feature: Tariff Update Subscriptions</h3>
+          <h3>New Feature: Browse Entries</h3>
         </div>
         <div class='modal-body'>
           <p>
-            You can now elect to receive an email notification every time the tariff database is updated with new regulatory information: 
+            The new browse entries screen gives you a quick summary view of all of your entry activity as well as fast access to your active shipments.
           </p>
           <p>
-            To subscribe to notifications:
+            The US &amp; Canadian screens show you...
           </p>
           <ul>
-            <li>Click on your name at the top right corner of the screen</li>
-            <li>Click Account</li>
-            <li>Check the <em>Email Me When Tariffs Are Updated</em> box</li>
-            <li>Click Save</li>
+            <li>Open Entries</li>
+            <li>Monthly Statement / K84 Summaries</li>
+            <li>Port &amp; Top Vendor breakouts</li>
+            <li>Year To Date Summaries</li>
           </ul>
+          <p>
+            You can find the new screens by clicking <a href='/entries/activity_summary/us'>Browse - US</a> or <a href='/entries/activity_summary/ca'>Browse - CA</a> from the Entries menu.
+          </p>
         </div>
         <div class='modal-footer'>
           <button class='btn' id='never-show'>Never Show This Again</button>
