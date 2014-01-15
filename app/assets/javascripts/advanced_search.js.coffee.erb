@@ -182,13 +182,18 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     ss = $scope.searchSetup
     $scope.searchSetup = {}
     $http.put('/advanced_search/'+ss.id,JSON.stringify({search_setup:ss})).success(() ->
-      # The searchResult.saved attribute lets the components watcher know that
-      # the user saved the scope (.ie this isn't an initial load)
-      $scope.searchResult = {
-        id: $scope.searchId
-        saved: true
-      }
-      loadSearch $scope.searchId
+      # Unless we're already on the first page, change to it.
+      if $scope.page != 1
+        $location.path '/'+ss.id+'/1'
+      else
+        # The searchResult.saved attribute lets the components watcher know that
+        # the user saved the scope (.ie this isn't an initial load)
+        $scope.searchResult = {
+          id: $scope.searchId
+          saved: true
+        }
+        loadSearch $scope.searchId
+        
     ).error((data) ->
       $scope.error.push "An error occurred while saving this search."
     )
