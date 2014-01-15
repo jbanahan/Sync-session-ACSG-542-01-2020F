@@ -16,7 +16,7 @@ describe Company do
       u1.reload
       u2.reload
       expect(u1.company).to eq @c2
-      expect(u1.updated_at).to > 5.seconds.ago
+      expect(u1.updated_at).to be > 5.seconds.ago
       expect(u2.company).to eq @c2
     end
     it "should move surveys" do
