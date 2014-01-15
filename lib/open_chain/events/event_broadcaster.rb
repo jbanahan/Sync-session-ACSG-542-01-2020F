@@ -7,13 +7,27 @@ require 'open_chain/events/event_processor'
 module OpenChain; module Events
   class EventBroadcaster
 
-    def initialize
+    # Only for testing purposes
+    attr_reader :broadcasted_events
+
+    def initialize process_events = Rails.configuration.broadcast_model_events
       @processor = EventProcessor.new
+      @process_events = process_events
     end
 
     def broadcast event_type, object_class, object_id, event_context = nil
+      event = make_event(event_type, object_class, object_id, event_context)
       begin
-        @processor.process_event make_event(event_type, object_class, object_id, event_context)
+        # Since the event listeners generally do things like send out files (billing files / 315s) and other 
+        # things that absolutely shouldn't get sent in test or development modes we're just going to store 
+        # the events off in these modes and only actually process events in production mode
+        if @process_events
+          @processor.process_event event
+        else
+          @broadcasted_events ||= []
+          @broadcasted_events << event
+        end
+        
       rescue
         $!.log_me
       end

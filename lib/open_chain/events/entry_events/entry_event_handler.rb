@@ -12,6 +12,7 @@ module OpenChain; module Events; module EntryEvents
       when :save
         listeners << LandedCostReportAttacherListener.new
         listeners << OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator.new
+        listeners << OpenChain::CustomHandler::Crocs::Crocs210Generator.new
       end
 
       listeners

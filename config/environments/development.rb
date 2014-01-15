@@ -50,5 +50,7 @@ OpenChain::Application.configure do
 
   # don't serve any precompiled assets
   config.serve_static_assets = true #need this to allow /public directory to work
+
+  config.broadcast_model_events = false
 end
 
