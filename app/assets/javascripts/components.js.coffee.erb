@@ -636,7 +636,7 @@
         $http.get(url).success((data,status,headers,config) ->
           # This is primarily just a backup check to make sure we're not attempting to load a page that doesn't exist, if
           # we do, just jump to the first page of the search results (note, this incurs another http request)
-          if data.total_pages >= page
+          if data.total_pages == 0 || data.total_pages >= page
             scope.searchResult = data
             scope.errors.push "Your search was too big.  Only the first " + scope.searchResult.total_pages + " pages are being shown."  if scope.errors && scope.searchResult.too_big
 
