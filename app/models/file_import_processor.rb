@@ -69,6 +69,7 @@ class FileImportProcessor
     begin
       data_map = make_data_map row, base_column
       ActiveRecord::Base.transaction do
+        error_messages = []
         @module_chain.to_a.each do |mod|
           if fields_for_me_or_children? data_map, mod
             parent_mod = @module_chain.parent mod
@@ -85,7 +86,7 @@ class FileImportProcessor
               if mf.custom?
                 custom_fields[mf] = data
               else
-                messages << mf.process_import(obj, data)
+                process_import mf, obj, data, messages, error_messages
               end
             end
             obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
@@ -99,8 +100,7 @@ class FileImportProcessor
               cv = CustomValue.new(:customizable_id=>obj.id,:customizable_type=>obj.class.to_s,:custom_definition_id=>cd.id) if cv.nil?
               orig_value = cv.value
               val = is_boolean ? get_boolean_value(data) : data
-              m = mf.process_import cv, val 
-              messages << "#{cd.label}: #{m} "
+              process_import mf, cv, val, messages, error_messages
               if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?) 
                 to_batch_write << cv
               else
@@ -120,26 +120,39 @@ class FileImportProcessor
             end
           end
         end
+        # Add our object errors before validating since the validator may raise an error and we want our
+        # process_import errors included in the object too.
+        object_map[@core_module].errors[:base].push(*error_messages) unless error_messages.blank?
         OpenChain::FieldLogicValidator.validate! object_map[@core_module] unless object_map[@core_module].nil?
+        # FieldLogicValidator only raises an error if a rule fails, we still want to raise an error if any of our process import calls resulted
+        # in an error.
+        raise OpenChain::ValidationLogicError.new(nil, object_map[@core_module]) unless object_map[@core_module].errors[:base].empty?
+
         fire_row row_number, object_map[@core_module], messages
       end
-    rescue OpenChain::ValidationLogicError
-      my_base = $!.base_object
+    rescue OpenChain::ValidationLogicError => e
+      my_base = e.base_object
       my_base = @core_object unless my_base
       my_base = object_map[@core_module] unless my_base
       my_base.errors.full_messages.each {|m| 
         messages << "ERROR: #{m}"
       }
       fire_row row_number, nil, messages, true #true = failed
-    rescue
-      $!.log_me ["Imported File ID: #{@import_file.id}"] 
-      messages << "SYS ERROR: #{$!.message}"
+    rescue => e
+      e.log_me ["Imported File ID: #{@import_file.id}"] 
+      messages << "SYS ERROR: #{e.message}"
       fire_row row_number, nil, messages, true
-      raise $!
+      raise e
     end
     r_val = @core_object
     @core_object = nil
     r_val
+  end
+
+  def process_import mf, obj, data, messages, error_messages
+    messages << mf.process_import(obj, data, true)
+  rescue OpenChain::ValidationLogicError => e
+    error_messages << e.message if e.message
   end
 
   #is this record allowed to be added / updated based on the search_setup's update mode
@@ -214,7 +227,7 @@ class FileImportProcessor
 
   def self.raise_validation_exception core_object, message
     core_object.errors[:base] << message
-    raise OpenChain::ValidationLogicError.new(core_object)
+    raise OpenChain::ValidationLogicError.new(nil, core_object)
   end
 
   class CSVImportProcessor < FileImportProcessor
@@ -350,8 +363,18 @@ class FileImportProcessor
       break if key_model_field
     end
 
-    raise "Cannot load record without key value for #{my_core_module.label}" unless key_model_field
-    
+    unless key_model_field
+      # Tell the users what actual field they're missing data for.
+      uids = my_core_module.key_model_field_uids
+      if uids.length == 1
+        e = "Cannot load #{my_core_module.label} data without a value in the '#{ModelField.find_by_uid(uids[0]).label(false)}' field."
+      else
+        e = "Cannot load #{my_core_module.label} data without a value in one of the #{uids.map {|v| "'#{ModelField.find_by_uid(v).label(false)}'"}.join(" or ")} fields."
+      end
+
+      raise e
+    end
+     
     obj = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value).first
 
     obj = search_scope.build if obj.nil?

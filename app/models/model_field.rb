@@ -1,3 +1,5 @@
+require 'open_chain/field_logic'
+
 class ModelField
 
   # When web mode is true, the class assumes that there is a before filter calling ModelField.reload_if_stale at the beginning of every request.
@@ -140,9 +142,15 @@ class ModelField
     end
   end
     #code to process when importing a field
-  def process_import(obj,data)
+  def process_import(obj,data, raise_error_if_invalid_data=false)
     return "Value ignored. #{FieldLabel.label_text uid} is read only." if self.read_only?
-    @import_lambda.call(obj,data)
+
+    # Use the 3 parameter process_import lambda if it supports it 
+    if @import_lambda.arity == 3
+      @import_lambda.call(obj, data, raise_error_if_invalid_data)
+    else
+      @import_lambda.call(obj,data)
+    end
   end
 
   #get the unformatted value that can be used for SearchCriterions
@@ -605,11 +613,18 @@ class ModelField
           {:label_override => "First HTS #{i} (#{c.iso_code})",
             :data_type=>:string,
             :history_ignore=>true,
-            :import_lambda => lambda {|p,d|
+            :import_lambda => lambda {|p,d, error_on_invalid|
               #validate HTS
               hts = TariffRecord.clean_hts(d)
               return "Blank HTS ignored for #{c.iso_code}" if hts.blank?
-              return "#{d} is not valid for #{c.iso_code} HTS #{i}" unless OfficialTariff.find_by_country_id_and_hts_code(c.id,hts) || OfficialTariff.where(country_id:c.id).empty?
+              unless OfficialTariff.find_by_country_id_and_hts_code(c.id,hts) || OfficialTariff.where(country_id:c.id).empty?
+                e = "#{d} is not valid for #{c.iso_code} HTS #{i}"
+                if error_on_invalid
+                  raise OpenChain::ValidationLogicError, e
+                else
+                  return e
+                end
+              end
               cls = nil
               #find classifications & tariff records in memory so this can work on objects that are dirty
               p.classifications.each do |existing| 

@@ -412,7 +412,7 @@ describe OpenChain::BulkUpdateClassification do
       # An easy way to force an error is to set the value to blank
       OpenChain::FieldLogicValidator.stub(:validate) do |o|
         o.errors[:base] << "Error"
-        raise OpenChain::ValidationLogicError.new o
+        raise OpenChain::ValidationLogicError.new nil, o
       end
       p = @products[0]
       @parameters['pk'] = ["#{@products[0].id}"]

@@ -184,7 +184,7 @@ module OpenChain
                   log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: false, entity_snapshot: snapshot
                 }
                 failure = lambda {|o,errors|
-                  raise OpenChain::ValidationLogicError.new(o)
+                  raise OpenChain::ValidationLogicError.new(nil, o)
                 }
                 before_validate = lambda {|o| OpenChain::CoreModuleProcessor.update_status(o)}
 
@@ -316,7 +316,7 @@ module OpenChain
               }
 
               failure = lambda {|o,errors|
-                raise OpenChain::ValidationLogicError.new(o)
+                raise OpenChain::ValidationLogicError.new(nil, o)
               }
               before_validate = lambda {|o| 
                 CustomFieldProcessor.new(dup_params).save_classification_custom_fields(o,dup_params['product'])

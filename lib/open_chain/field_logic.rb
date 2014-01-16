@@ -117,7 +117,7 @@ module OpenChain
       return passed
     end
     def self.validate! record
-      raise ValidationLogicError.new(record) unless validate record
+      raise ValidationLogicError.new(nil, record) unless validate record
     end
   end
 
@@ -125,7 +125,8 @@ module OpenChain
   class ValidationLogicError < StandardError
     attr_accessor :base_object
 
-    def initialize(base_obj=nil)
+    def initialize(msg = nil, base_obj=nil)
+      super(msg)
       self.base_object = base_obj
     end
 
