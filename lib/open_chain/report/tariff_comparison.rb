@@ -26,28 +26,34 @@ module OpenChain
 
         c_sheet = wb.create_worksheet :name=>"Changed"
         c_row = 0
+        sheet_count = 0
+
+        # The number of changes to a tariff file can be massive and can overflow the max number of rows that Excel
+        # allows in a single sheet, so we have to make sure that we roll to a new sheet if that happens
         changed.keys.each do |hts|
-          r = c_sheet.row c_row
-          r.push "HTS"
-          r.push unfreeze(hts)
-          c_row += 1
-          r = c_sheet.row c_row
-          r.push ""
-          r.push "Attribute"
-          r.push "New Value"
-          r.push "Old Value"
-          c_row += 1
+
+          change_rows = []
+          row = []
+          change_rows << row
+          row.push("HTS", unfreeze(hts))
+          row = []
+          change_rows << row
+          row.push("", "Attribute", "New Value", "Old Value")
           new_hash, old_hash = changed[hts]
           new_hash.keys.each do |a|
-            r = c_sheet.row c_row
-            r.push ""
-            r.push unfreeze(a)
-            r.push unfreeze(new_hash[a])
-            r.push unfreeze(old_hash[a])
-            c_row += 1
+            row = []
+            change_rows << row
+            row.push("", unfreeze(a), unfreeze(new_hash[a]), unfreeze(old_hash[a]))
           end
-          c_row += 1
-          
+          # Add a blank line between rows
+          change_rows << [""]
+
+          if (c_row + change_rows.length) > 65000
+            c_sheet = wb.create_worksheet :name=>"Changed (cont#{((sheet_count+=1) > 1) ? (" " + sheet_count.to_s) : "" })"
+            c_row = 0
+          end
+
+          c_row = write_rows c_sheet, c_row, change_rows          
         end
 
         t = Tempfile.new ['tariff_comparison','.xls']
@@ -88,6 +94,14 @@ module OpenChain
           r.push t.import_regulations
           r.push t.export_regulations
         end
+      end
+
+      def self.write_rows sheet, starting_row, rows
+        rows.each do |row|
+          sheet.row(starting_row).push(*row)
+          starting_row+=1
+        end
+        starting_row
       end
     end
   end

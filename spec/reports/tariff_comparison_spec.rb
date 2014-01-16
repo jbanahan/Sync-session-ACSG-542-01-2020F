@@ -9,9 +9,11 @@ describe OpenChain::Report::TariffComparison do
     @new_ts = TariffSet.create!(:country_id=>@country.id,:label=>'b')
     @unchanged_hts = '123456789'
     @changed_hts = '5556667778'
-    [@old_ts,@new_ts].each do |t|
+    @changed_2 = '159753456'
+    [@old_ts,@new_ts].each_with_index do |t, i|
       t.tariff_set_records.create!(:country_id=>@country.id,:hts_code=>@unchanged_hts,:full_description=>'not changed',:general_rate=>'.123/kg')
-      t.tariff_set_records.create!(:country_id=>@country.id,:hts_code=>@changed_hts,:full_description=>'desc',:general_rate=>t.label)
+      t.tariff_set_records.create!(:country_id=>@country.id,:hts_code=>@changed_hts,:full_description=>'desc',:general_rate=>t.label, :unit_of_measure=>i)
+      t.tariff_set_records.create!(:country_id=>@country.id,:hts_code=>@changed_2,:full_description=>'desc',:unit_of_measure=>i)
     end
     @removed = @old_ts.tariff_set_records.create!(:country_id=>@country.id,:hts_code=>'654987321')
     @added = @new_ts.tariff_set_records.create!(:country_id=>@country.id,:hts_code=>'987654321')
@@ -41,6 +43,15 @@ describe OpenChain::Report::TariffComparison do
     it "should show changed tariffs on third tab" do
       sheet = @wb.worksheet 2
       sheet.row(0)[1].should == @changed_hts
+      sheet.row(1).should == [nil, "Attribute", "New Value", "Old Value"]
+      sheet.row(2).should == [nil, "general_rate", "b", "a"]
+      sheet.row(3).should == [nil, "unit_of_measure", "1", "0"]
+      sheet.row(4).should == [nil]
+
+      sheet.row(5)[1].should == @changed_2
+      sheet.row(6).should == [nil, "Attribute", "New Value", "Old Value"]
+      sheet.row(7).should == [nil, "unit_of_measure", "1", "0"]
+      sheet.row(8).should == [nil]
     end
   end
 
