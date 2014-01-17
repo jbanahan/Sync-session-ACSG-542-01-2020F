@@ -52,6 +52,16 @@ describe SearchQuery do
       r = @sq.execute
       r[1][:result][2].should == "1234.56.7890"
     end
+    it "should prevent DISTINCT from combining child level values in a multi-level query" do
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
+
+      @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
+      r = @sq.execute
+      r[1][:result][2].should == "1234.56.7890"
+      r[1][:key].should == r[2][:key]
+      r[2][:result][2].should == "1234.56.7890"
+    end
     it "should handle _blank columns" do
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>2)
       r = @sq.execute

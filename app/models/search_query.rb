@@ -27,25 +27,31 @@ class SearchQuery
   # opts paramter takes :per_page and :page values like `will_paginate`. NOTE: Target page starts with 1 to emulate will_paginate convention
   def execute opts={}
     rs = ActiveRecord::Base.connection.execute to_sql opts
-    r = []
+    rows = []
+    
+    # This gives us the number of table.id columns prefixed onto the query that will need to get dropped
+    core_module_id_aliases = ordered_core_modules
+
     rs.each do |row|
-      k = row[0]
-      raw = row.to_a.drop(1)
+      # We want to remove these from the selected row since they're not actual query data
+      # First column to remove is ALWAYS the core primary key
+      core_primary_key = row[0]
+      raw_result_row = row.to_a.drop(core_module_id_aliases.size)
       
       #scrub results through model field
       result = []
-      sorted_columns.each_with_index {|sc,i| result << sc.model_field.process_query_result(raw[i],@user)}
+      sorted_columns.each_with_index {|sc,i| result << sc.model_field.process_query_result(raw_result_row[i],@user)}
 
-      result = result.collect {|r| r.nil? ? "" : r}
+      result = result.collect {|column| column.nil? ? "" : column}
 
-      h = {:row_key=>k, :result=>result}
+      h = {:row_key=>core_primary_key, :result=>result}
       if block_given?
         yield h
       else
-        r << h
+        rows << h
       end
     end
-    block_given? ? nil : r
+    block_given? ? nil : rows
   end
 
   #get distinct list of primary keys for the query
@@ -79,10 +85,32 @@ class SearchQuery
   private
   def build_select
     r = "SELECT DISTINCT "
-    flds = ["#{search_setup.core_module.table_name}.id"]
+    flds = core_module_id_select_list
     sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
     r << "#{flds.join(", ")} "
     r
+  end
+
+  def core_module_id_select_list 
+    # We need to use a SELECT DISTINCT for cases where we have to join a child table into the query because the
+    # user added a parameter or sort from it but did NOT have that table as part of the select list.  Because of this
+    # we need to make sure then that we're NOT combining results via the distinct from any of the tables the user did included 
+    # in the select list.  Include the table's id column for any core module table included in the select list.
+
+    # .ie User queries for invoice amounts on entries with invoice line po number of 123.  If two different invoices
+    # had PO 123 on them and totaled to 100, we want to make sure we're showing both of them.  With just a plain distinct
+    # they'll roll together.
+    ordered_core_modules.map {|cm| "#{cm.table_name}.id as \"#{cm.table_name}.id\""}
+  end
+
+  def ordered_core_modules
+    # Some columns (like _blank)  won't have core modules
+    child_core_modules = Set.new(@search_setup.search_columns.map {|sc| sc.model_field.core_module}.compact)
+
+    # Keep the primary core module's id as the first column
+    child_core_modules.delete(@search_setup.core_module)
+
+    [@search_setup.core_module] + child_core_modules.to_a
   end
 
   def build_from
