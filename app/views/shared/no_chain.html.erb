@@ -9,7 +9,7 @@
           This site's address has changed.  Please use <code><%=@new_domain%></code>.
         </p>
         <p>
-          You will be redirected to <a href='<%=@new_url%>'><%=@new_url%></a> in 10 seconds (or you can click the link to go there now).
+          You will be redirected to <a href='<%=@new_url%>'><%=@new_url%></a> in <span id='tcount'>10</span> seconds (or you can click the link to go there now).
         </p>
       </div>
     </div>
@@ -17,8 +17,14 @@
 </div>
 <script>
   $(document).ready(function() {
+    var target = new Date().getTime();
+    var i, diff;
+    setInterval(function() {
+      diff = Math.floor((new Date().getTime() - target)/1000)
+      $('#tcount').html(10-diff)
+    },1000);
     setTimeout(function() {
-      window.location = '<%=@new_url%>/?noredir=true'
-    },5000);
+      window.location = '<%=@new_url%>'
+    },10000);
   });
 </script>
