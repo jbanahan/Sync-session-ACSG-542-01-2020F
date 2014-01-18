@@ -4,6 +4,7 @@ class ApplicationController < ActionController::Base
   require 'newrelic_rpm'
 
   protect_from_forgery
+  before_filter :chainio_redirect
   before_filter :prep_model_fields
   before_filter :new_relic
   before_filter :set_master_setup
@@ -26,6 +27,15 @@ class ApplicationController < ActionController::Base
   after_filter :reset_state_values
  
 
+  # show user message and redirect for http(s)://*.chain.io/*
+  def chainio_redirect
+    if request.original_url.match(/https?:\/\/[a-zA-Z]*\.chain\.io\//) 
+      @original_url = request.url
+      @new_url = @original_url.sub(/chain\.io/,'vfitrack.net')
+      @new_domain = @new_url.match(/[a-zA-Z]*\.vfitrack\.net/).to_s
+      render 'shared/no_chain'
+    end
+  end
   # render generic json error message
   def render_json_error message, response_code=500
     render json: {error:message}, status: response_code
