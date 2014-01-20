@@ -68,7 +68,7 @@ describe SearchQuery do
       r[1][:result][2].should == ""
     end
     it "should secure query" do
-      Product.should_receive(:search_where).and_return("products.name = 'B'")
+      Product.stub(:search_where).and_return("products.name = 'B'")
       r = @sq.execute
       r.size.should == 1
       r[0][:row_key].should == @p1.id

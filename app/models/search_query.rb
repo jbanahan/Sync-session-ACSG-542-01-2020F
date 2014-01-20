@@ -25,12 +25,13 @@ class SearchQuery
   # and result is the returned values for the query
   #
   # opts paramter takes :per_page and :page values like `will_paginate`. NOTE: Target page starts with 1 to emulate will_paginate convention
+  # See to_sql for full list of options
   def execute opts={}
     rs = ActiveRecord::Base.connection.execute to_sql opts
     rows = []
     
     # This gives us the number of table.id columns prefixed onto the query that will need to get dropped
-    core_module_id_aliases = ordered_core_modules
+    core_module_id_aliases = ordered_core_modules(opts)
 
     rs.each do |row|
       # We want to remove these from the selected row since they're not actual query data
@@ -56,14 +57,16 @@ class SearchQuery
 
   #get distinct list of primary keys for the query
   def result_keys opts={}
-    rs = ActiveRecord::Base.connection.execute to_sql opts
-    keys = rs.collect {|r| r[0]}
-    keys.uniq
+    # Using a hash to preserve insertion order (Set doesn't guarantee that while hash does)
+    keys = {}
+    execute(opts.merge(select_core_module_keys_only:true)) {|result| keys[result[:row_key]] = true}
+    keys.keys
   end
   
   #get the row count for the query
   def count
-    ActiveRecord::Base.connection.execute("#{to_sql} LIMIT 1000").count
+    # Limit count to only including the core module keys will eliminate running any subselects in the select clauses
+    ActiveRecord::Base.connection.execute("#{to_sql(select_core_module_keys_only:true)} LIMIT 1000").count
   end
 
   #get the count of the total number of unique primary keys for the top level module 
@@ -71,7 +74,7 @@ class SearchQuery
   # For example: If there are 7 entries returned with 3 commercial invoices each, this record will return 7
   # If you're looking for a return value of `21` you should use the `count` method
   def unique_parent_count
-    r = "SELECT COUNT(DISTINCT #{@search_setup.core_module.table_name}.id) " +
+    r = "SELECT COUNT(DISTINCT #{ordered_core_modules(select_parent_key_only:true)[0].table_name}.id) " +
       build_from + build_where
     ActiveRecord::Base.connection.execute(r).first.first
   end
@@ -79,19 +82,25 @@ class SearchQuery
   # get the SQL query that will be executed
   #
   # opts parameter takes :per_page and :page values like `will_paginate`
+  # use the 'select_parent_key_only' opt to create a query only returning the parent core object keys (ala unique_parent_count)
+  # use the 'select_core_module_keys_only' to create a query returning the parent and child core module keys, 
+  # when utilized the parent core module key is ALWAYS returned in the first column
   def to_sql opts={}
-    build_select + build_from + build_where + build_order + build_pagination_from_opts(opts)
+    build_select(opts) + build_from + build_where + build_order + build_pagination_from_opts(opts)
   end
+
   private
-  def build_select
+  def build_select opts
     r = "SELECT DISTINCT "
-    flds = core_module_id_select_list
-    sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
+    flds = core_module_id_select_list opts
+    unless opts[:select_core_module_keys_only] || opts[:select_parent_key_only]
+      sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
+    end
     r << "#{flds.join(", ")} "
     r
   end
 
-  def core_module_id_select_list 
+  def core_module_id_select_list opts
     # We need to use a SELECT DISTINCT for cases where we have to join a child table into the query because the
     # user added a parameter or sort from it but did NOT have that table as part of the select list.  Because of this
     # we need to make sure then that we're NOT combining results via the distinct from any of the tables the user did included 
@@ -100,17 +109,21 @@ class SearchQuery
     # .ie User queries for invoice amounts on entries with invoice line po number of 123.  If two different invoices
     # had PO 123 on them and totaled to 100, we want to make sure we're showing both of them.  With just a plain distinct
     # they'll roll together.
-    ordered_core_modules.map {|cm| "#{cm.table_name}.id as \"#{cm.table_name}.id\""}
+    ordered_core_modules(opts).map {|cm| "#{cm.table_name}.id as \"#{cm.table_name}_id\""}
   end
 
-  def ordered_core_modules
-    # Some columns (like _blank)  won't have core modules
-    child_core_modules = Set.new(@search_setup.search_columns.map {|sc| sc.model_field.core_module}.compact)
+  def ordered_core_modules opts
+    if opts[:select_parent_key_only]
+      [@search_setup.core_module]
+    else
+      # Some columns (like _blank)  won't have core modules
+      child_core_modules = Set.new(@search_setup.search_columns.map {|sc| sc.model_field.core_module}.compact)
 
-    # Keep the primary core module's id as the first column
-    child_core_modules.delete(@search_setup.core_module)
+      # Keep the primary core module's id as the first column
+      child_core_modules.delete(@search_setup.core_module)
 
-    [@search_setup.core_module] + child_core_modules.to_a
+      [@search_setup.core_module] + child_core_modules.to_a
+    end
   end
 
   def build_from
