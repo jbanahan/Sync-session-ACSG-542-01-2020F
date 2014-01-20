@@ -15,7 +15,7 @@ describe SearchQuery do
   end
   describe :execute do
     it "should return array of arrays" do
-      r = @sq.execute
+      r = @sq.execute(per_page: 1000)
       r.should have(2).results
       r[0][:row_key].should == @p2.id
       r[0][:result][0].should == @p2.unique_identifier
@@ -32,7 +32,7 @@ describe SearchQuery do
     end
     it "should yield with loop of arrays and return nil" do
       r = []
-      @sq.execute {|row_hash| r << row_hash}.should be_nil
+      @sq.execute(per_page: 1000) {|row_hash| r << row_hash}.should be_nil
       r[0][:row_key].should == @p2.id
       r[0][:result][0].should == @p2.unique_identifier
       r[0][:result][1].should == @p2.name
@@ -43,13 +43,13 @@ describe SearchQuery do
     it "should process values via ModelField#process_query_result" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
-      r = @sq.execute
+      r = @sq.execute per_page: 1000
       r[1][:result][2].should == "1234.56.7890"
     end
     it "should handle multi-level queries" do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
-      r = @sq.execute
+      r = @sq.execute per_page: 1000
       r[1][:result][2].should == "1234.56.7890"
     end
     it "should prevent DISTINCT from combining child level values in a multi-level query" do
@@ -57,10 +57,27 @@ describe SearchQuery do
       tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
 
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
-      r = @sq.execute
+      r = @sq.execute per_page: 1000
       r[1][:result][2].should == "1234.56.7890"
-      r[1][:key].should == r[2][:key]
+      r[1][:row_key].should == r[2][:row_key]
       r[2][:result][2].should == "1234.56.7890"
+    end
+    it "should combine child level values in a multi-level query if no child level column is selected" do
+      @ss.search_criterions.first.value = "#{@p1.name}"
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p1))
+      r = @sq.execute per_page: 1000
+      r.size.should == 1
+      r[0][:result][1].should == @p1.name
+      r[0][:row_key].should == @p1.id
+    end
+    it "should show a blank value for null child values when a column is selected for it by the user" do
+      @ss.search_columns.build(:model_field_uid=>'class_cntry_iso',:rank=>2)
+      @ss.search_criterions.first.value = "#{@p1.name}"
+      r = @sq.execute per_page: 1000
+      r.size.should == 1
+      r[0][:row_key].should == @p1.id
+      r[0][:result][2].should == ""
     end
     it "should handle _blank columns" do
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>2)
@@ -69,7 +86,7 @@ describe SearchQuery do
     end
     it "should secure query" do
       Product.stub(:search_where).and_return("products.name = 'B'")
-      r = @sq.execute
+      r = @sq.execute per_page: 1000
       r.size.should == 1
       r[0][:row_key].should == @p1.id
     end
@@ -93,7 +110,7 @@ describe SearchQuery do
       @tr1_a_5 = Factory(:tariff_record,:hts_1=>'511111111',:classification=>@tr1_a_9.classification,:line_number=>2)
       @tr2_a_1 = Factory(:tariff_record,:hts_1=>'111111111',:classification=>@tr2_a_3.classification,:line_number=>2)
 
-      r = @sq.execute
+      r = @sq.execute per_page: 1000
       r.size.should == 6
       4.times { |i| r[i][:row_key].should == @p1.id }
       (4..5).each { |i| r[i][:row_key].should == @p2.id }
@@ -111,7 +128,7 @@ describe SearchQuery do
     it "should not bomb on IN lists with blank values" do
       @p3.update_attributes :name => ""
       @ss.search_criterions[0].value = ""
-      r = @sq.execute
+      r = @sq.execute per_page: 1000
       r.should have(1).results
 
       r[0][:row_key].should == @p3.id
@@ -124,8 +141,12 @@ describe SearchQuery do
       classfication.update_attributes :updated_at => 1.day.from_now
       @ss.search_criterions.clear
       @ss.search_criterions.build(:model_field_uid=>'prod_created_at', :operator=>'bfld', :value=>"class_updated_at")
-      r = @sq.execute
+      r = @sq.execute per_page: 1000
       r[0][:result][0].should == @p1.unique_identifier
+    end
+
+    it "adds an inner join optimization when pagination options exist" do
+      expect(@sq.to_sql(per_page: 100)).to include "AS inner_opt ON "
     end
     
     context :custom_values do
@@ -167,6 +188,34 @@ describe SearchQuery do
         r[0][:result][1].should == "D2"
         r[1][:result][1].should == "D3"
       end
+
+      it "should paginate child items across multiple pages" do
+        @ss.search_columns.build(:model_field_uid=>'class_cntry_iso',:rank=>2)
+
+        crit = @ss.search_criterions.first
+        crit.operator = "eq"
+        crit.value = @p1.name
+
+        6.times do |i|
+          @p1.classifications.create! country: Factory(:country)
+        end
+
+        c = @p1.classifications.joins(:country).order("countries.iso_code ASC")
+
+        r = @sq.execute :per_page=>2, :page=>2
+        r.size.should == 2
+        r[0][:row_key].should == @p1.id
+        r[0][:result][2].should == c[2].country.iso_code
+        r[1][:row_key].should == @p1.id
+        r[1][:result][2].should == c[3].country.iso_code
+
+        r = @sq.execute :per_page=>2, :page=>3
+        r.size.should == 2
+        r[0][:row_key].should == @p1.id
+        r[0][:result][2].should == c[4].country.iso_code
+        r[1][:row_key].should == @p1.id
+        r[1][:result][2].should == c[5].country.iso_code
+      end
     end
   end
 
@@ -176,7 +225,7 @@ describe SearchQuery do
       @ss.search_columns.build(:model_field_uid=>'hts_hts_1',:rank=>2)
       @sq.count.should == 2
     end
-    it "should hanlde multiple blanks" do
+    it "should handle multiple blanks" do
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>10)
       @ss.search_columns.build(:model_field_uid=>'_blank',:rank=>11)
       @sq.count.should == 2
