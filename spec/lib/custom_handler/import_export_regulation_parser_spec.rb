@@ -17,26 +17,14 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
     end
   end
 
-  context :process_s3 do
-    it "should use S3 helper to process a file from S3" do
-      # We'll do a full integration test below
-      t = double('tempfile')
-      OpenChain::S3.should_receive(:bucket_name).and_return "test"
-      OpenChain::S3.should_receive(:download_to_tempfile).with("test", "key").and_yield t
-      OpenChain::CustomHandler::ImportExportRegulationParser.should_receive(:process_file).with t, 'iso'
-
-      OpenChain::CustomHandler::ImportExportRegulationParser.process_s3 "key", "iso"
-    end
-  end
-
-  context :initialize do
-    it "should not error for countries that are set up" do
-      OpenChain::CustomHandler::ImportExportRegulationParser.new @country
-    end
-
-    it "should raise an error for country codes that are not configured" do
+  describe "process" do
+    it "raises an error for countries that are not configured" do
       country = Factory(:country)
-      expect{OpenChain::CustomHandler::ImportExportRegulationParser.new country}.to raise_error "The Import/Export Regulation Parser is not capable of processing files for '#{country.iso_code}'."
+      expect{OpenChain::CustomHandler::ImportExportRegulationParser.new(country).process(StringIO.new, 'file.txt')}.to raise_error "The Import/Export Regulation Parser is not capable of processing .txt files for '#{country.iso_code}'."
+    end
+
+    it "raises an error for country formats that are not configured" do
+      expect{OpenChain::CustomHandler::ImportExportRegulationParser.new(@country).process(StringIO.new, 'file.blah')}.to raise_error "The Import/Export Regulation Parser is not capable of processing .blah files for '#{@country.iso_code}'."
     end
   end
 
@@ -52,46 +40,82 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
               "01011000202 1020101 9999999               2.50%                    2.50%              HED    KGM                  B01\n" + \
               "01019000107 1020101 9999999               2.50%                    2.50%              HED    KGM\n" + \
               "01019000111 1020101 9999999               2.50%                    2.50%              HED    KGM\n"
+      @parser = OpenChain::CustomHandler::ImportExportRegulationParser.new @country
     end
 
-    it "should process a TW import file" do
-      io = StringIO.new @data
-      parser = OpenChain::CustomHandler::ImportExportRegulationParser.new @country
-      parser.process io
+    context "fixed_width" do
 
-      @tariff1.reload
-      @tariff1.import_regulations.should == "401 B01"
-      @tariff1.export_regulations.should == "441"
+      it "should process a fixed-width TW import file" do
+        io = StringIO.new @data
+        @parser.process io, 'file.txt'
 
-      @tariff2.reload
-      @tariff2.import_regulations.should == "B01"
-      @tariff2.export_regulations.should == ""
+        @tariff1.reload
+        @tariff1.import_regulations.should == "401 B01"
+        @tariff1.export_regulations.should == "441"
 
-      @tariff3.reload
-      @tariff3.import_regulations.should == ""
-      @tariff3.export_regulations.should == ""
+        @tariff2.reload
+        @tariff2.import_regulations.should == "B01"
+        @tariff2.export_regulations.should == ""
+
+        @tariff3.reload
+        @tariff3.import_regulations.should == ""
+        @tariff3.export_regulations.should == ""
+      end
     end
 
-    context "integration test" do
+    context "xls" do
+      before :each do
+        wb = Spreadsheet::Workbook.new
+        sheet = wb.create_worksheet :name=>"TW"
+        sheet.row(0).push(@tariff1.hts_code, nil, nil, nil, nil, nil, nil, nil, nil, "401 B01", "441")
+        sheet.row(1).push(@tariff2.hts_code, nil, nil, nil, nil, nil, nil, nil, nil, "B01")
+        sheet.row(2).push(@tariff3.hts_code)
+
+        @xls = Tempfile.open(["ImpExpTest", ".xls"])
+        @xls.binmode
+        wb.write(@xls)
+        @xls.flush
+        @xls.rewind
+      end
+
+      after :each do 
+        @xls.close!
+      end
+
+      it "should process an xls TW import file" do
+        @parser.process @xls
+
+        @tariff1.reload
+        @tariff1.import_regulations.should == "401 B01"
+        @tariff1.export_regulations.should == "441"
+
+        @tariff2.reload
+        @tariff2.import_regulations.should == "B01"
+        @tariff2.export_regulations.should == ""
+
+        @tariff3.reload
+        @tariff3.import_regulations.should == ""
+        @tariff3.export_regulations.should == ""
+      end
+    end
+
+    describe "process_s3" do
       before :each do
         #Upload the data contents to S3
         @original_tempfile = Tempfile.new('abc')
         @key = "s3_io_#{Time.now.to_f}.txt"
         @original_tempfile.write @data
         @original_tempfile.flush
-        
-        OpenChain::S3.upload_file OpenChain::S3.bucket_name('test'), @key, @original_tempfile
+        @original_tempfile.rewind
       end
 
       after :each do
-        begin
-          OpenChain::S3.delete OpenChain::S3.bucket_name('test'), @key
-        ensure
-          @original_tempfile.close!
-        end
+        @original_tempfile.close!
       end
       
       it "should download a file from S3 and process it" do
+        OpenChain::S3.should_receive(:download_to_tempfile).with(OpenChain::S3.bucket_name, @key).and_yield @original_tempfile
+
         # We're using the S3 path as the full integration test because it hits every portion
         # of the regulation parser code.
         OpenChain::CustomHandler::ImportExportRegulationParser.process_s3 @key, 'TW'
