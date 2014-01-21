@@ -40,6 +40,14 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
 
     entry = broker_invoices.first.entry
 
+    entry.split_master_bills_of_lading.each do |mb|
+      add_element root, "MasterBill", mb
+    end
+
+    entry.split_house_bills_of_lading.each do |hb|
+      add_element root, "HouseBill", hb
+    end
+
     add_element root, "FileNumber", entry.broker_reference
     add_element root, "EntryNumber", entry.entry_number
     add_element root, "PortOfLading", entry.lading_port_code
@@ -79,9 +87,9 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
 
           charge = add_element inv, "Charge"
           add_element charge, "Type", line.charge_type
+          add_element charge, "Amount", sprintf("%.2f", line.charge_amount)
           add_element charge, "Code", line.charge_code
           add_element charge, "Description", line.charge_description
-          add_element charge, "Amount", sprintf("%.2f", line.charge_amount)
         end
       end
     end

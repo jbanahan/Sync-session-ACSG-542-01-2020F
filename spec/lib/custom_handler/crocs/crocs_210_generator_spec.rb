@@ -46,6 +46,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
           broker_invoice: Factory(:broker_invoice, invoice_total: 50, currency: "CAD", invoice_number: "A",
             entry: Factory(:entry, broker_reference: "12345", entry_number: "65432", lading_port_code: "1", unlading_port_code: "2",
               merchandise_description: "GOODS", total_packages: 10, gross_weight: 20, arrival_date: Time.zone.now, ult_consignee_name: "CONSIGNEE",
+              master_bills_of_lading: "12345\n54321", house_bills_of_lading: "123\n456",
               importer: Factory(:company, name: "Importer")
             )
           )
@@ -61,6 +62,10 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       x = @g.generate_xml [@invoice]
 
       x.root.name.should eq "Crocs210"
+      expect(REXML::XPath.match(x, "/Crocs210/MasterBill")[0].text).to eq "12345"
+      expect(REXML::XPath.match(x, "/Crocs210/MasterBill")[1].text).to eq "54321"
+      expect(REXML::XPath.match(x, "/Crocs210/HouseBill")[0].text).to eq "123"
+      expect(REXML::XPath.match(x, "/Crocs210/HouseBill")[1].text).to eq "456"
       expect(REXML::XPath.first(x, "/Crocs210/FileNumber").text).to eq "12345"
       expect(REXML::XPath.first(x, "/Crocs210/EntryNumber").text).to eq "65432"
       expect(REXML::XPath.first(x, "/Crocs210/PortOfLading").text).to eq "1"
@@ -98,6 +103,15 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       expect(REXML::XPath.match(x, "/Crocs210/Invoice/Charge/Code")[2].text).to eq "1234"
       expect(REXML::XPath.match(x, "/Crocs210/Invoice/Charge/Description")[2].text).to eq "Charge"
       expect(REXML::XPath.match(x, "/Crocs210/Invoice/Charge/Amount")[2].text).to eq "20.00"
+
+      # Make sure the charge children are ordered internally according to our "spec", 
+      # for some reason it causes EDI translation problems if they're not in this exact order.
+      charge = REXML::XPath.first(x, "/Crocs210/Invoice/Charge")
+      expect(charge.elements).to have(4).items
+      expect(charge.elements[1].name).to eq "Type"
+      expect(charge.elements[2].name).to eq "Amount"
+      expect(charge.elements[3].name).to eq "Code"
+      expect(charge.elements[4].name).to eq "Description"
     end
 
     it "skips lines that aren't R, O, C charge types" do
