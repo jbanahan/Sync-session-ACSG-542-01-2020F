@@ -1,6 +1,6 @@
 module ProjectsHelper
   def render_project p
-    r = p.as_json(methods:[:red_messages])
+    r = p.as_json(methods:[:red_messages],include:[project_sets:{only:[:id,:name]}])
     r['project'][:project_updates] = p.project_updates.order('updated_at DESC').collect {|pu| project_update_hash pu}
     r['project'][:project_deliverables] = p.project_deliverables.collect {|pd| project_deliverable_hash pd}
     render json: r

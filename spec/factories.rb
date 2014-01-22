@@ -301,3 +301,6 @@ end
 Factory.define :project_deliverable do |f|
   f.association :project
 end
+Factory.define :project_set do |f|
+  f.sequence :name
+end

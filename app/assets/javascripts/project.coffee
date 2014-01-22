@@ -1,5 +1,16 @@
 projectApp = angular.module('ProjectApp',['ChainComponents'])
 projectApp.factory 'projectSvc', ['$http',($http) ->
+  handleProjectSave = (svc,project,promise) ->
+    project.saving = true
+    promise.then(((resp) ->
+      svc.project = resp.data.project
+    ),((resp) ->
+      project.saving = undefined
+      svc.errorMessage = resp.data.error
+    ))
+
+  disableProjectSaving = (project) ->
+
   return {
     project: null
     loadingMessage: null
@@ -17,13 +28,8 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
 
     saveProject: (project) ->
       svc = @
-      project.saving = true
-      $http.put('/projects/'+project.id+'.json',{project:project}).then(((resp) ->
-        svc.project = resp.data.project
-      ),((resp) ->
-        project.saving = null
-        svc.errorMessage = resp.data.error
-      ))
+      promise = $http.put('/projects/'+project.id+'.json',{project:project})
+      handleProjectSave svc, project, promise
 
     addProjectUpdate: (project,body) ->
       svc = @
@@ -70,12 +76,20 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
     toggleClose: (project) ->
       svc = @
       project.saving = true
-      $http.put('/projects/'+project.id+'/toggle_close.json').then(((resp) ->
-        svc.project = resp.data.project
-      ),((resp) ->
-        project.saving = null
-        svc.errorMessage = resp.data.error
-      ))
+      promise = $http.put('/projects/'+project.id+'/toggle_close.json')
+      handleProjectSave svc, project, promise
+
+    removeProjectSet: (project, projectSet) ->
+      svc = @
+      project.saving = true
+      promise = $http.delete('/projects/'+project.id+'/remove_project_set/'+projectSet.name)
+      handleProjectSave svc, project, promise
+
+    addProjectSet: (project,projectSetName) ->
+      svc = @
+      project.saving = true
+      promise = $http.post('/projects/'+project.id+'/add_project_set/'+projectSetName)
+      handleProjectSave svc, project, promise
   }
 ]
 projectApp.filter 'deliverableSort', [() ->
@@ -123,6 +137,13 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
     projectSvc.project.project_deliverables.push {edit:true}
   $scope.saveDeliverable = (d) ->
     projectSvc.saveDeliverable projectSvc.project, d
+  $scope.removeProjectSet = (ps) ->
+    projectSvc.removeProjectSet projectSvc.project, ps
+  $scope.addProjectSet = () ->
+    toAdd = $scope.projectSetToAdd
+    $scope.projectSetToAdd = undefined
+    $scope.projectSetAdd = false
+    projectSvc.addProjectSet projectSvc.project, toAdd
 
   $scope.unloadWarning = () ->
     return "You have not added your update." if $scope.addUpdateBody.length > 0

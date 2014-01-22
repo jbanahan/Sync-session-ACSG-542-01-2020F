@@ -78,14 +78,56 @@ describe "ProjectApp", () ->
         expect(svc.project.saving).toBeUndefined()
         expect(svc.project.id).toEqual 99
 
+    describe "removeProjectSet", () ->
+      it "should remove project set", () ->
+        resp = {project:{id:99}}
+        proj = {id:1}
+        ps = {id:2,name:'x'}
+        http.expectDELETE('/projects/1/remove_project_set/x').respond resp
+        svc.removeProjectSet proj, ps
+        http.flush()
+        expect(svc.project.saving).toBeUndefined()
+        expect(svc.project.id).toEqual 99
+
+    describe "addProjectSet", () ->
+      it "should add project set", () ->
+        resp = {project:{id:99}}
+        proj = (id:1)
+        pName = 'xyz'
+        http.expectPOST('/projects/1/add_project_set/xyz').respond resp
+        svc.addProjectSet proj, pName
+        http.flush()
+        expect(svc.project.saving).toBeUndefined()
+        expect(svc.project.id).toEqual 99
+
   describe 'ProjectCtrl', () ->
     ctrl = svc = $scope = null
 
     beforeEach inject(($rootScope,$controller,projectSvc) ->
       $scope = $rootScope.$new()
       svc = projectSvc
-      ctrl = $controller('ProjectCtrl',{$scope:$scope,srService:svc})
+      mockUserListCache = {
+        getListForCurrentUser : (cb) ->
+          cb([{id:1,full_name:'User Name'}])
+      }
+      ctrl = $controller('ProjectCtrl',{$scope:$scope,srService:svc,userListCache:mockUserListCache})
     )
+
+    it "should delegate addProjectSet", () ->
+      p = {id:1}
+      $scope.projectSetToAdd = 'myset'
+      svc.project = p
+      spyOn svc, 'addProjectSet'
+      $scope.addProjectSet()
+      expect(svc.addProjectSet).toHaveBeenCalledWith(p,'myset')
+
+    it "should delegate removeProjectSet", () ->
+      p = {id:1}
+      ps = {id:2,name:'abc'}
+      svc.project = p
+      spyOn svc, 'removeProjectSet'
+      $scope.removeProjectSet(ps)
+      expect(svc.removeProjectSet).toHaveBeenCalledWith p, ps
     
     it "should delegate saveProject", () ->
       p = {id:1}

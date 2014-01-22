@@ -103,4 +103,91 @@ describe ProjectsController do
       expect(@p.closed_at).to be_nil
     end
   end
+  describe :add_project_set do
+    before :each do
+      @p = Factory(:project)
+    end
+    it "should allow adding existing project set" do
+      ps = Factory(:project_set)
+      User.any_instance.stub(:edit_projects?).and_return true
+      post :add_project_set, :id=>@p.id, :project_set_name=>ps.name
+      expect(response).to be_success
+      @p.reload
+      expect(@p.project_sets.count).to eq 1
+      expect(@p.project_sets.first).to eq ps
+    end
+    it "should allow adding new project set" do
+      User.any_instance.stub(:edit_projects?).and_return true
+      post :add_project_set, :id=>@p.id, :project_set_name=>'new set'
+      expect(response).to be_success
+      @p.reload
+      expect(@p.project_sets.count).to eq 1
+      expect(@p.project_sets.first.name).to eq 'new set'
+    end
+    it "should fail on empty project_set_name" do
+      User.any_instance.stub(:edit_projects?).and_return true
+      post :add_project_set, :id=>@p.id, :project_set_name=>' '
+      expect(response.status).to eq 400
+      expect(JSON.parse(response.body)['error']).to match /blank/
+      @p.reload
+      expect(@p.project_sets).to be_empty
+    end
+    it "should reject on can't edit" do
+      User.any_instance.stub(:edit_projects?).and_return false
+      post :add_project_set, :id=>@p.id, :project_set_name=>'new set'
+      expect(response.status).to eq 401
+      @p.reload
+      expect(@p.project_sets).to be_empty
+    end
+  end
+  describe :remove_project_set do
+    before :each do
+      @p = Factory(:project)
+      @ps = Factory(:project_set)
+      @p.project_sets << @ps
+      User.any_instance.stub(:edit_projects?).and_return true 
+    end
+    it "should allow deleting project set" do
+      delete :remove_project_set, id: @p.id, project_set_name: @ps.name
+      expect(response).to be_success
+      @p.reload
+      expect(@p.project_sets).to be_empty
+    end
+    it "should not fail if project set does not exist" do
+      delete :remove_project_set, id: @p.id, project_set_name: 'some other name'
+      expect(response).to be_success
+      @p.reload
+      expect(@p.project_sets.to_a).to eq [@ps]
+    end
+    it "should not fail if project set is not already added" do
+      Factory(:project_set, name: 'some other name')
+      delete :remove_project_set, id: @p.id, project_set_name: 'some other name'
+      expect(response).to be_success
+      @p.reload
+      expect(@p.project_sets.to_a).to eq [@ps]
+    end
+    it "should delete project set if it isn't used by any projects" do
+      delete :remove_project_set, id: @p.id, project_set_name: @ps.name
+      expect(response).to be_success
+      expect(ProjectSet.all).to be_empty
+    end
+    it "should not delete set if still linked to project" do
+      p2 = Factory(:project)
+      p2.project_sets << @ps
+      delete :remove_project_set, id: @p.id, project_set_name: @ps.name
+      expect(response).to be_success
+      expect(ProjectSet.first).to eq @ps
+    end
+    it "should fail on empty project set name" do
+      delete :remove_project_set, id: @p.id, project_set_name: ''
+      expect(response.status).to eq 400
+      expect(JSON.parse(response.body)['error']).to match /blank/
+    end
+    it "should fail on can't edit" do
+      User.any_instance.stub(:edit_projects?).and_return false
+      delete :remove_project_set, id: @p.id, project_set_name: @ps.name
+      expect(response.status).to eq 401
+      expect(@p.project_sets.to_a).to eq [@ps]
+    end
+  end
 end

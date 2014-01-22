@@ -62,4 +62,35 @@ class ProjectsController < ApplicationController
     render_project p
   end
 
+  def add_project_set
+    if params[:project_set_name].blank?
+      return render_json_error "Project Set Name cannot be blank.", 400
+    end
+    p = Project.find params[:id]
+    if !p.can_edit? current_user
+      return render_json_error "You do not have permission to edit this project.", 401
+    end
+    if p.project_sets.where(name:params[:project_set_name].strip).empty?
+      ps = ProjectSet.where(name:params[:project_set_name].strip).first_or_create
+      if !ps.errors.blank?
+        return render_json_error ps.errors.full_messages.join('\n'), 400
+      end
+      p.project_sets << ps
+    end
+    render_project p
+  end
+
+  def remove_project_set
+    if params[:project_set_name].blank?
+      return render_json_error "Project Set Name cannot be blank.", 400
+    end
+    p = Project.find params[:id]
+    if !p.can_edit? current_user
+      return render_json_error "You do not have permission to edit this project.", 401
+    end
+    ps = ProjectSet.find_by_name params[:project_set_name].strip
+    ps.projects.destroy(p) if ps
+    ps.destroy if ps && ps.projects.empty?
+    render_project p
+  end
 end

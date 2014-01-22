@@ -4,6 +4,8 @@ class Project < ActiveRecord::Base
   has_many :project_updates, dependent: :destroy, inverse_of: :project
   has_many :project_deliverables, dependent: :destroy, inverse_of: :project
 
+  has_and_belongs_to_many :project_sets
+
   def red?
     !red_messages.blank?
   end
