@@ -45,7 +45,7 @@ group :development,:test do
   gem 'rspec-rails', '~> 2.12'
   gem 'factory_girl', '2.5.2'
   gem 'spork'
-  gem 'debugger'
+  gem 'byebug'
   gem 'jasmine-rails'
 end
 
