@@ -77,6 +77,7 @@ class ProjectsController < ApplicationController
       end
       p.project_sets << ps
     end
+    p.update_attributes(updated_at:0.seconds.ago)
     render_project p
   end
 
@@ -91,6 +92,7 @@ class ProjectsController < ApplicationController
     ps = ProjectSet.find_by_name params[:project_set_name].strip
     ps.projects.destroy(p) if ps
     ps.destroy if ps && ps.projects.empty?
+    p.update_attributes(updated_at:0.seconds.ago)
     render_project p
   end
 end
