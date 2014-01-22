@@ -191,6 +191,7 @@ describe SearchQuery do
 
       it "should paginate child items across multiple pages" do
         @ss.search_columns.build(:model_field_uid=>'class_cntry_iso',:rank=>2)
+        @ss.sort_criterions.build(:model_field_uid=>'class_cntry_iso',:rank=>1)
 
         crit = @ss.search_criterions.first
         crit.operator = "eq"
