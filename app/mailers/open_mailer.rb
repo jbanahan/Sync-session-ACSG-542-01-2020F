@@ -6,7 +6,7 @@ Click <a href='_path_'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EOS
 
-  default :from => "do-not-reply@chain.io"
+  default :from => "do-not-reply@vfitrack.net"
 
   #send a simple plain text email
   def send_simple_text to, subject, body
@@ -72,7 +72,7 @@ EOS
     @params = params
     @request = request
     mail(:to => 'chainio-feedback@aspect9.com',
-         :subject => "[chain.io User Feedback] #{current_user.full_name} - #{current_user.company.name} - #{Time.now}",
+         :subject => "[VFI Track] [User Feedback] #{current_user.full_name} - #{current_user.company.name} - #{Time.now}",
          :reply_to => current_user.email
         )
   end
@@ -82,7 +82,7 @@ EOS
     # Make sure the expiration time is presented in the user's timezone
     @expires_at = expires_at.in_time_zone(user.time_zone) rescue expires_at
 
-    mail(:to => user.email, :subject => "[chain.io] Password Reset") do |format| 
+    mail(:to => user.email, :subject => "[VFI Track] Password Reset") do |format| 
       format.text
     end
   end
@@ -98,16 +98,14 @@ EOS
     @user = current_user
     @comment = comment
     @link = link 
-    mail(:to => to_address, :reply_to => current_user.email, :subject => "[chain.io] #{comment.subject}") do |format|
-      format.text
-    end
+    mail(:to => to_address, :reply_to => current_user.email, :subject => "[VFI Track] #{comment.subject}") 
   end
 
   def send_search_result(to,search_name,attachment_name,file_path)
     attachment_saved = save_large_attachment(file_path, to)
     m = mail(:to => to,
-      :subject => "[chain.io] #{search_name} Result",
-      :from => 'do-not-reply@chain.io')
+      :subject => "[VFI Track] #{search_name} Result",
+      :from => 'do-not-reply@vfitrack.net')
     unless attachment_saved
       m.attachments[File.basename(file_path)] = create_attachment file_path
     end
@@ -127,7 +125,7 @@ EOS
 
     m = mail(:to=>to,
       :reply_to=>current_user.email,
-      :subject => "[chain.io] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
+      :subject => "[VFI Track] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
 
     unless attachment_saved
       m.attachments[imported_file.attached_file_name] = create_attachment data_file_path
@@ -163,7 +161,7 @@ EOS
     host = @message.user.host_with_port ? @message.user.host_with_port : MasterSetup.get.request_host
     @messages_url = messages_url(:host => host)
     
-    mail(:to => message.user.email, :subject => "[chain.io] New Message - #{message.subject}") do |format|
+    mail(:to => message.user.email, :subject => "[VFI Track] New Message - #{message.subject}") do |format|
       format.html
     end
   end
@@ -176,7 +174,7 @@ EOS
     @ftp_username = ftp_username
     @ftp_subfolder = ftp_subfolder
 
-    mail(:to=>to, :bcc=>"support@chain.io", :subject => "[chain.io] Search Transmission Failure") do |format|
+    mail(:to=>to, :bcc=>"support@vandegriftinc.com", :subject => "[VFI Track] Search Transmission Failure") do |format|
       format.text
     end
   end
@@ -184,7 +182,7 @@ EOS
   def send_imported_file_process_fail imported_file, source="Not Specified" #source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
     @imported_file = imported_file
     @source = source
-    mail(:to=>"bug@aspect9.com",:subject =>"[chain.io Exception] - Imported File Error") do |format|
+    mail(:to=>"bug@aspect9.com",:subject =>"[VFI Track Exception] - Imported File Error") do |format|
       format.text
     end
   end
@@ -193,7 +191,7 @@ EOS
     @user = user
     @error = error  
     @params = params
-    mail(:to => "bug@aspect9.com", :subject => "[chain.io Exception] Search Failure") do |format|
+    mail(:to => "bug@aspect9.com", :subject => "[VFI Track Exception] Search Failure") do |format|
       format.text
     end
   end
@@ -216,7 +214,7 @@ EOS
         local_attachments[File.basename(ap)] = create_attachment ap
       end
     end  
-    m = mail(:to=>"bug@aspect9.com", :subject =>"[chain.io Exception] - #{@error_message}"[0..99]) do |format|
+    m = mail(:to=>"bug@aspect9.com", :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
       format.text
     end
 
@@ -272,7 +270,7 @@ EOS
 
   def send_tariff_set_change_notification tariff_set, user
     @ts = tariff_set
-    mail(to:user.email,subject:"[chain.io] Tariff Update - #{tariff_set.country.name}") do |format|
+    mail(to:user.email,subject:"[VFI Track] Tariff Update - #{tariff_set.country.name}") do |format|
       format.text
     end
   end
@@ -282,7 +280,7 @@ EOS
     @temporary_password = temporary_password
     @login_url = url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: 'https')
 
-    mail(to:user.email,subject:"[chain.io] Welcome, #{user.first_name} #{user.last_name}!") do |format|
+    mail(to:user.email,subject:"[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|
       format.html
     end
   end
