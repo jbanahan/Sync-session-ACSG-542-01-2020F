@@ -24,8 +24,7 @@ module OpenChain; module Report; class JCrewBillingReport
     sheet = wb.create_worksheet :name => "#{start_date.strftime("%Y-%m-%d")} thru #{end_date.strftime("%Y-%m-%d")}"
     row_number = 0
     headers = ["Invoice #", "Invoice Date", "Entry #", "Direct Brokerage", "Direct Duty", "Retail Brokerage", "Retail Duty", "Factory Brokerage", "Factory Duty",
-                "Factory Direct Brokerage", "Factory Direct Duty", "Crewcuts Direct Brokerage", "Crewcuts Direct Duty", "Crewcuts Retail Brokerage", "Crewcuts Retail Duty",
-                "Crewcuts Factory Brokerage", "Crewcuts Factory Duty", "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
+                "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
                 "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Total Brokerage", "Total Duty", "Errors"]    
     error_format = Spreadsheet::Format.new :pattern_fg_color => :yellow, :pattern => 1, :pattern_bg_color=>:xls_color_26
     error_with_date = Spreadsheet::Format.new :pattern_fg_color => :yellow, :pattern => 1, :pattern_bg_color=>:xls_color_26, :number_format=>'YYYY-MM-DD'
@@ -61,10 +60,6 @@ module OpenChain; module Report; class JCrewBillingReport
       add_bucket_data row, buckets, :direct
       add_bucket_data row, buckets, :retail
       add_bucket_data row, buckets, :factory
-      add_bucket_data row, buckets, :factory_direct
-      add_bucket_data row, buckets, :crew_direct
-      add_bucket_data row, buckets, :crew_retail
-      add_bucket_data row, buckets, :crew_factory
       add_bucket_data row, buckets, :madewell_direct
       add_bucket_data row, buckets, :madewell_retail
       row << invoice_data[:t_e_amount]
@@ -76,7 +71,7 @@ module OpenChain; module Report; class JCrewBillingReport
 
       XlsMaker.add_body_row sheet, row_number, row, column_widths
       if errors_message
-        (0..27).each do |x|
+        (0..(row.length - 1)).each do |x|
           sheet.row(row_number).set_format(x, (x != 1 ? error_format : error_with_date))
         end
       end
@@ -203,26 +198,18 @@ module OpenChain; module Report; class JCrewBillingReport
       po_number = po_number.to_s.strip
 
       bucket = nil
-      if po_number.start_with?("1")
+      if ["1", "8"].include? po_number[0]
         bucket = [:direct, 1]
-      elsif po_number.start_with?("2")
+      elsif ["2", "5"].include? po_number[0]
         bucket = [:retail, 2]
-      elsif po_number.start_with?("3")
-        bucket = [:factory, 4]
-      elsif po_number.start_with?("6")
-        bucket = [:factory_direct, 5]
-      elsif po_number.start_with?("8")
-        bucket = [:crew_direct, 6]
-      elsif po_number.start_with?("5")
-        bucket = [:crew_retail, 7]
       elsif po_number.start_with?("95")
-        bucket = [:madewell_factory, 11]
-      elsif po_number.start_with?("9")
-        bucket = [:crew_factory, 8]
+        bucket = [:madewell_factory, 6]
+      elsif ["3", "6", "9"].include? po_number[0]
+        bucket = [:factory, 3]
       elsif po_number.start_with?("7")
-        bucket = [:madewell_direct, 9]
+        bucket = [:madewell_direct, 4]
       elsif po_number.start_with?("4")
-        bucket = [:madewell_retail, 10]
+        bucket = [:madewell_retail, 5]
       else
         bucket = [:unknown, 99]
       end
