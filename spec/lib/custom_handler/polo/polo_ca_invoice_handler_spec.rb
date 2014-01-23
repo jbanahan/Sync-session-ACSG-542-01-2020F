@@ -202,6 +202,19 @@ describe OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler do
       setup_xl_client_stub @g, s3_path, default_xl_client_header_values,defaul_xl_client_summary_values(default_rows.keys.sort.last), default_rows
       expect{@g.parse s3_path, true}.to raise_error 'Unable to locate where invoice detail lines begin.  Detail lines should begin after a header in Column A named "HTS" and a header in Column B named "Country of Origin".'
     end
+
+    it "handles numeric values in the hts column" do
+      s3_path = "/path/to/file.xls"
+      rows = default_xl_client_get_row_values
+      rows[21][2] = 1234.5
+
+      setup_xl_client_stub @g, s3_path, default_xl_client_header_values,defaul_xl_client_summary_values(rows.keys.sort.last), rows
+      @g.parse s3_path, true
+
+      inv = CommercialInvoice.first
+      expect(inv).to_not be_nil
+      expect(inv.commercial_invoice_lines.first.commercial_invoice_tariffs.first.hts_code).to eq "12345"
+    end
   end
 
   context :can_view? do
