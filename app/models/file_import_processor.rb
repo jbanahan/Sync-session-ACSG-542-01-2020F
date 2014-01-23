@@ -150,9 +150,14 @@ class FileImportProcessor
   end
 
   def process_import mf, obj, data, messages, error_messages
-    messages << mf.process_import(obj, data, true)
-  rescue OpenChain::ValidationLogicError => e
-    error_messages << e.message if e.message
+    message = mf.process_import(obj, data)
+    unless message.blank?
+      if message.error?
+        error_messages << message 
+      else
+        messages << message
+      end
+    end
   end
 
   #is this record allowed to be added / updated based on the search_setup's update mode
