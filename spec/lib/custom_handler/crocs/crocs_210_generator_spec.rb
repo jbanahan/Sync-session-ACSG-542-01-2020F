@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
     it "accepts 'CROCS' entries with broker invoices" do
       line = Factory(:broker_invoice_line,
         broker_invoice: Factory(:broker_invoice,
-          entry: Factory(:entry, customer_number: "CROCS")
+          entry: Factory(:entry, customer_number: "CROCS", last_billed_date: Time.now)
         )
       )
 
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
     it "accepts 'CROCSSAM' entries with broker invoices" do
       line = Factory(:broker_invoice_line,
         broker_invoice: Factory(:broker_invoice,
-          entry: Factory(:entry, customer_number: "CROCSSAM")
+          entry: Factory(:entry, customer_number: "CROCSSAM", last_billed_date: Time.now)
         )
       )
 
@@ -29,6 +29,16 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
 
     it "doesn't accept entries without broker invoices" do
       expect(described_class.new.accepts?(:save, Factory(:entry, customer_number: "CROCS"))).to be_false
+    end
+
+    it "doesn't accept entries without last bill dates" do
+      line = Factory(:broker_invoice_line,
+        broker_invoice: Factory(:broker_invoice,
+          entry: Factory(:entry, customer_number: "CROCSSAM")
+        )
+      )
+
+      expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_false
     end
   end
 

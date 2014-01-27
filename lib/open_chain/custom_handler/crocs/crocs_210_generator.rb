@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
     # We could check that we have unsent invoice to process here, but I think it's probably just
     # easier to check the simple things and then just no-op in the event processing step if 
     # there are no invoices left to actually send
-    ['CROCS', 'CROCSSAM'].include?(entry.customer_number) && entry.broker_invoices.length > 0
+    ['CROCS', 'CROCSSAM'].include?(entry.customer_number) && entry.broker_invoices.length > 0 && !entry.last_billed_date.nil?
   end
 
   def receive event, entry
