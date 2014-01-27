@@ -18,36 +18,54 @@ class Lock < ActiveRecord::Base
   #
   # In other words, use this locking mechanism judiciously and keep the execution time low for the 
   # block you pass in.
-  def self.acquire(name, retry_lock_aquire_count = 0)
+  # 
+  # options accepted:
+  # times- The number of times to retry after lock wait failure attempts (failures are currently 60 seconds in DB)
+  # temp_lock - If true, the lock record created will be removed after it is utilized.
+  def self.acquire(name, opts = {})
     already_acquired = definitely_acquired?(name)
+
+    opts = {:times => 0, :temp_lock => false}.merge opts
 
     result = nil
     if already_acquired
       result = yield
     else
+      # The outer block is solely for handling the potential for the lock missing error / retry
+      # on the temp locks.
+      my_lock = nil
       begin
-        create(:name => name) unless find_by_name(name)
-      rescue ActiveRecord::StatementInvalid
-        # concurrent create is okay since there's a unique index on the name attribute
-      end
-
-      counter = 0
-      begin
-        transaction do
-          find_by_name(name, :lock => true) # this is the call that will block in concurrent Lock.acquire attempts
-          acquired_lock(name)
-          result = yield
-        end
-      rescue ActiveRecord::StatementInvalid => e
-        # We only want to retry acquiring the lock, we don't want to retry the 
-        # actual code inside the yielded block.
-        unless definitely_acquired?(name)
-          retry if lock_wait_timeout?(e) && (counter += 1) <= retry_lock_aquire_count
+        begin
+          create(:name => name) unless find_by_name(name)
+        rescue ActiveRecord::RecordNotUnique
+          # concurrent create is okay since there's a unique index on the name attribute
         end
 
-        raise e
-      ensure
-        maybe_released_lock(name) 
+        counter = 0
+        begin
+          transaction do
+            my_lock = find_by_name(name, :lock => true) # this is the call that will block in concurrent Lock.acquire attempts
+            # The lock could technically have been removed since it was initially created and here..if so, just retry
+            raise LockMissingError, name unless my_lock
+            acquired_lock(name)
+            result = yield
+          end
+        rescue ActiveRecord::StatementInvalid => e
+          # We only want to retry acquiring the lock, we don't want to retry the 
+          # actual code inside the yielded block.
+          unless definitely_acquired?(name)
+            retry if lock_wait_timeout?(e) && (counter += 1) <= opts[:times]
+          end
+
+          raise e
+        ensure
+          maybe_released_lock(name)
+          # This needs to be outside the inner transaction because if the yield block blows up it'll
+          # roll back the transaction (nullifying any delete occurring inside it)
+          my_lock.destroy if opts[:temp_lock] == true
+        end
+      rescue LockMissingError
+        retry
       end
     end
 
@@ -97,5 +115,7 @@ class Lock < ActiveRecord::Base
       raise e
     end
   end
+
+  class LockMissingError < StandardError; end
 
 end
