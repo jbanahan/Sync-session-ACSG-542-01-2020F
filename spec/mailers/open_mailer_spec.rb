@@ -169,7 +169,7 @@ describe OpenMailer do
 
           body = <<EMAIL
 An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.
-Click <a href='http://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
+Click <a href='#{OpenMailer::LINK_PROTOCOL}://host.xxx/email_attachments/#{ea.id}'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EMAIL
           mail.body.raw_source.should match(body)

@@ -1,12 +1,13 @@
 class OpenMailer < ActionMailer::Base
-  ATTACHMENT_LIMIT = 10.megabytes
-  ATTACHMENT_TEXT = <<EOS
+  ATTACHMENT_LIMIT ||= 10.megabytes
+  ATTACHMENT_TEXT ||= <<EOS
 An attachment named '_filename_' for this message was larger than the maximum system size.
 Click <a href='_path_'>here</a> to download the attachment directly.
 All system attachments are deleted after seven days, please retrieve your attachments promptly.
 EOS
 
   default :from => "do-not-reply@vfitrack.net"
+  LINK_PROTOCOL ||= Rails.env.production? ? "https" : "http"
 
   #send a simple plain text email
   def send_simple_text to, subject, body
@@ -227,17 +228,18 @@ EOS
   def send_survey_invite survey_response
     survey = survey_response.survey
     @body_textile = survey.email_body
-    @link_addr = "http://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
+    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
     mail(:to=>survey_response.user.email,:subject=>survey.email_subject) do |format|
       format.html
     end
   end
 
   #send survey update notification
-  def send_survey_subscription_update survey_subscriptions, corrective_action_plan = false
-    survey = survey_subscriptions.first.survey
+  def send_survey_subscription_update survey_response, response_updates, survey_subscriptions, corrective_action_plan = false
     @cap_mode = corrective_action_plan
-    @link_addr = "http://#{MasterSetup.get.request_host}/surveys/#{survey.id}"
+    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
+    @updated_by = response_updates.collect {|u| u.user.full_name}
+
     to = survey_subscriptions.map {|ss| ss.user.email}.join(',')
     mail(:to=>to, :subject=>"Survey Updated") do |format|
       format.html
@@ -247,7 +249,7 @@ EOS
   #send survey update to survey response assigned user
   def send_survey_user_update survey_response, corrective_action_plan = false
     @cap_mode = corrective_action_plan
-    @link_addr = "http://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
+    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/surveys/#{survey_response.survey.id}"
     mail(:to=>survey_response.user.email, :subject=>"#{survey_response.survey.name} - Updated") do |format|
       format.html
     end
@@ -278,7 +280,7 @@ EOS
   def send_invite user, temporary_password
     @user = user
     @temporary_password = temporary_password
-    @login_url = url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: 'https')
+    @login_url = url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: LINK_PROTOCOL)
 
     mail(to:user.email,subject:"[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|
       format.html

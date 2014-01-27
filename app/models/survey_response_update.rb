@@ -39,6 +39,6 @@ class SurveyResponseUpdate < ActiveRecord::Base
       subs.delete_if {|s| s.user == updates.first.user}
     end
     return if subs.empty? #nothing to send
-    OpenMailer.send_survey_subscription_update(subs).deliver
+    OpenMailer.send_survey_subscription_update(survey_response, updates, subs).deliver
   end
 end
