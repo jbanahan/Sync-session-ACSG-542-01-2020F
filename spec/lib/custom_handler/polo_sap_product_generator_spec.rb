@@ -155,6 +155,11 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       r.should eq [{0=>"This is a - test."}]
     end
 
+    it "should convert ¾ to 3/4" do
+      r = @g.preprocess_row(0 => "This is a ¾ test.")
+      r.should eq [{0=>"This is a 3/4 test."}]
+    end
+
     it "should convert tab characters to spaces" do
       r = @g.preprocess_row(0 => "This\tis\ta\ttest.")
       r.should eq [{0 => "This is a test."}]

@@ -49,7 +49,8 @@ module OpenChain
           allowed_conversions = {
             "\u{00A0}" => " ", #non breaking space
             "\u{2013}" => "-",
-            "\u{2014}" => "-"
+            "\u{2014}" => "-",
+            "\u{00BE}" => "3/4"
           }
           # First convert the UTF-8 text to ascii w/ our conversion table
           value = value.encode("US-ASCII", :fallback => allowed_conversions)
