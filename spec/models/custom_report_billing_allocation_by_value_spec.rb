@@ -39,7 +39,7 @@ describe CustomReportBillingAllocationByValue do
       @ci_1 = @ent.commercial_invoices.create!(:invoice_number=>"ci_1")
       @cil_1_1 = @ci_1.commercial_invoice_lines.create!(:line_number=>"1",:value=>50)
       @cil_1_2 = @ci_1.commercial_invoice_lines.create!(:line_number=>"2",:value=>200)
-      @bi = @ent.broker_invoices.create!(:invoice_date=>0.seconds.ago,:invoice_total=>250)
+      @bi = @ent.broker_invoices.create!(:invoice_date=>0.seconds.ago,:invoice_total=>250, :invoice_number=>"INV#")
       @bil_1 = @bi.broker_invoice_lines.create!(:charge_description=>"C1",:charge_amount=>"50",:charge_code=>'CC1')
     end
     context "charge categories" do
@@ -84,7 +84,7 @@ describe CustomReportBillingAllocationByValue do
       arrays = @klass.new.to_arrays @u
       heading_row = arrays.first
       heading_row.should have(5).headings
-      heading_row[0].should == ModelField.find_by_uid(:bi_brok_ref).label
+      heading_row[0].should == ModelField.find_by_uid(:bi_invoice_number).label
       heading_row[1].should == ModelField.find_by_uid(:bi_invoice_date).label
       heading_row[2].should == "#{ModelField.find_by_uid(:bi_invoice_total).label} (not prorated)"
       heading_row[3].should == "Broker Invoice - Prorated Line Total"
@@ -99,7 +99,7 @@ describe CustomReportBillingAllocationByValue do
       heading_row.should have(7).headings
       heading_row[0].should == ModelField.find_by_uid(:ent_entry_num).label
       heading_row[1].should == ModelField.find_by_uid(:cil_line_number).label
-      heading_row[2].should == ModelField.find_by_uid(:bi_brok_ref).label
+      heading_row[2].should == ModelField.find_by_uid(:bi_invoice_number).label
     end
     it "should include prorated charges" do
       arrays = @klass.new.to_arrays @u
@@ -109,10 +109,10 @@ describe CustomReportBillingAllocationByValue do
     end
     it "should include base broker invoice fields" do
       arrays = @klass.new.to_arrays @u
-      arrays[1][0].should == @ent.broker_reference
+      arrays[1][0].should == @bi.invoice_number
       arrays[1][1].should == @bi.invoice_date.to_date 
       arrays[1][2].should == 250
-      arrays[2][0].should == @ent.broker_reference
+      arrays[2][0].should == @bi.invoice_number
       arrays[2][1].should == @bi.invoice_date.to_date
       arrays[2][2].should == 250
     end
@@ -122,7 +122,7 @@ describe CustomReportBillingAllocationByValue do
       arrays = rpt.to_arrays @u
       (1..2).each do |row|
         arrays[row][0].should == @ent.entry_number
-        arrays[row][1].should == @ent.broker_reference
+        arrays[row][1].should == @bi.invoice_number
       end
     end
     it "should include commercial invoice fields" do
@@ -131,7 +131,7 @@ describe CustomReportBillingAllocationByValue do
       arrays = rpt.to_arrays @u
       (1..2).each do |row|
         arrays[row][0].should == @ci_1.invoice_number
-        arrays[row][1].should == @ent.broker_reference
+        arrays[row][1].should == @bi.invoice_number
       end
     end
     it "should filter by broker invoice header information" do
@@ -148,7 +148,7 @@ describe CustomReportBillingAllocationByValue do
       rpt.search_criterions.build(:model_field_uid=>:bi_entry_num,:operator=>"eq",:value=>"9999")
       arrays = rpt.to_arrays @u
       arrays.should have(3).rows
-      arrays[1][0].should == "5555"
+      arrays[1][0].should == @bi_2.invoice_number
       arrays[1][3].should == BigDecimal.new(625)
       arrays[1][4].should == 500
       arrays[1][5].should == 125
@@ -251,8 +251,8 @@ describe CustomReportBillingAllocationByValue do
       arrays = rpt.to_arrays @u
       
       arrays.should have(4).rows
-      arrays[1][0].should == @ent_2.broker_reference
-      arrays[2][0].should == @ent.broker_reference
+      arrays[1][0].should == @bi_2.invoice_number
+      arrays[2][0].should == @bi.invoice_number
     end
   end
 end
