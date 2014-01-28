@@ -297,7 +297,7 @@ EMAIL
 
       mail.body.raw_source.should match /Username: #{@user.username}/
       mail.body.raw_source.should match /Temporary Password: #{pwd}/
-      mail.body.raw_source.should match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: 'https')}/
+      mail.body.raw_source.should match /#{url_for(host: MasterSetup.get.request_host, controller: 'user_sessions', action: 'new', protocol: OpenMailer::LINK_PROTOCOL)}/
     end
   end
 
