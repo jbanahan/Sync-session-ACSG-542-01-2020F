@@ -93,31 +93,7 @@
         <div class="col-md-6">
           <h2>Deliverables</h2>
           <div ng-repeat='d in svc.project.project_deliverables | deliverableSort'> 
-            <div>
-              <span ng-class="{'strike':d.complete}">{{d.description}}</span> <span class='label label-default'>{{d.assigned_to_name}}</span> <span class='label label-primary'>{{d.due_date}}</span> <button class='btn btn-sm btn-default' ng-click='d.edit=!d.edit'>Edit</button>
-            </div>
-            <div ng-show='d.edit' class='panel' ng-class="{'panel-default': d.complete, 'panel-primary': !d.complete}">
-              <div class='panel-body'>
-                <input type='text' ng-model='d.description' class='form-control' />
-                Assigned To:
-                <div chain-user-list='d.assigned_to_id'></div>
-                Due:
-                <input type='date' ng-model='d.due_date' class='form-control' />
-                Start:
-                <input type='date' ng-model='d.start_date' class='form-control' />
-                End:
-                <input type='date' ng-model='d.end_date' class='form-control' />
-                Estimated Hours:
-                <input type='number' ng-model='d.estimated_hours' min='0' step='1' class='form-control' />
-                Complete:
-                <input type='checkbox' ng-model='d.complete' />
-              </div>
-              <div class='panel-footer'>
-                <button ng-click='saveDeliverable(d)' class='btn btn-success btn-sm'>Save</button>
-                &nbsp;
-                <span class='label label-info' ng-show='d.saving'>Saving</span>
-              </div>
-            </div>
+            <div chain-project-deliverable='d' project='svc.project' save-promise-callback='handleSaveDeliverable'></div>
           </div>
           <div><button ng-click="addDeliverable()" class='btn btn-primary'>Add</button></div>
         </div>

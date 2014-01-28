@@ -59,19 +59,13 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
     saveDeliverable: (project,deliverable) ->
       svc = @
       deliverable.saving = true
-      goodCallback = (resp) ->
-        del = resp.data.project_deliverable
-        project.project_deliverables ?= []
-        for pd, i in project.project_deliverables
-          project.project_deliverables[i] = del if pd.id == deliverable.id
-      badCallback = (resp) ->
-        deliverable.saving = null
-        svc.errorMessage = resp.data.error
+      promise = null
       if deliverable.id == undefined
         deliverable.id = new Date().getTime()
-        $http.post('/projects/'+project.id+'/project_deliverables.json',{project_deliverable:deliverable}).then(goodCallback,badCallback)
+        promise = $http.post('/projects/'+project.id+'/project_deliverables.json',{project_deliverable:deliverable})
       else
-        $http.put('/projects/'+project.id+'/project_deliverables/'+deliverable.id+'.json',{project_deliverable:deliverable}).then(goodCallback,badCallback)
+        promise = $http.put('/projects/'+project.id+'/project_deliverables/'+deliverable.id+'.json',{project_deliverable:deliverable})
+      promise
 
     toggleClose: (project) ->
       svc = @
@@ -90,6 +84,16 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
       project.saving = true
       promise = $http.post('/projects/'+project.id+'/add_project_set/'+projectSetName)
       handleProjectSave svc, project, promise
+
+    # get deliverables for index page by user
+    getDeliverables: (layout) ->
+      svc = @
+      svc.loadingMessage = "Loading..."
+      p = $http.get('/project_deliverables.json?layout='+layout)
+      p.success () ->
+        svc.loadingMessage = null
+      p.error () ->
+        svc.loadingMessage = null
   }
 ]
 projectApp.filter 'deliverableSort', [() ->
@@ -98,6 +102,15 @@ projectApp.filter 'deliverableSort', [() ->
     r.sort (a,b) ->
       x = 0
       
+      a_pn = (if a.project_name then a.project_name else '')
+      b_pn = (if b.project_name then b.project_name else '')
+      if a_pn == b_pn
+        x = 0
+      else if a_pn < b_pn
+        return -1
+      else
+        return 1
+
       # sort by complete status
       a_comp = (if a.complete then 1 else 0)
       b_comp = (if b.complete then 1 else 0)
@@ -117,6 +130,66 @@ projectApp.filter 'deliverableSort', [() ->
       return x
 
 ]
+projectApp.directive 'chainProjectDeliverable', ['projectSvc',(projectSvc) ->
+  {
+    restrict:'A'
+    scope:{
+      deliverable:'=chainProjectDeliverable',
+      project:'=',
+      savePromiseCallback:'='
+    }
+    templateUrl:'<%=asset_path("chain_project_deliverable.html")%>'
+    link: (scope,el,attrs) ->
+      $(el).find('button.deliverable-edit').on 'click', () ->
+        $(el).find('div.modal').modal('show')
+        $(el).find('input[ng-model="deliverable.description"]').focus()
+      scope.errors = {errorMessage:null}
+
+      scope.late = () ->
+        scope.deliverable && scope.deliverable && scope.deliverable.due_date && moment(scope.deliverable.due_date) < moment()
+
+      scope.saveDeliverable = () ->
+        scope.errors.errorMessage = null
+        p = projectSvc.saveDeliverable(scope.project, scope.deliverable)
+        scope.savePromiseCallback p
+        p.success (data, status, headers, config) ->
+          $(el).find('div.modal').modal('hide')
+        p.error (data, status, headers, config) ->
+          scope.deliverable.saving = null
+          scope.errors.errorMessage = data.error
+      }
+
+]
+projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($scope,projectSvc) ->
+  #add required project attributes
+  prepDeliverable = (d) ->
+    d.project = {id:d.project_id,name:d.project_name}
+
+  $scope.svc = projectSvc
+
+  $scope.loadDeliverables = (layout) ->
+    $scope.deliverables = null
+    projectSvc.getDeliverables(layout).then (resp) ->
+      $scope.deliverables = resp.data.deliverables_by_user
+      for u, projects of $scope.deliverables
+        for pname, dels of projects
+          prepDeliverable d for d in dels
+
+
+  $scope.loadDeliverables 'person'
+
+  $scope.handleSaveDeliverable = (promise) ->
+    goodCallback = (resp) ->
+      deliverable = resp.data.project_deliverable
+      prepDeliverable deliverable
+      for u, dels of $scope.deliverables
+        for d, i in dels
+          if d.id == deliverable.id
+           dels[i] = deliverable
+           return
+      return
+    promise.then goodCallback
+]
 projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($scope,projectSvc,userListCache) ->
   $scope.addUpdateBody = ''
   $scope.svc = projectSvc
@@ -135,8 +208,15 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
     projectSvc.editProjectUpdate projectSvc.project, u
   $scope.addDeliverable = () ->
     projectSvc.project.project_deliverables.push {edit:true}
-  $scope.saveDeliverable = (d) ->
-    projectSvc.saveDeliverable projectSvc.project, d
+  $scope.handleSaveDeliverable = (p) ->
+    goodCallback = (resp) ->
+      project = projectSvc.project
+      del = resp.data.project_deliverable
+      project.project_deliverables ?= []
+      for pd, i in project.project_deliverables
+        project.project_deliverables[i] = del if pd.id == del.id
+    p.then goodCallback
+
   $scope.removeProjectSet = (ps) ->
     projectSvc.removeProjectSet projectSvc.project, ps
   $scope.addProjectSet = () ->

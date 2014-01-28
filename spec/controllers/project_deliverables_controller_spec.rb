@@ -9,28 +9,37 @@ describe ProjectDeliverablesController do
   end
   describe :index do
     before :each do
-      @d1 = Factory(:project_deliverable)
-      @d2 = Factory(:project_deliverable)
+      @u1 = Factory(:user)
+      @u2 = Factory(:user)
+      @d1 = Factory(:project_deliverable,assigned_to_id:@u1.id,project:Factory(:project,name:'pn1'))
+      @d2 = Factory(:project_deliverable,assigned_to_id:@u2.id,project:Factory(:project,name:'pn2'))
       @d3 = Factory(:project_deliverable,complete:true)
     end
     it "should return all incomplete" do
-      get :index
+      get :index, format: :json
       expect(response).to be_success
-      d = assigns(:deliverables)
-      expect(d.order(:id).to_a).to eq [@d1,@d2]
+      r = JSON.parse(response.body)['deliverables_by_user']
+      expect(r[@u1.full_name]['pn1'][0]['id']).to eq @d1.id
+      expect(r[@u2.full_name]['pn2'][0]['id']).to eq @d2.id
+    end
+    it "should sort by project" do
+      get :index, format: :json, layout: 'project'
+      r = JSON.parse(response.body)['deliverables_by_user']
+      expect(r['pn1'][@u1.full_name][0]['id']).to eq @d1.id
     end
     it "should error if user cannot view projects" do
       User.any_instance.stub(:view_projects?).and_return false
-      get :index
-      expect(response).to be_redirect
-      expect(flash[:errors].first).to match /permission/
+      get :index, format: :json
+      expect(JSON.parse(response.body)['error']).to match /permission/
+      expect(response.status).to eq 401
     end
     it "should secure by project_deliverable" do
       ProjectDeliverable.stub(:search_secure).and_return ProjectDeliverable.where(id:@d1.id)
-      get :index
+      get :index, format: :json
       expect(response).to be_success
-      d = assigns(:deliverables)
-      expect(d.to_a).to eq [@d1]
+      r = JSON.parse(response.body)['deliverables_by_user']
+      expect(r[@u1.full_name]['pn1'][0]['id']).to eq @d1.id
+      expect(r.size).to eq 1
     end
   end
   describe :create do

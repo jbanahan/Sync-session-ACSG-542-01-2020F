@@ -1,28 +1,38 @@
 <%content_for :action_bar do%>
   <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Projects</button>
 <%end%>
-<% cache ['v1',ProjectDeliverable.order('updated_at DESC').first] do %>
-<div class="container">
-  <div class="row">
-    <div class='col-md-12'>
-      <h1>Project Deliverables</h1>
+<div ng-app='ProjectApp'>
+  <div class="container" ng-controller='ProjectDeliverablesController'>
+    <div class="row">
+      <div class='col-md-12'>
+        <h1>Project Deliverables</h1>
+      </div>
+    </div>
+    <div class='row' style='margin-bottom:20px;'>
+      <div class='col-md-12'>
+        Group By: 
+        <a href='' ng-click='loadDeliverables("person")'>Person</a> |
+        <a href='' ng-click='loadDeliverables("project")'>Project</a> | 
+        <a href='' ng-click='loadDeliverables("weekproject")'>Week (Project)</a> |
+        <a href='' ng-click='loadDeliverables("weekuser")'>Week (Person)</a>
+      </div>
+    </div>
+    <chain-panel panel-title='Loading' panel-type='panel-primary' panel-message='svc.loadingMessage'></chain-panel>
+    <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
+    <div class='panel panel-default' ng-repeat='(top,projects) in deliverables'>
+      <div class="panel-heading">
+        <h3 class='panel-title'>{{top}}</h3>
+      </div>
+      <div class='panel-body'>
+        <div ng-repeat='(mid,dels) in projects'>
+          <h4>{{mid}}</h4>
+          <div class="row" ng-repeat='d in dels | deliverableSort'>
+            <div class="col-xs-12">
+              <div style='margin-left:10px;' chain-project-deliverable='d' project='d.project' save-promise-callback='handleSaveDeliverable'></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <%deliverables_by_user(@deliverables).each do |user,dels|%>
-  <div class="row">
-    <div class="col-md-12">
-      <h2><%=user ? user.full_name : 'Not Assigned'%></h2>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col-md-12">
-      <ul>
-        <%dels.each do |d|%>
-        <li><%=d.description%> <span class='label label-primary'><%=d.due_date%></span> - <%=link_to d.project.name, d.project%></li>
-        <%end%>
-      </ul>
-    </div>
-  </div>
-  <%end%>
 </div>
-<% end %>

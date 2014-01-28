@@ -100,6 +100,71 @@ describe "ProjectApp", () ->
         expect(svc.project.saving).toBeUndefined()
         expect(svc.project.id).toEqual 99
 
+    describe 'getDeliverables', () ->
+      it "should get deliverables and return promise", () ->
+        resp = {x:'y'}
+        http.expectGET('/project_deliverables.json?layout=x').respond resp
+        promise = svc.getDeliverables('x')
+        promise.then (r) ->
+          expect(r.data).toEqual resp
+        http.flush()
+
+  describe 'chainProjectDeliverable', () ->
+    svc = $scope = project = deliverable = compile = el = null
+    
+    beforeEach inject ($rootScope,$compile,projectSvc,$templateCache) ->
+      compile = $compile
+      $scope = $rootScope
+      svc = projectSvc
+      $templateCache.put('/assets/chain_project_deliverable.html','<div><div class="modal">abc</div></div>')
+      mockCallback = (p) ->
+        null
+      deliverable = {id:1}
+      project = {id:2}
+      $scope.project = project
+      $scope.deliverable = deliverable
+      $scope.savePromiseCallback = mockCallback
+      element = angular.element("<div chain-project-deliverable='deliverable' project='project' save-promise-callback='savePromiseCallback'></div>")
+      el = compile(element)($scope)
+      @
+
+    it "should delegate saveDeliverable", () ->
+      promise = {
+        error:(f) ->
+          null
+        success:(f) ->
+          null
+      }
+      spyOn(svc, 'saveDeliverable').andReturn(promise)
+      $scope.$digest()
+      el.scope().saveDeliverable()
+      expect(svc.saveDeliverable).toHaveBeenCalledWith(project,deliverable)
+
+    it "should call savePromiseCallback", () ->
+      promise = {
+        error:(f) ->
+          null
+        success:(f) ->
+          null
+      }
+      spyOn(svc, 'saveDeliverable').andReturn(promise)
+      spyOn($scope,'savePromiseCallback')
+      $scope.$digest()
+      el.scope().saveDeliverable()
+      expect($scope.savePromiseCallback).toHaveBeenCalledWith(promise)
+
+    it "should set error message if save fails", () ->
+      promise = {
+        error:(f) ->
+          f({error:'xyz'},null,null,null)
+        success:(f) ->
+          null
+      }
+      spyOn(svc, 'saveDeliverable').andReturn(promise)
+      $scope.$digest()
+      el.scope().saveDeliverable()
+      expect(el.scope().errors.errorMessage).toEqual('xyz')
+      
   describe 'ProjectCtrl', () ->
     ctrl = svc = $scope = null
 

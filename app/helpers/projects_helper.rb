@@ -18,7 +18,8 @@ module ProjectsHelper
       assigned_to_id:pd.assigned_to_id, assigned_to_name:assigned_name, 
       description:pd.description, due_date: pd.due_date,
       end_date:pd.end_date, estimated_hours: pd.estimated_hours,
-      start_date: pd.start_date, complete: pd.complete
+      start_date: pd.start_date, complete: pd.complete,
+      project_name:pd.project.name
     }
   end
 

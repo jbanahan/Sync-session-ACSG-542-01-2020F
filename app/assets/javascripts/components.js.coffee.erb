@@ -62,7 +62,7 @@
       panelMessage:'='
       panelType:'@'
     }
-    template:"<div class='container' ng-show='panelMessage && panelMessage.length>0'><div class='panel' ng-class='panelType'><div class='panel-heading'><h3 class='panel-title'>{{panelTitle}}</h3></div><div class='panel-body'><p>{{panelMessage}}</p></div></div></div>"
+    template:"<div ng-show='panelMessage && panelMessage.length>0'><div class='panel' ng-class='panelType'><div class='panel-heading'><h3 class='panel-title'>{{panelTitle}}</h3></div><div class='panel-body'><p>{{panelMessage}}</p></div></div></div>"
     link: (scope,el,attrs) ->
       @
   }
@@ -294,13 +294,16 @@
 # shows the user a drop down to select a user and sets the 
 # selected user id into the passed in object
 # <div user-list="myUserIdVariable"></div>
+# optionally adding form-control="true" to the div will make the select object have the boostrap friendly form-control class
 @components.directive 'chainUserList', ['$parse','$http','userListCache',($parse,$http,userListCache) ->
   {
     scope: {
       chainUserList:"="
-    },
-    template:"<select ng-model='chainUserList' ng-options='u.id as u.full_name group by u.company_name for u in users'></select>",
+    }
+    template:"<select ng-model='chainUserList' ng-options='u.id as u.full_name group by u.company_name for u in users'></select>"
     link: (scope,el,attrs) ->
+      if $(el).attr('form-control') == 'true'
+        $(el).find('select').addClass('form-control')
       userListCache.getListForCurrentUser (users) ->
         scope.users = users
     }
