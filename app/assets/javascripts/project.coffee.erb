@@ -130,35 +130,58 @@ projectApp.filter 'deliverableSort', [() ->
       return x
 
 ]
-projectApp.directive 'chainProjectDeliverable', ['projectSvc',(projectSvc) ->
+projectApp.directive 'chainProjectDeliverable', ['$compile','projectSvc',($compile,projectSvc) ->
   {
     restrict:'A'
     scope:{
       deliverable:'=chainProjectDeliverable',
-      project:'=',
-      savePromiseCallback:'='
+      project:'='
     }
     templateUrl:'<%=asset_path("chain_project_deliverable.html")%>'
     link: (scope,el,attrs) ->
-      $(el).find('button.deliverable-edit').on 'click', () ->
-        $(el).find('div.modal').modal('show')
+      editAction = () ->
+        projectSvc.deliverableToEdit = scope.deliverable
+        $('chain-project-deliverable-edit').find('div.modal').modal('show')
         $(el).find('input[ng-model="deliverable.description"]').focus()
-      scope.errors = {errorMessage:null}
+
+      appEl = $(el).parents('div[ng-controller]')
+      if appEl.find('chain-project-deliverable-edit').length == 0
+        angEl = angular.element('<chain-project-deliverable-edit save-promise-callback="'+$(el).attr('save-promise-callback')+'"></chain-project-deliverable-edit>')
+        appEl.append($compile(angEl)(appEl.scope())) #add the deliverable on the parent scope
+      $(el).find('button.deliverable-edit').on 'click', () ->
+        scope.$apply editAction
 
       scope.late = () ->
         scope.deliverable && scope.deliverable && scope.deliverable.due_date && moment(scope.deliverable.due_date) < moment()
 
+      editAction() if scope.deliverable.new
+
+  }
+]
+projectApp.directive 'chainProjectDeliverableEdit', ['projectSvc',(projectSvc) ->
+  {
+    restrict:'E'
+    scope:{
+      savePromiseCallback:'='
+    }
+    templateUrl:'<%=asset_path("chain_project_deliverable_edit.html")%>'
+    link: (scope,el,attrs) ->
+      scope.svc = projectSvc
+      scope.errors = {errorMessage:null}
       scope.saveDeliverable = () ->
         scope.errors.errorMessage = null
-        p = projectSvc.saveDeliverable(scope.project, scope.deliverable)
+        d = projectSvc.deliverableToEdit
+        proj = {id:d.project_id}
+        p = projectSvc.saveDeliverable(proj, projectSvc.deliverableToEdit)
         scope.savePromiseCallback p
         p.success (data, status, headers, config) ->
+          projectSvc.deliverableToEdit = null
           $(el).find('div.modal').modal('hide')
         p.error (data, status, headers, config) ->
-          scope.deliverable.saving = null
+          d.saving = null
           scope.errors.errorMessage = data.error
-      }
-
+  }
+  
 ]
 projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($scope,projectSvc) ->
   #add required project attributes
@@ -207,14 +230,14 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
   $scope.editProjectUpdate = (u) ->
     projectSvc.editProjectUpdate projectSvc.project, u
   $scope.addDeliverable = () ->
-    projectSvc.project.project_deliverables.push {edit:true}
+    projectSvc.project.project_deliverables.push {new:true,project_id:projectSvc.project.id}
   $scope.handleSaveDeliverable = (p) ->
     goodCallback = (resp) ->
       project = projectSvc.project
       del = resp.data.project_deliverable
       project.project_deliverables ?= []
       for pd, i in project.project_deliverables
-        project.project_deliverables[i] = del if pd.id == del.id
+        project.project_deliverables[i] = del if pd.new || pd.id == del.id
     p.then goodCallback
 
   $scope.removeProjectSet = (ps) ->

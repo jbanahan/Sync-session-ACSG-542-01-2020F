@@ -1,0 +1,52 @@
+<div class='modal' >
+  <div class='modal-dialog'>
+    <div class='modal-content'> 
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Edit Deliverable</h4>
+      </div>
+      <div class='modal-body'>
+        <chain-panel panel-title='Errors' panel-message="errors.errorMessage" panel-type='panel-danger' ></chain-panel>
+        <div class='form-group'>
+          <label>Description</label>
+          <input type='text' ng-model='svc.deliverableToEdit.description' class='form-control' />
+        </div>
+        <div class='form-group'>
+          <label>Assigned To</label>
+          <div chain-user-list='svc.deliverableToEdit.assigned_to_id' form-control='true'></div>
+        </div>
+        <div class='row'>
+          <div class='col-md-6'>
+            <div class='form-group'>
+              <label>Due</label>
+              <input type='date' ng-model='svc.deliverableToEdit.due_date' class='form-control' />
+            </div>
+            <div class='form-group'>
+              <label>Est Hours</label>
+              <input type='number' ng-model='svc.deliverableToEdit.estimated_hours' min='0' step='1' class='form-control' />
+            </div>
+          </div>
+          <div class='col-md-6'>
+            <div class='form-group'>
+              <label>Start</label>
+              <input type='date' ng-model='svc.deliverableToEdit.start_date' class='form-control' />
+            </div>
+            <div class='form-group'>
+              <label>End</label>
+              <input type='date' ng-model='svc.deliverableToEdit.end_date' class='form-control' />
+            </div>
+          </div>
+        </div>
+        <div class='form-group'>
+          <label>Complete</label>
+          <input type='checkbox' ng-model='svc.deliverableToEdit.complete' />
+        </div>
+      </div>
+      <div class='modal-footer'>
+        <button ng-click='saveDeliverable()' class='btn btn-success btn-sm'>Save</button>
+        &nbsp;
+        <span class='label label-info' ng-show='svc.deliverableToEdit.saving'>Saving</span>
+      </div>
+    </div>
+  </div>
+</div>
