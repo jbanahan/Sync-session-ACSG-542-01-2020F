@@ -32,7 +32,7 @@ class CustomReportBillingAllocationByValue < CustomReport
     self.search_columns.each do |sc|
       write row_cursor, (col_cursor += 1), sc.model_field.label
     end
-    hard_code_fields = [:bi_brok_ref,:bi_invoice_date,:bi_invoice_total].collect {|x| ModelField.find_by_uid(x)}
+    hard_code_fields = [:bi_invoice_number,:bi_invoice_date,:bi_invoice_total].collect {|x| ModelField.find_by_uid(x)}
     hard_code_fields.each do |mf|
       write row_cursor, (col_cursor += 1), (mf.uid == :bi_invoice_total) ? "#{mf.label} (not prorated)": mf.label
     end
@@ -95,7 +95,8 @@ class CustomReportBillingAllocationByValue < CustomReport
           end
           write row_cursor, (col_cursor += 1), (obj_to_proc ? mf.process_export(obj_to_proc,run_by) : "")
         end
-        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:ent_brok_ref).process_export(entry,run_by)
+        # Invoice number now reliably populates from both Alliance (w/ suffix) and Fenix
+        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_number).process_export(bi,run_by)
         write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_date).process_export(bi,run_by)
         write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_total).process_export(bi,run_by)
         
