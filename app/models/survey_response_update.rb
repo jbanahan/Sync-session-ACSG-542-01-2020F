@@ -14,7 +14,7 @@ class SurveyResponseUpdate < ActiveRecord::Base
     # so don't pre-load them
     sru = SurveyResponseUpdate.update_eligible.first 
     while !sru.nil?
-      Lock.acquire("SurveyResponseUpdate-#{sru.survey_response_id}") do #only one thread should be working on each response
+      Lock.acquire("SurveyResponseUpdate-#{sru.survey_response_id}", temp_lock: true) do #only one thread should be working on each response
         #load all updates from DB so we have the freshest copy
         sr = SurveyResponse.find(sru.survey_response_id)
         updates = sr.survey_response_updates.update_eligible
@@ -39,6 +39,6 @@ class SurveyResponseUpdate < ActiveRecord::Base
       subs.delete_if {|s| s.user == updates.first.user}
     end
     return if subs.empty? #nothing to send
-    OpenMailer.send_survey_subscription_update(subs).deliver
+    OpenMailer.send_survey_subscription_update(survey_response, updates, subs).deliver
   end
 end

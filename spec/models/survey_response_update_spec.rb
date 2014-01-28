@@ -27,12 +27,12 @@ describe SurveyResponseUpdate do
         u2 = Factory(:user)
         sr = Factory(:survey_response)
         ss = sr.survey.survey_subscriptions.create!(user:@u)
-        sr.survey_response_updates.create!(user:Factory(:user),updated_at:2.hours.ago)
+        update = sr.survey_response_updates.create!(user:Factory(:user),updated_at:2.hours.ago)
 
         #expectation
         eml = double('email')
         eml.should_receive(:deliver)
-        OpenMailer.should_receive(:send_survey_subscription_update).with([ss]).and_return(eml)
+        OpenMailer.should_receive(:send_survey_subscription_update).with(sr, [update], [ss]).and_return(eml)
 
         #run
         described_class.run_updates
@@ -54,12 +54,12 @@ describe SurveyResponseUpdate do
         sr = Factory(:survey_response)
         ss1 = sr.survey.survey_subscriptions.create!(user:@u)
         ss2 = sr.survey.survey_subscriptions.create!(user:u2)
-        sr.survey_response_updates.create!(user:@u,updated_at:2.hours.ago)
+        update = sr.survey_response_updates.create!(user:@u,updated_at:2.hours.ago)
 
         #expectation
         eml = double('email')
         eml.should_receive(:deliver)
-        OpenMailer.should_receive(:send_survey_subscription_update).with([ss2]).and_return(eml)
+        OpenMailer.should_receive(:send_survey_subscription_update).with(sr, [update], [ss2]).and_return(eml)
 
         #run
         described_class.run_updates
@@ -69,13 +69,13 @@ describe SurveyResponseUpdate do
         u2 = Factory(:user)
         sr = Factory(:survey_response)
         ss = sr.survey.survey_subscriptions.create!(user:@u)
-        sr.survey_response_updates.create!(user:@u,updated_at:2.hours.ago)
-        sr.survey_response_updates.create!(user:Factory(:user),updated_at:2.hours.ago)
+        update = sr.survey_response_updates.create!(user:@u,updated_at:2.hours.ago)
+        update2 = sr.survey_response_updates.create!(user:Factory(:user),updated_at:2.hours.ago)
 
         #expectation
         eml = double('email')
         eml.should_receive(:deliver)
-        OpenMailer.should_receive(:send_survey_subscription_update).with([ss]).and_return(eml)
+        OpenMailer.should_receive(:send_survey_subscription_update).with(sr, [update, update2], [ss]).and_return(eml)
 
         #run
         described_class.run_updates

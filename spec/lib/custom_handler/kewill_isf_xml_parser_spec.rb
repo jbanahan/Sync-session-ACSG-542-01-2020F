@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       sf.last_file_path.should == 'isf_2435412_20210914_20131118145402586.1384804944.xml'
     end
     it "should lock entry for update" do
-      Lock.should_receive(:acquire).with(Lock::ISF_PARSER_LOCK, 3).and_yield()
+      Lock.should_receive(:acquire).with(Lock::ISF_PARSER_LOCK, times:3).and_yield()
       Lock.should_receive(:with_lock_retry).with(kind_of(SecurityFiling)).and_yield()
 
       @k.parse IO.read(@path)

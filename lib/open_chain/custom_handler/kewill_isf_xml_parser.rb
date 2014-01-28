@@ -215,7 +215,7 @@ module OpenChain
         # This way we can guarantee that we don't get duplicate records created and ensure the last event time
         # is set right away in an atomic manner as well.
         sf = nil
-        Lock.acquire(Lock::ISF_PARSER_LOCK, 3) do
+        Lock.acquire(Lock::ISF_PARSER_LOCK, times: 3) do
           local_sf = SecurityFiling.where(:host_system=>SYSTEM_NAME, :host_system_file_number=>host_system_file_number).first_or_create! :last_event => last_event_time
 
           if parse_file? local_sf, last_event_time

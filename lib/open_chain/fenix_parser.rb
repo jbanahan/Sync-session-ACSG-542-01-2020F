@@ -486,7 +486,7 @@ module OpenChain
       # at the same time (prevents duplicate entries from being created).
       entry = nil
       importer = nil
-      Lock.acquire(Lock::FENIX_PARSER_LOCK, 3) do 
+      Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
         entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
 
         # Because the Fenix shell records created by the imaging client only have an entry number in them,
@@ -579,7 +579,7 @@ module OpenChain
 
       accumulated_entry_dates.each do |entry_number, dates|
         entry = nil
-        Lock.acquire(Lock::FENIX_PARSER_LOCK, 3) do 
+        Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
           # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
           entry = Entry.where(:entry_number => entry_number, :source_system => SOURCE_CODE).first_or_create! :import_country => canada
         end

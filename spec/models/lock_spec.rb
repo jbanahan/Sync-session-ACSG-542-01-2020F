@@ -96,6 +96,26 @@ describe Lock do
       # then the latter thread is going to block undefinitely anyway.
       (end_time - start_time).should <= 1.0
     end
+
+    it "allows for temp locks to be used that clean up the lock name record" do
+      started = nil
+      Lock.acquire 'LockSpecTemp', :temp_lock=>true do
+        started = true
+      end
+
+      expect(started).to be_true
+      expect(Lock.find_by_name('LockSpecTemp')).to be_nil
+    end
+
+    it "removes temp locks when errors occur in yield block" do
+      expect {
+        Lock.acquire 'LockSpecTemp', :temp_lock=>true do
+          raise "Blah"
+        end  
+      }.to raise_error "Blah"
+      
+      expect(Lock.find_by_name('LockSpecTemp')).to be_nil
+    end
   end
 
   context :retry_lock_aquire do
@@ -106,7 +126,7 @@ describe Lock do
       Lock.should_receive(:acquired_lock).and_return true
 
       started = false
-      Lock.acquire 'LockSpec', 2 do
+      Lock.acquire 'LockSpec', times: 2 do
         started = true
       end
 
@@ -118,7 +138,7 @@ describe Lock do
 
       started = false
       expect {
-        Lock.acquire 'LockSpec', 5 do
+        Lock.acquire 'LockSpec', times: 5 do
           started = true
           raise ActiveRecord::StatementInvalid, "Mysql2::Error: Lock wait timeout exceeded; try restarting transaction:"
         end
@@ -133,7 +153,7 @@ describe Lock do
 
       started = false
       expect {
-        Lock.acquire 'LockSpec', 5 do
+        Lock.acquire 'LockSpec', times: 5 do
           started = true
         end
       }.to raise_error ActiveRecord::StatementInvalid, "Mysql2::Error: ERROR!"

@@ -110,7 +110,7 @@ describe OpenChain::FenixParser do
 
   def do_shared_test entry_data
     # Make sure the locking mechanism is utilized
-    Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK, 3).and_yield
+    Lock.should_receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
     
     OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by_broker_reference @file_number

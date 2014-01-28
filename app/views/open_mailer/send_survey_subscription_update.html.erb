@@ -1,6 +1,6 @@
 <%if @cap_mode%>
-<p>A corrective action plan associated with one of your surveys has been updated.</p>
+<p>A corrective action plan associated with one of your surveys has been updated by the following <%="user".pluralize(@updated_by.length)%>: <%=@updated_by.join(", ")%>.</p>
 <%else%>
-<p>A survey you have been subscribed to has been updated.</p>
+<p>A survey you are subscribed to has been updated by the following <%="user".pluralize(@updated_by.length)%>: <%=@updated_by.join(", ")%>.</p>
 <%end%>
 <p>To view the survey follow this link: <a href='<%=@link_addr%>'><%=@link_addr%></a></p>
