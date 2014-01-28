@@ -185,6 +185,59 @@ describe FileImportProcessor do
         e = Entry.where(:broker_reference => "1").first
         e.total_packages.should == 2
       end
+
+      context "error cases" do
+        before :each do 
+          @listener = Class.new do 
+            attr_reader :messages, :failed
+            def process_row row_number, object, m, failed
+              @messages = m
+              @failed = failed
+            end
+          end.new
+        end
+
+        it "errors on invalid HTS values for First HTS fields" do
+          c = Factory(:country,:import_location=>true)
+          OfficialTariff.create! country: c, hts_code: "9876543210"
+
+          ModelField.reload        
+          pro = FileImportProcessor.new(@f,nil,[@listener])
+          pro.stub(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+            SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
+          ])
+          pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1
+
+          Product.count.should == 0
+          expect(@listener.failed).to be_true
+          expect(@listener.messages).to include("ERROR: 1234.56.7890 is not valid for #{c.iso_code} HTS 1")
+        end
+
+        it "informs user of missing key fields" do
+          pro = FileImportProcessor.new(@f,nil,[@listener])
+          pro.stub(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=>"prod_name",:rank=>1)
+          ])
+
+          expect {pro.do_row 0, ['name'], true, -1}.to raise_error "Cannot load Product data without a value in the 'Unique Identifier' field."
+        end
+
+        it "informs user of missing compound key fields" do
+          c = Factory(:country,:import_location=>true)
+          OfficialTariff.create! country: c, hts_code: "9876543210"
+
+          ModelField.reload        
+          pro = FileImportProcessor.new(@f,nil,[@listener])
+          pro.stub(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+            SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>2)
+          ])
+
+          expect {pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1}.to raise_error "Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields."
+        end
+      end
+      
     end
   end
 end

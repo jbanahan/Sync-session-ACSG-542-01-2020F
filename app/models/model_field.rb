@@ -1,3 +1,5 @@
+require 'open_chain/field_logic'
+
 class ModelField
 
   # When web mode is true, the class assumes that there is a before filter calling ModelField.reload_if_stale at the beginning of every request.
@@ -141,8 +143,17 @@ class ModelField
   end
     #code to process when importing a field
   def process_import(obj,data)
-    return "Value ignored. #{FieldLabel.label_text uid} is read only." if self.read_only?
-    @import_lambda.call(obj,data)
+    v = nil
+    if self.read_only?
+      v = "Value ignored. #{FieldLabel.label_text uid} is read only."
+    else
+      v = @import_lambda.call(obj,data)
+    end
+    # Force all responses returned from the import lambda to have an error? method.
+    if v && !v.respond_to?(:error?)
+      def v.error?; false; end
+    end
+    v
   end
 
   #get the unformatted value that can be used for SearchCriterions
@@ -609,7 +620,12 @@ class ModelField
               #validate HTS
               hts = TariffRecord.clean_hts(d)
               return "Blank HTS ignored for #{c.iso_code}" if hts.blank?
-              return "#{d} is not valid for #{c.iso_code} HTS #{i}" unless OfficialTariff.find_by_country_id_and_hts_code(c.id,hts) || OfficialTariff.where(country_id:c.id).empty?
+              unless OfficialTariff.find_by_country_id_and_hts_code(c.id,hts) || OfficialTariff.where(country_id:c.id).empty?
+                e = "#{d} is not valid for #{c.iso_code} HTS #{i}"
+                # Indicate the message is an error message
+                def e.error?; true; end
+                return e;
+              end
               cls = nil
               #find classifications & tariff records in memory so this can work on objects that are dirty
               p.classifications.each do |existing| 
