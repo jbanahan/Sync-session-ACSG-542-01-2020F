@@ -25,39 +25,48 @@ class SearchQuery
   # and result is the returned values for the query
   #
   # opts paramter takes :per_page and :page values like `will_paginate`. NOTE: Target page starts with 1 to emulate will_paginate convention
+  # See to_sql for full list of options
   def execute opts={}
     rs = ActiveRecord::Base.connection.execute to_sql opts
-    r = []
+    rows = []
+    
+    # This gives us the number of table.id columns prefixed onto the query that will need to get dropped
+    core_module_id_aliases = ordered_core_modules(opts)
+
     rs.each do |row|
-      k = row[0]
-      raw = row.to_a.drop(1)
+      # We want to remove these from the selected row since they're not actual query data
+      # First column to remove is ALWAYS the core primary key
+      core_primary_key = row[0]
+      raw_result_row = row.to_a.drop(core_module_id_aliases.size)
       
       #scrub results through model field
       result = []
-      sorted_columns.each_with_index {|sc,i| result << sc.model_field.process_query_result(raw[i],@user)}
+      sorted_columns.each_with_index {|sc,i| result << sc.model_field.process_query_result(raw_result_row[i],@user)}
 
-      result = result.collect {|r| r.nil? ? "" : r}
+      result = result.collect {|column| column.nil? ? "" : column}
 
-      h = {:row_key=>k, :result=>result}
+      h = {:row_key=>core_primary_key, :result=>result}
       if block_given?
         yield h
       else
-        r << h
+        rows << h
       end
     end
-    block_given? ? nil : r
+    block_given? ? nil : rows
   end
 
   #get distinct list of primary keys for the query
   def result_keys opts={}
-    rs = ActiveRecord::Base.connection.execute to_sql opts
-    keys = rs.collect {|r| r[0]}
-    keys.uniq
+    # Using a hash to preserve insertion order (Set doesn't guarantee that while hash does)
+    keys = {}
+    execute(opts.merge(select_core_module_keys_only:true)) {|result| keys[result[:row_key]] = true}
+    keys.keys
   end
   
   #get the row count for the query
   def count
-    ActiveRecord::Base.connection.execute("#{to_sql} LIMIT 1000").count
+    # Limit count to only including the core module keys will eliminate running any subselects in the select clauses
+    ActiveRecord::Base.connection.execute("#{to_sql(select_core_module_keys_only:true)} LIMIT 1000").count
   end
 
   #get the count of the total number of unique primary keys for the top level module 
@@ -65,27 +74,59 @@ class SearchQuery
   # For example: If there are 7 entries returned with 3 commercial invoices each, this record will return 7
   # If you're looking for a return value of `21` you should use the `count` method
   def unique_parent_count
-    r = "SELECT COUNT(DISTINCT #{@search_setup.core_module.table_name}.id) " +
-      build_from + build_where
+    r = "SELECT COUNT(DISTINCT #{ordered_core_modules(select_parent_key_only:true)[0].table_name}.id) " +
+      build_from(disable_join_optimization: true) + build_where
     ActiveRecord::Base.connection.execute(r).first.first
   end
 
   # get the SQL query that will be executed
   #
   # opts parameter takes :per_page and :page values like `will_paginate`
+  # use the 'select_parent_key_only' opt to create a query only returning the parent core object keys (ala unique_parent_count)
+  # use the 'select_core_module_keys_only' to create a query returning the parent and child core module keys, 
+  # when utilized the parent core module key is ALWAYS returned in the first column
   def to_sql opts={}
-    build_select + build_from + build_where + build_order + build_pagination_from_opts(opts)
+    build_select(opts) + build_from(opts) + build_where + build_order + build_pagination_from_opts(opts)
   end
+
   private
-  def build_select
+  def build_select opts
     r = "SELECT DISTINCT "
-    flds = ["#{search_setup.core_module.table_name}.id"]
-    sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
+    flds = core_module_id_select_list opts
+    unless opts[:select_core_module_keys_only] || opts[:select_parent_key_only]
+      sorted_columns.each_with_index {|sc,idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
+    end
     r << "#{flds.join(", ")} "
     r
   end
 
-  def build_from
+  def core_module_id_select_list opts
+    # We need to use a SELECT DISTINCT for cases where we have to join a child table into the query because the
+    # user added a parameter or sort from it but did NOT have that table as part of the select list.  Because of this
+    # we need to make sure then that we're NOT combining results via the distinct from any of the tables the user did included 
+    # in the select list.  Include the table's id column for any core module table included in the select list.
+
+    # .ie User queries for invoice amounts on entries with invoice line po number of 123.  If two different invoices
+    # had PO 123 on them and totaled to 100, we want to make sure we're showing both of them.  With just a plain distinct
+    # they'll roll together.
+    ordered_core_modules(opts).map {|cm| "#{cm.table_name}.id as \"#{cm.table_name}_id\""}
+  end
+
+  def ordered_core_modules opts
+    if opts[:select_parent_key_only]
+      [@search_setup.core_module]
+    else
+      # Some columns (like _blank)  won't have core modules
+      child_core_modules = Set.new(@search_setup.search_columns.map {|sc| sc.model_field.core_module}.compact)
+
+      # Keep the primary core module's id as the first column
+      child_core_modules.delete(@search_setup.core_module)
+
+      [@search_setup.core_module] + child_core_modules.to_a
+    end
+  end
+
+  def build_from opts
     top_module = @search_setup.core_module
     dmc = top_module.default_module_chain
     r = "FROM #{top_module.table_name} "
@@ -119,6 +160,10 @@ class SearchQuery
       r << join_statements.reverse.join("  ")
     end
     r << " #{@extra_from} " unless @extra_from.blank?
+
+    unless opts[:disable_join_optimization] || opts[:select_core_module_keys_only]
+      r << from_inner_optimization(opts)
+    end
     r
   end
 
@@ -177,7 +222,7 @@ class SearchQuery
   def build_pagination_from_opts opts
     target_page = (opts[:page].blank? || !opts[:page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? 1 : opts[:page].to_i
     per_page = (opts[:per_page].blank? || !opts[:per_page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? nil : opts[:per_page].to_i
-    if per_page
+    if per_page && !opts[:disable_pagination]
       return build_pagination(per_page, target_page)
     else
       return ""
@@ -194,5 +239,47 @@ class SearchQuery
       x = a.model_field_uid <=> b.model_field_uid if x==0
       x
     }
+  end
+
+  def from_inner_optimization opts
+    # The optimization we're doing here is to join on a subselect of the data so that we can eliminate having to
+    # do the select subselects for all but only the data we're going to be showing to the user, it also allows
+    # the query to only buffer for DISTINCT the values we'll actually be displaying as well.
+
+    # This isn't necessarily an optimization for search queries hitting small bits of data but it helps quite a bit on very broad ones.
+    # A further optimization might be to track runtimes of searches and only add this optimization if the query runs
+    # over X amount of seconds.
+    inner_optimization = ""
+    pagination = build_pagination_from_opts(opts)
+
+    # There's little point in doing this optimation if we're not paginating the results since the whole point of this
+    # is to only do the full select subselects over the range of data we're going to be viewing.  This also means
+    # that the downloads will NOT have this optimization applied.  We could possible further optimize those cases by 
+    # taking an iterative approach to the downloads and walking through those one "page" at a time as part of the 
+    # download process which would allow for applying this method to downloads as well.
+    unless pagination.blank?
+      inner_opts = opts.merge select_core_module_keys_only: true, disable_join_optimization: true
+      core_modules = ordered_core_modules inner_opts
+
+      inner_optimization = " INNER JOIN (" + to_sql(inner_opts) + ") AS inner_opt ON "
+
+      core_modules.each_with_index do |cm, i|
+        inner_optimization += " AND " if i > 0
+        inner_optimization += "(#{cm.table_name}.id = inner_opt.#{cm.table_name}_id"
+        # The first element of core modules is the base model (ie. product, entry, etc) we never have to worry about
+        # a null value in there
+        if i > 0
+          inner_optimization += " OR (#{cm.table_name}.id IS NULL AND #{cm.table_name}_id IS NULL)"
+        end
+        inner_optimization += ")"
+      end
+
+      # We need to disable the pagination because the subselect optimization already determined what 
+      # set of data keys the outer query should include (thus ensuring the correct paginated range 
+      # of data is used)
+      opts[:disable_pagination] = true
+    end
+
+    inner_optimization
   end
 end

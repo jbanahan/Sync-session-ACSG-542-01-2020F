@@ -103,8 +103,8 @@ class ImportedFilesController < ApplicationController
         error_redirect "You must include a \"To\" address." 
         return
       end
-      subject = params[:subject].blank? ? "[chain.io] #{@file.core_module.label} data." : params[:subject]
-      body = params[:body].blank? ? "#{current_user.full_name} has sent you the attached file from chain.io." : params[:body]
+      subject = params[:subject].blank? ? "[VFI Track] #{@file.core_module.label} data." : params[:subject]
+      body = params[:body].blank? ? "#{current_user.full_name} has sent you the attached file from VFI Track." : params[:body]
       opts = {}
       opts[:extra_country_ids] = params[:extra_countries] unless params[:extra_countries].blank?
       f.delay.email_updated_file current_user, params[:to], "", subject, body, opts

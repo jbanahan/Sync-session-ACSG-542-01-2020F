@@ -297,7 +297,8 @@ module OpenChain; module CustomHandler; module Polo
       def hts_value val
         hts = nil
         unless val.nil?
-          val = val.gsub(".", "")
+          # val can possibly not be a string -> 1234.34
+          val = val.to_s.gsub(".", "")
 
           # These invoices apparently will sometimes have HTS values like "Set Item 1: 1234567890 / Set Item 2: 9876543210"
           # In that case we don't actually want to pull the value in since we don't which hts should actually be used

@@ -74,7 +74,7 @@ module OpenChain
             begin
               # Only deliver the emails if we're in prod mode (other modes can grab the file via ec2)
               if @env == :prod
-                OpenMailer.send_simple_html(EMAIL_INVOICES_TO, "[chain.io] Vandegrift, Inc. RL Canada Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(broker_invoices, start_time), files).deliver!
+                OpenMailer.send_simple_html(EMAIL_INVOICES_TO, "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(broker_invoices, start_time), files).deliver!
                 delivered = true
               end
             ensure
