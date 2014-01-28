@@ -21,7 +21,7 @@ module OpenChain
           begin
             ActiveRecord::Base.transaction do
               CSV.parse(data,headers:true) do |row|
-                next if row.blank?
+                next if row.blank? || row[0].match(/Subtotal/)
                 part_number = row[5].split('-').first.strip
                 q = DrawbackImportLine.where(importer_id:@company.id,
                   entry_number:row[0],part_number:part_number).

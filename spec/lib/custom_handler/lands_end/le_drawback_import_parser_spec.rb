@@ -26,6 +26,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     d1.unit_price.should == 5
     d1.rate.should == BigDecimal("0.197")
   end
+  it "should skip subtotal lines" do
+    @data.gsub!(/23105002005/,'Subtotal')
+    @p.parse @data
+    DrawbackImportLine.count.should == 2
+  end
   it "should not call LinkableAttachmentImportRule" do
     LinkableAttachmentImportRule.should_not_receive(:exists_for_class?).with(Product)
     @p.parse @data
