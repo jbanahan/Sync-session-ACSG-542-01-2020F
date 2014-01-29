@@ -142,7 +142,7 @@ projectApp.directive 'chainProjectDeliverable', ['$compile','projectSvc',($compi
       editAction = () ->
         projectSvc.deliverableToEdit = scope.deliverable
         $('chain-project-deliverable-edit').find('div.modal').modal('show')
-        $(el).find('input[ng-model="deliverable.description"]').focus()
+        $('chain-project-deliverable-edit').find('input[ng-model$=".description"]').focus()
 
       appEl = $(el).parents('div[ng-controller]')
       if appEl.find('chain-project-deliverable-edit').length == 0
