@@ -43,7 +43,10 @@ describe Project do
     it "should not have message if closed" do
       expect(Project.new(closed_at:Time.now,due:2.weeks.ago).red_messages).to be_blank
     end
-    it "have message if not updated in 10 days" do
+    it "should have message if no active milestones" do
+      expect(Project.new.red_messages.to_a).to eq ["Project doesn't have any open deliverables."]
+    end
+    it "should have message if not updated in 10 days" do
       p = Project.new
       p.updated_at = 11.days.ago
       expect(p.red_messages.join).to match /more than 10 days/
