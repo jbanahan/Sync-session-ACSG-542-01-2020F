@@ -7,6 +7,6 @@ dependencies:
     - mkdir ./spec/support/tmp
 test:
   post:
-    - bundle exec rake spec:javascript:
-      environment:
-        RAILS_ENV: test
+    - bundle exec rake spec:javascript
+        environment:
+          RAILS_ENV: test
