@@ -22,6 +22,14 @@ describe ProjectDeliverablesController do
       expect(r[@u1.full_name]['pn1'][0]['id']).to eq @d1.id
       expect(r[@u2.full_name]['pn2'][0]['id']).to eq @d2.id
     end
+    it "should not return for closed projects" do
+      @d1.project.update_attributes(closed_at:Time.now)
+      get :index, format: :json
+      expect(response).to be_success
+      r = JSON.parse(response.body)['deliverables_by_user']
+      expect(r.size).to eq 1
+      expect(r[@u2.full_name]['pn2'][0]['id']).to eq @d2.id
+    end
     it "should sort by project" do
       get :index, format: :json, layout: 'project'
       r = JSON.parse(response.body)['deliverables_by_user']

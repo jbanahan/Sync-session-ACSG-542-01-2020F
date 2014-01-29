@@ -1,6 +1,13 @@
 require 'spec_helper'
 
 describe ProjectDeliverable do
+  describe :not_closed do
+    it "should not return closed deliverables" do
+      d1 = Factory(:project_deliverable)
+      d2 = Factory(:project_deliverable,project:Factory(:project,closed_at:Time.now))
+      expect(ProjectDeliverable.not_closed.to_a).to eq [d1]
+    end
+  end
   context :security do
     it "should allow view if project is visible" do
       pd = Factory(:project_deliverable)

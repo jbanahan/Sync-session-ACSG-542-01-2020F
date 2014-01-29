@@ -8,7 +8,7 @@ class ProjectDeliverablesController < ApplicationController
       format.json {
         return render_json_error "You do not have permission to view projects.", 401 unless current_user.view_projects?
         dbu = {}
-        ProjectDeliverable.search_secure(current_user, ProjectDeliverable.incomplete.order("due_date ASC")).each do |d|
+        ProjectDeliverable.search_secure(current_user, ProjectDeliverable.incomplete.not_closed.order("due_date ASC")).each do |d|
           h = project_deliverable_hash(d)
           nm = d.assigned_to.blank? ? '' : d.assigned_to.full_name
           dd = (d.due_date.nil?) ? 'No Due Date' : d.due_date.beginning_of_week.strftime('Week of %Y-%m-%d')
