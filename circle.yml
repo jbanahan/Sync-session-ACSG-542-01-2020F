@@ -5,3 +5,8 @@ dependencies:
   pre:
     - mkdir ./tmp
     - mkdir ./spec/support/tmp
+test:
+  post:
+    - bundle exec rake spec:javascript:
+      environment:
+        RAILS_ENV: test
