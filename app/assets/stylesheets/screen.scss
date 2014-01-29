@@ -4,11 +4,11 @@ body {
 img {
   border-style: none;
 }
-#dash-logo {
+.dash-logo {
+  height: 30px;
+}
+.dash-container {
   padding: 5px 15px;
-  img {
-    height: 30px;
-  }
 }
 div.clear {
   clear: both;

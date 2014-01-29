@@ -115,7 +115,7 @@ OpenChain::Application.routes.draw do
 
   match "/textile/preview" => "textile#preview"
   match "/tracker" => "public_shipments#index"
-	match "/index.html" => "dashboard_widgets#index"
+	match "/index.html" => "home#index"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
   match "/shipments/:id/undo_receive" => "shipments#undo_receive"
@@ -139,6 +139,7 @@ OpenChain::Application.routes.draw do
   match "/quick_search/module_result" => "quick_search#module_result"
   match "/enable_run_as" => "users#enable_run_as"
   match "/disable_run_as" => "users#disable_run_as"
+  match "/users/set_homepage" => "users#set_homepage", :via => :post
 
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
@@ -468,6 +469,6 @@ OpenChain::Application.routes.draw do
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 
-  root :to => "dashboard_widgets#index"
+  root :to => "home#index"
 
 end
