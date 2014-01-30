@@ -8,6 +8,7 @@ module OpenChain
         @mode = parameters[:mode] ? parameters[:mode] : 'not_paid'
         @year = parameters[:year] ? parameters[:year] : Time.current.year
         @month = parameters[:month] ? parameters[:month] : (Time.current - 1.month).month
+        @customer_number = parameters[:customer_number]
       end
       
       def self.permission? user
@@ -19,6 +20,9 @@ module OpenChain
       end
 
       def run
+        importer = Company.find_by_alliance_customer_number(@customer_number)
+
+        raise "No company record found for customer number #{@customer_number}." unless importer
         wb = Spreadsheet::Workbook.new
         @summary_sheet = wb.create_worksheet :name=>"Summary"
         @detail_sheet = wb.create_worksheet :name=>"Details"
@@ -33,7 +37,7 @@ module OpenChain
         end
         @detail_cursor += 1
 
-        entries = find_entries
+        entries = find_entries importer
         summary_hash = {}
         entries.each do |ent|
           raise "You do not have permission to view the entries related to this report." unless ent.can_view?(@run_by)
@@ -99,20 +103,20 @@ module OpenChain
           end
         end
 
-        t = Tempfile.new(["EddieBauerStatementSummary",".xls"])
+        t = Tempfile.new(["EddieBauerStatementSummary-#{@customer_number}-",".xls"])
         wb.write t
         t
       end
-      def find_entries
+      def find_entries importer
         r = nil
         if @mode && @mode.to_s=='previous_month'
           r = Entry.
-            where(:importer_id=>Company.find_by_alliance_customer_number("EDDIE").id).
+            where(:importer_id=>importer.id).
             where("MONTH(entries.release_date) = ? AND YEAR(entries.release_date) = ?", @month, @year).
             order("entries.release_date ASC")
         else
           r = Entry.
-            where(:importer_id=>Company.find_by_alliance_customer_number("EDDIE").id).
+            where(:importer_id=>importer.id).
             where("length(daily_statement_number) > 0").
             where("monthly_statement_paid_date is null")
         end

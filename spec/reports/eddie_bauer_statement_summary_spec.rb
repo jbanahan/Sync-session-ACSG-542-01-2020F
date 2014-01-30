@@ -24,25 +24,29 @@ describe OpenChain::Report::EddieBauerStatementSummary do
     @tar = @line.commercial_invoice_tariffs.create!(:duty_rate=>BigDecimal("0.081"),
       :duty_amount=>BigDecimal("12.22"))
     Entry.any_instance.stub(:can_view?).and_return(true)
+    MasterSetup.any_instance.stub(:request_host).and_return "www.test.com"
   end
   after :each do
     @tmp.unlink if @tmp
   end
   it "should raise exception if user cannot view returned entries" do
     Entry.any_instance.stub(:can_view?).and_return(false)
-    lambda {described_class.run_report @user}.should raise_error "You do not have permission to view the entries related to this report." 
+    lambda {described_class.run_report @user, customer_number: @imp.alliance_customer_number}.should raise_error "You do not have permission to view the entries related to this report." 
+  end
+
+  def get_summary_tab
+    get_spreadsheet.worksheet 0
   end
 
   def get_details_tab
-    @tmp = described_class.run_report @user
-    wb = Spreadsheet.open @tmp
-    wb.worksheet 1
+    get_spreadsheet.worksheet 1
   end
-  def get_summary_tab
-    @tmp = described_class.run_report @user
-    wb = Spreadsheet.open @tmp
-    wb.worksheet 0
+
+  def get_spreadsheet 
+    @tmp = described_class.run_report @user, customer_number: @imp.alliance_customer_number
+    Spreadsheet.open @tmp
   end
+  
   it "should populate details tab" do
     sheet = get_details_tab
     sheet.last_row_index.should == 1
@@ -76,7 +80,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
         :daily_statement_number=>'123456',:monthly_statement_paid_date=>Time.now)
       dont_find_because_not_on_daily = Factory(:entry,:importer=>@imp) 
       dont_find_because_not_eddie = Factory(:entry,:daily_statement_number=>'12345')
-      described_class.new(@user).find_entries.to_a.should == [@ent]
+      described_class.new(@user).find_entries(@imp).to_a.should == [@ent]
     end
   end
   context "previous_month mode" do
@@ -86,9 +90,9 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       @ent.update_attributes(:release_date=>3.months.ago)
       dont_find_even_though_unpaid_because_different_month = Factory(:entry,
         :importer=>@imp,:release_date=>1.hour.from_now)
-      options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year}
+      options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>@imp.alliance_customer_number}
       ent = described_class.new(@user,options)
-      ent.find_entries.to_a.should == [@ent,find_even_though_paid]
+      ent.find_entries(@imp).to_a.should == [@ent,find_even_though_paid]
     end
   end
   it "should total lines if multiple tariff records (and use higher duty rate)" do
