@@ -109,22 +109,20 @@ describe "ProjectApp", () ->
           expect(r.data).toEqual resp
         http.flush()
 
-  describe 'chainProjectDeliverable', () ->
+  describe 'chainProjectDeliverableEdit', () ->
     svc = $scope = project = deliverable = compile = el = null
     
     beforeEach inject ($rootScope,$compile,projectSvc,$templateCache) ->
       compile = $compile
       $scope = $rootScope
       svc = projectSvc
-      $templateCache.put('/assets/chain_project_deliverable.html','<div><div class="modal">abc</div></div>')
+      $templateCache.put('/assets/chain_project_deliverable_edit.html','<div><div class="modal">abc</div></div>')
       mockCallback = (p) ->
         null
-      deliverable = {id:1}
-      project = {id:2}
-      $scope.project = project
-      $scope.deliverable = deliverable
+      deliverable = {id:1,project_id:2}
+      svc.deliverableToEdit = deliverable
       $scope.savePromiseCallback = mockCallback
-      element = angular.element("<div chain-project-deliverable='deliverable' project='project' save-promise-callback='savePromiseCallback'></div>")
+      element = angular.element("<chain-project-deliverable-edit save-promise-callback='savePromiseCallback'></div>")
       el = compile(element)($scope)
       @
 
@@ -138,7 +136,7 @@ describe "ProjectApp", () ->
       spyOn(svc, 'saveDeliverable').andReturn(promise)
       $scope.$digest()
       el.scope().saveDeliverable()
-      expect(svc.saveDeliverable).toHaveBeenCalledWith(project,deliverable)
+      expect(svc.saveDeliverable).toHaveBeenCalledWith({id:2},deliverable)
 
     it "should call savePromiseCallback", () ->
       promise = {

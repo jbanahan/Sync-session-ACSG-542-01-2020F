@@ -161,6 +161,26 @@ describe "SurveyResponseApp", () ->
 #
 # FILTER TESTS
 #
+  describe "unsavedCommentsFilter", () ->
+    filter = null
+
+    beforeEach inject((unsavedCommentsFilter) ->
+      filter = unsavedCommentsFilter
+    )
+
+    it "should return all with new_comment values", () ->
+      answers = [
+        {id:1,new_comment:''} #don't find
+        {id:2,new_comment:'x'} #find
+        {id:3} #don't find
+        {id:4,new_comment:'abc'} #find
+        ]
+
+      matched = filter(answers)
+      expect(matched.length).toEqual 2
+      expect(matched[0].id).toEqual 2
+      expect(matched[1].id).toEqual 4
+
   describe "answerFilter", () ->
     filter = answers = null
 
@@ -296,3 +316,11 @@ describe "SurveyResponseApp", () ->
         d.answer_comments[0].user.id = 2
         expect($scope.showWarning(d)).toBe(true)
       
+    describe "hasUnsavedComments", () ->
+      it "should return true if response has unsaved comments", () ->
+        $scope.resp = {answers:[{id:1},{id:2,new_comment:'x'}]}
+        expect($scope.hasUnsavedComments()).toBe(true)
+
+      it "should return false if response doesn't have unsaved comments", () ->
+        $scope.resp = {answers:[{id:1},{id:2,new_comment:' '}]}
+        expect($scope.hasUnsavedComments()).toBe(false)
