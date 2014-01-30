@@ -137,6 +137,9 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
 
   $scope.filterAnswers = filterAnswers
 
+  $scope.hasUnsavedComments = () ->
+    $filter('unsavedComments')($scope.resp.answers).length != 0
+
   $scope.$watch 'srService.resp', (newVal,oldVal) ->
     $scope.resp = newVal
     filterAnswers()
@@ -163,3 +166,11 @@ srApp.filter 'answer', () ->
           else
             r.push a
      r
+
+srApp.filter 'unsavedComments', () ->
+  (answers) ->
+    r = []
+    return r unless answers
+    for a in answers
+      r.push a if a.new_comment && $.trim(a.new_comment).length > 0
+    r

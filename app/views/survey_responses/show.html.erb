@@ -1,3 +1,12 @@
+<%content_for :javascript do %>
+  Chain.onBeforeUnload(function(evt) {
+    if($('div[ng-controller]').scope().hasUnsavedComments()) {
+      return "You have not added all of your comments. If you leave the page without clicking the Add Comment button, they will not be saved."
+    } else {
+      return undefined;
+    }
+  });
+<%end%>
 <style>
   label {
     font-weight: bold;
