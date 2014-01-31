@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
     end
 
     it "generates xml for invoices" do
-      x = @g.generate_xml [@invoice]
+      x = @g.generate_xml @invoice
 
       x.root.name.should eq "Crocs210"
       expect(REXML::XPath.match(x, "/Crocs210/MasterBill")[0].text).to eq "12345"
@@ -128,16 +128,15 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       @invoice.broker_invoice_lines.update_all charge_type: "X"
 
       # If there's no charge lines included, the xml should be blank as well
-      expect(@g.generate_xml([@invoice])).to be_nil
+      expect(@g.generate_xml(@invoice)).to be_nil
     end
 
     it "skips invoices without any valid lines" do
       invoice_2 = Factory(:broker_invoice_line, charge_type: "X", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
               broker_invoice: Factory(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
 
-      x = @g.generate_xml [@invoice, invoice_2]
-      expect(REXML::XPath.match(x, "/Crocs210/Invoice").length).to eq 1
-      expect(REXML::XPath.first(x, "/Crocs210/Invoice/Number").text).to eq "A"
+      x = @g.generate_xml invoice_2
+      expect(x).to be_nil
     end
   end
 
@@ -154,27 +153,34 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
         ).broker_invoice
     end
 
-    it "generates xml and ftps it" do
-      contents = nil
-      @g.should_receive(:ftp_file) do |t|
-        contents = IO.read(t.path)
+    it "generates xml for multiple invoices and ftps them in individual files" do
+      invoice_2 = Factory(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
+                    broker_invoice: Factory(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
+      @invoice.entry.broker_invoices << invoice_2
+
+      contents = []
+      @g.should_receive(:ftp_file).exactly(2).times do |t|
+        contents << IO.read(t.path)
       end
 
       @g.receive :save, @invoice.entry
 
-      expect(contents).to_not be_nil
-      xml = REXML::Document.new(contents)
+      expect(contents).to have(2).items
+      xml = REXML::Document.new(contents[0])
       expect(REXML::XPath.first(xml, "/Crocs210/Invoice/Number").text).to eq "A"
 
-      expect(@invoice.entry.sync_records.first.fingerprint).to eq "A"
+      xml = REXML::Document.new(contents[1])
+      expect(REXML::XPath.first(xml, "/Crocs210/Invoice/Number").text).to eq "B"
+
+      expect(@invoice.entry.sync_records.first.fingerprint).to eq "A\nB"
       expect(@invoice.entry.sync_records.first.sent_at).to_not be_nil
       expect(@invoice.entry.sync_records.first.confirmed_at).to be >= (@invoice.entry.sync_records.first.sent_at + 1.minute)
     end
 
     it "skips invoices already sent but sends unsent ones" do
-      invoice_2 = Factory(:broker_invoice_line, charge_type: "S", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
+      invoice_2 = Factory(:broker_invoice_line, charge_type: "R", charge_amount: 20, charge_description: "Charge", charge_code: "1234",
               broker_invoice: Factory(:broker_invoice, invoice_total: 100, currency: "CAD", invoice_number: "B", entry: @invoice.entry)).broker_invoice
-
+      @invoice.entry.broker_invoices << invoice_2
       @invoice.entry.sync_records.create! trading_partner: "crocs 210", fingerprint: "B\nC"
 
       contents = nil

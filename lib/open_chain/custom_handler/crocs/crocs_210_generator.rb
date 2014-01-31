@@ -16,14 +16,17 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
     invoices_to_send = entry.broker_invoices.collect {|inv| sent_invoices.include?(inv.invoice_number) ? nil : inv}.compact
 
     unless invoices_to_send.blank?
-      xml = generate_xml invoices_to_send
-      # XML might be blank if the invoices have no charges that should be
-      # transmitted to Crocs
-      unless xml.blank?
-        Tempfile.open(["Crocs210-#{entry.broker_reference}-",'.xml']) do |t|
-          t << xml.to_s
-          t.flush
-          ftp_file t
+      invoices_to_send.each do |invoice|
+        xml = generate_xml invoice
+
+        # XML might be blank if the invoices have no charges that should be
+        # transmitted to Crocs
+        unless xml.blank?
+          Tempfile.open(["Crocs210-#{invoice.invoice_number.strip}-",'.xml']) do |t|
+            t << xml.to_s
+            t.flush
+            ftp_file t
+          end
         end
       end
       sync_record.update_attributes! fingerprint: (sent_invoices+invoices_to_send.map(&:invoice_number)).join("\n"), sent_at: Time.zone.now, confirmed_at: (Time.zone.now + 1.minute)
@@ -35,10 +38,10 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
     ftp2_vandegrift_inc "to_ecs/Crocs/210"
   end
 
-  def generate_xml broker_invoices
+  def generate_xml broker_invoice
     doc, root = build_xml_document "Crocs210"
 
-    entry = broker_invoices.first.entry
+    entry = broker_invoice.entry
 
     entry.split_master_bills_of_lading.each do |mb|
       add_element root, "MasterBill", mb
@@ -70,27 +73,25 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
 
     total_lines = 0
 
-    broker_invoices.each do |invoice|
-      lines = invoice.broker_invoice_lines.collect {|line| include_charge?(line) ? line : nil}.compact
+    lines = broker_invoice.broker_invoice_lines.collect {|line| include_charge?(line) ? line : nil}.compact
 
-      # Don't include invoices where there's no lines we're actually sending to Crocs
-      if lines.length > 0
-        total_lines += lines.length
+    # Don't include invoices where there's no lines we're actually sending to Crocs
+    if lines.length > 0
+      total_lines += lines.length
 
-        inv = add_element root, "Invoice"
+      inv = add_element root, "Invoice"
 
-        add_element inv, "Number", invoice.invoice_number
-        add_element inv, "Total", sprintf("%.2f", invoice.invoice_total)
-        add_element inv, "Currency", invoice.currency
+      add_element inv, "Number", broker_invoice.invoice_number.strip
+      add_element inv, "Total", sprintf("%.2f", broker_invoice.invoice_total)
+      add_element inv, "Currency", broker_invoice.currency
 
-        lines.each do |line|
+      lines.each do |line|
 
-          charge = add_element inv, "Charge"
-          add_element charge, "Type", line.charge_type
-          add_element charge, "Amount", sprintf("%.2f", line.charge_amount)
-          add_element charge, "Code", line.charge_code
-          add_element charge, "Description", line.charge_description
-        end
+        charge = add_element inv, "Charge"
+        add_element charge, "Type", line.charge_type
+        add_element charge, "Amount", sprintf("%.2f", line.charge_amount)
+        add_element charge, "Code", line.charge_code
+        add_element charge, "Description", line.charge_description
       end
     end
 
