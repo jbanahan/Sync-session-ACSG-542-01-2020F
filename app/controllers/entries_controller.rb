@@ -1,6 +1,8 @@
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
 class EntriesController < ApplicationController
+  include EntriesHelper
+
   def root_class
     Entry 
   end
@@ -50,7 +52,7 @@ class EntriesController < ApplicationController
     }
   end
   def show
-    e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first
+    e = Entry.where(:id=>params[:id]).includes(:commercial_invoices => [:commercial_invoice_lines=>[:commercial_invoice_tariffs]],:entry_comments=>[:entry],:import_country=>[]).first
     unless e
       error_redirect "Entry with id #{params[:id]} not found."
       return
@@ -63,12 +65,19 @@ class EntriesController < ApplicationController
         add_flash :notices, "Try simple mode by clicking on the button at the bottom of this screen." 
         current_user.update_attributes(:simple_entry_mode=>false)
       end
-      @entry = e
-      if e.import_country && e.import_country.iso_code == 'CA'
-        render :action=>'show_ca', :layout=>'one_col'
-      else
-        render :action=>(current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), :layout=>'one_col'
-      end
+      respond_to do |format|
+        format.html {
+          @entry = e
+          if e.canadian?
+            render :action=>'show_ca', :layout=>'one_col'
+          else
+            render :action=>(current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), :layout=>'one_col'
+          end
+        }
+        format.xls {
+          send_excel_workbook render_xls(e, current_user), "#{e.broker_reference}.xls"
+        }
+      end 
     }
   end
 

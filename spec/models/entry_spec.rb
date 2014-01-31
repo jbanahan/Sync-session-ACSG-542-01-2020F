@@ -222,4 +222,19 @@ describe Entry do
       @entry.k84_month.should eq 1
     end
   end
+
+  describe "canadian?" do
+    it 'identifies as canadian if import country is CA' do
+      e = Entry.new
+      c = Country.new
+      c.iso_code = "CA"
+      e.import_country = c
+      expect(e.canadian?).to be_true
+
+      e.import_country.iso_code = "US"
+      expect(e.canadian?).to be_false
+      e.import_country = nil
+      expect(e.canadian?).to be_false
+    end
+  end
 end

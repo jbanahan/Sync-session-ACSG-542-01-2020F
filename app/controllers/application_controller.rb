@@ -307,6 +307,12 @@ class ApplicationController < ActionController::Base
     u.destroy if u
   end
 
+  def send_excel_workbook workbook, filename
+    spreadsheet = StringIO.new 
+    workbook.write spreadsheet
+    send_data spreadsheet.string, :filename => filename, :type => :xls
+  end
+
   private
   
   def set_master_setup

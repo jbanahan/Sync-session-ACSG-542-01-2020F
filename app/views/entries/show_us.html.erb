@@ -5,6 +5,7 @@
   <%if current_user.company.master?-%>
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
+  <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
 <%end-%>
 <% cache ["v7",current_user.company,current_user,@entry] do-%>
   <style>
@@ -276,13 +277,13 @@
                 </td>
               </tr>
             <% end %>
-            <% if line.commercial_invoice_tariffs.count > 0%>
+            <% if line.commercial_invoice_tariffs.length > 0%>
               <tr>
                 <td colspan='<%=fields.length%>' style='font-size:111%; padding-left:0.5em;'>
                   <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:cit_spi_secondary,
                     :cit_classification_qty_1,:cit_classification_uom_1,:cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3,
                     :cit_gross_weight,:cit_tariff_description], :lines=>line.commercial_invoice_tariffs, 
-                    :overrides=>{:cit_hts_code=>lambda {|mf,line| show_tariff(line.hts_code,line.entry.import_country_id,true)}}}%>
+                    :overrides=>{:cit_hts_code=>lambda {|mf,line| show_tariff(line.hts_code,@entry.import_country_id,true)}}}%>
                 </td>
               </tr>
             <% end %>
@@ -292,7 +293,7 @@
       <hr />
     <%end%>
   <%else%>
-    <h3>More than 200 commercial invoice lines exist.  Please use the <a href='/entries'>search module</a> to report on commercial invoice details.</h3>
+    <h3>More than 200 commercial invoice lines exist.  Please <a href="<%=entry_path(@entry, format: :xls)%>">download</a> the entry data or use the <a href='/entries'>search module</a> to report on commercial invoice details.</h3>
   <%end%>
   <%if show_broker_invoices%>
     <a name='b_invoices'></a>

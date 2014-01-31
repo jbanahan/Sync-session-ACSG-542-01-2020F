@@ -124,10 +124,7 @@ class AdvancedSearchController < ApplicationController
       format.xls {
         m = XlsMaker.new(:include_links=>ss.include_links?,:no_time=>ss.no_time?)
         sq = SearchQuery.new ss, current_user
-        book = m.make_from_search_query sq
-        spreadsheet = StringIO.new 
-        book.write spreadsheet 
-        send_data spreadsheet.string, :filename => "#{ss.name}.xls", :type =>  "application/vnd.ms-excel"
+        send_excel_workbook m.make_from_search_query(sq), "#{ss.name}.xls"
       }
       format.json {
         ReportResult.run_report! ss.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>ss.id }

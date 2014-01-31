@@ -24,11 +24,7 @@ class SurveysController < ApplicationController
     respond_to do |format|
       format.html
       format.xls do 
-        wb = @survey.to_xls
-        io = StringIO.new
-        wb.write(io)
-        filename = @survey.name.blank? ? "survey" : @survey.name
-        send_data io.string, :type=> :xls, :filename => filename + ".xls"
+        send_excel_workbook @survey.to_xls, (@survey.name.blank? ? "survey" : @survey.name) + ".xls"
       end
     end
   end

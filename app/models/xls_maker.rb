@@ -130,15 +130,20 @@ class XlsMaker
 
   def self.create_workbook sheet_name, headers = []
     wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet :name=> sheet_name
-    XlsMaker.add_header_row(sheet, 0, headers) if headers.length > 0
+    create_sheet wb, sheet_name, headers
     wb
+  end
+
+  def self.create_sheet workbook, sheet_name, headers = []
+    sheet = workbook.create_worksheet :name=> sheet_name
+    XlsMaker.add_header_row(sheet, 0, headers) if headers.length > 0
+    sheet
   end
   
   private
   def prep_workbook cols
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet :name=>"Results"
+    wb = XlsMaker.create_workbook "Results"
+    sheet = wb.worksheet "Results"
     headers = []
     cols.each_with_index do |c,i|
       mf = ModelField.find_by_uid c.model_field_uid
