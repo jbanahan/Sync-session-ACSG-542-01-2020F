@@ -449,6 +449,7 @@ OpenChain::Application.routes.draw do
   resources :drawback_claims
 
   resources :error_log_entries, :only => [:index, :show]
+  match '/ang_error' => 'error_log_entries#log_angular', via: :post
   resources :charge_codes, :only => [:index, :update, :create, :destroy]
   resources :ports, :only => [:index, :update, :create, :destroy]
   resources :security_filings, :only=>[:index, :show]

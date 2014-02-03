@@ -10,4 +10,9 @@ class ErrorLogEntriesController < ApplicationController
       @error_log_entry = ErrorLogEntry.find params[:id]
     }
   end
+
+  def log_angular
+    StandardError.new('Angular Error').log_me [params[:exception],"REFERRER: #{request.referrer}"]
+    render text: 'ok'
+  end
 end
