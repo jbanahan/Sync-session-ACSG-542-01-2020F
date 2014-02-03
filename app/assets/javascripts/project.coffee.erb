@@ -146,7 +146,7 @@ projectApp.directive 'chainProjectDeliverable', ['$compile','projectSvc',($compi
 
       appEl = $(el).parents('div[ng-controller]')
       if appEl.find('chain-project-deliverable-edit').length == 0
-        scp = if appEl == true then appEl.scope() else el.scope().$root #conceit for unit testing where there is no outer controller
+        scp = if appEl.length > 0 then appEl.scope() else el.scope().$root #conceit for unit testing where there is no outer controller
         angEl = angular.element('<chain-project-deliverable-edit save-promise-callback="'+$(el).attr('save-promise-callback')+'"></chain-project-deliverable-edit>')
         appEl.append($compile(angEl)(scp)) #add the deliverable on the parent scope
       $(el).find('button.deliverable-edit').on 'click', () ->
