@@ -380,21 +380,21 @@
       $scope.remove = (crit) ->
         crit.deleteMe = true
 
-      $scope.renderTextInput = (opr) ->
+      $scope.renderTextInput = (data_type, opr) ->
         switch opr
           when "in", "notin"
             return "<textarea rows='8' ng-model='crit.value' class='form-control'/><div><small class='muted'>Enter one value per line.</small></div>"
           when "null", "notnull"
             return ""
 
-        return "<input type='text' ng-model='crit.value' class='form-control' />"
+        return "<" + (if (data_type == "text") then "textarea rows='2'" else "input type='text'") + " ng-model='crit.value' class='form-control' />"
 
       $scope.renderInput = (rScope, el) ->
         dateStepper = false #true means apply jStepper to a relative date field
         v_str = "<input type='text' ng-model='crit.value' class='form-control' />"
         switch rScope.crit.datatype
           when "string", "integer", "fixnum", "decimal"
-            v_str = rScope.renderTextInput rScope.crit.operator
+            v_str = rScope.renderTextInput rScope.crit.datatype, rScope.crit.operator
           when "date", "datetime"
             if chainSearchOperators.isRelative rScope.crit.datatype, rScope.crit.operator
               v_str = "<input type='text' ng-model='crit.value' class='form-control' />"
@@ -412,7 +412,7 @@
           when "boolean"
             v_str = ""
           when "text"
-            v_str = "<textarea ng-model='crit.value' class='form-control' />"
+            v_str = rScope.renderTextInput rScope.crit.datatype, rScope.crit.operator
 
         v = $compile(v_str)(rScope)
         va = $(el).find(".value_area")
