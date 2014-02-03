@@ -21,7 +21,6 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
       $http.get('/projects/'+projectId+'.json').then(((resp) ->
         svc.project = resp.data.project
         svc.loadingMessage = null
-        throw new Error('abc')
       ),((resp) ->
         svc.errorMessage = resp.data.error
         svc.loadingMessage = null

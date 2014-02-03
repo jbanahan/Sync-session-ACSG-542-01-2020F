@@ -12,11 +12,7 @@ class ErrorLogEntriesController < ApplicationController
   end
 
   def log_angular
-    begin
-      raise "Angular JS Error"
-    rescue
-      $!.log_me [params[:exception],"REFERRER: #{request.referrer}"]
-    end
+    StandardError.new('Angular Error').log_me [params[:exception],"REFERRER: #{request.referrer}"]
     render text: 'ok'
   end
 end
