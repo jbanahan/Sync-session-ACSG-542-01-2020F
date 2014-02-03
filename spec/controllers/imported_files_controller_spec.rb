@@ -84,6 +84,8 @@ describe ImportedFilesController do
         get :results, :id=>@f.id, :format=>:json
         response.should be_success
         @f.search_runs.first.should_not be_nil
+        r = JSON.parse response.body
+        expect(r['search_run_id']).to eq @f.search_runs.first.id
       end
       it "should update last accessed on search run" do
         @f.search_runs.create!(:last_accessed=>1.day.ago)
