@@ -19,7 +19,9 @@ module OpenChain
     def self.build_common_classifications selected_products, base_product
       products = []
       if selected_products.is_a? SearchRun 
-        products = selected_products.all_objects
+        keys = selected_products.find_all_object_keys.to_a
+        keys.in_groups_of(1000) { |group| products << Product.includes(:classifications=>:tariff_records).where("products.id in (?)", group).all}
+        products.flatten!
       elsif selected_products.respond_to? :values
         products = Product.includes(:classifications=>:tariff_records).where("products.id in (?)",selected_products.values)
       else

@@ -7,14 +7,14 @@ module OpenChain
       if !sr_id.blank? && sr_id.to_s.match(/^[0-9]*$/)
         sr = SearchRun.find sr_id
         good_count = sr.total_objects
-        sr.all_objects.each do |o|
-          yield good_count, o
+        sr.find_all_object_keys do |k|
+          yield good_count, core_module.find(k)
         end
       else
         pks = primary_keys.respond_to?(:values) ? primary_keys.values : primary_keys
         good_count = pks.size
         pks.each do |key|
-          p = core_module.klass.find key
+          p = core_module.find key
           yield good_count, p  
         end
       end

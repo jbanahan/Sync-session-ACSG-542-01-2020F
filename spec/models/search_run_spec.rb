@@ -44,7 +44,7 @@ describe SearchRun do
       sr.parent.should == @cf 
     end
   end
-  describe "all_objects / total_objects" do
+  describe "find_all_object_keys / total_objects" do
     before :each do
       @p1 = Factory(:product)
       @p2 = Factory(:product)
@@ -53,21 +53,53 @@ describe SearchRun do
     it "should find based on search_setup" do
       ss = Factory(:search_setup,:module_type=>"Product",:user=>@u)
       sr = ss.search_runs.create!
-      sr.all_objects.should == [@p1,@p2,@p3]
+      products = []
+      sr.find_all_object_keys {|k| products << Product.find(k)}
+      products.should == [@p1,@p2,@p3]
       sr.total_objects.should == 3
     end
+    it "should return a sized Enumerator if no block is given" do
+      ss = Factory(:search_setup,:module_type=>"Product",:user=>@u)
+      sr = ss.search_runs.create!
+      
+      keys = sr.find_all_object_keys
+
+      expect(keys.size).to eq 3
+      expect(keys.class).to eq Enumerator
+      products = []
+      keys.each {|k| products << Product.find(k)}
+      expect(products).to eq [@p1,@p2,@p3]
+    end
+
     it "should find based on imported_file" do
       fir = Factory(:file_import_result,:imported_file=>Factory(:imported_file,:module_type=>"Product"))
       [@p1,@p2].each {|p| fir.change_records.create!(:recordable_id=>p.id,:recordable_type=>"Product")}
       sr = fir.imported_file.search_runs.create!
-      sr.all_objects.should == [@p1,@p2]
+      sr.user = @u
+      products = []
+      sr.find_all_object_keys {|k| products << Product.find(k)}
+      products.should == [@p1,@p2]
       sr.total_objects.should == 2
+    end
+    it "should find based on imported file with a user search" do
+      fir = Factory(:file_import_result,:imported_file=>Factory(:imported_file,:module_type=>"Product"))
+      fir.imported_file.search_criterions.create! model_field_uid: 'prod_uid', operator: 'eq', value: @p1.unique_identifier
+      [@p1,@p2].each {|p| fir.change_records.create!(:recordable_id=>p.id,:recordable_type=>"Product")}
+      sr = fir.imported_file.search_runs.create!
+      sr.user = @u
+
+      products = []
+      sr.total_objects.should == 1
+      sr.find_all_object_keys {|k| products << Product.find(k)}
+      products.should == [@p1]
     end
     it "should find based on custom file" do
       cf = Factory(:custom_file)
       [@p2,@p3].each {|p| cf.custom_file_records.create!(:linked_object_id=>p.id,:linked_object_type=>"Product")}
       sr = cf.search_runs.create!
-      sr.all_objects.should == [@p2,@p3]
+      products = []
+      sr.find_all_object_keys {|k| products << Product.find(k)}
+      products.should == [@p2,@p3]
       sr.total_objects.should == 2
     end
   end

@@ -32,23 +32,33 @@ class SearchRun < ActiveRecord::Base
   end
 
   def total_objects
-    r = all_objects.size
-    r.is_a?(Hash) ? r.size : r #if the search has a group by, then the first size call will return an ordered hash
+    find_all_object_keys.size
   end
 
-  def all_objects
-    return @changed_objects unless @changed_objects.blank?
-    r = []
-    if !self.search_setup.nil?
-      r = self.search_setup.search.readonly(false) 
-    elsif !self.imported_file.nil? 
-      fir = self.imported_file.last_file_import_finished
-      r = fir.changed_objects unless fir.nil?
-    elsif !self.custom_file.nil?
-      r = self.custom_file.custom_file_records.collect {|cfr| cfr.linked_object}
+  def find_all_object_keys
+    if @object_keys.blank?
+      if !self.search_setup.nil? || !self.imported_file.nil?
+        query = nil
+        if !self.search_setup.nil?
+          query = SearchQuery.new self.search_setup, self.user
+        else
+          # make sure we utilize the imported file's search aspect since we don't actually want to 
+          # return every single result from the imported file if the user created a search over the imported result set
+          query = SearchQuery.new self.imported_file, self.user, :extra_from=>self.imported_file.result_keys_from
+        end
+        
+        @object_keys = query.result_keys
+      elsif !self.custom_file.nil?
+        # Avoid the linear key load from looping over the cf.custom_file_record's association also avoid pointless full object load
+        @object_keys = CustomFileRecord.where(custom_file_id: self.custom_file.id).pluck(:linked_object_id)
+      end
     end
-    @changed_objects = r
-    return @changed_objects
+
+    if block_given?
+      @object_keys.each {|k| yield k}
+    else
+      @object_keys.to_enum(:each) {@object_keys.size}
+    end
   end
 
   private 
