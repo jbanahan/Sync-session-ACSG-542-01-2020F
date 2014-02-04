@@ -151,7 +151,7 @@ describe ImportedFilesController do
       fir.change_records.create!(:recordable=>p1)
 
       # The important bit here is the 10 at the end of the with parameters
-      ImportedFilesController.any_instance.should_receive(:execute_query_to_hash).with(an_instance_of(SearchQuery), @u, 1, 10).and_return {}
+      ImportedFilesController.any_instance.should_receive(:execute_query_to_hash).with(an_instance_of(SearchQuery), @u, 1, 10).and_return({})
       get :results, :id=>f.id, :format=>:json
       response.should be_success
     end
@@ -167,7 +167,7 @@ describe ImportedFilesController do
       fir.change_records.create!(:recordable=>p1)
 
       # The important bit here is the 100 at the end of the with parameters
-      ImportedFilesController.any_instance.should_receive(:execute_query_to_hash).with(an_instance_of(SearchQuery), @u, 1, 100).and_return {}
+      ImportedFilesController.any_instance.should_receive(:execute_query_to_hash).with(an_instance_of(SearchQuery), @u, 1, 100).and_return({})
       get :results, :id=>f.id, :format=>:json
       response.should be_success
     end
