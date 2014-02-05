@@ -91,7 +91,10 @@ describe OpenChain::SearchQueryControllerHelper do
     @ss.search_columns.create!(:model_field_uid=>:prod_changed_at, :rank=>1)
     @ss.no_time= true
 
-    @p = Factory(:product,:name=>'mpn')
+    # Make sure the changed at time is set to a time that will roll back a day
+    # based on the timezone translation of GMT -> Hawaii
+    @p = Factory(:product, :name=>'mpn')
+    @p.update_column :changed_at, '2014-02-02 00:00:00-00:00'
     r = @k.new.execute_query_to_hash(SearchQuery.new(@ss,@user),@user,1,50)
     r = HashWithIndifferentAccess.new r
     # The only thing we really care about is how the time was returned
@@ -102,7 +105,7 @@ describe OpenChain::SearchQueryControllerHelper do
             {'label'=>'Edit','url'=>"/products/#{@p.id}/edit"}
           ],
         'vals'=>
-          [@p.changed_at.strftime("%Y-%m-%d")]
+          ['2014-02-01']
       }]
 
   end
