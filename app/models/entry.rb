@@ -96,7 +96,19 @@ class Entry < ActiveRecord::Base
     !self.liquidation_type.blank? ||
     self.liquidation_type_code != '00' 
   end
+
+  def split_master_bills_of_lading 
+    split_newline_values self.master_bills_of_lading
+  end
+
+  def split_house_bills_of_lading
+    split_newline_values self.house_bills_of_lading
+  end
+
   private
+  def split_newline_values values
+    values.blank? ? [] : values.split(/\r?\n */)
+  end
   def company_permission? user
     Entry.can_view_importer? self.importer, user
   end

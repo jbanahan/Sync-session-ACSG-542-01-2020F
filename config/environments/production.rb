@@ -66,4 +66,6 @@ OpenChain::Application.configure do
 
   #set path to include local ruby so forked processes can call bundle & rake
   ENV['PATH'] = "#{ENV['PATH']}:/usr/local/ruby/bin"
+
+  config.broadcast_model_events = true
 end

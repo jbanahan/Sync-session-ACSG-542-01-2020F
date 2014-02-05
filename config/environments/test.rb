@@ -42,4 +42,5 @@ OpenChain::Application.configure do
   
   #logger for showing sql
   #ActiveRecord::Base.logger = Logger.new(STDOUT)
+  config.broadcast_model_events = false
 end
