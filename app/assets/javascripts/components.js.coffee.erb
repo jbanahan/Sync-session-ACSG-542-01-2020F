@@ -1,13 +1,5 @@
 @components = angular.module 'ChainComponents', []
 
-@components.config ['$provide',($provide) ->
-  $provide.decorator "$exceptionHandler", ($delegate) ->
-     (exception, cause) ->
-        $delegate(exception, cause)
-        $.post('/ang_error',{exception:exception,cause:cause})
-]
-    
-
 #Boolean filter for writing text, works similar to a ternary operator like:
 # <div>{{x==1 | ifTrue : "I'm True" : "I'm not true"}}
 @components.filter 'ifTrue', () ->
