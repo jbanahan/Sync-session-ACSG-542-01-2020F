@@ -84,11 +84,14 @@ class ModelField
   # do post processing on raw sql query result generated using qualified_field_name
   def process_query_result val, user
     return "HIDDEN" unless can_view? user
-    if @process_query_result_lambda
-      return @process_query_result_lambda.call val
-    else
-      return val
+    result = @process_query_result_lambda ? @process_query_result_lambda.call(val) : val
+
+    # Make sure all times returned from the database are translated to the user's timezone (or Eastern if user has no timezone)
+    if result.respond_to?(:acts_like_time?) && result.acts_like_time?
+      result = result.in_time_zone(ActiveSupport::TimeZone[user.try(:time_zone) ? user.time_zone : "Eastern Time (US & Canada)"])
     end
+
+    result
   end
 
   # if true, then the field can't be updated with `process_import`

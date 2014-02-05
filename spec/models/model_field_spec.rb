@@ -14,6 +14,20 @@ describe ModelField do
     it "should write HIDDEN if user cannot view column" do
       ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:can_view_lambda=>lambda {|u| false}).process_query_result("x",@u).should=="HIDDEN"
     end
+    it "utilizes the user's timezone to translate date time values" do
+      @u.time_zone = "Hawaii"
+      time = Time.now.in_time_zone 'GMT'
+      result = ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:process_query_result_lambda=>lambda {|v| time}).process_query_result("x",@u)
+      #Without the to_s the times compare by clockticks since epoch, which isn't what we want here
+      expect(result.to_s).to eq time.in_time_zone('Hawaii').to_s
+    end
+    it "defaults timezone translation to Eastern" do
+      @u.time_zone = nil
+      time = Time.now.in_time_zone 'GMT'
+      result = ModelField.new(10000,:test,CoreModule::PRODUCT,:name,:process_query_result_lambda=>lambda {|v| time}).process_query_result("x",@u)
+      #Without the to_s the times compare by clockticks since epoch, which isn't what we want here
+      expect(result.to_s).to eq time.in_time_zone('Eastern Time (US & Canada)').to_s
+    end
   end
   context :read_only do
     before :each do

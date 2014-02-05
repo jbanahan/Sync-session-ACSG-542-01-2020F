@@ -33,10 +33,9 @@ module OpenChain
         end
         
         #format dates & times
-        tz = ActiveSupport::TimeZone[user.time_zone ? user.time_zone : 'Eastern Time (US & Canada)']
         row[:result].each_with_index do |r,i|
           if r.respond_to?(:acts_like_time?) && r.acts_like_time?
-            row[:result][i] = (ss.respond_to?(:no_time?) && ss.no_time?) ? r.strftime("%Y-%m-%d") : tz.at(r).to_s
+            row[:result][i] = (ss.respond_to?(:no_time?) && ss.no_time?) ? r.strftime("%Y-%m-%d") : r.to_s
           elsif r.respond_to?(:acts_like_date?) && r.acts_like_date?
             row[:result][i] = r.strftime("%Y-%m-%d")
           end
