@@ -476,6 +476,22 @@ describe SearchCriterion do
           sc.include_empty = true
           sc.apply(Entry.where("1=1")).all.should include entry
         end
+        it "finds something with doesn't start with parameter" do
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"nsw", :value=>"ABC123")
+          expect(sc.apply(Product.where("1=1")).all).to include @product
+        end
+        it "doesn't find something with doesn't start with parameter" do
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"nsw", :value=>@product.unique_identifier[0..2])
+          expect(sc.apply(Product.where("1=1")).all).to_not include @product
+        end
+        it "finds something with doesn't end with parameter" do
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"new", :value=>"ABC123")
+          expect(sc.apply(Product.where("1=1")).all).to include @product
+        end
+        it "doesn't find something with doesn't start with parameter" do
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"new", :value=>@product.unique_identifier[-3..-1])
+          expect(sc.apply(Product.where("1=1")).all).to_not include @product
+        end
       end
     end
   end

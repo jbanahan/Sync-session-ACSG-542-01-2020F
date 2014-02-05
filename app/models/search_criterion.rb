@@ -158,20 +158,25 @@ class SearchCriterion < ActiveRecord::Base
       return ["t","true","yes","y"].include? self_val.downcase
     end
     
-    return self_val.to_i if integer_field? && self.operator!="in"
-    
     case self.operator
     when "co"
       return "%#{self_val}%"
     when "nc"
       return "%#{self_val}%"
-    when "sw"
+    when "sw", "nsw"
       return "#{self_val}%"
-    when "ew"
+    when "ew", "new"
       return "%#{self_val}"
     when "in", "notin"
       return break_rows(self_val)
     else
+      # We want the actual data types here, not string representations, primarily to avoid unecessary DB type-casting to strings in the query
+      # self_val could be null here if the operator is one of the null value based ones
+      if self_val
+        self_val = self_val.to_i if integer_field?
+        self_val = BigDecimal.new(self_val) if decimal_field?
+      end
+      
       return self_val
     end
   end

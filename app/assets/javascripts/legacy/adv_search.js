@@ -98,6 +98,8 @@ var OCSearch = (function() {
       nq:numDateVal,
       sw:numDateVal,
       ew:numDateVal,
+      nsw:numDateVal,
+      'new':numDateVal,
       co:numDateVal,
       ada:relDateVal,
       adf:relDateVal,
@@ -154,6 +156,8 @@ var OCSearch = (function() {
         h += "<option value='lt'>Less Than</option>";
         h += "<option value='sw'>Starts With</option>";
         h += "<option value='ew'>Ends With</option>";
+        h += "<option value='nsw'>Does Not Start With</option>";
+        h += "<option value='new'>Does Not End With</option>";
         h += "<option value='co'>Contains</option>";
         h += "<option value='in'>One Of</option>";
         h += "<option value='notin'>Not One Of</option>";
@@ -163,6 +167,8 @@ var OCSearch = (function() {
         h += "<option value='nq'>Not Equal To</option>";
         h += "<option value='sw'>Starts With</option>";
         h += "<option value='ew'>Ends With</option>";
+        h += "<option value='nsw'>Does Not Start With</option>";
+        h += "<option value='new'>Does Not End With</option>";
         h += "<option value='co'>Contains</option>";
         h += "<option value='nc'>Doesn't Contain</option>";
         h += "<option value='in'>One Of</option>";

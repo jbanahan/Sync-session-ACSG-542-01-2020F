@@ -34,6 +34,8 @@ class CriterionOperator
     new("nc","NOT _fn_ LIKE ?","Doesn't Contain"),
     new("sw","_fn_ LIKE ?","Starts With"),
     new("ew","_fn_ LIKE ?","Ends With"),
+    new("nsw","_fn_ NOT LIKE ?","Noes Not Start With"),
+    new("new","_fn_ NOT LIKE ?","Does Not End With"),
     new("null","_fn_ IS NULL","Is Empty"),
     new("notnull","_fn_ IS NOT NULL","Is Not Empty"),
     new("bda","_fn_ < DATE_ADD(CURDATE(), INTERVAL -? DAY)","Before _ Days Ago"),
@@ -43,7 +45,7 @@ class CriterionOperator
     new("nq","(_fn_ IS NULL OR NOT _fn_ = ?)","Not Equal To"),
     new("in","(_fn_ IN (?))","One Of"),
     new("pm","(_fn_ >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -? MONTH) ,\"%Y-%m-01\") as DATE) and _fn_ < NOW() and NOT (MONTH(_fn_) = MONTH(NOW()) AND YEAR(_fn_) = YEAR(NOW())))","Previous _ Months"),
-    new("notin","(_fn_ NOT IN (?))","Not One Of"),
+    new("notin","(_fn_ NOT IN (?))","Not One Of")
   ]
   
   def self.find_by_key(key)
