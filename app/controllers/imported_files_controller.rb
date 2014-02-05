@@ -92,7 +92,9 @@ class ImportedFilesController < ApplicationController
     sr.per_page = per_page
     sr.save!
     def f.name; self.attached_file_name; end #duck typing to search setup
-    render :json=>execute_query_to_hash(SearchQuery.new(f,current_user,:extra_from=>f.result_keys_from),current_user,page,per_page) 
+    query_hash = execute_query_to_hash(SearchQuery.new(f,current_user,:extra_from=>f.result_keys_from),current_user,page,per_page) 
+    query_hash[:search_run_id] = sr.id
+    render json: query_hash
   end
 
   # email the updated current data for an imported_file
