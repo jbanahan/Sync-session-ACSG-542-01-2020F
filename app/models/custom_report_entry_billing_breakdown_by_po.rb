@@ -30,15 +30,12 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
     raise "User #{user.email} does not have permission to view invoices and cannot run the #{CustomReportEntryBillingBreakdownByPo.template_name} report." unless user.view_broker_invoices?
 
     search_cols = self.search_columns.order("rank ASC")
-    invoices = BrokerInvoice.select("distinct invoices.*")
+    invoices = BrokerInvoice.select("distinct broker_invoices.*")
     self.search_criterions.each {|sc| invoices = sc.apply(invoices)}
-    # The includes call needs to be added AFTER the search criterions are applied because
-    # the search_criterions method blindly adds joins to the active record query 
-    # we're building here whereas includes checks the query to make sure the joins are not
-    # already there before adding them
-    invoices.includes(:entry, :broker_invoice_lines)
     invoices = BrokerInvoice.search_secure user, invoices
     invoices = invoices.limit(row_limit) if row_limit
+    # Make sure there's a defined order by here so that all the invoices for the same entry are grouped together
+    invoices = invoices.order("entries.broker_reference, broker_invoices.invoice_date ASC")
 
     row = 1
     col = 0

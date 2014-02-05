@@ -55,7 +55,7 @@ describe CustomReportEntryBillingBreakdownByPo do
     before :each do
       @user = Factory(:master_user)
       @user.stub(:view_broker_invoices?).and_return(true)
-      @invoice_line_1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>100.00)
+      @invoice_line_1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>100.00, :broker_invoice=>Factory(:broker_invoice, invoice_number: "ABCD", invoice_date: "2014-01-01"))
       @invoice_line_2 = Factory(:broker_invoice_line,:broker_invoice=>@invoice_line_1.broker_invoice,:charge_description=>"CD2",:charge_amount=>99.99)
       @invoice = @invoice_line_1.broker_invoice
       @entry = @invoice.entry
@@ -159,6 +159,27 @@ describe CustomReportEntryBillingBreakdownByPo do
       expect{@report.to_arrays unpriv_user}.to raise_error {|e|
         e.message.should == "User #{unpriv_user.email} does not have permission to view invoices and cannot run the #{CustomReportEntryBillingBreakdownByPo.template_name} report."
       }
+    end
+
+    it "orders by entry number and invoice date" do
+      # add a second invoice to the @entry
+      @entry.broker_invoices << Factory(:broker_invoice_line, :charge_description=>"CD5",:charge_amount=>100.00, 
+                                          :broker_invoice => Factory(:broker_invoice, invoice_date: "2014-02-01", invoice_number: "EFGH", entry: @entry)).broker_invoice
+      @entry.save!
+
+      # create a second invoice / entry
+      entry2 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>100.00, 
+                          :broker_invoice=>Factory(:broker_invoice, invoice_date: '2014-01-01', invoice_number: "987654",
+                            entry: Factory(:entry, broker_reference: "AAAA", :carrier_code => 'SCAC')
+                          )
+                        ).broker_invoice.entry
+
+      r = @report.to_arrays @user
+      expect(r.length).to eq 8
+      expect(r[1][0]).to eq "AAAA"
+      expect(r[2][0]).to eq @entry.broker_reference
+      expect(r[2][1]).to eq "ABCD"
+      expect(r[5][1]).to eq "EFGH"
     end
   end
 end
