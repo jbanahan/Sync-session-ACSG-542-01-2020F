@@ -5,9 +5,22 @@
   <%if current_user.company.master?-%>
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
-  <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
+  <button id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
 <%end-%>
-<% cache ["v7",current_user.company,current_user,@entry] do-%>
+<% cache ["v8",current_user.company,current_user,@entry] do-%>
+<%if !current_user.hide_message?("ent_dl") -%>
+<%content_for :javascript do -%>
+$(function() {
+  $(document).ready(function() {
+    bootstro.start('', {items:[
+          {selector:'#ent_download', placement:'top', content:"<p>We've added a new feature!</p><p>Click to download entry data as an Excel workbook.</p>"}
+        ],
+        onExit:function(){Chain.hideMessage("ent_dl");}
+      });
+  });
+});
+<% end -%>
+<% end -%>
   <style>
   .ent_columns {
     width:99%;

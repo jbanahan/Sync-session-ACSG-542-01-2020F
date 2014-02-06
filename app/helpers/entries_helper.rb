@@ -34,20 +34,21 @@ module EntriesHelper
       end
     end
 
+    if user.view_broker_invoices?
+      sheet = XlsMaker.create_sheet wb, "Broker Invoices", (fields[:broker_invoice] + fields[:broker_invoice_line]).collect{|f| f.label(false)}
+      XlsMaker.add_body_row(sheet, 1, ["No Broker Invoice data."]) if entry.broker_invoices.length == 0
 
-    sheet = XlsMaker.create_sheet wb, "Broker Invoices", (fields[:broker_invoice] + fields[:broker_invoice_line]).collect{|f| f.label(false)}
-    XlsMaker.add_body_row(sheet, 1, ["No Broker Invoice data."]) if entry.broker_invoices.length == 0
+      row = 0
+      entry.broker_invoices.each do |inv|
+        invoice_data = fields[:broker_invoice].collect {|f| f.process_export(inv, user)}
 
-    row = 0
-    entry.broker_invoices.each do |inv|
-      invoice_data = fields[:broker_invoice].collect {|f| f.process_export(inv, user)}
-
-      if inv.broker_invoice_lines.length > 0
-        inv.broker_invoice_lines.each do |line|
-          XlsMaker.add_body_row sheet, (row+=1), (invoice_data + fields[:broker_invoice_line].collect {|f| f.process_export(line, user)})
+        if inv.broker_invoice_lines.length > 0
+          inv.broker_invoice_lines.each do |line|
+            XlsMaker.add_body_row sheet, (row+=1), (invoice_data + fields[:broker_invoice_line].collect {|f| f.process_export(line, user)})
+          end
+        else
+          XlsMaker.add_body_row sheet, (row+=1), invoice_data
         end
-      else
-        XlsMaker.add_body_row sheet, (row+=1), invoice_data
       end
     end
 

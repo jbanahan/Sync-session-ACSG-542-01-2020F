@@ -106,6 +106,7 @@ describe EntriesController do
     end
 
     it "sends an xls version of the entry" do
+      User.any_instance.stub(:view_broker_invoices?).and_return true
       line = Factory(:commercial_invoice_tariff).commercial_invoice_line
       line.commercial_invoice_tariffs << Factory(:commercial_invoice_tariff, commercial_invoice_line: line)
       line.save!
@@ -156,6 +157,16 @@ describe EntriesController do
       # Just check for the presence of a canadian field and non-presence of a US only one in the headers
       expect(sheet.row(0)).to include(ModelField.find_by_uid(:ent_cadex_sent_date).label)
       expect(sheet.row(0)).to_not include(ModelField.find_by_uid(:ent_isf_sent_date).label)
+    end
+
+    it "does not show broker invoices to users not capable of seeing them" do
+      User.any_instance.stub(:view_broker_invoices?).and_return false
+      e = Factory(:entry)
+
+      get :show, :id => e.id, :format=> :xls
+      wb = Spreadsheet.open StringIO.new(response.body)
+      expect(wb.worksheet("Entry")).to_not be_nil
+      expect(wb.worksheet("Broker Invoices")).to be_nil
     end
   end
 
