@@ -72,6 +72,13 @@ class EntriesController < ApplicationController
     }
   end
 
+  def validation_results
+    e = Entry.find params[:id]
+    action_secure(e.can_view?(current_user),e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
+      @entry = e
+    }
+  end
+
   #request that the images be reloaded from alliance for the given entry
   def get_images
     ent = Entry.find_by_id params[:id]

@@ -994,7 +994,31 @@ and classifications.product_id = products.id
         [133,:ent_freight_pickup_date,:freight_pickup_date,"Freight Pickup Date",{:data_type=>:datetime}],
         [134,:ent_k84_receive_date, :k84_receive_date, "K84 Received Date", {:data_type=>:date}],
         [135,:ent_k84_month, :k84_month, "K84 Month", {:data_type=>:integer}],
-        [136,:ent_k84_due_date, :k84_due_date, "K84 Due Date", {:data_type=>:date}]
+        [136,:ent_k84_due_date, :k84_due_date, "K84 Due Date", {:data_type=>:date}],
+        [137,:ent_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
+          :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
+          :export_lambda=>lambda {|obj| 
+            r = nil
+            obj.business_validation_results.each do |bvr|
+              r = BusinessValidationResult.worst_state r, bvr.state
+            end
+            r
+          },
+          :qualified_field_name=> "(select state 
+            from business_validation_results bvr 
+            where bvr.validatable_type = 'Entry' and bvr.validatable_id = entries.id 
+            order by (
+            case bvr.state
+                when 'Fail' then 0
+                when 'Review' then 1
+                when 'Pass' then 2
+                when 'Skipped' then 3
+                else 4
+            end
+            )
+            limit 1)"
+        }]
+
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [

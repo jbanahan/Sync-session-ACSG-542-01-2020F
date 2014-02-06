@@ -29,6 +29,7 @@ OpenChain::Application.routes.draw do
     post 'bulk_get_images', :on=>:collection
     get 'get_images', :on=>:member
     resources :broker_invoices, :only=>[:create]
+    get 'validation_results', on: :member
   end
   
   resources :commercial_invoices, :only => [:show]

@@ -1,0 +1,9 @@
+<h1><%=@entry.entry_number%></h1>
+<%@entry.business_validation_results.each do |res|%>
+  <h2><%=res.business_validation_template.name%> - <%=res.state%></h2>
+  <ul>
+    <%res.business_validation_rule_results.each do |rr|%>
+      <li><%=rr.business_validation_rule.name%> - <%=rr.state%></li>
+    <%end%>
+  </ul>
+<%end%>
