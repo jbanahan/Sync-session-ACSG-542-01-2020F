@@ -1,9 +1,29 @@
-<h1><%=@entry.entry_number%></h1>
-<%@entry.business_validation_results.each do |res|%>
-  <h2><%=res.business_validation_template.name%> - <%=res.state%></h2>
-  <ul>
-    <%res.business_validation_rule_results.each do |rr|%>
-      <li><%=rr.business_validation_rule.name%> - <%=rr.state%></li>
-    <%end%>
-  </ul>
+<%content_for :action_bar do%>
+<button class='btn_link' link_to='<%=entry_path(@entry)%>'>Entry</button>
 <%end%>
+<%-cache ['validation_results_page_v1',@entry] do -%>
+  <div id='validation_result_wrapper' class="container">
+    <div class="row">
+      <h1 class='page_title state-<%=ModelField.find_by_uid(:ent_rule_state).process_export(@entry,current_user,true)%>'>Business Rule Validations For Entry: <%=@entry.entry_number%></h1>
+      <%if @entry.business_validation_results.empty?%>
+        <h3>No validations have been run for this entry.</h3>
+      <%end%>
+      <%@entry.business_validation_results.each do |res|%>
+        <%-cache ['validation_result_v1',res] do-%>
+          <div class="panel panel-<%=validation_state_to_bootstrap res.state%>">
+            <div class="panel-heading">
+              <h3 class='panel-title'>
+                <%=res.business_validation_template.name%> - <%=res.state%>
+              </h3>
+            </div>
+            <div class="panel-body">
+              <%res.business_validation_rule_results.each do |rr|%>
+                <div class='text-<%=validation_state_to_bootstrap rr.state%>'><%=rr.business_validation_rule.name%> - <%=rr.state%></div>
+              <%end%>
+            </div>
+          </div>
+        <%-end-%>
+      <%end%>
+    </div>
+  </div>
+<%-end-%>

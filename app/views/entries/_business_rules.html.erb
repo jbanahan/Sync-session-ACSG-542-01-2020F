@@ -1,0 +1,16 @@
+<%rule_state_field = ModelField.find_by_uid(:ent_rule_state)%>
+<%if rule_state_field.can_view? current_user%>
+  <%rule_state = rule_state_field.process_export(entry,current_user,true)%>
+  <% if ['Fail','Review'].include?(rule_state)%>
+    <div class="panel panel-<%=validation_state_to_bootstrap rule_state%>">
+      <div class="panel-heading">
+        <h3 class='panel-title'>
+          Business Rules
+        </h3>
+      </div>
+      <div class="panel-body">
+        This entry's business rules are in <%=rule_state%> status.  Click the Business Rules button at the bottom of the page to see them.
+      </div>
+    </div>
+  <%end%>
+<%end%>

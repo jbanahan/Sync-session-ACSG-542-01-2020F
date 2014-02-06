@@ -1,5 +1,5 @@
 class BusinessValidationRuleResult < ActiveRecord::Base
-  belongs_to :business_validation_result
+  belongs_to :business_validation_result, touch: true
   belongs_to :business_validation_rule
   belongs_to :overridden_by, class_name:'User'
   attr_accessible :message, :note, :overridden_at, :state

@@ -1016,7 +1016,8 @@ and classifications.product_id = products.id
                 else 4
             end
             )
-            limit 1)"
+            limit 1)",
+          :can_view_lambda=>lambda {|u| u.admin?} #temporary until we determine better rule
         }]
 
       ]
