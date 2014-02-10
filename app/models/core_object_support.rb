@@ -14,12 +14,20 @@ module CoreObjectSupport
     base.instance_eval("has_many   :item_change_subscriptions, :dependent => :destroy")
     base.instance_eval("has_many   :change_records, :as => :recordable")
     base.instance_eval("has_many :sync_records, :as => :syncable, :dependent=>:destroy")
+    base.instance_eval("has_many :business_validation_results, as: :validatable, dependent: :destroy")
     base.instance_eval("after_save :process_linked_attachments")
 
     base.instance_eval("scope :need_sync, lambda {|trading_partner| joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause())}")
     base.instance_eval("scope :has_attachment, joins(\"LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '\#{self.name}' AND linked_attachments.attachable_id = \#{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '\#{self.name}' AND attachments.attachable_id = \#{self.table_name}.id\").where('attachments.id is not null OR linked_attachments.id is not null').uniq")
   end
 
+  def business_rules_state
+    r = nil
+    self.business_validation_results.each do |bvr|
+      r = BusinessValidationResult.worst_state r, bvr.state
+    end
+    r
+  end
 
   def all_attachments
     r = []

@@ -2,7 +2,7 @@ require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
 class EntriesController < ApplicationController
   include EntriesHelper
-
+  include ValidationResultsHelper
   def root_class
     Entry 
   end
@@ -79,6 +79,38 @@ class EntriesController < ApplicationController
         }
       end 
     }
+  end
+
+  def validation_results
+    e = Entry.find params[:id]
+    respond_to do |format|
+    format.html {
+      action_secure(e.can_view?(current_user) && current_user.admin?,e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
+        @entry = e
+      }
+    }
+    format.json {
+      return render_json_error "You do not have permission to view this object", 401 unless current_user.admin?
+      r = {
+        entry_number:e.entry_number,
+        state:e.business_rules_state,
+        bv_results:[]
+      }
+      e.business_validation_results.each do |bvr|
+        h = {
+          id:bvr.id,
+          state:bvr.state,
+          template:{name:bvr.business_validation_template.name},
+          rule_results:[]
+        }
+        bvr.business_validation_rule_results.each do |rr|
+          h[:rule_results] << business_validation_rule_result_json(rr)
+        end
+        r[:bv_results] << h
+      end
+      render json: {business_validation_result:r}
+    }
+    end
   end
 
   #request that the images be reloaded from alliance for the given entry

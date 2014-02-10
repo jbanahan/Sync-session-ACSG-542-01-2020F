@@ -512,6 +512,21 @@ describe ModelField do
         found.first.should == p
       end
     end
+    context :ent_rule_state do
+      before :each do
+        @mf = ModelField.find_by_uid(:ent_rule_state)
+      end
+      it "should show worst state if multiple business_validation_results" do
+        ent = Factory(:entry)
+        ent.business_validation_results.create!(state:'Pass')
+        ent.business_validation_results.create!(state:'Fail')
+        expect(@mf.process_export(ent,nil,true)).to eq 'Fail'
+        pass_sc = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')
+        expect(pass_sc.apply(Entry).count).to eq 0
+        fail_sc = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Fail')
+        expect(fail_sc.apply(Entry).count).to eq 1
+      end
+    end
     context :ent_pdf_count do
       before :each do
         @with_pdf = Factory(:entry)

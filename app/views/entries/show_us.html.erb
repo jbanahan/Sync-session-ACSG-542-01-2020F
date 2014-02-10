@@ -1,3 +1,4 @@
+<%rule_state_field = ModelField.find_by_uid(:ent_rule_state)%>
 <%content_for :action_bar do -%>
   <%pms = params.clone-%>
   <%pms[:mode]='simple'-%>
@@ -6,6 +7,9 @@
     <button class='btn_link' link_to='<%=get_images_entry_path(@entry)%>'>Update Images</button>
   <%end-%>
   <button id="ent_download" class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
+  <%if rule_state_field.can_view? current_user%>
+    <button class='btn_link' link_to='<%=validation_results_entry_path(@entry)%>'>Business Rules</button>
+  <%end%>
 <%end-%>
 <% cache ["v8",current_user.company,current_user,@entry] do-%>
 <%if !current_user.hide_message?("ent_dl") -%>
@@ -44,6 +48,7 @@ $(function() {
   }
   </style>
   <%show_broker_invoices = current_user.view_broker_invoices? && !@entry.broker_invoices.blank?%>
+  <%=render partial: 'business_rules', locals:{entry:@entry}%>
   <a name='ent_header'></a>
   <div class='quick_jump'>
     <a href='#c_invoices'>Commercial Invoices</a>

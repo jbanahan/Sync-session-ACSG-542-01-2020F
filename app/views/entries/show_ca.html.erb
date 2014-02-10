@@ -42,6 +42,7 @@
 }
 </style>
 <%show_broker_invoices = current_user.view_broker_invoices?%>
+<%=render partial: 'business_rules', locals:{entry:@entry}%>
 <a name='ent_header'></a>
 <div class='quick_jump'><span class='qj_label'>Jump To:</span>
   <a href='#c_invoices'>Commercial Invoices</a>

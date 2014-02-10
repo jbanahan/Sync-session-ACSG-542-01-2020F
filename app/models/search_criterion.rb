@@ -6,6 +6,8 @@ class SearchCriterion < ActiveRecord::Base
   belongs_to :status_rule  
   belongs_to :search_setup
   belongs_to :instant_classification
+  belongs_to :business_validation_rule
+  belongs_to :business_validation_template
   
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true

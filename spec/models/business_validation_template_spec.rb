@@ -1,0 +1,69 @@
+require 'spec_helper'
+
+describe BusinessValidationTemplate do
+  describe :create_results! do
+    before :each do
+      @bvt = Factory(:business_validation_template)
+      @bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
+      @bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
+      @bvt.reload
+    end
+    it "should create results for entries that match search criterions and don't have business_validation_result" do
+      match = Factory(:entry,customer_number:'12345')
+      dont_match = Factory(:entry,customer_number:'54321')
+      @bvt.create_results!
+      expect(BusinessValidationResult.scoped.count).to eq 1
+      expect(BusinessValidationResult.first.validatable).to eq match
+      expect(BusinessValidationResult.first.state).to be_nil
+    end
+    it "should run validation if flag set" do
+      match = Factory(:entry,customer_number:'12345')
+      @bvt.create_results! true
+      expect(BusinessValidationResult.first.state).not_to be_nil
+    end
+    it "should update results for entries that match search criterions and have old business_validation_result" do
+      match = Factory(:entry,customer_number:'12345')
+      @bvt.create_results! true
+      bvr = BusinessValidationResult.first
+      expect(bvr.validatable).to eq match
+      expect(bvr.state).to eq 'Fail'
+      match.update_attributes(entry_number:'X')
+      bvr.update_attributes(updated_at:10.seconds.ago)
+      @bvt.create_results! true
+      bvr.reload
+      expect(bvr.state).to eq 'Pass'
+    end
+  end
+  describe :create_result! do
+    it "should create result based on rules" do
+      o = Order.new
+      bvt = described_class.create!(module_type:'Order')
+      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      bvt.reload
+      bvr = bvt.create_result! o
+      expect(bvr.validatable).to eq o
+      expect(bvr.business_validation_rule_results.count).to eq 1
+      expect(bvr.business_validation_rule_results.first.business_validation_rule).to eq bvt.business_validation_rules.first
+      expect(bvr.state).to be_nil #doesn't run validations
+    end
+    it "should return nil if object doeesn't pass search criterions" do
+      o = Order.new(order_number:'DontMatch')
+      bvt = described_class.create!(module_type:'Order')
+      bvt.search_criterions.create!(model_field_uid:'ord_ord_num',operator:'eq',value:'xx')
+      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      bvt.reload
+      bvr = bvt.create_result! o
+      expect(bvr).to be_nil
+      expect(BusinessValidationResult.count).to eq 0
+    end
+    it "should run validation if attribute passed" do
+      o = Order.new
+      bvt = described_class.create!(module_type:'Order')
+      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'X'}.to_json)
+      bvt.reload
+      bvr = bvt.create_result! o, true
+      expect(bvr.validatable).to eq o
+      expect(bvr.state).not_to be_nil
+    end
+  end
+end
