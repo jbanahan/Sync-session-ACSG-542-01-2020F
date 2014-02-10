@@ -10,6 +10,52 @@ describe EntriesController do
     UserSession.create! @u
   end
 
+  describe 'validation_results' do 
+    before :each do
+      @u.admin = true
+      @u.save!
+      @ent = Factory(:entry,entry_number:'123456')
+      @rule_result = Factory(:business_validation_rule_result)
+      @bvr = @rule_result.business_validation_result
+      @bvr.state = 'Fail'
+      @bvr.validatable = @ent
+      @bvr.save!
+    end
+    it "should render page" do
+      get :validation_results, id: @ent.id
+      expect(response).to be_success
+      expect(assigns(:entry)).to eq @ent
+    end
+    it "should render json" do
+      @bvr.business_validation_template.update_attributes(name:'myname')
+      @rule_result.business_validation_rule.update_attributes(name:'rulename')
+      @rule_result.note = 'abc'
+      @rule_result.state = 'Pass'
+      @rule_result.overridden_by = @u
+      @rule_result.overridden_at = Time.now
+      @rule_result.save!
+      @rule_result.reload #fixes time issue
+      get :validation_results, id: @ent.id, format: :json
+      expect(response).to be_success
+      h = JSON.parse(response.body)['business_validation_result']
+      expect(h['entry_number']).to eq @ent.entry_number
+      expect(h['state']).to eq @bvr.state
+      bv_results = h['bv_results']
+      expect(bv_results.length).to eq 1
+      bvr = bv_results.first
+      expect(bvr['id']).to eq @bvr.id
+      expect(bvr['state']).to eq @bvr.state
+      expect(bvr['template']['name']).to eq 'myname'
+      expect(bvr['rule_results'].length).to eq 1
+      rr = bvr['rule_results'].first
+      expect(rr['id']).to eq @rule_result.id
+      expect(rr['rule']['name']).to eq 'rulename'
+      expect(rr['note']).to eq 'abc'
+      expect(rr['overridden_by']['full_name']).to eq @u.full_name
+      expect(Time.parse(rr['overridden_at'])).to eq @rule_result.overridden_at
+    end
+
+  end
   describe 'get_images' do
     it "should request images" do
       #make sure we're not relying on the referrer

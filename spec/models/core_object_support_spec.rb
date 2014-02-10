@@ -1,6 +1,18 @@
 require 'spec_helper'
 
 describe CoreObjectSupport do
+  describe :business_rules_state do
+    it "should set worst state from business_validation_results" do
+      ent = Factory(:entry)
+      bv1 = Factory(:business_validation_result,state:'Pass')
+      bv2 = Factory(:business_validation_result,state:'Fail')
+      [bv1,bv2].each do |b|
+        b.validatable = ent
+        b.save!
+      end
+      expect(ent.business_rules_state).to eq 'Fail'
+    end
+  end
   describe :process_linked_attachments do
     before :each do
       LinkableAttachmentImportRule.create!(:path=>'X',:model_field_uid=>'ord_ord_num')

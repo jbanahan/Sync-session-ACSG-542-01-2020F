@@ -997,13 +997,7 @@ and classifications.product_id = products.id
         [136,:ent_k84_due_date, :k84_due_date, "K84 Due Date", {:data_type=>:date}],
         [137,:ent_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
           :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
-          :export_lambda=>lambda {|obj| 
-            r = nil
-            obj.business_validation_results.each do |bvr|
-              r = BusinessValidationResult.worst_state r, bvr.state
-            end
-            r
-          },
+          :export_lambda=>lambda {|obj| obj.business_rules_state },
           :qualified_field_name=> "(select state 
             from business_validation_results bvr 
             where bvr.validatable_type = 'Entry' and bvr.validatable_id = entries.id 

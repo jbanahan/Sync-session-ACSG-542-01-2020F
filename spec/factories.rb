@@ -304,3 +304,20 @@ end
 Factory.define :project_set do |f|
   f.sequence :name
 end
+Factory.define :business_validation_template do |f|
+  f.module_type 'Entry'
+end
+Factory.define :business_validation_rule do |f|
+  f.association :business_validation_template
+end
+Factory.define :business_validation_result do |f|
+  f.association :business_validation_template
+end
+Factory.define :business_validation_rule_result do |f|
+  f.association :business_validation_rule
+  f.after_create {|rr| 
+    bvt = rr.business_validation_rule.business_validation_template
+    rr.business_validation_result = bvt.business_validation_results.create!
+    rr.save!
+  }
+end
