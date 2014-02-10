@@ -33,6 +33,13 @@ describe BusinessValidationTemplate do
       bvr.reload
       expect(bvr.state).to eq 'Pass'
     end
+    it "should only call once per entry" do
+      match = Factory(:entry,customer_number:'12345')
+      Factory(:commercial_invoice,entry:match)
+      Factory(:commercial_invoice,entry:match)
+      @bvt.create_results! true
+      expect(BusinessValidationResult.count).to eq 1
+    end
   end
   describe :create_result! do
     it "should create result based on rules" do
@@ -55,6 +62,16 @@ describe BusinessValidationTemplate do
       bvr = bvt.create_result! o
       expect(bvr).to be_nil
       expect(BusinessValidationResult.count).to eq 0
+    end
+    it "should not duplicate rules that already exist" do
+      o = Order.new
+      bvt = described_class.create!(module_type:'Order')
+      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      bvt.reload
+      bvt.create_result! o
+      bvt.create_result! o
+      expect(BusinessValidationResult.count).to eq 1
+      expect(BusinessValidationRuleResult.count).to eq 1
     end
     it "should run validation if attribute passed" do
       o = Order.new

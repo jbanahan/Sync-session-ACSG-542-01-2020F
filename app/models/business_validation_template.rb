@@ -10,7 +10,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
   def create_results! run_validation = false
     cm = CoreModule.find_by_class_name(self.module_type)
     klass = cm.klass 
-    srch = klass.where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
+    srch = klass.select("DISTINCT #{cm.table_name}.*").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
     srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id")
     self.search_criterions.each {|sc| srch = sc.apply(srch)}
     srch.each do |obj|
@@ -27,9 +27,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
       bvr.validatable = obj
       bvr.save!
       self.business_validation_rules.each do |rule|
-        rr = bvr.business_validation_rule_results.new
-        rr.business_validation_rule = rule
-        rr.save!
+        bvr.business_validation_rule_results.where(business_validation_rule_id:rule.id).first_or_create!
       end
     end
     if run_validation
