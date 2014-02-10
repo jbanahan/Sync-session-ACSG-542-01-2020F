@@ -27,25 +27,25 @@ class CustomReportIsfStatus < CustomReport
     criterions_contain_customer_number? true
 
     search_columns = self.search_columns
-
     isfs = setup_report_query SecurityFiling, run_by, row_limit
 
     add_tab "ISF Report Data"
     write_headers 0, search_columns
     write_query isfs, search_columns, run_by
+    unless preview_run
+      # The second tab shows all the unmatched ISF's for the customers returned by the customer number
+      # search criterion from the last 90 days.
+      days_ago = (Time.zone.now - 90.days).midnight
+      cust_no = find_cust_number_criterion
 
-    # The second tab shows all the unmatched ISF's for the customers returned by the customer number
-    # search criterion from the last 90 days.
-    days_ago = (Time.zone.now - 90.days).midnight
-    cust_no = find_cust_number_criterion
+      isfs = SecurityFiling.search_secure run_by, SecurityFiling.select("DISTINCT security_filings.*").where("file_logged_date > ?", days_ago).not_matched
+      isfs = cust_no.apply isfs
+      isfs.limit(row_limit) if row_limit
 
-    isfs = SecurityFiling.search_secure run_by, SecurityFiling.select("DISTINCT security_filings.*").where("file_logged_date > ?", days_ago).not_matched
-    isfs = cust_no.apply isfs
-    isfs.limit(row_limit) if row_limit
-
-    add_tab "Unmatched #{days_ago.strftime("%m-%d-%y")} thru #{Time.zone.now.strftime("%m-%d-%y")}"
-    write_headers 0, search_columns
-    write_query isfs, search_columns, run_by
+      add_tab "Unmatched #{days_ago.strftime("%m-%d-%y")} thru #{Time.zone.now.strftime("%m-%d-%y")}"
+      write_headers 0, search_columns
+      write_query isfs, search_columns, run_by
+    end
   end
 
   private 

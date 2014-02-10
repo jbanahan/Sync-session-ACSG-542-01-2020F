@@ -23,7 +23,8 @@ class CustomReport < ActiveRecord::Base
       a[:_destroy].blank?
     }
   
-  scope :for_user, lambda {|u| where(:user_id => u)} 
+  scope :for_user, lambda {|u| where(:user_id => u)}
+  attr_reader :preview_run
 
   def column_fields_available user
     #expects subclass to implement static version of this method
@@ -57,10 +58,13 @@ class CustomReport < ActiveRecord::Base
     file
   end
 
-  def to_arrays run_by, row_limit=nil
+  def to_arrays run_by, row_limit=nil, preview_run=false
     @listener = ArraysListener.new self.no_time?, false
+    @preview_run = preview_run
     run run_by, row_limit
-    @listener.arrays
+    @listener.arrays  
+  ensure
+    @preview_run = nil
   end
 
   def write row, column, content
@@ -100,7 +104,7 @@ class CustomReport < ActiveRecord::Base
 
       search_criterions.each {|sc| query = sc.apply query}
       query = active_record_class.search_secure run_by, query
-      query = active_record_class.limit(row_limit) if row_limit
+      query = query.limit(row_limit) if row_limit
 
       query
     end
