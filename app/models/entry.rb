@@ -49,6 +49,10 @@ class Entry < ActiveRecord::Base
     ['10','11'].include? self.transport_mode_code
   end
 
+  def canadian?
+    import_country && import_country.iso_code == "CA"
+  end
+
   def can_view? user
     user.view_entries? && company_permission?(user)
   end

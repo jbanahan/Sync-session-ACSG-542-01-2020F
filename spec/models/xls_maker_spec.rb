@@ -264,5 +264,26 @@ describe XlsMaker do
       expect(@sheet.row(0).formats[1].number_format).to eq "YYYY-MM-DD HH:MM"
     end
   end
+
+  describe "create_workbook" do
+    it "creates a new workbook" do
+      wb = XlsMaker.create_workbook "Sheet", ["Header"]
+      s = wb.worksheet "Sheet"
+      expect(s).to_not be_nil
+      expect(s.row(0)[0]).to eq "Header"
+      expect(s.row(0).format 0).to eq XlsMaker::HEADER_FORMAT
+    end
+  end
+
+  describe "create_sheet" do
+    it "creates a new worksheet from an existing book" do
+      wb = XlsMaker.create_workbook "Sheet", ["Header"]
+      s = XlsMaker.create_sheet wb, "Sheet2", ["Header2"]
+
+      expect(s).to_not be_nil
+      expect(s.row(0)[0]).to eq "Header2"
+      expect(s.row(0).format 0).to eq XlsMaker::HEADER_FORMAT
+    end
+  end
 end
 

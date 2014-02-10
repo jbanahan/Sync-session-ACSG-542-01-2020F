@@ -25,6 +25,9 @@
     });
   });
 <%end%>
+<%content_for :action_bar do -%>
+  <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
+<% end -%>
 <style>
 .quick_jump {
   text-align: center;
@@ -164,7 +167,7 @@
     <hr />
   <%end%>
 <%else%>
-  <h3>More than 200 commercial invoice lines exist.  Please use the <a href='/entries'>search module</a> to report on commercial invoice details.</h3>
+  <h3>More than 200 commercial invoice lines exist.  Please <a href="<%=entry_path(@entry, format: :xls)%>">download</a> the entry data or use the <a href='/entries'>search module</a> to report on commercial invoice details.</h3>
 <%end%>
 <%if show_broker_invoices%>
   <a name='b_invoices'></a>

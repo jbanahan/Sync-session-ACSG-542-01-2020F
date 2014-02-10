@@ -14,7 +14,7 @@ class UsersController < ApplicationController
           end
         }
         format.json {
-          companies = current_user.company.visible_companies_with_users
+          companies = current_user.company.visible_companies_with_users.includes(:users)
           render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
         }
       end
