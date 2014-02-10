@@ -411,3 +411,6 @@ $(document).ready () ->
         window.history.back()
       else
         window.location=link
+
+  $("#set-homepage-btn").click (evt) ->
+    $.post("/users/set_homepage", {homepage: $(location).attr("href")})

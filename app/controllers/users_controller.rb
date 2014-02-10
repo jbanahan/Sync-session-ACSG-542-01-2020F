@@ -207,6 +207,25 @@ class UsersController < ApplicationController
     end 
   end
 
+  def set_homepage
+    if params[:homepage]
+      uri = nil
+      if params[:homepage].blank?
+        uri = ""
+      else
+        uri = URI.parse params[:homepage]
+        # We want to strip the scheme and host from the URL since we want it to always be relative to the current server/ http scheme 
+        # that is in effect on the login homepage redirect
+        uri = uri.path + (uri.query ? ("?"+uri.query) : "") + (uri.fragment ? ("#" + uri.fragment): "")
+      end
+      current_user.update_attributes! homepage: uri
+
+      render :json=>{'OK'=>'OK'}
+    else
+      render :json=> {error: "Homepage URL missing."}
+    end
+  end
+
   private
   def parse_bulk_csv data
     rval = []

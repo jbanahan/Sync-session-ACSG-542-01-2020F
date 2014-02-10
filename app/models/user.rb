@@ -27,7 +27,7 @@ class User < ActiveRecord::Base
     :support_agent,
     :password_reset,
     :simple_entry_mode,
-    :tariff_subscribed
+    :tariff_subscribed, :homepage
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"

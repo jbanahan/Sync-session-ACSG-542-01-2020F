@@ -124,4 +124,31 @@ describe UsersController do
       flash[:errors].first.should == "Please select at least one user."
     end
   end
+
+  describe "set_homepage" do
+    it "sets the users homepage" do
+      post :set_homepage, homepage: "http://www.test.com/homepage/index.html?param1=1&param2=2#hash=123"
+      response.should be_success
+      JSON.parse(response.body).should == {'OK'=>'OK'}
+
+      @user.reload
+      expect(@user.homepage).to eq "/homepage/index.html?param1=1&param2=2#hash=123"
+    end
+
+    it "sets unsets the users homepage" do
+      @user.update_attributes! homepage: "/index.html"
+      post :set_homepage, homepage: ""
+      response.should be_success
+      JSON.parse(response.body).should == {'OK'=>'OK'}
+
+      @user.reload
+      expect(@user.homepage).to eq ""
+    end
+
+    it "returns an error when no homepage param is present" do
+      post :set_homepage
+      response.should be_success
+      JSON.parse(response.body).should == {'error' => "Homepage URL missing."}
+    end
+  end
 end
