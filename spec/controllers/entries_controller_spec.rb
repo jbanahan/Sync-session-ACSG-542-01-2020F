@@ -28,7 +28,7 @@ describe EntriesController do
     end
     it "should render json" do
       @bvr.business_validation_template.update_attributes(name:'myname')
-      @rule_result.business_validation_rule.update_attributes(name:'rulename')
+      @rule_result.business_validation_rule.update_attributes(name:'rulename',description:'ruledesc')
       @rule_result.note = 'abc'
       @rule_result.state = 'Pass'
       @rule_result.overridden_by = @u
@@ -50,6 +50,7 @@ describe EntriesController do
       rr = bvr['rule_results'].first
       expect(rr['id']).to eq @rule_result.id
       expect(rr['rule']['name']).to eq 'rulename'
+      expect(rr['rule']['description']).to eq 'ruledesc'
       expect(rr['note']).to eq 'abc'
       expect(rr['overridden_by']['full_name']).to eq @u.full_name
       expect(Time.parse(rr['overridden_at'])).to eq @rule_result.overridden_at

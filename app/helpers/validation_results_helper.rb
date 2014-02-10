@@ -15,7 +15,7 @@ module ValidationResultsHelper
     return {
       id:rr.id,
       state:rr.state,
-      rule:{name:rr.business_validation_rule.name},
+      rule:{name:rr.business_validation_rule.name,description:rr.business_validation_rule.description},
       note:rr.note,
       overridden_by:(rr.overridden_by ? {full_name:rr.overridden_by.full_name} : nil),
       overridden_at:rr.overridden_at
