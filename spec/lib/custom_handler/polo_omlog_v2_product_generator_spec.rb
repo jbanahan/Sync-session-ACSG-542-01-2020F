@@ -44,7 +44,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
     it "should find product with italian classification that needs sync" do
       r = Product.connection.execute described_class.new.query
       r.first[0].should == @product.id
-      r.first[-1].should == @product.classifications.first.tariff_records.first.line_number.to_s
+      r.first[-1].should == @product.classifications.first.tariff_records.first.line_number
     end
     it "should use custom where clause" do
       described_class.new(:where=>'WHERE xyz').query.should include "WHERE xyz"
