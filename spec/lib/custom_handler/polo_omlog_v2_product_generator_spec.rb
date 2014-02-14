@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe OpenChain::CustomHandler::PoloOmlogProductGenerator do
+describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
   describe :ftp_credentials do
     c = described_class.new
     c.ftp_credentials.should == {:server=>'ftp.omlogasia.com',:username=>'ftp06user21',:password=>'kXynC3jm',:folder=>'chain'}
