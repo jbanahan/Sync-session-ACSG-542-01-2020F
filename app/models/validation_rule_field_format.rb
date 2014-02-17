@@ -1,4 +1,11 @@
 class ValidationRuleFieldFormat < BusinessValidationRule
+  def should_skip? obj
+    r = false
+    self.search_criterions.each do |sc|
+      return true if !sc.test?(obj)
+    end
+    r
+  end
   def run_validation obj
     attrs = self.rule_attributes
     mf = ModelField.find_by_uid attrs['model_field_uid']

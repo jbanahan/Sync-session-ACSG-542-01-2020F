@@ -1,0 +1,19 @@
+<div class="container">
+  <div class="row">
+    <h1>Business Validation Templates</h1>
+  </div>
+  <div class="row">
+    <div class='col-md-12'>
+      <%@bv_templates.each do |template|%>
+        <h2><%=link_to template.name, template%></h2>
+        <div><%=template.description%></div>
+        <h3>Criterions</h3>
+        <ul>
+        <%template.search_criterions.each do |sc|%>
+          <li><%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%></li> 
+        <%end%>
+        </ul>
+      <%end%>
+    </div>
+  </div>
+</div>

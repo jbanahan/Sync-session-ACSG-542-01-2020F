@@ -1,0 +1,31 @@
+<div class="container">
+  <div class="row">
+    <h1>Template: <%=@bv_template.name%></h1>
+  </div>
+  <div class="row">
+    <h2>Criterions</h2>
+    <ul>
+      <%@bv_template.search_criterions.each do |sc|%>
+        <li><%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%></li> 
+      <%end%>
+    </ul>
+  </div>
+  <div class="row">
+    <h2>Rules</h2>
+    <%@bv_template.business_validation_rules.each do |bvr|%>
+    <div class='col-md-12'>
+      <h3><%=bvr.name%> (<%=bvr.class.name%>)</h3>
+      <div><strong>Description: </strong><%=bvr.description%></div>
+      <div><strong>Status If Failed: </strong><%=bvr.fail_state.blank? ? 'Fail' : bvr.fail_state%></div>
+      <h4>Criterions</h4>
+      <ul>
+        <%bvr.search_criterions.each do |sc|%>
+          <li><%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%></li> 
+        <%end%>
+      </ul>
+      <h4>Rule Data</h4>
+      <textarea><%=bvr.rule_attributes_json%></textarea>
+    </div>
+    <%end%>
+  </div>
+</div>

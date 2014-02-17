@@ -12,6 +12,10 @@ class SearchCriterion < ActiveRecord::Base
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true
   
+  def core_module
+    self.model_field.core_module 
+  end
+
   def apply(p, module_chain = nil)
     p = p.where("1=1") if p.class.to_s == "Class"
     if module_chain.nil?

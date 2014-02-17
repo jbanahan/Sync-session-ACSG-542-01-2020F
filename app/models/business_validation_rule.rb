@@ -8,4 +8,9 @@ class BusinessValidationRule < ActiveRecord::Base
   def rule_attributes
     self.rule_attributes_json.blank? ? nil : JSON.parse(self.rule_attributes_json)
   end
+
+  # override to allow your business rule to skip objects
+  def should_skip? obj
+    false
+  end
 end

@@ -4,6 +4,11 @@ describe SearchCriterion do
   before :each do 
     @product = Factory(:product)
   end
+  describe :core_module do
+    it "should return core module based on module type" do
+      expect(SearchCriterion.new(model_field_uid:'ent_release_date').core_module.klass).to eq Entry
+    end
+  end
   context "after (field)" do
     before :each do
       @u = Factory(:master_user)

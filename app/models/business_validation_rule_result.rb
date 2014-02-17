@@ -7,12 +7,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
 
   def run_validation obj
     return if self.overridden_at
-    run_validation = true
-    self.business_validation_rule.search_criterions.each do |sc|
-      run_validation = sc.test?(obj)
-      break unless run_validation
-    end
-    if !run_validation
+    if self.business_validation_rule.should_skip? obj
       self.message = nil
       self.state = 'Skipped'
       return
