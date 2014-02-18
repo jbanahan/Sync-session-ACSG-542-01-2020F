@@ -30,31 +30,35 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
       sheet = Spreadsheet.open(StringIO.new(data)).worksheet 0
 
       data = {}
-      data[:order_id] = sheet.row(3)[5]
-      data[:order_number] = sheet.row(4)[9]
-      data[:order_date] = sheet.row(5)[9]
-      data[:ship_terms] = sheet.row(9)[1]
-      data[:order_status] = sheet.row(9)[4]
-      data[:ship_via] = sheet.row(9)[5]
-      data[:expected_delivery_date] = sheet.row(9)[7]
-      data[:payment_terms] = sheet.row(9)[9]
-      data[:vendor] = parse_party "Vendor", sheet.row(7)[1], sheet.row(4)[3]
-      data[:factory] = parse_party "Factory", sheet.row(7)[5]
-      data[:forwarder] = parse_party "Forwarder", sheet.row(11)[1]
-      data[:consignee] = parse_party "Consignee", sheet.row(11)[4]
-      data[:final_dest] = parse_party "Final Destination", sheet.row(11)[8]
+      data[:order_id] = search_xl(sheet, /Order ID/i, column: 4)[:data]
+      data[:order_number] = safe_row(sheet, search_xl(sheet, /PurchaseOrderNo/i, column: 7)[:row])[9]
+      data[:order_date] = safe_row(sheet, search_xl(sheet, /Date/i, column: 7)[:row])[9]
+      data[:ship_terms] = search_xl(sheet, /F\.O\.B\. Terms/i, column: 1, data_position: :bottom)[:data]
+      data[:order_status] = search_xl(sheet, /Order Status/i, column: 4, data_position: :bottom)[:data]
+      data[:ship_via] = search_xl(sheet, /Ship Via/i, column: 5, data_position: :bottom)[:data]
+      data[:expected_delivery_date] = search_xl(sheet, /Expected Delivery Date/i, column: 7, data_position: :bottom)[:data]
+      data[:payment_terms] = search_xl(sheet, /Payment Terms/i, column: 9, data_position: :bottom)[:data]
+      data[:vendor] = parse_party "Vendor", search_xl(sheet, /Vendor:?\s*$/i, column: 1, data_position: :bottom)[:data], safe_row(sheet, search_xl(sheet, /Vendor Number:?/i, column: 1)[:row])[3]
+      data[:factory] = parse_party "Factory", search_xl(sheet, /Factory:?/i, column: 5, data_position: :bottom)[:data]
+      data[:forwarder] = parse_party "Forwarder", search_xl(sheet, /Forwarder:?/i, column: 1, data_position: :bottom)[:data]
+      data[:consignee] = parse_party "Consignee", search_xl(sheet, /Consignee Notify:?/i, column: 4, data_position: :bottom)[:data]
+      data[:final_dest] = parse_party "Final Destination", search_xl(sheet, /Final Destination:?/i, column: 8, data_position: :bottom)[:data]
 
       data[:items] = []
       last_row = sheet.last_row.idx
-      (13..last_row).each do |row_number|
-        row = sheet.row row_number
+      item_header_row = search_xl(sheet, /Item Code/i, column: 0)[:row]
 
-        if has_item_data? row
-          data[:items] << parse_item_data(row)
-        elsif order_balance_row? row
-          data[:order_balance] = row[10]
-          # If we got the order balance there's nothing left in the spreadsheet to look for
-          break
+      if item_header_row
+        ((item_header_row + 1)..last_row).each do |row_number|
+          row = sheet.row row_number
+
+          if has_item_data? row
+            data[:items] << parse_item_data(row)
+          elsif order_balance_row? row
+            data[:order_balance] = row[10]
+            # If we got the order balance there's nothing left in the spreadsheet to look for
+            break
+          end
         end
       end
 
@@ -91,6 +95,45 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
     end
 
     private 
+
+      def safe_row sheet, row
+        row.nil? ? [] : sheet.row(row)
+      end
+
+      def search_xl sheet, search_expression, opts={}
+        opts = {starting_row: 0, data_position: :right, column: 0}.merge opts
+
+        found = {}
+        (opts[:starting_row]..sheet.last_row.idx).each do |x|
+          col_val = sheet.row(x)[opts[:column]]
+
+          matched = false
+          if search_expression.respond_to?(:match)
+            matched = search_expression.match(col_val.to_s)
+          else 
+            matched = col_val == search_expression
+          end
+
+          if matched
+            found[:row] = x
+            data = nil
+            case opts[:data_position]
+            when :top
+              data = sheet.row(x - 1)[opts[:column]]
+            when :right
+              data = sheet.row(x)[opts[:column] + 1]
+            when :bottom
+              data = sheet.row(x + 1)[opts[:column]]
+            when :left
+              data = sheet.row(x)[opts[:column] - 1]
+            end
+            found[:data] = data
+
+            return found
+          end
+        end
+        found
+      end
 
       def add_party_xml parent_element, party
         p = add_element parent_element, "Party"
@@ -168,7 +211,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews;
       end
 
       def order_balance_row? row
-        row && row[8].is_a?(String) && row[8].upcase =~ /ORDER BALANCE/
+        row && row[8].is_a?(String) && row[8].upcase =~ /ORDER TOTAL/
       end
 
   end
