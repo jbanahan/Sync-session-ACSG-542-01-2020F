@@ -3,19 +3,16 @@
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
 require 'open_chain/tariff_finder'
 
-f = File.open('tmp/jcrew_canada_out.csv','w')
-importers = Company.where(alliance_customer_number:['J0000','JCREW']).to_a
+f = File.open(ARGV[1],'w')
+importers = Company.where(alliance_customer_number:['EDDIE','EBCC']).to_a
 usa = Country.find_by_iso_code('US')
 tf = OpenChain::TariffFinder.new(usa,importers)
 cursor = 0
-CSV.foreach('tmp/jcrew_canada_in.csv') do |row|
+CSV.foreach(ARGV[0],col_sep:'|') do |row|
 	cursor += 1
-	if cursor == 1 
-		f << (row + ["MID","HTS"]).to_csv
-		next
-	end
-	style = row[4]
-  r = tf.find_by_style style
+	style = row[5].strip
+  coo = row[4].strip
+  r = tf.find_by_style style, coo
 	if r 
 		f << (row + [r.mid,r.hts_code]).to_csv
 	else
