@@ -1,3 +1,4 @@
+require 'open_chain/stat_client'
 class BusinessValidationTemplate < ActiveRecord::Base
   attr_accessible :description, :module_type, :name
   validates :module_type, presence: true
@@ -6,6 +7,14 @@ class BusinessValidationTemplate < ActiveRecord::Base
   has_many :business_validation_results, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
 
+  # call create_results! for all templates
+  def self.create_all! run_validation = false
+    OpenChain::StatClient.wall_time 'bvt_create_all' do
+      self.all.each do |b| 
+        b.create_results!(run_validation) 
+      end
+    end
+  end
   #run create
   def create_results! run_validation = false
     cm = CoreModule.find_by_class_name(self.module_type)

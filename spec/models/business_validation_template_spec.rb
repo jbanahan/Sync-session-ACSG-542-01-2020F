@@ -1,6 +1,16 @@
 require 'spec_helper'
 
 describe BusinessValidationTemplate do
+  describe :create_all! do
+    before :each do
+      OpenChain::StatClient.stub(:wall_time).and_yield
+    end
+    it "should run all templates" do
+      Factory(:business_validation_template)
+      BusinessValidationTemplate.any_instance.should_receive(:create_results!).with(boolean())
+      BusinessValidationTemplate.create_all! true
+    end
+  end
   describe :create_results! do
     before :each do
       @bvt = Factory(:business_validation_template)

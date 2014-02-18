@@ -94,6 +94,7 @@ class EntriesController < ApplicationController
       r = {
         entry_number:e.entry_number,
         state:e.business_rules_state,
+        entry_updated_at:e.updated_at,
         bv_results:[]
       }
       e.business_validation_results.each do |bvr|
@@ -101,6 +102,7 @@ class EntriesController < ApplicationController
           id:bvr.id,
           state:bvr.state,
           template:{name:bvr.business_validation_template.name},
+          updated_at:bvr.updated_at,
           rule_results:[]
         }
         bvr.business_validation_rule_results.each do |rr|

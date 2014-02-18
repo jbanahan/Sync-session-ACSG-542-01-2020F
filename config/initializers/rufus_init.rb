@@ -49,6 +49,15 @@ def execute_scheduler
     end
   end
 
+  #run business rules engine
+  if Rails.env.production?
+    scheduler.every '10m' do
+      job_wrapper "BusinessValidationTemplate" do
+        BusinessValidationTemplate.delay.create_all!(true)
+      end
+    end
+  end
+
   #check for upgrades for the web servers (allow overlapping is supposed to only allow a single instance of this job to run on this scheduler)
   upgrade_job_options = {:tags => "Upgrade", :allow_overlapping => false}
   scheduler.every '30s', upgrade_job_options do
