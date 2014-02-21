@@ -9,11 +9,15 @@ module LinesSupport
     base.instance_eval("has_many :drawback_import_lines, :through => :piece_sets")
     base.instance_eval("has_many :commercial_invoice_lines, :through => :piece_sets")
     base.instance_eval("has_many :security_filing_lines, :through=>:piece_sets")
-    unless ["CommercialInvoiceLine","SecurityFilingLine"].include? base.instance_eval("self.name")
-      base.instance_eval("belongs_to :product")
-      base.instance_eval("validates :product, :presence => true")
+    class_name = base.instance_eval("self.name")
+    unless ["CommercialInvoiceLine","SecurityFilingLine"].include? class_name
+      # We need to allow products to be missing for certain cases, OrderLine handles the relation/validation itself
+      unless "OrderLine" == class_name
+        base.instance_eval("belongs_to :product")
+        base.instance_eval("validates :product, :presence => true")
+      end
       base.instance_eval("before_validation :default_quantity") 
-      unless base.instance_eval("self.name") == "DrawbackImportLine"
+      unless class_name == "DrawbackImportLine"
         base.instance_eval("before_validation :default_line_number")
       end
     end

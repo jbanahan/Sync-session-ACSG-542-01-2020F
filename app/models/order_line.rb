@@ -4,6 +4,8 @@ class OrderLine < ActiveRecord::Base
   include ShallowMerger
   
   belongs_to :order
+  belongs_to :product
+  validates :product, :presence => true, :unless => :has_item_identifier?
 
   has_many   :histories, :dependent => :destroy
   has_many  :shipment_lines, :through => :piece_sets
@@ -45,6 +47,10 @@ class OrderLine < ActiveRecord::Base
   
   def parent_id_where #supporting method for LinesSupport
     return :order_id => self.order.id
+  end
+
+  def has_item_identifier?
+    !(self.item_identifier.blank?)
   end
 
 end

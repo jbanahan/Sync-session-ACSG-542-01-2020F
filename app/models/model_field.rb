@@ -1299,12 +1299,15 @@ and classifications.product_id = products.id
               INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id
               WHERE order_lines.order_id = orders.id 
               ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)}
-        }]
+        },],
+        [4,:ord_cust_ord_no, :customer_order_number, "Customer Order Number"],
+        [5,:ord_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
       add_fields CoreModule::ORDER, make_division_arrays(300,"ord","orders")
       add_fields CoreModule::ORDER, make_master_setup_array(400,"ord")
+      add_fields CoreModule::ORDER, make_importer_arrays(500,"ord","orders")
 
       add_fields CoreModule::ORDER_LINE, [
         [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
@@ -1314,7 +1317,9 @@ and classifications.product_id = products.id
           :import_lambda => lambda {|obj,data| return "Milestone State was ignored. (read only)"},
           :export_lambda => lambda {|obj| obj.worst_milestone_state },
           :qualified_field_name => "(SELECT IFNULL(milestone_forecast_sets.state,'') as ms_state FROM milestone_forecast_sets INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id WHERE piece_sets.order_line_id = order_lines.id ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)"
-        }]
+        }],
+        [6,:ordln_ord_qty_uom, :quantity_uom, "Order Quantity UOM", {:data_type=>:string}],
+        [7,:ordln_item_identifier, :item_identifier, "Item Identifier", {:data_type=>:string}]
       ]
       add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
 

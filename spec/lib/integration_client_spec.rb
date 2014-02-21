@@ -169,7 +169,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
     it "should send to VF 850 Parser" do
       p = double("parser")
-      OpenChain::CustomHandler::Polo::Polo850VandegriftParser.should_receive(:delay).and_return p
+      OpenChain::CustomHandler::Polo::Polo850VandegriftParser.any_instance.should_receive(:delay).and_return p
       p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
       cmd = {'request_type'=>'remote_file','path'=>'/_polo_850/file.xml','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash

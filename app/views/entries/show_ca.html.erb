@@ -25,8 +25,12 @@
     });
   });
 <%end%>
+<%rule_state_field = ModelField.find_by_uid(:ent_rule_state)%>
 <%content_for :action_bar do -%>
   <button class="btn_link" link_to="<%=entry_path(@entry, format: :xls)%>">Download</button>
+  <%if rule_state_field.can_view? current_user%>
+    <button class='btn_link' link_to='<%=validation_results_entry_path(@entry)%>'>Business Rules</button>
+  <%end%>
 <% end -%>
 <style>
 .quick_jump {
