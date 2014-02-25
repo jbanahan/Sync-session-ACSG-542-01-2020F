@@ -140,12 +140,31 @@ module OpenChain; module CustomHandler; module Polo
           line = po.order_lines.find(lambda {po.order_lines.build(:line_number => line_number)}) {|l| line = l if l.line_number == line_number}
           line_numbers << line_number
 
-          # This is the RL Style regardless of whether this is a Prepack, Set or standard line
-          line.item_identifier = xml.text("ProductDetails3/ProductID/ProductIDValue")
-          # This info tells us if the line is a Set (ST), Prepack (AS), or standard (EA or PR [pair])
-          line.quantity_uom = xml.text("ProductQuantityDetails/ProductQuantityUOM")
+          # This is the RL Style regardless of whether the line is a Prepack, Set or standard line
+          style = xml.text("ProductDetails3/ProductID/ProductIDValue")
+
           # This is the number of UOM's ordered
           line.quantity = xml.text("ProductQuantityDetails/QuantityOrdered")
+
+          # Because we're storing these products in our system (which holds other importer product data), we need to preface the 
+          # table's unique identifier column with the importer identifier.
+          product = Product.where(importer_id: po.importer_id, unique_identifier: po.importer.fenix_customer_number + "-" + style).first_or_initialize
+          
+          # We only need to save product data the very first time we encounter it
+          if product.new_record?
+            # since we're only storing a minimal amount of information, also set the style into the name since
+            # the PO screen displays the product name on it
+            product.name = style 
+            # This info tells us if the line is a Set (ST), Prepack (AS), or standard (EA or PR [pair])
+            product.unit_of_measure = xml.text("ProductQuantityDetails/ProductQuantityUOM")
+
+            # Part Number is the importer's unique identifier, but not the system unique identifier
+            @part_number_cd ||= CustomDefinition.where(label: "Part Number", module_type: "Product").first
+            raise "Unable to find Part Number custom field for Product module." unless @part_number_cd
+            product.save!
+            product.update_custom_value! @part_number_cd, style
+          end
+          line.product = product
         end
 
         po.order_lines.select {|l| !(line_numbers.include?(l.line_number))}.map &:destroy

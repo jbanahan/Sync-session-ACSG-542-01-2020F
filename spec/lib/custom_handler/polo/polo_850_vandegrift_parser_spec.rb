@@ -11,6 +11,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
   describe :parse do
     context :standard_line_type do
       before :each do
+        @part_no_cd = CustomDefinition.create! label: "Part Number", module_type: "Product", data_type: "string"
         @po_type = ""
         @po_number = "PO"
         @merchandise_division = "MERCH"
@@ -96,14 +97,19 @@ XML
 
         l = order.order_lines.first
         expect(l.line_number).to eq @line_number.to_i
-        expect(l.item_identifier).to eq @style
         expect(l.quantity).to eq BigDecimal.new(@quantity)
-        expect(l.quantity_uom).to eq @uom
+        expect(l.product.unique_identifier).to eq "#{@importer.fenix_customer_number}-#{@style}"
+        expect(l.product.unit_of_measure).to eq @uom
+        expect(l.product.name).to eq @style
+        expect(l.product.get_custom_value(@part_no_cd).value).to eq @style
       end
 
       it "updates orders, adding new lines and eliminating old lines" do
+        # Make sure we also attach to existing Products
+        product = Product.create! importer: @importer, unique_identifier: "#{@importer.fenix_customer_number}-#{@style}"
+
         order = Order.new importer: @importer, customer_order_number: @po_number, order_number: "ABC"
-        order.order_lines.build line_number: 1, item_identifier: "item"
+        order.order_lines.build line_number: 1, product: product
         order.save!
 
         described_class.new.parse @xml_lambda.call
@@ -113,7 +119,7 @@ XML
         expect(order.order_lines).to have(1).item
         l = order.order_lines.first
         expect(l.line_number).to eq @line_number.to_i
-        expect(l.item_identifier).to eq @style
+        expect(l.product).to eq product
       end
 
       it "handles Club Monaco buyer" do
@@ -135,6 +141,12 @@ XML
         @importer.destroy
 
         expect{described_class.new.parse @xml_lambda.call}.to raise_error "Unable to find Fenix Importer for importer number #{@importer.fenix_customer_number}.  This account should not be missing."
+      end
+
+      it "raises an error if Part Number custom def is not found" do
+        @part_no_cd.destroy
+
+        expect{described_class.new.parse @xml_lambda.call}.to raise_error "Unable to find Part Number custom field for Product module."
       end
     end
 

@@ -92,15 +92,11 @@
     <% line_state = line.worst_milestone_state %>
 	<tr class='hover ord_det_row'>
 	  <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
-    <td><b><%= line.product ? link_to(line.product.name, product_path(line.product)) : line.item_identifier%></b></td>
+    <td><b><%=link_to(line.product.name, product_path(line.product))%></b></td>
   	<td><%= line.quantity %></td>
   	<td><%=line.shipped_qty%></td>
   	<td><%=line.received_qty%></td>
-    <% if line.product %>
-  	<td><%= line.product.unit_of_measure %></td>
-    <% else %>
-    <td><%=line.quantity_uom %></td>
-    <% end %>
+    <td><%= line.product.unit_of_measure %></td>
   	<td><%= line.price_per_unit %></td>
   	<td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
   	<td>
