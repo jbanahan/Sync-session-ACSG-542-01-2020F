@@ -5,6 +5,7 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
   describe "run_child_validation" do
 
     before :each do 
+      @part_no_cd = CustomDefinition.create! label: "Part Number", module_type: "Product", data_type: "string"
       @line = Factory(:commercial_invoice_line, po_number: "PONUMBER", part_number: "PARTNUMBER")
       @line.entry.importer = Factory(:company, importer: true)
     end
@@ -20,7 +21,10 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
 
     it "does not notify if PO and line are found" do
       po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
-      po.order_lines.create! item_identifier: @line.part_number
+      product = Factory(:product, importer: @line.entry.importer)
+      product.update_custom_value! @part_no_cd, @line.part_number
+
+      po.order_lines.create! product: product
 
       expect(described_class.new.run_child_validation @line).to be_nil
     end
