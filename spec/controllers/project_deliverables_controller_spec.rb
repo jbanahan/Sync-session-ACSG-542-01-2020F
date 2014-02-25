@@ -41,6 +41,17 @@ describe ProjectDeliverablesController do
       expect(JSON.parse(response.body)['error']).to match /permission/
       expect(response.status).to eq 401
     end
+    it "should duplicate deliverables by project set" do
+      ps1 = ProjectSet.create!(name:'myps')
+      ps2 = ProjectSet.create!(name:'myps2')
+      @d1.project.project_sets << ps1
+      @d1.project.project_sets << ps2
+      get :index, format: :json, layout: 'projectset'
+      r = JSON.parse(response.body)['deliverables_by_user']
+      expect(r['myps']['pn1'][0]['id']).to eq @d1.id
+      expect(r['myps2']['pn1'][0]['id']).to eq @d1.id
+      expect(r['[none]']['pn2'][0]['id']).to eq @d2.id
+    end
     it "should secure by project_deliverable" do
       ProjectDeliverable.stub(:search_secure).and_return ProjectDeliverable.where(id:@d1.id)
       get :index, format: :json
