@@ -152,6 +152,9 @@ projectApp.directive 'chainProjectDeliverable', ['$compile','projectSvc',($compi
       $(el).find('button.deliverable-edit').on 'click', () ->
         scope.$apply editAction
 
+      if scope.deliverable.autoEdit
+        scope.deliverable.autoEdit = false
+        scope.$apply editAction
       scope.late = () ->
         scope.deliverable && !scope.deliverable.complete && scope.deliverable.due_date && moment(scope.deliverable.due_date) < moment()
 
@@ -231,7 +234,7 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
   $scope.editProjectUpdate = (u) ->
     projectSvc.editProjectUpdate projectSvc.project, u
   $scope.addDeliverable = () ->
-    projectSvc.project.project_deliverables.push {new:true,project_id:projectSvc.project.id}
+    projectSvc.project.project_deliverables.push {new:true,project_id:projectSvc.project.id,autoEdit:true}
   $scope.handleSaveDeliverable = (p) ->
     goodCallback = (resp) ->
       project = projectSvc.project
