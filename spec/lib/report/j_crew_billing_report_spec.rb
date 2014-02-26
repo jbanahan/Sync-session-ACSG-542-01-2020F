@@ -40,7 +40,7 @@ describe OpenChain::Report::JCrewBillingReport do
 
     def column_values values
       v = []
-      (0..13).each do |x|
+      (0..15).each do |x|
         v << ((values[x]) ? values[x] : 0)
       end
       v
@@ -51,7 +51,7 @@ describe OpenChain::Report::JCrewBillingReport do
       s = Spreadsheet.open(@temp.path).worksheet 0
 
       expect(s.row(0)).to eq ["Invoice #", "Invoice Date", "Entry #", "Direct Brokerage", "Direct Duty", "Retail Brokerage", "Retail Duty", "Factory Brokerage", "Factory Duty",
-                "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
+                "Factory Direct Brokerage", "Factory Direct Duty", "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
                 "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Total Brokerage", "Total Duty", "Errors"]
 
       expect(s.row(1)).to eq ["Inv#", excel_date("2014-01-01".to_date), "123-45", column_values(0=>100.0, 1=>57.25), 100.0, 19.99].flatten
@@ -78,7 +78,7 @@ describe OpenChain::Report::JCrewBillingReport do
 
       @temp = @r.run
       s = Spreadsheet.open(@temp.path).worksheet 0
-      expect(s.row(1)).to eq ["Inv#", excel_date("2014-01-01".to_date), "123-45", column_values(1=> 57.25, 10=>200.0), 200.0, 19.99].flatten
+      expect(s.row(1)).to eq ["Inv#", excel_date("2014-01-01".to_date), "123-45", column_values(1=> 57.25, 12=>200.0), 200.0, 19.99].flatten
     end
 
     it "identifies and highlights invalid PO numbers" do

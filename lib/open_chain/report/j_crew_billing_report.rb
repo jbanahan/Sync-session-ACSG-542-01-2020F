@@ -24,7 +24,7 @@ module OpenChain; module Report; class JCrewBillingReport
     sheet = wb.create_worksheet :name => "#{start_date.strftime("%Y-%m-%d")} thru #{end_date.strftime("%Y-%m-%d")}"
     row_number = 0
     headers = ["Invoice #", "Invoice Date", "Entry #", "Direct Brokerage", "Direct Duty", "Retail Brokerage", "Retail Duty", "Factory Brokerage", "Factory Duty",
-                "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
+                "Factory Direct Brokerage", "Factory Direct Duty", "Madewell Direct Brokerage", "Madewell Direct Duty", "Madewell Retail Brokerage", "Madewell Retail Duty",
                 "Retail T & E Brokerage", "Retail T & E Duty", "Madewell Factory Brokerage", "Madewell Factory Duty", "Total Brokerage", "Total Duty", "Errors"]    
     error_format = Spreadsheet::Format.new :pattern_fg_color => :yellow, :pattern => 1, :pattern_bg_color=>:xls_color_26
     error_with_date = Spreadsheet::Format.new :pattern_fg_color => :yellow, :pattern => 1, :pattern_bg_color=>:xls_color_26, :number_format=>'YYYY-MM-DD'
@@ -60,8 +60,9 @@ module OpenChain; module Report; class JCrewBillingReport
       add_bucket_data row, buckets, :direct
       add_bucket_data row, buckets, :retail
       add_bucket_data row, buckets, :factory
-      add_bucket_data row, buckets, :madewell_direct
+      add_bucket_data row, buckets, :factory_direct
       add_bucket_data row, buckets, :madewell_retail
+      add_bucket_data row, buckets, :madewell_direct
       row << invoice_data[:t_e_amount]
       row << 0 # There's never any duty on T/E lines since this bucket is just a brokerage fee they want allocated to a different GL account
       add_bucket_data row, buckets, :madewell_factory
@@ -203,13 +204,15 @@ module OpenChain; module Report; class JCrewBillingReport
       elsif ["2", "5"].include? po_number[0]
         bucket = [:retail, 2]
       elsif po_number.start_with?("95")
-        bucket = [:madewell_factory, 6]
-      elsif ["3", "6", "9"].include? po_number[0]
+        bucket = [:madewell_factory, 7]
+      elsif ["3", "9"].include? po_number[0]
         bucket = [:factory, 3]
-      elsif po_number.start_with?("7")
-        bucket = [:madewell_direct, 4]
+      elsif po_number[0] == "6"
+        bucket = [:factory_direct, 4]
       elsif po_number.start_with?("4")
-        bucket = [:madewell_retail, 5]
+          bucket = [:madewell_retail, 5]
+      elsif po_number.start_with?("7")
+        bucket = [:madewell_direct, 6]
       else
         bucket = [:unknown, 99]
       end
