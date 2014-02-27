@@ -19,14 +19,27 @@ $(function() {
 <%content_for :action_bar do %>
 <button id='btn_process' class='attach_button'>Upload</button>
 <%end%>
-<h2>Upload File for <em><%=@search_setup.name%></em></h2>
-<%= form_for [@search_setup,@imported_file], :html => { :multipart => true, :id=>"frm_fi" } do |f| %>
-  <table>
-  <%=field_row "File To Upload", f.file_field(:attached, :id=>"attch") %>
-  <%=field_row "Update Mode", f.select(:update_mode, ImportedFile::UPDATE_MODES.map {|k,v| [v,k]}, {:include_blank=>true}, {:id=>"upd_mode"}) + "&nbsp;<a href='#' id='update_mode_help'>?</a>".html_safe%>
-  <%=field_row "Start At", ("Row "+f.select(:starting_row, 1..10, {:selected=>2}, {:style=>"width:4em;"}) + " and Column " + f.select(:starting_column, 1..10, {}, {:style=>"width:4em;"})).html_safe%>
-  </table>
-<% end %>
+<div class='container'>
+  <h2>Upload File for <em><%=@search_setup.name%></em></h2>
+  <div class='row'>
+    <div class='col-md-6'>
+      <%= form_for [@search_setup,@imported_file], :html => { :multipart => true, :id=>"frm_fi" } do |f| %>
+      <div class="form-group">
+        <label for="attch">File To Upload</label>
+        <%=f.file_field(:attached, :id=>"attch", :class=>'form-control')%>
+      </div>
+      <div class="form-group">
+        <label for="upd_mode">Update Mode <a href='#' id='update_mode_help'>?</a></label>
+        <%=f.select(:update_mode, ImportedFile::UPDATE_MODES.map {|k,v| [v,k]}, {:include_blank=>true}, {:id=>"upd_mode", :class=>'form-control'})%>
+      </div>
+      <div class="form-group">
+        <label>Start At</label><br />
+        Row <%=f.select(:starting_row, 1..10, {:selected=>2}, {:style=>"width:4em;"})%> and Column <%=f.select(:starting_column, 1..10, {}, {:style=>"width:4em;"})%> 
+      </div>
+      <% end %>
+    </div>
+  </div>
+</div>
 
 <div id='mod_update_mode_help' style='display:none;'>
 <div style='font-size:80%;'>
