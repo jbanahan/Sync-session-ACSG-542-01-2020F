@@ -1299,12 +1299,15 @@ and classifications.product_id = products.id
               INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id
               WHERE order_lines.order_id = orders.id 
               ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)}
-        }]
+        },],
+        [4,:ord_cust_ord_no, :customer_order_number, "Customer Order Number"],
+        [5,:ord_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
       add_fields CoreModule::ORDER, make_division_arrays(300,"ord","orders")
       add_fields CoreModule::ORDER, make_master_setup_array(400,"ord")
+      add_fields CoreModule::ORDER, make_importer_arrays(500,"ord","orders")
 
       add_fields CoreModule::ORDER_LINE, [
         [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],

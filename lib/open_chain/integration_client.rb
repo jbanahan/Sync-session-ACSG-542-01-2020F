@@ -131,7 +131,7 @@ module OpenChain
         status_msg = 'success'
         response_type = 'remote_file'
       elsif command['path'].include? '/_polo_850/'
-        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.delay.process_from_s3 bucket, remote_path
+        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
         status_msg = 'success'
         response_type = 'remote_file'
       elsif command['path'].include? '/_shoes_po/'

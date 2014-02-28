@@ -1,10 +1,14 @@
 class Order < ActiveRecord::Base
   include CoreObjectSupport
+  include IntegrationParserSupport
+
   belongs_to :division
 	belongs_to :vendor,  :class_name => "Company"
 	belongs_to :ship_to, :class_name => "Address"
+  belongs_to :importer, :class_name => "Company"
 	
-	validates  :vendor, :presence => true
+	validates  :vendor, :presence => true, :unless => :has_importer?
+  validates :importer, :presence => true, :unless => :has_vendor?
 	
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number'
 	has_many   :piece_sets, :through => :order_lines
@@ -18,7 +22,8 @@ class Order < ActiveRecord::Base
 	end
 	
 	def can_view?(user)
-	  return user.view_orders? && (user.company.master || (user.company.vendor && user.company_id == self.vendor_id))
+	  return user.view_orders? && (user.company.master || (user.company.vendor && user.company_id == self.vendor_id) || (user.company.importer && user.company_id = self.importer_id) ||
+        user.company.linked_companies.include?(importer) || user.company.linked_companies.include?(vendor))
 	end
 	
 	def can_edit?(user)
@@ -75,6 +80,8 @@ class Order < ActiveRecord::Base
       return "1=1"
     elsif user.company.vendor
       return "orders.vendor_id = #{user.company_id}"
+    elsif user.company.importer
+      return "orders.importer_id = #{user.company_id}"
     else
       return "1=0"
     end
@@ -97,4 +104,29 @@ class Order < ActiveRecord::Base
     highest_index.nil? ? nil : MilestoneForecast::ORDERED_STATES[highest_index]
   end
 
+  # Generates a unique PO Number based on the vendor or importer information associated with the PO.  Importer/Vendor and Customer Order Number must
+  # be set prior to calling this method.
+  def create_unique_po_number
+    # Use the importer/vendor identifier as the "uniqueness" factor on the order number.  This is only a factor for PO's utilized on a shared instance.
+    uniqueness = nil
+    if has_importer?
+      uniqueness = self.importer.system_code.blank? ? (self.importer.alliance_customer_number.blank? ? self.importer.fenix_customer_number : self.importer.alliance_customer_number) : self.importer.system_code
+      raise "Failed to create unique Order Number from #{self.customer_order_number} for Importer #{self.importer.name}." if uniqueness.blank?
+    else
+      uniqueness = self.vendor.system_code
+
+      raise "Failed to create unique Order Number from #{self.customer_order_number} for Vendor #{self.vendor.name}." if uniqueness.blank?
+    end
+
+    "#{uniqueness}-#{self.customer_order_number}"
+  end
+
+  private 
+    def has_importer?
+      self.importer.present?
+    end
+
+    def has_vendor?
+      self.vendor.present?
+    end
 end

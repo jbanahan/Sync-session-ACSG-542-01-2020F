@@ -62,10 +62,12 @@
   <tbody><tr><td>
   <table>
   <%=field_row field_label(:ord_ord_num), @order.order_number  %>
+  <%=field_row field_label(:ord_cust_ord_no), @order.customer_order_number  %>
   <%=field_row field_label(:ord_ship_to_name), render(:partial=>'addresses/display',:locals=>{ :ad => @order.ship_to, :address_id => 'ship_to_ad' } ) %>
   <%=field_row field_label(:ord_ord_date), @order.order_date %>
   <%=field_row field_label(:ord_div_name), (@order.division.blank? ? "" : @order.division.name) %>
   <%=field_row field_label(:ord_ven_name), (@order.vendor.blank? ? "" : @order.vendor.name) %>
+  <%=field_row field_label(:ord_imp_name), (@order.importer.blank? ? "" : @order.importer.name) %>
   <%=show_custom_fields @order, {:table=>true}%>
   </table>
   </td></tr>
@@ -90,11 +92,11 @@
     <% line_state = line.worst_milestone_state %>
 	<tr class='hover ord_det_row'>
 	  <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%= @order.can_edit?(current_user) && !@order.locked? ? (link_to line.line_number, edit_order_order_line_path(@order,line)) : line.line_number %></td>
-	  <td><b><%= link_to line.product.name, product_path(line.product) %></b></td>
+    <td><b><%=link_to(line.product.name, product_path(line.product))%></b></td>
   	<td><%= line.quantity %></td>
   	<td><%=line.shipped_qty%></td>
   	<td><%=line.received_qty%></td>
-  	<td><%= line.product.unit_of_measure %></td>
+    <td><%= line.product.unit_of_measure %></td>
   	<td><%= line.price_per_unit %></td>
   	<td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
   	<td>
@@ -157,3 +159,4 @@
   <!--hidden and linked through delete on button bar-->
   <%= button_to('Delete', order_path(@order),:method => :delete, :confirm => "Are you sure?", :id => "btn_delete") %>
 </div>
+<%=secure_link @order, current_user%>
