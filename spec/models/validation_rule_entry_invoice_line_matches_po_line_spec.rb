@@ -28,5 +28,29 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
 
       expect(described_class.new.run_child_validation @line).to be_nil
     end
+
+    it "notifies if extra field does not match" do
+      po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
+      product = Factory(:product, importer: @line.entry.importer)
+      product.update_custom_value! @part_no_cd, @line.part_number
+
+      po.order_lines.create! product: product, quantity: 10
+      @line.update_attributes(quantity:11)
+
+      h = {match_fields:[{invoice_line_field:'cil_units',order_line_field:'ordln_ordered_qty',operator:'gt'}]}
+      expect(described_class.new(rule_attributes_json:h.to_json).run_child_validation @line).to eq "No matching order for PO # #{@line.po_number} and Part # #{@line.part_number} where #{ModelField.find_by_uid(:ordln_ordered_qty).label(false)} Greater Than #{ModelField.find_by_uid(:cil_units).label(false)} (11.0)"
+    end
+
+    it 'does not notify if field matches' do
+      po = Factory(:order, importer: @line.entry.importer, customer_order_number: @line.po_number)
+      product = Factory(:product, importer: @line.entry.importer)
+      product.update_custom_value! @part_no_cd, @line.part_number
+
+      po.order_lines.create! product: product, quantity: 10
+      @line.update_attributes(quantity:11)
+
+      h = {match_fields:[{invoice_line_field:'cil_units',order_line_field:'ordln_ordered_qty',operator:'lt'}]}
+      expect(described_class.new(rule_attributes_json:h.to_json).run_child_validation @line).to be_nil 
+    end
   end
 end

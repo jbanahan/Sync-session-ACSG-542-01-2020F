@@ -48,7 +48,15 @@
             </h3>
           </div>
           <div class='panel-body'>
-            {{ruleResultToEdit.rule.description}}
+            <div>
+              <strong>Rule Description</strong><br/>
+              {{ruleResultToEdit.rule.description}}
+            </div>
+            <div>
+              <strong>System Messages</strong>
+              <br>
+              <pre>{{ruleResultToEdit.message}}</pre>
+            </div>
             <select ng-model='ruleResultToEdit.state' ng-options='s for s in svc.states' class='form-control'>
             </select>
             <textarea ng-model='ruleResultToEdit.note' class='form-control'></textarea>
