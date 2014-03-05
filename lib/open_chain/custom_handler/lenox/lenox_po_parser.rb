@@ -41,10 +41,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     o.update_custom_value! @cdefs[:order_destination_code], ls.destination_code
 
     #process lines
-    used_line_numbers = []
     lines.each do |ln|
       p = get_product ln
-      used_line_numbers << ln.line_number
       ol = o.order_lines.where(line_number:ln.line_number).first_or_create!(product:p)
       ol.update_attributes(
         product:p, price_per_unit:ln.unit_price,quantity:ln.quantity,
@@ -52,7 +50,6 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
       )
       ol.update_custom_value! @cdefs[:order_line_note], ln.line_note
     end
-    o.order_lines.where("line_number not in (?)",used_line_numbers).destroy_all
   end
   def get_product line_struct
     p = Product.where(importer_id:@imp.id,

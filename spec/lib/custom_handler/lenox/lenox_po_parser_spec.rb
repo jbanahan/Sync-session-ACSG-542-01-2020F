@@ -64,16 +64,18 @@ R                 RB05722520131105                                              
     expect(@lenox.linked_companies.first).to eq vn
 
   end
-  it "should update existing PO, replacing lines" do
+  it "should update existing PO, updating but not deleting lines" do
     ord = Factory(:order,order_number:'LENOX-RB057225',importer_id:@lenox.id)
-    o_line = Factory(:order_line,order:ord,line_number:1)
+    o_line = Factory(:order_line,order:ord,line_number:1) #update this one
+    o_line2 = Factory(:order_line,order:ord,line_number:100) #leave this one alone
     described_class.new.process @testdata
     expect(Order.count).to eq 1
     o = Order.first
     expect(o.order_number).to eq 'LENOX-RB057225'
-    expect(o.order_lines.count).to eq 12
+    expect(o.order_lines.count).to eq 13
     expect(o.id).to eq ord.id
     expect(o.order_lines.find_by_line_number(1).product.unique_identifier).to eq 'LENOX-6083927'
+    expect(o.order_lines.find_by_line_number(100)).to eq o_line2
   end
   it "should delete orders with D as first character" do
     ord = Factory(:order,order_number:'LENOX-RB057225',importer_id:@lenox.id)
