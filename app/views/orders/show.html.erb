@@ -83,7 +83,8 @@
 		<th>Shipped</th>
 		<th>Received</th>
 		<th><%=field_label :prod_uom, false%></th>
-		<th><%=field_label :ordln_ppu, false%></th>
+    <th><%=field_label :ordln_ppu, false%></th>
+    <th><%=field_label :ordln_currency, false%></th>
 		<th>Total Price</th>
 		<th></th>
 	</thead>
@@ -97,22 +98,24 @@
   	<td><%=line.shipped_qty%></td>
   	<td><%=line.received_qty%></td>
     <td><%= line.product.unit_of_measure %></td>
-  	<td><%= line.price_per_unit %></td>
+    <td><%= line.price_per_unit %></td>
+    <td><%= line.currency%></td>
   	<td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
   	<td>
   	  <% if @order.can_edit?(current_user) && !@order.locked?%>
   		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
-  		  <% if line.custom_definitions.length > 0 || !MilestoneForecastSet.joins(:piece_set).where("piece_sets.order_line_id=?",line.id).blank?%>
-  		  &nbsp;|&nbsp;
-  		  <a id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
-  		  <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
-  		  <% end %>
+        &nbsp;|&nbsp;
   		<% end %> 
+      <a id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
+      <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
   	</td>
 	</tr>
 	<tr style='display:none;' id='det_<%=line.id%>'>
 	  <td></td>
       <td colspan='8' >
+        <%[:ordln_country_of_origin,:ordln_hts].each do |fld|%>
+          <%=field_view_bootstrap line, fld, false%>
+        <%end%>
         <%= show_custom_fields line %><br />
         <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
       </td>
