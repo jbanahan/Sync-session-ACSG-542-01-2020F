@@ -190,6 +190,8 @@ def execute_scheduler
   if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
     scheduler.every("5m") do
       OpenChain::AllianceImagingClient.delay.consume_images
+      OpenChain::AllianceImagingClient.delay.consume_stitch_responses
+      OpenChain::AllianceImagingClient.delay.send_outstanding_stitch_requests
     end
     scheduler.every("30m") do
       OpenChain::CustomHandler::PoloCaEfocusGenerator.new.delay.generate 

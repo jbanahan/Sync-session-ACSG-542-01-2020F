@@ -131,4 +131,18 @@ describe Attachment do
       end.should eq "Pass"
     end
   end
+
+  describe "stitchable_attachment?" do
+    it 'identifies major image formats as stitchable' do
+      ['.tif', '.tiff', '.jpg', '.jpeg', '.gif', '.png', '.bmp', '.pdf'].each do |ext|
+        a = Attachment.new attached_file_name: "file#{ext}"
+        expect(a.stitchable_attachment?).to be_true
+      end
+    end
+
+    it 'identifies non-images as not stitchable' do
+      a = Attachment.new attached_file_name: "file.blahblah"
+      expect(a.stitchable_attachment?).to be_false
+    end
+  end
 end
