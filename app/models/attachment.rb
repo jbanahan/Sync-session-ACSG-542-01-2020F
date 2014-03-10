@@ -12,6 +12,8 @@ class Attachment < ActiveRecord::Base
   has_many :attachment_archives_attachments, :dependent=>:destroy
   has_many :attachment_archives, :through=>:attachment_archives_attachments
   
+  ARCHIVE_PACKET_ATTACHMENT_TYPE ||= "Archive Packet".freeze
+
   def web_preview?
     return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
   end
@@ -94,6 +96,16 @@ class Attachment < ActiveRecord::Base
         yield f
       end
     end
+  end
+
+  def stitchable_attachment?
+    # The stitching process supports any image format that ImageMagick can convert to a pdf (which is apparently a ton of formats), 
+    # for now, we'll just support stitching the major image formats.
+    Attachment.stitchable_attachment_extensions.include? File.extname(self.attached_file_name).try(:downcase)
+  end
+
+  def self.stitchable_attachment_extensions
+    ['.tif', '.tiff', '.jpg', '.jpeg', '.gif', '.png', '.bmp', '.pdf']
   end
 
   private

@@ -1,3 +1,15 @@
+<%content_for :javascript do -%>
+$(function() {
+  $('#attachment_archive_setup_combine_attachments').change(function() {
+    if (this.checked) {
+      $('#combine_attachments_order_container').show();
+    } else {
+      $('#combine_attachments_order_container').hide();
+    }
+  })
+});
+<%end-%>
+
 <%content_for :action_bar do-%>
   <button class='form_to' form_id='frm_save'>Save</button>
   <button class='btn_link' link_to='<%=company_path(@company)%>'>Back</button>
@@ -6,7 +18,15 @@
 <%s = @company.attachment_archive_setup-%>
 <%s = @company.build_attachment_archive_setup unless s-%>
 <%=form_for [@company,s], :html=>{:id=>'frm_save'} do |f|-%>
-  <table>
-    <%=field_row "Start Date", f.text_field(:start_date,:class=>'isdate')%>
-  </table>
+  <div class='container'>
+    <div class='row'>
+      <div class='col-md-7'>
+        <%=field_bootstrap 'Start Date', f.text_field(:start_date,:class=>'isdate')%>
+        <%=field_bootstrap "Combine Attachments", f.check_box(:combine_attachments)%>
+        <div id="combine_attachments_order_container" style="display: <%=s.combine_attachments ? "block" : "none"%>">
+          <%=field_bootstrap "Combine Attachments Order", f.text_area(:combined_attachment_order, :rows=>"10", :cols=>"30", :placeholder => "Enter one entry Document Type/Title per line in the order they should be stitched together in the 'Archive Packet'.  Any types not included in this list will be added to the packet chronologically.")%>
+        <div>
+      </div>
+    </div>
+  </div>
 <%end-%>

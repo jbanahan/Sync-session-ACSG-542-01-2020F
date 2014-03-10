@@ -12,6 +12,7 @@ class AttachmentArchiveSetupsController < ApplicationController
   end
   def update
     s = AttachmentArchiveSetup.find(params[:id])
+    params[:attachment_archive_setup][:combined_attachment_order] = "" unless params[:attachment_archive_setup][:combine_attachments] == "1"
     s.update_attributes(params[:attachment_archive_setup])
     redirect_to [s.company,s]
   end

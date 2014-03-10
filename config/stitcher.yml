@@ -1,0 +1,11 @@
+development:
+  request_queue: https://sqs.us-east-1.amazonaws.com/468302385899/stitch-request-test
+  response_queue: https://sqs.us-east-1.amazonaws.com/468302385899/stitch-response-test
+
+production:
+  request_queue: https://sqs.us-east-1.amazonaws.com/468302385899/stitch-request-prod
+  response_queue: https://sqs.us-east-1.amazonaws.com/468302385899/stitch-response-prod
+
+test:
+  request_queue: test-request-queue
+  response_queue: test-response-queue
