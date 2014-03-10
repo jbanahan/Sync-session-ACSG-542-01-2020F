@@ -97,6 +97,20 @@
           <div >
             <h3>Canada Export File (last 10)</h3>
             <p><em>167 column .csv file from Arvind @ J Crew</em></p>
+            <p>
+              Columns Used (column label when viewed in Excel)
+              <ul>
+                <li>Ship Date: DB</li>
+                <li>Export Date: DC</li>
+                <li>Part: FI</li>
+                <li>Ref 1 (CA Entry #): DM</li>
+                <li>Ref 2 (PO Number): I</li>
+                <li>Ref 3 (Tracking #): F</li>
+                <li>Quantity: DR</li>
+                <li>Description: DS</li>
+                <li>HTS Code: DQ</li>
+              </ul>
+            </p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_CANADA_EXPORTS}%>
           </div>
         </div>
