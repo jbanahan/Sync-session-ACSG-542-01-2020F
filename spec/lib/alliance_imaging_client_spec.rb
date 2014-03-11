@@ -201,7 +201,7 @@ describe OpenChain::AllianceImagingClient do
           'destination_file' => {'path' => "/chain-io/#{MasterSetup.get.uuid}/stitched/Entry-#{@entry.id}.pdf", 'service' => "s3"}
         }
       })
-
+      expect(StitchQueueItem.where(stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id).first).to_not be_nil
     end
 
     it 'orders multiple of the same attachment types by updated_at ASC' do
@@ -285,6 +285,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "reads a stitch response and updates an entry's attachments with an archive packet" do
+      StitchQueueItem.create! stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id
       OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', 'path/to/file.pdf').and_yield @t
       OpenChain::S3.should_receive(:delete).with('bucket', 'path/to/file.pdf')
       
@@ -295,6 +296,7 @@ describe OpenChain::AllianceImagingClient do
       expect(@entry.attachments.first.attachment_type).to eq Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
       expect(@entry.attachments.first.attached_file_name).to eq "#{@entry.entry_number}.pdf"
       expect(@entry.attachments.first.created_at).to eq Time.iso8601(@resp['stitch_response']['reference_info']['time'])
+      expect(StitchQueueItem.where(stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id).first).to be_nil
     end
 
     it "raises an error if the stitch request entity isn't found" do
@@ -356,6 +358,11 @@ describe OpenChain::AllianceImagingClient do
 
     it 'does not send stitch requests for entries that do not have invoices' do
       @broker_invoice.destroy
+      OpenChain::AllianceImagingClient.should_not_receive(:send_entry_stitch_request).with @entry.id
+      expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
+    end
+    it 'does not send a stitch request if there is already one queued' do
+      StitchQueueItem.create! stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: 'Entry', stitch_queuable_id: @entry.id
       OpenChain::AllianceImagingClient.should_not_receive(:send_entry_stitch_request).with @entry.id
       expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
     end
