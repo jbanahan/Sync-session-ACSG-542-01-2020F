@@ -279,6 +279,17 @@ describe ModelField do
         r.first[:row_key].should == @p.id
       end
     end
+    context "class_comp_cnt" do
+      it "should get count of tariff rows" do
+        tr = Factory(:tariff_record,line_number:1)
+        Factory(:tariff_record,line_number:2,classification:tr.classification)
+        cl = Classification.first
+        mf = ModelField.find_by_uid :class_comp_cnt
+        expect(mf.process_export(cl,nil,true)).to eq 2
+        sc = SearchCriterion.new(model_field_uid: :class_comp_cnt, operator:'eq',value:'2')
+        expect(sc.apply(Classification.scoped).first).to eq tr.classification
+      end
+    end
     context "regions" do
       it "should create classification count model fields for existing regions" do
         r = Factory(:region)

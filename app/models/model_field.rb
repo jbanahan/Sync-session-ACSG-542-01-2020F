@@ -1275,7 +1275,7 @@ and classifications.product_id = products.id
         [1,:class_comp_cnt, :comp_count, "Component Count", {
           :import_lambda => lambda {|obj,data| return "Component Count was ignored. (read only)"},
           :export_lambda => lambda {|obj| obj.tariff_records.size },
-          :qualified_field_name => "(SELECT comp_count FROM (SELECT count(id) as comp_count, classification_id FROM tariff_records group by classification_id) x where x.classification_id = classifications.id)",
+          :qualified_field_name => "(select count(id) from tariff_records tr where tr.classification_id = classifications.id)",
           :data_type => :integer,
           :history_ignore=>true
         }],
