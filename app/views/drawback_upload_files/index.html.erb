@@ -137,6 +137,11 @@
             <p><em>.csv file</em></p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_FMI_EXPORTS}%>
           </div>
+          <div>
+            <h3>Canada Stock Transfers (last 10)</h3>
+            <p><em>Excel Invoice File</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_STO_EXPORTS}%>
+          </div>
         </div>
         <%end-%>
       </div>
