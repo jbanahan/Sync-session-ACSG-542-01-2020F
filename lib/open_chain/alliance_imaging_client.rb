@@ -119,6 +119,7 @@ class OpenChain::AllianceImagingClient
       end
 
       if ordered_attachments.length > 0 || unordered_attachments.length > 0
+        StitchQueueItem.create! stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: Entry.name, stitch_queuable_id: entry.id
         OpenChain::SQS.send_json stitcher_info('request_queue'), generate_stitch_request(entry, (ordered_attachments + unordered_attachments), {'time' => stitch_time})
         sent = true
       end
@@ -177,7 +178,8 @@ class OpenChain::AllianceImagingClient
         attachment.created_at = Time.iso8601(message_hash['reference_info']['time'])
         attachment.save!
 
-        # Now set the referec
+        item = StitchQueueItem.where(stitch_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, stitch_queuable_type: entity.class.name, stitch_queuable_id: entity.id).first
+        item.destroy if item
 
         # Clear out any other archive packets already associated with this entry
         entity.attachments.where("NOT attachments.id = ?", attachment.id).where(:attachment_type => Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE).destroy_all
@@ -202,11 +204,14 @@ class OpenChain::AllianceImagingClient
       joins(:broker_invoices).
       joins("INNER JOIN attachments a on a.attachable_id = entries.id and a.attachable_type = '#{Entry.name}' and a.attachment_type <> '#{Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE}'").
       joins("LEFT OUTER JOIN attachments ap on ap.attachable_id = entries.id and ap.attachable_type = '#{Entry.name}' and ap.attachment_type = '#{Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE}'").
+      joins("LEFT OUTER JOIN stitch_queue_items sqi ON sqi.stitch_type = '#{Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE}' AND sqi.stitch_queuable_type = '#{Entry.name}' AND sqi.stitch_queuable_id = entries.id").
       where(attachment_archive_setups: {combine_attachments: true}).
       # Only return attachments that either don't have archive packets or have outdated ones
       where("ap.id IS NULL OR a.updated_at >= ap.created_at").
       # We only need to send new stitch requests when actual stitchable attachments have been updated
       where(Attachment.stitchable_attachment_extensions.collect{|ext| "a.attached_file_name LIKE '%#{ext}'"}.join(" OR ")).
+      # Only return attachments for entries that have not already been queued
+      where("sqi.id IS NULL").
       # We need to also make sure we're only sending stitch requests for those documents we're going to be archiving
       # By waiting till after we have invoices it also adds a period of delay where the entry info / attachments are likely to 
       # be their most volatile

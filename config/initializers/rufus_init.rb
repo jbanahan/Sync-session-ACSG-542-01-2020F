@@ -191,7 +191,7 @@ def execute_scheduler
     scheduler.every("5m") do
       OpenChain::AllianceImagingClient.delay.consume_images
       OpenChain::AllianceImagingClient.delay.consume_stitch_responses
-      #OpenChain::AllianceImagingClient.delay.send_outstanding_stitch_requests
+      OpenChain::AllianceImagingClient.delay.send_outstanding_stitch_requests
     end
     scheduler.every("30m") do
       OpenChain::CustomHandler::PoloCaEfocusGenerator.new.delay.generate 
