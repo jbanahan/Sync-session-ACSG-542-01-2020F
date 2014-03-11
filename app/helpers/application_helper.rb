@@ -125,7 +125,7 @@ module ApplicationHelper
 
 
   def attachment_icon att
-    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px"}
+    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px",:title=>"Uploaded: #{att.created_at.to_date}"}
     link_opts = {}
     fn = att.attached_file_name
     icon = image_tag("icon_other.png",opts)
