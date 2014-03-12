@@ -2,23 +2,27 @@
   <thead><tr><th>File</th><th>Started At</th><th>Finished At</th><th>Errors</th></tr></thead>
   <tbody>
     <%DrawbackUploadFile.where(:processor=>processor).order("created_at DESC").limit(10).each do |d|-%>
-    <tr class='hover'><td><%=link_to d.attachment.attached_file_name, d.attachment.secure_url(90.seconds)%></td><td><%=d.start_at%></td><td><%=d.finish_at%></td><td><%=d.error_message%></td></tr>
+      <tr class='hover'><td><%=link_to d.attachment.attached_file_name, d.attachment.secure_url(90.seconds)%></td><td><%=d.start_at%></td><td><%=d.finish_at%></td><td><%=d.error_message%></td></tr>
+    <%end-%>
+    <% if current_user.edit_drawback? -%>
+      <tr>
+        <td colspan='4'>
+          <% wm =  DrawbackUploadFile.new(:processor=>processor) -%>
+          <% wm.build_attachment -%>
+          <%=form_for wm, :html=>{:multipart=>true} do |f| %>
+            <%=f.hidden_field :processor%>
+            <%= f.fields_for(:attachment) do |a| %>
+              <% if local_assigns.has_key?(:accept) -%>
+                <%=a.file_field :attached, :accept=>accept, :class=>'form-control' %>
+              <% else -%>
+                <%=a.file_field :attached, :class=>'form-control' %>
+              <% end -%>
+            <%end%>
+            <%=f.submit 'Upload', :class=>'btn btn-primary'%>
+          <%end-%>
+        </td>
+      </tr>
     <%end-%>
   </tbody>
 </table>
-<% if current_user.edit_drawback? -%>
-  <% wm =  DrawbackUploadFile.new(:processor=>processor) -%>
-  <% wm.build_attachment -%>
-  <%=form_for wm, :html=>{:multipart=>true} do |f| %>
-    <%=f.hidden_field :processor%>
-    <%= f.fields_for(:attachment) do |a| %>
-      <% if local_assigns.has_key?(:accept) -%>
-        <%=a.file_field :attached, :accept=>accept %>
-      <% else -%>
-        <%=a.file_field :attached %>
-      <% end -%>
-    <%end%>
-    <%=f.submit 'Upload'%>
-  <%end-%>
-<%end-%>
 <hr />
