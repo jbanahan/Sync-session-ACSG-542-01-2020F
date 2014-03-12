@@ -53,19 +53,19 @@ describe AttachmentArchiveManifest do
       r = lines[0]
 
       r[0].should == "aname"
-      r[1].should > 1.minute.ago
+      r[1].should == Time.now.to_date
       r[2].should == '123'
       r[3].should == 'mbol'
-      #not testing release date because I don't feel like fighting w/ date logic
+      r[4].should == @rel_date.to_date
       r[5].should == 'EDOC'
       r[6].should == @att1.unique_file_name 
 
       r = lines[1]
       r[0].should == "bname"
-      r[1].should > 1.minute.ago
+      r[1].should == Time.now.to_date
       r[2].should == '123'
       r[3].should == 'mbol'
-      #not testing release date because I don't feel like fighting w/ date logic
+      r[4].should == @rel_date.to_date
       r[5].should == '7501'
       r[6].should == @att2.unique_file_name 
 
