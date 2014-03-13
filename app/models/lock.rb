@@ -8,6 +8,7 @@ class Lock < ActiveRecord::Base
   UPGRADE_LOCK ||= 'Upgrade'
   ISF_PARSER_LOCK ||= 'IsfParser'
   RL_PO_PARSER_LOCK ||= 'RLPoParser'
+  ALLIANCE_PARSER ||= 'AllianceParser'
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning wahtever

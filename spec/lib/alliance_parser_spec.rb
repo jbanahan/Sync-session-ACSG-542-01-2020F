@@ -352,6 +352,9 @@ describe OpenChain::AllianceParser do
   end
 
   it 'should create entry' do
+    Lock.should_receive(:acquire).with(Lock::ALLIANCE_PARSER, times: 3).and_yield
+    Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
+
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
@@ -870,6 +873,21 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
     expect(ent.broker_invoices.first.broker_invoice_lines.first.charge_description).to eq "NO DESCRIPTION"
+  end
+
+  class MutatingInstanceOf < RSpec::Mocks::ArgumentMatchers::InstanceOf
+
+    def ==(actual)
+      actual.instance_of?(@klass)
+      actual.last_exported_from_source = Time.now
+    end
+  end
+
+  it "checks for stale data after the with_lock_retry call" do
+    entry = Entry.new last_exported_from_source: Time.now
+    Lock.should_receive(:with_lock_retry).with(MutatingInstanceOf.new(Entry)).and_yield
+
+    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}").to be_false
   end
 
   describe 'process_past_days' do
