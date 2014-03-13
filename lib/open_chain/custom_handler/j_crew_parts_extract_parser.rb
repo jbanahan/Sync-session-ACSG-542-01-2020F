@@ -9,20 +9,21 @@ module OpenChain
       include AllianceProductSupport
       
       J_CREW_CUSTOMER_NUMBER ||= "J0000"
-      JCrewProduct = Struct.new(:po, :article, :hts, :description, :country_of_origin, :season, :cost)
-      COLUMN_HEADERS ||= Set.new ['PO #', 'Season', 'Article', 'HS #', 'Quota', 'Duty %', 'COO', 'FOB', 'PO Cost', 'Binding Ruling']
-
+      
       def self.process_file path
-        # Open in binmode (otherwise we tend to run into encoding issues with this file)
-        File.open(path, "rb") do |io|
+        # The file coming to us is in Windows extended ASCII, tranlsate it to UTF-8 internally and when we 
+        # output the file we're going to transliterate the data to ASCII for Alliance
+        File.open(path, "r:Windows-1252:UTF-8") do |io|
           JCrewPartsExtractParser.new.generate_and_send io
         end
       end
 
       # downloads the custom file to a temp file, then generate and send it
       def self.process_s3 s3_path, bucket = OpenChain::S3.bucket_name
+        # Because download_to_tempfile sets the IO object to binmode, we can't use the
+        # IO object directly, we can read from it via the path though.
         OpenChain::S3.download_to_tempfile(bucket, s3_path) do |file|
-          JCrewPartsExtractParser.new.generate_and_send file
+          process_file file.path
         end
       end
 
@@ -77,78 +78,51 @@ module OpenChain
 
       # Reads the IO object containing JCrew part information and writes the translated output
       # data to the output_io stream.
-      def generate_product_file input_io, output_io
-        @product_column_mapping = nil
-        @description_column_index = nil
-        product = nil
-
+      def generate_product_file io, out
         j_crew_company = Company.where("alliance_customer_number = ? ", J_CREW_CUSTOMER_NUMBER).first
 
         unless j_crew_company
           raise "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number '#{J_CREW_CUSTOMER_NUMBER}'."
         end
 
-        # While this file is named like .xls, it's not an excel file, it's a tab delimited file.
-        # There is no quote handling or any of that in the file (since it's tab delimited presumably there's no need to)
-        # Unfortunately, ruby doesn't really have a way to turn off quoting, and this file has " marks in it all over the place
-        # The easiest way I can think of to turn off quoting is to just tell it a character its never going to see is the quote char.
-        # So I'm using the bell character (\007)
-        csv = CSV.new(input_io, {:col_sep => "\t", :skip_blanks => true, :quote_char=> "\007"})
+        product = nil
+        line_number = 1
         begin
-          csv.each do |line|
-            if @product_column_mapping.nil? && !has_no_column_headers(line)
-              make_column_mapping line
-            elsif @description_column_index.nil? && has_description_header(line)
-              @description_column_index = has_description_header(line)
-            elsif has_product_header_data(line)
-              # Just in case we get a product without a description and then another line, write the product
-              # data sans description in that case.
-              if !product.nil?
-                write_product_data output_io, product, j_crew_company
-                product = nil
+          io.each_line("\r\n") do |line|
+            line.strip!
+            
+            if product.nil?
+              if line =~ /^\d+/
+                product = {}
+                product[:po] = parse_data line[0,18]
+                product[:season] = parse_data line[18, 14]
+                product[:article] = parse_data line[32, 15]
+                product[:hts] = parse_data line[47, 25]
+                product[:coo] = parse_data line[110, 11]
+                product[:cost] = parse_data line[134, 20]
               end
-
-              product = parse_product_data line, JCrewProduct.new
-
-            elsif !product.nil? && has_description(line)
-              product.description = get_data(line, @description_column_index)
-              write_product_data output_io, product, j_crew_company
+            else
+              # This is a description line since we have an open product (always a description after a product line)
+              product[:description] = parse_data line.strip
+              out << create_product_line(product, j_crew_company)
               product = nil
             end
-          end
-        rescue
-          # Re-raise the error but add approximately where we were in processing the file when the error occurred
-          raise $!, "#{$!.message} occurred when reading a line at or close to line #{csv.lineno + 1}", $!.backtrace
-        end
 
-        write_product_data(output_io, product, j_crew_company) unless product.nil?
-        output_io.flush
-        nil
+            line_number+=1
+          end
+
+          out.flush
+          nil
+        rescue => e
+          raise e, "#{e.message} occurred when reading a line at or close to line #{line_number}.", e.backtrace
+        end
       end
 
       private 
-        def write_product_data io, product, company
-          # There's a couple of translations / validations we need to make to the data before writing it
-
-          #Blank out invalid countries
-          if product.country_of_origin.length != 2
-            product.country_of_origin = ""
-          end
-
-          # Blank out invalid HTS numbers
-          if product.hts.length != 10
-            product.hts = ""
-          end
-
-          # J Crew has some out of date HTS #'s they send us which we automatically then translate into 
-          # updated numbers.  Take care of this here.
-          translated_hts = translate_hts_number product.hts, company
-
-          io << "#{out(product.po, 20)}#{out(product.season, 10)}#{out(product.article, 30)}#{out(translated_hts, 10)} #{out(product.description, 40)} #{out(product.cost, 10)}#{out(product.country_of_origin, 2)}\r\n"
-        end
 
         def out value, maxlen
           value = "" if value.nil?
+          value = ActiveSupport::Inflector.transliterate(value)
           if value.length < maxlen
             value = value.ljust(maxlen)
           elsif value.length > maxlen
@@ -158,62 +132,26 @@ module OpenChain
           value
         end
 
-        def parse_product_data line, product
-          unless @product_column_mapping
-            raise "No column headers found prior to first data line."
+        def create_product_line product, company
+          # Blank out invalid countries
+          if product[:coo].length != 2
+            product[:coo] = ""
           end
 
-          # the numeric value here referes to the header position from the column headers array constant, not the
-          # actual position in the file
-          product.po = get_data line, @product_column_mapping[0]
-          product.season = get_data line, @product_column_mapping[1]
-          product.article = get_data line, @product_column_mapping[2]
-          product.hts = get_data(line, @product_column_mapping[3]).gsub(".", "")
-          product.country_of_origin = get_data line, @product_column_mapping[6]
-          product.cost = sprintf("%0.2f", BigDecimal.new(get_data(line, @product_column_mapping[8])))
-
-          product
-        end
-
-        def get_data line, column
-          data = line[column] unless column.nil?
-
-          return data.nil? ? "" : data.strip
-        end
-
-        def has_product_header_data line
-          # We're looking for at least 3 columns with data in them and the article column having something in it
-          # and none of the columns containing any header names.
-          return !@product_column_mapping.nil? && line.select {|v| !v.blank?}.length >= 3 && has_data(line, @product_column_mapping[2]) && has_no_column_headers(line)
-        end
-
-        def make_column_mapping line
-          @product_column_mapping = {}
-          COLUMN_HEADERS.each_with_index do |header, x|
-            index = line.find_index header
-            if index 
-              @product_column_mapping[x] = index
-            end
+          # Blank out invalid HTS numbers
+          if product[:hts].length != 10
+            product[:hts] = ""
           end
+
+          # J Crew has some out of date HTS #'s they send us which we automatically then translate into 
+          # updated numbers.  Take care of this here.
+          translated_hts = translate_hts_number product[:hts], company
+
+          "#{out(product[:po], 20)}#{out(product[:season], 10)}#{out(product[:article], 30)}#{out(translated_hts, 10)} #{out(product[:description], 40)} #{out(product[:cost], 10)}#{out(product[:coo], 2)}\r\n"
         end
 
-        def has_description_header line
-          line.find_index "Description"
-        end
-
-        def has_data line, column
-          !line[column].blank?
-        end
-
-        def has_no_column_headers line
-          line.each do |col|
-            return false if !col.blank? && COLUMN_HEADERS.include?(col.strip)
-          end
-          true
-        end
-
-        def has_description line
-          !@description_column_index.nil? && has_data(line, @description_column_index)
+        def parse_data d
+          d.blank? ? "" : d.strip
         end
 
         def translate_hts_number number, company
