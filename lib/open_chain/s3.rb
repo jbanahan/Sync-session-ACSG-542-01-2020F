@@ -33,7 +33,7 @@ module OpenChain
           # If we started writing to a file, we need to truncate what we've already written
           # and start from scratch when we've failed
           if io.respond_to? :truncate
-            io.truncate
+            io.truncate(0)
           else
             io.rewind
           end
