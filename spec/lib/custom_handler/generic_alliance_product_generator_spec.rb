@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         expect(IO.read(@tmp.path)).to eq "AEroskobing    MYNAME                                  1234567890CN\n"
       end
       it "logs an error for non-translatable products and skips the record" do
-        @p.update_custom_value! @pn, "Copyright ©"
+        @p.update_custom_value! @pn, "Pilcrow ¶"
         error = nil
         StandardError.any_instance.should_receive(:log_me) do 
           error = $!
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
 
         # Nothing will have been written so nil is returned.
         expect(described_class.new(@c).sync_fixed_position).to be_nil
-        expect(error.message).to eq "Untranslatable Non-ASCII character for Part Number 'Copyright ©' found at string index 10 in product query column 0: 'Copyright ©'."
+        expect(error.message).to eq "Untranslatable Non-ASCII character for Part Number 'Pilcrow ¶' found at string index 8 in product query column 0: 'Pilcrow ¶'."
       end
     end
     describe "query" do
