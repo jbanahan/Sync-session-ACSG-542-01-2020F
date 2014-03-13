@@ -139,7 +139,7 @@ class FileImportProcessor
       }
       fire_row row_number, nil, messages, true #true = failed
     rescue => e
-      e.log_me ["Imported File ID: #{@import_file.id}"] 
+      e.log_me(["Imported File ID: #{@import_file.id}"]) unless e.is_a? MissingCoreModuleFieldError
       messages << "SYS ERROR: #{e.message}"
       fire_row row_number, nil, messages, true
       raise e
@@ -346,6 +346,9 @@ class FileImportProcessor
     end
   end
 
+  class MissingCoreModuleFieldError < StandardError
+  end
+
   private
 
   # find or build a new object based on the unique identfying column optionally scoped by the parent object
@@ -377,7 +380,7 @@ class FileImportProcessor
         e = "Cannot load #{my_core_module.label} data without a value in one of the #{uids.map {|v| "'#{ModelField.find_by_uid(v).label(false)}'"}.join(" or ")} fields."
       end
 
-      raise e
+      raise MissingCoreModuleFieldError, e
     end
      
     obj = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value).first
