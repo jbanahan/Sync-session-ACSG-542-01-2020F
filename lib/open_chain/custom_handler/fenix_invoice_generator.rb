@@ -161,7 +161,7 @@ module OpenChain; module CustomHandler
         :quantity => lambda {|i, line, tariff| line.quantity},
         :unit_price => lambda {|i, line, tariff| line.unit_price},
         :po_number => lambda {|i, line, tariff| line.po_number},
-        :tariff_treatment => lambda {|i, line, tariff| tariff.tariff_provision ? tariff.tariff_provision : "2"}
+        :tariff_treatment => lambda {|i, line, tariff| tariff.tariff_provision.blank? ? "2" : tariff.tariff_provision }
       }
     end
 

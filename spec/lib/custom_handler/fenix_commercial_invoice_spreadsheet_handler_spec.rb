@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       @importer = Factory(:company, importer: true, fenix_customer_number: "CUST1")
 
       @xl_client = double("XLClient")
-      @h.stub(:xl_client).and_return @xl_client
+      @h.stub(:file_reader).and_return @xl_client
     end
 
     it "should parse a file using the xlcient" do
@@ -226,6 +226,64 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       t.hts_code.should eq "12345"
       t.tariff_provision.should eq "1"
 
+    end
+  end
+
+  describe "file_reader" do
+    it "uses csvclient for csv files" do
+      expect(described_class.new(nil).send(:file_reader, "path/to/file.csv").class).to eq OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler::CsvClient
+    end
+
+    it "uses csvclient for txt files" do
+      expect(described_class.new(nil).send(:file_reader, "path/to/file.txt").class).to eq OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler::CsvClient
+    end
+
+    it "uses xlclient for xls files" do
+      expect(described_class.new(nil).send(:file_reader, "path/to/file.xls").class).to eq OpenChain::XLClient
+    end
+
+    it "uses xlclient for xlsx files" do
+      expect(described_class.new(nil).send(:file_reader, "path/to/file.xlsx").class).to eq OpenChain::XLClient
+    end
+
+    it "raies an error on other file types" do
+      expect {described_class.new(nil).send(:file_reader, "path/to/file.blah")}.to raise_error
+    end
+  end
+
+  describe "CsvClient" do
+    before :each do
+      @tempfile = Tempfile.new ['temp', '.csv']
+      @tempfile.binmode 
+      @tempfile << "header1,header2\ndata1,data2"
+      @tempfile.flush
+      @tempfile.rewind
+
+      @client = described_class.new(nil).send(:file_reader, "path/to/file.csv")
+      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', "path/to/file.csv").and_yield @tempfile
+    end
+
+    after :each do
+      @tempfile.close!
+    end
+
+    it "yields each row to a block" do
+      rows = []
+      @client.all_row_values(0) do |row|
+        rows << row
+      end
+
+      expect(rows).to eq [
+        ["header1", "header2"],
+        ["data1", "data2"]
+      ]
+    end
+
+    it "passes back all rows" do
+      expect(@client.all_row_values(0)).to eq [
+        ["header1", "header2"],
+        ["data1", "data2"]
+      ]
     end
   end
 end

@@ -7,6 +7,7 @@ require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
+require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -16,6 +17,7 @@ class CustomFeaturesController < ApplicationController
   POLO_CA_INVOICES = 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
   UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
   FENIX_CI_UPLOAD = 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
+  EDDIE_CI_UPLOAD = 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
 
   def index
     render :layout=>'one_col'
@@ -244,7 +246,7 @@ class CustomFeaturesController < ApplicationController
   end
 
   def fenix_ci_load_index
-    action_secure(OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
+    action_secure(OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
       @files = CustomFile.where(:file_type=>FENIX_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
       render :layout => 'one_col'
     }
@@ -268,6 +270,35 @@ class CustomFeaturesController < ApplicationController
   def fenix_ci_load_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def eddie_fenix_ci_load_index
+    action_secure(OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>EDDIE_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def eddie_fenix_ci_load_upload
+    f = CustomFile.new(:file_type=>EDDIE_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Eddie Bauer Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/eddie_fenix_ci_load'
+    }
+  end
+
+  def eddie_fenix_ci_load_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),EDDIE_CI_UPLOAD,{:verb=>"download",:module_name=>"Eddie Bauer Fenix Commerical Invoice Upload",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end
