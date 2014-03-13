@@ -13,7 +13,8 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def csv_client_options
-      {col_sep: "|"}
+      # Disable quoting
+      {col_sep: "|", quote_char: "\007"}
     end
 
     private 
@@ -36,6 +37,7 @@ module OpenChain; module CustomHandler; module EddieBauer
               .where("tariff_records.hts_1 IS NOT NULL AND tariff_records.hts_1 <> ''")
               .first
 
+        row[5] = "UOH" if row[5].to_s.upcase == "US"
         row[6] = tr.hts_1 if tr
 
         row
@@ -44,7 +46,7 @@ module OpenChain; module CustomHandler; module EddieBauer
       def ensure_line_length row
         # Ensure the row is at least 12 positions long
         row << "" while row.length < 13
-        row.each {|v| v.strip!}
+        row.each {|v| v.strip! if v}
         row
       end
   end

@@ -20,9 +20,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
 
     end
 
-    it "adds hts number" do
-      expect(described_class.new(nil).prep_line_row ["", "", "", "", "12345"]).to eq [
-        "855157855RM0001", "", "", "UOH", "12345", "", "1234567890", "", "", "", "", "", ""
+    it "adds hts number and translates US to UOH" do
+      expect(described_class.new(nil).prep_line_row ["", "", "", "", "12345", "US"]).to eq [
+        "855157855RM0001", "", "", "UOH", "12345", "UOH", "1234567890", "", "", "", "", "", ""
       ]
     end
   end
@@ -32,7 +32,8 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
       @importer = Factory(:company, fenix_customer_number: "855157855RM0001", importer: true)
       @tempfile = Tempfile.new ['temp', '.txt']
       @tempfile.binmode 
-      @tempfile << "header1|\n |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT                                           |0000010|000022.62|0309018| | | | | | | |     \n"
+      # Add a quotation mark to make sure we're disabling the quote handling
+      @tempfile << "header1|\n |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT 1\"                                         |0000010|000022.62|0309018| | | | | | | |     \n"
       @tempfile.flush
       @tempfile.rewind
 
