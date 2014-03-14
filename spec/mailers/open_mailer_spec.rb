@@ -357,7 +357,7 @@ EMAIL
         #As of right now, this doesn't detect if it's in the last line or not.
         #It's probably better to make sure it's showing up in the right place,
         #although that's dictated by the view, so it should never change.
-        @m.body.to_s.index("Survey label - test subtitle").should_not be_nil
+        expect(@m.body).to match(/test subtitle/)
       end
     end
 
@@ -381,7 +381,7 @@ EMAIL
       end
 
       it 'should not add a blank subtitle line to the normal body' do
-        @m.body.to_s.index("Survey label").should be_nil
+        @m.body.to_s.index("labeled ','").should be_nil
       end
     end
   end
