@@ -409,19 +409,20 @@ var OCSurvey = (function() {
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
       h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Warn If Empty</div>"
 
-      h += "<div class='row'><div class='col-md-12'><h4>Attachments</h4></div></div>"
-      $.each(attachments, function(index, value){
-        h += "<div class='row'><div class='col-md-12' style='padding-left:30px;'>"
-        h += "<a href='/attachments/"+value[0]+"/download' target='_blank'>"+value[1]+"</a>"
-        h += "</div></div>"
-      });
-      h += "</div></div>"
+      h += "<div id='qa_"+mid+"'><div class='row'><div class='col-md-12'><h4>Attachments</h4></div></div>"
+      if (typeof(attachments) != "undefined" && attachments != null){
+        $.each(attachments, function(index, value){
+          h += "<div class='row'><div class='col-md-12' style='padding-left:30px;'>"
+          h += "<a href='/attachments/"+value[0]+"/download' target='_blank'>"+value[1]+"</a>"
+          h += "</div></div>"
+        });
+      }
 
       h += "<div>"
       h += "<div class='row'><div class='col-md-12'>"
       h += "<div class='col-xs-4'>"
       h += "<input style='float: left; margin-right: 20px; width: 50%;' id='q-attach-input-"+mid+"' type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
-      h += "</div></div></div></div>"
+      h += "</div></div></div></div></div>"
 
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";
       h += "</div>";
@@ -448,9 +449,6 @@ var OCSurvey = (function() {
     },
     copyQuestion: function(id) {
       var mid = new Date().getTime();
-
-      //This should eventually replace "null" with $("#qa_"+id.val())
-      //once things are actually put in place properly
       OCSurvey.addQuestion(mid,$("#q_"+id).val(),$("#qc_"+id).val(),null,$("#qw_"+id));
       $('html, body').animate({scrollTop: $("#q-"+mid).offset().top}, 'slow');
     }
