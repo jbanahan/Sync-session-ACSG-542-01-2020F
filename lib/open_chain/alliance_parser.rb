@@ -64,7 +64,10 @@ module OpenChain
       row_content = rows[0]
       processed = false
       begin
-        find_and_process_entry(extract_entry_information(rows)) do |entry|
+        entry_information = extract_entry_information(rows)
+        return false if entry_information[:broker_reference].blank?
+
+        find_and_process_entry(entry_information) do |entry|
           # This block is run inside a transaction...no need to start another one
           @entry = entry
           @accumulated_strings = Hash.new
@@ -175,8 +178,11 @@ module OpenChain
       # really, this should always be the first line, but it's just as easy to iterate over the lines and find it
       sh00_line = lines.find {|l| l[0, 4] == "SH00"}
       info = {}
-      info[:broker_reference] = sh00_line[4,10].gsub(/^[0]*/,'')
-      info[:last_exported_from_source] = parse_date_time(sh00_line[24,12])
+      if sh00_line
+        info[:broker_reference] = sh00_line[4,10].gsub(/^[0]*/,'')
+        info[:last_exported_from_source] = parse_date_time(sh00_line[24,12])
+      end
+      
       info
     end
 

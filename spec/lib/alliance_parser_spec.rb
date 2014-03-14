@@ -890,6 +890,10 @@ describe OpenChain::AllianceParser do
     expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}").to be_false
   end
 
+  it "handles bad data" do
+    expect(OpenChain::AllianceParser.parse "bjsdfjsdfjkbashjkfsdj\ansdfasdjksd\nsdjfhasjkdfsa\sndfjshd").to be_false
+  end
+
   describe 'process_past_days' do
     it "should delay processing" do
       OpenChain::AllianceParser.should_receive(:delay).exactly(3).times.and_return(OpenChain::AllianceParser)
