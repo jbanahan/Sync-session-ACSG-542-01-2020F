@@ -159,7 +159,17 @@
       <div class='row' ng-show='answer.error_message'>
         <div class='col-md-12 alert alert-error'>{{answer.error_message}}</div>
       </div>
-      <div class='row' style='margin-bottom:15px;'>
+      <div class='row'>
+        <div class='col-md-12'>
+          <h4>Attachments</h4>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-md-12' ng-repeat='question_att in answer.question.attachments'>
+          <a href='/attachments/{{question_att.id}}/download' target='_blank'>{{question_att.attached_file_name}}</a>
+        </div>
+      </div>
+      <div class='row' style='margin-bottom:15px; margin-top:15px;'>
         <div class='col-md-6' ng-show='answer.question.choice_list.length>0'>
           <label>Multiple Choice Answer</label>
           <span ng-hide='resp.can_answer'>{{answer.choice}}</span>

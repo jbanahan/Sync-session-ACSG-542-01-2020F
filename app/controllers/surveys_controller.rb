@@ -82,6 +82,7 @@ class SurveysController < ApplicationController
       error_redirect "You do not have permission to edit surveys."
       return
     end
+    debugger
     s = Survey.new(params[:survey])
     s.company_id = current_user.company_id
     s.created_by = current_user

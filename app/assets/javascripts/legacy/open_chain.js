@@ -407,6 +407,16 @@ var OCSurvey = (function() {
       h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
       h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Warn If Empty</div>"
+
+      h += "<div>Here is the placeholder for an attachments box</div>"
+
+      h += "<div class='row'><div class='col-md-12'><h4>Attachments</h4></div></div>"
+      h += "<div>"
+      h += "<div class='row'><div class='col-md-12'>"
+      h += "<div class='col-xs-4'>"
+      h += "<input type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
+      h += "</div></div></div></div>"
+
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";
       h += "</div>";
       $("#questions").append(h);
