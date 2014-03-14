@@ -1012,8 +1012,8 @@ and classifications.product_id = products.id
             )
             limit 1)",
           :can_view_lambda=>lambda {|u| u.admin?} #temporary until we determine better rule
-        }]
-
+        }],
+        [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [

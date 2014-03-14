@@ -204,6 +204,7 @@ module OpenChain
       entry.transport_mode_code = str_val(line[4])
       entry.entry_port_code = prep_port_code(str_val(line[5]))
       entry.carrier_code = str_val(line[6])
+      entry.carrier_name = str_val line[97]
       entry.voyage = str_val(line[7])
       entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4,'0')}
       entry.entry_type = str_val(line[10])
@@ -226,6 +227,7 @@ module OpenChain
       entry.total_packages = int_val line[109]
       entry.total_packages_uom = "PKGS" unless entry.total_packages.blank?
       entry.gross_weight = int_val line[110]
+      entry.ult_consignee_name = str_val line[98]
 
       entry
     end
