@@ -396,9 +396,10 @@ var OpenChain = (function() {
 })();
 var OCSurvey = (function() {
   return {
-    addQuestion: function(id,content,choices,warning) {
+    addQuestion: function(id,content,choices,attachments,warning) {
       var mid = id ? id : new Date().getTime();
       var h = "<div class='question_box' id='q-"+mid+"' style='display:none;'>";
+
       if(id && id < 10000000) {
         h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][id]' value='"+mid+"' />";
       }
@@ -408,13 +409,18 @@ var OCSurvey = (function() {
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
       h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Warn If Empty</div>"
 
-      h += "<div>Here is the placeholder for an attachments box</div>"
-
       h += "<div class='row'><div class='col-md-12'><h4>Attachments</h4></div></div>"
+      $.each(attachments, function(index, value){
+        h += "<div class='row'><div class='col-md-12' style='padding-left:30px;'>"
+        h += "<a href='/attachments/"+value[0]+"/download' target='_blank'>"+value[1]+"</a>"
+        h += "</div></div>"
+      });
+      h += "</div></div>"
+
       h += "<div>"
       h += "<div class='row'><div class='col-md-12'>"
       h += "<div class='col-xs-4'>"
-      h += "<input type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
+      h += "<input style='float: left; margin-right: 20px; width: 50%;' id='q-attach-input-"+mid+"' type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
       h += "</div></div></div></div>"
 
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";
@@ -422,10 +428,30 @@ var OCSurvey = (function() {
       $("#questions").append(h);
       $("#q-"+mid).slideDown('slow');
       $("#qb-"+mid).effect("highlight",{color:"#1eb816"},2000);
+      $("#q-attach-input-"+mid).on("change", function(){
+        if ($(this).val()!=""){
+          //File was added, so present user with a remove button
+          remove_button = "<button id='q-remove-attachment-"+mid+"' style='margin-top: 2px;' type='button' class='btn btn-sm btn-danger'>Remove</button>"
+          if ($('#q-remove-attachment-'+mid).length == 0) {
+            $(remove_button).insertAfter($(this));
+            $('#q-remove-attachment-'+mid).click(function(){
+              $('#q-attach-input-'+mid).val("")
+              $(this).remove();
+            });
+          }
+        }
+        else{
+          //File was removed by cancelling the file dialog; destroy the remove button
+          $('#q-remove-attachment-'+mid).remove();
+        }
+      })
     },
     copyQuestion: function(id) {
       var mid = new Date().getTime();
-      OCSurvey.addQuestion(mid,$("#q_"+id).val(),$("#qc_"+id).val(),$("#qw_"+id));
+
+      //This should eventually replace "null" with $("#qa_"+id.val())
+      //once things are actually put in place properly
+      OCSurvey.addQuestion(mid,$("#q_"+id).val(),$("#qc_"+id).val(),null,$("#qw_"+id));
       $('html, body').animate({scrollTop: $("#q-"+mid).offset().top}, 'slow');
     }
   }
