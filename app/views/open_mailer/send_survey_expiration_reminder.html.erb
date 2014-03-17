@@ -1,0 +1,21 @@
+<p>Hello,</p>
+
+<p>Some of the responses to your survey named <b><%=@expired_survey.name%></b> have expired.  The table below summarizes these responses.</p>
+
+<table style="width:100%">
+	<tr>
+		<th style="background-color:#f0f0f0; width:50%">Company</th>
+		<th style="background-color:#f0f0f0">Label</th>
+	</tr>
+	<% @expired_responses.each do |response| %>
+		<tr>
+			<td><%= response.survey.company.name %></td>
+			<td><%= response.subtitle.blank? ? "N/A" : response.subtitle.blank %></td>
+		</tr>
+	<% end %>
+</table>
+
+<p>To view the survey, follow this link: <a href='<%=@link_addr%>'><%=@link_addr%></a></p>
+
+<p>Thanks, <br>
+	The Vandegift Team</p>

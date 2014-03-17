@@ -224,6 +224,15 @@ EOS
     m
   end
 
+  def send_survey_expiration_reminder to, expired_survey, expired_responses
+    @expired_survey = expired_survey
+    @expired_responses = expired_responses
+    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/surveys/#{expired_survey.id}"
+    mail(to: to, subject: "Survey \"#{@expired_survey.name}\" has #{expired_responses.count} expired survey(s).") do |format|
+      format.html
+    end
+  end
+
   #send survey response invite
   def send_survey_invite survey_response
     survey = survey_response.survey
