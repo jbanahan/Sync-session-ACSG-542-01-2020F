@@ -11,6 +11,12 @@ class BusinessValidationRule < ActiveRecord::Base
 
   # override to allow your business rule to skip objects
   def should_skip? obj
+    self.search_criterions.each do |sc|
+      sc_mf = sc.model_field
+      sc_cm = sc_mf.core_module
+      raise "Invalid object expected #{sc_cm.klass.name} got #{obj.class.name}" unless sc_cm == CoreModule.find_by_object(obj)
+      return true unless sc.test? obj
+    end
     false
   end
 end
