@@ -5,7 +5,7 @@ OpenMailer.deliveries.clear #Clean the inbox for the first test
 describe OpenChain::SurveyExpirationProcessor do 
 
 	before :each do
-		/ Setting up the 'ecosystem' for the test:
+		/ Set up the 'ecosystem' for the test:
 			Set up six users who will be our subscribers.
 			Create two surveys, and subscribe three users to each. 
 			Create some survey responses and set back the email_sent_date on them 
