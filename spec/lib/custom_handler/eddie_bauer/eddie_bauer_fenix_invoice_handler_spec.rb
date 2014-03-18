@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
       @tempfile = Tempfile.new ['temp', '.txt']
       @tempfile.binmode 
       # Add a quotation mark to make sure we're disabling the quote handling
-      @tempfile << "header1|\n |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT 1\"                                         |0000010|000022.62|0309018| | | | | | | |     \n"
+      @tempfile << " |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT 1\"                                         |0000010|000022.62|0309018| | | | | | | |     \n"
       @tempfile.flush
       @tempfile.rewind
 

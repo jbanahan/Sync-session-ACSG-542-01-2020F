@@ -113,8 +113,8 @@ module OpenChain; module CustomHandler
         current_invoice_rows = []
         row_number = 0
         reader.all_row_values(0) do |row|
-          #skip the first line, it's the column headings
-          next if (row_number +=1) == 1
+          #skip the first line if it's the column headings
+          next if (row_number +=1) == 1 && has_header_line?
 
           blank = blank_row row
           invoice_number = row[1]
@@ -139,6 +139,10 @@ module OpenChain; module CustomHandler
         end
 
         invoice_data
+      end
+
+      def has_header_line?
+        true
       end
 
       def parse_header row

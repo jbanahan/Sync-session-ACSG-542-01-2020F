@@ -17,6 +17,10 @@ module OpenChain; module CustomHandler; module EddieBauer
       {col_sep: "|", quote_char: "\007"}
     end
 
+    def has_header_line?
+      false
+    end
+
     private 
 
       def add_default_header_info row
