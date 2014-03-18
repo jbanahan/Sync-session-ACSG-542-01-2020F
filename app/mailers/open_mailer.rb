@@ -226,6 +226,7 @@ EOS
 
   #send survey response invite
   def send_survey_invite survey_response
+    debugger
     survey = survey_response.survey
     @subtitle = survey_response.subtitle
     @body_textile = survey.email_body
