@@ -1,7 +1,6 @@
 require 'spec_helper'
-require 'rake'
 
-OpenMailer.deliveries.clear
+OpenMailer.deliveries.clear #Clean the inbox for the first test
 
 describe OpenChain::SurveyExpirationProcessor do 
 
