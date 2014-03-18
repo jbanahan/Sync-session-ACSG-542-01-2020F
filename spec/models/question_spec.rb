@@ -41,4 +41,12 @@ describe Question do
     sorted[1].should == q_1_2
     sorted[2].should == q_10
   end
+  it 'should allow one or more attachments' do
+    s = Factory(:survey)
+    q = Question.new(survey_id: s.id, content: "Sample content of a question.")
+    q.save!
+    q.attachments.create!(attached_file_name:"attachment1.jpg")
+    q.attachments.create!(attached_file_name:"attachment2.jpg")
+    q.attachments.length.should == 2
+  end
 end
