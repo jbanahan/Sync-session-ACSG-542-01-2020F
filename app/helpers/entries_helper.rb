@@ -85,7 +85,7 @@ module EntriesHelper
       fields = {}
       fields[:entry] = [:ent_entry_num,:ent_brok_ref,:ent_cust_num, :ent_cust_name, :ent_importer_tax_id,:ent_cargo_control_number,:ent_ca_entry_type,:ent_po_numbers,
           :ent_vendor_names, :ent_customer_references, :ent_total_units,:ent_total_packages, :ent_total_packages_uom, :ent_gross_weight, :ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst,
-          :ent_direct_shipment_date,:ent_eta_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date,
+          :ent_direct_shipment_date,:ent_eta_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_exam_ordered_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date,
           :ent_entry_port_code,:ent_entry_port_name,:ent_mbols,:ent_hbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_voyage
       ]
       fields[:commercial_invoice] = [:ci_invoice_number,:ci_vendor_name,:ci_invoice_date,:ci_invoice_value,:ci_currency,:ci_exchange_rate]

@@ -30,6 +30,7 @@ describe OpenChain::FenixParser do
     @release_date = '01/09/2012,11:19am'
     @cadex_sent_date = '01/10/2012,12:15pm'
     @cadex_accept_date = '01/11/2012,01:13pm'
+    @exam_ordered_date = '01/11/2012,01:15pm'
     @invoice_number = '12345'
     @invoice_date = '04/16/2012'
     @vendor_name = 'MR Vendor'
@@ -141,6 +142,7 @@ describe OpenChain::FenixParser do
     ent.release_date.should == @est.parse_us_base_format(@release_date.gsub(',',' '))
     ent.cadex_sent_date.should == @est.parse_us_base_format(@cadex_sent_date.gsub(',',' '))
     ent.cadex_accept_date.should == @est.parse_us_base_format(@cadex_accept_date.gsub(',',' '))
+    ent.exam_ordered_date.should == @est.parse_us_base_format(@exam_ordered_date.gsub(',',' '))
     ent.k84_month.should == 1
     ent.origin_country_codes.should == @country_origin_code
     ent.export_country_codes.should == @country_export_code
@@ -756,13 +758,15 @@ describe OpenChain::FenixParser do
           '868' => '20131001',
           '1270' => '20131002',
           '1274' => '20131003',
-          '1280' => '20131004'
+          '1280' => '20131004',
+          '1276' => '20131005'
         },
         @child_entries[1] => {
           '868' => '20131005',
           '1270' => '20131006',
           '1274' => '20131007',
-          '1280' => '20131008'
+          '1280' => '20131008',
+          '1276' => '20131009'
         },
       }
       @time_zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
@@ -788,6 +792,7 @@ describe OpenChain::FenixParser do
       entry.cadex_sent_date.should eq @time_zone.parse '20131002'
       entry.cadex_accept_date.should eq @time_zone.parse '20131003'
       entry.k84_receive_date.should eq Date.parse '20131004'
+      entry.exam_ordered_date.should eq @time_zone.parse '20131005'
 
       entry = Entry.where(:entry_number => @child_entries[1], :source_system=>"Fenix").first
       entry.should_not be_nil
@@ -796,6 +801,7 @@ describe OpenChain::FenixParser do
       entry.cadex_sent_date.should eq @time_zone.parse '20131006'
       entry.cadex_accept_date.should eq @time_zone.parse '20131007'
       entry.k84_receive_date.should eq Date.parse '20131008'
+      entry.exam_ordered_date.should eq @time_zone.parse '20131009'
     end
 
     it "should update lvs entries" do
@@ -813,6 +819,7 @@ describe OpenChain::FenixParser do
       entry.cadex_sent_date.should eq @time_zone.parse '20131002'
       entry.cadex_accept_date.should eq @time_zone.parse '20131003'
       entry.k84_receive_date.should eq Date.parse '20131004'
+      entry.exam_ordered_date.should eq @time_zone.parse '20131005'
     end
   end
 end
