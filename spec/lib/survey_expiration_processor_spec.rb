@@ -1,8 +1,6 @@
 require 'spec_helper'
 
-OpenMailer.deliveries.clear #Clean the inbox for the first test
-
-describe OpenChain::SurveyExpirationProcessor do 
+describe OpenChain::SurveyExpirationProcessor, type: :mailer do 
 
 	before :each do
 		/ Set up the 'ecosystem' for the test:
