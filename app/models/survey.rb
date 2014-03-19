@@ -29,6 +29,10 @@ class Survey < ActiveRecord::Base
     user.edit_surveys? && user.company_id == self.company_id
   end
 
+  def can_view? user
+    self.can_edit?(user)
+  end
+
   # get an array of potential values to be used when rating surveys
   def rating_values
     r = []

@@ -20,6 +20,15 @@ class Question < ActiveRecord::Base
     r = self.choices.lines.collect {|l| l.strip.blank? ? nil : l.strip}.compact unless self.choices.blank?
     r
   end
+
+  def can_view? user
+    return true if self.survey.can_view?(user)
+    self.survey.survey_responses.each do |response|
+      return true if response.can_view?(user)
+    end
+    return false
+  end
+
   private
   def parent_lock
     errors[:base] << "Cannot save question because survey is missing or locked." if self.survey && self.survey.locked?

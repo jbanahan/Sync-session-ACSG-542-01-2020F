@@ -421,7 +421,9 @@ var OCSurvey = (function() {
       h += "<div>"
       h += "<div class='row'><div class='col-md-12'>"
       h += "<div class='col-xs-4'>"
-      h += "<input style='float: left; margin-right: 20px; width: 50%;' id='q-attach-input-"+mid+"' type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
+      h += "<input style='float: left; margin-right: 20px;' id='q-attach-input-"+mid+"' type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
+      h += "</div>"
+      h += "<div class='col-xs-2' id='q-upload-attachment-button'>"
       h += "</div></div></div></div></div>"
 
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";
@@ -431,11 +433,12 @@ var OCSurvey = (function() {
       $("#qb-"+mid).effect("highlight",{color:"#1eb816"},2000);
       $("#q-attach-input-"+mid).on("change", function(){
         if ($(this).val()!=""){
-          //File was added, so present user with a remove button
+          //File was chosen, so present user with a remove button
           remove_button = "<button id='q-remove-attachment-"+mid+"' style='margin-top: 2px;' type='button' class='btn btn-sm btn-danger'>Remove</button>"
-          if ($('#q-remove-attachment-'+mid).length == 0) {
-            $(remove_button).insertAfter($(this));
+          if ($('#q-remove-attachment-'+mid).length == 0) { //if there was no button already...
+            $("#q-upload-attachment-button").append(remove_button)
             $('#q-remove-attachment-'+mid).click(function(){
+              //bind the click to (1) remove attachment, (2) remove button
               $('#q-attach-input-'+mid).val("")
               $(this).remove();
             });

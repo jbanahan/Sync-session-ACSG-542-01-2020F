@@ -49,4 +49,26 @@ describe Question do
     q.attachments.create!(attached_file_name:"attachment2.jpg")
     q.attachments.length.should == 2
   end
+  it 'should not allow downloads if user does not have permission' do
+    u = User.new
+    s = Factory(:survey)
+    q = Question.new(survey_id: s.id, content: "Sample content of a question.")
+    q.save!
+    (q.can_view?(u)).should be_false
+  end
+  it 'should allow downloads for creator of the survey' do
+    ## In this case, the user in question is the survey creator
+    user = Factory(:user, survey_edit: true)
+    survey = Factory(:survey, created_by_id: user.id, company_id: user.company_id)
+    question = Question.new(survey_id: survey.id, content: "Sample content of a question.")
+    (question.can_view?(user)).should be_true
+  end
+  it 'should allow downloads for viewers of the response' do
+    ## In this case, the user in question is a viewer of the survey response
+    user = Factory(:user)
+    survey = Factory(:survey, created_by_id: user.id)
+    question = Question.new(survey_id: survey.id, content: "Sample content of a question.")
+    survey_response = Factory(:survey_response, survey: survey, user_id: user.id)
+    (question.can_view?(user)).should be_true
+  end
 end
