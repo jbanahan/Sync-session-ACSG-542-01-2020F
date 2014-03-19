@@ -117,15 +117,15 @@ describe Survey do
     before :each do
       @s = Factory(:survey)
     end
-    it "should allow editing if user has permission and is from survey's company" do
+    it "should allow view/download if user has permission and is from survey's company" do
       u = Factory(:user,:company=>@s.company,:survey_edit=>true)
       @s.can_view?(u).should be_true
     end
-    it "should not allow editing if user doesn't have permission" do
+    it "should not allow view/download if user doesn't have permission" do
       u = Factory(:user,:company=>@s.company)
       @s.can_view?(u).should be_false
     end
-    it "should not allow editing if user isn't from survey's company" do
+    it "should not allow view/download if user isn't from survey's company" do
       u = Factory(:user,:survey_edit=>true)
       @s.can_view?(u).should be_false
     end
