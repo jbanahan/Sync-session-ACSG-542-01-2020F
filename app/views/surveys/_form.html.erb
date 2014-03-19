@@ -63,6 +63,7 @@
 <%=form_for @survey, :html=>{ :id=>'frm_svy' } do |f|%>
   <table>
     <%=field_row "Survey Name", f.text_field(:name), id: "survey-name"%>
+    <%=field_row "Expires in... (days)", f.text_field(:expiration_days, maxlength: 4, size: 20, placeholder: "Number of days. Ex: 365")%> 
     <%=field_row "Rating Options", f.text_area(:ratings_list, :rows=>"5")%>
     <%=field_row "", "One rating per line."%>
   </table>

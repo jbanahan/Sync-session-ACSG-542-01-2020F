@@ -1,5 +1,5 @@
 class SurveyResponse < ActiveRecord::Base
-  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived
+  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at
   belongs_to :user
   belongs_to :survey
   has_many :answers, :inverse_of=>:survey_response
@@ -16,6 +16,7 @@ class SurveyResponse < ActiveRecord::Base
   STATUSES ||= {:incomplete => "Incomplete", :needs_rating => "Needs Rating", :rated => "Rated"}
 
   scope :was_archived, lambda {|ar| ar == true ? where("survey_responses.archived = ?", true) : where("survey_responses.archived IS NULL OR survey_responses.archived = ?", false)}
+  scope :reminder_email_needed, lambda { joins(:survey).where("(expiration_notification_sent_at IS NULL) AND (ADDDATE(email_sent_date, surveys.expiration_days) < now())").readonly(false) }
 
   def log_update user
     self.survey_response_updates.where(user_id:user.id).first_or_create
