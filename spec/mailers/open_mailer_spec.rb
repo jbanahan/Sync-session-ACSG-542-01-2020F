@@ -333,55 +333,39 @@ EMAIL
       m.attachments["test.txt"].should be_nil
     end
   end
-  context :send_survey_invite do
-    describe 'with a non-blank subtitle' do
+  describe :send_survey_invite do
+    context 'with a non-blank subtitle' do
       before :each do
         @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
         @survey = Factory(:survey)
         @survey.email_subject = "test subject"
         @survey.email_body = "test body"
-        survey_response = double("SurveyResponse")
-        survey_response.stub(:user).and_return @user
-        survey_response.stub(:survey).and_return @survey
-        survey_response.stub(:subtitle).and_return "test subtitle"
-        survey_response.stub(:id).and_return 1
+
+        survey_response = @survey.survey_responses.build :user => @user, :subtitle => 'test subtitle'
 
         @m = OpenMailer.send_survey_invite(survey_response)
       end
 
-      it 'should contain the subtitle in the subject line' do
-        (/test subtitle/ =~ @m.subject).should_not be_nil
-      end
-
-      it 'should append a line including the label to the body of the email' do
-        #As of right now, this doesn't detect if it's in the last line or not.
-        #It's probably better to make sure it's showing up in the right place,
-        #although that's dictated by the view, so it should never change.
-        expect(@m.body).to match(/test subtitle/)
+      it 'appends a line including the label to the body of the email and the subject' do
+        expect(@m.subject).to eq "test subject - test subtitle"
+        expect(@m.body.raw_source).to match(/To view the survey labeled &#x27;test subtitle,&#x27; follow this link:/)
       end
     end
 
-    describe 'without a blank subtitle' do
+    context 'without a blank subtitle' do
       before :each do
         @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
         @survey = Factory(:survey)
         @survey.email_subject = "test subject"
         @survey.email_body = "test body"
-        survey_response = double("SurveyResponse")
-        survey_response.stub(:user).and_return @user
-        survey_response.stub(:survey).and_return @survey
-        survey_response.stub(:subtitle).and_return ""
-        survey_response.stub(:id).and_return 1
+        survey_response = @survey.survey_responses.build :user => @user
 
         @m = OpenMailer.send_survey_invite(survey_response)
       end
 
-      it 'should not add a blank subtitle after the normal subject' do
-        @m.subject.should eq("test subject")
-      end
-
-      it 'should not add a blank subtitle line to the normal body' do
-        @m.body.to_s.index("labeled ','").should be_nil
+      it 'does not add a blank subtitle line to the normal body or subject' do
+        expect(@m.subject).to eq "test subject"
+        expect(@m.body.raw_source).to match(/To view the survey, follow this link:/)
       end
     end
   end

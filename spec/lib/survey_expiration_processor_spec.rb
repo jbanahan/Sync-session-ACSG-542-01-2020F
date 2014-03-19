@@ -34,107 +34,18 @@ describe OpenChain::SurveyExpirationProcessor, type: :mailer do
 
 	describe :run_schedulable do
 
-		it 'should send a total of six emails to subscribers' do
+		it 'sends emails to subscribers if survey is expiring' do
+      # Combining all the checks into a single example to save runtime
 			OpenMailer.deliveries.length.should equal(6)
-		end
+      expect(OpenMailer.deliveries.collect {|m| m.to}.flatten).to eq ["survey_1_sub1@example.com", "survey_1_sub2@example.com", 
+          "survey_1_sub3@example.com", "survey_2_sub1@example.com", "survey_2_sub2@example.com", "survey_2_sub3@example.com"]
+      expect(OpenMailer.deliveries.collect {|m| m.subject}).to eq ['Survey "survey_1" has 3 expired survey(s).', 'Survey "survey_1" has 3 expired survey(s).', 
+        'Survey "survey_1" has 3 expired survey(s).', 'Survey "survey_2" has 3 expired survey(s).', 
+        'Survey "survey_2" has 3 expired survey(s).', 'Survey "survey_2" has 3 expired survey(s).']
 
-		it 'should send an email to subscriber 1 of survey 1' do
-			OpenMailer.deliveries[-6].to.first.should eq("survey_1_sub1@example.com")
-		end
-
-		it 'should send an email to subscriber 2 of survey 1' do
-			OpenMailer.deliveries[-5].to.first.should eq("survey_1_sub2@example.com")
-		end
-		
-		it 'should send an email to subscriber 3 of survey 1' do
-			OpenMailer.deliveries[-4].to.first.should eq("survey_1_sub3@example.com")
-		end
-		
-		it 'should send an email to subscriber 1 of survey 2' do
-			OpenMailer.deliveries[-3].to.first.should eq("survey_2_sub1@example.com")
-		end
-		
-		it 'should send an email to subscriber 2 of survey 2' do
-			OpenMailer.deliveries[-2].to.first.should eq("survey_2_sub2@example.com")
-		end
-		
-		it 'should send an email to subscriber 3 of survey 2' do
-			OpenMailer.deliveries[-1].to.first.should eq("survey_2_sub3@example.com")
-		end
-
-		it 'should send the correct subject line for subscriber 1 of survey 1' do
-			OpenMailer.deliveries[-6].subject.should == "Survey \"survey_1\" has 3 expired survey(s)."
-		end
-
-		it 'should send the correct subject line for subscriber 2 of survey 1' do
-			OpenMailer.deliveries[-5].subject.should == "Survey \"survey_1\" has 3 expired survey(s)."
-		end
-		
-		it 'should send the correct subject line for subscriber 3 of survey 1' do
-			OpenMailer.deliveries[-4].subject.should == "Survey \"survey_1\" has 3 expired survey(s)."
-		end
-		
-		it 'should send the correct subject line for subscriber 1 of survey 2' do
-			OpenMailer.deliveries[-3].subject.should == "Survey \"survey_2\" has 3 expired survey(s)."
-		end
-		
-		it 'should send the correct subject line for subscriber 2 of survey 2' do
-			OpenMailer.deliveries[-2].subject.should == "Survey \"survey_2\" has 3 expired survey(s)."
-		end
-		
-		it 'should send the correct subject line for subscriber 3 of survey 2' do
-			OpenMailer.deliveries[-1].subject.should == "Survey \"survey_2\" has 3 expired survey(s)."
-		end
-		
-		it 'should include the subtitle for subscriber 1 of survey 1' do
-			OpenMailer.deliveries[-6].body.to_s.index("test subtitle 1.1").should_not be_nil
-		end
-
-		it 'should include a blank subtitle for subscriber 2 of survey 1' do
-			OpenMailer.deliveries[-5].body.to_s.index("N/A").should_not be_nil
-		end
-		
-		it 'should include the subtitle for subscriber 3 of survey 1' do
-			OpenMailer.deliveries[-4].body.to_s.index("test subtitle 1.3").should_not be_nil
-		end
-		
-		it 'should include the subtitle for subscriber 1 of survey 2' do
-			OpenMailer.deliveries[-3].body.to_s.index("test subtitle 2.1").should_not be_nil
-		end
-		
-		it 'should include a blank subtitle for subscriber 2 of survey 2' do
-			OpenMailer.deliveries[-2].body.to_s.index("N/A").should_not be_nil
-		end
-		
-		it 'should include the subtitle for subscriber 3 of survey 2' do
-			OpenMailer.deliveries[-1].body.to_s.index("test subtitle 2.3").should_not be_nil
-		end
-
-		it 'should set expiration_notification_sent_at for survey 1 response 1' do
-			#To explain why I didn't simply use @survey_1_response_1.expiration_notification_sent_at:
-			#RSpec changes the memory location on you as it executes run_schedulable, so you can't
-			#check the value just by checking the properties of @survey_1_response_1.
-			(Time.now - SurveyResponse.find(@survey_1_response_1.id).expiration_notification_sent_at).should < 1.minutes
-		end
-
-		it 'should set expiration_notification_sent_at for survey 1 response 2' do
-			(Time.now - SurveyResponse.find(@survey_1_response_2.id).expiration_notification_sent_at).should < 1.minutes
-		end
-
-		it 'should set expiration_notification_sent_at for survey 1 response 3' do
-			(Time.now - SurveyResponse.find(@survey_1_response_3.id).expiration_notification_sent_at).should < 1.minutes
-		end
-
-		it 'should set expiration_notification_sent_at for survey 2 response 1' do
-			(Time.now - SurveyResponse.find(@survey_2_response_1.id).expiration_notification_sent_at).should < 1.minutes
-		end
-
-		it 'should set expiration_notification_sent_at for survey 2 response 2' do
-			(Time.now - SurveyResponse.find(@survey_2_response_2.id).expiration_notification_sent_at).should < 1.minutes
-		end
-
-		it 'should set expiration_notification_sent_at for survey 2 response 3' do
-			(Time.now - SurveyResponse.find(@survey_2_response_3.id).expiration_notification_sent_at).should < 1.minutes
+      SurveyResponse.all.each do |sr|
+        expect(sr.expiration_notification_sent_at).to be > 1.minute.ago
+      end
 		end
 
 	end
