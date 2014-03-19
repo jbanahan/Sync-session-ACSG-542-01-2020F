@@ -236,10 +236,8 @@ EOS
   #send survey response invite
   def send_survey_invite survey_response
     survey = survey_response.survey
-    @subtitle = survey_response.subtitle
     @body_textile = survey.email_body
     @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
-    survey.email_subject += " - #{@subtitle}" unless @subtitle.blank?
     mail(:to=>survey_response.user.email,:subject=>survey.email_subject) do |format|
       format.html
     end

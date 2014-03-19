@@ -113,6 +113,23 @@ describe Survey do
       @s.can_edit?(u).should be_false
     end
   end
+  describe "can_view?" do
+    before :each do
+      @s = Factory(:survey)
+    end
+    it "should allow view/download if user has permission and is from survey's company" do
+      u = Factory(:user,:company=>@s.company,:survey_edit=>true)
+      @s.can_view?(u).should be_true
+    end
+    it "should not allow view/download if user doesn't have permission" do
+      u = Factory(:user,:company=>@s.company)
+      @s.can_view?(u).should be_false
+    end
+    it "should not allow view/download if user isn't from survey's company" do
+      u = Factory(:user,:survey_edit=>true)
+      @s.can_view?(u).should be_false
+    end
+  end
   describe :rating_values do
     it "should return empty array if no values" do
       Survey.new.rating_values.should == []
