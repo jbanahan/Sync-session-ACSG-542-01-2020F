@@ -30,7 +30,6 @@ describe OpenChain::FenixParser do
     @release_date = '01/09/2012,11:19am'
     @cadex_sent_date = '01/10/2012,12:15pm'
     @cadex_accept_date = '01/11/2012,01:13pm'
-    @exam_ordered_date = '01/11/2012,01:15pm'
     @invoice_number = '12345'
     @invoice_date = '04/16/2012'
     @vendor_name = 'MR Vendor'
