@@ -216,7 +216,6 @@ module OpenChain
       entry.release_date = parse_date_time(line,65)
       entry.cadex_accept_date = parse_date_time(line,67)
       entry.cadex_sent_date = parse_date_time(line,69)
-      entry.exam_ordered_date = parse_date_time(line, 68)
       entry.release_type = str_val(line[89])
       entry.employee_name = str_val(line[88])
       entry.po_numbers = str_val(line[14])
