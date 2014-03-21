@@ -54,11 +54,7 @@ module OpenChain
               r[9] = ent.daily_statement_approved_date
               r[10] = ent.monthly_statement_received_date
               r[11] = ent.release_date
-              po = cil.po_number
-              po = '0-0' if po.blank?
-              business = po.split("-").last
-              r[3] = po.split("-").first
-              r[4] = business
+              r[3], r[4] = EddieBauerStatementSummary.split_eddie_po_number cil.po_number
               duty_rate = BigDecimal("0.00") 
               line_duty = BigDecimal("0.00") 
               cil.commercial_invoice_tariffs.each do |cit|
@@ -122,6 +118,18 @@ module OpenChain
         end
         r
       end
+
+      def self.split_eddie_po_number full_po
+        po = "0"
+        division = "0"
+        unless full_po.blank?
+          po, division = *full_po.split("-")
+          division = "0" if division.blank?
+        end
+
+        [po, division]
+      end
+
       private
       def fees cil
         r = BigDecimal("0.00")

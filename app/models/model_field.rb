@@ -1065,7 +1065,29 @@ and classifications.product_id = products.id
         [32,:cil_cvd_duty_amount,:cvd_duty_amount,"CVD Duty",{:data_type=>:decimal,:currency=>:other}],
         [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}],
         [34,:cil_customer_reference, :customer_reference, "Customer Reference",{:data_type=>:string}],
-        [35,:cil_vendor_name, :vendor_name, "Vendor Name",{:data_type=>:string}]
+        [35,:cil_vendor_name, :vendor_name, "Vendor Name",{:data_type=>:string}],
+        [36,:cil_total_duty, :total_duty, "Total Duty", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Duty ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.total_duty },
+          :qualified_field_name=> "(SELECT ifnull(sum(total_duty_t.duty_amount), 0) FROM commercial_invoice_tariffs total_duty_t 
+            WHERE total_duty_t.commercial_invoice_line_id = commercial_invoice_lines.id)"
+        }],
+        [37,:cil_total_fees, :total_fees, "Total Fees", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Fees ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.total_fees },
+          :qualified_field_name=> "(SELECT ifnull(total_fees_l.prorated_mpf, 0) + ifnull(total_fees_l.hmf, 0) + ifnull(total_fees_l.cotton_fee, 0) FROM commercial_invoice_lines total_fees_l
+            WHERE total_fees_l.id = commercial_invoice_lines.id)"
+        }],
+        [38,:cil_total_duty_plus_fees, :duty_plus_fees_amount, "Total Duty + Fees", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Fees ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.duty_plus_fees_amount },
+          :qualified_field_name=> "(SELECT ifnull(total_duty_fees_l.prorated_mpf, 0) + ifnull(total_duty_fees_l.hmf, 0) + ifnull(total_duty_fees_l.cotton_fee, 0) + 
+              (SELECT ifnull(sum(total_duty_fees_t.duty_amount), 0) 
+                FROM commercial_invoice_tariffs total_duty_fees_t 
+                WHERE total_duty_fees_t.commercial_invoice_line_id = commercial_invoice_lines.id) 
+            FROM commercial_invoice_lines total_duty_fees_l
+            WHERE total_duty_fees_l.id = commercial_invoice_lines.id)"
+        }]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],

@@ -50,6 +50,10 @@
     <tr class='hover'><td><%=link_to "Eddie Bauer Statment Summary", reports_show_eddie_bauer_statement_summary_path%></td>
     <td>Eddie Bauer custom A/P Due Customs Report</td></tr>
   <%end-%>
+  <%if OpenChain::Report::EddieBauerCaStatementSummary.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Eddie Bauer CA Statment Summary", reports_show_eddie_bauer_ca_statement_summary_path%></td>
+    <td>Eddie Bauer CA custom A/P Due Customs Report</td></tr>
+  <%end-%>
   <%if OpenChain::Report::FootLockerBillingSummary.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Foot Locker US Billing Summary", reports_show_foot_locker_billing_summary_path%></td>
     <td>Foot Locker US Billing Summary report.</td</tr>
