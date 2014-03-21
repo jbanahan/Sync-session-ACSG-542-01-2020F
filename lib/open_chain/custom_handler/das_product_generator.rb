@@ -6,19 +6,14 @@ module OpenChain
     class DasProductGenerator < ProductGenerator
       include AllianceProductSupport
 
-      SYNC_CODE = 'das-product' #not sure where to get this value from
+      SYNC_CODE = 'das-product'
 
       def sync_code
         SYNC_CODE
       end
 
       def generate
-        ftp_file sync_xls
-      end
-
-      def auto_confirm?
-        #assuming this will also be false for DAS
-        false
+        ftp_file sync_fixed_position
       end
 
       def ftp_credentials
@@ -40,13 +35,16 @@ module OpenChain
       end
 
       def query
-        "select products.id, unique_identifier, name, 
-(select decimal_value from custom_values where custom_definition_id = 2 and customizable_id = products.id) as \"Unit Cost\", 
-(select string_value from custom_values where custom_definition_id = 6 and customizable_id = products.id) as \"COO\", 
-tr.hts_1
-from products
-inner join classifications c on c.product_id = products.id and c.country_id = (select id from countries where iso_code = \"US\")
-inner join tariff_records tr on tr.classification_id = c.id #{Product.need_sync_join_clause(sync_code)}"
+        unit_cost = CustomDefinition.where(label: 'Unit Cost', module_type: 'Product').first
+        coo = CustomDefinition.where(label: 'COO', module_type: 'Product').first
+        "SELECT products.id, unique_identifier, name,
+        #{cd_s(unit_cost.try(:id), nil, true)},
+        #{cd_s(coo.try(:id),nil, true)},
+        tr.hts_1 FROM products
+        INNER JOIN classifications c ON c.product_id = products.id AND c.country_id = (SELECT id FROM countries WHERE iso_code = \"US\")
+        INNER JOIN tariff_records tr ON tr.classification_id = c.id 
+        #{Product.need_sync_join_clause(sync_code)}
+        WHERE #{Product.need_sync_where_clause()}"
       end
     end
   end
