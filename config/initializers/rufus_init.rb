@@ -9,6 +9,7 @@ require 'open_chain/feed_monitor'
 require 'open_chain/custom_handler/polo_ca_efocus_generator'
 require 'open_chain/custom_handler/polo_efocus_product_generator'
 require 'open_chain/custom_handler/fenix_product_file_generator'
+require 'open_chain/custom_handler/das_product_generator'
 require 'open_chain/stat_client'
 
 def job_wrapper job_name, &block
@@ -184,6 +185,12 @@ def execute_scheduler
     end
     scheduler.every("240m") do
       OpenChain::CustomHandler::PoloEfocusProductGenerator.new.delay.generate
+    end
+  end
+
+  if MasterSetup.get.system_code == 'dasvfitracknet' && Rails.env == 'production'
+    scheduler.every("60m") do
+      OpenChain::CustomHandler::DasProductGenerator.new.delay.generate
     end
   end
 
