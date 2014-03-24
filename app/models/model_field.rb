@@ -1066,7 +1066,13 @@ and classifications.product_id = products.id
         [32,:cil_cvd_duty_amount,:cvd_duty_amount,"CVD Duty",{:data_type=>:decimal,:currency=>:other}],
         [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}],
         [34,:cil_customer_reference, :customer_reference, "Customer Reference",{:data_type=>:string}],
-        [35,:cil_vendor_name, :vendor_name, "Vendor Name",{:data_type=>:string}]
+        [35,:cil_vendor_name, :vendor_name, "Vendor Name",{:data_type=>:string}],
+        [36,:cil_adjustments_amount, :adjustments_amount, "Adjustments Amount",{:data_type=>:decimal,:currency=>:other}],
+        [37,:cil_adjusted_value, :adjusted_value, "Adjusted Value",{:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Adjusted Value ignored. (read only)"},
+          :export_lambda=>lambda {|obj| (obj.adjustments_amount ? obj.adjustments_amount : BigDecimal.new(0)) + (obj.value ? obj.value : BigDecimal.new(0))},
+          :qualified_field_name=> "(ifnull(commercial_invoice_lines.adjustments_amount,0) + ifnull(commercial_invoice_lines.value,0))",
+        }]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],

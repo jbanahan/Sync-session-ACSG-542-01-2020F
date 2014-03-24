@@ -291,6 +291,12 @@ module OpenChain
       accumulate_string :org_state, org[1]
       accumulate_string :customer_references, inv_ln.customer_reference
 
+      total_value_with_adjustments = dec_val(line[105])
+
+      if total_value_with_adjustments
+        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0"))
+      end
+
       t = inv_ln.commercial_invoice_tariffs.build
       t.spi_primary = str_val(line[28])
       t.hts_code = str_val(line[29])
@@ -347,6 +353,7 @@ module OpenChain
       t.sima_amount = dec_val(line[50])
       t.excise_rate_code = str_val(line[51])
       t.excise_amount = dec_val(line[52])
+      t.tariff_description = line[24]
     end
 
     def process_activity_line line, accumulated_dates
