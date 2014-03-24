@@ -320,6 +320,27 @@ EOS
         large_attachment_text = large_attachment_text.html_safe
       end
 
+      if blank_attachment? file
+        ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
+
+        email_attachment = EmailAttachment.create!(:email => registered_emails)
+        email_attachment.attachment = Attachment.new(:attachable => email_attachment)
+        #see note above concerning the next three lines
+        email_attachment.attachment.attached = (file.is_a?(String) ? File.open(file) : file)
+        email_attachment.attachment.save
+        email_attachment.save
+
+        blank_attachment_text = "* The attachment #{email_attachment.attachment.attached_file_name} was excluded because it was empty."
+        blank_attachment_text = blank_attachment_text.html_safe
+        if block_given?
+          yield email_attachment, blank_attachment_text
+          return nil
+        else
+          @body_text = blank_attachment_text if blank_attachment_text
+          return (blank_attachment_text.nil? ? false: true)
+        end
+      end
+
       if block_given?
         yield email_attachment, large_attachment_text
       else
@@ -330,6 +351,10 @@ EOS
 
     def large_attachment? file
       File.exist?(file) && File.size(file) > ATTACHMENT_LIMIT
+    end
+
+    def blank_attachment? file
+      File.size(file) == 0 || File.size(file) == nil
     end
 
     def create_attachment data, data_is_file = true
