@@ -5,7 +5,7 @@ module OpenChain
       include OpenChain::Report::ReportHelper
       TAX_ID ="857733323RM0001" 
       DATA_TABLE_COLUMNS = [:ent_brok_ref,:ent_entry_num,:ci_invoice_number,:ent_cargo_control_number,
-      :ent_cadex_sent_date,:ent_cadex_accept_date,:ent_pars_ack_date,:ent_direct_shipment_date,
+      :ent_cadex_sent_date,:ent_cadex_accept_date,:ent_exam_ordered_date,:ent_pars_ack_date,:ent_direct_shipment_date,
       :cil_line_number,:cil_part_number,:cil_country_origin_code,:ent_value_for_duty_code,
       :cit_hts_code,:cit_classification_qty_1,:cit_classification_uom_1,:cit_entered_value,
       :cil_units,:cil_uom,:cil_value,:ent_excise_amount,:ent_excise_rate_code,

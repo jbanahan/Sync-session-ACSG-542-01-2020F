@@ -68,7 +68,8 @@ describe OpenChain::FenixParser do
     @activities = {
       '180' => [Time.new(2013,4,1,10,0), Time.new(2013,4,1,18,0)],
       '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
-      '10' => [Date.new(2013,4,2), Date.new(2013,4,3)]
+      '10' => [Date.new(2013,4,2), Date.new(2013,4,3)],
+      '1276' => [Time.new(2013,4,4,10,0), Time.new(2013,4,4,18,0)]
     }
     @additional_bols = ["123456", "9876542321"]
     @duty_rate = BigDecimal.new "5.55"
@@ -217,6 +218,7 @@ describe OpenChain::FenixParser do
     ent.container_numbers.should == @container
     ent.first_do_issued_date.should be_nil
     ent.docs_received_date.should be_nil
+    ent.exam_ordered_date.should be_nil
   end
   
   it 'should save an entry with one main line in the new format' do
@@ -242,6 +244,7 @@ describe OpenChain::FenixParser do
     # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
     ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
     ent.eta_date.should == @activities['10'][1]
+    ent.exam_ordered_date.should == @activities['1276'][1].in_time_zone(Time.zone)
 
     # Master Bills should include ones from BL lines
     bols = ent.master_bills_of_lading.split("\n ")

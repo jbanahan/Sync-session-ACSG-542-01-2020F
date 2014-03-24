@@ -1013,7 +1013,8 @@ and classifications.product_id = products.id
             limit 1)",
           :can_view_lambda=>lambda {|u| u.admin?} #temporary until we determine better rule
         }],
-        [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}]
+        [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}],
+        [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -1169,7 +1170,8 @@ and classifications.product_id = products.id
         make_broker_invoice_entry_field(64,:bi_ent_pars_ack_date, :pars_ack_date, "PARS ACK Date", :datetime, lambda {|entry| entry.pars_ack_date}),
         make_broker_invoice_entry_field(65,:bi_ent_cadex_accept_date, :cadex_accept_date, "CADEX Accept Date", :datetime, lambda {|entry| entry.cadex_accept_date}),
         make_broker_invoice_entry_field(66,:bi_ent_cadex_sent_date, :cadex_sent_date, "CADEX Sent Date", :datetime, lambda {|entry| entry.cadex_sent_date}),
-        make_broker_invoice_entry_field(67,:bi_ent_k84_month, :k84_month, "K84 Month", :integer, lambda {|entry| entry.k84_month})
+        make_broker_invoice_entry_field(67,:bi_ent_k84_month, :k84_month, "K84 Month", :integer, lambda {|entry| entry.k84_month}),
+        make_broker_invoice_entry_field(68,:bi_ent_exam_ordered_date, :exam_ordered_date, "Exam Ordered Date", :datetime, lambda {|entry| entry.exam_ordered_date})
       ]
       add_fields CoreModule::BROKER_INVOICE_LINE, [
         [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
