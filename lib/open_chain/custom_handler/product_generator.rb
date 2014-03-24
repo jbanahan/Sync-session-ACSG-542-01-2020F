@@ -183,7 +183,7 @@ module OpenChain
       
 
       # Generate a subselect representing a custom value based on custom definition id
-      def cd_s cd_id, suppress_alias = false
+      def cd_s cd_id, suppress_alias = false, suppress_ifnull = false
         @definitions ||= {}
         if @definitions.empty?
           CustomDefinition.all.each {|cd| @definitions[cd.id] = cd}
@@ -201,7 +201,12 @@ module OpenChain
             table_name = 'tariff_records'
           end
           
-          "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          if suppress_ifnull
+            "(SELECT #{cd.data_column} FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          else
+            "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          end
+
         else
           #so report doesn't bomb if custom field is removed from system
           "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
