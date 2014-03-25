@@ -33,7 +33,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
       @tariff_line3 = @cil2.commercial_invoice_tariffs.create! duty_amount: 20, duty_rate: 0.25
       @tariff_line4 = @cil2.commercial_invoice_tariffs.create! duty_amount: 25, duty_rate: 0.05
 
-      @broker_invoice = Factory(:broker_invoice, entry: @entry)
+      @broker_invoice = Factory(:broker_invoice, entry: @entry, invoice_date: '2014-03-01')
       @broker_invoice_line1 = Factory(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 5)
       @broker_invoice_line2 = Factory(:broker_invoice_line, broker_invoice: @broker_invoice, charge_amount: 15, charge_type: "D")
 
@@ -44,25 +44,38 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
       @t.close! if @t && !@t.closed?
     end
 
-    it "outputs statement information for all entries w/ entry filed dates between specified dates" do
+    it "outputs statement information for all entries w/ invoice dates between specified dates" do
       @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
 
       expect(sheet.row(0)).to eq ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "LINK"]
       expect(sheet.row(1)).to eq [nil, nil, @entry.entry_number, "ABC", "123", @commercial_invoice.invoice_number, 
-        50.0, 15.0, 6.0, nil, nil, nil, nil, "#{@entry.entry_number}/#{50.0}/#{@commercial_invoice.invoice_number}", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
+        50.0, 15.0, 6.0, 5.0, nil, nil, nil, "#{@entry.entry_number}/#{50.0}/#{@commercial_invoice.invoice_number}", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
       expect(sheet.row(2)).to eq [nil, nil, @entry.entry_number, "DEF", "456", @commercial_invoice.invoice_number, 
-        25.0, 45.0, 15.0, 5.0, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
+        25.0, 45.0, 15.0, nil, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
     end
 
-    it "uses the user's timezone for the start and end dates" do
-      # Because midnight on 3/1 Eastern is after Midnight GMT (as the data is set up in before block) this should return nothing
-      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-03-01', end_date: '2014-03-02'
+    it "prevents users who do not have access to the entry from seeing them" do
+      @t = described_class.new.run Factory(:user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.rows.length).to eq 1
     end
 
-    it "prevents users who do not have access to the entry from seeing them" do
+    it "excludes invoices outside the start and end date range on an entry" do
+      prior_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-02-01'), charge_amount: 5).broker_invoice
+      post_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-05-01'), charge_amount: 5).broker_invoice
+
+      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      sheet = Spreadsheet.open(@t.path).worksheet 0
+      
+      sheet = Spreadsheet.open(@t.path).worksheet 0
+      expect(sheet.row(1)[9]).to eq 5.0
+      expect(sheet.row(2)[9]).to be_nil
+    end
+
+    it "excludes entries with invoices that zero each other out" do
+      other_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-03-01'), charge_amount: -5).broker_invoice
+
       @t = described_class.new.run Factory(:user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.rows.length).to eq 1

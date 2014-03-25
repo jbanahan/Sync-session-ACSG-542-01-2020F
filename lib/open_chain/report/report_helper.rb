@@ -1,3 +1,5 @@
+require 'spreadsheet'
+
 module OpenChain
   module Report
     module ReportHelper

@@ -247,7 +247,7 @@ class ReportsController < ApplicationController
   def run_eddie_bauer_ca_statement_summary
     if OpenChain::Report::EddieBauerCaStatementSummary.permission?(current_user)
       settings = {:start_date => params[:start_date].to_date, :end_date => params[:end_date].to_date}
-      run_report "Eddie Bauer CA Statement Summary", OpenChain::Report::EddieBauerCaStatementSummary, settings, ["Entry Filed Date on or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
+      run_report "Eddie Bauer CA Statement Summary", OpenChain::Report::EddieBauerCaStatementSummary, settings, ["Invoice Date on or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
     else
       error_redirect "You do not have permission to view this report"
     end

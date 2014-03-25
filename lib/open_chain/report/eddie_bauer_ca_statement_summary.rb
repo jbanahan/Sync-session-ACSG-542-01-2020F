@@ -13,8 +13,8 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
   end
 
   def run run_by, params = {}
-    start_date = params[:start_date]
-    end_date = params[:end_date]
+    start_date = params[:start_date].to_date
+    end_date = params[:end_date].to_date
 
     wb = XlsMaker.create_workbook "Billing Summary #{start_date} - #{end_date}", 
       ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "LINK"]
@@ -26,16 +26,19 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
                 joins(:broker_invoices).
                 includes(:commercial_invoices => [:commercial_invoice_lines => [:commercial_invoice_tariffs]]).
                 where(customer_number: "EBCC").
-                where("entries.entry_filed_date >= ? ", sanitize_date_string(start_date, run_by.time_zone)).
-                where("entries.entry_filed_date < ?", sanitize_date_string(end_date, run_by.time_zone)).
+                where("broker_invoices.invoice_date >= ? ", start_date).
+                where("broker_invoices.invoice_date < ?", end_date).
                 order("entries.entry_filed_date ASC")
 
     entries = Entry.search_secure run_by, entries
 
     entries.each do |ent|
+      # Only include entries where the brokerage fees don't total out to zero
+      fees = brokerage_fees(ent, run_by, start_date, end_date)
+      next unless fees.nonzero?
 
+      first_line = ent.commercial_invoice_lines.first
       ent.commercial_invoices.each do |ci|
-        last_line = ci.commercial_invoice_lines.last
         ci.commercial_invoice_lines.each do |cil|
           row = []
           row << ""
@@ -49,7 +52,7 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
           row << duty_rate
           row << cil.total_duty
           row << cil.total_fees
-          row << ((last_line.id == cil.id) ? ent.broker_invoice_lines.collect {|bil| bil.duty_charge_type? ? BigDecimal.new("0") : bil.charge_amount}.sum : "")
+          row << ((first_line.id == cil.id) ? fees : "")
           row << ""
           row << ""
           row << ent.release_date
@@ -66,5 +69,15 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
     t
   end
 
+  private
+
+    def brokerage_fees entry, run_by, start_date, end_date
+      # Only include invoices that fall between the start and end dates.
+      BrokerInvoice.where(entry_id: entry.id).
+        where("broker_invoices.invoice_date >= ? ", start_date).
+        where("broker_invoices.invoice_date < ?", end_date).
+        includes(:broker_invoice_lines).each.
+          map {|inv| inv.broker_invoice_lines.to_a}.flatten.collect {|bil| bil.duty_charge_type? ? BigDecimal.new("0") : bil.charge_amount}.sum
+    end
 
 end; end; end
