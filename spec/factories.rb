@@ -16,6 +16,9 @@ end
 Factory.define :company do |c|
   c.sequence(:name) { |n| "cname#{n}"}
 end
+Factory.define :importer, parent: :company do |c|
+  c.importer true
+end
 Factory.define :address do |a|
   a.name "MYaddr"
   a.association :country
