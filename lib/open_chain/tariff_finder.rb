@@ -19,7 +19,7 @@ module OpenChain; class TariffFinder
       where("commercial_invoice_lines.part_number = ?",part_number).
       where("entries.release_date is not null")
     cit = cit.where("commercial_invoice_lines.country_origin_code = ?",country_of_origin_code) unless country_of_origin_code.blank?
-    cit = cit.order("entries.release_date DESC").first
+    cit = cit.order("entries.release_date DESC, commercial_invoice_tariffs.hts_code ASC").first
     if cit
       cil = cit.commercial_invoice_line
       return s.new(cil.part_number,cil.country_origin_code,cil.commercial_invoice.mfid,cit.hts_code)
