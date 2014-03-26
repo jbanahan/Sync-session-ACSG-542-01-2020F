@@ -3,12 +3,22 @@ require 'csv'
 class DataCrossReference < ActiveRecord::Base
   belongs_to :company
 
+  LENOX_ITEM_MASTER_HASH ||= 'lenox_itm'
   RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
   RL_PO_TO_BRAND ||= 'po_to_brand'
   UA_PLANT_TO_ISO ||= 'uap2i'
   UA_WINSHUTTLE ||= 'uawin'
   UA_315_MILESTONE_EVENT ||= 'ua-315'
   UA_MATERIAL_COLOR_PLANT ||= 'ua-mcp'
+
+  #return a hash of all key value pairs
+  def self.get_all_pairs cross_reference_type
+    r = {}
+    self.where(cross_reference_type:cross_reference_type).each do |d|
+      r[d.key] = d.value
+    end
+    r
+  end
 
   def self.find_rl_profit_center_by_brand brand
     find_unique where(:cross_reference_type => RL_BRAND_TO_PROFIT_CENTER, :key => brand)
@@ -43,6 +53,14 @@ class DataCrossReference < ActiveRecord::Base
     add_xref! UA_MATERIAL_COLOR_PLANT, "#{material}-#{color}-#{plant}", '1'
   end
 
+  # Value will be MD5 hash of full line from Lenox Item Master Feed keyed by the lenox part number
+  def self.find_lenox_item_master_hash part_number
+    find_unique where(cross_reference_type:LENOX_ITEM_MASTER_HASH, key:part_number)
+  end
+
+  def self.create_lenox_item_master_hash! part_number, hash
+    add_xref! LENOX_ITEM_MASTER_HASH, part_number, hash
+  end
   def self.find_unique relation
     values = relation.limit(1).order("updated_at DESC").pluck(:value)
     values.first
