@@ -8,6 +8,15 @@ class AttachmentsController < ApplicationController
           att.destroy
           add_flash :errors, "You do not have permission to attach items to this object."
         end
+        if att.attached_file_name.nil? and att.attached_file_size.nil?
+          att.delete
+          add_flash :errors, "Please choose a file before uploading."
+          respond_to do |format|
+            format.html {redirect_to attachable}
+            format.json {render json: Attachment.attachments_as_json(attachable)}
+          end
+          return nil #avoid frozen hash issues with the rest of the action
+        end
         att.uploaded_by = current_user
         att.save
         attachable.log_update(current_user) if attachable.respond_to?(:log_update)
