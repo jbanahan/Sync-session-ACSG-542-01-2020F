@@ -2,7 +2,18 @@
 $(function() {
   $("#mod_comments_add").dialog({autoOpen:false,title:'Add Comment',
       width:'auto',
-      buttons:{"Save":function() {$("#frm_comment_add").submit();},
+      buttons:{"Save":function() {
+                  re = /^$|\S+@\S+\.\S+/;
+                  recipient = $(".comment_input#to").val();
+                  if (re.test(recipient))
+                  {
+                    $("#frm_comment_add").submit();
+                  }
+                  else
+                  {
+                    alert("Please enter a valid email address, or leave to \"Email To\" field blank.");
+                  } 
+                },
                "Cancel":function() {$("#mod_comments_add").dialog('close');}}  
     });
   $("#btn_comment_add").click(function() {
