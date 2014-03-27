@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module JCrew
       d.uom = r[16] #column q
       d.exporter = 'J Crew'
       d.action_code = 'E'
-      d.hts_code = OpenChain::TariffFinder.new(Country.where(iso_code: "US").first, Company.where(alliance_customer_number: ['J0000','JCREW'].to_a)).find_by_style(d.part_number)
+      d.hts_code = OpenChain::TariffFinder.new(Country.find_by_iso_code("US"), Company.where(alliance_customer_number: ['J0000','JCREW'].to_a)).find_by_style(d.part_number)
       d.importer = importer
       d
     end

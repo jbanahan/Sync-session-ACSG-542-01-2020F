@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       d.class.should == DutyCalcExportFileLine
       d.export_date.strftime("%Y-%m-%d").should == vals[:export_date]
       d.ship_date.strftime("%Y-%m-%d").should == vals[:ship_date]
-      d.part_number.should == vals[:part_number].split(' - ')[1]
+      d.part_number.should == "123456789-ABCDEF"
       d.ref_1.should == vals[:ref_1]
       d.ref_2.should == vals[:ref_2]
       d.quantity.to_s.should == vals[:quantity]

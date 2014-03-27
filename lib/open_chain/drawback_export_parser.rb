@@ -20,11 +20,9 @@ module OpenChain
       f = OpenChain::XLClient.new(s3_path)
       f.all_row_values(0) do |line|
         unless count == 0
-          ln = line.join(',').encode(Encoding.find("US-ASCII"),:undef=> :replace, replace: ' ', fallback:' ')
-          CSV.parse(ln) do |r|
-            d = parse_csv_line r, count, importer
-            d.save! unless d.nil?
-          end
+          line.map! {|element| element.to_s}
+          d = parse_csv_line line, count, importer
+          d.save! unless d.nil?
         end
         count += 1
       end
