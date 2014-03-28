@@ -15,13 +15,9 @@ module OpenChain
       def generate
         ftp_file sync_fixed_position
       end
-
-      def ftp_credentials
-        {:server=>'ftp2.vandegriftinc.com', username:'VFITRACK', password: 'RL2VFftp', folder: "to_ecs/DAS/products"} #not sure what the desired path is
-      end
-
+      
       def remote_file_name
-        "#{Time.now.strftime("%Y%m%d%H%M%S%L")}-DAPART.DAT"
+        "DAPART.DAT"
       end
 
       def fixed_position_map

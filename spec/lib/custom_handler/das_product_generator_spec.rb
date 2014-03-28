@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::DasProductGenerator do
   #YYYYMMDDHHMMSSLLL-DAPART.DAT
   describe :remote_file_name do
     it "should be in correct format" do
-      described_class.new.remote_file_name.should match /[0-9]{17}-DAPART\.DAT/
+      expect(described_class.new.remote_file_name).to eq "DAPART.DAT"
     end
   end
 
@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::DasProductGenerator do
 
   describe :ftp_credentials do
     it "should send credentials" do
-      described_class.new.ftp_credentials.should == {server: 'ftp2.vandegriftinc.com', username: "VFITRACK", password: 'RL2VFftp', folder: 'to_ecs/DAS/products'}
+     expect(described_class.new.ftp_credentials).to eq server: 'ftp2.vandegriftinc.com', username: "VFITRACK", password: 'RL2VFftp', folder: 'to_ecs/alliance_products', remote_file_name: "DAPART.DAT"
     end
   end
 
