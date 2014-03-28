@@ -507,9 +507,9 @@ module OpenChain
       c.weight = r[66,12]
       c.quantity = r[78,12]
       c.uom = r[90,6].strip
-      c.seal_number = r[241,15].strip
-      c.fcl_lcl = r[271]
-      if r.size > 283
+      if r.size > 240
+        c.seal_number = r[241,15].strip
+        c.fcl_lcl = r[271]
         c.size_description = r[283,40].strip
         c.teus = r[323,4]
       else
