@@ -39,6 +39,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     o.update_custom_value! @cdefs[:order_buyer_name], ls.buyer_name
     o.update_custom_value! @cdefs[:order_buyer_email], ls.buyer_email
     o.update_custom_value! @cdefs[:order_destination_code], ls.destination_code
+    o.update_custom_value! @cdefs[:order_factory_code], ls.factory_code
 
     #process lines
     lines.each do |ln|
@@ -78,7 +79,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     :line_number,:part_number,:part_name,:unit_price,:quantity,
     :currency,:transaction_type,:line_note,:buyer_name,:buyer_email,
     :earliest_ship_date,:destination_code,:hts,:coo,:mode,
-    :vendor_code,:vendor_name) do
+    :vendor_code,:vendor_name,:factory_code) do
     def order_number
       "LENOX-#{self.customer_order_number}"
     end
@@ -110,6 +111,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     r.mode = line[1356,3].strip
     r.vendor_code = line[1669,17].strip
     r.vendor_name = line[1686,35].strip
+    r.factory_code = line[2025,10].strip
     r
   end
   def parse_date str

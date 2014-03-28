@@ -499,11 +499,31 @@ module OpenChain
 
     # containers
     def process_sc00 r
-      accumulate_string :container_numbers, r[4,15].strip
-      cont_size_num = r[59,7].strip
-      cont_size_desc = r.size>283 ? r[283,40].strip : ""
+      # create the container record
+      c = @entry.containers.build
+      c.container_number = r[4,15].strip
+      c.goods_description = r[19,40].strip
+      c.container_size = r[59,7].strip
+      c.weight = r[66,12]
+      c.quantity = r[78,12]
+      c.uom = r[90,6].strip
+      c.seal_number = r[241,15].strip
+      c.fcl_lcl = r[271]
+      if r.size > 283
+        c.size_description = r[283,40].strip
+        c.teus = r[323,4]
+      else
+        c.size_description = ''
+      end
+
+      # handle the aggregate fields for the header
+      accumulate_string :container_numbers, c.container_number 
+      cont_size_num = c.container_size 
+      cont_size_desc = c.size_description 
       accumulate_string :container_sizes, (cont_size_desc.blank? ? cont_size_num : "#{cont_size_num}-#{cont_size_desc}")
       accumulate_string :fcl_lcl, r[271] unless r[271].blank?
+
+
     end
     
     #comments
