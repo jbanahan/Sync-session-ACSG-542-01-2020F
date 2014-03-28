@@ -30,6 +30,7 @@ R                 RB05722520131105                                              
     expect(o.get_custom_value(c_defs[:order_buyer_name]).value).to eq '97 - MADELINE LUM'
     expect(o.get_custom_value(c_defs[:order_buyer_email]).value).to eq 'MADELINE_LUMA@LENOX.COM'
     expect(o.get_custom_value(c_defs[:order_destination_code]).value).to eq 'H01'
+    expect(o.get_custom_value(c_defs[:order_factory_code]).value).to eq '000007'
     expect(o.importer).to eq @lenox
     expect(o.order_lines.count).to eq 12 
     expect(o.order_lines.collect {|ol| ol.product.unique_identifier}.sort.uniq).to eq [
@@ -62,6 +63,7 @@ R                 RB05722520131105                                              
     expect(vn.name).to eq 'PT HANKOOK'
     @lenox.reload
     expect(@lenox.linked_companies.first).to eq vn
+
 
   end
   it "should update existing PO, updating but not deleting lines" do

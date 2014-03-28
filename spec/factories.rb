@@ -324,3 +324,7 @@ Factory.define :business_validation_rule_result do |f|
     rr.save!
   }
 end
+Factory.define :container do |f|
+  f.sequence :container_number
+  f.association :entry
+end

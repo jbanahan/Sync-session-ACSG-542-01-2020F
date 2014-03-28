@@ -313,6 +313,36 @@ $(function() {
   <%else%>
     <h3>More than 200 commercial invoice lines exist.  Please <a href="<%=entry_path(@entry, format: :xls)%>">download</a> the entry data or use the <a href='/entries'>search module</a> to report on commercial invoice details.</h3>
   <%end%>
+  <%if !@entry.containers.blank?%>
+    <a name='containers'></a>
+    <h1>Containers</h1>
+    <table class="detail_table">
+      <thead>
+        <tr>
+          <th>Number</th>
+          <th>Size</th>
+          <th>Weight</th>
+          <th>Quantity</th>
+          <th>Description</th>
+          <th>FCL/LCL</th>
+          <th>TEUs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%@entry.containers.each do |cont|%>
+        <tr>
+          <td><%=cont.container_number%></td>
+          <td><%=cont.container_size%> <%=cont.size_description%></td>
+          <td><%=cont.weight%> KGS</td>
+          <td><%=cont.quantity%> <%=cont.uom%></td>
+          <td><%=cont.goods_description%></td>
+          <td><%=cont.fcl_lcl%></td>
+          <td><%=cont.teus%></td>
+        </tr>
+        <%end%>
+      </tbody>
+    </table>
+  <%end%>
   <%if show_broker_invoices%>
     <a name='b_invoices'></a>
     <div class='quick_jump'>
