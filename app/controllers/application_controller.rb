@@ -13,6 +13,7 @@ class ApplicationController < ActionController::Base
   before_filter :log_request
   before_filter :force_reset
   before_filter :set_legacy_scripts
+  before_filter :set_x_frame_options_header
 
   helper_method :current_user
   helper_method :master_company
@@ -459,5 +460,9 @@ class ApplicationController < ActionController::Base
     MasterSetup.current = nil
     Time.zone = @default_time_zone
     @include_legacy_scripts = nil
+  end
+
+  def set_x_frame_options_header
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
   end
 end

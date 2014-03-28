@@ -6,6 +6,10 @@ class User < ActiveRecord::Base
   acts_as_authentic do |config|
     # By default, authlogic expires password resets after 10 minutes...that's too short, allow an hour
     config.perishable_token_valid_for 1.hour
+    # Default options to make sure Authlogic cookies are set to only be accessible over ssl and only http only.
+    # SSL only for prod since we don't run dev environment over SSL
+    UserSession.secure = Rails.env.production?
+    UserSession.httponly = true
   end
   
   attr_accessible :username, :email, :password, 
