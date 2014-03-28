@@ -155,4 +155,30 @@ describe ApplicationController do
     end
   end
 
+  describe :set_x_frame_options_header do
+    # Create an anonymous rspec controller, allows testing only the
+    # filter mentioned in it
+    controller do
+      before_filter :set_x_frame_options_header
+
+      def show
+        render :text => "Rendered"
+      end
+    end
+
+    before :each do 
+      @u = Factory(:master_user)
+      activate_authlogic
+      UserSession.create! @u
+      @routes.draw {
+        resources :anonymous
+      }
+    end
+
+    it "should set X-Frame Options" do
+      get :show, :id => 1
+      expect(response.headers['X-Frame-Options']).to eq "SAMEORIGIN"
+    end
+  end
+
 end
