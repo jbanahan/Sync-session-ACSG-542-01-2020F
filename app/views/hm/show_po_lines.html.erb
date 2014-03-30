@@ -1,0 +1,27 @@
+<div ng-app='HMApp'>
+  <div class="container" ng-controller='HMPOLineController'>
+    <div class="row">
+      <div class='col-md-12'>
+        <h1>PO Lines</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Add Line</h2>
+        <label for='po_number'>PO Number</label>
+        <input type='text' ng-model='poLine.po_number' class='form-control' id='po_number'>
+        <label for='hts_number'>HTS Number</label>
+        <input type='text' ng-model='poLine.hts_number' class='form-control' id='hts_number'>
+        <label for="docs_rec_date">Docs Received</label>
+        <input id="docs_rec_date" type="date" ng-model="poLine.docs_rec_date" class='form-control'>
+        <label for="docs_ok_date">Docs OK</label>
+        <input id="docs_ok_date" type="date" ng-model="poLine.docs_ok_date" class='form-control'>
+        <label for="unit_cost">Unit Cost</label>
+        <input id="unit_cost" class="form-control" type="number" ng-model="poLine.unit_cost">
+        <label for="quantity">Quantity</label>
+        <input id="quantity" class="form-control" type="number" ng-model="poLine.quantity">
+        label[for='currency']{Currency}+
+      </div>
+    </div>
+  </div>
+</div>
