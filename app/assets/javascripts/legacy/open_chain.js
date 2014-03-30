@@ -4,10 +4,10 @@ var OpenChain = (function() {
   var keyMapPopUp = null;
 
   var initRemoteValidate = function() {
-    $(".rvalidate").live('change',function() {
+    $('body').on('change',"input.rvalidate",function() {
         remoteValidate($(this));
     });
-    $("form").live('submit',function(ev) {
+    $("body").on('submit','form',function(ev) {
       remoteValidateFormBlock($(this),ev);
     });
   }
@@ -154,7 +154,7 @@ var OpenChain = (function() {
   }
 
   var initEntitySnapshotPopups = function() {
-    $("a.entity_snapshot_popup").live('click',function(evt) {
+    $('body').on('click',"a.entity_snapshot_popup",function(evt) {
       var modal, inner;
       evt.preventDefault();
       modal = $("#mod_entity_snapshot");
@@ -196,7 +196,7 @@ var OpenChain = (function() {
     ajaxAutoClassify: function(column,baseCountry,hts) {
       var loadingMessage = "Loading Auto-Classification";
       $("div.auto_class_results.class_col_"+column).not(".cntry_"+baseCountry).html(loadingMessage);
-      $.get('/official_tariffs/auto_classify/'+hts.replace(/\./g,''),function(data) {
+      $.get('/official_tariffs/auto_classify/'+hts.replace(/\./g,'')+'.json',function(data) {
         var i,j,d,iso,hts,html;
         for(i=0;i<data.length;i++) {
           d = data[i];
@@ -309,13 +309,13 @@ var OpenChain = (function() {
       dropTableHandlers[table.attr('id')] = handler;
     },
     initClassifyPage: function() {
-      $(".tf_remove").live('click',function(ev) {
+      $("body").on('click','.tf_remove',function(ev) {
         $(this).closest(".tf_row").find(".hts_field").each(function() {Classify.removeFieldFromInvalidTariffList($(this));});
         $(this).closest(".tf_row").find(".sched_b_field").each(function() {Classify.removeFieldFromInvalidTariffList($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
-      $("a.auto_class").live('click',function(ev) {
+      $('body').on('click',"a.auto_class",function(ev) {
         ev.preventDefault();
         var found = false;
         $(this).parents(".tf_row").find("input.hts_field").each(function() {
@@ -460,7 +460,7 @@ var OCSurvey = (function() {
 var OCInvoice = (function() {
   return {
     init: function() {
-      $('.cc_fld').live('change',function() {
+      $('body').on('change','.cc_fld',function() {
         var rw = $(this).parents('tr');
         var sel = $(this).find('option:selected');
         rw.find('.desc_fld').val(sel.attr('desc'));
@@ -598,7 +598,7 @@ $(document).ready( function() {
     $("#btn_subscriptions").hide();
     
     //when closing a dialog, make sure to take focus from all inputs
-    $("div.ui-dialog").live( "dialogbeforeclose", function(event, ui) {
+    $(this).on( "dialogbeforeclose",'div.ui-dialog', function(event, ui) {
       $(this).find(":input").blur();
     });
     if(!$.support.boxModel) {
@@ -676,7 +676,7 @@ function loading(wrapper) {
 
 //address setup
 function setupShippingAddress(companyType,select,display,companyId,selected_val) {
-   select.live("change",function(){
+   select.parent().on("change",'select',function(){
      getAddress(display,select.val());
    });
    getShippingAddressList(select,companyId,selected_val,companyType);

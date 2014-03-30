@@ -148,14 +148,14 @@ $(function() {
         <div class='col-md-12 muted'>
           <strong>{{comm.user.full_name}}</strong> wrote:
         </div>
-        <div class='col-md-12' ng-bind-html-unsafe='comm.html_body'>
+        <div class='col-md-12' ng-bind-html='comm.html_body'>
         </div>
       </div>
       <%-unless @cap.status==@cap.class::STATUSES[:resolved]-%>
         <div class='row'>
           <div class='col-md-12'>
-            <label for='new_comment'>New Comment:</label'>
-            <textarea id='new_comment' ng-model='comment' rows='5'></textarea>
+            <label for='new_comment'>New Comment:</label>
+            <textarea id='new_comment' ng-model='comment' rows='5' class='form-control'></textarea>
           </div>
         </div>
         <div class='row'>
@@ -179,13 +179,13 @@ $(function() {
               </div>
             </div>
             <label for='issue-text-{{ci.id}}'>Description</label>
-            <div ng-hide='settings.canEdit' ng-bind-html-unsafe='ci.html_description'></div>
+            <div ng-hide='settings.canEdit' ng-bind-html='ci.html_description'></div>
             <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canEdit' id='issue-text-{{ci.id}}' ng-model='ci.description'></textarea>
             <label for='suggest-{{ci.id}}'>Suggested Action</label>
-            <div ng-hide='settings.canEdit' ng-bind-html-unsafe='ci.html_suggested_action'></div>
+            <div ng-hide='settings.canEdit' ng-bind-html='ci.html_suggested_action'></div>
             <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canEdit' id='suggest-{{ci.id}}' ng-model='ci.suggested_action'></textarea>
             <label for='action-{{ci.id}}'>Action Taken</label>
-            <div ng-hide='settings.canUpdateActions' ng-bind-html-unsafe='ci.html_action_taken'></div>
+            <div ng-hide='settings.canUpdateActions' ng-bind-html='ci.html_action_taken'></div>
             <div ng-show='!settings.canUpdateActions && ci.html_action_taken.length==0'><em>Survey recipient has not added information yet.</em></div>
             <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canUpdateActions' id='action-{{ci.id}}' ng-model='ci.action_taken'></textarea>
           </fieldset>

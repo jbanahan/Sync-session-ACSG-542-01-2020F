@@ -1,9 +1,9 @@
 srApp = angular.module 'SurveyResponseApp', ['ChainComponents','angularMoment']
 
-srApp.factory 'srService', ['$http',($http) ->
+srApp.factory 'srService', ['$http','$sce',($http,$sce) ->
   saveResponse = (r,buildData,success) ->
     r.saving = true
-    promise = $http.put('/survey_responses/'+r.id,buildData(r))
+    promise = $http.put('/survey_responses/'+r.id+'.json',buildData(r))
     promise.then(((response) ->
       r.saving = false
       success(response) if success
@@ -34,10 +34,12 @@ srApp.factory 'srService', ['$http',($http) ->
         svc.filterModes = ['All','Not Answered','Not Rated']
         if svc.resp.survey && svc.resp.survey.rating_values
           svc.filterModes.push("Rating: "+m) for m in svc.resp.survey.rating_values
+        if svc.resp.answers
+          ans.question.html_content = $sce.trustAsHtml(ans.question.html_content) for ans in svc.resp.answers
       ))
 
     addAnswerComment: (answer,content,isPrivate,extraCallback) ->
-      promise = $http.post('/answers/'+answer.id+'/answer_comments',{comment:{content:content,private:isPrivate}})
+      promise = $http.post('/answers/'+answer.id+'/answer_comments.json',{comment:{content:content,private:isPrivate}})
       promise.then(((resp) ->
         answer.answer_comments = [] if answer.answer_comments == undefined
         answer.answer_comments.push resp.data.answer_comment
@@ -49,7 +51,7 @@ srApp.factory 'srService', ['$http',($http) ->
 
     saveAnswer: (a,successCallback) ->
       a.saving = true
-      promise = $http.put('/answers/'+a.id, {
+      promise = $http.put('/answers/'+a.id+'.json', {
         answer: {
           id:a.id
           choice:a.choice
