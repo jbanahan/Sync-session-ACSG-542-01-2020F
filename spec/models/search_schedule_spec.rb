@@ -33,7 +33,7 @@ describe SearchSchedule do
         User.current.should == @setup.user
         Time.zone.should == ActiveSupport::TimeZone[@setup.user.time_zone]
       }
-      @ss.stub(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
+      @ss.stub(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', @u, log)
       @ss.should_receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
       
       @ss.run log 
@@ -62,7 +62,7 @@ describe SearchSchedule do
       log = double
       log.should_receive(:info).twice
 
-      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.xls', log)
+      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.xls', @u, log)
       @ss.should_receive(:send_ftp).with(@report.name, @temp, 't_st.txt.xls', log)
 
       @ss.run log
@@ -91,7 +91,7 @@ describe SearchSchedule do
       log = double
       log.should_receive(:info).twice
 
-      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', log)
+      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', @u, log)
       @ss.should_receive(:send_ftp).with(@report.name, @temp, 't_st.txt.csv', log)
 
       @ss.run log
@@ -110,7 +110,7 @@ describe SearchSchedule do
         Time.zone.should == ActiveSupport::TimeZone[@setup.user.time_zone]
       }
 
-      @ss.stub(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
+      @ss.stub(:send_email).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', @u, log)
       @ss.should_receive(:send_ftp).with(@setup.name, an_instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', log)
 
       @report.stub(:user) {@u}
@@ -123,7 +123,7 @@ describe SearchSchedule do
         @temp
       }
       
-      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', log)
+      @ss.should_receive(:send_email).with(@report.name, @temp, 't_st.txt.csv', @u, log)
       @ss.should_receive(:send_ftp).with(@report.name, @temp, 't_st.txt.csv', log)
 
       @ss.run log

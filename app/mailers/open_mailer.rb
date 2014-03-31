@@ -102,7 +102,8 @@ EOS
     mail(:to => to_address, :reply_to => current_user.email, :subject => "[VFI Track] #{comment.subject}") 
   end
 
-  def send_search_result(to,search_name,attachment_name,file_path)
+  def send_search_result(to, search_name, attachment_name, file_path, user)
+    @user = user
     attachment_saved = save_large_attachment(file_path, to)
     m = mail(:to => to,
       :subject => "[VFI Track] #{search_name} Result",
