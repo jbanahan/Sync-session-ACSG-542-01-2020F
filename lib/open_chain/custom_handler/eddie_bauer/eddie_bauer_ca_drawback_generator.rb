@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerCaDra
       d.import_date = ent.eta_date
       d.country_of_origin_code = cil.country_origin_code
       d.part_number = cil.part_number
-      d.product = Product.where(importer_id:ent.importer_id,unique_identifier:"EDDIE-#{cil.part_number}").first_or_create!
+      d.product = Product.where(unique_identifier:"EDDIE-#{cil.part_number}").first_or_create!
       ct = cil.commercial_invoice_tariffs.order('hts_code ASC').first
       d.hts_code = ct.hts_code
       d.description = ct.tariff_description
