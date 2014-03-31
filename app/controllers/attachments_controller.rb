@@ -8,7 +8,7 @@ class AttachmentsController < ApplicationController
           att.destroy
           add_flash :errors, "You do not have permission to attach items to this object."
         end
-        if att.attached_file_name.nil? and att.attached_file_size.nil?
+        if att.attached_file_size.nil?
           att.delete
           add_flash :errors, "Please choose a file before uploading."
           respond_to do |format|
