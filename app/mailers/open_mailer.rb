@@ -302,7 +302,7 @@ EOS
 
     def save_large_attachment(file, registered_emails)
       email_attachment = nil
-      large_attachment_text = nil
+      attachment_text = nil
 
       if large_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
@@ -316,36 +316,23 @@ EOS
         email_attachment.attachment.save
         email_attachment.save
 
-        large_attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
-        large_attachment_text = large_attachment_text.html_safe
-      end
-
-      if blank_attachment? file
+        attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
+        attachment_text = attachment_text.html_safe
+      elsif blank_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
 
-        email_attachment = EmailAttachment.create!(:email => registered_emails)
-        email_attachment.attachment = Attachment.new(:attachable => email_attachment)
-        #see note above concerning the next three lines
-        email_attachment.attachment.attached = (file.is_a?(String) ? File.open(file) : file)
-        email_attachment.attachment.save
-        email_attachment.save
+        # PostMark will raise exceptions if this is exactly nil, but a blank string is acceptable
+        email_attachment = ""
 
-        blank_attachment_text = "* The attachment #{email_attachment.attachment.attached_file_name} was excluded because it was empty."
-        blank_attachment_text = blank_attachment_text.html_safe
-        if block_given?
-          yield email_attachment, blank_attachment_text
-          return nil
-        else
-          @body_text = blank_attachment_text if blank_attachment_text
-          return (blank_attachment_text.nil? ? false: true)
-        end
+        attachment_text = "* The attachment #{File.basename(file)} was excluded because it was empty."
+        attachment_text = attachment_text.html_safe
       end
 
       if block_given?
-        yield email_attachment, large_attachment_text
+        yield email_attachment, attachment_text
       else
-        @body_text = large_attachment_text if large_attachment_text
-        return (large_attachment_text.nil? ? false : true)
+        @body_text = attachment_text if attachment_text
+        return (attachment_text.nil? ? false : true)
       end
     end
 
