@@ -1,6 +1,29 @@
 require 'spec_helper'
 
 describe DrawbackImportLine do
+  describe "unallocated" do
+    it "should return if no allocations" do
+      d = Factory(:drawback_import_line,quantity:10)
+      expect(DrawbackImportLine.unallocated.to_a).to eql([d])
+    end
+    it "should return if unallocated quantity" do
+      d = Factory(:drawback_import_line,quantity:10)
+      d.drawback_allocations.create!(quantity:9)
+      expect(DrawbackImportLine.unallocated.to_a).to eql([d])
+    end
+    it "should not return if fully allocated" do
+      d = Factory(:drawback_import_line,quantity:10)
+      d.drawback_allocations.create!(quantity:10)
+      expect(DrawbackImportLine.unallocated.to_a).to be_empty
+    end
+  end
+  describe "unallocated_quantity" do
+    it "should return difference between quantities and allocations" do
+      d = Factory(:drawback_import_line,quantity:10)
+      d.drawback_allocations.create!(quantity:9)
+      expect(d.unallocated_quantity).to eql(1)
+    end
+  end
   describe "not_in_duty_calc_file" do
     it "should find line not linked" do
       d1 = Factory(:drawback_import_line) 

@@ -3,8 +3,16 @@ class DrawbackImportLine < ActiveRecord::Base
 
   belongs_to :importer, :class_name=>"Company"
   has_many :duty_calc_import_file_lines, :dependent=>:destroy
+  has_many :drawback_allocations, dependent: :destroy, inverse_of: :drawback_import_line
 
   scope :not_in_duty_calc_file, lambda { joins("left outer join duty_calc_import_file_lines on drawback_import_lines.id = duty_calc_import_file_lines.drawback_import_line_id").where("duty_calc_import_file_lines.id is null") }
+
+  scope :unallocated, where("drawback_import_lines.quantity > (select ifnull(sum(drawback_allocations.quantity),0) FROM drawback_allocations WHERE drawback_import_lines.id = drawback_allocations.drawback_import_line_id)")
+
+  def unallocated_quantity
+    self.quantity - self.drawback_allocations.sum(:quantity)
+  end
+
   # return an array suitable for passing to duty calc
   def duty_calc_line_array
     [
