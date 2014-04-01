@@ -478,4 +478,11 @@ OpenChain::Application.routes.draw do
 
   root :to => "home#index"
 
+  namespace :api do
+    namespace :v1 do
+      match "/products/by_id/:id" => "products#show", :via=>:get
+      match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
+      match "/products/model_fields" => "products#model_fields", :via => :get
+    end
+  end
 end

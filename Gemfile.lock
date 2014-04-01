@@ -59,6 +59,8 @@ GEM
       execjs
     coffee-script-source (1.4.0)
     columnize (0.3.6)
+    crack (0.4.1)
+      safe_yaml (~> 0.9.0)
     daemons (1.1.9)
     dalli (2.6.4)
     debugger-linecache (1.2.0)
@@ -180,6 +182,7 @@ GEM
     rubyzip (0.9.9)
     rufus-scheduler (2.0.24)
       tzinfo (>= 0.3.22)
+    safe_yaml (0.9.7)
     sass (3.2.5)
     sass-rails (3.2.5)
       railties (~> 3.2.0)
@@ -214,6 +217,9 @@ GEM
       execjs (>= 0.3.0)
       multi_json (~> 1.0, >= 1.0.2)
     uuidtools (2.1.4)
+    webmock (1.16.1)
+      addressable (>= 2.2.7)
+      crack (>= 0.3.2)
     will_paginate (3.0.4)
 
 PLATFORMS
@@ -255,4 +261,5 @@ DEPENDENCIES
   therubyracer (= 0.12.0)
   uglifier
   uuidtools (= 2.1.4)
+  webmock
   will_paginate (= 3.0.4)

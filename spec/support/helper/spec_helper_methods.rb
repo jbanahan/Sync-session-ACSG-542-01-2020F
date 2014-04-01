@@ -19,4 +19,8 @@ module Helpers
     Paperclip::Attachment.any_instance.stub(:save).and_return true
     Paperclip::Attachment.any_instance.stub(:destroy).and_return true
   end
+  
+  def allow_api_access user
+    request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials "#{user.username}:#{user.api_auth_token}"
+  end
 end
