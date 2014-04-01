@@ -38,6 +38,43 @@ describe Attachment do
     end
   end
 
+  describe "can_view?" do
+    it "should allow viewing for permitted users when private" do
+      company = Factory(:company, master: true)
+      user = Factory(:user, company: company)
+      a = Attachment.new(is_private: true)
+      a.attached_file_name = "test.txt"
+      a.attachable = Entry.new
+      a.save!
+      # there's a lot of conditions to make this part true, so just mock it
+      a.attachable.should_receive(:can_view?).with(user).and_return true
+      a.can_view?(user).should be_true
+    end
+
+    it "should allow viewing for permitted users when not private" do
+      company = Factory(:company)
+      user = Factory(:user, company: company)
+      a = Attachment.new(is_private: false)
+      a.attached_file_name = "test.txt"
+      a.attachable = Entry.new
+      a.save!
+      a.attachable.should_receive(:can_view?).with(user).and_return true
+      a.can_view?(user).should be_true
+    end
+
+    it "should block viewing for non-permitted users" do
+      company = Factory(:company, master: true)
+      user = Factory(:user, company: company)
+      a = Attachment.new(is_private: true)
+      a.attached_file_name = "test.txt"
+      a.attachable = Entry.new
+      a.save!
+      a.attachable.should_receive(:can_view?).with(user).and_return false
+      a.can_view?(user).should be_false
+    end
+
+  end
+
   describe "add_original_filename_method" do
     it "should add original_filename accessor methods to subject object" do
       a = "test"
