@@ -7,6 +7,14 @@ class CommercialInvoiceLine < ActiveRecord::Base
   include LinesSupport
 
   def duty_plus_fees_amount
-    BigDecimal.new([BigDecimal.new(self.commercial_invoice_tariffs.map(&:duty_amount).compact.sum), prorated_mpf, hmf, cotton_fee].compact.sum)
+    BigDecimal.new([self.total_duty, self.total_fees].compact.sum)
+  end
+
+  def total_duty
+    BigDecimal.new(self.commercial_invoice_tariffs.map(&:duty_amount).compact.sum)
+  end
+
+  def total_fees
+    [prorated_mpf, hmf, cotton_fee].compact.sum
   end
 end

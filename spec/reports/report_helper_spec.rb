@@ -134,6 +134,11 @@ describe OpenChain::Report::ReportHelper do
       s = @helper.new.sanitize_date_string "20130101", "Hawaii"
       s.should == "2013-01-01 10:00:00"
     end
+
+    it "should accept a date object" do
+      s = @helper.new.sanitize_date_string Date.new(2013,1,1), "Hawaii"
+      s.should == "2013-01-01 10:00:00"
+    end
   end
 
 end

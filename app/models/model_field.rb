@@ -1072,6 +1072,28 @@ and classifications.product_id = products.id
           :import_lambda=>lambda {|o,d| "Adjusted Value ignored. (read only)"},
           :export_lambda=>lambda {|obj| (obj.adjustments_amount ? obj.adjustments_amount : BigDecimal.new(0)) + (obj.value ? obj.value : BigDecimal.new(0))},
           :qualified_field_name=> "(ifnull(commercial_invoice_lines.adjustments_amount,0) + ifnull(commercial_invoice_lines.value,0))",
+        }],
+        [38,:cil_total_duty, :total_duty, "Total Duty", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Duty ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.total_duty },
+          :qualified_field_name=> "(SELECT ifnull(sum(total_duty_t.duty_amount), 0) FROM commercial_invoice_tariffs total_duty_t 
+            WHERE total_duty_t.commercial_invoice_line_id = commercial_invoice_lines.id)"
+        }],
+        [39,:cil_total_fees, :total_fees, "Total Fees", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Fees ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.total_fees },
+          :qualified_field_name=> "(SELECT ifnull(total_fees_l.prorated_mpf, 0) + ifnull(total_fees_l.hmf, 0) + ifnull(total_fees_l.cotton_fee, 0) FROM commercial_invoice_lines total_fees_l
+            WHERE total_fees_l.id = commercial_invoice_lines.id)"
+        }],
+        [40,:cil_total_duty_plus_fees, :duty_plus_fees_amount, "Total Duty + Fees", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Fees ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.duty_plus_fees_amount },
+          :qualified_field_name=> "(SELECT ifnull(total_duty_fees_l.prorated_mpf, 0) + ifnull(total_duty_fees_l.hmf, 0) + ifnull(total_duty_fees_l.cotton_fee, 0) + 
+              (SELECT ifnull(sum(total_duty_fees_t.duty_amount), 0) 
+                FROM commercial_invoice_tariffs total_duty_fees_t 
+                WHERE total_duty_fees_t.commercial_invoice_line_id = commercial_invoice_lines.id) 
+            FROM commercial_invoice_lines total_duty_fees_l
+            WHERE total_duty_fees_l.id = commercial_invoice_lines.id)"
         }]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
