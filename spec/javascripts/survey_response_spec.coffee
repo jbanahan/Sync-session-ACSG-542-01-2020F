@@ -195,6 +195,7 @@ describe "SurveyResponseApp", () ->
         {id:3,rating:null}
         {id:4,rating:'x',choice:'y'}
         {id:5,rating:'x',answer_comments:['x']}
+        {id:6,rating:'x',attachments:['y','z']}
         ]
 
     it "should show all when filter mode is 'All'", () ->
@@ -204,7 +205,7 @@ describe "SurveyResponseApp", () ->
       results = filter(answers,'Rating: x')
       x = []
       x.push r.id for r in results
-      expect(x).toEqual([1,4,5])
+      expect(x).toEqual([1,4,5,6])
 
     it "should show all without rating when filter mode is 'Not Rated'", () ->
       results = filter(answers,'Not Rated')

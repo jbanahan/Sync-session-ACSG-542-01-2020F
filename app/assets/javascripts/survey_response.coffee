@@ -158,7 +158,7 @@ srApp.filter 'answer', () ->
         when 'Not Rated'
           r.push a if !a.rating || a.rating.length == 0
         when 'Not Answered'
-          r.push a if (!a.choice || a.choice.length == 0) && (a.answer_comments==undefined || a.answer_comments.length==0)
+          r.push a if (!a.choice || a.choice.length == 0) && (a.answer_comments==undefined || a.answer_comments.length==0) && (a.attachments==undefined || a.attachments.length==0)
         else
           if mode.indexOf('Rating: ')==0
             targetRating = mode.slice(8,mode.length)
