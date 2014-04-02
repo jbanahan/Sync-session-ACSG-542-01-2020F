@@ -117,7 +117,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       expect(row[65,10].rstrip).to eq '0000007'
       expect(row[75,10].rstrip).to eq 'ponum'
       expect(row[85,18].rstrip).to eq 'partnum'
-      expect(row[103,7]).to eq '0000020' #10 units * 2 per set
+      expect(row[103,7]).to eq '0000005' #10 units / 2 per set
       expect(row[110,4].rstrip).to eq 'CN'
       expect(row[114,126]).to eq ''.ljust(126)
       expect(row[240,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
@@ -135,7 +135,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         r << dr
       end
       row = r.first
-      expect(row[103,7]).to eq '0000010' #10 units * 2 per set
+      expect(row[103,7]).to eq '0000010' #10 units / 1 per set
     end
   end
   describe :generate_temp_files do

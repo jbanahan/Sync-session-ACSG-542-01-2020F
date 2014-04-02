@@ -70,6 +70,7 @@ module OpenChain
         find_and_process_entry(entry_information) do |entry|
           # This block is run inside a transaction...no need to start another one
           @entry = entry
+          @entry.containers.destroy_all
           @accumulated_strings = Hash.new
 
           start_time = Time.now

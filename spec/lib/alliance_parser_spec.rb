@@ -345,6 +345,21 @@ describe OpenChain::AllianceParser do
       expect(conts.collect {|c| c.fcl_lcl}).to eq @containers.collect {|c| c[:fcl_lcl]}
       expect(conts.collect {|c| c.seal_number}).to eq @containers.collect {|c| c[:seal]}
     end
+    it "should not create duplicate container records" do
+      2.times {OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"}
+      ent = Entry.find_by_broker_reference @ref_num
+      conts = ent.containers
+      expect(conts.count).to eq @containers.size
+
+    end
+    it "should clear removed container" do
+      bad_cnum = @containers.first[:cnum]
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      expect(Entry.first.containers.find_by_container_number(bad_cnum)).to_not be_nil 
+      @containers.first[:cnum] = 'newcnum'
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      expect(Entry.first.containers.find_by_container_number(bad_cnum)).to be_nil
+    end
   end
 
   it 'should match importer id if customer matches' do
