@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     end
     piece_factor = p.get_custom_value(@cdefs[:product_units_per_set]).value
     piece_factor = 1 if piece_factor.nil? || piece_factor < 1
-    ci_line.quantity * piece_factor
+    ci_line.quantity / piece_factor
   end
   def build_mode_specific_values entry
     if entry.transport_mode_code == '11'
