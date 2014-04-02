@@ -73,6 +73,18 @@ describe AttachmentArchiveSetup do
       expect(att).to include(@att3)
       expect(att).to include(@att)
     end
+    it "includes invoices from last month when using 'previous month' archiving scheme" do
+      @setup.update_attributes! archive_scheme: "PREVIOUS_MONTH"
+      @invoice.update_attributes! invoice_date: Time.current.midnight.at_beginning_of_month - 1.day
+      archive = @setup.create_entry_archive! "my name", 5.megabytes
+      expect(archive).to have(2).attachments
+      expect(archive.attachments).to include(@att,@att2)
+    end
+    it "excludes invoices from this month when using 'previous month' archiving scheme" do
+      @setup.update_attributes! archive_scheme: "PREVIOUS_MONTH"
+      @invoice.update_attributes! invoice_date: Time.current.midnight.at_beginning_of_month
+      expect(@setup).not_to be_entry_attachments_available
+    end
   end
   describe "entry_attachments_available?" do
     it "should return true if unarchived attachments exist for company" do
