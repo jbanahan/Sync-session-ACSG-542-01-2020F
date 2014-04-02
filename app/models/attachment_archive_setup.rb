@@ -1,7 +1,9 @@
 class AttachmentArchiveSetup < ActiveRecord::Base
-  attr_accessible :company_id, :start_date, :combine_attachments, :combined_attachment_order
+  attr_accessible :company_id, :start_date, :combine_attachments, :combined_attachment_order, :archive_scheme
 
   belongs_to :company
+
+  ARCHIVE_SCHEMES ||= [["Invoice Date Prior To 30 Days Ago", "MINUS_30"], ["Invoice Date Prior to This Month", "PREVIOUS_MONTH"]]
 
   #creates an archive with files for this importer that are on entries up to the max_size_in_bytes size
   def create_entry_archive! name, max_size_in_bytes
@@ -29,7 +31,14 @@ class AttachmentArchiveSetup < ActiveRecord::Base
 
   private
   def available_entry_files
-    days_ago = Time.current.midnight - 30.days
+    days_ago = nil
+    case self.archive_scheme
+    when "PREVIOUS_MONTH"
+      days_ago = Time.current.midnight.at_beginning_of_month - 1.day
+    else
+      days_ago = Time.current.midnight - 30.days  
+    end
+    
     non_stitchable_attachments = Attachment.stitchable_attachment_extensions.collect {|ext| "attachments.attached_file_name NOT like '%#{ext}'"}.join (" AND ")
 
     Attachment.select("distinct attachments.*").
