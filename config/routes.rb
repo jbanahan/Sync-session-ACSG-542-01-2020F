@@ -147,6 +147,9 @@ OpenChain::Application.routes.draw do
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
 
+  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#show_email_attachable", via: :get
+  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#send_email_attachable", via: :post
+
   resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
     get 'last_search_id', :on=>:collection
     get 'setup', :on=>:member

@@ -1,0 +1,146 @@
+<% number_of_attachments = @attachable.attachments.length %>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-4 col-md-offset-4">
+      <h3 align="center">Send attachments</h3>
+    </div>
+  </div>
+  <form role="form">
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4">
+        <div class="form-group">
+          <label>Send to:</label>
+          <input type="email" class="form-control" id="send_to_address" placeholder="Enter email address...">
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4">
+        <div class="form-group">
+          <label>Subject:</label>
+          <input type="text" class="form-control" id="email_subject" placeholder="Enter subject...">
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4">
+        <div class="form-group">
+          <label>Body:</label>
+          <textarea class="form-control" rows="4" id="email_body" placeholder="Enter body..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <% if number_of_attachments > 0 %>
+      <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+          <h4 align="center">Choose attachments</h4>
+        </div>
+      </div>
+
+      <% if number_of_attachments > 1 %> <!-- Not necessary if you only have one item -->
+        <div class="row">
+          <div class="col-md-4 col-md-offset-4" align="center">
+            <button type="button" class="btn btn-success" id="select_all_button" style="width: 110px; margin-right: 5px;">Select all</button>
+            <button type="button" class="btn btn-danger" id="select_none_button" style="width: 110px; margin-left: 5px;">Select none</button>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+
+    <% @attachable.attachments.each do |single_attachment| %>
+      <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+          <div class="checkbox">
+            <label>
+              <% if number_of_attachments == 1 %>
+                <!-- If there's only one, it has to be attached, so attach it by default -->
+                <input type="checkbox" value="" checked=true>
+              <% else %>
+                <input type="checkbox" value="">
+              <% end %>
+              <%= single_attachment.attached_file_name %>
+              <div style="display: none" class="attachment_id_container">
+                <%= single_attachment.id %>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4" align="center">
+        <button type="button" class="btn btn-primary btn-lg" id="submit_attachment_email" style="margin-top: 20px; width: 150px;">Submit</button>
+      </div>
+    </div>
+
+</div>
+
+<% content_for :javascript do -%>
+
+  $(function(){
+
+    var email_check = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,6}$/i
+
+    $("#select_all_button").click(function(){
+      $('input[type=checkbox]').prop("checked",true)
+    });
+
+    $("#select_none_button").click(function(){
+      $('input[type=checkbox]').prop("checked",false)
+    });
+
+    $("#submit_attachment_email").click(function(){
+      if ($("#send_to_address").val()==""){
+        alert("Please enter an email address")
+      }
+      else if (email_check.test($("#send_to_address").val()) == false){
+        alert("Please ensure the email address is valid.");
+      }
+      else if ($("input:checked").length == 0){
+        alert("Please select at least one attachment before submitting.");
+      }
+      else {
+        //so things are good to go
+        to_address = $("#send_to_address").val();
+        email_subject = $("#email_subject").val();
+        email_body = $("#email_body").val();
+        ids_to_include = []
+
+        for (i = 0; i < $("input:checked").length; i++){
+          ids_to_include.push(parseInt($($("input:checked")[i]).parent().find(".attachment_id_container").text().trim()));
+        }
+
+        console.log(to_address);
+        console.log(email_subject);
+        console.log(email_body);
+        console.log(ids_to_include);
+
+        $.ajax({
+          url: "/attachments/email_attachable/Product/1",
+          type: "POST",
+          data: {
+            to_address: to_address,
+            email_subject: email_subject,
+            email_body: email_body,
+            ids_to_include: ids_to_include
+          }
+        })
+        .fail(function(data){
+            alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
+        })
+        .done(function(data){
+            if(confirm("Your email has been sent successfully.  Click OK to return to the previous page."))
+            {
+              history.go(-1);
+            }
+        });
+
+      }
+    });
+  });
+<% end -%>

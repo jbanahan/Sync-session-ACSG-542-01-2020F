@@ -32,6 +32,24 @@ class Attachment < ActiveRecord::Base
     name
   end
 
+  def self.email_attachments params #hash
+    to_address = params[:to_address]
+    email_subject = params[:email_subject]
+    email_body = params[:email_body]
+    attachments = []
+    params[:ids_to_include].each do |attachment_id|
+      attachment = Attachment.find(attachment_id)
+      tfile = attachment.download_to_tempfile
+      Attachment.add_original_filename_method tfile
+      tfile.original_filename = attachment.attached_file_name
+      attachments << tfile
+    end
+    OpenMailer.send_simple_html(to_address, email_subject, email_body, attachments).deliver!
+    return true
+  ensure
+    attachments.each {|tfile| tfile.close! unless tfile.closed?}
+  end
+
   # create a hash suitable for json rendering containing all attachments for the given attachable
   def self.attachments_as_json attachable
     r = {attachable:{id:attachable.id,type:attachable.class.to_s},attachments:[]}
@@ -92,8 +110,13 @@ class Attachment < ActiveRecord::Base
   def download_to_tempfile
     if attached
       # Attachments are always in chain-io bucket regardless of environment
-      OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
-        yield f
+      #if block given, yield t
+      if block_given?
+        return OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
+          yield f
+        end
+      else
+        return OpenChain::S3.download_to_tempfile('chain-io', attached.path)
       end
     end
   end
