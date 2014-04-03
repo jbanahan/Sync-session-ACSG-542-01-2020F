@@ -685,6 +685,23 @@ describe SearchCriterion do
         @search_criterion.test?(@product).should == false
       end
 
+      context :string_handling do
+        before :each do
+          @ent = Factory(:entry,broker_reference:' ')
+          @sc = SearchCriterion.new(model_field_uid:'ent_brok_ref',operator:'null')
+        end
+        it "should return on empty string" do
+          expect(@sc.apply(Entry).to_a).to eq [@ent]
+          @ent.update_attributes(broker_reference:'x')
+          expect(@sc.apply(Entry)).to be_empty
+        end
+        it "should test on empty string" do
+          expect(@sc.test?(@ent)).to be_true          
+          @ent.update_attributes(broker_reference:'x')
+          expect(@sc.test?(@ent)).to be_false
+        end
+      end
+
     end
     context 'Is Not Empty' do
       before :each do
@@ -722,7 +739,22 @@ describe SearchCriterion do
         @search_criterion.apply(Product).should include @product 
         @search_criterion.test?(@product).should == true
       end
-
+      context :string_handling do
+        before :each do
+          @ent = Factory(:entry,broker_reference:'x')
+          @sc = SearchCriterion.new(model_field_uid:'ent_brok_ref',operator:'notnull')
+        end
+        it "should return on empty string" do
+          expect(@sc.apply(Entry).to_a).to eq [@ent]
+          @ent.update_attributes(broker_reference:' ')
+          expect(@sc.apply(Entry)).to be_empty
+        end
+        it "should test on empty string" do
+          expect(@sc.test?(@ent)).to be_true          
+          @ent.update_attributes(broker_reference:' ')
+          expect(@sc.test?(@ent)).to be_false
+        end
+      end
     end
   end
 end
