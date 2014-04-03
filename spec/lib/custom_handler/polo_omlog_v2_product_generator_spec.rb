@@ -59,10 +59,10 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       r = Product.connection.execute described_class.new.query
       r.count.should == 0
     end
-    it "should not find product without CSM number" do
+    it "should find product without CSM number" do
       @product.update_custom_value! @cd, ''
       r = Product.connection.execute described_class.new.query
-      r.count.should == 0
+      expect(r.count).to eq 1
     end
     it "should not find product already synced" do
       @product.sync_records.create!(:trading_partner=>described_class.new.sync_code,:sent_at=>10.minutes.ago,:confirmed_at=>5.minutes.ago)
