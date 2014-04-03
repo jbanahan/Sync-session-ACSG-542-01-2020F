@@ -148,7 +148,6 @@ module OpenChain
           retry
         else
           $!.log_me ["Command: #{command}"]
-          raise
         end
       end
     end
