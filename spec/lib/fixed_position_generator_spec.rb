@@ -35,6 +35,9 @@ describe OpenChain::FixedPositionGenerator do
     it "should include decimals on bigdecimal" do
       expect(@f.num(BigDecimal('523.23'),6,2)).to eq '052323'
     end
+    it "should include right side decimals on bigdecimal" do
+      expect(@f.num(BigDecimal('523.2'),6,2)).to eq '052320'
+    end
     it "should truncate too many decimals" do
       expect(@f.num(BigDecimal('523.27'),5,1)).to eq '05233'
     end

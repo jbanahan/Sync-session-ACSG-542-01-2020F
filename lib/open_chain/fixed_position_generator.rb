@@ -40,6 +40,7 @@ module OpenChain; class FixedPositionGenerator
         n_str = BigDecimal(n_str).round(decimal_positions,inner_opts[:round_mode]).to_s
         n_dec = decimal_positions < 1 ? '' : n_str.split('.').last
       end
+      n_dec << '0' while n_dec.size < decimal_positions
       s = "#{n_str.split('.').first}#{n_dec}"      
     else
       decimal_holder = Array.new(decimal_positions,'0').join('')
