@@ -117,9 +117,9 @@ describe OpenMailer do
         Tempfile.open(["file2", "txt"]) do |f2|
           f2.binmode
           f2 << "Content2"
+          f2.flush
+          f.flush
           
-          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f).and_return false
-          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f2).and_return false
           OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
 
           mail = ActionMailer::Base.deliveries.pop
@@ -131,12 +131,12 @@ describe OpenMailer do
           pa = mail.attachments[File.basename(f)]
           pa.should_not be_nil
           pa.read.should == File.read(f)
-          pa.content_type.should == "application/octet-stream"
+          pa.content_type.should == "application/octet-stream; charset=UTF-8"
 
           pa = mail.attachments[File.basename(f2)]
           pa.should_not be_nil
           pa.read.should == File.read(f2)
-          pa.content_type.should == "application/octet-stream"
+          pa.content_type.should == "application/octet-stream; charset=UTF-8"
         end
       end
     end
@@ -149,9 +149,10 @@ describe OpenMailer do
           f << "Content"
           f2.binmode
           f2 << "Content2"
+          f2.flush
 
           OpenMailer.any_instance.should_receive(:blank_attachment?).with(f).and_return true
-          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f2).and_return false
+          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f2)
 
           OpenMailer.send_simple_html("me@there.com","Subject","<p>Body</p>".html_safe,[f,f2]).deliver!
 
