@@ -72,73 +72,85 @@ module OpenChain
 
     private
     def self.process_remote_file command
-      bucket = OpenChain::S3.integration_bucket_name
-      dir, fname = Pathname.new(command['path']).split
-      remote_path = command['remote_path']
-      status_msg = 'success'
-      response_type = 'remote_file'
-      if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
-        OpenChain::AllianceParser.delay.process_from_s3 bucket, remote_path 
-      elsif command['path'].include?('_fenix_invoices/') && MasterSetup.get.custom_feature?('fenix')
-        OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
-        OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
-        OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
-        if fname.to_s.match /-ack/
-          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE'
-        else
+      total_attempts = 3
+      begin
+        bucket = OpenChain::S3.integration_bucket_name
+        dir, fname = Pathname.new(command['path']).split
+        remote_path = command['remote_path']
+        status_msg = 'success'
+        response_type = 'remote_file'
+        if command['path'].include?('_alliance/') && MasterSetup.get.custom_feature?('alliance')
+          OpenChain::AllianceParser.delay.process_from_s3 bucket, remote_path 
+        elsif command['path'].include?('_fenix_invoices/') && MasterSetup.get.custom_feature?('fenix')
+          OpenChain::CustomHandler::FenixInvoiceParser.delay.process_from_s3 bucket, remote_path
+        elsif command['path'].include?('_fenix/') && MasterSetup.get.custom_feature?('fenix')
+          OpenChain::FenixParser.delay.process_from_s3 bucket, remote_path
+        elsif command['path'].include?('_kewill_isf/') && MasterSetup.get.custom_feature?('alliance')
+          OpenChain::CustomHandler::KewillIsfXmlParser.delay.process_from_s3 bucket, remote_path
+        elsif command['path'].include?('/_from_msl/') && MasterSetup.get.custom_feature?('MSL+')
+          if fname.to_s.match /-ack/
+            OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE'
+          else
+            get_tempfile(bucket,remote_path,command['path']) do |tmp|
+              h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
+              h.send_and_delete_ack_file h.process(IO.read(tmp)), fname.to_s
+            end
+          end
+        elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
           get_tempfile(bucket,remote_path,command['path']) do |tmp|
-            h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
-            h.send_and_delete_ack_file h.process(IO.read(tmp)), fname.to_s
+            cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
+            cf.attached = tmp
+            cf.save!
+            cf.delay.process(cf.uploaded_by)
           end
-        end
-      elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
-          cf.attached = tmp
-          cf.save!
-          cf.delay.process(cf.uploaded_by)
-        end
-      elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product'
-      elsif command['path'].include?('/_efocus_ack/') && MasterSetup.get.custom_feature?("e-Focus Products")
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE
-      elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
-        if fname.to_s.match /^zym_ack/
-          OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'ANN-ZYM'
-        else
+        elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
+          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product'
+        elsif command['path'].include?('/_efocus_ack/') && MasterSetup.get.custom_feature?("e-Focus Products")
+          OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE
+        elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
+          if fname.to_s.match /^zym_ack/
+            OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'ANN-ZYM'
+          else
+            get_tempfile(bucket,remote_path,command['path']) do |tmp|
+              OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+            end
+          end
+        elsif command['path'].include? '/_polo_850/'
+          OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
+        elsif command['path'].include? '/_shoes_po/'
+          OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
+        elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
           get_tempfile(bucket,remote_path,command['path']) do |tmp|
-            OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
+            OpenChain::CustomHandler::Lenox::LenoxProductParser.new.process(IO.read(tmp),User.find_by_username('integration'))
           end
-        end
-      elsif command['path'].include? '/_polo_850/'
-        OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include? '/_shoes_po/'
-        OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
-      elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          OpenChain::CustomHandler::Lenox::LenoxProductParser.new.process(IO.read(tmp),User.find_by_username('integration'))
-        end
-      elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
-        get_tempfile(bucket,remote_path,command['path']) do |temp|
-          linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)
-          if !linkable.errors.blank?
-            response_type = 'error'
-            status_msg = linkable.errors.full_messages.join("\n")
+        elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
+          get_tempfile(bucket,remote_path,command['path']) do |temp|
+            linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)
+            if !linkable.errors.blank?
+              response_type = 'error'
+              status_msg = linkable.errors.full_messages.join("\n")
+            end
           end
+        elsif command['path'].include? '/to_chain/'
+          get_tempfile(bucket,remote_path,command['path']) do |temp|
+            status_msg = process_imported_file command, temp
+            response_type = 'error' if status_msg != 'success'
+          end
+        else
+          response_type = 'error'
+          status_msg = "Can't figure out what to do for path #{command['path']}"
         end
-      elsif command['path'].include? '/to_chain/'
-        get_tempfile(bucket,remote_path,command['path']) do |temp|
-          status_msg = process_imported_file command, temp
-          response_type = 'error' if status_msg != 'success'
+        return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
+      rescue
+        total_attempts -= 1
+        if total_attempts > 0
+          sleep 0.25
+          retry
+        else
+          $!.log_me ["Command: #{command}"]
+          raise
         end
-      else
-        response_type = 'error'
-        status_msg = "Can't figure out what to do for path #{command['path']}"
       end
-      return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     end
 
     # expects path like /username/to_chain/module/search_name/file.ext
