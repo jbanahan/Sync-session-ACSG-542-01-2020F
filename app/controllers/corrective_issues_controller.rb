@@ -34,10 +34,23 @@ class CorrectiveIssuesController < ApplicationController
       return
     end
     if cap.status!=CorrectiveActionPlan::STATUSES[:new]
-      render json: {error:'You canot remove issues from an active plan'}, status: 400
+      render json: {error:'You cannot remove issues from an active plan'}, status: 400
       return
     end
     ci.destroy
     render json: {ok: 'ok'}
   end
+
+  def update_resolution_status
+    ci = CorrectiveIssue.find params[:id]
+    cap = ci.corrective_action_plan
+    if cap.can_edit?(current_user)
+      ci.resolved = params[:is_resolved]
+      ci.save!
+      render json: {ok: 'ok'}
+    else
+      render json: {error: "You do not have permission to update the resolution status of this issue."}, status: 401
+    end
+  end
+
 end
