@@ -13,20 +13,12 @@
           <label>Send to:</label>
           <input type="email" class="form-control" id="send_to_address" placeholder="Enter email address...">
         </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="col-md-4 col-md-offset-4">
         <div class="form-group">
           <label>Subject:</label>
           <input type="text" class="form-control" id="email_subject" placeholder="Enter subject...">
         </div>
-      </div>
-    </div>
 
-    <div class="row">
-      <div class="col-md-4 col-md-offset-4">
         <div class="form-group">
           <label>Body:</label>
           <textarea class="form-control" rows="4" id="email_body" placeholder="Enter body..."></textarea>
@@ -102,10 +94,12 @@
         alert("Please ensure the email address is valid.");
       }
       else if ($("input:checked").length == 0){
-        alert("Please select at least one attachment before submitting.");
+        alert("Please select at least one attachment to send.");
       }
       else {
         //so things are good to go
+        attachable_id = <%= @attachable.id %>
+        controller_name = "<%= @attachable.class.to_s %>"
         to_address = $("#send_to_address").val();
         email_subject = $("#email_subject").val();
         email_body = $("#email_body").val();
@@ -115,21 +109,7 @@
           ids_to_include.push(parseInt($($("input:checked")[i]).parent().find(".attachment_id_container").text().trim()));
         }
 
-        console.log(to_address);
-        console.log(email_subject);
-        console.log(email_body);
-        console.log(ids_to_include);
-
-        $.ajax({
-          url: "/attachments/email_attachable/Product/1",
-          type: "POST",
-          data: {
-            to_address: to_address,
-            email_subject: email_subject,
-            email_body: email_body,
-            ids_to_include: ids_to_include
-          }
-        })
+        Chain.sendEmailAttachments(controller_name, attachable_id, to_address, email_subject, email_body, ids_to_include)       
         .fail(function(data){
             alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
         })
