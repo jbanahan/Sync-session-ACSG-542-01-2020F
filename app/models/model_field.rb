@@ -888,13 +888,14 @@ and classifications.product_id = products.id
           :import_lambda => lambda { |ent, data|
             port = Port.find_by_name data
             return "Port with name \"#{data}\" could not be found." unless port
-            ent.entry_port_code = port.schedule_d_code
+            ent.entry_port_code = (ent.source_system == "Fenix" ? port.cbsa_port : port.schedule_d_code)
             "Entry Port set to #{port.name}"
           },
           :export_lambda => lambda {|ent|
-            ent.entry_port.blank? ? "" : ent.entry_port.name
+            port = (ent.source_system == "Fenix" ? Port.where(cbsa_code: ent.entry_port_code) : Port.where(schedule_d_code: ent.entry_port_code)).first
+            port.try(:name).blank? ? "" : port.name
           },
-          :qualified_field_name => "(SELECT name FROM ports WHERE ports.schedule_d_code = entries.entry_port_code)"
+          qualified_field_name: "(CASE entries.source_system WHEN 'Fenix' THEN (SELECT name FROM ports WHERE ports.cbsa_port = entries.entry_port_code) ELSE (SELECT name FROM ports WHERE ports.schedule_d_code = entries.entry_port_code) END)"
         }],
         [61,:ent_vessel,:vessel,"Vessel/Airline",{:data_type=>:string}],
         [62,:ent_voyage,:voyage,"Voyage/Flight",{:data_type=>:string}],
