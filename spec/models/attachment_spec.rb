@@ -128,6 +128,78 @@ describe Attachment do
     end
   end
 
+  describe "email_attachments" do
+
+    before :each do
+      @x = Tempfile.new("temp-a.txt")
+      @y = Tempfile.new("temp-b.txt")
+      @z = Tempfile.new("temp-c.txt")
+    end
+
+    after :each do
+      [@x, @y, @z].each {|tfile| tfile.close! unless tfile.closed?}
+    end
+
+    it "should return true after success" do
+      param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+      a = Attachment.new(attached_file_name: "a.txt")
+      b = Attachment.new(attached_file_name: "b.txt")
+      c = Attachment.new(attached_file_name: "c.txt")
+      a.id = 1; b.id = 2; c.id = 3
+      a.save!; b.save!; c.save!
+      Attachment.should_receive(:find).with(1).and_return a
+      Attachment.should_receive(:find).with(2).and_return b
+      Attachment.should_receive(:find).with(3).and_return c
+      a.should_receive(:download_to_tempfile).and_return @x
+      b.should_receive(:download_to_tempfile).and_return @y
+      c.should_receive(:download_to_tempfile).and_return @z
+      Attachment.email_attachments(param_hash).should be_true
+    end
+
+    it "should send an email with the correct attachments" do
+      param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+      a = Attachment.new(attached_file_name: "a.txt")
+      b = Attachment.new(attached_file_name: "b.txt")
+      c = Attachment.new(attached_file_name: "c.txt")
+      a.id = 1; b.id = 2; c.id = 3
+      a.save!; b.save!; c.save!
+      Attachment.should_receive(:find).with(1).and_return a
+      Attachment.should_receive(:find).with(2).and_return b
+      Attachment.should_receive(:find).with(3).and_return c
+      a.should_receive(:download_to_tempfile).and_return @x
+      b.should_receive(:download_to_tempfile).and_return @y
+      c.should_receive(:download_to_tempfile).and_return @z
+
+      Attachment.email_attachments(param_hash)
+
+      m = OpenMailer.deliveries.last
+      m.attachments.length.should == 3
+      m.attachments[0].filename.should == "a.txt"
+      m.attachments[1].filename.should == "b.txt"
+      m.attachments[2].filename.should == "c.txt"
+    end
+
+    it "should send an email to the correct recipient" do
+      param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+      a = Attachment.new(attached_file_name: "a.txt")
+      b = Attachment.new(attached_file_name: "b.txt")
+      c = Attachment.new(attached_file_name: "c.txt")
+      a.id = 1; b.id = 2; c.id = 3
+      a.save!; b.save!; c.save!
+      Attachment.should_receive(:find).with(1).and_return a
+      Attachment.should_receive(:find).with(2).and_return b
+      Attachment.should_receive(:find).with(3).and_return c
+      a.should_receive(:download_to_tempfile).and_return @x
+      b.should_receive(:download_to_tempfile).and_return @y
+      c.should_receive(:download_to_tempfile).and_return @z
+
+      Attachment.email_attachments(param_hash)
+
+      m = OpenMailer.deliveries.last
+      m.to.first.should == "me@there.com"
+    end
+  end
+
   describe "push_to_google_drive" do
     it "should download and attachment and push it to google drive" do
       a = Attachment.new
@@ -154,7 +226,7 @@ describe Attachment do
   end
 
   describe "download_to_tempfile" do
-    it "should use S3 to download to tempfile and yield the given block" do
+    it "should use S3 to download to tempfile and yield the given block (if block given)" do
       a = Attachment.new
       a.stub(:attached).and_return a
       a.should_receive(:path).and_return "path/to/file.txt"
@@ -166,6 +238,15 @@ describe Attachment do
 
         "Pass"
       end.should eq "Pass"
+    end
+
+    it "should use S3 to download to tempfile and return the tempfile (if no block given)" do
+      a = Attachment.new
+      a.stub(:attached).and_return a
+      a.should_receive(:path).and_return "path/to/file.txt"
+      OpenChain::S3.should_receive(:download_to_tempfile).with('chain-io', "path/to/file.txt").and_return "Test"
+      tfile = a.download_to_tempfile
+      tfile.should eq "Test"
     end
   end
 

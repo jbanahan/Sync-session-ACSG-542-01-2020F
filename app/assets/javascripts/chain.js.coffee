@@ -52,6 +52,13 @@ root.Chain =
       $("#mod_attach").dialog('open')
     )
 
+  sendEmailAttachments: (controller_name, id, to_address, email_subject, email_body, ids_to_include) ->
+    return $.post ('/attachments/email_attachable/' + controller_name + '/' + id),
+      to_address: to_address
+      email_subject: email_subject
+      email_body: email_body
+      ids_to_include: ids_to_include
+
   #tell the server never to show this user message to the current user again
   hideMessage : (messageName) ->
     $.post('/hide_message/'+messageName)
