@@ -134,6 +134,7 @@ describe Attachment do
       @x = Tempfile.new("temp-a.txt")
       @y = Tempfile.new("temp-b.txt")
       @z = Tempfile.new("temp-c.txt")
+      [@x,@y,@z].each {|f| f << 'hello world'; f.flush}
     end
 
     after :each do
