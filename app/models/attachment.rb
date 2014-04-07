@@ -21,6 +21,14 @@ class Attachment < ActiveRecord::Base
   def secure_url(expires_in=10.seconds)
     OpenChain::S3.url_for attached.options[:bucket], attached.path, expires_in
   end
+
+  def can_view?(user)
+    if self.is_private?
+      return user.company.master? && self.attachable.can_view?(user)
+    else
+      return self.attachable.can_view?(user)
+    end
+  end
   
   #unique name suitable for putting on archive disks
   def unique_file_name

@@ -53,7 +53,7 @@ class AttachmentsController < ApplicationController
   def download
     att = Attachment.find(params[:id])
     attachable = att.attachable
-    if attachable.can_view?(current_user)
+    if att.can_view?(current_user)
       redirect_to att.secure_url
     else
       error_redirect "You do not have permission to download this attachment."
