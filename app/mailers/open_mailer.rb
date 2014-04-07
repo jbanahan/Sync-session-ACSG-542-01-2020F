@@ -303,7 +303,7 @@ EOS
 
     def save_large_attachment(file, registered_emails)
       email_attachment = nil
-      large_attachment_text = nil
+      attachment_text = nil
 
       if large_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
@@ -317,20 +317,32 @@ EOS
         email_attachment.attachment.save
         email_attachment.save
 
-        large_attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
-        large_attachment_text = large_attachment_text.html_safe
+        attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
+        attachment_text = attachment_text.html_safe
+      elsif blank_attachment? file
+        ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
+
+        # PostMark will raise exceptions if this is exactly nil, but a blank string is acceptable
+        email_attachment = ""
+
+        attachment_text = "* The attachment #{File.basename(file)} was excluded because it was empty."
+        attachment_text = attachment_text.html_safe
       end
 
       if block_given?
-        yield email_attachment, large_attachment_text
+        yield email_attachment, attachment_text
       else
-        @body_text = large_attachment_text if large_attachment_text
-        return (large_attachment_text.nil? ? false : true)
+        @body_text = attachment_text if attachment_text
+        return (attachment_text.nil? ? false : true)
       end
     end
 
     def large_attachment? file
       File.exist?(file) && File.size(file) > ATTACHMENT_LIMIT
+    end
+
+    def blank_attachment? file
+      File.size(file) == 0 || File.size(file) == nil
     end
 
     def create_attachment data, data_is_file = true

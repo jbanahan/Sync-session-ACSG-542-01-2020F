@@ -94,6 +94,7 @@ describe OpenMailer do
         f.binmode
         f << "Content"
 
+        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
         OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>", f).deliver
 
         mail = ActionMailer::Base.deliveries.pop
@@ -115,7 +116,9 @@ describe OpenMailer do
 
         Tempfile.open(["file2", "txt"]) do |f2|
           f2.binmode
-          f << "Content2"
+          f2 << "Content2"
+          f2.flush
+          f.flush
           
           OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
 
@@ -128,12 +131,41 @@ describe OpenMailer do
           pa = mail.attachments[File.basename(f)]
           pa.should_not be_nil
           pa.read.should == File.read(f)
-          pa.content_type.should == "application/octet-stream"
+          pa.content_type.should == "application/octet-stream; charset=UTF-8"
+
+          pa = mail.attachments[File.basename(f2)]
+          pa.should_not be_nil
+          pa.read.should == File.read(f2)
+          pa.content_type.should == "application/octet-stream; charset=UTF-8"
+        end
+      end
+    end
+
+    it "should not save an email attachment if the attachment is empty" do
+      MasterSetup.get.update_attributes(:request_host=>"host.xxx")
+      Tempfile.open(["file","txt"]) do |f|
+        Tempfile.open(["file2", "txt"]) do |f2|
+          f.binmode
+          f << "Content"
+          f2.binmode
+          f2 << "Content2"
+          f2.flush
+
+          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f).and_return true
+          OpenMailer.any_instance.should_receive(:blank_attachment?).with(f2)
+
+          OpenMailer.send_simple_html("me@there.com","Subject","<p>Body</p>".html_safe,[f,f2]).deliver!
+
+          mail = ActionMailer::Base.deliveries.pop
+          mail.attachments.should have(1).item
 
           pa = mail.attachments[File.basename(f2)]
           pa.should_not be_nil
           pa.read.should == File.read(f2)
           pa.content_type.should == "application/octet-stream"
+
+          ea = EmailAttachment.all.first
+          ea.should be_nil
         end
       end
     end
@@ -148,10 +180,12 @@ describe OpenMailer do
           f.binmode
           f << "Content"
           f2.binmode
-          f << "Content2"
+          f2 << "Content2"
 
+          #This chain means f is too large, but f2 is neither too large nor blank. Thus we should have 1 attachment.
           OpenMailer.any_instance.should_receive(:large_attachment?).with(f).and_return true
           OpenMailer.any_instance.should_receive(:large_attachment?).with(f2).and_return false
+          OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
 
           OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>".html_safe, [f, f2]).deliver
 
@@ -184,6 +218,7 @@ EMAIL
         Attachment.add_original_filename_method f
         f.original_filename = "test.txt"
 
+        OpenMailer.any_instance.should_receive(:blank_attachment?).and_return false
         OpenMailer.send_simple_html("me@there.com", "Subject", "<p>Body</p>", f).deliver
 
         mail = ActionMailer::Base.deliveries.pop
