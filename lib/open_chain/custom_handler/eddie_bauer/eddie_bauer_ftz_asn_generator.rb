@@ -38,6 +38,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
         sr.save!
       end
     end
+    t.flush
     t
   end
   # find entries that have passed business rules and need sync
