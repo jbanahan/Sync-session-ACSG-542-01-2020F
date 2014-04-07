@@ -27,6 +27,7 @@
   </div>
   <div class='row'>
       <% attachments.each do |att| %>
+        <% next unless att.can_view?(current_user) %>
         <div class='col-sm-6 col-md-4'>
           <div class='thumbnail text-center'>
             <div class='attachment_delete'>
