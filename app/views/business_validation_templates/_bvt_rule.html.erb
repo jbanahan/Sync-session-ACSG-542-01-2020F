@@ -1,0 +1,47 @@
+<div class="row">
+  <div class="col-md-12" align="center">
+    <h3>Existing Rules: <%= @rules.count %></h3>
+  </div>
+</div>
+
+<ol>
+  <% @rules.each do |r| %>
+    <div class="row">
+      <div class="col-md-12">
+        <li><%= r.name %>
+          <ul>
+            <li>
+              <b>
+                Description:
+              </b> 
+              <%= r.description %>
+            </li>
+            <li>
+              <b>
+                JSON:
+              </b>
+              <%= r.rule_attributes_json %>
+            </li>
+            <li>
+              <b>
+                Fail state:
+              </b>
+              <%= r.fail_state %>
+            <li>
+              <%= link_to "Delete", business_validation_rule_path(r), method: :delete, style: "color: #B83838;" %>
+            </li>
+          </ul>
+        </li>
+      </div>
+    </div>
+  <% end %>
+</ol>
+
+<hr>
+
+<div class="row">
+  <div class="col-md-12" align="center">
+    <h3>Add New Rule</h3>
+  </div>
+</div>
+<%= render partial: "add_new_rule", locals: {editableRule: new_rule} %>
