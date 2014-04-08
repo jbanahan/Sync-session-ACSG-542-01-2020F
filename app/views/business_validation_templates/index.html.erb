@@ -5,15 +5,31 @@
   <div class="row">
     <div class='col-md-12'>
       <%@bv_templates.each do |template|%>
-        <h2><%=link_to template.name, template%></h2>
-        <div><%=template.description%></div>
-        <h3>Criterions</h3>
-        <ul>
-        <%template.search_criterions.each do |sc|%>
-          <li><%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%></li> 
-        <%end%>
-        </ul>
+        <div class="template-container">
+          <span>
+            <h2 style="display: inline;">
+              <%=link_to template.name, template%>
+            </h2>
+          </span>
+          <span>
+            <%= button_to "Delete", template, method: :delete, class: "btn btn-danger", style: "color: white; height: 22px; padding-top: 0px; margin-bottom: 10px;" %>
+          </span>
+          <div><%=template.description%></div>
+          <h3>Criteria</h3>
+          <ul>
+          <%template.search_criterions.each do |sc|%>
+            <li><%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%></li> 
+          <%end%>
+          </ul>
+        </div>
+        <hr>
       <%end%>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-3">
+      <%= button_to "New Template", new_business_validation_template_path, class: "btn btn-primary", style: "color: white;", method: :get %>
     </div>
   </div>
 </div>
