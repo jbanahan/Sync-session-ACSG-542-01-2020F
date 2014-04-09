@@ -1014,7 +1014,8 @@ and classifications.product_id = products.id
           :can_view_lambda=>lambda {|u| u.company.master?}
         }],
         [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}],
-        [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}]
+        [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}],
+        [140,:ent_employee_name,:employee_name,"Employee",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [

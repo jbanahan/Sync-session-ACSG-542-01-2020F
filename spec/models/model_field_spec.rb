@@ -406,6 +406,19 @@ describe ModelField do
         @mf.can_view?(u).should be_false
       end
     end
+    context "employee" do
+      before(:each) do
+        @mf = ModelField.find_by_uid(:ent_employee_name)
+      end
+      it "should not view if not broker" do
+        u = Factory(:importer_user)
+        expect(@mf.can_view?(u)).to be_false
+      end
+      it "should view if broker" do
+        u = Factory(:broker_user)
+        expect(@mf.can_view?(u)).to be_true
+      end
+    end
     context "first HTS code" do
       before :each do
         country_1 = Factory(:country,:classification_rank=>1)
