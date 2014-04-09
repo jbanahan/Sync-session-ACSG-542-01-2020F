@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     @entry = Factory(:entry,importer:@lenox,master_bills_of_lading:'MBOL',entry_number:'11312345678',
       vessel:'VES',customer_references:'P14010337',export_date:Date.new(2014,1,16),
       lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11')
-    @ci = Factory(:commercial_invoice,entry:@entry)
+    @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99)
     @ci_line = Factory(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
       quantity:10, country_origin_code:'CN',part_number:'partnum'
     )
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       expect(row[39,8].rstrip).to eq 'VENCODE'
       expect(row[47,17].rstrip).to eq 'CN1'
       expect(row[64,10].rstrip).to eq '40'
-      expect(row[74,10]).to eq '0000050000' #weight
+      expect(row[74,10]).to eq '0000099000' #weight
       expect(row[84,10].rstrip).to eq 'KG'
       expect(row[94,7]).to eq '0000000' #placeholder for CBMs
       expect(row[101,18].rstrip).to eq 'VES'
@@ -60,7 +60,6 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     it "should use different fields for air shipments" do
       @entry.house_bills_of_lading = 'HBOL'
       @entry.transport_mode_code = 40
-      @entry.gross_weight = 543
       @entry.total_packages = 23
       @entry.save!
       r = []
@@ -70,7 +69,6 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       row = r.first
       expect(row[47,17].rstrip).to eq 'HBOL'
       expect(row[64,10].rstrip).to eq '' #container size
-      expect(row[74,10]).to eq '0000543000'
       expect(row[119]).to eq 'N'
       expect(row[120,7]).to eq '0000023'
       expect(row[127,35].rstrip).to eq ''
@@ -99,6 +97,24 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       ci_line2 = Factory(:commercial_invoice_line,po_number:'o2',commercial_invoice:Factory(:commercial_invoice,entry:@entry))
       expect{described_class.new.generate_header_rows(@entry) {|r|}}.
         to raise_error described_class::LenoxBusinessLogicError
+    end
+    it "should total the gross weight per vendor" do
+      v2 = Factory(:company,system_code:'LENOX-V2')
+      o2 = Factory(:order,importer:@lenox,order_number:'o2',vendor:v2)
+      cv = @order.get_custom_value(@cdefs[:order_destination_code])
+      cv.value = 'HG'
+      cv.save!
+      ci_line2 = Factory(:commercial_invoice_line,po_number:'o2',
+        commercial_invoice:Factory(:commercial_invoice,entry:@entry,gross_weight:88))
+      ci_line2 = Factory(:commercial_invoice_line,po_number:'o2',
+        commercial_invoice:Factory(:commercial_invoice,entry:@entry,gross_weight:12))
+      r = []
+      described_class.new.generate_header_rows @entry do |row|
+        r << row
+      end
+      expect(r.size).to eq 2
+      expect(r[0][74,10]).to eq '0000099000'
+      expect(r[1][74,10]).to eq '0000100000'      
     end
   end
   describe :generate_detail_rows do
