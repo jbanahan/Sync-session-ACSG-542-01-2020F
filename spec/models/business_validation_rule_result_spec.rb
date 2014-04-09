@@ -1,6 +1,26 @@
 require 'spec_helper'
 
 describe BusinessValidationRuleResult do
+  describe :can_view do
+    it "should allow users who can view results" do
+      u = Factory(:master_user)
+      expect(described_class.new.can_view?(u)).to be_true
+    end
+    it "should not allow who can't view results" do
+      u = Factory(:user)
+      expect(described_class.new.can_view?(u)).to be_false
+    end
+  end
+  describe :can_edit do
+    it "should allow users from master company" do
+      u = Factory(:master_user)
+      expect(described_class.new.can_edit?(u)).to be_true
+    end
+    it "should not allow users not from master company" do
+      u = Factory(:user)
+      expect(described_class.new.can_edit?(u)).to be_false
+    end
+  end
   describe :run_validation do
     it "should set failure state and message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json

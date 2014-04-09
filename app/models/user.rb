@@ -202,6 +202,18 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_business_validation_results?
+    self.company.master?
+  end
+  def edit_business_validation_results?
+    self.company.master?
+  end  
+  def view_business_validation_rule_results?
+    self.company.master?
+  end
+  def edit_business_validation_rule_results?
+    self.company.master?
+  end
   def view_official_tariffs?
     self.company.master?
   end

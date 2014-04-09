@@ -4,16 +4,13 @@ describe EntriesController do
 
   before :each do 
     MasterSetup.get.update_attributes(:entry_enabled=>true)
-    c = Factory(:company,:master=>true)
-    @u = Factory(:user,:entry_view=>true,:company=>c)
+    @u = Factory(:master_user,entry_view:true)
     activate_authlogic
     UserSession.create! @u
   end
 
   describe 'validation_results' do 
     before :each do
-      @u.admin = true
-      @u.save!
       @ent = Factory(:entry,entry_number:'123456')
       @rule_result = Factory(:business_validation_rule_result)
       @bvr = @rule_result.business_validation_result
