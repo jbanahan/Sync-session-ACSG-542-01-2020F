@@ -113,7 +113,7 @@
           ids_to_include.push(parseInt($($("input:checked")[i]).parent().find(".attachment_id_container").text().trim()));
         }
 
-        Chain.sendEmailAttachments(controller_name, attachable_id, to_address, email_subject, email_body, ids_to_include, "<%=current_user.full_name%>", "<%=current_user.email%>")       
+        Chain.sendEmailAttachments(controller_name, attachable_id, to_address, email_subject, email_body, ids_to_include)       
         .fail(function(data){
             alert("We were unable to send your attachments.  Please try sending fewer attachments at once or try again after reloading the page.");
         })
