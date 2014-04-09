@@ -65,6 +65,13 @@ describe OpenChain::IntegrationClientCommandProcessor do
         cmd = {'request_type'=>'remote_file','path'=>'/_lenox_product/a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
+      it "should send data to lenox po parser if feature enabled and patch contains _lenox_po" do
+        Factory(:user,:username=>'integration')
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('Lenox').and_return(true)
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.any_instance.should_receive(:process).with('abcdefg',instance_of(User))
+        cmd = {'request_type'=>'remote_file','path'=>'/_lenox_po/a.csv','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
     end
     context :ann_inc do
       it "should send data to Ann Inc SAP Product Handler if feature enabled and path contains _from_sap" do

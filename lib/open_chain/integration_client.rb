@@ -7,6 +7,7 @@ require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/kewill_isf_xml_parser'
+require 'open_chain/custom_handler/lenox/lenox_po_parser'
 require 'open_chain/custom_handler/lenox/lenox_product_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
@@ -120,6 +121,10 @@ module OpenChain
       elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
         get_tempfile(bucket,remote_path,command['path']) do |tmp|
           OpenChain::CustomHandler::Lenox::LenoxProductParser.new.process(IO.read(tmp),User.find_by_username('integration'))
+        end
+      elsif command['path'].include?('/_lenox_po/') && MasterSetup.get.custom_feature?('Lenox')
+        get_tempfile(bucket,remote_path,command['path']) do |tmp|
+          OpenChain::CustomHandler::Lenox::LenoxPoParser.new.process(IO.read(tmp),User.find_by_username('integration'))
         end
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         get_tempfile(bucket,remote_path,command['path']) do |temp|
