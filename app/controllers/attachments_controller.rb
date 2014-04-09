@@ -66,7 +66,7 @@ class AttachmentsController < ApplicationController
   end
 
   def send_email_attachable
-    Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include]})
+    Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: params[:full_name], email: params[:email]})
     render text: "OK"
   end
 

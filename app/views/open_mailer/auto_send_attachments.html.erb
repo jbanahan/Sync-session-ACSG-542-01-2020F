@@ -1,0 +1,9 @@
+<%= @body_content %>
+<% @attachment_messages.each do |attachment_message| %>
+<p style="margin-top: 1em;"><%=attachment_message%></p>
+<% end %>
+
+<p>
+  ---<br>
+  These attachments were sent from VFI Track by <%= @sender_name %> (<%= @sender_email %>).
+</p>
