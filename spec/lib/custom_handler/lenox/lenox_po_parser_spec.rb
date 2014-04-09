@@ -100,4 +100,20 @@ R                 RB05722520131105                                              
     described_class.new.process @testdata
     expect(Product.find(p.id).get_custom_value(cd).value).to eq Date.new(2013,1,1)
   end
+
+  describe "parse" do
+    it "creates a PO" do
+      # This method is just an integration point that call through to the process method..all we're testing is that
+      # an order is created
+      described_class.parse @testdata
+
+      expect(Order.first.order_number).to eq 'LENOX-RB057225'
+    end
+  end
+
+  describe "integration_folder" do
+    it "uses an integration folder" do
+      expect(described_class.integration_folder).to eq "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_po"
+    end
+  end
 end

@@ -119,13 +119,9 @@ module OpenChain
       elsif command['path'].include? '/_shoes_po/'
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          OpenChain::CustomHandler::Lenox::LenoxProductParser.new.process(IO.read(tmp),User.find_by_username('integration'))
-        end
+        OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_po/') && MasterSetup.get.custom_feature?('Lenox')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          OpenChain::CustomHandler::Lenox::LenoxPoParser.new.process(IO.read(tmp),User.find_by_username('integration'))
-        end
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         get_tempfile(bucket,remote_path,command['path']) do |temp|
           linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)

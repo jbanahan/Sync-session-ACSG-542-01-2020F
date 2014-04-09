@@ -1,10 +1,23 @@
 require 'open_chain/custom_handler/lenox/lenox_custom_definition_support'
+require 'open_chain/integration_client_parser'
+
 module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
+  extend OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::Lenox::LenoxCustomDefinitionSupport
+
   def initialize
     @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
     @imp = Company.where(system_code:'LENOX').first_or_create!(name:'Lenox',importer:true)
   end
+
+  def self.integration_folder
+    "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_po"
+  end
+
+  def self.parse data, opts = {}
+    LenoxPoParser.new.process data
+  end
+
   def process data
     order_lines = []
     last_order_number = []

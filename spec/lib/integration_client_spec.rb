@@ -61,14 +61,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "should send data to lenox prodct parser if feature enabled and path contains _lenox_product" do
         Factory(:user,:username=>'integration')
         MasterSetup.any_instance.should_receive(:custom_feature?).with('Lenox').and_return(true)
-        OpenChain::CustomHandler::Lenox::LenoxProductParser.any_instance.should_receive(:process).with('abcdefg',instance_of(User))
+        OpenChain::CustomHandler::Lenox::LenoxProductParser.should_receive(:delay).and_return OpenChain::CustomHandler::Lenox::LenoxProductParser
+        OpenChain::CustomHandler::Lenox::LenoxProductParser.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
         cmd = {'request_type'=>'remote_file','path'=>'/_lenox_product/a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
-      it "should send data to lenox po parser if feature enabled and patch contains _lenox_po" do
+      it "should send data to lenox po parser if feature enabled and path contains _lenox_po" do
         Factory(:user,:username=>'integration')
         MasterSetup.any_instance.should_receive(:custom_feature?).with('Lenox').and_return(true)
-        OpenChain::CustomHandler::Lenox::LenoxPoParser.any_instance.should_receive(:process).with('abcdefg',instance_of(User))
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.should_receive(:delay).and_return OpenChain::CustomHandler::Lenox::LenoxPoParser
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
         cmd = {'request_type'=>'remote_file','path'=>'/_lenox_po/a.csv','remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end

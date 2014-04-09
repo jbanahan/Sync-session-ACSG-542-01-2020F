@@ -1,5 +1,8 @@
 require 'open_chain/custom_handler/lenox/lenox_custom_definition_support'
+require 'open_chain/integration_client_parser'
+
 module OpenChain; module CustomHandler; module Lenox; class LenoxProductParser
+  extend OpenChain::IntegrationClientParser
   include LenoxCustomDefinitionSupport
 
   CUSTOM_DEFINITION_MAP ||= {
@@ -15,6 +18,15 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductParser
     @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
     @imp = Company.where(system_code:'LENOX').first_or_create!(name:'Lenox',importer:true)
   end
+
+  def self.integration_folder
+    "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_product"
+  end
+
+  def self.parse data, opts = {}
+    LenoxProductParser.new.process data, User.find_by_username('integration')
+  end
+
   def process data, user
     @user = user
     @hash_keys = DataCrossReference.get_all_pairs DataCrossReference::LENOX_ITEM_MASTER_HASH
