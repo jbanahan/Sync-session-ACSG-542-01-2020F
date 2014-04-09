@@ -1,5 +1,7 @@
 <% content_for :javascript do %>
   $(function() {
+    selected_user_ids = [];
+
     $( "#btn_new" )
       .click(function() {
         window.location = '<%=new_company_user_path(@company)%>';
@@ -8,6 +10,32 @@
     $("#btn_send_email").click(function() {
       $("#users_form").submit();
     });
+
+    $("#change_user_company_button").click(function(){
+      selected_user_ids = [];
+      $("input:checked").each(function(index, element) {
+        selected_user_ids.push(parseInt($(element).val()));
+      });
+      if (selected_user_ids.length > 0){
+        $("#move_user_modal").modal('show');
+      }
+      else {
+        alert("Please select at least one user to move.");
+      }
+    });
+
+    $("#move_user_submit_button").click(function(){
+      destination_company_id = parseInt($("#user_move_company_select").val());
+      Chain.changeUserCompany(selected_user_ids, destination_company_id)
+      .done(function(data){
+        //true --> reload from server instead of cache
+        location.reload(true);
+      })
+      .fail(function(data){
+        alert("Your request could not be completed.  Please refresh the page and try again.");
+      });
+    });
+
   });
 <% end %>
 <% content_for :action_bar do -%>
@@ -19,6 +47,7 @@
   <% end %>
   <% if current_user.sys_admin -%>
     <button id="btn_send_email" title="Send a welcome email to selected users with their login and a new, random password.">Send Invite Email</button>
+    <button id="change_user_company_button" title="Move the selected user(s) from one company to another.">Move User</button>
   <% end %>
 <% end -%>
 <h1><%=@company.name%> Users</h1>
@@ -49,3 +78,27 @@
 </table>
 <% end %>
 
+<div class="modal fade" id="move_user_modal" tabindex=-1 role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Move User(s) to Another Company</h4>
+      </div>
+      <div class="modal-body">
+        <p>The selected user(s) should be transferred to...</p>
+        <select class="form-control" id="user_move_company_select">
+          <% Company.all.each do |c| %>
+            <option value=<%=c.id%>>
+              <%=c.name%>
+            </option>
+          <% end %>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" id="move_user_cancel_button">Cancel</button>
+        <button type="button" class="btn btn-primary" id="move_user_submit_button">Submit</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->

@@ -151,4 +151,46 @@ describe UsersController do
       JSON.parse(response.body).should == {'error' => "Homepage URL missing."}
     end
   end
+
+  describe :move_to_new_company do
+    
+    before :each do
+      @user1 = Factory(:user, id: 1)
+      @user2 = Factory(:user, id: 2)
+      @user3 = Factory(:user, id: 3)
+      @company = Factory(:company, id: 1)
+    end
+
+    it "should only allow admins access" do
+      @user.admin = false
+      @user.save
+
+      post :move_to_new_company, user_ids_to_move: [1, 2, 3], destination_company_id: 1
+
+      response.should redirect_to "/"
+      flash[:errors].first.should == "Only administrators can move other users to a new company."
+    end
+
+    it "should move users to the correct company" do
+      @user.admin = true
+      @user.save
+
+      post :move_to_new_company, user_ids_to_move: [1, 2, 3], destination_company_id: 1
+
+      @user1.reload; @user1.company.id.should == 1
+      @user2.reload; @user2.company.id.should == 1
+      @user3.reload; @user3.company.id.should == 1
+    end
+
+    it "should have a text and status response of 200" do
+      @user.admin = true
+      @user.save
+
+      post :move_to_new_company, user_ids_to_move: [1, 2, 3], destination_company_id: 1
+
+      response.body.should == "200"
+      response.status.should == 200
+    end
+
+  end
 end

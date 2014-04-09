@@ -52,6 +52,11 @@ root.Chain =
       $("#mod_attach").dialog('open')
     )
 
+  changeUserCompany: (user_ids_to_move, destination_company_id) ->
+    return $.post ('/users/move_to_new_company'),
+      user_ids_to_move: user_ids_to_move
+      destination_company_id: destination_company_id
+
   sendEmailAttachments: (controller_name, id, to_address, email_subject, email_body, ids_to_include) ->
     return $.post ('/attachments/email_attachable/' + controller_name + '/' + id),
       to_address: to_address
