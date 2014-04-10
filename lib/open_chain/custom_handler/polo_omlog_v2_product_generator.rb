@@ -19,7 +19,7 @@ module OpenChain
         cursor = 0
         sync do |rv|
           if include_headers || cursor > 0
-            csm_numbers = rv[1] ? rv[1].split("\n") : ['']
+            csm_numbers = rv[1].blank? ? [''] : rv[1].split("\n")
             csm_numbers.each do |c|
               max_col = rv.keys.sort.last
               row = []
