@@ -3,7 +3,7 @@ require 'spec_helper'
 describe BusinessValidationRuleResultsController do
   describe :update do
     before :each do 
-      @u = Factory(:admin_user)
+      @u = Factory(:master_user)
       @ent = Factory(:entry)
       @rr = Factory(:business_validation_rule_result,state:'Fail')
       bvr = @rr.business_validation_result
@@ -27,9 +27,8 @@ describe BusinessValidationRuleResultsController do
       expect(rr['overridden_by']['full_name']).to eq @u.full_name
       expect(Time.parse(rr['overridden_at'])).to eq @rr.overridden_at
     end
-    it "should not allow update if user is not admin" do
-      @u.admin = false
-      @u.save!
+    it "should not allow update if user cannot update business_validation_rule_result" do
+      BusinessValidationRuleResult.any_instance.should_receive(:can_edit?).with(@u).and_return(false)
       put :update, id: @rr.id, business_validation_rule_result:{note:'abc', state:'Pass'} 
       expect(response).to be_redirect
       @rr.reload

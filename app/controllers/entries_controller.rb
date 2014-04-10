@@ -85,12 +85,12 @@ class EntriesController < ApplicationController
     e = Entry.find params[:id]
     respond_to do |format|
     format.html {
-      action_secure(e.can_view?(current_user) && current_user.admin?,e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
+      action_secure(e.can_view?(current_user) && current_user.view_business_validation_results?,e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
         @entry = e
       }
     }
     format.json {
-      return render_json_error "You do not have permission to view this object", 401 unless current_user.admin?
+      
       r = {
         entry_number:e.entry_number,
         state:e.business_rules_state,
@@ -98,6 +98,7 @@ class EntriesController < ApplicationController
         bv_results:[]
       }
       e.business_validation_results.each do |bvr|
+        return render_json_error "You do not have permission to view this object", 401 unless bvr.can_view?(current_user)
         h = {
           id:bvr.id,
           state:bvr.state,

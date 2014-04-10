@@ -1,10 +1,8 @@
 class BusinessValidationRuleResultsController < ApplicationController
   include ValidationResultsHelper
   def update
-    if !current_user.admin
-      return error_redirect "You do not have permission to perform this activity."
-    end
     rr = BusinessValidationRuleResult.find params[:id]
+    return error_redirect "You do not have permission to perform this activity." unless rr.can_edit? current_user
     rr.update_attributes(sanitized_attributes(params[:business_validation_rule_result]))
     rr.overridden_at = Time.now
     rr.overridden_by = current_user
