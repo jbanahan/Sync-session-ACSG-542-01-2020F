@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     )
     @product = Factory(:product,importer:@lenox,unique_identifier:'LENOX-partnum')
     @product.update_custom_value!(@cdefs[:product_units_per_set],2)
-    @order = Factory(:order,importer:@lenox,order_number:'ponum',vendor:@vendor)
+    @order = Factory(:order,importer:@lenox,order_number:'LENOX-ponum',vendor:@vendor)
     @order.update_custom_value!(@cdefs[:order_destination_code],'HG')
     @order.update_custom_value!(@cdefs[:order_factory_code],'0000007')
     @container = Factory(:container,entry:@entry,container_number:'CN1',container_size:'40',
@@ -75,7 +75,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
     it "should make multiple headers for multiple vendors" do
       v2 = Factory(:company,system_code:'LENOX-V2')
-      o2 = Factory(:order,importer:@lenox,order_number:'o2',vendor:v2)
+      o2 = Factory(:order,importer:@lenox,order_number:'LENOX-o2',vendor:v2)
       cv = @order.get_custom_value(@cdefs[:order_destination_code])
       cv.value = 'HG'
       cv.save!
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
     it "should total the gross weight per vendor" do
       v2 = Factory(:company,system_code:'LENOX-V2')
-      o2 = Factory(:order,importer:@lenox,order_number:'o2',vendor:v2)
+      o2 = Factory(:order,importer:@lenox,order_number:'LENOX-o2',vendor:v2)
       cv = @order.get_custom_value(@cdefs[:order_destination_code])
       cv.value = 'HG'
       cv.save!

@@ -116,13 +116,14 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     get_order_custom_value(:order_destination_code,entry.commercial_invoice_lines.first)
   end
   def get_order_custom_value cval_identifier, ci_line
-    ord = Order.find_by_importer_id_and_order_number(@lenox.id,ci_line.po_number)  
+    ord = Order.find_by_importer_id_and_order_number(@lenox.id,"LENOX-#{ci_line.po_number}")  
     ord.get_custom_value(@cdefs[cval_identifier]).value
   end
   def get_vendor_code_and_invoices entry
     h = {}
     entry.commercial_invoices.each do |ci|
       po_numbers = ci.commercial_invoice_lines.pluck('DISTINCT po_number')
+      po_numbers = po_numbers.collect {|p| "LENOX-#{p}"}
       orders = Order.where("order_number in (?)",po_numbers).where(importer_id:@lenox.id).to_a
       raise LenoxBusinessLogicError.new("Order numbers #{po_numbers} only matched #{orders.size} orders for entry #{entry.entry_number}") if po_numbers.size != orders.size
       c = orders.first.vendor
