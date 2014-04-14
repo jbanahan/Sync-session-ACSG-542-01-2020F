@@ -368,6 +368,29 @@ EMAIL
       m.attachments["test.txt"].should be_nil
     end
   end
+
+  describe :send_high_priority_tasks do
+
+    before :each do
+      @u1 = Factory(:user, email: "me@there.com")
+      @pd1 = Factory(:project_deliverable, assigned_to: @u1, description: "PD1 Description")
+      OpenMailer.send_high_priority_tasks(@u1, [@pd1]).deliver!
+    end
+
+    it "should be sent to the correct user" do
+      OpenMailer.deliveries.pop.to.first.should == "me@there.com"
+    end
+
+    it "should have a subject line of the correct form" do
+      OpenMailer.deliveries.pop.subject.should match(/\[VFI Track\] Task Priorities \- \d{2}\/\d{2}\/\d{2}/)
+    end
+
+    it "should have the project deliverable descriptions in the body" do
+      OpenMailer.deliveries.pop.body.should match(/PD1 Description/)
+    end
+
+  end
+
   describe :send_survey_invite do
     context 'with a non-blank subtitle' do
       before :each do
