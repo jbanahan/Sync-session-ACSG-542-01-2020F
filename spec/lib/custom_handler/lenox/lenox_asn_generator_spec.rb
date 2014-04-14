@@ -21,6 +21,10 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       weight:50,fcl_lcl:'F',quantity:23,seal_number:'SN')
 
   end
+
+  describe :run_schedulable do
+    it "should email on LenoxBusinessLogicError"
+  end
   describe :generate_header_rows do
     
     it "should make header row" do
@@ -125,19 +129,19 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       end
       expect(r.size).to eq 1
       row = r.first
-      expect(row.size).to eq 269
+      expect(row.size).to eq 311
       expect(row[0,4]).to eq 'ASND'
       expect(row[4,35].rstrip).to eq 'MBOL'
       expect(row[39,17].rstrip).to eq 'CN1'
       expect(row[56,9]).to eq '000000001'
       expect(row[65,10].rstrip).to eq '0000007'
-      expect(row[75,10].rstrip).to eq 'ponum'
-      expect(row[85,18].rstrip).to eq 'partnum'
-      expect(row[103,7]).to eq '0000005' #10 units / 2 per set
-      expect(row[110,4].rstrip).to eq 'CN'
-      expect(row[114,126]).to eq ''.ljust(126)
-      expect(row[240,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
-      expect(row[254,15].rstrip).to eq 'vanvendortest'
+      expect(row[75,35].rstrip).to eq 'ponum'
+      expect(row[110,35].rstrip).to eq 'partnum'
+      expect(row[145,7]).to eq '0000005' #10 units / 2 per set
+      expect(row[152,4].rstrip).to eq 'CN'
+      expect(row[156,126]).to eq ''.ljust(126)
+      expect(row[282,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
+      expect(row[296,15].rstrip).to eq 'vanvendortest'
     end
     it "should throw exception if part not found" do
       Product.scoped.destroy_all
@@ -151,7 +155,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         r << dr
       end
       row = r.first
-      expect(row[103,7]).to eq '0000010' #10 units / 1 per set
+      expect(row[145,7]).to eq '0000010' #10 units / 1 per set
     end
   end
   describe :generate_temp_files do

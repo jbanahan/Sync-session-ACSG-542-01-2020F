@@ -12,6 +12,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     )
   end
 
+  
+
   def generate_temp_files entries
     header_file = Tempfile.new(['LENOXHEADER','.txt'])
     detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
@@ -39,8 +41,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str(vals[:cnum],17)
       r << @f.num(i+1,9)
       r << @f.str(get_order_custom_value(:order_factory_code,ln),10)
-      r << @f.str(ln.po_number,10)
-      r << @f.str(ln.part_number,18)
+      r << @f.str(ln.po_number,35)
+      r << @f.str(ln.part_number,35)
       r << @f.num(get_exploded_quantity(ln),7)
       r << @f.str(ln.country_origin_code,4)
       r << ''.ljust(126)
