@@ -44,6 +44,15 @@
           <label>Complete</label>
           <input type='checkbox' ng-model='svc.deliverableToEdit.complete' />
         </div>
+        <div class='form-group'>
+          <label>
+            Priority
+          </label>
+          <select class="form-control" 
+              ng-model='svc.deliverableToEdit.priority' 
+              ng-options="p for p in ['Low', 'Medium', 'High']" >
+          </select>
+        </div>
       </div>
       <div class='modal-footer'>
         <button ng-click='saveDeliverable()' class='btn btn-success btn-sm'>Save</button>

@@ -1,0 +1,30 @@
+<p>
+  This is an automatic reminder from VFI Track of high priority deliverables that are not yet completed.
+</p>
+
+<table>
+  <tr>
+    <th>
+      Description
+    </th>
+    <th>
+      Project Name
+    </th>
+    <th>
+      Due Date
+    </th>
+  </tr>
+  <% @tasks.each do |task| %>
+    <tr>
+      <td>
+        <%= task.description %>
+      </td>
+      <td>
+        <%= link_to task.project.name, "#{@lp}://#{MasterSetup.get.request_host}/projects/#{task.project.id}" %>
+      </td>
+      <td>
+        <%= task.due_date.to_s %>
+      </td>
+    </tr>
+  <% end %>
+</table>

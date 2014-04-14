@@ -141,6 +141,10 @@ projectApp.directive 'chainProjectDeliverable', ['$compile','projectSvc',($compi
     link: (scope,el,attrs) ->
       editAction = () ->
         projectSvc.deliverableToEdit = scope.deliverable
+        if angular.isUndefined(scope.deliverable.priority) || scope.deliverable.priority == null
+          projectSvc.deliverableToEdit.priority = "Low"
+        else
+          projectSvc.deliverableToEdit.priority = scope.deliverable.priority
         $('chain-project-deliverable-edit').find('div.modal').modal('show')
         $('chain-project-deliverable-edit').find('input[ng-model$=".description"]').focus()
 
