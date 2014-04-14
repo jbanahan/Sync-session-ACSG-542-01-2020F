@@ -22,7 +22,16 @@
     <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
     <div class='panel panel-default' ng-repeat='(top,projects) in deliverables'>
       <div class="panel-heading">
-        <h3 class='panel-title'>{{top}}</h3>
+        <div class="row">
+          <div class="col-md-10">
+            <h3 class='panel-title'>
+              {{top}}
+            </h3>
+          </div>
+          <div class="col-md-2 text-right" ng-show='per_person_layout'>
+            <%= button_to "Notify Now", "/project_deliverables/{{ getDeliverableUserIdFromDeliverablesAndUsername(deliverables, top) }}/notify_now", method: :post, class: "btn btn-danger", title: "Email this user a list of their high priority tasks which are not yet completed" %>
+          </div>
+        </div>
       </div>
       <div class='panel-body'>
         <div ng-repeat='(mid,dels) in projects'>
