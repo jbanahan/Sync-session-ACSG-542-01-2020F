@@ -12,6 +12,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     )
   end
 
+  
+
   def generate_temp_files entries
     header_file = Tempfile.new(['LENOXHEADER','.txt'])
     detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
@@ -34,22 +36,29 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   def generate_detail_rows entry
     vals = build_mode_specific_values(entry)
     entry.commercial_invoice_lines.each_with_index do |ln,i|
+      order_line = get_order_line(ln)
+      raise LenoxBusinessLogicError.new("Order Line couldn't be found for order #{ln.po_number}, part #{ln.part_number}") if order_line.nil?
       r = "ASND"
       r << @f.str(entry.master_bills_of_lading,35)
       r << @f.str(vals[:cnum],17)
       r << @f.num(i+1,9)
       r << @f.str(get_order_custom_value(:order_factory_code,ln),10)
-      r << @f.str(ln.po_number,10)
-      r << @f.str(ln.part_number,18)
+      r << @f.str(ln.po_number,35)
+      r << @f.str(ln.part_number,35)
       r << @f.num(get_exploded_quantity(ln),7)
       r << @f.str(ln.country_origin_code,4)
       r << ''.ljust(126)
       r << time_and_user
+      r << @f.num(order_line.price_per_unit,18,6)
+      r << @f.num(ln.unit_price,18,6)
       yield r
     end
   end
 
   private
+  def get_order_line(ln)
+    OrderLine.joins([:order,:product]).where("products.unique_identifier = ?","LENOX-#{ln.part_number.strip}").where("orders.order_number = ?","LENOX-#{ln.po_number}").order('order_lines.line_number DESC').first
+  end
   def get_exploded_quantity ci_line
     p = Product.find_by_unique_identifier("LENOX-#{ci_line.part_number.strip}")
     if p.nil?
