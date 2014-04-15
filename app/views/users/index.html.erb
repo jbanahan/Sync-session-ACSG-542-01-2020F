@@ -12,28 +12,13 @@
     });
 
     $("#change_user_company_button").click(function(){
-      selected_user_ids = [];
-      $("input:checked").each(function(index, element) {
-        selected_user_ids.push(parseInt($(element).val()));
-      });
-      if (selected_user_ids.length > 0){
         $("#move_user_modal").modal('show');
-      }
-      else {
-        alert("Please select at least one user to move.");
-      }
     });
 
     $("#move_user_submit_button").click(function(){
       destination_company_id = parseInt($("#user_move_company_select").val());
-      Chain.changeUserCompany(selected_user_ids, destination_company_id)
-      .done(function(data){
-        //true --> reload from server instead of cache
-        location.reload(true);
-      })
-      .fail(function(data){
-        alert("Your request could not be completed.  Please refresh the page and try again.");
-      });
+      $("#users_form").prop("action","/users/move_to_new_company/" + destination_company_id);
+      $("#users_form").submit();
     });
 
   });
@@ -96,7 +81,7 @@
         </select>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" id="move_user_cancel_button">Cancel</button>
+        <button type="button" class="btn btn-default" id="move_user_cancel_button" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" id="move_user_submit_button">Submit</button>
       </div>
     </div><!-- /.modal-content -->

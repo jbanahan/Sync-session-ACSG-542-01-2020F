@@ -196,13 +196,13 @@ class UsersController < ApplicationController
   def move_to_new_company
     admin_secure("Only administrators can move other users to a new company."){
       destination_company = Company.find(params[:destination_company_id])
-      params[:user_ids_to_move].each do |user_id|
+      params[:id].each do |user_id|
         user = User.find(user_id)
         user.company = destination_company
         user.save!
       end
 
-      render text: "200"
+      redirect_to :back
     }
   end
   

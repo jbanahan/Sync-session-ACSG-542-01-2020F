@@ -165,7 +165,7 @@ describe UsersController do
       @user.admin = false
       @user.save
 
-      post :move_to_new_company, user_ids_to_move: [1, 2, 3], destination_company_id: 1
+      post :move_to_new_company, id: [1, 2, 3], destination_company_id: 1
 
       response.should redirect_to "/"
       flash[:errors].first.should == "Only administrators can move other users to a new company."
@@ -175,21 +175,21 @@ describe UsersController do
       @user.admin = true
       @user.save
 
-      post :move_to_new_company, user_ids_to_move: [1, 2, 3], destination_company_id: 1
+      post :move_to_new_company, id: [1, 2, 3], destination_company_id: 1
 
       @user1.reload; @user1.company.id.should == 1
       @user2.reload; @user2.company.id.should == 1
       @user3.reload; @user3.company.id.should == 1
     end
 
-    it "should have a text and status response of 200" do
+    it "should redirect back with a status of 302" do
       @user.admin = true
       @user.save
 
-      post :move_to_new_company, user_ids_to_move: [1, 2, 3], destination_company_id: 1
+      post :move_to_new_company, id: [1, 2, 3], destination_company_id: 1
 
-      response.body.should == "200"
-      response.status.should == 200
+      response.should be_redirect
+      response.status.should == 302
     end
 
   end
