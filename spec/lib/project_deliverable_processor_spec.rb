@@ -24,11 +24,11 @@ describe OpenChain::ProjectDeliverableProcessor do
   describe :run_schedulable do
 
     it 'should return the correct hash for the ecosystem' do
-      @p.run_schedulable.should == {1000=>[1001, 1003], 2000=>[2001]}
+      @p.run_schedulable.should == {1000=>[@pd1, @pd3], 2000=>[@pd4]}
     end
 
     it 'should call create_emails_from_hash with the correct hash' do
-      OpenChain::ProjectDeliverableProcessor.any_instance.should_receive(:create_emails_from_hash).exactly(1).times.with({1000=>[1001, 1003], 2000=>[2001]})
+      OpenChain::ProjectDeliverableProcessor.any_instance.should_receive(:create_emails_from_hash).exactly(1).times.with({1000=>[@pd1, @pd3], 2000=>[@pd4]})
       @p.run_schedulable
     end
 
@@ -38,7 +38,7 @@ describe OpenChain::ProjectDeliverableProcessor do
 
     it 'should fill the hash with the correct information' do
       blank_hash = {}
-      @p.fill_hash_values(blank_hash).should == {1000=>[1001, 1003], 2000=>[2001]}
+      @p.fill_hash_values(blank_hash).should == {1000=>[@pd1, @pd3], 2000=>[@pd4]}
     end
 
   end
