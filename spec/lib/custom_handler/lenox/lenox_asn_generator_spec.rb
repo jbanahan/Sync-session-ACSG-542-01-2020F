@@ -53,14 +53,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       expect(row[223,8]).to eq '20140116' 
       expect(row[231,10].rstrip).to eq '12345'
       expect(row[241,10].rstrip).to eq '4321'
-      expect(row[251,5].rstrip).to eq '11'
-      expect(row[256,10].rstrip).to eq 'HG'
-      expect(row[266,4]).to eq 'APP '
-      expect(row[270,80]).to eq ''.ljust(80)
-      expect(row[350,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS
-      expect(row[364,15].rstrip).to eq 'vanvendortest'
+      expect(row[251,6].rstrip).to eq '11'
+      expect(row[257,10].rstrip).to eq 'HG'
+      expect(row[267,4]).to eq 'APP '
+      expect(row[271,80]).to eq ''.ljust(80)
+      expect(row[351,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS
+      expect(row[365,15].rstrip).to eq 'vanvendortest'
 
-      expect(row.size).to eq 379
+      expect(row.size).to eq 380
     end
     it "should use different fields for air shipments" do
       @entry.house_bills_of_lading = 'HBOL'
