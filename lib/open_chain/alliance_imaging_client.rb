@@ -64,6 +64,7 @@ class OpenChain::AllianceImagingClient
           att = entry.attachments.build
           att.attached = t
           att.attachment_type = attachment_type
+          att.is_private = attachment_type.upcase.starts_with?("PRIVATE") ? true : false
           unless hsh["suffix"].blank?
             att.alliance_suffix = hsh["suffix"][2,3]
             att.alliance_revision = hsh["suffix"][0,2]
