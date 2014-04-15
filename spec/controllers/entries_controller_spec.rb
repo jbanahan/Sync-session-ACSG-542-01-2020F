@@ -193,7 +193,7 @@ describe EntriesController do
     end
 
     it "uses canadian fields in xls file for candian entries" do
-      Entry.any_instance.should_receive(:canadian?).and_return true
+      Entry.any_instance.should_receive(:canadian?).exactly(2).times.and_return true
       e = Factory(:entry)
 
       get :show, :id => e.id, :format=> :xls

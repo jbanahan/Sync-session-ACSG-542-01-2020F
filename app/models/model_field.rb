@@ -892,8 +892,7 @@ and classifications.product_id = products.id
             "Entry Port set to #{port.name}"
           },
           :export_lambda => lambda {|ent|
-            port = (ent.source_system == "Fenix" ? Port.where(cbsa_code: ent.entry_port_code) : Port.where(schedule_d_code: ent.entry_port_code)).first
-            port.try(:name).blank? ? "" : port.name
+            ent.entry_port.blank? ? "" : ent.entry_port.name
           },
           qualified_field_name: "(CASE entries.source_system WHEN 'Fenix' THEN (SELECT name FROM ports WHERE ports.cbsa_port = entries.entry_port_code) ELSE (SELECT name FROM ports WHERE ports.schedule_d_code = entries.entry_port_code) END)"
         }],
