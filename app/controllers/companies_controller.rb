@@ -127,7 +127,7 @@ class CompaniesController < ApplicationController
       return
     end
     c = Company.find params[:id]
-    c.linked_company_ids = params[:selected].values
+    c.linked_company_ids = (params[:selected].nil? ? [] : params[:selected].values)
     add_flash :notices, "Linked companies saved successfully."
     redirect_to show_children_company_path c
   end
