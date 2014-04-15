@@ -113,6 +113,27 @@
             </p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_CANADA_EXPORTS}%>
           </div>
+            <div >
+            <h3>Borderfree Export Drawback File (last 10)</h3>
+            <p><em>17 column .xlsx file</em></p>
+            <p>
+              Columns Used (column label when viewed in Excel)
+              <ul>
+                <li>Ship Date: C</li>
+                <li>Export Date: C</li>
+                <li>Ref 1 (CA Entry #): E</li>
+                <li>Carrier: F</li>
+                <li>Ref 2 (PO Number): G</li>
+                <li>Destination Country: I</li>
+                <li>Description: L</li>
+                <li>Part Number: M*</li>
+                <li>Quantity: P</li>
+                <li>UOM: Q</li>
+              </ul>
+              * Column M must match the format "Short description - Part number - Details"
+            </p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_BORDERFREE}%>
+          </div>
         </div>
         <%end-%>
         <%if MasterSetup.get.custom_feature?("UA Drawback")-%>
