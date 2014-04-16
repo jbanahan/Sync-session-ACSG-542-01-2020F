@@ -190,9 +190,7 @@ def execute_scheduler
 
   if MasterSetup.get.system_code == 'underarmour' && Rails.env == 'production'
     scheduler.every("60m") do
-      g = OpenChain::CustomHandler::FenixProductFileGenerator.new
-      g.initialize "UNDERARM"
-      g.delay.generate
+      OpenChain::CustomHandler::FenixProductFileGenerator.new("UNDERARM").delay.generate
     end
   end
 
