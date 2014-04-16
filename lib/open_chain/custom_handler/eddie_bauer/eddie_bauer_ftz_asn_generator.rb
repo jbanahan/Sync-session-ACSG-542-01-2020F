@@ -13,7 +13,10 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
       
   def self.run_schedulable opts={customer_numbers:['EDDIEFTZ']}
     g = self.new
-    g.ftp_file g.generate_file opts[:customer_numbers]
+    g.run_for_entries(g.find_entries(opts[:customer_numbers]),g)
+  end
+  def run_for_entries entries, instance=self.new
+    instance.ftp_file instance.generate_file entries
   end
   def initialize env=Rails.env
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
@@ -27,9 +30,9 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     r
   end
 
-  def generate_file customer_numbers=['EDDIEFTZ']
+  def generate_file entries
     t = Tempfile.new(['EDDIEFTZASN','.txt'])
-    find_entries(customer_numbers).each_with_index do |ent,i|
+    entries.each_with_index do |ent,i|
       Entry.transaction do
         t << "\n" unless i == 0
         t << self.generate_data_for_entry(ent)
@@ -47,7 +50,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     cust_num = SearchCriterion.new(model_field_uid:'ent_cust_num',operator:'in',value:customer_numbers.join("\n"))
     bi_total = SearchCriterion.new(model_field_uid:'ent_broker_invoice_total',operator:'gt',value:'0')
     r = bi_total.apply passed_rules.apply cust_num.apply Entry
-    r.joins(Entry.need_sync_join_clause(SYNC_CODE)).where(Entry.need_sync_where_clause)
+    r.joins(Entry.need_sync_join_clause(SYNC_CODE)).where(Entry.need_sync_where_clause).where('sync_records.id is null')
   end
 
   def generate_data_for_entry ent

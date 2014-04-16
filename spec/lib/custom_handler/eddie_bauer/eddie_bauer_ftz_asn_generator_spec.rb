@@ -3,9 +3,9 @@ require "spec_helper"
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   describe "run_schedulable" do
     it "should ftp file" do
-      r = 'x'
-      described_class.any_instance.should_receive(:generate_file).with(['EDDIEFTZ']).and_return(r)
-      described_class.any_instance.should_receive(:ftp_file).with(r)
+      described_class.any_instance.should_receive(:find_entries).with(['EDDIEFTZ']).and_return(['ents'])
+      described_class.any_instance.should_receive(:generate_file).with(['ents']).and_return('x')
+      described_class.any_instance.should_receive(:ftp_file).with('x')
       described_class.run_schedulable
     end
   end
@@ -23,16 +23,15 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     before(:each) do
       @ent = Factory(:entry)
       @g = described_class.new
-      @g.should_receive(:find_entries).and_return [@ent]
       @g.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
     end
     it "should link methods to find and generate" do
-      tmp  = @g.generate_file
+      tmp  = @g.generate_file [@ent]
       tmp.flush
       expect(IO.read(tmp.path)).to eq 'abc'
     end
     it "should write sync_records" do
-      expect{@g.generate_file}.to change(SyncRecord.where(trading_partner:'EBFTZASN'),:count).from(0).to(1)
+      expect{@g.generate_file([@ent])}.to change(SyncRecord.where(trading_partner:'EBFTZASN'),:count).from(0).to(1)
 
     end
   end
@@ -49,6 +48,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "should find all that don't have sync records and have passed business rule states" do
       expect(described_class.new.find_entries.to_a).to eq [@entry]
     end
+    it "should not send recrods that have been sent before" do
+      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE)
+      expect(described_class.new.find_entries.to_a).to eq []
+    end
     it "should not find Review business rules state" do
       @rule_result.state = 'Review'
       @rule_result.save!
@@ -60,16 +63,6 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "should not send if no broker invoice" do
       @entry.update_attributes(broker_invoice_total:0)
       expect(described_class.new.find_entries.to_a).to be_empty
-    end
-    it "should not find already synced" do
-      @entry.sync_records.create!(trading_partner:'EBFTZASN',sent_at:1.minute.ago,confirmed_at:1.second.ago)
-      @entry.update_attributes(updated_at:1.hour.ago)
-      expect(@entry.updated_at).to be < 1.minute.ago #make sure update attributes worked in the line above
-      expect(described_class.new.find_entries.to_a).to be_empty      
-    end
-    it "should find already synced but updated" do
-      @entry.sync_records.create!(trading_partner:'EBFTZASN',sent_at:1.day.ago,confirmed_at:1.second.ago)
-      expect(described_class.new.find_entries.to_a).to eq [@entry]
     end
   end
   describe "generate_data_for_entry" do
