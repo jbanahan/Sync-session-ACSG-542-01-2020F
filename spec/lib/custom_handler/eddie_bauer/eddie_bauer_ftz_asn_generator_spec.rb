@@ -137,6 +137,11 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       expect(ln[312,10]).to eql(@ci_tariff.hts_code)
       expect(ln[322,10].rstrip).to eq ''
     end
+    it "should handle long vessel" do
+      @entry.vessel = '123456789012345678'
+      r = described_class.new.generate_data_for_entry(@entry)
+      expect(r.lines.first[134,15]).to eq '123456789012345'
+    end
     it "should handle style/color" do
       @ci_line.part_number = '12345-123~XYZ'
       @ci_line.save!
