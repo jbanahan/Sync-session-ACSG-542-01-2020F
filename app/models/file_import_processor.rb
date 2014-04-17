@@ -53,8 +53,8 @@ class FileImportProcessor
     end
   end
   def self.find_processor import_file, listeners=[]
-    if import_file.attached_file_name.downcase.ends_with?("xls") 
-      return SpreadsheetImportProcessor.new(import_file,import_file.attachment_as_workbook,listeners)
+    if import_file.attached_file_name.downcase.ends_with?("xls") or import_file.attached_file_name.downcase.ends_with?("xlsx")
+      return SpreadsheetImportProcessor.new(import_file, OpenChain::XLClient.new(import_file.attached.path), listeners)
     else
       return CSVImportProcessor.new(import_file,import_file.attachment_data,listeners)
     end
@@ -251,13 +251,24 @@ class FileImportProcessor
   end
 
   class SpreadsheetImportProcessor < FileImportProcessor
+
     def row_count
-      s = @data.worksheet(0).row_count - (@import_file.starting_row - 1)
+      s = @data.last_row_number(0) - (@import_file.starting_row - 2) #-2 instead of -1 now since the counting methods index at 0 and 1
     end
+
     def get_rows &block
-      @data
-      s = @data.worksheet 0
-      s.each (@import_file.starting_row-1) do |row|
+      arv = @data.all_row_values(0)
+      arv.shift(@import_file.starting_row - 1)
+      s = []
+      idx = 0
+
+      arv.each do |row|
+        sx_row = Spreadsheet::Excel::Row.new(Spreadsheet::Excel::Worksheet.new, idx, row)
+        s << sx_row
+        idx += 1
+      end
+
+      s.each do |row|
         process = false
         row.each do |v|
           if !v.blank?
@@ -268,6 +279,7 @@ class FileImportProcessor
         yield row if process
       end
     end
+    
   end
     
   class RulesProcessor
