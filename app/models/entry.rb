@@ -20,7 +20,8 @@ class Entry < ActiveRecord::Base
   belongs_to :importer, :class_name=>"Company"
   belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'
   belongs_to :unlading_port, :class_name=>'Port', :foreign_key=>'unlading_port_code', :primary_key=>'schedule_d_code'
-  belongs_to :entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'schedule_d_code'
+  belongs_to :us_entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'schedule_d_code'
+  belongs_to :ca_entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'cbsa_port'
   belongs_to :us_exit_port, :class_name=>'Port', :foreign_key=>'us_exit_port_code', :primary_key=>'schedule_d_code'
   belongs_to :import_country, :class_name=>"Country"
 
@@ -56,6 +57,10 @@ class Entry < ActiveRecord::Base
 
   def can_view? user
     user.view_entries? && company_permission?(user)
+  end
+
+  def entry_port
+    self.canadian? ? self.ca_entry_port : self.us_entry_port
   end
 
   def can_comment? user
