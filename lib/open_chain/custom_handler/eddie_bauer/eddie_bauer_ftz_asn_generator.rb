@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     t = Tempfile.new(['EDDIEFTZASN','.txt'])
     entries.each_with_index do |ent,i|
       Entry.transaction do
-        t << "\n" unless i == 0
+        t << "\r\n" unless i == 0
         t << self.generate_data_for_entry(ent)
         sr = ent.sync_records.first_or_create!(trading_partner:SYNC_CODE)
         sr.sent_at = 0.seconds.ago
@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   def generate_data_for_entry ent
     r = ""
     ent.commercial_invoice_lines.each do |ci|
-      r << "\n" if r.size > 0 #write new line except on first line
+      r << "\r\n" if r.size > 0 #write new line except on first line
       r << @f.str(ent.broker_reference,7)
       r << @f.str(ent.master_bills_of_lading,35)
       r << @f.str(ent.house_bills_of_lading,35)
