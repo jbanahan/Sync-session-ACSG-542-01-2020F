@@ -1,4 +1,6 @@
 require 'open_chain/fixed_position_generator'
+require 'open_chain/ftp_file_support'
+
 # Business Rules:
 # * All lines must have part number and po number
 # * If the same style is used on multiple lines, then the _more specific_ line must use the following format  style~color~size 
@@ -7,13 +9,14 @@ require 'open_chain/fixed_position_generator'
 # * If used, size must be the 4 character EB provided code
 # * Files will be sent after they have been invoiced and all business rules are in a passed state
 module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAsnGenerator
+  include OpenChain::FtpFileSupport
   TRANSPORT_MODE_CODES ||= {'11'=>'O','10'=>'O','20'=>'R','21'=>'R','30'=>'T','31'=>'T','32'=>'T','33'=>'T','34'=>'T','40'=>'A','41'=>'A'}
 
   SYNC_CODE ||= 'EBFTZASN'
       
-  def self.run_schedulable opts={customer_numbers:['EDDIEFTZ']}
+  def self.run_schedulable opts={'customer_numbers'=>['EDDIEFTZ']}
     g = self.new
-    g.run_for_entries(g.find_entries(opts[:customer_numbers]),g)
+    g.run_for_entries(g.find_entries(opts['customer_numbers']),g)
   end
   def run_for_entries entries, instance=self.new
     instance.ftp_file instance.generate_file entries
