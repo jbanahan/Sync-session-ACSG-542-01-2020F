@@ -29,8 +29,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   end
 
   def ftp_credentials
-    r = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/#{@env=='production' ? 'prod' : 'test' }/to_eb/ftz_asn"}
-    r
+    {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/#{@env=='production' ? 'prod' : 'test' }/to_eb/ftz_asn",:remote_file_name=>"FTZ_ASN_#{Time.now.strftime('%Y%m%d%H%M%S')}.txt"}
   end
 
   def generate_file entries
