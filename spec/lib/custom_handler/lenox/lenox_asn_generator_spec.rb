@@ -18,6 +18,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     @order.update_custom_value!(@cdefs[:order_destination_code],'HG')
     @order.update_custom_value!(@cdefs[:order_factory_code],'0000007')
     @order_line = Factory(:order_line,order:@order,product:@product,quantity:100,price_per_unit:100.25)
+    @order_line.update_custom_value!(@cdefs[:order_line_destination_code],'HDC')
     @container = Factory(:container,entry:@entry,container_number:'CN1',container_size:'40',
       weight:50,fcl_lcl:'F',quantity:23,seal_number:'SN')
 
@@ -54,7 +55,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       expect(row[231,10].rstrip).to eq '12345'
       expect(row[241,10].rstrip).to eq '4321'
       expect(row[251,6].rstrip).to eq '11'
-      expect(row[257,10].rstrip).to eq 'HG'
+      expect(row[257,10].rstrip).to eq 'HDC'
       expect(row[267,4]).to eq 'APP '
       expect(row[271,80]).to eq ''.ljust(80)
       expect(row[351,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS
@@ -81,10 +82,10 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     it "should make multiple headers for multiple vendors" do
       v2 = Factory(:company,system_code:'LENOX-V2')
       o2 = Factory(:order,importer:@lenox,order_number:'LENOX-o2',vendor:v2)
-      cv = @order.get_custom_value(@cdefs[:order_destination_code])
-      cv.value = 'HG'
-      cv.save!
       ci_line2 = Factory(:commercial_invoice_line,po_number:'o2',commercial_invoice:Factory(:commercial_invoice,entry:@entry))
+      cv = @order.order_lines.first.get_custom_value(@cdefs[:order_destination_code])
+      cv.value = 'HDC'
+      cv.save!
       r = []
       described_class.new.generate_header_rows @entry do |row|
         r << row
