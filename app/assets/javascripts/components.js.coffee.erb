@@ -641,7 +641,7 @@
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
         scope.searchResult = {id:searchId}
-        url = scope.urlPrefix+searchId+'?page='+p
+        url = scope.urlPrefix+searchId+'.json?page='+p #need to specify json here because of this rails bug https://github.com/rails/rails/issues/9940
         if scope.perPage
           url += "&per_page=" + scope.perPage
 

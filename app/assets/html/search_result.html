@@ -45,7 +45,7 @@
               <input type='checkbox' ng-click='selectPage()' ng-model='selectPageCheck' data-toggle='tooltip' title='Select everything on this page' />
             </th>
             <th></th>
-            <th ng-repeat='col in searchResult.columns'>
+            <th ng-repeat='col in searchResult.columns track by $index'>
               {{col}}
             </th>
           </tr>
@@ -62,7 +62,7 @@
                 </span>
               </div>
             </td>
-            <td ng-repeat='v in row.vals'>
+            <td ng-repeat='v in row.vals track by $index'>
               {{v}}
             </td>
           </tr>

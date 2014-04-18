@@ -1,5 +1,5 @@
 root = exports ? this
-advSearchApp = angular.module('AdvancedSearchApp',['ChainComponents']).config(['$routeProvider', ($routeProvider) -> 
+advSearchApp = angular.module('AdvancedSearchApp',['ngRoute','ChainComponents']).config(['$routeProvider', ($routeProvider) -> 
   $routeProvider.
     when('/:searchId/:page',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'}).
     when('/:searchId',{templateUrl:'<%=asset_path("advanced_search.html")%>',controller:'AdvancedSearchCtrl'}).
@@ -103,7 +103,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       $scope.availableSorts.push mf unless findByMfid($scope.searchSetup.sort_criterions,mf.mfid)
 
   loadSearch = (id) ->
-    $http.get('/advanced_search/'+id+'/setup').success((data,status,headers,config) ->
+    $http.get('/advanced_search/'+id+'/setup.json').success((data,status,headers,config) ->
       $scope.searchSetup = data
       resetAvailables()
     ).error((data,status) ->
@@ -123,7 +123,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     loadSearch $scope.searchId
     $scope.searchResult.id = $scope.searchId
   else
-    $http.get('/advanced_search/last_search_id').success((data,status,headers,config) ->
+    $http.get('/advanced_search/last_search_id.json').success((data,status,headers,config) ->
       $location.path '/'+data.id+'/'+$scope.page
     )
 
@@ -146,7 +146,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.give = (targetId) ->
     $scope.givePrompt = false
     $scope.giveUserId = null
-    $http.post('/search_setups/'+$scope.searchSetup.id+'/give',{'other_user_id':targetId}).success((data) ->
+    $http.post('/search_setups/'+$scope.searchSetup.id+'/give.json',{'other_user_id':targetId}).success((data) ->
       if data.given_to
         $scope.notices.push "Report given to " + data.given_to + "."
       else
@@ -161,7 +161,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
   $scope.copy = (copyName) ->
     $scope.copyPrompt = false
     $scope.copyReportName = null
-    $http.post('/search_setups/'+$scope.searchSetup.id+'/copy',{'new_name':copyName}).success((data) ->
+    $http.post('/search_setups/'+$scope.searchSetup.id+'/copy.json',{'new_name':copyName}).success((data) ->
       $scope.notices.push "A copy of this report has been created as " + data.name + "."
       $location.path '/'+data.id+'/1'
     ).error((data) ->
@@ -181,7 +181,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchResult = {}
     ss = $scope.searchSetup
     $scope.searchSetup = {}
-    $http.put('/advanced_search/'+ss.id,JSON.stringify({search_setup:ss})).success(() ->
+    $http.put('/advanced_search/'+ss.id+'.json',JSON.stringify({search_setup:ss})).success(() ->
       # Unless we're already on the first page, change to it.
       if $scope.page != 1
         $location.path '/'+ss.id+'/1'
@@ -203,7 +203,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchResult = {}
     mt = $scope.searchSetup.module_type
     $scope.searchSetup = {}
-    $http.post('/advanced_search',JSON.stringify({module_type:mt})).success((data) ->
+    $http.post('/advanced_search.json',JSON.stringify({module_type:mt})).success((data) ->
       $location.path '/'+data.id+'/1'
     ).error((data) ->
       $scope.error.push "An error occurred while creating this search."
@@ -215,7 +215,7 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
     $scope.searchResult = {}
     id = $scope.searchSetup.id
     $scope.searchSetup = {}
-    $http.delete('/advanced_search/'+id).success((data) ->
+    $http.delete('/advanced_search/'+id+'.json').success((data) ->
       $location.path '/'+data.id+'/1'
     ).error((data) ->
       $scope.errors.push "An error occurred while deleting this search. Please reload and try again."

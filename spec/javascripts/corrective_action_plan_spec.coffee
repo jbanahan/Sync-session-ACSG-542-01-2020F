@@ -41,15 +41,16 @@ describe 'CorrectiveActionPlanApp', () ->
       expect(capSvc.removeIssue).toHaveBeenCalledWith(issue)
 
   describe 'service', () ->
-    d = svc = http = null
+    d = svc = http = sce = null
     expectUrl = '/survey_responses/1/corrective_action_plans/2.json'
-    beforeEach inject(($httpBackend,correctiveActionPlanService) ->
+    beforeEach inject(($httpBackend,$sce,correctiveActionPlanService) ->
       d = {
         can_edit: true
         corrective_action_plan:{id:1,corrective_issues:[]}
         can_update_actions:true
         }
       svc = correctiveActionPlanService
+      sce = $sce
       http = $httpBackend
     )
     afterEach () ->
@@ -59,7 +60,7 @@ describe 'CorrectiveActionPlanApp', () ->
     describe 'saveIssue', () ->
       it "should save", () ->
         d = {id:10}
-        http.expectPUT('/corrective_issues/10',{corrective_issue:d}).respond(d)
+        http.expectPUT('/corrective_issues/10.json',{corrective_issue:d}).respond(d)
         svc.saveIssue d
         expect(d.saving).toEqual(true)
         http.flush()
@@ -67,7 +68,7 @@ describe 'CorrectiveActionPlanApp', () ->
 
     describe 'addComment', () ->
       it "should do put", () ->
-        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment',{comment:'xyz'}).respond({comment:{id:99}})
+        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment.json',{comment:'xyz'}).respond({comment:{id:99}})
         svc.addComment('xyz',d.corrective_action_plan,7)
         expect(svc.settings.newCommentSaving).toBe(true)
         http.flush()
@@ -79,7 +80,7 @@ describe 'CorrectiveActionPlanApp', () ->
         #no assertions needed since the httpBackend will blow up if the post is made
 
       it "should handle error", () ->
-        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment',{comment:'xyz'}).respond(401,{error:'x'})
+        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment.json',{comment:'xyz'}).respond(401,{error:'x'})
         svc.addComment('xyz',d.corrective_action_plan,7)
         http.flush()
         expect(svc.settings.viewMode).toEqual 'error'
@@ -88,7 +89,7 @@ describe 'CorrectiveActionPlanApp', () ->
         commentData = null
         x = (cdata) ->
           commentData = cdata
-        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment',{comment:'xyz'}).respond({comment:{id:99}})
+        http.expectPOST('/survey_responses/7/corrective_action_plans/1/add_comment.json',{comment:'xyz'}).respond({comment:{id:99}})
         svc.addComment('xyz',d.corrective_action_plan,7,x)
         http.flush()
         expect(commentData).toEqual {comment:{id:99}}
@@ -97,7 +98,7 @@ describe 'CorrectiveActionPlanApp', () ->
     describe 'addIssue', () ->
       it "should make post", () ->
         svc.cap = d.corrective_action_plan
-        http.expectPOST('/corrective_issues',{corrective_action_plan_id:1}).respond({corrective_issue:{id:10}})
+        http.expectPOST('/corrective_issues.json',{corrective_action_plan_id:1}).respond({corrective_issue:{id:10}})
         svc.addIssue()
         http.flush()
         expect(svc.cap.corrective_issues[0].id).toEqual 10
@@ -125,18 +126,33 @@ describe 'CorrectiveActionPlanApp', () ->
       svc.setCorrectiveActionPlan d
       expect(svc.addIssue).toHaveBeenCalled()
 
-    it "should load data from the server", () ->
-      spyOn(svc,'addIssue')
-      http.expectGET(expectUrl).respond(d)
-      svc.load(1,2)
-      http.flush()
-      expect(svc.settings.canEdit).toBe true
-      expect(svc.settings.viewMode).toEqual 'edit'
-      expect(svc.cap.id).toEqual 1
+    describe 'load', () ->
+      it "should load data from the server", () ->
+        spyOn(svc,'addIssue')
+        http.expectGET(expectUrl).respond(d)
+        svc.load(1,2)
+        http.flush()
+        expect(svc.settings.canEdit).toBe true
+        expect(svc.settings.viewMode).toEqual 'edit'
+        expect(svc.cap.id).toEqual 1
+
+      it "should flag textile fields as html safe", () ->
+        spyOn(sce,'trustAsHtml')
+        cap = d.corrective_action_plan
+        cap.corrective_issues = [{html_description:'hd',html_suggested_action:'hsa',html_action_taken:'hat'}]
+        cap.comments = [{html_body:'hb'}]
+        http.expectGET(expectUrl).respond(d)
+        svc.load(1,2)
+        http.flush()
+        expect(sce.trustAsHtml).toHaveBeenCalledWith('hd')
+        expect(sce.trustAsHtml).toHaveBeenCalledWith('hsa')
+        expect(sce.trustAsHtml).toHaveBeenCalledWith('hat')
+        expect(sce.trustAsHtml).toHaveBeenCalledWith('hb')
+
 
     describe "remove", () ->
       it "should remove issue", () ->
-        http.expectDELETE('/corrective_issues/2').respond({ok:'ok'})
+        http.expectDELETE('/corrective_issues/2.json').respond({ok:'ok'})
         other_1 = {id:1,x:'y'}
         issue = {id:2,a:'b'}
         other_2 = {id:3,y:'z'}
