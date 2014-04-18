@@ -1,25 +1,33 @@
+<%-content_for :action_bar do-%>
+  <button class="btn_link btn btn-default" link_to="<%=business_validation_templates_path%>">Back</button>
+  <%= button_to "Edit", edit_business_validation_template_path(@bv_template), class: "btn btn-default", form_class:'inline-button-to', method: :get %>
+  <%= button_to "Delete", @bv_template, method: :delete, class: "btn btn-default", prompt:"Are you sure you want to delete this?", form_class:'inline-button-to'%>
+<%-end-%>
 <div class="container">
   <div class="row">
-    <%= link_to "<< Show all BVTs", business_validation_templates_path %>
+    <div class="col-md-12">
+      <h1>Template: <%=@bv_template.name%></h1>  
+    </div>
   </div>
   <div class="row">
-    <h1>Template: <%=@bv_template.name%></h1>
+    
   </div>
   <div class="row">
-    <%= button_to "Edit", edit_business_validation_template_path(@bv_template), class: "btn btn-warning", style: "color: white; width: 100px;", method: :get %>
+    <div class='col-md-12'>
+      <h2>Criteria</h2>
+      <ul>
+        <%@bv_template.search_criterions.each do |sc|%>
+          <li>
+            <%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%>
+          </li> 
+        <%end%>
+      </ul>
+    </div>
   </div>
   <div class="row">
-    <h2>Criteria</h2>
-    <ul>
-      <%@bv_template.search_criterions.each do |sc|%>
-        <li>
-          <%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%>
-        </li> 
-      <%end%>
-    </ul>
-  </div>
-  <div class="row">
-    <h2>Rules</h2>
+    <div class="col-md-12">
+      <h2>Rules</h2>
+    </div>
     <%@bv_template.business_validation_rules.each do |bvr|%>
     <div class='col-md-12 rule-container'>
       <h3><%=bvr.name%> (<%=bvr.class.name%>)</h3>
@@ -33,9 +41,9 @@
           </li> 
         <%end%>
       </ul>
-      <%= button_to "Add Criterion", edit_business_validation_rule_path(bvr), method: :get, class: "btn btn-primary" %>
+      <%= button_to "Add Criterion", edit_business_validation_rule_path(bvr), method: :get, class: "btn btn-sm btn-default" %>
       <h4>Rule Data</h4>
-      <textarea><%=bvr.rule_attributes_json%></textarea>
+      <pre><%=bvr.rule_attributes_json%></pre>
     </div>
     <%end%>
   </div>
