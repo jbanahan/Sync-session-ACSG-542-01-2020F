@@ -43,7 +43,7 @@ var Classify = (function() {
           h += "<a href='#' class='lnk_schedb_popup btn btn-xs btn-default' schedb='"+sb.hts_code+"'>info</a>";
         }
         to_write.html(h);
-        $(document).on('click',"a.sched_b_option",function(ev) {
+        to_write.on('click',"a.sched_b_option",function(ev) {
           ev.preventDefault();
           schedBField.val($(this).html());
         });
