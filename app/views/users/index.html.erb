@@ -18,7 +18,14 @@
     $("#move_user_submit_button").click(function(){
       destination_company_id = parseInt($("#user_move_company_select").val());
       $("#users_form").prop("action","/users/move_to_new_company/" + destination_company_id);
-      $("#users_form").submit();
+
+      if (destination_company_id) { //this will catch null, undefined, NaN, 0, false, and empty strings
+        $("#users_form").submit();
+      }
+      else{
+        alert("Please select a destination company for these users and then try again.");
+      }
+      
     });
 
   });

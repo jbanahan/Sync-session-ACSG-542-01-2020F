@@ -200,7 +200,7 @@ class UsersController < ApplicationController
         user = User.find(user_id)
         user.company = destination_company
         user.save!
-      end
+      end if params[:id] #ignore the whole block if no users were selected
 
       redirect_to :back
     }
