@@ -53,7 +53,8 @@ module OpenChain
             "\u{00BE}" => "3/4",
             "\u{201D}" => "\"", # Right quote-mark ”
             "\u{201C}" => "\"", # Left quote-mark “
-            "\u{00BC}" => "1/4"
+            "\u{00BC}" => "1/4",
+            "\u{00BD}" => "1/2"
           }
           # First convert the UTF-8 text to ascii w/ our conversion table
           value = value.encode("US-ASCII", :fallback => allowed_conversions)

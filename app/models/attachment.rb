@@ -44,6 +44,8 @@ class Attachment < ActiveRecord::Base
     to_address = params[:to_address]
     email_subject = params[:email_subject]
     email_body = params[:email_body]
+    full_name = params[:full_name]
+    email = params[:email]
     attachments = []
     params[:ids_to_include].each do |attachment_id|
       attachment = Attachment.find(attachment_id)
@@ -52,7 +54,7 @@ class Attachment < ActiveRecord::Base
       tfile.original_filename = attachment.attached_file_name
       attachments << tfile
     end
-    OpenMailer.send_simple_html(to_address, email_subject, email_body, attachments).deliver!
+    OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
     return true
   ensure
     attachments.each {|tfile| tfile.close! unless tfile.closed?}

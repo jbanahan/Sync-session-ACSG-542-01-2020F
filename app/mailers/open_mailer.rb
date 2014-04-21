@@ -309,6 +309,35 @@ EOS
     end
   end
 
+  def auto_send_attachments to, subject, body, file_attachments, sender_name, sender_email
+    @body_content = body
+    @attachment_messages = []
+    @sender_name = sender_name
+    @sender_email = sender_email
+    pm_attachments = []
+
+    file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
+    local_attachments = {}
+    file_attachments.each do |file|
+      
+      save_large_attachment(file, to) do |email_attachment, attachment_text|
+        if email_attachment
+          @attachment_messages << attachment_text
+        else
+          filename = ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
+          local_attachments[filename] = create_attachment(file)
+        end
+      end
+    end
+
+    m = mail(:to=>to,:subject=>subject) do |format|
+      format.html
+    end
+
+    local_attachments.each {|name, content| m.attachments[name] = content}
+    m
+  end
+
   private
 
     def save_large_attachment(file, registered_emails)

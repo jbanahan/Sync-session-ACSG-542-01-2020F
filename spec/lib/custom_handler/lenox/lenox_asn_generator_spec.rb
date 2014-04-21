@@ -10,16 +10,22 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11')
     @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99)
     @ci_line = Factory(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
-      quantity:10, country_origin_code:'CN',part_number:'partnum'
+      quantity:10, country_origin_code:'CN',part_number:'partnum',unit_price:100.10
     )
     @product = Factory(:product,importer:@lenox,unique_identifier:'LENOX-partnum')
     @product.update_custom_value!(@cdefs[:product_units_per_set],2)
-    @order = Factory(:order,importer:@lenox,order_number:'ponum',vendor:@vendor)
+    @order = Factory(:order,importer:@lenox,order_number:'LENOX-ponum',vendor:@vendor)
     @order.update_custom_value!(@cdefs[:order_destination_code],'HG')
     @order.update_custom_value!(@cdefs[:order_factory_code],'0000007')
+    @order_line = Factory(:order_line,order:@order,product:@product,quantity:100,price_per_unit:100.25)
+    @order_line.update_custom_value!(@cdefs[:order_line_destination_code],'HDC')
     @container = Factory(:container,entry:@entry,container_number:'CN1',container_size:'40',
       weight:50,fcl_lcl:'F',quantity:23,seal_number:'SN')
 
+  end
+
+  describe :run_schedulable do
+    it "should email on LenoxBusinessLogicError"
   end
   describe :generate_header_rows do
     
@@ -48,14 +54,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       expect(row[223,8]).to eq '20140116' 
       expect(row[231,10].rstrip).to eq '12345'
       expect(row[241,10].rstrip).to eq '4321'
-      expect(row[251,5].rstrip).to eq '11'
-      expect(row[256,10].rstrip).to eq 'HG'
-      expect(row[266,4]).to eq 'APP '
-      expect(row[270,80]).to eq ''.ljust(80)
-      expect(row[350,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS
-      expect(row[364,15].rstrip).to eq 'vanvendortest'
+      expect(row[251,6].rstrip).to eq '11'
+      expect(row[257,10].rstrip).to eq 'HDC'
+      expect(row[267,4]).to eq 'APP '
+      expect(row[271,80]).to eq ''.ljust(80)
+      expect(row[351,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS
+      expect(row[365,15].rstrip).to eq 'vanvendortest'
 
-      expect(row.size).to eq 379
+      expect(row.size).to eq 380
     end
     it "should use different fields for air shipments" do
       @entry.house_bills_of_lading = 'HBOL'
@@ -75,11 +81,11 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
     it "should make multiple headers for multiple vendors" do
       v2 = Factory(:company,system_code:'LENOX-V2')
-      o2 = Factory(:order,importer:@lenox,order_number:'o2',vendor:v2)
-      cv = @order.get_custom_value(@cdefs[:order_destination_code])
-      cv.value = 'HG'
-      cv.save!
+      o2 = Factory(:order,importer:@lenox,order_number:'LENOX-o2',vendor:v2)
       ci_line2 = Factory(:commercial_invoice_line,po_number:'o2',commercial_invoice:Factory(:commercial_invoice,entry:@entry))
+      cv = @order.order_lines.first.get_custom_value(@cdefs[:order_destination_code])
+      cv.value = 'HDC'
+      cv.save!
       r = []
       described_class.new.generate_header_rows @entry do |row|
         r << row
@@ -100,7 +106,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
     it "should total the gross weight per vendor" do
       v2 = Factory(:company,system_code:'LENOX-V2')
-      o2 = Factory(:order,importer:@lenox,order_number:'o2',vendor:v2)
+      o2 = Factory(:order,importer:@lenox,order_number:'LENOX-o2',vendor:v2)
       cv = @order.get_custom_value(@cdefs[:order_destination_code])
       cv.value = 'HG'
       cv.save!
@@ -125,19 +131,23 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       end
       expect(r.size).to eq 1
       row = r.first
-      expect(row.size).to eq 269
       expect(row[0,4]).to eq 'ASND'
       expect(row[4,35].rstrip).to eq 'MBOL'
       expect(row[39,17].rstrip).to eq 'CN1'
       expect(row[56,9]).to eq '000000001'
       expect(row[65,10].rstrip).to eq '0000007'
-      expect(row[75,10].rstrip).to eq 'ponum'
-      expect(row[85,18].rstrip).to eq 'partnum'
-      expect(row[103,7]).to eq '0000005' #10 units / 2 per set
-      expect(row[110,4].rstrip).to eq 'CN'
-      expect(row[114,126]).to eq ''.ljust(126)
-      expect(row[240,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
-      expect(row[254,15].rstrip).to eq 'vanvendortest'
+      expect(row[75,35].rstrip).to eq 'ponum'
+      expect(row[110,35].rstrip).to eq 'partnum'
+      expect(row[145,7]).to eq '0000005' #10 units / 2 per set
+      expect(row[152,4].rstrip).to eq 'CN'
+      expect(row[156,126]).to eq ''.ljust(126)
+      expect(row[282,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
+      expect(row[296,15].rstrip).to eq 'vanvendortest'
+      expect(row[311,18]).to eq '000000000100250000' #100.25 / unit (order)
+      expect(row[329,18]).to eq '000000000100100000' #110.10 / unit
+
+      #double check no extra characters
+      expect(row.size).to eq 347
     end
     it "should throw exception if part not found" do
       Product.scoped.destroy_all
@@ -151,7 +161,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         r << dr
       end
       row = r.first
-      expect(row[103,7]).to eq '0000010' #10 units / 1 per set
+      expect(row[145,7]).to eq '0000010' #10 units / 1 per set
     end
   end
   describe :generate_temp_files do

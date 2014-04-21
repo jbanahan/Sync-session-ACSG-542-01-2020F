@@ -44,6 +44,19 @@ describe OpenChain::AllianceImagingClient do
       @tempfile.close!
     end
 
+    it 'should be non-private if doc_desc does not start with "private"' do
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      entry = Entry.find(@e1.id)
+      entry.attachments[0].is_private.should be_false
+    end
+
+    it 'should be private if doc_desc starts with "private"' do
+      @hash["doc_desc"] = "private_attachment"
+      OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
+      entry = Entry.find(@e1.id)
+      entry.attachments[0].is_private.should be_true
+    end
+
     it 'should load an attachment into the entry with the proper content type' do
       OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash
 

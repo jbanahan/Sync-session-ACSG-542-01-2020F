@@ -3,36 +3,44 @@ require "spec_helper"
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   describe "run_schedulable" do
     it "should ftp file" do
-      r = 'x'
-      described_class.any_instance.should_receive(:generate_file).with(['EDDIEFTZ']).and_return(r)
-      described_class.any_instance.should_receive(:ftp_file).with(r)
+      described_class.any_instance.should_receive(:find_entries).with(['EDDIEFTZ']).and_return(['ents'])
+      described_class.any_instance.should_receive(:generate_file).with(['ents']).and_return('x')
+      described_class.any_instance.should_receive(:ftp_file).with('x')
       described_class.run_schedulable
     end
   end
   describe "ftp_credentials" do
-    it "should generate prod credentials" do
-      exp = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/prod/to_eb/ftz_asn"}
-      expect(described_class.new('production').ftp_credentials).to eq exp
-    end
-    it "should generate test credentials" do
+    it "should generate base credentials" do
       exp = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/test/to_eb/ftz_asn"}
-      expect(described_class.new.ftp_credentials).to eq exp
+      found = described_class.new.ftp_credentials
+      expect(found[:server]).to eq exp[:server]
+      expect(found[:username]).to eq exp[:username]
+      expect(found[:password]).to eq exp[:password]
+    end
+    it "should generate accurate file name" do
+      expect(described_class.new.ftp_credentials[:remote_file_name]).to match /^FTZ_ASN_\d{14}\.txt$/
+    end
+    it "should generate prod folder" do
+      expect(described_class.new('production').ftp_credentials[:folder]).to eq "/prod/to_eb/ftz_asn"
+    end
+    it "should generate test folder" do
+      
+      expect(described_class.new.ftp_credentials[:folder]).to eq "/test/to_eb/ftz_asn"
     end
   end
   describe "generate_file" do
     before(:each) do
       @ent = Factory(:entry)
       @g = described_class.new
-      @g.should_receive(:find_entries).and_return [@ent]
       @g.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
     end
     it "should link methods to find and generate" do
-      tmp  = @g.generate_file
+      tmp  = @g.generate_file [@ent]
       tmp.flush
       expect(IO.read(tmp.path)).to eq 'abc'
     end
     it "should write sync_records" do
-      expect{@g.generate_file}.to change(SyncRecord.where(trading_partner:'EBFTZASN'),:count).from(0).to(1)
+      expect{@g.generate_file([@ent])}.to change(SyncRecord.where(trading_partner:'EBFTZASN'),:count).from(0).to(1)
 
     end
   end
@@ -49,6 +57,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "should find all that don't have sync records and have passed business rule states" do
       expect(described_class.new.find_entries.to_a).to eq [@entry]
     end
+    it "should not send recrods that have been sent before" do
+      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE)
+      expect(described_class.new.find_entries.to_a).to eq []
+    end
     it "should not find Review business rules state" do
       @rule_result.state = 'Review'
       @rule_result.save!
@@ -60,16 +72,6 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "should not send if no broker invoice" do
       @entry.update_attributes(broker_invoice_total:0)
       expect(described_class.new.find_entries.to_a).to be_empty
-    end
-    it "should not find already synced" do
-      @entry.sync_records.create!(trading_partner:'EBFTZASN',sent_at:1.minute.ago,confirmed_at:1.second.ago)
-      @entry.update_attributes(updated_at:1.hour.ago)
-      expect(@entry.updated_at).to be < 1.minute.ago #make sure update attributes worked in the line above
-      expect(described_class.new.find_entries.to_a).to be_empty      
-    end
-    it "should find already synced but updated" do
-      @entry.sync_records.create!(trading_partner:'EBFTZASN',sent_at:1.day.ago,confirmed_at:1.second.ago)
-      expect(described_class.new.find_entries.to_a).to eq [@entry]
     end
   end
   describe "generate_data_for_entry" do
@@ -143,6 +145,11 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       expect(ln[301,11]).to eql('00000012200') #net weight from qty_2
       expect(ln[312,10]).to eql(@ci_tariff.hts_code)
       expect(ln[322,10].rstrip).to eq ''
+    end
+    it "should handle long vessel" do
+      @entry.vessel = '123456789012345678'
+      r = described_class.new.generate_data_for_entry(@entry)
+      expect(r.lines.first[134,15]).to eq '123456789012345'
     end
     it "should handle style/color" do
       @ci_line.part_number = '12345-123~XYZ'

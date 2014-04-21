@@ -8,11 +8,11 @@ module OpenChain; class FixedPositionGenerator
     @opts.merge! opts
   end
 
-  def str s, len, right_justify = false
+  def str s, len, right_justify = false, force_truncate = false
     return ''.ljust(len,@opts[:pad_char]) if s.nil?
     r = replace_newlines s.to_s
     if r.length > len
-      raise "String '#{r}' is longer than #{len} characters" if @opts[:exception_on_truncate]
+      raise "String '#{r}' is longer than #{len} characters" if @opts[:exception_on_truncate] && !force_truncate
       return r[0,len]
     end
     if right_justify

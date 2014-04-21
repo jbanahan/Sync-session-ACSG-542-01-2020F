@@ -1,6 +1,6 @@
 capApp = angular.module 'CorrectiveActionPlanApp', ['ChainComponents']
 
-capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
+capApp.factory 'correctiveActionPlanService', ['$http','$sce',($http,$sce) ->
   {
     #update the settings based on the data returned from the server
     settings: {
@@ -19,7 +19,7 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
     #add new issue to the plan
     addIssue:() ->
       cap = @.cap
-      $http.post('/corrective_issues',{corrective_action_plan_id:cap.id}).then(((resp)->
+      $http.post('/corrective_issues.json',{corrective_action_plan_id:cap.id}).then(((resp)->
         cap.corrective_issues.push resp.data.corrective_issue
       ),((resp) ->
         svc.settings.viewMode = 'error'
@@ -30,10 +30,11 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
       return if $.trim(comment).length == 0 #don't send empty comments
       svc = @
       svc.settings.newCommentSaving = true
-      $http.post('/survey_responses/'+surveyResponseId+'/corrective_action_plans/'+cap.id+'/add_comment',{comment:comment}).then(((resp) ->
+      $http.post('/survey_responses/'+surveyResponseId+'/corrective_action_plans/'+cap.id+'/add_comment.json',{comment:comment}).then(((resp) ->
         #good response
         svc.settings.newCommentSaving = false
         cap.comments = [] if cap.comments==undefined
+        resp.data.comment.html_body = $sce.trustAsHtml(resp.data.comment.html_body)
         cap.comments.push resp.data.comment
         successCallback resp.data unless successCallback==undefined
       ),(resp) ->
@@ -45,6 +46,17 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
     #load the plan from a server response
     setCorrectiveActionPlan: (data) ->
       @.cap = data.corrective_action_plan
+      
+      #mark textile rendered fields as html safe
+      if @.cap
+        if @.cap.corrective_issues
+          for ci in @.cap.corrective_issues
+            ci.html_description = $sce.trustAsHtml ci.html_description
+            ci.html_suggested_action = $sce.trustAsHtml ci.html_suggested_action
+            ci.html_action_taken = $sce.trustAsHtml ci.html_action_taken
+        if @.cap.comments
+          co.html_body = $sce.trustAsHtml(co.html_body) for co in @.cap.comments
+
       @.setSettings data
       @.addIssue() if (!@.cap.corrective_issues || @.cap.corrective_issues.length == 0) && @settings.canEdit
   
@@ -64,7 +76,7 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
     saveIssue: (issue) ->
       issue.saving = true
       svc = @
-      $http.put('/corrective_issues/'+issue.id,{corrective_issue:issue}).then(((resp) ->
+      $http.put('/corrective_issues/'+issue.id+'.json',{corrective_issue:issue}).then(((resp) ->
         #good
         issue.saving = false
       ),(resp) ->
@@ -77,7 +89,7 @@ capApp.factory 'correctiveActionPlanService', ['$http',($http) ->
       toRem = $.inArray(issue,@.cap.corrective_issues)
       cap = @.cap
       if toRem >= 0
-        $http.delete('/corrective_issues/'+issue.id).then(((resp) ->
+        $http.delete('/corrective_issues/'+issue.id+'.json').then(((resp) ->
           cap.corrective_issues.splice(toRem,1)
         ), ((resp) ->
           svc.settings.viewMode = 'error'
