@@ -27,6 +27,7 @@ describe OpenChain::JCrewDrawbackProcessor do
         :hts_code=>'6602454545',
         :entered_value=>BigDecimal("144.00"),
         :duty_amount => BigDecimal("14.40"),
+        :duty_rate => BigDecimal("0.1"),
         :classification_qty_1 => 10,
         :classification_uom_1 => "PCS"
       )
