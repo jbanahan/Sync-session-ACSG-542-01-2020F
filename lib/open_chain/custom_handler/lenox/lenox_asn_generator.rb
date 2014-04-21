@@ -122,11 +122,14 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     "#{@f.date(Time.now,'%Y%m%d%H%M%S')}#{@f.str((Rails.env.production? ? 'vanvendor' : 'vanvendortest'),15) }"
   end
   def get_final_destination_code entry
-    get_order_custom_value(:order_destination_code,entry.commercial_invoice_lines.first)
+    get_order_line(entry.commercial_invoice_lines.first).get_custom_value(@cdefs[:order_line_destination_code]).value
   end
   def get_order_custom_value cval_identifier, ci_line
-    ord = Order.find_by_importer_id_and_order_number(@lenox.id,"LENOX-#{ci_line.po_number}")  
+    ord = get_order(ci_line)
     ord.get_custom_value(@cdefs[cval_identifier]).value
+  end
+  def get_order ci_line
+    Order.find_by_importer_id_and_order_number(@lenox.id,"LENOX-#{ci_line.po_number}")  
   end
   def get_vendor_code_and_invoices entry
     h = {}

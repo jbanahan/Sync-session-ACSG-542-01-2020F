@@ -6,12 +6,20 @@ module OpenChain
     class GenericAllianceProductGenerator < ProductGenerator
       include AllianceProductSupport
 
+      def self.run_schedulable opts = {}
+        sync Company.where(alliance_customer_number: opts['alliance_customer_number']).first
+      end
+
       #this is the main method you should call
       def self.sync importer
         g = OpenChain::CustomHandler::GenericAllianceProductGenerator.new importer
-        f = g.sync_fixed_position
-        g.ftp_file f
-        f.unlink
+        f = nil
+        begin
+          f = g.sync_fixed_position
+          g.ftp_file f
+        ensure
+          f.close! unless f.nil? || f.closed?
+        end
         nil
       end
 
@@ -23,6 +31,11 @@ module OpenChain
 
         raise ArgumentError, "Importer is required and must have an alliance customer number" unless importer && !importer.alliance_customer_number.blank?
         @importer = importer
+      end
+
+      def sync
+        super
+        @importer.update_attributes! :last_alliance_product_push_at => Time.zone.now
       end
       
       def remote_file_name

@@ -63,6 +63,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
         currency:ln.currency,country_of_origin:ln.coo,hts:ln.hts
       )
       ol.update_custom_value! @cdefs[:order_line_note], ln.line_note
+      ol.update_custom_value! @cdefs[:order_line_destination_code], ln.line_destination_code
     end
   end
   def get_product line_struct
@@ -92,7 +93,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     :line_number,:part_number,:part_name,:unit_price,:quantity,
     :currency,:transaction_type,:line_note,:buyer_name,:buyer_email,
     :earliest_ship_date,:destination_code,:hts,:coo,:mode,
-    :vendor_code,:vendor_name,:factory_code) do
+    :vendor_code,:vendor_name,:factory_code,:line_destination_code) do
     def order_number
       "LENOX-#{self.customer_order_number}"
     end
@@ -125,6 +126,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     r.vendor_code = line[1669,17].strip
     r.vendor_name = line[1686,35].strip
     r.factory_code = line[2025,10].strip
+    r.line_destination_code = line[2505,17].strip if line.length > 2505 #this field was added and won't be there for long files
     r
   end
   def parse_date str

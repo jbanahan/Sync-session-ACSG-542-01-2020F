@@ -69,7 +69,9 @@ class AdvancedSearchController < ApplicationController
   end
   def show
     respond_to do |format|
-      format.html {redirect_to "/advanced_search#/#{params[:id]}"}
+      format.html {
+        redirect_to "/advanced_search#/#{params[:id]}"
+      }
       format.json {
         page = number_from_param params[:page], 1
         # Only show 10 results per page for older IE versions.  This is because these browser

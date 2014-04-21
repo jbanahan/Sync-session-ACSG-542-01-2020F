@@ -10,13 +10,22 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     end
   end
   describe "ftp_credentials" do
-    it "should generate prod credentials" do
-      exp = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/prod/to_eb/ftz_asn"}
-      expect(described_class.new('production').ftp_credentials).to eq exp
-    end
-    it "should generate test credentials" do
+    it "should generate base credentials" do
       exp = {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/test/to_eb/ftz_asn"}
-      expect(described_class.new.ftp_credentials).to eq exp
+      found = described_class.new.ftp_credentials
+      expect(found[:server]).to eq exp[:server]
+      expect(found[:username]).to eq exp[:username]
+      expect(found[:password]).to eq exp[:password]
+    end
+    it "should generate accurate file name" do
+      expect(described_class.new.ftp_credentials[:remote_file_name]).to match /^FTZ_ASN_\d{14}\.txt$/
+    end
+    it "should generate prod folder" do
+      expect(described_class.new('production').ftp_credentials[:folder]).to eq "/prod/to_eb/ftz_asn"
+    end
+    it "should generate test folder" do
+      
+      expect(described_class.new.ftp_credentials[:folder]).to eq "/test/to_eb/ftz_asn"
     end
   end
   describe "generate_file" do

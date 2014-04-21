@@ -1,5 +1,5 @@
 root = exports ? this
-importedFileApp = angular.module('ImportedFileApp',['ChainComponents']).config(['$routeProvider', ($routeProvider) ->
+importedFileApp = angular.module('ImportedFileApp',['ngRoute','ChainComponents']).config(['$routeProvider', ($routeProvider) ->
   $routeProvider.
     when('/:fileId',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'}).
     when('/:fileId/:page',{templateUrl:'<%=asset_path("imported_file.html")%>',controller:'ImportedFileController'})
@@ -56,7 +56,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
       countryIds.push c.id if c.selected
     $scope.emailCurrentSettings.extra_countries = countryIds
     $scope.disableEmailCurrent()
-    $http.post('/imported_files/'+$scope.importedFile.id+"/email_file",$scope.emailCurrentSettings).success(() ->
+    $http.post('/imported_files/'+$scope.importedFile.id+"/email_file.json",$scope.emailCurrentSettings).success(() ->
       $scope.notices.push "Your file has been scheduled and will be emailed soon."
     ).error(() ->
       $scope.errors.push "There was an error emailing this file. Please contact support."
@@ -64,7 +64,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
 
   $scope.updateSearchCriterions = () ->
     $scope.searchResult = {}
-    $http.put('/imported_files/'+$scope.importedFile.id+'/update_search_criterions',JSON.stringify({imported_file:$scope.importedFile})).success(() ->
+    $http.put('/imported_files/'+$scope.importedFile.id+'/update_search_criterions.json',JSON.stringify({imported_file:$scope.importedFile})).success(() ->
       $scope.searchResult = {
         id:$scope.importedFile.id
         saved:true
@@ -75,7 +75,7 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
 
   $scope.process = () ->
     $scope.showPreviewBox = false
-    $http.post('/imported_files/'+$scope.importedFile.id+"/process_file").success(() ->
+    $http.post('/imported_files/'+$scope.importedFile.id+"/process_file.json").success(() ->
       $scope.notices.push "Your file is being processed. You'll receive a system message when it is complete."
       $scope.showEmailCurrent=false
     ).error(() ->
@@ -93,14 +93,14 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$routeParams', 
     $window.location.href = "/file_import_results/" + id
 
   if($routeParams.fileId>0)
-    $http.get('/imported_files/'+parseInt($routeParams.fileId)).success((data) ->
+    $http.get('/imported_files/'+parseInt($routeParams.fileId)+'.json').success((data) ->
       $scope.importedFile = data
       $scope.emailCurrentSettings.to = $scope.importedFile.current_user.email
       if $scope.importedFile.total_rows && $scope.importedFile.total_rows > 0
         $scope.searchResult.id = data.id
       else
         $scope.showPreviewBox = true
-        $http.get('/imported_files/'+$scope.importedFile.id+'/preview').success((data) ->
+        $http.get('/imported_files/'+$scope.importedFile.id+'/preview.json').success((data) ->
           if data.error
             $scope.errors.push "There was an error loading the preview: "+data.error
             $scope.showPreviewBox = false

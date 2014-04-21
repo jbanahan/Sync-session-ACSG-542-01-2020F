@@ -184,7 +184,7 @@ root.Chain =
       $("#quick_class_content").append(r)
     modal = $("#mod_quick_classify")
     unless modal.length
-      $('body').append("<div style='display:none;' id='mod_quick_classify'>x</div>")
+      $('body').append("<div style='display:none;' id='mod_quick_classify' class='ui-front'>x</div>")
       modal = $("#mod_quick_classify")
     modal.html("")
     h = "<form>"
@@ -219,7 +219,7 @@ root.Chain =
       $("div.quick_class_country").removeClass("selected")
       $(@).parent("div.quick_class_country").addClass("selected")
       $("div[quick-class-content-id]").hide()
-      $("div[quick-class-content-id='"+cid+"']").show("slide",{direction:"left"},500)
+      $("div[quick-class-content-id='"+cid+"']").show("blind",{direction:'left'},500)
     )
     if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"])
       buttons['Advanced'] = () ->

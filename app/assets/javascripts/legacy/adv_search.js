@@ -60,13 +60,13 @@ var OCSearch = (function() {
   }
 
   var initSelectFullList = function() {
-    $(".sel_full").live('click',function(ev) {
+    $('body').on('click',".sel_full",function(ev) {
       ev.preventDefault();
       allObjectsMode = true;
       $("#result_table :checkbox:not(#chk_sel_all)").attr('checked','checked');
       rewriteBulkForm();
     });
-    $(".sel_none").live('click',function(ev) {
+    $('body').on('click',".sel_none",function(ev) {
       ev.preventDefault();
       allObjectsMode = false;
       $.cookie("sr_"+searchRunId,'');
@@ -181,10 +181,10 @@ var OCSearch = (function() {
       op.val(selected);
       op.change();
     }
-    $(".srch_crit_oper").live('change',function() {
+    $('body').on('change',".srch_crit_oper",function() {
       bindValueValidations($(this).parents("tr:first"));
     });
-    $(".srch_crit_fld").live('change',function() {
+    $('body').on('change',".srch_crit_fld",function() {
       writeSearchOperators($(this));
     });
   }
