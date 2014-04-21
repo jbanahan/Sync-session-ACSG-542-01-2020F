@@ -257,26 +257,21 @@ class FileImportProcessor
     end
 
     def get_rows &block
-      arv = @data.all_row_values(0)
-      arv.shift(@import_file.starting_row - 1)
-      s = []
+
+      blank_worksheet = Spreadsheet::Excel::Worksheet.new
       idx = 0
 
-      arv.each do |row|
-        sx_row = Spreadsheet::Excel::Row.new(Spreadsheet::Excel::Worksheet.new, idx, row)
-        s << sx_row
+      @data.all_row_values(0, @import_file.starting_row - 1).each do |row_as_list|
+        sx_row = Spreadsheet::Excel::Row.new(blank_worksheet, idx, row_as_list)
         idx += 1
-      end
-
-      s.each do |row|
         process = false
-        row.each do |v|
+        sx_row.each do |v|
           if !v.blank?
             process = true
             break
           end
         end
-        yield row if process
+        yield sx_row if process
       end
     end
     
