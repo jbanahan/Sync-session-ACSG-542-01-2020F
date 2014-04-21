@@ -2,9 +2,9 @@ class BusinessValidationRulesController < ApplicationController
 
   def create
     admin_secure do
-      bvt_id = params[:business_validation_rule].delete("business_validation_template_id")
+      bvt_id = params[:business_validation_template_id]
       @bvr = BusinessValidationRule.new(params[:business_validation_rule])
-      @bvt = BusinessValidationTemplate.find(bvt_id.to_i) #in case it's interpreted as a string
+      @bvt = BusinessValidationTemplate.find(params[:business_validation_template_id])
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
 
       begin
@@ -37,6 +37,7 @@ class BusinessValidationRulesController < ApplicationController
     admin_secure{
       @bvr = BusinessValidationRule.find(params[:id])
       if @bvr.update_attributes(params[:business_validation_rule])
+        @bvr.save!
         flash[:success] = "Criterion successfully added to rule."
         redirect_to @bvr.business_validation_template
       else
@@ -48,7 +49,7 @@ class BusinessValidationRulesController < ApplicationController
   def destroy
     admin_secure do 
       @bvr = BusinessValidationRule.find(params[:id])
-      @bvt = @bvr.business_validation_template unless @bvr.business_validation_template.nil?
+      @bvt = @bvr.business_validation_template
       @bvr.destroy
       redirect_to edit_business_validation_template_path(@bvt)
     end

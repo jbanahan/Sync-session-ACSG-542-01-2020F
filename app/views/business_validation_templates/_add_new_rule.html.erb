@@ -1,6 +1,4 @@
-<%= form_for editableRule do |f| %>
-
-  <%= f.hidden_field :business_validation_template_id, value: @bvt.id %>
+<%= form_for @new_rule, url: business_validation_template_business_validation_rules_path(@bvt) do |f| %>
 
   <div class="form-group">
     <%= f.label :name %>

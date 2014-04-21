@@ -16,7 +16,7 @@
       <%= cr.value %>
     </div>
     <div class="col-md-3">
-      <%= link_to "Delete", search_criterion_path(cr), method: :delete, style: "color: #B83838;" %>
+      <%= link_to "Delete", business_validation_template_t_search_criterion_path(business_validation_template_id: cr.business_validation_template.id, id: cr.id), method: :delete, style: "color: #B83838;" %>
     </div>
   </div>
 <% end %>

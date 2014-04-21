@@ -1,8 +1,6 @@
-<div class="row">
-  <div class="col-md-6 col-md-offset-3">
-    <%= link_to "<< Show this template's overview", business_validation_template_path(@bvr.business_validation_template) %>
-  </div>
-</div>
+<%-content_for :action_bar do-%>
+  <button class="btn_link btn btn-default" link_to="<%=business_validation_template_path(@bvr.business_validation_template) %>">Back</button>
+<%-end-%>
 
 <div class="row">
   <div class="col-md-6 col-md-offset-3" align="center">
@@ -15,7 +13,7 @@
 <div class="row">
   <div class="col-md-6 col-md-offset-3">
 
-    <%= form_for @new_criterion do |f| %>
+    <%= form_for @new_criterion, url: business_validation_template_business_validation_rule_r_search_criterions_path(business_validation_template_id: @bvr.business_validation_template.id, business_validation_rule_id: @bvr.id) do |f| %>
 
       <%= f.hidden_field :business_validation_rule_id, value: @bvr.id %>
 
@@ -32,34 +30,6 @@
         <%= f.text_field :value, class: "form-control", id: "new-criterion-value-field", placeholder: "Enter value..." %>
       </div>
       <div class="form-group">
-        <%= f.label :status_rule_id %>
-        <%= f.text_field :status_rule_id, class: "form-control", id: "new-criterion-status-rule-id-field", placeholder: "Enter status rule ID..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :search_setup_id %>
-        <%= f.text_field :search_setup_id, class: "form-control", id: "new-criterion-search-setup-id-field", placeholder: "Enter search setup ID..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :custom_definition_id %>
-        <%= f.text_field :custom_definition_id, class: "form-control", id: "new-criterion-custom-definition-id-field", placeholder: "Enter custom definition ID..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :imported_file_id %>
-        <%= f.text_field :imported_file_id, class: "form-control", id: "new-criterion-imported-file-id-field", placeholder: "Enter imported file ID..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :instant_classification_id %>
-        <%= f.text_field :instant_classification_id, class: "form-control", id: "new-criterion-instant-classification-id-field", placeholder: "Enter instant classification ID..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :search_run_id %>
-        <%= f.text_field :search_run_id, class: "form-control", id: "new-criterion-search-run-id-field", placeholder: "Enter search run ID..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :custom_report_id %>
-        <%= f.text_field :custom_report_id, class: "form-control", id: "new-criterion-custom-report-id-field", placeholder: "Enter custom report ID..." %>
-      </div>
-      <div class="form-group">
         <%= f.check_box :include_empty, id: "new-criterion-include-empty-field" %>
         <%= f.label :include_empty %>
       </div>
@@ -67,7 +37,6 @@
       <div align="center">
         <%= f.submit "Submit", class: "btn btn-primary btn-lg", style: "margin-top: 20px;" %>
       </div>
-
     <% end %>
   </div>
 </div>

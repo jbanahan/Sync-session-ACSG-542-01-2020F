@@ -1,6 +1,4 @@
-<%= form_for editableCrit do |f| %>
-
-  <%= f.hidden_field :business_validation_template_id, value: @bvt.id %>
+<%= form_for @new_criterion, url: business_validation_template_t_search_criterions_path(@bvt) do |f| %>
 
   <div class="form-group">
     <%= f.label :model_field_uid %>
@@ -13,34 +11,6 @@
   <div class="form-group">
     <%= f.label :value %>
     <%= f.text_field :value, class: "form-control", id: "new-criterion-value-field", placeholder: "Enter value..." %>
-  </div>
-  <div class="form-group">
-    <%= f.label :status_rule_id %>
-    <%= f.text_field :status_rule_id, class: "form-control", id: "new-criterion-status-rule-id-field", placeholder: "Enter status rule ID..." %>
-  </div>
-  <div class="form-group">
-    <%= f.label :search_setup_id %>
-    <%= f.text_field :search_setup_id, class: "form-control", id: "new-criterion-search-setup-id-field", placeholder: "Enter search setup ID..." %>
-  </div>
-  <div class="form-group">
-    <%= f.label :custom_definition_id %>
-    <%= f.text_field :custom_definition_id, class: "form-control", id: "new-criterion-custom-definition-id-field", placeholder: "Enter custom definition ID..." %>
-  </div>
-  <div class="form-group">
-    <%= f.label :imported_file_id %>
-    <%= f.text_field :imported_file_id, class: "form-control", id: "new-criterion-imported-file-id-field", placeholder: "Enter imported file ID..." %>
-  </div>
-  <div class="form-group">
-    <%= f.label :instant_classification_id %>
-    <%= f.text_field :instant_classification_id, class: "form-control", id: "new-criterion-instant-classification-id-field", placeholder: "Enter instant classification ID..." %>
-  </div>
-  <div class="form-group">
-    <%= f.label :search_run_id %>
-    <%= f.text_field :search_run_id, class: "form-control", id: "new-criterion-search-run-id-field", placeholder: "Enter search run ID..." %>
-  </div>
-  <div class="form-group">
-    <%= f.label :custom_report_id %>
-    <%= f.text_field :custom_report_id, class: "form-control", id: "new-criterion-custom-report-id-field", placeholder: "Enter custom report ID..." %>
   </div>
   <div class="form-group">
     <%= f.check_box :include_empty, id: "new-criterion-include-empty-field" %>

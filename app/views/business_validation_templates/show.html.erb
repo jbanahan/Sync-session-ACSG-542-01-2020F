@@ -36,12 +36,11 @@
       <h4>Criteria</h4>
       <ul>
         <%bvr.search_criterions.each do |sc|%>
-          <li><%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%> | 
-            <%= link_to "Delete", search_criterion_path(sc), method: :delete, style: "color: #B83838;" %>
+          <li>
+            <%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%>  
           </li> 
         <%end%>
       </ul>
-      <%= button_to "Add Criterion", edit_business_validation_rule_path(bvr), method: :get, class: "btn btn-sm btn-default" %>
       <h4>Rule Data</h4>
       <pre><%=bvr.rule_attributes_json%></pre>
     </div>
