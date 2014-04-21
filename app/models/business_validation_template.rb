@@ -1,4 +1,10 @@
 require 'open_chain/stat_client'
+# This is kind of weird but because of the way the invoice line rule extends the validation rule the load ordering 
+# matters here, so the validation rule is required first
+require 'business_validation_rule'
+# Any customer specific business rule should be required below here
+require 'open_chain/custom_handler/polo/polo_validation_rule_entry_invoice_line_matches_po_line'
+
 class BusinessValidationTemplate < ActiveRecord::Base
   attr_accessible :description, :module_type, :name
   validates :module_type, presence: true
