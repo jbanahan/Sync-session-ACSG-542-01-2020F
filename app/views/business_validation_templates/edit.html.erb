@@ -1,0 +1,25 @@
+<%-content_for :action_bar do-%>
+  <button class="btn_link btn btn-default" link_to="<%=business_validation_template_path(@bvt) %>">Back</button>
+<%-end-%>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h2>Edit Business Validation Template</h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%= render partial: "bvt_base", locals: {bvt: @bvt} %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <%= render partial: "bvt_criterion", locals: {criteria: @criteria, new_criterion: @new_criterion} %>
+    </div>
+
+    <div class="col-md-6">
+      <%= render partial: "bvt_rule", locals: {rules: @rules, new_rule: @new_rule} %>
+    </div>
+  </div>  
+</div>

@@ -1,0 +1,24 @@
+<%= form_for @new_criterion, url: business_validation_template_t_search_criterions_path(@bvt) do |f| %>
+
+  <div class="form-group">
+    <%= f.label :model_field_uid %>
+    <%= f.text_field :model_field_uid, class: "form-control", id: "new-criterion-model-field-uid-field", placeholder: "Enter model field UID..." %>
+  </div>
+  <div class="form-group">
+    <%= f.label :operator %>
+    <%= f.text_field :operator, class: "form-control", id: "new-criterion-operator-field", placeholder: "Enter operator..." %>
+  </div>
+  <div class="form-group">
+    <%= f.label :value %>
+    <%= f.text_field :value, class: "form-control", id: "new-criterion-value-field", placeholder: "Enter value..." %>
+  </div>
+  <div class="form-group">
+    <%= f.check_box :include_empty, id: "new-criterion-include-empty-field" %>
+    <%= f.label :include_empty %>
+  </div>
+
+  <div align="center">
+    <%= f.submit "Submit", class: "btn btn-primary btn-lg", style: "margin-top: 20px;" %>
+  </div>
+
+<% end %>

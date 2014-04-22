@@ -1,0 +1,31 @@
+<div class="row">
+  <div class="col-md-12" align="center">
+    <h3>Existing Criteria: <%= @criteria.count %></h3>
+  </div>
+</div>
+
+<% @criteria.each do |cr| %>
+  <div class="row">
+    <div class="col-md-3">
+      <%= cr.model_field.label %>
+    </div>
+    <div class="col-md-3">
+      <%= CriterionOperator.find_by_key(cr.operator).label %>
+    </div>
+    <div class="col-md-3">
+      <%= cr.value %>
+    </div>
+    <div class="col-md-3">
+      <%= link_to "Delete", business_validation_template_t_search_criterion_path(business_validation_template_id: cr.business_validation_template.id, id: cr.id), method: :delete, style: "color: #B83838;" %>
+    </div>
+  </div>
+<% end %>
+
+<hr>
+
+<div class="row">
+  <div class="col-md-12" align="center">
+    <h3>Add New Criterion</h3>
+  </div>
+</div>
+<%= render partial: "add_new_criterion", locals: {editableCrit: new_criterion} %>
