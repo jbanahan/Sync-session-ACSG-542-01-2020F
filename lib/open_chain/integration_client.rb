@@ -72,7 +72,7 @@ module OpenChain
     end
 
     private
-    def self.process_remote_file command
+    def self.process_remote_file command, total_attempts = 3
       bucket = OpenChain::S3.integration_bucket_name
       dir, fname = Pathname.new(command['path']).split
       remote_path = command['remote_path']
@@ -140,6 +140,14 @@ module OpenChain
         status_msg = "Can't figure out what to do for path #{command['path']}"
       end
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
+    rescue => e
+      total_attempts -= 1
+      if total_attempts > 0
+        sleep 0.25
+        retry
+      else
+        raise e
+      end
     end
 
     # expects path like /username/to_chain/module/search_name/file.ext

@@ -215,9 +215,9 @@ describe OpenChain::IntegrationClientCommandProcessor do
         @search_setup = Factory(:search_setup)
         @user = @search_setup.user
         @path = "/#{@user.username}/to_chain/#{@search_setup.module_type.downcase}/#{@search_setup.name}/myfile.csv"
-        LinkableAttachmentImportRule.should_receive(:find_import_rule).and_return(nil)
       end
       it 'should create if path contains to_chain' do
+        LinkableAttachmentImportRule.should_receive(:find_import_rule).and_return(nil)
         ImportedFile.any_instance.should_receive(:process).with(@user,{:defer=>true}).and_return(nil)
         cmd = {'request_type'=>'remote_file','path'=>@path,'remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
@@ -226,6 +226,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         imp.attached_file_name.should == 'myfile.csv'
       end
       context 'errors' do
+
+        before :each do
+          LinkableAttachmentImportRule.should_receive(:find_import_rule).exactly(3).times.and_return(nil,nil,nil)
+        end
+
         it 'should fail on bad user' do
           cmd = {'request_type'=>'remote_file','path'=>'/baduser/to_chain/product/search/file.csv','remote_path'=>'12345'}
           lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, 'Username baduser not found.'
