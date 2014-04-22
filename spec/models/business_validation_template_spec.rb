@@ -50,6 +50,12 @@ describe BusinessValidationTemplate do
       @bvt.create_results! true
       expect(BusinessValidationResult.count).to eq 1
     end
+    it 'rescues exceptions raise in create_result! call' do
+      match = Factory(:entry,customer_number:'12345')
+      @bvt.should_receive(:create_result!).and_raise "Error"
+      StandardError.any_instance.should_receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
+      @bvt.create_results!
+    end
   end
   describe :create_result! do
     it "should create result based on rules" do
@@ -91,6 +97,17 @@ describe BusinessValidationTemplate do
       bvr = bvt.create_result! o, true
       expect(bvr.validatable).to eq o
       expect(bvr.state).not_to be_nil
+    end
+    it "utilizes database locking while creating and validating objects" do
+      o = Order.new
+      bvt = described_class.create!(module_type:'Order')
+      rule = bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat')
+      bvt.reload
+
+      Lock.should_receive(:with_lock_retry).with(bvt).and_yield
+      Lock.should_receive(:with_lock_retry).with(instance_of(BusinessValidationResult)).and_yield
+
+      bvt.create_result! o
     end
   end
 end

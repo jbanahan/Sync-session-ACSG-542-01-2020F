@@ -21,6 +21,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
       end
     end
   end
+
   #run create
   def create_results! run_validation = false
     cm = CoreModule.find_by_class_name(self.module_type)
@@ -29,27 +30,46 @@ class BusinessValidationTemplate < ActiveRecord::Base
     srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id")
     self.search_criterions.each {|sc| srch = sc.apply(srch)}
     srch.each do |obj|
-      self.create_result! obj, run_validation
+      begin
+        self.create_result! obj, run_validation
+      rescue => e
+        # Don't let one bad object spoil the whole rule run
+        e.log_me ["Failed to generate rule results for #{obj.class} id #{obj.id}"]
+      end
     end
   end
+
   def create_result! obj, run_validation = false
     bvr = nil
     self.search_criterions.each do |sc|
       return nil unless sc.test?(obj)
     end
-    self.class.transaction do
+
+    # This should prevent multiple business validation result objects from being generated at a time (.ie if there are concurrent create_all! runs occurring)
+    # I'm not putting this in a super-coarse lock around create_all! because that will run the whole create_all! method inside a single DB transaction,
+    # which has the potential to be a very lengthy process.
+    bvr = nil
+    Lock.with_lock_retry(self) do
       bvr = self.business_validation_results.where(validatable_type:obj.class.name,validatable_id:obj.id).first_or_create!
+    end
+
+    # Create the rule results and then run the validations (if requested) all inside a lock on the validation result.
+    # This should mean that only a single process is running validations for this module obj at a time
+    Lock.with_lock_retry(bvr) do
       bvr.validatable = obj
       bvr.save!
+
       self.business_validation_rules.each do |rule|
         bvr.business_validation_rule_results.where(business_validation_rule_id:rule.id).first_or_create!
       end
+
+      if run_validation
+        bvr.run_validation
+        bvr.updated_at = Time.now #force save
+        bvr.save!
+      end
     end
-    if run_validation
-      bvr.run_validation
-      bvr.updated_at = Time.now #force save
-      bvr.save!
-    end
+    
     bvr
   end
 end
