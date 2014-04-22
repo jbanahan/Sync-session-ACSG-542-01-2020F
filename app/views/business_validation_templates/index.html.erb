@@ -1,19 +1,27 @@
+<%-content_for :action_bar do-%>
+  <button class="btn_link btn btn-default" link_to="<%=new_business_validation_template_path%>">New</button>
+<%-end-%>
 <div class="container">
   <div class="row">
-    <h1>Business Validation Templates</h1>
-  </div>
-  <div class="row">
     <div class='col-md-12'>
-      <%@bv_templates.each do |template|%>
-        <h2><%=link_to template.name, template%></h2>
+      <h1 style='margin-bottom:20px;'>Business Validation Templates</h1>
+    </div>
+  </div>
+  <%@bv_templates.each do |template|%>
+    <div class="row">
+      <div class='col-md-12'>
+        <h2 style="display: inline;">
+          <%=link_to template.name, template%>
+        </h2>
         <div><%=template.description%></div>
-        <h3>Criterions</h3>
+        <h3>Criteria</h3>
         <ul>
         <%template.search_criterions.each do |sc|%>
           <li><%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%></li> 
         <%end%>
         </ul>
-      <%end%>
+      <hr>
+      </div>
     </div>
-  </div>
+  <%end%>
 </div>

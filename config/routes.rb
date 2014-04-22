@@ -31,8 +31,15 @@ OpenChain::Application.routes.draw do
     resources :broker_invoices, :only=>[:create]
     get 'validation_results', on: :member
   end
-  resources :business_validation_templates, only:[:index,:show]
-  resources :business_validation_rule_results, only:[:update]
+
+  resources :business_validation_templates do
+    resources :t_search_criterions, only: [:new, :create, :destroy]
+    resources :business_validation_rules, only: [:create, :destroy, :edit, :update] do
+      resources :r_search_criterions, only: [:new, :create, :destroy]
+    end
+  end
+
+  resources :business_validation_rule_results, only: [:update]
   
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]

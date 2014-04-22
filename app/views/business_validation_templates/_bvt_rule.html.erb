@@ -1,0 +1,62 @@
+<div class="row">
+  <div class="col-md-12" align="center">
+    <h3>Existing Rules: <%= @rules.count %></h3>
+  </div>
+</div>
+
+<ol>
+  <% @rules.each do |r| %>
+    <div class="row">
+      <div class="col-md-12">
+        <li><%= r.name %>
+          <ul>
+            <li>
+              <b>
+                Description:
+              </b> 
+              <%= r.description %>
+            </li>
+            <li>
+              <b>
+                JSON:
+              </b>
+              <%= r.rule_attributes_json %>
+            </li>
+            <li>
+              <b>
+                Fail state:
+              </b>
+              <%= r.fail_state %>
+            <li>
+              <b>
+                Search criteria:
+              </b>
+              <ul>
+                <% r.search_criterions.each do |sc| %>
+                  <li>
+                    <%= sc.model_field.label %> <%= CriterionOperator.find_by_key(sc.operator).label %> <%= sc.value %> (<%= link_to "Delete", business_validation_template_business_validation_rule_r_search_criterion_path(business_validation_template_id: r.business_validation_template.id, business_validation_rule_id: r.id, id: sc.id), method: :delete, style: "color: #B83838" %>)
+                  </li>
+                <% end %>
+                <li>
+                  <%= link_to "Add Criterion", edit_business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id) %>
+                </li>
+              </ul>
+            <li>
+              <%= link_to "Delete", business_validation_template_business_validation_rule_path(business_validation_template_id: r.business_validation_template.id, id: r.id), method: :delete, style: "color: #B83838;" %>
+            </li>
+            </li>
+          </ul>
+        </li>
+      </div>
+    </div>
+  <% end %>
+</ol>
+
+<hr>
+
+<div class="row">
+  <div class="col-md-12" align="center">
+    <h3>Add New Rule</h3>
+  </div>
+</div>
+<%= render partial: "add_new_rule", locals: {editableRule: new_rule} %>
