@@ -155,19 +155,21 @@ describe UsersController do
   describe :move_to_new_company do
     
     before :each do
-      @user1 = Factory(:user, id: 1)
-      @user2 = Factory(:user, id: 2)
-      @user3 = Factory(:user, id: 3)
-      @company = Factory(:company, id: 1)
+      @user1 = Factory(:user)
+      @user2 = Factory(:user)
+      @user3 = Factory(:user)
+      @company = Factory(:company)
+      # So the :back redirect in the controller returns something
+      request.env["HTTP_REFERER"] = "/referer"
     end
 
     it "should only allow admins access" do
       @user.admin = false
       @user.save
 
-      post :move_to_new_company, id: [1, 2, 3], destination_company_id: 1
+      post :move_to_new_company, id: [@user1.id, @user2.id, @user3.id], destination_company_id: @company.id
 
-      response.should redirect_to "/"
+      response.should redirect_to "/referer"
       flash[:errors].first.should == "Only administrators can move other users to a new company."
     end
 
@@ -175,21 +177,13 @@ describe UsersController do
       @user.admin = true
       @user.save
 
-      post :move_to_new_company, id: [1, 2, 3], destination_company_id: 1
+      post :move_to_new_company, id: [@user1.id, @user2.id, @user3.id], destination_company_id: @company.id
 
-      @user1.reload; @user1.company.id.should == 1
-      @user2.reload; @user2.company.id.should == 1
-      @user3.reload; @user3.company.id.should == 1
-    end
+      response.should redirect_to "/referer"
 
-    it "should redirect back with a status of 302" do
-      @user.admin = true
-      @user.save
-
-      post :move_to_new_company, id: [1, 2, 3], destination_company_id: 1
-
-      response.should be_redirect
-      response.status.should == 302
+      @user1.reload; @user1.company.id.should == @company.id
+      @user2.reload; @user2.company.id.should == @company.id
+      @user3.reload; @user3.company.id.should == @company.id
     end
 
   end
