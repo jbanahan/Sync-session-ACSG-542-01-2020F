@@ -1,7 +1,7 @@
 class ProjectDeliverable < ActiveRecord::Base
   belongs_to :assigned_to, class_name:'User'
   belongs_to :project, touch: true, inverse_of: :project_deliverables
-  attr_accessible :description, :due_date, :end_date, :estimated_hours, :start_date, :assigned_to_id, :complete
+  attr_accessible :description, :due_date, :end_date, :estimated_hours, :start_date, :assigned_to_id, :complete, :priority
 
   scope :incomplete, where('complete is null or complete = ?',false)
   scope :not_closed, joins(:project).where(projects: {closed_at:nil})
