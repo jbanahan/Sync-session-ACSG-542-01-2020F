@@ -447,7 +447,9 @@ OpenChain::Application.routes.draw do
   resources :answers, only:[:update] do
     resources :answer_comments, only:[:create]
   end
-  resources :corrective_issues, :only=>[:create,:update,:destroy]
+  resources :corrective_issues, :only=>[:create,:update,:destroy] do
+    post 'update_resolution', on: :member, to: :update_resolution_status
+  end
   
   resources :drawback_upload_files, :only=>[:index,:create] do
     put 'process_j_crew_entries', on: :collection
