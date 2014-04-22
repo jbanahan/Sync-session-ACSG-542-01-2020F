@@ -28,19 +28,19 @@
       var postHtml = "<div>To view the survey follow this link: [link here]</div>";
       OpenChain.previewTextile("#email_body","Email Preview",preHtml,postHtml);
     });
-    $(".q_preview").live('click',function(evt) {
+    $(document).on('click', ".q_preview", function(evt) {
       evt.preventDefault();
       var qid = $(this).attr('qid');
       OpenChain.previewTextile("#q_"+qid,"Question Preview");
     });
-    $("a.del_ques").live('click',function(evt) {
+    $(document).on('click', "a.del_ques", function(evt) {
       evt.preventDefault();
       var qid = $(this).attr('qid');
       var qb = $("#q-"+qid);
       qb.append("<input type='hidden' name='survey[questions_attributes]["+qid+"][_destroy]' value='1' />");
       qb.slideUp('fast');
     });
-    $("a.copy_ques").live('click',function(evt) {
+    $(document).on('click', "a.copy_ques", function(evt) {
       evt.preventDefault();
       OCSurvey.copyQuestion($(this).attr('qid'));
     });

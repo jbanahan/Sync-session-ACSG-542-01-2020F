@@ -4,7 +4,7 @@
       ev.preventDefault();
       $('#frm_new_bi').slideDown('slow');
     });
-    $(".inv_det_del").live('click',function(ev) {
+    $(document).on('click', ".inv_det_del", function(ev) {
       ev.preventDefault();
       $(this).parents('tr').fadeOut('slow').remove();
     });
@@ -14,7 +14,7 @@
       <%=ChargeCode.order('code ASC').collect {|cc| "{code:'#{cc.code}',desc:'#{cc.description}',hst:'#{cc.apply_hst? ? "0.13" : "0.000" }'}"}.join(',').html_safe%>
     ];
     OCInvoice.addInvoiceLine("#inv_det",cCodes);
-    $('.inv_det_fld').live('change',function() {
+    $(document).on('change', ".inv_det_fld", function() {
       var v = $(this).val();
       if(v==undefined) {
         v = $(this).children(':selected').val();

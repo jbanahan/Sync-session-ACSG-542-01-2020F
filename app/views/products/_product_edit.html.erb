@@ -1,8 +1,8 @@
 <%content_for :javascript do %>
 $(function() {
-  $(".entity_type").live('change',function() {
+  $(document).on('change', '.entity_type', function() {
     OpenChain.hideByEntityType($("#product_header"),$(this).val());
-  });    
+  });
 });
 <%end%>
 <% hide_no_bulk_fields = nil if local_assigns[:hide_no_bulk_fields].nil?%>
