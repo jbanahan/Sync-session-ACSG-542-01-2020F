@@ -38,22 +38,22 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     it "should find entries for all 3 importer ids" do
       @e2 = Factory(:entry,:importer_tax_id=>@tax_ids[1],:container_numbers=>'C',:master_bills_of_lading=>"M")
       @e3 = Factory(:entry,:importer_tax_id=>@tax_ids[2],:container_numbers=>'C',:master_bills_of_lading=>"M")
-      @g.should_receive(:generate_xml_file).with(@e1,instance_of(Tempfile))
-      @g.should_receive(:generate_xml_file).with(@e2,instance_of(Tempfile))
-      @g.should_receive(:generate_xml_file).with(@e3,instance_of(Tempfile))
+      @g.should_receive(:generate_xml_file).with(@e1,instance_of(StringIO))
+      @g.should_receive(:generate_xml_file).with(@e2,instance_of(StringIO))
+      @g.should_receive(:generate_xml_file).with(@e3,instance_of(StringIO))
       @g.sync_xml
     end
     it "should not find entries that are not for polo importer ids" do
       @e2 = Factory(:entry,:importer_tax_id=>'somethingelse',:container_numbers=>'C',:master_bills_of_lading=>"M")
-      @g.should_receive(:generate_xml_file).with(@e1,instance_of(Tempfile))
-      @g.should_not_receive(:generate_xml_file).with(@e2,instance_of(Tempfile))
+      @g.should_receive(:generate_xml_file).with(@e1,instance_of(StringIO))
+      @g.should_not_receive(:generate_xml_file).with(@e2,instance_of(StringIO))
       @g.sync_xml
     end
     it "should not find entries that don't need sync" do
       @e2 = Factory(:entry,:importer_tax_id=>@tax_ids[1],:updated_at=>1.day.ago,:container_numbers=>'C',:master_bills_of_lading=>"M")
       @e2.sync_records.create!(:trading_partner=>'polo_ca_efocus',:sent_at=>1.hour.ago,:confirmed_at=>10.minutes.ago)
-      @g.should_receive(:generate_xml_file).with(@e1,instance_of(Tempfile))
-      @g.should_not_receive(:generate_xml_file).with(@e2,instance_of(Tempfile))
+      @g.should_receive(:generate_xml_file).with(@e1,instance_of(StringIO))
+      @g.should_not_receive(:generate_xml_file).with(@e2,instance_of(StringIO))
       @g.sync_xml
     end
     it "should not send records without master bill" do
@@ -63,12 +63,12 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
     end
     it "should send with house but not container" do
       @e1.update_attributes(:house_bills_of_lading=>'')
-      @g.should_receive(:generate_xml_file).with(@e1,instance_of(Tempfile))
+      @g.should_receive(:generate_xml_file).with(@e1,instance_of(StringIO))
       @g.sync_xml
     end
     it "should send with container but not house" do
       @e1.update_attributes(:container_numbers=>'')
-      @g.should_receive(:generate_xml_file).with(@e1,instance_of(Tempfile))
+      @g.should_receive(:generate_xml_file).with(@e1,instance_of(StringIO))
       @g.sync_xml
     end
     it "should not send records without house bill or container" do
@@ -94,6 +94,35 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       @e1.reload
       @e1.should have(1).sync_records
     end
+    it "does not resend files that have the same fingerprint as previous ones" do
+      data = "Testing"
+      fingerprint = Digest::SHA1.hexdigest data
+      @e1.sync_records.create!(:trading_partner=>OpenChain::CustomHandler::PoloCaEfocusGenerator::SYNC_CODE,:sent_at=>1.day.ago,:confirmed_at=>12.hours.ago, fingerprint: fingerprint)
+      @g.should_receive(:generate_xml_file) do |entry, io|
+        io << data
+      end
+
+      files = @g.sync_xml
+      expect(files).to have(0).items
+    end
+    it "yields tempfile to block given if file's fingerprint changed" do
+      files = []
+      @g.sync_xml {|t| files << t.path}
+      expect(files).to have(1).item
+    end
+    it "yields nothing if file fingerprint did not change" do
+      data = "Testing"
+      fingerprint = Digest::SHA1.hexdigest data
+      @e1.sync_records.create!(:trading_partner=>OpenChain::CustomHandler::PoloCaEfocusGenerator::SYNC_CODE,:sent_at=>1.day.ago,:confirmed_at=>12.hours.ago, fingerprint: fingerprint)
+      @g.should_receive(:generate_xml_file) do |entry, io|
+        io << data
+      end
+
+      files = []
+      @g.sync_xml {|t| files << t.path}
+      expect(files).to have(0).items
+    end
+
     context "bad port code" do
       before :each do 
         @e1.update_attributes(:entry_port_code=>'000')
@@ -117,15 +146,11 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
   end
 
   describe :generate_xml_file do
-    before :each do
-      @f = Tempfile.new('pcefg')
-    end
-    after :each do
-      @f.unlink if @f
-    end
     def get_entry_element 
-      @g.generate_xml_file @e1, @f
-      doc = REXML::Document.new File.new(@f.path)
+      io = StringIO.new 
+      @g.generate_xml_file @e1, io
+      io.rewind
+      doc = REXML::Document.new io.read
       doc.root.elements.to_a("entry").should have(1).element
       doc.root.elements['entry']
     end

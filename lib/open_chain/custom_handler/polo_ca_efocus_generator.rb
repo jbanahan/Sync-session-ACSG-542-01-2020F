@@ -1,5 +1,7 @@
 require 'rexml/document'
 require 'open_chain/custom_handler/polo_ca_entry_parser'
+require 'digest/sha1'
+
 module OpenChain
   module CustomHandler
 
@@ -12,12 +14,12 @@ module OpenChain
       include OpenChain::FtpFileSupport
 
       # key is fenix code, value is ohl code
-      TRANSPORT_MODE_MAP = {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
-      SYNC_CODE = 'polo_ca_efocus'
+      TRANSPORT_MODE_MAP ||= {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
+      SYNC_CODE ||= 'polo_ca_efocus'
       
       #This is the master method that does all of the work
       def generate
-        ftp_xml_files sync_xml
+        sync_xml {|t| ftp_file t}
       end
 
       def sync_xml
@@ -28,10 +30,32 @@ module OpenChain
           where("length(house_bills_of_lading) > 0 OR length(container_numbers) > 0").
           need_sync(SYNC_CODE).uniq
         entries.each do |ent|
+          sr = nil
+          fingerprint = nil
           begin
-          t = Tempfile.new(["PoloCaEfocus",".xml"])  
-            generate_xml_file ent, t
-            files << t
+            sr = ent.sync_records.find_by_trading_partner(SYNC_CODE)
+            sr = ent.sync_records.build(:trading_partner=>SYNC_CODE) unless sr
+            output = StringIO.new
+            generate_xml_file ent, output
+            output.rewind
+            fingerprint = Digest::SHA1.hexdigest output.read
+
+            if sr.fingerprint != fingerprint
+              output.rewind
+              if block_given?
+                Tempfile.open(["PoloCaEfocus",".xml"]) do |t|
+                  t << output.read
+                  t.rewind
+                  yield t if block_given? 
+                end
+              else
+                t = Tempfile.new ["PoloCaEfocus",".xml"]
+                t << output.read
+                t.rewind
+                files << t
+              end
+            end
+            
           rescue OpenChain::CustomHandler::PortMissingError
             body = <<endbody
 Error for file #{ent.broker_reference}.
@@ -42,11 +66,9 @@ If this port is invalid, please correct it in Fenix.  If it is valid, please ema
 endbody
             OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com','INVALID RALPH LAUREN CA PORT CODE',body).deliver!
           end
-          sr = ent.sync_records.find_by_trading_partner(SYNC_CODE)
-          sr = ent.sync_records.build(:trading_partner=>SYNC_CODE) unless sr
-          sr.update_attributes(:sent_at=>2.seconds.ago,:confirmed_at=>1.second.ago,:confirmation_file_name=>'n/a')
+          sr.update_attributes(:sent_at=>2.seconds.ago,:confirmed_at=>1.second.ago,:confirmation_file_name=>'n/a', fingerprint: fingerprint) unless sr.nil?
         end
-        files
+        block_given? ? nil : files
       end
 
       def generate_xml_file entry, output_file
@@ -98,7 +120,7 @@ endbody
       end
 
       def ftp_credentials 
-        environ = Rails.env=='production' ? 'prod' : 'dev'
+        environ = (Rails.env.production? ? 'prod' : 'dev')
         ftp2_vandegrift_inc "to_ecs/Ralph_Lauren/efocus_ca_#{environ}", remote_file_name
       end
 
