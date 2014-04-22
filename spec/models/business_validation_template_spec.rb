@@ -53,7 +53,7 @@ describe BusinessValidationTemplate do
     it 'rescues exceptions raise in create_result! call' do
       match = Factory(:entry,customer_number:'12345')
       @bvt.should_receive(:create_result!).and_raise "Error"
-      StandardError.any_instance.should_receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
+      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to generate rule results for Entry id #{match.id}"]
       @bvt.create_results!
     end
   end
