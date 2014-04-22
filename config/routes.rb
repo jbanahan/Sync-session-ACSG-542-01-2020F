@@ -139,6 +139,7 @@ OpenChain::Application.routes.draw do
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/help" => "chain_help#index"
   match '/users/find_by_email' => "users#find_by_email", :via => :get
+  match '/users/move_to_new_company/:destination_company_id' => "users#move_to_new_company", :via => :post
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"

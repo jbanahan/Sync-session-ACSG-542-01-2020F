@@ -23,4 +23,3 @@ describe 'addPagination', () ->
     expect($('#my_target').find('a[href="/x?page=7"]').length).toEqual 1
     expect($('#my_target').find('select option[value="1"]').length).toEqual 1
     expect($('#my_target').find('select option[value="7"]').length).toEqual 1
-    
