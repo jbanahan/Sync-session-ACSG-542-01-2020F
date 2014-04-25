@@ -1,5 +1,3 @@
-require 'set'
-
 class HtsController < ApplicationController
 
   skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position,:force_reset
@@ -48,9 +46,11 @@ class HtsController < ApplicationController
 
   def subscribed_countries
     if logged_in?
-      country_hashes = {:countries => Set.new()} #handle all the repetition with set pushes
-      OfficialTariff.all.each { |tariff| country_hashes[:countries] << {:iso => tariff.country.iso_code, :name => tariff.country.name} }
-      country_hashes[:countries] = country_hashes[:countries].to_a #give it back as an array after set has done its work
+      available_countries = Country.where(import_location: true)
+      country_hashes = {:countries => []}
+      available_countries.each do |country|
+        country_hashes[:countries] << {:name => country.name, :iso => country.iso_code}
+      end
       render json: country_hashes
     else
       render json: {:countries => [
