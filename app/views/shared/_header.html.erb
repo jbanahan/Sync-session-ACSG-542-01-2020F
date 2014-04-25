@@ -67,7 +67,7 @@
                     <% if current_user.view_official_tariffs?-%>
                       <li><a href='/official_tariffs?force_search=true'>Search Tariffs</a></li>
                     <% end -%>
-                    <% if current_user.view_products? %>
+                    <% if current_user.view_official_tariffs? %>
                       <li><a href='/hts'>Browse Tariffs</a></li>
                     <% end %>
                   </ul>
