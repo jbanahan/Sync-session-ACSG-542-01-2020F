@@ -1,3 +1,5 @@
+require 'set'
+
 class HtsController < ApplicationController
 
   skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:set_cursor_position,:force_reset
@@ -42,6 +44,22 @@ class HtsController < ApplicationController
       h[:sub_headings] << sh
     end
     render json: h
+  end
+
+  def subscribed_countries
+    if logged_in?
+      country_hashes = {:countries => Set.new()} #handle all the repetition with set pushes
+      OfficialTariff.all.each { |tariff| country_hashes[:countries] << {:iso => tariff.country.iso_code, :name => tariff.country.name} }
+      country_hashes[:countries] = country_hashes[:countries].to_a #give it back as an array after set has done its work
+      render json: country_hashes
+    else
+      render json: {:countries => [
+        {iso:'US',name:'United States'},{iso:'CA',name:'Canada'},{iso:'AU',name:'Australia'},{iso:'CL',name:'Chile'},{iso:'CN',name:'China'},{iso:'HK',name:'Hong Kong'},
+        {iso:'ID',name:'Indonesia'},{iso:'IT',name:'Italy'},{iso:'JP',name:'Japan'},{iso:'KR',name:'Korea, Republic of'},{iso:'MO',name:'Macao'},{iso:'MY',name:'Malaysia'},
+        {iso:'MX',name:'Mexico'},{iso:'NZ',name:'New Zealand'},{iso:'NO',name:'Norway'},{iso:'PE',name:'Peru'},{iso:'PH',name:'Philippines'},{iso:'RU',name:'Russian Federation'},
+        {iso:'SG',name:'Singapore'},{iso:'TW',name:'Taiwan'},{iso:'TH',name:'Thailand'},{iso:'TR',name:'Turkey'},{iso:'VN',name:'Vietnam'}
+      ]}
+    end
   end
 
 end
