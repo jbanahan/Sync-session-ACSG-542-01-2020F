@@ -56,9 +56,9 @@ describe HtsController do
 
   describe :subscribed_countries do
     before :each do
-      @usa = Factory(:country, "name"=> "United States", iso_code: "US"); @usa.save!
-      @can = Factory(:country, "name"=> "Canada", iso_code: "CA"); @can.save!
-      @vnm = Factory(:country, "name"=> "Vietnam", iso_code: "VN"); @vnm.save!
+      @usa = Factory(:country, "name"=> "United States", iso_code: "US", import_location: true); @usa.save!
+      @can = Factory(:country, "name"=> "Canada", iso_code: "CA", import_location: true); @can.save!
+      @vnm = Factory(:country, "name"=> "Vietnam", iso_code: "VN", import_location: true); @vnm.save!
       @tariff1 = Factory(:official_tariff, hts_code: "12345", chapter: 123); @tariff1.country = @usa; @tariff1.save!
       @tariff2 = Factory(:official_tariff, hts_code: "23456", chapter: 234); @tariff2.country = @can; @tariff2.save!
       @tariff3 = Factory(:official_tariff, hts_code: "34567", chapter: 345); @tariff3.country = @vnm; @tariff3.save!
