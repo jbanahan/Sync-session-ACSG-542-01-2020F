@@ -800,7 +800,17 @@ and classifications.product_id = products.id
         [16,:ot_col_2,:column_2_rate,"Column 2 Rate",{:data_type=>:string}],
         [17,:ot_import_regs,:import_regulations,"Import Regulations",{:data_type=>:string}],
         [18,:ot_export_regs,:export_regulations,"Export Regulations",{:data_type=>:string}],
-        [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}]
+        [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}],
+        [20,:ot_chapter_number, :chapter_number,"Chapter Number",{:data_type=>:string,
+            :import_lambda => lambda { |ent, data| 
+              "Chapter Number ignored. (read only)"
+            },
+            :export_lambda => lambda { |obj|
+              obj.hts_code[0,2]
+            },
+            :qualified_field_name => "LEFT(hts_code,2)"
+          }
+        ]
       ]
       add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
       add_fields CoreModule::ENTRY, [
