@@ -6,12 +6,35 @@ $(function() {
     } else {
       $('#combine_attachments_order_container').hide();
     }
-  })
+  });
+
+  if ( $("#attachment_archive_setup_start_date").val() != "" ){ 
+    enableFormElements(); 
+  }
+
+  $("#attachment_archive_setup_start_date").change(function(){
+    $(this).val() == "" ? disableFormElements() : enableFormElements();
+  });
+
+  function enableFormElements(){
+    $("#attachment_archive_setup_archive_scheme").removeAttr('disabled');
+    $("#attachment_archive_setup_combine_attachments").removeAttr('disabled');
+    $("#attachment_archive_setup_combined_attachment_order").removeAttr('disabled');
+    $("#attachment_archive_setup_save").removeAttr('disabled');
+  }
+
+  function disableFormElements(){
+    $("#attachment_archive_setup_archive_scheme").attr('disabled','disabled');
+    $("#attachment_archive_setup_combine_attachments").attr('disabled','disabled');
+    $("#attachment_archive_setup_combined_attachment_order").attr('disabled','disabled');
+    $("#attachment_archive_setup_save").attr('disabled','disabled');
+  }
+
 });
 <%end-%>
 
 <%content_for :action_bar do-%>
-  <button class='form_to' form_id='frm_save'>Save</button>
+  <button class='form_to' form_id='frm_save' id="attachment_archive_setup_save" disabled=disabled>Save</button>
   <button class='btn_link' link_to='<%=company_path(@company)%>'>Back</button>
 <%end-%>
 <h1>Attachment Archive Setup: <%=@company.name%></h1>
@@ -22,8 +45,8 @@ $(function() {
     <div class='row'>
       <div class='col-md-7'>
         <%=field_bootstrap 'Start Date', f.text_field(:start_date,:class=>'isdate')%>
-        <%=field_bootstrap 'Archive Scheme', f.select(:archive_scheme, AttachmentArchiveSetup::ARCHIVE_SCHEMES)%>
-        <%=field_bootstrap "Combine Attachments", f.check_box(:combine_attachments)%>
+        <%=field_bootstrap 'Archive Scheme', f.select(:archive_scheme, AttachmentArchiveSetup::ARCHIVE_SCHEMES, {}, {disabled: true})%>
+        <%=field_bootstrap "Combine Attachments", f.check_box(:combine_attachments, disabled: true)%>
         <div id="combine_attachments_order_container" style="display: <%=s.combine_attachments ? "block" : "none"%>">
           <%=field_bootstrap "Combine Attachments Order", f.text_area(:combined_attachment_order, :rows=>"10", :cols=>"30", :placeholder => "Enter one entry Document Type/Title per line in the order they should be stitched together in the 'Archive Packet'.  Any types not included in this list will be added to the packet chronologically.")%>
         <div>
