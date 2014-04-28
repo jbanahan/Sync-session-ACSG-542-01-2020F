@@ -78,6 +78,11 @@
     <tr class='hover'><td><%=link_to "J Crew Billing Report", reports_show_jcrew_billing_path%></td>
     <td>J Crew Weekly Billing Report</td></tr>
   <%end-%>
+  <%if OpenChain::Report::HmStatisticsReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "H&M Statistics Report", reports_show_hm_statistics_path%></td>
+    <td>H&M Statistics Report</td></tr>
+  <%end-%>
+
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>
