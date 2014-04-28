@@ -20,4 +20,20 @@ describe ModelFieldsController do
     found_uids = r.collect {|mf| mf["uid"]}
     found_uids.should include("ent_broker_invoice_total")
   end
+
+  describe "glossary" do
+    before :each do
+      u = Factory(:user)
+      activate_authlogic
+      UserSession.create! u
+      @mf = ModelField.new(10000,:test,CoreModule::PRODUCT,:name)
+    end
+
+    it "should return product model fields with the proper label" do
+      get :glossary, {core_module: 'Product'}
+      expect(response).to be_success
+      assigns(:fields).length.should > 0
+      assigns(:label).should == "Product"
+    end
+  end
 end

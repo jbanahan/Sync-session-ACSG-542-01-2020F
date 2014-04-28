@@ -4,6 +4,12 @@ class ModelFieldsController < ApplicationController
     mfs = custom_hash_for_json model_fields.select {|m| m.can_view? current_user}
     render :json => mfs.to_json 
   end
+
+  def glossary
+    cm = CoreModule.find_by_class_name(params[:core_module],true)
+    @label = cm.label.blank? ? "Unlabled Module" : cm.label
+    @fields = cm.nil? ? [] : cm.model_fields_including_children.values
+  end
   
   private
   def custom_hash_for_json(mfs)
