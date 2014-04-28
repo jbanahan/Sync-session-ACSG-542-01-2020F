@@ -236,6 +236,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_jcrew_billing" => "reports#run_jcrew_billing", :via=>:post
   match "/reports/show_eddie_bauer_ca_statement_summary" => "reports#show_eddie_bauer_ca_statement_summary", :via=>:get
   match "/reports/run_eddie_bauer_ca_statement_summary" => "reports#run_eddie_bauer_ca_statement_summary", :via=>:post
+  match "/reports/show_hm_statistics" => "reports#show_hm_statistics", :via => :get
+  match "/reports/run_hm_statistics" => "reports#run_hm_statistics", :via => :post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
