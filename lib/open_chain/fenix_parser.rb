@@ -358,14 +358,11 @@ module OpenChain
 
     def process_activity_line line, accumulated_dates
       if !line[2].nil? && !line[3].nil? && ACTIVITY_DATE_MAP[line[2].strip]
-        # We may get just a date here (not date and time)
-        time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M") rescue nil
-        unless time
-          time = Date.strptime(line[3], '%Y%m%d') # we actually want this to fail..it means we're getting bad data
-        end
+        time = (line[4].blank? ? time_zone.parse(line[3]).to_date : time_zone.parse("#{line[3]}#{line[4]}")) rescue nil
+
         # This assumes we're using a hash with a default return value of an empty array
         if time
-          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << ((time.is_a?(Date)) ? time : time.in_time_zone(time_zone))
+          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time
         end
       end
       rescue

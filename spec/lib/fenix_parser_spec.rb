@@ -226,38 +226,41 @@ describe OpenChain::FenixParser do
   end
   
   it 'should save an entry with one main line in the new format' do
-    ent = do_shared_test @entry_lambda.call
+    # Wrap this in a block using another timezone so we know that the dates we parse out are all relative to Eastern timezone.
+    Time.use_zone("Hawaii") do
+      ent = do_shared_test @entry_lambda.call
 
-    # New Entry file differences 
-    
-    # We're pulling cargo control number from B3L and CCN lines
-    ccn = ent.cargo_control_number.split("\n ")
-    ccn.length.should == @additional_cargo_control_numbers.length + 1
-    ([@cargo_control_no] + @additional_cargo_control_numbers).each do |n|
-      ccn.include?(n).should be_true
+      # New Entry file differences 
+      
+      # We're pulling cargo control number from B3L and CCN lines
+      ccn = ent.cargo_control_number.split("\n ")
+      ccn.length.should == @additional_cargo_control_numbers.length + 1
+      ([@cargo_control_no] + @additional_cargo_control_numbers).each do |n|
+        ccn.include?(n).should be_true
+      end
+
+      # We're pulling container from B3L and CON lines
+      containers = ent.container_numbers.split("\n ")
+      containers.length.should == @additional_container_numbers.length + 1
+      ([@container] + @additional_container_numbers).each do |n|
+        containers.include?(n).should be_true
+      end
+      # Need to use local time since we pulled the entry back from the DB 
+      ent.first_do_issued_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['180'][0].to_s).in_time_zone(Time.zone)
+      # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
+      ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
+      ent.eta_date.should == @activities['10'][1]
+      ent.exam_ordered_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['1276'][1].to_s).in_time_zone(Time.zone)
+
+      # Master Bills should include ones from BL lines
+      bols = ent.master_bills_of_lading.split("\n ")
+      [@bill_of_lading, @additional_bols].flatten.each {|bol|
+        bols.include?(bol).should be_true
+      }
+      
+      # House Bills should be blank
+      ent.house_bills_of_lading.should be_nil
     end
-
-    # We're pulling container from B3L and CON lines
-    containers = ent.container_numbers.split("\n ")
-    containers.length.should == @additional_container_numbers.length + 1
-    ([@container] + @additional_container_numbers).each do |n|
-      containers.include?(n).should be_true
-    end
-    # Need to use local time since we pulled the entry back from the DB 
-    ent.first_do_issued_date.should == @activities['180'][0].in_time_zone(Time.zone)
-    # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
-    ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
-    ent.eta_date.should == @activities['10'][1]
-    ent.exam_ordered_date.should == @activities['1276'][1].in_time_zone(Time.zone)
-
-    # Master Bills should include ones from BL lines
-    bols = ent.master_bills_of_lading.split("\n ")
-    [@bill_of_lading, @additional_bols].flatten.each {|bol|
-      bols.include?(bol).should be_true
-    }
-    
-    # House Bills should be blank
-    ent.house_bills_of_lading.should be_nil
   end
 
   it "should store container numbers in house bills field on air shipments" do
