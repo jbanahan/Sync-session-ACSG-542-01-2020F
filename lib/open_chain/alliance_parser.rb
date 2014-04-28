@@ -330,7 +330,7 @@ module OpenChain
       accumulate_string :mfid, mfid
       accumulate_string :commercial_invoice_number, @c_invoice.invoice_number
 
-      invoice_value = parse_currency r[50,13]
+      invoice_value = @c_invoice.invoice_value_foreign * @c_invoice.exchange_rate
       @c_invoice.invoice_value = invoice_value
       @entry.total_invoiced_value += parse_currency r[50,13]
     end
