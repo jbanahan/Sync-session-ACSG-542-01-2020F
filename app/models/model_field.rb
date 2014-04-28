@@ -1045,7 +1045,12 @@ and classifications.product_id = products.id
         [11,:ci_exchange_rate,:exchange_rate,"Exchange Rate",{:data_type=>:decimal}],
         [12,:ci_total_quantity, :total_quantity, "Quantity",{:data_type=>:decimal}],
         [13,:ci_total_quantity_uom, :total_quantity_uom, "Quantity UOM",{:data_type=>:string}],
+        [14,:ci_docs_received_date,:docs_received_date,'Docs Received Date',{data_type: :date}],
+        [15,:ci_docs_ok_date,:docs_ok_date,'Docs OK Date',{data_type: :date}],
+        [16,:ci_issue_codes,:issue_codes,'Issue Tracking Codes',{data_type: :string}],
+        [17,:ci_rater_comments,:rater_comments,'Rater Comments',{data_type: :text}]
       ]
+      add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100,'ci','commercial_invoices')
       add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
         [1,:cil_line_number,:line_number,"Line Number",{:data_type=>:integer}],
         [2,:cil_part_number,:part_number,"Part Number",{:data_type=>:string}],
@@ -1113,7 +1118,9 @@ and classifications.product_id = products.id
         [42,:cil_product_line, :product_line, "Product Line",{:data_type=>:string}],
         [43,:cil_visa_number, :visa_number, "Visa Number",{:data_type=>:string}],
         [44,:cil_visa_quantity, :visa_quantity, "Visa Quantity",{:data_type=>:decimal}],
-        [45,:cil_visa_uom, :visa_uom, "Visa UOM",{:data_type=>:string}]
+        [45,:cil_visa_uom, :visa_uom, "Visa UOM",{:data_type=>:string}],
+        [46,:cil_value_foreign,:value_foreign,'Value (Foreign)',{data_type: :decimal, currency: :other}],
+        [47,:cil_currency,:currency,'Currency',{data_type: :string}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],

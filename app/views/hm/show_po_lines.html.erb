@@ -1,27 +1,140 @@
 <div ng-app='HMApp'>
-  <div class="container" ng-controller='HMPOLineController'>
+  <div class="container" ng-controller='HMPOLineController' ng-init='getLines(1)'>
     <div class="row">
-      <div class='col-md-12'>
-        <h1>PO Lines</h1>
-      </div>
+      <chain-panel panel-title='Errors' panel-message="errorMessage" panel-type='panel-danger' />
     </div>
+    <form name='form' novalidate>
+      <div class="row">
+        <div class='col-md-12'>
+          <h1>H&amp;M PO Lines</h1>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-md-4'>
+          <div class='form-group' ng-class="{'has-error':form.po_number.$invalid}">
+            <label for='po_number'>PO Number</label>
+            <input type='text' ng-model='poLine.po_number' class='form-control' name='po_number' id='po_number' ng-pattern='/^\d{6}$/'>
+            <span ng-show='form.po_number.$error.pattern' class='error'>PO Number must be 6 digits like &quot;123456&quot;.</span>
+          </div>
+          <div class='form-group' ng-class="{'has-error':form.hts_code.$invalid}">
+            <label for='hts_code'>HTS Number</label>
+            <input type='text' ng-model='poLine.hts_code' class='form-control' id='hts_code' name='hts_code' ng-pattern='/^\d{10}$/'>
+            <span ng-show='form.hts_code.$error.pattern' class='error'>HTS number must be 10 digits without periods.</span>
+          </div>
+          <div class='form-group' ng-class="{'has-error':form.cartons.$invalid}">
+            <label for="cartons">Cartons</label>
+            <input id="cartons" class="form-control" type="number" name='cartons' ng-model="poLine.cartons">
+            <span ng-show='form.cartons.$error.min'>Cartons must be positive.</span>
+          </div>
+          <div class="form-group" ng-class="{'has-error':form.origin_country.$invalid}">
+            <label for="" form="origin_country">Country of Origin</label>
+            <input type="text" id="origin_country" class='form-control' name="origin_country" ng-model="poLine.origin_country" ng-pattern='/^[A-Z]{2}$/'>
+            <span ng-show='form.origin_country.$error.pattern' class='error'>Country of origin must be two capital letters (US, CA, CN, etc).</span>
+          </div>
+          <div class='form-group'>
+            <label for="gross_weight">Gross Weight</label>
+            <input id="gross_weight" class="form-control" type="number" ng-model="poLine.gross_weight">
+          </div>
+          <div class='form-group'>
+            <label for="net_weight">Net Weight</label>
+            <input id="net_weight" class="form-control" type="number" ng-model="poLine.net_weight">
+          </div>
+        </div>
+        <div class='col-md-4'>
+          <div class='form-group' ng-class="{'has-error':form.quantity.$invalid}">
+            <label for="quantity">Quantity</label>
+            <input id="quantity" class="form-control" type="number" ng-model="poLine.quantity" name='quantity' ng-change='svc.recalc(poLine)' min='0'>
+            <span ng-show='form.quantity.$error.min' class='error'>Quantity must be positive.</span>
+          </div>
+          <div class='form-group' ng-class="{'has-error':form.unit_cost.$invalid}">
+            <label for="unit_cost">Unit Cost</label>
+            <input id="unit_cost" class="form-control" type="number" name='unit_cost' ng-model="poLine.unit_cost" ng-change='svc.recalc(poLine)' min='0'>
+            <span ng-show='form.unit_cost.$error.min' class='error'>Unit Cost must be positive.</span>
+          </div>
+          <div class='form-group' ng-class="{'has-error':form.currency.$invalid}">
+            <label for="currency">Currency</label>
+            <select id="currency" class="form-control" type="text" name='currency' ng-model="poLine.currency">
+              <option>USD</option>
+              <option>EUR</option>
+              <option>SEK</option>
+            </select>
+            <span ng-show='form.currency.$error.pattern' class='error'>Currency should be USD, EUR, or SEK.</span>
+          </div>
+          <div class='form-group'>
+            <label for="invoice_value">Invoice Value (Foreign)</label>
+            <input id="invoice_value" class="form-control" type="number" ng-model="poLine.invoice_value">
+          </div>
+          <div class='form-group'>
+            <label for="adjusted_value">Adjusted Value (Foreign)</label>
+            <input id="adjusted_value" class="form-control" type="number" ng-model="poLine.adjusted_value">
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class='form-group'>
+            <label for="docs_rec_date">Docs Received</label>
+            <input id="docs_rec_date" type="date" ng-model="poLine.docs_rec_date" class='form-control'>
+          </div>
+          <div class='form-group'>
+            <label for="docs_ok_date">Docs OK</label>
+            <input id="docs_ok_date" type="date" ng-model="poLine.docs_ok_date" class='form-control'>
+          </div>
+          <div class='form-group'>
+            <label for="issue_codes">Issue Codes</label>
+            <input type="text" id="issue_codes" ng-model='poLine.issue_codes' class='form-control' />
+          </div>
+          <div class='form-group'>
+            <label for="comment">Comment</label>
+            <textarea ng-model='poLine.comment' class='form-control' id='comment'></textarea>
+          </div>
+          
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <button class='btn btn-primary' ng-click='saveLine(poLine)'>{{poLine.id ? "Update" : "Add"}}</button>
+        </div>
+      </div>
+    </form>
     <div class="row">
       <div class="col-md-12">
-        <h2>Add Line</h2>
-        <label for='po_number'>PO Number</label>
-        <input type='text' ng-model='poLine.po_number' class='form-control' id='po_number'>
-        <label for='hts_number'>HTS Number</label>
-        <input type='text' ng-model='poLine.hts_number' class='form-control' id='hts_number'>
-        <label for="docs_rec_date">Docs Received</label>
-        <input id="docs_rec_date" type="date" ng-model="poLine.docs_rec_date" class='form-control'>
-        <label for="docs_ok_date">Docs OK</label>
-        <input id="docs_ok_date" type="date" ng-model="poLine.docs_ok_date" class='form-control'>
-        <label for="unit_cost">Unit Cost</label>
-        <input id="unit_cost" class="form-control" type="number" ng-model="poLine.unit_cost">
-        <label for="quantity">Quantity</label>
-        <input id="quantity" class="form-control" type="number" ng-model="poLine.quantity">
-        label[for='currency']{Currency}+
+        <h2>Recent Lines</h2>
+        <div ng-show='loadingLines'>
+          Loading...
+        </div>
+        <table class="table table-striped" ng-hide='loadingLines'>
+          <thead>
+            <tr>
+              <th>PO</th>
+              <th>HTS</th>
+              <th>Cartons</th>
+              <th>Quantity</th>
+              <th>Unit Cost</th>
+              <th>Invoice Value</th>
+              <th>Adjusted Value</th>
+              <th>Currency</th>
+              <th>Docs Rcvd</th>
+              <th>Docs OK</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat='line in recentLines'>
+              <td><a class='btn btn-sm btn-default' ng-click='selectLine(line)'>{{line.po_number}}</a></td>
+              <td>{{line.hts_code}}</td>
+              <td>{{line.cartons}}</td>
+              <td>{{line.quantity}}</td>
+              <td>{{line.unit_cost}}</td>
+              <td>{{line.invoice_value}}</td>
+              <td>{{line.adjusted_value}}</td>
+              <td>{{line.currency}}</td>
+              <td>{{line.docs_rec_date}}</td>
+              <td>{{line.docs_ok_date}}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
+    </div>
+    <div chain-action-bar>
+      <button class='btn btn-default'>Send Log</button>
     </div>
   </div>
 </div>
