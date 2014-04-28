@@ -3,22 +3,25 @@ class UpdateCommercialInvoices < ActiveRecord::Migration
     say_with_time "Updating Fenix commercial invoices..." do
       update <<-SQL
         UPDATE commercial_invoices
-        LEFT JOIN entries ON entries.source_system = "Fenix"
+        INNER JOIN entries ON entries.id = commercial_invoices.entry_id
         SET commercial_invoices.invoice_value_foreign = commercial_invoices.invoice_value
+        WHERE entries.source_system = "Fenix"
       SQL
 
       update <<-SQL
         UPDATE commercial_invoices
-        LEFT JOIN entries ON entries.source_system = "Fenix"
+        INNER JOIN entries ON entries.id = commercial_invoices.entry_id
         SET commercial_invoices.invoice_value = commercial_invoices.invoice_value_foreign * commercial_invoices.exchange_rate
+        WHERE entries.source_system = "Fenix"
       SQL
     end
 
     say_with_time "Updating Alliance commercial invoices..." do
       update <<-SQL
         UPDATE commercial_invoices
-        LEFT JOIN entries on entries.source_system = "Alliance"
+        INNER JOIN entries on entries.id = commercial_invoices.entry_id
         SET commercial_invoices.invoice_value = commercial_invoices.invoice_value_foreign * commercial_invoices.exchange_rate
+        WHERE entries.source_system = "Alliance"
       SQL
     end
   end
