@@ -6,9 +6,11 @@ class ModelFieldsController < ApplicationController
   end
 
   def glossary
-    cm = CoreModule.find_by_class_name(params[:core_module],true)
-    @label = cm.label.blank? ? "Unlabled Module" : cm.label
-    @fields = cm.nil? ? [] : cm.model_fields_including_children.values
+    @cm = CoreModule.find_by_class_name(params[:core_module],true)
+    unless @cm.nil?
+      @label = @cm.label.blank? ? "Unlabled Module" : @cm.label
+      @fields = @cm.model_fields_including_children.values
+    end
   end
   
   private

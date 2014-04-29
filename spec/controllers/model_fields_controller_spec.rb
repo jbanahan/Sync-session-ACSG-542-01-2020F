@@ -22,18 +22,36 @@ describe ModelFieldsController do
   end
 
   describe "glossary" do
+    render_views
+
     before :each do
-      u = Factory(:user)
-      activate_authlogic
-      UserSession.create! u
       @mf = ModelField.new(10000,:test,CoreModule::PRODUCT,:name)
     end
 
     it "should return product model fields with the proper label" do
+      u = Factory(:user)
+      activate_authlogic
+      UserSession.create! u
+
       get :glossary, {core_module: 'Product'}
       expect(response).to be_success
       assigns(:fields).length.should > 0
       assigns(:label).should == "Product"
+    end
+
+    it "should display the module not found page for nil modules" do
+      u = Factory(:user)
+      activate_authlogic
+      UserSession.create! u
+
+      get :glossary, {core_module: 'nonexistent'}
+      expect(response).to be_success
+      response.body.should =~ /We were unable to locate the glossary you requested/
+    end
+
+    it "should redirect for users who aren't logged in" do
+      get :glossary, {core_module: 'doesnt_matter'}
+      response.status.should == 302
     end
   end
 end
