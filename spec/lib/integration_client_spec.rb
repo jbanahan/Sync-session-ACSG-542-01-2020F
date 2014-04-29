@@ -102,6 +102,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:send_and_delete_ack_file).with(ack,'a.csv')
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
+      it "should not raise errors on test files" do
+        ack = mock("ack_file")
+        cmd = {'request_type'=>'remote_file','path'=>'/test_from_msl/a.csv','remote_path'=>'12345'}
+        expect{OpenChain::IntegrationClientCommandProcessor.process_command(cmd)}.to_not raise_error
+      end
       it "should handle ack files" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
 

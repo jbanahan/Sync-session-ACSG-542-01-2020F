@@ -135,6 +135,8 @@ module OpenChain
           status_msg = process_imported_file command, temp
           response_type = 'error' if status_msg != 'success'
         end
+      elsif command['path'].include?('/_test_from_msl') && MasterSetup.get.custom_feature?('MSL+')
+        #prevent errors; don't do anything else
       else
         response_type = 'error'
         status_msg = "Can't figure out what to do for path #{command['path']}"
