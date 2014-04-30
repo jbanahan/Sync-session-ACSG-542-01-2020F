@@ -89,6 +89,22 @@ describe OpenMailer do
   end
 
   context :send_simple_html do 
+    describe "in development environment" do
+      before {
+        Rails.stub(:env => "development")
+        Rails.env.stub(:production? => false)
+      }
+
+      it "should send an email to User 1's email" do
+        #That should be support@vandegrift.inc in the test environment
+        OpenMailer.send_simple_html("example@example.com", "Test subject","<p>Test body</p>").deliver!
+
+        OpenMailer.deliveries.last.to.first.should == "support@vandegriftinc.com"
+        OpenMailer.deliveries.last.body.raw_source.should match('<b>Original "To" field:</b> example@example.com')
+
+      end
+    end
+
     it "should send html email with an attachment" do
       Tempfile.open(["file", "txt"]) do |f|
         f.binmode

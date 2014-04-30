@@ -1,4 +1,8 @@
 class OpenMailer < ActionMailer::Base
+  include AbstractController::Callbacks
+
+  after_filter :modify_email_for_development
+
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
 An attachment named '_filename_' for this message was larger than the maximum system size.
@@ -373,6 +377,13 @@ EOS
       else
         @body_text = attachment_text if attachment_text
         return (attachment_text.nil? ? false : true)
+      end
+    end
+
+    def modify_email_for_development
+      if Rails.env == "development"
+        message.to = User.first.email
+        message.cc, message.bcc = [""], [""] #Postmark doesn't like blank strings, nils, or blank lists...
       end
     end
 
