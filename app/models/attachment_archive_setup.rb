@@ -1,5 +1,5 @@
 class AttachmentArchiveSetup < ActiveRecord::Base
-  attr_accessible :company_id, :start_date, :combine_attachments, :combined_attachment_order, :archive_scheme
+  attr_accessible :company_id, :start_date, :combine_attachments, :combined_attachment_order, :archive_scheme, :end_date
 
   belongs_to :company
 
@@ -34,9 +34,14 @@ class AttachmentArchiveSetup < ActiveRecord::Base
     days_ago = nil
     case self.archive_scheme
     when "PREVIOUS_MONTH"
-      days_ago = Time.current.midnight.at_beginning_of_month - 1.day
+      days_ago = (Time.current.midnight.at_beginning_of_month - 1.day).to_date
     else
-      days_ago = Time.current.midnight - 30.days  
+      days_ago = (Time.current.midnight - 30.days).to_date
+    end
+
+    # If the end date is prior to the days ago value (.ie the cutoff) use the end date instead
+    if self.end_date && days_ago && self.end_date < days_ago
+      days_ago = self.end_date
     end
     
     non_stitchable_attachments = Attachment.stitchable_attachment_extensions.collect {|ext| "attachments.attached_file_name NOT like '%#{ext}'"}.join (" AND ")

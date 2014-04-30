@@ -22,6 +22,7 @@ $(function() {
     <div class='row'>
       <div class='col-md-7'>
         <%=field_bootstrap 'Start Date', f.text_field(:start_date,:class=>'isdate')%>
+        <%=field_bootstrap 'End Date', f.text_field(:end_date,:class=>'isdate')%>
         <%=field_bootstrap 'Archive Scheme', f.select(:archive_scheme, AttachmentArchiveSetup::ARCHIVE_SCHEMES)%>
         <%=field_bootstrap "Combine Attachments", f.check_box(:combine_attachments)%>
         <div id="combine_attachments_order_container" style="display: <%=s.combine_attachments ? "block" : "none"%>">
