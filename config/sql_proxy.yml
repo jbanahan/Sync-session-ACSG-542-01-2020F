@@ -1,0 +1,12 @@
+# This file contains settings relavent to connecting to the sql_proxy machine.
+development:
+  auth_token: test
+  url: http://localhost:3001
+
+test:
+  auth_token: test
+  url: http://localhost:3001
+
+production:
+  auth_token: mPCzuMq10eQ4BlUogBMTs1QSLag=
+  url: https://sql-proxy.vandegriftinc.com

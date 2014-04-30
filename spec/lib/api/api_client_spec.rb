@@ -123,7 +123,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        expect{@c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiAuthenticationError, "Authentication to http://www.notadomain.com failed for user user and token: Error Response"
+        expect{@c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiAuthenticationError, "Authentication to #{@c.endpoint} failed for user '#{@c.username}' and api token '#{@c.authtoken}'. Error: Error Response"
         WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
@@ -148,7 +148,7 @@ describe OpenChain::Api::ApiClient do
         )
 
         expect{@c.send_request "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "API Request failed with error: invalid byte sequence in US-ASCII"
-        WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").times(3)
+        WebMock.should have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3")
     end
 
     it "handles URL encoding parameters" do

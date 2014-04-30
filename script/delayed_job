@@ -7,5 +7,11 @@ require 'delayed/command'
 # because in ruby 2.0 you cannot use mutexes in signal traps due to potential deadlock issues 
 # with re-entrant signal handlers.  Standard logger uses a mutex resulting in exceptions
 # in delayed job worker's INT/TERM signal traps and an unclean shutdown.
+
+# Don't destroy jobs that couldn't be intialized or run, we want to make sure we see these so we know
+# there was a problem with them.
+Delayed::Worker.destroy_failed_jobs = false
+# Preload all of lib (this prevents use from having to individually require files for delayed usage in an initializer)
+Dir[Rails.root + 'lib/**/*.rb'].each {|f| require f}
 Delayed::Worker.logger = MonoLogger.new(File.join(Rails.root, 'log', 'delayed_job.log'))
 Delayed::Command.new(ARGV).daemonize

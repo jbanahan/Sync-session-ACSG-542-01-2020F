@@ -1,46 +1,26 @@
-require 'open_chain/api/api_entity_jsonizer'
-
 module Api; module V1; class ApiController < ActionController::Base
   # disable authlogic for all requests to these controllers
   # we're using our own authtoken based authentication
   skip_filter :activate_authlogic 
-  rescue_from Exception, :with => :error_handler
+  rescue_from StandardError, :with => :error_handler
 
   around_filter :validate_authtoken
   around_filter :set_user_settings
   before_filter :validate_format
 
-  attr_reader :jsonizer
-
-  def initialize jsonizer = OpenChain::Api::ApiEntityJsonizer.new
-    @jsonizer = jsonizer
+  def render_forbidden
+    render_error "Access denied.", :unauthorized
   end
 
   def render_error errors, status = :not_found
-    e = errors.is_a?(Enumerable) ? errors : [errors]
+    e = nil
+    if errors.respond_to? :each
+      e = []
+      errors.each {|err| e << err.to_s}
+    else
+      e = [errors.to_s]
+    end
     render json: {:errors => e}, status: status
-  end
-
-  def show_module mod
-    render_obj mod.find params[:id]
-  end
-
-  def render_obj obj
-    raise ActiveRecord::RecordNotFound unless obj
-
-    if obj.can_view? User.current
-      render json: jsonizer.entity_to_json(User.current, obj, parse_model_field_param_list)
-    else
-      render_error "Not Found.", :not_found
-    end
-  end
-
-  def render_model_field_list core_module
-    if core_module.view? User.current
-      render json: jsonizer.model_field_list_to_json(User.current, core_module)
-    else
-      render_error "Not Found.", :not_found
-    end
   end
 
   class StatusableError < StandardError
@@ -56,14 +36,15 @@ module Api; module V1; class ApiController < ActionController::Base
 
   private
     def validate_format
-      raise StatusableError.new("Format #{params[:format].to_s} not supported.", :not_acceptable) if request.format != Mime::JSON
+      if request.headers["CONTENT_TYPE"] != "application/json"
+        raise StatusableError.new("Content-Type '#{request.headers["CONTENT_TYPE"]}' not supported.", :not_acceptable)
+      end
     end
 
     def validate_authtoken
       api_user = nil
       begin
         api_user = authenticate_with_http_token do |token, options|
-
           # Token should be username:token (username is there to mitigate timing attacks)
           username, auth_token = token.split(":")
           user = User.where(:username => username).first
@@ -121,23 +102,11 @@ module Api; module V1; class ApiController < ActionController::Base
         if ExceptionNotifier.notify_exception(error, :env=>request.env)
           request.env['exception_notifier.delivered'] = true
         end
+
+        # This is basically just copied from how Rails logs exceptions in action dispatch
+        message = "\n#{error.class} (#{error.message}):\n"
+        message << "  " << error.backtrace.join("\n  ")
+        Rails.logger.error "#{message}\n\n"
       end
     end
-
-    def parse_model_field_param_list
-      uids = params[:mf_uids]
-
-      # Depending on how params are sent, the uids could be an array or a string
-      # query string like "mf_uid[]=uid&mf_uid[]=uid2" will result in an array (rails takes care of this for us
-      # so do most other web application frameworks and lots of tools autogenerate parameters like this so we'll support it)
-      # query string like "mf_uid=uid,uid2,uid2" results in a string
-      unless uids.is_a?(Enumerable) || uids.blank?
-        uids = uids.split(/[,~]/).collect {|v| v.strip}
-      end
-
-      uids = [] if uids.blank?
-
-      uids 
-    end
-
 end; end; end

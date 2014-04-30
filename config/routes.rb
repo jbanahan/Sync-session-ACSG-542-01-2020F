@@ -483,6 +483,9 @@ OpenChain::Application.routes.draw do
       match "/products/by_id/:id" => "products#show", :via=>:get
       match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
       match "/products/model_fields" => "products#model_fields", :via => :get
+
+      match "/intacct_data/receive_alliance_invoice_numbers" => "intacct_data#receive_alliance_invoice_numbers", :via => :post
+      match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
     end
   end
 end

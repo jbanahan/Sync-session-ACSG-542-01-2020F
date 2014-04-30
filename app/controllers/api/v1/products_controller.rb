@@ -1,4 +1,4 @@
-module Api; module V1; class ProductsController < ApiController
+module Api; module V1; class ProductsController < EntityApiController
 
   def show
     show_module Product

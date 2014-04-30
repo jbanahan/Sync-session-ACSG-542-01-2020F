@@ -1,4 +1,5 @@
 require 'uri'
+require 'open_chain/json_http_client'
 
 module OpenChain; module Api; class ApiClient
 
@@ -33,64 +34,51 @@ module OpenChain; module Api; class ApiClient
 
     uri_string = "#{endpoint}/api/v1/#{URI.encode(path)}"
     uri_string += "?#{encode_parameters(parameters)}" unless parameters.blank?
+    authtoken = "#{username}:#{@authtoken}"
 
     uri = URI.parse(uri_string)
     retry_count = 0
     r = nil
     status = nil
     begin
-      res = Net::HTTP.start(uri.host, uri.port) do |http|
-        if uri.scheme == "https"
-          http.use_ssl = true
-          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-        end
-        
-        req = Net::HTTP::Get.new(uri)
-        req["Authorization"] = "Token token=\"#{username}:#{authtoken}\""
-        req["Accept"] = "application/json"
-        req["Host"] = uri.host
-
-        http.read_timeout = 600
-        http.request req
-      end
-      
-      status = res.code
-      # All errors from the API SHOULD have some form of JSON response so we should technically be able to parse 
-      # every valid HTTP response..this won't apply to routing errors, which will return 404 HTML.  We should figure
-      # out how to fix this before publically releasing the API, but I'm not 100% sure how at the moment.
-      if json_response? res
-        response_body = get_response_body res
-        r = JSON.parse(response_body) unless response_body.blank?
-      end
-  
-      raise "Server responded with an error: #{status}" unless status == "200"
+      r = JsonHttpClient.new.get uri_string, {}, authtoken
     rescue => e
       # There's no real point in retrying 400 series errors, since they're all going to be issues in some manner with the 
       # client request.  The only one we want to specifically watch out for and raise differently is a 401, since that means authentication failed.
-      
-      if status
-        if status == "401"
-          raise ApiAuthenticationError.new((r ? r : make_errors_json("Access to API denied.")), endpoint, username, authtoken)
-        elsif status.starts_with? "4"
-          raise ApiError.new(r ? r : make_errors_json(e.message))
+      if e.is_a? OpenChain::HttpErrorWithResponse
+        http_status = e.http_status.to_i
+        if http_status == 401
+          raise ApiAuthenticationError.new((e.http_response_body ? e.http_response_body : make_errors_json("Access to API denied.")), endpoint, username, @authtoken)
+        elsif (http_status / 100) == 4
+          raise ApiError.new(e.http_response_body ? e.http_response_body : make_errors_json(e.message))
+        elsif (http_status / 100) == 5
+          # Retry 500 series errors a couple times, just in case
+          retry_count += 1
+          if retry_count < 3
+            r = nil
+            sleep 1
+            retry
+          end
+
+          # Set the backtrace information to be that of the actual underlying error
+          raise_api_error_from_error_response(e)
+        else
+          # This means we likely got a valid response but there was something wrong w/ the data (perhaps invalid json?) that caused an error
+          raise_api_error_from_error_response(e)
         end
+      else
+        raise e
       end
-
-      retry_count += 1
-      if retry_count < 3
-        r = nil
-        status = nil
-        sleep 1
-        retry
-      end
-
-      # Set the backtrace information to be that of the actual underlying error.
-      api_error = ApiError.new(r ? r : make_errors_json("API Request failed with error: #{e.message}"))
-      api_error.set_backtrace(e.backtrace)
-
-      raise api_error
     end
+
     r
+  end
+
+  def raise_api_error_from_error_response e
+    api_error = ApiError.new(e.http_response_body ? e.http_response_body : make_errors_json("API Request failed with error: #{e.message}"))
+    api_error.set_backtrace(e.backtrace)
+
+    raise api_error
   end
 
   class ApiError < StandardError 
@@ -121,37 +109,11 @@ module OpenChain; module Api; class ApiClient
     end
 
     def message
-      "Authentication to #{api_endpoint} failed for user #{api_username} and #{api_token}: #{super}"
+     "Authentication to #{api_endpoint} failed for user '#{api_username}' and api token '#{api_token}'. Error: #{super}"
     end
   end
 
-
   private 
-
-    def get_response_body response
-      # This is a fix for the absolutely moronic implementation detail of Net::HTTP not setting the response body
-      # charset based on the server's content-type response header.
-
-      content_type = response['content-type']
-      if content_type && content_type['charset']
-        # Split the content_type header on ; (ie. header field separator) -> Content-Type: text/html; charset=UTF-8
-        charset = content_type.split(';').select do |key|
-          # Find the header key value that contains a charset
-          key['charset']
-        end
-
-        # Only use the first charset (technically, there's nothing preventing multiple of them from being supplied in the header)
-        # and split it into a key value pair array
-        charset = charset.first.to_s.split("=")
-        if charset.length == 2
-          # If the server supplies an invalid or unsupported charset, we'll just handle the error and ignore it.
-          # This isn't really any worse than what was happening before where the default charset was utilized.
-          response.body.force_encoding(charset.last.strip) rescue ArgumentError
-        end
-      end
-
-      response.body
-    end
 
     def encode_parameters parameters
       parameters.map {|k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}"}.join("&")
@@ -159,10 +121,6 @@ module OpenChain; module Api; class ApiClient
 
     def make_errors_json errors
       r = {'errors'=>(errors.is_a?(Array) ? errors : [errors])}
-    end
-
-    def json_response? response
-      response['content-type'].to_s.include? 'application/json'
     end
 
 end; end; end

@@ -176,7 +176,8 @@ describe Api::V1::ProductsController do
       end
 
       it "executes the action with valid authorization header" do
-        request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials "#{@user.username}:#{@user.api_auth_token}"
+        allow_api_access @user
+        
         controller.should_receive(:show) do
           controller.render json: {'ok'=>true}
         end
@@ -196,11 +197,13 @@ describe Api::V1::ProductsController do
         # There's really no need for an opposite test here because pretty much every other test
         # proves it works.
         it "raises an error for non-json requests" do
+          request.env['CONTENT_TYPE'] = 'text/html'
+
           get 'show', id: 1, format: "html"
 
           expect(response.status).to eq 406
           json = ActiveSupport::JSON.decode response.body
-          expect(json['errors']).to eq ["Format html not supported."]
+          expect(json['errors']).to eq ["Content-Type 'text/html' not supported."]
         end
       end
 

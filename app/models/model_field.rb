@@ -1152,7 +1152,7 @@ and classifications.product_id = products.id
         make_broker_invoice_entry_field(45,:bi_ent_total_packages_uom,:total_packages_uom,"Total Packages UOM",:string,lambda {|entry| entry.total_packages_uom}),
         make_broker_invoice_entry_field(46,:bi_ent_cotton_fee,:cotton_fee,"Cotton Fee",:decimal,lambda {|entry| entry.cotton_fee}),
         make_broker_invoice_entry_field(47,:bi_ent_hmf,:hmf,"HMF",:decimal,lambda {|entry| entry.hmf}),
-        make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decima,lambda {|entry| entry.mpf}),
+        make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decimal,lambda {|entry| entry.mpf}),
         make_broker_invoice_entry_field(49,:bi_ent_container_numbers,:container_numbers,"Container Numbers",:text,lambda {|entry| entry.container_numbers}),
         [50,:bi_currency,:currency,"Currency",{:data_type=>:decimal}],
         make_broker_invoice_entry_field(51,:bi_ent_importer_tax_id,:importer_tax_id,"Importer Tax ID",:string,lambda {|entry| entry.importer_tax_id}),

@@ -21,6 +21,8 @@ module Helpers
   end
   
   def allow_api_access user
+    request.env['CONTENT_TYPE'] = 'application/json'
+    request.env['HTTP_ACCEPT'] = 'application/json'
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials "#{user.username}:#{user.api_auth_token}"
   end
 end
