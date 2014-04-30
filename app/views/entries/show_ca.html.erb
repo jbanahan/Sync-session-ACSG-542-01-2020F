@@ -4,7 +4,7 @@
       ev.preventDefault();
       $('#frm_new_bi').slideDown('slow');
     });
-    $(".inv_det_del").live('click',function(ev) {
+    $(document).on('click', ".inv_det_del", function(ev) {
       ev.preventDefault();
       $(this).parents('tr').fadeOut('slow').remove();
     });
@@ -14,7 +14,7 @@
       <%=ChargeCode.order('code ASC').collect {|cc| "{code:'#{cc.code}',desc:'#{cc.description}',hst:'#{cc.apply_hst? ? "0.13" : "0.000" }'}"}.join(',').html_safe%>
     ];
     OCInvoice.addInvoiceLine("#inv_det",cCodes);
-    $('.inv_det_fld').live('change',function() {
+    $(document).on('change', ".inv_det_fld", function() {
       var v = $(this).val();
       if(v==undefined) {
         v = $(this).children(':selected').val();
@@ -76,7 +76,7 @@
         <table>
           <%e_port_name_f = ModelField.find_by_uid(:ent_entry_port_code)%>
           <%=field_row e_port_name_f.label(false), "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}'>#{e_port_name_f.process_export(@entry,current_user)}<span class='glyphicon glyphicon-link' style='font-size:80%;'></span></a>".html_safe%>
-          <%[:ent_mbols,:ent_hbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name].each do |f|%>
+          <%[:ent_mbols,:ent_hbols,:ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name,:ent_employee_name].each do |f|%>
             <%=field_view_row @entry, f %>
           <%end%>
         </table>

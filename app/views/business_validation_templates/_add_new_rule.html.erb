@@ -1,0 +1,27 @@
+<%= form_for @new_rule, url: business_validation_template_business_validation_rules_path(@bvt) do |f| %>
+
+  <div class="form-group">
+    <%= f.label :name %>
+    <%= f.text_field :name, class: "form-control", id: "new-rule-name-field", placeholder: "Enter name..." %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_field :description, class: "form-control", id: "new-rule-description-field", placeholder: "Enter description..." %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :fail_state %>
+    <%= f.text_field :fail_state, class: "form-control", id: "new-rule-fail-state-field", placeholder: "Enter fail state..." %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :rule_attributes_json %>
+    <%= f.text_area :rule_attributes_json, rows: 4, class: "form-control", id: "new-rule-rule-attribute-json-field", placeholder: "Enter the rule's JSON..." %>
+  </div>
+
+  <div align="center">
+    <%= f.submit "Submit", class: "btn btn-primary btn-lg", style: "margin-top: 20px;" %>
+  </div>
+
+<% end %>

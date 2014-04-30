@@ -1,6 +1,6 @@
 class CorrectiveIssue < ActiveRecord::Base
   belongs_to :corrective_action_plan, inverse_of: :corrective_issues
-  attr_accessible :action_taken, :description, :suggested_action
+  attr_accessible :action_taken, :description, :suggested_action, :resolved
 
   def html_description
     mdown description

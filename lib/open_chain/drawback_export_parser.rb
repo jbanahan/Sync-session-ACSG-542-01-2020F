@@ -14,5 +14,19 @@ module OpenChain
         count += 1
       end
     end
+
+    def self.parse_xlsx_file s3_path, importer
+      count = 0
+      f = OpenChain::XLClient.new(s3_path)
+      f.all_row_values(0) do |line|
+        unless count == 0
+          line.map! {|element| element.to_s}
+          d = parse_csv_line line, count, importer
+          d.save! unless d.nil?
+        end
+        count += 1
+      end
+    end
+
   end
 end

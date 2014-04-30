@@ -236,6 +236,40 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_eddie_bauer_ca_statement_summary
+    if OpenChain::Report::EddieBauerCaStatementSummary.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_eddie_bauer_ca_statement_summary
+    if OpenChain::Report::EddieBauerCaStatementSummary.permission?(current_user)
+      settings = {:start_date => params[:start_date].to_date, :end_date => params[:end_date].to_date}
+      run_report "Eddie Bauer CA Statement Summary", OpenChain::Report::EddieBauerCaStatementSummary, settings, ["Invoice Date on or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def show_hm_statistics
+    if OpenChain::Report::HmStatisticsReport.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_hm_statistics
+    if OpenChain::Report::HmStatisticsReport.permission?(current_user)
+      settings = {:start_date => params[:start_date].to_date, :end_date => params[:end_date].to_date}
+      run_report "H&M Statistics Report", OpenChain::Report::HmStatisticsReport, settings, ["On or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+
   private
   def run_report name, klass, settings, friendly_settings
     begin

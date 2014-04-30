@@ -188,6 +188,12 @@ def execute_scheduler
     end
   end
 
+  if MasterSetup.get.system_code == 'underarmour' && Rails.env == 'production'
+    scheduler.every("60m") do
+      OpenChain::CustomHandler::FenixProductFileGenerator.new("UNDERARM").delay.generate
+    end
+  end
+
   if MasterSetup.get.system_code == 'dasvfitracknet' && Rails.env == 'production'
     scheduler.every("60m") do
       OpenChain::CustomHandler::DasProductGenerator.new.delay.generate

@@ -7,6 +7,7 @@ require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/kewill_isf_xml_parser'
+require 'open_chain/custom_handler/lenox/lenox_po_parser'
 require 'open_chain/custom_handler/lenox/lenox_product_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
@@ -71,7 +72,7 @@ module OpenChain
     end
 
     private
-    def self.process_remote_file command
+    def self.process_remote_file command, total_attempts = 3
       bucket = OpenChain::S3.integration_bucket_name
       dir, fname = Pathname.new(command['path']).split
       remote_path = command['remote_path']
@@ -118,9 +119,9 @@ module OpenChain
       elsif command['path'].include? '/_shoes_po/'
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          OpenChain::CustomHandler::Lenox::LenoxProductParser.new.process(IO.read(tmp),User.find_by_username('integration'))
-        end
+        OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_lenox_po/') && MasterSetup.get.custom_feature?('Lenox')
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         get_tempfile(bucket,remote_path,command['path']) do |temp|
           linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)
@@ -139,6 +140,14 @@ module OpenChain
         status_msg = "Can't figure out what to do for path #{command['path']}"
       end
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
+    rescue => e
+      total_attempts -= 1
+      if total_attempts > 0
+        sleep 0.25
+        retry
+      else
+        raise e
+      end
     end
 
     # expects path like /username/to_chain/module/search_name/file.ext

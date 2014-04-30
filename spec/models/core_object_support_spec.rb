@@ -96,16 +96,13 @@ describe CoreObjectSupport do
     end
   end
   describe :view_url do
-    before :each do
-      @rh = "x.y.z"
-      MasterSetup.get.update_attributes(:request_host=>@rh)
-    end
     it "should make url based on request_host" do
+      MasterSetup.any_instance.should_receive(:request_host).and_return "x.y.z"
       p = Factory(:product)
-      p.view_url.should == "http://#{@rh}/redirect.html?page=/products/#{p.id}"
+      p.view_url.should == "http://x.y.z/redirect.html?page=/products/#{p.id}"
     end
     it "should raise exception if id not set" do
-      lambda {Product.new.view_url}.should raise_error
+      expect{Product.new.view_url}.to raise_error
     end
   end
   describe :relative_url do

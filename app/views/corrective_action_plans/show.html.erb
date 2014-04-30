@@ -34,7 +34,27 @@ $(function() {
     $('#tour-prompt').modal('hide');
     Chain.hideMessage('<%=cmsg%>');
   });
+
 });
+
+function updateResolutionStatus(issueID){
+  resolutionStatus = $("#ci-"+issueID+"-checkbox").prop("checked");
+
+  $.ajax({
+  url: '/corrective_issues/'+issueID+'/update_resolution',
+  type: 'POST',
+  data:
+    {
+      is_resolved: resolutionStatus
+    }
+  })
+  .done(function(data){
+    console.log("The resolution status of this issue has been updated.");
+  })
+  .fail(function(data){
+    alert("This issue's resolution status could not be updated.  Please try again after reloading the page.");
+  });
+}
 <%-end-%>
 <%-content_for :action_bar do -%>
   <button class='btn btn_link' link_to='<%=url_for survey_response_path(@cap.survey_response)%>'>Back</button>
@@ -148,14 +168,14 @@ $(function() {
         <div class='col-md-12 muted'>
           <strong>{{comm.user.full_name}}</strong> wrote:
         </div>
-        <div class='col-md-12' ng-bind-html-unsafe='comm.html_body'>
+        <div class='col-md-12' ng-bind-html='comm.html_body'>
         </div>
       </div>
       <%-unless @cap.status==@cap.class::STATUSES[:resolved]-%>
         <div class='row'>
           <div class='col-md-12'>
-            <label for='new_comment'>New Comment:</label'>
-            <textarea id='new_comment' ng-model='comment' rows='5'></textarea>
+            <label for='new_comment'>New Comment:</label>
+            <textarea id='new_comment' ng-model='comment' rows='5' class='form-control'></textarea>
           </div>
         </div>
         <div class='row'>
@@ -179,15 +199,36 @@ $(function() {
               </div>
             </div>
             <label for='issue-text-{{ci.id}}'>Description</label>
-            <div ng-hide='settings.canEdit' ng-bind-html-unsafe='ci.html_description'></div>
+            <div ng-hide='settings.canEdit' ng-bind-html='ci.html_description'></div>
             <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canEdit' id='issue-text-{{ci.id}}' ng-model='ci.description'></textarea>
             <label for='suggest-{{ci.id}}'>Suggested Action</label>
-            <div ng-hide='settings.canEdit' ng-bind-html-unsafe='ci.html_suggested_action'></div>
+            <div ng-hide='settings.canEdit' ng-bind-html='ci.html_suggested_action'></div>
             <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canEdit' id='suggest-{{ci.id}}' ng-model='ci.suggested_action'></textarea>
             <label for='action-{{ci.id}}'>Action Taken</label>
-            <div ng-hide='settings.canUpdateActions' ng-bind-html-unsafe='ci.html_action_taken'></div>
+            <div ng-hide='settings.canUpdateActions' ng-bind-html='ci.html_action_taken'></div>
             <div ng-show='!settings.canUpdateActions && ci.html_action_taken.length==0'><em>Survey recipient has not added information yet.</em></div>
             <textarea rows='6' ng-blur='saveIssue(ci)' ng-show='settings.canUpdateActions' id='action-{{ci.id}}' ng-model='ci.action_taken'></textarea>
+            <div class="row">
+              <div class="col-md-4">
+                <div class="checkbox">
+                  <label>
+                    <% if @cap.can_edit?(current_user) %>
+                      <span ng-switch on="ci.resolved">
+                        <input ng-switch-when="true" type="checkbox" checked id="ci-{{ci.id}}-checkbox" onclick="updateResolutionStatus({{ci.id}})">
+                        <input ng-switch-default type="checkbox" id="ci-{{ci.id}}-checkbox" onclick="updateResolutionStatus({{ci.id}})">
+                      </span>
+                    <% else %>
+                      <span ng-switch on="ci.resolved">
+                        <input ng-switch-when="true" type="checkbox" checked disabled title="You do not have permission to change this issue's resolution status." id="ci-{{ci.id}}-checkbox">
+                        <input ng-switch-default type="checkbox" disabled title="You do not have permission to change this issue's resolution status." id="ci-{{ci.id}}-checkbox">
+                      </span>
+                    <% end %>
+                      Issue resolved
+                    </input>
+                  </label>
+                </div>
+              </div>
+            </div>
           </fieldset>
         </div>
       </div>

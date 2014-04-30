@@ -31,8 +31,15 @@ OpenChain::Application.routes.draw do
     resources :broker_invoices, :only=>[:create]
     get 'validation_results', on: :member
   end
-  resources :business_validation_templates, only:[:index,:show]
-  resources :business_validation_rule_results, only:[:update]
+
+  resources :business_validation_templates do
+    resources :t_search_criterions, only: [:new, :create, :destroy]
+    resources :business_validation_rules, only: [:create, :destroy, :edit, :update] do
+      resources :r_search_criterions, only: [:new, :create, :destroy]
+    end
+  end
+
+  resources :business_validation_rule_results, only: [:update]
   
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
@@ -132,6 +139,7 @@ OpenChain::Application.routes.draw do
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/help" => "chain_help#index"
   match '/users/find_by_email' => "users#find_by_email", :via => :get
+  match '/users/move_to_new_company/:destination_company_id' => "users#move_to_new_company", :via => :post
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
@@ -146,6 +154,9 @@ OpenChain::Application.routes.draw do
 
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
+
+  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#show_email_attachable", via: :get
+  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#send_email_attachable", via: :post
 
   resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
     get 'last_search_id', :on=>:collection
@@ -223,6 +234,10 @@ OpenChain::Application.routes.draw do
   match "/reports/run_landed_cost" => "reports#run_landed_cost", :via=>:post
   match "/reports/show_jcrew_billing" => "reports#show_jcrew_billing", :via=>:get
   match "/reports/run_jcrew_billing" => "reports#run_jcrew_billing", :via=>:post
+  match "/reports/show_eddie_bauer_ca_statement_summary" => "reports#show_eddie_bauer_ca_statement_summary", :via=>:get
+  match "/reports/run_eddie_bauer_ca_statement_summary" => "reports#run_eddie_bauer_ca_statement_summary", :via=>:post
+  match "/reports/show_hm_statistics" => "reports#show_hm_statistics", :via => :get
+  match "/reports/run_hm_statistics" => "reports#run_hm_statistics", :via => :post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
@@ -442,7 +457,9 @@ OpenChain::Application.routes.draw do
   resources :answers, only:[:update] do
     resources :answer_comments, only:[:create]
   end
-  resources :corrective_issues, :only=>[:create,:update,:destroy]
+  resources :corrective_issues, :only=>[:create,:update,:destroy] do
+    post 'update_resolution', on: :member, to: :update_resolution_status
+  end
   
   resources :drawback_upload_files, :only=>[:index,:create] do
     put 'process_j_crew_entries', on: :collection

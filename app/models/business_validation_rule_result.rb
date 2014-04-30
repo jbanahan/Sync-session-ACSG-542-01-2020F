@@ -4,6 +4,13 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   belongs_to :overridden_by, class_name:'User'
   attr_accessible :message, :note, :overridden_at, :state
 
+  def can_view? user
+    user.view_business_validation_rule_results?
+  end
+
+  def can_edit? user
+    user.edit_business_validation_rule_results?
+  end
 
   def run_validation obj
     return if self.overridden_at

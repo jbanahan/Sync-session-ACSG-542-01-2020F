@@ -52,6 +52,13 @@ root.Chain =
       $("#mod_attach").dialog('open')
     )
 
+  sendEmailAttachments: (controller_name, id, to_address, email_subject, email_body, ids_to_include) ->
+    return $.post ('/attachments/email_attachable/' + controller_name + '/' + id),
+      to_address: to_address
+      email_subject: email_subject
+      email_body: email_body
+      ids_to_include: ids_to_include
+
   #tell the server never to show this user message to the current user again
   hideMessage : (messageName) ->
     $.post('/hide_message/'+messageName)
@@ -177,7 +184,7 @@ root.Chain =
       $("#quick_class_content").append(r)
     modal = $("#mod_quick_classify")
     unless modal.length
-      $('body').append("<div style='display:none;' id='mod_quick_classify'>x</div>")
+      $('body').append("<div style='display:none;' id='mod_quick_classify' class='ui-front'>x</div>")
       modal = $("#mod_quick_classify")
     modal.html("")
     h = "<form>"
@@ -212,7 +219,7 @@ root.Chain =
       $("div.quick_class_country").removeClass("selected")
       $(@).parent("div.quick_class_country").addClass("selected")
       $("div[quick-class-content-id]").hide()
-      $("div[quick-class-content-id='"+cid+"']").show("slide",{direction:"left"},500)
+      $("div[quick-class-content-id='"+cid+"']").show("blind",{direction:'left'},500)
     )
     if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"])
       buttons['Advanced'] = () ->

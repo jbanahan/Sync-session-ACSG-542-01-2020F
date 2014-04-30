@@ -83,7 +83,7 @@ class SearchSchedule < ActiveRecord::Base
           write_xls(srch_setup, t)
         end
 
-        send_email srch_setup.name, t, attachment_name, log
+        send_email srch_setup.name, t, attachment_name, srch_setup.user, log
         send_ftp srch_setup.name, t, attachment_name, log
         self.update_attributes(:last_finish_time => Time.now)
         log.info "#{Time.now}: Search schedule #{self.id} complete." if log
@@ -111,7 +111,7 @@ class SearchSchedule < ActiveRecord::Base
         attachment_name = "#{attachment_name}.xls"
       end
       
-      send_email rpt.name, t, attachment_name, log
+      send_email rpt.name, t, attachment_name, rpt.user, log
       send_ftp rpt.name, t, attachment_name, log
       self.update_attributes(:last_finish_time => Time.now)
       log.info "#{Time.now}: Search schedule #{self.id} complete." if log
@@ -131,10 +131,10 @@ class SearchSchedule < ActiveRecord::Base
     nil
   end
 
-  def send_email name, temp_file,attachment_name, log=nil
+  def send_email name, temp_file,attachment_name, user, log=nil
     if !self.email_addresses.nil? && self.email_addresses.include?("@")
       log.info "#{Time.now}: Attempting to send email to #{self.email_addresses}" if log
-      OpenMailer.send_search_result(self.email_addresses, name,attachment_name, temp_file.path).deliver!
+      OpenMailer.send_search_result(self.email_addresses, name, attachment_name, temp_file.path, user).deliver!
       log.info "#{Time.now}: Sent email" if log
     end
   end

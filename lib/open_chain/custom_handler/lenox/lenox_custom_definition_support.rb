@@ -10,11 +10,12 @@ module OpenChain; module CustomHandler; module Lenox; module LenoxCustomDefiniti
     product_buyer_name:{label:'Buyer Name',data_type: :string, module_type:'Product'},
     product_units_per_set:{label:'Units Per Set',data_type: :integer, module_type:'Product'},
     product_coo:{label:'Country of Origin',data_type: :string, module_type:'Product'},
-    order_line_note:{label:'Note',data_type: :string, module_type:'OrderLine'},
     order_buyer_name:{label:'Buyer',data_type: :string, module_type:'Order'},
     order_buyer_email:{label:'Buyer Email',data_type: :string, module_type:'Order'},
     order_destination_code:{label:'Final Destination',data_type: :string,module_type:'Order'},
-    order_factory_code:{label:'Factory Code', data_type: :string, module_type:'Order'}
+    order_factory_code:{label:'Factory Code', data_type: :string, module_type:'Order'},
+    order_line_note:{label:'Note',data_type: :string, module_type:'OrderLine'},
+    order_line_destination_code:{label:'Destination Code',data_type: :string, module_type:'OrderLine'}
   } 
   
   def self.included(base)

@@ -3,6 +3,14 @@ class BusinessValidationResult < ActiveRecord::Base
   belongs_to :validatable, polymorphic: true, touch: true
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_result, autosave: true
 
+  def can_view? user
+    user.view_business_validation_results?
+  end
+
+  def can_edit? user
+    user.edit_business_validation_results?
+  end
+
   def run_validation
     base_state = 'Skipped'
     results = self.business_validation_rule_results

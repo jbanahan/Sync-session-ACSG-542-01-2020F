@@ -3,6 +3,14 @@
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
 require 'delayed/command'
 
+# Preload all of lib (this prevents use from having to individually require files for delayed usage in an initializer)
+# If we didn't do this, any .rb files referenced from delayed methods that aren't required when rails loads the .rb files
+# from the app directory will fail to run.  This ends up being a minimal memory bump for delayed jobs, so it's worth it.
+Dir[Rails.root + 'lib/**/*.rb'].each {|f| require f}
+# Don't destroy jobs that couldn't be intialized or run, we want to make sure we see these so we know
+# there was a problem with them.
+Delayed::Worker.destroy_failed_jobs = false
+
 # We need to use MonoLogger instead of the standard ruby logger used by the command class 
 # because in ruby 2.0 you cannot use mutexes in signal traps due to potential deadlock issues 
 # with re-entrant signal handlers.  Standard logger uses a mutex resulting in exceptions

@@ -10,8 +10,8 @@ $(function() {
     $("#conditional_buttons").hide();
     $("#must_save").show();
   }
-  $("#search_setup select, #search_setup input").live('blur',swap_buttons);
-  $("#search_setup a").live('click',swap_buttons);
+  $(document).on("blur", "#search_setup select, #search_setup input", swap_buttons);
+  $(document).on("click", "#search_setup a", swap_buttons);
 });
 <%end-%>
 <%content_for :action_bar do -%>

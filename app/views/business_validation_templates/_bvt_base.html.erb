@@ -1,0 +1,17 @@
+<%= form_for bvt do |f| %>
+  <div class="form-group">
+    <%= f.label :name %>
+    <%= f.text_field :name, class: "form-control", id:"new-bvt-name-field", placeholder: "Enter name..." %>
+  </div>
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_field :description, class: "form-control", id:"new-bvt-description-field", placeholder: "Enter description..." %>
+  </div>
+  <div class="form-group">
+    <%= f.label :module_type %>
+    <%= f.text_field :module_type, class: "form-control", id:"new-bvt-module-type-field", placeholder: "Enter module type..." %>
+  </div>
+  <div align="center">
+    <%= f.submit "Submit", class: "btn btn-primary btn-lg", style: "margin-top: 20px;" %>
+  </div>
+<% end %>

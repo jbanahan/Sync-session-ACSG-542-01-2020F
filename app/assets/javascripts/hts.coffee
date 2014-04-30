@@ -34,19 +34,19 @@ htsApp.controller 'HtsCtrl', ['$scope','$http',($scope,$http) ->
     $scope.chapters = []
     if country.iso == 'US' || country.iso == 'CA'
       $scope.viewMode = 'base'
-      $http.get('/hts/'+country.iso).success((data) ->
+      $http.get('/hts/'+country.iso+'.json').success((data) ->
         $scope.chapters = data.chapters
       )
     else
       $scope.viewMode = 'more-info'
 
   $scope.loadChapter = (country,chapter) ->
-    $http.get('/hts/'+country.iso+'/chapter/'+chapter.num).success((data) ->
+    $http.get('/hts/'+country.iso+'/chapter/'+chapter.num+'.json').success((data) ->
       chapter.headings = data.headings
     )
 
   $scope.loadHeading = (country,chapter,heading) ->
-    $http.get('/hts/'+country.iso+'/heading/'+chapter.num+heading.num).success((data) ->
+    $http.get('/hts/'+country.iso+'/heading/'+chapter.num+heading.num+'.json').success((data) ->
       heading.sub_headings = data.sub_headings
     )
 

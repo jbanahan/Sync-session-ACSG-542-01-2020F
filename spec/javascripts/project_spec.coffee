@@ -116,7 +116,7 @@ describe "ProjectApp", () ->
       compile = $compile
       $scope = $rootScope
       svc = projectSvc
-      $templateCache.put('/assets/chain_project_deliverable_edit.html','<div><div class="modal">abc</div></div>')
+      $templateCache.put('/assets/chain_project_deliverable_edit.html','<div><div class="modal"><button id="fakebutton">def</button>abc</div></div>')
       mockCallback = (p) ->
         null
       deliverable = {id:1,project_id:2}
@@ -135,7 +135,7 @@ describe "ProjectApp", () ->
       }
       spyOn(svc, 'saveDeliverable').andReturn(promise)
       $scope.$digest()
-      el.scope().saveDeliverable()
+      el.find('#fakebutton').scope().saveDeliverable()
       expect(svc.saveDeliverable).toHaveBeenCalledWith({id:2},deliverable)
 
     it "should call savePromiseCallback", () ->
@@ -148,7 +148,7 @@ describe "ProjectApp", () ->
       spyOn(svc, 'saveDeliverable').andReturn(promise)
       spyOn($scope,'savePromiseCallback')
       $scope.$digest()
-      el.scope().saveDeliverable()
+      el.find('#fakebutton').scope().saveDeliverable()
       expect($scope.savePromiseCallback).toHaveBeenCalledWith(promise)
 
     it "should set error message if save fails", () ->
@@ -160,8 +160,8 @@ describe "ProjectApp", () ->
       }
       spyOn(svc, 'saveDeliverable').andReturn(promise)
       $scope.$digest()
-      el.scope().saveDeliverable()
-      expect(el.scope().errors.errorMessage).toEqual('xyz')
+      el.find('#fakebutton').scope().saveDeliverable()
+      expect(el.find('#fakebutton').scope().errors.errorMessage).toEqual('xyz')
       
   describe 'ProjectCtrl', () ->
     ctrl = svc = $scope = null

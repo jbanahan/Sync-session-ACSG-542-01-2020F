@@ -12,6 +12,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     )
   end
 
+  
+
   def generate_temp_files entries
     header_file = Tempfile.new(['LENOXHEADER','.txt'])
     detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
@@ -25,30 +27,38 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   end
 
   def generate_header_rows entry
-    get_vendor_codes(entry).each do |vendor_code|
-      yield build_header_row(entry,vendor_code,build_mode_specific_values(entry))
+    get_vendor_code_and_invoices(entry).each do |vendor_code,invoices|
+      gross_weight = invoices.inject(0) {|r,inv| r + (inv.gross_weight.blank? ? 0 : inv.gross_weight)}
+      yield build_header_row(entry,vendor_code,gross_weight,build_mode_specific_values(entry))
     end
   end
 
   def generate_detail_rows entry
     vals = build_mode_specific_values(entry)
     entry.commercial_invoice_lines.each_with_index do |ln,i|
+      order_line = get_order_line(ln)
+      raise LenoxBusinessLogicError.new("Order Line couldn't be found for order #{ln.po_number}, part #{ln.part_number}") if order_line.nil?
       r = "ASND"
       r << @f.str(entry.master_bills_of_lading,35)
       r << @f.str(vals[:cnum],17)
       r << @f.num(i+1,9)
       r << @f.str(get_order_custom_value(:order_factory_code,ln),10)
-      r << @f.str(ln.po_number,10)
-      r << @f.str(ln.part_number,18)
+      r << @f.str(ln.po_number,35)
+      r << @f.str(ln.part_number,35)
       r << @f.num(get_exploded_quantity(ln),7)
       r << @f.str(ln.country_origin_code,4)
       r << ''.ljust(126)
       r << time_and_user
+      r << @f.num(order_line.price_per_unit,18,6)
+      r << @f.num(ln.unit_price,18,6)
       yield r
     end
   end
 
   private
+  def get_order_line(ln)
+    OrderLine.joins([:order,:product]).where("products.unique_identifier = ?","LENOX-#{ln.part_number.strip}").where("orders.order_number = ?","LENOX-#{ln.po_number}").order('order_lines.line_number DESC').first
+  end
   def get_exploded_quantity ci_line
     p = Product.find_by_unique_identifier("LENOX-#{ci_line.part_number.strip}")
     if p.nil?
@@ -56,7 +66,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     end
     piece_factor = p.get_custom_value(@cdefs[:product_units_per_set]).value
     piece_factor = 1 if piece_factor.nil? || piece_factor < 1
-    ci_line.quantity * piece_factor
+    ci_line.quantity / piece_factor
   end
   def build_mode_specific_values entry
     if entry.transport_mode_code == '11'
@@ -69,7 +79,6 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       return {
         cnum:cont.container_number,
         csize:cont.container_size,
-        weight:cont.weight,
         cartons:cont.quantity,
         seal:cont.seal_number,
         fcl:(cont.fcl_lcl=='F' ? 'Y' : 'N')
@@ -77,20 +86,19 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     else
       vals = {
         cnum:entry.house_bills_of_lading,
-        weight:entry.gross_weight,
         cartons:entry.total_packages,
         fcl:'N'
       }
     end
   end
-  def build_header_row entry, vendor_code, vals
+  def build_header_row entry, vendor_code, gross_weight, vals
     r = ""
     r << "ASNH"
     r << @f.str(entry.master_bills_of_lading,35)
     r << @f.str(vendor_code,8)
     r << @f.str(vals[:cnum],17)
     r << @f.str(vals[:csize],10)
-    r << @f.num(vals[:weight],10,3)
+    r << @f.num(gross_weight,10,3)
     r << @f.str('KG',10)
     r << @f.num(0,7,0) #TODO cubic meters
     r << @f.str(entry.vessel,18)
@@ -103,7 +111,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     r << @f.date(entry.export_date)
     r << @f.str(entry.lading_port_code,10)
     r << @f.str(entry.unlading_port_code,10)
-    r << @f.str(entry.transport_mode_code,5)
+    r << @f.str(entry.transport_mode_code,6)
     r << @f.str(get_final_destination_code(entry),10)
     r << 'APP '
     r << ''.ljust(80)
@@ -114,22 +122,30 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     "#{@f.date(Time.now,'%Y%m%d%H%M%S')}#{@f.str((Rails.env.production? ? 'vanvendor' : 'vanvendortest'),15) }"
   end
   def get_final_destination_code entry
-    get_order_custom_value(:order_destination_code,entry.commercial_invoice_lines.first)
+    get_order_line(entry.commercial_invoice_lines.first).get_custom_value(@cdefs[:order_line_destination_code]).value
   end
   def get_order_custom_value cval_identifier, ci_line
-    ord = Order.find_by_importer_id_and_order_number(@lenox.id,ci_line.po_number)  
+    ord = get_order(ci_line)
     ord.get_custom_value(@cdefs[cval_identifier]).value
   end
-  def get_vendor_codes entry
-    po_numbers = entry.commercial_invoice_lines.pluck('DISTINCT po_number')
-    orders = Order.where("order_number in (?)",po_numbers).where(importer_id:@lenox.id).to_a
-    raise LenoxBusinessLogicError.new("Order numbers #{po_numbers} only matched #{orders.size} orders for entry #{entry.entry_number}") if po_numbers.size != orders.size
-    vendor_codes = Company.where("id IN (?)",orders.collect {|o| o.vendor_id}).collect do |c|
+  def get_order ci_line
+    Order.find_by_importer_id_and_order_number(@lenox.id,"LENOX-#{ci_line.po_number}")  
+  end
+  def get_vendor_code_and_invoices entry
+    h = {}
+    entry.commercial_invoices.each do |ci|
+      po_numbers = ci.commercial_invoice_lines.pluck('DISTINCT po_number')
+      po_numbers = po_numbers.collect {|p| "LENOX-#{p}"}
+      orders = Order.where("order_number in (?)",po_numbers).where(importer_id:@lenox.id).to_a
+      raise LenoxBusinessLogicError.new("Order numbers #{po_numbers} only matched #{orders.size} orders for entry #{entry.entry_number}") if po_numbers.size != orders.size
+      c = orders.first.vendor
       #strip the LENOX- prefix from the sytem code to get the lenox internal code
       #see the LenoxPoParser to see how these are created
-      c.system_code.gsub('LENOX-','') 
+      vendor_code = c.system_code.gsub('LENOX-','') 
+      h[vendor_code] ||= []
+      h[vendor_code] << ci
     end
-    vendor_codes
+    h
   end
 
 end; end; end; end

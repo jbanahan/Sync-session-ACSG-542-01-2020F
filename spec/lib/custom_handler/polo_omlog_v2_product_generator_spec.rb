@@ -32,6 +32,37 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       a[2][13].should == '2222222222'.hts_format
       a[2][16].should == '3333333333'.hts_format
     end
+    it "should build record without CSM number" do
+      @cd = Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text)
+      @italy = Factory(:country,:iso_code=>'IT')
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>Factory(:classification,:country=>@italy))
+      @product = tr.classification.product
+      @product.update_attributes :name => "Value1\nValue2\r\nValue3"
+      @tmp = described_class.new.sync_csv
+      a = CSV.parse IO.read @tmp.path
+      a[1][1].should == ""
+      a[1][6].should == @product.unique_identifier
+      a[1][8].should == 'Value1 Value2 Value3'
+      a[1][10].should == '1234567890'.hts_format
+      a[1][13].should == '2222222222'.hts_format
+      a[1][16].should == '3333333333'.hts_format      
+    end
+    it "should build record with blank CSM number" do
+      @cd = Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text)
+      @italy = Factory(:country,:iso_code=>'IT')
+      tr = Factory(:tariff_record,:hts_1=>'1234567890',:hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>Factory(:classification,:country=>@italy))
+      @product = tr.classification.product
+      @product.update_attributes :name => "Value1\nValue2\r\nValue3"
+      @product.update_custom_value! @cd, ""
+      @tmp = described_class.new.sync_csv
+      a = CSV.parse IO.read @tmp.path
+      a[1][1].should == ""
+      a[1][6].should == @product.unique_identifier
+      a[1][8].should == 'Value1 Value2 Value3'
+      a[1][10].should == '1234567890'.hts_format
+      a[1][13].should == '2222222222'.hts_format
+      a[1][16].should == '3333333333'.hts_format
+    end
   end
   describe :query do
     before :each do
@@ -59,10 +90,10 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       r = Product.connection.execute described_class.new.query
       r.count.should == 0
     end
-    it "should not find product without CSM number" do
+    it "should find product without CSM number" do
       @product.update_custom_value! @cd, ''
       r = Product.connection.execute described_class.new.query
-      r.count.should == 0
+      expect(r.count).to eq 1
     end
     it "should not find product already synced" do
       @product.sync_records.create!(:trading_partner=>described_class.new.sync_code,:sent_at=>10.minutes.ago,:confirmed_at=>5.minutes.ago)

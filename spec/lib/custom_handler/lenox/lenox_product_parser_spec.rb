@@ -58,5 +58,21 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
       expect(p.last_updated_by).to eq @u
       expect(p.entity_snapshots.count).to eq 1
     end
+
+    describe "parse" do
+      it "parses a product file" do
+        @u.update_attributes! username: 'integration'
+
+        # This is just an integration call through to the process method, just make sure it runs without error
+        described_class.parse @row
+        expect(Product.first.unique_identifier).to eq 'LENOX-00200GB'
+      end
+    end
+  end
+
+  describe "integration_folder" do
+    it "uses an integration folder" do
+      expect(described_class.integration_folder).to eq "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_product"
+    end
   end
 end

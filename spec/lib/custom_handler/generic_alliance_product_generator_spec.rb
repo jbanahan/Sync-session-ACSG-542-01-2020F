@@ -4,17 +4,16 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
   before :each do
-    @c = Factory(:company,:alliance_customer_number=>'MYCUS')
+    @c = Factory(:company,:alliance_customer_number=>'MYCUS', last_alliance_product_push_at: '2000-01-01')
   end
   describe :sync do
     it "should call appropriate methods" do
       k = described_class
-      m = mock("generator")
-      k.should_receive(:new).with(@c).and_return m
       f = mock("file")
-      f.should_receive(:unlink)
-      m.should_receive(:sync_fixed_position).and_return(f)
-      m.should_receive(:ftp_file).with(f)
+      f.should_receive(:closed?).and_return false
+      f.should_receive(:close!)
+      OpenChain::CustomHandler::GenericAllianceProductGenerator.any_instance.should_receive(:sync_fixed_position).and_return(f)
+      OpenChain::CustomHandler::GenericAllianceProductGenerator.any_instance.should_receive(:ftp_file).with(f)
       k.sync(@c).should be_nil
     end
   end
@@ -72,6 +71,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       it "should generate output file" do
         @tmp = described_class.new(@c).sync_fixed_position
         IO.read(@tmp.path).should == "MYPN           MYNAME                                  1234567890CN\n"
+        expect(@c.last_alliance_product_push_at.to_date).to eq Time.zone.now.to_date
       end
       it "transliterates non-ASCII data" do
         # Text taken from Rails transliterate rdoc example
@@ -136,6 +136,17 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         r = ActiveRecord::Base.connection.execute described_class.new(@c).query
         r.count.should == 0
       end
+    end
+  end
+
+  describe "run_schedulable" do
+    it 'uses customer number from ops to run via scheduler' do
+      OpenChain::CustomHandler::GenericAllianceProductGenerator.should_receive(:sync) do |c|
+        expect(c.id).to eq @c.id
+        nil
+      end
+
+      OpenChain::CustomHandler::GenericAllianceProductGenerator.run_schedulable({'alliance_customer_number'=>@c.alliance_customer_number})
     end
   end
 end

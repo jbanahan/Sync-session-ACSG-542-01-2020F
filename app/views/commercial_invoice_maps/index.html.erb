@@ -37,7 +37,7 @@ $(function() {
     ev.preventDefault();
     OCM.addInputPair();
   });
-  $(".d_lnk").live('click',function(ev) {
+  $(document).on('click', ".d_lnk", function(ev) {
     ev.preventDefault();
     OCM.deletePair(this);
   })
