@@ -13,7 +13,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
   def run opts
     push_receivables
     push_payables
-    push_checks
   end
 
   def push_payables
