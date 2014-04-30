@@ -1123,13 +1123,13 @@ $.format = $.validator.format;
 				handler: function(e) {
 					arguments[0] = $.event.fix(e);
 					arguments[0].type = fix;
-					return $.event.handle.apply(this, arguments);
+					return $.event.dispatch.apply(this, arguments);
 				}
 			};
 			function handler(e) {
 				e = $.event.fix(e);
 				e.type = fix;
-				return $.event.handle.call(this, e);
+				return $.event.dispatch.call(this, e);
 			}
 		});
 	};
