@@ -30,7 +30,7 @@ module OpenChain
       #
       # If nil or a blank array is returned then this row of sync data is skipped and will not be included
       # in the output, nor will the product be marked as synced.
-      def preprocess_row row
+      def preprocess_row row, opts = {}
         [row]
       end
 
@@ -57,7 +57,8 @@ module OpenChain
           end
           row = {}
           clean_vals.each_with_index {|v,i| row[i-1] = v unless i==0}
-          processed_rows = preprocess_row row
+
+          processed_rows = preprocess_row row, last_result: (rt.size == (i + 1))
           # Allow for preprocess_row to "reject" the row and not process it in this sync pass.
           # Allows for more complicated code based handling of sync data that might not be able to be
           # done via the query.

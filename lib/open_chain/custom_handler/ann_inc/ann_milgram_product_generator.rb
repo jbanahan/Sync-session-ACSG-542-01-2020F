@@ -37,7 +37,7 @@ module OpenChain
           super(false, {:col_sep=>"\t"}) #no headers
         end
 
-        def preprocess_row outer_row
+        def preprocess_row outer_row, opts = {}
           explode_lines_with_related_styles(outer_row) do |row|
             r = []
 

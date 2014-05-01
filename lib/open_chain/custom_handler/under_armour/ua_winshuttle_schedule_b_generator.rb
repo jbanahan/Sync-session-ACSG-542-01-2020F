@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       f.original_filename = "winshuttle_schedule_b_#{Time.now.strftime('%Y%m%d')}.xls"
       OpenMailer.send_simple_html(email_address,'Winshuttle Schedule B Output File','Your Winshuttle schedule b output file is attached.  For assistance, please email support@vandegriftinc.com',[f]).deliver
     end
-    def preprocess_row base_row
+    def preprocess_row base_row, opts = {}
       r = []
       base_row[4] = base_row[4].hts_format
       color_codes = base_row.delete 5

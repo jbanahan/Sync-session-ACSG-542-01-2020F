@@ -29,7 +29,7 @@ module OpenChain
         {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/sap_#{@env==:qa ? 'qa' : 'prod'}"}
       end
 
-      def preprocess_row row
+      def preprocess_row row, opts = {}
         row.each do |key, val|
           row[key] = convert_to_ascii(val)
         end

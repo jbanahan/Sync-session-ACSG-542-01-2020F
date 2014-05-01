@@ -5,7 +5,7 @@ module OpenChain
         {:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/alliance_products',:remote_file_name=>remote_file_name}
       end
 
-      def preprocess_row row
+      def preprocess_row row, opts = {}
         row.each do |column, val|
           # So, what we're doing here is attempting to transliterate any NON-ASCII data...
           # If that's not possible, we're using an ASCII bell character.
