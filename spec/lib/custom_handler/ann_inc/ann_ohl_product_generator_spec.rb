@@ -154,6 +154,23 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       r[5][0].should == "P-Style"
       r[5][4].should == "CA"
     end
+    it "handles multiple product records" do
+      p = Factory(:product)
+      p2 = Factory(:product)
+
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      cls = p2.classifications.create!(:country_id=>@ca.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      r = run_to_array
+      r.should have(2).records
+      r[0][0].should == p.unique_identifier
+      r[1][0].should == p2.unique_identifier
+    end
   end
   describe :ftp_credentials do
     it "should send proper credentials" do
