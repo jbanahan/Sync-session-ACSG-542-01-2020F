@@ -1,0 +1,115 @@
+<div class="row">
+  <div class="col-md-8 col-md-offset-2 text-center">
+    <h2>
+      Part Number Correlation
+    </h2>
+  </div>
+</div>
+
+<%= form_for PartNumberCorrelation.new, html: {id: "part_number_correlation_form", multipart: true} do |f| %>
+  <div class="row">
+    <div class="col-md-6 col-md-offset-3">
+      <div class="form-group">
+        <label>Starting row number</label>
+        <%= f.text_field :starting_row, placeholder: "Enter starting row number", class: "form-control" %>
+      </div>
+      <div class="form-group">
+        <label>Part column</label>
+        <%= f.text_field :part_column, placeholder: "Column containing part numbers (Ex: D, AA, BA)", class: "form-control" %>
+      </div>
+      <div class="form-group">
+        <label>Part regex</label>
+        <%= f.text_field :part_regex, placeholder: "For example, match four digits by entering: \\d{4}", class: "form-control" %>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group text-center">
+            <label>Importer(s)</label><br>
+            <%= f.select(:importers, @importer_choices,{},{multiple: true, size: 5, style: "min-width: 160px;"}) %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group text-center">
+            <label>Entry country</label><br>
+            <%= f.select(:entry_country_iso, [[@usa.name, @usa.iso_code],[@can.name,@can.iso_code]], {}, {style: "min-width: 160px;"}) %>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>File</label>
+        <%= f.file_field :attachment %>
+      </div>
+      <div class="text-right">
+        <%= f.submit "Start Processing", class: "btn btn-primary" %>
+      </div>
+    </div>
+  </div>
+<% end %>
+
+<hr></hr>
+
+<div class="row">
+  <div class="col-md-8 col-md-offset-2 text-center">
+    <h2>
+      Recent Results
+    </h2>
+  </div>
+</div>
+
+<div class="row" style="margin-bottom: 10px;">
+  <div class="col-md-2 col-md-offset-2 text-center">
+    <b>
+      File name
+    </b>
+  </div>
+  <div class="col-md-2">
+    <b>
+      Download link
+    </b>
+  </div>
+  <div class="col-md-2">
+    <b>
+      Start time
+    </b>
+  </div>
+  <div class="col-md-2">
+    <b>
+      Finish time
+    </b>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-2 col-md-offset-2" id="new_file_name">
+    Waiting for file...
+  </div>
+  <div class="col-md-2" id="new_download_link">
+    ---
+  </div>
+  <div class="col-md-2" id="new_start_time">
+    ---
+  </div>
+  <div class="col-md-2" id="new_finish_time">
+    ---
+  </div>
+</div>
+
+<% current_user.part_number_correlations.find(:all, order: "created_at DESC")[0..19].each do |pnc| %>
+  <div class="row">
+    <div class="col-md-2 col-md-offset-2">
+      <%= pnc.attachment.attached_file_name %>
+    </div>
+    <div class="col-md-2">
+      <%= link_to "Download results", download_attachment_path(pnc.attachment) %>
+    </div>
+    <div class="col-md-2">
+      <%= pnc.created_at %>
+    </div>
+    <div class="col-md-2">
+      <%= pnc.finished_time.nil? ? "---" : pnc.finished_time %>
+    </div>
+  </div>
+<% end %>
+
+
+  

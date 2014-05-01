@@ -18,4 +18,8 @@
     <h2><a href='/projects'>Projects</a></h2>
     <p>View the project portfolio</p>
   <% end %>
+  <% if current_user.view_entries? and current_user.company.master? %>
+    <h2><a href='/part_number_correlations'>HTS Lookup</a></h2>
+    <p>Find prior tariff information for products.</p>
+  <% end %>
 </div>

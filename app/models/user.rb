@@ -48,6 +48,7 @@ class User < ActiveRecord::Base
   has_many   :instant_classification_results, :foreign_key => :run_by_id
   has_many   :report_results, :foreign_key => :run_by_id
   has_many   :survey_responses
+  has_many   :part_number_correlations, :dependent => :destroy
   has_many   :support_tickets, :foreign_key => :requestor_id
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
 
