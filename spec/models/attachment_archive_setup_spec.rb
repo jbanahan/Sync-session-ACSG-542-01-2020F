@@ -85,6 +85,10 @@ describe AttachmentArchiveSetup do
       @invoice.update_attributes! invoice_date: Time.current.midnight.at_beginning_of_month
       expect(@setup).not_to be_entry_attachments_available
     end
+    it "excludes invoices that occur after the end date" do
+      @setup.update_attributes! end_date: Date.new(2013, 1, 1)
+      expect(@setup).not_to be_entry_attachments_available
+    end
   end
   describe "entry_attachments_available?" do
     it "should return true if unarchived attachments exist for company" do
