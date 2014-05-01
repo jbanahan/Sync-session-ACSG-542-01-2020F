@@ -11,8 +11,32 @@ describe OpenChain::OhlDrawbackParser do
   end
   it 'should create entries based on sample, skipping Mode = "-1"' do
     entries = Entry.all
-    entries.should have(2).items
-    entries.collect {|e| e.entry_number}.should == ['11350368418','11353554642']
+    entries.should have(3).items
+    entries.collect {|e| e.entry_number}.should == ['11350368418','11353554642','11365647418']
+  end
+  it 'should map newer 31 column format' do
+    ent = Entry.find_by_entry_number '11365647418'
+    expect(ent.entry_port_code).to eql '4601'
+    expect(ent.arrival_date).to eql @est.parse('2014-04-01')
+    expect(ent.mpf).to eql BigDecimal(485)
+    expect(ent.transport_mode_code).to eql '11'
+    expect(ent.total_invoiced_value).to eql BigDecimal('280512.00')
+    expect(ent.total_duty).to eql BigDecimal('0')
+    expect(ent.total_duty_direct).to eql BigDecimal('43.41')
+    expect(ent.merchandise_description).to eql '1307 MENS & WOMENS WEARING APPAREL'
+    expect(ent.commercial_invoices.count).to eql 1
+    ci = ent.commercial_invoices.first
+    expect(ci.commercial_invoice_lines.count).to eql 1
+    ln = ci.commercial_invoice_lines.first
+    expect(ln.part_number).to eql '1233719-025'
+    expect(ln.po_number).to eql '4500493274'
+    expect(ln.quantity).to eql 3528
+    tr = ln.commercial_invoice_tariffs.first
+    expect(tr.hts_code).to eq '6109901090'
+    expect(tr.duty_amount).to eq BigDecimal('0')
+    expect(tr.classification_qty_1).to eq BigDecimal('294')
+    expect(tr.classification_uom_1).to eq 'DOZ'
+    expect(tr.entered_value).to eq BigDecimal('14575')
   end
   it 'should map header fields' do
     ent = Entry.find_by_entry_number '11350368418'
@@ -79,10 +103,10 @@ describe OpenChain::OhlDrawbackParser do
     found = Entry.find_by_entry_number('11350368418')
     found.id.should == ent.id
     found.merchandise_description.should == 'WEARING APPAREL, FOOTWEAR'
-    Entry.all.should have(2).items
+    Entry.all.should have(3).items
   end
   it 'should map source' do
-    Entry.where(:source_system=>'OHL Drawback').all.should have(2).items
+    Entry.where(:source_system=>'OHL Drawback').all.should have(3).items
   end
   it 'should map import country' do
     Entry.first.import_country.iso_code.should == 'US'
