@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler do
     p = Factory(:product) 
     p.sync_records.create!(trading_partner:'XYZ')
     p.update_custom_value! cdefs[:related_styles], 'REL123'
-    described_class.new.process_product_ack_file "h,h,h\nREL123,2013060191051,OK", 'fn.csv', 'XYZ', "example@example.com", "some/key.csv"
+    described_class.new.process_product_ack_file "h,h,h\nREL123,2013060191051,OK", 'fn.csv', 'XYZ', "chainio_admin"
     p.reload
     sr = p.sync_records.first
     sr.confirmed_at.should > 1.minute.ago
