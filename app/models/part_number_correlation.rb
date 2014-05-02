@@ -66,7 +66,7 @@ class PartNumberCorrelation < ActiveRecord::Base
   end
 
   def add_additional_column_headings(xlc, rows_used)
-    xlc.set_cell(0, 0, rows_used, "MFID")
+    xlc.set_cell(0, 0, rows_used, "MID")
     xlc.set_cell(0, 0, rows_used + 1, "HTS Code")
     xlc.set_cell(0, 0, rows_used + 2, "Country of Origin Code")
     xlc

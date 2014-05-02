@@ -11,11 +11,11 @@ class PartNumberCorrelationsController < ApplicationController
       pnc = PartNumberCorrelation.new(params[:part_number_correlation])
       att = Attachment.new(attached: attached_file)
       pnc.attachment = att; pnc.user = current_user
-      if pnc.save!
+      if pnc.save
         pnc.delay.process(importers)
-        add_flash :notices, "Your file is being processed.  You will receive a system notification when processing is complete."
+        add_flash :notices, "Your file is being processed. You will receive a system notification when processing is complete."
       else
-        add_flash :errors, "We were unable to begin processing your file.  Please refresh the page and try again."
+        add_flash :errors, "#{pnc.errors.full_messages.join(' ')}. Please refresh the page and try again."
       end
     else
       add_flash :errors, "You do not have permission to use this tool."
@@ -27,8 +27,6 @@ class PartNumberCorrelationsController < ApplicationController
   def index
     if PartNumberCorrelation.can_view?(current_user)
       @importer_choices = Company.importers.collect{|c| [c.name, c.id]}
-      @usa = Country.find_by_iso_code("US")
-      @can = Country.find_by_iso_code("CA")
     else
       add_flash :errors, "You do not have permission to use this tool."
       redirect_to :back

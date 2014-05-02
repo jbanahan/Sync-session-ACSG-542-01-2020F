@@ -16,7 +16,7 @@ describe PartNumberCorrelationsController do
       PartNumberCorrelation.stub(:can_view?).and_return(true)
       post :create, part_number_correlation: {starting_row: 1, part_column: "B", part_regex: "", importer_ids: ["1","2","3"], entry_country_iso: "US", attachment: @file}
       response.should be_redirect
-      flash[:notices].first.should == "Your file is being processed.  You will receive a system notification when processing is complete."
+      flash[:notices].first.should == "Your file is being processed. You will receive a system notification when processing is complete."
       @pnc = PartNumberCorrelation.last
 
       @pnc.starting_row.should == 1
@@ -39,11 +39,11 @@ describe PartNumberCorrelationsController do
     end
 
     it "should redirect and show error on exceptions" do
-      PartNumberCorrelation.any_instance.stub(:save!).and_return(false)
+      PartNumberCorrelation.any_instance.stub(:save).and_return(false)
       PartNumberCorrelation.stub(:can_view?).and_return(true)
       post :create, part_number_correlation: {starting_row: 3, part_column: "D", part_regex: "", importer_ids: ["1","2","3"], entry_country_iso: "US", attachment: @file}
       response.should be_redirect
-      flash[:errors].first.should == "We were unable to begin processing your file.  Please refresh the page and try again."
+      flash[:errors].first.should match("Please refresh the page and try again.")
     end
   end
 
