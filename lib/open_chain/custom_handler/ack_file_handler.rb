@@ -12,7 +12,7 @@ module OpenChain
         process_product_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:email_address], opts[:key]
       end
       
-      def process_product_ack_file file_content, file_name, sync_code, email_address = "", key = ""
+      def process_product_ack_file file_content, file_name, sync_code, email_address, key
         #I've made the last two arguments optional just in case the ann_zym processor shouldn't use them.  All calls in this file use these arguments.
         errors = get_ack_file_errors file_content, file_name, sync_code
         handle_errors errors, file_name, email_address, file_content, key unless errors.blank?
