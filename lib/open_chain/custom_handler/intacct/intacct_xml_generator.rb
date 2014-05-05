@@ -15,6 +15,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       add_element trans, "transactiontype", receivable.receivable_type
       add_date trans, "datecreated", receivable.invoice_date
       add_element trans, "customerid", receivable.customer_number
+      add_element trans, "referenceno", receivable.customer_reference
       add_element trans, "documentno", receivable.invoice_number
       add_element trans, "currency", receivable.currency
       add_date trans, "exchratedate", receivable.invoice_date
@@ -193,6 +194,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       add_element gl, "amount", payable_line.amount
       gl_account = (gl_entry_type == "credit" ? payable_line.bank_cash_gl_account : payable_line.gl_account)
       add_element gl, "glaccountno", gl_account
+      add_element gl, "document", payable_line.check_number
       add_date gl, "datecreated", payable_line.check_date
       add_element gl, "memo", payable_line.charge_description
       add_element gl, "locationid", payable_line.location

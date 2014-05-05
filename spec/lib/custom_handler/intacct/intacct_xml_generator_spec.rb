@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
   describe "generate_receivable_xml" do
     before :each do 
-      @recv = IntacctReceivable.new receivable_type: "type", invoice_date: Time.zone.now.to_date, customer_number: "cust", invoice_number: "inv", currency: "USD"
+      @recv = IntacctReceivable.new receivable_type: "type", invoice_date: Time.zone.now.to_date, customer_number: "cust", invoice_number: "inv", currency: "USD", customer_reference: "REFERENCE"
       @rl = @recv.intacct_receivable_lines.build charge_code: '123', charge_description: 'desc', amount: BigDecimal("12.50"), location: "loc", 
                                   line_of_business: "lob", freight_file: "f123", vendor_number: "ven", broker_file: "b123"
     end
@@ -32,6 +32,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(t.text "datecreated/month").to eq @recv.invoice_date.strftime "%m"
       expect(t.text "datecreated/day").to eq @recv.invoice_date.strftime "%d"
       expect(t.text "customerid").to eq @recv.customer_number
+      expect(t.text "referenceno").to eq @recv.customer_reference
       expect(t.text "documentno").to eq @recv.invoice_number
       expect(t.text "currency").to eq @recv.currency
       expect(t.text "exchratedate/year").to eq @recv.invoice_date.strftime "%Y"
@@ -270,6 +271,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(e.text "trtype").to eq "credit"
       expect(e.text "amount").to eq @l.amount.to_s
       expect(e.text "glaccountno").to eq @l.bank_cash_gl_account
+      expect(e.text "document").to eq @l.check_number
       expect(e.text "datecreated/year").to eq @l.check_date.strftime "%Y"
       expect(e.text "datecreated/month").to eq @l.check_date.strftime "%m"
       expect(e.text "datecreated/day").to eq @l.check_date.strftime "%d"
@@ -292,6 +294,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(e.text "trtype").to eq "debit"
       expect(e.text "amount").to eq @l.amount.to_s
       expect(e.text "glaccountno").to eq @l.gl_account
+      expect(e.text "document").to eq @l.check_number
       expect(e.text "datecreated/year").to eq @l.check_date.strftime "%Y"
       expect(e.text "datecreated/month").to eq @l.check_date.strftime "%m"
       expect(e.text "datecreated/day").to eq @l.check_date.strftime "%d"
