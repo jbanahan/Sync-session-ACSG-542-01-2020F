@@ -1,4 +1,5 @@
 OpenChain::Application.routes.draw do
+  match '/hts/subscribed_countries' => 'hts#subscribed_countries', :via=>:get
   match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
   match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
   match '/hts/:iso' => 'hts#country', :via=>:get
