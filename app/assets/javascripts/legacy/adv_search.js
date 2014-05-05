@@ -174,8 +174,10 @@ var OCSearch = (function() {
         h += "<option value='in'>One Of</option>";
         h += "<option value='notin'>Not One Of</option>";
       }
+      h += "<option value='regexp'>Regex</option>";
       h += "<option value='null'>Is Empty</option>";
       h += "<option value='notnull'>Is Not Empty</option>";
+
       var op = modelField.parents("tr:first").find(".srch_crit_oper");
       op.html(h);
       op.val(selected);
