@@ -140,6 +140,7 @@ INV
   end
 
   it "creates intacct receivables" do
+    @ent.update_attributes! entry_number: "11981001052312"
     @content = <<INV
     INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
@@ -147,7 +148,7 @@ INV
 INV
     
     OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
-    OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with 'Broker File', @ent.broker_reference, @ent.broker_reference
+    OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with 'Broker File', @ent.entry_number, @ent.entry_number
 
     @k.parse @content
 
@@ -169,7 +170,7 @@ INV
     expect(l.charge_description).to eq bl.charge_description
     expect(l.amount).to eq bl.charge_amount
     expect(l.line_of_business).to eq "Brokerage"
-    expect(l.broker_file).to eq bi.broker_reference
+    expect(l.broker_file).to eq @ent.entry_number
     expect(l.location).to eq "Toronto"
 
     l = r.intacct_receivable_lines.second

@@ -118,7 +118,7 @@ module OpenChain
               pl.charge_description = line.charge_description
               pl.amount = line.charge_amount
               pl.line_of_business = "Brokerage"
-              pl.broker_file = invoice.broker_reference
+              pl.broker_file = invoice.entry.entry_number unless invoice.entry.nil?
               pl.location = "Toronto"
             end
 
@@ -138,7 +138,7 @@ module OpenChain
           end
 
           # We also want to queue up a send to push the broker file number dimension to intacct
-          OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension 'Broker File', invoice.broker_reference, invoice.broker_reference unless invoice.broker_reference.blank?
+          OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension 'Broker File', invoice.entry.entry_number, invoice.entry.entry_number unless invoice.entry.nil?
         end
     end
   end
