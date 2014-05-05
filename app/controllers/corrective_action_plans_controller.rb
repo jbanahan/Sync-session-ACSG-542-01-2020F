@@ -83,7 +83,8 @@ class CorrectiveActionPlansController < ApplicationController
         j = cap.as_json(
           include:{
             corrective_issues: {
-              methods:[:html_description,:html_suggested_action,:html_action_taken]
+              methods:[:html_description,:html_suggested_action,:html_action_taken],
+              include:{attachments:{only:[:id,:attached_file_name]}}
             },
             comments: {
               methods:[:html_body],
@@ -98,6 +99,9 @@ class CorrectiveActionPlansController < ApplicationController
         )
         j[:can_edit] = cap.can_edit?(current_user) && cap.status!=CorrectiveActionPlan::STATUSES[:resolved]
         j[:can_update_actions] = cap.can_update_actions?(current_user) && !cap.status!=CorrectiveActionPlan::STATUSES[:resolved]
+        j["corrective_action_plan"][:corrective_issues].each_with_index do |ci, index|
+          ci[:attachments] = Attachment.attachments_as_json(CorrectiveIssue.find(ci['id']))[:attachments]
+        end
         render json: j
       }
     end

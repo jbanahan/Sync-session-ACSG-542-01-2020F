@@ -9,7 +9,7 @@ class CorrectiveIssuesController < ApplicationController
     end
     params_to_update = {} 
     fields_to_update = []
-    fields_to_update += [:description,:suggested_action] if cap.can_edit? current_user
+    fields_to_update += [:description,:suggested_action, :attachments] if cap.can_edit? current_user
     fields_to_update += [:action_taken] if cap.can_update_actions? current_user
     fields_to_update.each {|x| params_to_update[x] = params[:corrective_issue][x]}
     ci.update_attributes(params_to_update)

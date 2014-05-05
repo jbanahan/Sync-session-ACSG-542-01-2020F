@@ -229,6 +229,21 @@ function updateResolutionStatus(issueID){
                 </div>
               </div>
             </div>
+            <div class='row'>
+              <div class='col-md-12'>
+                <h4>Attachments</h4>
+              </div>
+            </div>
+            <div class='row' ng-repeat='att in ci.attachments'>
+              <div class='col-md-12'>
+                <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
+              </div>
+            </div>
+            <div class='row' style='margin-top:10px;'>
+              <div class='col-md-12'>
+                <div chain-attach='ci' attachable-type='CorrectiveIssue' attachable-id='{{ci.id}}'></div>
+              </div>
+            </div>
           </fieldset>
         </div>
       </div>
