@@ -46,6 +46,7 @@ describe AttachmentArchiveSetupsController do
       @c.reload
       @c.attachment_archive_setup.start_date.should == target_date
       response.should redirect_to [@c,@c.attachment_archive_setup]
+      flash[:notices].should == ["Your setup was successfully created."]
     end
     it "should fail if company already has record" do
       UserSession.create! @admin
@@ -80,6 +81,7 @@ describe AttachmentArchiveSetupsController do
       expect(@c.attachment_archive_setup.combine_attachments).to be_true
       expect(@c.attachment_archive_setup.combined_attachment_order).to eq "A\nB\nC"
       expect(response).to redirect_to [@c,@c.attachment_archive_setup]
+      flash[:notices].should == ["Your setup was successfully updated."]
     end
     it "should fail if user not admin" do
       UserSession.create! @user
