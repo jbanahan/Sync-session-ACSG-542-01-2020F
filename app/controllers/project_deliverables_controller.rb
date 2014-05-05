@@ -75,6 +75,25 @@ class ProjectDeliverablesController < ApplicationController
     render json: {project_deliverable:project_deliverable_hash(pd)}
   end
 
+  def notify_now
+    if current_user.view_projects?
+      user = User.find(params[:user_id])
+      high_priority_pds_for_user = []
+
+      ProjectDeliverable.all.each do |pd|
+        if pd.assigned_to == user and pd.priority.try(:downcase) == "high"
+          high_priority_pds_for_user << pd
+        end
+      end
+
+      OpenMailer.send_high_priority_tasks(user, high_priority_pds_for_user).deliver!
+      add_flash :notices, "Email successfully sent to #{user.email}."
+      redirect_to project_deliverables_path
+    else
+      error_redirect "You do not have permission to notify users of high priority tasks."
+    end
+  end
+
   private
   def add_deliverable_for_index dbu, d, structure, level_lambda
     h = project_deliverable_hash(d)

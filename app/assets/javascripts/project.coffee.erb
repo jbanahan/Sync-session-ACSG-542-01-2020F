@@ -117,7 +117,7 @@ projectApp.filter 'deliverableSort', [() ->
       x = a_comp - b_comp
       return x unless x==0
 
-      # sort by due duate
+      # sort by due date
       a_due = (if a.due_date then new Date(a.due_date) else new Date(2999,1,1))
       b_due = (if b.due_date then new Date(b.due_date) else new Date(2999,1,1))
       x = a_due.getTime() - b_due.getTime()
@@ -198,8 +198,11 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
 
   $scope.svc = projectSvc
 
+
+
   $scope.loadDeliverables = (layout) ->
     $scope.deliverables = null
+    $scope.per_person_layout = if (layout=='person') then true else false
     projectSvc.getDeliverables(layout).then (resp) ->
       $scope.deliverables = resp.data.deliverables_by_user
       for u, projects of $scope.deliverables
@@ -208,6 +211,9 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
 
 
   $scope.loadDeliverables 'person'
+
+  $scope.getDeliverableUserIdFromDeliverablesAndUsername = (deliverables, username) ->
+    deliverables[username][Object.keys(deliverables[username])[0]][0].assigned_to_id
 
   $scope.handleSaveDeliverable = (promise) ->
     goodCallback = (resp) ->

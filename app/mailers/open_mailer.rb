@@ -299,6 +299,16 @@ EOS
     end
   end
 
+  def send_high_priority_tasks(user, tasks) #tasks is a list of ProjectDeliverable objects
+    @user = user
+    @tasks = tasks
+    @lp = LINK_PROTOCOL
+    time = Time.now
+    mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|
+      format.html
+    end
+  end
+
   def auto_send_attachments to, subject, body, file_attachments, sender_name, sender_email
     @body_content = body
     @attachment_messages = []

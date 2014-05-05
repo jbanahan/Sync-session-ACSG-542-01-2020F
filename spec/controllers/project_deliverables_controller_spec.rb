@@ -3,6 +3,7 @@ require 'spec_helper'
 describe ProjectDeliverablesController do
   before :each do
     @u = Factory(:master_user,project_view:true,project_edit:true)
+    @u.save!
     MasterSetup.get.update_attributes(project_enabled:true)
     activate_authlogic
     UserSession.create! @u
@@ -106,5 +107,23 @@ describe ProjectDeliverablesController do
       expect(response).to be_success
       expect(JSON.parse(response.body)['project_deliverable']['description']).to eq 'y'
     end
+  end
+
+  describe :notify_now do
+
+    it "should reject if user cannot view" do
+      User.any_instance.stub(:view_projects?).and_return false
+      pd = Factory(:project_deliverable,description:"x")
+      put :notify_now, user_id: @u.id
+      expect(response).to_not be_success
+    end
+
+    it "should trigger send_high_priority_tasks for correct user and deliverables" do
+      User.any_instance.stub(:view_projects?).and_return true
+      pd = Factory(:project_deliverable, description: "PD Description", id: @u.id, assigned_to: @u, priority: "High")
+      OpenMailer.any_instance.should_receive(:send_high_priority_tasks).exactly(1).times.with(@u, [pd])
+      put :notify_now, user_id: @u.id
+    end
+
   end
 end
