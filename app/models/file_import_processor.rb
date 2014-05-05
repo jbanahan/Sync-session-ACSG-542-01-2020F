@@ -53,8 +53,8 @@ class FileImportProcessor
     end
   end
   def self.find_processor import_file, listeners=[]
-    if import_file.attached_file_name.downcase.ends_with?("xls") 
-      return SpreadsheetImportProcessor.new(import_file,import_file.attachment_as_workbook,listeners)
+    if import_file.attached_file_name.downcase.ends_with?("xls") or import_file.attached_file_name.downcase.ends_with?("xlsx")
+      return SpreadsheetImportProcessor.new(import_file, OpenChain::XLClient.new(import_file.attached.path), listeners)
     else
       return CSVImportProcessor.new(import_file,import_file.attachment_data,listeners)
     end
@@ -251,13 +251,13 @@ class FileImportProcessor
   end
 
   class SpreadsheetImportProcessor < FileImportProcessor
+
     def row_count
-      s = @data.worksheet(0).row_count - (@import_file.starting_row - 1)
+      s = @data.last_row_number(0) - (@import_file.starting_row - 2) #-2 instead of -1 now since the counting methods index at 0 and 1
     end
+
     def get_rows &block
-      @data
-      s = @data.worksheet 0
-      s.each (@import_file.starting_row-1) do |row|
+      @data.all_row_values(0, @import_file.starting_row - 1).each do |row|
         process = false
         row.each do |v|
           if !v.blank?
@@ -268,6 +268,7 @@ class FileImportProcessor
         yield row if process
       end
     end
+    
   end
     
   class RulesProcessor
@@ -423,6 +424,10 @@ class FileImportProcessor
         if trailing_zeros 
           value = value[0, trailing_zeros]
         end
+      elsif model_field_integer_type?(mf) && value.is_a?(Numeric)
+        # This is included primarily for display reasons, so the change record message will show a value like "Field set to 1" instead of "Field set to 1.0"
+        # for integer fields.
+        value = value.to_i
       end
     end
 
@@ -431,6 +436,10 @@ class FileImportProcessor
 
   def model_field_character_type? mf
     mf.data_type == :string || mf.data_type == :text
+  end
+
+  def model_field_integer_type? mf
+    mf.data_type == :fixnum || mf.data_type == :integer
   end
 
   def fire_start
