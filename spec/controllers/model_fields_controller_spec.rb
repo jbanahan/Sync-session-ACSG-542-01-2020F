@@ -39,14 +39,14 @@ describe ModelFieldsController do
       assigns(:label).should == "Product"
     end
 
-    it "should display the module not found page for nil modules" do
+    it "should redirect when the module is not found" do
       u = Factory(:user)
       activate_authlogic
       UserSession.create! u
 
       get :glossary, {core_module: 'nonexistent'}
-      expect(response).to be_success
-      response.body.should =~ /We were unable to locate the glossary you requested/
+      expect(response).to be_redirect
+      flash[:errors].first.should == "Module nonexistent was not found."
     end
 
     it "should redirect for users who aren't logged in" do

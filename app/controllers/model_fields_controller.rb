@@ -7,10 +7,9 @@ class ModelFieldsController < ApplicationController
 
   def glossary
     @cm = CoreModule.find_by_class_name(params[:core_module],true)
-    unless @cm.nil?
-      @label = @cm.label.blank? ? "Unlabled Module" : @cm.label
-      @fields = @cm.model_fields_including_children.values
-    end
+    return error_redirect "Module #{params[:core_module]} was not found." if @cm.nil?
+    @label = @cm.label
+    @fields = @cm.model_fields_including_children.values
   end
   
   private
