@@ -229,6 +229,13 @@ EOS
     m
   end
 
+  def send_ack_file_exception recipient, error_messages, attached_file, file_name, subject = "[VFI Track] Ack File Processing Error"
+    @error_messages = error_messages
+    m = mail(to: recipient, subject: subject)
+    m.attachments[file_name] = create_attachment attached_file
+    m
+  end
+
   def send_survey_expiration_reminder to, expired_survey, expired_responses
     @expired_survey = expired_survey
     @expired_responses = expired_responses

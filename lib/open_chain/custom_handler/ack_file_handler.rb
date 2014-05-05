@@ -7,13 +7,14 @@ module OpenChain
       def parse file_contents, opts = {}
         raise ArgumentError, "Opts must have a :sync_code hash key." unless opts[:sync_code]
         raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
+        opts[:username] = "chainio_admin" unless opts[:username]
 
-        process_product_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code]
+        process_product_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username]
       end
       
-      def process_product_ack_file file_content, file_name, sync_code
+      def process_product_ack_file file_content, file_name, sync_code, username
         errors = get_ack_file_errors file_content, file_name, sync_code
-        handle_errors errors, file_name unless errors.blank?
+        handle_errors errors, file_name, username, file_content unless errors.blank?
       end
 
       def get_ack_file_errors file_content, file_name, sync_code
@@ -42,13 +43,19 @@ module OpenChain
       end
 
       # override this to do custom handling with the given array of error messages
-      def handle_errors errors, file_name
-        begin
-          raise "Ack File Error"
-        rescue
-          messages = ["File Name: #{file_name}"]
-          messages += errors
-          $!.log_me messages
+      def handle_errors errors, file_name, username, file_content
+        messages = ["File Name: #{file_name}"]
+        messages += errors
+
+        email_address = User.find_by_username(username).email
+
+        Tempfile.open(["temp",".csv"]) do |t|
+          t << file_content
+          t.flush; t.rewind
+
+          OpenMailer.send_ack_file_exception(email_address, messages, t, file_name).deliver!
+
+          t.close
         end
       end
       
@@ -56,6 +63,7 @@ module OpenChain
       def find_product row 
         Product.find_by_unique_identifier row[0]
       end
+
     end
   end
 end
