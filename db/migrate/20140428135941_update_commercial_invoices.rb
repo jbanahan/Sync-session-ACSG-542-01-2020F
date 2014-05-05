@@ -12,16 +12,7 @@ class UpdateCommercialInvoices < ActiveRecord::Migration
         UPDATE commercial_invoices
         INNER JOIN entries ON entries.id = commercial_invoices.entry_id
         SET commercial_invoices.invoice_value = commercial_invoices.invoice_value_foreign * commercial_invoices.exchange_rate
-        WHERE entries.source_system = "Fenix"
-      SQL
-    end
-
-    say_with_time "Updating Alliance commercial invoices..." do
-      update <<-SQL
-        UPDATE commercial_invoices
-        INNER JOIN entries on entries.id = commercial_invoices.entry_id
-        SET commercial_invoices.invoice_value = commercial_invoices.invoice_value_foreign * commercial_invoices.exchange_rate
-        WHERE entries.source_system = "Alliance"
+        WHERE (entries.source_system = "Fenix" OR entries.source_system = "Alliance") AND commercial_invoices.exchange_rate <> 1
       SQL
     end
   end
