@@ -6,7 +6,8 @@ Spork.prefork do
   require File.expand_path("../../config/environment", __FILE__)
   require 'rspec/rails'
   require 'authlogic/test_case'
-  require File.dirname(__FILE__) + "/factories"  
+  require File.dirname(__FILE__) + "/factories" 
+  require 'webmock/rspec'
   include Authlogic::TestCase
 
 # Requires supporting ruby files with custom matchers and macros, etc,
@@ -34,6 +35,7 @@ Spork.prefork do
     config.use_transactional_fixtures = true
     config.before(:all) do
       DeferredGarbageCollection.start unless ENV['CIRCLECI']
+      WebMock.disable!
     end
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"

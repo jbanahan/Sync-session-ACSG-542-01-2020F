@@ -51,6 +51,7 @@ end
 
 group :test do
   gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
+  gem 'webmock'
 end
 # Gems used only for assets and not required
 # in production environments by default.
