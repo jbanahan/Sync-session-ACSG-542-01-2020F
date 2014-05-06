@@ -44,10 +44,13 @@ describe Api::V1::ProductsController do
 
     context "invalid token" do
       it "Raises an unauthorized error if there is no valid token" do
+        # api access also sets required request header elements..so that's why it's called here
+        allow_api_access @user
+
         @user.api_auth_token = "Invalid"
         @user.save!
 
-        get "show", {id: 1, format: 'json'}
+        get "show", {id: 1}
         expect(response.status).to eq 401
 
         json = ActiveSupport::JSON.decode response.body
@@ -124,10 +127,15 @@ describe Api::V1::ProductsController do
     # it.  I can't figure out how to do this straight up without being part of another controller test
     # class.  It has something to do w/ an rspec and/or authlogic expectation that there's only a single 
     # application controller in use for all of the app.
+    before :each do
+      # Set a baseline for the test of a valid state, then we can back out expected 
+      allow_api_access @user
+    end
 
     describe "validate_authtoken" do
       it "returns an unauthorized error when a request is missing an authorization header" do
-        get 'show', id: 1, format: 'json'
+        request.env["HTTP_AUTHORIZATION"] = nil
+        get 'show', id: 1
 
         expect(response.status).to eq 401
         json = ActiveSupport::JSON.decode response.body
@@ -175,9 +183,7 @@ describe Api::V1::ProductsController do
         expect(json['errors']).to eq ['Access denied.']
       end
 
-      it "executes the action with valid authorization header" do
-        allow_api_access @user
-        
+      it "executes the action with valid authorization header" do        
         controller.should_receive(:show) do
           controller.render json: {'ok'=>true}
         end
@@ -197,13 +203,13 @@ describe Api::V1::ProductsController do
         # There's really no need for an opposite test here because pretty much every other test
         # proves it works.
         it "raises an error for non-json requests" do
-          request.env['CONTENT_TYPE'] = 'text/html'
+          request.env['HTTP_ACCEPT'] = 'text/html'
 
-          get 'show', id: 1, format: "html"
+          get 'show', id: 1
 
           expect(response.status).to eq 406
           json = ActiveSupport::JSON.decode response.body
-          expect(json['errors']).to eq ["Content-Type 'text/html' not supported."]
+          expect(json['errors']).to eq ["Request must include Accept header of 'application/json'."]
         end
       end
 
@@ -216,7 +222,7 @@ describe Api::V1::ProductsController do
 
             controller.render json: {'ok'=>true}
           end
-          get 'show', id: 1, format: 'json'
+          get 'show', id: 1
 
           expect(response.status).to eq 200
           expect(Time.zone.name).to eq def_tz.name

@@ -4,9 +4,9 @@ module Api; module V1; class ApiController < ActionController::Base
   skip_filter :activate_authlogic 
   rescue_from StandardError, :with => :error_handler
 
+  before_filter :validate_format
   around_filter :validate_authtoken
   around_filter :set_user_settings
-  before_filter :validate_format
 
   def render_forbidden
     render_error "Access denied.", :unauthorized
@@ -36,8 +36,14 @@ module Api; module V1; class ApiController < ActionController::Base
 
   private
     def validate_format
-      if request.headers["CONTENT_TYPE"] != "application/json"
+      if request.headers["HTTP_ACCEPT"] != "application/json"
+        raise StatusableError.new("Request must include Accept header of 'application/json'.", :not_acceptable)
+      end
+
+      if request.method == "POST" && request.headers["CONTENT_TYPE"] != "application/json"
         raise StatusableError.new("Content-Type '#{request.headers["CONTENT_TYPE"]}' not supported.", :not_acceptable)
+      elsif !(["POST", "GET"].include?(request.method))
+        raise StatusableError.new("Request Method '#{request.method}' not supported.", :not_acceptable)
       end
     end
 
