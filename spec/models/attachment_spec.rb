@@ -130,74 +130,135 @@ describe Attachment do
 
   describe "email_attachments" do
 
-    before :each do
-      @x = Tempfile.new("temp-a.txt")
-      @y = Tempfile.new("temp-b.txt")
-      @z = Tempfile.new("temp-c.txt")
-      [@x,@y,@z].each {|f| f << 'hello world'; f.flush}
+    describe "large attachments" do
+      before :each do
+        @x = Tempfile.new("temp-a.txt")
+        @y = Tempfile.new("temp-b.txt")
+        @z = Tempfile.new("temp-c.txt")
+        [@x,@y,@z].each {|f| f << 'hello world'; f.flush}
+        OpenMailer.deliveries.clear
+      end
+
+      it "should send two emails with three attachments total if attachment sizes are about 4200000 (4.2 MB) each" do
+        param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+        a = Attachment.new(attached_file_name: "a.txt")
+        b = Attachment.new(attached_file_name: "b.txt")
+        c = Attachment.new(attached_file_name: "c.txt")
+        a.id = 1; b.id = 2; c.id = 3
+        a.save!; b.save!; c.save!
+        Attachment.should_receive(:find).with(1).and_return a
+        Attachment.should_receive(:find).with(2).and_return b
+        Attachment.should_receive(:find).with(3).and_return c
+        a.should_receive(:download_to_tempfile).and_return @x
+        b.should_receive(:download_to_tempfile).and_return @y
+        c.should_receive(:download_to_tempfile).and_return @z
+        @x.stub(:size).and_return 4200000
+        @y.stub(:size).and_return 4300000
+        @z.stub(:size).and_return 4400000
+        #@x.should_receive(:size).exactly(6).times.and_return 4200000
+        #@y.should_receive(:size).exactly(5).times.and_return 4300000
+        #@z.should_receive(:size).exactly(3).times.and_return 4400000
+
+        Attachment.email_attachments(param_hash)
+        OpenMailer.deliveries.length.should == 2
+        (OpenMailer.deliveries.last.attachments.length + OpenMailer.deliveries[-2].attachments.length).should == 3
+      end
+
+      it "should send three emails with three attachments total if two attachments exceed 10MB" do
+        param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+        a = Attachment.new(attached_file_name: "a.txt")
+        b = Attachment.new(attached_file_name: "b.txt")
+        c = Attachment.new(attached_file_name: "c.txt")
+        a.id = 1; b.id = 2; c.id = 3
+        a.save!; b.save!; c.save!
+        Attachment.should_receive(:find).with(1).and_return a
+        Attachment.should_receive(:find).with(2).and_return b
+        Attachment.should_receive(:find).with(3).and_return c
+        a.should_receive(:download_to_tempfile).and_return @x
+        b.should_receive(:download_to_tempfile).and_return @y
+        c.should_receive(:download_to_tempfile).and_return @z
+        @x.stub(:size).and_return 4200000
+        @y.stub(:size).and_return 11300000
+        @z.stub(:size).and_return 12000000
+
+        Attachment.email_attachments(param_hash)
+        OpenMailer.deliveries.length.should == 3
+        OpenMailer.deliveries.last.attachments.length.should == 1
+        OpenMailer.deliveries[-2].attachments.length.should == 1
+        OpenMailer.deliveries[-3].attachments.length.should == 1
+      end
     end
 
-    after :each do
-      [@x, @y, @z].each {|tfile| tfile.close! unless tfile.closed?}
-    end
+    describe "small attachments" do 
+      before :each do
+        @x = Tempfile.new("temp-a.txt")
+        @y = Tempfile.new("temp-b.txt")
+        @z = Tempfile.new("temp-c.txt")
+        [@x,@y,@z].each {|f| f << 'hello world'; f.flush}
+      end
 
-    it "should return true after success" do
-      param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
-      a = Attachment.new(attached_file_name: "a.txt")
-      b = Attachment.new(attached_file_name: "b.txt")
-      c = Attachment.new(attached_file_name: "c.txt")
-      a.id = 1; b.id = 2; c.id = 3
-      a.save!; b.save!; c.save!
-      Attachment.should_receive(:find).with(1).and_return a
-      Attachment.should_receive(:find).with(2).and_return b
-      Attachment.should_receive(:find).with(3).and_return c
-      a.should_receive(:download_to_tempfile).and_return @x
-      b.should_receive(:download_to_tempfile).and_return @y
-      c.should_receive(:download_to_tempfile).and_return @z
-      Attachment.email_attachments(param_hash).should be_true
-    end
+      after :each do
+        [@x, @y, @z].each {|tfile| tfile.close! unless tfile.closed?}
+      end
 
-    it "should send an email with the correct attachments" do
-      param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
-      a = Attachment.new(attached_file_name: "a.txt")
-      b = Attachment.new(attached_file_name: "b.txt")
-      c = Attachment.new(attached_file_name: "c.txt")
-      a.id = 1; b.id = 2; c.id = 3
-      a.save!; b.save!; c.save!
-      Attachment.should_receive(:find).with(1).and_return a
-      Attachment.should_receive(:find).with(2).and_return b
-      Attachment.should_receive(:find).with(3).and_return c
-      a.should_receive(:download_to_tempfile).and_return @x
-      b.should_receive(:download_to_tempfile).and_return @y
-      c.should_receive(:download_to_tempfile).and_return @z
+      it "should return true after success" do
+        param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+        a = Attachment.new(attached_file_name: "a.txt")
+        b = Attachment.new(attached_file_name: "b.txt")
+        c = Attachment.new(attached_file_name: "c.txt")
+        a.id = 1; b.id = 2; c.id = 3
+        a.save!; b.save!; c.save!
+        Attachment.should_receive(:find).with(1).and_return a
+        Attachment.should_receive(:find).with(2).and_return b
+        Attachment.should_receive(:find).with(3).and_return c
+        a.should_receive(:download_to_tempfile).and_return @x
+        b.should_receive(:download_to_tempfile).and_return @y
+        c.should_receive(:download_to_tempfile).and_return @z
+        Attachment.email_attachments(param_hash).should be_true
+      end
 
-      Attachment.email_attachments(param_hash)
+      it "should send an email with the correct attachments" do
+        param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+        a = Attachment.new(attached_file_name: "a.txt")
+        b = Attachment.new(attached_file_name: "b.txt")
+        c = Attachment.new(attached_file_name: "c.txt")
+        a.id = 1; b.id = 2; c.id = 3
+        a.save!; b.save!; c.save!
+        Attachment.should_receive(:find).with(1).and_return a
+        Attachment.should_receive(:find).with(2).and_return b
+        Attachment.should_receive(:find).with(3).and_return c
+        a.should_receive(:download_to_tempfile).and_return @x
+        b.should_receive(:download_to_tempfile).and_return @y
+        c.should_receive(:download_to_tempfile).and_return @z
 
-      m = OpenMailer.deliveries.last
-      m.attachments.length.should == 3
-      m.attachments[0].filename.should == "a.txt"
-      m.attachments[1].filename.should == "b.txt"
-      m.attachments[2].filename.should == "c.txt"
-    end
+        Attachment.email_attachments(param_hash)
 
-    it "should send an email to the correct recipient" do
-      param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
-      a = Attachment.new(attached_file_name: "a.txt")
-      b = Attachment.new(attached_file_name: "b.txt")
-      c = Attachment.new(attached_file_name: "c.txt")
-      a.id = 1; b.id = 2; c.id = 3
-      a.save!; b.save!; c.save!
-      Attachment.should_receive(:find).with(1).and_return a
-      Attachment.should_receive(:find).with(2).and_return b
-      Attachment.should_receive(:find).with(3).and_return c
-      a.should_receive(:download_to_tempfile).and_return @x
-      b.should_receive(:download_to_tempfile).and_return @y
-      c.should_receive(:download_to_tempfile).and_return @z
+        m = OpenMailer.deliveries.last
+        m.attachments.length.should == 3
+        m.attachments[0].filename.should == "a.txt"
+        m.attachments[1].filename.should == "b.txt"
+        m.attachments[2].filename.should == "c.txt"
+      end
 
-      Attachment.email_attachments(param_hash)
+      it "should send an email to the correct recipient" do
+        param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+        a = Attachment.new(attached_file_name: "a.txt")
+        b = Attachment.new(attached_file_name: "b.txt")
+        c = Attachment.new(attached_file_name: "c.txt")
+        a.id = 1; b.id = 2; c.id = 3
+        a.save!; b.save!; c.save!
+        Attachment.should_receive(:find).with(1).and_return a
+        Attachment.should_receive(:find).with(2).and_return b
+        Attachment.should_receive(:find).with(3).and_return c
+        a.should_receive(:download_to_tempfile).and_return @x
+        b.should_receive(:download_to_tempfile).and_return @y
+        c.should_receive(:download_to_tempfile).and_return @z
 
-      m = OpenMailer.deliveries.last
-      m.to.first.should == "me@there.com"
+        Attachment.email_attachments(param_hash)
+
+        m = OpenMailer.deliveries.last
+        m.to.first.should == "me@there.com"
+      end
     end
   end
 

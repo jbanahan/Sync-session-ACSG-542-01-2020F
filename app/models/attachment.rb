@@ -54,10 +54,36 @@ class Attachment < ActiveRecord::Base
       tfile.original_filename = attachment.attached_file_name
       attachments << tfile
     end
-    OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+    attachment_buckets = get_buckets_from(attachments)
+    attachment_buckets.each do |attachments|
+      OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+    end
     return true
   ensure
     attachments.each {|tfile| tfile.close! unless tfile.closed?}
+  end
+
+  def self.get_buckets_from(attachments)
+    # This is definitely not optimized.  It sorts them and then puts them into buckets until the bucket overflows.
+    # The only optimization is for attachments over 10MB already.
+    # For example, attachments with sizes [100, 300, 500, 700, 900] would get buckets of [100, 300, 500], [700], [900]
+    attachments.sort_by! {|f| f.size }
+    final_buckets = []
+    current_bucket = []
+    attachments.each do |attachment|
+      if attachment.size >= 10*1020*1024
+        final_buckets << [attachment]
+      else
+        if (current_bucket.map(&:size).inject(:+) == nil) or (10*1020*1024 - current_bucket.map(&:size).inject(:+) >= attachment.size)
+          current_bucket << attachment
+        else
+          final_buckets << current_bucket
+          current_bucket = [attachment]
+        end
+      end
+    end
+    final_buckets << current_bucket unless current_bucket == []
+    final_buckets
   end
 
   # create a hash suitable for json rendering containing all attachments for the given attachable
