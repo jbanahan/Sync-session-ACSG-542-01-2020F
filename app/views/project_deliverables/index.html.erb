@@ -29,7 +29,9 @@
             </h3>
           </div>
           <div class="col-md-2 text-right" ng-show='per_person_layout'>
-            <%= button_to "Notify Now", "/project_deliverables/{{ getDeliverableUserIdFromDeliverablesAndUsername(deliverables, top) }}/notify_now", method: :post, class: "btn btn-danger", title: "Email this user a list of their high priority tasks which are not yet completed" %>
+            <a href={{getDeliverableUserIdFromDeliverablesAndUsername(deliverables,top)}}>
+              <button type="button" class="btn btn-danger">Notify Now</button>
+            </a>
           </div>
         </div>
       </div>
