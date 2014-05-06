@@ -123,7 +123,7 @@ describe OpenChain::ScheduleSupport do
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       @ss.stub(:minute_to_run).and_return(30)
       now = Time.now.utc
-      @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1,30)
+      @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour,30) + 1.hour
     end
 =begin
     context "day of month" do
