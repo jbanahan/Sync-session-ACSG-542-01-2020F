@@ -9,12 +9,13 @@ htsApp.controller 'HtsCtrl', ['$scope','$http',($scope,$http) ->
     $scope.countries = []
     $http.get('/hts/subscribed_countries.json').success((data)->
       $scope.countries = data.countries
+      $scope.subscribed_isos = (country.iso for country in $scope.countries)
       $scope.country = $scope.countries[0]
     )
 
   loadCountry = (country) ->
     $scope.chapters = []
-    if country.iso == 'US' || country.iso == 'CA'
+    if country.iso in $scope.subscribed_isos
       $scope.viewMode = 'base'
       $http.get('/hts/'+country.iso+'.json').success((data) ->
         $scope.chapters = data.chapters
