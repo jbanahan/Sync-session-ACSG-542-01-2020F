@@ -3,7 +3,7 @@ require "spec_helper"
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   describe "run_schedulable" do
     it "should ftp file" do
-      described_class.any_instance.should_receive(:find_entries).with(['EDDIEFTZ']).and_return(['ents'])
+      described_class.any_instance.should_receive(:find_entries).and_return(['ents'])
       described_class.any_instance.should_receive(:generate_file).with(['ents']).and_return('x')
       described_class.any_instance.should_receive(:ftp_file).with('x')
       described_class.run_schedulable
@@ -24,8 +24,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       expect(described_class.new('production').ftp_credentials[:folder]).to eq "/prod/to_eb/ftz_asn"
     end
     it "should generate test folder" do
-      
       expect(described_class.new.ftp_credentials[:folder]).to eq "/test/to_eb/ftz_asn"
+    end
+    it "should generate test folder if not EDDIEFTZ customer" do
+      expect(described_class.new('production',['OTHER']).ftp_credentials[:folder]).to eq "/test/to_eb/ftz_asn"
     end
   end
   describe "generate_file" do

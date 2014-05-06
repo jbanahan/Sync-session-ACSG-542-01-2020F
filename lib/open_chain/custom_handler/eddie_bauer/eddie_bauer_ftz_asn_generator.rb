@@ -15,21 +15,23 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   SYNC_CODE ||= 'EBFTZASN'
       
   def self.run_schedulable opts={'customer_numbers'=>['EDDIEFTZ']}
-    g = self.new
-    g.run_for_entries(g.find_entries(opts['customer_numbers']),g)
+    g = self.new Rails.env, opts['customer_numbers']
+    g.run_for_entries(g.find_entries,g)
   end
   def run_for_entries entries, instance=self.new
     instance.ftp_file instance.generate_file entries
   end
-  def initialize env=Rails.env
+  def initialize env=Rails.env, customer_numbers=['EDDIEFTZ']
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
       date_format:'%m/%d/%Y'
     )
     @env = env
+    @customer_numbers = customer_numbers
   end
 
   def ftp_credentials
-    {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/#{@env=='production' ? 'prod' : 'test' }/to_eb/ftz_asn",:remote_file_name=>"FTZ_ASN_#{Time.now.strftime('%Y%m%d%H%M%S')}.txt"}
+    folder_prefix = (@env=='production' && @customer_numbers == ['EDDIEFTZ']) ? 'prod' : 'test'
+    {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/#{folder_prefix}/to_eb/ftz_asn",:remote_file_name=>"FTZ_ASN_#{Time.now.strftime('%Y%m%d%H%M%S')}.txt"}
   end
 
   def generate_file entries
@@ -47,9 +49,9 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     t
   end
   # find entries that have passed business rules and need sync
-  def find_entries customer_numbers=['EDDIEFTZ']
+  def find_entries
     passed_rules = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')
-    cust_num = SearchCriterion.new(model_field_uid:'ent_cust_num',operator:'in',value:customer_numbers.join("\n"))
+    cust_num = SearchCriterion.new(model_field_uid:'ent_cust_num',operator:'in',value:@customer_numbers.join("\n"))
     bi_total = SearchCriterion.new(model_field_uid:'ent_broker_invoice_total',operator:'gt',value:'0')
     r = bi_total.apply passed_rules.apply cust_num.apply Entry
     r.joins(Entry.need_sync_join_clause(SYNC_CODE)).where(Entry.need_sync_where_clause).where('sync_records.id is null')
