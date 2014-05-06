@@ -6,6 +6,16 @@
   </div>
 
   <div class="form-group">
+    <%= f.label :type %>
+    <%= f.select :type, options_for_select([["Entry Invoice Line Field Format","ValidationRuleEntryInvoiceLineFieldFormat"],
+                                            ["Entry Invoice Line Matches PO Line","ValidationRuleEntryInvoiceLineMatchesPoLine"],
+                                            ["Field Format","ValidationRuleFieldFormat"],
+                                            ["Manual","ValidationRuleManual"],
+                                            ["(Polo) Entry Invoice Line Matches PO Line","PoloValidationRuleEntryInvoiceLineMatchesPoLine"]]), 
+                                            {}, {class: "form-control", id: "new-rule-type"} %>
+  </div>
+
+  <div class="form-group">
     <%= f.label :description %>
     <%= f.text_field :description, class: "form-control", id: "new-rule-description-field", placeholder: "Enter description..." %>
   </div>

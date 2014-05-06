@@ -29,7 +29,8 @@ describe BusinessValidationRulesController do
       post :create, 
             business_validation_template_id: @bvt.id, 
             business_validation_rule: {
-              "rule_attributes_json" => '{"valid":"json-2"}'
+              "rule_attributes_json" => '{"valid":"json-2"}',
+              "type" => "ValidationRuleManual"
             }
       expect(response).to be_redirect
       new_rule = BusinessValidationRule.last
