@@ -2,12 +2,6 @@ class BusinessValidationRulesController < ApplicationController
 
   def create
     admin_secure do
-      #pass in from form the subclass type (as a dropdown)
-      #make an array in here of class names (with Kernel.const_get(string of class name))
-      #options:  4 validation_rule_ pieces...
-                #+ polo_validation
-
-      #create should redirect to the edit page
       @bvr = BusinessValidationRule.new(params[:business_validation_rule])
       @bvt = BusinessValidationTemplate.find(params[:business_validation_template_id])
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
