@@ -16,21 +16,30 @@ htsApp.controller 'HtsCtrl', ['$scope','$http',($scope,$http) ->
   loadCountry = (country) ->
     $scope.chapters = []
     if (country.iso in $scope.subscribed_isos) and (country.view == true)
-      $scope.viewMode = 'base'
       $http.get('/hts/'+country.iso+'.json').success((data) ->
-        $scope.chapters = data.chapters
+        if data == "no_permission"
+          $scope.viewMode = 'more-info'
+        else
+          $scope.viewMode = 'base'
+          $scope.chapters = data.chapters
       )
     else
       $scope.viewMode = 'more-info'
 
   $scope.loadChapter = (country,chapter) ->
     $http.get('/hts/'+country.iso+'/chapter/'+chapter.num+'.json').success((data) ->
-      chapter.headings = data.headings
+      if data == "no_permission"
+        $scope.viewMode = 'more-info'
+      else
+        chapter.headings = data.headings
     )
 
   $scope.loadHeading = (country,chapter,heading) ->
     $http.get('/hts/'+country.iso+'/heading/'+chapter.num+heading.num+'.json').success((data) ->
-      heading.sub_headings = data.sub_headings
+      if data == "no_permission"
+        $scope.viewMode = 'more-info'
+      else
+        heading.sub_headings = data.sub_headings
     )
 
   $scope.loadSubscribedCountries()
