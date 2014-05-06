@@ -38,16 +38,26 @@ String.class_eval do
   end
 end
 
+class SerializableNoMethodError < StandardError; end;
+
 Exception.class_eval do
   #logs the exception to the database and emails it to bug@aspect9.com
   def log_me messages=[], attachment_paths=[], send_now=false
     return unless MasterSetup.connection.table_exists? 'error_log_entries'
     e = ErrorLogEntry.create_from_exception self, messages
-    msgs = messages.blank? ? [] : messages
+    msgs = messages.blank? ? [] : messages.dup
     msgs << "Error Database ID: #{e.id}"
     if e.email_me?
       if attachment_paths.blank? && !send_now
-        OpenMailer.delay.send_generic_exception(self,msgs,self.message,self.backtrace)
+        # Psych (via Delayed Jobs) has an issue serializing NoMethodErrors due to the NameError object used inside NoMethodError.
+        # This is a workaround for dealing w/ that since the issue has been open in Psych for over a year with no plans for resolution.
+        if self.is_a? NoMethodError
+          error = SerializableNoMethodError.new self.message
+          error.set_backtrace self.backtrace
+          error.log_me messages, attachment_paths, send_now
+        else
+          OpenMailer.delay.send_generic_exception(self,msgs,self.message,self.backtrace)
+        end
       else
         OpenMailer.send_generic_exception(self,msgs,self.message,self.backtrace,attachment_paths).deliver
       end

@@ -244,7 +244,11 @@ class FileImportProcessor
       r = 0
       start_row = @import_file.starting_row - 1
       CSV.parse(@data,{:skip_blanks=>true}) do |row|
-        yield row if r >= start_row
+        # Skip blanks apparently only skips lines consisting solely of a newline,
+        # it doesn't skip lines that solely consist of commas.
+        # If find returns any non-blank value then we can process the line.
+        has_values = row.find {|c| !c.blank?}
+        yield row if r >= start_row && has_values
         r += 1
       end
     end
