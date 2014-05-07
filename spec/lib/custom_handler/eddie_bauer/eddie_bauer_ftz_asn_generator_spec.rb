@@ -192,12 +192,13 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       end
     end
     it "should handle secondary HTS number" do
-      @ci_line.commercial_invoice_tariffs.create!(hts_code:'8888888888')
+      @ci_line.commercial_invoice_tariffs.first.update_attributes(entered_value:0)
+      @ci_line.commercial_invoice_tariffs.create!(hts_code:'8888888888',entered_value:1)
       r = described_class.new.generate_data_for_entry(@entry)
       expect(r.lines.count).to eql(1) #2 numbers should still be one line
       ln = r.lines.first
-      expect(ln[312,10]).to eql(@ci_tariff.hts_code)
-      expect(ln[322,10].rstrip).to eq '8888888888'
+      expect(ln[312,10]).to eq '8888888888'
+      expect(ln[322,10].rstrip).to eq @ci_tariff.hts_code
     end
   end
 end

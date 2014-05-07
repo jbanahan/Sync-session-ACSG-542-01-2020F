@@ -103,7 +103,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     r
   end
   def tariff_lines ci_line
-    r = ci_line.commercial_invoice_tariffs.order(entered_value: :desc).limit(2).to_a
+    r = ci_line.commercial_invoice_tariffs.order("entered_value desc").limit(2).to_a
     r << nil if r.size == 1
     r
   end
