@@ -30,7 +30,7 @@
     </div>
     <%@bv_template.business_validation_rules.each do |bvr|%>
     <div class='col-md-12 rule-container'>
-      <h3><%=bvr.name%> (<%=bvr.type%>)</h3>
+      <h3><%=bvr.name%> (<%=BusinessValidationRule::SUBCLASSES[bvr.type.to_sym]%>)</h3>
       <div><strong>Description: </strong><%=bvr.description%></div>
       <div><strong>Status If Failed: </strong><%=bvr.fail_state.blank? ? 'Fail' : bvr.fail_state%></div>
       <h4>Criteria</h4>
