@@ -36,7 +36,7 @@ class Company < ActiveRecord::Base
   scope :importers, where(:importer=>true)
   scope :consignees, where(:consignee=>true)
   scope :by_name, order("companies.name ASC")
-  scope :active_importers, joins("INNER JOIN products p ON companies.id = p.importer_id INNER JOIN entries e ON companies.id = e.importer_id").where("p.created_at > #{(Time.now - 3.years).strftime("%Y-%m-%d")} or #{(Time.now - 3.years).strftime("%Y-%m-%d")}")
+  scope :active_importers, where("companies.id in (select importer_id from products where products.created_at > '2011') or companies.id in (select importer_id from entries where entries.file_logged_date > '2011')")
   #find all companies that have attachment_archive_setups that include a start date
   scope :attachment_archive_enabled, joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null")
 
