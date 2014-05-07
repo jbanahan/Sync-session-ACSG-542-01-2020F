@@ -41,31 +41,3 @@
     </td>
   </tr>
 </table>
-
-<h3>Exports Not Matching Imports (<%=@claim.exports_not_in_import.sum("duty_calc_export_file_lines.quantity")%> pieces)</h3>
-<table class='detail_table'>
-  <thead>
-    <tr>
-      <th>Export Date</th>
-      <th>Ref 1</th>
-      <th>Ref 2</th>
-      <th>Part Number</th>
-      <th>Quantity</th>
-      <th>Sent To Duty Calc</th>
-    </tr>
-  </thead>
-  <tbody>
-    <%@bad_exports.each do |exp|-%>
-      <tr class='hover'>
-        <td><%=exp.export_date%></td>
-        <td><%=exp.ref_1%></td>
-        <td><%=exp.ref_2%></td>
-        <td><%=exp.part_number%></td>
-        <td><%=exp.quantity%></td>
-        <td><%=exp.duty_calc_export_file_id.nil? ? "NO" : "YES"%></td>
-      </tr>
-    <%end-%>
-  </tbody>
-</table>
-<%=will_paginate(@bad_exports)%>
-
