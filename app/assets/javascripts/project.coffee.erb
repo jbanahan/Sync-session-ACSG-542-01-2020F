@@ -213,7 +213,8 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
   $scope.loadDeliverables 'person'
 
   $scope.getDeliverableUserIdFromDeliverablesAndUsername = (deliverables, username) ->
-    deliverables[username][Object.keys(deliverables[username])[0]][0].assigned_to_id
+    id = deliverables[username][Object.keys(deliverables[username])[0]][0].assigned_to_id
+    "/project_deliverables/" + id + "/notify_now"
 
   $scope.handleSaveDeliverable = (promise) ->
     goodCallback = (resp) ->
