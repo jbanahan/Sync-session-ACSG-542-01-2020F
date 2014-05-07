@@ -26,6 +26,56 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
 
   describe :run_schedulable do
     it "should email on LenoxBusinessLogicError"
+    it "should ftp_file"
+  end
+
+  describe "ftp_credentials" do
+    it "should generate base non-production credentials" do
+      exp = {:server=>'ftp.lenox.com',:username=>'vanvendortest',:password=>'$hipments',:folder=>"/vandegrift test/shipments"}
+      found = described_class.new.ftp_credentials
+      expect(found[:server]).to eq exp[:server]
+      expect(found[:username]).to eq exp[:username]
+      expect(found[:password]).to eq exp[:password]
+    end
+    it "should generate base production credentials" do
+      exp = {:server=>'ftp.lenox.com',:username=>'vanvendor',:password=>'$hipments',:folder=>"/vandegrift/shipments"}
+      found = described_class.new.ftp_credentials
+      expect(found[:server]).to eq exp[:server]
+      expect(found[:username]).to eq exp[:username]
+      expect(found[:password]).to eq exp[:password]
+    end
+  end
+
+  describe :find_entries do
+    before :each do
+      @bvr = Factory(:business_validation_result)
+      @entry = Factory(:entry,importer:@lenox,entry_filed_date:1.day.ago)
+      @bvr.validatable = @entry
+      @bvr.state = 'Pass'
+      @bvr.save!
+    end
+    it "should find entries" do
+      expect(described_class.new.find_entries.to_a).to eq [@entry]
+    end
+    it "should not find entries not for lenox" do
+      @entry.importer = Factory(:importer)
+      @entry.save!
+      expect(described_class.new.find_entries.to_a).to be_empty
+    end
+    it "should not find entries where business rules are not passed" do
+      @bvr.state = 'Skipped'
+      @bvr.save!
+      expect(described_class.new.find_entries.to_a).to be_empty
+    end
+    it "should not find entries not filed" do
+      @entry.update_attributes(entry_filed_date:nil)
+      expect(described_class.new.find_entries.to_a).to be_empty
+    end
+    it "should not find entries that have been sent before" do
+      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE,
+        sent_at:1.hour.ago,confirmed_at:1.minute.ago)
+      expect(described_class.new.find_entries.to_a).to be_empty
+    end
   end
   describe :generate_header_rows do
     
@@ -78,6 +128,16 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       expect(row[119]).to eq 'N'
       expect(row[120,7]).to eq '0000023'
       expect(row[127,35].rstrip).to eq ''
+    end
+    it "should set fcl_lcl to N for mode 10" do
+      @entry.transport_mode_code = 10
+      @entry.save!
+      r = []
+      described_class.new.generate_header_rows @entry do |row|
+        r << row
+      end
+      row = r.first
+      expect(row[119]).to eq 'N'
     end
     it "should make multiple headers for multiple vendors" do
       v2 = Factory(:company,system_code:'LENOX-V2')
@@ -163,6 +223,15 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       row = r.first
       expect(row[145,7]).to eq '0000010' #10 units / 1 per set
     end
+    it "should not duplicate rows for multiple order lines" do
+      @order_line = Factory(:order_line,order:@order,product:@product,quantity:100,price_per_unit:100.25)
+      r = []
+      expect {
+        described_class.new.generate_detail_rows(@entry) do |dr|
+          r << dr
+        end
+      }.to change(r,:size).to(1)
+    end
   end
   describe :generate_temp_files do
     it "should generate compliant files" do
@@ -174,6 +243,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       g.generate_detail_rows(@entry) {|r| detail_rows << r}
       expect(IO.read(header_file.path)).to eq "#{header_rows.first}\n"
       expect(IO.read(detail_file.path)).to eq "#{detail_rows.first}\n" 
+    end
+    it "should write sync records" do
+      expect {
+        described_class.new.generate_temp_files [@entry]
+      }.to change(
+        SyncRecord.where(syncable_id:@entry.id,
+          trading_partner:'LENOXASN').
+        where('confirmed_at is not null'),:count).from(0).to(1)
     end
   end
 end

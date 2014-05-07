@@ -4,7 +4,10 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   include OpenChain::CustomHandler::Lenox::LenoxCustomDefinitionSupport
 
   class LenoxBusinessLogicError < StandardError; end
-  def initialize
+
+  SYNC_CODE = 'LENOXASN'
+
+  def initialize env = Rails.env
     @lenox = Company.find_by_system_code 'LENOX'
     @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
@@ -12,18 +15,27 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     )
   end
 
-  
+  def find_entries
+    passed_rules = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')
+    passed_rules.apply(Entry.joins("LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = '#{SYNC_CODE}'").
+      where(importer_id:@lenox.id).
+      where("entries.entry_filed_date is not null").
+      where('sync_records.id is null'))
+  end
 
   def generate_temp_files entries
-    header_file = Tempfile.new(['LENOXHEADER','.txt'])
-    detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
-    entries.each do |ent|
-      generate_header_rows(ent) {|r| header_file << "#{r}\n"}
-      generate_detail_rows(ent) {|r| detail_file << "#{r}\n"}
+    Entry.transaction do
+      header_file = Tempfile.new(['LENOXHEADER','.txt'])
+      detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
+      entries.each do |ent|
+        generate_header_rows(ent) {|r| header_file << "#{r}\n"}
+        generate_detail_rows(ent) {|r| detail_file << "#{r}\n"}
+        ent.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
+      end
+      header_file.flush
+      detail_file.flush
+      [header_file,detail_file]
     end
-    header_file.flush
-    detail_file.flush
-    [header_file,detail_file]
   end
 
   def generate_header_rows entry
@@ -69,7 +81,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     ci_line.quantity / piece_factor
   end
   def build_mode_specific_values entry
-    if entry.transport_mode_code == '11'
+    if entry.transport_mode_code == '11' || entry.transport_mode_code == '10'
       if entry.containers.size != 1
         # temporary business logic exception until we figure out how to handle 
         # multiple containers
@@ -81,7 +93,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
         csize:cont.container_size,
         cartons:cont.quantity,
         seal:cont.seal_number,
-        fcl:(cont.fcl_lcl=='F' ? 'Y' : 'N')
+        fcl:(entry.transport_mode_code=='11' ? 'Y' : 'N')
       }
     else
       vals = {
