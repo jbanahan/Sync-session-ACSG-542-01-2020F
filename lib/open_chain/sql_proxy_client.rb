@@ -25,7 +25,7 @@ module OpenChain; class SqlProxyClient
 
   def request_alliance_invoice_details file_number, suffix, request_context = {}
     # Alliance stores the suffix as blank strings...we want that locally as nil in our DB
-    suffix = suffix.blank? ? nil : suffix.trim
+    suffix = suffix.blank? ? nil : suffix.strip
 
     export = IntacctAllianceExport.where(file_number: file_number, suffix: suffix).first_or_create! data_requested_date: Time.zone.now
     # Alliance/Oracle won't return results if you send a blank string for suffix (since the data is stored like '        '), but will
