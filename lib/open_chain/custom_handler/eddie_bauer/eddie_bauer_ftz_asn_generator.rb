@@ -53,7 +53,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     passed_rules = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')
     cust_num = SearchCriterion.new(model_field_uid:'ent_cust_num',operator:'in',value:@customer_numbers.join("\n"))
     bi_total = SearchCriterion.new(model_field_uid:'ent_broker_invoice_total',operator:'gt',value:'0')
-    r = bi_total.apply passed_rules.apply cust_num.apply Entry
+    r = bi_total.apply passed_rules.apply cust_num.apply Entry.select('distinct entries.*').where('file_logged_date > "2014-04-01"')
     r.joins(Entry.need_sync_join_clause(SYNC_CODE)).where(Entry.need_sync_where_clause).where('sync_records.id is null')
   end
 

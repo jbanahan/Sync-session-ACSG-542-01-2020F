@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   end
   describe "find_entries" do
     before :each do
-      @entry  = Factory(:entry,customer_number:'EDDIEFTZ',broker_invoice_total:45)
+      @entry  = Factory(:entry,customer_number:'EDDIEFTZ',broker_invoice_total:45,file_logged_date:Date.new(2014,5,1))
       @rule_result = Factory(:business_validation_rule_result,state:'Pass')
       res = @rule_result.business_validation_result
       res.state = 'Pass'
