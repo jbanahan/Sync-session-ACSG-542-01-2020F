@@ -7,16 +7,12 @@ class HtsController < ApplicationController
 
   end
 
-  def permission_error
-    render json: "no_permission"
-  end
-
   def permission
     logged_in? or ["US","CA"].include?(params[:iso])
   end
 
   def country
-    return permission_error unless permission
+    return render_json_error("no_permission", 401) unless permission
     c = Country.find_by_iso_code params[:iso]
     h = {chapters:[]}
     c.official_tariffs.select("distinct left(hts_code,2) as 'ch_code', chapter").order('left(hts_code,4) ASC').each do |ot|
@@ -27,7 +23,7 @@ class HtsController < ApplicationController
   end
 
   def chapter
-    return permission_error unless permission
+    return render_json_error("no_permission", 401) unless permission
     h = {headings:[]}
     Country.find_by_iso_code(params[:iso]).official_tariffs.select("distinct mid(hts_code,3,2) as 'hd_code', heading").order('left(hts_code,4) ASC').where("left(hts_code,2) = ?",params[:chapter]).each do |ot|
       h[:headings] << {num:ot.hd_code,name:ot.heading}
@@ -36,7 +32,7 @@ class HtsController < ApplicationController
   end
 
   def heading
-    return permission_error unless permission
+    return render_json_error("no_permission", 401) unless permission
     h = {sub_headings:[]}
     c = Country.find_by_iso_code(params[:iso])
     c.official_tariffs.select("distinct mid(hts_code,5,2) as 'sh_code', sub_heading").order('left(hts_code,6) ASC').where("left(hts_code,4) = ?",params[:heading]).each do |ot|
