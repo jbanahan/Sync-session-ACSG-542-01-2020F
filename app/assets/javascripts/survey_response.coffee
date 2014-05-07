@@ -119,7 +119,6 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
     else
       $scope.srService.submit($scope.resp)
 
-
   $scope.showWarning = (answer) ->
     return false unless answer.question.warning
     return false if answer.choice && answer.choice.length > 0

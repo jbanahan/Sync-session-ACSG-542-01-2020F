@@ -67,8 +67,8 @@
         <h1>{{resp.survey.name}} <span ng-show='resp.subtitle.length>0'> - {{resp.subtitle}}</span></h1>
       </div>
     </div>
-    <div chain-modal-message='resp.success_message' title='Success' clear-on-close='true'></div>
-    <div chain-modal-message='resp.error_message' title='Error' clear-on-close='true'></div>
+    <div chain-modal-message message-object='resp' message-property='success_message' title='Success' clear-on-close='true'></div>
+    <div chain-modal-message message-object='resp' message-property='error_message' title='Error' clear-on-close='true'></div>
     <div>
       <div class='col-md-12'>
         <span ng-show='resp.saving' class='label label-info'>Saving...</span>&nbsp;
