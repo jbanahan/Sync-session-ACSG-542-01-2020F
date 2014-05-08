@@ -51,7 +51,7 @@ describe OpenMailer do
       @tempfile << "Content of a tempfile"
       @tempfile.rewind
 
-      OpenMailer.send_ack_file_exception("example@example.com",["Error 1","Error 2","Error 3"], @tempfile, "s3_content.txt").deliver!
+      OpenMailer.send_ack_file_exception("example@example.com",["Error 1","Error 2","Error 3"], @tempfile, "s3_content.txt","Sync code").deliver!
       m = OpenMailer.deliveries.pop
       m.to.first.should == "example@example.com"
       m.subject.should == "[VFI Track] Ack File Processing Error"
