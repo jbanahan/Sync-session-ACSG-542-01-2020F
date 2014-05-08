@@ -143,8 +143,8 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       expect(ln[266,4].rstrip).to eql('') #empty size
       expect(ln[270,9]).to eql('000002000') #quantity
       expect(ln[279,11]).to eql('00000100050') #entered value
-      expect(ln[290,11]).to eql('00000012300') #gross weight KGS
-      expect(ln[301,11]).to eql('00000012200') #net weight from qty_2
+      expect(ln[290,11]).to eql('00000000000') #gross weight is always zero now
+      expect(ln[301,11]).to eql('00000012300') #net weight from gross weight field per SOP
       expect(ln[312,10]).to eql(@ci_tariff.hts_code)
       expect(ln[322,10].rstrip).to eq ''
     end

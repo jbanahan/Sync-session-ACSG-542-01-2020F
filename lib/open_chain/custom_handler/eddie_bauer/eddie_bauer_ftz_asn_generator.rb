@@ -89,8 +89,8 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
       r << @f.num(ci.quantity,9,0)
       tariff_1, tariff_2 = tariff_lines(ci)
       r << @f.num(tariff_1.entered_value,11,2)
+      r << @f.num(0,11,2)
       r << @f.num(tariff_1.gross_weight,11,2)
-      r << @f.num(tariff_1.classification_qty_2,11,2)
       r << @f.num(tariff_1.hts_code,10)
       r << @f.str((tariff_2 && tariff_2.hts_code ? tariff_2.hts_code : ''),10)
     end
