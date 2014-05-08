@@ -131,7 +131,7 @@ module ApplicationHelper
     
     opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px",
             "data-container" => "body", "data-toggle" => "popover", "data-placement" => "top",
-            "data-content" => title, "data-trigger" => "hover" }
+            "data-content" => title, "data-trigger" => "hover", "data-delay" => '{"show":"500"}' }
     link_opts = {}
     fn = att.attached_file_name
     icon = image_tag("icon_other.png",opts)
