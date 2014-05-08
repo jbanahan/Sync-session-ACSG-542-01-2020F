@@ -54,8 +54,6 @@ module OpenChain
           t.flush; t.rewind
 
           OpenMailer.send_ack_file_exception(email_address, messages, t, file_name).deliver!
-
-          t.close
         end
       end
       
