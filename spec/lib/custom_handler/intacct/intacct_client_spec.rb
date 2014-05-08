@@ -62,6 +62,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       expect(@c.send_dimension "type", "id", "value", "company").to be_nil
     end
+
+    it "uses temp locks around dimension call to avoid race conditions" do
+      # Don't have this return/yield anything, we then know this is the only real thing
+      # of consequence done first in the method, which is what we want
+      Lock.should_receive(:acquire).with("IntacctDimension-type-id", temp_lock: true)
+      expect(@c.send_dimension "type", "id", "value").to be_nil
+    end
   end
 
   describe "send_receivable" do
