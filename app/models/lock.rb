@@ -64,7 +64,7 @@ class Lock < ActiveRecord::Base
           maybe_released_lock(name)
           # This needs to be outside the inner transaction because if the yield block blows up it'll
           # roll back the transaction (nullifying any delete occurring inside it)
-          my_lock.destroy if opts[:temp_lock] == true
+          my_lock.destroy if opts[:temp_lock] == true && !my_lock.nil?
         end
       rescue LockMissingError
         retry

@@ -30,28 +30,42 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   end
 
   def send_dimension type, id, value, company = nil
-    # if location_id is set, then the dimension will post to a specific sub-entity.
-    control, xml = @generator.generate_dimension_get type, id
-    begin
-      response = post_xml company, false, xml, control
+    # Need to lock on the dimension type, id, so only one process is trying to send a dimension at a time.
+    # Otherwise, due to the way we trigger a whole bunch of dimension sends on Alliance invoice retrievals
+    # there's a very good chance we'll try and create the same dimension multiple times due to the inherent
+    # race conditions between checking intacct for the dimension value and then attempting to create them.
+    Lock.acquire("IntacctDimension-#{type}-#{id}", temp_lock: true) do 
+      # if location_id is set, then the dimension will post to a specific sub-entity.
+      control, xml = @generator.generate_dimension_get type, id
+      begin
+        response = post_xml company, false, xml, control
 
-      # Just look for a <key> element in the response, if it's there, then we can reliably know the dimension already exists
-      key = response.text("//key")
-      if key.blank?
-        # No key was found, so try and create the dimension
-        control, xml = @generator.generate_dimension_create type, id, value
-        response = post_xml company, true, xml, control
-
-        # Might as well return the key that was created
+        # Just look for a <key> element in the response, if it's there, then we can reliably know the dimension already exists
         key = response.text("//key")
+        if key.blank?
+          # No key was found, so try and create the dimension
+          control, xml = @generator.generate_dimension_create type, id, value
+          response = post_xml company, true, xml, control
+
+          # Might as well return the key that was created
+          key = response.text("//key")
+        end
+
+        key
+      rescue => e
+        # There must be some slight delay when dimensions are created vs. when they're available to the API,
+        # since we're only creating the same dimension one at a time (via locking) and we're still getting duplicate
+        # create errors.  Just look for an error message stating the transaction was already created and then don't 
+        # bother with the error reporting since our end goal of getting the dimension out there has been met we
+        # don't care if this particular call errored.
+        if e.message && e.message.downcase.include?("a successful transaction has already been recorded")
+          return id
+        else
+          e.log_me ["Failed to find and/or create dimension #{type} #{id} for location #{company}."]
+          return nil
+        end
       end
-
-      key
-    rescue => e
-      e.log_me ["Failed to find and/or create dimension #{type} #{id} for location #{company}."]
-      return nil
     end
-
   end
 
   def send_receivable receivable

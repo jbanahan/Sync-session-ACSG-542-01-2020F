@@ -15,8 +15,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       add_element trans, "transactiontype", receivable.receivable_type
       add_date trans, "datecreated", receivable.invoice_date
       add_element trans, "customerid", receivable.customer_number
-      add_element trans, "referenceno", receivable.customer_reference
       add_element trans, "documentno", receivable.invoice_number
+      add_element trans, "referenceno", receivable.customer_reference
       add_element trans, "currency", receivable.currency
       add_date trans, "exchratedate", receivable.invoice_date
       add_element trans, "exchratetype", "Intacct Daily Rate"
