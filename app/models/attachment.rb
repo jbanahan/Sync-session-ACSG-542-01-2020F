@@ -55,8 +55,16 @@ class Attachment < ActiveRecord::Base
       attachments << tfile
     end
     attachment_buckets = get_buckets_from(attachments)
+    email_index = 1; total_emails = attachment_buckets.length
+
     attachment_buckets.each do |attachments|
-      OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+      if total_emails > 1
+        altered_subject = email_subject + " (#{email_index} of #{total_emails})"
+        email_index += 1
+        OpenMailer.auto_send_attachments(to_address, altered_subject, email_body, attachments, full_name, email).deliver!
+      else
+        OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+      end
     end
     return true
   ensure
@@ -64,27 +72,27 @@ class Attachment < ActiveRecord::Base
   end
 
   def self.get_buckets_from(attachments)
-    # This is definitely not optimized.  It sorts them and then puts them into buckets until the bucket overflows.
-    # The only optimization is for attachments over 10MB already.
-    # For example, attachments with sizes [100, 300, 500, 700, 900] would get buckets of [100, 300, 500], [700], [900]
-    attachments.sort_by! {|f| f.size }
-    final_buckets = []
-    current_bucket = []
-    attachments.each do |attachment|
-      if attachment.size >= 10*1020*1024
-        final_buckets << [attachment]
-      else
-        if (current_bucket.map(&:size).inject(:+) == nil) or (10*1020*1024 - current_bucket.map(&:size).inject(:+) >= attachment.size)
-          current_bucket << attachment
-        else
-          final_buckets << current_bucket
-          current_bucket = [attachment]
+  final_buckets = [[]]
+  attachments.each do |attachment|
+    added_to_existing_bucket = false
+    if attachment.size >= 10*1020*1024
+      final_buckets << [attachment]
+    else
+      final_buckets.each do |bucket|
+        if bucket == []
+          bucket << attachment
+          added_to_existing_bucket = true
+        elsif (bucket.map(&:size).inject(:+) != nil) and (10*1020*1024 - bucket.map(&:size).inject(:+) >= attachment.size)
+          bucket << attachment
+          added_to_existing_bucket = true
+          break
         end
       end
+      final_buckets << [attachment] unless added_to_existing_bucket
     end
-    final_buckets << current_bucket unless current_bucket == []
-    final_buckets
   end
+  final_buckets
+end
 
   # create a hash suitable for json rendering containing all attachments for the given attachable
   def self.attachments_as_json attachable
