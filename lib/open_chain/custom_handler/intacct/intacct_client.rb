@@ -53,8 +53,17 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
         key
       rescue => e
-        e.log_me ["Failed to find and/or create dimension #{type} #{id} for location #{company}."]
-        return nil
+        # There must be some slight delay when dimensions are created vs. when they're available to the API,
+        # since we're only creating the same dimension one at a time (via locking) and we're still getting duplicate
+        # create errors.  Just look for an error message stating the transaction was already created and then don't 
+        # bother with the error reporting since our end goal of getting the dimension out there has been met we
+        # don't care if this particular call errored.
+        if e.message && e.message.downcase.include?("a successful transaction has already been recorded")
+          return id
+        else
+          e.log_me ["Failed to find and/or create dimension #{type} #{id} for location #{company}."]
+          return nil
+        end
       end
     end
   end

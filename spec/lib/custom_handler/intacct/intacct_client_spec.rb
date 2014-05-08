@@ -69,6 +69,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       Lock.should_receive(:acquire).with("IntacctDimension-type-id", temp_lock: true)
       expect(@c.send_dimension "type", "id", "value").to be_nil
     end
+
+    it "swallows errors returned by Intacct API related to duplicate create calls" do
+      get_xml = "<xml>test</xml>"
+      control = "controlid"
+      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      @c.should_receive(:post_xml).with(nil, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "A successful transaction has already been recorded with the control id #{control}"
+
+      expect(@c.send_dimension "type", "id", "value").to eq "id"
+    end
   end
 
   describe "send_receivable" do
