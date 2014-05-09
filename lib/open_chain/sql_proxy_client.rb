@@ -33,17 +33,29 @@ module OpenChain; class SqlProxyClient
     request 'invoice_details', {:file_number => file_number.to_i, :suffix => (suffix.blank? ? " " : suffix)}, request_context
   end
 
-  private 
-    def request query_name, sql_params, request_context
-      request_body = {'sql_params' => sql_params}
-      request_body['context'] = request_context unless request_context.blank?
+  def self.request_alliance_entry_details file_number, last_exported_from_source
+    self.new.request_alliance_entry_details file_number, last_exported_from_source
+  end
 
-      begin
-        config = PROXY_CONFIG[Rails.env]
-        @json_client.post "#{config['url']}/query/#{query_name}", request_body, {}, config['auth_token']
-      rescue => e
-        e.log_me ["Failed to initiate sql_proxy query for #{query_name} with params #{request_body.to_json}."]
-      end
+  def request_alliance_entry_details file_number, last_exported_from_source
+    # We're sending this context so that when the results are sent back to us from sql proxy's postback job
+    # we can determine if the data in the postback is still valid or if there should be another request forthcoming.
+
+    # Make sure we're keeping the timezone we're sending in eastern time (the alliance parser expects it that way)
+    request_context = {"broker_reference" => file_number, "last_exported_from_source" => last_exported_from_source.in_time_zone("Eastern Time (US & Canada)")}
+    request 'entry_details', {:file_number => file_number.to_i}, request_context
+  end
+ 
+  def request query_name, sql_params, request_context
+    request_body = {'sql_params' => sql_params}
+    request_body['context'] = request_context unless request_context.blank?
+
+    begin
+      config = PROXY_CONFIG[Rails.env]
+      @json_client.post "#{config['url']}/query/#{query_name}", request_body, {}, config['auth_token']
+    rescue => e
+      e.log_me ["Failed to initiate sql_proxy query for #{query_name} with params #{request_body.to_json}."]
     end
+  end
 
 end; end

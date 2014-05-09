@@ -87,10 +87,13 @@ describe OpenChain::AllianceParser do
     @pay_type = '7'
     @comments = [{:text=>"Entry Summary queued to send",:date=>'201104211824',:user=>'BDEVITO'}]
     convert_cur = lambda {|c,width| c ? (c * 100).to_i.to_s.rjust(width,'0') : "".rjust(width,'0')}
+    
+    @bond_type = '8'
+    @location_of_goods = "LOCG"
     @make_entry_lambda = lambda {
       r = []
-      r << "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00F792ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG#{@daily_stmt_number.ljust(11)}#{@pay_type}N   N#{@liq_type_code.ljust(2)}#{@liq_type.ljust(35)}#{@liq_action_code.ljust(2)}#{@liq_action.ljust(35)}#{@liq_ext_code.ljust(2)}#{@liq_ext.ljust(35)}#{@liq_ext_ct}LQ090419ESP       N05#{@census_warning}#{@error_free}#{@paperless_cert}#{@paperless}YVFEDI     "
-      r << "SH01#{@release_cert_message.ljust(33)}#{"".ljust(12)}#{convert_cur.call(@total_duty,12)}#{convert_cur.call(@liq_duty,12)}#{"".ljust(12)}#{convert_cur.call(@total_fees,12)}#{convert_cur.call(@liq_fees,12)}#{"".ljust(24)}#{convert_cur.call(@liq_tax,12)}#{"".ljust(24)}#{convert_cur.call(@liq_ada,12)}#{"".ljust(24)}#{convert_cur.call(@liq_cvd,12)}#{@fda_message.ljust(33)}#{"".ljust(107)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}#{"".ljust(12)}#{@monthly_stmt_number.ljust(11)}#{"".ljust(13)}#{"".ljust(2)}#{@monthly_stmt_due_str}"
+      r << "SH00#{@ref_num.rjust(10,"0")}#{@cust_num.ljust(10)}#{@extract_date_str}#{@company_number}#{@division}#{@customer_name.ljust(35)}#{@merchandise_description.ljust(70)}IDID#{@lading_port_code.ljust(5,'0')}#{@unlading_port_code.ljust(4,'0')}#{@entry_port_code.rjust(4,'0')}#{@transport_mode_code}#{@entry_type}#{@filer_code}0#{@entry_ext}#{@ult_consignee_code.ljust(10)}#{@ult_consignee_name.ljust(35)}#{@carrier_code.ljust(4)}00#{@location_of_goods}ETIHAD AIRWAYS                     #{@vessel.ljust(20)}#{@voyage.ljust(10)}#{@total_packages.to_s.rjust(12,'0')}#{@total_packages_uom.ljust(6)}#{@gross_weight.to_s.rjust(12,'0')}0000000014400WEDG#{@daily_stmt_number.ljust(11)}#{@pay_type}N   N#{@liq_type_code.ljust(2)}#{@liq_type.ljust(35)}#{@liq_action_code.ljust(2)}#{@liq_action.ljust(35)}#{@liq_ext_code.ljust(2)}#{@liq_ext.ljust(35)}#{@liq_ext_ct}LQ090419ESP       N05#{@census_warning}#{@error_free}#{@paperless_cert}#{@paperless}YVFEDI     "
+      r << "SH01#{@release_cert_message.ljust(33)}#{"".ljust(12)}#{convert_cur.call(@total_duty,12)}#{convert_cur.call(@liq_duty,12)}#{"".ljust(12)}#{convert_cur.call(@total_fees,12)}#{convert_cur.call(@liq_fees,12)}#{"".ljust(24)}#{convert_cur.call(@liq_tax,12)}#{"".ljust(24)}#{convert_cur.call(@liq_ada,12)}#{"".ljust(24)}#{convert_cur.call(@liq_cvd,12)}#{@fda_message.ljust(33)}#{"".ljust(107)}#{convert_cur.call(@total_duty_direct,12)}#{"".ljust(15)}#{convert_cur.call(@entered_value,13)}#{@recon}#{"".ljust(12)}#{@monthly_stmt_number.ljust(11)}#{"".ljust(13)}#{"".ljust(2)}#{@monthly_stmt_due_str}000000000000000000000000                    #{@bond_type}"
       r << "SH03#{"".ljust(285)}#{@consignee_address_1.ljust(35)}#{@consignee_address_2.ljust(35)}#{@consignee_city.ljust(35)}#{@consignee_state.ljust(2)}"
       r << "SH04DAS DISTRIBUTORS INC               DAS DISTRIBUTORS INC               724 LAWN RD                                                           PALMYRA                     PA17078    20110808#{@destination_state}                XQPIOTRA1932TIL            20110808   Vandegrift Forwarding Co. Inc.     0000000550900000000000000000000000000                                                                                                                                                                                    "
       r << "SD0000012#{@arrival_date_str}200904061628Arr POE Arrival Date Port of Entry                                  "
@@ -194,7 +197,7 @@ describe OpenChain::AllianceParser do
           :add=>{:case_number => 'A23456789', :bond=> "Y", :amount=>BigDecimal('12345678.90'), :percent=>BigDecimal('123.45'), :value=>BigDecimal('98765432.10')},
           :cvd=>{:case_number => 'C12345678', :bond=> "N", :amount=>BigDecimal('12345678.90'), :percent=>BigDecimal('123.45'), :value=>BigDecimal('98765432.10')}
           },
-        {:part_number=>'101301',:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301'}
+        {:part_number=>'101301',:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301', :product_line=>"PLINE"}
       ]},
       {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
@@ -220,7 +223,7 @@ describe OpenChain::AllianceParser do
         ci[:lines].each do |line|
           [:mid,:po_number,:department].each {|k| line[k]='' unless line[k]}
           # Note: Contract Amount specifically is not using the convert_cur lambda because the test files for this value DID have decimal points in the values.
-          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(6)}#{line[:contract_amount].to_s.ljust(10)}#{"".ljust(2)}#{line[:department].ljust(6)}#{"".ljust(27)}#{line[:po_number].ljust(35)}#{"".ljust(45)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{"".ljust(8)}"
+          rows << "CL00#{line[:part_number].ljust(30)}#{(line[:units]*1000).to_i.to_s.rjust(12,"0")}#{line[:units_uom].ljust(6)}#{line[:mid].ljust(15)}#{line[:origin_country_code]}#{"".ljust(11)}#{line[:export_country_code]}#{line[:related_parties] ? 'Y' : 'N'}#{line[:vendor_name].ljust(35)}#{convert_cur.call(line[:volume],11)}#{"".ljust(6)}#{line[:contract_amount].to_s.ljust(10)}#{"".ljust(2)}#{line[:department].ljust(6)}#{"".ljust(27)}#{line[:po_number].ljust(35)}#{"".ljust(15)}#{line[:product_line].to_s.rjust(30)}#{convert_cur.call(line[:computed_value],13)}#{convert_cur.call(line[:value],13)}#{"".ljust(13,"0")}#{convert_cur.call(line[:computed_adjustments],13)}#{convert_cur.call(line[:computed_net_value],13)}#{"".ljust(8)}"
           rows << "CL01#{"".ljust(426)}#{line[:line_number]}"
           if line[:tariff]
             line[:tariff].each do |t|
@@ -387,6 +390,8 @@ describe OpenChain::AllianceParser do
   it 'should create entry' do
     Lock.should_receive(:acquire).with(Lock::ALLIANCE_PARSER, times: 3).and_yield
     Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
+    OpenChain::SqlProxyClient.should_receive(:delay).and_return OpenChain::SqlProxyClient
+    OpenChain::SqlProxyClient.should_receive(:request_alliance_entry_details).with @ref_num, @est.parse(@extract_date_str)
 
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
@@ -473,6 +478,8 @@ describe OpenChain::AllianceParser do
     ent.delivery_order_pickup_date.should == @est.parse(@delivery_order_pickup_str)
 
     ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
+    expect(ent.location_of_goods).to eq @location_of_goods
+    expect(ent.bond_type).to eq @bond_type
 
     expected_invoiced_value = BigDecimal("0",2)
     expected_export_country_codes = Set.new
@@ -532,6 +539,8 @@ describe OpenChain::AllianceParser do
         else
           ci_line.contract_amount.should == line[:contract_amount]
         end
+
+        expect(ci_line.product_line).to eq line[:product_line].to_s
 
         if line[:tariff]
           line[:tariff].each do |t_line|
@@ -944,5 +953,130 @@ describe OpenChain::AllianceParser do
       OpenChain::AllianceParser.should_receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false})
       OpenChain::AllianceParser.process_day d
     end
+  end
+
+  describe "process_alliance_query_details" do
+
+    before :each do
+      # Every test in here can assume there will be an entry in the system already, since there's really
+      # no other way for this process to be kicked off.
+      t = Factory(:commercial_invoice_tariff, hts_code: "123",
+        commercial_invoice_line: Factory(:commercial_invoice_line, line_number: 1,
+          commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV 1", entry: Factory(:entry, broker_reference: "Reference", source_system: "Alliance", last_exported_from_source: Time.zone.now))
+        )
+      )
+      t2 = Factory(:commercial_invoice_tariff, hts_code: "456", commercial_invoice_line: t.commercial_invoice_line)
+      t3 = Factory(:commercial_invoice_tariff, hts_code: "789",
+        commercial_invoice_line: Factory(:commercial_invoice_line, line_number: 2,
+          commercial_invoice: t2.commercial_invoice_line.commercial_invoice
+        )
+      )
+
+      t4 = Factory(:commercial_invoice_tariff, hts_code: "987",
+        commercial_invoice_line: Factory(:commercial_invoice_line, line_number: 2,
+          commercial_invoice: Factory(:commercial_invoice, invoice_number: "INV 2", entry: t.commercial_invoice_line.entry)
+        )
+      )
+
+      @entry = t4.commercial_invoice_line.entry
+
+      # Normally, we'd not end up missing information for certain lines, but I'm just doing it here to make sure that the 
+      # correct lines are getting discovered in the code to be updated.
+      @query_context = {'broker_reference' => @entry.broker_reference, 'last_exported_from_source'=> @entry.last_exported_from_source.to_json}
+      # All of the values need to be sent over as strings, otherwise, the json'ization of the result set sends them as float values which causes issues w/ dates and expected int values.
+      @query_results = [
+        {'final statement date'=>"20140501", 'invoice number'=>'INV 1      ',  'line number'=>"10", 'customs line number'=>"1", 'visa no'=>'123', 'visa qty'=>"1", 'visa uom'=>'UOM', 'tariff line no'=>"1", 'tariff no'=>"123", 'category'=>'123'},
+        {'final statement date'=>"20140501", 'invoice number'=>'INV 2      ',  'line number'=>"20", 'customs line number'=>"2", 'visa no'=>'987', 'visa qty'=>"6", 'visa uom'=>'MOU', 'tariff line no'=>"1", 'tariff no'=>"987", 'category'=>'987'},
+      ]
+    end
+
+    it "parses query results from SQL Proxy and updates the line information for each line" do
+      Entry.any_instance.should_receive(:broadcast_event).with :save
+
+      OpenChain::AllianceParser.process_alliance_query_details @query_results, @query_context
+
+      @entry.reload
+      expect(@entry.final_statement_date).to eq Date.new(2014, 5, 1)
+      l = @entry.commercial_invoices.first.commercial_invoice_lines.first
+
+      expect(l.customs_line_number).to eq 1
+      expect(l.visa_number).to eq '123'
+      expect(l.visa_quantity).to eq BigDecimal.new(1)
+      expect(l.visa_uom).to eq "UOM"
+
+      t = l.commercial_invoice_tariffs.first
+      expect(t.quota_category).to eq 123
+
+      l = @entry.commercial_invoices.second.commercial_invoice_lines.first
+      expect(l.customs_line_number).to eq 2
+      expect(l.visa_number).to eq '987'
+      expect(l.visa_quantity).to eq BigDecimal.new(6)
+      expect(l.visa_uom).to eq "MOU"
+
+      t = l.commercial_invoice_tariffs.first
+      expect(t.quota_category).to eq 987
+    end
+
+    it "handles blank data in query results by setting columns to nil" do
+      # Blank dates in alliance end up being represented by 0
+      query_results = [
+        {'final statement date'=>"0", 'invoice number'=>'INV 1',  'line number'=>"10", 'customs line number'=>"0", 'visa no'=>'', 'visa qty'=>"0", 'visa uom'=>'      ', 'tariff line no'=>"1", 'tariff no'=>"123", 'category'=>''}
+      ]
+
+      @entry.update_attributes! final_statement_date: Date.new(2014,5,1)
+      @entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! customs_line_number: 3, visa_number: 'abc', visa_quantity: 10, visa_uom: 'UOM'
+      @entry.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first.update_attributes! quota_category: 'ABC'
+      OpenChain::AllianceParser.process_alliance_query_details query_results, @query_context
+
+      @entry.reload
+
+      expect(@entry.final_statement_date).to be_nil
+      l = @entry.commercial_invoices.first.commercial_invoice_lines.first
+
+      expect(l.customs_line_number).to be_nil
+      expect(l.visa_number).to be_nil
+      expect(l.visa_quantity).to be_nil
+      expect(l.visa_uom).to be_nil
+
+      t = l.commercial_invoice_tariffs.first
+      expect(t.quota_category).to be_nil
+    end
+
+    it "updates tariff level fields by tariff line number when multiple lines have the same hts code" do
+      t1 = @entry.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first
+      @entry.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.second.update_attributes! hts_code: t1.hts_code
+      @query_results.first['tariff line no'] = 2
+
+      OpenChain::AllianceParser.process_alliance_query_details @query_results, @query_context
+      @entry.reload
+
+      t = @entry.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.second
+      expect(t.quota_category).to eq 123
+    end
+
+    it "does nothing if query details are outdated" do
+      @query_context['last_exported_from_source'] = (@entry.last_exported_from_source - 1.day).to_json
+      updated = @entry.updated_at
+
+      OpenChain::AllianceParser.process_alliance_query_details @query_results, @query_context
+
+      @entry.reload
+      expect(@entry.updated_at).to eq updated
+    end
+
+    it "handles unmarshalling json results/context data" do
+      OpenChain::AllianceParser.process_alliance_query_details @query_results.to_json, @query_context.to_json
+      @entry.reload
+      # Just check the entry and make sure it's updated, that's enough of a check to make sure the json data was unmarshalled
+      expect(@entry.final_statement_date).to eq Date.new(2014, 5, 1)
+    end
+
+    it "handles results with nothing in them" do
+      updated = @entry.updated_at
+      OpenChain::AllianceParser.process_alliance_query_details [], @query_context
+      @entry.reload
+      expect(@entry.updated_at).to eq updated
+    end
+
   end
 end

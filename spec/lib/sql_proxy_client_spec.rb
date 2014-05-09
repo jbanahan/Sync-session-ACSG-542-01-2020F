@@ -48,4 +48,14 @@ describe OpenChain::SqlProxyClient do
       @c.request_alliance_invoice_numbers_since Date.new(2014,1,1)
     end
   end
+
+  describe "request_alliance_entry_details" do
+    it "requests alliance entry details" do
+      last_exported_date = Time.zone.now
+      body = {'sql_params' => {:file_number => 12345}, 'context' => {'broker_reference' => '12345', 'last_exported_from_source' => last_exported_date.in_time_zone("Eastern Time (US & Canada)")}}
+
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/entry_details", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+      @c.request_alliance_entry_details "12345", last_exported_date
+    end
+  end
 end
