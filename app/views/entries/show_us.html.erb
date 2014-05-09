@@ -11,7 +11,7 @@
     <button class='btn_link' link_to='<%=validation_results_entry_path(@entry)%>'>Business Rules</button>
   <%end%>
 <%end-%>
-<% cache ["v8",current_user.company,current_user,@entry] do-%>
+<% cache ["v9",current_user.company,current_user,@entry] do-%>
 <%if !current_user.hide_message?("ent_dl") -%>
 <%content_for :javascript do -%>
 $(function() {
@@ -279,17 +279,17 @@ $(function() {
             # Don't bother showing CVD or ADD fields if there's no values to show.  We can determine if there's something to show 
             # by checking if add/cvd case number is non-null, since the Alliance files don't include the CVD/ADD line types 
             # unless that data is applicable to the invoice.  Even if there's no actual case #, the value in those cases will be '', not nil
-            if ci.commercial_invoice_lines.find {|line| !line.add_case_number.nil?} %>
+            if !line.add_case_number.blank? %>
               <tr>
-                <td colspan='<%=fields.length%>' style='font-size:111%;'>
+                <td colspan='<%=fields.length%>' style='font-size:111%; padding-left:0.5em;'>
                   <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cil_add_case_number, :cil_add_bond, :cil_add_case_value, :cil_add_duty_amount, :cil_add_case_percent],
                       :lines=>[line]}%>
                 </td>
               </tr>
             <% end %>
-            <% if ci.commercial_invoice_lines.find {|line| !line.cvd_case_number.nil?} %>
+            <% if !line.cvd_case_number.blank? %>
               <tr>
-                <td colspan='<%=fields.length%>' style='font-size:111%;'>
+                <td colspan='<%=fields.length%>' style='font-size:111%; padding-left:0.5em;'>
                   <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cil_cvd_case_number, :cil_cvd_bond, :cil_cvd_case_value, :cil_cvd_duty_amount, :cil_cvd_case_percent],
                       :lines=>[line]}%>
                 </td>
@@ -297,7 +297,7 @@ $(function() {
             <% end %>
             <% if line.commercial_invoice_tariffs.length > 0%>
               <tr>
-                <td colspan='<%=fields.length%>' style='font-size:111%; padding-left:0.5em;'>
+                <td colspan='<%=fields.length%>' style='font-size:111%; padding-left:1em;'>
                   <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:cit_spi_secondary,
                     :cit_classification_qty_1,:cit_classification_uom_1,:cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3,
                     :cit_gross_weight,:cit_tariff_description], :lines=>line.commercial_invoice_tariffs, 
