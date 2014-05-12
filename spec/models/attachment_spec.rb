@@ -180,6 +180,29 @@ describe Attachment do
       m.attachments[2].filename.should == "c.txt"
     end
 
+    it "should prepend attachment_type to file names when available" do
+      param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
+      a = Attachment.new(attached_file_name: "a.txt", attachment_type: "Type1")
+      b = Attachment.new(attached_file_name: "b.txt", attachment_type: "Type2")
+      c = Attachment.new(attached_file_name: "c.txt", attachment_type: "Type3")
+      a.id = 1; b.id = 2; c.id = 3
+      a.save!; b.save!; c.save!
+      Attachment.should_receive(:find).with(1).and_return a
+      Attachment.should_receive(:find).with(2).and_return b
+      Attachment.should_receive(:find).with(3).and_return c
+      a.should_receive(:download_to_tempfile).and_return @x
+      b.should_receive(:download_to_tempfile).and_return @y
+      c.should_receive(:download_to_tempfile).and_return @z
+
+      Attachment.email_attachments(param_hash)
+
+      m = OpenMailer.deliveries.last
+      m.attachments.length.should == 3
+      m.attachments[0].filename.should == "Type1 a.txt"
+      m.attachments[1].filename.should == "Type2 b.txt"
+      m.attachments[2].filename.should == "Type3 c.txt"
+    end
+
     it "should send an email to the correct recipient" do
       param_hash = {to_address: "me@there.com", email_subject: "Test subject", email_body: "Test body", ids_to_include: [1, 2, 3]}
       a = Attachment.new(attached_file_name: "a.txt")

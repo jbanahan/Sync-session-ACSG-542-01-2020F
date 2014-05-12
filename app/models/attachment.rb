@@ -52,6 +52,7 @@ class Attachment < ActiveRecord::Base
       tfile = attachment.download_to_tempfile
       Attachment.add_original_filename_method tfile
       tfile.original_filename = attachment.attached_file_name
+      tfile.original_filename = attachment.attachment_type + " " + tfile.original_filename if !attachment.attachment_type.blank?
       attachments << tfile
     end
     OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
