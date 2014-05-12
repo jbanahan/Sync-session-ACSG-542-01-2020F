@@ -114,7 +114,7 @@ module OpenChain
               actual_charge_sum += line.charge_amount
 
               pl = r.intacct_receivable_lines.build
-              pl.charge_code = line.charge_code
+              pl.charge_code = "#{line.charge_code}".rjust(3, "0")
               pl.charge_description = line.charge_description
               pl.amount = line.charge_amount
               pl.line_of_business = "Brokerage"

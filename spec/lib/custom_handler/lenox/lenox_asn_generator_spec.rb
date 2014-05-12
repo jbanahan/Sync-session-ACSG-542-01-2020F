@@ -29,7 +29,6 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     it "should ftp_file"
   end
 
-=begin
   describe "ftp_credentials" do
     it "should generate base non-production credentials" #do
 =begin
@@ -50,7 +49,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
 =end
   end
-=end
+  
   describe :find_entries do
     before :each do
       @bvr = Factory(:business_validation_result)

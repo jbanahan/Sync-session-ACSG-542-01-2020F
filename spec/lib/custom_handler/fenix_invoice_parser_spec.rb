@@ -166,7 +166,7 @@ INV
 
     l = r.intacct_receivable_lines.first
     bl = bi.broker_invoice_lines.first
-    expect(l.charge_code).to eq bl.charge_code
+    expect(l.charge_code).to eq "055"
     expect(l.charge_description).to eq bl.charge_description
     expect(l.amount).to eq bl.charge_amount
     expect(l.line_of_business).to eq "Brokerage"
