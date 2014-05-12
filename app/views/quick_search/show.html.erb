@@ -18,7 +18,7 @@ $(function() {
         for(j=0;j<row.values.length;j++) {
           html += "<td>"
           if(j==0) {
-            html += "<a href='"+row.link+"'>";
+            html += "<a href='"+row.link+"' class='btn btn-xs btn-default'>";
             if(row.values[j] == "") {
               html += "empty";
             }
@@ -32,7 +32,7 @@ $(function() {
         html += "</tr>";
       }
       if(data.rows.length==0) {
-        html += "<tr><td>No Results</td></tr>";
+        html += "<tr><td style='color:#333;font-size:90%;'>No Results</td></tr>";
       } else if (data.rows.length > 10) {
         html += "<tr><td colspan='"+colspan+"'>More than 10 results found, use <a href='<%=url_for cm.klass%>'>advanced search</a> to add more filters.</td></tr>";
       }
@@ -46,7 +46,7 @@ $(function() {
 <%@module_field_map.each do |cm,fields|%>
   <div id='<%=cm.class_name%>'>
     <h2><%=cm.label%></h2>
-    <table class='detail_table' id='<%=cm.class_name%>_result_content'>
+    <table class='detail_table table table-condensed table-hover' id='<%=cm.class_name%>_result_content'>
       <thead><tr>
         <% sc_counter = 0 %>
         <%cm.default_search_columns.each do |f|%>
