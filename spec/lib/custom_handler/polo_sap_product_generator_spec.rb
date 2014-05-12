@@ -49,6 +49,19 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       a.should have(3).items
       a.collect {|x| x[2]}.sort.should == ['CA','IT','US']
     end
+    it "should allow custom list of valid countries" do
+      italy = Factory(:country,:iso_code=>'IT')
+      kr = Factory(:country,:iso_code=>'KR')
+      p = Factory(:product)
+      p.update_custom_value! @sap_brand_cd, true
+      [@us,italy,kr].each do |country|
+        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>p))
+      end
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1",:custom_countries=>['KR','IT']).sync_csv
+      a = CSV.parse(IO.read(@tmp.path),:headers=>true)
+      a.should have(2).items
+      a.collect {|x| x[2]}.sort.should == ['IT','KR']
+    end
     it "should not send records with blank tariff numbers" do
       p1 = Factory(:product)
       p2 = Factory(:product)
@@ -82,7 +95,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       @tmp = described_class.new(:no_brand_restriction=>true,:custom_where=>"WHERE 1=1").sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
       a.should have(3).item
-      a.collect {|x| x[0]}.should == [p1.unique_identifier,p2.unique_identifier,p3.unique_identifier]
+      a.collect {|x| x[0]}.sort.should == [p1.unique_identifier,p2.unique_identifier,p3.unique_identifier].sort
     end
 
     it "should sync and skip product with invalid UTF-8 data" do
