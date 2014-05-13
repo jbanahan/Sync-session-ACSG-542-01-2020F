@@ -28,14 +28,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
 
       dimension_response = REXML::Document.new "<notfound>false</notfound>"
-      @c.should_receive(:post_xml).with("company", false, get_xml, control).and_return dimension_response
+      @c.should_receive(:post_xml).with("company", false, false, get_xml, control).and_return dimension_response
 
       create_xml = "<create>value</create>"
       control2 = "controlid2"
       @xml_gen.should_receive(:generate_dimension_create).with("type", "id", "value").and_return [control2, create_xml]
 
       create_response = REXML::Document.new "<key>New Dimension</key>"
-      @c.should_receive(:post_xml).with("company", true, create_xml, control2).and_return create_response
+      @c.should_receive(:post_xml).with("company", true, true, create_xml, control2).and_return create_response
 
 
       expect(@c.send_dimension "type", "id", "value", "company").to eq "New Dimension"
@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
 
       dimension_response = REXML::Document.new "<key>Existing</key>"
-      @c.should_receive(:post_xml).with("company", false, get_xml, control).and_return dimension_response
+      @c.should_receive(:post_xml).with("company", false, false, get_xml, control).and_return dimension_response
 
       expect(@c.send_dimension "type", "id", "value", "company").to eq "Existing"
     end
@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       control = "controlid"
       @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
       
-      @c.should_receive(:post_xml).with("company", false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Intacct Error"
+      @c.should_receive(:post_xml).with("company", false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Intacct Error"
       OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError.any_instance.should_receive(:log_me).with ["Failed to find and/or create dimension type id for location company."]
 
       expect(@c.send_dimension "type", "id", "value", "company").to be_nil
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       get_xml = "<xml>test</xml>"
       control = "controlid"
       @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
-      @c.should_receive(:post_xml).with(nil, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "A successful transaction has already been recorded with the control id #{control}"
+      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "A successful transaction has already been recorded with the control id #{control}"
 
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       xml = "<recv>receivable</recv>"
       @xml_gen.should_receive(:generate_receivable_xml).with(r).and_return [cid, xml]
 
-      @c.should_receive(:post_xml).with("c", true, xml, cid).and_return create_result_key_response(cid, "R-Key")
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "R-Key")
 
       @c.send_receivable r
 
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       xml = "<recv>receivable</recv>"
       @xml_gen.should_receive(:generate_receivable_xml).with(r).and_return [cid, xml]
 
-      @c.should_receive(:post_xml).with("c", true, xml, cid).and_raise "Error Message"
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_raise "Error Message"
 
       @c.send_receivable r
 
@@ -122,7 +122,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     
       @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
       @xml_gen.should_receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, xml, cid).and_return create_result_key_response(cid, "P-Key")
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "P-Key")
 
       @c.send_payable p
 
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       
       @c.should_receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
       @xml_gen.should_receive(:generate_payable_xml).with(p, "TERMS").and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, xml, cid).and_raise "Creation error."
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_raise "Creation error."
 
       @c.send_payable p
 
@@ -163,7 +163,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       cid = "controlid"
       xml = "<check>check</check>"
       @xml_gen.should_receive(:generate_check_gl_entry_xml).with(p).and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", true, xml, cid).and_return create_result_key_response(cid, "GL-Account-Key")
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "GL-Account-Key")
 
       @c.send_payable p
 
@@ -180,7 +180,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       @xml_gen.should_receive(:generate_get_object_fields).with("object", "key", "field1", "field2").and_return [cid, xml]
 
       fields_xml = "<result><controlid>#{cid}</controlid><data><object><field1>value1</field1><field2>value2</field2></object></data></result>"
-      @c.should_receive(:post_xml).with("c", false, xml, cid).and_return REXML::Document.new(fields_xml)
+      @c.should_receive(:post_xml).with("c", false, false, xml, cid).and_return REXML::Document.new(fields_xml)
 
       expect(@c.get_object_fields "c", "object", "key", "field1", "field2").to eq({"field1" => "value1", "field2" => "value2"})
     end
@@ -189,7 +189,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       cid = "controlid"
       xml = "<fields>f</fields>"
       @xml_gen.should_receive(:generate_get_object_fields).with("object", "key", "field1", "field2").and_return [cid, xml]
-      @c.should_receive(:post_xml).with("c", false, xml, cid).and_return REXML::Document.new("<result />")
+      @c.should_receive(:post_xml).with("c", false, false, xml, cid).and_return REXML::Document.new("<result />")
 
       expect {@c.get_object_fields "c", "object", "key", "field1", "field2"}.to raise_error "Failed to find object object with key key."
     end
@@ -210,7 +210,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     it "posts xml to the intacct API" do
       function_content = "<content>function</content>"
       outer_control_id = Digest::SHA1.hexdigest function_content
-      expect(@c.post_xml "location", true, function_content, "controlid").to eq @resp
+      expect(@c.post_xml "location", true, true, function_content, "controlid").to eq @resp
 
       # We're primarily concerned with what we're actually posting here, so check out the URI and post values
       # we've captured.
@@ -224,6 +224,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(x.text "/request/control/password").to eq "9gUMGbFIMy"
       expect(x.text "/request/control/dtdversion").to eq "2.1"
       expect(x.text "/request/control/controlid").to eq outer_control_id
+      # In non-production env. don't ever set this value to true.
       expect(x.text "/request/control/uniqueid").to eq "false"
 
       expect(REXML::XPath.first(x, "/request/operation").attributes["transaction"]).to eq "true"
@@ -235,13 +236,23 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(REXML::XPath.first(x, "/request/operation/content").elements[1].to_s).to eq function_content
     end
 
+    it "sets unique id to true in production env if specified" do
+      @c.should_receive(:production?).and_return true
+      function_content = "<content>function</content>"
+      outer_control_id = Digest::SHA1.hexdigest function_content
+      expect(@c.post_xml "location", true, true, function_content, "controlid").to eq @resp
+
+      x = REXML::Document.new(@post.body)
+      expect(x.text "/request/control/uniqueid").to eq "true"
+    end
+
     it "allows overriding default values" do
       @c.should_receive(:production?).and_return true
       overrides = {sender_id: "sid", sender_password: "spwd", api_version: "3", user_id: "uid", company_id: "cid", user_password: "upwd", url: "http://www.test.com/"}
 
       function_content = "<content>function</content>"
       outer_control_id = Digest::SHA1.hexdigest function_content
-      expect(@c.post_xml nil, false, function_content, "controlid", overrides).to eq @resp
+      expect(@c.post_xml nil, false, false, function_content, "controlid", overrides).to eq @resp
 
 
       expect(@uri.to_s).to eq overrides[:url]
@@ -254,7 +265,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(x.text "/request/control/password").to eq overrides[:sender_password]
       expect(x.text "/request/control/dtdversion").to eq overrides[:api_version]
       expect(x.text "/request/control/controlid").to eq outer_control_id
-      expect(x.text "/request/control/uniqueid").to eq "true"
+      expect(x.text "/request/control/uniqueid").to eq "false"
 
       expect(REXML::XPath.first(x, "/request/operation").attributes["transaction"]).to be_nil
       expect(x.text "/request/operation/authentication/login/userid").to eq overrides[:user_id]
@@ -274,13 +285,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       @resp = REXML::Document.new "<errormessage><error><errorno>#{error_no}</errorno><description>#{description}</description><description2>#{description2}</description2><correction>#{correction}</correction></error></errormessage>"
 
       error_message = "Intacct API call failed with errors:\nError No: #{error_no}\nDescription: #{description}\nDescription 2: #{description2}\nCorrection: #{correction}"
-      expect{@c.post_xml nil, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+      expect{@c.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
     end
 
     it "transparently handles responses with non-success statuses" do
       @resp =  REXML::Document.new "<result><controlid>id</controlid><status>error</status><function>func</function></result>"
       error_message = "Intacct API Function call func failed with status error."
-      expect{@c.post_xml nil, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+      expect{@c.post_xml nil, false, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
     end
   end
 

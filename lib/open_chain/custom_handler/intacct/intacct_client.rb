@@ -38,14 +38,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       # if location_id is set, then the dimension will post to a specific sub-entity.
       control, xml = @generator.generate_dimension_get type, id
       begin
-        response = post_xml company, false, xml, control
+        response = post_xml company, false, false, xml, control
 
         # Just look for a <key> element in the response, if it's there, then we can reliably know the dimension already exists
         key = response.text("//key")
         if key.blank?
           # No key was found, so try and create the dimension
           control, xml = @generator.generate_dimension_create type, id, value
-          response = post_xml company, true, xml, control
+          response = post_xml company, true, true, xml, control
 
           # Might as well return the key that was created
           key = response.text("//key")
@@ -71,7 +71,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   def send_receivable receivable
     begin
       function_control_id, xml = @generator.generate_receivable_xml receivable
-      response = post_xml receivable.company, true, xml, function_control_id
+      response = post_xml receivable.company, true, true, xml, function_control_id
       receivable.intacct_key = extract_result_key response, function_control_id
       receivable.intacct_upload_date = Time.zone.now
       receivable.intacct_errors = nil
@@ -109,17 +109,17 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     raise "Failed to retrieve Terms for Vendor #{payable.vendor_number}.  Terms must be set up for all vendors." if vendor_terms.blank?
 
     function_control_id, xml = @generator.generate_payable_xml payable, vendor_terms
-    [function_control_id, post_xml(payable.company, true, xml, function_control_id)]
+    [function_control_id, post_xml(payable.company, true, true, xml, function_control_id)]
   end
 
   def send_check payable
     function_control_id, xml = @generator.generate_check_gl_entry_xml payable
-    [function_control_id, post_xml(payable.company, true, xml, function_control_id)]
+    [function_control_id, post_xml(payable.company, true, true, xml, function_control_id)]
   end
 
   def get_object_fields location_id, object_name, key, *fields
     function_control_id, xml = @generator.generate_get_object_fields object_name, key, *fields
-    response = post_xml location_id, false, xml, function_control_id
+    response = post_xml location_id, false, false, xml, function_control_id
     obj = REXML::XPath.first response, "//result[controlid = '#{function_control_id}']/data/#{object_name}"
     raise "Failed to find #{object_name} object with key #{key}." unless obj
     object_fields = {}
@@ -133,14 +133,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   # response from the API.  The XML data should already be stringified (sans <?xml version..>)
   # DON'T use this method directly, use the other public feeder methods in this class.  The method
   # is primarily exposed as non-private for simplified testing.
-  def post_xml location_id, transaction, intacct_content_xml, function_control_id, request_options = {}
+  def post_xml location_id, transaction, unique_request, intacct_content_xml, function_control_id, request_options = {}
     connection_options = INTACCT_CONNECTION_INFO.merge(request_options)
 
     uri = URI.parse connection_options[:url]
 
     post = Net::HTTP::Post.new(uri)
     post["Content-Type"] = "x-intacct-xml-request"
-    post.body = assemble_request_xml(location_id, transaction, connection_options, intacct_content_xml)
+    post.body = assemble_request_xml(location_id, transaction, unique_request, connection_options, intacct_content_xml)
 
     xml = http_request(uri, post)
 
@@ -177,8 +177,11 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       xml.text("//result[controlid = '#{function_control_id}']/key")
     end
 
-    def assemble_request_xml location_id, transaction, connection_options, intacct_content_xml
-      # This uniquely identifies the content section part of the request
+    def assemble_request_xml location_id, transaction, unique_content, connection_options, intacct_content_xml
+      # This uniquely identifies the content section part of the request, if uniqueid is true, then
+      # ANY request with the same SHA-1 digest will fail (even non-transactional ones).  In general,
+      # if we're just reading information from Intacct there's no point to requiring a unique transaction control
+      # identifier.
       control_id = Digest::SHA1.hexdigest intacct_content_xml
       xml = <<-XML
 <?xml version="1.0" encoding="UTF-8"?>
@@ -187,7 +190,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     <senderid>#{connection_options[:sender_id]}</senderid>
     <password>#{connection_options[:sender_password]}</password>
     <controlid>#{control_id}</controlid>
-    <uniqueid>#{(production? ? "true" : "false")}</uniqueid>
+    <uniqueid>#{((production? && unique_content == true) ? "true" : "false")}</uniqueid>
     <dtdversion>#{connection_options[:api_version]}</dtdversion>
   </control>
   <operation#{((transaction == true) ? ' transaction="true"' : "" )}>
