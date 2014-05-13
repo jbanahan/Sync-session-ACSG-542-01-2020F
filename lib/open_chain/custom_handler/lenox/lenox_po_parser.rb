@@ -125,7 +125,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     r.mode = line[1356,3].strip
     r.vendor_code = line[1669,17].strip
     r.vendor_name = line[1686,35].strip
-    r.factory_code = line[2025,10].strip
+    r.factory_code = line[2021,10].strip
     r.line_destination_code = line[2505,17].strip if line.length > 2505 #this field was added and won't be there for long files
     r
   end
