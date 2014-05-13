@@ -98,8 +98,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
   describe "generate_and_send" do
     before :each do
       @g = described_class.new
-      @g.stub(:ftp_file) do |file, delete|
-        delete.should be_false
+      @g.stub(:ftp_file) do |file, opts|
+        opts[:keep_local].should be_true
         file.rewind
         @xml_data = REXML::Document.new(file.read)
       end

@@ -21,12 +21,19 @@ describe "FtpFileSupport" do
       FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
       FtpSupportImpl.new.ftp_file @t
     end
+
+    it "should take option_overrides" do
+      File.stub(:exists?).and_return true
+      FtpSender.should_receive(:send_file).with('otherserver','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
+      @t.should_receive(:unlink)
+      FtpSupportImpl.new.ftp_file @t, {server:'otherserver'}
+    end
     
     it 'should not unlink if false is passed' do
       File.stub(:exists?).and_return true
       @t.should_not_receive(:unlink)
       FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
-      FtpSupportImpl.new.ftp_file @t, false
+      FtpSupportImpl.new.ftp_file @t, {keep_local:true}
     end
     
     it "should return false if file is nil" do

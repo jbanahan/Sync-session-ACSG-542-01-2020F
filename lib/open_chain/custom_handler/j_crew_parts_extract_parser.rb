@@ -166,7 +166,7 @@ module OpenChain
           send = File.open temp.path, "rb"
           begin
             # Don't delete the tempfile, we have to send twice.
-            ftp_file(send, false) 
+            ftp_file(send, {keep_local:true}) 
           ensure 
             send.close unless send.closed?
           end

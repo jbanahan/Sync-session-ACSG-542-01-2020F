@@ -1,18 +1,33 @@
 require 'open_chain/fixed_position_generator'
 require 'open_chain/custom_handler/lenox/lenox_custom_definition_support'
+require 'open_chain/ftp_file_support'
+
 module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   include OpenChain::CustomHandler::Lenox::LenoxCustomDefinitionSupport
+  include OpenChain::FtpFileSupport
 
   class LenoxBusinessLogicError < StandardError; end
 
   SYNC_CODE = 'LENOXASN'
 
-  def initialize env = Rails.env
+  def self.run_schedulable opts={}
+    g = self.new(opts)
+    temps = g.generate_tempfiles g.find_entries
+    g.ftp_file temps[0], {remote_file_name:'Vand_Header'}
+    g.ftp_file temps[1], {remote_file_name:'Vand_Detail'}
+  end
+
+  def initialize opts = {env: Rails.env}
     @lenox = Company.find_by_system_code 'LENOX'
     @cdefs = self.class.prep_custom_definitions CUSTOM_DEFINITION_INSTRUCTIONS.keys
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
       date_format:'%Y%m%d'
     )
+    @env = opts[:env]
+  end
+
+  def ftp_credentials
+    {server:'ftp.lenox.com',username:"vanvendor#{@env=='production' ? '' : 'test'}",password:'$hipments',folder:'/'}
   end
 
   def find_entries
@@ -23,14 +38,26 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       where('sync_records.id is null'))
   end
 
-  def generate_temp_files entries
+  def generate_tempfiles entries
     Entry.transaction do
       header_file = Tempfile.new(['LENOXHEADER','.txt'])
       detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
       entries.each do |ent|
-        generate_header_rows(ent) {|r| header_file << "#{r}\n"}
-        generate_detail_rows(ent) {|r| detail_file << "#{r}\n"}
-        ent.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
+        begin
+          Entry.transaction do
+            hdata = ''
+            ddata = ''
+            generate_header_rows(ent) {|r| hdata << "#{r}\n"}
+            generate_detail_rows(ent) {|r| ddata << "#{r}\n"}
+            ent.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
+            header_file << hdata
+            detail_file << ddata
+          end
+        rescue
+          OpenMailer.send_simple_html('lenox_us@vandegriftinc.com',
+            "Lenox ASN Failure","<p>A Lenox ASN Failed with the following message:</p>
+            <pre>#{$!.message}</pre><p>Please contact the Lenox on site team so they can manually enter the shipment and invoice into SCW / Rockblocks.</p>").deliver!
+        end
       end
       header_file.flush
       detail_file.flush
@@ -59,7 +86,9 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str(ln.part_number,35)
       r << @f.num(get_exploded_quantity(ln),7)
       r << @f.str(ln.country_origin_code,4)
-      r << ''.ljust(126)
+      r << @f.str(ln.commercial_invoice.invoice_number,25)
+      r << @f.num(ln.line_number,5)
+      r << ''.ljust(96)
       r << time_and_user
       r << @f.num(order_line.price_per_unit,18,6)
       r << @f.num(ln.unit_price,18,6)

@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     end
 
     def generate_and_send data
-     generate_file(data) {|f| ftp_file f, false}     
+     generate_file(data) {|f| ftp_file f, {keep_local:true}}     
     end
 
     # Generates data to a tempfile, yielding the file to any

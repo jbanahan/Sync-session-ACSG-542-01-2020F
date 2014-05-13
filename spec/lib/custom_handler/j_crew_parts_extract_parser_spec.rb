@@ -86,20 +86,18 @@ describe 'JCrewPartsExtractParser' do
         tempfile = output
       }
 
-      @p.should_receive(:ftp_file) {|file, delete|
+      @p.should_receive(:ftp_file) {|file, opts|
         file.path == tempfile.path
-        delete.should_not be_nil
-        delete.should be_false
+        opts[:keep_local].should be_true
 
         # simulate closing the file reference like ftp'ing does so we make sure
         # we're handling this case
         file.close
       }
 
-      @p.should_receive(:ftp_file) {|file, delete|
+      @p.should_receive(:ftp_file) {|file, opts|
         file.path == tempfile.path
-        delete.should_not be_nil
-        delete.should be_false
+        opts[:keep_local].should be_true
       }
 
       @p.generate_and_send io
