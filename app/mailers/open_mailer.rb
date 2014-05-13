@@ -395,7 +395,7 @@ EOS
     end
 
     def modify_email_for_development
-      if Rails.env == "development"
+      if Rails.env.development?
         message.to = User.first.email
         message.cc, message.bcc = [""], [""] #Postmark doesn't like blank strings, nils, or blank lists...
       end

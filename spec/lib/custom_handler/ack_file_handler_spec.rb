@@ -52,9 +52,10 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "should send an email to the user provided if there's an error while processing the file" do
-      described_class.new.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: "chainio_admin"})
+      user = Factory(:user, email: "me@there.com")
+      described_class.new.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username})
 
-      OpenMailer.deliveries.last.to.first.should == "support@vandegriftinc.com"
+      OpenMailer.deliveries.last.to.first.should == user.email
       OpenMailer.deliveries.last.subject.should == "[VFI Track] Ack File Processing Error"
     end
 
