@@ -62,7 +62,9 @@ class UserSessionsController < ApplicationController
       # to the browser cookies.  Therefore, we can set a cookie here if the user wants to be remembered and then
       # check in the callback for it and not allow the remember_token cookie to expire.
      if params[:remember_me]
-        cookies.permanent[:remember_me] = ""
+        # We don't use SSL in development, so make sure we don't use secure cookies there, otherwise, 
+        # remember me won't work.
+        cookies.permanent[:remember_me] = {value: "", secure: !Rails.env.development?, httponly: true}
       else
         cookies.delete(:remember_me)
       end

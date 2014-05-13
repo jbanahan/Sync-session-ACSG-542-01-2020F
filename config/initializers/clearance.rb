@@ -52,6 +52,9 @@ Clearance.configure do |config|
   config.mailer_sender = OpenMailer.default_params[:from]
   config.password_strategy = Sha512PasswordStrategy
   config.sign_in_guards = [LoginAllowedGuard]
+  config.httponly = true
+  # We don't use SSL in dev, so if we secure the cookie, we won't be able to stay logged in
+  config.secure_cookie = !Rails.env.development?
   config.cookie_expiration = lambda {|cookies|
     # Basically, since the clearance devs are a tad bit opinionated and they
     # don't really want to implement a remember function when logging
