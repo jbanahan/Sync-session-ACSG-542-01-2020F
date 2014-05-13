@@ -78,10 +78,10 @@ module OpenChain
     end
 
     # call get_row_values for all rows in sheet and yield each row's resulting array
-    def all_row_values sheet_number
+    def all_row_values sheet_number, starting_row_number = 0
       r = block_given? ? nil : []
       lrn = last_row_number(sheet_number) 
-      (0..lrn).each do |i|
+      (starting_row_number..lrn).each do |i|
         if block_given?
           yield get_row_values(sheet_number,i)
         else

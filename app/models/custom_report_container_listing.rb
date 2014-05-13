@@ -15,7 +15,7 @@ class CustomReportContainerListing < CustomReport
       :ent_vessel, :ent_voyage, :ent_importer_tax_id, :ent_cargo_control_number,
       :ent_ship_terms, :ent_direct_shipment_date, :ent_across_sent_date,
       :ent_pars_ack_date, :ent_pars_reject_date, :ent_cadex_accept_date,
-      :ent_cadex_sent_date, :ent_us_exit_port_code, :ent_origin_state_code, 
+      :ent_cadex_sent_date, :ent_exam_ordered_date, :ent_us_exit_port_code, :ent_origin_state_code, 
       :ent_export_state_code, :ent_ca_entry_type, :ent_export_date 
     ].collect do |mfid|
       m = ModelField.find_by_uid mfid

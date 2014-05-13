@@ -52,10 +52,45 @@ module OpenChain; module CustomHandler
       errors
     end
 
+    class CsvClient
+
+      def initialize s3_path, csv_options = {}
+        @file_path = s3_path
+        @options = csv_options
+      end
+
+      def all_row_values sheet_number
+        r = block_given? ? nil : []
+        OpenChain::S3.download_to_tempfile('chain-io', @file_path) do |file|
+          CSV.foreach(file, @options) do |row|
+            if block_given?
+              yield row
+            else
+              r << row
+            end
+          end
+        end
+        r
+      end
+      
+    end
+
+
     private 
 
-      def xl_client s3_path
-        OpenChain::XLClient.new s3_path
+      def file_reader s3_path
+        case File.extname(s3_path).downcase
+        when ".csv", ".txt"
+          options = nil
+          if respond_to?(:csv_client_options)
+            options = csv_client_options
+          end
+          return CsvClient.new(s3_path, options ? options : {})
+        when ".xls", ".xlsx"
+          return OpenChain::XLClient.new(s3_path)
+        else
+          raise "No CI Upload processor exists for #{File.extname(s3_path).downcase} file types."
+        end
       end
 
       # Returns false if any any non-blank value is found in the row
@@ -66,8 +101,9 @@ module OpenChain; module CustomHandler
       end
 
       def extract_invoices s3_path
-        # Use the XL client so that xls AND xlsx files can be read.
-        xl = xl_client s3_path
+        # Abstract out all the file reading, so we can just deal w/ the actual row data regardless of the file source
+        reader = file_reader s3_path
+
         invoice_data = {}
 
         # We allow multiple invoices per file, so we need to track the invoice number
@@ -76,9 +112,9 @@ module OpenChain; module CustomHandler
         previous_invoice_number = nil
         current_invoice_rows = []
         row_number = 0
-        xl.all_row_values(0) do |row|
-          #skip the first line, it's the column headings
-          next if (row_number +=1) == 1
+        reader.all_row_values(0) do |row|
+          #skip the first line if it's the column headings
+          next if (row_number +=1) == 1 && has_header_line?
 
           blank = blank_row row
           invoice_number = row[1]
@@ -105,7 +141,14 @@ module OpenChain; module CustomHandler
         invoice_data
       end
 
+      def has_header_line?
+        true
+      end
+
       def parse_header row
+        if respond_to?(:prep_header_row)
+          row = prep_header_row(row)
+        end
         invoice = find_invoice text_value(row[0]), text_value(row[1])
 
         invoice.invoice_date = parse_date row[2]
@@ -117,6 +160,10 @@ module OpenChain; module CustomHandler
 
       def parse_details invoice, rows
         rows.each do |row|
+          if respond_to? :prep_line_row
+            row = prep_line_row(row)
+          end
+
           detail = invoice.commercial_invoice_lines.build
 
           detail.part_number = text_value row[4]

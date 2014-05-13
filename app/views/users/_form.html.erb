@@ -24,7 +24,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     });
     $(".check_none").click(function(evt) {
       evt.preventDefault();
-      $(this).parents('tr.permission_row').find(':checkbox').attr('checked','');
+      $(this).parents('tr.permission_row').find(':checkbox').attr('checked',false);
     });
     <% if @user.id -%>
       $("#btn_reports").click(function(evt) { window.location = "<%=user_scheduled_reports_path @user%>"});
@@ -41,39 +41,87 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     <button id="btn_reports">Reports</button>
   <% end -%>
 <%end%>
-<%= form_for([@company, @user], :html=>{:id=>'frm_user'}) do |f| %>
-  <%= f.hidden_field :company_id %>
-  <table>
-  <%=field_row "Username", f.text_field(:username) %>
-  <%=field_row "Email", f.text_field(:email) %>
-  <%=field_row "First Name", f.text_field(:first_name)%>
-  <%=field_row "Last Name", f.text_field(:last_name)%>
-  <%=field_row "Password", f.password_field(:password, :title=>"Enter your new password into both password fields. If you don't need to change your password, you can leave this blank.") %>
-  <%=field_row "Confirm Pasword", f.password_field(:password_confirmation, :title=>"Enter your new password into both password fields. If you don't need to change your password, you can leave this blank.") %>
-  <%=field_row "Time Zone", f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones) %>
-  <%=field_row "Email Format", f.select(:email_format,["html","text"])%>
-  <% if current_user.admin? || current_user.view_official_tariffs? -%>
-    <%=field_row "Email Me When Tariffs Are Updated", f.check_box(:tariff_subscribed)-%>
-  <% end -%>
-  <% if current_user.admin? %>
-    <%=field_row "Account Locked", "<input type='checkbox' name='is_disabled' id='disabled' value='true' #{@user.disabled ? "checked='true'" : ""}/>".html_safe%>
-    <%=field_row "Administrator", raw("<input type='checkbox' name='is_admin' id='admin' value='true' #{@user.admin ? "checked='true'" : ""}/>")%>
-    <%=field_row "Support Agent", f.check_box(:support_agent)%>
-    <% if current_user.sys_admin? %>
-      <%=field_row "Sys Administrator", raw("<input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' #{@user.sys_admin ? "checked='true'" : ""} />  (Aspect 9 Employees Only)")%>
-      <%=field_row "Reset Password", raw("<input type='checkbox' name='password_reset' id='password_reset' value='true' #{@user.password_reset ? "checked='true'" : ""} />")%>
-      <% if @user.debug_active? %>
-        <%=field_row "Debug Will Expire", @user.debug_expires %>
-      <% end %>
-      <%=field_row "Set Debug Expiration", select_tag(:debug_expiration_hours,options_for_select([["Don't Change",""],["Now","0"],["1 hour","1"],["4 hours","4"],["8 hours","8"],["24 hours","24"]])) %>
-    <% end %>
- <% end %>
-  </table>
 
-  <% if current_user.admin? %>
-    <%=render :partial=>'permissions', :locals=>{:user=>@user,:f=>f} -%>
+<div class="container">
+  <div class="row">
+    <%= form_for([@company, @user], html: {id: 'frm_user'}) do |f| %>
+      <div class="col-md-6">
+        <%= f.hidden_field :company_id %>
+        <div class="form-group">
+          <label>Username</label>
+          <%= f.text_field :username, value: @user.username, class: "form-control", placeholder: "Username" %>
+        </div>
+
+        <div class="form-group">
+          <label>Email address</label>
+          <%= f.email_field :email, value: @user.email, class: "form-control", placeholder: "Email address" %>
+        </div>
+
+        <div class="form-group">
+          <label>First name</label>
+          <%= f.text_field :first_name, value: @user.first_name, class: "form-control", placeholder: "First name" %>
+        </div>
+
+        <div class="form-group">
+          <label>Last name</label>
+          <%= f.text_field :last_name, value: @user.last_name, class: "form-control", placeholder: "Last name" %>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <%= f.password_field :password, class: "form-control", placeholder: "Password", title: "Enter your new password into both password fields. If you don't need to change your password, you can leave this blank."%>
+        </div>
+
+        <div class="form-group">
+          <label>Confirm password</label>
+          <%= f.password_field :password_confirmation, class: "form-control", placeholder: "Confirm password" %>
+        </div>
+
+        <div class="form-group">
+          <label>Time zone</label>
+          <%= f.time_zone_select(:time_zone, ActiveSupport::TimeZone.us_zones, {}, {class: "form-control", title: "Time zone"}) %>
+        </div>
+
+        <div class="form-group">
+          <label>Email format</label>
+          <%= f.select(:email_format, ["html","text"], {}, {class: "form-control", title: "Email format"}) %>
+        </div> 
+
+        <% if current_user.admin? && current_user.sys_admin? %>
+          <div class="form-group" style="margin-top: 8px;">
+            <label>VFI Track homepage</label>
+            <%= f.text_field :homepage, value: @user.homepage, class: "form-control", placeholder: "VFI Track Homepage" %>
+          </div>
+        <% end %>
+
+        <table>
+          <% if current_user.admin? || current_user.view_official_tariffs? -%>
+            <%= field_row "Email me when tariffs are updated", f.check_box(:tariff_subscribed) -%>
+          <% end %>
+
+          <% if current_user.admin? %>
+            <%=field_row "Account Locked", "<input type='checkbox' name='is_disabled' id='disabled' value='true' #{@user.disabled ? "checked='true'" : ""}/>".html_safe%>
+            <%=field_row "Administrator", raw("<input type='checkbox' name='is_admin' id='admin' value='true' #{@user.admin ? "checked='true'" : ""}/>")%>
+            <%=field_row "Support Agent", f.check_box(:support_agent)%>
+            <% if current_user.sys_admin? %>
+              <%=field_row "Sys Administrator", raw("<input type='checkbox' name='is_sys_admin' id='sys_admin' value='true' #{@user.sys_admin ? "checked='true'" : ""} />  (Aspect 9 Employees Only)")%>
+              <%=field_row "Reset Password", raw("<input type='checkbox' name='password_reset' id='password_reset' value='true' #{@user.password_reset ? "checked='true'" : ""} />")%>
+              <% if @user.debug_active? %>
+                <%= f.field_row "Debug will expire", @user.debug_expires %>
+              <% end %>
+              <%=field_row "Set Debug Expiration", select_tag(:debug_expiration_hours,options_for_select([["Don't Change",""],["Now","0"],["1 hour","1"],["4 hours","4"],["8 hours","8"],["24 hours","24"]]), class: "form-control") %>
+            <% end %>
+          <% end %>
+        </table>
+      </div>
+    </div>
+
+    <% if current_user.admin? %>
+      <%=render :partial=>'permissions', :locals=>{:user=>@user,:f=>f} -%>
+    <% end %>
   <% end %>
-<% end %>
+</div>
+
 <br />
 <br />
 <div id='mod_run_as' style='display:none;'>

@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
         @inst.row_count.should == 2
       end
       it "should count exploded rows" do
-        def @inst.preprocess_row r; [r,r]; end
+        def @inst.preprocess_row r, opts={}; [r,r]; end
         @inst.sync {|r| nil} #don't need to do anything with the rows
         @inst.row_count.should == 3
       end
@@ -45,7 +45,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
         r.should == [{0=>'UID',1=>'NM'},{0=>@p1.unique_identifier,1=>'x'}]
       end
       it "should allow override to create new rows" do
-        def @inst.preprocess_row row
+        def @inst.preprocess_row row, opts={}
           [row,row] #double it
         end
         r = []
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       end
 
       it "should skip preprocess rows that return nil" do
-        def @inst.preprocess_row row
+        def @inst.preprocess_row row, opts={}
           nil
         end
 
@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       end
 
       it "should skip preprocess rows that return blank arrays" do
-        def @inst.preprocess_row row
+        def @inst.preprocess_row row, opts={}
           []
         end
 
@@ -79,6 +79,17 @@ describe OpenChain::CustomHandler::ProductGenerator do
         end
 
         r.blank?.should be_true
+      end
+
+      it "notifies preprocess_rows when the final row of the result set is being processed" do
+        # Add a second product so we can ensure the first call to preprocess_row receives false as last_row and the second true
+        p2 = Factory(:product, name: 'y')
+
+        # don't care about the actual row values for this test, only the last result opt
+        @inst.should_receive(:preprocess_row).ordered.with(instance_of(Hash), last_result: false).and_return []
+        @inst.should_receive(:preprocess_row).ordered.with(instance_of(Hash), last_result: true).and_return []
+
+        @inst.sync {|row| nil}
       end
     end
     context :sync_records do

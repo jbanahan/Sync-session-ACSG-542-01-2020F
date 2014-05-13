@@ -203,4 +203,14 @@ describe OpenChain::S3 do
     end
   end
 
+  describe "parse_full_s3_path" do
+    it "splits a path string into bucket and key values" do
+      expect(OpenChain::S3.parse_full_s3_path "/bucket/path/to/file.pdf").to eq ["bucket", "path/to/file.pdf"]
+    end
+
+    it "handles missing leading slashes" do
+      expect(OpenChain::S3.parse_full_s3_path "bucket/path/to/file.pdf").to eq ["bucket", "path/to/file.pdf"]
+    end
+  end
+
 end

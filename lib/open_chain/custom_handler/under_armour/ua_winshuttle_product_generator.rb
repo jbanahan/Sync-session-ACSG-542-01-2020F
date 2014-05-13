@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       OpenMailer.send_simple_html(email_address,'Winshuttle Product Output File','Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com',[f]).deliver
     end
 
-    def preprocess_row base_row
+    def preprocess_row base_row, opts = {}
       r = []
       country_id = base_row.delete 4
       plant_codes = base_row[2]

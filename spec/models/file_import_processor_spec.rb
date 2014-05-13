@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'file_import_processor'
 
 describe FileImportProcessor do
   it 'should initialize without search setup' do
@@ -28,6 +29,15 @@ describe FileImportProcessor do
       r.should have(3).rows
       Product.count.should == 0
     end
+
+    it "should return a SpreadsheetImportProcessor for xls and xlsx files" do
+      @ss = SearchSetup.new(:module_type=>"Product")
+      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0, attached_file_name: "file.xlsx") 
+      country = Factory(:country)
+      pro = FileImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
+      (FileImportProcessor.find_processor(@f)).should be_an_instance_of(FileImportProcessor::SpreadsheetImportProcessor)
+    end
+
   end
 
   describe :do_row do
@@ -219,7 +229,7 @@ describe FileImportProcessor do
           pro.stub(:get_columns).and_return([
             SearchColumn.new(:model_field_uid=>"prod_name",:rank=>1)
           ])
-
+          FileImportProcessor::MissingCoreModuleFieldError.any_instance.should_not_receive(:log_me)
           expect {pro.do_row 0, ['name'], true, -1}.to raise_error "Cannot load Product data without a value in the 'Unique Identifier' field."
         end
 
@@ -234,6 +244,7 @@ describe FileImportProcessor do
             SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>2)
           ])
 
+          FileImportProcessor::MissingCoreModuleFieldError.any_instance.should_not_receive(:log_me)
           expect {pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1}.to raise_error "Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields."
         end
       end

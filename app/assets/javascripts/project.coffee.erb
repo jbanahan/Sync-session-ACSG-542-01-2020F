@@ -117,7 +117,7 @@ projectApp.filter 'deliverableSort', [() ->
       x = a_comp - b_comp
       return x unless x==0
 
-      # sort by due duate
+      # sort by due date
       a_due = (if a.due_date then new Date(a.due_date) else new Date(2999,1,1))
       b_due = (if b.due_date then new Date(b.due_date) else new Date(2999,1,1))
       x = a_due.getTime() - b_due.getTime()
@@ -141,6 +141,10 @@ projectApp.directive 'chainProjectDeliverable', ['$compile','projectSvc',($compi
     link: (scope,el,attrs) ->
       editAction = () ->
         projectSvc.deliverableToEdit = scope.deliverable
+        if angular.isUndefined(scope.deliverable.priority) || scope.deliverable.priority == null
+          projectSvc.deliverableToEdit.priority = "Low"
+        else
+          projectSvc.deliverableToEdit.priority = scope.deliverable.priority
         $('chain-project-deliverable-edit').find('div.modal').modal('show')
         $('chain-project-deliverable-edit').find('input[ng-model$=".description"]').focus()
 
@@ -152,6 +156,9 @@ projectApp.directive 'chainProjectDeliverable', ['$compile','projectSvc',($compi
       $(el).find('button.deliverable-edit').on 'click', () ->
         scope.$apply editAction
 
+      if scope.deliverable.autoEdit
+        scope.deliverable.autoEdit = false
+        scope.$apply editAction
       scope.late = () ->
         scope.deliverable && !scope.deliverable.complete && scope.deliverable.due_date && moment(scope.deliverable.due_date) < moment()
 
@@ -191,8 +198,11 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
 
   $scope.svc = projectSvc
 
+
+
   $scope.loadDeliverables = (layout) ->
     $scope.deliverables = null
+    $scope.per_person_layout = if (layout=='person') then true else false
     projectSvc.getDeliverables(layout).then (resp) ->
       $scope.deliverables = resp.data.deliverables_by_user
       for u, projects of $scope.deliverables
@@ -201,6 +211,10 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
 
 
   $scope.loadDeliverables 'person'
+
+  $scope.getDeliverableUserIdFromDeliverablesAndUsername = (deliverables, username) ->
+    id = deliverables[username][Object.keys(deliverables[username])[0]][0].assigned_to_id
+    "/project_deliverables/" + id + "/notify_now"
 
   $scope.handleSaveDeliverable = (promise) ->
     goodCallback = (resp) ->
@@ -231,7 +245,7 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
   $scope.editProjectUpdate = (u) ->
     projectSvc.editProjectUpdate projectSvc.project, u
   $scope.addDeliverable = () ->
-    projectSvc.project.project_deliverables.push {new:true,project_id:projectSvc.project.id}
+    projectSvc.project.project_deliverables.push {new:true,project_id:projectSvc.project.id,autoEdit:true}
   $scope.handleSaveDeliverable = (p) ->
     goodCallback = (resp) ->
       project = projectSvc.project

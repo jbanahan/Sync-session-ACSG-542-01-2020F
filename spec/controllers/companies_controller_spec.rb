@@ -72,6 +72,13 @@ describe CompaniesController do
       response.should redirect_to show_children_company_path @c
       Company.find(@c.id).linked_companies.to_a.should == [c2,c3]
     end
+    it "should allow user to unlink all companies" do
+      c1 = Factory(:company); c2 = Factory(:company); c3 = Factory(:company)
+      @c.linked_companies << c1; @c.linked_companies << c2
+      post :update_children, { :id=>@c.id }
+      response.should redirect_to show_children_company_path @c
+      Company.find(@c.id).linked_companies.to_a.should == []
+    end
   end
   describe :push_alliance_products do
     before :each do

@@ -125,7 +125,7 @@ module ApplicationHelper
 
 
   def attachment_icon att
-    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px"}
+    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px",:title=>"Uploaded: #{att.created_at.to_date}"}
     link_opts = {}
     fn = att.attached_file_name
     icon = image_tag("icon_other.png",opts)
@@ -219,7 +219,8 @@ module ApplicationHelper
     return '' if !never_hide && field.blank?
     field_content = field
     if model_field && model_field.data_type==:text
-      field_content = content_tag(:pre,field,:class=>'pre-nochrome')
+      field = field.gsub(/(:?\r\n)|(:?\r)|(:?\n)/, "<br>").html_safe
+      field_content = content_tag(:span,field,:class=>'pre-ish')
     end
     content_tag(:div, 
       content_tag(:div,

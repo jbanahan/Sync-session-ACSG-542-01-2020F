@@ -11,7 +11,7 @@ describe 'JCrewPartsExtractParser' do
     it "should open a file and call generate and send" do
       path = "/path/to/file.txt"
       io = double("IO")
-      File.should_receive(:open).with(path, "rb").and_yield io
+      File.should_receive(:open).with(path, "r:Windows-1252:UTF-8").and_yield io
       OpenChain::CustomHandler::JCrewPartsExtractParser.any_instance.should_receive(:generate_and_send).with(io)
 
       OpenChain::CustomHandler::JCrewPartsExtractParser.process_file path
@@ -24,8 +24,11 @@ describe 'JCrewPartsExtractParser' do
       file = double("file")
       OpenChain::S3.should_receive(:bucket_name).and_return("bucket")
       OpenChain::S3.should_receive(:download_to_tempfile).and_yield(file)
+      file.should_receive(:path).and_return path
+      io = double("IO")
+      File.should_receive(:open).with(path, "r:Windows-1252:UTF-8").and_yield io
 
-      OpenChain::CustomHandler::JCrewPartsExtractParser.any_instance.should_receive(:generate_and_send).with(file)
+      OpenChain::CustomHandler::JCrewPartsExtractParser.any_instance.should_receive(:generate_and_send).with(io)
       OpenChain::CustomHandler::JCrewPartsExtractParser.process_s3 path
     end
   end
@@ -116,107 +119,98 @@ describe 'JCrewPartsExtractParser' do
   context :generate_product_file do
     it "should read product data and translate it into the output format" do
     	us = Factory(:country, :iso_code=>"US")
-    	HtsTranslation.create :company_id => @j_crew.id, :country_id => us.id, :hts_number => "6205904040", :translated_hts_number => "1234567890"
+    	HtsTranslation.create :company_id => @j_crew.id, :country_id => us.id, :hts_number => "6204312010", :translated_hts_number => "1234567890"
 
-    	# Tab-delimited data all copied from an actual J Crew file
+    	# This data was copied from an actual J Crew file
     	# The data looks like it's a screen-print from a legacy type system
     	# Hence all the header data that is repeated every "page"
       file = <<FILE
-	J.Crew Group											Print Date:		04/22/2013
-	Report:	/JCREW/CUSTOMS_BROKER_REPORT										Print Time:		09:13:38
-	User:		MJIANG									Page:			    1
-	Transaction Code: ZM18
-	PO #			Season	Article	HS #	Quota		Duty %	COO	FOB	PO Cost		Binding Ruling
-					Description
-	1618733			SP1	48774	6204624055	348		16.60	CN	HK	10.74
-					98% COTTON 2% SPANDEX TWILL WOMENS WOVEN SHORT
-	J.Crew Group											Print Date:		04/22/2013
-	Report:	/JCREW/CUSTOMS_BROKER_REPORT										Print Time:		09:13:38
-	User:		MJIANG									Page:			    2
-	Transaction Code: ZM18
-	PO #			Season	Article	HS #	Quota		Duty %	COO	FOB	PO Cost		Binding Ruling
-					Description
-	1621783			SU1	43644	6205904040	840		2.80	CN	CS	22.27
-					Mens woven 100% yd linen shirt"      
+      J.Crew Group                                                                                                                                      Print Date: 03/10/2014
+      Report:  /JCREW/CUSTOMS_BROKER_REPORT                                                                                                             Print Time: 09:35:37
+      User:     DJIANG                                                                                                                                  Page:                1
+      Transaction Code: ZM18
+
+
+
+      PO #              Season        Article        HS #                     Quota            Duty %               COO        FOB          PO Cost             Binding Ruling
+                                      Description
+
+
+
+      1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                      women's knit swim neon cali halter 82% polyester 18% elastane
+
+      1632448           HOL1          23346          6204312010               435              17.50                CN         HK           41.40
+                                      womens knit swim cali hipster 82% polyester 18% elastane
+
 FILE
       output = StringIO.new ""
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file.gsub("\n", "\r\n")), output)
       output.rewind
       line1, line2 = output.read.split("\r\n")
       # PO
-      line1[0, 20].should == "1618733".ljust(20)
+      line1[0, 20].should == "1620194".ljust(20)
       # Season
-      line1[20, 10].should == "SP1".ljust(10)
+      line1[20, 10].should == "SU1".ljust(10)
       # Article #
-      line1[30, 30].should == "48774".ljust(30)
+      line1[30, 30].should == "23953".ljust(30)
       # HTS #
-      line1[60, 10].should == "6204624055"
+      line1[60, 10].should == "6204624020"
       # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
-      line1[71, 40].should == "98% COTTON 2% SPANDEX TWILL WOMENS WOVEN"
+      line1[71, 40].should == "women's knit swim neon cali halter 82% p"
       # Cost (Also a hardcoded space between description and Cost)
-      line1[112, 10].should == sprintf("%0.2f", BigDecimal.new("10.74")).ljust(10)
+      line1[112, 10].should == sprintf("%0.2f", BigDecimal.new("0.10")).ljust(10)
       # Country of Origin
       line1[122, 2].should == "CN"
 
       # PO
-      line2[0, 20].should == "1621783".ljust(20)
+      line2[0, 20].should == "1632448".ljust(20)
       # Season
-      line2[20, 10].should == "SU1".ljust(10)
+      line2[20, 10].should == "HOL1".ljust(10)
       # Article #
-      line2[30, 30].should == "43644".ljust(30)
+      line2[30, 30].should == "23346".ljust(30)
       # HTS # (should have been translated)
       line2[60, 10].should == "1234567890"
       # The quote is here to verify we've worked around a parsing issue with quotation marks in the data
-      line2[71, 40].should == "Mens woven 100% yd linen shirt\"".ljust(40)
+      line2[71, 40].should == "womens knit swim cali hipster 82% polyes".ljust(40)
       # Cost (Also a hardcoded space between description and Cost)
-      line2[112, 10].should == sprintf("%0.2f", BigDecimal.new("22.27")).ljust(10)
+      line2[112, 10].should == sprintf("%0.2f", BigDecimal.new("41.40")).ljust(10)
       # Country of Origin
       line2[122, 2].should == "CN"
     end
 
     it "should trim data to the correct lengths and exclude incorrect length values" do
       file = <<FILE
-	PO #			Season	Article	HS #	Quota		Duty %	COO	FOB	PO Cost		Binding Ruling
-					Description
-	123456789012345678901			SP345678910	1234567890123456789012345678901	62046240551	348		16.60	CNX	HK	10000000000
-					98% COTTON 2% SPANDEX TWILL WOMENS WOVEN SHORT
+	1620194           SP3456789123  23953          62046240                 348              16.60                CNT        HK           10000000000        
+                                  women's knit swim neon cali halter 82% polyester 18% elastane
 FILE
       output = StringIO.new ""
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file.gsub("\n", "\r\n")), output)
       output.rewind
       line1 = output.read
 
-      line1[0, 20].should == "12345678901234567890"
       # Season
       line1[20, 10].should == "SP34567891"
-      # Article #
-      line1[30, 30].should == "123456789012345678901234567890"
       # HTS Numbers that aren't 10 characters are stripped
       line1[60, 10].should == "          "
-      # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
-      line1[71, 40].should == "98% COTTON 2% SPANDEX TWILL WOMENS WOVEN"
+      line1[71, 40].should == "women's knit swim neon cali halter 82% p"
       # Cost (Also a hardcoded space between description and Cost)
       line1[112, 10].should == "1000000000"
       # Country of Origin
       line1[122, 2].should == "  "
     end
 
-    it "should output header data that's missing description data" do
+    it "transliterates UTF-8 chars" do
+      # NOTE: the description has one of those non-ascii angled apostrophes for this test (JCREW does send us these)
       file = <<FILE
-	PO #			Season	Article	HS #	Quota		Duty %	COO	FOB	PO Cost		Binding Ruling
-					Description
-	1618733			SP1	48774	6204624055	348		16.60	CN	HK	10.74
-	1621783			SU1	43644	6205904040	840		2.80	CN	CS	22.27
+      1620194            SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                      women‘s knit swim neon cali halter 82% polyester 18% elastane
 FILE
-			output = StringIO.new ""
-			OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
-			output.rewind
-			line1, line2 = output.read.split("\r\n")
-
-			line1[0, 20].should == "1618733".ljust(20)
-			line1[71, 40].should == "".ljust(40)
-			line2[0, 20].should == "1621783".ljust(20)
-			line2[71, 40].should == "".ljust(40)
+      output = StringIO.new ""
+      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file.gsub("\n", "\r\n")), output)
+      output.rewind
+      line1 = output.read
+      line1[71, 40].should == "women's knit swim neon cali halter 82% p"
     end
 
     it "should raise an error if J Crew company doesn't exist" do
@@ -226,47 +220,15 @@ FILE
         OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file nil, nil
       }.to raise_error "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number 'J0000'."
     end
-
-    it "should handle re-arranged header data" do
-     file = <<FILE
-Season	PO #			Article		HS #	Quota	PO Cost	COO	FOB			Binding Ruling		
-				Description											
-SU1	1622461			49592		6202922061	335	21.29	CN	HK					
-				100% Cotton Womens Woven Jacket
-FILE
-      output = StringIO.new ""
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new.generate_product_file(StringIO.new(file), output)
-      output.rewind
-      line1 = output.read.split("\r\n")[0]
-      # PO
-      line1[0, 20].should == "1622461".ljust(20)
-      # Season
-      line1[20, 10].should == "SU1".ljust(10)
-      # Article #
-      line1[30, 30].should == "49592".ljust(30)
-      # HTS #
-      line1[60, 10].should == "6202922061"
-      # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
-      line1[71, 40].should == "100% Cotton Womens Woven Jacket".ljust(40)
-      # Cost (Also a hardcoded space between description and Cost)
-      line1[112, 10].should == sprintf("%0.2f", BigDecimal.new("21.29")).ljust(10)
-      # Country of Origin
-      line1[122, 2].should == "CN"
-    end
   end
 
   context :integration_test do
     before :each do
       file = <<FILE
-	J.Crew Group											Print Date:		04/22/2013
-	Report:	/JCREW/CUSTOMS_BROKER_REPORT										Print Time:		09:13:38
-	User:		MJIANG									Page:			    1
-	Transaction Code: ZM18
-	PO #			Season	Article	HS #	Quota		Duty %	COO	FOB	PO Cost		Binding Ruling
-					Description
-	1618733			SP1	48774	6204624055	348		16.60	CN	HK	10.74
-					98% COTTON 2% SPANDEX TWILL WOMENS WOVEN SHORT      
+      1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                      women's knit swim neon cali halter 82% polyester 18% elastane
 FILE
+      file.gsub! "\n", "\r\n"
 			@user = Factory(:master_user)
 			@custom_file = nil
 			Tempfile.open(['JcrewTest', '.DAT']) do |t|
@@ -295,7 +257,7 @@ FILE
     		output = file.read
     	}
     	p.process(@user)
-    	output[0,20].should == "1618733".ljust(20)
+    	output[0,20].should == "1620194".ljust(20)
     	@user.reload
     	message = @user.messages.first
     	message.subject.should == "J Crew Parts Extract File Complete"

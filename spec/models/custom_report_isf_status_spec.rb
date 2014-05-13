@@ -111,6 +111,16 @@ describe CustomReportIsfStatus do
       @rpt.search_criterions.destroy_all
       expect{@rpt.to_arrays @u}.to raise_error "This report must include the Customer Number parameter."
     end
+
+    it "only shows first tab for preview runs" do
+      # Just build an unmatched ISF for the same company that would normally show on the second tab and make sure it's not there
+      sf2 = Factory(:security_filing, :transaction_number => "456789", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
+      @rpt.search_criterions.create! model_field_uid: "sf_transaction_number", operator: "eq", value: @sf.transaction_number
+
+      a = @rpt.to_arrays @u, 10, true
+      expect(a.length).to eq 2
+      expect(a[1][0]).to eq @sf.transaction_number
+    end
   end
 
   describe "criterions_contain_customer_number?" do

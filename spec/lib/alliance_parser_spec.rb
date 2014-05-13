@@ -246,13 +246,13 @@ describe OpenChain::AllianceParser do
       rows.join("\n")
     }
     @containers = [
-      {:cnum=>'153153',:csize=>'abcdef',:cdesc=>"HC",:fcl_lcl=>'F'},
-      {:cnum=>'afii1911010',:csize=>'123949',:cdesc=>"DRY VAN",:fcl_lcl=>'L'}
+      {:cnum=>'153153',:csize=>'abcdef',:cdesc=>"HC",:fcl_lcl=>'F',:weight=>12,:quantity=>5,:uom=>'EA',:gdesc=>'WEARING APPAREL',:teus=>1,:seal=>'12345'},
+      {:cnum=>'afii1911010',:csize=>'123949',:cdesc=>"DRY VAN",:fcl_lcl=>'L',:weight=>3,:quantity=>6,:uom=>'PRS',:gdesc=>'WEARING APPAREL',:teus=>2,:seal=>'SEAL1'}
     ]
     @make_containers_lambda = lambda {
       rows = []
       @containers.each do |c|
-        rows << "SC00#{c[:cnum].ljust(15)}#{"".ljust(40)}#{c[:csize].ljust(7)}#{"".ljust(205)}#{c[:fcl_lcl].ljust(1)}#{"".ljust(11)}#{c[:cdesc].ljust(40)}"
+        rows << "SC00#{c[:cnum].ljust(15)}#{c[:gdesc].ljust(40)}#{c[:csize].ljust(7)}#{c[:weight].to_s.rjust(12,'0')}#{c[:quantity].to_s.rjust(12,'0')}#{c[:uom].ljust(6)}#{"".ljust(145)}#{c[:seal].ljust(15)}#{''.ljust(15)}#{c[:fcl_lcl].ljust(1)}#{"".ljust(11)}#{c[:cdesc].ljust(40)}#{c[:teus].to_s.rjust(4,'0')}"
       end
       rows.join("\n")
     }
@@ -290,43 +290,76 @@ describe OpenChain::AllianceParser do
     ent.first_7501_print.should == @est.parse(first_7501)
     ent.last_7501_print.should == @est.parse(last_7501)
   end
-  it 'should aggregate containers' do
-    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
-    ent = Entry.find_by_broker_reference @ref_num
-    expected_containers = @containers.collect {|c| c[:cnum]}
-    expected_sizes = @containers.collect {|c| "#{c[:csize]}-#{c[:cdesc]}"}
-    ent.container_numbers.split(@split_string).should == expected_containers
-    ent.container_sizes.split(@split_string).should == expected_sizes
-  end
-  it 'should set fcl_lcl to mixed if different flags on different containers' do
-    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
-    ent = Entry.find_by_broker_reference @ref_num
-    ent.fcl_lcl.should == 'Mixed'
-  end
-  it 'should set fcl_lcl to lcl if "L" on all containers' do
-    @containers.each {|c| c[:fcl_lcl] = "L"}
-    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
-    ent = Entry.find_by_broker_reference @ref_num
-    ent.fcl_lcl.should == 'LCL'
-  end
-  it 'should set fcl_lcl to fcl if "F" on all containers' do
-    @containers.each {|c| c[:fcl_lcl] = "F"}
-    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
-    ent = Entry.find_by_broker_reference @ref_num
-    ent.fcl_lcl.should == 'FCL'
-  end
-  it 'should set fcl_lcl to FCL even if only one container has value' do
-    @containers.each {|c| c[:fcl_lcl] = ""}
-    @containers.first[:fcl_lcl] = "F"
-    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
-    ent = Entry.find_by_broker_reference @ref_num
-    ent.fcl_lcl.should == 'FCL'
-  end
-  it 'should set fcl_lcl to nil if no values' do
-    @containers.each {|c| c[:fcl_lcl] = ""}
-    OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
-    ent = Entry.find_by_broker_reference @ref_num
-    ent.fcl_lcl.should be_nil
+  context :containers do
+    it 'should aggregate containers at header' do
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      ent = Entry.find_by_broker_reference @ref_num
+      expected_containers = @containers.collect {|c| c[:cnum]}
+      expected_sizes = @containers.collect {|c| "#{c[:csize]}-#{c[:cdesc]}"}
+      ent.container_numbers.split(@split_string).should == expected_containers
+      ent.container_sizes.split(@split_string).should == expected_sizes
+    end
+    it 'should set fcl_lcl to mixed if different flags on different containers' do
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      ent = Entry.find_by_broker_reference @ref_num
+      ent.fcl_lcl.should == 'Mixed'
+    end
+    it 'should set fcl_lcl to lcl if "L" on all containers' do
+      @containers.each {|c| c[:fcl_lcl] = "L"}
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      ent = Entry.find_by_broker_reference @ref_num
+      ent.fcl_lcl.should == 'LCL'
+    end
+    it 'should set fcl_lcl to fcl if "F" on all containers' do
+      @containers.each {|c| c[:fcl_lcl] = "F"}
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      ent = Entry.find_by_broker_reference @ref_num
+      ent.fcl_lcl.should == 'FCL'
+    end
+    it 'should set fcl_lcl to FCL even if only one container has value' do
+      @containers.each {|c| c[:fcl_lcl] = ""}
+      @containers.first[:fcl_lcl] = "F"
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      ent = Entry.find_by_broker_reference @ref_num
+      ent.fcl_lcl.should == 'FCL'
+    end
+    it 'should set fcl_lcl to nil if no values' do
+      @containers.each {|c| c[:fcl_lcl] = ""}
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      ent = Entry.find_by_broker_reference @ref_num
+      ent.fcl_lcl.should be_nil
+    end
+    it "should create container records" do
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      ent = Entry.find_by_broker_reference @ref_num
+      conts = ent.containers
+      expect(conts.count).to eq @containers.size
+      expect(conts.collect {|c| c.container_number}).to eq @containers.collect {|c| c[:cnum]}
+      expect(conts.collect {|c| c.container_size}).to eq @containers.collect {|c| c[:csize]}
+      expect(conts.collect {|c| c.size_description}).to eq @containers.collect {|c| c[:cdesc]}
+      expect(conts.collect {|c| c.weight}).to eq @containers.collect {|c| c[:weight]}
+      expect(conts.collect {|c| c.quantity}).to eq @containers.collect {|c| c[:quantity]}
+      expect(conts.collect {|c| c.uom}).to eq @containers.collect {|c| c[:uom]}
+      expect(conts.collect {|c| c.goods_description}).to eq @containers.collect {|c| c[:gdesc]}
+      expect(conts.collect {|c| c.teus}).to eq @containers.collect {|c| c[:teus]}
+      expect(conts.collect {|c| c.fcl_lcl}).to eq @containers.collect {|c| c[:fcl_lcl]}
+      expect(conts.collect {|c| c.seal_number}).to eq @containers.collect {|c| c[:seal]}
+    end
+    it "should not create duplicate container records" do
+      2.times {OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"}
+      ent = Entry.find_by_broker_reference @ref_num
+      conts = ent.containers
+      expect(conts.count).to eq @containers.size
+
+    end
+    it "should clear removed container" do
+      bad_cnum = @containers.first[:cnum]
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      expect(Entry.first.containers.find_by_container_number(bad_cnum)).to_not be_nil 
+      @containers.first[:cnum] = 'newcnum'
+      OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_containers_lambda.call}"
+      expect(Entry.first.containers.find_by_container_number(bad_cnum)).to be_nil
+    end
   end
 
   it 'should match importer id if customer matches' do
@@ -352,6 +385,9 @@ describe OpenChain::AllianceParser do
   end
 
   it 'should create entry' do
+    Lock.should_receive(:acquire).with(Lock::ALLIANCE_PARSER, times: 3).and_yield
+    Lock.should_receive(:with_lock_retry).with(instance_of(Entry)).and_yield
+
     file_content = "#{@make_entry_lambda.call}\n#{@make_commercial_invoices_lambda.call}"
     OpenChain::AllianceParser.parse file_content
     ent = Entry.find_by_broker_reference @ref_num
@@ -870,6 +906,25 @@ describe OpenChain::AllianceParser do
     OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}"
     ent = Entry.first
     expect(ent.broker_invoices.first.broker_invoice_lines.first.charge_description).to eq "NO DESCRIPTION"
+  end
+
+  class MutatingInstanceOf < RSpec::Mocks::ArgumentMatchers::InstanceOf
+
+    def ==(actual)
+      actual.instance_of?(@klass)
+      actual.last_exported_from_source = Time.now
+    end
+  end
+
+  it "checks for stale data after the with_lock_retry call" do
+    entry = Entry.new last_exported_from_source: Time.now
+    Lock.should_receive(:with_lock_retry).with(MutatingInstanceOf.new(Entry)).and_yield
+
+    expect(OpenChain::AllianceParser.parse "#{@make_entry_lambda.call}\n#{@make_invoice_lambda.call}").to be_false
+  end
+
+  it "handles bad data" do
+    expect(OpenChain::AllianceParser.parse "bjsdfjsdfjkbashjkfsdj\ansdfasdjksd\nsdjfhasjkdfsa\sndfjshd").to be_false
   end
 
   describe 'process_past_days' do

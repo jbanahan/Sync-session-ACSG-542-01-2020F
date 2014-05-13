@@ -14,14 +14,26 @@
         <a href='' ng-click='loadDeliverables("person")'>Person</a> |
         <a href='' ng-click='loadDeliverables("project")'>Project</a> | 
         <a href='' ng-click='loadDeliverables("weekproject")'>Week (Project)</a> |
-        <a href='' ng-click='loadDeliverables("weekuser")'>Week (Person)</a>
+        <a href='' ng-click='loadDeliverables("weekuser")'>Week (Person)</a> |
+        <a href='' ng-click='loadDeliverables("projectset")'>Project Set</a>
       </div>
     </div>
     <chain-panel panel-title='Loading' panel-type='panel-primary' panel-message='svc.loadingMessage'></chain-panel>
     <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
     <div class='panel panel-default' ng-repeat='(top,projects) in deliverables'>
       <div class="panel-heading">
-        <h3 class='panel-title'>{{top}}</h3>
+        <div class="row">
+          <div class="col-md-10">
+            <h3 class='panel-title'>
+              {{top}}
+            </h3>
+          </div>
+          <div class="col-md-2 text-right" ng-show='per_person_layout'>
+            <a href={{getDeliverableUserIdFromDeliverablesAndUsername(deliverables,top)}}>
+              <button type="button" class="btn btn-danger">Notify Now</button>
+            </a>
+          </div>
+        </div>
       </div>
       <div class='panel-body'>
         <div ng-repeat='(mid,dels) in projects'>

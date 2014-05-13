@@ -7,6 +7,8 @@ class Lock < ActiveRecord::Base
   FENIX_PARSER_LOCK ||= 'FenixParser'
   UPGRADE_LOCK ||= 'Upgrade'
   ISF_PARSER_LOCK ||= 'IsfParser'
+  RL_PO_PARSER_LOCK ||= 'RLPoParser'
+  ALLIANCE_PARSER ||= 'AllianceParser'
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning wahtever
@@ -62,7 +64,7 @@ class Lock < ActiveRecord::Base
           maybe_released_lock(name)
           # This needs to be outside the inner transaction because if the yield block blows up it'll
           # roll back the transaction (nullifying any delete occurring inside it)
-          my_lock.destroy if opts[:temp_lock] == true
+          my_lock.destroy if opts[:temp_lock] == true && !my_lock.nil?
         end
       rescue LockMissingError
         retry

@@ -73,6 +73,8 @@ $(function() {
 <%=field_row "Internal System ID Number", @company.id %>
 </table>
 
+<%= render :partial => 'shared/attachments', :locals => { :attachable => @company } %>
+
 <%= render :partial => 'companies/address', :locals => { :edit_add => @address } %>
 
 <%= render :partial => 'companies/division', :locals => { :edit_div => @division } %>

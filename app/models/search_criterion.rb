@@ -6,10 +6,16 @@ class SearchCriterion < ActiveRecord::Base
   belongs_to :status_rule  
   belongs_to :search_setup
   belongs_to :instant_classification
+  belongs_to :business_validation_rule
+  belongs_to :business_validation_template
   
   validates  :model_field_uid, :presence => true
   validates  :operator, :presence => true
   
+  def core_module
+    self.model_field.core_module 
+  end
+
   def apply(p, module_chain = nil)
     p = p.where("1=1") if p.class.to_s == "Class"
     if module_chain.nil?
@@ -169,6 +175,8 @@ class SearchCriterion < ActiveRecord::Base
       return "%#{self_val}"
     when "in", "notin"
       return break_rows(self_val)
+    when "regexp"
+      return "#{self_val}"
     else
       # We want the actual data types here, not string representations, primarily to avoid unecessary DB type-casting to strings in the query
       # self_val could be null here if the operator is one of the null value based ones
@@ -252,6 +260,8 @@ class SearchCriterion < ActiveRecord::Base
         return !value_to_test.downcase.include?(self.value.downcase)
       elsif self.operator == "sw"
         return value_to_test.downcase.start_with?(self.value.downcase)
+      elsif self.operator == "regexp"
+        return !value_to_test.to_s.match(self.value).nil?
       elsif self.operator == "ew"
         return value_to_test.downcase.end_with?(self.value.downcase)
       elsif self.operator == "nq"
@@ -300,6 +310,8 @@ class SearchCriterion < ActiveRecord::Base
         return vt < self_val.days.from_now.to_date
       elsif self.operator == "nq"
         return vt.nil?  || vt!=self_val
+      elsif self.operator == "regexp"
+        return !value_to_test.to_s.match(self.value).nil?
       elsif self.operator == "pm"
         base_date = self_val.months.ago
         base_date = Date.new(base_date.year,base_date.month,1)
@@ -319,6 +331,8 @@ class SearchCriterion < ActiveRecord::Base
         else
           return value_to_test
         end
+      elsif self.operator == "regexp"
+        return !value_to_test.to_s.match(self.value).nil?
       end  
     elsif [:decimal, :integer, :fixnum].include? d
       self_val = number_value d, self.value
@@ -338,6 +352,8 @@ class SearchCriterion < ActiveRecord::Base
         return break_rows(self.value.downcase).include?(value_to_test.to_s.rstrip)
       elsif self.operator == "notin"
         return !break_rows(self.value.downcase).include?(value_to_test.to_s.rstrip)
+      elsif self.operator == "regexp"
+        return !value_to_test.to_s.match(self.value).nil?
       end
     end
   end

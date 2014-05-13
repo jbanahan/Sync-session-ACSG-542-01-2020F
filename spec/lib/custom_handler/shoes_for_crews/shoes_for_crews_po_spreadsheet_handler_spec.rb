@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler do
 
   def defaults overrides={}
@@ -75,28 +77,47 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     wb = Spreadsheet::Workbook.new
     sht = wb.create_worksheet :name=>'Test'
     row = sht.row 3
+    row[4] = "Order ID:"
     row[5] = data[:order_id]
     row = sht.row 4
+    row[1] = "Vendor Number:"
     row[3] = data[:vendor_id]
+    row[7] = "PurchaseOrderNo:"
     row[9] = data[:order_number]
     row = sht.row 5
+    row[7] = "Date:"
     row[9] = data[:order_date]
+    row = sht.row 6
+    row[1] = "Vendor:"
+    row[5] = "Factory"
     row = sht.row 7
     row[1] = data[:vendor_address]
     row[5] = data[:factory_address]
+    row = sht.row 8
+    row[1] = "F.O.B. Terms"
+    row[4] = "Order Status"
+    row[5] = "Ship Via"
+    row[7] = "Expected Delivery Date"
+    row[9] = "Payment Terms"
     row = sht.row 9
     row[1] = data[:ship_terms]
     row[4] = data[:order_status]
     row[5] = data[:ship_via]
     row[7] = data[:expected_delivery_date]
     row[9] = data[:payment_terms]
+    row = sht.row 10
+    row[1] = "Forwarder:"
+    row[4] = "Consignee Notify:"
+    row[8] = "Warehouse & Final Destination:"
     row = sht.row 11
     row[1] = data[:forwarder_address]
     row[4] = data[:consignee_address]
     row[8] = data[:final_dest_address]
 
+    row = sht.row 13
+    row[0] = "Item Code"
     counter = 0
-    (13..(13 + (data[:items].size - 1))).each do |r|
+    (15..(15 + (data[:items].size - 1))).each do |r|
       row = sht.row r
       i = data[:items][counter]
       row[0] = i[:item_code]
@@ -114,8 +135,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       counter += 1
     end
 
-    row = sht.row (13 + counter + 8)
-    row[8] = "Order Balance:"
+    row = sht.row (15 + counter + 8)
+    row[8] = "Order Total:"
     row[10] = data[:order_balance]
 
     out = StringIO.new

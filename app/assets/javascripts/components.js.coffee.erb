@@ -82,22 +82,26 @@
 @components.directive 'chainModalMessage', ['$timeout',($timeout) ->
   {
     scope:{
-      chainModalMessage:'='
+      messageObject:'=' 
+      messageProperty:'@'
       clearOnClose:'='
     }
     template:"<div class='modal fade'><div class='modal-dialog'><div class='modal-content'><div class='modal-header'><button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button><h3>{{title}}</h3></div>
-      <div class='modal-body'><p>{{chainModalMessage}}</p></div>
+      <div class='modal-body'><p>{{message()}}</p></div>
       <div class='modal-footer'><button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button></div>
       </div></div></div>"
     link: (scope,el,attrs) ->
       scope.title = attrs.title
 
-      if scope.clearOnClose
-        el.find('.modal').on 'hide', () ->
-          $timeout () -> #prevents $digest already in progress error while also making sure $apply is called
-            scope.chainModalMessage = ''
+      scope.message = () ->
+        scope.messageObject[scope.messageProperty]
 
-      scope.$watch 'chainModalMessage', (newVal,oldVal) ->
+      if scope.clearOnClose
+        el.find('.modal').on 'hide.bs.modal', () ->
+          $timeout () -> #prevents $digest already in progress error while also making sure $apply is called
+            scope.messageObject[scope.messageProperty] = ''
+
+      scope.$watch 'messageObject[messageProperty]', (newVal,oldVal) ->
         if newVal && newVal.length > 0
           el.find('.modal').modal('show')
         else
@@ -497,6 +501,7 @@
         {operator:'notnull',label:'Is Not Empty'}
         {operator:'afld',label:'After (Field)', fieldRelative: true}
         {operator:'bfld',label:'Before (Field)', fieldRelative: true}
+        {operator:'regexp',label:'Regex'}
         ]
       datetime: [
         {operator:'eq',label:'Equals'}
@@ -512,6 +517,7 @@
         {operator:'notnull',label:'Is Not Empty'}
         {operator:'afld',label:'After (Field)', fieldRelative: true}
         {operator:'bfld',label:'Before (Field)', fieldRelative: true}
+        {operator:'regexp',label:'Regex'}
         ]
       integer: [
         {operator:'eq',label:'Equals'}
@@ -527,6 +533,7 @@
         {operator:'notin',label:'Not One Of'}
         {operator:'null',label:'Is Empty'}
         {operator:'notnull',label:'Is Not Empty'}
+        {operator:'regexp',label:'Regex'}
         ]
       decimal: [
         {operator:'eq',label:'Equals'}
@@ -542,6 +549,7 @@
         {operator:'notin',label:'Not One Of'}
         {operator:'null',label:'Is Empty'}
         {operator:'notnull',label:'Is Not Empty'}
+        {operator:'regexp',label:'Regex'}
         ]
       fixnum: [
         {operator:'eq',label:'Equals'}
@@ -557,6 +565,7 @@
         {operator:'notin',label:'Not One Of'}
         {operator:'null',label:'Is Empty'}
         {operator:'notnull',label:'Is Not Empty'}
+        {operator:'regexp',label:'Regex'}
         ]
       string: [
         {operator:'eq',label:'Equals'}
@@ -571,6 +580,7 @@
         {operator:'notin',label:'Not One Of'}
         {operator:'null',label:'Is Empty'}
         {operator:'notnull',label:'Is Not Empty'}
+        {operator:'regexp',label:'Regex'}
         ]
       text: [
         {operator:'eq',label:'Equals'}
@@ -585,10 +595,12 @@
         {operator:'notin',label:'Not One Of'}
         {operator:'null',label:'Is Empty'}
         {operator:'notnull',label:'Is Not Empty'}
+        {operator:'regexp',label:'Regex'}
         ]
       boolean: [
         {operator:'notnull',label:'Yes'}
         {operator:'null',label:'No'}
+        {operator:'regexp',label:'Regex'}
         ]
       }
     }
@@ -641,7 +653,7 @@
       loadResultPage = (scope, searchId, page) ->
         p = if page==undefined then 1 else page
         scope.searchResult = {id:searchId}
-        url = scope.urlPrefix+searchId+'?page='+p
+        url = scope.urlPrefix+searchId+'.json?page='+p #need to specify json here because of this rails bug https://github.com/rails/rails/issues/9940
         if scope.perPage
           url += "&per_page=" + scope.perPage
 

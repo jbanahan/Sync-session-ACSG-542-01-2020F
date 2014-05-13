@@ -4,6 +4,11 @@ describe SearchCriterion do
   before :each do 
     @product = Factory(:product)
   end
+  describe :core_module do
+    it "should return core module based on module type" do
+      expect(SearchCriterion.new(model_field_uid:'ent_release_date').core_module.klass).to eq Entry
+    end
+  end
   context "after (field)" do
     before :each do
       @u = Factory(:master_user)
@@ -421,6 +426,47 @@ describe SearchCriterion do
           sc.apply(Product.where("1=1")).all.should include @product
         end
 
+        it "should find a product when there is a regex match on the appropriate text field" do
+          @product.update_attributes(unique_identifier: "Blue jeans")
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"regexp",:value=>"jean")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+        end
+
+        it "should not find a product when there is not a regex match on the appropriate text field" do
+          @product.update_attributes(unique_identifier: "Blue jeans")
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"regexp",:value=>"khaki")
+          sc.apply(Product.where("1=1")).all.should_not include @product
+          sc.test?(@product).should be_false
+        end
+
+        it "should find a product when there is a regex match on the appropriate date field" do
+          @product.update_attributes(created_at: Time.now)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>Time.now.year.to_s)
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+
+          @product.update_attributes(created_at: ActiveSupport::TimeZone["UTC"].parse("2013-02-03 04:05"))
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>"02-03")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>"04:05")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>"[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2} [[:digit:]]{2}:[[:digit:]]{2}")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+        end
+
+        it "should find a product when there is a regex match on the appropriate integer field" do
+          @product.attachments << Factory(:attachment)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_attachment_count,:operator=>"regexp",:value=>"1")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+        end
+
         it "should find something with a nil string and include_empty" do
           @product.update_attributes(:name=>nil)
           sc = SearchCriterion.new(:model_field_uid=>:prod_name,:operator=>"eq",:value=>"1")
@@ -441,6 +487,15 @@ describe SearchCriterion do
           sc = SearchCriterion.new(:model_field_uid=>:ent_total_packages,:operator=>"eq",:value=>"1")
           sc.include_empty = true
           sc.apply(Entry.where("1=1")).all.should include entry
+        end
+
+        it "should find an entry with a decimal value and a regex match" do
+          entry = Factory(:entry)
+          entry.update_attributes(:total_fees => 123.45)
+          sc = SearchCriterion.new(:model_field_uid => :ent_total_fees, :operator=>"regexp",:value=>"123")
+          sql_stm = sc.apply(Entry.where("1=1")).to_sql
+          sc.apply(Entry.where("1=1")).all.should include entry
+          sc.test?(entry).should be_true
         end
 
         it "should find something with 0 decimal value and include_empty" do
@@ -680,6 +735,23 @@ describe SearchCriterion do
         @search_criterion.test?(@product).should == false
       end
 
+      context :string_handling do
+        before :each do
+          @ent = Factory(:entry,broker_reference:' ')
+          @sc = SearchCriterion.new(model_field_uid:'ent_brok_ref',operator:'null')
+        end
+        it "should return on empty string" do
+          expect(@sc.apply(Entry).to_a).to eq [@ent]
+          @ent.update_attributes(broker_reference:'x')
+          expect(@sc.apply(Entry)).to be_empty
+        end
+        it "should test on empty string" do
+          expect(@sc.test?(@ent)).to be_true          
+          @ent.update_attributes(broker_reference:'x')
+          expect(@sc.test?(@ent)).to be_false
+        end
+      end
+
     end
     context 'Is Not Empty' do
       before :each do
@@ -717,7 +789,22 @@ describe SearchCriterion do
         @search_criterion.apply(Product).should include @product 
         @search_criterion.test?(@product).should == true
       end
-
+      context :string_handling do
+        before :each do
+          @ent = Factory(:entry,broker_reference:'x')
+          @sc = SearchCriterion.new(model_field_uid:'ent_brok_ref',operator:'notnull')
+        end
+        it "should return on empty string" do
+          expect(@sc.apply(Entry).to_a).to eq [@ent]
+          @ent.update_attributes(broker_reference:' ')
+          expect(@sc.apply(Entry)).to be_empty
+        end
+        it "should test on empty string" do
+          expect(@sc.test?(@ent)).to be_true          
+          @ent.update_attributes(broker_reference:' ')
+          expect(@sc.test?(@ent)).to be_false
+        end
+      end
     end
   end
 end

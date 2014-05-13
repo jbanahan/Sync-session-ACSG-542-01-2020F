@@ -17,8 +17,7 @@ describe CustomReportBillingAllocationByValue do
     end
     it "should show all entry, commercial invoice, commercial invoice line, commercial invoice tariff fields" do
       cfa = @klass.column_fields_available(@u)
-      cfa.size.should == CoreModule::ENTRY.model_fields_including_children.values.size
-      cfa.should == CoreModule::ENTRY.model_fields_including_children.values
+      cfa.size.should == CoreModule::ENTRY.model_fields_including_children(@u).values.size
       cfa.should include(ModelField.find_by_uid(:ent_entry_num))
       cfa.should include(ModelField.find_by_uid(:ci_invoice_number))
       cfa.should include(ModelField.find_by_uid(:cil_line_number))

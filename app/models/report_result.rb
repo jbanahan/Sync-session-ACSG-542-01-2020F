@@ -62,7 +62,7 @@ class ReportResult < ActiveRecord::Base
       begin
         local_file = nil
         if self.custom_report_id.nil?
-          local_file = eval(self.report_class).run_report run_by, ActiveSupport::JSON.decode(self.settings_json)
+          local_file = self.report_class.constantize.run_report run_by, ActiveSupport::JSON.decode(self.settings_json)
         else
           local_file = self.custom_report.run_report run_by
         end

@@ -34,7 +34,7 @@
     </script>
   </head>
   <body>
-    <% cache ['v7',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
+    <% cache ['v8',ms,(current_user ? current_user.company : 0),(current_user ? current_user : 0),@run_as_user] do %>
       <% if @run_as_user %>
         <div id='run_as_box'>Logged In As: <%=@run_as_user.full_name%>, Running As: <%=@current_user.full_name%> - <a href='/disable_run_as'>Disable</a></div>
       <% end %>
@@ -47,8 +47,8 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="/" id='dash-logo'>
-              <%=image_tag(master_setup.logo_image.blank? ? "vfi_logo.png" : master_setup.logo_image, :id=>'dash-logo')%>
+            <a class="navbar-brand dash-container" href="/">
+              <%=image_tag(master_setup.logo_image.blank? ? "vfi_logo.png" : master_setup.logo_image, :class=>'dash-logo')%>
             </a>
           </div>
           <div class='collapse navbar-collapse' id="top-nav-collapse">
@@ -65,8 +65,11 @@
                       <li><a href='/products/new'>New</a></li>
                     <% end -%>
                     <% if current_user.view_official_tariffs?-%>
-                      <li><a href='/official_tariffs?force_search=true'>Tariffs</a></li>
+                      <li><a href='/official_tariffs?force_search=true'>Search Tariffs</a></li>
                     <% end -%>
+                    <% if current_user.view_official_tariffs? %>
+                      <li><a href='/hts'>Browse Tariffs</a></li>
+                    <% end %>
                   </ul>
                 </li>
               <% end -%>
@@ -200,11 +203,13 @@
                 </a>
                 <ul class='dropdown-menu' role='menu'>
                   <li><a href='/companies/<%=current_user.company_id%>/users/<%=current_user.id%>'>Account</a></li>
+                  <li><a href="/dashboard_widgets">Dashboard</a></li>
                   <li><a href='/messages'>Messages</a></li>
                   <li><a href='/report_results'>Reports</a></li>
                   <li><a href='/support_tickets'>Support</a></li>
                   <li><a href='/tools'>Tools</a></li>
                   <li><a href='/imported_files'>Uploads</a></li>
+                  <li><a href="#" data-toggle="modal" data-target="#homepage-modal">Set Homepage</a></li>
                   <li><a href='/logout'>Log Out</a></li>
                 </ul>
               </li>
@@ -219,6 +224,21 @@
                 <a href='/messages/'><span class='label label-primary' id='message_envelope'></span></a>
               </li>
             </ul>
+          </div>
+        </div>
+        <div class="modal fade" id="homepage-modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header"><h4 class="modal-title">Set Homepage To Current Page</h4></div>
+              <div class="modal-body">
+                <p>Click "OK" to make this page the first one you see when you log in to VFI Track.</p>
+                <p>You may also access your homepage at any time by clicking the <%=image_tag(master_setup.logo_image.blank? ? "vfi_logo.png" : master_setup.logo_image, :class=>'dash-logo')%> in the upper left corner of the page.</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" id="set-homepage-btn">OK</button>
+              </div>
+            </div>
           </div>
         </div>
       <% end -%>

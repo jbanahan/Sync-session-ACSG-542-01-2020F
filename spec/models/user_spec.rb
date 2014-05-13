@@ -52,6 +52,30 @@ describe User do
         Factory(:user).should_not be_view_official_tariffs
       end
     end
+    context "business_validation_results" do
+      it "should allow master users" do
+        u = Factory(:master_user)
+        expect(u.view_business_validation_results?).to be_true
+        expect(u.edit_business_validation_results?).to be_true
+      end
+      it "should not allow non-master users" do
+        u = Factory(:user)
+        expect(u.view_business_validation_results?).to be_false
+        expect(u.edit_business_validation_results?).to be_false
+      end
+    end
+    context "business_validation_rule_results" do
+      it "should allow master users" do
+        u = Factory(:master_user)
+        expect(u.view_business_validation_rule_results?).to be_true
+        expect(u.edit_business_validation_rule_results?).to be_true
+      end
+      it "shouldn't allow non master users" do
+        u = Factory(:user)
+        expect(u.view_business_validation_rule_results?).to be_false
+        expect(u.edit_business_validation_rule_results?).to be_false
+      end
+    end
     context "projects" do
       it "should allow master company user with permission" do
         u = Factory(:master_user)

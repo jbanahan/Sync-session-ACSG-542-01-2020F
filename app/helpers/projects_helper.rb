@@ -19,7 +19,7 @@ module ProjectsHelper
       description:pd.description, due_date: pd.due_date,
       end_date:pd.end_date, estimated_hours: pd.estimated_hours,
       start_date: pd.start_date, complete: pd.complete,
-      project_name:pd.project.name
+      project_name:pd.project.name, priority: pd.priority
     }
   end
 
@@ -34,7 +34,7 @@ module ProjectsHelper
   end
   def sanitize_project_deliverable_params p
     r = {}
-    [:description, :due_date, :end_date, :estimated_hours, :start_date, :assigned_to_id, :complete].each do |k|
+    [:description, :due_date, :end_date, :estimated_hours, :start_date, :assigned_to_id, :complete, :priority].each do |k|
       r[k] = p[k]
     end
     r

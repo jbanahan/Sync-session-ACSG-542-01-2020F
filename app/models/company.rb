@@ -24,6 +24,7 @@ class Company < ActiveRecord::Base
   has_many  :attachment_archives
   has_many  :attachment_archive_manifests, :dependent=>:destroy
   has_many  :surveys, dependent: :destroy
+  has_many  :attachments, as: :attachable, dependent: :destroy
 
   has_one :attachment_archive_setup, :dependent => :destroy
 
@@ -63,6 +64,10 @@ class Company < ActiveRecord::Base
 	    return user.company == self
 	  end
 	end
+
+  def can_attach?(user)
+    can_edit? user
+  end
 	
   #migrate all users and surveys to the target company
   def migrate_accounts target_company

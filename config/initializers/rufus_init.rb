@@ -9,6 +9,7 @@ require 'open_chain/feed_monitor'
 require 'open_chain/custom_handler/polo_ca_efocus_generator'
 require 'open_chain/custom_handler/polo_efocus_product_generator'
 require 'open_chain/custom_handler/fenix_product_file_generator'
+require 'open_chain/custom_handler/das_product_generator'
 require 'open_chain/stat_client'
 
 def job_wrapper job_name, &block
@@ -45,6 +46,15 @@ def execute_scheduler
     scheduler.every '4h' do
       job_wrapper "StatClient" do
         OpenChain::StatClient.delay.run
+      end
+    end
+  end
+
+  #run business rules engine
+  if Rails.env.production?
+    scheduler.every '10m' do
+      job_wrapper "BusinessValidationTemplate" do
+        BusinessValidationTemplate.delay.create_all!(true)
       end
     end
   end
@@ -178,9 +188,23 @@ def execute_scheduler
     end
   end
 
+  if MasterSetup.get.system_code == 'underarmour' && Rails.env == 'production'
+    scheduler.every("60m") do
+      OpenChain::CustomHandler::FenixProductFileGenerator.new("UNDERARM").delay.generate
+    end
+  end
+
+  if MasterSetup.get.system_code == 'dasvfitracknet' && Rails.env == 'production'
+    scheduler.every("60m") do
+      OpenChain::CustomHandler::DasProductGenerator.new.delay.generate
+    end
+  end
+
   if MasterSetup.get.system_code == "www-vfitrack-net" && Rails.env == 'production'
     scheduler.every("5m") do
       OpenChain::AllianceImagingClient.delay.consume_images
+      OpenChain::AllianceImagingClient.delay.consume_stitch_responses
+      OpenChain::AllianceImagingClient.delay.send_outstanding_stitch_requests
     end
     scheduler.every("30m") do
       OpenChain::CustomHandler::PoloCaEfocusGenerator.new.delay.generate 

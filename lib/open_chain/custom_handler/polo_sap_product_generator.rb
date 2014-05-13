@@ -29,7 +29,7 @@ module OpenChain
         {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ralph_Lauren/sap_#{@env==:qa ? 'qa' : 'prod'}"}
       end
 
-      def preprocess_row row
+      def preprocess_row row, opts = {}
         row.each do |key, val|
           row[key] = convert_to_ascii(val)
         end
@@ -50,7 +50,11 @@ module OpenChain
             "\u{00A0}" => " ", #non breaking space
             "\u{2013}" => "-",
             "\u{2014}" => "-",
-            "\u{00BE}" => "3/4"
+            "\u{00BE}" => "3/4",
+            "\u{201D}" => "\"", # Right quote-mark ”
+            "\u{201C}" => "\"", # Left quote-mark “
+            "\u{00BC}" => "1/4",
+            "\u{00BD}" => "1/2"
           }
           # First convert the UTF-8 text to ascii w/ our conversion table
           value = value.encode("US-ASCII", :fallback => allowed_conversions)

@@ -57,6 +57,24 @@ describe OpenChain::IntegrationClientCommandProcessor do
       Delayed::Worker.delay_jobs = @ws
       @t.close!
     end
+    context :lenox do
+      it "should send data to lenox prodct parser if feature enabled and path contains _lenox_product" do
+        Factory(:user,:username=>'integration')
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('Lenox').and_return(true)
+        OpenChain::CustomHandler::Lenox::LenoxProductParser.should_receive(:delay).and_return OpenChain::CustomHandler::Lenox::LenoxProductParser
+        OpenChain::CustomHandler::Lenox::LenoxProductParser.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_lenox_product/a.csv','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+      it "should send data to lenox po parser if feature enabled and path contains _lenox_po" do
+        Factory(:user,:username=>'integration')
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('Lenox').and_return(true)
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.should_receive(:delay).and_return OpenChain::CustomHandler::Lenox::LenoxPoParser
+        OpenChain::CustomHandler::Lenox::LenoxPoParser.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_lenox_po/a.csv','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+    end
     context :ann_inc do
       it "should send data to Ann Inc SAP Product Handler if feature enabled and path contains _from_sap" do
         Factory(:user,:username=>'integration')
@@ -83,6 +101,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:process).with('abcdefg').and_return(ack)
         OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.any_instance.should_receive(:send_and_delete_ack_file).with(ack,'a.csv')
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+      it "should not raise errors on test files" do
+        ack = mock("ack_file")
+        cmd = {'request_type'=>'remote_file','path'=>'/test_from_msl/a.csv','remote_path'=>'12345'}
+        expect{OpenChain::IntegrationClientCommandProcessor.process_command(cmd)}.to_not raise_error
       end
       it "should handle ack files" do
         MasterSetup.any_instance.should_receive(:custom_feature?).with('MSL+').and_return(true)
@@ -169,7 +192,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
     it "should send to VF 850 Parser" do
       p = double("parser")
-      OpenChain::CustomHandler::Polo::Polo850VandegriftParser.should_receive(:delay).and_return p
+      OpenChain::CustomHandler::Polo::Polo850VandegriftParser.any_instance.should_receive(:delay).and_return p
       p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
       cmd = {'request_type'=>'remote_file','path'=>'/_polo_850/file.xml','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
@@ -197,9 +220,9 @@ describe OpenChain::IntegrationClientCommandProcessor do
         @search_setup = Factory(:search_setup)
         @user = @search_setup.user
         @path = "/#{@user.username}/to_chain/#{@search_setup.module_type.downcase}/#{@search_setup.name}/myfile.csv"
-        LinkableAttachmentImportRule.should_receive(:find_import_rule).and_return(nil)
       end
       it 'should create if path contains to_chain' do
+        LinkableAttachmentImportRule.should_receive(:find_import_rule).and_return(nil)
         ImportedFile.any_instance.should_receive(:process).with(@user,{:defer=>true}).and_return(nil)
         cmd = {'request_type'=>'remote_file','path'=>@path,'remote_path'=>'12345'}
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
@@ -208,6 +231,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         imp.attached_file_name.should == 'myfile.csv'
       end
       context 'errors' do
+
+        before :each do
+          LinkableAttachmentImportRule.should_receive(:find_import_rule).exactly(3).times.and_return(nil,nil,nil)
+        end
+
         it 'should fail on bad user' do
           cmd = {'request_type'=>'remote_file','path'=>'/baduser/to_chain/product/search/file.csv','remote_path'=>'12345'}
           lambda { OpenChain::IntegrationClientCommandProcessor.process_command(cmd) }.should raise_error RuntimeError, 'Username baduser not found.'

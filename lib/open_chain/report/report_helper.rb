@@ -1,3 +1,5 @@
+require 'spreadsheet'
+
 module OpenChain
   module Report
     module ReportHelper
@@ -71,7 +73,7 @@ module OpenChain
       # You'll want to specify a time zone in cases where the column you're reporting against is a Datetime
       # since the date selected is more than likely not expected to be UTC based (ie. db times)
       def sanitize_date_string dstr, time_zone_name = nil
-        d = Date.parse(dstr)
+        d = Date.parse(dstr.to_s)
         if time_zone_name
           # This translates to the time in the zone specified and then returns a datetime string converted to the 
           # db timezone suitable to be directly placed into a query.

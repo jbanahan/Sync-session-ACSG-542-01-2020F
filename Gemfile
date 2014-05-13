@@ -21,7 +21,7 @@ gem 'dalli', '2.6.4'
 gem 'postmark-rails', '0.5.2'
 # rubyzip API changed in 1.0, need to pin to version prior to 1.0 until we fix files referencing 'zip/zip'
 gem 'rubyzip', '< 1.0.0'
-gem 'jquery-rails'
+gem 'jquery-rails', '2.3.0'
 gem 'newrelic_rpm', '~> 3.6.7'
 
 #text processing/encoding stuff
@@ -51,6 +51,7 @@ end
 
 group :test do
   gem 'mocha', '0.9.12', :require => false #http://blog.agoragames.com/2010/09/10/rails-3-mocha-load-order-gotcha/
+  gem 'webmock'
 end
 # Gems used only for assets and not required
 # in production environments by default.

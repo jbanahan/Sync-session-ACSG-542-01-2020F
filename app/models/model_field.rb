@@ -800,7 +800,17 @@ and classifications.product_id = products.id
         [16,:ot_col_2,:column_2_rate,"Column 2 Rate",{:data_type=>:string}],
         [17,:ot_import_regs,:import_regulations,"Import Regulations",{:data_type=>:string}],
         [18,:ot_export_regs,:export_regulations,"Export Regulations",{:data_type=>:string}],
-        [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}]
+        [19,:ot_common_rate,:common_rate,"Common Rate",{:data_type=>:string}],
+        [20,:ot_chapter_number, :chapter_number,"Chapter Number",{:data_type=>:string,
+            :import_lambda => lambda { |ent, data| 
+              "Chapter Number ignored. (read only)"
+            },
+            :export_lambda => lambda { |obj|
+              obj.hts_code[0,2]
+            },
+            :qualified_field_name => "LEFT(hts_code,2)"
+          }
+        ]
       ]
       add_fields CoreModule::OFFICIAL_TARIFF, make_country_arrays(100,"ot","official_tariffs")
       add_fields CoreModule::ENTRY, [
@@ -888,13 +898,13 @@ and classifications.product_id = products.id
           :import_lambda => lambda { |ent, data|
             port = Port.find_by_name data
             return "Port with name \"#{data}\" could not be found." unless port
-            ent.entry_port_code = port.schedule_d_code
+            ent.entry_port_code = (ent.source_system == "Fenix" ? port.cbsa_port : port.schedule_d_code)
             "Entry Port set to #{port.name}"
           },
           :export_lambda => lambda {|ent|
             ent.entry_port.blank? ? "" : ent.entry_port.name
           },
-          :qualified_field_name => "(SELECT name FROM ports WHERE ports.schedule_d_code = entries.entry_port_code)"
+          qualified_field_name: "(CASE entries.source_system WHEN 'Fenix' THEN (SELECT name FROM ports WHERE ports.cbsa_port = entries.entry_port_code) ELSE (SELECT name FROM ports WHERE ports.schedule_d_code = entries.entry_port_code) END)"
         }],
         [61,:ent_vessel,:vessel,"Vessel/Airline",{:data_type=>:string}],
         [62,:ent_voyage,:voyage,"Voyage/Flight",{:data_type=>:string}],
@@ -994,7 +1004,28 @@ and classifications.product_id = products.id
         [133,:ent_freight_pickup_date,:freight_pickup_date,"Freight Pickup Date",{:data_type=>:datetime}],
         [134,:ent_k84_receive_date, :k84_receive_date, "K84 Received Date", {:data_type=>:date}],
         [135,:ent_k84_month, :k84_month, "K84 Month", {:data_type=>:integer}],
-        [136,:ent_k84_due_date, :k84_due_date, "K84 Due Date", {:data_type=>:date}]
+        [136,:ent_k84_due_date, :k84_due_date, "K84 Due Date", {:data_type=>:date}],
+        [137,:ent_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
+          :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.business_rules_state },
+          :qualified_field_name=> "(select state 
+            from business_validation_results bvr 
+            where bvr.validatable_type = 'Entry' and bvr.validatable_id = entries.id 
+            order by (
+            case bvr.state
+                when 'Fail' then 0
+                when 'Review' then 1
+                when 'Pass' then 2
+                when 'Skipped' then 3
+                else 4
+            end
+            )
+            limit 1)",
+          :can_view_lambda=>lambda {|u| u.company.master?}
+        }],
+        [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}],
+        [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}],
+        [140,:ent_employee_name,:employee_name,"Employee",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -1046,7 +1077,35 @@ and classifications.product_id = products.id
         [32,:cil_cvd_duty_amount,:cvd_duty_amount,"CVD Duty",{:data_type=>:decimal,:currency=>:other}],
         [33,:cil_cvd_case_percent,:cvd_case_percent,"CVD Percentage",{:data_type=>:decimal}],
         [34,:cil_customer_reference, :customer_reference, "Customer Reference",{:data_type=>:string}],
-        [35,:cil_vendor_name, :vendor_name, "Vendor Name",{:data_type=>:string}]
+        [35,:cil_vendor_name, :vendor_name, "Vendor Name",{:data_type=>:string}],
+        [36,:cil_adjustments_amount, :adjustments_amount, "Adjustments Amount",{:data_type=>:decimal,:currency=>:other}],
+        [37,:cil_adjusted_value, :adjusted_value, "Adjusted Value",{:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Adjusted Value ignored. (read only)"},
+          :export_lambda=>lambda {|obj| (obj.adjustments_amount ? obj.adjustments_amount : BigDecimal.new(0)) + (obj.value ? obj.value : BigDecimal.new(0))},
+          :qualified_field_name=> "(ifnull(commercial_invoice_lines.adjustments_amount,0) + ifnull(commercial_invoice_lines.value,0))",
+        }],
+        [38,:cil_total_duty, :total_duty, "Total Duty", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Duty ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.total_duty },
+          :qualified_field_name=> "(SELECT ifnull(sum(total_duty_t.duty_amount), 0) FROM commercial_invoice_tariffs total_duty_t 
+            WHERE total_duty_t.commercial_invoice_line_id = commercial_invoice_lines.id)"
+        }],
+        [39,:cil_total_fees, :total_fees, "Total Fees", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Fees ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.total_fees },
+          :qualified_field_name=> "(SELECT ifnull(total_fees_l.prorated_mpf, 0) + ifnull(total_fees_l.hmf, 0) + ifnull(total_fees_l.cotton_fee, 0) FROM commercial_invoice_lines total_fees_l
+            WHERE total_fees_l.id = commercial_invoice_lines.id)"
+        }],
+        [40,:cil_total_duty_plus_fees, :duty_plus_fees_amount, "Total Duty + Fees", {:data_type=>:decimal,:currency=>:other,
+          :import_lambda=>lambda {|o,d| "Total Fees ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.duty_plus_fees_amount },
+          :qualified_field_name=> "(SELECT ifnull(total_duty_fees_l.prorated_mpf, 0) + ifnull(total_duty_fees_l.hmf, 0) + ifnull(total_duty_fees_l.cotton_fee, 0) + 
+              (SELECT ifnull(sum(total_duty_fees_t.duty_amount), 0) 
+                FROM commercial_invoice_tariffs total_duty_fees_t 
+                WHERE total_duty_fees_t.commercial_invoice_line_id = commercial_invoice_lines.id) 
+            FROM commercial_invoice_lines total_duty_fees_l
+            WHERE total_duty_fees_l.id = commercial_invoice_lines.id)"
+        }]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
@@ -1126,7 +1185,7 @@ and classifications.product_id = products.id
         make_broker_invoice_entry_field(45,:bi_ent_total_packages_uom,:total_packages_uom,"Total Packages UOM",:string,lambda {|entry| entry.total_packages_uom}),
         make_broker_invoice_entry_field(46,:bi_ent_cotton_fee,:cotton_fee,"Cotton Fee",:decimal,lambda {|entry| entry.cotton_fee}),
         make_broker_invoice_entry_field(47,:bi_ent_hmf,:hmf,"HMF",:decimal,lambda {|entry| entry.hmf}),
-        make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decima,lambda {|entry| entry.mpf}),
+        make_broker_invoice_entry_field(48,:bi_ent_mpf,:mpf,"MPF",:decimal,lambda {|entry| entry.mpf}),
         make_broker_invoice_entry_field(49,:bi_ent_container_numbers,:container_numbers,"Container Numbers",:text,lambda {|entry| entry.container_numbers}),
         [50,:bi_currency,:currency,"Currency",{:data_type=>:decimal}],
         make_broker_invoice_entry_field(51,:bi_ent_importer_tax_id,:importer_tax_id,"Importer Tax ID",:string,lambda {|entry| entry.importer_tax_id}),
@@ -1150,7 +1209,8 @@ and classifications.product_id = products.id
         make_broker_invoice_entry_field(64,:bi_ent_pars_ack_date, :pars_ack_date, "PARS ACK Date", :datetime, lambda {|entry| entry.pars_ack_date}),
         make_broker_invoice_entry_field(65,:bi_ent_cadex_accept_date, :cadex_accept_date, "CADEX Accept Date", :datetime, lambda {|entry| entry.cadex_accept_date}),
         make_broker_invoice_entry_field(66,:bi_ent_cadex_sent_date, :cadex_sent_date, "CADEX Sent Date", :datetime, lambda {|entry| entry.cadex_sent_date}),
-        make_broker_invoice_entry_field(67,:bi_ent_k84_month, :k84_month, "K84 Month", :integer, lambda {|entry| entry.k84_month})
+        make_broker_invoice_entry_field(67,:bi_ent_k84_month, :k84_month, "K84 Month", :integer, lambda {|entry| entry.k84_month}),
+        make_broker_invoice_entry_field(68,:bi_ent_exam_ordered_date, :exam_ordered_date, "Exam Ordered Date", :datetime, lambda {|entry| entry.exam_ordered_date})
       ]
       add_fields CoreModule::BROKER_INVOICE_LINE, [
         [1,:bi_line_charge_code,:charge_code,"Charge Code",{:data_type=>:string}],
@@ -1256,7 +1316,7 @@ and classifications.product_id = products.id
         [1,:class_comp_cnt, :comp_count, "Component Count", {
           :import_lambda => lambda {|obj,data| return "Component Count was ignored. (read only)"},
           :export_lambda => lambda {|obj| obj.tariff_records.size },
-          :qualified_field_name => "(SELECT comp_count FROM (SELECT count(id) as comp_count, classification_id FROM tariff_records group by classification_id) x where x.classification_id = classifications.id)",
+          :qualified_field_name => "(select count(id) from tariff_records tr where tr.classification_id = classifications.id)",
           :data_type => :integer,
           :history_ignore=>true
         }],
@@ -1280,12 +1340,16 @@ and classifications.product_id = products.id
               INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id
               WHERE order_lines.order_id = orders.id 
               ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)}
-        }]
+        },],
+        [4,:ord_cust_ord_no, :customer_order_number, "Customer Order Number"],
+        [5,:ord_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}],
+        [6,:ord_mode, :mode, "Mode of Transport",{:data_type=>:string}]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
       add_fields CoreModule::ORDER, make_division_arrays(300,"ord","orders")
       add_fields CoreModule::ORDER, make_master_setup_array(400,"ord")
+      add_fields CoreModule::ORDER, make_importer_arrays(500,"ord","orders")
 
       add_fields CoreModule::ORDER_LINE, [
         [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
@@ -1295,6 +1359,11 @@ and classifications.product_id = products.id
           :import_lambda => lambda {|obj,data| return "Milestone State was ignored. (read only)"},
           :export_lambda => lambda {|obj| obj.worst_milestone_state },
           :qualified_field_name => "(SELECT IFNULL(milestone_forecast_sets.state,'') as ms_state FROM milestone_forecast_sets INNER JOIN piece_sets on piece_sets.id = milestone_forecast_sets.piece_set_id WHERE piece_sets.order_line_id = order_lines.id ORDER BY FIELD(milestone_forecast_sets.state,'Achieved','Pending','Unplanned','Missed','Trouble','Overdue') DESC LIMIT 1)"
+        }],
+        [6,:ordln_currency,:currency,"Currency",{data_type: :string}],
+        [7,:ordln_country_of_origin,:country_of_origin,"Country of Origin",{data_type: :string}],
+        [8,:ordln_hts,:hts,"HTS Code",{data_type: :string,
+          :export_lambda=> lambda{|obj| obj.hts.blank? ? '' : obj.hts.hts_format}
         }]
       ]
       add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")

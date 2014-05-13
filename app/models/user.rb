@@ -23,8 +23,8 @@ class User < ActiveRecord::Base
     :support_agent,
     :password_reset,
     :simple_entry_mode,
-    :tariff_subscribed
-
+    :tariff_subscribed, :homepage
+    
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
   
@@ -223,6 +223,18 @@ class User < ActiveRecord::Base
   end
   
   #permissions
+  def view_business_validation_results?
+    self.company.master?
+  end
+  def edit_business_validation_results?
+    self.company.master?
+  end  
+  def view_business_validation_rule_results?
+    self.company.master?
+  end
+  def edit_business_validation_rule_results?
+    self.company.master?
+  end
   def view_official_tariffs?
     self.company.master?
   end

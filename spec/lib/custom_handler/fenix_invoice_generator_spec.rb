@@ -89,7 +89,11 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
 
     it "should use defaults for missing data" do
       # Default output handles missing data in Invoice Number, Cartons, Units, Value, HTS Code, tariff treatment
-      @i.update_attributes! invoice_number: nil, total_quantity_uom: nil, invoice_value: nil
+      @i.update_attributes! invoice_number: nil, total_quantity_uom: nil, invoice_value: nil, gross_weight: nil
+      @i.vendor = nil
+      @i.importer = nil
+      @i.consignee = nil
+      @i.save!
       @line_1.commercial_invoice_tariffs.first.update_attributes! hts_code: nil, tariff_provision: nil
 
       @f = @generator.generate_file @i.id
@@ -99,12 +103,49 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       h = contents[0]
 
       h[1..25].should == "VFI-#{@i.id}".ljust(25)
+      # Num Cartons
       h[60..74].should == BigDecimal.new("0").to_s.ljust(15)
-      h[105..119].should == BigDecimal.new("0").to_s.ljust(15)
+      # Gross Weight
+      h[75..89].should == "0".ljust(15)
+      # It should be poulating the invoice value from the detail level here
+      h[105..119].should == BigDecimal.new("100.1").to_s.ljust(15)
+      h[120..169].should == "GENERIC".ljust(50)
+      h[470..519].should == "GENERIC".ljust(50)
+      h[820..869].should == "GENERIC".ljust(50)
 
       d = contents[1]
       d[61..72].should == "0".ljust(12)
       d[203..212].should == "2".ljust(10)
+    end
+
+    it "should not populate units or invoice value if any lines are missing unit counts" do
+      @i.update_attributes! invoice_value: nil
+      @line_2.update_attributes! quantity: nil
+
+      @f = @generator.generate_file @i.id
+      @f.rewind
+      contents = @f.read.split("\r\n")
+      contents.length.should == 3
+      h = contents[0]
+
+      # Invoice value 
+      h[105..119].should == "0.0".ljust(15)
+      # Units
+      h[90..104].should == "0.0".ljust(15)
+    end
+
+    it "should not populate invoice value if any lines are missing unit price" do
+      @i.update_attributes! invoice_value: nil
+      @line_2.update_attributes! unit_price: nil
+
+      @f = @generator.generate_file @i.id
+      @f.rewind
+      contents = @f.read.split("\r\n")
+      contents.length.should == 3
+      h = contents[0]
+
+      # Invoice value 
+      h[105..119].should == "0.0".ljust(15)
     end
 
     it "should handle nils in all default field values" do
@@ -172,7 +213,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       expect{@generator.generate_file(@i.id)}.to raise_error "Invoice # #{@i.invoice_number} generated a Fenix invoice file containing 1000 lines.  Invoice's over 999 lines are not supported and must have detail lines consolidated or the invoice must be split into multiple pieces."
     end
 
-    it "should handle non-ASCII encoding values and translate them to '?' when outputting" do
+    it "should transliterate non-ASCII encoding values" do
       @i.invoice_number = "Glósóli"
       @i.save
 
@@ -181,8 +222,19 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       contents = @f.read.split("\r\n")
       contents.length.should == 3
       h = contents[0]
-      h[1..25].should == "Gl?s?li".ljust(25)
+      h[1..25].should == "Glosoli".ljust(25)
+    end
 
+    it "uses ? when it can't transliterate a character" do
+      @i.invoice_number = "℗"
+      @i.save
+
+      @f = @generator.generate_file @i.id
+      @f.rewind
+      contents = @f.read.split("\r\n")
+      contents.length.should == 3
+      h = contents[0]
+      h[1..25].should == "?".ljust(25)
     end
 
     it "should trim field lengths when they exceed the format's length attribute" do

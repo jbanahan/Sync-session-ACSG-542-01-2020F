@@ -19,11 +19,17 @@ $(function() {
     <thead><tr><th>Not Linked</th><th>Linked</th></thead>
     <tbody><tr><td>
       <select size='15' multiple='multiple' class='unselected'>
-      <%=options_from_collection_for_select @company.unlinked_companies.order('companies.name ASC'), :id, :name%>
+         <% @company.unlinked_companies.sort_by(&:name).each do |uc| %>
+          <option value=<%= uc.id %> ><%= uc.name + (!uc.fenix_customer_number.nil? ? " (" + uc.fenix_customer_number.to_s + ")" : "" ) + (!uc.alliance_customer_number.nil? ? " (" + uc.alliance_customer_number.to_s + ")" : "" )%>
+          </option>
+        <% end %>
       </select>
     </td><td>
       <select size='15' multiple='multiple' class='selected' id='selected_companies'>
-      <%=options_from_collection_for_select @company.linked_companies.order('companies.name ASC'), :id, :name%>
+         <% @company.linked_companies.sort_by(&:name).each do |lc| %>
+          <option value=<%= lc.id %> ><%= lc.name + (!lc.fenix_customer_number.nil? ? " (" + lc.fenix_customer_number.to_s + ")" : "" ) + (!lc.alliance_customer_number.nil? ? " (" + lc.alliance_customer_number.to_s + ")" : "" )%>
+          </option>
+        <% end %>
       </select>
     </td></tr>
     <tr><td><a href='#' class='select'>Link</a></td><td><a href='#' class='unselect'>Remove</a></td></tr>

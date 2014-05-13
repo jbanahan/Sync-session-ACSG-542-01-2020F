@@ -82,4 +82,11 @@
     </div>
   </div>
   <%-end-%>
+  <%-if enabled_features.include?('Eddie Fenix CI Upload') && OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler.new(nil).can_view?(current_user)-%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "Eddie Fenix Commerical Invoice Upload", '/custom_features/eddie_fenix_ci_load', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
 </div>

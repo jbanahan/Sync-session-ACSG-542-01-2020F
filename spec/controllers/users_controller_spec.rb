@@ -124,4 +124,67 @@ describe UsersController do
       flash[:errors].first.should == "Please select at least one user."
     end
   end
+
+  describe "set_homepage" do
+    it "sets the users homepage" do
+      post :set_homepage, homepage: "http://www.test.com/homepage/index.html?param1=1&param2=2#hash=123"
+      response.should be_success
+      JSON.parse(response.body).should == {'OK'=>'OK'}
+
+      @user.reload
+      expect(@user.homepage).to eq "/homepage/index.html?param1=1&param2=2#hash=123"
+    end
+
+    it "sets unsets the users homepage" do
+      @user.update_attributes! homepage: "/index.html"
+      post :set_homepage, homepage: ""
+      response.should be_success
+      JSON.parse(response.body).should == {'OK'=>'OK'}
+
+      @user.reload
+      expect(@user.homepage).to eq ""
+    end
+
+    it "returns an error when no homepage param is present" do
+      post :set_homepage
+      response.should be_success
+      JSON.parse(response.body).should == {'error' => "Homepage URL missing."}
+    end
+  end
+
+  describe :move_to_new_company do
+    
+    before :each do
+      @user1 = Factory(:user)
+      @user2 = Factory(:user)
+      @user3 = Factory(:user)
+      @company = Factory(:company)
+      # So the :back redirect in the controller returns something
+      request.env["HTTP_REFERER"] = "/referer"
+    end
+
+    it "should only allow admins access" do
+      @user.admin = false
+      @user.save
+
+      post :move_to_new_company, id: [@user1.id, @user2.id, @user3.id], destination_company_id: @company.id
+
+      response.should redirect_to "/referer"
+      flash[:errors].first.should == "Only administrators can move other users to a new company."
+    end
+
+    it "should move users to the correct company" do
+      @user.admin = true
+      @user.save
+
+      post :move_to_new_company, id: [@user1.id, @user2.id, @user3.id], destination_company_id: @company.id
+
+      response.should redirect_to "/referer"
+
+      @user1.reload; @user1.company.id.should == @company.id
+      @user2.reload; @user2.company.id.should == @company.id
+      @user3.reload; @user3.company.id.should == @company.id
+    end
+
+  end
 end

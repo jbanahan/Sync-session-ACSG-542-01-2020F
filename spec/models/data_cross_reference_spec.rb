@@ -11,6 +11,15 @@ describe DataCrossReference do
     end
   end
 
+  context :get_all_pairs do
+    it "should get all pairs for a cross reference type" do
+      described_class.create!(key:'a',value:'b',cross_reference_type:'x')
+      described_class.create!(key:'c',value:'d',cross_reference_type:'x')
+      described_class.create!(key:'dontfind',value:'d',cross_reference_type:'z')
+      h = {'a'=>'b','c'=>'d'}
+      expect(described_class.get_all_pairs('x')).to eq h
+    end
+  end
   context :load_cross_references do
     it "should load csv cross reference data from an IO object" do
       # Make sure we're also updating existing xrefs
@@ -29,6 +38,16 @@ describe DataCrossReference do
     end
   end
 
+  context :lenox_item_master_hash do
+    it "should find" do
+      described_class.create! key: 'partno', value:'ABCDEFG', cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH
+      expect(described_class.find_lenox_item_master_hash('partno')).to eq 'ABCDEFG'
+    end
+    it "should create" do
+      described_class.create_lenox_item_master_hash! 'part_no', 'hashval'
+      expect(described_class.where(key:'part_no',value:'hashval',cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH).count).to eq 1
+    end
+  end
   context :find_rl_profit_center do
     it "should find an rl profit center from the brand code" do
       DataCrossReference.create! :key=>"brand", :value=>"profit center", :cross_reference_type=>DataCrossReference::RL_BRAND_TO_PROFIT_CENTER

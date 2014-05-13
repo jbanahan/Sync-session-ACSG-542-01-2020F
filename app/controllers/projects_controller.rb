@@ -77,7 +77,8 @@ class ProjectsController < ApplicationController
       end
       p.project_sets << ps
     end
-    p.update_attributes(updated_at:0.seconds.ago)
+    p.updated_at = 0.seconds.ago
+    p.save!
     render_project p
   end
 

@@ -40,7 +40,7 @@ module OpenChain
         def ftp_credentials
           {:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>"to_ecs/Ann/ZYM"}
         end
-        def preprocess_row outer_row
+        def preprocess_row outer_row, opts = {}
           explode_lines_with_related_styles(outer_row) do |row|
             r = []
             origins = row[3].blank? ? [''] : row[3].split("\n")

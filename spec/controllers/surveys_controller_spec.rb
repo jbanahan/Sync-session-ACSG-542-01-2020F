@@ -152,6 +152,15 @@ describe SurveysController do
       flash[:notices].first.should == "Survey saved."
       Question.find(q.id).should_not be_warning
     end
+    it 'should allow questions to have attachments' do
+      q = @s.questions.create!(content: "Sample content", choices:"a\nb")
+      q.save!
+      q.attachments.create!(attached_file_name:"attachment1.jpg")
+      post :update, {id: @s.id, survey: {name: 'survey name', questions_attributes: {q.id => {id: q.id, content: "Sample content"}}}}
+      response.should redirect_to edit_survey_path(@s)
+      flash[:notices].first.should == "Survey saved."
+      Question.find(q.id).should_not be_warning
+    end
   end
   describe "create" do
     it "should reject if user does not have edit_survey permission" do

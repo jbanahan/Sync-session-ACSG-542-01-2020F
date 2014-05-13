@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+
+require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
+
+def find_by_style part_number, importers, country_of_origin_code=nil
+  s = Struct.new(:part_number,:country_origin_code,:mid,:hts_code)
+  cit = CommercialInvoiceTariff.joins(:commercial_invoice_line=>{:commercial_invoice=>:entry}).
+    where("entries.customer_number IN (?)", importers).
+    where("commercial_invoice_lines.part_number = ?",part_number).
+    where("entries.release_date is not null")
+  cit = cit.where("commercial_invoice_lines.country_origin_code = ?",country_of_origin_code) unless country_of_origin_code.blank?
+  cit = cit.order("entries.release_date DESC").first
+  if cit
+    cil = cit.commercial_invoice_line
+    return s.new(cil.part_number,cil.country_origin_code,(cil.mid.blank? ? cil.commercial_invoice.mfid : cil.mid),cit.hts_code)
+  end
+  nil
+end
+
+import_country = Country.find_by_iso_code("US")
+
+customer_numbers = ['EDDIE','EBCC']
+
+mids = {}
+# Extra MID database to utilize, if present
+if File.exists?("tmp/eddie-mids.csv")
+  CSV.foreach('tmp/eddie-mids.csv') do |row|
+    next if row[0].blank? || row[0].strip == "C/O" || row[1].blank? || row[2].blank?
+
+    mids[row[0].strip.upcase+"~"+row[1].strip.upcase] = row[2].strip
+  end
+end
+
+cursor = -1
+headers = ["File #","Customer","Inv#","Inv Date","C/O","Part# / Style","Pcs","Mid","Tariff#","Cotton Fee y/n","Value (IV)","Qty#1","Qty#2","Gr wt","PO#","Ctns","FIRST SALE","ndc/mmv","dept"]
+
+column_widths = []
+wb = XlsMaker.create_workbook "CI Upload", headers
+sheet = wb.worksheet "CI Upload"
+row_number = 0
+
+CSV.foreach(ARGV[0],col_sep:'|') do |row|
+  puts cursor if ((cursor += 1) % 100) == 0
+
+  style = row[5].strip if row[5]
+  coo = row[4].strip if row[4]
+
+  mid = nil
+  hts = nil
+
+  tr = TariffRecord.joins(:classification=>[:product, :country])
+            .where(:products=>{:unique_identifier => "EDDIE-#{style}"})
+            .where(:classifications => {:country_id => import_country.id})
+            .where("tariff_records.hts_1 IS NOT NULL AND tariff_records.hts_1 <> ''").first
+  hts = tr ? tr.hts_1 : ""
+
+  r = find_by_style style, customer_numbers, coo
+
+  if r 
+    hts = r.hts_code if hts.blank?
+    mid = r.mid
+  end
+
+  if mid.blank? && !(coo.blank? || style.blank?)
+    mid = mids["#{coo.upcase}~#{style.upcase}"]
+    mid = "" if mid.blank?
+  end
+
+  row[1] = "EDDIE"
+  row[6] = BigDecimal.new(row[6]) rescue row[6]
+  row[7] = mid
+  row[8] = hts
+  row[10] = BigDecimal.new(row[10]) rescue row[10]
+
+  row = row[0..(headers.length() -1)]
+
+  XlsMaker.add_body_row sheet, (row_number +=1), row, column_widths
+end
+wb.write "tmp/#{File.basename(ARGV[0], ".*")}.xls"

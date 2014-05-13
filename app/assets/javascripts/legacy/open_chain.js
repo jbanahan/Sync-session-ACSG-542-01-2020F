@@ -4,10 +4,10 @@ var OpenChain = (function() {
   var keyMapPopUp = null;
 
   var initRemoteValidate = function() {
-    $(".rvalidate").live('change',function() {
+    $('body').on('change',"input.rvalidate",function() {
         remoteValidate($(this));
     });
-    $("form").live('submit',function(ev) {
+    $("body").on('submit','form',function(ev) {
       remoteValidateFormBlock($(this),ev);
     });
   }
@@ -154,7 +154,7 @@ var OpenChain = (function() {
   }
 
   var initEntitySnapshotPopups = function() {
-    $("a.entity_snapshot_popup").live('click',function(evt) {
+    $('body').on('click',"a.entity_snapshot_popup",function(evt) {
       var modal, inner;
       evt.preventDefault();
       modal = $("#mod_entity_snapshot");
@@ -196,7 +196,7 @@ var OpenChain = (function() {
     ajaxAutoClassify: function(column,baseCountry,hts) {
       var loadingMessage = "Loading Auto-Classification";
       $("div.auto_class_results.class_col_"+column).not(".cntry_"+baseCountry).html(loadingMessage);
-      $.get('/official_tariffs/auto_classify/'+hts.replace(/\./g,''),function(data) {
+      $.get('/official_tariffs/auto_classify/'+hts.replace(/\./g,'')+'.json',function(data) {
         var i,j,d,iso,hts,html;
         for(i=0;i<data.length;i++) {
           d = data[i];
@@ -309,13 +309,13 @@ var OpenChain = (function() {
       dropTableHandlers[table.attr('id')] = handler;
     },
     initClassifyPage: function() {
-      $(".tf_remove").live('click',function(ev) {
+      $("body").on('click','.tf_remove',function(ev) {
         $(this).closest(".tf_row").find(".hts_field").each(function() {Classify.removeFieldFromInvalidTariffList($(this));});
         $(this).closest(".tf_row").find(".sched_b_field").each(function() {Classify.removeFieldFromInvalidTariffList($(this));});
         destroy_nested('tf',$(this));
         ev.preventDefault();
       });
-      $("a.auto_class").live('click',function(ev) {
+      $('body').on('click',"a.auto_class",function(ev) {
         ev.preventDefault();
         var found = false;
         $(this).parents(".tf_row").find("input.hts_field").each(function() {
@@ -396,9 +396,10 @@ var OpenChain = (function() {
 })();
 var OCSurvey = (function() {
   return {
-    addQuestion: function(id,content,choices,warning) {
+    addQuestion: function(id,content,choices,attachments,warning) {
       var mid = id ? id : new Date().getTime();
       var h = "<div class='question_box' id='q-"+mid+"' style='display:none;'>";
+
       if(id && id < 10000000) {
         h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][id]' value='"+mid+"' />";
       }
@@ -407,15 +408,51 @@ var OCSurvey = (function() {
       h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
       h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Warn If Empty</div>"
+
+      h += "<div id='qa_"+mid+"'><div class='row'><div class='col-md-12'><h4>Attachments</h4></div></div>"
+      if (typeof(attachments) != "undefined" && attachments != null){
+        $.each(attachments, function(index, value){
+          h += "<div class='row'><div class='col-md-12' style='padding-left:30px;'>"
+          h += "<a href='/attachments/"+value[0]+"/download' target='_blank'>"+value[1]+"</a>"
+          h += "</div></div>"
+        });
+      }
+
+      h += "<div>"
+      h += "<div class='row'><div class='col-md-12'>"
+      h += "<div class='col-xs-4'>"
+      h += "<input style='float: left; margin-right: 20px;' id='q-attach-input-"+mid+"' type='file' size='60' name='survey[questions_attributes]["+mid+"][attachments_attributes][attachment][attached]' class='form-control'>"
+      h += "</div>"
+      h += "<div class='col-xs-2' id='q-upload-attachment-button'>"
+      h += "</div></div></div></div></div>"
+
       h += "<div style='text-align:right;'><a href='#' class='copy_ques' qid='"+mid+"'>Copy</a> | <a href='#' class='del_ques' qid='"+mid+"'>Delete</a></div>";
       h += "</div>";
       $("#questions").append(h);
       $("#q-"+mid).slideDown('slow');
       $("#qb-"+mid).effect("highlight",{color:"#1eb816"},2000);
+      $("#q-attach-input-"+mid).on("change", function(){
+        if ($(this).val()!=""){
+          //File was chosen, so present user with a remove button
+          remove_button = "<button id='q-remove-attachment-"+mid+"' style='margin-top: 2px;' type='button' class='btn btn-sm btn-danger'>Remove</button>"
+          if ($('#q-remove-attachment-'+mid).length == 0) { //if there was no button already...
+            $("#q-upload-attachment-button").append(remove_button)
+            $('#q-remove-attachment-'+mid).click(function(){
+              //bind the click to (1) remove attachment, (2) remove button
+              $('#q-attach-input-'+mid).val("")
+              $(this).remove();
+            });
+          }
+        }
+        else{
+          //File was removed by cancelling the file dialog; destroy the remove button
+          $('#q-remove-attachment-'+mid).remove();
+        }
+      })
     },
     copyQuestion: function(id) {
       var mid = new Date().getTime();
-      OCSurvey.addQuestion(mid,$("#q_"+id).val(),$("#qc_"+id).val(),$("#qw_"+id));
+      OCSurvey.addQuestion(mid,$("#q_"+id).val(),$("#qc_"+id).val(),null,$("#qw_"+id));
       $('html, body').animate({scrollTop: $("#q-"+mid).offset().top}, 'slow');
     }
   }
@@ -423,7 +460,7 @@ var OCSurvey = (function() {
 var OCInvoice = (function() {
   return {
     init: function() {
-      $('.cc_fld').live('change',function() {
+      $('body').on('change','.cc_fld',function() {
         var rw = $(this).parents('tr');
         var sel = $(this).find('option:selected');
         rw.find('.desc_fld').val(sel.attr('desc'));
@@ -561,7 +598,7 @@ $(document).ready( function() {
     $("#btn_subscriptions").hide();
     
     //when closing a dialog, make sure to take focus from all inputs
-    $("div.ui-dialog").live( "dialogbeforeclose", function(event, ui) {
+    $(this).on( "dialogbeforeclose",'div.ui-dialog', function(event, ui) {
       $(this).find(":input").blur();
     });
     if(!$.support.boxModel) {
@@ -639,7 +676,7 @@ function loading(wrapper) {
 
 //address setup
 function setupShippingAddress(companyType,select,display,companyId,selected_val) {
-   select.live("change",function(){
+   select.parent().on("change",'select',function(){
      getAddress(display,select.val());
    });
    getShippingAddressList(select,companyId,selected_val,companyType);

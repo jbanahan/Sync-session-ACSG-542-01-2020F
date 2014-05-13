@@ -97,7 +97,42 @@
           <div >
             <h3>Canada Export File (last 10)</h3>
             <p><em>167 column .csv file from Arvind @ J Crew</em></p>
+            <p>
+              Columns Used (column label when viewed in Excel)
+              <ul>
+                <li>Ship Date: DB</li>
+                <li>Export Date: DC</li>
+                <li>Part: FI</li>
+                <li>Ref 1 (CA Entry #): DM</li>
+                <li>Ref 2 (PO Number): I</li>
+                <li>Ref 3 (Tracking #): F</li>
+                <li>Quantity: DR</li>
+                <li>Description: DS</li>
+                <li>HTS Code: DQ</li>
+              </ul>
+            </p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_CANADA_EXPORTS}%>
+          </div>
+            <div >
+            <h3>Borderfree Export Drawback File (last 10)</h3>
+            <p><em>17 column .xlsx file</em></p>
+            <p>
+              Columns Used (column label when viewed in Excel)
+              <ul>
+                <li>Ship Date: C</li>
+                <li>Export Date: C</li>
+                <li>Ref 1 (CA Entry #): E</li>
+                <li>Carrier: F</li>
+                <li>Ref 2 (PO Number): G</li>
+                <li>Destination Country: I</li>
+                <li>Description: L</li>
+                <li>Part Number: M*</li>
+                <li>Quantity: P</li>
+                <li>UOM: Q</li>
+              </ul>
+              * Column M must match the format "Short description - Part number - Details"
+            </p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_JCREW_BORDERFREE}%>
           </div>
         </div>
         <%end-%>
@@ -122,6 +157,11 @@
             <h3>FMI Outbound Files (last 10)</h3>
             <p><em>.csv file</em></p>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_FMI_EXPORTS}%>
+          </div>
+          <div>
+            <h3>Canada Stock Transfers (last 10)</h3>
+            <p><em>Excel Invoice File</em></p>
+            <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_UA_STO_EXPORTS}%>
           </div>
         </div>
         <%end-%>

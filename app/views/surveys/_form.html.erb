@@ -1,7 +1,18 @@
 <% content_for :javascript do%>
   $(function() {
+    $('#frm_svy').submit(function(){
+      if ($('#survey_name').val().length == 0){
+        alert("Please name your survey before saving.");
+        return false;
+      }
+    });
     <%@survey.questions.each do |q|%>
-    OCSurvey.addQuestion(<%=q.id%>,"<%=q.content.gsub("\n",'\n').gsub("\r","")%>","<%=q.choices.gsub("\n",'\n').gsub("\r",'')%>",<%=q.warning?%>);
+      attachment_info = [];
+      <% q.attachments.each do |a| %>
+        attachment_info.push([<%=a.id%>, "<%=a.attached_file_name.html_safe%>"]);
+      <% end %>
+
+    OCSurvey.addQuestion(<%=q.id%>,"<%=q.content.gsub("\n",'\n').gsub("\r","")%>","<%=q.choices.gsub("\n",'\n').gsub("\r",'')%>",attachment_info,<%=q.warning?%>);
     <%end%>
     <%if @survey.questions.empty?%>
     OCSurvey.addQuestion(null,"Your first question goes here...","");
@@ -17,19 +28,19 @@
       var postHtml = "<div>To view the survey follow this link: [link here]</div>";
       OpenChain.previewTextile("#email_body","Email Preview",preHtml,postHtml);
     });
-    $(".q_preview").live('click',function(evt) {
+    $(document).on('click', ".q_preview", function(evt) {
       evt.preventDefault();
       var qid = $(this).attr('qid');
       OpenChain.previewTextile("#q_"+qid,"Question Preview");
     });
-    $("a.del_ques").live('click',function(evt) {
+    $(document).on('click', "a.del_ques", function(evt) {
       evt.preventDefault();
       var qid = $(this).attr('qid');
       var qb = $("#q-"+qid);
       qb.append("<input type='hidden' name='survey[questions_attributes]["+qid+"][_destroy]' value='1' />");
       qb.slideUp('fast');
     });
-    $("a.copy_ques").live('click',function(evt) {
+    $(document).on('click', "a.copy_ques", function(evt) {
       evt.preventDefault();
       OCSurvey.copyQuestion($(this).attr('qid'));
     });
@@ -54,9 +65,10 @@
 <button class='form_to' form_id="frm_svy">Save</button>
 <button class='btn_link' link_to='<%=surveys_path%>'>Back</button>
 <% end %>
-<%=form_for @survey, :html=>{ :id=>'frm_svy' } do |f|%>
+<%=form_for @survey, :html=>{ :id=>'frm_svy', :multipart=>true } do |f|%>
   <table>
-    <%=field_row "Survey Name", f.text_field(:name)%>
+    <%=field_row "Survey Name", f.text_field(:name), id: "survey-name"%>
+    <%=field_row "Expires in... (days)", f.text_field(:expiration_days, maxlength: 4, size: 20, placeholder: "Number of days. Ex: 365")%> 
     <%=field_row "Rating Options", f.text_area(:ratings_list, :rows=>"5")%>
     <%=field_row "", "One rating per line."%>
   </table>

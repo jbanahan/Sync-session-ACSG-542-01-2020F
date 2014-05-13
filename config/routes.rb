@@ -1,4 +1,5 @@
 OpenChain::Application.routes.draw do
+  match '/hts/subscribed_countries' => 'hts#subscribed_countries', :via=>:get
   match '/hts/:iso/heading/:heading' => 'hts#heading', :via=>:get
   match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
   match '/hts/:iso' => 'hts#country', :via=>:get
@@ -29,7 +30,17 @@ OpenChain::Application.routes.draw do
     post 'bulk_get_images', :on=>:collection
     get 'get_images', :on=>:member
     resources :broker_invoices, :only=>[:create]
+    get 'validation_results', on: :member
   end
+
+  resources :business_validation_templates do
+    resources :t_search_criterions, only: [:new, :create, :destroy]
+    resources :business_validation_rules, only: [:create, :destroy, :edit, :update] do
+      resources :r_search_criterions, only: [:new, :create, :destroy]
+    end
+  end
+
+  resources :business_validation_rule_results, only: [:update]
   
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
@@ -115,7 +126,7 @@ OpenChain::Application.routes.draw do
 
   match "/textile/preview" => "textile#preview"
   match "/tracker" => "public_shipments#index"
-	match "/index.html" => "dashboard_widgets#index"
+	match "/index.html" => "home#index"
   match "/shipments/:id/add_sets" => "shipments#add_sets"
   match "/shipments/:id/receive_inventory" => "shipments#receive_inventory"
   match "/shipments/:id/undo_receive" => "shipments#undo_receive"
@@ -129,6 +140,7 @@ OpenChain::Application.routes.draw do
   match "/model_fields/find_by_module_type" => "model_fields#find_by_module_type"
   match "/help" => "chain_help#index"
   match '/users/find_by_email' => "users#find_by_email", :via => :get
+  match '/users/move_to_new_company/:destination_company_id' => "users#move_to_new_company", :via => :post
   match "/accept_tos" => "users#accept_tos"
   match "/show_tos" => "users#show_tos"
   match "/public_fields" => "public_fields#index"
@@ -139,9 +151,15 @@ OpenChain::Application.routes.draw do
   match "/quick_search/module_result" => "quick_search#module_result"
   match "/enable_run_as" => "users#enable_run_as"
   match "/disable_run_as" => "users#disable_run_as"
+  match "/users/set_homepage" => "users#set_homepage", :via => :post
 
   match "email_attachments/:id" => "email_attachments#show", :as => :email_attachments_show, :via => :get
   match "email_attachments/:id/download" => "email_attachments#download", :as => :email_attachments_download, :via => :post
+
+  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#show_email_attachable", via: :get
+  match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#send_email_attachable", via: :post
+
+  match "/project_deliverables/:user_id/notify_now" => "project_deliverables#notify_now", via: :get
 
   resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
     get 'last_search_id', :on=>:collection
@@ -178,6 +196,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/fenix_ci_load" => "custom_features#fenix_ci_load_index", :via=>:get
   match "/custom_features/fenix_ci_load/upload" => "custom_features#fenix_ci_load_upload", :via => :post
   match "/custom_features/fenix_ci_load/:id/download" => "custom_features#fenix_ci_load_download", :via => :get
+  match "/custom_features/eddie_fenix_ci_load" => "custom_features#eddie_fenix_ci_load_index", :via=>:get
+  match "/custom_features/eddie_fenix_ci_load/upload" => "custom_features#eddie_fenix_ci_load_upload", :via => :post
+  match "/custom_features/eddie_fenix_ci_load/:id/download" => "custom_features#eddie_fenix_ci_load_download", :via => :get
 
   #reports
   match "/reports" => "reports#index", :via => :get
@@ -216,6 +237,10 @@ OpenChain::Application.routes.draw do
   match "/reports/run_landed_cost" => "reports#run_landed_cost", :via=>:post
   match "/reports/show_jcrew_billing" => "reports#show_jcrew_billing", :via=>:get
   match "/reports/run_jcrew_billing" => "reports#run_jcrew_billing", :via=>:post
+  match "/reports/show_eddie_bauer_ca_statement_summary" => "reports#show_eddie_bauer_ca_statement_summary", :via=>:get
+  match "/reports/run_eddie_bauer_ca_statement_summary" => "reports#run_eddie_bauer_ca_statement_summary", :via=>:post
+  match "/reports/show_hm_statistics" => "reports#show_hm_statistics", :via => :get
+  match "/reports/run_hm_statistics" => "reports#run_hm_statistics", :via => :post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
@@ -435,7 +460,9 @@ OpenChain::Application.routes.draw do
   resources :answers, only:[:update] do
     resources :answer_comments, only:[:create]
   end
-  resources :corrective_issues, :only=>[:create,:update,:destroy]
+  resources :corrective_issues, :only=>[:create,:update,:destroy] do
+    post 'update_resolution', on: :member, to: :update_resolution_status
+  end
   
   resources :drawback_upload_files, :only=>[:index,:create] do
     put 'process_j_crew_entries', on: :collection
@@ -469,6 +496,16 @@ OpenChain::Application.routes.draw do
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 
-  root :to => "dashboard_widgets#index"
+  root :to => "home#index"
 
+  namespace :api do
+    namespace :v1 do
+      match "/products/by_id/:id" => "products#show", :via=>:get
+      match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
+      match "/products/model_fields" => "products#model_fields", :via => :get
+
+      match "/intacct_data/receive_alliance_invoice_numbers" => "intacct_data#receive_alliance_invoice_numbers", :via => :post
+      match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
+    end
+  end
 end

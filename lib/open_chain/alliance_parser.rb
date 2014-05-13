@@ -43,36 +43,39 @@ module OpenChain
     def self.parse file_content, opts={}
       current_line = 0
       entry_lines = []
-      file_content.lines.each_with_index do |line,idx|
+      file_content.each_line.each_with_index do |line,idx|
         current_line = idx
         prefix = line[0,4]
         if !entry_lines.empty? && prefix=="SH00"
-          AllianceParser.new(file_content,current_line).parse_entry entry_lines, opts
+          AllianceParser.new.parse_entry entry_lines, opts
           entry_lines = []
         end
         entry_lines << line
       end
-      AllianceParser.new(file_content,current_line).parse_entry entry_lines, opts if !entry_lines.empty?
-    end
-
-    def initialize(file_content,starting_row=0)
-      @file_content = file_content
-      @starting_row = starting_row
+      AllianceParser.new.parse_entry entry_lines, opts if !entry_lines.empty?
     end
 
     def parse_entry rows, opts={}
+      @entry = nil
       inner_opts = {:imaging=>true}.merge(opts)
       bucket_name = inner_opts[:bucket]
       s3_key = inner_opts[:key]
-      current_row = @starting_row
-      row_content = nil
+      current_row = 1
+      row_content = rows[0]
+      processed = false
       begin
-        Entry.transaction do 
+        entry_information = extract_entry_information(rows)
+        return false if entry_information[:broker_reference].blank?
+
+        find_and_process_entry(entry_information) do |entry|
+          # This block is run inside a transaction...no need to start another one
+          @entry = entry
+          @entry.containers.destroy_all
+          @accumulated_strings = Hash.new
+
           start_time = Time.now
           rows.each do |r|
             row_content = r
-            current_row += 1
-            break if @skip_entry
             prefix = r[0,4]
             case prefix
               when "SH00"
@@ -118,100 +121,137 @@ module OpenChain
             end
             current_row += 1
           end
-          if !@skip_entry
-            @entry.last_file_bucket = bucket_name
-            @entry.last_file_path = s3_key
-            @entry.import_country = Country.find_by_iso_code('US')
-            @entry.it_numbers = accumulated_string :it_number 
-            @entry.master_bills_of_lading = accumulated_string :mbol 
-            @entry.house_bills_of_lading = accumulated_string :hbol 
-            @entry.sub_house_bills_of_lading = accumulated_string :sub 
-            [:cust_ref,:po_numbers,:part_numbers].each {|x| @accumulated_strings[x] ||= []}
-            @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n ")
-            @entry.mfids = accumulated_string :mfid
-            @entry.export_country_codes = accumulated_string :export_country_codes
-            @entry.origin_country_codes = accumulated_string :origin_country_codes
-            @entry.vendor_names = accumulated_string :vendor_names
-            @entry.total_units_uoms = accumulated_string :total_units_uoms
-            @entry.special_program_indicators = accumulated_string :spis
-            @entry.po_numbers = accumulated_string :po_numbers
-            @entry.part_numbers = accumulated_string :part_numbers
-            @entry.container_numbers = accumulated_string :container_numbers
-            @entry.container_sizes = accumulated_string :container_sizes
-            @entry.charge_codes = accumulated_string :charge_codes
-            @entry.commercial_invoice_numbers = accumulated_string :commercial_invoice_number
-            @entry.broker_invoice_total = @entry.broker_invoices.inject(0) { |sum, bi| sum += (bi.invoice_total || 0) }
-            set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
-            set_importer_id
-            @entry.save! if @entry
-            #set time to process in milliseconds without calling callbacks
-            @entry.connection.execute "UPDATE entries SET time_to_process = #{((Time.now-start_time) * 1000).to_i.to_s} WHERE ID = #{@entry.id}"
-            OpenChain::AllianceImagingClient.request_images @entry.broker_reference if inner_opts[:imaging]
-          end
-          @entry.broadcast_event(:save) unless @skip_entry
-          @skip_entry = false
+         
+          @entry.last_file_bucket = bucket_name
+          @entry.last_file_path = s3_key
+          @entry.import_country = Country.find_by_iso_code('US')
+          @entry.it_numbers = accumulated_string :it_number 
+          @entry.master_bills_of_lading = accumulated_string :mbol 
+          @entry.house_bills_of_lading = accumulated_string :hbol 
+          @entry.sub_house_bills_of_lading = accumulated_string :sub 
+          [:cust_ref,:po_numbers,:part_numbers].each {|x| @accumulated_strings[x] ||= []}
+          @entry.customer_references = (@accumulated_strings[:cust_ref].to_a - @accumulated_strings[:po_numbers].to_a).join("\n ")
+          @entry.mfids = accumulated_string :mfid
+          @entry.export_country_codes = accumulated_string :export_country_codes
+          @entry.origin_country_codes = accumulated_string :origin_country_codes
+          @entry.vendor_names = accumulated_string :vendor_names
+          @entry.total_units_uoms = accumulated_string :total_units_uoms
+          @entry.special_program_indicators = accumulated_string :spis
+          @entry.po_numbers = accumulated_string :po_numbers
+          @entry.part_numbers = accumulated_string :part_numbers
+          @entry.container_numbers = accumulated_string :container_numbers
+          @entry.container_sizes = accumulated_string :container_sizes
+          @entry.charge_codes = accumulated_string :charge_codes
+          @entry.commercial_invoice_numbers = accumulated_string :commercial_invoice_number
+          @entry.broker_invoice_total = @entry.broker_invoices.inject(0) { |sum, bi| sum += (bi.invoice_total || 0) }
+          set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
+          set_importer_id
+
+          @entry.save!
+          #set time to process in milliseconds without calling callbacks
+          @entry.update_column :time_to_process, ((Time.now-start_time) * 1000)
+
+          processed = true
         end
-      rescue
-        puts $!
-        puts $!.backtrace
+
+        if @entry
+          OpenChain::AllianceImagingClient.request_images @entry.broker_reference if inner_opts[:imaging]
+          # This needs to go outside the lock/transaction so the listeners on the event all don't have to run inside the transaction
+          @entry.broadcast_event(:save) if @entry
+        end
+
+      rescue => e
+        raise e unless Rails.env.production?
+
         tmp = Tempfile.new(['alliance_error','.txt'])
-        tmp << @file_content
+        # Only store off the actual lines we're processing from the source file
+        tmp << rows.join("\n")
         tmp.flush
-        $!.log_me ["Alliance parser failure, line #{current_row}.","Row: #{row_content}"], [tmp.path]
+        e.log_me ["Alliance parser failure, line #{current_row}.","Row: #{row_content}"], [tmp.path]
       end
+
+      processed
     end
 
     private 
+
+    def extract_entry_information lines
+      # really, this should always be the first line, but it's just as easy to iterate over the lines and find it
+      sh00_line = lines.find {|l| l[0, 4] == "SH00"}
+      info = {}
+      if sh00_line
+        info[:broker_reference] = sh00_line[4,10].gsub(/^[0]*/,'')
+        info[:last_exported_from_source] = parse_date_time(sh00_line[24,12])
+      end
+      
+      info
+    end
+
+    def find_and_process_entry entry_information
+      entry = nil
+      Lock.acquire(Lock::ALLIANCE_PARSER, times: 3) do
+        entry = Entry.where(broker_reference: entry_information[:broker_reference], source_system: SOURCE_CODE).first_or_create! last_exported_from_source: entry_information[:last_exported_from_source]
+
+        if skip_file? entry, entry_information[:last_exported_from_source]
+          entry = nil
+        end
+      end
+
+      # entry will be nil if we're skipping the file do to it being outdated
+      if entry 
+        Lock.with_lock_retry(entry) do
+          # The lock call here can potentially update us with new data, so we need to check again that another process isn't processing a newer file
+          yield entry unless skip_file?(entry, entry_information[:last_exported_from_source])
+        end
+      end
+    end
+
+    def skip_file? entry, last_exported_from_source
+      entry && entry.last_exported_from_source && entry.last_exported_from_source > last_exported_from_source
+    end
+
     # header
     def process_sh00 r
-      brok_ref = r[4,10].gsub(/^[0]*/,'')
-      @accumulated_strings = Hash.new
-      @entry = Entry.find_by_broker_reference_and_source_system brok_ref, SOURCE_CODE
-      if @entry && @entry.last_exported_from_source && @entry.last_exported_from_source > parse_date_time(r[24,12]) #if current is newer than file
-        @skip_entry = true
-      else
-        @entry = Entry.new(:broker_reference=>brok_ref) unless @entry
-        clear_dates
-        @entry.source_system = SOURCE_CODE
-        @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
-        @entry.broker_invoices.destroy_all #clear all invoices and recreate as we go
-        @entry.entry_comments.destroy_all
-        @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
-        @entry.total_units = 0 #reset, then accumulate as we process invoice lines
-        @entry.customer_number = r[14,10].strip
-        @entry.last_exported_from_source = parse_date_time r[24,12]
-        @entry.company_number = r[36,2].strip
-        @entry.division_number = r[38,4].strip
-        @entry.customer_name = r[42,35].strip
-        @entry.entry_type = r[166,2].strip
-        @entry.entry_number = "#{r[168,3]}#{r[172,8]}"
-        @entry.carrier_code = r[225,4].strip
-        @entry.total_packages = r[300,12]
-        @entry.total_packages_uom = r[312,6].strip
-        @entry.merchandise_description = r[77,70].strip
-        @entry.transport_mode_code = r[164,2]
-        @entry.entry_port_code = port_code r[160,4]
-        @entry.lading_port_code = port_code r[151,5]
-        @entry.unlading_port_code = port_code r[156,4]
-        @entry.ult_consignee_code = r[180,10].strip
-        @entry.ult_consignee_name = r[190,35].strip
-        @entry.vessel = r[270,20].strip
-        @entry.voyage = r[290,10].strip
-        @entry.gross_weight = r[318,12]
-        @entry.daily_statement_number = r[347,11].strip
-        @entry.pay_type = r[358] 
-        @entry.liquidation_type_code = r[364,2]
-        @entry.liquidation_type = r[366,35].strip
-        @entry.liquidation_action_code = r[401,2]
-        @entry.liquidation_action_description = r[403,35].strip
-        @entry.liquidation_extension_code = r[438,2]
-        @entry.liquidation_extension_description = r[440,35].strip
-        @entry.liquidation_extension_count = r[475]
-        @entry.census_warning = parse_boolean r[497]
-        @entry.error_free_release = parse_boolean r[498]
-        @entry.paperless_certification = parse_boolean r[499]
-        @entry.paperless_release = parse_boolean r[500]
-      end
+      clear_dates
+
+      @entry.commercial_invoices.destroy_all #clear all invoices and recreate as we go
+      @entry.broker_invoices.destroy_all #clear all invoices and recreate as we go
+      @entry.entry_comments.destroy_all
+      @entry.total_invoiced_value = 0 #reset, then accumulate as we process invoices
+      @entry.total_units = 0 #reset, then accumulate as we process invoice lines
+      @entry.customer_number = r[14,10].strip
+      @entry.last_exported_from_source = parse_date_time r[24,12]
+      @entry.company_number = r[36,2].strip
+      @entry.division_number = r[38,4].strip
+      @entry.customer_name = r[42,35].strip
+      @entry.entry_type = r[166,2].strip
+      @entry.entry_number = "#{r[168,3]}#{r[172,8]}"
+      @entry.carrier_code = r[225,4].strip
+      @entry.total_packages = r[300,12]
+      @entry.total_packages_uom = r[312,6].strip
+      @entry.merchandise_description = r[77,70].strip
+      @entry.transport_mode_code = r[164,2]
+      @entry.entry_port_code = port_code r[160,4]
+      @entry.lading_port_code = port_code r[151,5]
+      @entry.unlading_port_code = port_code r[156,4]
+      @entry.ult_consignee_code = r[180,10].strip
+      @entry.ult_consignee_name = r[190,35].strip
+      @entry.vessel = r[270,20].strip
+      @entry.voyage = r[290,10].strip
+      @entry.gross_weight = r[318,12]
+      @entry.daily_statement_number = r[347,11].strip
+      @entry.pay_type = r[358] 
+      @entry.liquidation_type_code = r[364,2]
+      @entry.liquidation_type = r[366,35].strip
+      @entry.liquidation_action_code = r[401,2]
+      @entry.liquidation_action_description = r[403,35].strip
+      @entry.liquidation_extension_code = r[438,2]
+      @entry.liquidation_extension_description = r[440,35].strip
+      @entry.liquidation_extension_count = r[475]
+      @entry.census_warning = parse_boolean r[497]
+      @entry.error_free_release = parse_boolean r[498]
+      @entry.paperless_certification = parse_boolean r[499]
+      @entry.paperless_release = parse_boolean r[500]
     end
 
     # header continuation
@@ -460,11 +500,31 @@ module OpenChain
 
     # containers
     def process_sc00 r
-      accumulate_string :container_numbers, r[4,15].strip
-      cont_size_num = r[59,7].strip
-      cont_size_desc = r.size>283 ? r[283,40].strip : ""
+      # create the container record
+      c = @entry.containers.build
+      c.container_number = r[4,15].strip
+      c.goods_description = r[19,40].strip
+      c.container_size = r[59,7].strip
+      c.weight = r[66,12]
+      c.quantity = r[78,12]
+      c.uom = r[90,6].strip
+      if r.size > 240
+        c.seal_number = r[241,15].strip
+        c.fcl_lcl = r[271]
+        c.size_description = r[283,40].strip
+        c.teus = r[323,4]
+      else
+        c.size_description = ''
+      end
+
+      # handle the aggregate fields for the header
+      accumulate_string :container_numbers, c.container_number 
+      cont_size_num = c.container_size 
+      cont_size_desc = c.size_description 
       accumulate_string :container_sizes, (cont_size_desc.blank? ? cont_size_num : "#{cont_size_num}-#{cont_size_desc}")
       accumulate_string :fcl_lcl, r[271] unless r[271].blank?
+
+
     end
     
     #comments
@@ -485,7 +545,7 @@ module OpenChain
 
     # match importer_id
     def set_importer_id 
-      raise "Alliance @entry received without customer number" unless @entry.customer_number
+      raise "Alliance entry received without customer number" unless @entry.customer_number
       @entry.importer = Company.find_or_create_by_alliance_customer_number(:alliance_customer_number=>@entry.customer_number, :name=>@entry.customer_name, :importer=>true)
     end
 

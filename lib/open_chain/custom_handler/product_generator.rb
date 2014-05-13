@@ -30,7 +30,7 @@ module OpenChain
       #
       # If nil or a blank array is returned then this row of sync data is skipped and will not be included
       # in the output, nor will the product be marked as synced.
-      def preprocess_row row
+      def preprocess_row row, opts = {}
         [row]
       end
 
@@ -57,7 +57,8 @@ module OpenChain
           end
           row = {}
           clean_vals.each_with_index {|v,i| row[i-1] = v unless i==0}
-          processed_rows = preprocess_row row
+
+          processed_rows = preprocess_row row, last_result: (rt.size == (i + 1))
           # Allow for preprocess_row to "reject" the row and not process it in this sync pass.
           # Allows for more complicated code based handling of sync data that might not be able to be
           # done via the query.
@@ -183,7 +184,7 @@ module OpenChain
       
 
       # Generate a subselect representing a custom value based on custom definition id
-      def cd_s cd_id, suppress_alias = false
+      def cd_s cd_id, suppress_alias = false, suppress_ifnull = false
         @definitions ||= {}
         if @definitions.empty?
           CustomDefinition.all.each {|cd| @definitions[cd.id] = cd}
@@ -201,7 +202,12 @@ module OpenChain
             table_name = 'tariff_records'
           end
           
-          "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          if suppress_ifnull
+            "(SELECT #{cd.data_column} FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          else
+            "(SELECT IFNULL(#{cd.data_column},\"\") FROM custom_values WHERE customizable_id = #{table_name}.id AND custom_definition_id = #{cd.id})#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          end
+
         else
           #so report doesn't bomb if custom field is removed from system
           "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"

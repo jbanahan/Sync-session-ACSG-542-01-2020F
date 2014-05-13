@@ -12,12 +12,22 @@ class Attachment < ActiveRecord::Base
   has_many :attachment_archives_attachments, :dependent=>:destroy
   has_many :attachment_archives, :through=>:attachment_archives_attachments
   
+  ARCHIVE_PACKET_ATTACHMENT_TYPE ||= "Archive Packet".freeze
+
   def web_preview?
     return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
   end
   
   def secure_url(expires_in=10.seconds)
     OpenChain::S3.url_for attached.options[:bucket], attached.path, expires_in
+  end
+
+  def can_view?(user)
+    if self.is_private?
+      return user.company.master? && self.attachable.can_view?(user)
+    else
+      return self.attachable.can_view?(user)
+    end
   end
   
   #unique name suitable for putting on archive disks
@@ -28,6 +38,26 @@ class Attachment < ActiveRecord::Base
       name = Attachment.get_sanitized_filename "#{self.attachment_type}-#{name}"
     end
     name
+  end
+
+  def self.email_attachments params #hash
+    to_address = params[:to_address]
+    email_subject = params[:email_subject]
+    email_body = params[:email_body]
+    full_name = params[:full_name]
+    email = params[:email]
+    attachments = []
+    params[:ids_to_include].each do |attachment_id|
+      attachment = Attachment.find(attachment_id)
+      tfile = attachment.download_to_tempfile
+      Attachment.add_original_filename_method tfile
+      tfile.original_filename = attachment.attached_file_name
+      attachments << tfile
+    end
+    OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+    return true
+  ensure
+    attachments.each {|tfile| tfile.close! unless tfile.closed?}
   end
 
   # create a hash suitable for json rendering containing all attachments for the given attachable
@@ -90,10 +120,25 @@ class Attachment < ActiveRecord::Base
   def download_to_tempfile
     if attached
       # Attachments are always in chain-io bucket regardless of environment
-      OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
-        yield f
+      #if block given, yield t
+      if block_given?
+        return OpenChain::S3.download_to_tempfile('chain-io', attached.path) do |f|
+          yield f
+        end
+      else
+        return OpenChain::S3.download_to_tempfile('chain-io', attached.path)
       end
     end
+  end
+
+  def stitchable_attachment?
+    # The stitching process supports any image format that ImageMagick can convert to a pdf (which is apparently a ton of formats), 
+    # for now, we'll just support stitching the major image formats.
+    Attachment.stitchable_attachment_extensions.include? File.extname(self.attached_file_name).try(:downcase)
+  end
+
+  def self.stitchable_attachment_extensions
+    ['.tif', '.tiff', '.jpg', '.jpeg', '.gif', '.png', '.bmp', '.pdf']
   end
 
   private

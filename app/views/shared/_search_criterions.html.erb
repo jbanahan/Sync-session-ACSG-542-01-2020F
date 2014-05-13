@@ -1,11 +1,11 @@
 <%content_for :javascript do%>
   $(function() {
     OCSearch.initSearchCriterions();
-    $(".sp_remove").live('click',function(ev) {
+    $(document).on('click', ".sp_remove", function(ev){
       ev.preventDefault();
       destroy_nested('sp',$(this));
     });
-    $("#sp_add").live('click',function(ev) {
+    $(document).on('click', "#sp_add", function(ev) {
       ev.preventDefault();
       addNewSearchCriterion();
     });

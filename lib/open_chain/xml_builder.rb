@@ -1,8 +1,10 @@
 module OpenChain
   module XmlBuilder
 
-    def build_xml_document root_element_name
-      doc = REXML::Document.new("<?xml version=\"1.0\" encoding=\"UTF-8\"?><#{root_element_name}></#{root_element_name}>")
+    def build_xml_document root_element_name, options = {}
+      xml = options[:suppress_xml_declaration] ? "" : "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+      xml = "#{xml}<#{root_element_name}></#{root_element_name}>"
+      doc = REXML::Document.new(xml)
       [doc, doc.root]
     end
 

@@ -1,6 +1,8 @@
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/activity_summary'
 class EntriesController < ApplicationController
+  include EntriesHelper
+  include ValidationResultsHelper
   def root_class
     Entry 
   end
@@ -50,7 +52,7 @@ class EntriesController < ApplicationController
     }
   end
   def show
-    e = Entry.where(:id=>params[:id]).includes(:commercial_invoices,:entry_comments,:import_country).first
+    e = Entry.where(:id=>params[:id]).includes(:commercial_invoices => [:commercial_invoice_lines=>[:commercial_invoice_tariffs]],:entry_comments=>[:entry],:import_country=>[]).first
     unless e
       error_redirect "Entry with id #{params[:id]} not found."
       return
@@ -63,13 +65,55 @@ class EntriesController < ApplicationController
         add_flash :notices, "Try simple mode by clicking on the button at the bottom of this screen." 
         current_user.update_attributes(:simple_entry_mode=>false)
       end
-      @entry = e
-      if e.import_country && e.import_country.iso_code == 'CA'
-        render :action=>'show_ca', :layout=>'one_col'
-      else
-        render :action=>(current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), :layout=>'one_col'
-      end
+      respond_to do |format|
+        format.html {
+          @entry = e
+          if e.canadian?
+            render :action=>'show_ca', :layout=>'one_col'
+          else
+            render :action=>(current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), :layout=>'one_col'
+          end
+        }
+        format.xls {
+          send_excel_workbook render_xls(e, current_user), "#{e.broker_reference}.xls"
+        }
+      end 
     }
+  end
+
+  def validation_results
+    e = Entry.find params[:id]
+    respond_to do |format|
+    format.html {
+      action_secure(e.can_view?(current_user) && current_user.view_business_validation_results?,e,{:lock_check=>false,:verb=>"view",:module_name=>"entry"}) {
+        @entry = e
+      }
+    }
+    format.json {
+      
+      r = {
+        entry_number:e.entry_number,
+        state:e.business_rules_state,
+        entry_updated_at:e.updated_at,
+        bv_results:[]
+      }
+      e.business_validation_results.each do |bvr|
+        return render_json_error "You do not have permission to view this object", 401 unless bvr.can_view?(current_user)
+        h = {
+          id:bvr.id,
+          state:bvr.state,
+          template:{name:bvr.business_validation_template.name},
+          updated_at:bvr.updated_at,
+          rule_results:[]
+        }
+        bvr.business_validation_rule_results.each do |rr|
+          h[:rule_results] << business_validation_rule_result_json(rr)
+        end
+        r[:bv_results] << h
+      end
+      render json: {business_validation_result:r}
+    }
+    end
   end
 
   #request that the images be reloaded from alliance for the given entry

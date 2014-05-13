@@ -83,6 +83,16 @@ describe ProductsController do
       p.unique_identifier.should == "abc123455_pccreate"
       p.importer.should == @user.company
     end
+    it "should clear custom value at classification level" do
+      cntry = Factory(:country)
+      cls = Factory(:classification,product:@product,country:cntry)
+      cd = Factory(:custom_definition,module_type:'Classification',data_type:'string')
+      cls.update_custom_value!(cd,'abc')
+      put :update, id:@product.id, 'product'=>{'unique_identifier'=>'1234','classifications_attributes'=>{'0'=>{'id'=>cls.id.to_s,'country_id'=>cntry.id.to_s}}}, 
+        'classification_custom'=>{'0'=>{'classification_cf'=>{cd.id.to_s=>''}}}
+      p = Product.find @product.id
+      expect(p.classifications.first.get_custom_value(cd).value).to be_blank
+    end
   end
 
   describe :bulk_update do

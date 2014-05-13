@@ -126,8 +126,8 @@ module OpenChain; module CustomHandler
         :country_ultimate_destination => "CA",
         :currency => lambda {|i| i.currency},
         :number_of_cartons => lambda {|i| (i.total_quantity_uom =~ /CTN/i) ? i.total_quantity : BigDecimal.new("0")},
-        :gross_weight => lambda {|i| i.gross_weight},
-        :total_units => lambda {|i| i.commercial_invoice_lines.inject(BigDecimal.new("0.00")) {|sum, line| line.quantity ? (sum + line.quantity) : sum}},
+        :gross_weight => lambda {|i| i.gross_weight ? i.gross_weight : 0},
+        :total_units => lambda {|i| number_of_units(i)},
         :total_value => lambda {|i| calculate_invoice_value(i)},
         :shipper => lambda {|i| convert_company_to_hash(i.vendor)},
         :consignee => lambda {|i| convert_company_to_hash(i.consignee)},
@@ -161,7 +161,7 @@ module OpenChain; module CustomHandler
         :quantity => lambda {|i, line, tariff| line.quantity},
         :unit_price => lambda {|i, line, tariff| line.unit_price},
         :po_number => lambda {|i, line, tariff| line.po_number},
-        :tariff_treatment => lambda {|i, line, tariff| tariff.tariff_provision ? tariff.tariff_provision : "2"}
+        :tariff_treatment => lambda {|i, line, tariff| tariff.tariff_provision.blank? ? "2" : tariff.tariff_provision }
       }
     end
 
@@ -193,6 +193,10 @@ module OpenChain; module CustomHandler
           h[:state] = address.state
           h[:postal_code] = address.postal_code
         end
+      else 
+        # Fenix expects at least a name for all companies, so in the cases where we don't have one we need to throw
+        # in something.  
+        h[:name] = "GENERIC"
       end
       
       h
@@ -210,7 +214,7 @@ module OpenChain; module CustomHandler
 
       # If there's any value at all set at the header level, use that..otherwise
       # attempt to sum the invoice lines.
-      if invoice.invoice_value
+      if invoice.invoice_value && invoice.invoice_value != BigDecimal.new("0")
         value = invoice.invoice_value
       else
         sum_value = BigDecimal.new("0.00")
@@ -226,6 +230,7 @@ module OpenChain; module CustomHandler
             break
           end
         end
+        value = sum_value unless invalid
       end
 
       value
@@ -250,6 +255,10 @@ module OpenChain; module CustomHandler
       def format_for_output field, value
         value = value.nil? ? "" : value.to_s
 
+        # We need to make sure we're only exporting ASCII chars so add a ? for any character that can't 
+        # be transliterated
+        value = ActiveSupport::Inflector.transliterate(value)
+
         max_len = field[:length]
         if value.length > max_len
           value = value[0..(max_len - 1)]
@@ -257,8 +266,7 @@ module OpenChain; module CustomHandler
           value = value.ljust(max_len)
         end
 
-        # We need to make sure we're only exporting ASCII chars so add a ? for any character outside the ASCII range
-        value.encode("ASCII", {:invalid => :replace, :undef => :replace, :replace => "?"})
+        value
       end
 
       def write_fields file, field_type, output_format_fields, data_mapping, *args
@@ -278,6 +286,19 @@ module OpenChain; module CustomHandler
 
         # The mapping is looking for newlines as CRLF
         file << "\r\n"
+      end
+
+      def number_of_units invoice
+        sum = BigDecimal.new "0"
+        invoice.commercial_invoice_lines.each do |line|
+          if line.quantity
+            sum += line.quantity
+          else
+            sum = nil
+            break
+          end
+        end
+        sum ? sum : BigDecimal.new("0")
       end
   end
 end; end

@@ -43,6 +43,7 @@ describe ReportsController do
       end
     end
   end
+
   describe 'tariff comparison report' do
     before(:each) do
       Country.destroy_all
@@ -86,6 +87,43 @@ describe ReportsController do
         settings['old_tariff_set_id'].should == old_ts.id.to_s
         settings['new_tariff_set_id'].should == new_ts.id.to_s
       end
+    end
+  end
+
+  describe "H&M Statistics Report" do
+    before (:each) do
+      @admin = Factory(:user)
+      @admin.admin = true
+      @admin.save
+    end
+
+    context "show" do
+      it "should not render the page for non-admin users" do
+        get :show_hm_statistics
+        response.should_not be_success
+      end
+
+      it "should render page for admin users" do
+        sign_in_as @admin
+        OpenChain::Report::HmStatisticsReport.should_receive(:permission?).and_return true
+        get :show_hm_statistics
+        response.should be_success
+      end
+    end
+
+    context "run" do
+      it "should not run the report for non-admin users" do
+        post :run_hm_statistics
+        flash[:errors].first.should == "You do not have permission to view this report."
+      end
+
+      it "should run the report for admin users" do
+        OpenChain::Report::HmStatisticsReport.should_receive(:permission?).and_return true
+        post :run_hm_statistics, {'start_date'=>'2014-01-02','end_date'=>'2014-03-04'}
+        response.should be_redirect
+        flash[:notices].first.should == "Your report has been scheduled. You'll receive a system message when it finishes."
+      end
+      
     end
   end
 

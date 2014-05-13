@@ -61,6 +61,42 @@ describe CorrectiveIssuesController do
       @cap.corrective_issues.should be_empty
     end
   end
+
+  describe 'update_resolution_status' do
+    it 'should allow update if user can edit the parent plan' do
+      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return true
+      ci = @cap.corrective_issues.create!
+
+      #set it from nil to true
+      post :update_resolution_status, id: ci.id.to_s, is_resolved: true, format: :json
+      ci.reload
+      ci.resolved.should == true
+
+      #set it from true to false
+      post :update_resolution_status, id: ci.id.to_s, is_resolved: false, format: :json
+      ci.reload
+      ci.resolved.should == false
+    end
+
+    it 'should not allow update if user can not edit the parent plan' do
+      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return false
+      ci = @cap.corrective_issues.create!
+      ci.resolved = false; ci.save!
+
+      #try setting it from false to true (should reject and remain false)
+      post :update_resolution_status, id: ci.id.to_s, is_resolved: true, format: :json
+      ci.reload
+      ci.resolved.should == false
+
+      ci.resolved = true; ci.save!
+      
+      #try setting it from true to false (should reject and remain true)
+      post :update_resolution_status, id: ci.id.to_s, is_resolved: false, format: :json
+      ci.reload
+      ci.resolved.should == true
+    end
+
+  end
   describe 'destroy' do
     it "should allow destroy if user can edit plan and plan is new" do
       CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return true

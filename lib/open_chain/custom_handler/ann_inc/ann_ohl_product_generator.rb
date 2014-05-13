@@ -24,6 +24,7 @@ module OpenChain
           super(opts)
           @cdefs = self.class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :related_styles]
           @used_part_countries = []
+          @row_buffer = []
         end
 
         #superclass requires this method
@@ -39,17 +40,43 @@ module OpenChain
           super(false) #no headers
         end
 
-        def preprocess_row outer_row
-          explode_lines_with_related_styles(outer_row) do |row|
-            pc_key = "#{row[0]}-#{row[4]}"
-            local_row = [row]
-            if @used_part_countries.include? pc_key
-              local_row = []
-            else 
-              @used_part_countries << pc_key  
-            end
-            local_row
+        def preprocess_row outer_row, opts = {}
+          # What we're doing here is buffering the outer_row values
+          # until we see a new product id (or we're processing the last line).  
+          # This allows us to make sure we keep all the country values for
+          # the same style number on consecutive rows while still exploding the related styles.
+          rows = nil
+          if opts[:last_result] || @row_buffer.empty? || @row_buffer.first[0] == outer_row[0]
+            @row_buffer << outer_row
           end
+
+          # No we need to determine if we need to drain the row buffer
+          # Only do that if we got a new product record or if this is the last row in the export
+          if opts[:last_result] || @row_buffer.first[0] != outer_row[0]
+            # Use the hash so we ensure we're keeping all the rows for the same product grouped together
+            exploded_rows = Hash.new {|h, k| h[k] = []}
+            @row_buffer.each do |buffer_row|
+              explode_lines_with_related_styles(buffer_row) do |row|
+                pc_key = "#{row[0]}-#{row[4]}"
+                local_row = [row]
+                if @used_part_countries.include? pc_key
+                  local_row = []
+                else 
+                  @used_part_countries << pc_key  
+                end
+
+                exploded_rows[row[0]] << local_row unless local_row.blank?
+              end
+            end
+
+            rows = exploded_rows.values.flatten
+
+            @row_buffer.clear
+            # Now put the new record in the buffer
+            @row_buffer << outer_row unless opts[:last_result]
+          end
+
+          rows          
         end
         
         def before_csv_write cursor, vals

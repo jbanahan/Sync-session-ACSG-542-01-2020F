@@ -2,10 +2,11 @@ describe "SurveyResponseApp", () ->
   beforeEach module('SurveyResponseApp')
 
   describe 'srService', () ->
-    http = svc = null
-    beforeEach inject((srService,$httpBackend) ->
+    http = svc = sce = null
+    beforeEach inject((srService,$httpBackend,$sce) ->
       svc = srService
       http = $httpBackend
+      sce = $sce
     )
 
     afterEach () ->
@@ -28,6 +29,15 @@ describe "SurveyResponseApp", () ->
         http.flush()
         expect(svc.settings.viewMode).toEqual('view')
 
+      it "should mark questions html_content as safe", () ->
+        resp = {survey_response:{id:7,answers:[{question:{html_content:'abc'}}]}}
+        spyOn(sce,'trustAsHtml')
+        http.expectGET('/survey_responses/7.json').respond(resp)
+        svc.load(7)
+        http.flush()
+        expect(sce.trustAsHtml).toHaveBeenCalledWith('abc')
+
+
     describe 'invite', () ->
       it "should make send invite call", () ->
         resp = {id:7}
@@ -41,7 +51,7 @@ describe "SurveyResponseApp", () ->
       
       it "should add the comment to the answer_comments for the appropriate answer", () ->
         resp = {answer_comment:{user:{full_name:'Joe Jackson'},created_at:'2013-05-16 13:19',private:true,content:'mycontent'}}
-        http.expectPOST('/answers/1/answer_comments',{comment:{content:'mycontent',private:true}}).respond(resp)
+        http.expectPOST('/answers/1/answer_comments.json',{comment:{content:'mycontent',private:true}}).respond(resp)
         svc.resp.answers = []
         svc.resp.answers.push {id:1,answer_comments:[]}
         answer = svc.resp.answers[0]
@@ -52,7 +62,7 @@ describe "SurveyResponseApp", () ->
 
       it "should work if answer_comments not defined", () ->
         resp = {answer_comment:{user:{full_name:'Joe Jackson'},created_at:'2013-05-16 13:19',private:true,content:'mycontent'}}
-        http.expectPOST('/answers/1/answer_comments',{comment:{content:'mycontent',private:true}}).respond(resp)
+        http.expectPOST('/answers/1/answer_comments.json',{comment:{content:'mycontent',private:true}}).respond(resp)
         svc.resp.answers = []
         svc.resp.answers.push {id:1}
         answer = svc.resp.answers[0]
@@ -63,7 +73,7 @@ describe "SurveyResponseApp", () ->
 
       it "should show set error state if failed", () ->
         resp = {error:'some message'}
-        http.expectPOST('/answers/1/answer_comments',{comment:{content:'mycontent',private:true}}).respond(400,resp)
+        http.expectPOST('/answers/1/answer_comments.json',{comment:{content:'mycontent',private:true}}).respond(400,resp)
         svc.resp.answers = []
         svc.resp.answers.push {id:1,answer_comments:[]}
         answer = svc.resp.answers[0]
@@ -75,7 +85,7 @@ describe "SurveyResponseApp", () ->
     describe "saveAnswer", () ->
       it "should save", () ->
         resp = {ok:'ok'}
-        http.expectPUT('/answers/2',{answer:{id:2,choice:'x',rating:'y'}}).respond(resp)
+        http.expectPUT('/answers/2.json',{answer:{id:2,choice:'x',rating:'y'}}).respond(resp)
         d = {id:2,choice:'x',rating:'y'}
         svc.saveAnswer(d)
         expect(d.saving).toBe(true)
@@ -88,7 +98,7 @@ describe "SurveyResponseApp", () ->
         cb = (response) ->
           cbVal = true
         resp = {ok:'ok'}
-        http.expectPUT('/answers/2',{answer:{id:2,choice:'x',rating:'y'}}).respond(resp)
+        http.expectPUT('/answers/2.json',{answer:{id:2,choice:'x',rating:'y'}}).respond(resp)
         d = {id:2,choice:'x',rating:'y'}
         svc.saveAnswer(d,cb)
         http.flush()
@@ -96,7 +106,7 @@ describe "SurveyResponseApp", () ->
 
       it "should show error if save fails", () ->
         resp = {ok:'ok'}
-        http.expectPUT('/answers/2',{answer:{id:2,choice:'x',rating:'y'}}).respond(500,resp)
+        http.expectPUT('/answers/2.json',{answer:{id:2,choice:'x',rating:'y'}}).respond(500,resp)
         d = {id:2,choice:'x',rating:'y'}
         svc.saveAnswer(d)
         expect(d.saving).toBe(true)
@@ -107,7 +117,7 @@ describe "SurveyResponseApp", () ->
     describe "saveContactInfo", () ->
       it "should save", () ->
         resp = {ok:'ok'}
-        http.expectPUT('/survey_responses/1',{survey_response:{id:1,address:'addr',email:'sample@sample.com',phone:'5555555555',fax:'5554443333',name:'myname'}}).respond(resp)
+        http.expectPUT('/survey_responses/1.json',{survey_response:{id:1,address:'addr',email:'sample@sample.com',phone:'5555555555',fax:'5554443333',name:'myname'}}).respond(resp)
         d = {id:1,address:'addr',phone:'5555555555',fax:'5554443333',email:'sample@sample.com',name:'myname'}
         svc.saveContactInfo(d)
         expect(d.saving).toBe(true)
@@ -116,7 +126,7 @@ describe "SurveyResponseApp", () ->
         
       it "should show error if server call fails", () ->
         resp = {ok:'ok'}
-        http.expectPUT('/survey_responses/1',{survey_response:{id:1,address:'addr',email:'sample@sample.com',phone:'5555555555',fax:'5554443333',name:'myname'}}).respond(500,resp)
+        http.expectPUT('/survey_responses/1.json',{survey_response:{id:1,address:'addr',email:'sample@sample.com',phone:'5555555555',fax:'5554443333',name:'myname'}}).respond(500,resp)
         d = {id:1,rating:'pass',address:'addr',phone:'5555555555',fax:'5554443333',email:'sample@sample.com',name:'myname'}
         svc.saveContactInfo(d)
         expect(d.saving).toBe(true)
@@ -127,7 +137,7 @@ describe "SurveyResponseApp", () ->
     describe "submit", () ->
       it "should save", () ->
         resp = {ok:'ok'}
-        http.expectPUT('/survey_responses/1',{do_submit:true}).respond(resp)
+        http.expectPUT('/survey_responses/1.json',{do_submit:true}).respond(resp)
         d = {id:1,address:'addr',phone:'5555555555',fax:'5554443333',email:'sample@sample.com',name:'myname',can_submit:true}
         svc.submit(d)
         expect(d.saving).toBe(true)
@@ -140,7 +150,7 @@ describe "SurveyResponseApp", () ->
     describe "saveRating", () ->
       it "should save", () ->
         resp = {ok:'ok'}
-        http.expectPUT('/survey_responses/1',{survey_response:{id:1,rating:'pass'}}).respond(resp)
+        http.expectPUT('/survey_responses/1.json',{survey_response:{id:1,rating:'pass'}}).respond(resp)
         d = {id:1,rating:'pass',address:'addr',phone:'5555555555',fax:'5554443333',email:'sample@sample.com',name:'myname'}
         svc.saveRating(d)
         expect(d.saving).toBe(true)
@@ -150,7 +160,7 @@ describe "SurveyResponseApp", () ->
 
       it "shoud show error on failure", () ->
         resp = {ok:'ok'}
-        http.expectPUT('/survey_responses/1',{survey_response:{id:1,rating:'pass'}}).respond(500,resp)
+        http.expectPUT('/survey_responses/1.json',{survey_response:{id:1,rating:'pass'}}).respond(500,resp)
         d = {id:1,rating:'pass',address:'addr',phone:'5555555555',fax:'5554443333',email:'sample@sample.com',name:'myname'}
         svc.saveRating(d)
         expect(d.saving).toBe(true)
@@ -195,6 +205,7 @@ describe "SurveyResponseApp", () ->
         {id:3,rating:null}
         {id:4,rating:'x',choice:'y'}
         {id:5,rating:'x',answer_comments:['x']}
+        {id:6,rating:'x',attachments:['y','z']}
         ]
 
     it "should show all when filter mode is 'All'", () ->
@@ -204,7 +215,7 @@ describe "SurveyResponseApp", () ->
       results = filter(answers,'Rating: x')
       x = []
       x.push r.id for r in results
-      expect(x).toEqual([1,4,5])
+      expect(x).toEqual([1,4,5,6])
 
     it "should show all without rating when filter mode is 'Not Rated'", () ->
       results = filter(answers,'Not Rated')

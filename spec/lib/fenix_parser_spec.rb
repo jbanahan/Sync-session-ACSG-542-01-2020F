@@ -17,6 +17,7 @@ describe OpenChain::FenixParser do
     @transport_mode_code = " 9 "
     @entry_port_code = '0456'
     @carrier_code = '1234'
+    @carrier_name = 'Carrier'
     @voyage = '19191'
     @exit_port_code = '0708'
     @entry_type = 'AB'
@@ -39,6 +40,7 @@ describe OpenChain::FenixParser do
     @invoice_page = 1
     @invoice_line = 1
     @part_number = '123BBB'
+    @tariff_desc = "Tariff Description"
     @header_po = '123531'
     @detail_po = ''
     @container = 'cont'
@@ -62,21 +64,24 @@ describe OpenChain::FenixParser do
     @sima_amount = BigDecimal("8.20")
     @excise_amount = BigDecimal("2.22")
     @excise_rate_code = '3'
+    @adjusted_vcc = BigDecimal("1.05") + @line_value
     @additional_container_numbers = ['456', '789']
     @additional_cargo_control_numbers = ['asdf', 'sdfa']
     @activities = {
       '180' => [Time.new(2013,4,1,10,0), Time.new(2013,4,1,18,0)],
       '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
-      '10' => [Date.new(2013,4,2), Date.new(2013,4,3)]
+      '10' => [Date.new(2013,4,2), Date.new(2013,4,3)],
+      '1276' => [Time.new(2013,4,4,10,0), Time.new(2013,4,4,18,0)]
     }
     @additional_bols = ["123456", "9876542321"]
     @duty_rate = BigDecimal.new "5.55"
     @customer_reference = "REFERENCE #"
     @number_of_pieces = "99"
     @gross_weight = "25.50"
+    @consignee_name = "Consignee"
     @entry_lambda = lambda { |new_style = true, multi_line = true|
       data = new_style ? "B3L," : ""
-      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"CAT NOROX MEKP-925H CS560\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"Roadway Express\",\"\",\"\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS PERFORMANCE INITIATORS\",\"SYRGIS   \",\"#{@customer_reference}\", 1 ,        967.68,,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight}"
+      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"#{@tariff_desc}\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,\"\", 0 , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" 0 \",\" 1 \",\"#{@file_logged_date}\",\" \",\"\",\"#{@carrier_name}\",\"#{@consignee_name}\",\"PURCHASER\",\"SHIPPER\",\"EXPORTER\",\"MFID/VENDOR CODE   \",\"#{@customer_reference}\", 1 ,        #{@adjusted_vcc},,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight}"
       if new_style && multi_line
         @additional_container_numbers.each do |container|
           data += "\r\nCON,#{@barcode},#{container}"
@@ -126,6 +131,7 @@ describe OpenChain::FenixParser do
     ent.transport_mode_code.should == @transport_mode_code.strip
     ent.entry_port_code.should == @entry_port_code
     ent.carrier_code.should == @carrier_code
+    ent.carrier_name.should == @carrier_name
     ent.voyage.should == @voyage
     ent.us_exit_port_code.should == @exit_port_code
     ent.entry_type.should == @entry_type
@@ -159,6 +165,8 @@ describe OpenChain::FenixParser do
     ent.gross_weight.should == @gross_weight.to_i
     ent.total_packages.should == @number_of_pieces.to_i
     ent.total_packages_uom.should == "PKGS"
+    ent.ult_consignee_name.should == @consignee_name
+
 
     #commercial invoice header
     ent.commercial_invoices.should have(1).invoice
@@ -181,6 +189,7 @@ describe OpenChain::FenixParser do
     line.value.should == @line_value
     line.line_number.should == 1 
     line.customer_reference.should == @customer_reference
+    line.adjustments_amount.should == (@adjusted_vcc - @line_value)
 
     line.should have(1).commercial_invoice_tariffs
     tar = line.commercial_invoice_tariffs.first
@@ -198,6 +207,7 @@ describe OpenChain::FenixParser do
     tar.excise_rate_code.should == @excise_rate_code
     tar.excise_amount.should == @excise_amount
     tar.duty_rate.should == (@duty_rate / 100).round(3)
+    tar.tariff_description.should == @tariff_desc
 
     @broadcasted_event.should == :save
     ent
@@ -212,40 +222,45 @@ describe OpenChain::FenixParser do
     ent.container_numbers.should == @container
     ent.first_do_issued_date.should be_nil
     ent.docs_received_date.should be_nil
+    ent.exam_ordered_date.should be_nil
   end
   
   it 'should save an entry with one main line in the new format' do
-    ent = do_shared_test @entry_lambda.call
+    # Wrap this in a block using another timezone so we know that the dates we parse out are all relative to Eastern timezone.
+    Time.use_zone("Hawaii") do
+      ent = do_shared_test @entry_lambda.call
 
-    # New Entry file differences 
-    
-    # We're pulling cargo control number from B3L and CCN lines
-    ccn = ent.cargo_control_number.split("\n ")
-    ccn.length.should == @additional_cargo_control_numbers.length + 1
-    ([@cargo_control_no] + @additional_cargo_control_numbers).each do |n|
-      ccn.include?(n).should be_true
+      # New Entry file differences 
+      
+      # We're pulling cargo control number from B3L and CCN lines
+      ccn = ent.cargo_control_number.split("\n ")
+      ccn.length.should == @additional_cargo_control_numbers.length + 1
+      ([@cargo_control_no] + @additional_cargo_control_numbers).each do |n|
+        ccn.include?(n).should be_true
+      end
+
+      # We're pulling container from B3L and CON lines
+      containers = ent.container_numbers.split("\n ")
+      containers.length.should == @additional_container_numbers.length + 1
+      ([@container] + @additional_container_numbers).each do |n|
+        containers.include?(n).should be_true
+      end
+      # Need to use local time since we pulled the entry back from the DB 
+      ent.first_do_issued_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['180'][0].to_s).in_time_zone(Time.zone)
+      # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
+      ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
+      ent.eta_date.should == @activities['10'][1]
+      ent.exam_ordered_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['1276'][1].to_s).in_time_zone(Time.zone)
+
+      # Master Bills should include ones from BL lines
+      bols = ent.master_bills_of_lading.split("\n ")
+      [@bill_of_lading, @additional_bols].flatten.each {|bol|
+        bols.include?(bol).should be_true
+      }
+      
+      # House Bills should be blank
+      ent.house_bills_of_lading.should be_nil
     end
-
-    # We're pulling container from B3L and CON lines
-    containers = ent.container_numbers.split("\n ")
-    containers.length.should == @additional_container_numbers.length + 1
-    ([@container] + @additional_container_numbers).each do |n|
-      containers.include?(n).should be_true
-    end
-    # Need to use local time since we pulled the entry back from the DB 
-    ent.first_do_issued_date.should == @activities['180'][0].in_time_zone(Time.zone)
-    # Since the actual date may have crossed date timelines from local to parser time, we need to compare the date against parser time
-    ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
-    ent.eta_date.should == @activities['10'][1]
-
-    # Master Bills should include ones from BL lines
-    bols = ent.master_bills_of_lading.split("\n ")
-    [@bill_of_lading, @additional_bols].flatten.each {|bol|
-      bols.include?(bol).should be_true
-    }
-    
-    # House Bills should be blank
-    ent.house_bills_of_lading.should be_nil
   end
 
   it "should store container numbers in house bills field on air shipments" do

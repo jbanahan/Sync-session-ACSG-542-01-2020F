@@ -221,4 +221,22 @@ describe Company do
       end
     end
   end
+
+  describe "attachments.create!" do
+    it 'should allow one or more attachments' do
+      c = Factory(:company)
+      c.attachments.create!(attached_file_name:"attachment1.jpg")
+      c.attachments.create!(attached_file_name:"attachment2.jpg")
+      c.attachments.length.should == 2
+    end
+  end
+
+  describe "can_view?" do
+    it "doesn't allow users from other companies to view the company" do
+      my_company = Factory(:company)
+      other_company = Factory(:company)
+      user = Factory(:user, company: my_company)
+      (other_company.can_view?(user)).should be_false
+    end
+  end
 end

@@ -1,0 +1,11 @@
+#validation_result_wrapper {
+  h1.page_title.state-Review {
+    color: orange;
+  }
+  h1.page_title.state-Fail {
+    color: red;
+  }
+  h1.page_title.state-Pass {
+    color: green;
+  }
+}

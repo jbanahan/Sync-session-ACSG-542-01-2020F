@@ -116,6 +116,20 @@ describe Lock do
       
       expect(Lock.find_by_name('LockSpecTemp')).to be_nil
     end
+
+    it "handles temp locks being deleted by retrying transaction when attempting to lock" do
+      lock = Lock.create! name: "TempLock"
+
+      # To simulate the lock missing, we need to stub out the find_by_name method so that it returns
+      # nil when it attempts to lock the Lock record the first time.  This should force a retry
+      Lock.should_receive(:find_by_name).ordered.twice.with("TempLock").and_return(lock)
+      Lock.should_receive(:find_by_name).ordered.twice.with("TempLock", lock: true).and_return(nil, lock)
+
+      block_ran = false
+      Lock.acquire('TempLock', temp_lock: true) { block_ran = true}
+      expect(block_ran).to be_true
+      expect(Lock.where(name:"TempLock").first).to be_nil
+    end
   end
 
   context :retry_lock_aquire do

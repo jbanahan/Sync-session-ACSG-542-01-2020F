@@ -279,6 +279,17 @@ describe ModelField do
         r.first[:row_key].should == @p.id
       end
     end
+    context "class_comp_cnt" do
+      it "should get count of tariff rows" do
+        tr = Factory(:tariff_record,line_number:1)
+        Factory(:tariff_record,line_number:2,classification:tr.classification)
+        cl = Classification.first
+        mf = ModelField.find_by_uid :class_comp_cnt
+        expect(mf.process_export(cl,nil,true)).to eq 2
+        sc = SearchCriterion.new(model_field_uid: :class_comp_cnt, operator:'eq',value:'2')
+        expect(sc.apply(Classification.scoped).first).to eq tr.classification
+      end
+    end
     context "regions" do
       it "should create classification count model fields for existing regions" do
         r = Factory(:region)
@@ -393,6 +404,19 @@ describe ModelField do
         u = Factory(:broker_user)
         u.stub(:view_broker_invoices?).and_return(false)
         @mf.can_view?(u).should be_false
+      end
+    end
+    context "employee" do
+      before(:each) do
+        @mf = ModelField.find_by_uid(:ent_employee_name)
+      end
+      it "should not view if not broker" do
+        u = Factory(:importer_user)
+        expect(@mf.can_view?(u)).to be_false
+      end
+      it "should view if broker" do
+        u = Factory(:broker_user)
+        expect(@mf.can_view?(u)).to be_true
       end
     end
     context "first HTS code" do
@@ -510,6 +534,21 @@ describe ModelField do
         found = ss.search.to_a
         found.should have(1).product
         found.first.should == p
+      end
+    end
+    context :ent_rule_state do
+      before :each do
+        @mf = ModelField.find_by_uid(:ent_rule_state)
+      end
+      it "should show worst state if multiple business_validation_results" do
+        ent = Factory(:entry)
+        ent.business_validation_results.create!(state:'Pass')
+        ent.business_validation_results.create!(state:'Fail')
+        expect(@mf.process_export(ent,nil,true)).to eq 'Fail'
+        pass_sc = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')
+        expect(pass_sc.apply(Entry).count).to eq 0
+        fail_sc = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Fail')
+        expect(fail_sc.apply(Entry).count).to eq 1
       end
     end
     context :ent_pdf_count do

@@ -222,4 +222,39 @@ describe Entry do
       @entry.k84_month.should eq 1
     end
   end
+
+  describe "canadian?" do
+    it 'identifies as canadian if import country is CA' do
+      e = Entry.new
+      c = Country.new
+      c.iso_code = "CA"
+      e.import_country = c
+      expect(e.canadian?).to be_true
+
+      e.import_country.iso_code = "US"
+      expect(e.canadian?).to be_false
+      e.import_country = nil
+      expect(e.canadian?).to be_false
+    end
+  end
+
+  describe "entry_port" do
+
+    it 'returns Candian ports for Canadian imports' do
+      e = Entry.new; c = Country.new; p_ca = Port.new(name: "Montreal"); p_us = Port.new(name: "Houston")
+      c.iso_code = "CA"; c.save!
+      e.us_entry_port = p_us; e.ca_entry_port = p_ca; e.import_country = c
+
+      e.entry_port.should == p_ca
+    end
+
+    it 'returns US ports for US imports' do
+      e = Entry.new; c = Country.new; p_ca = Port.new(name: "Montreal"); p_us = Port.new(name: "Houston")
+      c.iso_code = "US"; c.save!
+      e.us_entry_port = p_us; e.ca_entry_port = p_ca; e.import_country = c
+
+      e.entry_port.should == p_us
+    end
+
+  end
 end

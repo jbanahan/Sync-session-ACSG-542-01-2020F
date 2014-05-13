@@ -17,6 +17,7 @@ class ApplicationController < ActionController::Base
   before_filter :log_request
   before_filter :force_reset
   before_filter :set_legacy_scripts
+  before_filter :set_x_frame_options_header
 
   helper_method :master_company
   helper_method :add_flash
@@ -303,6 +304,12 @@ class ApplicationController < ActionController::Base
   def old_ie_version? 
     return browser.ie? && Integer(browser.version) < 9 rescue true
   end
+  
+  def send_excel_workbook workbook, filename
+    spreadsheet = StringIO.new 
+    workbook.write spreadsheet
+    send_data spreadsheet.string, :filename => filename, :type => :xls
+  end
 
   private
   
@@ -452,5 +459,9 @@ class ApplicationController < ActionController::Base
     MasterSetup.current = nil
     Time.zone = @default_time_zone
     @include_legacy_scripts = nil
+  end
+
+  def set_x_frame_options_header
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
   end
 end

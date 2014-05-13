@@ -16,6 +16,7 @@ module OpenChain
       '868' => :release_date=,
       '1270' => :cadex_sent_date=,
       '1274' => :cadex_accept_date=,
+      '1276' => :exam_ordered_date=,
       '1280' => :k84_receive_date=
     }
 
@@ -204,6 +205,7 @@ module OpenChain
       entry.transport_mode_code = str_val(line[4])
       entry.entry_port_code = prep_port_code(str_val(line[5]))
       entry.carrier_code = str_val(line[6])
+      entry.carrier_name = str_val line[97]
       entry.voyage = str_val(line[7])
       entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4,'0')}
       entry.entry_type = str_val(line[10])
@@ -226,6 +228,7 @@ module OpenChain
       entry.total_packages = int_val line[109]
       entry.total_packages_uom = "PKGS" unless entry.total_packages.blank?
       entry.gross_weight = int_val line[110]
+      entry.ult_consignee_name = str_val line[98]
 
       entry
     end
@@ -288,6 +291,12 @@ module OpenChain
       accumulate_string :org_state, org[1]
       accumulate_string :customer_references, inv_ln.customer_reference
 
+      total_value_with_adjustments = dec_val(line[105])
+
+      if total_value_with_adjustments
+        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0"))
+      end
+
       t = inv_ln.commercial_invoice_tariffs.build
       t.spi_primary = str_val(line[28])
       t.hts_code = str_val(line[29])
@@ -344,18 +353,16 @@ module OpenChain
       t.sima_amount = dec_val(line[50])
       t.excise_rate_code = str_val(line[51])
       t.excise_amount = dec_val(line[52])
+      t.tariff_description = line[24]
     end
 
     def process_activity_line line, accumulated_dates
       if !line[2].nil? && !line[3].nil? && ACTIVITY_DATE_MAP[line[2].strip]
-        # We may get just a date here (not date and time)
-        time = Time.strptime(line[3] + line[4], "%Y%m%d%H%M") rescue nil
-        unless time
-          time = Date.strptime(line[3], '%Y%m%d') # we actually want this to fail..it means we're getting bad data
-        end
+        time = (line[4].blank? ? time_zone.parse(line[3]).to_date : time_zone.parse("#{line[3]}#{line[4]}")) rescue nil
+
         # This assumes we're using a hash with a default return value of an empty array
         if time
-          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << ((time.is_a?(Date)) ? time : time.in_time_zone(time_zone))
+          accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time
         end
       end
       rescue

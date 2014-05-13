@@ -7,6 +7,7 @@ Spork.prefork do
   require 'rspec/rails'
   require File.dirname(__FILE__) + "/factories"
   require 'clearance/rspec'
+  require 'webmock/rspec'
 
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
@@ -33,6 +34,7 @@ Spork.prefork do
     config.use_transactional_fixtures = true
     config.before(:all) do
       DeferredGarbageCollection.start unless ENV['CIRCLECI']
+      WebMock.disable!
     end
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"

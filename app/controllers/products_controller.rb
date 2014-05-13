@@ -102,7 +102,7 @@ class ProductsController < ApplicationController
         error_redirect
       }
       before_validate = lambda {|p|
-        save_classification_custom_fields p,params[:product]
+        save_classification_custom_fields p,params[:product],false #don't ignore blank values on individual updates
         update_status p
         if current_user.company.importer? && !p.importer_id.nil? && p.importer!=current_user.company && !current_user.company.linked_companies.include?(p.importer)
           p.errors[:base] << "You do not have permission to set importer to company #{p.importer_id}"
@@ -217,8 +217,8 @@ class ProductsController < ApplicationController
     params[:product].delete(:classifications_attributes) unless params[:product].nil? || current_user.edit_classifications?
   end
   
-  def save_classification_custom_fields(product,product_params)
-    OpenChain::CustomFieldProcessor.new(params).save_classification_custom_fields product, product_params
+  def save_classification_custom_fields(product,product_params,ignore_blank_values=true)
+    OpenChain::CustomFieldProcessor.new(params).save_classification_custom_fields product, product_params, ignore_blank_values
   end
 
   def module_label

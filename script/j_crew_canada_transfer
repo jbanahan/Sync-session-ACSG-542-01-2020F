@@ -1,7 +1,12 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
+require 'open_chain/tariff_finder'
+
 f = File.open('tmp/jcrew_canada_out.csv','w')
+importers = Company.where(alliance_customer_number:['J0000','JCREW']).to_a
+usa = Country.find_by_iso_code('US')
+tf = OpenChain::TariffFinder.new(usa,importers)
 cursor = 0
 CSV.foreach('tmp/jcrew_canada_in.csv') do |row|
 	cursor += 1
@@ -10,12 +15,9 @@ CSV.foreach('tmp/jcrew_canada_in.csv') do |row|
 		next
 	end
 	style = row[4]
-	cil = CommercialInvoiceTariff.joins(:commercial_invoice_line=>{:commercial_invoice=>:entry}).
-		where("entries.customer_number IN ('J0000','JCREW')").
-		where("commercial_invoice_lines.part_number = ?",style).
-		order("entries.release_date DESC").first
-	if cil
-		f << (row + [cil.commercial_invoice_line.commercial_invoice.mfid,cil.hts_code]).to_csv
+  r = tf.find_by_style style
+	if r 
+		f << (row + [r.mid,r.hts_code]).to_csv
 	else
 		f << (row + ['','']).to_csv
 	end

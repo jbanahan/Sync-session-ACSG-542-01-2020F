@@ -1,9 +1,9 @@
 srApp = angular.module 'SurveyResponseApp', ['ChainComponents','angularMoment']
 
-srApp.factory 'srService', ['$http',($http) ->
+srApp.factory 'srService', ['$http','$sce',($http,$sce) ->
   saveResponse = (r,buildData,success) ->
     r.saving = true
-    promise = $http.put('/survey_responses/'+r.id,buildData(r))
+    promise = $http.put('/survey_responses/'+r.id+'.json',buildData(r))
     promise.then(((response) ->
       r.saving = false
       success(response) if success
@@ -34,10 +34,12 @@ srApp.factory 'srService', ['$http',($http) ->
         svc.filterModes = ['All','Not Answered','Not Rated']
         if svc.resp.survey && svc.resp.survey.rating_values
           svc.filterModes.push("Rating: "+m) for m in svc.resp.survey.rating_values
+        if svc.resp.answers
+          ans.question.html_content = $sce.trustAsHtml(ans.question.html_content) for ans in svc.resp.answers
       ))
 
     addAnswerComment: (answer,content,isPrivate,extraCallback) ->
-      promise = $http.post('/answers/'+answer.id+'/answer_comments',{comment:{content:content,private:isPrivate}})
+      promise = $http.post('/answers/'+answer.id+'/answer_comments.json',{comment:{content:content,private:isPrivate}})
       promise.then(((resp) ->
         answer.answer_comments = [] if answer.answer_comments == undefined
         answer.answer_comments.push resp.data.answer_comment
@@ -49,7 +51,7 @@ srApp.factory 'srService', ['$http',($http) ->
 
     saveAnswer: (a,successCallback) ->
       a.saving = true
-      promise = $http.put('/answers/'+a.id, {
+      promise = $http.put('/answers/'+a.id+'.json', {
         answer: {
           id:a.id
           choice:a.choice
@@ -119,7 +121,6 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
     else
       $scope.srService.submit($scope.resp)
 
-
   $scope.showWarning = (answer) ->
     return false unless answer.question.warning
     return false if answer.choice && answer.choice.length > 0
@@ -158,7 +159,7 @@ srApp.filter 'answer', () ->
         when 'Not Rated'
           r.push a if !a.rating || a.rating.length == 0
         when 'Not Answered'
-          r.push a if (!a.choice || a.choice.length == 0) && (a.answer_comments==undefined || a.answer_comments.length==0)
+          r.push a if (!a.choice || a.choice.length == 0) && (a.answer_comments==undefined || a.answer_comments.length==0) && (a.attachments==undefined || a.attachments.length==0)
         else
           if mode.indexOf('Rating: ')==0
             targetRating = mode.slice(8,mode.length)

@@ -3,6 +3,17 @@ module OpenChain
   class S3
     BUCKETS = {:test => 'chain-io-test', :development=>'chain-io-dev', :production=>'chain-io'}
 
+    def self.parse_full_s3_path path
+      # We're expecting the path to be like "/bucket/path/to/file.pdf"
+      # The first path segment of the file is the bucket, everything after that is the path to the actual file
+      split_path = path.split("/")
+      
+      # If the path started with a / the first index is blank
+      split_path.shift if split_path[0].strip.length == 0
+
+      [split_path[0], split_path[1..-1].join("/")]
+    end
+
     def self.upload_file bucket, key, file
       s3_action_with_retries do
         s3_obj = s3_file bucket, key
@@ -18,7 +29,15 @@ module OpenChain
     # If no io object is provided, the full file content is returned.
     def self.get_data bucket, key, io = nil
       retry_lambda = lambda {
-        io.rewind if io
+        if io
+          # If we started writing to a file, we need to truncate what we've already written
+          # and start from scratch when we've failed
+          if io.respond_to? :truncate
+            io.truncate(0)
+          else
+            io.rewind
+          end
+        end
       }
       s3_action_with_retries 3, retry_lambda do
         s3_file = s3_file(bucket, key)

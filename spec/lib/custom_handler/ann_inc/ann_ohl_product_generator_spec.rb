@@ -127,6 +127,50 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       r[1][0].should == "T-Style"
       r[2][0].should == "P-Style"
     end
+    it "should ensure multiple country lines for related styles are ordered together by style value" do
+      p = Factory(:product)
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      ca_cls = p.classifications.create!(:country_id=>@ca.id)
+      ca_cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      ca_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      p.update_custom_value! @cdefs[:related_styles], "T-Style\nP-Style"
+
+      r = run_to_array
+      r.should have(6).records
+      r[0][0].should == p.unique_identifier
+      r[0][4].should == "US"
+      r[1][0].should == p.unique_identifier
+      r[1][4].should == "CA"
+      r[2][0].should == "T-Style"
+      r[2][4].should == "US"
+      r[3][0].should == "T-Style"
+      r[3][4].should == "CA"
+      r[4][0].should == "P-Style"
+      r[4][4].should == "US"
+      r[5][0].should == "P-Style"
+      r[5][4].should == "CA"
+    end
+    it "handles multiple product records" do
+      p = Factory(:product)
+      p2 = Factory(:product)
+
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      cls = p2.classifications.create!(:country_id=>@ca.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890",:line_number=>1)
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+
+      r = run_to_array
+      r.should have(2).records
+      r[0][0].should == p.unique_identifier
+      r[1][0].should == p2.unique_identifier
+    end
   end
   describe :ftp_credentials do
     it "should send proper credentials" do

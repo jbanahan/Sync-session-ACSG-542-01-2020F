@@ -423,39 +423,41 @@ module OpenChain
     def initialize p
       @params = p
     end
-    def save_classification_custom_fields(product,product_params)
+    def save_classification_custom_fields(product,product_params,ignore_blank_values=true)
       return if product_params.nil? || product_params['classifications_attributes'].nil? || @params['classification_custom'].nil?
       product.classifications.each do |classification|
         unless classification.destroyed?
           product_params['classifications_attributes'].each do |k,v|
             if v['country_id'] == classification.country_id.to_s
-
-              # Strip blank custom values
               custom_values = @params['classification_custom'][k.to_s]['classification_cf']
-              custom_values.each do |k, v|
-                custom_values.delete(k) if v.blank?
+              if ignore_blank_values
+                # Strip blank custom values
+                custom_values.each do |k, v|
+                  custom_values.delete(k) if v.blank?
+                end
               end
-
               OpenChain::CoreModuleProcessor.update_custom_fields classification, custom_values
             end  
           end
         end
-        save_tariff_custom_fields(classification)
+        save_tariff_custom_fields(classification,ignore_blank_values)
       end    
     end
 
     private
-    def save_tariff_custom_fields(classification)
+    def save_tariff_custom_fields(classification,ignore_blank_values)
       return if @params['tariff_custom'].nil?
       classification.tariff_records.each do |tr|
         unless tr.destroyed?
           vs = tr.view_sequence
           custom_container = @params['tariff_custom'][vs]
           unless custom_container.blank?
-            # Strip blank custom values
             custom_values = custom_container['tariffrecord_cf']
-            custom_values.each do |k, v|
-              custom_values.delete(k) if v.blank?
+            if ignore_blank_values
+              # Strip blank custom values
+              custom_values.each do |k, v|
+                custom_values.delete(k) if v.blank?
+              end
             end
 
             OpenChain::CoreModuleProcessor.update_custom_fields tr, custom_values

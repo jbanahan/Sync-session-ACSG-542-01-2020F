@@ -3,6 +3,7 @@ require 'spec_helper'
 describe ProjectDeliverablesController do
   before :each do
     @u = Factory(:master_user,project_view:true,project_edit:true)
+    @u.save!
     MasterSetup.get.update_attributes(project_enabled:true)
 
     sign_in_as @u
@@ -40,6 +41,17 @@ describe ProjectDeliverablesController do
       get :index, format: :json
       expect(JSON.parse(response.body)['error']).to match /permission/
       expect(response.status).to eq 401
+    end
+    it "should duplicate deliverables by project set" do
+      ps1 = ProjectSet.create!(name:'myps')
+      ps2 = ProjectSet.create!(name:'myps2')
+      @d1.project.project_sets << ps1
+      @d1.project.project_sets << ps2
+      get :index, format: :json, layout: 'projectset'
+      r = JSON.parse(response.body)['deliverables_by_user']
+      expect(r['myps']['pn1'][0]['id']).to eq @d1.id
+      expect(r['myps2']['pn1'][0]['id']).to eq @d1.id
+      expect(r['[none]']['pn2'][0]['id']).to eq @d2.id
     end
     it "should secure by project_deliverable" do
       ProjectDeliverable.stub(:search_secure).and_return ProjectDeliverable.where(id:@d1.id)
@@ -95,5 +107,23 @@ describe ProjectDeliverablesController do
       expect(response).to be_success
       expect(JSON.parse(response.body)['project_deliverable']['description']).to eq 'y'
     end
+  end
+
+  describe :notify_now do
+
+    it "should reject if user cannot view" do
+      User.any_instance.stub(:view_projects?).and_return false
+      pd = Factory(:project_deliverable,description:"x")
+      put :notify_now, user_id: @u.id
+      expect(response).to_not be_success
+    end
+
+    it "should trigger send_high_priority_tasks for correct user and deliverables" do
+      User.any_instance.stub(:view_projects?).and_return true
+      pd = Factory(:project_deliverable, description: "PD Description", id: @u.id, assigned_to: @u, priority: "High")
+      OpenMailer.any_instance.should_receive(:send_high_priority_tasks).exactly(1).times.with(@u, [pd])
+      put :notify_now, user_id: @u.id
+    end
+
   end
 end

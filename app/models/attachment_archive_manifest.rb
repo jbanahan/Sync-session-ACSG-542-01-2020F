@@ -18,15 +18,10 @@ class AttachmentArchiveManifest < ActiveRecord::Base
 
   #generates the manifest file but doesn't attach it or set the finish_at variable
   def generate_manifest_tempfile! oldest_archive_start_date_to_include
-    wb = Spreadsheet::Workbook.new
-    sheet = wb.create_worksheet :name=>'Archive'
+    wb = XlsMaker.create_workbook 'Archive', ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading", "Release Date","Doc Type","Doc Name"]
+    sheet = wb.worksheet "Archive"
     cursor = 0
-    r = sheet.row(cursor)
-    ["Archive Name","Archive Date","Broker Reference","Master Bill of Lading",
-      "Release Date","Doc Type","Doc Name"].each_with_index do |n,i|
-      r[i] = n
-    end
-    cursor += 1
+    column_widths = []
     qry = "SELECT attachment_archives.name as \"Name\", attachment_archives.start_at as \"Archive Date\", entries.broker_reference as \"Broker Reference\",
 entries.master_bills_of_lading as \"MBOL\",entries.release_date as \"Release\", attachments.attachment_type as \"DocType\", attachment_archives_attachments.file_name as \"FileName\" 
 FROM attachment_archives 
@@ -37,9 +32,7 @@ WHERE attachment_archives.start_at >= \"#{oldest_archive_start_date_to_include.s
 AND attachment_archives.company_id = #{self.company_id}"
     result = AttachmentArchiveManifest.connection.execute qry
     result.each do |vals|
-      row = sheet.row(cursor)
-      vals.each_with_index {|v,i| row[i] = v}
-      cursor +=1
+      XlsMaker.add_body_row sheet, (cursor+=1), vals, column_widths, true
     end
     t = Tempfile.new(["ArchiveManifest",".xls"])
     wb.write t

@@ -147,23 +147,23 @@ var OpenChainMilestonePlan = (function() {
         }    
       });
       $("#mod_sla_help").dialog({autoOpen:false,width:400,title:"Help - SLA Complete",buttons:{"Close":function() {$("#mod_sla_help").dialog('close');}}});
-      $(".sla_help").live('click',function(evt) {
+      $('body').on('click',"a.sla_help",function(evt) {
         evt.preventDefault();
         $("#mod_sla_help").dialog('open');
       });
       $(".hdn_mfuid").each(function() {setMFUIDLabel($(this));});
-      $(".hdn_mfuid").live('change',function(evt) {
+      $('body').on('change',".hdn_mfuid",function(evt) {
         setMFUIDLabel($(this));
       });
-      $(".add_row").live('click',function(evt) {
+      $('body').on('click',".add_row",function(evt) {
         evt.preventDefault();
         OpenChainMilestonePlan.addEmptyRow($(this).parents(".definition_row"));
       });
-      $(".remove_row").live('click',function(evt) {
+      $('body').on('click',".remove_row",function(evt) {
         evt.preventDefault();
         removeRow($(this),false);    
       });
-      $(".edit_row").live('click',function(evt) {
+      $('body').on('click',".edit_row",function(evt) {
         evt.preventDefault();
         editRow($(this).parents('.definition_row'),false);
       });

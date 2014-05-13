@@ -13,7 +13,7 @@ class UsersController < ApplicationController
           end
         }
         format.json {
-          companies = current_user.company.visible_companies_with_users
+          companies = current_user.company.visible_companies_with_users.includes(:users)
           render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
         }
       end
@@ -202,6 +202,19 @@ class UsersController < ApplicationController
       redirect_to company_users_path params[:company_id]
     }
   end
+
+  def move_to_new_company
+    admin_secure("Only administrators can move other users to a new company."){
+      destination_company = Company.find(params[:destination_company_id])
+      params[:id].each do |user_id|
+        user = User.find(user_id)
+        user.company = destination_company
+        user.save!
+      end if params[:id] #ignore the whole block if no users were selected
+
+      redirect_to :back
+    }
+  end
   
   def find_by_email
     admin_secure "Only admins can use this page" do
@@ -215,6 +228,25 @@ class UsersController < ApplicationController
         end
       end
     end 
+  end
+
+  def set_homepage
+    if params[:homepage]
+      uri = nil
+      if params[:homepage].blank?
+        uri = ""
+      else
+        uri = URI.parse params[:homepage]
+        # We want to strip the scheme and host from the URL since we want it to always be relative to the current server/ http scheme 
+        # that is in effect on the login homepage redirect
+        uri = uri.path + (uri.query ? ("?"+uri.query) : "") + (uri.fragment ? ("#" + uri.fragment): "")
+      end
+      current_user.update_attributes! homepage: uri
+
+      render :json=>{'OK'=>'OK'}
+    else
+      render :json=> {error: "Homepage URL missing."}
+    end
   end
 
   private

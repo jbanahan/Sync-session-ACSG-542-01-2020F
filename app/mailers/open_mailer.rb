@@ -1,4 +1,8 @@
 class OpenMailer < ActionMailer::Base
+  include AbstractController::Callbacks
+
+  after_filter :modify_email_for_development
+
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
 An attachment named '_filename_' for this message was larger than the maximum system size.
@@ -100,7 +104,8 @@ EOS
     mail(:to => to_address, :reply_to => current_user.email, :subject => "[VFI Track] #{comment.subject}") 
   end
 
-  def send_search_result(to,search_name,attachment_name,file_path)
+  def send_search_result(to, search_name, attachment_name, file_path, user)
+    @user = user
     attachment_saved = save_large_attachment(file_path, to)
     m = mail(:to => to,
       :subject => "[VFI Track] #{search_name} Result",
@@ -221,12 +226,30 @@ EOS
     m
   end
 
+  def send_ack_file_exception recipient, error_messages, attached_file, file_name, subject = "[VFI Track] Ack File Processing Error"
+    @error_messages = error_messages
+    m = mail(to: recipient, subject: subject)
+    m.attachments[file_name] = create_attachment attached_file
+    m
+  end
+
+  def send_survey_expiration_reminder to, expired_survey, expired_responses
+    @expired_survey = expired_survey
+    @expired_responses = expired_responses
+    @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/surveys/#{expired_survey.id}"
+    mail(to: to, subject: "Survey \"#{@expired_survey.name}\" has #{expired_responses.count} expired survey(s).") do |format|
+      format.html
+    end
+  end
+
   #send survey response invite
   def send_survey_invite survey_response
     survey = survey_response.survey
+    @subtitle = survey_response.subtitle
     @body_textile = survey.email_body
     @link_addr = "#{LINK_PROTOCOL}://#{MasterSetup.get.request_host}/survey_responses/#{survey_response.id}"
-    mail(:to=>survey_response.user.email,:subject=>survey.email_subject) do |format|
+    email_subject = survey.email_subject + (@subtitle.blank? ? "" : " - #{@subtitle}")
+    mail(:to=>survey_response.user.email,:subject=>email_subject) do |format|
       format.html
     end
   end
@@ -284,11 +307,60 @@ EOS
     end
   end
 
+  def send_high_priority_tasks(user, tasks) #tasks is a list of ProjectDeliverable objects
+    @user = user
+    @tasks = tasks
+    @lp = LINK_PROTOCOL
+    time = Time.now
+    mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|
+      format.html
+    end
+  end
+
+  def auto_send_attachments to, subject, body, file_attachments, sender_name, sender_email
+    @body_content = body
+    @attachment_messages = []
+    @sender_name = sender_name
+    @sender_email = sender_email
+    pm_attachments = []
+
+    file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
+    local_attachments = {}
+    file_attachments.each do |file|
+      
+      save_large_attachment(file, to) do |email_attachment, attachment_text|
+        if email_attachment
+          @attachment_messages << attachment_text
+        else
+          filename = ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
+          local_attachments[filename] = create_attachment(file)
+        end
+      end
+    end
+
+    m = mail(:to=>to,:subject=>subject) do |format|
+      format.html
+    end
+
+    local_attachments.each {|name, content| m.attachments[name] = content}
+    m
+  end
+
+  def send_high_priority_tasks(user, tasks) #tasks is a list of ProjectDeliverable objects
+    @user = user
+    @tasks = tasks
+    @lp = LINK_PROTOCOL
+    time = Time.now
+    mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|
+      format.html
+    end
+  end
+  
   private
 
     def save_large_attachment(file, registered_emails)
       email_attachment = nil
-      large_attachment_text = nil
+      attachment_text = nil
 
       if large_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
@@ -302,20 +374,39 @@ EOS
         email_attachment.attachment.save
         email_attachment.save
 
-        large_attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
-        large_attachment_text = large_attachment_text.html_safe
+        attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
+        attachment_text = attachment_text.html_safe
+      elsif blank_attachment? file
+        ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
+
+        # PostMark will raise exceptions if this is exactly nil, but a blank string is acceptable
+        email_attachment = ""
+
+        attachment_text = "* The attachment #{File.basename(file)} was excluded because it was empty."
+        attachment_text = attachment_text.html_safe
       end
 
       if block_given?
-        yield email_attachment, large_attachment_text
+        yield email_attachment, attachment_text
       else
-        @body_text = large_attachment_text if large_attachment_text
-        return (large_attachment_text.nil? ? false : true)
+        @body_text = attachment_text if attachment_text
+        return (attachment_text.nil? ? false : true)
+      end
+    end
+
+    def modify_email_for_development
+      if Rails.env == "development"
+        message.to = User.first.email
+        message.cc, message.bcc = [""], [""] #Postmark doesn't like blank strings, nils, or blank lists...
       end
     end
 
     def large_attachment? file
       File.exist?(file) && File.size(file) > ATTACHMENT_LIMIT
+    end
+
+    def blank_attachment? file
+      File.size(file) == 0 || File.size(file) == nil
     end
 
     def create_attachment data, data_is_file = true
