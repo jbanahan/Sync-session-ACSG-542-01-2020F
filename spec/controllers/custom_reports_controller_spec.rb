@@ -4,8 +4,8 @@ describe CustomReportsController do
   before :each do
     @u = Factory(:master_user)
     CustomReportEntryInvoiceBreakdown.stub(:can_view?).and_return(true)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
 
   describe :run do

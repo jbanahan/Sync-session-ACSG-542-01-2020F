@@ -6,8 +6,8 @@ describe EntriesController do
     MasterSetup.get.update_attributes(:entry_enabled=>true)
     c = Factory(:company,:master=>true)
     @u = Factory(:user,:entry_view=>true,:company=>c)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
 
   describe 'get_images' do

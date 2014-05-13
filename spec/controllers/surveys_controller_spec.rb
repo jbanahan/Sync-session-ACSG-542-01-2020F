@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe SurveysController do
   before :each do
-    activate_authlogic
+
     @u = Factory(:user,:survey_view=>true,:survey_edit=>true)
-    UserSession.create! @u
+    sign_in_as @u
   end
   describe 'index' do
     it "should only show surveys for logged in company" do
@@ -287,7 +287,7 @@ describe SurveysController do
     end
     it "should not create subscription if user cannot see surveys" do
       @u = Factory(:user,:survey_view => false)
-      UserSession.create! @u
+      sign_in_as @u
       lambda do
         @u.survey_view = false
         get :toggle_subscription, :id => @s.id

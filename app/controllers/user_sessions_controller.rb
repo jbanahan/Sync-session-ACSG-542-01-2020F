@@ -1,7 +1,6 @@
 class UserSessionsController < ApplicationController
-  skip_before_filter :require_user
-  skip_before_filter :verify_authenticity_token, :only=> [:create]
-
+  skip_before_filter :require_user, :only => [:create, :new, :destroy]
+  protect_from_forgery :except => :create
 
   def index
     if current_user
@@ -10,57 +9,68 @@ class UserSessionsController < ApplicationController
       redirect_to new_user_session_path
     end
   end
-  # GET /user_sessions/new
-  # GET /user_sessions/new.xml
+
   def new
     if current_user
       redirect_to root_path
     else
-      @user_session = UserSession.new
-
-      respond_to do |format|
-        format.html { render :layout => 'one_col' }# new.html.erb
-      end
+      render
     end
   end
 
-  # POST /user_sessions
-  # POST /user_sessions.xml
   def create
-    @user_session = UserSession.new(params[:user_session])
+    remember_me
 
-    respond_to do |format|
-      if @user_session.save
-        c = @user_session.user
-        if @user_session.user.host_with_port.nil?
-          @user_session.user.host_with_port = request.host_with_port
-          @user_session.user.save
+    user = authenticate(params)
+    # This call runs the clearance sign_in "guards" which runs business logic validations
+    # to check if user is allowed to login (.ie user isn't locked, disabled etc)
+    sign_in(user) do |status|
+      if status.success?
+        user.on_successful_login request
+        respond_to do |format|
+          format.html { redirect_back_or_default(:root) }
+          format.json { head :ok }
         end
-        
-        History.create({:history_type => 'login', :user_id => c.id, :company_id => c.company_id})
-        format.html do 
-          redirect_back_or_default(:root)
-        end
-        format.json { head :ok }
       else
-        format.html do 
-          errors_to_flash @user_session, :now => true
-          render :action => "new" 
+        error = "Your login was not successful."
+        respond_to do |format|
+          format.html {
+            add_flash :errors, error, now: true
+            render action: "new"
+          }
+          format.json { render :json => {"errors"=>[error]} }
         end
-        format.json { render :json => {"errors"=>@user_session.errors.full_messages}}
       end
     end
   end
 
   # DELETE /user_sessions/1
-  # DELETE /user_sessions/1.xml
   def destroy
-    @user_session = UserSession.find
-    @user_session.destroy if @user_session #would be nil if logout action is hit when user is not logged in (Lighthouse ticket 199)
-
-    respond_to do |format|
-      add_flash :notices, "You are logged out.  Thanks for visiting."
-      format.html { redirect_to new_user_session_path }
-    end
+    sign_out
+    cookies.delete(:remember_me)
+    add_flash :notices, "You are logged out. Thanks for visiting."
+    redirect_to new_user_session_path
   end
+
+  private 
+
+    def remember_me
+      # Clearance (due to wanting a "clean codebase"), removed the option to
+      # allow for the remember me cookie to be just a plain session cookie (ie. deleted when the browser is closed).
+      # This is what we actually want in the default case (security concerns, blah, blah).
+      # The only real way to implement this is via the cookie expiration callback Clearance uses, which has access
+      # to the browser cookies.  Therefore, we can set a cookie here if the user wants to be remembered and then
+      # check in the callback for it and not allow the remember_token cookie to expire.
+     if params[:remember_me]
+        cookies.permanent[:remember_me] = ""
+      else
+        cookies.delete(:remember_me)
+      end
+    end
+
+    def authenticate params
+      # This is primarily here so we don't have to change anything on the login screen after moving
+      # to clearance from Authlogic (since we do have the Imaging Archiver project using these params I don't want to change)
+      User.authenticate(params[:user_session].try(:[], :username), params[:user_session].try(:[], :password))
+    end
 end

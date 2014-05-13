@@ -6,9 +6,8 @@ class PasswordResetsController < ApplicationController
   def create
     @user = User.find_by_email(params[:email])
     if @user
-      ActionMailer::Base.default_url_options[:host] = request.host_with_port
-      @user.deliver_password_reset_instructions!
-      add_flash :notices, "Instructions for resetting your password have been sent to your email."
+      @user.delay.deliver_password_reset_instructions!
+      add_flash :notices, "Instructions for resetting your password have been emailed to you."
     else
       add_flash :errors, "No user was found with email \"#{params[:email]}\"."
     end
@@ -20,13 +19,21 @@ class PasswordResetsController < ApplicationController
   end
 
   def update
-    @user.password = params[:user][:password]
-    @user.password_confirmation = params[:user][:password_confirmation]
-    if @user.save
+    success = false
+    if @user.update_user_password params[:user][:password], params[:user][:password_confirmation]
       @user.update_attributes(:password_reset => false)
+      # Have to actually sign in the user here via clearance to set their remember token
+      sign_in(@user) do |status|
+        success = status.success?
+      end
+    end
+
+    if success
+      @user.on_successful_login request
       flash[:notice] = "Password successfully updated"
       redirect_to root_url
-    else
+    else 
+      errors_to_flash @user, now: true
       render :action => :edit
     end
   end
@@ -37,14 +44,16 @@ class PasswordResetsController < ApplicationController
       # This method used to also fall back to using the user's id to find by, this is very insecure because user id's are easily guessed since they're
       # a numerical sequence.  So, having a lookup on id here effectively provides a means for DOS'ing user accounts - changing random passwords.  The lookups need to be
       # non-deterministic, which is what perishable token attempts to be.
-      @user = User.find_using_perishable_token(params[:id])
+
+      # Make sure we can't pass a blank token and return a random user
+      @user = User.where("confirmation_token <> '' AND confirmation_token IS NOT NULL AND confirmation_token = ?", params[:id]).first
 
       unless @user
         add_flash :errors, "We're sorry, but we could not locate your account.  Please retry resetting your password from the login page."
         # There's a case here where the user may click a password reset link (probably from an old email) while they already have a live session...probably thinking they
         # can use the password as a shortcut for resetting their password - which doesn't work.  So, we'll log the user out and then redirect them which will allow them
         # to use the password reset link on the login page to generate a new reset.
-        force_logout
+        sign_out
         redirect_to new_user_session_path
       end
     end

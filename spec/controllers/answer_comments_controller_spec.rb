@@ -4,8 +4,8 @@ describe AnswerCommentsController do
   describe :create do
     before :each do
       @user = Factory(:user,first_name:'Joe',last_name:'Jackson')
-      activate_authlogic
-      UserSession.create! @user
+
+      sign_in_as @user
       @answer = Factory(:answer) 
       SurveyResponse.any_instance.stub(:can_view?).and_return true
     end

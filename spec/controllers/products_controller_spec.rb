@@ -2,12 +2,12 @@ require 'spec_helper'
 
 describe ProductsController do
   before :each do
-    activate_authlogic
+
     @user = Factory(:importer_user,:product_edit=>true,:product_view=>true,:classification_edit=>true)
     @other_importer = Factory(:company,:importer=>true)
     @linked_importer = Factory(:company,:importer=>true)
     @user.company.linked_companies << @linked_importer
-    UserSession.create! @user
+    sign_in_as @user
   end
   describe :next do
     it "should go to next item" do

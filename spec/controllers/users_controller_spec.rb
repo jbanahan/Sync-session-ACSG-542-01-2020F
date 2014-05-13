@@ -3,8 +3,7 @@ require 'spec_helper'
 describe UsersController do
   before :each do
     @user = Factory(:user)
-    activate_authlogic
-    UserSession.create! @user
+    sign_in_as @user
   end
   describe 'hide_message' do
     it "should hide message" do
@@ -42,6 +41,7 @@ describe UsersController do
       u.should be_order_view
       u.should_not be_order_edit
       u.email_format.should == 'html'
+      expect(u.encrypted_password).to_not be_nil
 
       u = User.find_by_company_id_and_username @user.company_id, 'un2'
       u.email.should == 'fred@sample.com'

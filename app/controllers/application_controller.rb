@@ -1,20 +1,23 @@
 class ApplicationController < ActionController::Base
+  include Clearance::Controller
   require 'open_chain/field_logic'
   require 'yaml'
   require 'newrelic_rpm'
 
   protect_from_forgery
+  # This is Clearances default before filter...we already handle its use cases in require_user more to our liking
+  skip_before_filter :authorize
   before_filter :chainio_redirect
   before_filter :prep_model_fields
   before_filter :new_relic
   before_filter :set_master_setup
   before_filter :require_user
   before_filter :set_user_time_zone
+  before_filter :log_last_request_time
   before_filter :log_request
   before_filter :force_reset
   before_filter :set_legacy_scripts
 
-  helper_method :current_user
   helper_method :master_company
   helper_method :add_flash
   helper_method :has_messages
@@ -25,7 +28,6 @@ class ApplicationController < ActionController::Base
   helper_method :master_setup
 
   after_filter :reset_state_values
- 
 
   # show user message and redirect for http(s)://*.chain.io/*
   def chainio_redirect
@@ -302,11 +304,6 @@ class ApplicationController < ActionController::Base
     return browser.ie? && Integer(browser.version) < 9 rescue true
   end
 
-  def force_logout
-    u = UserSession.find
-    u.destroy if u
-  end
-
   private
   
   def set_master_setup
@@ -314,15 +311,14 @@ class ApplicationController < ActionController::Base
   end
 
   def force_reset
-    if logged_in? && current_user.password_reset
+    if signed_in? && current_user.password_reset
       # Basically, we're just going to redirect the user to the standard password resets page using the
-      # authlogic perishable token.
+      # clearance forgot password functionality
 
-      # Logout the user to prevent the session from being looked up on the redirect and the
-      # users perishable token from being updated.
-      force_logout
-      current_user.reset_password_prep
-      redirect_to edit_password_reset_path current_user.perishable_token
+      # The forgot password call just generates a confirmation token which is used by the controller to determine
+      # which user is resetting their password
+      current_user.forgot_password!
+      redirect_to edit_password_reset_path current_user.confirmation_token
       return false
     end
   end
@@ -364,28 +360,34 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def current_user_session
-    return @current_user_session if defined?(@current_user_session)
-    @current_user_session = UserSession.find
-  end
-
-  def current_user
-    return @current_user unless @current_user.nil?
-    @current_user = current_user_session && current_user_session.record
-    if @current_user && @current_user.run_as
-      @run_as_user = @current_user
-      @current_user = @current_user.run_as
-    end
-    User.current = @current_user
-    @current_user
-  end
-
   def require_user
-    unless current_user
-      store_location
-      add_flash :errors, "You must be logged in to access this page. #{PublicField.first.nil? ? "" : "Public shipment tracking is available below."}"
-      redirect_to login_path
-      return false
+    if current_user && User.access_allowed?(current_user)
+      User.current = current_user
+    else
+      respond_to do |format|
+        format.any(:js, :json, :xml) { head :unauthorized }
+        format.any {
+          # If we had a user that signed in and was disabled, we need to log them out as well, otherwise the login page will see the login and try
+          # to redirect, which'll bring us back here, and cause a redirect loop
+          if current_user
+            sign_out
+          end
+
+          store_location
+          add_flash :errors, "You must be logged in to access this page. #{PublicField.first.nil? ? "" : "Public shipment tracking is available below."}"
+          redirect_to login_path
+        }
+      end
+    end
+  end
+
+  def log_last_request_time
+    if current_user
+      # Only bother updating the last request at if it's more than a minute old
+      if current_user.last_request_at.nil? || (current_user.last_request_at.to_i <  (Time.now - 1.minute).to_i)
+        # Update column doesn't run any validations or set timestamps, it just runs a query to set the column to the provided value
+        current_user.update_column :last_request_at, Time.zone.now
+      end
     end
   end
 
@@ -403,12 +405,10 @@ class ApplicationController < ActionController::Base
   end
 
   def set_user_time_zone
-      @default_time_zone = Time.zone
-      Time.zone = current_user.time_zone if logged_in?
-  end
-
-  def logged_in?
-      return !current_user.nil?
+    @default_time_zone = Time.zone
+    unless current_user.try(:time_zone).blank?
+      Time.zone = current_user.time_zone
+    end
   end
 
   def hash_flip(src)
@@ -448,7 +448,6 @@ class ApplicationController < ActionController::Base
 
   def reset_state_values
     # Try and clear any globals that may retain any unwanted state inside the current the process.
-    @current_user = nil
     User.current = nil
     MasterSetup.current = nil
     Time.zone = @default_time_zone

@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe ShipmentsController do
   before :each do
-    activate_authlogic
+
   end
   context 'invoice generation' do
     before :each do
@@ -19,7 +19,7 @@ describe ShipmentsController do
       @piece_set = PieceSet.create!(:order_line_id=>@order_line_2.id,:shipment_line_id=>@shipment_line_2.id,
         :commercial_invoice_line_id=>@existing_ci_line.id,:quantity=>8)
       @u = Factory(:user,:shipment_edit=>true,:company=>Factory(:company,:master=>true))
-      UserSession.create! @u
+      sign_in_as @u
     end
     describe 'make_invoice' do
       it "should not display if user cannot edit shipment" do

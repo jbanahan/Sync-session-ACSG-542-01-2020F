@@ -78,13 +78,11 @@ EOS
         )
   end
 
-  def send_password_reset(user, expires_at)
+  def send_password_reset(user)
     @user = user
-    # Make sure the expiration time is presented in the user's timezone
-    @expires_at = expires_at.in_time_zone(user.time_zone) rescue expires_at
-
+    @reset_url = edit_password_reset_url(@user.confirmation_token, host: emailer_host(user))
     mail(:to => user.email, :subject => "[VFI Track] Password Reset") do |format| 
-      format.text
+      format.html
     end
   end
 
@@ -159,8 +157,7 @@ EOS
 
   def send_message(message)
     @message = message
-    host = @message.user.host_with_port ? @message.user.host_with_port : MasterSetup.get.request_host
-    @messages_url = messages_url(:host => host)
+    @messages_url = messages_url(:host => emailer_host(@message.user))
     
     mail(:to => message.user.email, :subject => "[VFI Track] New Message - #{message.subject}") do |format|
       format.html
@@ -329,5 +326,9 @@ EOS
       # postmark library handles that behind the scenes for us now.
       {content: data,
         mime_type: "application/octet-stream"}
+    end
+
+    def emailer_host user
+      user.host_with_port.blank? ? MasterSetup.get.request_host : user.host_with_port
     end
 end

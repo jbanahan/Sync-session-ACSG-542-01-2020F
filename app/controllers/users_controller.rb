@@ -1,7 +1,6 @@
 class UsersController < ApplicationController
   skip_before_filter :check_tos, :only => [:show_tos, :accept_tos]
     # GET /users
-    # GET /users.xml
     def index
       respond_to do |format|
         format.html {
@@ -21,22 +20,16 @@ class UsersController < ApplicationController
     end
 
     # GET /users/1
-    # GET /users/1.xml
     def show
       @user = User.find(params[:id])
       redirect_to edit_company_user_path @user.company, @user
     end
 
     # GET /users/new
-    # GET /users/new.xml
     def new
       admin_secure("Only administrators can create users.") {
         @company = Company.find(params[:company_id])
         @user = @company.users.build
-        respond_to do |format|
-            format.html # new.html.erb
-            format.xml  { render :xml => @user }
-        end
       }
     end
 
@@ -49,25 +42,30 @@ class UsersController < ApplicationController
     end
 
     # POST /users
-    # POST /users.xml
     def create
       admin_secure("Only administrators can create users.") {
+        # Strip the password and password confirmation values otherwise the User call gets mad
+        # on attribute assignment since they're not accessible
+        password = params[:user].delete :password
+        password_confirmation = params[:user].delete :password_confirmation
+
         @user = User.new(params[:user])
         set_admin_params(@user,params)
         set_debug_expiration(@user)
         set_password_reset(@user)
+        @user.password = password
         @company = @user.company
-        respond_to do |format|
-            if @user.save
-                add_flash :notices, "User created successfully."
-                format.html { redirect_to(company_users_path(@company)) }
-                format.xml  { render :xml => @user, :status => :created, :location => @user }
-            else
-                errors_to_flash @user, :now => true
-                @company = Company.find(params[:company_id])
-                format.html { render :action => "new" }
-                format.xml  { render :xml => @user.errors, :status => :unprocessable_entity }
-            end
+        User.transaction do
+          if @user.save && @user.update_user_password(password, password_confirmation)
+            add_flash :notices, "User created successfully."
+            redirect_to(company_users_path(@company))
+          else
+            errors_to_flash @user, :now => true
+            @company = Company.find(params[:company_id])
+            render :action => "new"
+            # Rollback is swallowed by the transaction block
+            raise ActiveRecord::Rollback, "Bad user create."
+          end
         end
       }
     end
@@ -81,18 +79,26 @@ class UsersController < ApplicationController
         set_admin_params(@user,params)
         set_debug_expiration(@user)
         set_password_reset(@user)
-        respond_to do |format|
-            if @user.update_attributes(params[:user])
-                add_flash :notices, "Account updated successfully."
-                format.html {
+        # Deleting password params because they're not set as accessible in the user model
+        if @user.update_user_password(params[:user].delete(:password), params[:user].delete(:password_confirmation)) && @user.update_attributes(params[:user])
+            add_flash :notices, "Account updated successfully."
+
+            # If the user is updating their own account then it's possible they've updated their password, in which case their remember token is invalid (it's re-generated
+            # whenever the user password is modified). The easiest thing to do here is just always re-log them in which will reset their remember token cookie.
+            if current_user.id == @user.id
+              sign_in(@user) do |status|
+                if status.success?
                   redirect_to current_user.admin? ? company_users_path(@company) : "/"
-                }
-                format.xml  { head :ok }
+                else
+                  redirect_to login_path
+                end
+              end
             else
-                errors_to_flash @user
-                format.html { render :action => "edit" }
-                format.xml  { render :xml => @user.errors, :status => :unprocessable_entity }
+              redirect_to current_user.admin? ? company_users_path(@company) : "/"
             end
+        else
+          errors_to_flash @user
+          render :action => "edit"
         end
       }
     end
@@ -167,9 +173,13 @@ class UsersController < ApplicationController
       begin
         User.transaction do 
           results.each do |res|
-            res['password_confirmation'] = res['password']
             res.merge! params[:user]
-            u = company.users.create!(res)
+            u = company.users.build res
+            # Password is no longer an accessible attribute, so set it
+            # manually. Setting the password here updates the encrypted password
+            # as well.
+            u.password = res['password']
+            u.save!
             count += 1
           end
         end

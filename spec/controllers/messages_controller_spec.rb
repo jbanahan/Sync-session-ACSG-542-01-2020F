@@ -7,12 +7,12 @@ describe MessagesController do
     @sys_admin_user = Factory(:user)
     @sys_admin_user.sys_admin = true
     @sys_admin_user.save!
-    activate_authlogic
+
   end
 
   describe 'create' do
     it 'should work for sys_admins' do
-      UserSession.create! @sys_admin_user
+      sign_in_as @sys_admin_user
       put :create, {:message=>{:subject=>'test subject',:body=>'test body',:user_id=>@base_user.id.to_s}}
       response.should redirect_to('/messages')
       flash[:notices].should include "Your message has been sent."
@@ -24,14 +24,14 @@ describe MessagesController do
       msg.body.should == 'test body'
     end
     it 'should sanitize html' do
-      UserSession.create! @sys_admin_user
+      sign_in_as @sys_admin_user
       put :create, {:message=>{:subject=>'test <em>subject</em>',:body=>'<a href=\'http://www.google.com\'>test body</a>',:user_id=>@base_user.id.to_s}}
       msg = @base_user.messages.first
       msg.subject.should == 'test subject'
       msg.body.should == 'test body'
     end
     it 'should not allow basic users' do
-      UserSession.create! @base_user
+      sign_in_as @base_user
       put :create, {:subject=>'test subject',:body=>'test body',:user_id=>@base_user.id.to_s}
       response.should be_redirect
       flash[:notices].should be_blank
@@ -41,7 +41,7 @@ describe MessagesController do
       u = Factory(:user)
       u.admin = true
       u.save!
-      UserSession.create! u
+      sign_in_as u
       put :create, {:subject=>'test subject',:body=>'test body',:user_id=>@base_user.id.to_s}
       response.should be_redirect
       flash[:notices].should be_blank
@@ -51,12 +51,12 @@ describe MessagesController do
 
   describe 'new' do
     it 'should allow sys_admins' do
-      UserSession.create! @sys_admin_user
+      sign_in_as @sys_admin_user
       get :new
       response.should be_success
     end
     it 'should not allow basic users' do
-      UserSession.create! @base_user
+      sign_in_as @base_user
       get :new
       response.should be_redirect
     end
@@ -64,7 +64,7 @@ describe MessagesController do
       u = Factory(:user)
       u.admin = true
       u.save!
-      UserSession.create! u
+      sign_in_as u
       get :new
       response.should be_redirect
     end

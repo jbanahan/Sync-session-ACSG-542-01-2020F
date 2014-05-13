@@ -3,8 +3,8 @@ require 'spec_helper'
 describe PublicFieldsController do
   before :each do
     @u = Factory(:user,:admin=>true)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
   describe "index" do
     it "should reject if not admin" do

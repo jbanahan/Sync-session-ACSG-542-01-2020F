@@ -6,18 +6,38 @@ describe User do
       @updated_at = 1.year.ago
       @u = Factory(:user,:updated_at=>@updated_at)
     end
-    it "should not update updated_at if only authlogic columns changed" do
-      @u.perishable_token='12345'
+    it "should not update updated_at if only confirmation token changed" do
+      @u.confirmation_token='12345'
       @u.save!
       User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
       User.record_timestamps.should be_true
     end
-    it "should update updated_at if non-authlogic column changes" do
+    it "should not update updated_at if only remember token changed" do
+      @u.remember_token='12345'
+      @u.save!
+      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
+      User.record_timestamps.should be_true
+    end
+    it "should not update updated_at if only last request at changed" do
+      @u.last_request_at = Time.zone.now
+      @u.save!
+      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
+      User.record_timestamps.should be_true
+    end
+    it "should not update updated_at if all no-update fields changed" do
+      @u.confirmation_token='12345'
+      @u.remember_token='12345'
+      @u.last_request_at = Time.zone.now
+      @u.save!
+      User.find(@u.id).updated_at.to_i.should == @updated_at.to_i
+      User.record_timestamps.should be_true
+    end
+    it "should update updated_at if a standard column changes" do
       @u.update_attributes(:email=>'a@sample.com')
       User.record_timestamps.should be_true
       User.find(@u.id).updated_at.should > 10.seconds.ago
     end
-    it "should update updated_at if both non-authlogic and authlogic columns change" do
+    it "should update updated_at if both standard and no-update columns change" do
       @u.update_attributes(:perishable_token=>'12345',:email=>'a@sample.com')
       User.record_timestamps.should be_true
       User.find(@u.id).updated_at.should > 10.seconds.ago
@@ -307,12 +327,10 @@ describe User do
 
       OpenMailer.should_receive(:send_invite) do |user, password| 
         user.id.should == u.id
-        # Make sure the password was updated and user was set to force
-        # reset password
-        user.crypted_password.should_not == u.crypted_password
-        user.password_reset.should be_true
-        user.perishable_token.should_not == u.perishable_token
-
+        # Make sure the password has been updated by checking the encrypted
+        # versions
+        user.encrypted_password.should_not == u.encrypted_password
+        expect(user.password_reset).to be_true
         e
       end
       
@@ -328,17 +346,98 @@ describe User do
       User.send_invite_emails [u.id, u.id]
     end
   end
-  describe :reset_password_prep do
-    it "should update updated_at and change the perishable token" do
-      @u = Factory(:user)
 
-      updated = @u.updated_at
-      token = @u.perishable_token
-      sleep 0.5
+  describe "authenticate" do 
+    before :each do
+      @user = Factory :user, password: "abc"
+    end
 
-      @u.reset_password_prep
-      @u.perishable_token.should_not == updated
-      @u.perishable_token.should_not == token
+    it "validates user exists with specified password" do
+      expect(User.authenticate @user.username, "abc").to eq @user
+    end
+
+    it "returns nil if user is not found" do
+      expect(User.authenticate "notauser", "abc").to be_nil
+    end
+
+    it "returns nil if user password is incorrect" do
+      expect(User.authenticate @user.username, "notmypassword").to be_nil
+    end
+  end
+
+  describe "access_allowed?" do
+    it "validates user is not nill" do
+      expect(User.access_allowed? nil).to be_false
+    end
+
+    it "validates user is not disabled?" do
+      user = User.new
+      user.disabled = true
+      expect(User.access_allowed? user).to be_false
+    end
+
+    it "validates user company is not locked" do
+      user = Factory(:user, company: Factory(:company, locked: true))
+      expect(User.access_allowed? user).to be_false
+    end
+
+    it "validates user" do 
+      user = Factory(:user)
+      expect(User.access_allowed? user).to be_true
+    end
+  end
+
+  describe "update_user_password" do
+    before :each do
+      @user = Factory(:user)
+    end
+
+    it "updates a user password with valid info" do
+      # Update the password and then validate that our authenticate method confirms
+      # the password now matches the hash that our new password generates
+      @user.update_user_password 'newpassword', 'newpassword'
+      expect(User.authenticate @user.username, 'newpassword').to eq @user
+    end
+
+    it "validates password confirmation matches password" do
+      @user.update_user_password 'newpassword', 'notmatched'
+      expect(@user.errors.full_messages).to eq ["Password must match password confirmation."]
+    end
+
+    it "skips update if password is blank" do
+      expect(@user.update_user_password ' ', 'notmatched').to be_true
+      expect(User.authenticate @user.username, ' ').to be_nil
+    end
+  end
+
+  describe "on_successful_login" do
+    it "sets last_login_at, current_login_at, failed_login_count and creates a history record" do
+      user = Factory(:user, current_login_at: Date.new(2014,1,1), failed_login_count: 10)
+      last_login = user.current_login_at
+      updated_at = user.updated_at
+
+      request = double("request")
+      request.stub(:host_with_port).and_return "localhost:3000"
+
+      user.on_successful_login request
+
+      user.reload
+      expect(user.last_login_at).to eq last_login
+      expect(user.current_login_at).to be >= 5.seconds.ago
+      expect(user.failed_login_count).to eq 0
+      expect(user.host_with_port).to eq "localhost:3000"
+      # Don't want the login to update the user timestamps
+      expect(user.updated_at.to_i).to eq updated_at.to_i
+      expect(user.histories.where(history_type: 'login', company_id: user.company.id).first).to_not be_nil
+
+    end
+
+    it "doesn't update host with port if it's not blank" do
+      user = Factory(:user, host_with_port: "www.test.com")
+      user.on_successful_login double("request")
+
+      user.reload
+      expect(user.host_with_port).to eq "www.test.com"
     end
   end
 end

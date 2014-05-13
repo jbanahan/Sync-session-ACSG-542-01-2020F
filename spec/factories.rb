@@ -23,8 +23,7 @@ Factory.define :address do |a|
 end
 Factory.define :user do |f|  
   f.sequence(:username) { |n| "foo#{n}" }   
-  f.password "foobar"  
-  f.password_confirmation { |u| u.password }  
+  f.password "foobar"
   f.sequence(:email) { |n| "foo#{n}@example.com" }  
   f.association :company
 end  

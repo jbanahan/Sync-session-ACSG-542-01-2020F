@@ -2,14 +2,14 @@ require 'spec_helper'
 
 describe LinkableAttachmentImportRulesController do
   before(:each) do
-    activate_authlogic
+
     @rule = Factory(:linkable_attachment_import_rule)
     @admin_user = Factory(:user,:admin=>true)
   end
   describe 'security' do
     context 'admins' do
       before(:each) do
-        UserSession.create @admin_user
+        sign_in_as @admin_user
       end
       it 'should allow index' do
         get :index
@@ -43,7 +43,7 @@ describe LinkableAttachmentImportRulesController do
     context 'non-admins' do
       before(:each) do
         @base_user = Factory(:user)
-        UserSession.create @base_user
+        sign_in_as @base_user
       end
       it "shouldn't allow index" do
         get :index
@@ -76,7 +76,7 @@ describe LinkableAttachmentImportRulesController do
   end
   describe 'normal actions' do
     before(:each) do
-      UserSession.create @admin_user
+      sign_in_as @admin_user
     end
     it 'should set @rule for edit' do
       get :edit, :id=>@rule.id

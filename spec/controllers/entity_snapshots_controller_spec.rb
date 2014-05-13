@@ -8,8 +8,8 @@ describe EntitySnapshotsController do
       @es = @p.create_snapshot @u
       @p.update_attributes(:name=>'new name')
       Product.any_instance.stub(:can_edit?).and_return(true)
-      activate_authlogic
-      UserSession.create! @u
+
+      sign_in_as @u
     end
     it "should restore object" do
       post :restore, :id=>@es.id.to_s

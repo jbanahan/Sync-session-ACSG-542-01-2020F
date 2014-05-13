@@ -4,8 +4,8 @@ describe SyncRecordsController do
 
   before :each do
     @user = Factory(:master_user,:email=>'a@example.com', :product_view => true)
-    activate_authlogic
-    UserSession.create! @user
+
+    sign_in_as @user
   end
 
   it "should mark a sync record to be resent" do

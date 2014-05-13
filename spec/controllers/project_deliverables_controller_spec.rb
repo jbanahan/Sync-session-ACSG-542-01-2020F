@@ -4,8 +4,8 @@ describe ProjectDeliverablesController do
   before :each do
     @u = Factory(:master_user,project_view:true,project_edit:true)
     MasterSetup.get.update_attributes(project_enabled:true)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
   describe :index do
     before :each do

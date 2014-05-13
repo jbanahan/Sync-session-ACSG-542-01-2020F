@@ -1,10 +1,10 @@
 require 'spec_helper'
 describe PowerOfAttorneysController do
   before(:each) do
-    activate_authlogic
     @company = Factory(:company)
     @user = Factory(:user, :company => @company)
     @poa = Factory(:power_of_attorney, :user => @user, :company => @company)
+    sign_in_as @user
   end
 
   describe "GET index" do
@@ -24,9 +24,6 @@ describe PowerOfAttorneysController do
   end
 
   describe "POST create" do
-    before(:each) do
-      UserSession.create @user
-    end
     
     describe "with valid params" do
       it "creates a new PowerOfAttorney" do

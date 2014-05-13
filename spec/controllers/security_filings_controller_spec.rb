@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe SecurityFilingsController do
   before :each do
-    activate_authlogic
+
     @u = Factory(:user)
-    UserSession.create! @u
+    sign_in_as @u
   end
   describe :show do
     before :each do
