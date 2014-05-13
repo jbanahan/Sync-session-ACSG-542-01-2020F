@@ -1,11 +1,3 @@
-<%content_for :javascript do %>
-$(function() {
-  $("#forgot_password_dialog").dialog({autoOpen:false, modal:true, title: "Reset Password"})
-  $("#forgot_password").click(function(evt) {
-    $("#forgot_password_dialog").dialog('open');
-  });
-});
-<%end%>
 <% content_for :head_tags do %>
 <style type="text/css">
   #new_user_session .small-margin {margin-bottom: 5px;}
@@ -25,43 +17,55 @@ $(function() {
 <div class='container'>
   <div class='well well-small'>
     <div id='login' class='row'>
-      <%= form_for(@user_session, html: {class: "form-horizontal"}) do |f| %>
+      <%=form_tag("/user_sessions", :method=>'post', :id=>"new_user_session") do -%>
       <div class='col-md-6'>
         <div class="form-group small-margin">
-          <%=f.label(:username, class: "control-label")%>
-          <div class="controls"><%=f.text_field(:username, :class=>"focus_first input-lg form-control")%></div>
+          <%=label_tag('user_session_username', "Username", class: "control-label")%>
+          <div class="controls"><%=text_field_tag('user_session[username]', "", class: "focus_first input-lg form-control", id: "user_session_id")%></div>
         </div>
         <div class="form-group small-margin">
-          <%=f.label(:password, class: "control-label")%>
-          <div class="controls"><%=f.password_field(:password, :class=>"input-lg form-control")%></div>
+          <%=label_tag("user_session_password", 'Password', class: "control-label")%>
+          <div class="controls"><%=password_field_tag('user_session[password]', nil, class: "input-lg form-control", id: 'user_session_password')%></div>
         </div>
         <div class="form-group">
           <div class="controls">
-            <%=f.check_box(:remember_me, style: "display: inline;")%>
-            <%=f.label(:remember_me, style: "display: inline;")%><br>
+            <%=check_box_tag(:remember_me, "1", false, style: "display: inline;")%>
+            <%=label_tag(:remember_me, "Remember Me", title: "Check this to remain logged in even after you close your browser.", style: "display: inline;")%><br>
           </div>
         </div>
         <div class="form-group">
           <div class="controls">
-            <div><%=f.submit 'Log In', class: 'btn btn-primary' %></div>
+            <div><%=submit_tag 'Log In', class: 'btn btn-primary' %></div>
           </div>
         </div>
         <div class="form-group small-margin">
           <div class="controls">
-            <a id="forgot_password" href="javascript:void(0)">Forgot your password?</a>
+            <a id="forgot_password" href="javascript:void(0)" data-toggle="modal" data-target="#forgot-password-modal">Forgot your password?</a>
           </div>
         </div>
       </div>
       <% end %>
-      <div id='forgot_password_dialog' style='display:none;'>
-        <p>Enter your email and we'll send you instructions for resetting your password.</p>
-        <%=form_tag password_resets_path, id: "password_reset_form" do %>
-        <%=text_field_tag("email", "", :class=>"input-xlarge")-%><br />
-        <div style='margin-top:5px;'>
-          <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn btn-primary' -%>
+      <div class="modal fade" id="forgot-password-modal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4>Reset Password</h4>
+            </div>
+            <div class="modal-body">
+              <p>Enter your email and we'll send you instructions for resetting your password.</p>
+              <%=form_tag password_resets_path, id: "password_reset_form" do -%>
+              <div class="col-md-8">
+                <%=text_field_tag("email", "", :class=>"form-control")-%>
+              </div>
+              <div style='margin-top:5px;'>
+                <%= submit_tag "Reset My Password", :id=>'pwd_reset_submit', :class=>'btn btn-primary' -%>
+              </div>
+              <% end -%>
+            </div>
+          </div>
         </div>
-        <% end %>
-      </div>
+      </div>      
     </div>
   </div>
   <%-if MasterSetup.get.custom_feature? 'public hts'-%>

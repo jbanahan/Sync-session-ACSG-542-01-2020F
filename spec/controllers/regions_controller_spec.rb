@@ -3,12 +3,12 @@ require 'spec_helper'
 describe RegionsController do
   
   before :each do
-    activate_authlogic
+
   end
   describe :security do
     before :each do
       @u = Factory(:user)
-      UserSession.create! @u
+      sign_in_as @u
     end
     after :each do
       response.should redirect_to request.referrer
@@ -44,7 +44,7 @@ describe RegionsController do
   context "security passed" do
     before :each do
       @u = Factory(:admin_user)
-      UserSession.create! @u
+      sign_in_as @u
       @r = Factory(:region)
     end
     describe :index do

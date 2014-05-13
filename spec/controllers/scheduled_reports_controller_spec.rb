@@ -4,8 +4,8 @@ describe ScheduledReportsController do
 
   before :each do
     @user = Factory(:master_user,:email=>'a@example.com')
-    activate_authlogic
-    UserSession.create! @user
+
+    sign_in_as @user
   end
 
   context :index do

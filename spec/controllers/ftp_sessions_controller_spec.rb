@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe FtpSessionsController do
   before :each do
-    activate_authlogic
+
     @u = Factory(:user, :admin => true, :sys_admin => true, :company => Factory(:company, :master=>true))
-    UserSession.create! @u
+    sign_in_as @u
     @ftp = Factory(:ftp_session)
   end
 

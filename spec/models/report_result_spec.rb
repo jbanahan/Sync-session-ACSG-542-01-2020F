@@ -3,7 +3,7 @@ require 'spec_helper'
 
 describe ReportResult do
   before :each do
-    @u = User.create!(:company_id=>Company.create!(:name=>'x').id,:username=>'user1',:password=>'pass123',:password_confirmation=>'pass123',:email=>'a@aspect9.com', :time_zone => 'Hawaii')
+    @u = Factory(:user, :email=>'a@aspect9.com', :time_zone => 'Hawaii')
   end
 
   describe 'friendly settings' do

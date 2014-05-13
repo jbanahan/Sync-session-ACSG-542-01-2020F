@@ -2,9 +2,6 @@ require 'spec_helper'
 require 'json'
 
 describe HtsController do
-  before :each do
-    activate_authlogic
-  end
 
   describe :country do
     before :each do
@@ -66,7 +63,7 @@ describe HtsController do
     end
 
     it "should return all countries in your local OfficialTariff table when logged in" do
-      u = Factory(:user); UserSession.create! u
+      u = Factory(:user); sign_in_as u
       get :subscribed_countries
       response.should be_success
       countries = JSON.parse(response.body)["countries"]

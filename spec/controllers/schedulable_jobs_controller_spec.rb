@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe SchedulableJobsController do
   def login u
-    activate_authlogic
-    UserSession.create! u
+
+    sign_in_as u
   end
   describe :index do
     it "should only allow sys_admins" do

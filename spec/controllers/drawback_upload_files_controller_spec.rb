@@ -3,8 +3,8 @@ require 'spec_helper'
 describe DrawbackUploadFilesController do
   before :each do
     @user = Factory(:user)
-    activate_authlogic
-    UserSession.create! @user
+
+    sign_in_as @user
     DrawbackUploadFile.any_instance.stub(:validate_layout).and_return([])
   end
   describe :index do

@@ -3,8 +3,8 @@ require 'spec_helper'
 describe ChargeCodesController do
   before :each do
     @u = Factory(:user,:admin=>true,:company=>Factory(:company,:master=>true))
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
   describe :index do
     it "should only allow admins" do

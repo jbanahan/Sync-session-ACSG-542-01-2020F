@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe CorrectiveActionPlansController do
   before :each do
-    activate_authlogic
+
     @u = Factory(:user,first_name:'joe',last_name:'user')
-    UserSession.create! @u
+    sign_in_as @u
   end
   describe :add_comment do
     before :each do

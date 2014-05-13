@@ -4,8 +4,8 @@ describe SearchSetupsController do
 
   before(:each) do
     @u = Factory(:user, :time_zone=>"Hawaii")
-    activate_authlogic
-    UserSession.create @u
+
+    sign_in_as @u
     @ss = SearchSetup.create!(:name=>"Test", :user=>@u, :module_type=>'Entry')
     #release date is used becuase it's a datetime
     @crit1 = @ss.search_criterions.create!(:model_field_uid=>'ent_release_date', :operator=>"eq", :value=>"2013-01-01")

@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe CompaniesController do
   before :each do
-    activate_authlogic
+
     @u = Factory(:user,:admin=>true,:company=>Factory(:company,:master=>true))
-    UserSession.create! @u
+    sign_in_as @u
     @c = Factory(:company)
   end
   describe "attachment_archive_enabled" do

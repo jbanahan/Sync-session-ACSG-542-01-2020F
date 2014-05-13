@@ -4,8 +4,8 @@ describe AttachmentArchiveManifestsController do
   before :each do
     @u = Factory(:user)
     User.any_instance.stub(:view_attachment_archives?).and_return(true)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
   describe :create do
     it "should create manifest and delay manifest generation" do

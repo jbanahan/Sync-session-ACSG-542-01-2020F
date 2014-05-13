@@ -4,8 +4,8 @@ describe AnswersController do
   describe 'update' do
     before :each do
       @u = Factory(:user)
-      activate_authlogic
-      UserSession.create! @u
+
+      sign_in_as @u
       @answer = Factory(:answer)
     end
     it 'should log update' do

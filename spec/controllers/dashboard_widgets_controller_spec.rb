@@ -4,8 +4,7 @@ describe DashboardWidgetsController do
 
   before :each do
     @user = Factory(:master_user,:email=>'a@example.com')
-    activate_authlogic
-    UserSession.create! @user
+    sign_in_as @user
 
     @search_setup = Factory(:search_setup, user: @user)
     @dashboard_widget = DashboardWidget.new

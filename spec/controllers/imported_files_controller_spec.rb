@@ -4,8 +4,8 @@ describe ImportedFilesController do
   
   before :each do 
     @u = Factory(:user)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
   describe 'show' do
     it 'should pass for html' do

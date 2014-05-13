@@ -227,33 +227,6 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
 
   end
-  describe :ftp_file do
-    before :each do
-      @t = mock('tmpfile')
-      @t.stub(:path).and_return('/x.badfile')
-    end
-    it "should ftp_file" do
-      File.stub(:exists?).and_return true
-      @t.should_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
-      @base.new.ftp_file @t
-    end
-    it 'should not unlink if false is passed' do
-      File.stub(:exists?).and_return true
-      @t.should_not_receive(:unlink)
-      FtpSender.should_receive(:send_file).with('svr','u','p',@t,{:folder=>'f',:remote_file_name=>'r'})
-      @base.new.ftp_file @t, false
-    end
-    it "should return false if file is nil" do
-      File.stub(:exists?).and_return true
-      FtpSender.should_not_receive(:send_file)
-      @base.new.ftp_file(nil).should be_false
-    end
-    it "should return false if file does not exist" do
-      FtpSender.should_not_receive(:send_file)
-      @base.new.ftp_file(@t).should be_false
-    end
-  end
 
   describe :cd_s do
     it "should generate a subselect with an alias" do

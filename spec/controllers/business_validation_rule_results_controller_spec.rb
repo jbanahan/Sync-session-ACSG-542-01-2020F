@@ -10,8 +10,8 @@ describe BusinessValidationRuleResultsController do
       bvr.state='Fail'
       bvr.validatable = @ent
       bvr.save!
-      activate_authlogic
-      UserSession.create! @u
+
+      sign_in_as @u
     end
     it "should return json if requested" do
       @rr.business_validation_rule.update_attributes(name:'myname')

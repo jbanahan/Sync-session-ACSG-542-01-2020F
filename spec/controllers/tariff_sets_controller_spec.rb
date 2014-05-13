@@ -8,8 +8,8 @@ describe TariffSetsController do
       Country.destroy_all
       TariffSet.destroy_all
       @user = Factory(:user)
-      activate_authlogic
-      UserSession.create @user
+
+      sign_in_as @user
       @c1 = Factory(:country)
       c2 = Factory(:country)
       [@c1,c2].each do |c|
@@ -49,8 +49,8 @@ describe TariffSetsController do
     context 'security' do
       it 'should not allow non-sys admins' do
         @user = Factory(:user)
-        activate_authlogic
-        UserSession.create @user
+
+        sign_in_as @user
         TariffLoader.should_not_receive(:delay)
         post :load, :country_id=>@country.id, :path=>'abc', :label=>'abcd'
         response.should be_redirect
@@ -60,8 +60,8 @@ describe TariffSetsController do
     context 'behavior' do
       before :each do
         @user = Factory(:user,:sys_admin=>true, :time_zone=>'Hawaii')
-        activate_authlogic
-        UserSession.create @user
+
+        sign_in_as @user
       end
       it 'should delay load from s3 and without activating' do
         Country.should_receive(:find).with(@country.id.to_s).and_return(@country)
@@ -92,8 +92,8 @@ describe TariffSetsController do
     context 'security' do
       it 'should not allow non admins' do
         @user = Factory(:user)
-        activate_authlogic
-        UserSession.create @user
+
+        sign_in_as @user
         get :activate, :id=>@tariff_set.id
         response.should be_redirect
         flash[:errors].should include "You must be an administrator to activate tariffs."
@@ -101,8 +101,8 @@ describe TariffSetsController do
     end
     it 'should call delayed activate and write flash message' do
       @user = Factory(:user,:admin=>true)
-      activate_authlogic
-      UserSession.create @user
+
+      sign_in_as @user
       TariffSet.should_receive(:find).with(@tariff_set.id.to_s).and_return(@tariff_set)
       @tariff_set.should_receive(:delay).and_return(@tariff_set)
       @tariff_set.should_receive(:activate).with(instance_of(User)).and_return(nil)
