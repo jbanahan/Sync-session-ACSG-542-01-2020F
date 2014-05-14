@@ -44,6 +44,7 @@ class User < ActiveRecord::Base
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
 
   validates  :company, :presence => true
+  validates  :username, presence: true, uniqueness: { case_sensitive: false }
 
   before_save :should_update_timestaps?
   after_save :reset_timestamp_flag

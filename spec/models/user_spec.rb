@@ -464,4 +464,23 @@ describe User do
       expect(user.host_with_port).to eq "www.test.com"
     end
   end
+  describe "username uniqueness" do
+    it "should prevent duplicate usernames without case sensitivity" do
+      c = Factory(:company)
+      u1 = User.new(email: "example@example.com", username: "username")
+      u1.password = "password"
+      u1.company = c
+      u1.save!
+
+      u2 = User.new(email: "example2@example.com", username: "username")
+      u2.password = "password"
+      u2.company = c
+      expect{ u2.save! }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Username has already been taken")
+
+      u3 = User.new(email: "example2@example.com", username: "USERNAME")
+      u3.password = "password"
+      u3.company = c
+      expect{ u3.save! }.to raise_error(ActiveRecord::RecordInvalid, "Validation failed: Username has already been taken")
+    end
+  end
 end
