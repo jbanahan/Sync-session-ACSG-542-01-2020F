@@ -52,6 +52,7 @@ class Attachment < ActiveRecord::Base
       tfile = attachment.download_to_tempfile
       Attachment.add_original_filename_method tfile
       tfile.original_filename = attachment.attached_file_name
+      tfile.original_filename = attachment.attachment_type + " " + tfile.original_filename if !attachment.attachment_type.blank?
       attachments << tfile
     end
     attachment_buckets = get_buckets_from(attachments)
