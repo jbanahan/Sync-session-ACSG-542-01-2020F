@@ -25,38 +25,41 @@
       <h3>Attachments</h3>
     </div>
   </div>
-      <% attachment_counter = 0 %>
+      <% attachment_counter = 0; private_counter = 0 %>
       <% attachments.each do |att| %>
-        <% next unless att.can_view?(current_user) %>
+        <% (private_counter += 1; next) unless att.can_view?(current_user) %>
         <% if attachment_counter%3 == 0 %>
           <div class="row">
         <% end %>
         <% attachment_counter += 1%>
-            <div class='col-sm-6 col-md-4'>
-              <div class='thumbnail text-center'>
-                <div class='attachment_delete'>
-                  <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>
-                    <%=link_to(image_tag("x.png",:size=>"16x16"), att, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
-                  <%else%>
-                    <%=image_tag('spacer.gif',:size=>'16x16')%>
-                  <%end%>
-                </div>
-                <%=attachment_icon att%>
-                <div class='caption' style="word-wrap:break-word">
-                  <%unless att.attachment_type.blank?%><h4><%=att.attachment_type%></h4><%end%>
-                  <p>
-                    <%=att.attached_file_name%>
-                  </p>
-                  <p>
-                    <%=link_to 'Download', download_attachment_path(att), :class=>'btn btn-primary btn-sm', :role=>'button', :target=>"chainio_attachment"%>
-                  </p>
-                </div>
+          <div class='col-sm-6 col-md-4'>
+            <div class='thumbnail text-center'>
+              <div class='attachment_delete'>
+                <%if attachable.can_edit?(current_user) && !att.attachable.is_a?(LinkableAttachment)%>
+                  <%=link_to(image_tag("x.png",:size=>"16x16"), att, :method => :delete, :confirm => "Are you sure you want to delete this?")%>
+                <%else%>
+                  <%=image_tag('spacer.gif',:size=>'16x16')%>
+                <%end%>
+              </div>
+              <%=attachment_icon att%>
+              <div class='caption' style="word-wrap:break-word">
+                <%unless att.attachment_type.blank?%><h4><%=att.attachment_type%></h4><%end%>
+                <p>
+                  <%=att.attached_file_name%>
+                </p>
+                <p>
+                  <%=link_to 'Download', download_attachment_path(att), :class=>'btn btn-primary btn-sm', :role=>'button', :target=>"chainio_attachment"%>
+                </p>
               </div>
             </div>
-          <% if attachment_counter%3 == 0%>
+          </div>
+          <% if attachment_counter%3 == 0 %>
             </div>
           <% end %>
       <% end -%>
+      <% if attachment_counter%3 != 0 and attachment_counter + private_counter == attachments.length %>
+        </div>
+      <% end %>
   <div class="row">
     <div class="col-md-12 text-center">
       <a href="/attachments/email_attachable/<%= attachable.class %>/<%= attachable.id %>">
