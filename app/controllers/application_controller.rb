@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
   require 'yaml'
   require 'newrelic_rpm'
 
-  protect_from_forgery
+  #protect_from_forgery
   # This is Clearances default before filter...we already handle its use cases in require_user more to our liking
   skip_before_filter :authorize
   before_filter :chainio_redirect
