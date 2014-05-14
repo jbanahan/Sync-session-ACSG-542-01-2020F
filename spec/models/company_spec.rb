@@ -88,6 +88,18 @@ describe Company do
       c.unlinked_companies.should_not include(linked_c)
     end
   end
+  describe "active_importers" do
+    it "should retrieve any active importers for existing companies based on products" do
+      @importer = Factory(:company, importer: true)
+      @product = Factory(:product, importer: @importer)
+      Company.active_importers.should include(@importer)
+    end
+    it "should retrieve any active importers for existing companies based on entries" do
+      @importer = Factory(:company, importer: true)
+      @entry = Factory(:entry, importer: @importer, file_logged_date: Time.now)
+      Company.active_importers.should include(@importer)
+    end
+  end
   context 'security' do
     before :each do
       MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)

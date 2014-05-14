@@ -29,6 +29,7 @@ class ApplicationController < ActionController::Base
   helper_method :master_setup
 
   after_filter :reset_state_values
+  after_filter :set_csrf_cookie
 
   # show user message and redirect for http(s)://*.chain.io/*
   def chainio_redirect
@@ -317,6 +318,14 @@ class ApplicationController < ActionController::Base
     send_data spreadsheet.string, :filename => filename, :type => :xls
   end
 
+  protected 
+  def verified_request?
+    # Angular uses the header X-XSRF-Token (rather than rails' X-CSRF-Token default), just account for that
+    # rather than making config modifications to our angular apps (since we'd have to update several different files
+    # rather than just this single spot)
+    super || (form_authenticity_token == request.headers['X-XSRF-Token'])
+  end
+
   private
   
   def set_master_setup
@@ -469,5 +478,13 @@ class ApplicationController < ActionController::Base
 
   def set_x_frame_options_header
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+  end
+
+  def set_csrf_cookie
+    # Angular will pick up this cookie value and add it to every ajax request, which allows us to then
+    # utilize the rails forgery protection.
+    if protect_against_forgery?
+      cookies['XSRF-TOKEN'] = {value: form_authenticity_token, secure: !Rails.env.development?}
+    end
   end
 end

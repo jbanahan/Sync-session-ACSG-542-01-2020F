@@ -23,7 +23,6 @@
       <%= javascript_include_tag "html5shim" %>
     <![endif]-->
     <script type='text/javascript'>
-      Chain.setAuthToken('<%=form_authenticity_token%>');
       <% if current_user %>
         Chain.messagePoller.initialize('<%=current_user.id%>', 30)
         <% if @include_legacy_scripts %>

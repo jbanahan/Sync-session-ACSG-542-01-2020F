@@ -192,4 +192,60 @@ describe ApplicationController do
     end
   end
 
+  describe :set_csrf_cookie do
+    controller do
+      after_filter :set_csrf_cookie
+
+      def show
+        render :text => "Rendered"
+      end
+
+      def protect_against_forgery?
+        true
+      end
+    end
+
+    before :each do 
+      @u = Factory(:master_user)
+      sign_in_as @u
+      @routes.draw {
+        resources :anonymous
+      }
+    end
+
+    it "should set csrf cookie" do
+      controller.should_receive(:form_authenticity_token).and_return "test"
+      get :show, :id => 1
+      expect(cookies['XSRF-TOKEN']).to eq "test"
+    end
+  end
+
+  describe "verified_request?" do
+    controller do
+      protect_from_forgery
+
+      def destroy
+        render :text => "Rendered"
+      end
+
+      def protect_against_forgery?
+        # This is off by default in test
+        true
+      end
+    end
+
+    before :each do 
+      @u = Factory(:master_user)
+      sign_in_as @u
+      @routes.draw {
+        resources :anonymous
+      }
+    end
+
+    it "verifies requests with a valid X-XSRF-Token" do
+      controller.stub(:form_authenticity_token).and_return "testing"
+      request.env['X-XSRF-Token'] = "testing"
+      post :destroy, :id => 1
+    end
+  end
 end

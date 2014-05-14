@@ -125,7 +125,13 @@ module ApplicationHelper
 
 
   def attachment_icon att
-    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px",:title=>"Uploaded: #{att.created_at.to_date}"}
+    title = "Uploaded: " + att.created_at.to_date.to_s
+    title += "<br>Uploaded by: " + att.uploaded_by.full_name unless att.uploaded_by.full_name.blank?
+    title += "<br>Archive Title: " + att.attachment_archives.first.name unless att.try(:attachment_archives).try(:first).try(:name).blank?
+    
+    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px",
+            "data-container" => "body", "data-toggle" => "popover", "data-placement" => "top",
+            "data-content" => title, "data-trigger" => "hover", "data-delay" => '{"show":"500"}' }
     link_opts = {}
     fn = att.attached_file_name
     icon = image_tag("icon_other.png",opts)

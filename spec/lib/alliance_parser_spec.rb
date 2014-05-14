@@ -166,7 +166,7 @@ describe OpenChain::AllianceParser do
     }
     #array of hashes for each invoice
     @commercial_invoices = [
-      {:invoice_number=>'19319111',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
+      {:invoice_number=>'19319111',:mfid=>'12345',:invoiced_value=>BigDecimal("1520.25",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
         :total_quantity=>"000000000012", :total_quantity_uom=>"CTNS",
@@ -196,13 +196,13 @@ describe OpenChain::AllianceParser do
           },
         {:part_number=>'101301',:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("8",3),:units_uom=>'EA',:po_number=>'1921301'}
       ]},
-      {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("41911.23",2),
+      {:invoice_number=>'491919fadf',:mfid=>'12345',:invoiced_value=>BigDecimal("1520.25",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
         :total_quantity=>"000000000001", :total_quantity_uom=>"BINDLE",
         :lines=>[{:export_country_code=>'CN',:origin_country_code=>'NZ',:vendor_name=>'vend 01',:units=>BigDecimal("29.111",3),:units_uom=>'EA',:spi_1=>"X",:part_number=>'123918',:mpf=>BigDecimal('100.00',2), :contract_amount => BigDecimal('0')}
         ]},
-      {:invoice_number=>'ff30101ffz',:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("611.23",2),
+      {:invoice_number=>'ff30101ffz',:mfid=>'MFIfdlajf1',:invoiced_value=>BigDecimal("1520.25",2),
         :currency=>"USD",:exchange_rate=>BigDecimal("12.345678",6),:invoice_value_foreign=>BigDecimal("123.14",2),
         :country_origin_code=>"CN",:gross_weight=>"1234",:total_charges=>BigDecimal("5546.21"),:invoice_date=>"20111203",
         :total_quantity=>"000000000099", :total_quantity_uom=>"BOTTLE",

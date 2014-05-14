@@ -147,7 +147,7 @@ var OpenChain = (function() {
     dialogContainer.dialog('destroy');
     dialogContainer.dialog({modal:true,buttons:{"OK":function() {
       dialogContainer.dialog('close');
-      $.post('/milestone_forecast_sets/'+milestoneSetId+'/change_plan',{plan_id:$("#sel_plan").val(),authenticity_token:authToken},function(data) {
+      $.post('/milestone_forecast_sets/'+milestoneSetId+'/change_plan',{plan_id:$("#sel_plan").val()},function(data) {
         renderMilestones(parentContainer,data,headingModule,isAdmin);
       });
     }}});

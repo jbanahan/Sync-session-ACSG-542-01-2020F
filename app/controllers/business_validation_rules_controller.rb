@@ -2,7 +2,6 @@ class BusinessValidationRulesController < ApplicationController
 
   def create
     admin_secure do
-      bvt_id = params[:business_validation_template_id]
       @bvr = BusinessValidationRule.new(params[:business_validation_rule])
       @bvt = BusinessValidationTemplate.find(params[:business_validation_template_id])
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible

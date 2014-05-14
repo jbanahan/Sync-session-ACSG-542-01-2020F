@@ -2,8 +2,8 @@ class XlsMaker
   require 'spreadsheet'
   
   HEADER_FORMAT = Spreadsheet::Format.new :weight => :bold,
-                                          :color => :orange,
-                                          :pattern_fg_color => :navy,
+                                          :color => :black,
+                                          :pattern_fg_color => :white,
                                           :pattern => 1,
                                           :name=>"Heading"
   DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'

@@ -10,7 +10,6 @@ class DrawbackClaimsController < ApplicationController
     claim = DrawbackClaim.find params[:id]
     action_secure(claim.can_view?(current_user), claim, {:verb => "view", :lock_check => false, :module_name=>"drawback claim"}) do
       @claim = claim
-      @bad_exports = @claim.exports_not_in_import.paginate(:page=>params[:page],:per_page=>20)
     end
   end
 
