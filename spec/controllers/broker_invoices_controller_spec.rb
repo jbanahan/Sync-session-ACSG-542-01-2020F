@@ -3,9 +3,9 @@ require 'spec_helper'
 describe BrokerInvoicesController do
   before :each do 
     MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)
-    activate_authlogic
+
     @user = Factory(:user,:company=>Factory(:company,:master=>true),:broker_invoice_edit=>true,:entry_view=>true)
-    UserSession.create! @user
+    sign_in_as @user
   end
   describe :create do
     before :each do 

@@ -3,8 +3,8 @@ require 'spec_helper'
 describe AdvancedSearchController do
   before :each do
     @user = Factory(:master_user,:email=>'a@example.com')
-    activate_authlogic
-    UserSession.create! @user
+
+    sign_in_as @user
   end
 
   describe :destroy do 
@@ -159,8 +159,9 @@ describe AdvancedSearchController do
         # updated_at is overwritten from the attribute hash internally by an activerecord
         # save hook unless record timestamps is unset
         # For some reason, the DB in Circle CI requires created_at...none of our local or prod dbs do
-        ss_first = Factory(:search_setup,:user=>@user,:updated_at=>1.day.ago, :created_at=>Time.zone.now)
-        ss_second = Factory(:search_setup,:user=>@user,:updated_at=>2.years.ago, :created_at=>Time.zone.now)
+        ss_first = Factory(:search_setup,:user=>@user)
+        ss_second = Factory(:search_setup,:user=>@user)
+        ss_second.update_column :updated_at, 2.years.ago
         get :last_search_id
         JSON.parse(response.body)['id'].should == ss_first.id.to_s
       end

@@ -3,8 +3,8 @@ require 'spec_helper'
 describe PortsController do
   before :each do
     @u = Factory(:admin_user)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
   
   describe :index do

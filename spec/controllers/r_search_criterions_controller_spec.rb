@@ -2,10 +2,6 @@ require 'spec_helper'
 
 describe RSearchCriterionsController do
 
-  before :each do
-    activate_authlogic
-  end
-
   describe :create do
 
     before :each do
@@ -18,7 +14,7 @@ describe RSearchCriterionsController do
 
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :create, business_validation_rule_id: @bvr.id, business_validation_template_id: @bvt.id, 
                     search_criterion: {
                       "operator" => "eq",
@@ -29,7 +25,7 @@ describe RSearchCriterionsController do
 
     it "should create the correct search criterion on a BVR" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       post :create, business_validation_rule_id: @bvr.id, business_validation_template_id: @bvt.id,
                     search_criterion: {
                       "operator" => "eq",
@@ -57,14 +53,14 @@ describe RSearchCriterionsController do
 
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :destroy, id: @sc.id, business_validation_template_id: @bvt.id, business_validation_rule_id: @bvr.id
       expect(response).to be_redirect
     end
 
     it "should delete the correct search criterion" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       post :destroy, id: @sc.id, business_validation_template_id: @bvt.id, business_validation_rule_id: @bvr.id
       expect { SearchCriterion.find(@sc.id) }.to raise_error
     end

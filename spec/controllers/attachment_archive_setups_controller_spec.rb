@@ -5,17 +5,17 @@ describe AttachmentArchiveSetupsController do
     @admin = Factory(:admin_user)
     @user = Factory(:user)
     @c = Factory(:company)
-    activate_authlogic
+
   end
   describe "new" do
     it "should fail if user not admin" do
-      UserSession.create! @user
+      sign_in_as @user
       get :new, :company_id=>@c.id
       response.should redirect_to request.referrer
       flash[:errors].should == ["You do not have permission to access this page."]
     end
     it "should succeed if user admin" do
-      UserSession.create! @admin
+      sign_in_as @admin
       get :new, :company_id=>@c.id
       response.should be_success
       assigns(:company).should == @c
@@ -26,13 +26,13 @@ describe AttachmentArchiveSetupsController do
       @c.create_attachment_archive_setup(:start_date=>Time.now)
     end
     it "should fail if user not admin" do
-      UserSession.create! @user
+      sign_in_as @user
       get :edit, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id
       response.should redirect_to request.referrer
       flash[:errors].should == ["You do not have permission to access this page."]
     end
     it "should succeed if user admin" do
-      UserSession.create! @admin
+      sign_in_as @admin
       get :edit, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id
       response.should be_success
       assigns(:company).should == @c
@@ -40,7 +40,7 @@ describe AttachmentArchiveSetupsController do
   end
   describe "create" do
     it "should succeed if user admin" do
-      UserSession.create! @admin
+      sign_in_as @admin
       target_date = Date.new(2011,12,1)
       post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
@@ -49,7 +49,7 @@ describe AttachmentArchiveSetupsController do
       flash[:notices].should == ["Your setup was successfully created."]
     end
     it "should fail if company already has record" do
-      UserSession.create! @admin
+      sign_in_as @admin
       @c.create_attachment_archive_setup(:start_date=>Time.now)
       target_date = Date.new(2011,12,1)
       post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
@@ -59,7 +59,7 @@ describe AttachmentArchiveSetupsController do
       flash[:errors].should == ["This company already has an attachment archive setup."]
     end
     it "should fail if user not admin" do
-      UserSession.create! @user
+      sign_in_as @user
       target_date = Date.new(2011,12,1)
       post :create, :company_id=>@c.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
@@ -73,7 +73,7 @@ describe AttachmentArchiveSetupsController do
       @c.create_attachment_archive_setup(:start_date=>Time.now)
     end
     it "should succeed if user is admin" do
-      UserSession.create! @admin
+      sign_in_as @admin
       target_date = Date.new(2011,12,1)
       post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d"), :combine_attachments=>"1", :combined_attachment_order=>"A\nB\nC"}
       @c.reload
@@ -84,7 +84,7 @@ describe AttachmentArchiveSetupsController do
       flash[:notices].should == ["Your setup was successfully updated."]
     end
     it "should fail if user not admin" do
-      UserSession.create! @user
+      sign_in_as @user
       target_date = Date.new(2011,12,1)
       post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d")}
       @c.reload
@@ -93,7 +93,7 @@ describe AttachmentArchiveSetupsController do
       expect(flash[:errors]).to eq ["You do not have permission to access this page."]
     end
     it "blanks the order attribute if combined attribute is not checked" do
-      UserSession.create! @admin
+      sign_in_as @admin
       target_date = Date.new(2011,12,1)
       post :update, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{:start_date=>target_date.strftime("%Y-%m-%d"), :combine_attachments=>"0", :combined_attachment_order=>"A\nB\nC"}
       @c.reload

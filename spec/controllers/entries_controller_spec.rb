@@ -4,9 +4,10 @@ describe EntriesController do
 
   before :each do 
     MasterSetup.get.update_attributes(:entry_enabled=>true)
-    @u = Factory(:master_user,entry_view:true)
-    activate_authlogic
-    UserSession.create! @u
+    c = Factory(:company,:master=>true)
+    @u = Factory(:master_user,entry_view:true,:company=>c)
+
+    sign_in_as @u
   end
 
   describe 'validation_results' do 

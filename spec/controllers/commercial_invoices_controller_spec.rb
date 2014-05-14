@@ -4,8 +4,8 @@ describe CommercialInvoicesController do
   describe "show" do
     before :each do
       u = Factory(:user,:company=>Factory(:company,:master=>true))
-      activate_authlogic
-      UserSession.create! u
+
+      sign_in_as u
       @ci = Factory(:commercial_invoice)
     end
     it "should show if user can view" do

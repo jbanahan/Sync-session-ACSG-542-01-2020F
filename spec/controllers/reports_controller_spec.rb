@@ -4,8 +4,8 @@ describe ReportsController do
 
   before(:each) do
     @u = Factory(:user)
-    activate_authlogic
-    UserSession.create @u
+
+    sign_in_as @u
   end
 
   describe 'containers released report' do
@@ -104,7 +104,7 @@ describe ReportsController do
       end
 
       it "should render page for admin users" do
-        UserSession.create @admin
+        sign_in_as @admin
         OpenChain::Report::HmStatisticsReport.should_receive(:permission?).and_return true
         get :show_hm_statistics
         response.should be_success
@@ -141,7 +141,7 @@ describe ReportsController do
       end
 
       it "should render page for admin user" do
-        UserSession.create @admin
+        sign_in_as @admin
         get :show_poa_expirations
         response.should be_success
       end
@@ -149,7 +149,7 @@ describe ReportsController do
 
     context "run as admin" do
       it "should run report for valid date and admin user" do
-        UserSession.create @admin
+        sign_in_as @admin
         get :run_poa_expirations, {'poa_expiration_date' => '2012-01-20'}
         response.should be_redirect
         flash[:notices].first.should == "Your report has been scheduled. You'll receive a system message when it finishes."

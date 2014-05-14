@@ -4,8 +4,8 @@ describe AttachmentArchivesController do
   before :each do
     User.any_instance.stub(:edit_attachment_archives?).and_return true
     @u = Factory(:user)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
   end
   describe :create do
     context :good_processing do

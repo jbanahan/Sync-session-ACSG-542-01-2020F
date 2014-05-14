@@ -3,8 +3,8 @@ require 'spec_helper'
 describe CorrectiveIssuesController do
   before :each do
     @u = Factory(:user)
-    activate_authlogic
-    UserSession.create! @u
+
+    sign_in_as @u
     @cap = Factory(:corrective_action_plan)
     CorrectiveActionPlan.any_instance.stub(:can_view?).and_return(true)
   end

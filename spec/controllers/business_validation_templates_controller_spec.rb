@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe BusinessValidationTemplatesController do
   before :each do
-    activate_authlogic
+
   end
   describe :index do
     before :each do
@@ -10,14 +10,14 @@ describe BusinessValidationTemplatesController do
     end
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       get :index
       expect(response).to be_redirect
       expect(assigns(:bv_templates)).to be_nil
     end
     it "should load templates" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       get :index
       expect(response).to be_success
       expect(assigns(:bv_templates)).to eq @bv_templates
@@ -29,14 +29,14 @@ describe BusinessValidationTemplatesController do
     end
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       get :show, id: @t.id
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
     end
     it "should load templates" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       get :show, id: @t.id
       expect(response).to be_success
       expect(assigns(:bv_template)).to eq @t
@@ -51,7 +51,7 @@ describe BusinessValidationTemplatesController do
 
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       get :new, id: @t.id
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
@@ -59,7 +59,7 @@ describe BusinessValidationTemplatesController do
 
     it "should load the correct template" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       get :new, id: @t.id
       expect(response).to be_success
       response.request.filtered_parameters["id"].to_i.should == @t.id
@@ -75,7 +75,7 @@ describe BusinessValidationTemplatesController do
 
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :create, id: @t.id
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
@@ -83,7 +83,7 @@ describe BusinessValidationTemplatesController do
 
     it "should create the correct template" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       post :create, id: @t.id
       expect(response).to be_success
       expect { BusinessValidationTemplate.find(@t.id) }.to_not raise_error
@@ -99,7 +99,7 @@ describe BusinessValidationTemplatesController do
 
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :update, id: @t.id
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
@@ -115,7 +115,7 @@ describe BusinessValidationTemplatesController do
 
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       get :edit, id: @t.id
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
@@ -123,7 +123,7 @@ describe BusinessValidationTemplatesController do
 
     it "should load the correct template" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       get :edit, id: @t.id
       expect(response).to be_success
       response.request.filtered_parameters["id"].to_i.should == @t.id
@@ -139,7 +139,7 @@ describe BusinessValidationTemplatesController do
 
     it "should require admin" do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :destroy, id: @t.id
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
@@ -147,7 +147,7 @@ describe BusinessValidationTemplatesController do
 
     it "should destroy the BVT" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       previous_id = @t.id
       post :destroy, id: @t.id
       expect { BusinessValidationTemplate.find(previous_id) }.to raise_error

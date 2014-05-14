@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe DrawbackClaimsController do
   before :each do
-    activate_authlogic
+
   end
   describe :index do
     before :each do
@@ -10,7 +10,7 @@ describe DrawbackClaimsController do
       @dc = Factory(:drawback_claim,:importer=>@du.company,:sent_to_customs_date=>1.year.ago)
       @dc2 = Factory(:drawback_claim,:importer=>@du.company)
       @dc_other = Factory(:drawback_claim,:sent_to_customs_date=>1.day.ago)
-      UserSession.create! @du
+      sign_in_as @du
     end
     it "should show claims based on DrawbackClaim.viewable" do
       User.any_instance.stub(:view_drawback?).and_return(true)
@@ -30,7 +30,7 @@ describe DrawbackClaimsController do
     before :each do
       @d = Factory(:drawback_claim)
       @u = Factory(:user)
-      UserSession.create! @u
+      sign_in_as @u
     end
     it "should show to user with permission" do
       DrawbackClaim.any_instance.stub(:can_view?).and_return(true)
@@ -50,6 +50,7 @@ describe DrawbackClaimsController do
     before :each do
       @claim = Factory(:drawback_claim)
       @u = Factory(:user)
+      sign_in_as @u
     end
     it "should show claim" do
       DrawbackClaim.any_instance.stub(:can_edit?).and_return(true)
@@ -69,7 +70,7 @@ describe DrawbackClaimsController do
       @u = Factory(:user)
       @claim = Factory(:drawback_claim)
       @h = {'id'=>@claim.id,'drawback_claim'=>{'name'=>'newname'}}
-      UserSession.create! @u
+      sign_in_as @u
     end
     it "should update claim" do
       DrawbackClaim.any_instance.stub(:can_edit?).and_return(true)
@@ -92,7 +93,7 @@ describe DrawbackClaimsController do
       @u = Factory(:user)
       @c = Factory(:company)
       @h = {'drawback_claim'=>{'importer_id'=>@c.id,'name'=>'nm','hmf_claimed'=>'10.04'}}
-      UserSession.create! @u
+      sign_in_as @u
     end
     it "should save new claim" do
       User.any_instance.stub(:edit_drawback?).and_return(true)

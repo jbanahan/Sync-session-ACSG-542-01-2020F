@@ -3,8 +3,8 @@ require 'spec_helper'
 describe DutyCalcImportFilesController do
   before :each do
     @user = Factory(:user)
-    activate_authlogic
-    UserSession.create! @user
+
+    sign_in_as @user
   end
   describe :create do
     before :each do 

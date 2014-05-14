@@ -5,17 +5,17 @@ describe ChargeCategoriesController do
   before :each do
     @c = Factory(:company)
     @cat = @c.charge_categories.create!(:charge_code=>'A',:category=>'B')
-    activate_authlogic
+
   end
   describe "index" do
     it "should require user to be admin" do
-      UserSession.create! Factory(:user)
+      sign_in_as Factory(:user)
       get :index, :company_id=>@c.id
       response.should redirect_to request.referrer
       flash[:errors].should have(1).message
     end
     it "should get charge categories for given company" do
-      UserSession.create! Factory(:admin_user)
+      sign_in_as Factory(:admin_user)
       get :index, :company_id=>@c.id
       response.should be_success
       assigns(:charge_categories).to_a.should == [@cat]
@@ -24,7 +24,7 @@ describe ChargeCategoriesController do
 
   describe "create" do
     it "should require user to be admin" do
-      UserSession.create! Factory(:user)
+      sign_in_as Factory(:user)
       post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x','category'=>'y'}
       response.should redirect_to request.referrer
       flash[:errors].should have(1).message
@@ -32,7 +32,7 @@ describe ChargeCategoriesController do
       @c.should have(1).charge_categories
     end
     it "should create category" do
-      UserSession.create! Factory(:admin_user)
+      sign_in_as Factory(:admin_user)
       post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x','category'=>'y'}
       response.should redirect_to company_charge_categories_path(@c)
       flash[:notices].first.should == "Charge Category created successfully."
@@ -44,7 +44,7 @@ describe ChargeCategoriesController do
 
   describe "destroy" do
     it "should require user to be admin" do
-      UserSession.create! Factory(:user)
+      sign_in_as Factory(:user)
       delete :destroy, :company_id=>@c.id, :id=>@cat.id
       response.should redirect_to request.referrer
       flash[:errors].should have(1).message
@@ -52,7 +52,7 @@ describe ChargeCategoriesController do
       @c.should have(1).charge_categories
     end 
     it "should destroy category" do
-      UserSession.create! Factory(:admin_user)
+      sign_in_as Factory(:admin_user)
       delete :destroy, :company_id=>@c.id, :id=>@cat.id
       response.should redirect_to company_charge_categories_path(@c)
       flash[:notices].first.should == "Charge Category deleted."

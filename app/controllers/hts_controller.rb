@@ -45,7 +45,7 @@ class HtsController < ApplicationController
   end
 
   def subscribed_countries
-    if logged_in?
+    if signed_in?
       available_countries = Country.where(import_location: true).where('id in (select country_id from official_tariffs)')
       country_hashes = {:countries => available_countries.collect {|country| {:name => country.name, :iso => country.iso_code}}}
       render json: country_hashes

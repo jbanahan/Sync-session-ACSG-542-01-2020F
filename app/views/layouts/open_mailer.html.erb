@@ -13,7 +13,7 @@
         </td></tr>
       </table>
     <%-end-%>
-    <% if Rails.env == "development" %>
+    <% if Rails.env.development? %>
       <b>Original "To" field:</b> <%= message.to.join(", ") %><br>
       <% if !message.cc.nil? %>
         <b>Original "CC" field:</b> <%= message.cc.join(", ") %><br>

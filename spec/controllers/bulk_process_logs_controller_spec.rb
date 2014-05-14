@@ -4,8 +4,7 @@ describe BulkProcessLogsController do
 
   before :each do
     @u = Factory(:user)
-    activate_authlogic
-    UserSession.create! @u
+    sign_in_as @u
 
     @log = BulkProcessLog.create! :user => @u
     @log.change_records.create!(:record_sequence_number => 1).add_message("Testing").save!

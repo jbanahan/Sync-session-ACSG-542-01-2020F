@@ -5,7 +5,6 @@ gem 'mysql2', '0.3.13'
 gem 'sqlite3'
 # AWS-SDK prior to 1.15 has a timeout bug in Ruby 2 on s3_object.write
 gem 'aws-sdk', '1.17.0'
-gem 'authlogic', '3.3.0'
 # Meta_Search is deprecated, replaced by Ransack - not API compatible, same concept though.
 gem 'meta_search', '1.1.3'
 gem 'will_paginate', '3.0.4'
@@ -40,6 +39,7 @@ gem "google-api-client", "0.6.4"
 # needs this.
 gem "mono_logger", '1.1.0'
 gem "net-sftp", '2.1.2'
+gem "clearance", '1.3.0'
 
 group :development,:test do
   gem 'rspec-rails', '~> 2.12'

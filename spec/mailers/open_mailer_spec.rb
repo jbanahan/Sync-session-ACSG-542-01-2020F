@@ -107,18 +107,19 @@ describe OpenMailer do
 
   context :send_simple_html do 
     describe "in development environment" do
-      before {
-        Rails.stub(:env => "development")
-        Rails.env.stub(:production? => false)
-      }
-
       it "should send an email to User 1's email" do
-        #That should be support@vandegrift.inc in the test environment
+        # For some reason, the test seems to fail when run from spork on an undefined message variable in the layout.
+        # It runs fine via the rspec commandline, not sure what's going on.
+
+        Rails.stub(:env).and_return ActiveSupport::StringInquirer.new("development")
+        
+        #Ensure there's a user set up, it seems sometimes there's not in circle environment
+        user = Factory(:user, email: "me@there.com")
+        
         OpenMailer.send_simple_html("example@example.com", "Test subject","<p>Test body</p>").deliver!
 
-        OpenMailer.deliveries.last.to.first.should == "support@vandegriftinc.com"
+        OpenMailer.deliveries.last.to.first.should == User.first.email
         OpenMailer.deliveries.last.body.raw_source.should match('<b>Original "To" field:</b> example@example.com')
-
       end
     end
 

@@ -1,19 +1,11 @@
 require 'securerandom'
 
 class User < ActiveRecord::Base
-  cattr_accessor :current
+  include Clearance::User
 
-  acts_as_authentic do |config|
-    # By default, authlogic expires password resets after 10 minutes...that's too short, allow an hour
-    config.perishable_token_valid_for 1.hour
-    # Default options to make sure Authlogic cookies are set to only be accessible over ssl and only http only.
-    # SSL only for prod since we don't run dev environment over SSL
-    UserSession.secure = Rails.env.production?
-    UserSession.httponly = true
-  end
+  cattr_accessor :current
   
-  attr_accessible :username, :email, :password, 
-    :password_confirmation, :time_zone, 
+  attr_accessible :username, :email, :time_zone, 
     :email_format, :company_id,
     :first_name, :last_name, :search_open,
     :order_view, :order_edit, :order_delete, :order_attach, :order_comment,
@@ -53,16 +45,53 @@ class User < ActiveRecord::Base
 
   validates  :company, :presence => true
 
-  before_save :authlogic_persistence
+  before_save :should_update_timestaps?
   after_save :reset_timestamp_flag
 
-  def self.find_not_locked(login) 
-    u = User.where(:username => login).first
-    unless u.nil? || u.company.locked
-      return u
-    else
-      return nil
+  # This is overriding the standard clearance email find and replacing with a lookup by username instead
+  def self.authenticate username, password
+    user = User.where(username: username).first
+
+    if user
+      # Authenticated? is the clearance method for validating the user's supplied password matches
+      # the stored password hash.
+      user = user.authenticated?(password) ? user : nil
     end
+
+    user
+  end
+
+  def self.access_allowed? user
+    !(user.nil? || user.disabled? || user.company.locked)
+  end
+
+  def update_user_password password, password_confirmation
+    # The password will be blank most of the time on the user maint screen, unless the user
+    # is actually trying to update their password.
+    valid = password.blank?
+    unless valid
+      if password != password_confirmation
+        valid = false
+        errors.add(:password, "must match password confirmation.")
+      else
+        # This is the clearance method for updating the password.
+        valid = update_password(password)
+      end
+    end
+    valid
+  end
+
+  def on_successful_login request
+    if request && self.host_with_port.blank?
+      self.host_with_port = request.host_with_port
+    end
+
+    self.last_login_at = self.current_login_at
+    self.current_login_at = Time.zone.now
+    self.failed_login_count = 0
+    save validate: false
+
+    History.create({:history_type => 'login', :user_id => self.id, :company_id => self.company_id})
   end
 
   def debug_active?
@@ -71,18 +100,8 @@ class User < ActiveRecord::Base
 
   #send password reset email to user
   def deliver_password_reset_instructions!
-    reset_password_prep
-    OpenMailer.send_password_reset(self, self.updated_at + 1.hour).deliver
-  end
-
-  # Preparations needed for resetting a users password.
-  def reset_password_prep
-    # The reason we're touching ourselves is because authlogic uses 'updated_at' to implement an expiration time on the
-    # perishable token.  However, since we've disabled setting updated_at for caching reasons (perishable token is reset every request)
-    # if only perishable_token is updated (as happens below on 'reset_perishable_token!') then, unless the user account has been 
-    # updated within the last hour, the user won't be able to use the password reset email because his token will be considered out of date already.
-    self.touch
-    reset_perishable_token!
+    forgot_password!
+    OpenMailer.send_password_reset(self).deliver
   end
 
   # Sends each user id listed an email informing them of their account login / temporary password
@@ -95,9 +114,11 @@ class User < ActiveRecord::Base
       user = User.where(id: id).first
       if user
         # Because we only store hashed versions of passwords, if we're going to relay users their temporary 
-        # password in an email, the only way we can send them a cleartext password is if we generate one here.
-        password = update_with_random_password user
-        OpenMailer.send_invite(user, password).deliver
+        # password in an email, the only way we can send them a cleartext password is if we generate and save one here.
+        cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
+        user.update_user_password cleartext, cleartext
+        user.update_column :password_reset, true
+        OpenMailer.send_invite(user, cleartext).deliver
       end
     end
     nil
@@ -427,28 +448,13 @@ class User < ActiveRecord::Base
   def master_setup
     MasterSetup.get 
   end
-  def authlogic_persistence
-    self.record_timestamps = false if (self.changed - ['perishable_token','persistence_token','last_request_at']).empty?
+  def should_update_timestaps?
+    no_timestamp_reset_fields = ['confirmation_token','remember_token','last_request_at', 'last_login_at', 'current_login_at', 'failed_login_count', 'host_with_port']
+    self.record_timestamps = false if (self.changed - no_timestamp_reset_fields).empty?
     true
   end
   def reset_timestamp_flag
     self.record_timestamps = true
     true
   end
-
-  # Generates a random password, saves it into the user, forces password reset and returns the cleartext version of the password
-  # that was generated.
-  def self.update_with_random_password user
-    # Generates a purely random 8 character password
-    cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
-
-    user.password = cleartext
-    user.password_confirmation = cleartext
-    user.password_reset = true
-    user.save!
-    user.reset_perishable_token!
-
-    cleartext
-  end
-  private_class_method :update_with_random_password
 end

@@ -4,8 +4,8 @@ describe SurveyResponseLogsController do
   describe :index do
     before :each do 
       u = Factory(:user)
-      activate_authlogic
-      UserSession.create! u
+
+      sign_in_as u
       @sr = Factory(:survey_response)
       @log = @sr.survey_response_logs.create!(:message=>"x")
     end

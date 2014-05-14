@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe BusinessValidationRulesController do
   before :each do
-    activate_authlogic
+
   end
 
   describe :create do
@@ -14,7 +14,7 @@ describe BusinessValidationRulesController do
 
     it 'should require admin' do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :create, 
             business_validation_template_id: @bvt.id, 
             business_validation_rule: {
@@ -25,7 +25,7 @@ describe BusinessValidationRulesController do
 
     it "should create the correct rule" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       post :create, 
             business_validation_template_id: @bvt.id, 
             business_validation_rule: {
@@ -39,7 +39,7 @@ describe BusinessValidationRulesController do
 
     it "should only save for valid JSON" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       post :create, 
             business_validation_template_id: @bvt.id, 
             business_validation_rule: {
@@ -59,14 +59,14 @@ describe BusinessValidationRulesController do
 
     it 'should require admin' do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       get :edit, id: @bvr.id, business_validation_template_id: @bvt.id
       expect(response).to be_redirect
     end
 
     it "should load the correct rule to edit" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       get :edit, 
             id: @bvr.id,
             business_validation_template_id: @bvt.id, 
@@ -88,14 +88,14 @@ describe BusinessValidationRulesController do
 
     it 'should require admin' do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :update, id: @bvr.id, business_validation_template_id: @bvt.id
       expect(response).to be_redirect
     end
 
     it "should update the correct rule" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       post :update, 
             id: @bvr.id,
             business_validation_template_id: @bvt.id, 
@@ -119,7 +119,7 @@ describe BusinessValidationRulesController do
 
     it 'should require admin' do
       u = Factory(:user)
-      UserSession.create! u
+      sign_in_as u
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
       expect { BusinessValidationRule.find(@bvr.id) }.to_not raise_error
       expect(response).to be_redirect
@@ -127,7 +127,7 @@ describe BusinessValidationRulesController do
 
     it "should delete the correct rule" do
       u = Factory(:admin_user)
-      UserSession.create! u
+      sign_in_as u
       post :destroy, id: @bvr.id, business_validation_template_id: @bvt.id
       expect { BusinessValidationRule.find(@bvr.id) }.to raise_error
     end
