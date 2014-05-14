@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
   end
 
   def self.parse data, opts = {}
-    LenoxPoParser.new.process data
+    self.new.process data
   end
 
   def initialize
