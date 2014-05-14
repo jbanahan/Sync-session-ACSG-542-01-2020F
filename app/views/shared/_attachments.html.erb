@@ -8,9 +8,6 @@
         $('#attachment_attached_visible').val($(this).val());
       });
 
-      $($("span.ui-button-text")[0]).addClass("btn-success")
-      $($("span.ui-button-text")[1]).addClass("btn-danger")
-
     });    
   <% end %>
   <% if !attachable.respond_to?('can_attach?') || attachable.can_attach?(current_user)%>
