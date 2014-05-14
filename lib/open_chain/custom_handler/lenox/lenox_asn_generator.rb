@@ -152,7 +152,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     r << @f.date(entry.export_date)
     r << @f.str(entry.lading_port_code,10)
     r << @f.str(entry.unlading_port_code,10)
-    r << @f.str(entry.transport_mode_code,6)
+    r << @f.str('',6) #hold for mode
     r << @f.str(get_final_destination_code(entry),10)
     r << 'APP '
     r << ''.ljust(80)

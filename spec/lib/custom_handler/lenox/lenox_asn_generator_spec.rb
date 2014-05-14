@@ -124,7 +124,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[223,8]).to eq '20140116' 
         expect(row[231,10].rstrip).to eq '12345'
         expect(row[241,10].rstrip).to eq '4321'
-        expect(row[251,6].rstrip).to eq '11'
+        expect(row[251,6].rstrip).to eq '' #placeholder for mode
         expect(row[257,10].rstrip).to eq 'HDC'
         expect(row[267,4]).to eq 'APP '
         expect(row[271,80]).to eq ''.ljust(80)
