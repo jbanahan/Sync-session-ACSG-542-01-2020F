@@ -2,6 +2,7 @@
   <% content_for :javascript do %>
     $(document).ready(function() {
       Chain.initAttachments();
+      $('.attachment_icon').popover({html: true});
 
       $('input[id=attachment_attached]').change(function(){
         $('#attachment_attached_visible').val($(this).val());
