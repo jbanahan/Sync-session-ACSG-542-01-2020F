@@ -14,7 +14,7 @@ module OpenChain
       
       def process_product_ack_file file_content, file_name, sync_code, username
         errors = get_ack_file_errors file_content, file_name, sync_code
-        handle_errors errors, file_name, username, file_content unless errors.blank?
+        handle_errors errors, file_name, username, file_content, sync_code unless errors.blank?
       end
 
       def get_ack_file_errors file_content, file_name, sync_code
@@ -43,7 +43,7 @@ module OpenChain
       end
 
       # override this to do custom handling with the given array of error messages
-      def handle_errors errors, file_name, username, file_content
+      def handle_errors errors, file_name, username, file_content, sync_code
         messages = ["File Name: #{file_name}"]
         messages += errors
 
@@ -53,9 +53,7 @@ module OpenChain
           t << file_content
           t.flush; t.rewind
 
-          OpenMailer.send_ack_file_exception(email_address, messages, t, file_name).deliver!
-
-          t.close
+          OpenMailer.send_ack_file_exception(email_address, messages, t, file_name, sync_code).deliver!
         end
       end
       

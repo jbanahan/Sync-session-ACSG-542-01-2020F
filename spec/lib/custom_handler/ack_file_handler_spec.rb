@@ -31,13 +31,13 @@ describe OpenChain::CustomHandler::AckFileHandler do
   it "should call errors callback if there is an error" do
     t = described_class.new
     msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
-    t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,OK")
+    t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,OK", "OTHER")
     t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
   end
   it "should handle extra whitespace" do
     t = described_class.new
     msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
-    t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,\"OK\"        ")
+    t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,\"OK\"        ","OTHER")
     t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER', "testuser"
   end
 
