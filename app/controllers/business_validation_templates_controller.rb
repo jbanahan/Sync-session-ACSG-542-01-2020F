@@ -11,7 +11,7 @@ class BusinessValidationTemplatesController < ApplicationController
       @bvt = BusinessValidationTemplate.new(params[:business_validation_template])
 
       if @bvt.save
-        redirect_to @bvt, notice: "Template successfully created."
+        redirect_to edit_business_validation_template_path(@bvt), notice: "Template successfully created."
       else
         render action: "new"
       end
