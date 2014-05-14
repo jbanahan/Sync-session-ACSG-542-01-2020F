@@ -1,6 +1,6 @@
 root = exports ? this
 root.Chain =
-  
+
   # runs the onwindowunload properly handling IE duplicate call issues
   # expects passed in function to return a string if user should be prompted
   # or undefined if no prompt is needed
@@ -253,14 +253,12 @@ root.Chain =
     modal.dialog('open')
 
 
-  # Rails Auth Token accessors
-  setAuthToken : (token) ->
-    # References rails_helper.js.coffee
-    RailsHelper.authToken(token)
-
   getAuthToken : () ->
-    # References rails_helper.js.coffee
-    RailsHelper.authToken()
+    # First check for the csrf cookie (since that's what angular uses as well), then fall back to the meta tag.
+    token = $.cookie("XSRF-TOKEN")
+    unless token
+      token = $('meta[name="csrf-token"]').attr('content')
+    token
 
   # Controls for enabling and disabling the user message poller.
   messagePoller :
@@ -382,6 +380,10 @@ root.Chain =
 
 
 $(document).ready () ->
+  # This includes this header in literally every jQuery ajax call.
+  # Note, this header is included twice, since jquery.form also 'helpfully' reads the crsf token and injects it as well
+  $.ajaxSetup({headers: {"X-CRSF-Token": Chain.getAuthToken()}})
+
   Chain.bindQuickSearchKey()
   $("#lnk_hide_notice").click (evt) ->
     evt.preventDefault
