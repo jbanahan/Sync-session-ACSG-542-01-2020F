@@ -161,7 +161,8 @@ module OpenChain
           @entry.file_logged_date = time_zone.now.midnight if @entry.file_logged_date.nil?
 
           @commercial_invoices.each do |inv_num, inv|
-            inv.invoice_value = @ci_invoice_val[inv_num]
+            inv.invoice_value_foreign = @ci_invoice_val[inv_num]
+            inv.invoice_value = inv.invoice_value_foreign * inv.exchange_rate
           end
 
           set_entry_dates @entry, accumulated_dates

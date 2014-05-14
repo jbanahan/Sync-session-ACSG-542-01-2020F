@@ -55,9 +55,10 @@ describe OpenChain::FenixParser do
     @val_for_duty = '23'
     @unit_price = BigDecimal("12.21")
     @line_value = BigDecimal("14652.00")
-    @currency = 'USD'
     @exchange_rate = BigDecimal("1.01")
+    @invoice_value = BigDecimal("14798.52") # = line_value * exchange_rate
     @entered_value = BigDecimal('14652.01')
+    @currency = 'USD'
     @duty_amount = BigDecimal("813.19")
     @gst_rate_code = '5'
     @gst_amount = BigDecimal("5.05")
@@ -176,7 +177,7 @@ describe OpenChain::FenixParser do
     ci.vendor_name.should == @vendor_name
     ci.currency.should == @currency
     ci.exchange_rate.should == @exchange_rate
-    ci.invoice_value.should == @line_value
+    ci.invoice_value.should == @invoice_value
 
     ci.commercial_invoice_lines.should have(1).line
     line = ci.commercial_invoice_lines.first
@@ -635,7 +636,7 @@ describe OpenChain::FenixParser do
         ent = Entry.find_by_broker_reference(@file_number)
         ent.total_invoiced_value.should == BigDecimal('39.13')
         invoice_vals = ent.commercial_invoices.collect {|i| i.invoice_value}
-        invoice_vals.should == [BigDecimal('19.10'),BigDecimal('20.03')]
+        invoice_vals.should == [BigDecimal('19.29'),BigDecimal('20.23')]
       end
       it 'invoice value - same invoices' do
         ['19.10','20.03'].each_with_index {|b,i| 
@@ -646,7 +647,7 @@ describe OpenChain::FenixParser do
         ent = Entry.find_by_broker_reference(@file_number)
         ent.total_invoiced_value.should == BigDecimal('39.13')
         ent.should have(1).commercial_invoices
-        ent.commercial_invoices.first.invoice_value.should == BigDecimal('39.13')
+        ent.commercial_invoices.first.invoice_value.should == BigDecimal('39.52')
       end
       it 'duty amount' do
         ['9.10','10.10'].each_with_index {|b,i| @invoices[i][:duty]=b}
