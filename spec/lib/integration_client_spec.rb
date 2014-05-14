@@ -93,6 +93,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
         OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
       end
     end
+    context :eddie_bauer do
+      it "should send data to eddie bauer po parser for _eddie_po" do
+        p = double("parser")
+        OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.should_receive(:delay).and_return p
+        p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_eddie_po/','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+    end
     context :msl_plus_enterprise do
       it "should send data to MSL+ Enterprise custom handler if feature enabled and path contains _from_msl but not test and file name does not include -ack" do
         ack = mock("ack_file")

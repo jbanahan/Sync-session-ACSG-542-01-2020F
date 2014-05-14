@@ -5,6 +5,7 @@ require 'open_chain/fenix_parser'
 require 'open_chain/custom_handler/ack_file_handler'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
+require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
 require 'open_chain/custom_handler/fenix_invoice_parser'
 require 'open_chain/custom_handler/kewill_isf_xml_parser'
 require 'open_chain/custom_handler/lenox/lenox_po_parser'
@@ -118,6 +119,8 @@ module OpenChain
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_shoes_po/'
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include? '/_eddie_po/'
+        OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_po/') && MasterSetup.get.custom_feature?('Lenox')
