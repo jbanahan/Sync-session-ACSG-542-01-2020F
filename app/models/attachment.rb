@@ -54,11 +54,45 @@ class Attachment < ActiveRecord::Base
       tfile.original_filename = attachment.attached_file_name
       attachments << tfile
     end
-    OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+    attachment_buckets = get_buckets_from(attachments)
+    email_index = 1; total_emails = attachment_buckets.length
+
+    attachment_buckets.each do |attachments|
+      if total_emails > 1
+        altered_subject = email_subject + " (#{email_index} of #{total_emails})"
+        email_index += 1
+        OpenMailer.auto_send_attachments(to_address, altered_subject, email_body, attachments, full_name, email).deliver!
+      else
+        OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver!
+      end
+    end
     return true
   ensure
     attachments.each {|tfile| tfile.close! unless tfile.closed?}
   end
+
+  def self.get_buckets_from(attachments)
+  final_buckets = [[]]
+  attachments.each do |attachment|
+    added_to_existing_bucket = false
+    if attachment.size >= 10*1020*1024
+      final_buckets << [attachment]
+    else
+      final_buckets.each do |bucket|
+        if bucket == []
+          bucket << attachment
+          added_to_existing_bucket = true
+        elsif (bucket.map(&:size).inject(:+) != nil) and (10*1020*1024 - bucket.map(&:size).inject(:+) >= attachment.size)
+          bucket << attachment
+          added_to_existing_bucket = true
+          break
+        end
+      end
+      final_buckets << [attachment] unless added_to_existing_bucket
+    end
+  end
+  final_buckets
+end
 
   # create a hash suitable for json rendering containing all attachments for the given attachable
   def self.attachments_as_json attachable
