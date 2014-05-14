@@ -8,7 +8,7 @@ class HtsController < ApplicationController
   end
 
   def permission
-    logged_in? or ["US","CA"].include?(params[:iso])
+    signed_in? || ["US","CA"].include?(params[:iso])
   end
 
   def country
