@@ -9,7 +9,7 @@ describe "HtsApp", () ->
       scope = $injector.get('$rootScope')
       $ctrl = $injector.get('$controller')
       ctrl = $ctrl('HtsCtrl', {$scope: scope})
-      countriesResponse = {countries:[{iso:'US',name:'USA'},{iso:'CA',name:'Canada'}]}
+      countriesResponse = {countries:[{iso:'US',name:'USA',view:true},{iso:'CA',name:'Canada',view:true}]}
       chaptersResponse = {headings:[1,2,3]}
       headingsResponse = {sub_headings:[6, 7, 8]}
       
@@ -24,12 +24,15 @@ describe "HtsApp", () ->
 
     describe "loadSubscribedCountries", () ->
       it "should load countries by default", () ->
+        scope.loadSubscribedCountries()
         http.flush()
         expect(scope.countries).toEqual countriesResponse.countries
         expect(scope.country.iso).toEqual 'US'
 
       it "should load first country's chapters", () ->
+        scope.loadSubscribedCountries()
         http.flush()
+        expect(scope.country.iso).toEqual 'US'
         expect(scope.chapters).toEqual [1,2,3]
 
     describe "loadChapter", () ->
