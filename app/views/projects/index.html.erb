@@ -1,8 +1,28 @@
+<%- content_for :javascript do %>
+  var showClosed = -1;
+
+  $(function() {
+    $("#toggle-closed-projects").click(function(){
+      showClosed *= -1;
+      if (showClosed == 1){
+        $(".closed-project").css("display","table-row");
+        $("#toggle-closed-projects").text("Hide Closed Projects");
+      }
+      else{
+        $(".closed-project").css("display","none");
+        $("#toggle-closed-projects").text("Show Closed Projects");
+      }
+    });
+  });
+<% end %>
+
+
 <%-content_for :action_bar do-%>
   <%if current_user.edit_projects?%>
     <button class='btn btn-default' id='btn-new'>New</button>
   <%end%>
   <button class='btn btn-default btn_link' link_to='<%=project_deliverables_path%>'>Deliverables</button>
+  <button class='btn btn-default' id='toggle-closed-projects'>Show Closed Projects</button>
 <%-end-%>
 <%-cache ['project_index_v2',Project.select('projects.id, projects.updated_at').order('updated_at DESC').first] do-%>
 <%@projects = @projects.order('closed_at ASC, name ASC, due ASC')%>
@@ -20,7 +40,7 @@
   <tbody>
     <%-@projects.each do |p|-%>
       <%-cache ['proj_index_row_v2',p,0.seconds.ago.strftime('%Y-%m-%d')] do #cache at this level because the .red? method is expensive-%>
-        <tr class='<%=p.red? ? 'danger' : 'no-danger'%>'>
+        <tr class='<%=p.red? ? 'danger' : 'no-danger'%> <%=p.closed_at.nil? ? '' : 'closed-project'%>' style='<%= p.closed_at.nil? ? '' : 'display:none' %>'>
           <td><%=link_to 'View', p, :class=>'btn btn-xs btn-default'%></td>
           <td><%=p.name%><%=p.closed_at ? ' <span class="label label-default">closed</span> '.html_safe : ''%></td>
           <td><%=p.due%></td>
