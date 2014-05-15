@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
 
   def find_entries
     passed_rules = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')
-    passed_rules.apply(Entry.joins("LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = '#{SYNC_CODE}'").
+    passed_rules.apply(Entry.select("DISTINCT entries.*").joins("LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = '#{SYNC_CODE}'").
       where(importer_id:@lenox.id).
       where("entries.entry_filed_date is not null").
       where('sync_records.id is null'))
