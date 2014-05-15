@@ -98,7 +98,7 @@ $(function() {
             <td><%=ii.last_check_in%></td>
             <td>
               <div class='upgrade_list'>
-                <%ii.upgrade_logs.order("started_at DESC").each do |u|%>
+                <%ii.upgrade_logs.order("started_at DESC LIMIT 5").each do |u|%>
                   <div>
                     <%=link_to u.started_at.to_s, u%> (<%=u.to_version%>)
                     <%= "FAILED" if u.log && u.finished_at && !u.log.include?("Upgrade complete") %>
