@@ -121,8 +121,9 @@ class UsersController < ApplicationController
       if current_user.admin?
         u = User.find_by_username params[:username]
         if u
-          current_user.run_as = u
-          current_user.save
+          user = current_user
+          user.run_as = u
+          user.save
           redirect_to "/"
         else
           error_redirect "User with username #{params[:username]} not found."

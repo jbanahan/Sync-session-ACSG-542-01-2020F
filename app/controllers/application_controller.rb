@@ -318,6 +318,17 @@ class ApplicationController < ActionController::Base
     send_data spreadsheet.string, :filename => filename, :type => :xls
   end
 
+  def current_user
+    # Clearance controller defines current_user method, we need to add in run_as handling here ourselves
+    user = super
+    if user && user.run_as
+      @run_as_user = user
+      user = user.run_as
+    end
+
+    user
+  end
+
   protected 
   def verified_request?
     # Angular uses the header X-XSRF-Token (rather than rails' X-CSRF-Token default), just account for that

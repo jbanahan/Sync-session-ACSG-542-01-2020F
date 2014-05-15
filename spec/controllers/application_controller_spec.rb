@@ -248,4 +248,37 @@ describe ApplicationController do
       post :destroy, :id => 1
     end
   end
+
+  describe "current_user" do
+    controller do
+      def show 
+        render :text => current_user.username
+      end
+    end
+
+    before :each do
+      @routes.draw {
+        resources :anonymous
+      }
+    end
+
+    it "supplies logged in user as current_user" do
+      u = Factory(:user)
+      sign_in_as u
+      get :show, :id => 1
+      expect(response.body).to eq u.username
+    end
+
+    it "delegates current_user to the user set in run_as" do
+      u = Factory(:user)
+      run_as = Factory(:user, run_as: u)
+      sign_in_as u
+      u.run_as = run_as
+      u.save!
+
+      get :show, :id => 1
+      expect(response.body).to eq run_as.username
+      expect(assigns(:run_as_user)).to eq u
+    end
+  end
 end
