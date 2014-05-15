@@ -5,8 +5,9 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     g = described_class.new
     g.stub(:generate_header_rows).and_yield("x")
     g.stub(:generate_detail_rows).and_raise(described_class::LenoxBusinessLogicError)
-    r = g.generate_tempfiles [Entry.new]
+    r = g.generate_tempfiles [Factory(:entry)]
     expect(r.size).to eq 2
+    expect(Entry.first.sync_records.count).to eq 1 #write sync record on LenoxBusinessLogicError
     email = ActionMailer::Base.deliveries.last
     expect(email.subject).to eql("Lenox ASN Failure")
     expect(email.to).to eq ["lenox_us@vandegriftinc.com"]
