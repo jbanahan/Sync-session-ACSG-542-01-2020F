@@ -26,8 +26,8 @@ describe CorrectiveIssuesController do
       CorrectiveActionPlan.any_instance.stub(:can_update_actions?).and_return(true)
       put :update, :id=>ci.id.to_s, 'corrective_issue'=>{'id'=>ci.id.to_s,'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}, :format=> 'json'
       ci.reload
-      ci.description.should == 'd' #not changed
-      ci.suggested_action.should == 'sa' #not changed
+      ci.description.should == 'nd' #can change due to updated permission expression
+      ci.suggested_action.should == 'ns' #can change due to updated permission expression
       ci.action_taken.should == 'na'
     end
     it "should 401 if user cannot view" do
@@ -43,6 +43,38 @@ describe CorrectiveIssuesController do
 
       CorrectiveActionPlan.any_instance.should_receive(:log_update).with(@u)
       put :update, :id=>ci.id.to_s, 'corrective_issue'=>{'id'=>ci.id.to_s,'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}, :format=> 'json'
+    end
+    it "should update extra fields if current_user can edit" do
+      ci = @cap.corrective_issues.create!(description:'d',suggested_action:'sa',action_taken:'at')
+      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(true)
+      CorrectiveActionPlan.any_instance.stub(:can_update_actions?).and_return(false)
+
+      put :update, :id=>ci.id.to_s, 'corrective_issue'=>{'id'=>ci.id.to_s,'description'=>'nd','suggested_action'=>'nsa','action_taken'=>'nat'}, :format=> 'json'
+      r = JSON.parse(response.body)["corrective_issue"]
+      r["description"].should == "nd"
+      r["suggested_action"].should == "nsa"
+    end
+
+    it "should update extra fields if current_user can update actions" do
+      ci = @cap.corrective_issues.create!(description:'d',suggested_action:'sa',action_taken:'at')
+      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(false)
+      CorrectiveActionPlan.any_instance.stub(:can_update_actions?).and_return(true)
+
+      put :update, :id=>ci.id.to_s, 'corrective_issue'=>{'id'=>ci.id.to_s,'description'=>'nd','suggested_action'=>'nsa','action_taken'=>'nat'}, :format=> 'json'
+      r = JSON.parse(response.body)["corrective_issue"]
+      r["description"].should == "nd"
+      r["suggested_action"].should == "nsa"
+    end
+
+    it "should not update extra fields if current_user can neither edit nor update actions" do
+      ci = @cap.corrective_issues.create!(description:'d',suggested_action:'sa',action_taken:'at')
+      CorrectiveActionPlan.any_instance.stub(:can_edit?).and_return(false)
+      CorrectiveActionPlan.any_instance.stub(:can_update_actions?).and_return(false)
+
+      put :update, :id=>ci.id.to_s, 'corrective_issue'=>{'id'=>ci.id.to_s,'description'=>'nd','suggested_action'=>'ns','action_taken'=>'na'}, :format=> 'json'
+      r = JSON.parse(response.body)["corrective_issue"]
+      r["description"].should == "d"
+      r["suggested_action"].should == "sa"
     end
   end
 
