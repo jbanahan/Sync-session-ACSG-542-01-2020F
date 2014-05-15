@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   end
 
   def ftp_credentials
-    {server:'ftp.lenox.com',username:"vanvendor#{@env=='production' ? '' : 'test'}",password:'$hipments',folder:'/'}
+    {server:'ftp.lenox.com',username:"vanvendor#{@env=='production' ? '' : 'test'}",password:'$hipments',folder:'.'}
   end
 
   def find_entries
