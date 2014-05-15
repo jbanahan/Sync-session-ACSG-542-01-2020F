@@ -374,7 +374,8 @@ module OpenChain
     end
 
     def process_cl01 line
-      @c_line.line_number = (parse_decimal(line[430, 5], 0) / 10).to_i
+      #unless check is a protection for "extra" CL01 records that I've asked about in kewill ticket 00040017
+      @c_line.line_number = (parse_decimal(line[430, 5], 0) / 10).to_i unless @c_line.line_number 
     end
 
     # commercial invoice line - fees
