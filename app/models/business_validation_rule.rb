@@ -5,11 +5,12 @@ class BusinessValidationRule < ActiveRecord::Base
   has_many :search_criterions, dependent: :destroy
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_rule
 
-  SUBCLASSES = {ValidationRuleEntryInvoiceLineFieldFormat: "Entry Invoice Line Field Format",
+  SUBCLASSES ||= {ValidationRuleEntryInvoiceLineFieldFormat: "Entry Invoice Line Field Format",
                 ValidationRuleEntryInvoiceLineMatchesPoLine: "Entry Invoice Line Matches PO Line",
                 ValidationRuleFieldFormat: "Field Format",
                 ValidationRuleManual: "Manual",
-                PoloValidationRuleEntryInvoiceLineMatchesPoLine: "(Polo) Entry Invoice Line Matches PO Line"}
+                PoloValidationRuleEntryInvoiceLineMatchesPoLine: "(Polo) Entry Invoice Line Matches PO Line",
+                ValidationRuleEntryInvoiceLineTariffFieldFormat: "Entry Invoice Tariff Field Format"}
 
   def self.subclasses_array
     SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}
