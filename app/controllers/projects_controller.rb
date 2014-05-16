@@ -62,6 +62,19 @@ class ProjectsController < ApplicationController
     render_project p
   end
 
+  def toggle_on_hold
+    p = Project.find params[:id]
+    if !p.can_edit? current_user
+      return render_json_error "You do not have permissoin to edit this project.", 401
+    end
+    p.on_hold = !p.on_hold
+    p.save
+    unless p.errors.blank?
+      return render_json_error p.errors.full_messages.join('\n'), 400
+    end
+    render_project p
+  end
+
   def add_project_set
     if params[:project_set_name].blank?
       return render_json_error "Project Set Name cannot be blank.", 400

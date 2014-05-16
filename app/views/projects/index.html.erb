@@ -25,7 +25,7 @@
   <button class='btn btn-default' id='toggle-closed-projects'>Show Closed Projects</button>
 <%-end-%>
 <%-cache ['project_index_v2',Project.select('projects.id, projects.updated_at').order('updated_at DESC').first] do-%>
-<%@projects = @projects.order('closed_at ASC, name ASC, due ASC')%>
+<%@projects = @projects.order('closed_at ASC, on_hold ASC, name ASC, due ASC')%>
 <h1 class="text-center">Projects</h1>
 <table class="table table-striped table-collapse table-hover">
   <thead>
@@ -42,7 +42,10 @@
       <%-cache ['proj_index_row_v2',p,0.seconds.ago.strftime('%Y-%m-%d')] do #cache at this level because the .red? method is expensive-%>
         <tr class='<%=p.red? ? 'danger' : 'no-danger'%> <%=p.closed_at.nil? ? '' : 'closed-project'%>' style='<%= p.closed_at.nil? ? '' : 'display:none' %>'>
           <td><%=link_to 'View', p, :class=>'btn btn-xs btn-default'%></td>
-          <td><%=p.name%><%=p.closed_at ? ' <span class="label label-default">closed</span> '.html_safe : ''%></td>
+          <td><%=p.name%>
+            <%=p.closed_at ? ' <span class="label label-default">closed</span> '.html_safe : ''%>
+            <%=p.on_hold? ? '<span class="label label-warning">on hold</span> '.html_safe : '' %>
+          </td>
           <td><%=p.due%></td>
           <td><%=p.project_deliverables.incomplete.count%></td>
           <td>

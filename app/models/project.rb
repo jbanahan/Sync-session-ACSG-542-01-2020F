@@ -1,5 +1,5 @@
 class Project < ActiveRecord::Base
-  attr_accessible :due, :name, :closed_at, :objective, :drive_folder, :updated_at
+  attr_accessible :due, :name, :closed_at, :objective, :drive_folder, :updated_at, :on_hold
   
   has_many :project_updates, dependent: :destroy, inverse_of: :project
   has_many :project_deliverables, dependent: :destroy, inverse_of: :project

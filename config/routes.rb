@@ -490,6 +490,7 @@ OpenChain::Application.routes.draw do
     resources :project_updates, only: [:update,:create]
     resources :project_deliverables, only: [:update,:create]
     put 'toggle_close', on: :member
+    put 'toggle_on_hold', on: :member
   end
   resources :project_deliverables, only: [:index]
   resources :schedulable_jobs, except: [:show]
