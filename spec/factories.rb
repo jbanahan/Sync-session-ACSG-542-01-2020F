@@ -85,6 +85,9 @@ end
 Factory.define :tariff_record do |t|
   t.association :classification
 end
+Factory.define :change_record do |t|
+  t.association :file_import_result
+end
 Factory.define :linkable_attachment do |t|
   t.model_field_uid 'mfuid'
   t.value 'val'

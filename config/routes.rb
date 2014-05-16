@@ -394,6 +394,8 @@ OpenChain::Application.routes.draw do
   resources :file_import_results, :only => [:show] do
     member do
       get 'messages'
+      get 'download_all'
+      get 'download_failed'
     end
   end
 
