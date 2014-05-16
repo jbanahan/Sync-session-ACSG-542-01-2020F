@@ -55,6 +55,7 @@ class ProjectsController < ApplicationController
       return render_json_error "You do not have permission to edit this project.", 401
     end
     p.closed_at = p.closed_at.blank? ? 0.seconds.ago : nil
+    p.on_hold = false
     p.save
     unless p.errors.blank?
       return render_json_error p.errors.full_messages.join('\n'), 400

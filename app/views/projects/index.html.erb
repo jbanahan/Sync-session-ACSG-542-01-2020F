@@ -1,7 +1,8 @@
 <%- content_for :javascript do %>
-  var showClosed = -1;
 
   $(function() {
+    var showClosed = -1;
+
     $("#toggle-closed-projects").click(function(){
       showClosed *= -1;
       if (showClosed == 1){
@@ -13,6 +14,12 @@
         $("#toggle-closed-projects").text("Show Closed Projects");
       }
     });
+
+    $("#project-table").tablesorter({
+      sortList: [[5,0],[6,0],[2,0]],
+      sortForce: [[5,0],[6,0]]
+    });
+
   });
 <% end %>
 
@@ -27,14 +34,16 @@
 <%-cache ['project_index_v2',Project.select('projects.id, projects.updated_at').order('updated_at DESC').first] do-%>
 <%@projects = @projects.order('closed_at ASC, on_hold ASC, name ASC, due ASC')%>
 <h1 class="text-center">Projects</h1>
-<table class="table table-striped table-collapse table-hover">
+<table id="project-table" class="table table-striped table-collapse table-hover tablesorter">
   <thead>
     <tr>
       <th>&nbsp;</th>
-      <th>Name</th>
-      <th>Due</th>
-      <th>Incomplete Deliverables</th>
-      <th>Sets</th>
+      <th style="cursor:pointer">Name <%= image_tag "sort_arrows.png", height: 12 %></th>
+      <th style="cursor:pointer">Due <%= image_tag "sort_arrows.png", height: 12 %></th>
+      <th style="cursor:pointer">Incomplete Deliverables <%= image_tag "sort_arrows.png", height: 12 %></th>
+      <th style="cursor:pointer">Sets</th>
+      <th style="display:none">Closed?</th>
+      <th style="display:none">On Hold?</th>
     </tr>
   </thead>
   <tbody>
@@ -52,6 +61,12 @@
             <%-p.project_sets.each do |ps|-%>
               <span class='label label-default'><%=ps.name%></span>
             <%-end-%>
+          </td>
+          <td style="display:none">
+            <%=p.closed_at.nil? ? 'No' : 'Yes' %>
+          </td>
+          <td style="display:none">
+            <%=p.on_hold? ? 'Yes' : 'No' %>
           </td>
         </tr>
       <%-end-%>
