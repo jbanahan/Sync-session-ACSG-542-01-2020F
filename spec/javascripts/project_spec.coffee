@@ -78,6 +78,17 @@ describe "ProjectApp", () ->
         expect(svc.project.saving).toBeUndefined()
         expect(svc.project.id).toEqual 99
 
+    describe "toggleOnHold", () ->
+      it "should toggle and reload", () ->
+        resp = {project:{id:99}}
+        proj = {id:1}
+        http.expectPUT('/projects/1/toggle_on_hold.json').respond resp
+        svc.toggleOnHold proj
+        expect(proj.saving).toBe true
+        http.flush()
+        expect(svc.project.saving).toBeUndefined()
+        expect(svc.project.id).toEqual 99
+
     describe "removeProjectSet", () ->
       it "should remove project set", () ->
         resp = {project:{id:99}}
@@ -205,6 +216,13 @@ describe "ProjectApp", () ->
       spyOn svc, 'toggleClose'
       $scope.toggleClose()
       expect(svc.toggleClose).toHaveBeenCalledWith p
+
+    it "should delegate toggleOnHold", () ->
+      p = {id:1}
+      svc.project = p
+      spyOn svc, 'toggleOnHold'
+      $scope.toggleOnHold()
+      expect(svc.toggleOnHold).toHaveBeenCalledWith p
 
     it "should delegate editProjectUpdate", () ->
       p = {id:1}

@@ -66,7 +66,9 @@ class ProjectsController < ApplicationController
   def toggle_on_hold
     p = Project.find params[:id]
     if !p.can_edit? current_user
-      return render_json_error "You do not have permissoin to edit this project.", 401
+      return render_json_error "You do not have permission to edit this project.", 401
+    elsif !p.closed_at.blank? #They shouldn't get here from the UI anyway, but just in case
+      return render_json_error "Closed projects can not be put on hold.", 401
     end
     p.on_hold = !p.on_hold
     p.save
