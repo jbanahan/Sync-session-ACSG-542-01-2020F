@@ -7,14 +7,15 @@ module OpenChain
       def parse file_contents, opts = {}
         raise ArgumentError, "Opts must have a :sync_code hash key." unless opts[:sync_code]
         raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
-        opts[:username] = "chainio_admin" unless opts[:username]
+        
 
-        process_product_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username], opts
+        process_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username], opts
       end
       
-      def process_product_ack_file file_content, file_name, sync_code, username, opts={}
+      def process_ack_file file_content, file_name, sync_code, username, opts={}
+        un = username.blank? ? 'chainio_admin' : username
         errors = get_ack_file_errors file_content, file_name, sync_code, opts
-        handle_errors errors, file_name, username, file_content, sync_code unless errors.blank?
+        handle_errors errors, file_name, un, file_content, sync_code unless errors.blank?
       end
 
       def get_ack_file_errors file_content, file_name, sync_code, opts={}
@@ -26,7 +27,7 @@ module OpenChain
           next if row_count == 1
           row = CSV.parse_line line.strip, csv_opts
           errors << "Malformed response line: #{row.to_csv}" unless row.size==3
-          prod = find_product row
+          prod = find_object row, opts
           if prod.nil?
             errors << "Product #{row[0]} confirmed, but it does not exist."
             next
@@ -59,8 +60,11 @@ module OpenChain
       end
       
       #override this to do custom handling if a product isn't found in the database
-      def find_product row 
-        Product.find_by_unique_identifier row[0]
+      def find_object row, opts
+        module_type = opts[:module_type].blank? ? 'Product' : opts[:module_type]
+        cm = CoreModule.find_by_class_name(module_type)
+        SearchCriterion.new(model_field_uid:cm.unique_id_field.uid,
+          operator:'eq',value:row[0]).apply(cm.klass).first
       end
 
     end

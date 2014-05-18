@@ -8,16 +8,35 @@ describe OpenChain::CustomHandler::AckFileHandler do
       t = described_class.new
       msg = "Product #{p.unique_identifier} confirmed, but it was never sent."
       t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h|h|h\n#{p.unique_identifier}|201306191706|OK","OTHER")
-      t.process_product_ack_file "h|h|h\n#{p.unique_identifier}|201306191706|OK", 'fn', 'OTHER', "testuser", {csv_opts:{col_sep:'|'}}
+      t.process_ack_file "h|h|h\n#{p.unique_identifier}|201306191706|OK", 'fn', 'OTHER', "testuser", {csv_opts:{col_sep:'|'}}
     end
     it "should handle extra whitespace" do
       p = Factory(:product)
       t = described_class.new
       msg = "Product #{p.unique_identifier} confirmed, but it was never sent."
       t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"        ","OTHER")
-      t.process_product_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER', "testuser"
+      t.process_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER', "testuser"
     end
     
+  end
+
+  context :module_type do
+    it "should default to product handling" do
+      p = Factory(:product)
+      sr = p.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+      t = described_class.new
+      t.process_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"", 'fn', 'OTHER', "testuser"
+      sr.reload
+      expect(sr.confirmed_at).not_to be_nil
+    end
+    it "should allow alternate module type" do
+      ent = Factory(:entry,broker_reference:'123456')
+      sr = ent.sync_records.create!(sent_at:1.hour.ago,trading_partner:'OTHER')
+      t = described_class.new
+      t.process_ack_file "h,h,h\n#{ent.broker_reference},201306191706,\"OK\"", 'fn', 'OTHER', nil, {module_type:'Entry'}
+      sr.reload
+      expect(sr.confirmed_at).not_to be_nil
+    end
   end
   context :sync_records do
     before :each do
@@ -26,7 +45,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
     it "should update product sync record" do
       @p.sync_records.create!(:trading_partner=>'XYZ')
-      described_class.new.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'XYZ', "testuser"
+      described_class.new.process_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'XYZ', "testuser"
       @p.reload
       @p.should have(1).sync_records
       sr = @p.sync_records.first
@@ -38,7 +57,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
 
     it "should not update sync record for another trading partner" do
       @p.sync_records.create!(:trading_partner=>'XYZ')
-      described_class.new.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
+      described_class.new.process_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
       @p.reload
       @p.should have(1).sync_records
       sr = @p.sync_records.first
@@ -49,7 +68,7 @@ describe OpenChain::CustomHandler::AckFileHandler do
       t = described_class.new
       msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
       t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,OK", "OTHER")
-      t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
+      t.process_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
     end
   end
 
@@ -84,10 +103,5 @@ describe OpenChain::CustomHandler::AckFileHandler do
       expect{described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", email_address: "example@example.com"}}.to raise_error ArgumentError, "Opts must have a :sync_code hash key."
     end
 
-    it "should set username to chainio_admin if none is provided in the options hash" do
-      opts = {:key=>"/path/to/file.csv", :sync_code=>"XYZ"}
-      OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with("h,h,h\n#{@p.unique_identifier},201306191706,OK", "file.csv", "XYZ", "chainio_admin", opts)
-      described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", opts
-    end
   end
 end
