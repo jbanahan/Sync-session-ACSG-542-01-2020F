@@ -9,21 +9,22 @@ module OpenChain
         raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
         opts[:username] = "chainio_admin" unless opts[:username]
 
-        process_product_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username]
+        process_product_ack_file file_contents, File.basename(opts[:key]), opts[:sync_code], opts[:username], opts
       end
       
-      def process_product_ack_file file_content, file_name, sync_code, username
-        errors = get_ack_file_errors file_content, file_name, sync_code
+      def process_product_ack_file file_content, file_name, sync_code, username, opts={}
+        errors = get_ack_file_errors file_content, file_name, sync_code, opts
         handle_errors errors, file_name, username, file_content, sync_code unless errors.blank?
       end
 
-      def get_ack_file_errors file_content, file_name, sync_code
+      def get_ack_file_errors file_content, file_name, sync_code, opts={}
         errors = []
         row_count = 0
+        csv_opts = opts[:csv_opts] ? opts[:csv_opts] : {}
         StringIO.new(file_content).each do |line|
           row_count += 1
           next if row_count == 1
-          row = CSV.parse_line line.strip
+          row = CSV.parse_line line.strip, csv_opts
           errors << "Malformed response line: #{row.to_csv}" unless row.size==3
           prod = find_product row
           if prod.nil?

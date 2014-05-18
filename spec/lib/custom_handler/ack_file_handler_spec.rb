@@ -2,46 +2,63 @@ require 'spec_helper'
 
 describe OpenChain::CustomHandler::AckFileHandler do
 
+  context :line_handling do
+    it "should take optional separator" do
+      p = Factory(:product)
+      t = described_class.new
+      msg = "Product #{p.unique_identifier} confirmed, but it was never sent."
+      t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h|h|h\n#{p.unique_identifier}|201306191706|OK","OTHER")
+      t.process_product_ack_file "h|h|h\n#{p.unique_identifier}|201306191706|OK", 'fn', 'OTHER', "testuser", {csv_opts:{col_sep:'|'}}
+    end
+    it "should handle extra whitespace" do
+      p = Factory(:product)
+      t = described_class.new
+      msg = "Product #{p.unique_identifier} confirmed, but it was never sent."
+      t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"        ","OTHER")
+      t.process_product_ack_file "h,h,h\n#{p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER', "testuser"
+    end
+    
+  end
+  context :sync_records do
+    before :each do
+      @p = Factory(:product)
+      @u = Factory(:user, email: "example@example.com", username: "testuser")
+    end
+    it "should update product sync record" do
+      @p.sync_records.create!(:trading_partner=>'XYZ')
+      described_class.new.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'XYZ', "testuser"
+      @p.reload
+      @p.should have(1).sync_records
+      sr = @p.sync_records.first
+      sr.trading_partner.should == 'XYZ'
+      sr.confirmed_at.should > 1.minute.ago
+      sr.confirmation_file_name.should == 'fn'
+      sr.failure_message.should be_blank
+    end
 
-  before :each do
-    @p = Factory(:product)
-    @u = Factory(:user, email: "example@example.com", username: "testuser")
-  end
-  it "should update product sync record" do
-    @p.sync_records.create!(:trading_partner=>'XYZ')
-    described_class.new.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'XYZ', "testuser"
-    @p.reload
-    @p.should have(1).sync_records
-    sr = @p.sync_records.first
-    sr.trading_partner.should == 'XYZ'
-    sr.confirmed_at.should > 1.minute.ago
-    sr.confirmation_file_name.should == 'fn'
-    sr.failure_message.should be_blank
-  end
-
-  it "should not update sync record for another trading partner" do
-    @p.sync_records.create!(:trading_partner=>'XYZ')
-    described_class.new.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
-    @p.reload
-    @p.should have(1).sync_records
-    sr = @p.sync_records.first
-    sr.trading_partner.should == 'XYZ'
-    sr.confirmed_at.should be_nil
-  end
-  it "should call errors callback if there is an error" do
-    t = described_class.new
-    msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
-    t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,OK", "OTHER")
-    t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
-  end
-  it "should handle extra whitespace" do
-    t = described_class.new
-    msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
-    t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,\"OK\"        ","OTHER")
-    t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,\"OK\"        ", 'fn', 'OTHER', "testuser"
+    it "should not update sync record for another trading partner" do
+      @p.sync_records.create!(:trading_partner=>'XYZ')
+      described_class.new.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
+      @p.reload
+      @p.should have(1).sync_records
+      sr = @p.sync_records.first
+      sr.trading_partner.should == 'XYZ'
+      sr.confirmed_at.should be_nil
+    end
+    it "should call errors callback if there is an error" do
+      t = described_class.new
+      msg = "Product #{@p.unique_identifier} confirmed, but it was never sent."
+      t.should_receive(:handle_errors).with([msg],'fn', "testuser", "h,h,h\n#{@p.unique_identifier},201306191706,OK", "OTHER")
+      t.process_product_ack_file "h,h,h\n#{@p.unique_identifier},201306191706,OK", 'fn', 'OTHER', "testuser"
+    end
   end
 
   describe "parse" do
+    before :each do
+      @p = Factory(:product)
+      @u = Factory(:user, email: "example@example.com", username: "testuser")
+    end
+
     it "should parse a file" do
       @p.sync_records.create!(:trading_partner=>'XYZ')
       described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", :sync_code=>"XYZ", email_address: "example@example.com"}
@@ -68,8 +85,9 @@ describe OpenChain::CustomHandler::AckFileHandler do
     end
 
     it "should set username to chainio_admin if none is provided in the options hash" do
-      OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with("h,h,h\n#{@p.unique_identifier},201306191706,OK", "file.csv", "XYZ", "chainio_admin")
-      described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:key=>"/path/to/file.csv", :sync_code=>"XYZ"}
+      opts = {:key=>"/path/to/file.csv", :sync_code=>"XYZ"}
+      OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:process_product_ack_file).with("h,h,h\n#{@p.unique_identifier},201306191706,OK", "file.csv", "XYZ", "chainio_admin", opts)
+      described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", opts
     end
   end
 end
