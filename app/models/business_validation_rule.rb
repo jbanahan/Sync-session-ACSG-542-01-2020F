@@ -5,7 +5,7 @@ class BusinessValidationRule < ActiveRecord::Base
   has_many :search_criterions, dependent: :destroy
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_rule
 
-  SUBCLASSES = {ValidationRuleEntryInvoiceLineFieldFormat: "Entry Invoice Line Field Format",
+  SUBCLASSES ||= {ValidationRuleEntryInvoiceLineFieldFormat: "Entry Invoice Line Field Format",
                 ValidationRuleEntryInvoiceLineMatchesPoLine: "Entry Invoice Line Matches PO Line",
                 ValidationRuleFieldFormat: "Field Format",
                 ValidationRuleManual: "Manual",
