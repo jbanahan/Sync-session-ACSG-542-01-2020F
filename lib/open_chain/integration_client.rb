@@ -121,6 +121,8 @@ module OpenChain
         OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHandler.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include? '/_eddie_po/'
         OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include? '/_eb_ftz_ack/'
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE}
       elsif command['path'].include?('/_lenox_product/') && MasterSetup.get.custom_feature?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_po/') && MasterSetup.get.custom_feature?('Lenox')

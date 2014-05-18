@@ -94,6 +94,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
     end
     context :eddie_bauer do
+      it "should send ack files to ack parser for _eb_ftz_ack" do
+        p = double("parser")
+        OpenChain::CustomHandler::AckFileHandler.should_receive(:new).and_return p
+        p.should_receive(:delay).and_return p
+        p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE}
+        cmd = {'request_type'=>'remote_file','path'=>'/_eb_ftz_ack/','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
       it "should send data to eddie bauer po parser for _eddie_po" do
         p = double("parser")
         OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.should_receive(:delay).and_return p
