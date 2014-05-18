@@ -19,6 +19,7 @@ module OpenChain
       end
 
       def get_ack_file_errors file_content, file_name, sync_code, opts={}
+        cm = core_module(opts)
         errors = []
         row_count = 0
         csv_opts = opts[:csv_opts] ? opts[:csv_opts] : {}
@@ -29,17 +30,17 @@ module OpenChain
           errors << "Malformed response line: #{row.to_csv}" unless row.size==3
           prod = find_object row, opts
           if prod.nil?
-            errors << "Product #{row[0]} confirmed, but it does not exist."
+            errors << "#{cm.label} #{row[0]} confirmed, but it does not exist."
             next
           end
           sync = prod.sync_records.find_by_trading_partner sync_code 
           if sync.nil?
-            errors << "Product #{row[0]} confirmed, but it was never sent."
+            errors << "#{cm.label} #{row[0]} confirmed, but it was never sent."
             next
           end
           fail_message = row[2]=='OK' ? '' : row[2]
           sync.update_attributes(:confirmed_at=>Time.now,:confirmation_file_name=>file_name,:failure_message=>fail_message)
-          errors << "Product #{row[0]} failed: #{fail_message}" unless fail_message.blank?
+          errors << "#{cm.label} #{row[0]} failed: #{fail_message}" unless fail_message.blank?
         end
         errors
       end
@@ -61,10 +62,14 @@ module OpenChain
       
       #override this to do custom handling if a product isn't found in the database
       def find_object row, opts
-        module_type = opts[:module_type].blank? ? 'Product' : opts[:module_type]
-        cm = CoreModule.find_by_class_name(module_type)
+        cm = core_module opts
         SearchCriterion.new(model_field_uid:cm.unique_id_field.uid,
           operator:'eq',value:row[0]).apply(cm.klass).first
+      end
+
+      def core_module opts
+        module_type = opts[:module_type].blank? ? 'Product' : opts[:module_type]
+        CoreModule.find_by_class_name(module_type)
       end
 
     end
