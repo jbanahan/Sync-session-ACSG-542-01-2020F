@@ -79,7 +79,16 @@ module CoreObjectSupport
     end
 
     def need_sync_where_clause 
-      "(sync_records.id is NULL OR sync_records.sent_at is NULL or sync_records.confirmed_at is NULL or sync_records.sent_at > sync_records.confirmed_at or #{table_name}.updated_at > sync_records.sent_at)"
+      "(sync_records.id is NULL OR 
+         (
+            (sync_records.sent_at is NULL OR 
+             sync_records.confirmed_at is NULL OR 
+             sync_records.sent_at > sync_records.confirmed_at OR
+             #{table_name}.updated_at > sync_records.sent_at
+            ) AND
+            (sync_records.ignore_updates_before IS NULL OR
+             sync_records.ignore_updates_before < #{table_name}.updated_at)
+        ))"
     end
   end
 end

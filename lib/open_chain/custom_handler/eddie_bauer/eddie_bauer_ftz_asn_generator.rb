@@ -1,5 +1,6 @@
 require 'open_chain/fixed_position_generator'
 require 'open_chain/ftp_file_support'
+require 'digest/md5'
 
 # Business Rules:
 # * All lines must have part number and po number
@@ -8,6 +9,8 @@ require 'open_chain/ftp_file_support'
 # * If used, color must be the 3 character EB provided code
 # * If used, size must be the 4 character EB provided code
 # * Files will be sent after they have been invoiced and all business rules are in a passed state
+# * Files will be resent if anything in the output has changed
+
 module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAsnGenerator
   include OpenChain::FtpFileSupport
   TRANSPORT_MODE_CODES ||= {'11'=>'O','10'=>'O','20'=>'R','21'=>'R','30'=>'T','31'=>'T','32'=>'T','33'=>'T','34'=>'T','40'=>'A','41'=>'A'}
@@ -38,11 +41,20 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     t = Tempfile.new(['EDDIEFTZASN','.txt'])
     entries.each_with_index do |ent,i|
       Entry.transaction do
-        t << "\r\n" unless i == 0
-        t << self.generate_data_for_entry(ent)
+        data = self.generate_data_for_entry(ent)
+        new_fingerprint = Digest::MD5.hexdigest(data)
         sr = ent.sync_records.first_or_create!(trading_partner:SYNC_CODE)
-        sr.sent_at = 0.seconds.ago
-        sr.save!
+        if new_fingerprint != sr.fingerprint
+          t << "\r\n" unless i == 0
+          t << data
+          sr.sent_at = 0.seconds.ago
+          sr.fingerprint = new_fingerprint
+          sr.save!
+        else
+          sr = ent.sync_records.first_or_create!(trading_partner:SYNC_CODE)
+          sr.ignore_updates_before = ent.updated_at
+          sr.save!
+        end
       end
     end
     t.flush
@@ -54,7 +66,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     cust_num = SearchCriterion.new(model_field_uid:'ent_cust_num',operator:'in',value:@customer_numbers.join("\n"))
     bi_total = SearchCriterion.new(model_field_uid:'ent_broker_invoice_total',operator:'gt',value:'0')
     r = bi_total.apply passed_rules.apply cust_num.apply Entry.select('distinct entries.*').where('file_logged_date > "2014-04-01"')
-    r.joins(Entry.need_sync_join_clause(SYNC_CODE)).where(Entry.need_sync_where_clause).where('sync_records.id is null')
+    r.need_sync(self.class::SYNC_CODE)
   end
 
   def generate_data_for_entry ent

@@ -94,6 +94,11 @@ describe CoreObjectSupport do
       ns.size.should == 1
       ns.first.should == @p
     end
+    it "should not find products updated before ignore_updates_before" do
+      dont_find = Factory(:product,unique_identifier:'DONTFINDME',updated_at:1.day.ago)
+      dont_find.sync_records.create!(trading_partner:@tp,sent_at:2.days.ago,ignore_updates_before:1.hour.ago)
+      expect(Product.need_sync(@tp).to_a).to eq [@p]
+    end
   end
   describe :view_url do
     it "should make url based on request_host" do

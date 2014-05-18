@@ -1,4 +1,5 @@
 require "spec_helper"
+require 'digest/md5'
 
 describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   describe "run_schedulable" do
@@ -32,23 +33,43 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
   end
   describe "generate_file" do
     before(:each) do
-      @ent = Factory(:entry)
+      @ent = Factory(:entry,updated_at:1.minute.ago)
       @g = described_class.new
       @g.should_receive(:generate_data_for_entry).with(@ent).and_return 'abc'
     end
-    it "should link methods to find and generate" do
-      tmp  = @g.generate_file [@ent]
-      tmp.flush
-      expect(IO.read(tmp.path)).to eq 'abc'
+    context :changed do
+      it "should link methods to find and generate" do
+        tmp  = @g.generate_file [@ent]
+        tmp.flush
+        expect(IO.read(tmp.path)).to eq 'abc'
+      end
+      it "should write sync_records" do
+        expect{@g.generate_file([@ent])}.to change(SyncRecord.where(trading_partner:'EBFTZASN'),:count).from(0).to(1)
+        expect(SyncRecord.first.ignore_updates_before).to be_nil
+      end
     end
-    it "should write sync_records" do
-      expect{@g.generate_file([@ent])}.to change(SyncRecord.where(trading_partner:'EBFTZASN'),:count).from(0).to(1)
-
+    context "hasn't changed" do
+      before :each do
+        @sr = @ent.sync_records.create!(trading_partner:'EBFTZASN',fingerprint:Digest::MD5.hexdigest('abc'))
+      end
+      it "should write ignore_updates_before" do
+        @g.generate_file([@ent])
+        @sr.reload
+        expect(@sr.ignore_updates_before).to be > 2.minutes.ago
+        expect(@sr.sent_at).to be_nil #don't change sent at if we didn't send
+      end
+      it "should not write data if matches fingerprint" do
+        tmp  = @g.generate_file [@ent]
+        tmp.flush
+        expect(IO.read(tmp.path)).to be_blank
+      end
     end
   end
   describe "find_entries" do
     before :each do
-      @entry  = Factory(:entry,customer_number:'EDDIEFTZ',broker_invoice_total:45,file_logged_date:Date.new(2014,5,1))
+      @entry  = Factory(:entry,customer_number:'EDDIEFTZ',
+        broker_invoice_total:45,file_logged_date:Date.new(2014,5,1),
+        last_exported_from_source:1.day.ago)
       @rule_result = Factory(:business_validation_rule_result,state:'Pass')
       res = @rule_result.business_validation_result
       res.state = 'Pass'
@@ -59,8 +80,23 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "should find all that don't have sync records and have passed business rule states" do
       expect(described_class.new.find_entries.to_a).to eq [@entry]
     end
-    it "should not send recrods that have been sent before" do
-      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE)
+    it "should not send records that have been sent before where sent at > updated_at" do
+      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE,sent_at:1.hour.ago,confirmed_at:20.minutes.ago)
+      @entry.update_attributes(updated_at:1.day.ago)
+      expect(described_class.new.find_entries.to_a).to eq []
+    end
+    it "should send records that have not been confirmed" do
+      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE,sent_at:1.hour.ago)
+      expect(described_class.new.find_entries.to_a).to eq [@entry]
+    end
+    it "should not send records that have been confirmed" do
+      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE,sent_at:1.hour.ago,confirmed_at:20.minutes.ago)
+      @entry.update_attributes(updated_at:1.day.ago)
+      expect(described_class.new.find_entries.to_a).to eq []
+    end
+    it "should not send records where updated_at < ignore_updates_before" do
+      @entry.sync_records.create!(trading_partner:described_class::SYNC_CODE,sent_at:10.days.ago,confirmed_at:2.days.ago,ignore_updates_before:1.hour.ago)
+      @entry.update_attributes(updated_at:1.day.ago)
       expect(described_class.new.find_entries.to_a).to eq []
     end
     it "should not find Review business rules state" do
@@ -110,6 +146,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         hts_code:'1234567890'
       )
     end
+
     def first_line
       described_class.new.generate_data_for_entry(@entry).lines.first
     end
