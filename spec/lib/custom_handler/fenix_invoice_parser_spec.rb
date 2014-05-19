@@ -225,4 +225,19 @@ INV
     bi = BrokerInvoice.find_by_invoice_number_and_source_system 9, 'Fenix'
     expect(bi.customer_number).to eq "BOSSCI"
   end
+
+  it "detects charge code 1 and 2 as Duty (D) type codes" do
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 2 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+INV
+
+    @k.parse @content
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system 9, 'Fenix'
+    
+    expect(bi.broker_invoice_lines).to have(2).items
+    expect(bi.broker_invoice_lines.first.charge_type).to eq "D"
+    expect(bi.broker_invoice_lines.second.charge_type).to eq "D"
+  end
 end

@@ -88,7 +88,7 @@ module OpenChain
           charge_code_prefix = charge_code.split(" ").first
           charge_code = charge_code_prefix if charge_code_prefix.match /^[0-9]*$/
           line = invoice.broker_invoice_lines.build(:charge_description=>safe_strip(row[7]),:charge_code=>charge_code,:charge_amount=>BigDecimal(safe_strip(row[8])))
-          line.charge_type = (['20','21'].include?(line.charge_code) ? 'D' : 'R')
+          line.charge_type = (['1', '2', '20','21'].include?(line.charge_code) ? 'D' : 'R')
           line
         end
 
