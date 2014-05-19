@@ -19,6 +19,8 @@ end
 Factory.define :importer, parent: :company do |c|
   c.importer true
 end
+Factory.define :part_number_correlation do |c|
+end
 Factory.define :address do |a|
   a.name "MYaddr"
   a.association :country

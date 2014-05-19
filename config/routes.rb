@@ -44,6 +44,7 @@ OpenChain::Application.routes.draw do
   
   resources :commercial_invoices, :only => [:show]
   resources :broker_invoices, :only => [:index,:show]
+  resources :part_number_correlations, only: [:index, :show, :create]
   resources :commercial_invoice_maps, :only=>[:index] do
     post 'update_all', :on=>:collection
   end
