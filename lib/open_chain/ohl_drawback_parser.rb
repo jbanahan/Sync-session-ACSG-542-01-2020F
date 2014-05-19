@@ -81,13 +81,16 @@ module OpenChain
         end
         rows << row
         last_entry_num = entry_num
-        if row.length > 28 && !row[28].blank?
-          map_to_use = LONG_MAP
-        elsif row.length > 19 && !row[20].blank?
-          map_to_use = MEDIUM_MAP
-        else
-          map_to_use = SHORT_MAP
-        end
+        last_non_blank_cell_index = OhlDrawbackParser.get_last_non_blank_cell_index(row)
+
+        case last_non_blank_cell_index
+          when 31
+            map_to_use = LONG_MAP
+          when 28
+            map_to_use = SHORT_MAP
+          else
+            map_to_use = MEDIUM_MAP
+        end 
       end
       entries << OhlDrawbackParser.new(rows,map_to_use).entry unless rows.blank?
       entries
@@ -106,7 +109,19 @@ module OpenChain
       @entry
     end
 
-    private 
+    def self.get_last_non_blank_cell_index(row)
+      total_length = row.length
+      row.reverse.each do |cell|
+        if cell.blank?
+          total_length -= 1
+        else
+          return total_length
+        end
+      end
+    end
+
+    private
+
     def process_header row
       importer_name = row[@map[:importer_name]]
       raise "Importer Name is required." if importer_name.blank?
