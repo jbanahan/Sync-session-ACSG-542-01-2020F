@@ -215,4 +215,14 @@ INV
     r = IntacctReceivable.where(company: "vcu").first
     expect(r.customer_number).to eq "XREF"
   end
+
+  it "strips trailing U from customer number if billed in USD" do
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,BOSSCIU, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},USD, 4000 , 1 ,,,,,,,,
+INV
+    @k.parse @content
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system 9, 'Fenix'
+    expect(bi.customer_number).to eq "BOSSCI"
+  end
 end

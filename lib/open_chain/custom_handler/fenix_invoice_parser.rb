@@ -79,7 +79,7 @@ module OpenChain
           inv.broker_reference = broker_reference
           inv.currency = safe_strip row[10]
           inv.invoice_date = Date.strptime safe_strip(row[0]), '%m/%d/%Y'
-          inv.customer_number = safe_strip row[1]
+          inv.customer_number = customer_number(safe_strip(row[1]), inv.currency)
           inv
         end
 
@@ -90,6 +90,16 @@ module OpenChain
           line = invoice.broker_invoice_lines.build(:charge_description=>safe_strip(row[7]),:charge_code=>charge_code,:charge_amount=>BigDecimal(safe_strip(row[8])))
           line.charge_type = (['20','21'].include?(line.charge_code) ? 'D' : 'R')
           line
+        end
+
+        def customer_number number, currency 
+          # For some unknown reason, if the invoice is billed in USD, Fenix sends us the customer number with a U
+          # appended to it.  So, strip the U.
+          cust_no = number
+          if currency && number && currency.upcase == "USD" && cust_no.upcase.end_with?("U")
+            cust_no = cust_no[0..-2]
+          end
+          cust_no
         end
 
         def safe_strip val
