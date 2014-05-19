@@ -15,31 +15,32 @@ class FileImportResultsController < ApplicationController
   end
 
   def download_failed
+    #Note on the name: this means the user wants to download change records that failed, not that some download method has actually failed
     secure{
-      download_results(false)
+      @fir = FileImportResult.find(params[:id])
+      if @fir.change_records.length > 200
+        @fir.delay.download_results(false, current_user.id, true)
+        flash[:notices] = ["You will receive a system message when your file is finished processing."]
+        redirect_to :back
+      else
+        att = @fir.download_results(false, current_user.id)
+        redirect_to download_attachment_path(att)
+      end
     }
   end
 
   def download_all
     secure{
-      download_results(true)
+      @fir = FileImportResult.find(params[:id])
+      if @fir.change_records.length > 200
+        @fir.delay.download_results(true, current_user.id, true)
+        flash[:notices] = ["You will receive a system message when your file is finished processing."]
+        redirect_to :back
+      else
+        att = @fir.download_results(true, current_user.id)
+        redirect_to download_attachment_path(att)
+      end
     }
-  end
-
-  def download_results(include_all)
-    @fir = FileImportResult.find(params[:id])
-    name = @fir.imported_file.try(:attached_file_name).nil? ? "File Import Results #{Time.now.to_date.to_s}.csv" : File.basename(@fir.imported_file.attached_file_name,File.extname(@fir.imported_file.attached_file_name)) + " - Results.csv" 
-    f = File.new(name,"w+")
-    f.write("Record Number,Status\r\n")
-    @fir.change_records.each do |cr|
-      next if ((!include_all) && (!cr.failed?))
-      record_information = cr.record_sequence_number.to_s + ","
-      record_information += cr.failed? ? "Error" : "Success"
-      record_information += "\r\n"
-      f.write(record_information)
-    end
-    send_file(f, type: "text/csv")
-    f.close
   end
 
   private

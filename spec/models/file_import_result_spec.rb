@@ -2,6 +2,60 @@ require 'spec_helper'
 
 describe FileImportResult do
 
+  before :each do
+    @user = Factory(:master_user,:email=>'a@example.com')
+  end
+
+  describe :download_results do
+    before :each do
+      @imported_file = Factory(:imported_file, attached_file_name: "file name")
+      @fir = Factory(:file_import_result, imported_file: @imported_file)
+      @user.messages.delete_all
+
+      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
+      @cr2 = Factory(:change_record, failed: false, record_sequence_number: 2)
+      @fir.change_records << @cr1
+      @fir.change_records << @cr2
+    end
+
+    it "should create a new attachment" do
+      @fir.download_results(true, @user.id)
+      a = Attachment.last
+      a.attached_file_name.should == "file name - Results.csv"
+      a.created_at.should > Time.now - 15.seconds
+      a.attachable_type.should == "FileImportResult"
+    end
+
+    it "should create a message for the user if delayed" do
+      @fir.download_results(true, @user.id, true)
+      @user.reload
+      @user.messages.length.should == 1
+      @user.messages.last.subject.should == "File Import Result Prepared for Download"
+    end
+
+    it "should not create a message for the user if not delayed" do
+      @fir.download_results(true, @user.id)
+      @user.messages.length.should == 0
+    end
+
+    it "should skip successful records when include_all is false" do
+      ChangeRecord.any_instance.should_receive(:record_sequence_number).exactly(1).times
+      @fir.download_results(false, @user.id)
+    end
+
+    it "should include successful records when include_all is true" do
+      @cr1.should_receive(:record_sequence_number)
+      @cr2.should_receive(:record_sequence_number)
+      @fir.download_results(true, @user.id)
+    end
+
+    it "should return the created attachment" do
+      @fir.download_results(true, @user.id).class.to_s.should == "Attachment"
+    end
+
+
+  end
+
   describe :time_to_process do
     it "should return nil if no started_at" do
       FileImportResult.new(:finished_at=>0.seconds.ago).time_to_process.should be_nil
