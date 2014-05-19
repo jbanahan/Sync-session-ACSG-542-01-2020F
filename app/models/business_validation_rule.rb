@@ -9,7 +9,8 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryInvoiceLineMatchesPoLine: "Entry Invoice Line Matches PO Line",
                 ValidationRuleFieldFormat: "Field Format",
                 ValidationRuleManual: "Manual",
-                PoloValidationRuleEntryInvoiceLineMatchesPoLine: "(Polo) Entry Invoice Line Matches PO Line"}
+                PoloValidationRuleEntryInvoiceLineMatchesPoLine: "(Polo) Entry Invoice Line Matches PO Line",
+                ValidationRuleEntryInvoiceLineTariffFieldFormat: "Entry Invoice Tariff Field Format"}
 
   def self.subclasses_array
     SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}
