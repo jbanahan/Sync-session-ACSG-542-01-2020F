@@ -45,6 +45,27 @@ module OpenChain
       quantity:26,
       uom:27
     }
+    MEDIUM_MAP ||= {
+      importer_name:0,
+      entry_number:1,
+      arrival_date:2,
+      entry_port_code:3,
+      mpf:4,
+      transport_mode_code:5,
+      total_invoiced_value:6,
+      total_duty:7,
+      merchandise_description:8,
+      country_origin_code:9,
+      entered_value:10,
+      hts_code:11,
+      po_number:12,
+      part_number:13,
+      total_duty_direct:14,
+      duty_amount:17,
+      quantity:18,
+      uom:19
+    }
+
     # parse an OHL Drawback File (sample in spec/support/bin folder)
     def self.parse file_path
       sheet = Spreadsheet.open(file_path).worksheet(0) #always first sheet in workbook
@@ -60,7 +81,13 @@ module OpenChain
         end
         rows << row
         last_entry_num = entry_num
-        map_to_use = (row.length > 28 && !row[28].blank? ? LONG_MAP : SHORT_MAP)
+        if row.length > 28 && !row[28].blank?
+          map_to_use = LONG_MAP
+        elsif row.length > 19 && !row[20].blank?
+          map_to_use = MEDIUM_MAP
+        else
+          map_to_use = SHORT_MAP
+        end
       end
       entries << OhlDrawbackParser.new(rows,map_to_use).entry unless rows.blank?
       entries
