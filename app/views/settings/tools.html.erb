@@ -18,6 +18,8 @@
     <h2><a href='/projects'>Projects</a></h2>
     <p>View the project portfolio</p>
   <% end %>
-  <h2><a href='/users/find_by_email'>User Finder</a></h2>
-  <p>Find users by email address.</p>
+  <% if current_user.admin? %>
+    <h2><a href='/users/find_by_email'>User Finder</a></h2>
+    <p>Find users by email address.</p>
+  <% end %>
 </div>
