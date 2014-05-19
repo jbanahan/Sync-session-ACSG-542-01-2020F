@@ -1,14 +1,11 @@
 require 'spec_helper'
 
 describe PartNumberCorrelationsController do
-  before :each do
-    activate_authlogic
-  end
 
   describe :create do
     before :each do
       @u = Factory(:admin_user)
-      UserSession.create! @u
+      sign_in_as @u
       @file = fixture_file_upload('/files/some_products.xls',"application/vnd.ms-excel")
     end
 
@@ -50,7 +47,7 @@ describe PartNumberCorrelationsController do
   describe :index do
     before :each do
       @u = Factory(:admin_user)
-      UserSession.create! @u
+      sign_in_as @u
       @file = fixture_file_upload('/files/some_products.xls',"application/vnd.ms-excel")
     end
 
