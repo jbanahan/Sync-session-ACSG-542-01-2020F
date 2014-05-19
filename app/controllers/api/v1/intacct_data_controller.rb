@@ -2,13 +2,13 @@ require 'open_chain/sql_proxy_client'
 require 'open_chain/custom_handler/intacct/intacct_invoice_details_parser'
 require 'open_chain/custom_handler/intacct/intacct_client'
 
-module Api; module V1; class IntacctDataController < ApiController
+module Api; module V1; class IntacctDataController < SqlProxyPostbackController
 
   before_filter :require_admin
 
   def receive_alliance_invoice_numbers
     # This is the callback action handling the query returning invoice #'s cut in the last X# days. 
-    extract_results(params) do |p|
+    extract_results(params) do |p, context|
       # Put this in a thread since we're likely dealing with lookups for hundreds (or more) invoices at a time...all that matters
       # to the client is that the numbers were successfully pushed to this action
       run_in_thread do 
@@ -30,31 +30,13 @@ module Api; module V1; class IntacctDataController < ApiController
   end
 
   def receive_alliance_invoice_details
-    extract_results(params) do |p|
+    extract_results(params) do |p, context|
       OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.delay.parse_query_results p.to_json
       render json: {"OK" => ""}
     end
   end
 
-  private 
-
-    def extract_results params, null_response = {"OK" => ""}
-      # Params may be nil in cases where a query didn't return any results (rails munges JSON like {'results':[]} into {'results':nil}).
-      # So don't return an error if results is there but it's null, just don't yield.
-      if (params.include?("results") && params[:results].nil?) || (params[:results] && params[:results].respond_to?(:each))
-        if params[:results]
-          yield params[:results]
-        else
-          render json: null_response
-        end
-      else
-        render_error "Bad Request", :bad_request
-      end
-    end
-
-    def require_admin
-      render_forbidden unless User.current.admin?
-    end
+  private
 
     def run_in_thread
       # Run inline for testing

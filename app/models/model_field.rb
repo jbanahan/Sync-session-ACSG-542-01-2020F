@@ -1025,7 +1025,10 @@ and classifications.product_id = products.id
         }],
         [138,:ent_carrier_name,:carrier_name,"Carrier Name", {:data_type=>:string}],
         [139,:ent_exam_ordered_date,:exam_ordered_date,"Exam Ordered Date",{:data_type=>:datetime}],
-        [140,:ent_employee_name,:employee_name,"Employee",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}]
+        [140,:ent_employee_name,:employee_name,"Employee",{:data_type=>:string,:can_view_lambda=>lambda {|u| u.company.broker?}}],
+        [141,:ent_location_of_goods,:location_of_goods,"Location Of Goods", {:data_type=>:string}],
+        [142,:ent_final_statement_date,:final_statement_date,"Final Statement Date", {:data_type=>:date}],
+        [143,:ent_bond_type,:bond_type,"Bond Type", {:data_type=>:string}],
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -1105,7 +1108,12 @@ and classifications.product_id = products.id
                 WHERE total_duty_fees_t.commercial_invoice_line_id = commercial_invoice_lines.id) 
             FROM commercial_invoice_lines total_duty_fees_l
             WHERE total_duty_fees_l.id = commercial_invoice_lines.id)"
-        }]
+        }],
+        [41,:cil_customs_line_number, :customs_line_number, "Customs Line Number",{:data_type=>:integer}],
+        [42,:cil_product_line, :product_line, "Product Line",{:data_type=>:string}],
+        [43,:cil_visa_number, :visa_number, "Visa Number",{:data_type=>:string}],
+        [44,:cil_visa_quantity, :visa_quantity, "Visa Quantity",{:data_type=>:decimal}],
+        [45,:cil_visa_uom, :visa_uom, "Visa UOM",{:data_type=>:string}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
@@ -1128,7 +1136,8 @@ and classifications.product_id = products.id
         [22,:ent_sima_amount,:sima_amount,"SIMA Amount",{:data_type=>:decimal}],
         [23,:ent_excise_amount,:excise_amount,"Excise Amount",{:data_type=>:decimal}],
         [24,:ent_excise_rate_code,:excise_rate_code,"Excise Rate Code",{:data_type=>:string}],
-        [25,:cit_duty_rate,:duty_rate,"Duty Rate",{:data_type=>:decimal}]
+        [25,:cit_duty_rate,:duty_rate,"Duty Rate",{:data_type=>:decimal}],
+        [26,:cit_quota_category,:quota_category,"Quota Category",{:data_type=>:integer}]
       ]
       add_fields CoreModule::BROKER_INVOICE, [
         make_broker_invoice_entry_field(1,:bi_brok_ref,:broker_reference,"Broker Reference",:string,lambda {|entry| entry.broker_reference}),

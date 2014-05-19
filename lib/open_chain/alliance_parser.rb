@@ -1,6 +1,8 @@
 require 'bigdecimal'
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/integration_client_parser'
+require 'open_chain/sql_proxy_client'
+
 module OpenChain
   class AllianceParser
     extend OpenChain::IntegrationClientParser
@@ -156,6 +158,8 @@ module OpenChain
 
         if @entry
           OpenChain::AllianceImagingClient.request_images @entry.broker_reference if inner_opts[:imaging]
+          OpenChain::SqlProxyClient.delay.request_alliance_entry_details(@entry.broker_reference, @entry.last_exported_from_source)
+
           # This needs to go outside the lock/transaction so the listeners on the event all don't have to run inside the transaction
           @entry.broadcast_event(:save) if @entry
         end
@@ -173,7 +177,117 @@ module OpenChain
       processed
     end
 
+    def self.process_alliance_query_details results, context
+      results = (results.is_a?(String) ? JSON.parse(results) : results)
+      context = (context.is_a?(String) ? JSON.parse(context) : context)
+
+      # The query results get posted back here regardless of if the file number was found or not, so just bail if the results don't have any values in them
+      return if results.size == 0
+
+      self.new.process_alliance_query_details results, context
+    end
+
+    def process_alliance_query_details results, context
+      # Context should contain the file number and the last exported from source of the entry as it stood when the request was initially
+      # made.  We can then use the same find_and_process_entry process as is used for preventing processing out of date alliance files
+      # to prevent us from also processing out of date responses.
+      last_exported_from_source = context['last_exported_from_source'].blank? ? nil : timezone.parse(context['last_exported_from_source'])
+      entry_information = {broker_reference: context['broker_reference'], last_exported_from_source: last_exported_from_source}
+
+      outer_entry = nil
+      find_and_process_entry(entry_information) do |entry|
+        # Each line from the results is going to be a hash from a DB query sent back by the Alliance SQL Proxy, the data goes down to the tariff level and is 
+        # sorted together by invoice number, invoice line, tariff line
+        # Use the first line for entry header information.
+        header = results.first
+        entry.final_statement_date = parse_date "#{nil_blank(header["final statement date"], true)}"
+
+        invoices = extract_invoice_information_from_query_lines results
+        invoices.values.each do |invoice_data|
+          invoice = entry.commercial_invoices.find {|i| i.invoice_number == invoice_data[:header]["invoice number"]}
+          next unless invoice
+
+          invoice_data[:lines].values.each do |line_data|
+            line = line_data[:line]
+            inv_line_number = line["line number"].to_i/10
+            invoice_line = invoice.commercial_invoice_lines.find {|l| l.line_number == inv_line_number}
+            next unless invoice_line
+
+            invoice_line.visa_number = nil_blank line["visa no"]
+            invoice_line.visa_quantity = nil_blank line["visa qty"], true
+            invoice_line.visa_uom = nil_blank line["visa uom"]
+            invoice_line.customs_line_number = nil_blank line["customs line number"], true
+           
+            line_data[:tariffs].values.each do |tariff_line|
+              # We don't actually get the underlying Alliance tariff line number in the webtracking files.  Although it's rare,
+              # there are some cases where the same tariff number is used on multiple tariff lines for the same com inv. line.
+              # In that case, see if we can use tariff line number as an array 
+              lines = invoice_line.commercial_invoice_tariffs.find_all {|t| t.hts_code == tariff_line["tariff no"]}
+              invoice_tariff_line = nil
+
+              if lines.length == 1
+                invoice_tariff_line = lines.first
+              elsif lines.length > 1
+                invoice_tariff_line = lines[tariff_line["tariff line no"].to_i - 1]
+              end
+
+              next unless invoice_tariff_line
+              invoice_tariff_line.quota_category = nil_blank tariff_line["category"], true
+              # See note by invoice_line.save! below
+              invoice_tariff_line.save!
+            end
+
+            # Normally, I'd just assume that saving the parent would propigate down and save invoices and 
+            # invoice lines and tariff records.  It doesn't appear that ActiveRecrod actually works that way
+            # though.  Because we're not setting any invoice fields, it hits the invoice association and then
+            # doesn't bother to traverse down to the invoice line level for the update.  Because of that
+            # we have to call save on each individual lines/tariffs we update.
+            invoice_line.save!
+          end
+        end
+
+        entry.save!
+        outer_entry = entry
+      end
+
+      # we want this outside the main transaction otherwise any event listeners will run inside the transaction
+      # which we don't want since that will extend the life of the transaction possibly for a long time.
+      outer_entry.broadcast_event :save if outer_entry
+    end
+
     private 
+
+    def extract_invoice_information_from_query_lines results
+      invoices = {}
+      results.each do |line|
+        # Strip all line values, Alliance uses char fields instead of varchar ones so fields are all space padded to full
+        # db column widths.
+        line.values.each {|v| v.strip! if v.respond_to?(:strip)}
+
+        if invoices[line["invoice number"]].nil?
+          invoices[line["invoice number"]] = {}
+          invoices[line["invoice number"]][:header] = line 
+          invoices[line["invoice number"]][:lines] = {}
+        end
+        
+        if invoices[line["invoice number"]][:lines][line["line number"]].nil?
+          invoices[line["invoice number"]][:lines][line["line number"]] = {}
+          invoices[line["invoice number"]][:lines][line["line number"]][:line] = line
+          invoices[line["invoice number"]][:lines][line["line number"]][:tariffs] = {}
+        end
+
+        invoices[line["invoice number"]][:lines][line["line number"]][:tariffs][line["tariff line no"]] = line
+      end
+      invoices
+    end
+
+    def nil_blank v, numeric = false
+      if numeric
+        v.to_i.nonzero? ? v : nil
+      else
+        v.blank? ? nil : v
+      end
+    end
 
     def extract_entry_information lines
       # really, this should always be the first line, but it's just as easy to iterate over the lines and find it
@@ -236,6 +350,7 @@ module OpenChain
       @entry.unlading_port_code = port_code r[156,4]
       @entry.ult_consignee_code = r[180,10].strip
       @entry.ult_consignee_name = r[190,35].strip
+      @entry.location_of_goods = r[231, 4].strip
       @entry.vessel = r[270,20].strip
       @entry.voyage = r[290,10].strip
       @entry.gross_weight = r[318,12]
@@ -275,6 +390,7 @@ module OpenChain
       @entry.monthly_statement_number = r[413,11].strip
       @entry.monthly_statement_due_date = parse_date r[439,8]
       @entry.recon_flags = accumulated_string(:recon)
+      @entry.bond_type = r[491,1].strip
     end
 
     # header continuation 3
@@ -361,6 +477,7 @@ module OpenChain
       @c_line.unit_price = @c_line.value / @c_line.quantity if @c_line.value > 0 && @c_line.quantity > 0
       @c_line.contract_amount = parse_currency r[135,10]
       @c_line.department = r[147,6].strip
+      @c_line.product_line = r[230, 30].strip
       @c_line.computed_value = parse_currency r[260,13]
       @c_line.computed_adjustments = parse_currency r[299,13]
       @c_line.computed_net_value = parse_currency r[312,13]
@@ -580,15 +697,19 @@ module OpenChain
     def parse_date_time str
       return nil if str.blank? || str.match(/^[0]*$/)
       begin
-        ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse str
+        timezone.parse str
       rescue 
         # For some reason Alliance will send us dates with a 60 in the minutes columns (rather than adding an hour)
         # .ie  201305152260
         if str =~ /60$/
-          time = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(str[0..-3] + "00")
+          time = timezone.parse(str[0..-3] + "00")
           time + 1.hour
         end
       end
+    end
+
+    def timezone
+      ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     end
 
     def parse_decimal str, decimal_places
