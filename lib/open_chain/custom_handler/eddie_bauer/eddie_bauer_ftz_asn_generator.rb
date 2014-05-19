@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     r = ""
     ent.commercial_invoice_lines.each do |ci|
       r << "\r\n" if r.size > 0 #write new line except on first line
-      r << @f.str(ent.broker_reference,7)
+      r << @f.str(ent.broker_reference,7,false,true) #force truncate
       r << @f.str(ent.master_bills_of_lading,35)
       r << @f.str(ent.house_bills_of_lading,35)
       r << @f.str(ent.it_numbers,23)
