@@ -8,8 +8,16 @@ module OpenChain
     class PoloSapInvoiceFileGenerator
       include Polo::PoloBusinessLogic
 
-      RL_CANADA_TAX_IDS ||= ['806167003RM0001'] # This is ONLY the RL Canada importer, other RL accounts are done by hand for now
-      EMAIL_INVOICES_TO ||= ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+      # These are the ONLY the RL Canada importer accounts we're doing automatically, other RL accounts are done by hand for now
+      RL_INVOICE_CONFIGS ||= {
+        :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), 
+          email_to: ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
+          unallocated_profit_center: "19999999", company_code: "1017"
+        }, 
+        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["forthcoming@there.com", "accounting-ca@vandegriftinc.com"],
+          unallocated_profit_center: "20399999", company_code: "1710"
+        }
+      }
 
       def initialize env = :prod, custom_where = nil
         # env == :qa will send the invoices to a "test" directory
@@ -23,12 +31,15 @@ module OpenChain
 
       def find_generate_and_send_invoices 
         Time.use_zone("Eastern Time (US & Canada)") do
-          start_time = Time.zone.now
-          generate_and_send_invoices start_time, find_broker_invoices
+          RL_INVOICE_CONFIGS.each_pair do |rl_company, conf|
+            start_time = Time.zone.now
+            invoices = find_broker_invoices rl_company
+            generate_and_send_invoices rl_company, start_time, invoices
+          end
         end
       end
 
-      def find_broker_invoices 
+      def find_broker_invoices rl_company
         # We should be fine eager loading everything here since we're doing these week by week.
         # It shouldn't be THAT much data, at least at this point.
         query = BrokerInvoice.select("distinct broker_invoices.*").
@@ -41,8 +52,9 @@ module OpenChain
           # Or at least something that limits the invoice output
           query = query.where(@custom_where)
         else
-          query = query.where(:entries => {:importer_tax_id => RL_CANADA_TAX_IDS}).
-                    where("broker_invoices.invoice_date >= ?", Date.new(2013, 6, 01)).
+          conf = RL_INVOICE_CONFIGS[rl_company]
+          query = query.where(:entries => {:importer_tax_id => conf[:tax_id]}).
+                    where("broker_invoices.invoice_date >= ?", conf[:start_date]).
                     # We need to exclude everything that has already been successfully invoiced
                     where("broker_invoices.id NOT IN ("+
                       "SELECT ejl.exportable_id FROM export_job_links ejl "+
@@ -54,12 +66,12 @@ module OpenChain
         query.all
       end
 
-      def generate_and_send_invoices start_time, broker_invoices
+      def generate_and_send_invoices rl_company, start_time, broker_invoices
        # Send them 
         if broker_invoices.length > 0
           files = []
           begin
-            invoice_output = generate_invoice_output broker_invoices
+            invoice_output = generate_invoice_output rl_company, broker_invoices
 
             export_jobs = []
 
@@ -74,7 +86,8 @@ module OpenChain
             begin
               # Only deliver the emails if we're in prod mode (other modes can grab the file via ec2)
               if @env == :prod
-                OpenMailer.send_simple_html(EMAIL_INVOICES_TO, "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(broker_invoices, start_time), files).deliver!
+                conf = RL_INVOICE_CONFIGS[rl_company]
+                OpenMailer.send_simple_html(conf[:email_to], "[VFI Track] Vandegrift, Inc. #{conf[:name]} Invoices for #{start_time.strftime("%m/%d/%Y")}", email_body(conf[:name], broker_invoices, start_time), files).deliver!
                 delivered = true
               end
             ensure
@@ -126,7 +139,7 @@ module OpenChain
         brand = find_rl_brand entry
 
         if brand
-          DataCrossReference.find_rl_profit_center_by_brand brand
+          DataCrossReference.find_rl_profit_center_by_brand entry.importer_id, brand
         else
           nil
         end
@@ -155,8 +168,9 @@ module OpenChain
 
       class PoloMmglInvoiceWriter
        
-       def initialize generator
+       def initialize generator, config
           @inv_generator = generator
+          @config = config
 
           @starting_row ||= 1
           @workbook ||= XlsMaker.create_workbook 'MMGL', ['Indicator_Post_invoice_or_credit_memo','Document_date_of_incoming_invoice',
@@ -214,7 +228,7 @@ module OpenChain
             line << ((charge_total >= BigDecimal.new("0")) ? "X" : "")
             line << broker_invoice.invoice_date.strftime("%Y%m%d")
             line << broker_invoice.invoice_number
-            line << '1017'
+            line << @config[:company_code]
             line << '100023825'
             line << 'CAD'
             line << charge_total
@@ -273,9 +287,9 @@ module OpenChain
               gst_row << "14311000" # GL Account for GST
               gst_row << broker_invoice.entry.total_gst
               gst_row << "S"
-              gst_row << '1017'
+              gst_row << @config[:company_code]
               gst_row << "GST"
-              gst_row << "19999999"
+              gst_row << @config[:unallocated_profit_center]
             end
             
             profit_center = @inv_generator.find_profit_center(broker_invoice.entry)
@@ -303,9 +317,9 @@ module OpenChain
               # All charge amounts should be positive amounts (stupid accounting systems)
               row << line.charge_amount.abs
               row << ((line.charge_amount > BigDecimal.new("0")) ? "S" : "H")
-              row << "1017"
+              row << @config[:company_code]
               row << line.charge_description
-              row << (hst_line ? "19999999" : profit_center) # HST Lines have a different profit center than brokerage fees.
+              row << (hst_line ? @config[:unallocated_profit_center] : profit_center) # HST Lines have a different profit center than brokerage fees.
 
               rows << row
             end
@@ -316,8 +330,10 @@ module OpenChain
 
       class PoloFfiInvoiceWriter
 
-        def initialize generator
+        def initialize generator, rl_company, config
           @inv_generator = generator
+          @rl_company = rl_company
+          @config = config
         end
 
         # Appends the invoice information specified here to the excel file currently being generated
@@ -385,12 +401,14 @@ module OpenChain
             raw_profit_center = @inv_generator.find_profit_center(broker_invoice.entry)
 
             # If no profit center is found..we fall back to using the "catch all" one for non-deployed brands
-            profit_center = raw_profit_center.blank? ? "19999999" : raw_profit_center
+            profit_center = raw_profit_center.blank? ? @config[:unallocated_profit_center] : raw_profit_center
 
             # We only need to output the Duty and GST lines if this entry hasn't already been invoiced.
             unless @inv_generator.previously_invoiced? broker_invoice.entry
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "23101230", profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number)
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", profit_center, broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
+              # RL Canada probably should be using the unallocated account here too, but we haven't been doing that from the start so we're keeping this as is for the momemnt
+              # Joanne from RL will let us know if we can use it instead of raw one
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", (@rl_company == :rl_canada ? profit_center : @config[:unallocated_profit_center]), broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
             end
 
             # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
@@ -428,7 +446,7 @@ module OpenChain
             row = []
             row << invoice_date.strftime("%m/%d/%Y")
             row << "KR"
-            row << "1017"
+            row << @config[:company_code]
             row << now
             row << "CAD"
             row << nil
@@ -461,6 +479,10 @@ module OpenChain
 
       class PoloExceptionInvoiceWriter
 
+        def initialize config
+          @config = config
+        end
+
         def add_invoice broker_invoice, error
           @broker_invoice_data ||= []
           @broker_invoice_data << {:number=> broker_invoice.invoice_number, :error => error}
@@ -480,14 +502,14 @@ module OpenChain
             XlsMaker.add_body_row sheet, (starting_row += 1), [data[:number], data[:error].message, data[:error].backtrace.join("\n")]
           end
           
-          file = Tempfile.new(["RL_Canada_Invoice_Exceptions_#{Time.zone.now.strftime("%Y%m%d")}_", ".xls"])
+          file = Tempfile.new(["#{@config[:name].gsub(" ", "_")}_Invoice_Exceptions_#{Time.zone.now.strftime("%Y%m%d")}_", ".xls"])
           file.binmode
           workbook.write file
 
           # The easiest way for us to send an email to the appropriate people to handle
           # this issue now is just to raise and log an exception
           begin
-            raise "Failed to generate #{broker_invoice_data.length} RL Canada invoices."
+            raise "Failed to generate #{broker_invoice_data.length} #{@config[:name]} invoices."
           rescue 
             $!.log_me ["See attached spreadsheet for full list of invoice numbers that could not be generated."], [file.path]
           end
@@ -497,12 +519,12 @@ module OpenChain
       end
 
       private 
-        def email_body broker_invoices, start_time
+        def email_body rl_company_name, broker_invoices, start_time
           # This can include HTML if we want.
-          "An MM and/or FFI invoice file is attached for RL Canada for #{broker_invoices.length} invoices as of #{start_time.strftime("%m/%d/%Y")}."
+          "An MM and/or FFI invoice file is attached for #{rl_company_name} for #{broker_invoices.length} #{"invoice".pluralize(broker_invoices.length)} as of #{start_time.strftime("%m/%d/%Y")}."
         end
 
-        def generate_invoice_output broker_invoices
+        def generate_invoice_output rl_company, broker_invoices
           # This set is used so that we don't attempt to generate multiple mmgl invoices
           # against the same entry.  It's basically here because we're not saving the export
           # jobs until after files are actually written and attached to the export jobs.
@@ -513,7 +535,7 @@ module OpenChain
           broker_invoices.each do |broker_invoice|
             begin
               format = determine_invoice_output_format(broker_invoice)
-              writer = create_writer(format)
+              writer = create_writer(rl_company, format)
 
               if writer
                 writers[format] ||= writer
@@ -529,7 +551,7 @@ module OpenChain
               end
             rescue
               # Catch any errors and write them out using another writer format
-              writer = create_writer(:exception)
+              writer = create_writer(rl_company, :exception)
               writers[:exception] ||= writer
               writer.add_invoice broker_invoice, $!
             end
@@ -595,18 +617,19 @@ module OpenChain
           output_format
         end
 
-        def create_writer output_format
+        def create_writer rl_company, output_format
           @output_writers ||= {}
           output = nil
 
+          config = RL_INVOICE_CONFIGS[rl_company]
           if output_format == :mmgl
-            @output_writers[output_format] ||= PoloMmglInvoiceWriter.new(self)
+            @output_writers[output_format] ||= PoloMmglInvoiceWriter.new(self, config)
             output = @output_writers[output_format]
           elsif output_format == :ffi
-            @output_writers[output_format] ||= PoloFfiInvoiceWriter.new(self)
+            @output_writers[output_format] ||= PoloFfiInvoiceWriter.new(self, rl_company, config)
             output = @output_writers[output_format]
           elsif output_format == :exception
-            @output_writers[output_format] ||= PoloExceptionInvoiceWriter.new
+            @output_writers[output_format] ||= PoloExceptionInvoiceWriter.new(config)
             output = @output_writers[output_format]
           end
 
