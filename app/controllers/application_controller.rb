@@ -30,6 +30,7 @@ class ApplicationController < ActionController::Base
 
   after_filter :reset_state_values
   after_filter :set_csrf_cookie
+  after_filter :set_authtoken_cookie
 
   # show user message and redirect for http(s)://*.chain.io/*
   def chainio_redirect
@@ -496,6 +497,17 @@ class ApplicationController < ActionController::Base
     # utilize the rails forgery protection.
     if protect_against_forgery?
       cookies['XSRF-TOKEN'] = {value: form_authenticity_token, secure: !Rails.env.development?}
+    end
+  end
+
+  def set_authtoken_cookie
+    u = current_user
+    if u
+      if Rails.env == 'production' && u.api_auth_token.blank?
+        u.api_auth_token = User.generate_authtoken(u)
+        u.save
+      end
+      cookies['AUTH-TOKEN'] = {value:"#{u.username}:#{u.api_auth_token}"}
     end
   end
 end

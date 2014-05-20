@@ -4,7 +4,13 @@ OpenChain::Application.routes.draw do
   match '/hts/:iso/chapter/:chapter' => 'hts#chapter', :via=>:get
   match '/hts/:iso' => 'hts#country', :via=>:get
   match '/hts' => 'hts#index', :via=>:get
-  
+
+  namespace :api do
+    namespace :v1 do
+      resources :commercial_invoices, only: [:index,:create,:update]    
+    end
+  end  
+
   resources :delayed_jobs, :only => [:destroy]
   resources :ftp_sessions, :only => [:index, :show] do
     member do
@@ -200,6 +206,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/eddie_fenix_ci_load" => "custom_features#eddie_fenix_ci_load_index", :via=>:get
   match "/custom_features/eddie_fenix_ci_load/upload" => "custom_features#eddie_fenix_ci_load_upload", :via => :post
   match "/custom_features/eddie_fenix_ci_load/:id/download" => "custom_features#eddie_fenix_ci_load_download", :via => :get
+  
+  #H&M specific
+  match "/hm/po_lines" => 'hm#show_po_lines', via: :get
+  match "/hm" => 'hm#index', via: :get
 
   #reports
   match "/reports" => "reports#index", :via => :get

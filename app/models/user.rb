@@ -1,4 +1,5 @@
 require 'securerandom'
+require 'digest/sha1'
 
 class User < ActiveRecord::Base
   include Clearance::User
@@ -177,6 +178,10 @@ class User < ActiveRecord::Base
   
   def can_edit?(user)
     return user.admin? || self==user
+  end
+
+  def self.generate_authtoken user
+    Digest::SHA1.base64digest "#{Time.zone.now}#{MasterSetup.get.uuid}#{user.username}"
   end
 
   # Can the given user view items for the given module
