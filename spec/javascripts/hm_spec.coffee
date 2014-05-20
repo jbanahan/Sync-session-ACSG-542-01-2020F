@@ -43,6 +43,11 @@ describe 'HMApp', () ->
         expect(lines[0].po_number).toEqual '123'
         expect(lines[1].po_number).toEqual '124'
 
+      it 'should search by PO number', () ->
+        expected_url = '/api/v1/commercial_invoices.json?page=99&per_page=20&sid1=ci_imp_syscode&sid2=ci_invoice_number&sop1=eq&sop2=co&sv1=HENNE&sv2=123'
+        http.expectGET(expected_url).respond(response_obj)
+        svc.getLines 99, {poNumber:'123'}
+        http.flush()
 
     describe 'saveLine', ->
       ln = expected_obj = null

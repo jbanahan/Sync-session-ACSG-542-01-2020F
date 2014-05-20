@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
 
     #These custom definitions will be automatically created in if they don't already exist
-    CUSTOM_DEFINITIONS = {
+    CUSTOM_DEFINITIONS ||= {
       'Country of Origin'=>[:coo,3],
       'PO Number'=>[:po,5],
       'Size'=>[:size,11],

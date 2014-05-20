@@ -1,14 +1,14 @@
-<<<<<<< HEAD
 module Api; module V1; class ApiController < ActionController::Base
-  # disable authlogic for all requests to these controllers
-  # we're using our own authtoken based authentication
-  skip_filter :activate_authlogic 
   rescue_from StandardError, :with => :error_handler
 
   before_filter :validate_format
   around_filter :validate_authtoken
   around_filter :set_user_settings
 
+  
+  def current_user
+    @user 
+  end
   def render_forbidden
     render_error "Access denied.", :unauthorized
   end
@@ -25,7 +25,7 @@ module Api; module V1; class ApiController < ActionController::Base
   end
   
   def render_search core_module
-    return render_json_error "You do not have permission to view this module.", 401 unless current_user.view_module?(core_module)
+    raise StatusableError.new("You do not have permission to view this module.", 401) unless current_user.view_module?(core_module)
     page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
     per_page = 50 if per_page > 50
@@ -67,7 +67,7 @@ module Api; module V1; class ApiController < ActionController::Base
 
       if request.method == "POST" && request.headers["CONTENT_TYPE"] != "application/json"
         raise StatusableError.new("Content-Type '#{request.headers["CONTENT_TYPE"]}' not supported.", :not_acceptable)
-      elsif !(["POST", "GET"].include?(request.method))
+      elsif !(["POST", "GET", "PUT"].include?(request.method))
         raise StatusableError.new("Request Method '#{request.method}' not supported.", :not_acceptable)
       end
     end
@@ -77,24 +77,26 @@ module Api; module V1; class ApiController < ActionController::Base
       begin
         api_user = authenticate_with_http_token do |token, options|
           # Token should be username:token (username is there to mitigate timing attacks)
-          username, auth_token = token.split(":")
-          user = User.where(:username => username).first
-          if user && user.api_auth_token == auth_token
-            user
-          else
-            nil
-          end
+          user_from_token token
         end
       rescue 
         # Invalid authentication tokens will blow up the rails token parser (stupid), we don't really want to hear about this error 
         # since it's the client's fault they didn't set up their request correctly, so just let the api_user check below handle 
         # this as an access denied error
       end
+      if api_user.nil?
+        t = cookies['AUTH-TOKEN']
+        api_user = user_from_token t unless t.blank?
+      end
 
       raise StatusableError.new("Access denied.", :unauthorized) unless api_user
 
       @user = api_user
       yield
+    end
+    def user_from_token t
+      username, auth_token = t.split(":")
+      User.find_by_username_and_api_auth_token username, auth_token
     end
 
     def set_user_settings
@@ -194,11 +196,11 @@ module Api; module V1; class ApiController < ActionController::Base
   def validate_model_field field_type, model_field_uid, core_module
     mf = ModelField.find_by_uid model_field_uid
     if mf.nil?
-      render_json_error "#{field_type} field #{model_field_uid} not found.", 400 
+      raise StatusableError.new("#{field_type} field #{model_field_uid} not found.", 400 )
       return false
     end
     if mf.core_module != core_module
-      render_json_error "#{field_type} field #{model_field_uid} is for incorrect module.", 400 
+      raise StatusableError.new("#{field_type} field #{model_field_uid} is for incorrect module.", 400)
       return false
     end
     return true

@@ -1,5 +1,7 @@
 app = angular.module 'HMApp', ['ChainComponents']
-
+app.config(['$httpProvider', ($httpProvider) ->
+    $httpProvider.defaults.headers.common['Accept'] = 'application/json';
+])
 app.factory 'hmService', ['$http',($http) ->
   sys_code: 'HENNE'
   line_to_api : (line) ->
@@ -71,7 +73,7 @@ app.factory 'hmService', ['$http',($http) ->
       line.invoice_value = Number(iv.round(2))
       line.adjusted_value = Number(av.round(2))
 
-  getLines : (pageNumber) ->
+  getLines : (pageNumber,searchOpts) ->
     svc = @
     req = {
       page:pageNumber
@@ -80,6 +82,14 @@ app.factory 'hmService', ['$http',($http) ->
       sop1:'eq'
       sv1:'HENNE'
     }
+    sCounter = 2
+    if searchOpts
+      if searchOpts.poNumber
+        req['sid'+sCounter] = 'ci_invoice_number'
+        req['sop'+sCounter] = 'co'
+        req['sv'+sCounter] = searchOpts.poNumber
+        sCounter++
+
     $http.get('/api/v1/commercial_invoices.json',{params:req}).success((d) ->
       d.lines = (svc.api_to_line(r) for r in d.results)
     )
@@ -104,6 +114,9 @@ app.controller 'HMPOLineController', ['$scope','hmService',($scope,hmService) ->
   $scope.svc = hmService
   $scope.poLine = {}
   $scope.recentLines = []
+  $scope.searchField = undefined
+  $scope.searchValue = undefined
+  $scope.page = 1
   $scope.selectLine = (line) ->
     $scope.poLine = line
 
@@ -111,17 +124,22 @@ app.controller 'HMPOLineController', ['$scope','hmService',($scope,hmService) ->
     return if line.saving #already saving, move on
     hmService.saveLine(line).success((data,status,headers,config) ->
       r = data.line
+      foundPosition = undefined
       for ln, i in $scope.recentLines
-        $scope.recentLines.splice(i,1) if ln.id == r.id
+        foundPosition = i if  ln.id == r.id
+      $scope.recentLines.splice(foundPosition,1)
       $scope.recentLines.unshift r
       $scope.poLine = {} #reset PO Line
     ).error((d,s,h,c) ->
       $scope.errorMessage = d.error
     )
 
-  $scope.getLines = (page) ->
+  $scope.getLines = () ->
     $scope.loadingLines = true
-    hmService.getLines(page).success((d,s,h,c) ->
+    searchOpts = {}
+    if $scope.searchField && $scope.searchValue && $scope.searchValue.length > 0
+      searchOpts[$scope.searchField] = $scope.searchValue
+    hmService.getLines($scope.page,searchOpts).success((d,s,h,c) ->
       $scope.loadingLines = false
       $scope.recentLines = d.lines
     ).error((d,s,h,c) ->

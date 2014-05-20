@@ -5,8 +5,7 @@ describe Api::V1::CommercialInvoicesController do
     MasterSetup.get.update_attributes(entry_enabled:true)
     @u = Factory(:user,commercial_invoice_edit:true,commercial_invoice_view:true)
     @u.company.update_attributes(importer:true,system_code:'SYS')
-    activate_authlogic
-    UserSession.create! @u
+    allow_api_access @u
   end
   describe 'index' do
     before(:each) do
@@ -60,7 +59,7 @@ describe Api::V1::CommercialInvoicesController do
     it "should throw error for search criterions that don't match core module" do
       get :index, {'sid1'=>'cil_part_number','sop1'=>'sw','sv1'=>'1'}
       expect(response.status).to eql 400
-      expect(JSON.parse(response.body)['error']).to eql "Search field cil_part_number is for incorrect module."
+      expect(JSON.parse(response.body)['errors'].first).to eql "Search field cil_part_number is for incorrect module."
     end
     it "should apply sort criterions" do
       get :index, {'oid1'=>'ci_invoice_number','oo1'=>'D'}
@@ -85,7 +84,7 @@ describe Api::V1::CommercialInvoicesController do
       get :index
       expect(response.status).to eql 401
       j = JSON.parse response.body
-      expect(j['error']).to eql "You do not have permission to view this module."
+      expect(j['errors'].first).to eql "You do not have permission to view this module."
     end
   end
   describe 'create' do
@@ -124,7 +123,9 @@ describe Api::V1::CommercialInvoicesController do
       }
     end
     it "should create invoice" do
-      expect {post :create, @base_hash}.to change(CommercialInvoice,:count).from(0).to(1)
+      expect {
+        post :create, @base_hash
+      }.to change(CommercialInvoice,:count).from(0).to(1)
       ci = CommercialInvoice.first
       expect(ci.invoice_number).to eq 'INVNUM'
       expect(ci.invoice_date).to eql Date.new(2014,4,21)
@@ -214,7 +215,7 @@ describe Api::V1::CommercialInvoicesController do
         @base_hash['commercial_invoice']['lines'].first.delete('cil_line_number')
         expect {post :create, @base_hash}.to_not change(CommercialInvoice,:count)
         expect(response.status).to eq 400
-        j = JSON.parse(response.body)['error']
+        j = JSON.parse(response.body)['errors'].first
         expect(j).to eql "Line 1 is missing cil_line_number."
       end
       context :tariffs do
@@ -259,7 +260,7 @@ describe Api::V1::CommercialInvoicesController do
         @base_hash['commercial_invoice']['ci_imp_syscode'] = 'OTHR'
         expect {post :create, @base_hash}.to_not change(CommercialInvoice,:count)
         expect(response.status).to eq 400
-        j = JSON.parse(response.body)['error']
+        j = JSON.parse(response.body)['errors'].first
         expect(j).to eql "Cannot save invoice for importer OTHR."
       end
       it "should default importer to current_user if importer_system_code.blank? and current_user is importer" do
@@ -271,13 +272,74 @@ describe Api::V1::CommercialInvoicesController do
         @u.company.update_attributes(importer:false)
         expect {post :create, @base_hash}.to_not change(CommercialInvoice,:count)
         expect(response.status).to eq 400
-        j = JSON.parse(response.body)['error']
+        j = JSON.parse(response.body)['errors'].first
         expect(j).to eql "Cannot save invoice without importer."
       end
     end
   end
   describe "update" do
-    it 'should not update record attached to entry'
-    it "should use existing importer if not specified"
+    before :each do
+      @ci = Factory(:commercial_invoice,importer:@u.company,invoice_number:'OLD',entry:nil)
+      @cil = @ci.commercial_invoice_lines.create!(line_number:1,
+        part_number:'ABC',quantity:40)
+      @base_hash = {'id'=>@ci.id,
+        'ci_imp_syscode'=>'SYS','ci_invoice_number'=>'INVNUM',
+        'ci_invoice_date'=>'2014-04-21','ci_mfid'=>'12345ABCDEF',
+        'ci_currency'=>'GBP','ci_invoice_value_foreign'=>'99',
+        'ci_vendor_name'=>'MyVendor','ci_invoice_value'=>'100',
+        'ci_gross_weight'=>'1001','ci_total_charges'=>'112',
+        'ci_exchange_rate'=>'0.013','ci_total_quantity'=>'300',
+        'ci_total_quantity_uom'=>'PCS',
+        'ci_docs_received_date'=>'2014-04-18',
+        'ci_docs_ok_date'=>'2014-05-01',
+        'ci_issue_codes'=>'A',
+        'ci_rater_comments'=>'COMM',
+        'lines'=>[{'id'=>@cil.id,'cil_po_number'=>'po','cil_part_number'=>'part','cil_units'=>10,'cil_value'=>100.2,ent_unit_price:10.02,'cil_line_number'=>1,'cil_uom'=>'EA','cil_country_origin_code'=>'DE','cil_country_export_code'=>'GB',
+          'cil_currency'=>'GBP',
+          'cil_value_foreign'=>'53',
+          'tariffs'=>[{'cit_hts_code'=>'1234567890',
+            'cit_entered_value'=>99.45,
+            'cit_spi_primary'=>'A',
+            'cit_spi_secondary'=>'B',
+            'cit_classification_qty_1'=>100,
+            'cit_classification_uom_1'=>'DOZ',
+            'cit_classification_qty_2'=>101,
+            'cit_classification_uom_2'=>'KGS',
+            'cit_classification_qty_3'=>102,
+            'cit_classification_uom_3'=>'OTR',
+            'cit_gross_weight'=>'203',
+            'cit_tariff_description'=>'My Desc'
+            }]
+          }
+        ]
+        }
+    end
+    it "should save update" do
+      put :update, id:@ci.id, commercial_invoice: @base_hash
+      expect(response).to be_success
+      @ci.reload
+      expect(@ci.invoice_number).to eq 'INVNUM'
+      @cil.reload
+      expect(@cil.part_number).to eq 'part'
+      j = JSON.parse(response.body)['commercial_invoice']
+      expect(j['id']).to eq @ci.id
+      expect(j['ci_invoice_number']).to eq 'INVNUM'
+    end
+    it "should fail if ID in hash doesn't match route" do
+      @base_hash['id'] = @ci.id+1
+      put :update, id:@ci.id, commercial_invoice: @base_hash
+      expect(response.status).to eq 400
+      @ci.reload
+      expect(@ci.invoice_number).to eq 'OLD'
+      expect(JSON.parse(response.body)['errors'].first).to eql "Path ID #{@ci.id} does not match JSON ID #{@ci.id+1}."
+    end
+    it 'should not update record attached to entry' do
+      ent = Factory(:entry,importer:@ci.importer)
+      @ci.entry = ent
+      @ci.save!
+      put :update, id:@ci.id, commercial_invoice: @base_hash
+      expect(response.status).to eq 403
+      expect(JSON.parse(response.body)['errors'].first).to eql "Cannot update commercial invoice attached to customs entry."
+    end
   end
 end

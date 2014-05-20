@@ -1,5 +1,5 @@
 <div ng-app='HMApp'>
-  <div class="container" ng-controller='HMPOLineController' ng-init='getLines(1)'>
+  <div class="container" ng-controller='HMPOLineController' ng-init='getLines()'>
     <div class="row">
       <chain-panel panel-title='Errors' panel-message="errorMessage" panel-type='panel-danger' />
     </div>
@@ -9,13 +9,17 @@
           <h1>H&amp;M PO Lines</h1>
         </div>
       </div>
-      <div class='row'>
-        <div class='col-md-4'>
+      <div class="row">
+        <div class="col-md-12">
           <div class='form-group' ng-class="{'has-error':form.po_number.$invalid}">
             <label for='po_number'>PO Number</label>
             <input type='text' ng-model='poLine.po_number' class='form-control' name='po_number' id='po_number' ng-pattern='/^\d{6}$/'>
             <span ng-show='form.po_number.$error.pattern' class='error'>PO Number must be 6 digits like &quot;123456&quot;.</span>
           </div>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-md-4'>
           <div class='form-group' ng-class="{'has-error':form.hts_code.$invalid}">
             <label for='hts_code'>HTS Number</label>
             <input type='text' ng-model='poLine.hts_code' class='form-control' id='hts_code' name='hts_code' ng-pattern='/^\d{10}$/'>
@@ -58,7 +62,6 @@
               <option>EUR</option>
               <option>SEK</option>
             </select>
-            <span ng-show='form.currency.$error.pattern' class='error'>Currency should be USD, EUR, or SEK.</span>
           </div>
           <div class='form-group'>
             <label for="invoice_value">Invoice Value (Foreign)</label>
@@ -98,6 +101,21 @@
     <div class="row">
       <div class="col-md-12">
         <h2>Recent Lines</h2>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <form class="form-inline">
+          <select ng-model='searchField' class='form-control'>
+            <option value='poNumber'>PO</option>
+          </select>
+          <input ng-model='searchValue'  class='form-control'/>
+          <button ng-click='getLines()' class='btn btn-default'>Search</button>
+        </form>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
         <div ng-show='loadingLines'>
           Loading...
         </div>

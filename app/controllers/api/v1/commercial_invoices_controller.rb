@@ -7,7 +7,18 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
       ci_hash = params['commercial_invoice']
       ci = save_invoice ci_hash
       unless ci.errors.full_messages.blank?
-        return render_json_error ci.errors.full_messages.join("\n"), 400
+        raise StatusableError.new(ci.errors.full_messages.join("\n"), 400)
+      end
+      render json: {commercial_invoice:obj_to_json_hash(ci)}
+    end
+  end
+  def update
+    CommercialInvoice.transaction do
+      ci_hash = params['commercial_invoice']
+      raise StatusableError.new("Path ID #{params[:id]} does not match JSON ID #{ci_hash['id']}.",400) unless params[:id].to_s == ci_hash['id'].to_s
+      ci = save_invoice ci_hash
+      unless ci.errors.full_messages.blank?
+        raise StatusableError.new(ci.errors.full_messages.join("\n"), 400)
       end
       render json: {commercial_invoice:obj_to_json_hash(ci)}
     end
@@ -76,6 +87,7 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
   private
   def save_invoice h
     ci = h['id'].blank? ? CommercialInvoice.new : CommercialInvoice.find(h['id'])
+    raise StatusableError.new("Cannot update commercial invoice attached to customs entry.",:forbidden) if ci.entry_id
     h['ci_imp_syscode'] = current_user.company.system_code if h['ci_imp_syscode'].blank? && ci.importer.nil? && current_user.company.importer? && !current_user.company.system_code.blank?
     import_fields h, ci, CoreModule::COMMERCIAL_INVOICE
     load_lines ci, h
@@ -87,7 +99,7 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
   def load_lines ci, h
     if h['lines']
       h['lines'].each_with_index do |ln,i|
-        c_line = ci.commercial_invoice_lines.find {|obj| obj.line_number == ln['cil_line_number'].to_i}
+        c_line = ci.commercial_invoice_lines.find {|obj| obj.line_number == ln['cil_line_number'].to_i || obj.id == ln['id'].to_i}
         c_line = ci.commercial_invoice_lines.build(line_number:ln['cil_line_number']) if c_line.nil?
         import_fields ln, c_line, CoreModule::COMMERCIAL_INVOICE_LINE
         ci.errors[:base] << "Line #{i+1} is missing cil_line_number." if c_line.line_number.blank?
