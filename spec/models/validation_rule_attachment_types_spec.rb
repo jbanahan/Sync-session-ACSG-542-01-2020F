@@ -31,4 +31,12 @@ describe ValidationRuleAttachmentTypes do
     expect{ vr.run_validation(e) }.to raise_error(RuntimeError, "Missing attachment type two.")
   end
 
+  it "should raise error indicated attachment types were not specified when appropriate" do
+    json = {model_field_uid: :ent_cust_name, regex: "ABC"}.to_json
+    vr = ValidationRuleAttachmentTypes.create!(rule_attributes_json:json)
+    e = Factory(:entry)
+
+    expect { vr.run_validation(e) }.to raise_error(RuntimeError, "No attachment types were specified.")
+  end
+
 end

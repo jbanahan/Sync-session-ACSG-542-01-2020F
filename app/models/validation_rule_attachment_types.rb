@@ -9,7 +9,7 @@ class ValidationRuleAttachmentTypes < BusinessValidationRule
     @attrs ||= self.rule_attributes
     @types = @attrs['attachment_types']
 
-    return nil if @types.blank?
+    raise "No attachment types were specified." if @types.blank?
 
     @types = [@types] if @types.instance_of?(String)
     object_attachment_types = obj.attachments.collect {|a| a.attachment_type.downcase}
