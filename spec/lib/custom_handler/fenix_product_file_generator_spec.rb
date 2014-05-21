@@ -92,4 +92,35 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @h.ftp_file t
     end
   end
+
+  describe "run_schedulable" do
+    it "should pass in all possible options when provided" do
+      hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23",
+          "use_part_number" => "false", "additional_where" => "5 > 3"}
+      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ","23",false,"5 > 3")
+
+      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ","23",false,"5 > 3").and_return(fpfg)
+      OpenChain::CustomHandler::FenixProductFileGenerator.any_instance.should_receive(:generate)
+      OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash)
+    end
+
+    it "should convert strings of true into keywords of true" do
+      hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23",
+          "use_part_number" => "true", "additional_where" => "5 > 3"}
+      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ","23",true,"5 > 3")
+
+      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ","23",true,"5 > 3").and_return(fpfg)
+      OpenChain::CustomHandler::FenixProductFileGenerator.any_instance.should_receive(:generate)
+      OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash)      
+    end
+
+    it "should not fail on missing options" do
+      hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23"}
+      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ","23")
+
+      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ","23",false, nil).and_return(fpfg)
+      OpenChain::CustomHandler::FenixProductFileGenerator.any_instance.should_receive(:generate)
+      OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash) 
+    end
+  end
 end
