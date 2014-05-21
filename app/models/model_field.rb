@@ -17,7 +17,7 @@ class ModelField
               :import_lambda, :export_lambda, 
               :custom_id, :data_type, :core_module, 
               :join_statement, :join_alias, :qualified_field_name, :uid, 
-              :public, :public_searchable
+              :public, :public_searchable, :definition
   
   def initialize(rank,uid,core_module, field, options={})
     o = {:import_lambda =>  lambda {|obj,data|
@@ -42,6 +42,7 @@ class ModelField
     @sort_rank = rank
     @model = core_module.class_name.intern unless core_module.nil?
     @field_name = field
+    @definition = o[:definition]
     @import_lambda = o[:import_lambda]
     @export_lambda = o[:export_lambda]
     @can_view_lambda = o[:can_view_lambda]
@@ -572,7 +573,8 @@ class ModelField
       class_symbol = base_class.to_s.downcase
       fld = "*cf_#{d.id}".intern
       mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",
-        :qualified_field_name=>"(SELECT IFNULL(#{d.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{d.id})"
+        :qualified_field_name=>"(SELECT IFNULL(#{d.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{d.id})",
+        :definition => d.definition
       }))
       model_hash[mf.uid.to_sym] = mf
     end
