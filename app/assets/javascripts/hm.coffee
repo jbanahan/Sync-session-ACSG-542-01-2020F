@@ -16,6 +16,7 @@ app.factory 'hmService', ['$http',($http) ->
         ci_docs_ok_date:line.docs_ok_date
         ci_issue_codes:line.issue_codes
         ci_rater_comments:line.comment
+        ci_mfid:line.mid
         lines:[
           {
             cil_value_foreign:line.adjusted_value
@@ -58,6 +59,7 @@ app.factory 'hmService', ['$http',($http) ->
       ci_line_id:ci_line.id
       currency:ci_line.cil_currency
       origin_country:ci_line.cil_country_origin_code
+      mid:ci.ci_mfid
     }
     if ci_line.tariffs && ci_line.tariffs[0]
       t = ci_line.tariffs[0]

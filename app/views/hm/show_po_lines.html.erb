@@ -25,11 +25,10 @@
             <input type='text' ng-model='poLine.hts_code' class='form-control' id='hts_code' name='hts_code' ng-pattern='/^\d{10}$/'>
             <span ng-show='form.hts_code.$error.pattern' class='error'>HTS number must be 10 digits without periods.</span>
           </div>
-          <div class='form-group' ng-class="{'has-error':form.cartons.$invalid}">
-            <label for="cartons">Cartons</label>
-            <input id="cartons" class="form-control" type="number" name='cartons' ng-model="poLine.cartons">
-            <span ng-show='form.cartons.$error.min'>Cartons must be positive.</span>
-          </div>
+          <div class='form-group'>
+            <label for="mid">MID</label>
+            <input id="mid" class="form-control" name='mid' ng-model="poLine.mid">
+          </div>          
           <div class="form-group" ng-class="{'has-error':form.origin_country.$invalid}">
             <label for="" form="origin_country">Country of Origin</label>
             <input type="text" id="origin_country" class='form-control' name="origin_country" ng-model="poLine.origin_country" ng-pattern='/^[A-Z]{2}$/'>
@@ -45,6 +44,11 @@
           </div>
         </div>
         <div class='col-md-4'>
+          <div class='form-group' ng-class="{'has-error':form.cartons.$invalid}">
+            <label for="cartons">Cartons</label>
+            <input id="cartons" class="form-control" type="number" name='cartons' ng-model="poLine.cartons">
+            <span ng-show='form.cartons.$error.min'>Cartons must be positive.</span>
+          </div>
           <div class='form-group' ng-class="{'has-error':form.quantity.$invalid}">
             <label for="quantity">Quantity</label>
             <input id="quantity" class="form-control" type="number" ng-model="poLine.quantity" name='quantity' ng-change='svc.recalc(poLine)' min='0'>
