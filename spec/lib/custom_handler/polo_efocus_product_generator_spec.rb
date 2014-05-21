@@ -30,23 +30,28 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
     end
     context "simple tests" do
       before :each do
+        # We can instantiate a new efocus product generator here which will create the custom defs we require..then just look them up by label
+        @g = described_class.new
+
         @classification = Factory(:classification, :country_id=>@us.id)
         @tariff_record = Factory(:tariff_record, :classification => @classification, :hts_1 => '12345')
         @match_product = @classification.product
-        @barthco_cust = Factory(:custom_definition,:id=>1,:module_type=>'Product',:label=>'Barthco Customer ID')
-        @test_style = Factory(:custom_definition,:module_type=>'Product',:label=>'Test Style')
+        @barthco_cust = CustomDefinition.where(label: "Barthco Customer ID").first
+        @test_style = CustomDefinition.where(label: "Test Style").first
+        @set_type = CustomDefinition.where(label: "Set Type").first
+
         @match_product.update_custom_value! @barthco_cust, '100'
       end
       it 'should not return product without US classification' do
         dont_find = Factory(:classification).product
         dont_find.update_custom_value! @barthco_cust, '100'
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 1
         r.first[6].should == @match_product.unique_identifier
       end
       it 'should not return multiple rows for multiple country classifications' do
         other_country_class = Factory(:classification,:product=>@match_product)
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 1
         r.first[6].should == @match_product.unique_identifier
       end
@@ -55,42 +60,41 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
         dont_find.update_custom_value! @barthco_cust, '100'
         dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.minute.ago,:confirmed_at=>1.second.ago)
         dont_find.update_attributes(:updated_at=>1.day.ago)
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 1
         r.first[6].should == @match_product.unique_identifier
       end
       it "should not return products without barthco customer ids" do
         @match_product.custom_values.destroy_all
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 0
       end
       it "should not return products that are test styles" do
         @match_product.update_custom_value! @test_style, 'x'
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 0
       end
       it "should not return products that are non-RL sets and are missing hts numbers" do
         @tariff_record.update_attributes :hts_1 => ''
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 0
       end
       it "should return products that only have hts 2" do
         @tariff_record.update_attributes :hts_1 => '', :hts_2 => "1234"
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 1
         r.first[6].should == @match_product.unique_identifier
       end
       it "should return products that only have hts 3" do
         @tariff_record.update_attributes :hts_1 => '', :hts_3 => "1234"
-        r = Product.connection.execute described_class.new.query
+        r = Product.connection.execute @g.query
         r.count.should == 1
         r.first[6].should == @match_product.unique_identifier
       end
       it "should return products that are RL sets and are missing hts numbers" do
-        set_type = Factory(:custom_definition,:id=>131,:module_type=>'Product',:label=>'Set Type')
         @tariff_record.update_attributes :hts_1 => '', :hts_2 => '', :hts_3 => ''
-        @match_product.update_custom_value! set_type, 'RL'
-        r = Product.connection.execute described_class.new.query
+        @classification.update_custom_value! @set_type, 'RL'
+        r = Product.connection.execute @g.query
         r.count.should == 1
         r.first[6].should == @match_product.unique_identifier
       end
