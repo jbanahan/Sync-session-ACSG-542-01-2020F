@@ -54,6 +54,11 @@ module OpenChain
         f.unlink
       end
 
+      def self.run_schedulable opts_hash={}
+        ["true",true].include?(opts_hash["use_part_number"]) ? use_part_number = true : use_part_number = false
+        OpenChain::CustomHandler::FenixProductFileGenerator.new(opts_hash["fenix_customer_code"], opts_hash["importer_id"], use_part_number, opts_hash["additional_where"]).generate
+      end
+      
       private
       def force_fixed str, len
         return str.ljust(len) if str.length <= len
@@ -69,6 +74,7 @@ module OpenChain
           p.unique_identifier
         end
       end
+
     end
   end
 end
