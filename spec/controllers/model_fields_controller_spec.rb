@@ -30,8 +30,7 @@ describe ModelFieldsController do
 
     it "should return product model fields with the proper label" do
       u = Factory(:user)
-      activate_authlogic
-      UserSession.create! u
+      sign_in_as u
 
       get :glossary, {core_module: 'Product'}
       expect(response).to be_success
@@ -41,8 +40,7 @@ describe ModelFieldsController do
 
     it "should redirect when the module is not found" do
       u = Factory(:user)
-      activate_authlogic
-      UserSession.create! u
+      sign_in_as u
 
       get :glossary, {core_module: 'nonexistent'}
       expect(response).to be_redirect
