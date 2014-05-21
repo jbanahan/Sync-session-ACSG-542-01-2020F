@@ -20,4 +20,38 @@ describe ModelFieldsController do
     found_uids = r.collect {|mf| mf["uid"]}
     found_uids.should include("ent_broker_invoice_total")
   end
+
+  describe "glossary" do
+    render_views
+
+    before :each do
+      @mf = ModelField.new(10000,:test,CoreModule::PRODUCT,:name)
+    end
+
+    it "should return product model fields with the proper label" do
+      u = Factory(:user)
+      activate_authlogic
+      UserSession.create! u
+
+      get :glossary, {core_module: 'Product'}
+      expect(response).to be_success
+      assigns(:fields).length.should > 0
+      assigns(:label).should == "Product"
+    end
+
+    it "should redirect when the module is not found" do
+      u = Factory(:user)
+      activate_authlogic
+      UserSession.create! u
+
+      get :glossary, {core_module: 'nonexistent'}
+      expect(response).to be_redirect
+      flash[:errors].first.should == "Module nonexistent was not found."
+    end
+
+    it "should redirect for users who aren't logged in" do
+      get :glossary, {core_module: 'doesnt_matter'}
+      response.status.should == 302
+    end
+  end
 end

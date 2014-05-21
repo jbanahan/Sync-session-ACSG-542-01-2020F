@@ -167,6 +167,7 @@ OpenChain::Application.routes.draw do
   match "/attachments/email_attachable/:attachable_type/:attachable_id" => "attachments#send_email_attachable", via: :post
 
   match "/project_deliverables/:user_id/notify_now" => "project_deliverables#notify_now", via: :get
+  match "/glossary/:core_module" => "model_fields#glossary", via: :get
 
   resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
     get 'last_search_id', :on=>:collection
