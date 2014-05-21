@@ -251,4 +251,16 @@ describe FileImportProcessor do
       
     end
   end
+
+  describe "process_file" do 
+    context "CSVImportProcessor" do
+      it "skips blank lines in CSV files" do
+        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.xlsx")
+        p = FileImportProcessor::CSVImportProcessor.new f, "a,b\n,,,\nc,d\n, , , ,,\n,,,,,\n\n", []
+        rows = []
+        p.get_rows {|r| rows << r}
+        expect(rows).to eq [["a", "b"], ["c", "d"]]
+      end
+    end
+  end
 end
