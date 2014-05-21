@@ -82,7 +82,10 @@
     <tr class='hover'><td><%=link_to "H&M Statistics Report", reports_show_hm_statistics_path%></td>
     <td>H&amp;M Statistics Report</td></tr>
   <%end-%>
-
+  <%if OpenChain::Report::HmOkLog.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "H&M OK Log", reports_show_hm_ok_log_path%></td>
+    <td>H&amp;M OK Log</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

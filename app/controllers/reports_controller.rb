@@ -253,6 +253,22 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_hm_ok_log
+    if OpenChain::Report::HmOkLog.permission?(current_user)
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_hm_ok_log
+    if OpenChain::Report::HmOkLog.permission?(current_user)
+      run_report "H&M OK Log", OpenChain::Report::HmOkLog, {}, []
+    else
+      error_redirect "You do not have permission to view this report."
+    end
+  end
+
   def show_hm_statistics
     if OpenChain::Report::HmStatisticsReport.permission?(current_user)
       render

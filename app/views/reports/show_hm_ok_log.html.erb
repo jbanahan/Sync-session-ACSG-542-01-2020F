@@ -1,0 +1,15 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<%=form_tag reports_run_hm_ok_log_path, :id=>'frm_run' do -%>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>H&amp;M OK Log</h2>
+      This report does not have parameters.  Click Run Report below.
+    </div>
+  </div>
+</div>
+<%end%>
+</div>
