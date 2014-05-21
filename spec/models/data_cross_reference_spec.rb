@@ -50,9 +50,10 @@ describe DataCrossReference do
   end
   context :find_rl_profit_center do
     it "should find an rl profit center from the brand code" do
-      DataCrossReference.create! :key=>"brand", :value=>"profit center", :cross_reference_type=>DataCrossReference::RL_BRAND_TO_PROFIT_CENTER
+      company = Factory(:importer)
+      DataCrossReference.create! :key=>"brand", :value=>"profit center", :cross_reference_type=>DataCrossReference::RL_BRAND_TO_PROFIT_CENTER, company_id: company.id
 
-      DataCrossReference.find_rl_profit_center_by_brand('brand').should == "profit center"
+      expect(DataCrossReference.find_rl_profit_center_by_brand(company.id, 'brand')).to eq "profit center"
     end
   end
 
