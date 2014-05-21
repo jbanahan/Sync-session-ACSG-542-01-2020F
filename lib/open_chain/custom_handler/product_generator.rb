@@ -200,6 +200,10 @@ module OpenChain
             table_name = 'classifications'
           when 'TariffRecord'
             table_name = 'tariff_records'
+          else
+            # This shouldn't really happen in prod, but it can in dev for any ids that are hardcoded and the hardcoded id links to a field 
+            # for a different module
+            return missing_custom_def suppress_alias, cd_id, cd
           end
           
           if suppress_ifnull
@@ -210,7 +214,7 @@ module OpenChain
 
         else
           #so report doesn't bomb if custom field is removed from system
-          "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+          missing_custom_def suppress_alias, cd_id, cd
         end
       end
       
@@ -227,6 +231,10 @@ module OpenChain
       end
 
       private 
+        def missing_custom_def suppress_alias, cd_id, cd
+          "(SELECT \"\")#{build_custom_def_query_alias(suppress_alias, cd_id, cd)}"
+        end
+
         def build_custom_def_query_alias suppress_alias, cd_id, cd
           if suppress_alias
             ""
