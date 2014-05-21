@@ -95,6 +95,15 @@ describe OpenChain::CustomHandler::AckFileHandler do
       OpenMailer.deliveries.last.subject.should == "[VFI Track] Ack File Processing Error"
     end
 
+    it "should send an email to multiple users if there's an error while processing the file" do
+      me = Factory(:user, email: "me@there.com")
+      you = Factory(:user, email: "you@there.com")
+      described_class.new.parse("some\ntext",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: [me.username, you.username]})
+
+      expect(OpenMailer.deliveries.last.to - [me.email, you.email]).to have(0).items
+      OpenMailer.deliveries.last.subject.should == "[VFI Track] Ack File Processing Error"
+    end
+
     it "should error if key is missing" do
       expect{described_class.new.parse "h,h,h\n#{@p.unique_identifier},201306191706,OK", {:sync_code=>"XYZ", email_address: "example@example.com"}}.to raise_error ArgumentError, "Opts must have an s3 :key hash key."
     end

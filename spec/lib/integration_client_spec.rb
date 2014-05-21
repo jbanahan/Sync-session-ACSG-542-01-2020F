@@ -138,7 +138,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       MasterSetup.any_instance.should_receive(:custom_feature?).with('CSM Sync').and_return(true)
       p = double("parser")
       OpenChain::CustomHandler::AckFileHandler.any_instance.should_receive(:delay).and_return p
-      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {:sync_code => 'csm_product'}
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345', {sync_code: 'csm_product', username: ['rbjork', 'aditaran']}
       cmd = {'request_type'=>'remote_file','path'=>'_from_csm/ACK-file.csv','remote_path'=>'12345'}
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
@@ -250,6 +250,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       context 'errors' do
 
         before :each do
+          Rails.stub(:env).and_return ActiveSupport::StringInquirer.new("production")
           LinkableAttachmentImportRule.should_receive(:find_import_rule).exactly(3).times.and_return(nil,nil,nil)
         end
 

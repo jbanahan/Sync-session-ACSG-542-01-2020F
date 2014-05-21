@@ -50,13 +50,15 @@ module OpenChain
         messages = ["File Name: #{file_name}"]
         messages += errors
 
-        email_address = User.find_by_username(username).email
+        email_addresses = User.where(username: username).pluck :email
+        email_addresses = ["support@vandegriftinc.com"] unless email_addresses
 
         Tempfile.open(["temp",".csv"]) do |t|
           t << file_content
-          t.flush; t.rewind
+          t.flush
+          t.rewind
 
-          OpenMailer.send_ack_file_exception(email_address, messages, t, file_name, sync_code).deliver!
+          OpenMailer.send_ack_file_exception(email_addresses, messages, t, file_name, sync_code).deliver!
         end
       end
       

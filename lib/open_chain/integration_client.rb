@@ -105,7 +105,7 @@ module OpenChain
           cf.delay.process(cf.uploaded_by)
         end
       elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
-        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product'
+        OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
       elsif command['path'].include?('/_efocus_ack/') && MasterSetup.get.custom_feature?("e-Focus Products")
         OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: OpenChain::CustomHandler::PoloEfocusProductGenerator::SYNC_CODE
       elsif command['path'].include?('/_from_sap/') && MasterSetup.get.custom_feature?('Ann SAP')
@@ -149,6 +149,8 @@ module OpenChain
       end
       return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
     rescue => e
+      raise e unless Rails.env.production?
+      
       total_attempts -= 1
       if total_attempts > 0
         sleep 0.25
