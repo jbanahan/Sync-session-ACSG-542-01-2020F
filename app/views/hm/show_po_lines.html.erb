@@ -1,5 +1,33 @@
 <div ng-app='HMApp'>
   <div class="container" ng-controller='HMPOLineController' ng-init='getLines()'>
+    <div class="modal" id='issue_codes'>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Issue Codes</h4>
+          </div>
+          <div class="modal-body">
+            <dl class="dl-horizontal">
+            <dt>GSPHTS</dt><dd>Wrong tariff number on GSP Form A</dd>
+            <dt>GSPBAD</dt><dd>Mismatching information on the GSP Form A and invoices ( i.e. weight not matching with invoice, no. of cartons incorrect)</dd>
+            <dt>GSPBBY</dt><dd>Missing GSP FORM A for baby sizes</dd>
+            <dt>NODOCS</dt><dd>Docs in general delayed (shipment arrived, no docs for customs clearance received)</dd>
+            <dt>BADDES</dt><dd>Incorrect/inscrutable/missing description and/or composition on the invoice ( i.e. just the STYLE-name instead of “ladies trousers woven”, blouse is shown item is a skirt, stated KNITTED but item is WOVEN)</dd>
+            <dt>UNTPRC</dt><dd>Incorrect unit price on the invoice</dd>
+            <dt>LTDOCS</dt><dd>Documents partly missing/delayed</dd>
+            <dt>BADWGT</dt><dd>Weight on packing lists/invoice not the actual weight of the goods</dd>
+            <dt>BADDOC</dt><dd>If docs were sent by scanned copy, very often the copies are not readable or blurred</dd>
+            <dt>BADCTN</dt><dd>Deviation in number of cartons or pieces between supplier’s invoice and packing list</dd>
+            </dl>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="row">
       <chain-panel panel-title='Errors' panel-message="errorMessage" panel-type='panel-danger' />
     </div>
@@ -86,7 +114,7 @@
             <input id="docs_ok_date" type="date" ng-model="poLine.docs_ok_date" class='form-control'>
           </div>
           <div class='form-group'>
-            <label for="issue_codes">Issue Codes</label>
+            <label for="issue_codes">Issue Codes <button class='btn btn-xs btn-default' data-toggle='modal' data-target='#issue_codes'>?</button></label>
             <input type="text" id="issue_codes" ng-model='poLine.issue_codes' class='form-control' />
           </div>
           <div class='form-group'>
