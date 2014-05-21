@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job = ExportJob.all.first
         mail = ActionMailer::Base.deliveries.pop
         expect(mail).to_not be_nil
-        expect(mail.to).to eq ["forthcoming@there.com", "accounting-ca@vandegriftinc.com"]
+        expect(mail.to).to eq ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "robert.helm@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
         mail.subject.should == "[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
@@ -234,6 +234,27 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         # The only differences here should be the company code and the profit centers utilized
         expect(sheet.row(1)[2]).to eq "1710"
         expect(sheet.row(2)[24]).to eq "20399999"
+      end
+
+      it "should use unallocated profit center for CM invoices on HST/GST Lines" do
+        @broker_invoice_line1.update_attributes! charge_code: "250"
+        @gen.stub(:find_profit_center).and_return "profit_center"
+
+        # All that we need to check here is the differences between rl ca and club monaco
+        time = Time.zone.now
+        @gen.generate_and_send_invoices :club_monaco, time, [@broker_invoice]
+
+        # A single ExportJob should have been created
+        job = ExportJob.all.first
+        job.should_not be_nil
+        mail = ActionMailer::Base.deliveries.pop
+
+        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
+        # The only differences here should be the company code and the profit centers utilized
+        expect(sheet.row(1)[2]).to eq "1710"
+        expect(sheet.row(2)[24]).to eq "profit_center"
+        expect(sheet.row(4)[24]).to eq "20399999"
+        expect(sheet.row(4)[27]).to eq @broker_invoice_line1.charge_description
       end
 
       it "should generate an FFI invoice for converted legacy PO's missing profit center links" do

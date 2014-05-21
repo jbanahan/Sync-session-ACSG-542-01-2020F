@@ -14,7 +14,7 @@ module OpenChain
           email_to: ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
           unallocated_profit_center: "19999999", company_code: "1017"
         }, 
-        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["forthcoming@there.com", "accounting-ca@vandegriftinc.com"],
+        :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "robert.helm@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
           unallocated_profit_center: "20399999", company_code: "1710"
         }
       }
@@ -408,7 +408,7 @@ module OpenChain
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "23101230", profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number)
               # RL Canada probably should be using the unallocated account here too, but we haven't been doing that from the start so we're keeping this as is for the momemnt
               # Joanne from RL will let us know if we can use it instead of raw one
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", (@rl_company == :rl_canada ? profit_center : @config[:unallocated_profit_center]), broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", hst_gst_profit_center(profit_center), broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
             end
 
             # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
@@ -418,7 +418,8 @@ module OpenChain
               # Duty is included at the "header" level so skip it at the invoice line level
               next if line.duty_charge_type?
               gl_account = line.hst_gst_charge_code? ? "14311000" : brokerage_gl_account
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number)
+              local_profit_center = (line.hst_gst_charge_code? ? (hst_gst_profit_center(profit_center)) : profit_center)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, gl_account, local_profit_center, line.charge_amount, line.charge_description, :brokerage, broker_invoice.entry.entry_number)
             end
 
             # There always needs to be a "total" line, regardless of whether there's duty / gst listed or not,
@@ -438,6 +439,10 @@ module OpenChain
             end
 
             rows
+          end
+
+          def hst_gst_profit_center main_profit_center
+            @rl_company == :rl_canada ? main_profit_center : @config[:unallocated_profit_center]
           end
 
           def create_line invoice_number, invoice_date, gl_account, profit_center, amount, description, line_type, entry_number
