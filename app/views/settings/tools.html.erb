@@ -22,4 +22,8 @@
     <h2><a href='/part_number_correlations'>HTS Lookup</a></h2>
     <p>Find prior tariff information for products.</p>
   <% end %>
+  <% if current_user.admin? %>
+    <h2><a href='/users/find_by_email'>User Finder</a></h2>
+    <p>Find users by email address.</p>
+  <% end %>
 </div>
