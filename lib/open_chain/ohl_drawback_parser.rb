@@ -45,7 +45,7 @@ module OpenChain
       quantity:26,
       uom:27
     }
-    MEDIUM_MAP ||= {
+    SHORTER_MAP ||= {
       importer_name:0,
       entry_number:1,
       arrival_date:2,
@@ -88,8 +88,8 @@ module OpenChain
             map_to_use = LONG_MAP
           when 28
             map_to_use = SHORT_MAP
-          else
-            map_to_use = MEDIUM_MAP
+          when 20
+            map_to_use = SHORTER_MAP
         end 
       end
       entries << OhlDrawbackParser.new(rows,map_to_use).entry unless rows.blank?
@@ -133,11 +133,18 @@ module OpenChain
       @entry.entry_port_code = row[@map[:entry_port_code]]
       @entry.arrival_date = datetime row[@map[:arrival_date]]
       @entry.mpf = row[@map[:mpf]]
-      @entry.transport_mode_code = row[@map[:transport_mode_code]].to_s
+      @entry.transport_mode_code = get_transport_mode_code(row[@map[:transport_mode_code]]).to_s
       @entry.total_invoiced_value = row[@map[:total_invoiced_value]]
       @entry.total_duty = row[@map[:total_duty]]
       @entry.merchandise_description = row[@map[:merchandise_description]]
     end
+
+    def get_transport_mode_code(input_code)
+      return input_code unless input_code.to_i == 0 # "any string".to_i = 0
+      return 40 if input_code == "AIR"
+      return 11 if input_code == "SEA"
+    end
+
     def process_details row
       @line_number ||= 1
       line = @invoice.commercial_invoice_lines.build(:line_number=>@line_number)
@@ -146,12 +153,12 @@ module OpenChain
       line.quantity = DOZENS_INDICATORS.include?(row[@map[:uom]]) ? row[@map[:quantity]]*12 : row[@map[:quantity]]
       line.country_origin_code = get_country_of_origin row[@map[:country_origin_code]]
       t = line.commercial_invoice_tariffs.build
-      t.duty_amount = row[@map[:duty_amount]]
+      t.duty_amount = row.at(@map[:duty_amount])
       t.classification_qty_1 = row[@map[:quantity]]
       t.classification_uom_1 = row[@map[:uom]]
-      t.hts_code = row[@map[:hts_code]].gsub('.','') if row[@map[:hts_code]]
+      t.hts_code = row[@map[:hts_code]].to_s.gsub('.','') if row[@map[:hts_code]]
       t.entered_value = row[@map[:entered_value]]
-      @entry.total_duty_direct += row[@map[:total_duty_direct]] unless row[@map[:total_duty_direct]].nil?
+      @entry.total_duty_direct += row.at(@map[:total_duty_direct]) unless row[@map[:total_duty_direct]].nil?
       @line_number += 1
     end
     

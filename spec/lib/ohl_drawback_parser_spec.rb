@@ -11,8 +11,35 @@ describe OpenChain::OhlDrawbackParser do
   end
   it 'should create entries based on sample, skipping Mode = "-1"' do
     entries = Entry.all
-    entries.should have(3).items
-    entries.collect {|e| e.entry_number}.should == ['11350368418','11353554642','11365647418']
+    entries.should have(4).items
+    entries.collect {|e| e.entry_number}.should == ["11350368418", "11353554642", "11365647418", "OHL03410879"]
+  end
+  it "should map new 20 column format" do
+    ent = Entry.find_by_entry_number "OHL03410879"
+    ent.importer.name.should == "UNDER ARMOUR INC."
+    ent.arrival_date.to_date.should == "Thu, 17 Apr 2014".to_date
+    ent.entry_port_code.should == "2704"
+    ent.mpf.should == 485
+    ent.transport_mode_code.should == "11"
+    ent.total_invoiced_value.should == 528971
+    ent.total_duty.should == 93098.89
+    ent.merchandise_description.should == "BACKPACKS/SACKPACKS OF MAN-MADE FIBERS 100% POLYESTER"
+    ent.import_country.iso_code.should == "US" #Check this logic
+    ent.total_duty_direct.should == 39109.6
+    ent.commercial_invoices.count.should == 1
+    ci = ent.commercial_invoices.first
+    ci.commercial_invoice_lines.count.should == 4
+    ln = ci.commercial_invoice_lines.first
+    ln.part_number.should == "1251829-389"
+    ln.po_number.should == "4500514847"
+    ln.quantity.should == 2700
+    ln.country_origin_code.should == "CN"
+    tr = ln.commercial_invoice_tariffs.first
+    tr.hts_code.should == "4202923020"
+    tr.duty_amount.should == 6253.63
+    tr.classification_qty_1.should == 2700
+    tr.classification_uom_1.should == "NO"
+    tr.entered_value.should == 1997
   end
   it 'should map newer 31 column format' do
     ent = Entry.find_by_entry_number '11365647418'
@@ -28,6 +55,7 @@ describe OpenChain::OhlDrawbackParser do
     ci = ent.commercial_invoices.first
     expect(ci.commercial_invoice_lines.count).to eql 1
     ln = ci.commercial_invoice_lines.first
+    expect(ln.country_origin_code).to eql 'JO'
     expect(ln.part_number).to eql '1233719-025'
     expect(ln.po_number).to eql '4500493274'
     expect(ln.quantity).to eql 3528
@@ -103,10 +131,10 @@ describe OpenChain::OhlDrawbackParser do
     found = Entry.find_by_entry_number('11350368418')
     found.id.should == ent.id
     found.merchandise_description.should == 'WEARING APPAREL, FOOTWEAR'
-    Entry.all.should have(3).items
+    Entry.all.should have(4).items
   end
   it 'should map source' do
-    Entry.where(:source_system=>'OHL Drawback').all.should have(3).items
+    Entry.where(:source_system=>'OHL Drawback').all.should have(4).items
   end
   it 'should map import country' do
     Entry.first.import_country.iso_code.should == 'US'
