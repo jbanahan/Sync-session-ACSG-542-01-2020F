@@ -120,15 +120,20 @@ class FileImportProcessor
             end
           end
         end
-        # Add our object errors before validating since the validator may raise an error and we want our
-        # process_import errors included in the object too.
-        object_map[@core_module].errors[:base].push(*error_messages) unless error_messages.blank?
-        OpenChain::FieldLogicValidator.validate! object_map[@core_module] unless object_map[@core_module].nil?
-        # FieldLogicValidator only raises an error if a rule fails, we still want to raise an error if any of our process import calls resulted
-        # in an error.
-        raise OpenChain::ValidationLogicError.new(nil, object_map[@core_module]) unless object_map[@core_module].errors[:base].empty?
-
-        fire_row row_number, object_map[@core_module], messages
+        
+        # If we get blank rows in here somehow (should be prevented elsewhere) it's possible that the object map will be
+        # blank, in which case we don't want to do anything of the following
+        if object_map[@core_module]
+          # Add our object errors before validating since the validator may raise an error and we want our
+          # process_import errors included in the object too.
+          object_map[@core_module].errors[:base].push(*error_messages) unless error_messages.blank?
+          OpenChain::FieldLogicValidator.validate! object_map[@core_module]
+          # FieldLogicValidator only raises an error if a rule fails, we still want to raise an error if any of our process import calls resulted
+          # in an error.
+          raise OpenChain::ValidationLogicError.new(nil, object_map[@core_module]) unless object_map[@core_module].errors[:base].empty?
+          fire_row row_number, object_map[@core_module], messages
+        end
+        
       end
     rescue OpenChain::ValidationLogicError => e
       my_base = e.base_object
@@ -244,7 +249,11 @@ class FileImportProcessor
       r = 0
       start_row = @import_file.starting_row - 1
       CSV.parse(@data,{:skip_blanks=>true}) do |row|
-        yield row if r >= start_row
+        # Skip blanks apparently only skips lines consisting solely of a newline,
+        # it doesn't skip lines that solely consist of commas.
+        # If find returns any non-blank value then we can process the line.
+        has_values = row.find {|c| !c.blank?}
+        yield row if r >= start_row && has_values
         r += 1
       end
     end

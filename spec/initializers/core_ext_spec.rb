@@ -77,3 +77,52 @@ describe "hts_format" do
     '!@#$%%^'.hts_format.should == '!@#$%%^'
   end
 end
+
+describe "log_me" do
+  context "NoMethodError" do
+    it "proxies NoMethodErrorClasses" do
+      SerializableNoMethodError.any_instance.should_receive(:log_me).with ["Test"], [], false
+      begin
+        raise NoMethodError, "Testing"
+      rescue => e
+        e.log_me ["Test"]
+      end
+    end
+  end
+
+  it "delays an email send if log_me call has no attachments" do
+    m = double("OpenMailer")
+    OpenMailer.should_receive(:delay).and_return m
+    m.should_receive(:send_generic_exception)
+
+    begin
+      raise StandardError, "Testing"
+    rescue => e
+      e.log_me ["Testing"]
+    end
+  end
+
+  it "immediately sends exception if attachment paths has a value" do
+    mail = double("mail")
+    OpenMailer.should_receive(:send_generic_exception).and_return mail
+    mail.should_receive(:deliver)
+
+    begin
+      raise StandardError, "Testing"
+    rescue => e
+      e.log_me ["Testing"], ["Attachment Path"]
+    end
+  end
+
+  it "immediately sends exception if send_now is true" do
+    mail = double("mail")
+    OpenMailer.should_receive(:send_generic_exception).and_return mail
+    mail.should_receive(:deliver)
+    
+    begin
+      raise StandardError, "Testing"
+    rescue => e
+      e.log_me ["Testing"], [], true
+    end
+  end
+end
