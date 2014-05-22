@@ -22,13 +22,13 @@ describe ValidationRuleAttachmentTypes do
     vr.run_validation(e).should be_nil
   end
   
-  it "should raise error indicating missing attachment type when appropriate" do
+  it "should return message indicating missing attachment type when appropriate" do
     json = {model_field_uid: :ent_cust_name, regex: "ABC", attachment_types: ["one", "two"]}.to_json
     vr = ValidationRuleAttachmentTypes.create!(rule_attributes_json:json)
     att = Factory(:attachment, attachment_type: "one")
     e = Factory(:entry, attachments: [att])
 
-    expect{ vr.run_validation(e) }.to raise_error(RuntimeError, "Missing attachment type two.")
+    vr.run_validation(e).should == "Missing attachment type two."
   end
 
   it "should raise error indicated attachment types were not specified when appropriate" do

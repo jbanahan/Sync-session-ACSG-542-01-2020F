@@ -16,7 +16,7 @@ class ValidationRuleAttachmentTypes < BusinessValidationRule
 
     @types.each do |t|
       if !object_attachment_types.include?(t.downcase)
-        raise "Missing attachment type #{t}."
+        return "Missing attachment type #{t}."
       end
     end
 
