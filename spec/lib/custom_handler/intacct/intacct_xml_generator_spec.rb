@@ -275,7 +275,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(e.text "datecreated/year").to eq @l.check_date.strftime "%Y"
       expect(e.text "datecreated/month").to eq @l.check_date.strftime "%m"
       expect(e.text "datecreated/day").to eq @l.check_date.strftime "%d"
-      expect(e.text "memo").to eq @l.charge_description
+      expect(e.text "memo").to eq @p.vendor_number + " - " + @l.charge_description
       expect(e.text "locationid").to eq @l.location
       expect(e.text "departmentid").to eq @l.line_of_business
       expect(e.text "customerid").to eq @l.customer_number
@@ -298,7 +298,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       expect(e.text "datecreated/year").to eq @l.check_date.strftime "%Y"
       expect(e.text "datecreated/month").to eq @l.check_date.strftime "%m"
       expect(e.text "datecreated/day").to eq @l.check_date.strftime "%d"
-      expect(e.text "memo").to eq @l.charge_description
+      expect(e.text "memo").to eq @p.vendor_number + " - " + @l.charge_description
       expect(e.text "locationid").to eq @l.location
       expect(e.text "departmentid").to eq @l.line_of_business
       expect(e.text "customerid").to eq @l.customer_number

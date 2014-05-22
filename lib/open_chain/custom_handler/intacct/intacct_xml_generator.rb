@@ -196,7 +196,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       add_element gl, "glaccountno", gl_account
       add_element gl, "document", payable_line.check_number
       add_date gl, "datecreated", payable_line.check_date
-      add_element gl, "memo", payable_line.charge_description
+      add_element gl, "memo", "#{payable.vendor_number} - #{payable_line.charge_description}"
       add_element gl, "locationid", payable_line.location
       add_element gl, "departmentid", payable_line.line_of_business
       add_element gl, "customerid", payable_line.customer_number
