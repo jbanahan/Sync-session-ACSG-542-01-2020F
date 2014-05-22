@@ -23,6 +23,12 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         @broker_invoice_line.update_attributes :charge_code => "1234"
         described_class.new.accepts?(nil, @entry).should be_false
       end
+
+      it "accepts JJILL entries with internal charge code lines" do
+        DataCrossReference.create! key: '1234', value: '', cross_reference_type: DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
+        @broker_invoice_line.update_attributes :charge_code => "1234"
+        described_class.new.accepts?(nil, @entry).should be_true
+      end
     end
   end
 

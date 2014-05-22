@@ -239,7 +239,7 @@ module OpenChain; module Report
             if block_given?
               total_amount += line.charge_amount if yield(line) == true
             else
-              total_amount += line.charge_amount if line.charge_amount && charge_types.include?(line.charge_type)
+              total_amount += line.charge_amount if line.charge_amount && charge_types.include?(line.charge_type) && !freight_charge?(line.charge_code)
             end
           end
         end
@@ -266,7 +266,7 @@ module OpenChain; module Report
       def calculate_freight_proration total_units, entry, invoice_lines, invoice_freight_mapping
         freight_invoice_numbers = invoice_freight_mapping.keys
         calculate_broker_invoice_charge_proration total_units, entry, invoice_lines, :international_freight do |line|
-          (line.charge_type == "F") && line.charge_amount && !charge_description_matches_invoice?(line.charge_description, freight_invoice_numbers)
+          freight_charge?(line.charge_code) && line.charge_amount && !charge_description_matches_invoice?(line.charge_description, freight_invoice_numbers)
         end
       end
 
@@ -289,7 +289,7 @@ module OpenChain; module Report
           matches = []
           entry.broker_invoices.each do |b|
             b.broker_invoice_lines.each do |l|
-              matches << l.charge_amount if ("0600" == l.charge_code) && l.charge_description && l.charge_amount && charge_description_matches_invoice?(l.charge_description, [inv])
+              matches << l.charge_amount if (freight_charge?(l.charge_code)) && l.charge_description && l.charge_amount && charge_description_matches_invoice?(l.charge_description, [inv])
             end
           end
           # Sum all the matching invoice values
@@ -298,6 +298,15 @@ module OpenChain; module Report
         
 
         lines
+      end
+
+      def freight_charge? charge_code
+        unless @freight_charges
+          @freight_charges ||= DataCrossReference.hash_for_type DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
+          @freight_charges["0600"] = ""
+        end
+        
+        @freight_charges.has_key? charge_code
       end
 
   end

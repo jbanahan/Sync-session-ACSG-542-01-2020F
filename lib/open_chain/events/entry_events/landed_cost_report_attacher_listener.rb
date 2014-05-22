@@ -10,7 +10,7 @@ module OpenChain; module Events; module EntryEvents
     def accepts? event, entry
       process = false
       if entry
-        process = jjill_with_0600_charges entry
+        process = jjill_with_freight_charges entry
       end
       process
     end
@@ -90,16 +90,21 @@ module OpenChain; module Events; module EntryEvents
 
     private 
 
-      def jjill_with_0600_charges entry
+      def jjill_with_freight_charges entry
         if entry.customer_number == "JILL"
-          # Make sure we have a broker invoice charge with a code of '0600'
+          # Make sure we have a broker invoice charge with a code of '0600' or one of our internal freight charge lines
           entry.broker_invoices.each do |inv|
             inv.broker_invoice_lines.each do |line|
-              return true if line.charge_code == "0600"
+              return true if line.charge_code == "0600" || freight_charge?(line.charge_code)
             end
           end
         end
         return false
+      end
+
+      def freight_charge? charge_code
+        @freight_charges ||= DataCrossReference.hash_for_type DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
+        @freight_charges.has_key? charge_code
       end
   end 
 end; end; end
