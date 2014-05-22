@@ -28,6 +28,8 @@ app.factory 'hmService', ['$http',($http) ->
             tariffs:[{
               cit_hts_code:line.hts_code
               cit_gross_weight: line.gross_weight
+              cit_classification_qty_1: line.reporting_quantity
+              cit_classification_uom_1: line.reporting_uom
             }
             ]
           }
@@ -66,6 +68,8 @@ app.factory 'hmService', ['$http',($http) ->
       r.hts_code = t.cit_hts_code
       r.net_weight = Number(t.cit_classification_qty_2 )
       r.gross_weight = Number(t.cit_gross_weight)
+      r.reporting_quantity = Number(t.cit_classification_qty_1)
+      r.reporting_uom = t.cit_classification_uom_1
     r
 
   recalc : (line) ->
@@ -133,7 +137,7 @@ app.controller 'HMPOLineController', ['$scope','hmService',($scope,hmService) ->
       $scope.recentLines.unshift r
       $scope.poLine = {} #reset PO Line
     ).error((d,s,h,c) ->
-      $scope.errorMessage = d.error
+      $scope.errorMessage = d.errors[0]
     )
 
   $scope.getLines = () ->
@@ -145,6 +149,6 @@ app.controller 'HMPOLineController', ['$scope','hmService',($scope,hmService) ->
       $scope.loadingLines = false
       $scope.recentLines = d.lines
     ).error((d,s,h,c) ->
-      $scope.errorMessage = d.error
+      $scope.errorMessage = d.errors[0]
     )
 ]

@@ -69,6 +69,8 @@ describe 'HMApp', () ->
           issue_codes:'AB'
           comment:'COMM',
           mid:'MID1'
+          reporting_quantity:103
+          reporting_uom:'PCS'
         }
         expected_obj = {
           commercial_invoice:{
@@ -92,6 +94,8 @@ describe 'HMApp', () ->
                 tariffs:[{
                   cit_gross_weight:123
                   cit_hts_code:'1234567890'
+                  cit_classification_qty_1:103
+                  cit_classification_uom_1:'PCS'
                   cit_classification_qty_2:122
                   cit_classification_uom_2:'KGS'
                 }]
