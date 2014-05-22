@@ -8,7 +8,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
 
     @bi_line_brokerage = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"R", :charge_amount=> BigDecimal.new("100"))
     @bi_line_other = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"O", :charge_amount => BigDecimal.new("100"))
-    @bi_line_freight = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"F", :charge_amount => BigDecimal.new("100"))
+    @bi_line_freight = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"F", :charge_amount => BigDecimal.new("100"), charge_code: "0600")
     @bi_line_inland = Factory(:broker_invoice_line, :broker_invoice => @bi, :charge_type=>"T", :charge_amount => BigDecimal.new("100"))
 
     @ci = Factory(:commercial_invoice, :entry=>@entry, :invoice_number=>"INV1")
@@ -195,6 +195,39 @@ describe OpenChain::Report::LandedCostDataGenerator do
       global_freight_proration = (@bi_line_freight.charge_amount / BigDecimal.new("44"))
       l[:international_freight].to_s("F").should == (BigDecimal.new("100") + (global_freight_proration * ci_2_line_1.quantity)).round(2, BigDecimal::ROUND_HALF_UP).to_s("F")
       lc[:totals][:international_freight].should == BigDecimal.new("200")
+    end
+
+    it "detects and applies freight charges for freight lines other than 0600" do
+      # This is testing the case where we are passing through our own breakbulk charges (.ie we're doing the freight handling)
+      # and the freight charges come through as non-0600 lines.
+
+      @bi_line_other.update_attributes! charge_code: "ABCD"
+      @bi.broker_invoice_lines.create :charge_type=>"F", :charge_amount => BigDecimal.new("100"), :charge_description=> "Test", :charge_code=>"9999"
+      @bi.broker_invoice_lines.create :charge_type=>"C", :charge_amount => BigDecimal.new("100"), :charge_description=> "Test", :charge_code=>"1111"
+
+      DataCrossReference.create! key: "ABCD", cross_reference_type: DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
+      DataCrossReference.create! key: "9999", cross_reference_type: DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
+      DataCrossReference.create! key: "1111", cross_reference_type: DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
+
+
+      lc = described_class.new.landed_cost_data_for_entry @entry.id
+
+      e = lc[:entries].first
+      i = e[:commercial_invoices].first
+      l = i[:commercial_invoice_lines].first
+
+      # 400 is the sum of all freight charge lines, 33 is total # of units on invoice
+      per_unit = BigDecimal.new("400") / BigDecimal.new("33")
+      expect(l[:international_freight]).to eq (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
+      l[:per_unit][:international_freight].should == (l[:international_freight] / @ci_line_1.quantity)
+      l[:percentage][:international_freight].should == ((l[:international_freight] / l[:landed_cost]) * BigDecimal.new("100"))
+      # Since we switched the "O" charge line to a freight line via the charge code type, make sure this was taken into account 
+      # and our other charges are now 0
+      l[:other].should ==  BigDecimal.new("0")
+
+      e[:totals][:other].should == BigDecimal.new("0")
+      e[:totals][:international_freight].should == BigDecimal.new("400")
+      e[:percentage][:international_freight].should == (BigDecimal.new("400") / e[:totals][:landed_cost]) * BigDecimal.new("100")
     end
   end
 end

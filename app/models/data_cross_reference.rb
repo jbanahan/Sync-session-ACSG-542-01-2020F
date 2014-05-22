@@ -15,6 +15,7 @@ class DataCrossReference < ActiveRecord::Base
   INTACCT_CUSTOMER_XREF ||= 'in_cust'
   INTACCT_VENDOR_XREF ||= 'in_vend'
   INTACCT_BANK_CASH_GL_ACCOUNT ||= 'in_cash_gl'
+  ALLIANCE_FREIGHT_CHARGE_CODE ||= 'al_freight_code'
 
   #return a hash of all key value pairs
   def self.get_all_pairs cross_reference_type
@@ -95,6 +96,7 @@ class DataCrossReference < ActiveRecord::Base
     values = relation.limit(1).order("updated_at DESC").pluck(:value)
     values.first
   end
+  private_class_method :find_unique
 
   def self.hash_for_type cross_reference_type
     h = Hash.new
@@ -110,8 +112,6 @@ class DataCrossReference < ActiveRecord::Base
     xref.save!
     xref
   end
-
-  private_class_method :find_unique
 
   def self.load_cross_references io, cross_reference_type, company_id = nil
     csv = CSV.new io
