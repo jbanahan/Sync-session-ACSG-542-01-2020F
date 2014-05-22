@@ -18,8 +18,8 @@ describe FileImportResult do
       @fir.change_records << @cr2
     end
 
-    it "should create a new attachment" do
-      @fir.download_results(true, @user.id)
+    it "should create a new attachment when delayed" do
+      FileImportResult.download_results(true, @user.id, @fir, true)
       a = Attachment.last
       a.attached_file_name.should == "file name - Results.csv"
       a.created_at.should > Time.now - 15.seconds
@@ -27,33 +27,28 @@ describe FileImportResult do
     end
 
     it "should create a message for the user if delayed" do
-      @fir.download_results(true, @user.id, true)
+      FileImportResult.download_results(true, @user.id, @fir, true)
       @user.reload
       @user.messages.length.should == 1
       @user.messages.last.subject.should == "File Import Result Prepared for Download"
     end
 
     it "should not create a message for the user if not delayed" do
-      @fir.download_results(true, @user.id)
+      FileImportResult.download_results(true, @user.id, @fir, false) do |t| "blank block" end
+      @user.reload
       @user.messages.length.should == 0
     end
 
     it "should skip successful records when include_all is false" do
       ChangeRecord.any_instance.should_receive(:record_sequence_number).exactly(1).times
-      @fir.download_results(false, @user.id)
+      FileImportResult.download_results(false, @user.id, @fir) do |t| "blank block" end
     end
 
     it "should include successful records when include_all is true" do
       @cr1.should_receive(:record_sequence_number)
       @cr2.should_receive(:record_sequence_number)
-      @fir.download_results(true, @user.id)
+      FileImportResult.download_results(true, @user.id, @fir) do |t| "blank block" end
     end
-
-    it "should return the created attachment" do
-      @fir.download_results(true, @user.id).class.to_s.should == "Attachment"
-    end
-
-
   end
 
   describe :time_to_process do

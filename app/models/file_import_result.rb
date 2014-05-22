@@ -9,23 +9,27 @@ class FileImportResult < ActiveRecord::Base
     return self.imported_file.can_view?(user)
   end
 
-  def download_results(include_all, user_id, delayed = false)
-    name = self.imported_file.try(:attached_file_name).nil? ? "File Import Results #{Time.now.to_date.to_s}.csv" : File.basename(self.imported_file.attached_file_name,File.extname(self.imported_file.attached_file_name)) + " - Results.csv" 
-    t = Tempfile.new([name, '.csv'])
-    t << "Record Number, Status\r\n"
-    self.change_records.each do |cr|
-      next if ((!include_all) && (!cr.failed?))
-      record_information = cr.record_sequence_number.to_s + ","
-      record_information += cr.failed? ? "Error" : "Success"
-      record_information += "\r\n"
-      t << record_information
+  def self.download_results(include_all, user_id, fir, delayed = false)
+    fir = fir.is_a?(Numeric) ? FileImportResult.find(fir) : fir
+    name = fir.imported_file.try(:attached_file_name).nil? ? "File Import Results #{Time.now.to_date.to_s}.csv" : File.basename(fir.imported_file.attached_file_name,File.extname(fir.imported_file.attached_file_name)) + " - Results.csv"
+    Tempfile.open([name, '.csv']) do |t|
+      t << "Record Number, Status\r\n"
+      fir.change_records.each do |cr|
+        next if ((!include_all) && (!cr.failed?))
+        record_information = cr.record_sequence_number.to_s + ","
+        record_information += cr.failed? ? "Error" : "Success"
+        record_information += "\r\n"
+        t << record_information        
+      end
+      t.rewind
+      if not delayed
+        yield t
+      else
+        u = User.find(user_id)
+        a = Attachment.create!(attached: t, uploaded_by: u, attachable: fir, attached_file_name: name)
+        u.messages.create!(subject: "File Import Result Prepared for Download", body: "The file import result report that you requested is finished.  To download the file directly, <a href='/attachments/#{a.id}/download'>click here</a>.")
+      end
     end
-    u = User.find(user_id)
-    t.rewind
-    a = Attachment.create!(attached: t, uploaded_by: u, attachable: self, attached_file_name: name)
-    u.messages.create!(subject: "File Import Result Prepared for Download", body: "The file import result report that you requested is finished.  To download the file directly, <a href='/attachments/#{a.id}/download'>click here</a>.") if delayed
-    t.close
-    return a
   end
   
   def changed_objects search_criterions=[]
