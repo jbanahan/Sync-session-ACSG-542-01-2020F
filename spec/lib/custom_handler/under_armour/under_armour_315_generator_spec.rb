@@ -62,6 +62,22 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
       DataCrossReference.find_ua_315_milestone("DEF", "2902").should eq xml_date(@entry.first_do_issued_date)
     end
 
+    it "should handle reformatting the shipment id" do
+      @inv_line_1.update_attributes! customer_reference: "ABC-123"
+      @inv_line_2.update_attributes! customer_reference: "ABC-123"
+      @inv_line_3.update_attributes! customer_reference: "ABC-123"
+
+      @g.should_receive(:generate_and_send).with(event_code: '2315', shipment_identifier: 'ABC', date: @entry.cadex_sent_date)
+      @g.should_receive(:generate_and_send).with(event_code: '2326', shipment_identifier: 'ABC', date: @entry.release_date)
+      @g.should_receive(:generate_and_send).with(event_code: '2902', shipment_identifier: 'ABC', date: @entry.first_do_issued_date)
+
+      @g.receive nil, @entry
+
+      DataCrossReference.find_ua_315_milestone("ABC", "2315").should eq xml_date(@entry.cadex_sent_date)
+      DataCrossReference.find_ua_315_milestone("ABC", "2326").should eq xml_date(@entry.release_date)
+      DataCrossReference.find_ua_315_milestone("ABC", "2902").should eq xml_date(@entry.first_do_issued_date)
+    end
+
     it "should not trigger xml for date values that have already been sent" do
       @inv_line_3.destroy
 

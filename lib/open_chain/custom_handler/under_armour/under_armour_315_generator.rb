@@ -81,7 +81,10 @@ XML
       def extract_underarmour_shipment_identifiers entry
         shipment_id = Set.new 
         entry.commercial_invoice_lines.each do |line|
-          shipment_id << line.customer_reference unless line.customer_reference.blank?
+          next if line.customer_reference.blank?
+
+          id = line.customer_reference.strip
+          shipment_id << ((id =~ /\A([^-]+)-.+\z/) ? $1 : id)
         end
 
         shipment_id
