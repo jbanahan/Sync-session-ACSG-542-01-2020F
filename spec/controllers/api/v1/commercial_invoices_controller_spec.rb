@@ -216,7 +216,7 @@ describe Api::V1::CommercialInvoicesController do
         expect {post :create, @base_hash}.to_not change(CommercialInvoice,:count)
         expect(response.status).to eq 400
         j = JSON.parse(response.body)['errors'].first
-        expect(j).to eql "Line 1 is missing cil_line_number."
+        expect(j).to eql "Line 1 is missing Invoice Line - Line Number."
       end
       context :tariffs do
         it "should add tariff records" do
