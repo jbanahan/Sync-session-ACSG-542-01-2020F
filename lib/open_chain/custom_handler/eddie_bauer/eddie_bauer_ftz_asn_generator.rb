@@ -33,20 +33,22 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   end
 
   def ftp_credentials
-    folder_prefix = (@env=='production' && @customer_numbers == ['EDDIEFTZ']) ? 'prod' : 'test'
+    folder_prefix = @env=='production' ? 'prod' : 'test'
     {:server=>'connect.vfitrack.net',:username=>'eddiebauer',:password=>'antxsqt',:folder=>"/#{folder_prefix}/to_eb/ftz_asn",:remote_file_name=>"FTZ_ASN_#{Time.now.strftime('%Y%m%d%H%M%S')}.txt"}
   end
 
   def generate_file entries
     t = Tempfile.new(['EDDIEFTZASN','.txt'])
+    has_data = false
     entries.each_with_index do |ent,i|
       Entry.transaction do
         data = self.generate_data_for_entry(ent)
         new_fingerprint = Digest::MD5.hexdigest(data)
         sr = ent.sync_records.first_or_create!(trading_partner:SYNC_CODE)
         if new_fingerprint != sr.fingerprint
-          t << "\r\n" unless i == 0
+          t << "\r\n" if has_data
           t << data
+          has_data = true
           sr.sent_at = 0.seconds.ago
           sr.fingerprint = new_fingerprint
           sr.save!

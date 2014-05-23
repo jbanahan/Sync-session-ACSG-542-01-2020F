@@ -27,9 +27,6 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
     it "should generate test folder" do
       expect(described_class.new.ftp_credentials[:folder]).to eq "/test/to_eb/ftz_asn"
     end
-    it "should generate test folder if not EDDIEFTZ customer" do
-      expect(described_class.new('production',['OTHER']).ftp_credentials[:folder]).to eq "/test/to_eb/ftz_asn"
-    end
   end
   describe "generate_file" do
     before(:each) do
