@@ -99,4 +99,13 @@ describe DataCrossReference do
       d.company_id.should == 1
     end
   end
+
+  describe "has_key?" do
+    it "determines if an xref key is present in the db table" do
+      DataCrossReference.add_xref! DataCrossReference::UA_PLANT_TO_ISO, 'x', 'y', 1
+      expect(DataCrossReference.has_key? 'x', DataCrossReference::UA_PLANT_TO_ISO).to be_true
+      expect(DataCrossReference.has_key? 'askjfda', DataCrossReference::UA_PLANT_TO_ISO).to be_false
+      expect(DataCrossReference.has_key? nil, DataCrossReference::UA_PLANT_TO_ISO).to be_false
+    end
+  end
 end

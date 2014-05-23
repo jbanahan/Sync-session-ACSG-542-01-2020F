@@ -240,4 +240,20 @@ INV
     expect(bi.broker_invoice_lines.first.charge_type).to eq "D"
     expect(bi.broker_invoice_lines.second.charge_type).to eq "D"
   end
+
+  it "detects ALS customer numbers" do
+    DataCrossReference.create! key: DataCrossReference.make_compound_key("Fenix", "BOSSCI"), value: "POST_XREF", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
+    DataCrossReference.create! key: "POST_XREF", value: "", cross_reference_type: DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 2 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+INV
+
+    @k.parse @content
+
+    r = IntacctReceivable.where(company: "als").first
+    expect(r).to_not be_nil
+    expect(r.customer_number).to eq "POST_XREF"
+  end
 end

@@ -113,10 +113,14 @@ module OpenChain
             return unless r.intacct_upload_date.nil?
 
             r.invoice_date = invoice.invoice_date
-            r.company = "vcu"
             # Use the xref value if there is one, otherwise use the raw value from Fenix
             xref = DataCrossReference.find_intacct_customer_number 'Fenix', invoice.customer_number
             r.customer_number = (xref.blank? ? invoice.customer_number : xref)
+
+            # There are certain customers that are billed in Fenix for a third system, ALS.  These cusotmers are stored in an xref,
+            # if the name is there, then the company is 'als', otherwise it's 'vcu'
+
+            r.company = DataCrossReference.has_key?(r.customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
             r.currency = invoice.currency
 
             actual_charge_sum = BigDecimal.new 0
