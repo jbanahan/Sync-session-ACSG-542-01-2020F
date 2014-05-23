@@ -26,8 +26,8 @@ class DataCrossReference < ActiveRecord::Base
     r
   end
 
-  def self.find_rl_profit_center_by_brand brand
-    find_unique where(:cross_reference_type => RL_BRAND_TO_PROFIT_CENTER, :key => brand)
+  def self.find_rl_profit_center_by_brand importer_id, brand
+    find_unique where(:cross_reference_type => RL_BRAND_TO_PROFIT_CENTER, :key => brand, company_id: importer_id)
   end
 
   def self.find_rl_brand_by_po po_number

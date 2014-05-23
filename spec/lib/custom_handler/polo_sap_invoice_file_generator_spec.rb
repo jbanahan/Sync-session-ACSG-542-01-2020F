@@ -42,10 +42,10 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         make_sap_po
       end
 
-      it "should generate and email an MM excel file" do
+      it "should generate and email an MM excel file for RL Canada" do
         time = Time.zone.now
 
-        @gen.generate_and_send_invoices time, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, time, [@broker_invoice]
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail.should_not be_nil
         mail.to.should == ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
-        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoices as of #{job.start_time.strftime("%m/%d/%Y")}."
+        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"]
         at.should_not be_nil
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @entry.update_attributes(:po_numbers=>"A")
         @po_xref = DataCrossReference.create!(:cross_reference_type=>'po_to_brand', :key=>'A', :value=>'ABC')
 
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         # Just verify that an MM invoice was generated.  There are no data differences between SAP / non-SAP invoices in the MM format.
         job = ExportJob.all.first
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @broker_invoice_line1.update_attributes(:charge_type => "D")
 
 
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         job = ExportJob.all.first
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
 
@@ -116,12 +116,40 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       it "should use different GL account for Brokerage fees" do
         @broker_invoice_line1.update_attributes(:charge_code => "22")
 
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
         sheet = get_workbook_sheet mail.attachments.first
         sheet.row(2)[19, 7].should == ["2", "52111300", @broker_invoice_line1.charge_amount, "S", "1017", @broker_invoice_line1.charge_description, @profit_center.value]
+      end
+
+      it "should generate and email an MM excel file for Club Monaco" do
+        time = Time.zone.now
+
+        @gen.generate_and_send_invoices :club_monaco, time, [@broker_invoice]
+
+        # A single ExportJob should have been created
+        job = ExportJob.all.first
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail).to_not be_nil
+        expect(mail.to).to eq ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "robert.helm@ralphlauren.com", "accounting-ca@vandegriftinc.com"]
+        mail.subject.should == "[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
+        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
+
+        at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"]
+        at.should_not be_nil
+
+        sheet = get_workbook_sheet at
+        sheet.name.should == "MMGL"
+        # We only need to validate the file differences between CM and RL CA
+        # Which is the company code and unallocated profit center differences
+
+        expect(sheet.row(1)[3]).to eq "1710"
+        expect(sheet.row(1)[23]).to eq "1710"
+        # First line is always GST, which is always the unallocated profit center
+        expect(sheet.row(1)[25]).to eq "20399999"
+        expect(sheet.row(2)[25]).to eq @profit_center.value
       end
     end
 
@@ -136,7 +164,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @broker_invoice_line1.update_attributes(:charge_code=>"250", :charge_description=>"123456789012345678901234567890123456789012345678901")
         time = Time.zone.now
 
-        @gen.generate_and_send_invoices time, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, time, [@broker_invoice]
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
@@ -153,7 +181,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
-        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoices as of #{job.start_time.strftime("%m/%d/%Y")}."
+        mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
         mail.attachments.should have(2).items
 
@@ -192,10 +220,47 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         csv_rows[4].should == rows[4]
       end
 
+      it "should generate an FFI invoice for non-deployed brands for Club Monaco" do
+        # All that we need to check here is the differences between rl ca and club monaco
+        time = Time.zone.now
+        @gen.generate_and_send_invoices :club_monaco, time, [@broker_invoice]
+
+        # A single ExportJob should have been created
+        job = ExportJob.all.first
+        job.should_not be_nil
+        mail = ActionMailer::Base.deliveries.pop
+
+        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
+        # The only differences here should be the company code and the profit centers utilized
+        expect(sheet.row(1)[2]).to eq "1710"
+        expect(sheet.row(2)[24]).to eq "20399999"
+      end
+
+      it "should use unallocated profit center for CM invoices on HST/GST Lines" do
+        @broker_invoice_line1.update_attributes! charge_code: "250"
+        @gen.stub(:find_profit_center).and_return "profit_center"
+
+        # All that we need to check here is the differences between rl ca and club monaco
+        time = Time.zone.now
+        @gen.generate_and_send_invoices :club_monaco, time, [@broker_invoice]
+
+        # A single ExportJob should have been created
+        job = ExportJob.all.first
+        job.should_not be_nil
+        mail = ActionMailer::Base.deliveries.pop
+
+        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
+        # The only differences here should be the company code and the profit centers utilized
+        expect(sheet.row(1)[2]).to eq "1710"
+        expect(sheet.row(2)[24]).to eq "profit_center"
+        expect(sheet.row(4)[24]).to eq "20399999"
+        expect(sheet.row(4)[27]).to eq @broker_invoice_line1.charge_description
+      end
+
       it "should generate an FFI invoice for converted legacy PO's missing profit center links" do
         po_to_brand_xref = DataCrossReference.create!(:cross_reference_type=>'po_to_brand', :key=>'A', :value=>'NO PROFIT CENTER FOR YOU')
 
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
         # A single ExportJob should have been created
         job = ExportJob.all.first
@@ -218,7 +283,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @gen.stub(:previously_invoiced?).with(@entry).and_return true
 
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         job = ExportJob.all.first
         job.should_not be_nil
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
@@ -241,7 +306,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @gen.stub(:previously_invoiced?).with(@entry).and_return true
 
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
         job = ExportJob.all.first
         job.should_not be_nil
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
@@ -265,7 +330,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @broker_invoice_line1.update_attributes :charge_amount => BigDecimal("-5.00")
         @broker_invoice_line2.update_attributes :charge_amount => BigDecimal("-4.00")
 
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
         mail = ActionMailer::Base.deliveries.pop
         sheet = get_workbook_sheet mail.attachments.first
@@ -288,7 +353,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013,06,01), :invoice_number => 'INV2')
         @broker_invoice2_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
         
-        @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice, @broker_invoice2]
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
 
         job = ExportJob.where(:export_type => ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE).first
         job.should_not be_nil
@@ -339,10 +404,19 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   end
 
   context :find_broker_invoices do
-    it "should find broker invoices after June 1, 2013 that have not been succssfully invoiced" do
+    it "should find broker invoices for RL Canada after June 1, 2013 that have not been succssfully invoiced" do
       # the default invoice should be found
-      invoices = @gen.find_broker_invoices
-      invoices.first.id.should == @broker_invoice.id
+      invoices = @gen.find_broker_invoices :rl_canada
+      expect(invoices.first.id).to eq @broker_invoice.id
+    end
+
+    it "should find broker invoices for Club Monaco after May 23, 2014 that have not been succssfully invoiced" do
+      @broker_invoice.update_attributes! invoice_date: '2014-05-24'
+      @broker_invoice.entry.update_attributes! importer_tax_id: '866806458RM0001'
+
+      # the default invoice should be found
+      invoices = @gen.find_broker_invoices :club_monaco
+      expect(invoices.first.id).to eq @broker_invoice.id
     end
 
     it "should not find invoiced invoices" do
@@ -353,12 +427,17 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
       j.save!
 
-      @gen.find_broker_invoices.length.should == 0
+      expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
     end
 
-    it "should not find invoices prior to June 1, 2013" do
+    it "should not find RL Canada invoices prior to June 1, 2013" do
       @broker_invoice.update_attributes(:invoice_date => Date.new(2013, 5, 31))
-      @gen.find_broker_invoices.length.should == 0
+      expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
+    end
+
+    it "should not find Club Monaco invoices prior to May 23, 2014" do
+      @broker_invoice.update_attributes(:invoice_date => Date.new(2014, 5, 22))
+      expect(@gen.find_broker_invoices(:club_monaco)).to have(0).items
     end
 
     it "should use custom_where if supplied to constructor" do
@@ -367,7 +446,9 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       @broker_invoice.update_attributes(:invoice_date => Date.new(2012, 1, 1))
       generator = OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.new :prod, {:id => @broker_invoice.id}
 
-      generator.find_broker_invoices.first.id.should == @broker_invoice.id
+      # Can use nil, because the company symbol passed in here is only used when creating a  "standard" query
+      # we're overriding that w/ the custom clause
+      expect(generator.find_broker_invoices(nil).first.id).to eq @broker_invoice.id
     end
   end
 
@@ -378,11 +459,13 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       zone = double("zone")
       now = double("now")
 
-      Time.should_receive(:use_zone).with("Eastern Time (US & Canada)").and_yield
-      Time.should_receive(:zone).and_return zone
-      zone.should_receive(:now).and_return now
-      @gen.should_receive(:find_broker_invoices).and_return [@broker_invoice]
-      @gen.should_receive(:generate_and_send_invoices).with(now, [@broker_invoice])
+      Time.stub(:use_zone).with("Eastern Time (US & Canada)").and_yield
+      Time.stub(:zone).and_return zone
+      zone.stub(:now).and_return now
+      @gen.should_receive(:find_broker_invoices).with(:rl_canada).and_return([@broker_invoice])
+      @gen.should_receive(:find_broker_invoices).with(:club_monaco).and_return([])
+      @gen.should_receive(:generate_and_send_invoices).with(:rl_canada, now, [@broker_invoice])
+      @gen.should_receive(:generate_and_send_invoices).with(:club_monaco, now, [])
 
       @gen.find_generate_and_send_invoices
     end
@@ -407,7 +490,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         sheet = Spreadsheet.open(file_paths[0]).worksheet 0
       end
 
-      @gen.generate_and_send_invoices Time.zone.now, [@broker_invoice]
+      @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
 
       sheet.row(1)[0].should == @broker_invoice.invoice_number
       sheet.row(1)[1].should == "Error to log."
