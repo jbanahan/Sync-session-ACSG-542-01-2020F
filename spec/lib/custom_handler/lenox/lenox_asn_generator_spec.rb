@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[223,8]).to eq '20140116' 
         expect(row[231,10].rstrip).to eq '12345'
         expect(row[241,10].rstrip).to eq '4321'
-        expect(row[251,6].rstrip).to eq '' #placeholder for mode
+        expect(row[251,6].rstrip).to eq '11' #placeholder for mode
         expect(row[257,10].rstrip).to eq 'HDC'
         expect(row[267,4]).to eq 'APP '
         expect(row[271,80]).to eq ''.ljust(80)
@@ -215,22 +215,22 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[0,4]).to eq 'ASND'
         expect(row[4,35].rstrip).to eq 'MBOL'
         expect(row[39,17].rstrip).to eq 'CN1'
-        expect(row[56,9]).to eq '000000001'
-        expect(row[65,10].rstrip).to eq '0000007'
-        expect(row[75,35].rstrip).to eq 'ponum'
-        expect(row[110,35].rstrip).to eq 'partnum'
-        expect(row[145,7]).to eq '0000005' #10 units / 2 per set
-        expect(row[152,4].rstrip).to eq 'CN'
-        expect(row[156,25].rstrip).to eq '123456'
-        expect(row[181,5]).to eq '00002'
-        expect(row[186,96]).to eq ''.ljust(96)
-        expect(row[282,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
-        expect(row[296,15].rstrip).to eq 'vanvendortest'
-        expect(row[311,18]).to eq '000000000100250000' #100.25 / unit (order)
-        expect(row[329,18]).to eq '000000000100100000' #110.10 / unit
+        expect(row[56,10]).to eq '0000000001'
+        expect(row[66,10].rstrip).to eq '0000007'
+        expect(row[76,35].rstrip).to eq 'ponum'
+        expect(row[111,35].rstrip).to eq 'partnum'
+        expect(row[146,7]).to eq '0000005' #10 units / 2 per set
+        expect(row[153,4].rstrip).to eq 'CN'
+        expect(row[157,35].rstrip).to eq '123456'
+        expect(row[192,10]).to eq '0000000002'
+        expect(row[202,96]).to eq ''.ljust(96)
+        expect(row[298,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
+        expect(row[312,15].rstrip).to eq 'vanvendortest'
+        expect(row[327,18]).to eq '000000000100250000' #100.25 / unit (order)
+        expect(row[345,18]).to eq '000000000100100000' #110.10 / unit
 
         #double check no extra characters
-        expect(row.size).to eq 347
+        expect(row.size).to eq 363
       end
       it "should throw exception if part not found" do
         Product.scoped.destroy_all
@@ -244,7 +244,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
           r << dr
         end
         row = r.first
-        expect(row[145,7]).to eq '0000010' #10 units / 1 per set
+        expect(row[146,7]).to eq '0000010' #10 units / 1 per set
       end
       it "should not duplicate rows for multiple order lines" do
         @order_line = Factory(:order_line,order:@order,product:@product,quantity:100,price_per_unit:100.25)

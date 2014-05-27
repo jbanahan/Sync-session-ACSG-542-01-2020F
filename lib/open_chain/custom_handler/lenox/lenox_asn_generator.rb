@@ -83,14 +83,14 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r = "ASND"
       r << @f.str(entry.master_bills_of_lading,35)
       r << @f.str(vals[:cnum],17)
-      r << @f.num(i+1,9)
+      r << @f.num(i+1,10)
       r << @f.str(get_order_custom_value(:order_factory_code,ln),10)
       r << @f.str(ln.po_number,35)
       r << @f.str(ln.part_number,35)
       r << @f.num(get_exploded_quantity(ln),7)
       r << @f.str(ln.country_origin_code,4)
-      r << @f.str(ln.commercial_invoice.invoice_number,25)
-      r << @f.num(ln.line_number,5)
+      r << @f.str(ln.commercial_invoice.invoice_number,35)
+      r << @f.num(ln.line_number,10)
       r << ''.ljust(96)
       r << time_and_user
       r << @f.num(order_line.price_per_unit,18,6)
@@ -155,7 +155,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     r << @f.date(entry.export_date)
     r << @f.str(entry.lading_port_code,10)
     r << @f.str(entry.unlading_port_code,10)
-    r << @f.str('',6) #hold for mode
+    r << @f.str(entry.transport_mode_code,6)
     r << @f.str(get_final_destination_code(entry),10)
     r << 'APP '
     r << ''.ljust(80)
