@@ -121,7 +121,7 @@ tariff_records.hts_1 as 'Tariff - HTS Code 1',
 FROM products 
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
 INNER JOIN classifications on classifications.product_id = products.id AND classifications.country_id IN (SELECT id FROM countries WHERE iso_code IN (
-#{@custom_countries.blank? ? "'IT','US','CA'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
+#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
   ))
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
 #{Product.need_sync_join_clause(sync_code)} "

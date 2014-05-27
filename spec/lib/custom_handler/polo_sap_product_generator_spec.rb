@@ -35,13 +35,13 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     before :each do
       @us = Factory(:country,:iso_code=>'US')
     end
-    it "should not send countries except US, CA, IT with custom where" do
+    it "should not send countries except US, CA, IT, KR, JP, HK with custom where" do
       ca = Factory(:country,:iso_code=>'CA')
       italy = Factory(:country,:iso_code=>'IT')
-      kr = Factory(:country,:iso_code=>'KR')
+      nz = Factory(:country,:iso_code=>'NZ')
       p = Factory(:product)
       p.update_custom_value! @sap_brand_cd, true
-      [@us,ca,italy,kr].each do |country|
+      [@us,ca,italy,nz].each do |country|
         Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>p))
       end
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
@@ -51,16 +51,16 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
     it "should allow custom list of valid countries" do
       italy = Factory(:country,:iso_code=>'IT')
-      kr = Factory(:country,:iso_code=>'KR')
+      nz = Factory(:country,:iso_code=>'NZ')
       p = Factory(:product)
       p.update_custom_value! @sap_brand_cd, true
-      [@us,italy,kr].each do |country|
+      [@us,italy,nz].each do |country|
         Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>p))
       end
-      @tmp = described_class.new(:custom_where=>"WHERE 1=1",:custom_countries=>['KR','IT']).sync_csv
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1",:custom_countries=>['NZ','IT']).sync_csv
       a = CSV.parse(IO.read(@tmp.path),:headers=>true)
       a.should have(2).items
-      a.collect {|x| x[2]}.sort.should == ['IT','KR']
+      a.collect {|x| x[2]}.sort.should == ['IT','NZ']
     end
     it "should not send records with blank tariff numbers" do
       p1 = Factory(:product)
