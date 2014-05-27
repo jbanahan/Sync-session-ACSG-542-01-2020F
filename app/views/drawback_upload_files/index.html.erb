@@ -176,11 +176,11 @@
         <ul>
           <%@import_lines_not_in_duty_calc.each do |comp,cnt|-%>
           <li>
-            <form action='/duty_calc_import_files' method='POST'>
+            <%=form_tag '/duty_calc_import_files', method: :post do%>
               <%=comp.name%> - <%=cnt%> 
               <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
               <input type='submit' class='btn btn-xs' value='Make File'/>
-            </form>
+            <%end%>
           </li>
           <%end-%>
         </ul>
@@ -190,11 +190,11 @@
         <ul>
           <%@export_lines_not_in_duty_calc.each do |comp,cnt|-%>
           <li>
-            <form action='/duty_calc_export_files' method='POST'>
+            <%=form_tag '/duty_calc_export_files', method: :post do%>
               <%=comp.name%> - <%=cnt%> 
               <input type='hidden' name='importer_id' value='<%=comp.id%>'/>
               <input type='submit' class='btn btn-xs' value='Make File'/>
-            </form>
+            <%end%>
           </li>
           <%end-%>
         </ul>
