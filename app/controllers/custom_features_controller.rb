@@ -36,7 +36,7 @@ class CustomFeaturesController < ApplicationController
         OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator.delay.run_and_email params[:email]
         add_flash :notices, "Your Winshuttle report is being generated and will be emailed to #{params[:email]}"
       end
-      redirect_to '/custom_features/ua_winshuttle'
+      redirect_to '/custom_features/ua_winshuttle_b'
     }
   end
   def ua_winshuttle_index

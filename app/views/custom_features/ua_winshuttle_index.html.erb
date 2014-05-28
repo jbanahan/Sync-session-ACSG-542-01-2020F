@@ -16,9 +16,14 @@ $(function() {
   </div>
   <div class='row'>
     <div class='col-md-12'>
-      <form id='myfrm' method='POST' action='/custom_features/ua_winshuttle'>
-        <label for='email'>Send To: </label><input type='email' name='email' value='<%=current_user.email%>'/>
-      </form>
+      <%=form_tag '/custom_features/ua_winshuttle', method: :post, id: 'myfrm', class: "form-horizontal", role: "form" do %>
+        <div class="form-group">
+          <label for='email' class="col-md-1 control-label">Send To:</label>
+          <div class="col-md-4">
+            <input type='email' name='email' value='<%=current_user.email%>' class="form-control"/>
+          </div>
+        <div>
+      <%end%>
     </div>
   </div>
 </div>
