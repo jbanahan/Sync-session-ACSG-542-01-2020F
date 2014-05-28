@@ -86,7 +86,7 @@ describe DrawbackUploadFile do
       s3_att.stub(:path).and_return('xyz')
       @mock_attachment.stub(:attached).and_return(s3_att)
       d = DrawbackUploadFile.new(processor: DrawbackUploadFile::PROCESSOR_JCREW_BORDERFREE)
-      OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.should_receive(:parse_xlsx_file).with('xyz',imp).and_return('abc')
+      OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.should_receive(:parse_csv_file).with('xyz',imp).and_return('abc')
       d.process(@user).should == 'abc'
     end
     it "should route Lands End Export file" do
