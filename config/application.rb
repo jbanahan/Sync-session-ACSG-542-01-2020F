@@ -12,6 +12,7 @@ if defined?(Bundler)
 end
 
 require 'csv'
+require 'json'
 
 module OpenChain
   class Application < Rails::Application
@@ -73,6 +74,16 @@ module OpenChain
     config.action_mailer.postmark_settings = { :api_key => postmark_api_key }
     
     ::AWS_CREDENTIALS = YAML::load_file 'config/s3.yml'
+
+    if File.exist?("config/google_auth.json")
+      google_auth_settings = JSON.parse(File.read("config/google_auth.json"))
+      ::USE_GOOGLE_AUTH = true
+      ::GOOGLE_SECRET_KEY = google_auth_settings["web"]["client_secret"]
+      ::GOOGLE_CLIENT_KEY = google_auth_settings["web"]["client_email"].split("@").first
+    else
+      ::USE_GOOGLE_AUTH = false
+    end
+
 
     config.paperclip_defaults = {
       :storage => :s3, 

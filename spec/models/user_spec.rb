@@ -464,6 +464,38 @@ describe User do
       expect(user.host_with_port).to eq "www.test.com"
     end
   end
+
+  describe "from_omniauth" do
+    before :each do
+      require 'ostruct'
+      @user = Factory(:user, email: "condaleeza@rice.com")
+    end
+
+    it "should return an updated user when a user is found" do
+      info = OpenStruct.new({"email" => "condaleeza@rice.com", "name" => "Condaleeza R"})
+      creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
+      @auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
+      User.from_omniauth(@auth).id.should == @user.id
+
+      @user.reload
+
+      @user.provider.should == "google_oauth2"
+      @user.uid.should == "someuid123"
+      @user.google_name.should == "Condaleeza R"
+      @user.oauth_token.should == "123456789"
+      (@user.oauth_expires_at > Time.now).should == true
+    end
+
+    it "should return nil if the user is not found" do
+      info = OpenStruct.new({"email" => "susan@rice.com", "name" => "Condaleeza R"})
+      creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
+      @auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
+
+      User.from_omniauth(@auth).should == nil
+    end
+
+  end
+
   describe "username uniqueness" do
     it "should prevent duplicate usernames without case sensitivity" do
       c = Factory(:company)

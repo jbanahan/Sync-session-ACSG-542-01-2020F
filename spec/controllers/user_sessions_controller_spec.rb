@@ -79,6 +79,43 @@ describe UserSessionsController do
     end
   end
 
+  describe "create_from_omniauth" do
+    before :each do
+      @user = Factory(:user)
+    end
+
+    it "should sign in when user is found successfully" do
+      User.should_receive(:from_omniauth).and_return(@user)
+      post :create_from_omniauth, provider: "google_oauth2"
+
+      flash[:notices].should == ["You have been successfully signed in."]
+      flash[:errors].should == nil
+      response.should be_redirect
+      expect(response).to redirect_to dashboard_widgets_path
+    end
+
+    it "should display an error on the login page when unsuccessful" do
+      User.should_receive(:from_omniauth).and_return(@user)
+      (Clearance::SuccessStatus).any_instance.stub(:success?).and_return false
+      post :create_from_omniauth, provider: "google_oauth2"
+
+      flash[:notices].should == nil
+      flash[:errors].should == ["An error occurred during authentication.  Please try again."]
+      response.should be_redirect
+      expect(response).to redirect_to login_path
+    end
+
+    it "should display an error on the login page when account does not exist" do
+      User.should_receive(:from_omniauth).and_return(nil)
+      post :create_from_omniauth, provider: "google_oauth2"
+
+      flash[:notices].should == nil
+      flash[:errors].should == ["This account is not yet authenticated."]
+      response.should be_redirect
+      expect(response).to redirect_to login_path
+    end
+  end
+
   describe "destroy" do
     it "signs out the user and removes the remember me coookie" do
       sign_in_as @user

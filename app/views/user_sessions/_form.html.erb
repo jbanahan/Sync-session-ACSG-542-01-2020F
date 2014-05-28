@@ -35,7 +35,27 @@
         </div>
         <div class="form-group">
           <div class="controls">
-            <div><%=submit_tag 'Log In', class: 'btn btn-primary' %></div>
+            <span><%=submit_tag 'Log In', class: 'btn btn-primary' %></span>
+            <% if ::USE_GOOGLE_AUTH %>
+
+              <span> or </span>
+
+              <a href="/auth/google_oauth2" 
+                 style="background: #da4835; padding-top: 7px; padding-bottom: 10px; border-bottom-left-radius: 5px; border-top-left-radius: 5px;
+                        border-top-right-radius: 5px; border-bottom-right-radius: 5px; text-decoration: none">
+
+                <span>
+                  <%= image_tag "google_plus_small.png", 
+                                style: "height: 33px; border-bottom-left-radius: 5px; border-top-left-radius: 5px; 
+                                        padding-right: 5px; border-right: thin solid white;" %>
+                </span>
+
+                <span style="color: white; padding-right: 10px; font-weight: 700; margin-left: 3px;">
+                  Sign in with Google+
+                </span>
+                
+              </a>
+            <% end %>
           </div>
         </div>
         <div class="form-group small-margin">

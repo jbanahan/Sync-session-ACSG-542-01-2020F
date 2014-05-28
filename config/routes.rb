@@ -5,6 +5,8 @@ OpenChain::Application.routes.draw do
   match '/hts/:iso' => 'hts#country', :via=>:get
   match '/hts' => 'hts#index', :via=>:get
 
+  match "auth/:provider/callback" => "user_sessions#create_from_omniauth"
+
   namespace :api do
     namespace :v1 do
       resources :commercial_invoices, only: [:index,:create,:update]    

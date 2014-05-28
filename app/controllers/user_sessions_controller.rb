@@ -1,5 +1,5 @@
 class UserSessionsController < ApplicationController
-  skip_before_filter :require_user, :only => [:create, :new, :destroy]
+  skip_before_filter :require_user, :only => [:create, :new, :destroy, :create_from_omniauth]
   protect_from_forgery :except => :create
 
   def index
@@ -42,6 +42,26 @@ class UserSessionsController < ApplicationController
         end
       end
     end
+  end
+
+  def create_from_omniauth
+    user = User.from_omniauth(env["omniauth.auth"])
+    unless user.nil?
+      session[:user_id] = user.id
+      sign_in(user) do |status|
+        if status.success?
+          flash[:notices] = ["You have been successfully signed in."]
+          @destination = dashboard_widgets_path
+        else
+          flash[:errors] = ["An error occurred during authentication.  Please try again."]
+          @destination = login_path
+        end
+      end
+    else
+      flash[:errors] = ["This account is not yet authenticated."]
+      @destination = login_path
+    end                                                                                                             
+    redirect_to @destination
   end
 
   # DELETE /user_sessions/1
