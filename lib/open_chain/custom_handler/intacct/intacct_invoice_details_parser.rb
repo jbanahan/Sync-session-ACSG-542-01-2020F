@@ -171,9 +171,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       # Sales Order Invoice is for all standard invoices
       # Credit Memo is for cases where we're backing out charges from a previous Sales Order Invoice
       if actual_charge_sum >= 0
-        r.receivable_type = IntacctReceivable::SALES_INVOICE_TYPE
+        r.receivable_type = IntacctReceivable.create_receivable_type r.company, false
       else
-        r.receivable_type = IntacctReceivable::CREDIT_INVOICE_TYPE
+        r.receivable_type = IntacctReceivable.create_receivable_type r.company, true
         # Credit Memos should have all credit lines as positive amounts.  The lines come to us
         # as negative amounts from Alliance and the debits as postive amounts so we invert them.
         r.intacct_receivable_lines.each {|l| l.amount = (l.amount * -1)}

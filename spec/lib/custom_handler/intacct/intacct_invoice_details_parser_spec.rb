@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       r = @p.create_receivable [@line, @line], true
 
       expect(r.persisted?).to be_true
-      expect(r.receivable_type).to eq "Sales Invoice"
+      expect(r.receivable_type).to eq "VFI Sales Invoice"
       expect(r.company).to eq "vfc"
       expect(r.invoice_number).to eq @line['invoice number']
       expect(r.invoice_date).to eq Date.strptime @line['invoice date'], "%Y%m%d"
@@ -56,13 +56,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(l.location).to eq @line['header division']
     end
 
-    it "creates a credit memo object" do
+    it "creates a credit note object" do
       l2 = @line.dup
       l2['charge amount'] = "-25"
 
       r = @p.create_receivable [@line, l2], true
       expect(r.persisted?).to be_true
-      expect(r.receivable_type).to eq "Sales Credit Memo"
+      expect(r.receivable_type).to eq "VFI Credit Note"
 
       # Credit memos invert the charge amounts (negative amounts are positive / positive are negative)
       expect(r.intacct_receivable_lines.first.amount).to eq (BigDecimal.new(@line['charge amount']) * -1)
@@ -76,6 +76,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       # Just check the differences in fields between lmd and vfc receivables
       expect(r.customer_number).to eq "VANDE"
       expect(r.company).to eq "lmd"
+      expect(r.receivable_type).to eq "LMD Sales Invoice"
       expect(r.invoice_number).to eq @line['freight file number']
       expect(r.intacct_receivable_lines.first.line_of_business).to eq 'Freight'
       expect(r.intacct_receivable_lines.first.location).to eq @line["line division"]
@@ -89,8 +90,24 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       # Just check the differences in fields between lmd and vfc receivables
       expect(r.customer_number).to eq @line["customer"]
       expect(r.company).to eq "lmd"
+      expect(r.receivable_type).to eq "LMD Sales Invoice"
       expect(r.invoice_number).to eq @line['invoice number']
       expect(r.intacct_receivable_lines.first.line_of_business).to eq 'Freight'
+    end
+
+    it "creates an LMD credit note object" do
+      @line['header division'] = "11"
+      @line['line division'] = "11"
+      l2 = @line.dup
+      l2['charge amount'] = "-25"
+
+      r = @p.create_receivable [@line, l2], true
+      expect(r.persisted?).to be_true
+      expect(r.receivable_type).to eq "LMD Credit Note"
+
+      # Credit memos invert the charge amounts (negative amounts are positive / positive are negative)
+      expect(r.intacct_receivable_lines.first.amount).to eq (BigDecimal.new(@line['charge amount']) * -1)
+      expect(r.intacct_receivable_lines.second.amount).to eq (BigDecimal.new(l2['charge amount']) * -1)
     end
 
     it "updates vfc receivables that have not been sent" do

@@ -160,7 +160,7 @@ INV
     expect(r.invoice_date).to eq bi.invoice_date
     expect(r.customer_number).to eq bi.customer_number
     expect(r.currency).to eq bi.currency
-    expect(r.receivable_type).to eq IntacctReceivable::SALES_INVOICE_TYPE
+    expect(r.receivable_type).to eq "VFC Sales Invoice"
 
     expect(r.intacct_receivable_lines).to have(2).items
 
@@ -192,7 +192,7 @@ INV
 
     r = IntacctReceivable.where(company: "vcu", invoice_number: bi.invoice_number).first
 
-    expect(r.receivable_type).to eq IntacctReceivable::CREDIT_INVOICE_TYPE
+    expect(r.receivable_type).to eq "VFC Credit Note"
     l = r.intacct_receivable_lines.first
     bl = bi.broker_invoice_lines.first
 
@@ -247,7 +247,6 @@ INV
     @content = <<INV
     INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
     01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
-    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 2 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
 INV
 
     @k.parse @content
@@ -255,5 +254,21 @@ INV
     r = IntacctReceivable.where(company: "als").first
     expect(r).to_not be_nil
     expect(r.customer_number).to eq "POST_XREF"
+    expect(r.receivable_type).to eq "ALS Sales Invoice"
+  end
+
+  it "detects ALS customer numbers on credit invoices" do
+    DataCrossReference.create! key: DataCrossReference.make_compound_key("Fenix", "BOSSCI"), value: "POST_XREF", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
+    DataCrossReference.create! key: "POST_XREF", value: "", cross_reference_type: DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, -45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+INV
+
+    @k.parse @content
+
+    r = IntacctReceivable.where(company: "als").first
+    expect(r).to_not be_nil
+    expect(r.receivable_type).to eq "ALS Credit Note"
   end
 end
