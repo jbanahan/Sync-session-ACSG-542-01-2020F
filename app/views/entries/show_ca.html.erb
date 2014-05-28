@@ -143,7 +143,7 @@
       </tbody>
     </table>
     <%fields = [:cil_part_number,:cil_po_number,:cil_customer_reference, :cil_units,:cil_uom,:ent_unit_price,:cil_value,:cil_adjustments_amount,:cil_country_origin_code,:ent_state_origin_code,:cil_country_export_code,:ent_state_export_code]%>
-    <table class='detail_table'>
+    <table class='table table-condensed table-bordered'>
       <thead><tr>
         <%fields.each do |f|%>
           <th><%=field_label f, false%></th>
@@ -158,7 +158,8 @@
           </tr>
           <% if line.commercial_invoice_tariffs.count > 0%>
             <tr>
-              <td colspan='12' style='font-size:111%;'>
+              <td>&nbsp;</td>
+              <td colspan='11' style='font-size:111%;'>
                 <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:ent_tariff_provision,
                   :cit_classification_qty_1,:cit_classification_uom_1,:ent_value_for_duty_code,:ent_gst_rate_code,:ent_gst_amount,
                   :ent_sima_amount,:ent_excise_amount,:ent_excise_rate_code, :cit_tariff_description], :lines=>line.commercial_invoice_tariffs,

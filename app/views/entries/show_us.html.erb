@@ -262,7 +262,7 @@ $(function() {
         </tbody>
       </table>
       <%fields = [:cil_part_number,:cil_po_number,:cil_units,:cil_uom,:cil_value,:cil_country_origin_code,:cil_country_export_code,:cil_department,:cil_related_parties,:cil_volume,:cil_hmf,:cil_prorated_mpf,:cil_cotton_fee, :cil_contract_amount]%>
-      <table class='detail_table'>
+      <table class='table table-condensed table-bordered'>
         <thead><tr>
           <%fields.each do |f|%>
             <th><%=field_label f, false%></th>
@@ -297,7 +297,8 @@ $(function() {
             <% end %>
             <% if line.commercial_invoice_tariffs.length > 0%>
               <tr>
-                <td colspan='<%=fields.length%>' style='font-size:111%; padding-left:1em;'>
+                <td>&nbsp;</td>
+                <td colspan='<%=fields.length-1%>' align='right'>
                   <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:cit_hts_code,:cit_duty_amount,:cit_entered_value,:cit_duty_rate,:cit_spi_primary,:cit_spi_secondary,
                     :cit_classification_qty_1,:cit_classification_uom_1,:cit_classification_qty_2,:cit_classification_uom_2,:cit_classification_qty_3,:cit_classification_uom_3,
                     :cit_gross_weight,:cit_tariff_description], :lines=>line.commercial_invoice_tariffs, 

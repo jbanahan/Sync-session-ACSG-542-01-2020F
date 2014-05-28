@@ -1,5 +1,5 @@
 <% overrides = {} if local_assigns[:overrides].nil?-%>
-<table class='detail_table'>
+<table class='detail_table' style="width:100%;">
   <thead><tr>
     <%fields.each do |f|%>
       <%if ModelField.find_by_uid(f).can_view? current_user%>
@@ -11,7 +11,7 @@
     <%lines.each do |line|%>
       <tr class='hover'>
         <%fields.each do |f|%>
-          <td <%="style='text-align:right;'" if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%>>
+          <td style='<%="text-align:right; " if [:decimal,:integer].include? ModelField.find_by_uid(f).data_type%> border:1px solid #ccc; padding: 3px;' >
             <% mf = ModelField.find_by_uid(f) -%>
             <%if mf.can_view? current_user -%>
               <% if overrides[f] -%>
