@@ -24,6 +24,21 @@ class UserSessionsController < ApplicationController
     user = authenticate(params)
     # This call runs the clearance sign_in "guards" which runs business logic validations
     # to check if user is allowed to login (.ie user isn't locked, disabled etc)
+    handle_sign_in(user)
+  end
+
+  def create_from_omniauth
+    user = User.from_omniauth(env["omniauth.auth"])
+    unless user.nil?
+      session[:user_id] = user.id
+      handle_sign_in(user)
+    else
+      flash[:errors] = ["This account is not yet authenticated."]
+      redirect_to login_path
+    end                                                                                                             
+  end
+
+  def handle_sign_in(user)
     sign_in(user) do |status|
       if status.success?
         user.on_successful_login request
@@ -43,27 +58,7 @@ class UserSessionsController < ApplicationController
       end
     end
   end
-
-  def create_from_omniauth
-    user = User.from_omniauth(env["omniauth.auth"])
-    unless user.nil?
-      session[:user_id] = user.id
-      sign_in(user) do |status|
-        if status.success?
-          flash[:notices] = ["You have been successfully signed in."]
-          @destination = dashboard_widgets_path
-        else
-          flash[:errors] = ["An error occurred during authentication.  Please try again."]
-          @destination = login_path
-        end
-      end
-    else
-      flash[:errors] = ["This account is not yet authenticated."]
-      @destination = login_path
-    end                                                                                                             
-    redirect_to @destination
-  end
-
+  
   # DELETE /user_sessions/1
   def destroy
     sign_out

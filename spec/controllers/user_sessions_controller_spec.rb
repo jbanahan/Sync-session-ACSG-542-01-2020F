@@ -88,10 +88,9 @@ describe UserSessionsController do
       User.should_receive(:from_omniauth).and_return(@user)
       post :create_from_omniauth, provider: "google_oauth2"
 
-      flash[:notices].should == ["You have been successfully signed in."]
-      flash[:errors].should == nil
       response.should be_redirect
-      expect(response).to redirect_to dashboard_widgets_path
+      controller.current_user.id.should == @user.id
+      expect(response).to redirect_to root_path
     end
 
     it "should display an error on the login page when unsuccessful" do
@@ -100,9 +99,8 @@ describe UserSessionsController do
       post :create_from_omniauth, provider: "google_oauth2"
 
       flash[:notices].should == nil
-      flash[:errors].should == ["An error occurred during authentication.  Please try again."]
-      response.should be_redirect
-      expect(response).to redirect_to login_path
+      flash[:errors].should == ["Your login was not successful."]
+      response.should be_success
     end
 
     it "should display an error on the login page when account does not exist" do

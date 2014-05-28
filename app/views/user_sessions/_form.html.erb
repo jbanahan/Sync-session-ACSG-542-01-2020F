@@ -36,7 +36,7 @@
         <div class="form-group">
           <div class="controls">
             <span><%=submit_tag 'Log In', class: 'btn btn-primary' %></span>
-            <% if ::USE_GOOGLE_AUTH %>
+            <% if Rails.configuration.use_google_auth %>
 
               <span> or </span>
 
