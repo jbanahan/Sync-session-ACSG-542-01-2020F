@@ -148,13 +148,13 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
     it 'should send file' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      FtpSender.should_receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_to_msl',:remote_file_name=>fn})
+      FtpSender.should_receive(:send_file).with("ftp.chain.io","polo","pZZ117",@tmp,{:folder=>'/_to_msl',:remote_file_name=>fn})
       OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new.send_file(@tmp,fn)
     end
     it 'should send file in qa_mode' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      FtpSender.should_receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_test_to_msl',:remote_file_name=>fn})
+      FtpSender.should_receive(:send_file).with("ftp.chain.io","polo","pZZ117",@tmp,{:folder=>'/_test_to_msl',:remote_file_name=>fn})
       OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new(:env=>:qa).send_file(@tmp,fn)
     end
   end

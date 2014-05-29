@@ -24,7 +24,7 @@ module OpenChain
     LVS_LINE_TYPE = "LVS"
 
     def self.integration_folder
-      "/opt/wftpserver/ftproot/www-vfitrack-net/_fenix"
+      ["//opt/wftpserver/ftproot/www-vfitrack-net/_fenix", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_fenix"]
     end
 
     # take the text from a Fenix CSV output file and create entries

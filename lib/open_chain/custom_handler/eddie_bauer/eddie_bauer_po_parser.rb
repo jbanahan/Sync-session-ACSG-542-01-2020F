@@ -2,7 +2,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
   extend OpenChain::IntegrationClientParser
 
   def self.integration_folder
-    "/opt/wftpserver/ftproot/www-vfitrack-net/_eddie_po"
+    ["//opt/wftpserver/ftproot/www-vfitrack-net/_eddie_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_eddie_po"]
   end
 
   def self.parse data, opts = {}

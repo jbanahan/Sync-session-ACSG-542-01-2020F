@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductParser
   end
 
   def self.integration_folder
-    "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_product"
+    ["//opt/wftpserver/ftproot/www-vfitrack-net/_lenox_product", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lenox_product"]
   end
 
   def self.parse data, opts = {}

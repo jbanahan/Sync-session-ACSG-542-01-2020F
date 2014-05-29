@@ -124,7 +124,7 @@ module OpenChain
       end
 
       def send_file local_file, destination_file_name
-        FtpSender.send_file("connect.vfitrack.net",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_msl' : '/_to_msl'),:remote_file_name=>destination_file_name})
+        FtpSender.send_file("ftp.chain.io",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_msl' : '/_to_msl'),:remote_file_name=>destination_file_name})
       end
 
       private 

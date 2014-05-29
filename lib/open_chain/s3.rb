@@ -137,18 +137,30 @@ module OpenChain
     end
 
     # get files uploaded to the integration bucket for a particular date and subfolder and passes each key name to the given block
-    def self.integration_keys upload_date, subfolder
-      prefix = "#{upload_date.strftime("%Y-%m/%d")}/#{subfolder}"
-      # The sort call here is to make sure we're processing all the files nearest to the order they were received
-      # in using the last modified date.  This is the only "standard" metadata date we get on all objects, so technically
-      # it's not going to be 100% reliable if we update a file ever, but I'm not sure if that'll ever really happen anyway
-      # so it should be close enough to 100% reliable for us.
+    def self.integration_keys upload_date, subfolders
+      # For the time being, we need to support looking for files in multiple locations after migrating the integration code
+      # to a new machine.  The integration_client_parser implementations will all return multiple integration folders to check
+      # for files to process.  This ammounts primarily just to a single extra HTTP call per subfolder listed.
+      subfolders = subfolders.respond_to?(:to_a) ? subfolders.to_a : [subfolders]
 
-      # Also note, this call does make HTTP HEAD requests for every S3 object being sorted.  It's somewhat expensive
-      # to do this but works in all storage cases and doesn't have to rely on storage naming standards.
-      AWS::S3.new(AWS_CREDENTIALS).buckets[integration_bucket_name].objects.with_prefix(prefix).sort_by {|o| o.last_modified}.each do |obj|
-        yield obj.key
+      subfolders.each do |subfolder|
+        # Strip any leading slash from the subfolder since we add one below...this allows us to use the actual
+        # absolute path to the integration directory in the parsers, vs. what looks like a relative path.
+        subfolder = subfolder[1..-1] if subfolder.start_with? "/"
+        prefix = "#{upload_date.strftime("%Y-%m/%d")}/#{subfolder}"
+        
+        # The sort call here is to make sure we're processing all the files nearest to the order they were received
+        # in using the last modified date.  This is the only "standard" metadata date we get on all objects, so technically
+        # it's not going to be 100% reliable if we update a file ever, but I'm not sure if that'll ever really happen anyway
+        # so it should be close enough to 100% reliable for us.
+
+        # Also note, this call does make HTTP HEAD requests for every S3 object being sorted.  It's somewhat expensive
+        # to do this but works in all storage cases and doesn't have to rely on storage naming standards.
+        AWS::S3.new(AWS_CREDENTIALS).buckets[integration_bucket_name].objects.with_prefix(prefix).sort_by {|o| o.last_modified}.each do |obj|
+          yield obj.key
+        end
       end
+      
     end
   end
 end

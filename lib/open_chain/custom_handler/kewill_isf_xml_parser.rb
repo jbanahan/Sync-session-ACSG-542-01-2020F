@@ -9,7 +9,7 @@ module OpenChain
       NO_NOTES_EVENTS = [10,19,20,21]
   
       def self.integration_folder
-        "/opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf"
+        ["//opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]
       end
 
       def self.parse data, opts={}

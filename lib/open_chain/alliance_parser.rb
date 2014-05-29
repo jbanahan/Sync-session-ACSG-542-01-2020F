@@ -39,7 +39,7 @@ module OpenChain
     }
 
     def self.integration_folder
-      "/opt/wftpserver/ftproot/www-vfitrack-net/_alliance"
+      ["//opt/wftpserver/ftproot/www-vfitrack-net/_alliance", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_alliance"]
     end
     # take the text inside an internet tracking file from alliance and create/update the entry
     def self.parse file_content, opts={}
