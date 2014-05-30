@@ -1050,7 +1050,8 @@ and classifications.product_id = products.id
         [14,:ci_docs_received_date,:docs_received_date,'Docs Received Date',{data_type: :date}],
         [15,:ci_docs_ok_date,:docs_ok_date,'Docs OK Date',{data_type: :date}],
         [16,:ci_issue_codes,:issue_codes,'Issue Tracking Codes',{data_type: :string}],
-        [17,:ci_rater_comments,:rater_comments,'Rater Comments',{data_type: :text}]
+        [17,:ci_rater_comments,:rater_comments,'Rater Comments',{data_type: :text}],
+        [18,:ci_destination_code,:destination_code,'Destination Code',{data_type: :string}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100,'ci','commercial_invoices')
       add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [

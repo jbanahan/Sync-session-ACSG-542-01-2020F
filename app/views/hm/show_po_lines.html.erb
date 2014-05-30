@@ -41,13 +41,22 @@
         <div class="col-md-12">
           <div class='form-group' ng-class="{'has-error':form.po_number.$invalid}">
             <label for='po_number'>PO Number</label>
-            <input type='text' ng-model='poLine.po_number' class='form-control' name='po_number' id='po_number' ng-pattern='/^\d{6}$/'>
+            <input type='text' ng-model='poLine.po_number' class='form-control' name='po_number' id='po_number' ng-pattern='/^\d{6}$/' required>
             <span ng-show='form.po_number.$error.pattern' class='error'>PO Number must be 6 digits like &quot;123456&quot;.</span>
+            <span ng-show='form.po_number.$error.required' class='error'>PO Number is required.</span>
           </div>
         </div>
       </div>
       <div class='row'>
         <div class='col-md-4'>
+        <div class='form-group'>
+            <label for='coast'>Coast</label>
+            <select id='coast' name='coast' class='form-control' ng-model='poLine.coast' required>
+              <option>East</option>
+              <option>West</option>
+            </select>
+            <span ng-show='form.coast.$error.required' class='error'>Coast is required.</span>
+          </div>
           <div class='form-group' ng-class="{'has-error':form.hts_code.$invalid}">
             <label for='hts_code'>HTS Number</label>
             <input type='text' ng-model='poLine.hts_code' class='form-control' id='hts_code' name='hts_code' ng-pattern='/^\d{10}$/'>
@@ -75,12 +84,12 @@
             <label for="reporting_uom">Reporting UOM</label>
             <input id="reporting_uom" class="form-control" ng-model="poLine.reporting_uom">
           </div>
+        </div>
+        <div class='col-md-4'>
           <div class='form-group'>
             <label for="net_weight">Net Weight</label>
             <input id="net_weight" class="form-control" type="number" ng-model="poLine.net_weight">
           </div>
-        </div>
-        <div class='col-md-4'>
           <div class='form-group'>
             <label for="gross_weight">Gross Weight</label>
             <input id="gross_weight" class="form-control" type="number" ng-model="poLine.gross_weight">
@@ -115,7 +124,8 @@
         <div class="col-md-4">
           <div class='form-group'>
             <label for="docs_rec_date">Docs Received</label>
-            <input id="docs_rec_date" type="date" ng-model="poLine.docs_rec_date" class='form-control'>
+            <input id="docs_rec_date" name='docs_rec_date' type="date" ng-model="poLine.docs_rec_date" class='form-control' required>
+            <span ng-show='form.docs_rec_date.$error.required' class='error'>Docs Received Date is required.</span>
           </div>
           <div class='form-group'>
             <label for="docs_ok_date">Docs OK</label>
@@ -134,7 +144,8 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <button class='btn btn-primary' ng-click='saveLine(poLine)'>{{poLine.id ? "Update" : "Add"}}</button>
+          <button class='btn btn-primary' ng-click='saveLine(poLine)' ng-disabled="form.$invalid">{{poLine.id ? "Update" : "Add"}}</button>
+          <span class='label label-success' ng-show='actionResponse'>{{actionResponse}}</span>
         </div>
       </div>
     </form>
@@ -163,6 +174,7 @@
           <thead>
             <tr>
               <th>PO</th>
+              <th>Coast</th>
               <th>HTS</th>
               <th>Cartons</th>
               <th>Quantity</th>
@@ -177,6 +189,7 @@
           <tbody>
             <tr ng-repeat='line in recentLines'>
               <td><a class='btn btn-sm btn-default' ng-click='selectLine(line)'>{{line.po_number}}</a></td>
+              <td>{{line.coast}}</td>
               <td>{{line.hts_code}}</td>
               <td>{{line.cartons}}</td>
               <td>{{line.quantity}}</td>

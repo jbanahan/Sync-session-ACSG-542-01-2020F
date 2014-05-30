@@ -42,8 +42,8 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
       :ci_docs_received_date,
       :ci_docs_ok_date,
       :ci_issue_codes,
-      :ci_rater_comments
-
+      :ci_rater_comments,
+      :ci_destination_code
     ]
     line_fields_to_render = [:cil_line_number,:cil_po_number,:cil_part_number,
       :cil_units,:cil_value,:ent_unit_price,:cil_uom,
@@ -106,10 +106,6 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
         unless ln['tariffs'].blank?
           ln['tariffs'].each_with_index do |tln,j|
             hts = tln['cit_hts_code']
-            if hts.blank?
-              ci.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:cit_hts_code).label} for record #{j+i}." 
-              next
-            end
             ct = c_line.commercial_invoice_tariffs.find {|t| t.hts_code == hts}
             ct = c_line.commercial_invoice_tariffs.build(hts_code:hts) if ct.nil?
             import_fields tln, ct, CoreModule::COMMERCIAL_INVOICE_TARIFF
