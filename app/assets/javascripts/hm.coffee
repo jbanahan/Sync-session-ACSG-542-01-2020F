@@ -17,6 +17,7 @@ app.factory 'hmService', ['$http',($http) ->
         ci_issue_codes:line.issue_codes
         ci_rater_comments:line.comment
         ci_mfid:line.mid
+        ci_destination_code:line.coast
         lines:[
           {
             cil_value_foreign:line.adjusted_value
@@ -62,6 +63,7 @@ app.factory 'hmService', ['$http',($http) ->
       currency:ci_line.cil_currency
       origin_country:ci_line.cil_country_origin_code
       mid:ci.ci_mfid
+      coast:ci.ci_destination_code
     }
     if ci_line.tariffs && ci_line.tariffs[0]
       t = ci_line.tariffs[0]
@@ -116,7 +118,7 @@ app.factory 'hmService', ['$http',($http) ->
     promise
 ]   
 
-app.controller 'HMPOLineController', ['$scope','hmService',($scope,hmService) ->
+app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$interval,hmService) ->
   $scope.svc = hmService
   $scope.poLine = {}
   $scope.recentLines = []
@@ -136,6 +138,13 @@ app.controller 'HMPOLineController', ['$scope','hmService',($scope,hmService) ->
       $scope.recentLines.splice(foundPosition,1)
       $scope.recentLines.unshift r
       $scope.poLine = {} #reset PO Line
+      $scope.errorMessage = ""
+      $scope.actionResponse = "Saved!"
+      $interval(
+        (() ->
+          $scope.actionResponse = ""
+        ),1000,1
+      )
     ).error((d,s,h,c) ->
       $scope.errorMessage = d.errors[0]
     )

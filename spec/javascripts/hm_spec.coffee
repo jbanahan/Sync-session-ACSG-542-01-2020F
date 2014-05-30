@@ -67,10 +67,11 @@ describe 'HMApp', () ->
           gross_weight:123
           net_weight:122
           issue_codes:'AB'
-          comment:'COMM',
+          comment:'COMM'
           mid:'MID1'
           reporting_quantity:103
           reporting_uom:'PCS'
+          coast:'East'
         }
         expected_obj = {
           commercial_invoice:{
@@ -84,6 +85,7 @@ describe 'HMApp', () ->
             ci_issue_codes:'AB'
             ci_rater_comments:'COMM'
             ci_mfid:'MID1'
+            ci_destination_code:'East'
             lines:[{
                 cil_line_number:1
                 cil_units:230
