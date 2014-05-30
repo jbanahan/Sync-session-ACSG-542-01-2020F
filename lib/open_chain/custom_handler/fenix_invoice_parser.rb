@@ -31,15 +31,38 @@ module OpenChain
       end
 
       def self.get_invoice_number row
-        val = row[3]
-        val.nil? ? nil : val.strip
+        return nil if row[3].blank?
+
+        prefix = row[2].to_s.strip.rjust(2, "0")
+        number = row[3].to_s.strip
+        suffix = row[4].to_s.strip.rjust(2, "0")
+
+        if suffix =~ /^0+$/
+          suffix = ""
+        end
+
+        # Looks like the invoice number includes the suffix, but in a way that doesn't zero pad it so we need to strip out
+        # everything after the trailing hyphen
+        if number =~ /^(.+)-\w+$/
+          number = $1
+        end
+
+        number = number.rjust(7, "0")
+
+        if suffix.blank?
+          "#{prefix}-#{number}"
+        else
+          "#{prefix}-#{number}-#{suffix}"
+        end
       end
       
       #don't call this, use the static parse method
       def initialize rows, opts
         invoice = nil
-        BrokerInvoice.transaction do
-          invoice = make_header rows.first
+        find_and_process_invoice(rows.first) do |yielded_invoice|
+          invoice = yielded_invoice
+          make_header invoice, rows.first
+
           invoice.last_file_bucket = opts[:bucket]
           invoice.last_file_path = opts[:key]
           invoice.invoice_total = BigDecimal('0.00')
@@ -66,7 +89,15 @@ module OpenChain
       end
 
       private 
-        def make_header row
+        def make_header inv, row
+          inv.broker_invoice_lines.destroy_all #clear existing lines
+          inv.broker_reference = safe_strip row[9]
+          inv.currency = safe_strip row[10]
+          inv.invoice_date = Date.strptime safe_strip(row[0]), '%m/%d/%Y'
+          inv.customer_number = customer_number(safe_strip(row[1]), inv.currency)
+        end
+
+        def find_and_process_invoice row
           broker_reference = safe_strip row[9]
           # We need a broker reference in the system to link to an entry, so that we can then know which 
           # customer the invoice belongs to
@@ -74,13 +105,25 @@ module OpenChain
             raise "Invoice # #{FenixInvoiceParser.get_invoice_number(row)} is missing a broker reference number."
           end
 
-          inv = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>FenixInvoiceParser.get_invoice_number(row)).first_or_create!
-          inv.broker_invoice_lines.destroy_all #clear existing lines
-          inv.broker_reference = broker_reference
-          inv.currency = safe_strip row[10]
-          inv.invoice_date = Date.strptime safe_strip(row[0]), '%m/%d/%Y'
-          inv.customer_number = customer_number(safe_strip(row[1]), inv.currency)
-          inv
+          invoice = nil
+          Lock.acquire(Lock::FENIX_INVOICE_PARSER_LOCK, times: 3) do 
+            invoice = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>FenixInvoiceParser.get_invoice_number(row)).first
+
+            # Fall back to using the "legacy" invoice number for the time being (at a sufficient time in the future we could probably remove this)
+            unless invoice || row[3].to_s.blank?
+              invoice = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>row[3].to_s.strip).first
+
+              unless invoice
+                invoice = BrokerInvoice.create! :source_system=>'Fenix',:invoice_number=>FenixInvoiceParser.get_invoice_number(row)
+              end
+            end
+          end
+
+          if invoice
+            Lock.with_lock_retry(invoice) do
+              yield invoice
+            end
+          end
         end
 
         def add_detail invoice, row

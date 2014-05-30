@@ -15,6 +15,11 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     b.last_file_path.should == 'key'
   end
   it "should write invoice" do
+    # There's two invoices in the spec csv file, account for that
+    Lock.should_receive(:acquire).twice.with(Lock::FENIX_INVOICE_PARSER_LOCK, times: 3).and_yield
+    Lock.should_receive(:with_lock_retry).twice.with(instance_of(BrokerInvoice)).and_yield
+    Lock.should_receive(:with_lock_retry).twice.with(instance_of(IntacctReceivable)).and_yield
+
     @k.parse @content
     BrokerInvoice.count.should == 2
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
@@ -22,7 +27,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     bi.suffix.should be_blank
     bi.currency.should == 'CAD'
     bi.invoice_date = Date.new(2013,1,14)
-    bi.invoice_number.should == '9'
+    bi.invoice_number.should == '01-0000009'
     bi.customer_number.should == "BOSSCI"
   end
   it "should write details" do
@@ -99,28 +104,28 @@ INV
   it "should handle a minimal amount of information" do
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},  , 1 ,,,,,,,,"
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system 'INV#', 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-000INV#', 'Fenix'
     bi.broker_reference.should == @ent.broker_reference
   end
 
   it "should handle errors for each invoice individually" do
-    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # INV#2 from file 'path/to/file'."])
+    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2 from file 'path/to/file'."])
 
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               # This line fails due to missing invoice date
               ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n" +
               "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{@ent.broker_reference},,  , 1 ,,,,,,,,\n", {:key => "path/to/file"}
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system 'INV#', 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
     bi.should_not be_nil
   end
 
   it "should raise an error if the broker reference is missing" do
-    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # INV#2."])
+    StandardError.any_instance.should_receive(:log_me).with(["Failed to process Fenix Invoice # 01-00INV#2."])
     
     @k.parse "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
               # This line fails due to missing broker reference
               "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,"
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system 'INV#2', 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
     bi.should be_nil
   end
 
@@ -135,8 +140,32 @@ INV
 INV
     @k.parse @content
 
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system '39009', 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-0039009', 'Fenix'
     bi.should_not be_nil
+  end
+
+  it "falls back to finding legacy invoice numbers for updates" do
+    @k.parse @content
+    bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
+    bi.broker_invoice_lines.destroy_all
+    # The legacy invoince number is simply just the data as it appears in column 3, rather than
+    # the prefix-invoice#-suffix stuff
+    bi.update_attributes! invoice_number: "9"
+
+    @k.parse @content
+    bi.reload
+    bi.should have(3).broker_invoice_lines
+    bi.invoice_total.should == 50.85
+  end
+
+  it "uses suffix in invoice number if value in column 4 is not 0" do
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,BOSSCI, 1 , 9 , 1 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+INV
+    @k.parse @content
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009-01", 'Fenix'
+    expect(bi).to_not be_nil
   end
 
   it "creates intacct receivables" do
@@ -152,7 +181,7 @@ INV
 
     @k.parse @content
 
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system 9, 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
 
     r = IntacctReceivable.where(company: "vcu", invoice_number: bi.invoice_number).first
 
@@ -188,7 +217,7 @@ INV
 
     @k.parse @content
 
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system 9, 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
 
     r = IntacctReceivable.where(company: "vcu", invoice_number: bi.invoice_number).first
 
@@ -222,7 +251,7 @@ INV
     01/14/2013,BOSSCIU, 1 , 9 , 0 ,11981001052312, 55 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},USD, 4000 , 1 ,,,,,,,,
 INV
     @k.parse @content
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system 9, 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
     expect(bi.customer_number).to eq "BOSSCI"
   end
 
@@ -234,7 +263,7 @@ INV
 INV
 
     @k.parse @content
-    bi = BrokerInvoice.find_by_invoice_number_and_source_system 9, 'Fenix'
+    bi = BrokerInvoice.find_by_invoice_number_and_source_system "01-0000009", 'Fenix'
     
     expect(bi.broker_invoice_lines).to have(2).items
     expect(bi.broker_invoice_lines.first.charge_type).to eq "D"
