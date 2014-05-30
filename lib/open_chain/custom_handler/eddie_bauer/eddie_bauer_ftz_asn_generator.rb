@@ -18,18 +18,20 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   SYNC_CODE ||= 'EBFTZASN'
       
   def self.run_schedulable opts={'customer_numbers'=>['EDDIEFTZ']}
-    g = self.new Rails.env, opts['customer_numbers']
+    g = self.new Rails.env, opts
     g.run_for_entries(g.find_entries,g)
   end
   def run_for_entries entries, instance=self.new
     instance.ftp_file instance.generate_file entries
   end
-  def initialize env=Rails.env, customer_numbers=['EDDIEFTZ']
+  def initialize env=Rails.env, opts={}
+    inner_opts = {'customer_numbers'=>['EDDIEFTZ']}.merge opts
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
       date_format:'%m/%d/%Y'
     )
     @env = env
-    @customer_numbers = customer_numbers
+    @customer_numbers = inner_opts['customer_numbers']
+    @skip_long_containers = inner_opts['skip_long_containers']
   end
 
   def ftp_credentials
@@ -68,6 +70,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
     cust_num = SearchCriterion.new(model_field_uid:'ent_cust_num',operator:'in',value:@customer_numbers.join("\n"))
     bi_total = SearchCriterion.new(model_field_uid:'ent_broker_invoice_total',operator:'gt',value:'0')
     r = bi_total.apply passed_rules.apply cust_num.apply Entry.select('distinct entries.*').where('file_logged_date > "2014-04-01"')
+    r = r.where('(NOT length(entries.container_numbers) > 20)') if @skip_long_containers
     r.need_sync(self.class::SYNC_CODE)
   end
 

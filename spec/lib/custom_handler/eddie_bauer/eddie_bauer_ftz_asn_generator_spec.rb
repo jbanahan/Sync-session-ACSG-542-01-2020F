@@ -108,6 +108,10 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       @entry.update_attributes(broker_invoice_total:0)
       expect(described_class.new.find_entries.to_a).to be_empty
     end
+    it "should optionally skip multi-container" do
+      @entry.update_attributes(container_numbers:'1234567890 1234567890')
+      expect(described_class.new(Rails.env,{'skip_long_containers'=>true}).find_entries).to be_empty
+    end
   end
   describe "generate_data_for_entry" do
     before(:each) do
