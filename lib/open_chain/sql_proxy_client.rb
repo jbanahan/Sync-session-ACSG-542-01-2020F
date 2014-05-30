@@ -45,8 +45,13 @@ module OpenChain; class SqlProxyClient
     request_context = {"broker_reference" => file_number, "last_exported_from_source" => last_exported_from_source.in_time_zone("Eastern Time (US & Canada)")}
     request 'entry_details', {:file_number => file_number.to_i}, request_context
   end
+
+  def report_query query_name, query_params = {}, context = {}
+    # We actually want this to raise an error so that it's reported in the report result, rather than just left hanging out there in a "Running" state
+    request query_name, query_params, context, false
+  end
  
-  def request query_name, sql_params, request_context
+  def request query_name, sql_params, request_context, swallow_error = true
     request_body = {'sql_params' => sql_params}
     request_body['context'] = request_context unless request_context.blank?
 
@@ -54,6 +59,7 @@ module OpenChain; class SqlProxyClient
       config = PROXY_CONFIG[Rails.env]
       @json_client.post "#{config['url']}/query/#{query_name}", request_body, {}, config['auth_token']
     rescue => e
+      raise e unless swallow_error
       e.log_me ["Failed to initiate sql_proxy query for #{query_name} with params #{request_body.to_json}."]
     end
   end

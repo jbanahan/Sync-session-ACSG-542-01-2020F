@@ -58,4 +58,26 @@ describe OpenChain::SqlProxyClient do
       @c.request_alliance_entry_details "12345", last_exported_date
     end
   end
+
+  describe "report_query" do
+    it "requests running a query" do
+      params = {"1"=>"2"}
+      context = {"id"=>"1"}
+
+      body = {'sql_params' => params, "context" => context}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/query_name", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+
+      @c.report_query "query_name", params, context
+    end
+
+    it "raises errors encountered by the json client" do
+      params = {"1"=>"2"}
+      context = {"id"=>"1"}
+
+      body = {'sql_params' => params, "context" => context}
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/query_name", body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token']).and_raise "JSON CLIENT ERROR"
+
+      expect { @c.report_query "query_name", params, context }.to raise_error "JSON CLIENT ERROR"
+    end
+  end
 end

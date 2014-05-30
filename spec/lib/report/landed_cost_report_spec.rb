@@ -31,7 +31,10 @@ describe OpenChain::Report::LandedCostReport do
 
       sheet = Spreadsheet.open(@tempfile.path).worksheet "CUST #{start_date} - #{end_date}"
 
-      # don't really care about the header names
+      # don't really care about the header names, just make sure they're there
+      sheet.row(0)[0].should == "Broker Reference"
+      sheet.row(0)[17].should == "Total Per Unit"
+      
       sheet.row(1)[0].should == @entry1.broker_reference
       sheet.row(1)[1].should == @entry1.entry_number
       sheet.row(1)[2].strftime("%Y-%m-%d").should == @entry1.release_date.strftime("%Y-%m-%d")

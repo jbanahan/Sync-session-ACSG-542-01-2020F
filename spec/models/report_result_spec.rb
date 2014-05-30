@@ -47,8 +47,11 @@ describe ReportResult do
       class SampleReport
         def self.run_report user, opts
           loc = 'spec/support/tmp/sample_report.txt'
-          File.open(loc,'w') {|f| f.write('mystring')}
-          File.new loc
+          f = File.new loc, "w"
+          f << "mystring"
+          f.flush
+          f.rewind
+          f
         end
       end
       @report_class = SampleReport
@@ -114,6 +117,42 @@ describe ReportResult do
       ReportResult.run_report! 'user settings', @u, @report_class
     end
 
+    it "detects alliance reports" do
+      class AllianceReport
+        def self.alliance_report?
+          true
+        end
+
+        def self.run_report user, opts
+          loc = 'spec/support/tmp/sample_report.txt'
+          File.open(loc,'w') {|f| f.write('mystring')}
+          File.new loc
+        end
+      end
+      rr = double("ReportResult") 
+      rr.should_receive(:execute_alliance_report)
+      ReportResult.any_instance.should_receive(:delay).with(:priority=>100).and_return(rr)
+      ReportResult.run_report! 'delay', @u, AllianceReport
+    end
+
+    it "detects non-alliance reports reponding to alliance_report?" do
+      class NonAllianceReport
+        def self.alliance_report?
+          false
+        end
+
+        def self.run_report user, opts
+          loc = 'spec/support/tmp/sample_report.txt'
+          File.open(loc,'w') {|f| f.write('mystring')}
+          File.new loc
+        end
+      end
+      rr = double("ReportResult") 
+      rr.should_receive(:execute_report)
+      ReportResult.any_instance.should_receive(:delay).with(:priority=>100).and_return(rr)
+      ReportResult.run_report! 'delay', @u, NonAllianceReport
+    end
+
     describe "error handling" do
       before(:each) do
         SampleReport.stub(:run_report).and_raise('some error message')
@@ -174,6 +213,129 @@ describe ReportResult do
       r.report_data_file_name = "照片\/:*?\"<>|\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
       r.save
       r.report_data_file_name.should == "___________________________________.jpg"
+    end
+  end
+
+  describe "execute_alliance_report" do
+    before :each do
+      class TestReport; end
+      @report_class = TestReport
+      @r = ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: @u.id, status: "new", report_class: @report_class.to_s
+    end
+
+    it "runs an alliance report" do
+      User.should_receive(:run_with_user_settings).and_yield
+      settings = ActiveSupport::JSON.decode(@r.settings_json)
+      settings["report_result_id"] = @r.id
+      @report_class.should_receive(:run_report).with(@u, settings)
+
+      @r.execute_alliance_report
+      
+      @r.reload
+      expect(@r.status).to eq "Running"
+    end
+
+    it "handles any errors raised while starting report" do
+      @report_class.should_receive(:run_report).and_raise "Error"
+
+      @r.execute_alliance_report
+
+      expect(@u.messages).to have(1).item
+      @r.reload
+      expect(@r.status).to eq "Failed"
+    end
+  end
+
+  describe "continue_alliance_report" do
+    before :each do
+      class TestReport; end
+      @report_class = TestReport
+      @r = ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: @u.id, status: "new", report_class: @report_class.to_s
+      @tf = Tempfile.new "ContinueAlliancReportSpec"
+      @tf << "Testing"
+    end
+
+    after :each do
+      @tf.close! unless @tf.closed?
+    end
+
+    it "continues an alliance report" do
+      User.should_receive(:run_with_user_settings).and_yield
+      settings = ActiveSupport::JSON.decode(@r.settings_json)
+      results = []
+      @report_class.should_receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+
+      @r.continue_alliance_report results
+
+      @r.reload
+      expect(@u.messages).to have(1).item
+      expect(@r.status).to eq "Complete"
+      expect(@r.report_data).to_not be_nil
+    end
+
+    it "continues an alliance report with json results" do
+      User.should_receive(:run_with_user_settings).and_yield
+      settings = ActiveSupport::JSON.decode(@r.settings_json)
+      results = []
+      @report_class.should_receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+
+      @r.continue_alliance_report results.to_json
+
+      @r.reload
+      expect(@u.messages).to have(1).item
+      expect(@r.status).to eq "Complete"
+      expect(@r.report_data).to_not be_nil
+    end
+
+    it "handles errors / cleanup if alliance report continuation fails" do
+      settings = ActiveSupport::JSON.decode(@r.settings_json)
+      results = []
+      @report_class.should_receive(:process_alliance_query_details).with(@u, results, settings).and_return @tf
+      @r.should_receive(:complete_report).with(@tf).and_raise "Error"
+      @r.continue_alliance_report results
+
+      expect(@u.messages).to have(1).item
+      @r.reload
+      expect(@r.status).to eq "Failed"
+      expect(@tf.closed?).to be_true
+    end
+  end
+
+  describe "file_cleanup" do
+    it "handles Tempfile" do
+      tf = Tempfile.new "file"
+      begin
+        ReportResult.new.file_cleanup tf
+        expect(tf.path).to be_nil
+        expect(tf.closed?).to be_true
+      ensure
+        tf.close!
+      end
+    end
+
+    it "handles File" do
+      f = File.new "tmp/file", "w"
+      begin
+        ReportResult.new.file_cleanup f
+        expect(f.closed?).to be_true
+        expect(File.exists?(f.path)).to be_false
+      ensure
+        File.delete(f) if File.exists?(f.path)
+      end
+    end
+
+    it "handles String" do
+      f = File.new "tmp/file", "w"
+      begin
+        ReportResult.new.file_cleanup f.path
+        expect(File.exists?(f.path)).to be_false
+      ensure
+        File.delete(f) if File.exists?(f.path)
+      end
+    end
+
+    it "handles nil" do
+      ReportResult.new.file_cleanup nil
     end
   end
 end

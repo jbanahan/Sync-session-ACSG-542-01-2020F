@@ -1,5 +1,3 @@
-require 'spreadsheet'
-
 module OpenChain
   module Report
     module ReportHelper
@@ -17,49 +15,22 @@ module OpenChain
       # integer column number (the name key takes priority in case of collisions).
       def table_from_query sheet, query, data_conversions = {}
         result_set = ActiveRecord::Base.connection.execute query
-        cursor = 0
-        row = sheet.row(cursor)
-        column_names = []
-        result_set.fields.each {|f| row.push << f; column_names << f}
-        cursor += 1
+        column_names = result_set.fields
+        XlsMaker.add_header_row sheet, 0, column_names
+        write_result_set_to_sheet result_set, sheet, column_names, 1, data_conversions
+      end
+
+      def write_result_set_to_sheet result_set, sheet, column_names, row_number, data_conversions = {}
+        column_widths = []
         result_set.each do |result_set_row|
-          row = sheet.row(cursor)
           result_set_row.each_with_index do |raw_column_value, column_number|
             # Extract and translate the raw value from the database
             value = translate_raw_result_set_value(result_set_row, raw_column_value, column_number, column_names[column_number], data_conversions)
 
             # Write the value to the Excel sheet
-            write_val sheet, row, cursor, column_number, value
+            XlsMaker.insert_cell_value sheet, row_number, column_number, value, column_widths
           end
-          cursor += 1
-        end
-      end
-
-      # Writes the value provided to the Excel spreadsheet.
-      def write_val sheet, row, row_num, col_num, val, options = {}
-        if val.nil?
-          val = ''
-        elsif val.is_a?(BigDecimal)
-          # Helps w/ rounding issues in spreadsheet output
-          val = val.to_s.to_f
-        end
-
-        row[col_num] = val
-
-        if val.respond_to?(:strftime)
-          # If your query includes a DateTime column and you want it to output as a Date,
-          # then you should use a data_conversion or cast the value in the select as a date -> 'SELECT Date(column) FROM Table'.
-          # Keep in mind, that if you do this, mysql is giving you the date at that moment in UTC, so you'll most likely want to 
-          # use this instead -> 'SELECT DATE(CONVERT_TZ(datetime_column, 'GMT', 'America/New_York') FROM Table'.
-          if val.is_a?(Date)
-            sheet.row(row_num).set_format(col_num, DATE_FORMAT)
-          else
-            sheet.row(row_num).set_format(col_num, DATE_TIME_FORMAT)
-          end
-        end
-
-        if options[:format]
-          sheet.row(row_num).set_format(col_num, options[:format])
+          row_number += 1
         end
       end
 
@@ -101,6 +72,7 @@ module OpenChain
       end
 
     private 
+
       # Takes the raw result set value from the query and conditionally does some data manipulation on it.
       # By default, it handles timezone conversions in Datetime columns and nothing else.  See the data_conversions param
       # on the table_from_query method for how to do more fine-grained data manipulations.
@@ -117,7 +89,7 @@ module OpenChain
       end
 
       # Translates the value from a raw SQL datatype into a format that 
-      # should be able to be handled by the write_val method.
+      # should be able to be handled in writing to the excel file (see XlsMaker#insert_cell_value)
       def default_translate value
         if value.is_a?(Time)
           # Since we're parsing a raw SQL connection here, we're not actually getting the benefit of the Timezone translation

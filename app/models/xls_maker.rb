@@ -94,13 +94,18 @@ class XlsMaker
     if cell.respond_to?(:strftime)
       if (cell.is_a?(Date) && !cell.is_a?(DateTime)) || options[:no_time] == true
         width = 13
-        sheet.row(row_number).set_format(column_number,DATE_FORMAT) 
+        sheet.row(row_number).set_format(column_number,DATE_FORMAT) unless options[:format]
       else
-        sheet.row(row_number).set_format(column_number,DATE_TIME_FORMAT)
+        sheet.row(row_number).set_format(column_number,DATE_TIME_FORMAT) unless options[:format]
       end
     end
     width = 23 if width > 23
     XlsMaker.calc_column_width sheet, column_number, column_widths, width
+
+    if options[:format]
+      sheet.row(row_number).set_format(column_number, options[:format])
+    end
+    nil
   end
   private_class_method :set_cell_value
 
