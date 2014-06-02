@@ -6,12 +6,12 @@ module OpenChain; module Api; class ApiClient
   attr_accessor :endpoint, :username, :authtoken
 
   VALID_ENDPOINTS ||= {
-    "polo" => 'https://polo.chain.io',
+    "polo" => 'https://polo.vfitrack.net',
     "vfitrack" => 'https://www.vfitrack.net',
     "ann" => 'https://ann.vfitrack.net',
-    "underarmour" => 'https://underarmour.chain.io',
+    "underarmour" => 'https://underarmour.vfitrack.net',
     'jcrew' => 'https://jcrew.vfitrack.net',
-    "bdemo" => 'https://bdemo.chain.io',
+    "bdemo" => 'https://bdemo.vfitrack.net',
     "das" => 'https://das.vfitrack.net',
     "warnaco" => 'https://warnaco.vfitrack.net',
     "dev" => "http://localhost:3000",

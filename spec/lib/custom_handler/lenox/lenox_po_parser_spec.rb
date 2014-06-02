@@ -114,7 +114,7 @@ R                 RB05722520131105                                              
 
   describe "integration_folder" do
     it "uses an integration folder" do
-      expect(described_class.integration_folder).to eq "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_po"
+      expect(described_class.integration_folder).to eq ["//opt/wftpserver/ftproot/www-vfitrack-net/_lenox_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lenox_po"]
     end
   end
 end

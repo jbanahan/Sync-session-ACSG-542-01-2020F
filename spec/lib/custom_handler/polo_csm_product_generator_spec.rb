@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     it "should send credentials" do
       c = described_class.new
       c.stub(:remote_file_name).and_return("x.csv")
-      c.ftp_credentials.should == {:username=>'polo',:password=>'pZZ117',:server=>'ftp.chain.io',:folder=>'/_to_csm',:remote_file_name=>'x.csv'}
+      c.ftp_credentials.should == {:username=>'polo',:password=>'pZZ117',:server=>'connect.vfitrack.net',:folder=>'/_to_csm',:remote_file_name=>'x.csv'}
     end
   end
   describe :sync_csv do

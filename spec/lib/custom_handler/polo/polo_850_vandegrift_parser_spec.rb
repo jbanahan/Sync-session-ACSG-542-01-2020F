@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
   describe :integration_folder do
     it "should use the correct folder" do
-      described_class.new.integration_folder.should eq "/opt/wftpserver/ftproot/www-vfitrack-net/_polo_850"
+      described_class.new.integration_folder.should eq ["//opt/wftpserver/ftproot/www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
     end
   end
 

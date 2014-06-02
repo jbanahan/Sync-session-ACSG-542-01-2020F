@@ -48,8 +48,8 @@ module OpenChain
 
     config.middleware.use ExceptionNotification::Rack,
       :email => {
-        :email_prefix => "[chain.io Exception] ",
-        :sender_address => %{"Exception Notifier" <bug@chain.io>},
+        :email_prefix => "[VFI Track Exception]",
+        :sender_address => %{"Exception Notifier" <bug@vandegriftinc.com>},
         :exception_recipients => %w{bug@vandegriftinc.com}
       }
       

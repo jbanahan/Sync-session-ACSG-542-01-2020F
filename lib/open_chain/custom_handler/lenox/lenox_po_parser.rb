@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
   end
 
   def self.integration_folder
-    "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_po"
+    ["//opt/wftpserver/ftproot/www-vfitrack-net/_lenox_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lenox_po"]
   end
 
   def self.parse data, opts = {}

@@ -54,7 +54,7 @@ module OpenChain
       end
 
       def ftp_credentials
-        {:server=>'ftp.chain.io',:username=>'polo',:password=>'pZZ117',:folder=>'/_to_csm',:remote_file_name=>remote_file_name}
+        {:server=>'connect.vfitrack.net',:username=>'polo',:password=>'pZZ117',:folder=>'/_to_csm',:remote_file_name=>remote_file_name}
       end
 
       def query

@@ -3,4 +3,4 @@ development:
 test:
   base_url: "http://localhost:22001"
 production:
-  base_url: "http://xlserver.chain.io:22001"
+  base_url: "http://xlserver.vfitrack.net:22001"

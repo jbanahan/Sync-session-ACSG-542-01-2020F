@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductParser do
 
   describe "integration_folder" do
     it "uses an integration folder" do
-      expect(described_class.integration_folder).to eq "/opt/wftpserver/ftproot/www-vfitrack-net/_lenox_product"
+      expect(described_class.integration_folder).to eq ["//opt/wftpserver/ftproot/www-vfitrack-net/_lenox_product", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lenox_product"]
     end
   end
 end
