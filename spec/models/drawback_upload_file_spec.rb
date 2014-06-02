@@ -82,11 +82,8 @@ describe DrawbackUploadFile do
     end
     it 'should route J Crew Borderfree Export file' do
       imp = Factory(:company, importer: true, alliance_customer_number: "JCREW")
-      s3_att = mock("S3 Attachment")
-      s3_att.stub(:path).and_return('xyz')
-      @mock_attachment.stub(:attached).and_return(s3_att)
       d = DrawbackUploadFile.new(processor: DrawbackUploadFile::PROCESSOR_JCREW_BORDERFREE)
-      OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.should_receive(:parse_csv_file).with('xyz',imp).and_return('abc')
+      OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.should_receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       d.process(@user).should == 'abc'
     end
     it "should route Lands End Export file" do

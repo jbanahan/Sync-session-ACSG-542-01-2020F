@@ -56,7 +56,7 @@ class DrawbackUploadFile < ActiveRecord::Base
       PROCESSOR_UA_FMI_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_fmi_csv_file tempfile.path},
       PROCESSOR_UA_STO_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportParser.parse self.attachment.attached.path},
       PROCESSOR_JCREW_SHIPMENTS => lambda {OpenChain::CustomHandler::JCrewShipmentParser.parse_merged_entry_file tempfile.path},
-      PROCESSOR_JCREW_BORDERFREE => lambda {OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.parse_csv_file self.attachment.attached.path, Company.find_by_alliance_customer_number("JCREW")},
+      PROCESSOR_JCREW_BORDERFREE => lambda {OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("JCREW")},
       PROCESSOR_JCREW_CANADA_EXPORTS => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("JCREW")},
       PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.find_by_alliance_customer_number("LANDS")},
       PROCESSOR_LANDS_END_IMPORTS => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser.new(Company.find_by_alliance_customer_number("LANDS")).parse IO.read tempfile.path},
