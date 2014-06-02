@@ -33,7 +33,7 @@ class UserSessionsController < ApplicationController
       session[:user_id] = user.id
       handle_sign_in(user)
     else
-      flash[:errors] = ["This account is not yet authenticated."]
+      flash[:errors] = ["This Google email account has not been enabled in VFI Track."]
       redirect_to login_path
     end                                                                                                             
   end
