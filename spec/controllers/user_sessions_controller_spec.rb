@@ -108,7 +108,7 @@ describe UserSessionsController do
       post :create_from_omniauth, provider: "google_oauth2"
 
       flash[:notices].should == nil
-      flash[:errors].should == ["This account is not yet authenticated."]
+      flash[:errors].should == ["This Google email account has not been enabled in VFI Track."]
       response.should be_redirect
       expect(response).to redirect_to login_path
     end
