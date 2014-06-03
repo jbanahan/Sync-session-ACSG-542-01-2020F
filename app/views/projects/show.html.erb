@@ -1,6 +1,5 @@
 <div ng-app='ProjectApp' ng-init='projectId = <%=@project_id%>; userId=<%=current_user.id%>'>
   <div ng-controller='ProjectCtrl'>
-    {{svc.project}}
     <chain-panel panel-title='Loading' panel-type='panel-primary' panel-message='svc.loadingMessage'></chain-panel>
     <chain-panel panel-title='Error' panel-type='panel-danger' panel-message='svc.errorMessage'></chain-panel>
     <div class="container" ng-show='svc.project'>
