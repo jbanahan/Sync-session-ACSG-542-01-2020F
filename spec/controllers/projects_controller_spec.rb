@@ -103,6 +103,45 @@ describe ProjectsController do
       expect(@p.closed_at).to be_nil
     end
   end
+  describe :toggle_on_hold do
+    before :each do
+      @p = Factory(:project)
+    end
+    it "should put a hold on a going project" do
+      User.any_instance.stub(:edit_projects?).and_return true
+      put :toggle_on_hold, id: @p.id
+      expect(response).to be_success
+      @p.reload
+      @p.on_hold.should be_true
+      expect(JSON.parse(response.body)['project']['on_hold']).to eq(true)
+    end
+    it "should lift a hold on a held project" do
+      @p.update_attributes(on_hold: true)
+      User.any_instance.stub(:edit_projects?).and_return true
+      put :toggle_on_hold, id: @p.id
+      expect(response).to be_success
+      @p.reload
+      @p.on_hold.should be_false
+      expect(JSON.parse(response.body)['project']['on_hold']).to eq(false)
+    end
+    it "should reject if you can't edit" do
+      User.any_instance.stub(:edit_projects?).and_return false
+      put :toggle_on_hold, id: @p.id
+      expect(response.status).to eq(401)
+      expect(JSON.parse(response.body)['error']).to match /permission/
+      @p.reload
+      expect(@p.on_hold).to be_nil
+    end
+    it "should reject if the project is closed" do
+      @p.update_attributes(closed_at: Time.now - 5.minutes)
+      User.any_instance.stub(:edit_projects?).and_return true
+      put :toggle_on_hold, id: @p.id
+      expect(response.status).to eq(401)
+      expect(JSON.parse(response.body)['error']).to match /Closed projects can not be put on hold/
+      @p.reload
+      expect(@p.on_hold).to_not be_true
+    end
+  end
   describe :add_project_set do
     before :each do
       @p = Factory(:project)

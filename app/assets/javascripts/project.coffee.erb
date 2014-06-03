@@ -73,6 +73,12 @@ projectApp.factory 'projectSvc', ['$http',($http) ->
       promise = $http.put('/projects/'+project.id+'/toggle_close.json')
       handleProjectSave svc, project, promise
 
+    toggleOnHold: (project) ->
+      svc = @
+      project.saving = true
+      promise = $http.put('/projects/'+project.id+'/toggle_on_hold.json')
+      handleProjectSave svc, project, promise
+
     removeProjectSet: (project, projectSet) ->
       svc = @
       project.saving = true
@@ -239,6 +245,8 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
     projectSvc.saveProject projectSvc.project
   $scope.toggleClose = () ->
     projectSvc.toggleClose projectSvc.project
+  $scope.toggleOnHold = () ->
+    projectSvc.toggleOnHold projectSvc.project
   $scope.addProjectUpdate = () ->
     projectSvc.addProjectUpdate projectSvc.project, $scope.addUpdateBody
     $scope.addUpdateBody = ''
