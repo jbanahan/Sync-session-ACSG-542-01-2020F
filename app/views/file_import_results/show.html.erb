@@ -1,5 +1,7 @@
 <% content_for :action_bar do%>
   <button id='btn_back' class='btn_link' link_to='<%=imported_file_path(@imported_file)%>'>Back</button>
+  <%= button_to "Download All Records", download_all_file_import_result_path(@file_import_result), class: "btn btn-default", form_class:'inline-button-to', method: :get %>
+  <%= button_to "Download Failed Records", download_failed_file_import_result_path(@file_import_result), class: "btn btn-default", form_class:'inline-button-to', method: :get %>
 <%end%>
 <table>
   <%=field_row "File Name", @imported_file.attached_file_name%>

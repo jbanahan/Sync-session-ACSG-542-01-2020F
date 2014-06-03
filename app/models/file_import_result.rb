@@ -4,6 +4,33 @@ class FileImportResult < ActiveRecord::Base
   has_many :change_records, :order => "failed DESC, record_sequence_number ASC"
 
   after_save :update_changed_object_count
+
+  def can_view?(user)
+    return self.imported_file.can_view?(user)
+  end
+
+  def self.download_results(include_all, user_id, fir, delayed = false)
+    fir = fir.is_a?(Numeric) ? FileImportResult.find(fir) : fir
+    name = fir.imported_file.try(:attached_file_name).nil? ? "File Import Results #{Time.now.to_date.to_s}.csv" : File.basename(fir.imported_file.attached_file_name,File.extname(fir.imported_file.attached_file_name)) + " - Results.csv"
+    Tempfile.open([name, '.csv']) do |t|
+      t << "Record Number, Status\r\n"
+      fir.change_records.each do |cr|
+        next if ((!include_all) && (!cr.failed?))
+        record_information = cr.record_sequence_number.to_s + ","
+        record_information += cr.failed? ? "Error" : "Success"
+        record_information += "\r\n"
+        t << record_information        
+      end
+      t.rewind
+      if not delayed
+        yield t
+      else
+        u = User.find(user_id)
+        a = Attachment.create!(attached: t, uploaded_by: u, attachable: fir, attached_file_name: name)
+        u.messages.create!(subject: "File Import Result Prepared for Download", body: "The file import result report that you requested is finished.  To download the file directly, <a href='/attachments/#{a.id}/download'>click here</a>.")
+      end
+    end
+  end
   
   def changed_objects search_criterions=[]
     cm = self.imported_file.core_module
