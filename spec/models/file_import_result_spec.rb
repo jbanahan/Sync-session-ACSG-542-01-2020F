@@ -6,6 +6,57 @@ describe FileImportResult do
     @user = Factory(:master_user,:email=>'a@example.com')
   end
 
+  describe :collected_messages do
+    before :each do
+      @fir = Factory(:file_import_result)
+      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
+      @crm1 = Factory(:change_record_message, message: "INFO: Hello", change_record: @cr1)
+      @crm2 = Factory(:change_record_message, message: "ERROR: Hello", change_record: @cr1)
+    end
+
+    it "should return the correct messages and count when including everything" do
+      @fir.collected_messages(@cr1, false).should == ["INFO: Hello\nERROR: Hello", 2]
+    end
+
+    it "should return the correct messages and count when including errors only" do
+      @fir.collected_messages(@cr1, true).should == ["ERROR: Hello", 1]
+    end
+  end
+
+  describe :create_excel_report do
+    before :each do
+      @imported_file = Factory(:imported_file, attached_file_name: "file name")
+      @fir = Factory(:file_import_result, imported_file: @imported_file)
+      @user.messages.delete_all
+
+      @cr1 = Factory(:change_record, failed: true, record_sequence_number: 1)
+      @cr2 = Factory(:change_record, failed: false, record_sequence_number: 2)
+      @fir.change_records << @cr1
+      @fir.change_records << @cr2
+    end
+
+    it "should return a worksheet object" do
+      output = @fir.create_excel_report(true, "Some name")
+      output.class.should == Spreadsheet::Workbook
+    end
+
+    it "should have three columns" do
+      output = @fir.create_excel_report(true, "Some name")
+      output.worksheets.first.rows.length.should == 3
+    end
+
+    it "should have the appropriate number of rows when including all" do
+      output = @fir.create_excel_report(true, "Some name")
+      output.worksheets.first.rows.length.should == 3
+    end
+
+    it "should have the appropriate number of rows when including only errors" do
+      output = @fir.create_excel_report(false, "Some name")
+      output.worksheets.first.rows.length.should == 2
+    end
+
+  end
+
   describe :download_results do
     before :each do
       @imported_file = Factory(:imported_file, attached_file_name: "file name")
@@ -21,7 +72,7 @@ describe FileImportResult do
     it "should create a new attachment when delayed" do
       FileImportResult.download_results(true, @user.id, @fir, true)
       a = Attachment.last
-      a.attached_file_name.should == "file name - Results.csv"
+      a.attached_file_name.should == "Log for file name - Results.xls"
       a.created_at.should > Time.now - 15.seconds
       a.attachable_type.should == "FileImportResult"
     end
