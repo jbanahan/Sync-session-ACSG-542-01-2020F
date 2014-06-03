@@ -67,9 +67,13 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     end
   end
   def get_product line_struct
-    p = Product.where(importer_id:@imp.id,
+    p = Product.where(
       unique_identifier:line_struct.product_uid).
-      first_or_create!(name:line_struct.part_name)
+      first_or_create!(name:line_struct.part_name, importer_id:@imp.id)
+
+    #manually created products may not have the importer set properly  
+    p.update_attributes(importer_id:@imp.id) unless p.importer_id == @imp.id  
+    
     p.update_custom_value! @cdefs[:part_number], line_struct.part_number
     if line_struct.earliest_ship_date
       cv = p.get_custom_value(@cdefs[:product_earliest_ship])

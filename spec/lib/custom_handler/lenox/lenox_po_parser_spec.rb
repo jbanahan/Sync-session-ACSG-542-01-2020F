@@ -67,6 +67,13 @@ R                 RB05722520131105                                              
 
 
   end
+  it "should move existing product to correct importer" do
+    p = Factory(:product, unique_identifier:'LENOX-6083927')
+    described_class.new.process @testdata
+    pr = Order.first.order_lines.first.product
+    expect(pr.id).to eq p.id
+    expect(pr.importer).to eq @lenox
+  end
   it "should update existing PO, updating but not deleting lines" do
     ord = Factory(:order,order_number:'LENOX-RB057225',importer_id:@lenox.id)
     o_line = Factory(:order_line,order:ord,line_number:1) #update this one
