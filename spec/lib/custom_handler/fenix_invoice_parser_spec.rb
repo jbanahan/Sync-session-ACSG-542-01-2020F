@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     @k.parse @content
     BrokerInvoice.count.should == 2
     bi = BrokerInvoice.find_by_broker_reference_and_source_system '280952', 'Fenix'
-    bi.invoice_total.should == 50.85 #does not include GST (code 2)
+    bi.invoice_total.should == 4574.83 #does not include GST (code 2)
     bi.suffix.should be_blank
     bi.currency.should == 'CAD'
     bi.invoice_date = Date.new(2013,1,14)
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     @k.parse @content
     bi.reload
     bi.should have(3).broker_invoice_lines
-    bi.invoice_total.should == 50.85
+    bi.invoice_total.should == 4574.83
   end
   it "should match to entry" do
     @k.parse @content
@@ -97,8 +97,8 @@ INV
 
   it "invoice total should not include codes 20 or 21" do
     @k.parse @content
-    BrokerInvoice.find_by_broker_reference('280952').invoice_total.should == 50.85
-    BrokerInvoice.find_by_broker_reference('281350').invoice_total.should == 53.11
+    BrokerInvoice.find_by_broker_reference('280952').invoice_total.should == 4574.83
+    BrokerInvoice.find_by_broker_reference('281350').invoice_total.to_f.should == 595.68
   end
 
   it "should handle a minimal amount of information" do
@@ -155,7 +155,7 @@ INV
     @k.parse @content
     bi.reload
     bi.should have(3).broker_invoice_lines
-    bi.invoice_total.should == 50.85
+    bi.invoice_total.should == 4574.83
   end
 
   it "uses suffix in invoice number if value in column 4 is not 0" do
