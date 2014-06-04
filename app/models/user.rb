@@ -181,7 +181,8 @@ class User < ActiveRecord::Base
   end
 
   def self.generate_authtoken user
-    Digest::SHA1.base64digest "#{Time.zone.now}#{MasterSetup.get.uuid}#{user.username}"
+    # Removing the Base64 padding (ie. equals) from digest due to rails 3 authorization header token parsing bug
+    Digest::SHA1.base64digest("#{Time.zone.now}#{MasterSetup.get.uuid}#{user.username}").gsub("=", "")
   end
 
   # Can the given user view items for the given module
