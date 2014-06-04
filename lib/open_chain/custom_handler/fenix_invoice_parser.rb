@@ -68,7 +68,7 @@ module OpenChain
           invoice.invoice_total = BigDecimal('0.00')
           rows.each do |r|
             line = add_detail(invoice, r)
-            invoice.invoice_total += line.charge_amount unless line.charge_type=='D'
+            invoice.invoice_total += line.charge_amount
           end
 
           ent = Entry.includes(:broker_invoices).find_by_source_system_and_broker_reference(invoice.source_system, invoice.broker_reference)
