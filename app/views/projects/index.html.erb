@@ -42,6 +42,9 @@
           <td style="display:none">
             <%=p.on_hold? ? 'Yes' : 'No' %>
           </td>
+          <td style="display:none" class="project-id">
+            <%=p.id%>
+          </td>
         </tr>
       <%-end-%>
     <%-end-%>
@@ -104,7 +107,10 @@
         sortForce: [[5,0],[6,0]]
       }).bind("sortEnd", function(sorter){
         Chain.setStorageItem("user-projects-sort",{order: sorter.target.config.sortList});
+        setProjectOrder();
       });
+
+      setProjectOrder();
 
     }
     else
@@ -113,6 +119,10 @@
         sortList: [[5,0],[6,0],[2,0]],
         sortForce: [[5,0],[6,0]]
       });
+    }
+
+    function setProjectOrder() {
+      Chain.setStorageItem("user-projects-sorted-ids",{ordered_ids: $(".project-id").text().replace(/\s{2,}/g,',').split(",").slice(1,-1)});
     }
 
   });

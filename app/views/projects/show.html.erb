@@ -103,6 +103,8 @@
       <button class='btn btn-default btn_link' link_to='<%=projects_path%>'>Projects</button> 
       <button class='btn btn-default' ng-click='toggleClose()' ng-show='svc.project'>{{svc.project && svc.project.closed_at | ifTrue : 'Re-open' : 'Close'}} Project</button>
       <button class='btn btn-default' ng-click='toggleOnHold()' ng-show='svc.project && !svc.project.closed_at'>{{svc.project && svc.project.on_hold | ifTrue: 'Lift Hold' : 'Place on Hold'}}</button>
+      <button class='btn btn-default btn_link' ng-click='previousProject()'>Previous</button>
+      <button class='btn btn-default btn_link' ng-click='nextProject()'>Next</button>
     </div>
   </div>
 </div>

@@ -234,7 +234,7 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
       return
     promise.then goodCallback
 ]
-projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($scope,projectSvc,userListCache) ->
+projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache','$window', ($scope,projectSvc,userListCache,$window) ->
   $scope.addUpdateBody = ''
   $scope.svc = projectSvc
   $scope.users = []
@@ -274,6 +274,30 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
   $scope.unloadWarning = () ->
     return "You have not added your update." if $scope.addUpdateBody.length > 0
     return undefined
+
+  $scope.nextProject = () ->
+    id = String($scope.projectId)
+    ids = Chain.getStorageItem("user-projects-sorted-ids").ordered_ids
+    if ids?
+      currentIndex = ids.indexOf(id)
+      if currentIndex == ids.length-1
+        $window.alert "This is the last project according to the current sorting order."
+      else
+        $window.location.replace("/projects/" + ids[currentIndex+1])
+    else
+      $window.alert "You must enable local storage in your browser to use this feature."
+
+  $scope.previousProject = () ->
+    id = String($scope.projectId)
+    ids = Chain.getStorageItem("user-projects-sorted-ids").ordered_ids
+    if ids?
+      currentIndex = ids.indexOf(id)
+      if currentIndex == 0
+        $window.alert "This is the first project according to the current sorting order."
+      else
+        $window.location.replace("/projects/" + ids[currentIndex-1])
+    else
+      $window.alert "You must enable local storage in your browser to use this feature."
 
   $scope.svc.load $scope.projectId if $scope.projectId
 ]
