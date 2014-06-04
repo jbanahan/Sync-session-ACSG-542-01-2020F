@@ -91,7 +91,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str(ln.country_origin_code,4)
       r << @f.str(ln.commercial_invoice.invoice_number,35)
       r << @f.num(ln.line_number,10)
-      r << ''.ljust(96)
+      r << @f.date(ln.commercial_invoice.invoice_date)
+      r << ''.ljust(88)
       r << time_and_user
       r << @f.num(order_line.price_per_unit,18,6)
       r << @f.num(ln.unit_price,18,6)

@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       @entry = Factory(:entry,importer:@lenox,master_bills_of_lading:'MBOL',entry_number:'11312345678',
         vessel:'VES',customer_references:'P14010337',export_date:Date.new(2014,1,16),
         lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11')
-      @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99,invoice_number:'123456')
+      @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99,invoice_number:'123456',invoice_date:Date.new(2014,3,17))
       @ci_line = Factory(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
         quantity:10, country_origin_code:'CN',part_number:'partnum',unit_price:100.10,line_number:2
       )
@@ -223,7 +223,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[153,4].rstrip).to eq 'CN'
         expect(row[157,35].rstrip).to eq '123456'
         expect(row[192,10]).to eq '0000000002'
-        expect(row[202,96]).to eq ''.ljust(96)
+        expect(row[202,8]).to eq '20140317'
+        expect(row[210,88]).to eq ''.ljust(88)
         expect(row[298,14]).to match /#{Time.now.strftime('%Y%m%d%H%M')}\d{2}/ #Time.now YYYYMMDDHHMMSS 
         expect(row[312,15].rstrip).to eq 'vanvendortest'
         expect(row[327,18]).to eq '000000000100250000' #100.25 / unit (order)
