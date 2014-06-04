@@ -90,45 +90,29 @@
       }
     });
 
-    initializeSortForcefully("name-sort",1,1);
-    initializeSortForcefully("due-sort",2,1);
-    initializeSortForcefully("deliverables-sort",3,1);
-    initializeSortForcefully("sets-sort",4,1);
+    if (typeof(Storage) !== void(0))
+    {
+      if (typeof(Chain.getStorageItem("user-projects-sort"))==="undefined" || Chain.getStorageItem("user-projects-sort")==null){
+        Chain.setStorageItem("user-projects-sort",{order: [[5,0],[6,0],[2,0]]});
+      }
 
-    initializeUserSort("user-sort",2,0);
-    correctCurrentlyUsedSort();
+      startingOrder = [];
+      $.each(Chain.getStorageItem("user-projects-sort").order, function(index, value){ startingOrder.push(value)});
 
-    $("#project-table").tablesorter({
-      sortList: [[5,0],[6,0],localStorage.getItem("user-sort").split(",")],
-      sortForce: [[5,0],[6,0]]
-    });
+      $("#project-table").tablesorter({
+        sortList: startingOrder,
+        sortForce: [[5,0],[6,0]]
+      }).bind("sortEnd", function(sorter){
+        Chain.setStorageItem("user-projects-sort",{order: sorter.target.config.sortList});
+      });
 
-    $("#name-header").click(function(){updateAndSetUserSort("name-sort",1)});
-    $("#due-header").click(function() {updateAndSetUserSort("due-sort",2)});
-    $("#deliverables-header").click(function() {updateAndSetUserSort("deliverables-sort",3)});
-    $("#sets-header").click(function() {updateAndSetUserSort("sets-sort",4)});
-
-    function correctCurrentlyUsedSort(){
-      currentSort = localStorage.getItem("user-sort").split(",");
-      if (currentSort[0]==1) {localStorage.setItem("name-sort",[1, localStorage.getItem("user-sort").split(",")[1]]);}
-      else if (currentSort[0]==2) {localStorage.setItem("due-sort",[2, localStorage.getItem("user-sort").split(",")[1]]);}
-      else if (currentSort[0]==3) {localStorage.setItem("deliverables-sort",[3, localStorage.getItem("user-sort").split(",")[1]]);}
-      else if (currentSort[0]==4) {localStorage.setItem("sets-sort",[4, localStorage.getItem("user-sort").split(",")[1]]);}
     }
-
-    function initializeUserSort(name, index, order){
-      if (typeof(localStorage.getItem(name))==="undefined" || localStorage.getItem(name)==null){localStorage.setItem(name,[index,order]);}
-    }
-
-    function initializeSortForcefully(name, index, order){localStorage.setItem(name,[index,order]);}
-
-    function updateAndSetUserSort(sortName, linkedColumn){
-      upcomingSort = localStorage.getItem(sortName).split(",");
-      currentOrder = upcomingSort[1];
-      newOrder = Math.pow(currentOrder-1,2);
-      localStorage.setItem(sortName,[linkedColumn, newOrder]);
-      localStorage.setItem("user-sort",[linkedColumn, newOrder]);
-      console.log(localStorage.getItem("user-sort"));
+    else
+    {
+      $("#project-table").tablesorter({
+        sortList: [[5,0],[6,0],[2,0]],
+        sortForce: [[5,0],[6,0]]
+      });
     }
 
   });

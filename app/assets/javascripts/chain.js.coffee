@@ -40,6 +40,18 @@ root.Chain =
   makeErrorPanel: (message) ->
     "<div class='container'><div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>"+message+"</div></div></div>"
   
+  setStorageItem: (name, value) ->
+    if (typeof(Storage) == undefined)
+      return null
+    else
+      localStorage.setItem(name, JSON.stringify(value))
+
+  getStorageItem: (name) ->
+    if (typeof(Storage) == undefined)
+      return null
+    else
+      return JSON.parse(localStorage.getItem(name))
+
   #prep the attachments partial
   initAttachments: () ->
     $("#mod_attach").dialog({autoOpen:false,title:"Attach File",width:"auto",buttons:{
