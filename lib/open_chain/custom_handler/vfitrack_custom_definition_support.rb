@@ -12,6 +12,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     shpln_size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'},
     prod_country_of_origin: {label: "Country of Origin", data_type: :string, module_type: "Product"},
     prod_part_number: {label: "Part Number", data_type: :string, module_type: "Product"},
+    prod_fda_product: {label: "FDA Product?", data_type: :boolean, module_type: "Product"},
     prod_fda_product_code: {label: "FDA Product Code", data_type: :string, module_type: "Product"},
     prod_fda_temperature: {label: "FDA Temperature", data_type: :string, module_type: "Product"},
     prod_fda_uom: {label: "FDA Reporting UOM", data_type: :string, module_type: "Product"},

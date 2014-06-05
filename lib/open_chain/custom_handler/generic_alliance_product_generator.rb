@@ -35,7 +35,7 @@ module OpenChain
         raise ArgumentError, "Importer is required and must have an alliance customer number" unless importer && !importer.alliance_customer_number.blank?
         @importer = importer
 
-        @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, 
+        @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, 
                     :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, 
                     :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance]
       end
@@ -51,6 +51,15 @@ module OpenChain
       
       def remote_file_name
         "#{Time.now.to_i}-#{@importer.alliance_customer_number}.DAT"
+      end
+
+      def preprocess_row row, opts = {}
+        # We're going to exclude all the FDA columns unless the FDA Product indicator is true
+        unless row[4] == "Y"
+          (5..18).each {|x| row[x] = ""}
+        end
+
+        super row, opts
       end
 
       def fixed_position_map
@@ -84,7 +93,7 @@ SELECT products.id,
 products.name,
 tariff_records.hts_1,
 IF(length(#{cd_s @cdefs[:prod_country_of_origin].id, true})=2,#{cd_s @cdefs[:prod_country_of_origin].id, true},""),
-IF(length(rtrim(#{cd_s @cdefs[:prod_fda_product_code].id, true})) > 0, "Y", "N"),
+IF(#{cd_s @cdefs[:prod_fda_product].id, true} = 1, "Y", "N"),
 #{cd_s @cdefs[:prod_fda_product_code].id},
 #{cd_s @cdefs[:prod_fda_temperature].id},
 #{cd_s @cdefs[:prod_fda_uom].id},
