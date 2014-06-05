@@ -284,6 +284,7 @@ INV
     expect(r).to_not be_nil
     expect(r.customer_number).to eq "POST_XREF"
     expect(r.receivable_type).to eq "ALS Sales Invoice"
+    expect(r.intacct_receivable_lines.first.location).to eq "TOR"
   end
 
   it "detects ALS customer numbers on credit invoices" do
@@ -299,5 +300,22 @@ INV
     r = IntacctReceivable.where(company: "als").first
     expect(r).to_not be_nil
     expect(r.receivable_type).to eq "ALS Credit Note"
+  end
+
+  it "updates ALS receivable" do
+    inv = IntacctReceivable.create! company: "als", invoice_number: "01-0000009"
+    inv.intacct_receivable_lines.create! charge_code: "ABC"
+
+    DataCrossReference.create! key: "BOSSCI", value: "", cross_reference_type: DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER
+
+    @content = <<INV
+    INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF
+    01/14/2013,BOSSCI, 1 , 9 , 0 ,11981001052312, 1 WITH TEXT ,BILLING, 45 ,#{@ent.broker_reference},CAD, 4000 , 1 ,,,,,,,,
+INV
+    @k.parse @content
+    inv.reload
+
+    expect(inv.customer_number).to eq "BOSSCI"
+    expect(inv.intacct_receivable_lines.first.charge_code).to eq "001"
   end
 end
