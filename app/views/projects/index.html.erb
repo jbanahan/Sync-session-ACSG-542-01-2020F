@@ -33,7 +33,9 @@
           <td><%=p.project_deliverables.incomplete.count%></td>
           <td>
             <%-p.project_sets.each do |ps|-%>
-              <span class='label label-default'><%=ps.name%></span>
+              <a href='<%= "/project_sets/" + ps.id.to_s %>' style="text-decoration:none;">
+                <span class='label label-default'><%=ps.name%></span>
+              </a>
             <%-end-%>
           </td>
           <td style="display:none">
