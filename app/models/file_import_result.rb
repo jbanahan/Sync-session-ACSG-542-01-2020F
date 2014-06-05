@@ -51,12 +51,14 @@ class FileImportResult < ActiveRecord::Base
     change_record.change_record_messages.each do |crm|
       if errors_only
         if crm.message.downcase.starts_with?("error:")
-          combined_messages += crm.message + "\n"
-          message_count += 1 unless crm.message.blank?
+            combined_messages += crm.message + "\n"
+            message_count += 1
         end
       else
-        combined_messages += crm.message + "\n"
-        message_count += 1 unless crm.message.blank?
+        unless crm.message.blank?
+          combined_messages += crm.message + "\n"
+          message_count += 1
+        end
       end
     end
     [combined_messages.chop, message_count]
