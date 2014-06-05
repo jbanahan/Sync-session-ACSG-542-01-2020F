@@ -300,7 +300,6 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache','$wi
   $scope.previousProject = () ->
     id = parseInt($scope.projectId)
     currentIndex = $scope.orderedIds.indexOf(id)
-    #debugger
     $window.location.replace("/projects/" + $scope.orderedIds[currentIndex-1])
 
   $scope.svc.load $scope.projectId if $scope.projectId
