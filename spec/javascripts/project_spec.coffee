@@ -187,57 +187,39 @@ describe "ProjectApp", () ->
       }
       ctrl = $controller('ProjectCtrl',{$scope: $scope, srService: svc, userListCache: mockUserListCache, $window: win})
 
+    describe "showingLastProject", () ->
+      it "should return true if and only if the last project is being shown", () ->
+        $scope.orderedIds = [1, 2, 3, 4, 10]
+        $scope.projectId = 10
+        expect($scope.showingLastProject()).toEqual true
+
+        $scope.projectId = 4
+        expect($scope.showingLastProject()).toEqual false
+
+    describe "showingFirstProject", () ->
+      it "should return true if and only if the first project is being shown", () ->
+        $scope.orderedIds = [10, 20, 32, 5, 15, 70]
+        $scope.projectId = 10
+        expect($scope.showingFirstProject()).toEqual true
+
+        $scope.projectId = 20
+        expect($scope.showingFirstProject()).toEqual false
+
     describe "previousProject", () ->
       it "should call window.replace with the correct ID", () ->
         win.location.replace = jasmine.createSpy("replace")
-        spyOn(Chain, 'getStorageItem').andReturn {
-          ordered_ids: ["10", "9", "8", "7", "6", "2", "1"]
-        }
-        $scope.projectId = "8"
-        $scope.nextProject()
-        expect(win.location.replace).toHaveBeenCalledWith("/projects/7")
-
-      it "should alert the user if clicked while viewing the first project", () ->
-        win.alert = jasmine.createSpy("alert")
-        spyOn(Chain, 'getStorageItem').andReturn {
-          ordered_ids: ["10", "9", "8", "7", "6", "2", "1"]
-        }
-        $scope.projectId = "10"
-        $scope.previousProject()
-        expect(win.alert).toHaveBeenCalledWith("This is the first project according to the current sorting order.")
-
-      it 'should alert the user if local storage is disabled', () ->
-        win.alert = jasmine.createSpy("alert")
-        spyOn(Chain, 'getStorageItem').andReturn {}
-        $scope.projectId = "7"
-        $scope.previousProject()
-        expect(win.alert).toHaveBeenCalled()
-
-    describe "nextProject", () ->
-      it 'should call window.replace with the correct ID', () ->
-        win.location.replace = jasmine.createSpy("replace")
-        spyOn(Chain, 'getStorageItem').andReturn {
-          ordered_ids: ["10", "9", "8", "7", "6", "2", "1"]
-        }
-        $scope.projectId = "8"
+        $scope.orderedIds = [10, 9, 8, 7, 6, 5]
+        $scope.projectId = 8
         $scope.previousProject()
         expect(win.location.replace).toHaveBeenCalledWith("/projects/9")
 
-      it "should alert the user if clicked while viewing the last project", () ->
-        win.alert = jasmine.createSpy("alert")
-        spyOn(Chain, 'getStorageItem').andReturn {
-          ordered_ids: ["10", "9", "8", "7", "6", "2", "1"]
-        }
-        $scope.projectId = "1"
+    describe "nextProject", () ->
+      it "should call window.replace with the correct ID", () ->
+        win.location.replace = jasmine.createSpy("replace")
+        $scope.orderedIds = [10, 9, 8, 7, 6, 5]
+        $scope.projectId = 8
         $scope.nextProject()
-        expect(win.alert).toHaveBeenCalledWith("This is the last project according to the current sorting order.")
-
-      it 'should alert the user if local storage is disabled', () ->
-        win.alert = jasmine.createSpy("alert")
-        spyOn(Chain, 'getStorageItem').andReturn {}
-        $scope.projectId = "7"
-        $scope.previousProject()
-        expect(win.alert).toHaveBeenCalled()
+        expect(win.location.replace).toHaveBeenCalledWith("/projects/7")
 
     it "should delegate addProjectSet", () ->
       p = {id:1}

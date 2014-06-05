@@ -240,6 +240,13 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache','$wi
   $scope.users = []
   userListCache.getListForCurrentUser (userList) ->
     $scope.users = userList
+  
+  $scope.orderedIds = Chain.getStorageItem("user-projects-sorted-ids")
+  if $scope.orderedIds?
+    $scope.orderedIds = $scope.orderedIds.ordered_ids
+    $scope.enableNextPrev = true
+  else
+    $scope.enableNextPrev = false
 
   $scope.saveProject = () ->
     projectSvc.saveProject projectSvc.project
@@ -275,29 +282,26 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache','$wi
     return "You have not added your update." if $scope.addUpdateBody.length > 0
     return undefined
 
+  $scope.showingLastProject = () ->
+    if $scope.orderedIds.slice(-1)[0] == $scope.projectId then true else false
+
+  $scope.showingFirstProject = () ->
+    if $scope.orderedIds[0] == $scope.projectId then true else false
+
+  if $scope.orderedIds?
+    $scope.hideNext = $scope.showingLastProject()
+    $scope.hidePrevious = $scope.showingFirstProject()
+
   $scope.nextProject = () ->
-    id = String($scope.projectId)
-    ids = Chain.getStorageItem("user-projects-sorted-ids").ordered_ids
-    if ids?
-      currentIndex = ids.indexOf(id)
-      if currentIndex == ids.length-1
-        $window.alert "This is the last project according to the current sorting order."
-      else
-        $window.location.replace("/projects/" + ids[currentIndex+1])
-    else
-      $window.alert "You must enable local storage in your browser to use this feature."
+    id = $scope.projectId
+    currentIndex = $scope.orderedIds.indexOf(id)
+    $window.location.replace("/projects/" + $scope.orderedIds[currentIndex+1])
 
   $scope.previousProject = () ->
-    id = String($scope.projectId)
-    ids = Chain.getStorageItem("user-projects-sorted-ids").ordered_ids
-    if ids?
-      currentIndex = ids.indexOf(id)
-      if currentIndex == 0
-        $window.alert "This is the first project according to the current sorting order."
-      else
-        $window.location.replace("/projects/" + ids[currentIndex-1])
-    else
-      $window.alert "You must enable local storage in your browser to use this feature."
+    id = parseInt($scope.projectId)
+    currentIndex = $scope.orderedIds.indexOf(id)
+    #debugger
+    $window.location.replace("/projects/" + $scope.orderedIds[currentIndex-1])
 
   $scope.svc.load $scope.projectId if $scope.projectId
 ]
