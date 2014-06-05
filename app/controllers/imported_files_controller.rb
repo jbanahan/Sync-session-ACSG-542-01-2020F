@@ -51,11 +51,12 @@ class ImportedFilesController < ApplicationController
         redirect_to "/imported_files/show_angular#/#{params[:id]}"
       }
       format.json {
-        f = ImportedFile.find params[:id] 
+        f = ImportedFile.find params[:id]
         fir= f.last_file_import_finished
         raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
         r = {:id=>f.id,
           :file_name=>f.attached_file_name,
+          :show_email_button=>f.attached_file_name.downcase.ends_with?(".xls") || f.attached_file_name.downcase.ends_with?(".xlsx"),
           :uploaded_at=>f.created_at.strftime("%Y-%m-%d %H:%M"),
           :uploaded_by=>f.user.full_name,
           :never_processed=>fir.nil?,
