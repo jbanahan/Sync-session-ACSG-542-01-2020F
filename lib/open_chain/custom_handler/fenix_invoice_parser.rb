@@ -150,20 +150,22 @@ module OpenChain
         end
 
         def create_intacct_invoice invoice
-          r = IntacctReceivable.where(company: "vcu", invoice_number: invoice.invoice_number).first_or_create!
+          # Use the xref value if there is one, otherwise use the raw value from Fenix
+          xref = DataCrossReference.find_intacct_customer_number 'Fenix', invoice.customer_number
+          customer_number = (xref.blank? ? invoice.customer_number : xref)
+          # There are certain customers that are billed in Fenix for a third system, ALS.  These cusotmers are stored in an xref,
+          # if the name is there, then the company is 'als', otherwise it's 'vcu'
+          company =  DataCrossReference.has_key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
+          
+          r = IntacctReceivable.where(company: company, invoice_number: invoice.invoice_number).first_or_create!
           Lock.with_lock_retry(r) do
             # If the data has already been uploaded to Intacct, then there's nothing we can do to update it (at least for now)
             return unless r.intacct_upload_date.nil?
 
+            r.intacct_receivable_lines.destroy_all
+
             r.invoice_date = invoice.invoice_date
-            # Use the xref value if there is one, otherwise use the raw value from Fenix
-            xref = DataCrossReference.find_intacct_customer_number 'Fenix', invoice.customer_number
-            r.customer_number = (xref.blank? ? invoice.customer_number : xref)
-
-            # There are certain customers that are billed in Fenix for a third system, ALS.  These cusotmers are stored in an xref,
-            # if the name is there, then the company is 'als', otherwise it's 'vcu'
-
-            r.company = DataCrossReference.has_key?(r.customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
+            r.customer_number = customer_number
             r.currency = invoice.currency
 
             actual_charge_sum = BigDecimal.new 0
@@ -176,7 +178,9 @@ module OpenChain
               pl.amount = line.charge_amount
               pl.line_of_business = "Brokerage"
               pl.broker_file = invoice.entry.entry_number unless invoice.entry.nil?
-              pl.location = "Toronto"
+              # For whatever reason, a location code is tied exclusively to a single entity in Intacct.  So we need to use
+              # different location codes for the same office depending on which invoicing system the customer's data originates from.
+              pl.location = r.company == "als" ? "TOR" : "Toronto"
             end
 
             # Credit Memo or Sales Order Invoice (depends on the sum of the charges)

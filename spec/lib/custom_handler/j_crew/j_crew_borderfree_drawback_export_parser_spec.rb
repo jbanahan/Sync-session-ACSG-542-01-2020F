@@ -4,8 +4,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
   describe :parse_csv_line do
     def default_vals
       {
-        export_date: '2014-03-24' ,
-        ship_date: '2014-03-24',
+        export_date: '8/23/2011 2:15:32 PM' ,
+        ship_date: '8/23/2011 2:15:32 PM',
         part_number: 'Short Description - 123456789-ABCDEF - KEYWORDS',
         ref_1:'R1',
         ref_2:'R2',
@@ -50,8 +50,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       d = described_class.parse_csv_line(make_row,1,@imp)
 
       d.class.should == DutyCalcExportFileLine
-      d.export_date.strftime("%Y-%m-%d").should == vals[:export_date]
-      d.ship_date.strftime("%Y-%m-%d").should == vals[:ship_date]
+      d.export_date.strftime("%Y-%m-%d").should == "2011-08-23"
+      d.ship_date.strftime("%Y-%m-%d").should == "2011-08-23"
       d.part_number.should == "123456789-ABCDEF"
       d.ref_1.should == vals[:ref_1]
       d.ref_2.should == vals[:ref_2]

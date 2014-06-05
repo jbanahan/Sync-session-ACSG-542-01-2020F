@@ -9,8 +9,8 @@ module OpenChain; module CustomHandler; module JCrew
       raise "Line #{row_number} had #{r.size} elements.  All lines must have 17 elements." unless r.size==17
       quanity = 
       d = DutyCalcExportFileLine.new
-      d.ship_date = DateTime.strptime(r[2].split(' ')[0],"%Y-%m-%d") #column c
-      d.export_date = DateTime.strptime(r[2].split(' ')[0],"%Y-%m-%d") #column c
+      d.ship_date = DateTime.strptime(r[2], "%m/%d/%Y %H:%M:%S %p")
+      d.export_date = DateTime.strptime(r[2], "%m/%d/%Y %H:%M:%S %p")
       d.part_number = get_part_number(r[12]) #function on column m
       d.ref_1 = r[4] #column e
       d.ref_2 = r[6] #column g
