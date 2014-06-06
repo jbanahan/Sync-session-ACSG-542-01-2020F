@@ -500,7 +500,7 @@ OpenChain::Application.routes.draw do
     post 'resend', :on=>:member
   end
 
-  resources :project_sets
+  resources :project_sets, only: [:show]
   
   match '/projects/:id/add_project_set/:project_set_name' => 'projects#add_project_set', via: :post
   match '/projects/:id/remove_project_set/:project_set_name' => 'projects#remove_project_set', via: :delete
