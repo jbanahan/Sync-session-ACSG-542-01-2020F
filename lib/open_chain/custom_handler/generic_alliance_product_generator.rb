@@ -111,7 +111,10 @@ IF(#{cd_s @cdefs[:prod_fda_product].id, true} = 1, "Y", "N"),
 FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
 INNER JOIN tariff_records on length(tariff_records.hts_1)=10 AND tariff_records.classification_id = classifications.id
-WHERE products.importer_id = #{@importer.id} AND length(#{cd_s@cdefs[:prod_part_number].id, true})>0
+#{Product.need_sync_join_clause(sync_code)} 
+WHERE 
+#{Product.need_sync_where_clause()} 
+AND products.importer_id = #{@importer.id} AND length(#{cd_s@cdefs[:prod_part_number].id, true})>0
 QRY
       end
     end

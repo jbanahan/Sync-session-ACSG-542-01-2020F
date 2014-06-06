@@ -201,6 +201,13 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         row = ActiveRecord::Base.connection.execute(described_class.new(@c).query).first
         expect(row[5]).to eq "Y"
       end
+      it "does not include products already synced" do
+        @p.sync_records.create! trading_partner: 'Alliance', sent_at: 2.days.ago, confirmed_at: 1.day.ago
+        @p.update_column :updated_at, 3.days.ago
+
+        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r.count.should == 0
+      end
     end
   end
 
