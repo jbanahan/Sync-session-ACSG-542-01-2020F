@@ -131,16 +131,18 @@ var OpenChain = (function() {
   }
   var orderLineMilestones = function(parentContainer,orderLineId,isAdmin) {
     $.getJSON('/milestone_forecast_sets/show_by_order_line_id?line_id='+orderLineId,function(data) {
-      parentContainer.hide();
-      var h = "<table class='ms_tbl'><thead><tr><th width='40%'>Milestone</th><th width='20%'>Actual</th><th width='20%'>Forecast</th><th width='20%'>Plan</th></tr></table>";
-      for(var i=0;i<data.length;i++) {
-        h += "<div id='mfs_"+data[i].milestone_forecast_set.id+"'/>";
+      if(data.length>0) {
+        parentContainer.hide();
+        var h = "<table class='ms_tbl'><thead><tr><th width='40%'>Milestone</th><th width='20%'>Actual</th><th width='20%'>Forecast</th><th width='20%'>Plan</th></tr></table>";
+        for(var i=0;i<data.length;i++) {
+          h += "<div id='mfs_"+data[i].milestone_forecast_set.id+"'/>";
+        }
+        parentContainer.html(h);
+        for(i=0;i<data.length;i++) {
+          renderMilestones($("#mfs_"+data[i].milestone_forecast_set.id),data[i],'shipment',isAdmin);
+        }
+        parentContainer.fadeIn('slow');
       }
-      parentContainer.html(h);
-      for(i=0;i<data.length;i++) {
-        renderMilestones($("#mfs_"+data[i].milestone_forecast_set.id),data[i],'shipment',isAdmin);
-      }
-      parentContainer.fadeIn('slow');
     });                  
   }
   var showChangePlan = function(dialogContainer,parentContainer,milestoneSetId,headingModule,isAdmin) {
@@ -262,7 +264,6 @@ var OpenChain = (function() {
     showOrderLineDetail: function(orderLineId,isAdmin) {
       var detRow = $("#det_"+orderLineId);
       var mCont = detRow.find(".milestones_cont");
-      mCont.html("Loading Milestones...");
       detRow.fadeIn('slow');
       orderLineMilestones(mCont,orderLineId,isAdmin);
     },

@@ -126,6 +126,9 @@
           <%=field_view_bootstrap line, fld, false%>
         <%end%>
         <%= show_custom_fields line %><br />
+        <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
+          <div>Shipment: <%=link_to s.reference, s%></div>
+        <%end%>
         <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
       </td>
 	</tr>
