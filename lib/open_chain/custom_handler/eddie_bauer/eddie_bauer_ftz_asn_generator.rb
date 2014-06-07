@@ -77,6 +77,8 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
   def generate_data_for_entry ent
     r = ""
     ent.commercial_invoice_lines.each do |ci|
+      style, color, size = parse_part(ci.part_number)
+      next unless style.match(/^\d{3}-\d{4}/)
       r << "\r\n" if r.size > 0 #write new line except on first line
       r << @f.str(ent.broker_reference,7,false,true) #force truncate
       r << @f.str(ent.master_bills_of_lading,35)
@@ -99,7 +101,6 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerFtzAs
       r << @f.str(ci.po_number,15)
       r << @f.str(ci.country_origin_code,2)
       r << @f.str(ci.mid,15)
-      style, color, size = parse_part(ci.part_number)
       r << @f.str(style,20)
       r << @f.str(color,3)
       r << @f.str(size,4)

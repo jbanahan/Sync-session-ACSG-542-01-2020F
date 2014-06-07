@@ -137,7 +137,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
         country_export_code:'HK',
         country_origin_code:'CN',
         po_number:'12345-001',
-        part_number:'1234-ABC',
+        part_number:'123-1234',
         mid:'mid',
         quantity:2000)
       @ci_tariff = Factory(:commercial_invoice_tariff,commercial_invoice_line:@ci_line,
@@ -186,32 +186,37 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator do
       expect(ln[312,10]).to eql(@ci_tariff.hts_code)
       expect(ln[322,10].rstrip).to eq ''
     end
+    it "should skip line with bad part number" do
+      @ci_line.update_attributes(part_number:'DELL FLAT PANEL MONITOR')
+      r = described_class.new.generate_data_for_entry(@entry)
+      expect(r).to be_blank
+    end
     it "should handle long vessel" do
       @entry.vessel = '123456789012345678'
       r = described_class.new.generate_data_for_entry(@entry)
       expect(r.lines.first[134,15]).to eq '123456789012345'
     end
     it "should handle style/color" do
-      @ci_line.part_number = '12345-123~XYZ'
+      @ci_line.part_number = '123-1234~XYZ'
       @ci_line.save!
       ln = first_line
-      expect(ln[243,20].rstrip).to eql('12345-123')
+      expect(ln[243,20].rstrip).to eql('123-1234')
       expect(ln[263,3].rstrip).to eql('XYZ') 
       expect(ln[266,4].rstrip).to eql('') #empty size
     end
     it "should handle style/size" do
-      @ci_line.part_number = '12345-123~~FFFF'
+      @ci_line.part_number = '123-1234~~FFFF'
       @ci_line.save!
       ln = first_line
-      expect(ln[243,20].rstrip).to eql('12345-123')
+      expect(ln[243,20].rstrip).to eql('123-1234')
       expect(ln[263,3].rstrip).to eql('') 
       expect(ln[266,4].rstrip).to eql('FFFF') #empty size
     end
     it "should handle style/color/size" do
-      @ci_line.part_number = '12345-123~XYZ~FFFF'
+      @ci_line.part_number = '123-1234~XYZ~FFFF'
       @ci_line.save!
       ln = first_line
-      expect(ln[243,20].rstrip).to eql('12345-123')
+      expect(ln[243,20].rstrip).to eql('123-1234')
       expect(ln[263,3].rstrip).to eql('XYZ') 
       expect(ln[266,4].rstrip).to eql('FFFF') #empty size
     end
