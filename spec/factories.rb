@@ -90,6 +90,9 @@ end
 Factory.define :change_record do |t|
   t.association :file_import_result
 end
+Factory.define :change_record_message do |t|
+  t.association :change_record
+end
 Factory.define :linkable_attachment do |t|
   t.model_field_uid 'mfuid'
   t.value 'val'

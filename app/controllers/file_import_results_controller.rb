@@ -24,7 +24,7 @@ class FileImportResultsController < ApplicationController
         redirect_to :back
       else
         FileImportResult.download_results(false, current_user.id, @fir) do |t|
-          name = @fir.imported_file.try(:attached_file_name).nil? ? "File Import Results #{Time.now.to_date.to_s}.csv" : File.basename(@fir.imported_file.attached_file_name,File.extname(@fir.imported_file.attached_file_name)) + " - Results.csv" 
+          name = @fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}.xls" : "Log for " + File.basename(@fir.imported_file.attached_file_name,File.extname(@fir.imported_file.attached_file_name)) + " - Results.xls" 
           send_file t, {filename: name}
         end
       end
@@ -40,7 +40,7 @@ class FileImportResultsController < ApplicationController
         redirect_to :back
       else
         FileImportResult.download_results(true, current_user.id, @fir) do |t|
-          name = @fir.imported_file.try(:attached_file_name).nil? ? "File Import Results #{Time.now.to_date.to_s}.csv" : File.basename(@fir.imported_file.attached_file_name,File.extname(@fir.imported_file.attached_file_name)) + " - Results.csv" 
+          name = @fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}.xls" : "Log for " + File.basename(@fir.imported_file.attached_file_name,File.extname(@fir.imported_file.attached_file_name)) + " - Results.xls" 
           send_file t, {filename: name}
         end
       end

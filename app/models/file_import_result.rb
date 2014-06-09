@@ -11,25 +11,57 @@ class FileImportResult < ActiveRecord::Base
 
   def self.download_results(include_all, user_id, fir, delayed = false)
     fir = fir.is_a?(Numeric) ? FileImportResult.find(fir) : fir
-    name = fir.imported_file.try(:attached_file_name).nil? ? "File Import Results #{Time.now.to_date.to_s}.csv" : File.basename(fir.imported_file.attached_file_name,File.extname(fir.imported_file.attached_file_name)) + " - Results.csv"
-    Tempfile.open([name, '.csv']) do |t|
-      t << "Record Number, Status\r\n"
-      fir.change_records.each do |cr|
-        next if ((!include_all) && (!cr.failed?))
-        record_information = cr.record_sequence_number.to_s + ","
-        record_information += cr.failed? ? "Error" : "Success"
-        record_information += "\r\n"
-        t << record_information        
-      end
+    name = fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}" : "Log for " + File.basename(fir.imported_file.attached_file_name,File.extname(fir.imported_file.attached_file_name)) + " - Results"
+    
+    wb = fir.create_excel_report(include_all, name)
+
+    Tempfile.open([name, '.xls']) do |t|
+      wb.write(t)
       t.rewind
       if not delayed
         yield t
       else
         u = User.find(user_id)
-        a = Attachment.create!(attached: t, uploaded_by: u, attachable: fir, attached_file_name: name)
+        a = Attachment.create!(attached: t, uploaded_by: u, attachable: fir, attached_file_name: name + ".xls")
         u.messages.create!(subject: "File Import Result Prepared for Download", body: "The file import result report that you requested is finished.  To download the file directly, <a href='/attachments/#{a.id}/download'>click here</a>.")
       end
     end
+  end 
+
+  def create_excel_report(include_all, name)
+    wb = XlsMaker.create_workbook(name, ["Record Number", "Status", "Messages"])
+    sheet = wb.worksheet 0
+    row_number = 1
+    self.change_records.each do |cr|
+      next if ((!include_all) && (!cr.failed?))
+      messages = self.collected_messages(cr, !include_all)
+      column_number = -1
+      sheet[row_number, column_number+=1] = cr.record_sequence_number.to_s
+      sheet[row_number, column_number+=1] = cr.failed? ? "Error" : "Success"
+      sheet[row_number, column_number+=1] = messages[0]
+      sheet.row(row_number).height = 12 * messages[1]
+      row_number += 1
+    end
+    wb
+  end
+
+  def collected_messages(change_record, errors_only)
+    combined_messages = ""
+    message_count = 0
+    change_record.change_record_messages.each do |crm|
+      if errors_only
+        if crm.message.downcase.starts_with?("error:")
+            combined_messages += crm.message + "\n"
+            message_count += 1
+        end
+      else
+        unless crm.message.blank?
+          combined_messages += crm.message + "\n"
+          message_count += 1
+        end
+      end
+    end
+    [combined_messages.chop, message_count]
   end
   
   def changed_objects search_criterions=[]
