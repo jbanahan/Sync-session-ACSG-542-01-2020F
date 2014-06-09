@@ -6,6 +6,7 @@ require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
+require 'open_chain/custom_handler/kewill_isf_manual_parser'
 
 class CustomFile < ActiveRecord::Base
   has_many :custom_file_records

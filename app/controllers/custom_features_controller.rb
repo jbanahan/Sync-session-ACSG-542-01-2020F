@@ -8,6 +8,7 @@ require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
+require 'open_chain/custom_handler/kewill_isf_manual_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -18,6 +19,7 @@ class CustomFeaturesController < ApplicationController
   UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
   FENIX_CI_UPLOAD = 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
   EDDIE_CI_UPLOAD = 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
+  KEWILL_ISF = 'OpenChain::CustomHandler::KewillIsfManualParser'
 
   def index
     render :layout=>'one_col'
@@ -108,12 +110,37 @@ class CustomFeaturesController < ApplicationController
       redirect_to f.secure_url
     }
   end
+  
+  def kewill_isf_index
+    action_secure(OpenChain::CustomHandler::KewillIsfManualParser.new(nil).can_view?(current_user),Product,{verb:"view",module_name:"Kewill ISF Manual Parser", lock_check: false}){
+      @files = CustomFile.where(file_type: KEWILL_ISF).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render layout: 'one_col'
+    }
+  end
+
+  def kewill_isf_upload
+    f = CustomFile.new(file_type: KEWILL_ISF, uploaded_by: current_user, attached: params[:attached], start_at: 0.seconds.ago)
+    action_secure(OpenChain::CustomHandler::KewillIsfManualParser.new(f).can_view?(current_user),Product,{:verb=>'upload',:module_name=>"Kewill ISF Manual Parser",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/kewill_isf'
+    }
+  end
+
   def polo_sap_bom_index 
     action_secure(OpenChain::CustomHandler::PoloSapBomHandler.new(nil).can_view?(current_user),Product,{:verb=>"view",:module_name=>"SAP Bill of Materials Files",:lock_check=>false}) {
       @files = CustomFile.where(:file_type=>POLO_SAP_BOM).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
       render :layout => 'one_col'
     }
   end
+
+
   def polo_sap_bom_upload
     f = CustomFile.new(:file_type=>POLO_SAP_BOM,:uploaded_by=>current_user,:attached=>params[:attached],:start_at=>0.seconds.ago)
     action_secure(OpenChain::CustomHandler::PoloSapBomHandler.new(f).can_view?(current_user),Product,{:verb=>'upload',:module_name=>"SAP Bill of Materials Files",:lock_check=>false}) {
