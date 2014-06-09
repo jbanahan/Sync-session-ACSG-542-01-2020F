@@ -101,7 +101,7 @@ class Company < ActiveRecord::Base
     master_setup.security_filing_enabled? && (self.master? || self.broker? || self.importer?) 
   end
   def edit_security_filings?
-    false
+    master_setup.security_filing_enabled? && (self.master? || self.broker?)
   end
   def comment_security_filings?
     view_security_filings?

@@ -7,7 +7,7 @@ module OpenChain
       end
 
       def can_view? user
-        user.edit_security_filings? || user.email == "jeff@arcweb.co" #Since edit_security_filings is false for all companies.  Delete this before committing.
+        user.edit_security_filings?
       end
 
       def self.process_s3 s3_path, bucket = OpenChain::S3.bucket_name
