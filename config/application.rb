@@ -12,6 +12,7 @@ if defined?(Bundler)
 end
 
 require 'csv'
+require 'json'
 
 module OpenChain
   class Application < Rails::Application

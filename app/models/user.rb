@@ -24,7 +24,8 @@ class User < ActiveRecord::Base
     :support_agent,
     :password_reset,
     :simple_entry_mode,
-    :tariff_subscribed, :homepage
+    :tariff_subscribed, :homepage,
+    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -62,6 +63,20 @@ class User < ActiveRecord::Base
     end
 
     user
+  end
+
+  def self.from_omniauth(auth)
+    if user = User.where(email: auth[:info][:email]).first
+      user.provider = auth.provider
+      user.uid = auth.uid
+      user.google_name = auth.info.name
+      user.oauth_token = auth.credentials.token
+      user.oauth_expires_at = Time.at(auth.credentials.expires_at)
+      user.save!
+      return user
+    else
+      return nil
+    end
   end
 
   def self.access_allowed? user

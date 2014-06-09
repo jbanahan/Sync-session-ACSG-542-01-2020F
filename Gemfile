@@ -32,7 +32,9 @@ gem 'RedCloth', '4.2.9'
 gem 'execjs', '2.0.1'
 gem 'therubyracer', '0.12.0', :require => 'v8'
 gem 'browser'
-gem "google-api-client", "0.6.4"
+
+gem "google-api-client", "0.7.1"
+gem "omniauth-google-oauth2", "0.2.2"
 
 # Standard ruby logger uses mutexes for writing / rotation which we don't need and
 # causes issues since Ruby 2.0 doesn't allow mutexes in signal traps - delayed_job specifically

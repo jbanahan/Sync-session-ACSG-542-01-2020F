@@ -1,5 +1,5 @@
 class UserSessionsController < ApplicationController
-  skip_before_filter :require_user, :only => [:create, :new, :destroy]
+  skip_before_filter :require_user, :only => [:create, :new, :destroy, :create_from_omniauth]
   protect_from_forgery :except => :create
 
   def index
@@ -24,6 +24,21 @@ class UserSessionsController < ApplicationController
     user = authenticate(params)
     # This call runs the clearance sign_in "guards" which runs business logic validations
     # to check if user is allowed to login (.ie user isn't locked, disabled etc)
+    handle_sign_in(user)
+  end
+
+  def create_from_omniauth
+    user = User.from_omniauth(env["omniauth.auth"])
+    unless user.nil?
+      session[:user_id] = user.id
+      handle_sign_in(user)
+    else
+      flash[:errors] = ["This Google email account has not been enabled in VFI Track."]
+      redirect_to login_path
+    end                                                                                                             
+  end
+
+  def handle_sign_in(user)
     sign_in(user) do |status|
       if status.success?
         user.on_successful_login request
@@ -43,7 +58,7 @@ class UserSessionsController < ApplicationController
       end
     end
   end
-
+  
   # DELETE /user_sessions/1
   def destroy
     sign_out
