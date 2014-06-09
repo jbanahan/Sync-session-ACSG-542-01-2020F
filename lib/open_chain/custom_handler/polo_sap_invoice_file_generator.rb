@@ -3,6 +3,7 @@ require 'tempfile'
 require 'csv'
 require 'open_chain/xml_builder'
 require 'open_chain/custom_handler/polo/polo_business_logic'
+require 'open_chain/api/product_api_client'
 
 module OpenChain
   module CustomHandler
@@ -29,6 +30,10 @@ module OpenChain
         @custom_where = custom_where
       end
 
+      def api_client
+        @api_client ||= OpenChain::Api::ProductApiClient.new 'polo'
+      end
+
       def self.run_schedulable opts = {}
         PoloSapInvoiceFileGenerator.new.find_generate_and_send_invoices
       end
@@ -46,8 +51,13 @@ module OpenChain
       def find_broker_invoices rl_company
         # We should be fine eager loading everything here since we're doing these week by week.
         # It shouldn't be THAT much data, at least at this point.
+        conf = RL_INVOICE_CONFIGS[rl_company]
         query = BrokerInvoice.select("distinct broker_invoices.*").
-                includes([{:entry=>{:commercial_invoices=>:commercial_invoice_lines}}, :broker_invoice_lines]).
+                joins(:entry).
+                # This needs to be part of the standard query clause, even if there's custom where clauses
+                # otherwise we're going to end up with results for every pass over the configs, which we don't
+                # want.
+                where(:entries => {:importer_tax_id => conf[:tax_id]}).
                 order("broker_invoices.invoice_date ASC")
 
 
@@ -56,15 +66,15 @@ module OpenChain
           # Or at least something that limits the invoice output
           query = query.where(@custom_where)
         else
-          conf = RL_INVOICE_CONFIGS[rl_company]
-          query = query.where(:entries => {:importer_tax_id => conf[:tax_id]}).
+          query = query.
                     where("broker_invoices.invoice_date >= ?", conf[:start_date]).
                     # We need to exclude everything that has already been successfully invoiced
-                    where("broker_invoices.id NOT IN ("+
-                      "SELECT ejl.exportable_id FROM export_job_links ejl "+
-                      "INNER JOIN export_jobs ej ON ejl.export_job_id = ej.id " +
-                      "AND ejl.exportable_type = 'BrokerInvoice' AND ej.successful = true " +
-                      "AND ej.export_type IN (?) )", [ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE, ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE])
+                    joins("LEFT OUTER JOIN export_job_links ejl ON broker_invoices.id = ejl.exportable_id AND ejl.exportable_type = 'BrokerInvoice'").
+                    joins("LEFT OUTER JOIN export_jobs ej on ejl.export_job_id = ej.id and ej.successful = true and ej.export_type in ('#{ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE}', '#{ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE}')").
+                    where("ej.id IS NULL").
+                    # We need to also exclude everything that is in a Fail or Review Business Rule state
+                    joins("LEFT OUTER JOIN business_validation_results bvr ON bvr.validatable_id = entries.id AND bvr.validatable_type = 'Entry' AND bvr.state IN ('Fail')").
+                    where("bvr.id IS NULL")
         end
 
         query.all
@@ -184,6 +194,34 @@ module OpenChain
         ftp2_vandegrift_inc 'to_ecs/Ralph_Lauren/sap_invoices'
       end
 
+      def set_product? part_number
+        @set_product_cache ||= {}
+
+        is_set = @set_product_cache[part_number]
+        return is_set unless is_set.nil?
+      
+        response = api_client.find_by_uid part_number, ['class_cntry_iso', '*cf_131']
+        if response && response['product']
+          is_set = false
+
+          product = response['product']
+          if product && product['classifications']
+            set_type = product['classifications'].find {|c| c['class_cntry_iso'] == 'CA'}.try(:[], "*cf_131")
+            is_set = !set_type.blank?
+          end
+
+          @set_product_cache[part_number] = is_set
+        end
+        
+        is_set
+      rescue => e
+        # Don't bother logging the 404 not found error raised by the client since we'll end up reporting on it anyway, we do want to log any other error though.
+        if !e.is_a?(OpenChain::Api::ApiClient::ApiError) || e.http_status.to_s != "404"
+          e.log_me "Failed to retrieve product information for style #{part_number} from RL VFI Track instance."
+        end
+        nil
+      end
+
       class PoloMmglInvoiceWriter
         include OpenChain::XmlBuilder
        
@@ -252,12 +290,10 @@ module OpenChain
         end
 
         def write_commercial_invoice_line_xml parent_el, l, currency
-          po_number, line_number = @inv_generator.split_sap_po_line_number l[1]
-
           item_el = add_element parent_el, "ItemData"
           add_element item_el, "InvoiceDocumentNumber", l[0]
-          add_element item_el, "PurchaseOrderNumber", po_number
-          add_element item_el, "PurchasingDocumentItemNumber", line_number
+          add_element item_el, "PurchaseOrderNumber", l[1]
+          add_element item_el, "PurchasingDocumentItemNumber", l[2]
           add_element item_el, "AmountDocumentCurrency", l[3]
           add_element item_el, "Currency", currency
           add_element item_el, "Quantity", l[4]
@@ -376,51 +412,82 @@ module OpenChain
 
             # If it is not a set, then sum the quantity values from the commercial invoice lines
             # If it is a set, use the Tradecard 810 IT102 quantity value and sum the duty amount
-            invoices_with_tradecard_line = {}
+            invoice_line_info = {}
             commercial_invoices.each do |inv|
               tradecard_invoice = find_tradecard_invoice inv.invoice_number
 
               inv.commercial_invoice_lines.each do |line|
                 tradecard_line = find_tradecard_line(tradecard_invoice, line.po_number) if tradecard_invoice
 
-                invoices_with_tradecard_line[line.po_number] ||= {inv_lines: []}
+                set_product = nil
+                po_number = nil
+                sap_line_number = nil
+                prepack = nil
 
-                invoices_with_tradecard_line[line.po_number][:inv_lines] << line
-                invoices_with_tradecard_line[line.po_number][:tradecard_line] ||= tradecard_line
+                # Rollup any lines that are sets or are prepacks by their po / part number
+                # Prepacks are supposed to all be on Tradecard lines...it's possible we could also 
+                # find if the style is a prepack by looking to the Order as well.
+                if tradecard_line && @inv_generator.prepack_indicator?(tradecard_line.unit_of_measure)
+                  po_number, sap_line_number = @inv_generator.split_sap_po_line_number line.po_number
+                  prepack = true
+                  set_product = false
+                else
+                  # Only look up the product if a Tradecard invoice exists...there's no point 
+                  # to looking it up if it doesn't exist since there's no quantity to pull from
+                  # and the call is rather expensive to make (since it's an http request to another system)
+                  if tradecard_invoice
+                    set_product = @inv_generator.set_product? line.part_number                    
+                  else
+                    set_product = false
+                  end
+
+                  # Find the SAP Line number for the style (which may be a part of the invoice PO #)
+                  # If it's not, we have to go back to the PO and see which line matches our part
+                  po_number, sap_line_number = @inv_generator.split_sap_po_line_number line.po_number
+                  if sap_line_number.blank?
+                    sap_line_number = get_sap_line_from_order(@config[:tax_id], po_number, line.part_number)
+                  end
+                end
+
+                invoice_line_group = "#{po_number}~#{sap_line_number}"
+
+                invoice_line_info[invoice_line_group] ||= {inv_lines: []}
+                invoice_line_info[invoice_line_group][:inv_lines] << line
+                invoice_line_info[invoice_line_group][:tradecard_line] ||= tradecard_line
+                invoice_line_info[invoice_line_group][:po_number] ||= po_number
+                invoice_line_info[invoice_line_group][:sap_line_number] ||= sap_line_number
+                invoice_line_info[invoice_line_group][:set_product] ||= set_product
+                invoice_line_info[invoice_line_group][:prepack] ||= prepack
               end
             end
 
             rows = []
             counter = 0
-            invoices_with_tradecard_line.each do |po_line_number, values|
-              if @inv_generator.prepack_indicator? values[:tradecard_line].try(:unit_of_measure)
-                rows << create_mmgl_line((counter += 1), values[:tradecard_line].quantity, values[:inv_lines])
+            invoice_line_info.each do |po_line_number, values|
+              # We need to look up the product here from the RL VFITrack instance to determine if it's a set or not
+              # If we can't find the product, we'll continue like it's not a set but we need to generate some sort
+              # of error reference indicating that the product couldn't be found.
+              line = values[:inv_lines].first
+
+              # There's two things we need to error on..
+                # 1) Missing product definition (don't need this if product is a prepack)
+                # 2) Missing Tradecard Invoice if Set or Prepack
+
+              # nil indicates a lookup failure, if the lookup worked then we expect a true/false value instead
+              if !values[:prepack] && values[:set_product].nil?
+                @errors << create_errors_line(values, :missing_product)
+              elsif (values[:set_product] || values[:prepack]) && values[:tradecard_line].nil? 
+                # We need the tradecard invoice for sets, otherwise we may not have the correct quantity
+                @errors << create_errors_line(values, :missing_810)
+              end
+
+              if (values[:set_product] || values[:prepack]) && values[:tradecard_line]
+                # Since this is a set and we have a tradecard line, we need to use the tradecard invoice's quantity value
+                rows << create_mmgl_line((counter += 1), values[:tradecard_line].quantity, values[:po_number], values[:sap_line_number], values[:inv_lines])
               else
-                # We need to look up the product here from the RL VFITrack instance to determine if it's a set or not
-                # If we can't find the product, we'll continue like it's not a set but we need to generate some sort
-                # of error reference indicating that the product couldn't be found.
-                line = values[:inv_lines].first
-                set_product = set? line.part_number
-
-                # There's two things we need to error on..
-                  # 1) Missing product definition
-                  # 2) Missing tradecard record
-
-                # For now, nil indicates a lookup failure 
-                if set_product.nil?
-                  @errors << create_errors_line(values, :missing_product)
-                elsif values[:tradecard_line].nil? 
-                  @errors << create_errors_line(values, :missing_810)
-                end
-
-                if set_product && values[:tradecard_line]
-                  # Since this is a set and we have a tradecard line, we need to use the tradecard invoice's quantity value
-                  rows << create_mmgl_line((counter += 1), values[:tradecard_line].quantity, values[:inv_lines])
-                else
-                  # Since this isn't a set (or product / tradecard information is missing), the product is the sum of the entered quantity for the invoice lines
-                  quantity = values[:inv_lines].inject(BigDecimal.new("0.00")) {|sum, line| sum + line.quantity}
-                  rows << create_mmgl_line((counter += 1), quantity, values[:inv_lines])
-                end
+                # Since this isn't a set (or product / tradecard information is missing), the product is the sum of the entered quantity for the invoice lines
+                quantity = values[:inv_lines].inject(BigDecimal.new("0.00")) {|sum, line| sum + line.quantity}
+                rows << create_mmgl_line((counter += 1), quantity, values[:po_number], values[:sap_line_number], values[:inv_lines])
               end
             end
 
@@ -442,26 +509,25 @@ module OpenChain
           end
 
           def create_errors_line values, error_type
-            po, line = @inv_generator.split_sap_po_line_number values[:inv_lines][0].po_number
             row = []
             row[0] = values[:inv_lines][0].entry.entry_number
             row[1] = values[:inv_lines][0].commercial_invoice.invoice_number
-            row[2] = po
-            row[3] = line
-            row[4] = (error_type == :missing_810) ? "No Tradecard Invoice line found for PO # #{po} / SAP Line #{line}" : "No Chain.IO product found for style #{values[:inv_lines][0].part_number}."
+            row[2] = values[:po_number]
+            row[3] = values[:sap_line_number]
+            row[4] = (error_type == :missing_810) ? "No Tradecard Invoice line found for PO # #{values[:po_number]} / SAP Line #{values[:sap_line_number]}" : "No VFI Track product found for style #{values[:inv_lines][0].part_number}."
 
             row
           end
 
-          def create_mmgl_line counter, quantity, invoice_lines
+          def create_mmgl_line counter, quantity, po_number, sap_line_number, invoice_lines
             total_duty = invoice_lines.collect{|l| l.commercial_invoice_tariffs}.flatten.inject(BigDecimal.new("0.00")) {|sum, t| sum + t.duty_amount}
 
             line = invoice_lines.first
 
             row = []
             row << "#{counter}"
-            row << line.po_number
-            row << line.part_number
+            row << po_number
+            row << sap_line_number
             row << total_duty
             row << quantity
             row << "ZDTY"
@@ -470,32 +536,23 @@ module OpenChain
             row
           end
 
-          def set? part_number
-            is_set = nil
-            #TODO This should throw an error if no product is found rather than return nil
-            response = find_rl_product part_number
-            if response && response['product']
-              is_set = false
-
-              product = response['product']
-              if product && product['classifications']
-                product['classifications'].each do |c|
-                  if c['class_cntry_iso'] == "CA"
-                    is_set = !c['*cdef_131'].nil? && c['*cdef_131'] == true
-                    break
-                  end
-                end
-              end
+          def get_sap_line_from_order importer_tax_id, po_number, style
+            # We're just pulling the first PO line that has the same Style.  If this ends up being an issue we may have to 
+            # add additional heuristics from the PO into the mix.
+            order_line = OrderLine.
+                          joins(:order, :product).
+                          where(orders: {order_number: "#{importer_tax_id}-#{po_number}"}, products: {unique_identifier: "#{importer_tax_id}-#{style}"}).
+                          order("order_lines.line_number ASC").first
+            line_number = order_line.try(:line_number)
+            if line_number
+              # The line number isn't going to be formatted correctly at this point (since it's stored as an int in the DB)
+              # Just use the sap po split function to reformat it to the desired string
+              po, line = @inv_generator.split_sap_po_line_number "#{po_number}-#{line_number.to_s}"
+              line
+            else
+              nil
             end
             
-            is_set
-          rescue 
-            nil
-          end
-
-          def find_rl_product part_number
-            #TODO Plug in the API client for calling between multiple instances.
-            {}
           end
 
           def get_broker_invoice_information broker_invoice
@@ -578,7 +635,7 @@ module OpenChain
             add_element header_el, "DOCUMENTTYPE", header[1]
             add_element header_el, "DOCUMENTDATE", header[0]
             add_element header_el, "POSTINGDATE", header[3]
-            add_element header_el, "REFERENCE", header[26]
+            add_element header_el, "REFERENCE", header[8]
             add_element header_el, "INVOICINGPARTY", header[10]
             add_element header_el, "AMOUNT", header[12]
             add_element header_el, "CURRENCYCODE", header[4]
@@ -784,6 +841,10 @@ module OpenChain
           export_jobs = {}
 
           broker_invoices.each do |broker_invoice|
+            # Refind the invoice, preloading the invoice lines, entry and com inv lines
+            broker_invoice = BrokerInvoice.where(id: broker_invoice.id).includes([{:entry=>{:commercial_invoices=>:commercial_invoice_lines}}, :broker_invoice_lines]).first
+            # This should never happen, but don't blow up if it does
+            next unless broker_invoice
             begin
               format = determine_invoice_output_format(broker_invoice)
               writer = create_writer(rl_company, format)
