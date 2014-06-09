@@ -28,8 +28,12 @@ class SchedulableJobsController < ApplicationController
 
   def create
     sys_admin_secure do
-      SchedulableJob.create! params[:schedulable_job]
-      add_flash :notices, 'Created'
+      @sj = SchedulableJob.new(params[:schedulable_job])
+      if @sj.save
+        add_flash :notices, "Created"
+      else
+        add_flash :errors, "Job could not be created due to invalid parameters."
+      end
       redirect_to schedulable_jobs_path
     end
   end

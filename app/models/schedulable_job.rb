@@ -2,23 +2,33 @@ require 'open_chain/schedule_support'
 class SchedulableJob < ActiveRecord::Base
   include OpenChain::ScheduleSupport
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday, 
-    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time
-  
+    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email
+
+  validates :success_email, allow_blank: true, format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i, on: :create }
+  validates :failure_email, allow_blank: true, format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i, on: :create }
+
   def run log=nil
-    rc = self.run_class.gsub("::",":")
-    components = rc.split(":")
     begin
-      camel_case_components = components.collect {|c| c.underscore}
-      require_path = camel_case_components.join("/")
-      require require_path
-    rescue LoadError
-      #just move on, if we needed the file it'll throw an exception below
-      #otherwise this isn't an issue
+      rc = self.run_class.gsub("::",":")
+      components = rc.split(":")
+      begin
+        camel_case_components = components.collect {|c| c.underscore}
+        require_path = camel_case_components.join("/")
+        require require_path
+      rescue LoadError
+        #just move on, if we needed the file it'll throw an exception below
+        #otherwise this isn't an issue
+      end
+      k = Kernel
+      components.each {|c| k = k.const_get(c)}
+      log.info "Running schedule for #{k.to_s} with options #{opts_hash.to_s}" if log
+      k.run_schedulable opts_hash
+      OpenMailer.send_simple_html(self.success_email,"[VFI Track] Scheduled Job Succeeded",
+        "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has succeeded.").deliver! unless self.success_email.blank?
+    rescue
+      OpenMailer.send_simple_html(self.failure_email,"[VFI Track] Scheduled Job Failed",
+        "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has failed.").deliver! unless self.failure_email.blank?
     end
-    k = Kernel
-    components.each {|c| k = k.const_get(c)}
-    log.info "Running schedule for #{k.to_s} with options #{opts_hash.to_s}" if log
-    k.run_schedulable opts_hash
   end
 
   def time_zone
