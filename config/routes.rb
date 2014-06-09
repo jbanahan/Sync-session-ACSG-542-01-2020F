@@ -187,6 +187,8 @@ OpenChain::Application.routes.draw do
   match "/custom_features/csm_sync/upload" => "custom_features#csm_sync_upload", :via => :post
   match "/custom_features/csm_sync/:id/download" => "custom_features#csm_sync_download", :via => :get
   match "/custom_features/csm_sync/:id/reprocess" => "custom_features#csm_sync_reprocess", :via=>:get
+  match "/custom_features/kewill_isf" => "custom_features#kewill_isf_index", via: :get
+  match "/custom_features/kewill_isf/upload" => "custom_features#kewill_isf_upload", via: :post
   match "/custom_features/polo_sap_bom" => "custom_features#polo_sap_bom_index", :via=>:get
   match "/custom_features/polo_sap_bom/upload" => "custom_features#polo_sap_bom_upload", :via=>:post
   match "/custom_features/polo_sap_bom/:id/download" => "custom_features#polo_sap_bom_download", :via=>:get

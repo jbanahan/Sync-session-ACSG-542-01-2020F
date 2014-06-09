@@ -133,7 +133,17 @@ describe Company do
         end
       end
       context "edit" do
-        it "should be false" do
+        it "should allow for brokers" do
+          Company.new(:broker=>true).edit_security_filings?.should be_true
+        end
+        it "should allow for master" do
+          Company.new(:master=>true).edit_security_filings?.should be_true
+        end
+        it "should not allow for non broker/master" do
+          Company.new.edit_security_filings?.should be_false
+        end
+        it "should not allow if master setup is disabled" do
+          MasterSetup.any_instance.stub(:security_filing_enabled?).and_return(false)
           Company.new(:master=>true).edit_security_filings?.should be_false
         end
       end
