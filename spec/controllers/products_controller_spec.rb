@@ -210,18 +210,16 @@ describe ProductsController do
         pks[i.to_s] = i.to_s
       end
       p = {:pk => pks}
-      
+      b = BulkProcessLog.create!
       OpenChain::BulkUpdateClassification.should_receive(:quick_classify) do |params, u, options|
         u.should == @user
         params[:pk].length.should == 10
         options[:no_user_message].should be_true
-        {:message => "Test", :errors =>["A", "B"]}
+        b
       end
 
       post :bulk_update_classifications, p
-      response.should redirect_to Product
-      flash[:notices].first.should == "Test"
-      flash[:errors].should == ["A", "B"]
+      response.should redirect_to b
     end
 
     it "should allow user to bulk update classifications" do

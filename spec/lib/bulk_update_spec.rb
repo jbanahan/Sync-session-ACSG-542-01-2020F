@@ -350,8 +350,7 @@ describe OpenChain::BulkUpdateClassification do
     end
 
     it "should create new classifications on products" do
-
-      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
+      log = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
       @products.each do |p|
         p.reload
@@ -362,15 +361,10 @@ describe OpenChain::BulkUpdateClassification do
         p.classifications[0].tariff_records[0].hts_1.should eq @hts
       end
 
-      log = BulkProcessLog.first
       log.change_records.should have(2).items
       log.change_records.each do |cr|
         cr.entity_snapshot.should_not be_nil
       end
-
-      messages[:message].should eq "Bulk Classify Job Complete."
-      messages[:errors].should have(0).items
-      messages[:good_count].should eq 2
 
       @u.messages.should have(1).item
       @u.messages[0].subject.should eq "Bulk Classify Job Complete."
@@ -417,9 +411,8 @@ describe OpenChain::BulkUpdateClassification do
       p = @products[0]
       @parameters['pk'] = ["#{@products[0].id}"]
 
-      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
+      log = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
-      log = BulkProcessLog.first
       log.change_records.should have(1).item
       log.change_records.first.failed.should be_true
       log.change_records.first.messages[0].should eq "Error saving product #{p.unique_identifier}: Error"
@@ -429,10 +422,6 @@ describe OpenChain::BulkUpdateClassification do
       @u.messages[0].subject.should eq "Bulk Classify Job Complete (1 Error)."
       @u.messages[0].body.should eq "<p>Your Bulk Classify job has completed.</p><p>0 Products saved.</p><p>The full update log is available <a href=\"https://#{@ms.request_host}/bulk_process_logs/#{log.id}\">here</a>.</p>"
 
-      messages[:message].should eq "Bulk Classify Job Complete (1 Error)."
-      messages[:good_count].should eq 0
-      messages[:errors].should have(1).item
-      messages[:errors][0].should eq "Error saving product #{p.unique_identifier}: Error"
     end
 
     it "should verify user can classify product" do
@@ -440,15 +429,11 @@ describe OpenChain::BulkUpdateClassification do
       @parameters['pk'] = ["#{@products[0].id}"]
 
       @u.update_attributes product_view: false
-      messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
+      log = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
       @u.messages.should have(1).item
       @u.messages[0].subject.should eq "Bulk Classify Job Complete (1 Error)."
 
-      messages[:message].should eq "Bulk Classify Job Complete (1 Error)."
-      messages[:good_count].should eq 0
-      messages[:errors].should have(1).item
-      messages[:errors][0].should eq "You do not have permission to classify product #{p.unique_identifier}."
     end
 
     it "should not log user messages if specified" do

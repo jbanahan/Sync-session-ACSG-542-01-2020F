@@ -1,8 +1,16 @@
-<table>
-  <%=field_row "Type", @bulk_process_log.bulk_type%>
-  <%=field_row "Processed At", @bulk_process_log.finished_at%>
-  <%=field_row "Number of Changes", @bulk_process_log.changed_object_count%>
-</table>
-<br />
-<br />
-<%=render :partial=>'file_import_results/change_records', :locals=>{:change_records=>@change_records, :messages_url=>messages_bulk_process_log_path(@bulk_process_log)} %>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Bulk Process Log</h2>
+      <%=field_bootstrap "Type", @bulk_process_log.bulk_type%>
+      <%=field_bootstrap "Processed At", @bulk_process_log.finished_at%>
+      <%=field_bootstrap "Number of Changes", @bulk_process_log.changed_object_count%>
+      <%=field_bootstrap "Total Items", @bulk_process_log.total_object_count%>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <%=render :partial=>'file_import_results/change_records', :locals=>{:change_records=>@change_records, :messages_url=>messages_bulk_process_log_path(@bulk_process_log)} %>
+    </div>
+  </div>
+</div>

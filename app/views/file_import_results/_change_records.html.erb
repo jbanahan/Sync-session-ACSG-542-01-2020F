@@ -18,7 +18,7 @@ $(function() {
       });
     }
   }); 
-  $("a.failed_rec").each(function(idx) {
+  $("button.failed_rec").each(function(idx) {
     $(this).click();
   });
   $("a.snapshot").click(function(evt) {
@@ -37,18 +37,25 @@ $(function() {
 });
 <% end %>
 
-<table class='detail_table'>
+<table class='table table-striped'>
   <thead><tr>
-    <th>Row</th><th>Status</th><th>&nbsp;</th>
+    <th>&nbsp;</th>
+    <th>Row</th>
+    <th>Item</th>
+    <th>Status</th>
   </tr></thead>
   <%@change_records.each do |r|%>
-    <tr class='hover'>
-      <td><a href='#' class='toggle_record <%if r.failed?%>failed_rec<%end%>' cr_id='<%=r.id%>'><%=r.record_sequence_number%></a></td>
-      <td class='<%=r.failed? ? "error" : ""%>'><%=r.failed? ? "Error" : "Success"%></td>
-      <td><%if r.entity_snapshot%><%=link_to "Show Field Updates", r.entity_snapshot, class: "snapshot"%><%end%></td>
+    <tr>
+      <td>
+        <button class='btn btn-xs btn-default toggle_record <%if r.failed?%>failed_rec<%end%>' cr_id='<%=r.id%>'>Messages</button> 
+        <%if r.entity_snapshot%><%=link_to "Changes", r.entity_snapshot, class: "btn btn-xs btn-default snapshot"%><%end%>
+      </td>
+      <td><%=r.record_sequence_number%></td>
+      <td><button class='btn_link btn btn-xs btn-default' link_to='<%=polymorphic_path(r.recordable)%>'><%=CoreModule.find_by_object(r.recordable).unique_id_field.process_export(r.recordable,current_user)%></button></td>
+      <td><span class='<%=r.failed? ? "text-error" : "text-success"%>'><%=r.failed? ? "Error" : "Success"%></span></td>
     </tr>
     <tr style='display:none;'>
-      <td colspan='3' style='padding-left:2em;'><%=image_tag "ajax-loader.gif"%> Loading...</td>
+      <td colspan='4' style='padding-left:2em;'><%=image_tag "ajax-loader.gif"%> Loading...</td>
     </tr>
   <%end%>
 </table>

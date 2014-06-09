@@ -214,6 +214,7 @@ module OpenChain
         end
         log.update_attributes total_object_count: total_objects, changed_object_count: good_count, finished_at: Time.zone.now
         create_bulk_user_message current_user, good_count, error_count, log, options
+        log
       end
     end
 
