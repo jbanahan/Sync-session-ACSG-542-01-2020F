@@ -175,17 +175,51 @@ describe "ProjectApp", () ->
       expect(el.find('#fakebutton').scope().errors.errorMessage).toEqual('xyz')
       
   describe 'ProjectCtrl', () ->
-    ctrl = svc = $scope = null
+    ctrl = svc = $scope = win = null
 
-    beforeEach inject(($rootScope,$controller,projectSvc) ->
+    beforeEach inject ($rootScope,$controller,projectSvc) ->
       $scope = $rootScope.$new()
       svc = projectSvc
+      win = { location: { replace: (url) -> console.log "redirected to " + url }}
       mockUserListCache = {
         getListForCurrentUser : (cb) ->
           cb([{id:1,full_name:'User Name'}])
       }
-      ctrl = $controller('ProjectCtrl',{$scope:$scope,srService:svc,userListCache:mockUserListCache})
-    )
+      ctrl = $controller('ProjectCtrl',{$scope: $scope, srService: svc, userListCache: mockUserListCache, $window: win})
+
+    describe "showingLastProject", () ->
+      it "should return true if and only if the last project is being shown", () ->
+        $scope.orderedIds = [1, 2, 3, 4, 10]
+        $scope.projectId = 10
+        expect($scope.showingLastProject()).toEqual true
+
+        $scope.projectId = 4
+        expect($scope.showingLastProject()).toEqual false
+
+    describe "showingFirstProject", () ->
+      it "should return true if and only if the first project is being shown", () ->
+        $scope.orderedIds = [10, 20, 32, 5, 15, 70]
+        $scope.projectId = 10
+        expect($scope.showingFirstProject()).toEqual true
+
+        $scope.projectId = 20
+        expect($scope.showingFirstProject()).toEqual false
+
+    describe "previousProject", () ->
+      it "should call window.replace with the correct ID", () ->
+        win.location.replace = jasmine.createSpy("replace")
+        $scope.orderedIds = [10, 9, 8, 7, 6, 5]
+        $scope.projectId = 8
+        $scope.previousProject()
+        expect(win.location.replace).toHaveBeenCalledWith("/projects/9")
+
+    describe "nextProject", () ->
+      it "should call window.replace with the correct ID", () ->
+        win.location.replace = jasmine.createSpy("replace")
+        $scope.orderedIds = [10, 9, 8, 7, 6, 5]
+        $scope.projectId = 8
+        $scope.nextProject()
+        expect(win.location.replace).toHaveBeenCalledWith("/projects/7")
 
     it "should delegate addProjectSet", () ->
       p = {id:1}

@@ -234,12 +234,19 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
       return
     promise.then goodCallback
 ]
-projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($scope,projectSvc,userListCache) ->
+projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache','$window', ($scope,projectSvc,userListCache,$window) ->
   $scope.addUpdateBody = ''
   $scope.svc = projectSvc
   $scope.users = []
   userListCache.getListForCurrentUser (userList) ->
     $scope.users = userList
+  
+  $scope.orderedIds = Chain.getStorageItem("user-projects-sorted-ids")
+  if $scope.orderedIds?
+    $scope.orderedIds = $scope.orderedIds.ordered_ids
+    $scope.enableNextPrev = true
+  else
+    $scope.enableNextPrev = false
 
   $scope.saveProject = () ->
     projectSvc.saveProject projectSvc.project
@@ -274,6 +281,26 @@ projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache',($sc
   $scope.unloadWarning = () ->
     return "You have not added your update." if $scope.addUpdateBody.length > 0
     return undefined
+
+  $scope.showingLastProject = () ->
+    if $scope.orderedIds.slice(-1)[0] == $scope.projectId then true else false
+
+  $scope.showingFirstProject = () ->
+    if $scope.orderedIds[0] == $scope.projectId then true else false
+
+  if $scope.orderedIds?
+    $scope.hideNext = $scope.showingLastProject()
+    $scope.hidePrevious = $scope.showingFirstProject()
+
+  $scope.nextProject = () ->
+    id = $scope.projectId
+    currentIndex = $scope.orderedIds.indexOf(id)
+    $window.location.replace("/projects/" + $scope.orderedIds[currentIndex+1])
+
+  $scope.previousProject = () ->
+    id = parseInt($scope.projectId)
+    currentIndex = $scope.orderedIds.indexOf(id)
+    $window.location.replace("/projects/" + $scope.orderedIds[currentIndex-1])
 
   $scope.svc.load $scope.projectId if $scope.projectId
 ]
