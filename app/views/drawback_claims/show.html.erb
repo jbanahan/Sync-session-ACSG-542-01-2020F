@@ -5,6 +5,7 @@
 <%end-%>
 <h2>Drawback Claim: <%=@claim.name%></h2>
 
+
 <table class='ent_columns'>
   <tr>
     <td>
@@ -41,3 +42,9 @@
     </td>
   </tr>
 </table>
+
+<div class="row">
+  <div class="col-md-12">
+    <%= render :partial => 'shared/attachments', :locals => { :attachable => @claim } %>
+  </div>
+</div>
