@@ -357,6 +357,7 @@ root.Chain =
           h = "<table class='tbl_hts_popup'><tbody>"
           h += htsDataRow("Country:",o.country.name)
           h += htsDataRow("Tariff #:",o.hts_code)
+          h += "<span class='label label-warning' title='This product may require a Lacey Act declaration.'>Lacey Act</span>" if o.lacey_act == true
           h += htsDataRow("Common Rate:",o.common_rate)
           h += htsDataRow("General Rate:",o.general_rate)
           h += htsDataRow("Chapter:",o.chapter)
