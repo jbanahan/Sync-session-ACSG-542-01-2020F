@@ -87,20 +87,6 @@ describe SchedulableJobsController do
       response.should redirect_to schedulable_jobs_path
       SchedulableJob.first.opts.should == '12345'
     end
-    it "should reject if emails are an invalid format" do
-      login Factory(:sys_admin_user)
-      post :create, schedulable_job: {success_email: "not valid email format", opts: "12345"}
-      response.should redirect_to schedulable_jobs_path
-      SchedulableJob.all.length.should == 0
-      flash[:errors].first.should == "Job could not be created due to invalid parameters."
-    end
-    it "should accept if emails are blank" do
-      login Factory(:sys_admin_user)
-      post :create, schedulable_job: {success_email: "", opts: "12345"}
-      response.should redirect_to schedulable_jobs_path
-      SchedulableJob.all.length.should == 1
-      flash[:notices].first.should == "Created"
-    end
   end
 
   describe :destroy do

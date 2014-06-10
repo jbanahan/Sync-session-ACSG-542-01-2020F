@@ -4,9 +4,6 @@ class SchedulableJob < ActiveRecord::Base
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday, 
     :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email
 
-  validates :success_email, allow_blank: true, format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i, on: :create }
-  validates :failure_email, allow_blank: true, format: { with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\Z/i, on: :create }
-
   def run log=nil
     begin
       rc = self.run_class.gsub("::",":")
@@ -23,11 +20,16 @@ class SchedulableJob < ActiveRecord::Base
       components.each {|c| k = k.const_get(c)}
       log.info "Running schedule for #{k.to_s} with options #{opts_hash.to_s}" if log
       k.run_schedulable opts_hash
-      OpenMailer.send_simple_html(self.success_email,"[VFI Track] Scheduled Job Succeeded",
-        "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has succeeded.").deliver! unless self.success_email.blank?
+      self.success_email.split(",").each do |address|
+        OpenMailer.send_simple_html(address,"[VFI Track] Scheduled Job Succeeded",
+          "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has succeeded.").deliver! 
+      end unless self.success_email.blank?
     rescue
-      OpenMailer.send_simple_html(self.failure_email,"[VFI Track] Scheduled Job Failed",
-        "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has failed.").deliver! unless self.failure_email.blank?
+      self.failure_email.split(",").each do |address|
+        OpenMailer.send_simple_html(address,"[VFI Track] Scheduled Job Failed",
+          "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has failed. The error message is below:<br><br>
+          #{$!.message}").deliver! 
+      end unless self.failure_email.blank?
     end
   end
 
