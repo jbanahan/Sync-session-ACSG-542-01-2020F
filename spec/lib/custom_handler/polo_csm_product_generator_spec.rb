@@ -53,8 +53,8 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     before :each do
       @cd = Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text)
       @italy = Factory(:country,:iso_code=>'IT')
-      tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country=>@italy))
-      @product = tr.classification.product
+      @tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country=>@italy))
+      @product = @tr.classification.product
       @product.update_custom_value! @cd, 'CSMVAL'
     end
     it "should find product with italian classification that needs sync" do
@@ -82,6 +82,11 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     it "should not find product already synced" do
       @product.sync_records.create!(:trading_partner=>described_class.new.sync_code,:sent_at=>10.minutes.ago,:confirmed_at=>5.minutes.ago)
       @product.update_attributes(:updated_at=>1.day.ago)
+      r = Product.connection.execute described_class.new.query
+      r.count.should == 0
+    end
+    it "should not return anything other than tariff row 1" do
+      @tr.update_attributes! line_number: 2
       r = Product.connection.execute described_class.new.query
       r.count.should == 0
     end
