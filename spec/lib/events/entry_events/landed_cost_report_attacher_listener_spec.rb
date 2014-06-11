@@ -10,24 +10,36 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         @broker_invoice_line = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_code => "0600")
       end
 
-      it "should accept a J JILL entry with a Broker Invoice containing a charge code of '0600'" do
-        described_class.new.accepts?(nil, @entry).should be_true
-      end 
+      context "www-vfitrack-net system code" do
+        before :each do
+          ms = double("MasterSetup")
+          ms.stub(:system_code).and_return "www-vfitrack-net"
+          MasterSetup.stub(:get).and_return ms
+        end
 
-      it "should not accept non-JJILL entries with 0600 code" do
-        @entry.update_attributes :customer_number => "Blargh!!"
-        described_class.new.accepts?(nil, @entry).should be_false
+        it "should accept a J JILL entry with a Broker Invoice containing a charge code of '0600'" do
+          described_class.new.accepts?(nil, @entry).should be_true
+        end 
+
+        it "should not accept non-JJILL entries with 0600 code" do
+          @entry.update_attributes :customer_number => "Blargh!!"
+          described_class.new.accepts?(nil, @entry).should be_false
+        end
+
+        it "should not accept JJILL entries without a 0600 code" do
+          @broker_invoice_line.update_attributes :charge_code => "1234"
+          described_class.new.accepts?(nil, @entry).should be_false
+        end
+
+        it "accepts JJILL entries with internal charge code lines" do
+          DataCrossReference.create! key: '1234', value: '', cross_reference_type: DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
+          @broker_invoice_line.update_attributes :charge_code => "1234"
+          described_class.new.accepts?(nil, @entry).should be_true
+        end
       end
 
-      it "should not accept JJILL entries without a 0600 code" do
-        @broker_invoice_line.update_attributes :charge_code => "1234"
+      it "does not accept when run from non-vfitrack system" do
         described_class.new.accepts?(nil, @entry).should be_false
-      end
-
-      it "accepts JJILL entries with internal charge code lines" do
-        DataCrossReference.create! key: '1234', value: '', cross_reference_type: DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
-        @broker_invoice_line.update_attributes :charge_code => "1234"
-        described_class.new.accepts?(nil, @entry).should be_true
       end
     end
   end

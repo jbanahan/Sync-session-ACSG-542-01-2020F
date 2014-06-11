@@ -12,7 +12,7 @@ module OpenChain; module Events; module EntryEvents
       if entry
         process = jjill_with_freight_charges entry
       end
-      process
+      process && MasterSetup.get.system_code == 'www-vfitrack-net'
     end
 
     def receive event, entry

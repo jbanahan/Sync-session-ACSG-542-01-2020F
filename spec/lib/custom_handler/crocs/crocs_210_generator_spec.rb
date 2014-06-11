@@ -7,34 +7,53 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
   end
 
   describe "accepts?" do
-    it "accepts 'CROCS' entries with broker invoices" do
+    context 'in www-vfitrack-net' do
+
+      before :each do
+        ms = double("MasterSetup")
+        ms.stub(:system_code).and_return "www-vfitrack-net"
+        MasterSetup.stub(:get).and_return ms
+      end
+
+      it "accepts 'CROCS' entries with broker invoices" do
+        line = Factory(:broker_invoice_line,
+          broker_invoice: Factory(:broker_invoice,
+            entry: Factory(:entry, customer_number: "CROCS", last_billed_date: Time.now)
+          )
+        )
+
+        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_true
+      end
+
+      it "accepts 'CROCSSAM' entries with broker invoices" do
+        line = Factory(:broker_invoice_line,
+          broker_invoice: Factory(:broker_invoice,
+            entry: Factory(:entry, customer_number: "CROCSSAM", last_billed_date: Time.now)
+          )
+        )
+
+        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_true
+      end
+
+      it "doesn't accept entries without broker invoices" do
+        expect(described_class.new.accepts?(:save, Factory(:entry, customer_number: "CROCS"))).to be_false
+      end
+
+      it "doesn't accept entries without last bill dates" do
+        line = Factory(:broker_invoice_line,
+          broker_invoice: Factory(:broker_invoice,
+            entry: Factory(:entry, customer_number: "CROCSSAM")
+          )
+        )
+
+        expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_false
+      end
+    end
+   
+    it "does not accept when not vfitrack system" do
       line = Factory(:broker_invoice_line,
         broker_invoice: Factory(:broker_invoice,
           entry: Factory(:entry, customer_number: "CROCS", last_billed_date: Time.now)
-        )
-      )
-
-      expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_true
-    end
-
-    it "accepts 'CROCSSAM' entries with broker invoices" do
-      line = Factory(:broker_invoice_line,
-        broker_invoice: Factory(:broker_invoice,
-          entry: Factory(:entry, customer_number: "CROCSSAM", last_billed_date: Time.now)
-        )
-      )
-
-      expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_true
-    end
-
-    it "doesn't accept entries without broker invoices" do
-      expect(described_class.new.accepts?(:save, Factory(:entry, customer_number: "CROCS"))).to be_false
-    end
-
-    it "doesn't accept entries without last bill dates" do
-      line = Factory(:broker_invoice_line,
-        broker_invoice: Factory(:broker_invoice,
-          entry: Factory(:entry, customer_number: "CROCSSAM")
         )
       )
 
