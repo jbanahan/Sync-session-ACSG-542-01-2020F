@@ -17,12 +17,14 @@ describe AnswerComment do
   it "should update answer and response updated_at" do
     a = Factory(:answer)
     ac = a.answer_comments.create!(:user=>Factory(:user),:content=>'1239014')
-    a.update_attributes(:updated_at=>1.week.ago)
-    a.survey_response.update_attributes(:updated_at=>1.week.ago)
+    update = 10.seconds.ago
+    a.update_column :updated_at, update
+    a.survey_response.update_column :updated_at, update
+
     ac.content = '191985'
     ac.save!
     a.reload
-    a.updated_at.should > 1.second.ago
-    a.survey_response.updated_at.should > 1.second.ago
+    expect(a.updated_at).to be > update
+    expect(a.survey_response.updated_at).to be > update
   end
 end
