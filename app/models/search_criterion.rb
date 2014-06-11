@@ -316,6 +316,17 @@ class SearchCriterion < ActiveRecord::Base
         base_date = self_val.months.ago
         base_date = Date.new(base_date.year,base_date.month,1)
         return (vt < Time.now.to_date) && (vt >= base_date) && !(vt.month == 0.seconds.ago.month && vt.year == 0.seconds.ago.year)
+      elsif self.operator == "bma"
+        return vt < (Time.zone.now - self_val.months).beginning_of_month.at_midnight
+      elsif self.operator == "ama"
+        # Adding 1 day so that we're making sure we're truly comparing that the month is after the given months ago.
+        # .ie. If it's currently June..user selects "After 2 months ago", this should mean they get values after April (.ie only from May and beyond).
+        return vt >= ((Time.zone.now - self_val.months).end_of_month + 1.day).at_midnight
+      elsif self.operator == "amf"
+        # See note above...same situation
+        return vt >= ((Time.zone.now + self_val.months).end_of_month + 1.day).at_midnight
+      elsif self.operator == "bmf"
+        return vt < (Time.zone.now + self_val.months).beginning_of_month.at_midnight
       end
     elsif d == :boolean
       # The screen does't use 'eq', 'nq' for boolean types, it uses 'null', 'notnull' (evaluated above)
