@@ -146,25 +146,16 @@ describe AdvancedSearchController do
       get :last_search_id
       JSON.parse(response.body)['id'].should == ss_first.id.to_s
     end
-    context :no_record_timestamps do
-      before :each do
-        @record_timestamps = SearchSetup.record_timestamps
-        SearchSetup.record_timestamps = false
-      end
-      after :each do
-        SearchSetup.record_timestamps = @record_timestamps
-      end
+    
+    it "should return last search created if no search_runs" do
+      ss_first = Factory(:search_setup,:user=>@user)
+      ss_second = Factory(:search_setup,:user=>@user)
 
-      it "should return last search created if no search_runs" do
-        ss_first = Factory(:search_setup,:user=>@user)
-        ss_second = Factory(:search_setup,:user=>@user)
+      ss_first.update_column :updated_at, 1.day.ago
+      ss_second.update_column :updated_at, 1.year.ago
 
-        ss_first.update_column :updated_at, 1.day.ago
-        ss_second.update_column :updated_at, 1.year.ago
-
-        get :last_search_id
-        JSON.parse(response.body)['id'].should == ss_first.id.to_s
-      end
+      get :last_search_id
+      JSON.parse(response.body)['id'].should == ss_first.id.to_s
     end
    
     it "should return 0 if no search setups" do
