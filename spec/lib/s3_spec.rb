@@ -45,13 +45,18 @@ describe OpenChain::S3 do
       expect {OpenChain::S3.get_data(@bucket,@key)}.to raise_error "Failure"
     end
 
-    it "should retry failed downloads 3 times and rewind file arguments in between times" do
-      output_to = double("S3Object")
-      output_to.should_receive(:write).exactly(3).times.and_raise "Failure"
-      # The third time we don't rewind since we're not actually retrying
-      output_to.should_receive(:rewind).exactly(2).times
+    it "should retry failed downloads 3 times and truncate in between times" do
+      io = StringIO.new
+      io.should_receive(:truncate).with(0).exactly(2).times
+      OpenChain::S3.should_receive(:s3_file).exactly(3).times.and_raise "Failure"
+      expect {OpenChain::S3.get_data(@bucket, @key, io)}.to raise_error "Failure"
+    end
 
-      expect {OpenChain::S3.get_data(@bucket, @key, output_to)}.to raise_error "Failure"
+    it 'should retry failed downloads 3 times and rewind in between' do
+      io = double("IO")
+      io.should_receive(:rewind).exactly(2).times
+      OpenChain::S3.should_receive(:s3_file).exactly(3).times.and_raise "Failure"
+      expect {OpenChain::S3.get_data(@bucket, @key, io)}.to raise_error "Failure"
     end
 
     it 'should round trip a file to tempfile' do
