@@ -17,7 +17,7 @@ class CustomReportContainerListing < CustomReport
       :ent_pars_ack_date, :ent_pars_reject_date, :ent_cadex_accept_date,
       :ent_cadex_sent_date, :ent_exam_ordered_date, :ent_us_exit_port_code, :ent_origin_state_code, 
       :ent_export_state_code, :ent_ca_entry_type, :ent_export_date,
-      :ent_export_country_code, :ent_destination_state, :ent_total_packages,
+      :ent_export_country_codes, :ent_destination_state, :ent_total_packages,
       :ent_eta_date, :ent_docs_received_date, :ent_first_7501_print, :ent_first_do_issued_date
     ].collect do |mfid|
       m = ModelField.find_by_uid mfid
