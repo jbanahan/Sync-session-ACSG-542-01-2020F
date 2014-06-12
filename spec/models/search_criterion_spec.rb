@@ -551,6 +551,126 @@ describe SearchCriterion do
     end
   end
 
+  context "Before _ Months Ago" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"bma",:value=>1)
+    end
+
+    context "test?" do
+      it "accepts product created prior to first of the previous month" do
+        @product.created_at = 2.months.ago.end_of_month
+        expect(@sc.test?(@product)).to be_true
+      end
+
+      it "does not accept product created on first of the previous month" do
+        @product.created_at = 1.months.ago.beginning_of_month.at_midnight
+        expect(@sc.test?(@product)).to be_false
+      end
+    end
+
+    context "apply" do
+      it "finds product created prior to first of the previous month" do
+        @product.update_column :created_at, 2.months.ago.end_of_month
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created on the first of the previous month" do
+        @product.update_column :created_at, 1.months.ago.beginning_of_month.at_midnight
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "After _ Months Ago" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"ama",:value=>1)
+    end
+
+    context "test?" do
+      it "accepts product created after the first of the previous month" do
+        @product.created_at = Time.zone.now.beginning_of_month.at_midnight
+        expect(@sc.test?(@product)).to be_true
+      end
+
+      it "does not accept product created prior to the first of the previous month" do
+        @product.created_at = (Time.zone.now.beginning_of_month.at_midnight - 1.second)
+        expect(@sc.test?(@product)).to be_false
+      end
+    end
+
+    context "apply" do
+      it "finds product created prior to first of the previous month" do
+        @product.update_column :created_at, Time.zone.now.beginning_of_month.at_midnight
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created prior to the first of the previous month" do
+        @product.update_column :created_at, (Time.zone.now.beginning_of_month.at_midnight - 1.second)
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "After _ Months From Now" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"amf",:value=>1)
+    end
+
+    context "test?" do
+      it "accepts product created after 1 month from now" do
+        @product.created_at = (Time.zone.now.beginning_of_month + 2.month).at_midnight
+        expect(@sc.test?(@product)).to be_true
+      end
+
+      it "does not accept product created on last of the next month" do
+        @product.created_at = ((Time.zone.now.beginning_of_month + 2.month).at_midnight - 1.second)
+        expect(@sc.test?(@product)).to be_false
+      end
+    end
+
+    context "apply" do
+      it "finds product created after 1 month from now" do
+        @product.update_column :created_at, (Time.zone.now.beginning_of_month + 2.month).at_midnight
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created on last of the next month" do
+        @product.update_column :created_at, ((Time.zone.now.beginning_of_month + 2.month).at_midnight - 1.second)
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
+  context "Before _ Months From Now" do
+    before :each do
+      @sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"bmf",:value=>1)
+    end
+
+    context "test?" do
+      it "accepts product created before 1 month from now" do
+        @product.created_at = ((Time.zone.now.beginning_of_month + 1.month).at_midnight - 1.second)
+        expect(@sc.test?(@product)).to be_true
+      end
+
+      it "does not accept product created on first of the next month" do
+        @product.created_at = (Time.zone.now.beginning_of_month + 1.month).at_midnight
+        expect(@sc.test?(@product)).to be_false
+      end
+    end
+
+    context "apply" do
+      it "finds product created before 1 month from now" do
+        @product.update_column :created_at, ((Time.zone.now.beginning_of_month + 1.month).at_midnight - 1.second)
+        expect(@sc.apply(Product.where("1=1")).all).to include @product
+      end
+
+      it "does not find product created before 1 month from now" do
+        @product.update_column :created_at,  (Time.zone.now.beginning_of_month + 1.month).at_midnight
+        expect(@sc.apply(Product.where("1=1")).all).to_not include @product
+      end
+    end
+  end
+
   context "string field IN list" do
     it "should find something using a string field from a list of values using unix newlines" do
       sc = SearchCriterion.new(:model_field_uid=>:prod_uid, :operator=>"in", :value=>"val\n#{@product.unique_identifier}\nval2")
@@ -699,6 +819,60 @@ describe SearchCriterion do
         p.created_at = ActiveSupport::TimeZone["UTC"].parse "2013-01-01 09:59"
         sc.test?(p).should be_false
       end
+    end
+
+    it "utilize's users current time in UTC when doing days/months comparison against date time fields" do
+      sc = SearchCriterion.new(:model_field_uid=>:prod_created_at, :operator=>"bda", :value=>1)
+      now = Time.zone.now.in_time_zone 'Hawaii'
+      Time.zone.stub(:now).and_return now
+
+      current_time = "'#{now.at_midnight.in_time_zone("UTC").strftime("%Y-%m-%d %H:%M:%S")}'"
+
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+
+      sc.operator = "ada"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+      sc.operator = "adf"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+      sc.operator = "bdf"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+      sc.operator = "bma"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+      sc.operator = "ama"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+      sc.operator = "amf"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+      sc.operator = "bmf"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+      sc.operator = "pm"
+      expect(sc.apply(Product.where("1=1")).to_sql).to include current_time
+    end
+
+    it "utilize's users current date when doing days/months comparison against date fields" do
+      sc = SearchCriterion.new(:model_field_uid=>:ent_export_date, :operator=>"bda", :value=>1)
+      now = Time.zone.now.in_time_zone 'Hawaii'
+      Time.zone.stub(:now).and_return now
+
+      current_date = "'#{now.at_midnight.strftime("%Y-%m-%d %H:%M:%S")}'"
+
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+
+      sc.operator = "ada"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+      sc.operator = "adf"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+      sc.operator = "bdf"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+      sc.operator = "bma"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+      sc.operator = "ama"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+      sc.operator = "amf"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+      sc.operator = "bmf"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
+      sc.operator = "pm"
+      expect(sc.apply(Entry.where("1=1")).to_sql).to include current_date
     end
   end
 
