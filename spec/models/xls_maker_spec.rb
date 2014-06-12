@@ -263,6 +263,12 @@ describe XlsMaker do
       expect(widths[1]).to eq 19
       expect(@sheet.row(0).formats[1].number_format).to eq "YYYY-MM-DD HH:MM"
     end
+
+    it "handles format overrides" do
+      XlsMaker.insert_cell_value @sheet, 0, 0, Time.new(2014, 01, 01), [], {no_time: true, :format => Spreadsheet::Format.new(:number_format=>'MM/DD/YYYY')}
+      expect(@sheet.row(0)[0].to_s).to eq Time.new(2014, 01, 01).to_s
+      expect(@sheet.row(0).formats[0].number_format).to eq "MM/DD/YYYY"
+    end
   end
 
   describe "create_workbook" do

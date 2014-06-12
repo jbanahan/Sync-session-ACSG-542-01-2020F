@@ -61,25 +61,23 @@ QRY
       end
       def make_raw_sheet wb, entries, run_by 
         raw_sheet = wb.create_worksheet :name=>"Raw Data"
-        cursor = 0
-        row = raw_sheet.row(cursor)
-        DATA_TABLE_COLUMNS.each {|id| 
-          mf = ModelField.find_by_uid(id)
-          puts id if mf.nil?
-          row.push mf.label(false)
-        }
-        cursor += 1
+
+        XlsMaker.add_header_row raw_sheet, 0, DATA_TABLE_COLUMNS.map{|f| ModelField.find_by_uid(id).label(false) }
+
+        cursor = 1
+        column_widths = []
         entries.each do |ent|
           ent.commercial_invoices.each do |ci|
             ci.commercial_invoice_lines.each do |cil|
               cil.commercial_invoice_tariffs.each do |cit|
-                row = raw_sheet.row(cursor)
+                row = []
                 DATA_TABLE_COLUMNS.each_with_index do |id,col|
                   mf = ModelField.find_by_uid(id)
                   obj_map = {CoreModule::ENTRY=>ent,CoreModule::COMMERCIAL_INVOICE=>ci,
                     CoreModule::COMMERCIAL_INVOICE_LINE=>cil,CoreModule::COMMERCIAL_INVOICE_TARIFF=>cit}
-                  write_val raw_sheet, row, cursor, col, mf.process_export(obj_map[mf.core_module],run_by)
+                  row << mf.process_export(obj_map[mf.core_module], run_by)
                 end
+                XlsMaker.add_body_row sheet, cursor, row, column_widths
                 cursor += 1
               end
             end

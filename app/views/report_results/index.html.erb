@@ -86,6 +86,10 @@
     <tr class='hover'><td><%=link_to "H&M OK Log", reports_show_hm_ok_log_path%></td>
     <td>H&amp;M OK Log</td></tr>
   <%end-%>
+  <%if OpenChain::Report::AllianceDeferredRevenueReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Deferred Revenue", reports_show_deferred_revenue_path%></td>
+    <td>Deferred Revenue for Breakbulk Files over a specified time span.</td></tr>
+  <%end-%>
   </table>
 <% end -%>
 <% unless @customizable_reports.blank? -%>

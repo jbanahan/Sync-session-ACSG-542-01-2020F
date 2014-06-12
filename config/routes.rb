@@ -259,6 +259,8 @@ OpenChain::Application.routes.draw do
   match "/reports/run_hm_statistics" => "reports#run_hm_statistics", :via => :post
   match "/reports/show_hm_ok_log" => "reports#show_hm_ok_log", :via => :get
   match "/reports/run_hm_ok_log" => "reports#run_hm_ok_log", :via => :post
+  match "/reports/show_deferred_revenue" => "reports#show_deferred_revenue", :via => :get
+  match "/reports/run_deferred_revenue" => "reports#run_deferred_revenue", :via => :post
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member
@@ -530,6 +532,7 @@ OpenChain::Application.routes.draw do
       match "/intacct_data/receive_alliance_invoice_numbers" => "intacct_data#receive_alliance_invoice_numbers", :via => :post
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
       match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post
+      match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
     end
   end
 end

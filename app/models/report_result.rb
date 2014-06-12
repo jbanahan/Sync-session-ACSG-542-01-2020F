@@ -34,7 +34,12 @@ class ReportResult < ActiveRecord::Base
       :friendly_settings_json=>inner_opts[:friendly_settings].to_json,:settings_json=>inner_opts[:settings].to_json,
       :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id]
     )
-    rr.delay(:priority=>100).execute_report
+    if report_class.respond_to?(:alliance_report?) && report_class.alliance_report?
+      rr.delay(:priority=>100).execute_alliance_report
+    else
+      rr.delay(:priority=>100).execute_report
+    end
+    
   end
 
   def can_view? u
@@ -66,22 +71,74 @@ class ReportResult < ActiveRecord::Base
         else
           local_file = self.custom_report.run_report run_by
         end
-        self.report_data = local_file
-        self.status = "Complete"
-        self.save
-        run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
-<p>You can download it by clicking <a href='/report_results/#{self.id}/download'>here</a>.</p>
-<p>You can view the report status page by clicking <a href='/report_results/#{self.id}'>here</a>.</p>"
-        )
-      rescue
-        $!.log_me ["Report execution failure.","User: #{self.run_by.full_name}","ReportResultID: #{self.id}"]
-        self.update_attributes(:status=>"Failed",:run_errors=>$!.message)
-        run_by.messages.create(:subject=>"Report FAILED: #{name}",:body=>"<p>Your report failed to run properly.</p>
-<p>If you need immediate support, please click the Help link at the top of the screen and log a new incident.</p>")
+        complete_report local_file
+      rescue => err
+        fail_report err
       ensure
-        File.delete local_file if local_file && File.exists?(local_file)
+        file_cleanup local_file
       end
     end
+  end
+
+  def execute_alliance_report
+    User.run_with_user_settings(run_by) do
+      self.update_attributes(:status=>"Running")
+      settings = ActiveSupport::JSON.decode(self.settings_json)
+      self.report_class.constantize.run_report run_by, settings.merge('report_result_id' => self.id)
+    end
+  rescue => e
+    fail_report e
+  end
+
+  def continue_alliance_report results
+    User.run_with_user_settings(run_by) do
+      local_file = nil
+      begin
+        self.update_attributes(:status=>"Running")
+        settings = ActiveSupport::JSON.decode(self.settings_json)
+        results = results.is_a?(String) ? ActiveSupport::JSON.decode(results) : results
+        local_file = self.report_class.constantize.process_alliance_query_details run_by, results, settings
+        complete_report local_file
+      rescue => err
+        fail_report err
+      ensure 
+        file_cleanup local_file        
+      end
+    end
+  end
+
+  def file_cleanup local_file
+    return unless local_file
+
+    # There appears to be a bug with closing a File object and then calling File.exists?
+    # (currently raising IOError: closed stream - doesn't on different ruby versions (.ie jruby))
+    # So just work around it.
+    if local_file.is_a? Tempfile
+      local_file.close!
+    else
+      if File.exists?(local_file)
+        local_file.close if local_file.respond_to?(:close) && !local_file.closed?
+        File.delete(local_file)
+      end
+    end
+    nil
+  end
+
+  def complete_report local_file
+    self.report_data = local_file
+    self.status = "Complete"
+    self.save
+    run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
+<p>You can download it by clicking <a href='/report_results/#{self.id}/download'>here</a>.</p>
+<p>You can view the report status page by clicking <a href='/report_results/#{self.id}'>here</a>.</p>"
+    )
+  end
+
+  def fail_report e
+    e.log_me ["Report execution failure.","User: #{self.run_by.full_name}","ReportResultID: #{self.id}"]
+    self.update_attributes(:status=>"Failed",:run_errors=>e.message)
+    run_by.messages.create(:subject=>"Report FAILED: #{name}",:body=>"<p>Your report failed to run properly.</p>
+<p>If you need immediate support, please click the Help link at the top of the screen and log a new incident.</p>")
   end
 
   def report_content
