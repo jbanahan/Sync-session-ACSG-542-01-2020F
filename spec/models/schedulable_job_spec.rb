@@ -15,6 +15,29 @@ describe SchedulableJob do
       sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts)
       sj.run
     end
+    it "should email when successful" do
+      opts = {:a=>"b"}.to_json
+      TestSchedulable.should_receive(:run_schedulable).with('a'=>'b')
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts, success_email: "success1@email.com,success2@email.com")
+      sj.run
+
+      m = OpenMailer.deliveries.pop
+      m.to.first.should == "success1@email.com"
+      m.to.last.should == "success2@email.com"
+      m.subject.should == "[VFI Track] Scheduled Job Succeeded"
+    end
+    it "should email when unsuccessful" do
+      opts = {:a=>"b"}.to_json
+      TestSchedulable.stub(:run_schedulable).and_raise(NameError)
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts, failure_email: "failure1@email.com,failure2@email.com")
+
+      sj.run
+
+      m = OpenMailer.deliveries.pop
+      m.to.first.should == "failure1@email.com"
+      m.to.last.should == "failure2@email.com"
+      m.subject.should == "[VFI Track] Scheduled Job Failed"
+    end
   end
 
   describe :time_zone do
