@@ -4,6 +4,8 @@ class DrawbackClaim < ActiveRecord::Base
   
   validates_presence_of :importer_id
   validates_presence_of :name
+
+  has_many  :attachments, as: :attachable, dependent: :destroy
   
   before_save :set_claim_totals
 
@@ -40,6 +42,10 @@ class DrawbackClaim < ActiveRecord::Base
 
   def can_edit? user
     user.edit_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer)) 
+  end
+
+  def can_attach?(user)
+    can_edit? user
   end
 
   #find all duty calc export file lines for the importer and claim date range

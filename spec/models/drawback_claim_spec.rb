@@ -38,6 +38,20 @@ describe DrawbackClaim do
       d.errors[:name].should have(1).message
     end
   end
+  describe :can_attach? do
+    before :each do
+      @dbc = Factory(:drawback_claim)
+      @u = Factory(:user)
+    end
+    it "should be true if can_edit? is true" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return true
+      @dbc.can_attach?(@u).should == true
+    end
+    it "should be false if can_edit? is false" do
+      DrawbackClaim.any_instance.stub(:can_edit?).and_return false
+      @dbc.can_attach?(@u).should == false
+    end
+  end
   describe :percent_pieces_claimed do
     it "should calculate claim percentage by export pieces" do
       DrawbackClaim.new(:total_pieces_exported=>9,:total_pieces_claimed=>3).percent_pieces_claimed.should == 0.333
