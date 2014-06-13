@@ -22,11 +22,8 @@ describe SchedulableJob do
       sj.run
 
       m = OpenMailer.deliveries.pop
-      m.to.first.should == "success2@email.com"
-      m.subject.should == "[VFI Track] Scheduled Job Succeeded"
-
-      m = OpenMailer.deliveries.pop
       m.to.first.should == "success1@email.com"
+      m.to.last.should == "success2@email.com"
       m.subject.should == "[VFI Track] Scheduled Job Succeeded"
     end
     it "should email when unsuccessful" do
@@ -37,11 +34,8 @@ describe SchedulableJob do
       sj.run
 
       m = OpenMailer.deliveries.pop
-      m.to.first.should == "failure2@email.com"
-      m.subject.should == "[VFI Track] Scheduled Job Failed"
-
-      m = OpenMailer.deliveries.pop
       m.to.first.should == "failure1@email.com"
+      m.to.last.should == "failure2@email.com"
       m.subject.should == "[VFI Track] Scheduled Job Failed"
     end
   end

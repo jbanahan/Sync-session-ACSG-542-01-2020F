@@ -20,16 +20,12 @@ class SchedulableJob < ActiveRecord::Base
       components.each {|c| k = k.const_get(c)}
       log.info "Running schedule for #{k.to_s} with options #{opts_hash.to_s}" if log
       k.run_schedulable opts_hash
-      self.success_email.split(",").each do |address|
-        OpenMailer.send_simple_html(address,"[VFI Track] Scheduled Job Succeeded",
-          "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has succeeded.").deliver! 
-      end unless self.success_email.blank?
+      OpenMailer.send_simple_html(self.success_email,"[VFI Track] Scheduled Job Succeeded",
+          "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has succeeded.").deliver! unless self.success_email.blank?
     rescue
-      self.failure_email.split(",").each do |address|
-        OpenMailer.send_simple_html(address,"[VFI Track] Scheduled Job Failed",
+      OpenMailer.send_simple_html(self.failure_email,"[VFI Track] Scheduled Job Failed",
           "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has failed. The error message is below:<br><br>
-          #{$!.message}").deliver! 
-      end unless self.failure_email.blank?
+          #{$!.message}").deliver! unless self.failure_email.blank?
     end
   end
 
