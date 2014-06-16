@@ -1,6 +1,11 @@
 require 'open_chain/stat_client'
 class OfficialTariff < ActiveRecord::Base
 
+  LACEY_CODES ||= ["4401","4402","4403","4404","4406","4407","4408","4409",
+                    "4412", "4414", "4417", "4418", "4419", "4420", "4421",
+                    "6602", "8201", "9201", "9202", "9302", "93051020",
+                    "940169", "950420", "9703"]
+
   after_commit :update_cache
   before_save :set_common_rate
 
@@ -11,6 +16,22 @@ class OfficialTariff < ActiveRecord::Base
   validates :hts_code, :presence => true
   
   validates :hts_code, :uniqueness => {:scope => :country_id}
+
+  def lacey_act?
+    return false if self.country.iso_code != "US"
+
+    LACEY_CODES.each do |prefix|
+      return true if self.hts_code.starts_with?(prefix)
+    end
+
+    return false
+  end
+
+  def lacey_act
+    #JSON doesn't like sending methods that end in a question mark.  I'm keeping the "?"
+    #version because it's more intuitive. This is ONLY used for the controller's #find render.
+    return lacey_act?
+  end
   
   #update the database with the total number of times that each official tariff has been used
   def self.update_use_count

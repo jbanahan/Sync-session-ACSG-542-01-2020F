@@ -1,6 +1,26 @@
 require 'spec_helper'
 
 describe OfficialTariff do
+  describe :lacey_act do
+    it "should return false if the country's ISO code is not US" do
+      c = Factory(:country, iso_code: "VN")
+      t = Factory(:official_tariff, country: c)
+      t.lacey_act?.should == false
+    end
+    it "should return true if the tariff's HTS code starts with any of the Lacey Act codes" do
+      sample_lacey_codes = ["4401","4402","4403","4404","940169", "950420", "9703"]
+      c = Factory(:country, iso_code: "US")
+      sample_lacey_codes.each do |sample|
+        t = Factory(:official_tariff, hts_code: sample + "55555", country: c)
+        t.lacey_act?.should == true
+      end
+    end
+    it "should return false if the country's ISO is US but the HTS code doesn't match any Lacey Act Codes" do
+      c = Factory(:country, iso_code: "US")
+      t = Factory(:official_tariff, hts_code: "4405155555", country: c)
+      t.lacey_act?.should == false
+    end
+  end
   describe :update_use_count do
     before :each do
       OpenChain::StatClient.stub(:wall_time).and_yield

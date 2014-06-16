@@ -10,7 +10,7 @@ class OfficialTariffsController < ApplicationController
     r = []
     found.each do |k,v|
       hts = []
-      v.each {|ot| hts << {'code'=>ot.hts_code,'desc'=>ot.remaining_description,'rate'=>ot.common_rate,'use_count'=>ot.use_count}}
+      v.each {|ot| hts << {'lacey_act'=>ot.lacey_act?,'code'=>ot.hts_code,'desc'=>ot.remaining_description,'rate'=>ot.common_rate,'use_count'=>ot.use_count}}
       r << {'iso'=>k.iso_code,'country_id'=>k.id,'hts'=>hts}
     end
     r
@@ -40,7 +40,7 @@ class OfficialTariffsController < ApplicationController
         render :json => nil.to_json
       end
     else
-      render :json => ot.to_json(:include =>{:country => {:only => [:name,:iso_code]},:official_quota=>{:only=>[:category,:unit_of_measure,:square_meter_equivalent_factor]}})
+      render :json => ot.to_json(methods: :lacey_act, :include=>{:country=>{:only=>[:name]},:official_quota=>{:only=>[:category,:unit_of_measure,:square_meter_equivalent_factor]}})
     end
   end
 
