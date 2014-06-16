@@ -40,6 +40,7 @@ describe OpenChain::OhlDrawbackParser do
     tr.classification_qty_1.should == 2700
     tr.classification_uom_1.should == "NO"
     tr.entered_value.should == 1997
+    tr.duty_rate.should == BigDecimal('0.056')
   end
   it 'should map newer 31 column format' do
     ent = Entry.find_by_entry_number '11365647418'
