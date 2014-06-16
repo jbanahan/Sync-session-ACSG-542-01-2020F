@@ -65,6 +65,7 @@ describe OpenChain::OhlDrawbackParser do
     expect(tr.classification_qty_1).to eq BigDecimal('294')
     expect(tr.classification_uom_1).to eq 'DOZ'
     expect(tr.entered_value).to eq BigDecimal('14575')
+    expect(tr.duty_rate).to eq BigDecimal('0.012')
   end
   it 'should map header fields' do
     ent = Entry.find_by_entry_number '11350368418'
@@ -108,11 +109,13 @@ describe OpenChain::OhlDrawbackParser do
     first_hts.classification_qty_1.should == BigDecimal('477')
     first_hts.classification_uom_1.should == 'DOZ'
     first_hts.entered_value.should == BigDecimal('61544.00')
+    first_hts.duty_rate.should == BigDecimal('0.034')
 
     other_hts = Entry.find_by_entry_number('11350368418').commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first
     other_hts.duty_amount.should == BigDecimal('26.35')
     other_hts.classification_qty_1.should == BigDecimal('1')
     other_hts.classification_uom_1.should == 'DOZ'
+    other_hts.duty_rate.should == BigDecimal('0.17')
   end
   it 'should replace invoice lines' do
     #process again
