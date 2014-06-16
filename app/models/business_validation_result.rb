@@ -1,6 +1,6 @@
 class BusinessValidationResult < ActiveRecord::Base
   belongs_to :business_validation_template
-  belongs_to :validatable, polymorphic: true, touch: true
+  belongs_to :validatable, polymorphic: true
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_result, autosave: true
 
   def can_view? user
