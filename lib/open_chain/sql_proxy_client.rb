@@ -46,6 +46,14 @@ module OpenChain; class SqlProxyClient
     request 'entry_details', {:file_number => file_number.to_i}, request_context
   end
 
+  def self.request_advance_checks oldest_check_date
+    self.new.request_advance_checks oldest_check_date
+  end
+
+  def request_advance_checks oldest_check_date
+    request 'open_check_details', {:check_date => oldest_check_date.strftime("%Y%m%d").to_i}, {}
+  end
+
   def report_query query_name, query_params = {}, context = {}
     # We actually want this to raise an error so that it's reported in the report result, rather than just left hanging out there in a "Running" state
     request query_name, query_params, context, false

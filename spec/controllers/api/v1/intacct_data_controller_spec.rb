@@ -82,4 +82,14 @@ describe Api::V1::IntacctDataController do
       expect(response.body).to eq ({"errors" => ["Bad Request"]}.to_json)
     end
   end
+
+  describe "receive_advance_checks" do
+    it "forwards results to intacct invoice details parser" do
+      results = [{:a => "b"}]
+      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser
+      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.should_receive(:parse_advance_check_results).with results.to_json
+      post "receive_advance_checks", results: results
+      expect(response.body).to eq ({"OK" => ""}.to_json)
+    end
+  end
 end
