@@ -23,7 +23,8 @@ module OpenChain
       total_duty_direct:21,
       duty_amount:22,
       quantity:23,
-      uom:24
+      uom:24,
+      ad_valorem_rate:26
     }
     LONG_MAP ||= {
       importer_name:0,
@@ -43,7 +44,8 @@ module OpenChain
       total_duty_direct:24,
       duty_amount:25,
       quantity:26,
-      uom:27
+      uom:27,
+      ad_valorem_rate:29
     }
     SHORTER_MAP ||= {
       importer_name:0,
@@ -63,7 +65,8 @@ module OpenChain
       total_duty_direct:14,
       duty_amount:17,
       quantity:18,
-      uom:19
+      uom:19,
+      ad_valorem_rate:20
     }
 
     # parse an OHL Drawback File (sample in spec/support/bin folder)
@@ -88,7 +91,7 @@ module OpenChain
             map_to_use = LONG_MAP
           when 28
             map_to_use = SHORT_MAP
-          when 20
+          when 21
             map_to_use = SHORTER_MAP
         end 
       end
@@ -158,6 +161,7 @@ module OpenChain
       t.classification_uom_1 = row[@map[:uom]]
       t.hts_code = row[@map[:hts_code]].to_s.gsub('.','') if row[@map[:hts_code]]
       t.entered_value = row[@map[:entered_value]]
+      t.duty_rate = row[@map[:ad_valorem_rate]] > 1 ? row[@map[:ad_valorem_rate]] * 0.01 : row[@map[:ad_valorem_rate]]
       @entry.total_duty_direct += row.at(@map[:total_duty_direct]) unless row[@map[:total_duty_direct]].nil?
       @line_number += 1
     end
