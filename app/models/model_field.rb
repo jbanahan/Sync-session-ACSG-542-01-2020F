@@ -1362,7 +1362,24 @@ and classifications.product_id = products.id
         },],
         [4,:ord_cust_ord_no, :customer_order_number, "Customer Order Number"],
         [5,:ord_last_exported_from_source,:last_exported_from_source,"System Extract Date",{:data_type=>:datetime}],
-        [6,:ord_mode, :mode, "Mode of Transport",{:data_type=>:string}]
+        [6,:ord_mode, :mode, "Mode of Transport",{:data_type=>:string}],
+        [7,:ord_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
+          :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
+          :export_lambda=>lambda {|obj| obj.business_rules_state },
+          :qualified_field_name=> "(select state 
+            from business_validation_results bvr 
+            where bvr.validatable_type = 'Order' and bvr.validatable_id = orders.id 
+            order by (
+            case bvr.state
+                when 'Fail' then 0
+                when 'Review' then 1
+                when 'Pass' then 2
+                when 'Skipped' then 3
+                else 4
+            end
+            )
+            limit 1)"
+        }]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
