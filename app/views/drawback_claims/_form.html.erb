@@ -4,7 +4,7 @@
 <%end-%>
 <%=form_for @drawback_claim, :html=>{:id=>'frm_sub'} do |f|-%>
 <table>
-  <%=field_row "Importer", f.collection_select(:importer_id,Company.importers.order("name ASC"), :id, :name, :prompt=>true)%>
+  <%=field_row "Importer", f.collection_select(:importer_id,Company.importers.order("name ASC"), :id, :name_with_customer_number, :prompt=>true)%>
   <%=field_row "Name", f.text_field(:name)%>
   <%=field_row "Exports Start", f.text_field(:exports_start_date,:class=>'isdate')%>
   <%=field_row "Exports End", f.text_field(:exports_end_date,:class=>'isdate')%>
