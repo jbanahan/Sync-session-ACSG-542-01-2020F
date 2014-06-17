@@ -160,6 +160,17 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         row = r.first
         expect(row[119]).to eq 'N'
       end
+      it "should send house bill instead of master for mode 10" do
+        @entry.transport_mode_code = '10'
+        @entry.house_bills_of_lading = 'HBOL'
+        @entry.save!
+        r = []
+        described_class.new.generate_header_rows @entry do |row|
+          r << row
+        end
+        row = r.first
+        expect(row[4,35].rstrip).to eq @entry.house_bills_of_lading
+      end
       it "should make multiple headers for multiple vendors" do
         v2 = Factory(:company,system_code:'LENOX-V2')
         o2 = Factory(:order,importer:@lenox,order_number:'LENOX-o2',vendor:v2)

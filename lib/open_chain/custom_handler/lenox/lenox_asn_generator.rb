@@ -126,10 +126,12 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
         csize:cont.container_size,
         cartons:cont.quantity,
         seal:cont.seal_number,
-        fcl:(entry.transport_mode_code=='11' ? 'Y' : 'N')
+        fcl:(entry.transport_mode_code=='11' ? 'Y' : 'N'),
+        mbol:(entry.transport_mode_code=='11' ? entry.master_bills_of_lading : entry.house_bills_of_lading)
       }
     else
       vals = {
+        mbol:entry.master_bills_of_lading,
         cnum:entry.house_bills_of_lading,
         cartons:entry.total_packages,
         fcl:'N'
@@ -139,7 +141,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   def build_header_row entry, vendor_code, gross_weight, vals
     r = ""
     r << "ASNH"
-    r << @f.str(entry.master_bills_of_lading,35)
+    r << @f.str(vals[:mbol],35)
     r << @f.str(vendor_code,8)
     r << @f.str(vals[:cnum],17)
     r << @f.str(vals[:csize],10)
