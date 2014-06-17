@@ -261,4 +261,24 @@ describe Company do
       (other_company.can_view?(user)).should be_false
     end
   end
+
+  describe "name_with_customer_number" do
+    it "returns a string with the appropriate customer numbers appended to the name" do
+      c = Factory(:company, name: "My Name")
+      c.name_with_customer_number.should == "My Name"
+
+      c.fenix_customer_number = "12345"
+      c.name_with_customer_number.should == "My Name (12345)"
+
+      c.fenix_customer_number = nil
+      c.name_with_customer_number.should == "My Name"
+
+      c.alliance_customer_number = "7890"
+      c.name_with_customer_number.should == "My Name (7890)"
+
+      c.fenix_customer_number = "ABCD"
+      c.name_with_customer_number.should == "My Name (ABCD) (7890)"
+    end
+  end
+
 end
