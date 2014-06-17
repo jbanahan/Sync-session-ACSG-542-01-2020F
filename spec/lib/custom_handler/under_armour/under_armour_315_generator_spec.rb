@@ -131,7 +131,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
       REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/@Id").value.should eq @entry_data[:shipment_identifier]
       REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/Shipment/@Id").value.should eq @entry_data[:shipment_identifier]
       REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/@DocSource").value.should eq "Vande"
-      REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/Shipment/Event/EventLocation/@InternalId").value.should eq "VFI CA"
+      REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/Shipment/Event/EventLocation/@InternalId").value.should eq "VFICA"
       REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/Shipment/Event/@Id").value.should eq sha
       REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/Shipment/Event/@Code").value.should eq @entry_data[:event_code]
       REXML::XPath.first(@xml_data, "/tXML/Message/MANH_TPM_Shipment/Shipment/Event/@DateTime").value.should eq @entry_data[:date].in_time_zone("GMT").iso8601[0..-7]
