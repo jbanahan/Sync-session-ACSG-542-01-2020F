@@ -92,9 +92,10 @@ class EntriesController < ApplicationController
     format.json {
       
       r = {
-        entry_number:e.entry_number,
+        object_number:e.entry_number,
         state:e.business_rules_state,
-        entry_updated_at:e.updated_at,
+        object_updated_at:e.updated_at,
+        single_object:"Entry",
         bv_results:[]
       }
       e.business_validation_results.each do |bvr|

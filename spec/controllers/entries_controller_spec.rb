@@ -36,7 +36,8 @@ describe EntriesController do
       get :validation_results, id: @ent.id, format: :json
       expect(response).to be_success
       h = JSON.parse(response.body)['business_validation_result']
-      expect(h['entry_number']).to eq @ent.entry_number
+      expect(h['object_number']).to eq @ent.entry_number
+      expect(h['single_object']).to eq "Entry"
       expect(h['state']).to eq @bvr.state
       bv_results = h['bv_results']
       expect(bv_results.length).to eq 1

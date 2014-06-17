@@ -129,9 +129,10 @@ class OrdersController < ApplicationController
     format.json {
       
       r = {
-        order_number:o.order_number,
+        object_number:o.order_number,
         state:o.business_rules_state,
-        order_updated_at:o.updated_at,
+        object_updated_at:o.updated_at,
+        single_object:"Order",
         bv_results:[]
       }
       o.business_validation_results.each do |bvr|

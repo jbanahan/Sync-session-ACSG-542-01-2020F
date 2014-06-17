@@ -1,6 +1,6 @@
-app = angular.module('OrderValidationResultsApp',['ChainComponents'])
+app = angular.module('CoreObjectValidationResultsApp',['ChainComponents'])
 
-app.factory 'orderValidationResultsSvc', ['$http',($http) ->
+app.factory 'coreObjectValidationResultsSvc', ['$http',($http) ->
   {
     states: ["Pass","Review","Fail","Skipped"]
     #converts rule state to Bootstrap contextual value
@@ -22,8 +22,8 @@ app.factory 'orderValidationResultsSvc', ['$http',($http) ->
         when 'Skipped' then r = 'glyphicon-minus'
       r
 
-    loadRuleResult: (orderId) ->
-      $http.get('/orders/'+orderId+'/validation_results.json')
+    loadRuleResult: (pluralObject, objectId) ->
+      $http.get('/' + pluralObject + '/' + objectId + '/validation_results.json')
 
     saveRuleResult: (result,ruleResult) ->
       p = $http.put('/business_validation_rule_results/'+ruleResult.id+'.json',{business_validation_rule_result:ruleResult})
@@ -40,18 +40,18 @@ app.factory 'orderValidationResultsSvc', ['$http',($http) ->
   }
 ]
 
-app.controller 'orderValidationResultsCtrl', ['$scope','orderValidationResultsSvc',($scope,orderValidationResultsSvc) ->
-  $scope.svc = orderValidationResultsSvc
+app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidationResultsSvc',($scope,coreObjectValidationResultsSvc) ->
+  $scope.svc = coreObjectValidationResultsSvc
   $scope.ruleResultToEdit = null
   $scope.editRuleResult = (rr) ->
     $scope.ruleResultToEdit = rr
   $scope.saveRuleResult = (rr) ->
-    p = orderValidationResultsSvc.saveRuleResult $scope.result, rr
+    p = coreObjectValidationResultsSvc.saveRuleResult $scope.result, rr
     p.success () ->
       $scope.editRuleResult data.save_response.rule_result
 
-  $scope.loadOrder = (orderId) ->
-    p = orderValidationResultsSvc.loadRuleResult orderId
+  $scope.loadObject = (pluralObject, objectId) ->
+    p = coreObjectValidationResultsSvc.loadRuleResult pluralObject, objectId
     p.success (data) ->
       $scope.result = data['business_validation_result']
 ]

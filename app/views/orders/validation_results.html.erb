@@ -1,75 +1,10 @@
 <%content_for :javascript do%>
   $('document').ready(function() {
-    $('div[ng-controller]').scope().loadOrder(<%=@order.id%>);
+    $('div[ng-controller]').scope().loadObject('orders', <%=@order.id%>);
   });
 <%end%>
 <%content_for :action_bar do%>
   <button class='btn_link' link_to='<%=order_path(@order)%>'>Order</button>
 <%end%>
-<div ng-app='OrderValidationResultsApp'>
-  <div id='validation_result_wrapper' class="container" ng-controller='orderValidationResultsCtrl'>
-    <div class="row" style="margin-bottom:20px;">
-      <div class='col-md-12'>
-        <h1 class='page_title' ng-class='svc.stateToBootstrap("text",result.state)'>Order: {{result.order_number}}</h1>
-      </div>
-    </div>
-    <h3 ng-show='result && result.bv_results.length==0'>No validations have been run for this order.</h3>
-    <div class="row">
-      <div class="col-md-6">
-        <div ng-repeat='bvr in result.bv_results'>
-          <div class="panel" ng-class='svc.stateToBootstrap("panel",bvr.state)'>
-            <div class="panel-heading">
-              <h3 class='panel-title'>
-                {{bvr.template.name}} - {{bvr.state}}
-              </h3>
-            </div>
-            <div class="panel-body">
-              <div ng-show="bvr.updated_at < result.order_updated_at" class='alert-warning'>
-                This order has been updated recently and is queued to have its business rules revalidated.  Please check back in a few minutes.
-              </div>
-              <div ng-repeat="rr in bvr.rule_results">
-                <span ng-class='svc.stateToBootstrap("text",rr.state)'>
-                  <span class='glyphicon' ng-class="svc.stateToGlyphicon(rr.state)"></span>
-                  <a href='' ng-click='editRuleResult(rr)' title='{{rr.rule.description}}'>
-                    {{rr.rule.name}} - {{rr.state}}
-                  </a>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div ng-show='ruleResultToEdit' class='panel' ng-class='svc.stateToBootstrap("panel",ruleResultToEdit.state)'>
-          <div class="panel-heading">
-            <h3 class='panel-title'>
-              <span class='glyphicon' ng-class="svc.stateToGlyphicon(ruleResultToEdit.state)"></span>
-              {{ruleResultToEdit.rule.name}}
-            </h3>
-          </div>
-          <div class='panel-body'>
-            <div>
-              <strong>Rule Description</strong><br/>
-              {{ruleResultToEdit.rule.description}}
-            </div>
-            <div>
-              <strong>System Messages</strong>
-              <br>
-              <pre>{{ruleResultToEdit.message}}</pre>
-            </div>
-            <select ng-model='ruleResultToEdit.state' ng-options='s for s in svc.states' class='form-control'>
-            </select>
-            <textarea ng-model='ruleResultToEdit.note' class='form-control'></textarea>
-            <div ng-show='ruleResultToEdit.overridden_at' class='text-right text-muted'>
-              Last Edited By {{ruleResultToEdit.overridden_by.full_name}} @ {{ruleResultToEdit.overridden_at}}
-            </div>
-          </div>
-          <div class='panel-footer text-right'>
-            <button ng-click='saveRuleResult(ruleResultToEdit)' class='btn btn-primary'>Save</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-</div>
+
+<%= render 'shared/validation_results' %>
