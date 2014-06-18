@@ -96,6 +96,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << time_and_user
       r << @f.num(order_line.price_per_unit,18,6)
       r << @f.num(ln.unit_price,18,6)
+      r << @f.str(order_line.order.vendor.system_code.gsub('LENOX-',''),8)
       yield r
     end
   end

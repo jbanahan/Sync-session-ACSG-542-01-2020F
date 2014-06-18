@@ -240,9 +240,11 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[312,15].rstrip).to eq 'vanvendortest'
         expect(row[327,18]).to eq '000000000100250000' #100.25 / unit (order)
         expect(row[345,18]).to eq '000000000100100000' #110.10 / unit
+        expect(row[363,8].rstrip).to eq 'VENCODE'
+
 
         #double check no extra characters
-        expect(row.size).to eq 363
+        expect(row.size).to eq 371
       end
       it "should throw exception if part not found" do
         Product.scoped.destroy_all
