@@ -258,6 +258,13 @@ class Company < ActiveRecord::Base
     self.master? && master_setup.project_enabled?
   end
 
+  def name_with_customer_number
+    n = self.name
+    n += " (#{self.fenix_customer_number})" unless self.fenix_customer_number.blank?
+    n += " (#{self.alliance_customer_number})" unless self.alliance_customer_number.blank?
+    n
+  end
+
 	
 	private 
 

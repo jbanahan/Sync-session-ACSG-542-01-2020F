@@ -238,14 +238,19 @@ class ModelField
     ]
     r << [rank_start+1,"#{uid_prefix}_#{short_prefix}_name".to_sym, :name,"#{description} Name",{
       :import_lambda => lambda {|obj,data|
-        comp = Company.where(:name => data).where(association_name.to_sym => true).first
-        unless comp.nil?
-          obj.send("#{association_name}=".to_sym,comp)
-          return "#{description} set to #{comp.name}"
+        if data.blank?
+          obj.send("#{association_name}=".to_sym, nil)
+          return "#{description} set to blank."
         else
-          comp = Company.create(:name=>data,association_name.to_sym=>true)
-          obj.send("#{association_name}=".to_sym,comp)
-          return "#{description} auto-created with name \"#{data}\""
+          comp = Company.where(:name => data).where(association_name.to_sym => true).first
+          unless comp.nil?
+            obj.send("#{association_name}=".to_sym,comp)
+            return "#{description} set to #{comp.name}"
+          else
+            comp = Company.create(:name=>data,association_name.to_sym=>true)
+            obj.send("#{association_name}=".to_sym,comp)
+            return "#{description} auto-created with name \"#{data}\""
+          end
         end
       },
       :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).name},
@@ -254,12 +259,17 @@ class ModelField
     }]
     r << [rank_start+2,"#{uid_prefix}_#{short_prefix}_syscode".to_sym,:system_code,"#{description} System Code", {
       :import_lambda => lambda {|obj,data|
-        comp = Company.where(:system_code=>data,association_name.to_sym=>true).first
-        unless comp.nil?
-          obj.send("#{association_name}=".to_sym,comp)
-          return "#{description} set to #{comp.name}"
+        if data.blank?
+          obj.send("#{association_name}=".to_sym, nil)
+          return "#{description} set to blank."
         else
-          return "#{description} not found with code \"#{data}\""
+          comp = Company.where(:system_code=>data,association_name.to_sym=>true).first
+          unless comp.nil?
+            obj.send("#{association_name}=".to_sym,comp)
+            return "#{description} set to #{comp.name}"
+          else
+            return "#{description} not found with code \"#{data}\""
+          end
         end
       },
       :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).system_code},

@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     <MANH_TPM_Shipment Version="8.1.0" Timestamp="#{xml_date_value(Time.zone.now)}" Id=#{data[:shipment_identifier].encode(:xml=>:attr)} DocSourceType="2" DocSource="Vande">
       <Shipment Id="#{data[:shipment_identifier]}">
         <Event Id="#{data_hash}" Code="#{data[:event_code]}" DateTime="#{xml_date_value(data[:date])}" Action="1">
-          <EventLocation InternalId="VFI CA" />
+          <EventLocation InternalId="VFICA" />
         </Event>
       </Shipment>
     </MANH_TPM_Shipment>

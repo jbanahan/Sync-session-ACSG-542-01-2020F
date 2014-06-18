@@ -80,6 +80,9 @@ class EntitySnapshot < ActiveRecord::Base
       if obj_hash['children']
         obj_hash['children'].each do |c|
           c_hash = c['entity']
+          # No need to weed out records we know won't have an id to delete
+          next if c_hash['record_id'].blank?
+
           child_core_module = CoreModule.find_by_class_name c_hash['core_module']
           good_children[child_core_module] ||= [0]
           good_children[child_core_module] << c_hash['record_id']
@@ -91,8 +94,12 @@ class EntitySnapshot < ActiveRecord::Base
         core_module.child_lambdas[cm].call(obj).where("NOT #{cm.table_name}.id IN (?)",good_ids).destroy_all
       end
 
-      #then we create/update children based on hash
-      obj_hash['children'].each {|c| recursive_restore c['entity'], user, obj} if obj_hash['children']
+      # Then we create/update children based on hash
+
+      # Skipping children without record_ids is primarily a workaround for buggy snapshot records...not exactly sure at the moment
+      # why we appear to be getting child entity records with null record ids that appear to be 
+      # duplicate records. .ie two classification records for same country, one without a record id.
+      obj_hash['children'].each {|c| recursive_restore(c['entity'], user, obj) unless c['entity']['record_id'].blank?} if obj_hash['children']
     end
     obj.save!
     unless custom_values.empty?
