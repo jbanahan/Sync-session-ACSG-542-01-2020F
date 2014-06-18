@@ -107,14 +107,14 @@ describe OpenChain::ScheduleSupport do
       now = Time.now.utc
       @ss.next_run_time.should == Time.utc(now.year,now.month,now.day,now.hour+1)
     end
-    it "should return a time in the future if none of the run days or day of month are set"do
+    it "should return nil if none of the run days or day of month are set"do
       @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u),:last_start_time=>1.year.ago,:run_hour => 23)
-      @ss.next_run_time.should > Time.now
+      expect(@ss.next_run_time).to be_nil
     end
-    it "should return a time in the future if run hour is not set" do
+    it "should return nil if run hour is not set" do
       tz_str = "Eastern Time (US & Canada)"
       @ss.run_hour = nil
-      @ss.next_run_time.should > Time.now
+      expect(@ss.next_run_time).to be_nil
     end
     it "should identify next_run_time with minute_to_run set " do
       tz_str = "Eastern Time (US & Canada)"
@@ -141,5 +141,52 @@ describe OpenChain::ScheduleSupport do
       end
     end
 =end
+  end
+
+  describe "next_run_time" do
+    before :each do 
+      c = class FakeSchedulable 
+        include OpenChain::ScheduleSupport
+      end
+
+      @s = c.new
+      @last_start = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01")
+      @s.stub(:last_start_time).and_return @last_start
+    end
+
+    it "uses interval string to determine next runtime" do
+      @s.stub(:interval).and_return "1m"
+      @s.stub(:wednesday_active?).and_return true
+
+      expect(@s.next_run_time).to eq (@last_start + 1.minute).utc
+    end
+
+    it "handles interval hours" do
+      @s.stub(:interval).and_return "1h"
+      @s.stub(:wednesday_active?).and_return true
+
+      expect(@s.next_run_time).to eq (@last_start + 1.hour)
+    end
+
+    it "handles mixed intervals" do
+      @s.stub(:interval).and_return "1h30m"
+      @s.stub(:wednesday_active?).and_return true
+
+      expect(@s.next_run_time).to eq (@last_start + 1.hour + 30.minutes)
+    end
+
+    it "does not run on days that are not configured in the schedule" do
+      # Jan 1, 2014 was a wednesday, so the next run time should 
+      # be Jan 2 (thurs), midnight
+      @s.stub(:interval).and_return "1h"
+      @s.stub(:thursday_active?).and_return true
+
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-02").utc
+    end
+
+    it "returns nil if no day is configured to run on" do
+      @s.stub(:interval).and_return "1h"
+      expect(@s.next_run_time).to be_nil
+    end
   end
 end
