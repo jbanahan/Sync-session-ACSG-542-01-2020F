@@ -39,7 +39,7 @@ root.Chain =
   # generates html string for  a bootstrap error panel
   makeErrorPanel: (message) ->
     "<div class='container'><div class='panel panel-danger'><div class='panel-heading'><h3 class='panel-title'>Error</h3></div><div class='panel-body'>"+message+"</div></div></div>"
-  
+
   setStorageItem: (name, value) ->
     if (typeof(Storage) == undefined)
       return null
