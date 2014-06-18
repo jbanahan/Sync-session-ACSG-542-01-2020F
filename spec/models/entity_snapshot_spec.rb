@@ -110,6 +110,14 @@ describe EntitySnapshot do
         restored = @first_snapshot.restore @u
         restored.classifications.first.get_custom_value(cd).value.should == 'x'
       end
+
+      it "should skip child records with blank record ids" do
+        j = JSON.parse @first_snapshot.snapshot
+        j['entity']['children'][0]['entity']['record_id'] = nil
+        @first_snapshot.snapshot = j.to_json
+        restored = @first_snapshot.restore @u
+        expect(restored.classifications.size).to eq 0
+      end
     end
 
   end
