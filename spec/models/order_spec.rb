@@ -5,6 +5,7 @@ describe Order do
   before :each do
     LinkedAttachment.destroy_all
   end
+
   describe 'linkable attachments' do
     it 'should have linkable attachments' do
       o = Factory(:order,:order_number=>'ordn')
@@ -89,6 +90,22 @@ describe Order do
 
         @user.company.linked_company_ids = [order.importer.id]
         expect(order.can_view? @user).to be_true
+      end
+
+      it "allows user to view if linked company is order vendor" do
+        order.vendor = Factory(:company, vendor: true)
+
+        @user.company.linked_company_ids = [order.vendor.id]
+        expect(order.can_view? @user).to be_true
+      end
+
+      it "allows a vendor to view their orders" do
+        vendor = Factory(:company, vendor: true)
+        order.vendor = vendor
+        u = Factory(:user, company: vendor)
+        u.stub(:view_orders?).and_return true
+
+        expect(order.can_view? u).to be_true
       end
     end
 

@@ -22,13 +22,20 @@ class Order < ActiveRecord::Base
 	end
 	
 	def can_view?(user)
-	  return user.view_orders? && (user.company.master || (user.company.vendor && user.company_id == self.vendor_id) || (user.company.importer && user.company_id = self.importer_id) ||
+	  return user.view_orders? && (user.company.master || (user.company_id == self.vendor_id) || (user.company_id == self.importer_id) ||
         user.company.linked_companies.include?(importer) || user.company.linked_companies.include?(vendor))
 	end
 	
-	def can_edit?(user)
-	  return user.edit_orders?
-	end
+  def self.search_where user
+    return "1=1" if user.company.master?
+    cid = user.company_id
+    lstr = "(SELECT child_id FROM linked_companies WHERE parent_id = #{cid})"
+    "(orders.vendor_id = #{cid} OR orders.vendor_id IN #{lstr} OR orders.importer_id = #{cid} OR orders.importer_id IN #{lstr})"
+  end
+
+  def can_edit?(user)
+    return user.edit_orders?
+  end
 
   def can_comment? user
     return user.comment_orders? && self.can_view?(user)
@@ -37,8 +44,8 @@ class Order < ActiveRecord::Base
   def can_attach? user
     return user.attach_orders? && self.can_view?(user)
   end
-	
-	def self.find_by_vendor(vendor)
+  
+  def self.find_by_vendor(vendor)
     return Order.where({:vendor_id => vendor})
   end
   
@@ -75,17 +82,6 @@ class Order < ActiveRecord::Base
     base_object.where search_where user
   end
 
-  def self.search_where user
-    if user.company.master
-      return "1=1"
-    elsif user.company.vendor
-      return "orders.vendor_id = #{user.company_id}"
-    elsif user.company.importer
-      return "orders.importer_id = #{user.company_id}"
-    else
-      return "1=0"
-    end
-  end
 
   def worst_milestone_state
     return nil if self.piece_sets.blank?
