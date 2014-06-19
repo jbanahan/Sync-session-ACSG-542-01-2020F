@@ -47,6 +47,17 @@ module Api; module V1; class ApiController < ActionController::Base
     r = k.to_a.collect {|obj| obj_to_json_hash(obj)}
     render json:{results:r,page:page,per_page:per_page}
   end
+
+  def render_show core_module
+    obj = core_module.klass.find_by_id params[:id]
+    raise StatusableError.new("Not Found",404) unless obj && obj.can_view?(current_user)
+    render json:{core_module.class_name.underscore => obj_to_json_hash(obj)}
+  end
+
+  #helper method to get model_field_uids for custom fields
+  def custom_field_keys core_module
+    core_module.model_fields.keys.collect {|k| k.to_s.match(/\*cf_/) ? k : nil}.compact
+  end
   
   class StatusableError < StandardError
     attr_accessor :http_status, :errors

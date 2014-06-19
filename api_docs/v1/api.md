@@ -109,6 +109,50 @@ _Currently, you can only search and sort using fields from the top level of the 
 
 **FINISH THIS SECTION**
 
+## Shipment
+
+Represents the movement of goods.
+
+In order to build a container based shipment, you must first save the shipment and with the containers then save the lines.  This is because each line must container the 'shpln_container_uid' value in order to be assigned to the container.
+
+### Data Object
+```
+{shipment:
+  #HEADER INFO
+  shp_ref: 'MYSHIPREF'
+  shp_mode: 'Air'
+  shp_ven_name: 'Vendor Name'
+  shp_ven_syscode: 'VENSYSCODE' #unique system code for vender
+  shp_ship_to_name: 'Joe Warehouse'
+  shp_ship_from_name: 'My Factory'
+  shp_car_name: 'Vandegrift Logistics'
+  shp_car_syscode: 'VFILOG' #unique system code for carrier
+  *cf_99: 'VAL' #custom field value for custom definition 99, see the custom values section of this documentation for more info
+  lines: [{
+    shpln_line_number: 1 #sequential line number for this line on the shipment
+    shpln_shipped_qty: 1.23 #quantity shipped
+    shpln_puid: 'PARTNUM' #unique ID of product shipped
+    shpln_pname: 'CHAIR' #product name
+    shpln_container_uid: 123 #database id of container
+    shpln_container_number: 'ABCD12345' 
+    shpln_container_size: '40HC'
+    *cf_1: 'VAL' #custom field value for custom definition 1, see the custom values section of this documentation for more info
+    }]
+  containers: [{
+    con_uid: 123 #database id of container
+    con_container_number: 'ABCD12345'
+    con_container_size: '40HC'
+    con_size_description: '40FT HIGH CUBE'
+    con_weight: 100
+    con_seal_number: 'ABC555'
+    con_teus: 2
+    con_fcl_lcl: 'fcl' #fcl for full container, lcl for LCL shipment within consolidated container
+    con_quantity: 10 #AMS reporting quantity (usually in cartons)
+    con_uom: 'CTNS' #AMS reporting unit of measure (usually CTNS)
+    }]
+  }
+```
+
 ## CommercialInvoice
 
 Represents a commercial invoice which may or may not be part of a CustomsEntry

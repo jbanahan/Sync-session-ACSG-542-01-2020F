@@ -225,6 +225,13 @@ class CoreModule
       :enabled_lambda => lambda { MasterSetup.get.order_enabled? },
       :key_model_field_uids => [:ord_ord_num]
     })
+  CONTAINER = new("Container", "Container", {
+    show_field_prefix: false,
+    unique_id_field_name: :con_num,
+    object_from_piece_set_lambda: lambda {|ps| ps.shipment_line.nil? ? nil : sp.shipment_line.container},
+    enabled_lambda: lambda {MasterSetup.get.shipment_enabled?},
+    key_model_field_uids: [:con_uid]
+    })
   SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:shpln_line_number,

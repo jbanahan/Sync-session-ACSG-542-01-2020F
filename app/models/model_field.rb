@@ -638,6 +638,7 @@ class ModelField
     ModelField.add_custom_fields(CoreModule::PRODUCT,Product)
     ModelField.add_custom_fields(CoreModule::CLASSIFICATION,Classification)
     ModelField.add_custom_fields(CoreModule::TARIFF,TariffRecord)
+    ModelField.add_custom_fields(CoreModule::CONTAINER,Container)
     ModelField.add_custom_fields(CoreModule::SHIPMENT,Shipment)
     ModelField.add_custom_fields(CoreModule::SHIPMENT_LINE,ShipmentLine)
     ModelField.add_custom_fields(CoreModule::SALE,SalesOrder)
@@ -1467,10 +1468,41 @@ and classifications.product_id = products.id
       
       add_fields CoreModule::SHIPMENT_LINE, [
         [1,:shpln_line_number,:line_number,"Shipment - Row",{:data_type=>:integer}],
-        [2,:shpln_shipped_qty,:quantity,"Shipment Row Quantity",{:data_type=>:decimal}]
+        [2,:shpln_shipped_qty,:quantity,"Shipment Row Quantity",{:data_type=>:decimal}],
+        [3,:shpln_container_number,:container_number,"Container Number",{data_type: :string,
+          export_lambda: lambda {|sl| sl.container ? sl.container.container_number : ''},
+          import_lambda: lambda {|o,d| "Container Number cannot be set via import."},
+          qualified_field_name: "(SELECT container_number FROM containers WHERE containers.id = shipment_lines.container_id)"
+          }],
+        [4,:shpln_container_size,:container_size,"Container Size",{data_type: :string,
+          export_lambda: lambda {|sl| sl.container ? sl.container.container_size : ''},
+          import_lambda: lambda {|o,d| "Container Size cannot be set via import."},
+          qualified_field_name: "(SELECT container_size FROM containers WHERE containers.id = shipment_lines.container_id)"
+          }],
+        [5,:shpln_container_uid,:container_id,"Container Unique ID",{data_type: :integer,
+          import_lambda: lambda {|sl,id| 
+            con = Container.find_by_id id
+            return "Container with ID #{id} not found. Ignored." unless con
+            return "#{ModelField.find_by_uid(:shpln_container_uid).label} is not part of this shipment and was ignored." unless con.shipment_id == sl.shipment_id
+            sl.container_id = con.id
+            "#{ModelField.find_by_uid(:shpln_container_uid).label} set to #{con.id}."
+          }
+          }]
       ]
       add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
 
+      add_fields CoreModule::CONTAINER, [
+        [1,:con_uid,:id,"Unique ID",{data_type: :string}],
+        [2,:con_container_number,:container_number,"Container Number",{data_type: :string}],
+        [3,:con_container_size,:container_size,"Size",{data_type: :string}],
+        [4,:con_size_description,:size_description,"Size Description",{data_type: :string}],
+        [5,:con_weight,:weight,"Weight",{data_type: :string}],
+        [6,:con_seal_number,:seal_number,"Seal Number",{data_type: :string}],
+        [7,:con_teus,:teus,"TEUs",{data_type: :integer}],
+        [8,:con_fcl_lcl,:fcl_lcl,"Full Container",{data_type: :string}],
+        [9,:con_quantity,:quantity,"AMS Qauntity",{data_type: :integer}],
+        [10,:con_uom,:uom,"AMS UOM",{data_type: :string}]
+      ]
 
       add_fields CoreModule::SALE, [
         [1,:sale_order_number,:order_number,"Sale Number",{:data_type=>:string}],

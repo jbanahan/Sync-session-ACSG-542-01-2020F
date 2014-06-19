@@ -2,7 +2,8 @@ class ShipmentLine < ActiveRecord::Base
   include LinesSupport
   include CustomFieldSupport
   include ShallowMerger
-  belongs_to :shipment
+  belongs_to :shipment, inverse_of: :shipment_lines
+  belongs_to :container, inverse_of: :shipment_lines
 
   validates_uniqueness_of :line_number, :scope => :shipment_id	
   

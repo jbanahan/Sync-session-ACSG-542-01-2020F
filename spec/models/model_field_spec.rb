@@ -511,6 +511,52 @@ describe ModelField do
       ModelField.find_by_uid(:prod_uid).process_query_parameter(p).should == "abc"
     end
 
+    context "shipment_lines" do
+      it "should show container number" do
+        con = Factory(:container,entry:nil,container_number:'CN123')
+        sl = Factory(:shipment_line,container:con)
+        mf = ModelField.find_by_uid(:shpln_container_number)
+        expect(mf.process_export(sl,nil,true)).to eq 'CN123'
+
+        sc = SearchCriterion.new(operator:'eq',model_field_uid:'shpln_container_number',value:'CN123')
+        expect(sc.apply(Shipment).to_a).to eq [sl.shipment]
+      end
+      it "should show container size" do
+        con = Factory(:container,entry:nil,container_size:'40HC')
+        sl = Factory(:shipment_line,container:con)
+        mf = ModelField.find_by_uid(:shpln_container_size)
+        expect(mf.process_export(sl,nil,true)).to eq '40HC'
+
+        sc = SearchCriterion.new(operator:'eq',model_field_uid:'shpln_container_size',value:'40HC')
+        expect(sc.apply(Shipment).to_a).to eq [sl.shipment]
+      end
+      context :container_uid do
+        before :each do
+          @mf = ModelField.find_by_uid(:shpln_container_uid)
+        end
+        it "should show container uid" do
+          con = Factory(:container,entry:nil)
+          sl = Factory(:shipment_line,container:con)
+          expect(@mf.process_export(sl,nil,true)).to eq con.id
+
+          sc = SearchCriterion.new(operator:'eq',model_field_uid:'shpln_container_uid',value:con.id.to_s)
+          expect(sc.apply(Shipment).to_a).to eq [sl.shipment]
+        end
+        it "should not allow you to set a container that is already on a different shipment" do
+          con = Factory(:container,shipment:Factory(:shipment))
+          sl = Factory(:shipment_line)
+          expect(@mf.process_import(sl,con.id)).to eq "#{@mf.label} is not part of this shipment and was ignored."
+          sl.reload
+          expect(sl.container).to be_nil
+        end
+        it "should allow you to set a container that is already on the shipment" do
+          sl = Factory(:shipment_line)
+          con = Factory(:container,entry:nil,shipment:sl.shipment)
+          expect(@mf.process_import(sl,con.id)).to eq "#{@mf.label} set to #{con.id}."
+        end
+      end
+      end
+
     context "broker_invoice_total" do
       before :each do
         MasterSetup.get.update_attributes(:broker_invoice_enabled=>true)

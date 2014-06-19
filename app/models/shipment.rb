@@ -6,7 +6,8 @@ class Shipment < ActiveRecord::Base
 	belongs_to	:ship_to,	:class_name => "Address"
   belongs_to :importer, :class_name=>"Company"
 	
-	has_many   :shipment_lines, :dependent => :destroy
+	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment
+  has_many   :containers, dependent: :destroy, inverse_of: :shipment
   has_many   :piece_sets, :through=>:shipment_lines
 
   validates  :vendor, :presence => true
