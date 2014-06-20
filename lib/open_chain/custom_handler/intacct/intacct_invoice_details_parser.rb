@@ -378,6 +378,17 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
 
       p.save!
     end
+
+    # Send up all the referenced broker and freight file dimensions
+    broker_files = p.intacct_payable_lines.map(&:broker_file).uniq.compact
+    broker_files.each do |bf|
+      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Broker File", bf, bf)
+    end
+
+    freight_files = p.intacct_payable_lines.map(&:freight_file).uniq.compact
+    freight_files.each do |ff|
+      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Freight File", ff, ff)
+    end
   end
 
   private 

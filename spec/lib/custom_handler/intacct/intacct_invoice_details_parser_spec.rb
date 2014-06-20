@@ -486,6 +486,10 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "creates an advanced check payable" do
+      OpenChain::CustomHandler::Intacct::IntacctClient.stub(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Freight File", @line["freight file number"], @line["freight file number"])
+
       @p.parse_advance_check_results [@line]
 
       p = IntacctPayable.where(bill_number: @line['invoice number']).first
