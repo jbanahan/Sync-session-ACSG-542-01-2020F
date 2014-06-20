@@ -81,7 +81,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       order_line = get_order_line(ln)
       raise LenoxBusinessLogicError.new("Order Line couldn't be found for order #{ln.po_number}, part #{ln.part_number}") if order_line.nil?
       r = "ASND"
-      r << @f.str(entry.master_bills_of_lading,35)
+      r << @f.str(vals[:mbol],35)
       r << @f.str(vals[:cnum],17)
       r << @f.num(i+1,10)
       r << @f.str(get_order_custom_value(:order_factory_code,ln),10)
