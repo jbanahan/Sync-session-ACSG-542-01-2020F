@@ -37,12 +37,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
 
       brokerage_payables.each_pair do |key, payable_lines|
         p = create_payable key, payable_lines
-        merge_file_numbers(lines, extract_file_numbers(p))
+        merge_file_numbers(lines, extract_file_numbers(p)) if p
       end
 
       lmd_payables.each_pair do |key, payable_lines|
         p = create_payable key, payable_lines
-        merge_file_numbers(lines, extract_file_numbers(p))
+        merge_file_numbers(lines, extract_file_numbers(p)) if p
       end
 
       lines[:broker_file].each do |bf|
