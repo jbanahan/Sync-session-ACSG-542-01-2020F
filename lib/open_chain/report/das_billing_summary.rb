@@ -26,13 +26,13 @@ module OpenChain
         # The case statement in the inner query for the LVS is there so that we still are reporting historical entries using the old $1600 LVS limit
         # and going forward utilize the $2500 limit
         summary_qry = <<QRY
-select `Entry Number`, `Total Value By Entry`, `Invoice Lines`, `Billable Lines`, (`Billable Lines` * if(`lvs`,0.4,0.5)) as "Line Charge", 
+select `Web Links`, `Entry Number`, `Total Value By Entry`, `Invoice Lines`, `Billable Lines`, (`Billable Lines` * if(`lvs`,0.4,0.5)) as "Line Charge", 
 if(`lvs`,45,85) as `Brokerage Charge`, `Total Duty`, `Total GST`
 from (
-select `Id`, `Entry Number`, `Entered Value` as `Total Value By Entry`, count(*) as `Invoice Lines`,
+select `Web Links`, `Entry Number`, `Entered Value` as `Total Value By Entry`, count(*) as `Invoice Lines`,
 if(count(*)>10,count(*)-10,0) as "Billable Lines", (CASE WHEN `Cadex Sent` > '2013-12-02 05:00' THEN if(`Entered Value` > 2500,false,true) ELSE if(`Entered Value` > 1600,false,true) END) as "lvs", `Total Duty`, `Total GST`
 from (
-select distinct cil.country_origin_code, ent.id as `Id`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST`, ent.cadex_sent_date as `Cadex Sent`
+select distinct cil.country_origin_code, ent.id as `Web Links`, ent.entered_value as `Entered Value`, ent.entry_number as `Entry Number`, cit.hts_code, ent.total_duty as `Total Duty`, ent.total_gst as `Total GST`, ent.cadex_sent_date as `Cadex Sent`
 from entries ent
 inner join commercial_invoices ci on ci.entry_id = ent.id
 inner join commercial_invoice_lines cil on cil.commercial_invoice_id = ci.id
@@ -40,7 +40,7 @@ inner join commercial_invoice_tariffs cit on cil.id = cit.commercial_invoice_lin
 where ent.importer_tax_id = "#{TAX_ID}"
 and cadex_sent_date between "#{start_date}" and "#{end_date}"
 ) root
-group by `Id` 
+group by `Web Links` 
 ) middle
 QRY
         wb = Spreadsheet::Workbook.new
@@ -57,12 +57,12 @@ QRY
       private 
       def make_summary_sheet wb, qry
         sheet = wb.create_worksheet :name=>"Summary"
-        table_from_query sheet, qry
+        table_from_query sheet, qry, {0 => weblink_translation_lambda(CoreModule::ENTRY)}
       end
       def make_raw_sheet wb, entries, run_by 
         raw_sheet = wb.create_worksheet :name=>"Raw Data"
 
-        XlsMaker.add_header_row raw_sheet, 0, DATA_TABLE_COLUMNS.map{|f| ModelField.find_by_uid(id).label(false) }
+        XlsMaker.add_header_row raw_sheet, 0, DATA_TABLE_COLUMNS.map{|uid| ModelField.find_by_uid(uid).label(false) }
 
         cursor = 1
         column_widths = []
@@ -77,7 +77,7 @@ QRY
                     CoreModule::COMMERCIAL_INVOICE_LINE=>cil,CoreModule::COMMERCIAL_INVOICE_TARIFF=>cit}
                   row << mf.process_export(obj_map[mf.core_module], run_by)
                 end
-                XlsMaker.add_body_row sheet, cursor, row, column_widths
+                XlsMaker.add_body_row raw_sheet, cursor, row, column_widths
                 cursor += 1
               end
             end

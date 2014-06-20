@@ -71,6 +71,15 @@ module OpenChain
         }
       end
 
+      # This lambda will translate and id (int) value to the excel URL to use for viewing a
+      # core module object.
+      def weblink_translation_lambda core_module
+        lambda { |result_set_row, raw_column_value|
+          url = core_module.klass.excel_url raw_column_value
+          XlsMaker.create_link_cell url
+        }
+      end
+
     private 
 
       # Takes the raw result set value from the query and conditionally does some data manipulation on it.

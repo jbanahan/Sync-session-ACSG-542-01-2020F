@@ -116,6 +116,16 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  describe "weblink_translation_lamda" do
+    it "creates a lambda capable of transating an Id value to a URL" do
+      ms = double("MasterSetup")
+      ms.stub(:request_host).and_return "localhost"
+      MasterSetup.stub(:get).and_return ms
+      l = @helper.new.weblink_translation_lambda CoreModule::PRODUCT
+      expect(l.call(nil, 1)).to eq Spreadsheet::Link.new(Product.excel_url(1), "Web View")
+    end
+  end
+
   context :sanitize_date_string do
     it "should return a date string" do
       s = @helper.new.sanitize_date_string "20130101"

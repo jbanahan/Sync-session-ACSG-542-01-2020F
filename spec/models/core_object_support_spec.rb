@@ -110,11 +110,21 @@ describe CoreObjectSupport do
       expect{Product.new.view_url}.to raise_error
     end
   end
+  describe "excel_url" do
+    it "should make url based on request_host with class method" do
+      MasterSetup.any_instance.should_receive(:request_host).and_return "x.y.z"
+      expect(Product.excel_url 1).to eq "http://x.y.z/redirect.html?page=/products/1"
+    end
+  end
   describe :relative_url do
     it "should make url without host" do
       p = Factory(:product)
       p.relative_url.should == "/products/#{p.id}"
     end
+
+    it "should make url without host with class method" do
+      expect(Product.relative_url 1).to eq "/products/1"
+    end 
   end
   describe :all_attachments do
     it "should sort by attachment type then attached file name then id" do

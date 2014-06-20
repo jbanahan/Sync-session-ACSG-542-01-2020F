@@ -144,6 +144,10 @@ class XlsMaker
     XlsMaker.add_header_row(sheet, 0, headers) if headers.length > 0
     sheet
   end
+
+  def self.create_link_cell url, link_text = "Web View"
+    Spreadsheet::Link.new(url,link_text)
+  end
   
   private
   def prep_workbook cols
@@ -161,8 +165,8 @@ class XlsMaker
   end
 
   def process_row sheet, row_number, row_data, base_object
-      XlsMaker.add_body_row sheet, row_number, row_data, @column_widths, @no_time
-      sheet.row(row_number).push(Spreadsheet::Link.new(base_object.excel_url,"Web View")) if self.include_links 
+    XlsMaker.add_body_row sheet, row_number, row_data, @column_widths, @no_time
+    sheet.row(row_number).push(self.class.create_link_cell(base_object.excel_url)) if self.include_links 
   end
 
 end

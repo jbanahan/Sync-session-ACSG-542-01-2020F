@@ -291,5 +291,15 @@ describe XlsMaker do
       expect(s.row(0).format 0).to eq XlsMaker::HEADER_FORMAT
     end
   end
+
+  describe "create_link_cell" do
+    it "creates a link cell" do
+      expect(XlsMaker.create_link_cell("url")).to eq Spreadsheet::Link.new("url", "Web View")
+    end
+
+    it "creates a link cell with given text" do
+      expect(XlsMaker.create_link_cell("url", "Test")).to eq Spreadsheet::Link.new("url", "Test")
+    end
+  end
 end
 

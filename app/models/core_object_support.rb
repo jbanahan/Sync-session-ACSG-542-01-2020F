@@ -48,28 +48,17 @@ module CoreObjectSupport
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded file links)
   def view_url
-    excel_url
+    self.class.excel_url self.id
   end
   
   #return the relative url to the view page for the object
   def relative_url
-    raise "Cannot generate view_url because object id not set." unless self.id
-    "/#{self.class.table_name}/#{self.id}"
+    self.class.relative_url self.id
   end
 
   #return an excel friendly link to the object that handles Excel session bugs
   def excel_url
-    request_host = nil
-    # Caching this call ends up creating an ordering dependency in unit tests...so only do it in production
-    if Rails.env.production?
-      @@req_host ||= MasterSetup.get.request_host
-      request_host = @@req_host
-    else
-      request_host = MasterSetup.get.request_host
-    end
-    
-    raise "Cannot generate view_url because MasterSetup.request_host not set." unless request_host
-    "http://#{request_host}/redirect.html?page=#{relative_url}"
+    self.class.excel_url self.id
   end
 
   module ClassMethods
@@ -89,6 +78,25 @@ module CoreObjectSupport
             (sync_records.ignore_updates_before IS NULL OR
              sync_records.ignore_updates_before < #{table_name}.updated_at)
         ))"
+    end
+
+    def excel_url object_id
+      request_host = nil
+      # Caching this call ends up creating an ordering dependency in unit tests...so only do it in production
+      if Rails.env.production?
+        @@req_host ||= MasterSetup.get.request_host
+        request_host = @@req_host
+      else
+        request_host = MasterSetup.get.request_host
+      end
+      
+      raise "Cannot generate view_url because MasterSetup.request_host not set." unless request_host
+      "http://#{request_host}/redirect.html?page=#{relative_url(object_id)}"
+    end
+
+    def relative_url object_id
+      raise "Cannot generate view_url because object id not set." unless object_id
+      "/#{self.table_name}/#{object_id}"
     end
   end
 end
