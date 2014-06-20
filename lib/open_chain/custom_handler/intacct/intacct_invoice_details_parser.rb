@@ -205,11 +205,13 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
 
     # Checks need to be recorded as different types so that we know when creating advanced checks if the number has already been invoiced or not.
     # There's not really much chance of that actually being the case, but we need to be absolutely certain that doesn't happen.
-    payable_type = no_zero(first_line["check number"]) ? IntacctPayable::PAYABLE_TYPE_CHECK : IntacctPayable::PAYABLE_TYPE_BILL
+    check_number = no_zero(first_line["check number"])
+    payable_type = check_number ? IntacctPayable::PAYABLE_TYPE_CHECK : IntacctPayable::PAYABLE_TYPE_BILL
 
     existing = nil
     Lock.acquire(Lock::INTACCT_DETAILS_PARSER, times: 3) do
-      existing = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, payable_type: payable_type).first_or_create!
+      # Check number needs to be part of the key since it's very possible we'll issue multiple checks to the same vendor on the same invoice
+      existing = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, payable_type: payable_type, check_number: check_number).first_or_create!
     end
     
     p = nil

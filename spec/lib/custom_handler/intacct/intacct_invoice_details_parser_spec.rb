@@ -277,7 +277,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "updates an existing payable that has not been sent" do
-      exists = IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, intacct_errors: "Error"
+      exists = IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, check_number: @line["check number"], intacct_errors: "Error"
 
       p = @p.create_payable "VENDOR", [@line]
       expect(exists.id).to eq p.id
@@ -287,7 +287,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "skips payables that have already been sent" do
-      IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, intacct_upload_date: Time.zone.now, intacct_key: "KEY"
+      IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, check_number: @line["check number"], intacct_upload_date: Time.zone.now, intacct_key: "KEY"
       expect(@p.create_payable "VENDOR", [@line]).to be_nil
     end
 
@@ -455,6 +455,26 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(payables).to have(1).item
       expect(payables.first.vendor_number).to eq line2["vendor"]
     end
+
+    it "creates multiple check payables for different checks to the same vendor on the same invoice" do
+      @line["payable"] = "Y"
+      @line["freight file number"] = ""
+      line2 = @line.dup
+      line2["check number"] = (@line["check number"].to_i + 1).to_s
+
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
+
+      @p.parse [@line, line2]
+
+      @export.reload
+
+      payables = @export.intacct_payables
+      expect(payables).to have(2).items
+      expect(payables.find {|p| p.check_number == @line["check number"]}).not_to be_nil
+      expect(payables.find {|p| p.check_number == line2["check number"]}).not_to be_nil
+    end
+
   end
 
   describe "parse_check_query_results" do
