@@ -43,7 +43,16 @@
           <label class="col-sm-2 control-label">Project Sets</label>
           <div class='col-sm-10'>
             <div ng-hide='projectSetAdd'>
-              <span ng-repeat='ps in svc.project.project_sets'><span class='label label-default'>{{ps.name}} <a href='' ng-click='removeProjectSet(ps)'>x</a></span> &nbsp; </span>
+              <span ng-repeat='ps in svc.project.project_sets'>
+                <span class='label label-default'>
+                  <a href='/project_sets/{{ps.id}}' style="text-decoration:none; color:white;">
+                    {{ps.name}} 
+                  </a>
+                  <a href='' ng-click='removeProjectSet(ps)'>
+                    x
+                  </a>
+                </span> &nbsp; 
+              </span>
               <button class='btn btn-xs btn-success' ng-click='projectSetAdd=true'>Add Project Set</button>
             </div>
             <div ng-show='projectSetAdd'>
