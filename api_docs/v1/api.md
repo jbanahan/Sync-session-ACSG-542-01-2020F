@@ -105,54 +105,6 @@ You can have as many search criteria and order operations as you want, just incr
 
 _Currently, you can only search and sort using fields from the top level of the given data object.  For example, you **cannot** search for commercial invoices by the line level part number. Including criteria from the wrong level will result in an error._
 
-**Search Criterion Operators**
-
-**FINISH THIS SECTION**
-
-## Shipment
-
-Represents the movement of goods.
-
-In order to build a container based shipment, you must first save the shipment and with the containers then save the lines.  This is because each line must container the 'shpln_container_uid' value in order to be assigned to the container.
-
-### Data Object
-```
-{shipment:
-  #HEADER INFO
-  shp_ref: 'MYSHIPREF'
-  shp_mode: 'Air'
-  shp_ven_name: 'Vendor Name'
-  shp_ven_syscode: 'VENSYSCODE' #unique system code for vender
-  shp_ship_to_name: 'Joe Warehouse'
-  shp_ship_from_name: 'My Factory'
-  shp_car_name: 'Vandegrift Logistics'
-  shp_car_syscode: 'VFILOG' #unique system code for carrier
-  *cf_99: 'VAL' #custom field value for custom definition 99, see the custom values section of this documentation for more info
-  lines: [{
-    shpln_line_number: 1 #sequential line number for this line on the shipment
-    shpln_shipped_qty: 1.23 #quantity shipped
-    shpln_puid: 'PARTNUM' #unique ID of product shipped
-    shpln_pname: 'CHAIR' #product name
-    shpln_container_uid: 123 #database id of container
-    shpln_container_number: 'ABCD12345' 
-    shpln_container_size: '40HC'
-    *cf_1: 'VAL' #custom field value for custom definition 1, see the custom values section of this documentation for more info
-    }]
-  containers: [{
-    con_uid: 123 #database id of container
-    con_container_number: 'ABCD12345'
-    con_container_size: '40HC'
-    con_size_description: '40FT HIGH CUBE'
-    con_weight: 100
-    con_seal_number: 'ABC555'
-    con_teus: 2
-    con_fcl_lcl: 'fcl' #fcl for full container, lcl for LCL shipment within consolidated container
-    con_quantity: 10 #AMS reporting quantity (usually in cartons)
-    con_uom: 'CTNS' #AMS reporting unit of measure (usually CTNS)
-    }]
-  }
-```
-
 ## CommercialInvoice
 
 Represents a commercial invoice which may or may not be part of a CustomsEntry
@@ -242,6 +194,293 @@ Retrive multiple commercial invoices
 _Request_
 
 `POST - /commercial_invoices.json` with JSON payload of 1 data object as defined above without any `id` attributes at any level
+
+_Response_
+
+`200 - data object with IDs included`
+
+## Company
+
+Represents a Company
+
+__Companies are read only via the API.__
+
+They may be assigned one or more of the following roles:
+
+* Master - The main administrative company for the system
+* Vendor - Can receive and accept Purchase Orders, may be able to pack Purchase Orders onto shipments
+* Customer - Can issue Purchase Orders, and Shipments and have shpments sent to them
+* Importer - Can create Products and can be the importer on a customs entry
+* Broker - Can create Customs Entries
+
+_* These descriptions are a partial list of the things that each role may do in the system._
+
+
+### Data Object
+
+```
+{company:{
+    # HEADER INFO
+    id:1 #database id
+    name:'My Company'
+    system_code:'MCOM' #code used to assign company in other api modules
+    master: true #is the company the master company
+    vendor: true 
+    customer: true
+    importer: true
+    broker: true
+    carrier: true
+  }
+}
+```
+
+### Methods
+
+#### Index
+
+Retrieve a list of all companies sorted alphabetically by name
+
+`GET - /companies.json`
+
+Returns:
+```
+{companies:[{id:1 ...},{id:2 ...}]}
+```
+
+You can add a query string with a comma separated list of roles to get all companies for each role in a single object like:
+
+`GET - /companies.json?roles=vendor,customer`
+
+Returns
+```
+{vendors:[{id:1 ...},{id:7 ...}],customers:[{id:1 ...},{id:3 ...}]
+```
+
+
+## Fields
+
+Provides a reference to the logical fields available in the system.
+
+Fields are sorted by ModuleType.  The following ModuleTypes are available to query via the API:
+
+* commercial_invoice
+* commercial_invoice_line
+* commercial_invoice_tariff
+* container
+* shipment
+* shipment_line
+
+### Data Object
+
+```
+{shipment_fields:[
+  {uid:'shp_ref',label:'Shipment Reference',data_type:'string'}
+  {uid:'shp_mode',label:'Mode',data_type:'string'}
+  {uid:'*cf_27',label:'My Custom Field',data_type:'string'}
+  ...
+  ]
+  shipment_line_fields:[
+  {uid:'shpln_line_number',label:'Line Number',data_type:'integer'}
+  ...
+  ]
+}
+```
+
+### Methods
+
+#### Index
+
+Retrieve a list of fields for comma separated (and case sensitive) list of ModuleTypes
+
+`GET - fields?module_types=shipment,shipment_line`
+
+This method returns all fields available in the system regardless of whether the user has permission to view them or whether they are available in the API.
+
+You will receive a 401 status if you try to query a ModuleType that the user does not have permission to view.
+
+You will receive a 404 status if you try to query a ModuleType that does not exist.
+
+## Order
+
+Represents the purchase of goods.
+
+### Data Object
+```
+{order:
+  #HEADER INFO
+  id: 1
+  ord_ord_num: 'UID1' #unique order number
+  ord_cust_ord_no: 'C_ORD_1' #customer order number
+  ord_imp_name: 'My Company'
+  ord_imp_syscode: 'MC'
+  ord_mode: 'Air' #requested ship mode
+  ord_ord_date: '2014-01-01'
+  ord_ven_name: 'My Vendor LLC'
+  ord_ven_syscode: 'MV'
+  *cf_99: 'VAL' #custom field value for custom definition 99, see the custom values section of this documentation for more info
+  lines: [{
+    id: 2
+    ordln_line_number: 1
+    ordln_puid: 'SKU123' #product unique identifier
+    ordln_pname: 'HAT' #product name
+    ordln_ppu: 1.25 #price per unit
+    ordln_currency: 'USD'
+    ordln_ordered_qty: 100.24
+    ordln_country_of_origin: 'CN'
+    ordln_hts: '1234567890' #hts code for country where order will be imported
+    *cf_1: 'VAL' #custom field value for custom definition 1, see the custom values section of this documentation for more info
+    }]
+  }
+```
+
+### Methods
+
+#### Index
+
+Retrieve a list of shipments
+
+`GET - /orders.json`
+
+_See [QueryApi](#QueryAPI) for more info_
+
+
+
+## Shipment
+
+Represents the movement of goods.
+
+In order to build a container based shipment, you must first save the shipment and with the containers then save the lines.  This is because each line must container the 'shpln_container_uid' value in order to be assigned to the container.
+
+When creating  or updating lines, they can be linked to order lines by passing a `linked_order_line_id` attribute in the line object that indicates the order line's DB id that should be linked.
+
+You can optionally have any related order lines nested in the shipment lines by including the parameter `include=order_lines` in your request.  When the order lines are returned they will also include read only convenience fields with each line as follows:
+
+```
+ord_ord_num: 'UID1' #unique order number
+ord_cust_ord_no: 'ORD123' #customer order number
+allocated_quantity: 7 #the quantity from the order line that is allocated to the shipment line
+order_id: 77 #db id of order
+```
+
+### Data Object
+```
+{shipment:
+  #HEADER INFO
+  shp_ref: 'MYSHIPREF'
+  shp_mode: 'Air'
+  shp_ven_name: 'Vendor Name'
+  shp_ven_syscode: 'VENSYSCODE' #unique system code for vender
+  shp_ship_to_name: 'Joe Warehouse'
+  shp_ship_from_name: 'My Factory'
+  shp_car_name: 'Vandegrift Logistics'
+  shp_car_syscode: 'VFILOG' #unique system code for carrier
+  shp_imp_name: 'My Company'
+  shp_imp_syscode: 'MYCOMP' #unique system code for importer - REQUIRED FOR CREATE
+  shp_master_bill_of_lading: 'MBOL'
+  shp_house_bill_of_lading: 'HBOL'
+  shp_booking_number: 'BOOK1'
+  shp_receipt_location: 'YANTIAN'
+  shp_freight_terms: 'COB'
+  shp_lcl: true #boolean true for LCL freight, false for fcl freight
+  shp_shipment_type: 'CFS/CY' #free form
+  shp_booking_shipment_type: 'CFS/CY' #free form
+  shp_booking_mode: 'Air' #mode requested at time of booking confirmation
+  shp_vessel: 'CSCLVANCOUVER'
+  shp_voyage: '0098'
+  shp_vessel_carrier_scac: 'CHHK'
+  shp_booking_received_date: '2014-01-01'
+  shp_booking_confirmed_date: '2014-01-02'
+  shp_booking_cutoff_date: '2014-01-10'
+  shp_booking_est_departure_date: '2014-01-15'
+  shp_booking_est_arrival_date: '2014-01-30'
+  shp_docs_received_date: '2014-01-06'
+  shp_cargo_on_hand_date: '2014-01-08'
+  shp_est_departure_date: '2014-01-15'
+  shp_departure_date: '2014-01-15'
+  shp_est_arrival_port_date: '2014-01-30'
+  shp_arrival_port_date: '2014-01-30'
+  shp_est_delivery_date: '2014-02-03'
+  shp_delivered_date: '2014-02-03'
+  *cf_99: 'VAL' #custom field value for custom definition 99, see the custom values section of this documentation for more info
+  lines: [{
+    shpln_line_number: 1 #sequential line number for this line on the shipment
+    shpln_shipped_qty: 1.23 #quantity shipped
+    shpln_puid: 'PARTNUM' #unique ID of product shipped
+    shpln_pname: 'CHAIR' #product name
+    shpln_container_uid: 123 #database id of container
+    shpln_container_number: 'ABCD12345' 
+    shpln_container_size: '40HC'
+    *cf_1: 'VAL' #custom field value for custom definition 1, see the custom values section of this documentation for more info
+    #OPTIONAL with includes=order_lines parameter
+    order_lines: [{
+      id: 2
+      ord_ord_num: 'ORDER123'
+      ord_cust_ord_no: 'CORDER1234'
+      order_id: 77
+      allocated_quantity: 7
+      ordln_line_number: 1
+      ordln_puid: 'SKU123' #product unique identifier
+      ordln_pname: 'HAT' #product name
+      ordln_ppu: 1.25 #price per unit
+      ordln_currency: 'USD'
+      ordln_ordered_qty: 100.24
+      ordln_country_of_origin: 'CN'
+      ordln_hts: '1234567890' #hts code for country where order will be imported
+      *cf_50: 'VAL'
+      }]
+    }]
+  containers: [{
+    con_uid: 123 #database id of container
+    con_container_number: 'ABCD12345'
+    con_container_size: '40HC'
+    con_size_description: '40FT HIGH CUBE'
+    con_weight: 100
+    con_seal_number: 'ABC555'
+    con_teus: 2
+    con_fcl_lcl: 'fcl' #fcl for full container, lcl for LCL shipment within consolidated container
+    con_quantity: 10 #AMS reporting quantity (usually in cartons)
+    con_uom: 'CTNS' #AMS reporting unit of measure (usually CTNS)
+    }]
+  }
+```
+
+### Methods
+
+#### Index
+
+Retrieve a list of shipments
+
+`GET - /shipments.json`
+
+_See [QueryApi](#QueryAPI) for more info_
+
+#### Show
+
+Retrieve one shipment by ID
+
+_Request_
+
+`GET - /shipments/1.json`
+
+_Response_
+
+`200 - one data object as defined above`
+
+#### Create
+
+Make a new shipment
+
+_Request_
+
+`POST - /shipment.json` with JSON payload of 1 data object as defined above without any `id` attributes at any level
+
+#### Update
+
+Update a shipment
+
+_Request_
+
+`PUT - /shipment/1.json` with JSON payload of 1 data object with an id attribute that matches the path.  Child level objects with id attributes will be updated and child level objects without will be created.
 
 _Response_
 

@@ -3,30 +3,17 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
     render_search CoreModule::COMMERCIAL_INVOICE
   end
   def create
-    CommercialInvoice.transaction do
-      ci_hash = params['commercial_invoice']
-      ci = save_invoice ci_hash
-      unless ci.errors.full_messages.blank?
-        raise StatusableError.new(ci.errors.full_messages.join("\n"), 400)
-      end
-      render json: {commercial_invoice:obj_to_json_hash(ci)}
-    end
+    do_create CoreModule::COMMERCIAL_INVOICE
   end
   def update
-    CommercialInvoice.transaction do
-      ci_hash = params['commercial_invoice']
-      raise StatusableError.new("Path ID #{params[:id]} does not match JSON ID #{ci_hash['id']}.",400) unless params[:id].to_s == ci_hash['id'].to_s
-      ci = save_invoice ci_hash
-      unless ci.errors.full_messages.blank?
-        raise StatusableError.new(ci.errors.full_messages.join("\n"), 400)
-      end
-      render json: {commercial_invoice:obj_to_json_hash(ci)}
-    end
+    do_update CoreModule::COMMERCIAL_INVOICE
   end
+
+  
 
   #needed for index
   def obj_to_json_hash ci
-    headers_to_render = [:ci_invoice_number,
+    headers_to_render = limit_fields([:ci_invoice_number,
       :ci_invoice_date,
       :ci_mfid,
       :ci_imp_syscode,
@@ -44,13 +31,13 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
       :ci_issue_codes,
       :ci_rater_comments,
       :ci_destination_code
-    ]
-    line_fields_to_render = [:cil_line_number,:cil_po_number,:cil_part_number,
+    ])
+    line_fields_to_render = limit_fields([:cil_line_number,:cil_po_number,:cil_part_number,
       :cil_units,:cil_value,:ent_unit_price,:cil_uom,
       :cil_country_origin_code,:cil_country_export_code,
       :cil_value_foreign,:cil_currency
-    ]
-    tariff_fields_to_render = [
+    ])
+    tariff_fields_to_render = limit_fields([
       :cit_hts_code,
       :cit_entered_value,
       :cit_spi_primary,
@@ -63,7 +50,7 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
       :cit_classification_uom_3,
       :cit_gross_weight,
       :cit_tariff_description
-    ]
+    ])
     h = {id:ci.id}
     headers_to_render.each do |uid|
       h[uid] = ModelField.find_by_uid(uid).process_export(ci,current_user)
@@ -85,7 +72,7 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
     h
   end
   private
-  def save_invoice h
+  def save_object h
     ci = h['id'].blank? ? CommercialInvoice.new : CommercialInvoice.find(h['id'])
     raise StatusableError.new("Cannot update commercial invoice attached to customs entry.",:forbidden) if ci.entry_id
     h['ci_imp_syscode'] = current_user.company.system_code if h['ci_imp_syscode'].blank? && ci.importer.nil? && current_user.company.importer? && !current_user.company.system_code.blank?
@@ -115,11 +102,5 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
     end
   end
 
-  def import_fields base_hash, obj, core_module
-    fields = ModelField.find_by_core_module(core_module)
-    fields.each do |mf|
-      uid = mf.uid.to_s
-      mf.process_import(obj,base_hash[uid]) if base_hash.has_key?(uid)
-    end
-  end
+  
 end; end; end

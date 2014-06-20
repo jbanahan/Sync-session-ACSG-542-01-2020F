@@ -12,15 +12,8 @@ class ShipmentsController < ApplicationController
   # GET /shipments/1
   # GET /shipments/1.xml
   def show
-    s = Shipment.find(params[:id])
-    action_secure(s.can_view?(current_user),s,{:lock_check=>false,:verb => "view",:module_name=>"shipment"}) {
-      @shipment = s
-      @products = Product.where(:vendor_id=>s.vendor)
-      respond_to do |format|
-        format.html # show.html.erb
-        format.xml  { render :xml => @shipment }
-      end
-    }
+    @shipment_id = params[:id]
+    @no_action_bar = true
   end
 
   # GET /shipments/new

@@ -1,7 +1,7 @@
 module CustomFieldSupport
   attr_accessor :lock_custom_values #if set to true, the object will no longer look to the database to retrieve any custom values and will just build new ones if they're not already injected / cached
   def self.included(base)
-    base.instance_eval("has_many :custom_values, :as => :customizable, :dependent => :destroy")
+    base.instance_eval("has_many :custom_values, :as => :customizable, :dependent => :destroy, :autosave => true")
   end
   
   def custom_definitions

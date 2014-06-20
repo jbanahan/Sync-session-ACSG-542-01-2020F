@@ -6,8 +6,8 @@ class Shipment < ActiveRecord::Base
 	belongs_to	:ship_to,	:class_name => "Address"
   belongs_to :importer, :class_name=>"Company"
 	
-	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment
-  has_many   :containers, dependent: :destroy, inverse_of: :shipment
+	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
+  has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :piece_sets, :through=>:shipment_lines
 
   validates  :vendor, :presence => true
@@ -32,7 +32,11 @@ class Shipment < ActiveRecord::Base
 	end
 
 	def can_view?(user)
-	  return user.view_shipments? && (user.company.master? || (user.company.vendor? && user.company == self.vendor) || (user.company.carrier? && user.company == self.carrier))
+    return false unless user.view_shipments?
+    return true if user.company.master?
+    imp = self.importer
+    return false unless imp && (imp==user.company || imp.linked_company?(user.company))
+	  return (user.company.vendor? && user.company == self.vendor) || (user.company.carrier? && user.company == self.carrier)
 	end
 	
 	def can_edit?(user)

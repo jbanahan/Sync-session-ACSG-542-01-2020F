@@ -1,20 +1,44 @@
 class PieceSet < ActiveRecord::Base
 #PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
-    belongs_to :order_line
-    belongs_to :sales_order_line
-    belongs_to :shipment_line
-    belongs_to :delivery_line
-    belongs_to :milestone_plan
-    belongs_to :commercial_invoice_line
-    belongs_to :drawback_import_line
-    belongs_to :security_filing_line
+  belongs_to :order_line
+  belongs_to :sales_order_line
+  belongs_to :shipment_line
+  belongs_to :delivery_line
+  belongs_to :milestone_plan
+  belongs_to :commercial_invoice_line
+  belongs_to :drawback_import_line
+  belongs_to :security_filing_line
 
-    has_one :milestone_forecast_set, :dependent=>:destroy, :autosave=>true
+  has_one :milestone_forecast_set, :dependent=>:destroy, :autosave=>true
 
-    validates :quantity, :presence => true
-    validates_numericality_of :quantity, :greater_than_or_equal_to => 0
-    validate :validate_product_integrity
+  validates :quantity, :presence => true
+  validates_numericality_of :quantity, :greater_than_or_equal_to => 0
+  validate :validate_product_integrity
   
+  #merge all piece sets together that have the same linked keys and set the quantity to the sum of all records
+  def self.merge_duplicates! base
+    all = PieceSet.where(
+      order_line_id:base.order_line_id,
+      sales_order_line_id:base.sales_order_line_id,
+      shipment_line_id:base.shipment_line_id,
+      delivery_line_id:base.delivery_line_id,
+      commercial_invoice_line_id:base.commercial_invoice_line_id,
+      drawback_import_line_id:base.drawback_import_line_id,
+      security_filing_line_id:base.security_filing_line_id
+      )
+    return if all.size < 2
+    first = all.first
+    PieceSet.transaction do
+      all.each do |ps|
+        next if ps == first
+        first.quantity += ps.quantity
+        destroyed = ps.destroy
+        raise "Error destroying PieceSet with ID #{ps.id}" unless destroyed
+      end
+      first.save!
+    end
+  end
+
   def change_milestone_plan? user
     return false if order_line && !order_line.order.can_edit?(user)
     return false if shipment_line && !shipment_line.shipment.can_edit?(user)

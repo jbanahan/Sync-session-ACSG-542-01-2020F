@@ -553,9 +553,12 @@ describe ModelField do
           sl = Factory(:shipment_line)
           con = Factory(:container,entry:nil,shipment:sl.shipment)
           expect(@mf.process_import(sl,con.id)).to eq "#{@mf.label} set to #{con.id}."
+          sl.save!
+          sl.reload
+          expect(sl.container).to eq con
         end
       end
-      end
+    end
 
     context "broker_invoice_total" do
       before :each do

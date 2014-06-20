@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe Shipment do
+  describe "can_view?" do
+    it "should not allow view if user not master and linked to importer (even if the company is one of the other parties" do
+      imp = Factory(:company)
+      c = Factory(:company,vendor:true)
+      s = Factory(:shipment,vendor:c,importer:imp)
+      u = Factory(:user,shipment_view:true,company:c)
+      expect(s.can_view?(u)).to be_false
+   end
+  end
   describe "commercial_invoices" do
     it "should find linked invoices" do
       sl_1 = Factory(:shipment_line,:quantity=>10)

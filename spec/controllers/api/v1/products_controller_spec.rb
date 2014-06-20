@@ -267,6 +267,7 @@ describe Api::V1::ProductsController do
         end
 
         it "handles all other exceptions as server errors" do
+          Rails.stub(:env).and_return('not_test') #errors are raised in test
           controller.should_receive(:show) do
             raise "Oops, something weird happened!"
           end

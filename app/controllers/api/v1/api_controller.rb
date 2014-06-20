@@ -54,6 +54,70 @@ module Api; module V1; class ApiController < ActionController::Base
     render json:{core_module.class_name.underscore => obj_to_json_hash(obj)}
   end
 
+  # generic create method 
+  # subclasses must implement the save_object method which takes a hash and should return the object that was saved with any errors set
+  def do_create core_module
+    obj_name = core_module.class_name.underscore
+    ActiveRecord::Base.transaction do
+      obj_hash = params[obj_name]
+      obj = save_object obj_hash
+      if obj.errors.full_messages.blank?
+        obj.create_snapshot if obj.respond_to?('create_snapshot')
+      else
+        raise StatusableError.new(obj.errors.full_messages.join("\n"), 400)
+      end
+      render json: {obj_name => obj_to_json_hash(obj)}
+    end
+  end
+
+  #generic update method
+  # subclasses must implement the save_object method which takes a hash and should return the object that was saved with any errors set
+  def do_update core_module
+    obj_name = core_module.class_name.underscore
+    ActiveRecord::Base.transaction do
+      obj_hash = params[obj_name]
+      raise StatusableError.new("Path ID #{params[:id]} does not match JSON ID #{obj_hash['id']}.",400) unless params[:id].to_s == obj_hash['id'].to_s
+      obj = save_object obj_hash
+      if obj.errors.full_messages.blank?
+        obj.create_snapshot if obj.respond_to?('create_snapshot')
+      else
+        raise StatusableError.new(obj.errors.full_messages.join("\n"), 400)
+      end
+      render json: {obj_name=>obj_to_json_hash(obj)}
+    end
+  end
+
+  #limit list of fields to render to only those that client requested
+  def limit_fields field_list
+    return field_list if params[:fields].blank?
+    field_list & params[:fields].split(',').collect {|x| x.to_sym}
+  end
+
+  #load data into object via model fields
+  def import_fields base_hash, obj, core_module
+    fields = ModelField.find_by_core_module(core_module)
+    fields.each do |mf|
+      uid = mf.uid.to_s
+      mf.process_import(obj,base_hash[uid]) if base_hash.has_key?(uid)
+    end
+  end
+
+  #render field for json
+  def export_field model_field_uid, obj
+    mf = ModelField.find_by_uid(model_field_uid)
+    v = mf.process_export(obj,current_user)
+    return "" if v.blank?
+    case mf.data_type
+    when :integer
+      v = v.to_i
+    when :decimal
+      v = BigDecimal(v).to_f
+    when :numeric
+      v = BigDecimal(v).to_f
+    end
+    v
+  end
+
   #helper method to get model_field_uids for custom fields
   def custom_field_keys core_module
     core_module.model_fields.keys.collect {|k| k.to_s.match(/\*cf_/) ? k : nil}.compact
@@ -151,6 +215,8 @@ module Api; module V1; class ApiController < ActionController::Base
         message = "\n#{error.class} (#{error.message}):\n"
         message << "  " << error.backtrace.join("\n  ")
         Rails.logger.error "#{message}\n\n"
+
+        raise error if Rails.env == 'test'
       end
     end
 

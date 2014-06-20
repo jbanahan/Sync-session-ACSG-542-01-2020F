@@ -40,6 +40,9 @@ class Company < ActiveRecord::Base
   #find all companies that have attachment_archive_setups that include a start date
   scope :attachment_archive_enabled, joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null")
 
+  def linked_company? c
+    self.linked_companies.include? c
+  end
 	def self.find_can_view(user)
 	  if user.company.master
 	    return Company.where("1=1")

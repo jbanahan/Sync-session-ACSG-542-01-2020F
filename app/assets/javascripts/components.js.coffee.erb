@@ -1,5 +1,19 @@
 @components = angular.module 'ChainComponents', []
 
+@components.directive 'focusWhen', ['$timeout','$parse', ($timeout, $parse) ->
+  {
+    link: (scope, element, attrs) ->
+      model = $parse(attrs.focusWhen)
+      scope.$watch model, (value) ->
+        if value == true
+          $timeout () ->
+            element[0].focus()
+            element[0].scrollIntoView()
+      element.bind 'blur', () ->
+         scope.$apply(model.assign(scope, false))
+  }
+]
+
 #Boolean filter for writing text, works similar to a ternary operator like:
 # <div>{{x==1 | ifTrue : "I'm True" : "I'm not true"}}
 @components.filter 'ifTrue', () ->

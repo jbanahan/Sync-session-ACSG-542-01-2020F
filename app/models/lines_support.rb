@@ -1,7 +1,7 @@
 module LinesSupport
 #need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
   def self.included(base)
-    base.instance_eval("has_many :piece_sets, :dependent => :destroy")
+    base.instance_eval("has_many :piece_sets")
     base.instance_eval("has_many :order_lines, :through => :piece_sets")
     base.instance_eval("has_many :sales_order_lines, :through => :piece_sets")
     base.instance_eval("has_many :shipment_lines, :through => :piece_sets")
@@ -26,6 +26,7 @@ module LinesSupport
     base.instance_eval("attr_accessor :linked_commercial_invoice_line_id")
     base.instance_eval("attr_accessor :linked_security_filing_line_id")
     base.instance_eval("after_save :process_links")
+    base.instance_eval("after_destroy :merge_piece_sets")
   end
 
   def default_line_number
@@ -77,6 +78,15 @@ module LinesSupport
       end
     end
     highest_index.nil? ? nil : MilestoneForecast::ORDERED_STATES[highest_index]
+  end
+
+  #clean up piece sets after destroy
+  def merge_piece_sets
+    my_id = self.id
+    self.piece_sets.each do |ps|
+      ps.update_attributes(self.class.reflections[:piece_sets].foreign_key=>nil)
+      PieceSet.merge_duplicates! ps
+    end
   end
 
   private
