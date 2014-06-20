@@ -36,6 +36,13 @@ module Api; module V1; class IntacctDataController < SqlProxyPostbackController
     end
   end
 
+  def receive_advance_checks
+    extract_results(params) do |p, context|
+      OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser.delay.parse_advance_check_results p.to_json
+      render json: {"OK" => ""}
+    end
+  end
+
   private
 
     def run_in_thread

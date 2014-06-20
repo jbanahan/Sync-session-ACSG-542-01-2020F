@@ -4,9 +4,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
   LMD_VFI_CUSTOMER_CODE ||= "VANDE"
   VFI_COMPANY_CODE ||= 'vfc'
   LMD_COMPANY_CODE ||= 'lmd'
+  PREPAID_PAYMENTS_GL_ACCOUNT ||= "2021"
 
   def self.parse_query_results result_set
     self.new.parse(format_results(result_set))
+  end
+
+  def self.parse_advance_check_results result_set
+    self.new.parse_advance_check_results(format_results(result_set))
   end
 
   def parse result_set
@@ -198,7 +203,17 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     company = (lmd_company ? LMD_COMPANY_CODE : VFI_COMPANY_CODE) 
     bill_number = s first_line["invoice number"]
 
-    existing = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number).first_or_create!
+    # Checks need to be recorded as different types so that we know when creating advanced checks if the number has already been invoiced or not.
+    # There's not really much chance of that actually being the case, but we need to be absolutely certain that doesn't happen.
+    check_number = no_zero(first_line["check number"])
+    payable_type = check_number ? IntacctPayable::PAYABLE_TYPE_CHECK : IntacctPayable::PAYABLE_TYPE_BILL
+
+    existing = nil
+    Lock.acquire(Lock::INTACCT_DETAILS_PARSER, times: 3) do
+      # Check number needs to be part of the key since it's very possible we'll issue multiple checks to the same vendor on the same invoice
+      existing = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, payable_type: payable_type, check_number: check_number).first_or_create!
+    end
+    
     p = nil
     Lock.with_lock_retry(existing) do
       return unless existing.intacct_upload_date.nil? && existing.intacct_key.nil?
@@ -245,11 +260,27 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         # If the payable originated under the LMD Company, then we won't have a Broker File #
         pl.broker_file = s(l["broker file number"]) unless lmd_company
         pl.check_number =  no_zero l["check number"]
+
+        # Record the check number at the header to make it easier to lookup for advanced check screening.
+        if pl.check_number
+          p.check_number = pl.check_number
+        end
         bank_number = no_zero l["bank number"]
         pl.bank_number = DataCrossReference.find_alliance_bank_number(bank_number) if bank_number
         pl.check_date = parse_date l["check date"]
         if pl.bank_number
-          pl.bank_cash_gl_account = DataCrossReference.find_intacct_bank_gl_cash_account pl.bank_number
+          # The bank cash gl account is actually the account to credit when recording the check - the debit 
+          # on invoiced checks is always against the charge code GL expense account.
+          # For checks that have been recorded as advanced payments, then we need to actually be crediting the
+          # 2021 Prepaid Advanced Payments account, since that is the account the advanced payments debit.
+          # Account is used so we know at any point how much money is floating as checks and have not been billed 
+          # to a customer.
+
+          if IntacctPayable.where(company: p.company, vendor_number: p.vendor_number, bill_number: p.bill_number, check_number: pl.check_number, payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).exists?
+            pl.bank_cash_gl_account = PREPAID_PAYMENTS_GL_ACCOUNT
+          else
+            pl.bank_cash_gl_account = DataCrossReference.find_intacct_bank_gl_cash_account pl.bank_number
+          end
         end
       end
 
@@ -260,6 +291,93 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     end
     
     p
+  end
+
+  def parse_advance_check_results result_set
+    # In theory, according to Luca, each line should be a different check...in practice, I'm not sure that's true.
+    # Split out the values that are the same invoice # and check number into distinct groups
+    checks = {}
+    result_set.each do |line|
+      key = payable_key line
+      checks[key] ||= []
+      checks[key] << line
+    end
+
+    checks.values.each do |check_lines|
+      create_advance_check_payable check_lines
+    end
+
+  end
+
+  def create_advance_check_payable lines
+    first_line = lines.first
+
+    # We first need to confirm that we don't already have an open payable already in the system for this line.
+    lmd_company = lmd_division?(s(first_line["header division"])) 
+    company = (lmd_company ? LMD_COMPANY_CODE : VFI_COMPANY_CODE)
+    vendor = find_vendor_number s(first_line['vendor'])
+    check_number = s(first_line['check number'])
+    bill_number = s(first_line['invoice number'])
+
+    # We shouldn't create an advanced payment if there is a check payable (.ie the file is invoiced already)
+    p = nil
+    Lock.acquire(Lock::INTACCT_DETAILS_PARSER, times: 3) do
+      return if IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, check_number: check_number, payable_type: IntacctPayable::PAYABLE_TYPE_CHECK).exists?
+
+      p = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, check_number: check_number, payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).first_or_create!
+    end
+
+    return unless p
+    
+    Lock.with_lock_retry(p) do 
+      return unless p.intacct_key.blank? && p.intacct_upload_date.nil?
+
+      # Blank any existing lines...
+      p.intacct_payable_lines.destroy_all
+
+      p.intacct_errors = nil
+      p.vendor_reference = s first_line["vendor reference"]
+      p.currency = s first_line["currency"]
+      # Because the invoice hasn't been finalized, there is no invoice date associated w/ the bill yet.
+      p.bill_date = parse_date first_line["check date"]
+
+      lines.each do |l|
+        pl = p.intacct_payable_lines.build
+
+        pl.charge_code = s l["charge code"]
+        # The GL account (.ie the account to debit) is always the prepaid payments GL account.
+        # When the invoice is finally billed, the check line will come through on that and zero this balance out.
+        pl.gl_account = PREPAID_PAYMENTS_GL_ACCOUNT
+        pl.amount = as_dec l["charge amount"]
+        description = s l["charge description"]
+        # append the vendor reference to the description if there is one since the bill doesn't carry a line level reference
+        description += " - #{s(l["vendor reference"])}" unless l["vendor reference"].blank?
+        pl.charge_description = description
+        pl.location = s(l["header division"])
+        pl.line_of_business = lmd_company ? "Freight" : "Brokerage"
+        pl.freight_file = s l["freight file number"]
+        pl.customer_number = find_customer_number(s(l["customer"]))
+
+        # If the payable originated under the LMD Company, then we won't have a Broker File #
+        pl.broker_file = s(l["broker file number"]) unless lmd_company
+        pl.check_number =  no_zero l["check number"]
+
+        # Record the check number at the header so that we can easily identify it both for updates and when parsing invoice data
+        # to look for advanced checks (see #create_payable above)
+        if pl.check_number
+          p.check_number = pl.check_number
+        end
+
+        bank_number = no_zero l["bank number"]
+        pl.bank_number = DataCrossReference.find_alliance_bank_number(bank_number) if bank_number
+        pl.check_date = parse_date l["check date"]
+        if pl.bank_number
+          pl.bank_cash_gl_account = DataCrossReference.find_intacct_bank_gl_cash_account pl.bank_number
+        end
+      end
+
+      p.save!
+    end
   end
 
   private 

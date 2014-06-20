@@ -4,10 +4,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctAllianceDat
 
   def self.run_schedulable opts = {}
     client = self.new
-    if opts['days_ago']
-      client.request_invoice_numbers opts['days_ago'].to_i
+    if opts['checks'].to_s == "true"
+      client.request_checks opts
     else
-      client.request_invoice_numbers
+      client.request_invoice_numbers opts
     end
   end
 
@@ -15,10 +15,22 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctAllianceDat
     @client = client
   end
 
-  def request_invoice_numbers days_ago = 5
+  def request_invoice_numbers opts = {}
     # Translate days ago to an actual date then use the proxy client.
-    starting_invoice_date = (Time.zone.now - days_ago.days).to_date
+    starting_invoice_date = reference_date opts, 5
     @client.request_alliance_invoice_numbers_since starting_invoice_date
   end
+
+  def request_checks opts = {}
+    check_date = reference_date opts, 2
+    @client.request_advance_checks check_date
+  end
+
+  private
+    def reference_date opts, default_ago
+      days_ago = opts['days_ago'].nil? ? default_ago : opts['days_ago'].to_i
+
+      (Time.zone.now - days_ago.days).to_date
+    end
 
 end; end; end; end;

@@ -157,8 +157,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     end
 
     it "sends checks using check xml" do
-      p = IntacctPayable.new company: "c"
-      l = p.intacct_payable_lines.build check_number: '123'
+      p = IntacctPayable.new company: "c", payable_type: IntacctPayable::PAYABLE_TYPE_CHECK
+
+      cid = "controlid"
+      xml = "<check>check</check>"
+      @xml_gen.should_receive(:generate_check_gl_entry_xml).with(p).and_return [cid, xml]
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "GL-Account-Key")
+
+      @c.send_payable p
+
+      expect(p.persisted?).to be_true
+      expect(p.intacct_key).to eq "GL-Account-Key"
+      expect(p.intacct_upload_date.to_date).to eq Time.zone.now.to_date
+    end
+
+    it "sends advanced checks using check xml" do
+      p = IntacctPayable.new company: "c", payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED
 
       cid = "controlid"
       xml = "<check>check</check>"

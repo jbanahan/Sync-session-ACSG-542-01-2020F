@@ -86,10 +86,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       response = nil
       function_control_id = nil
       # Check if we have a check number, if so, that means we're sending a check and not a standard bill
-      if payable.intacct_payable_lines.first.try(:check_number).blank?
-        function_control_id, response = send_bill payable
-      else
+      if [IntacctPayable::PAYABLE_TYPE_ADVANCED, IntacctPayable::PAYABLE_TYPE_CHECK].include?(payable.payable_type)
         function_control_id, response = send_check payable
+      else
+        function_control_id, response = send_bill payable
       end
 
       payable.intacct_key = extract_result_key response, function_control_id

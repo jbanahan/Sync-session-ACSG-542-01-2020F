@@ -80,4 +80,15 @@ describe OpenChain::SqlProxyClient do
       expect { @c.report_query "query_name", params, context }.to raise_error "JSON CLIENT ERROR"
     end
   end
+
+  describe "request_advance_checks" do
+    it "requests checks since given date" do
+      now = Time.new 2014, 1, 1, 12, 30
+      request_body = {'sql_params' => {:check_date=>20140101}}
+
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/open_check_details", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+
+      @c.request_advance_checks now
+    end
+  end
 end

@@ -178,7 +178,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       @bank_cash_account = DataCrossReference.create! key: @bank.value, value: "BANK CASH", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
     end
 
-    it "creates a vfc payable" do
+    it "creates a vfc check payable" do
       p = @p.create_payable "VENDOR", [@line, @line]
 
       expect(p.persisted?).to be_true
@@ -188,6 +188,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(p.currency).to eq @line["currency"]
       expect(p.bill_number).to eq @line["invoice number"]
       expect(p.bill_date).to eq Date.strptime @line["invoice date"], "%Y%m%d"
+      expect(p.check_number).to eq @line["check number"]
+      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_CHECK
 
       expect(p.intacct_payable_lines).to have(2).items
       # Only bother inspecting one line since we used same
@@ -210,6 +212,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
 
       @export.reload
       expect(@export.data_received_date.to_date).to eq Time.zone.now.to_date
+    end
+
+    it "creates vfc bill payable" do
+      @line["check number"] = '0'
+      p = @p.create_payable "VENDOR", [@line]
+
+      expect(p.check_number).to be_nil
+      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_BILL
     end
 
     it "creates a vfc payable to lmd division" do
@@ -267,7 +277,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "updates an existing payable that has not been sent" do
-      exists = IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], intacct_errors: "Error"
+      exists = IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, check_number: @line["check number"], intacct_errors: "Error"
 
       p = @p.create_payable "VENDOR", [@line]
       expect(exists.id).to eq p.id
@@ -277,7 +287,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     end
 
     it "skips payables that have already been sent" do
-      IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], intacct_upload_date: Time.zone.now, intacct_key: "KEY"
+      IntacctPayable.create! company: 'vfc', vendor_number: "VENDOR", bill_number: @line["invoice number"], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK, check_number: @line["check number"], intacct_upload_date: Time.zone.now, intacct_key: "KEY"
       expect(@p.create_payable "VENDOR", [@line]).to be_nil
     end
 
@@ -295,6 +305,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       p = @p.create_payable @line['vendor'], [@line]
       expect(p.vendor_number).to eq @vendor.value
       expect(p.intacct_payable_lines.first.customer_number).to eq @customer.value
+    end
+
+    it "uses Advanced Payment GL account if check has been logged already" do
+     IntacctPayable.create! company: 'vfc', vendor_number: @line['vendor'], bill_number: @line["invoice number"], check_number: @line['check number'], payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED
+
+     p = @p.create_payable @line['vendor'], [@line]
+     expect(p.intacct_payable_lines.first.bank_cash_gl_account).to eq "2021"
     end
   end
 
@@ -437,6 +454,115 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       payables = @export.intacct_payables
       expect(payables).to have(1).item
       expect(payables.first.vendor_number).to eq line2["vendor"]
+    end
+
+    it "creates multiple check payables for different checks to the same vendor on the same invoice" do
+      @line["payable"] = "Y"
+      @line["freight file number"] = ""
+      line2 = @line.dup
+      line2["check number"] = (@line["check number"].to_i + 1).to_s
+
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
+
+      @p.parse [@line, line2]
+
+      @export.reload
+
+      payables = @export.intacct_payables
+      expect(payables).to have(2).items
+      expect(payables.find {|p| p.check_number == @line["check number"]}).not_to be_nil
+      expect(payables.find {|p| p.check_number == line2["check number"]}).not_to be_nil
+    end
+
+  end
+
+  describe "parse_check_query_results" do
+
+    before :each do
+      @gl_account = DataCrossReference.create! key: @line['charge code'], value: "GLACCOUNT", cross_reference_type: DataCrossReference::ALLIANCE_CHARGE_TO_GL_ACCOUNT
+      @bank = DataCrossReference.create! key: @line['bank number'], value: "INTACCT BANK", cross_reference_type: DataCrossReference::ALLIANCE_BANK_ACCOUNT_TO_INTACCT
+      @bank_cash_account = DataCrossReference.create! key: @bank.value, value: "BANK CASH", cross_reference_type: DataCrossReference::INTACCT_BANK_CASH_GL_ACCOUNT
+    end
+
+    it "creates an advanced check payable" do
+      @p.parse_advance_check_results [@line]
+
+      p = IntacctPayable.where(bill_number: @line['invoice number']).first
+      expect(p).not_to be_nil
+
+      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_ADVANCED
+
+      expect(p.company).to eq "vfc"
+      expect(p.vendor_number).to eq @line['vendor']
+      expect(p.vendor_reference).to eq @line["vendor reference"]
+      expect(p.currency).to eq @line["currency"]
+      expect(p.bill_number).to eq @line["invoice number"]
+      expect(p.bill_date).to eq Date.strptime @line["check date"], "%Y%m%d"
+      expect(p.check_number).to eq @line["check number"]
+      expect(p.payable_type).to eq IntacctPayable::PAYABLE_TYPE_ADVANCED
+
+      expect(p.intacct_payable_lines).to have(1).item
+
+      l = p.intacct_payable_lines.first
+      expect(l.charge_code).to eq @line["charge code"]
+      expect(l.gl_account).to eq "2021"
+      expect(l.amount).to eq BigDecimal.new(@line["charge amount"])
+      expect(l.charge_description).to eq "#{@line["charge description"]} - #{@line["vendor reference"]}"
+      expect(l.location).to eq @line["line division"]
+      expect(l.line_of_business).to eq "Brokerage"
+      expect(l.freight_file).to eq @line["freight file number"]
+      expect(l.customer_number).to eq @line['customer']
+      expect(l.broker_file).to eq @line['broker file number']
+      expect(l.check_number).to eq @line["check number"]
+      expect(l.bank_number).to eq @bank.value
+      expect(l.check_date).to eq Date.strptime @line["check date"], "%Y%m%d"
+      expect(l.bank_cash_gl_account).to eq @bank_cash_account.value
+    end
+
+    it "does not create a payable if check already exists" do
+      IntacctPayable.create! company: 'vfc', vendor_number: @line['vendor'], bill_number: @line['invoice number'], check_number: @line['check number'], payable_type: IntacctPayable::PAYABLE_TYPE_CHECK
+
+      @p.parse_advance_check_results [@line]
+
+      expect(IntacctPayable.where(payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).first).to be_nil
+    end
+
+    it "updates an existing advanced payable" do
+      p = IntacctPayable.create! company: 'vfc', vendor_number: @line['vendor'], bill_number: @line['invoice number'], check_number: @line['check number'], payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED, intacct_errors: "Errors"
+
+      @p.parse_advance_check_results [@line]
+
+      p.reload
+      expect(p.intacct_errors).to be_nil
+    end
+
+    it "uses vendor and customer cross references" do
+      @customer = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['customer']), value: "CUSTOMER", cross_reference_type: DataCrossReference::INTACCT_CUSTOMER_XREF
+      @vendor = DataCrossReference.create! key: DataCrossReference.make_compound_key("Alliance", @line['vendor']), value: "VENDOR", cross_reference_type: DataCrossReference::INTACCT_VENDOR_XREF
+
+      @p.parse_advance_check_results [@line]
+      p = IntacctPayable.first
+
+      expect(p.vendor_number).to eq @vendor.value
+      expect(p.intacct_payable_lines.first.customer_number).to eq @customer.value
+    end
+
+    it 'creates LMD advanced payable' do
+      @line['header division'] = '11'
+
+      @p.parse_advance_check_results [@line]
+      p = IntacctPayable.first
+      expect(p.company).to eq "lmd"
+    end
+
+    it "handles multiple check result lines" do
+      line2 = @line.dup
+      line2['check number'] = "0987"
+
+      @p.parse_advance_check_results [@line, line2]
+
+      expect(IntacctPayable.where(payable_type: IntacctPayable::PAYABLE_TYPE_ADVANCED).all).to have(2).items
     end
   end
 end
