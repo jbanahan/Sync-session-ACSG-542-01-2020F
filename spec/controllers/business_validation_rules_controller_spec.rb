@@ -87,6 +87,20 @@ describe BusinessValidationRulesController do
       @bvr.business_validation_template = @bvt; @bvr.save!
     end
 
+    it "should update criterions when search_criterions_only is set" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :update,
+          id: @bvr.id,
+          business_validation_template_id: @bvt.id,
+          search_criterions_only: true,
+          business_validation_rule: {search_criterions: [{"uid" => "ent_cust_name", 
+              "datatype" => "string", "label" => "Customer Name", 
+              "operator" => "eq", "value" => "Monica Lewinsky"}]}
+      @bvr.search_criterions.length.should == 1
+      @bvr.search_criterions.first.value.should == "Monica Lewinsky"
+    end
+
     it 'should require admin' do
       u = Factory(:user)
       sign_in_as u
@@ -109,6 +123,37 @@ describe BusinessValidationRulesController do
       updated_rule.business_validation_template.id.should == @bvt.id
     end
 
+  end
+
+  describe :edit_angular do
+    before :each do
+      @sc = Factory(:search_criterion)
+      @bvr = Factory(:business_validation_rule, search_criterions: [@sc])
+      @bvt = Factory(:business_validation_template, module_type: "Entry")
+      @bvr.business_validation_template = @bvt; @bvr.save!
+    end
+
+    it "should render the correct model_field and business_rule json" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      get :edit_angular, id: @bvr.id
+      r = JSON.parse(response.body)
+      r["model_fields"].length.should == 143
+      rule = r["business_rule"]["business_validation_rule"]
+      rule.delete("updated_at")
+      rule.delete("created_at")
+      rule.should == {"business_validation_template_id"=>@bvt.id, 
+          "description"=>nil, "fail_state"=>nil, "id"=>@bvr.id, 
+          "name"=>nil, "rule_attributes_json"=>nil, 
+          "search_criterions"=>[{"model_field_uid"=>"prod_uid", "operator"=>"eq", "value"=>"x"}]}
+    end
+
+    it 'should require admin' do
+      u = Factory(:user)
+      sign_in_as u
+      get :edit_angular, id: @bvr.id
+      expect(response).to be_redirect
+    end
   end
 
   describe :destroy do

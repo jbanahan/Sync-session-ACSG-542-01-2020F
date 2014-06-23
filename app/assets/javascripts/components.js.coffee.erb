@@ -354,6 +354,55 @@
       )
   }
 ]
+
+@components.directive 'chainSearchCriteria', ['$compile', 'chainSearchOperators', ($compile,chainSearchOperators) ->
+  # Note:
+  # The boundItem JSON object requires a search_criterions key containing a list of the criteria
+  # already created for that object.
+  
+  {
+    scope: {
+      crit:"=chainSearchCriterion"
+      boundItem: "=boundItem"
+      modelFields: "=modelFields"
+    }
+
+    templateUrl:'<%=asset_path("chain_search_criteria.html")%>'
+
+    controller: ['$scope', ($scope) ->
+      $scope.operators = chainSearchOperators.ops
+
+      $scope.removeCriterion = (crit) ->
+        criterions = $scope.boundItem.search_criterions
+        criterions.splice($.inArray(crit, criterions ),1)
+
+      $scope.addCriterion = (toAddId) ->
+        toAdd = {value:''}
+        mf = findByMfid $scope.modelFields, toAddId
+        toAdd.uid = mf.uid
+        toAdd.datatype = mf.datatype
+        toAdd.label = mf.label
+        toAdd.operator = $scope.operators[toAdd.datatype][0].operator
+        $scope.boundItem.search_criterions.push toAdd
+
+      findByMfid = (ary,uid) ->
+        for m in ary
+          return m if m.uid==uid
+        return null
+
+      registrations = []
+
+      #remove criterions that are deleted
+      registrations.push($scope.$watch 'boundItem.search_criterions', ((newValue, oldValue, watchScope) ->
+          return unless watchScope.boundItem && watchScope.boundItem.search_criterions && watchScope.boundItem.search_criterions.length > 0
+          for c in watchScope.boundItem.search_criterions
+            watchScope.removeCriterion(c) if c && c.deleteMe  # Not sure why, but I've seen console errors due to c being null here.
+        ), true
+      )
+    ]
+  }
+]
+
 @components.directive 'chainSearchCriterion', ['$compile','chainSearchOperators',($compile,chainSearchOperators) ->
   {
     scope: {

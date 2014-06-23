@@ -2,6 +2,22 @@
   <button class="btn_link btn btn-default" link_to="<%=business_validation_template_path(@bvr.business_validation_template) %>">Back</button>
 <%-end-%>
 
+<div class="row" id="rule-criteria-submit-success" style="display:none;">
+  <div class="col-md-6 col-md-offset-3 ">
+    <div class="alert alert-info">
+      <p><b>Notice:</b> Criteria updated successfully.</p>
+    </div>
+  </div>
+</div>
+
+<div class="row" id="rule-criteria-submit-failure" style="display:none;">
+  <div class="col-md-6 col-md-offset-3 ">
+    <div class="alert alert-danger">
+      <p><b>Notice:</b> Criteria could not be saved.</p>
+    </div>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-md-6 col-md-offset-3" align="center">
     <h2>
@@ -10,33 +26,19 @@
   </div>
 </div>
 
-<div class="row">
-  <div class="col-md-6 col-md-offset-3">
+<div id='ng-app' ng-app='BusinessRuleApp'>
+  <div ng-controller='BusinessRuleController' ng-init="setId(<%= @bvr.id %>)">
 
-    <%= form_for @new_criterion, url: business_validation_template_business_validation_rule_r_search_criterions_path(business_validation_template_id: @bvr.business_validation_template.id, business_validation_rule_id: @bvr.id) do |f| %>
+    <div chain-action-bar>
+      <button class="btn btn-default" ng-click="backButton()">Back</button>
+      <button class="btn btn-default" ng-click="updateBusinessRule()">Save</button>
+    </div>
 
-      <%= f.hidden_field :business_validation_rule_id, value: @bvr.id %>
+    <div class="row">
+      <div class="col-md-6 col-md-offset-3">
+        <div chain-search-criteria bound-item="businessRule" model-fields="model_fields">
+      </div>
+    </div>
 
-      <div class="form-group">
-        <%= f.label :model_field_uid %>
-        <%= f.text_field :model_field_uid, class: "form-control", id: "new-criterion-model-field-uid-field", placeholder: "Enter model field UID..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :operator %>
-        <%= f.text_field :operator, class: "form-control", id: "new-criterion-operator-field", placeholder: "Enter operator..." %>
-      </div>
-      <div class="form-group">
-        <%= f.label :value %>
-        <%= f.text_field :value, class: "form-control", id: "new-criterion-value-field", placeholder: "Enter value..." %>
-      </div>
-      <div class="form-group">
-        <%= f.check_box :include_empty, id: "new-criterion-include-empty-field" %>
-        <%= f.label :include_empty %>
-      </div>
-
-      <div align="center">
-        <%= f.submit "Submit", class: "btn btn-primary btn-lg", style: "margin-top: 20px;" %>
-      </div>
-    <% end %>
   </div>
 </div>

@@ -48,6 +48,10 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  match '/business_validation_templates/:id/manage_criteria' => 'business_validation_templates#manage_criteria', via: :get
+  match '/business_validation_templates/:id/edit_angular' => 'business_validation_templates#edit_angular', via: :get
+  match '/business_validation_rules/:id/edit_angular' => 'business_validation_rules#edit_angular', via: :get
+
   resources :business_validation_rule_results, only: [:update]
   
   resources :commercial_invoices, :only => [:show]
