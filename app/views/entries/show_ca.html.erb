@@ -31,6 +31,7 @@
   <%if rule_state_field.can_view? current_user%>
     <button class='btn_link' link_to='<%=validation_results_entry_path(@entry)%>'>Business Rules</button>
   <%end%>
+  <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>'>Sync Records</button>
 <% end -%>
 <style>
 .quick_jump {

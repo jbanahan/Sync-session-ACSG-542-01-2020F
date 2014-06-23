@@ -39,6 +39,7 @@ OpenChain::Application.routes.draw do
     get 'get_images', :on=>:member
     resources :broker_invoices, :only=>[:create]
     get 'validation_results', on: :member
+    get 'sync_records', on: :member
   end
 
   resources :business_validation_templates do
