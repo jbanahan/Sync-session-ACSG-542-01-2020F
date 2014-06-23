@@ -16,6 +16,10 @@ class SurveyResponsesController < ApplicationController
     end
     respond_to do |format|
       format.html {
+        if old_ie_version? 
+          add_flash :errors, "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers.", now: true
+        end
+        
         @no_action_bar = true
       }
 
@@ -71,6 +75,9 @@ class SurveyResponsesController < ApplicationController
   end
 
   def index
+    if old_ie_version? 
+      add_flash :errors, "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers.", now: true
+    end
     @survey_responses = SurveyResponse.where(:user_id=>current_user.id)
   end
 

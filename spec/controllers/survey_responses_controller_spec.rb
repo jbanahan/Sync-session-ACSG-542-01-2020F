@@ -60,6 +60,13 @@ describe SurveyResponsesController do
       assigns(:sr).should == sr
       assigns(:respond_mode).should be_false
     end
+    it "should show error if user is using old IE version" do
+      @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
+      sr = Factory(:survey_response,:user=>@u)
+      get :show, :id=>sr.id
+      expect(response).to be_success
+      expect(flash[:errors]).to include "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers."
+    end
     context :json do 
       it "should load json response" do
         q = Factory(:question,survey:Factory(:survey,name:'myname',ratings_list:"a\nb"))
@@ -203,6 +210,14 @@ describe SurveyResponsesController do
       get :index
       response.should be_success
       assigns(:survey_responses).to_a.should == [to_find]
+    end
+
+    it "shows error if user is using IE < 9" do
+      @request.user_agent = "Mozilla/5.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; GTB7.4; InfoPath.2; SV1; .NET CLR 3.3.69573; WOW64; en-US)"
+      to_find = Factory(:survey_response,:user=>@u)
+      get :index
+      expect(response).to be_success
+      expect(flash[:errors]).to include "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers."
     end
   end
 end
