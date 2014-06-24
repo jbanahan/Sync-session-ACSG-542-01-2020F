@@ -92,7 +92,7 @@ module OpenChain
           :unit_of_measure=>"EA",
           :quantity=>ps.quantity,
           :unit_price => tariff.entered_value / c_line.quantity,
-          :rate => tariff.duty_rate,
+          :rate => (tariff.duty_rate ? tariff.duty_rate : tariff.duty_amount / tariff.entered_value),
           :compute_code => "7",
           :ocean => entry.ocean?,
           :total_mpf => entry.mpf,
