@@ -94,6 +94,7 @@ module OpenChain
           when 21
             map_to_use = SHORTER_MAP
         end 
+        next unless map_to_use #skip lines that don't match a map length
       end
       entries << OhlDrawbackParser.new(rows,map_to_use).entry unless rows.blank?
       entries
