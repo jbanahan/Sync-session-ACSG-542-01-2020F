@@ -30,7 +30,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       sf = SecurityFiling.first
       sf.host_system_file_number.should == '1870446'
       sf.host_system.should == "Kewill"
-      sf.last_event.to_i.should == Time.iso8601("2012-11-27T10:14:02.475-05:00").to_i
+      sf.last_event.to_i.should == Time.iso8601("2012-11-27T09:20:01.565-05:00").to_i
     end
     it "should not process files with outdated event times" do
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
     it "should update existing security filing and replace lines" do
       # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call (timestamp manually extracted from test file)
-      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T10:13:36.627-05:00"))
+      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
       @k.parse IO.read(@path)
       sf.reload

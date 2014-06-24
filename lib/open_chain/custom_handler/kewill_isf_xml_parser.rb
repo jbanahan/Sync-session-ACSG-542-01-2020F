@@ -137,11 +137,11 @@ module OpenChain
       def last_event_time root
         r = nil
         root.each_element('events') do |el|
-          next if et(el,'EVENT_NBR')=='10'
+          next unless et(el,'EVENT_NBR')=='21'
           time_stamp = ed el, 'EVENT_DATE'
           r = pick_date(r,time_stamp,true)
         end
-        raise "At least one 'events' element with an 'EVENT_DATE' child must be present in the XML." unless r
+        raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 must be present in the XML." unless r
         r
       end
       def process_events parent
