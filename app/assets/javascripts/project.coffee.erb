@@ -1,4 +1,4 @@
-projectApp = angular.module('ProjectApp',['ChainComponents'])
+projectApp = angular.module('ProjectApp',['ChainComponents','LocalStorageModule'])
 projectApp.factory 'projectSvc', ['$http',($http) ->
   handleProjectSave = (svc,project,promise) ->
     project.saving = true
@@ -234,14 +234,14 @@ projectApp.controller 'ProjectDeliverablesController', ['$scope','projectSvc',($
       return
     promise.then goodCallback
 ]
-projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache','$window', ($scope,projectSvc,userListCache,$window) ->
+projectApp.controller 'ProjectCtrl', ['$scope','projectSvc','userListCache','$window','localStorageService', ($scope,projectSvc,userListCache,$window,localStorageService) ->
   $scope.addUpdateBody = ''
   $scope.svc = projectSvc
   $scope.users = []
   userListCache.getListForCurrentUser (userList) ->
     $scope.users = userList
-  
-  $scope.orderedIds = Chain.getStorageItem("user-projects-sorted-ids")
+
+  $scope.orderedIds = localStorageService.get("user-projects-sorted-ids")
   if $scope.orderedIds?
     $scope.orderedIds = $scope.orderedIds.ordered_ids
     $scope.enableNextPrev = true
