@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     end
     it "should generate base production credentials" do
       exp = {:server=>'ftp.lenox.com',:username=>'vanvendor',:password=>'$hipments',:folder=>"."}
-      found = described_class.new(env:'production').ftp_credentials
+      found = described_class.new('env'=>'production').ftp_credentials
       expect(found[:server]).to eq exp[:server]
       expect(found[:username]).to eq exp[:username]
       expect(found[:password]).to eq exp[:password]
