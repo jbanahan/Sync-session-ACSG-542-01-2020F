@@ -24,7 +24,7 @@
   <tbody>
     <%-@projects.each do |p|-%>
       <%-cache ['proj_index_row_v2',p,0.seconds.ago.strftime('%Y-%m-%d')] do #cache at this level because the .red? method is expensive-%>
-        <tr class='<%=p.red? ? 'danger' : 'no-danger'%> <%=p.closed_at ? 'closed-project' : ''%>' style='<%= p.closed_at.nil? ? '' : 'display:none' %>'>
+        <tr class='<%=p.red? ? 'danger' : 'no-danger'%> <%=p.closed_at ? 'closed-project' : ''%>' style='<%= p.closed_at.nil? ? '' : 'display:none' %>' data-project-id='<%=p.id%>'>
           <td><%=link_to 'View', p, :class=>'btn btn-xs btn-default'%></td>
           <td><%=p.name%>
             <%=p.closed_at ? ' <span class="label label-default">closed</span> '.html_safe : ''%>
@@ -66,9 +66,43 @@
       }
     });
     
-    $("#project-sets-table").tablesorter({
-      sortList: [[5,0],[6,0],[2,0]]
-    });
+    if (typeof(Storage) !== void(0))
+    {
+      if (typeof(Chain.getStorageItem("user-project-sets-sort"))==="undefined" || Chain.getStorageItem("user-project-sets-sort")==null){
+        Chain.setStorageItem("user-project-sets-sort",{order: [[5,0],[6,0],[2,0]]});
+      }
+
+      startingOrder = [];
+      $.each(Chain.getStorageItem("user-project-sets-sort").order, function(index, value){ startingOrder.push(value)});
+
+      $("#project-sets-table").tablesorter({
+        sortList: startingOrder,
+        sortForce: [[5,0],[6,0]]
+      }).bind("sortEnd", function(sorter){
+        Chain.setStorageItem("user-project-sets-sort",{order: sorter.target.config.sortList});
+        setProjectOrder();
+      });
+
+      setProjectOrder();
+
+    }
+    else
+    {
+      $("#project-sets-table").tablesorter({
+        sortList: [[5,0],[6,0],[2,0]],
+        sortForce: [[5,0],[6,0]]
+      });
+    }
+
+    function setProjectOrder() {
+      order = [];
+      $.each($("tr"), function(index, value){
+        if ($(value).data("project-id")!=null){ 
+          order.push($(value).data("project-id"));
+        }
+      });
+      Chain.setStorageItem("user-projects-sorted-ids", {ordered_ids: order})
+    }
     
   })
 <% end %>
