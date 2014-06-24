@@ -1,0 +1,10 @@
+<div ng-repeat='crit in boundItem.search_criterions'>
+  <div chain-search-criterion='crit' model-fields="boundItem.model_fields"></div>
+</div>
+<div class='row'>
+  <div class='col-md-12 form-inline'>
+    Add New: <select class='form-control' style='width:30%;' ng-model='criterionToAdd' ng-options='f.uid as f.label for f in modelFields'>
+    </select>
+    <button ng-show='criterionToAdd' class='btn btn-default' ng-click='addCriterion(criterionToAdd)'>Add</button>
+  </div>
+</div>

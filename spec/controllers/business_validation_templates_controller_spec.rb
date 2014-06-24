@@ -105,6 +105,19 @@ describe BusinessValidationTemplatesController do
       expect(assigns(:bv_template)).to be_nil
     end
 
+    it "should update criteria when search_criterions_only is set" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      post :update,
+          id: @t.id,
+          search_criterions_only: true,
+          business_validation_template: {search_criterions: [{"uid" => "ent_cust_name", 
+              "datatype" => "string", "label" => "Customer Name", 
+              "operator" => "eq", "value" => "Monica Lewinsky"}]}
+      @t.search_criterions.length.should == 1
+      @t.search_criterions.first.value.should == "Monica Lewinsky"
+    end
+
   end
 
   describe :edit do
@@ -153,6 +166,28 @@ describe BusinessValidationTemplatesController do
       expect { BusinessValidationTemplate.find(previous_id) }.to raise_error
     end
 
+  end
+
+  describe :edit_angular do
+    before :each do
+      @sc = Factory(:search_criterion)
+      @bvt = Factory(:business_validation_template, module_type: "Entry", search_criterions: [@sc])
+    end
+
+    it "should render the correct model_field and business_template json" do
+      u = Factory(:admin_user)
+      sign_in_as u
+      get :edit_angular, id: @bvt.id
+      r = JSON.parse(response.body)
+      r["model_fields"].length.should == 143
+      temp = r["business_template"]["business_validation_template"]
+      temp.delete("updated_at")
+      temp.delete("created_at")
+      temp.should == {"description"=>nil, "id"=>@bvt.id, "module_type"=>"Entry", 
+          "name"=>nil, "search_criterions"=>[{"operator"=>"eq", 
+              "value"=>"x", "datatype"=>"string", 
+              "label"=>"Unique Identifier", "uid"=>"prod_uid"}]}
+    end
   end
 
 end
