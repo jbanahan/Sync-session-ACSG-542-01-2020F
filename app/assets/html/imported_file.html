@@ -57,7 +57,7 @@
   <div ng-show='importedFile.last_processed.length>0'>
     <div chain-search-result='searchResult' page='page' src='/imported_files_results/'>
       <button class='btn btn-default' ng-click='downloadOriginal()' ng-show='importedFile.file_name && !showEmailCurrent'>Download Original</button>
-      <button class='btn btn-default' ng-click='enableEmailCurrent()' ng-hide='showEmailCurrent'>Email Current</button>
+      <button class='btn btn-default' ng-click='enableEmailCurrent()' ng-hide='showEmailCurrent || !importedFile.show_email_button'>Email Current</button>
       <span ng-show='showEmailCurrent'>
         <button class='btn btn-default' ng-click='sendEmailCurrent()'>Send</button>
         <button class='btn btn-default' ng-click='disableEmailCurrent()'>Cancel</button>
