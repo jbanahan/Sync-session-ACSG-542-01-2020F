@@ -15,10 +15,10 @@ module OpenChain
       RL_INVOICE_CONFIGS ||= {
         :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), 
           email_to: ["joanne.pauta@ralphlauren.com", "james.moultray@ralphlauren.com", "dean.mark@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
-          unallocated_profit_center: "19999999", company_code: "1017"
+          unallocated_profit_center: "19999999", company_code: "1017", filename_prefix: "RL"
         }, 
         :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["joanne.pauta@ralphlauren.com", "matthew.dennis@ralphlauren.com", "jude.belas@ralphlauren.com", "robert.helm@ralphlauren.com", "accounting-ca@vandegriftinc.com"],
-          unallocated_profit_center: "20399999", company_code: "1710"
+          unallocated_profit_center: "20399999", company_code: "1710", filename_prefix: "CM"
         }
       }
 
@@ -316,7 +316,7 @@ module OpenChain
         def write_file
           output_files = {}
 
-          filename = "Vandegrift_#{Time.zone.now.strftime("%Y%m%d")}_MM_Invoice"
+          filename = "Vandegrift MM #{@config[:filename_prefix]} #{Time.zone.now.strftime("%Y%m%d")}"
           file = Tempfile.new([filename, ".xls"])
           file.binmode
           @workbook.write file
@@ -333,7 +333,7 @@ module OpenChain
               XlsMaker.add_body_row sheet, (row_num += 1), row
             end
 
-            exception_file = "#{filename}_Exceptions"
+            exception_file = "#{filename} Exceptions"
             file = Tempfile.new([exception_file, ".xls"])
             file.binmode
             workbook.write file
@@ -417,7 +417,11 @@ module OpenChain
               tradecard_invoice = find_tradecard_invoice inv.invoice_number
 
               inv.commercial_invoice_lines.each do |line|
-                tradecard_line = find_tradecard_line(tradecard_invoice, line.po_number) if tradecard_invoice
+                # First things first, lets make sure we have a po_number and an SAP line number
+                # either directly from the invoice part number or by looking up the data from the PO
+                po_number, sap_line_number = find_po_sap_line_number @config[:tax_id], line
+
+                tradecard_line = find_tradecard_line(tradecard_invoice, po_number, sap_line_number) if tradecard_invoice
 
                 set_product = nil
                 po_number = nil
@@ -498,9 +502,17 @@ module OpenChain
             CommercialInvoice.where(invoice_number: invoice_number, vendor_name: "Tradecard").includes(:commercial_invoice_lines).first
           end
 
-          def find_tradecard_line tradecard_invoice, commercial_invoice_po
-            inv_po, inv_po_line_number = @inv_generator.split_sap_po_line_number commercial_invoice_po
+          def find_po_sap_line_number importer_tax_id, invoice_line
+            inv_po, inv_po_line_number = @inv_generator.split_sap_po_line_number invoice_line.po_number
 
+            if inv_po_line_number.blank?
+              inv_po_line_number = get_sap_line_from_order importer_tax_id, invoice_line.po_number, invoice_line.part_number
+            end
+            
+            [inv_po, inv_po_line_number]
+          end
+
+          def find_tradecard_line tradecard_invoice, inv_po, inv_po_line_number
             tradecard_invoice.commercial_invoice_lines.find do |line|
               po_number, line_number = @inv_generator.split_sap_po_line_number line.po_number
 
@@ -660,7 +672,7 @@ module OpenChain
           output_files = {}
           return output_files unless @document_lines && @document_lines.length > 0
 
-          filename = "Vandegrift_#{Time.zone.now.strftime("%Y%m%d")}_FFI_Invoice"
+          filename = "Vandegrift FI #{@config[:filename_prefix]} #{Time.zone.now.strftime("%Y%m%d")}"
           xls_file = Tempfile.new([filename, ".xls"])
           xls_file.binmode
 

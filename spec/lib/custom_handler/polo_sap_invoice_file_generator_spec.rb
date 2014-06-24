@@ -83,8 +83,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.successful.should be_true
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
         job.attachments.length.should == 2
-        job.attachments.first.attached_file_name.should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"
-        job.attachments.second.attached_file_name.should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xml"
+        job.attachments.first.attached_file_name.should == "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xls"
+        job.attachments.second.attached_file_name.should == "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"]
+        at = mail.attachments["Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xls"]
         at.should_not be_nil
 
         sheet = get_workbook_sheet at
@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         # Now we need to verify the XML document structure
         expect(@xml_files).to have(1).item
-        @xml_files[0][:name].should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xml"
+        @xml_files[0][:name].should == "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
         d = REXML::Document.new @xml_files[0][:contents]
         d.root.name.should eq "Invoices"
         expect(xp_m(d, '/Invoices/Invoice')).to have(1).item
@@ -293,7 +293,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice_Exceptions.xls"]
+        at = mail.attachments["Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")} Exceptions.xls"]
         at.should_not be_nil
 
         sheet = get_workbook_sheet at
@@ -333,7 +333,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail.subject.should == "[VFI Track] Vandegrift, Inc. RL Canada Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for RL Canada for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice_Exceptions.xls"]
+        at = mail.attachments["Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")} Exceptions.xls"]
         at.should_not be_nil
 
         sheet = get_workbook_sheet at
@@ -359,6 +359,26 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq order_line.line_number.to_s
       end
 
+      it "falls back to PO to find SAP Line number and uses tradecard line" do
+        # Since we need the SAP line number to find the tradecard line, this ensures we're finding the SAP line prior to looking up the tradecard invoice line.
+        @cil.update_attributes! po_number: "471234"
+        make_sap_po
+
+        @tradecard_line.update_attributes! unit_of_measure: "AS", quantity: "10"
+
+        order_line = Factory(:order_line, line_number: "0010", product: Factory(:product, unique_identifier: "#{@entry.importer_tax_id}-#{@cil.part_number}"),
+          order: Factory(:order, order_number: "#{@entry.importer_tax_id}-#{@cil.po_number}")
+        )
+
+        @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
+
+        expect(@xml_files).to have(1).item
+        d = REXML::Document.new @xml_files[0][:contents]
+        expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchaseOrderNumber')).to eq @cil.po_number
+        expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/PurchasingDocumentItemNumber')).to eq order_line.line_number.to_s
+        expect(xp_t(d, '/Invoices/Invoice/Items/ItemData/Quantity')).to eq @cil.quantity.to_s
+      end
+
       context "multiple invoices same entry mm/gl split" do
         it "should know if an entry has been sent already during the same generation and send FFI format for second" do
           # create a second broker invoice for the same entry, and make sure it's output in FFI format
@@ -376,8 +396,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
           job.should_not be_nil
 
           expect(@xml_files).to have(2).items
-          expect(@xml_files[0][:name]).to eq "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xml"
-          expect(@xml_files[1][:name]).to eq "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xml"
+          expect(@xml_files[0][:name]).to eq "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
+          expect(@xml_files[1][:name]).to eq "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xml"
 
           d = REXML::Document.new @xml_files[0][:contents]
           expect(xp_t(d, "/Invoices/Invoice/HeaderData/Reference")).to eq @broker_invoice.invoice_number
@@ -402,7 +422,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         mail.subject.should == "[VFI Track] Vandegrift, Inc. Club Monaco Invoices for #{job.start_time.strftime("%m/%d/%Y")}"
         mail.body.raw_source.should include "An MM and/or FFI invoice file is attached for Club Monaco for 1 invoice as of #{job.start_time.strftime("%m/%d/%Y")}."
 
-        at = mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xls"]
+        at = mail.attachments["Vandegrift MM CM #{job.start_time.strftime("%Y%m%d")}.xls"]
         at.should_not be_nil
 
         sheet = get_workbook_sheet at
@@ -440,8 +460,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.successful.should be_true
         job.export_type.should == ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE
         job.attachments.length.should == 2
-        job.attachments.first.attached_file_name.should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"
-        job.attachments.second.attached_file_name.should == "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xml"
+        job.attachments.first.attached_file_name.should == "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls"
+        job.attachments.second.attached_file_name.should == "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xml"
 
         mail = ActionMailer::Base.deliveries.pop
         mail.should_not be_nil
@@ -450,9 +470,9 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         mail.attachments.should have(1).item
 
-        mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"].should_not be_nil
+        mail.attachments["Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls"].should_not be_nil
 
-        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
+        sheet = get_workbook_sheet mail.attachments["Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xls"]
         sheet.name.should == "FFI"
         now = job.start_time.strftime("%m/%d/%Y")
         rows = []
@@ -506,7 +526,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.should_not be_nil
         mail = ActionMailer::Base.deliveries.pop
 
-        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
+        sheet = get_workbook_sheet mail.attachments["Vandegrift FI CM #{job.start_time.strftime("%Y%m%d")}.xls"]
         # The only differences here should be the company code and the profit centers utilized
         expect(sheet.row(1)[2]).to eq "1710"
         expect(sheet.row(2)[24]).to eq "20399999"
@@ -525,7 +545,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.should_not be_nil
         mail = ActionMailer::Base.deliveries.pop
 
-        sheet = get_workbook_sheet mail.attachments["Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xls"]
+        sheet = get_workbook_sheet mail.attachments["Vandegrift FI CM #{job.start_time.strftime("%Y%m%d")}.xls"]
         # The only differences here should be the company code and the profit centers utilized
         expect(sheet.row(1)[2]).to eq "1710"
         expect(sheet.row(2)[24]).to eq "profit_center"
@@ -650,8 +670,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         job.should_not be_nil
 
         expect(@xml_files).to have(2).items
-        expect(@xml_files[0][:name]).to eq "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_MM_Invoice.xml"
-        expect(@xml_files[1][:name]).to eq "Vandegrift_#{job.start_time.strftime("%Y%m%d")}_FFI_Invoice.xml"
+        expect(@xml_files[0][:name]).to eq "Vandegrift MM RL #{job.start_time.strftime("%Y%m%d")}.xml"
+        expect(@xml_files[1][:name]).to eq "Vandegrift FI RL #{job.start_time.strftime("%Y%m%d")}.xml"
 
         d = REXML::Document.new @xml_files[0][:contents]
         expect(xp_t(d, "/Invoices/Invoice/HeaderData/Reference")).to eq @broker_invoice.invoice_number
