@@ -9,7 +9,8 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     shpln_desc: {label:'Description',data_type: :string, module_type: 'ShipmentLine'},
     shpln_received_date: {label:'Received Date',data_type: :date, module_type: 'ShipmentLine'},
     shpln_uom: {label:'UOM',data_type: :string, module_type: 'ShipmentLine'},
-    shpln_size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'}
+    shpln_size: {label:'Size',data_type: :string, module_type: 'ShipmentLine'},
+    prod_part_number: {label: 'Part Number', data_type: :string, module_type: 'Product'}
   } 
   
   def self.included(base)

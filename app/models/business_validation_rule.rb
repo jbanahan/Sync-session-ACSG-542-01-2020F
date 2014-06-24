@@ -11,14 +11,16 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleManual: "Manual",
                 PoloValidationRuleEntryInvoiceLineMatchesPoLine: "(Polo) Entry Invoice Line Matches PO Line",
                 ValidationRuleEntryInvoiceLineTariffFieldFormat: "Entry Invoice Tariff Field Format",
-                ValidationRuleEntryInvoiceFieldFormat: "Entry Invoice Field Format"}
+                ValidationRuleEntryInvoiceFieldFormat: "Entry Invoice Field Format",
+                ValidationRuleEntryHtsMatchesPo: "Entry Invoice Line HTS Matches PO HTS"
+              }
 
   def self.subclasses_array
     SUBCLASSES.keys.collect! {|key| [SUBCLASSES[key], key.to_s]}
   end
 
   def rule_attributes
-    self.rule_attributes_json.blank? ? nil : JSON.parse(self.rule_attributes_json)
+    self.rule_attributes_json.blank? ? {} : JSON.parse(self.rule_attributes_json)
   end
 
   # override to allow your business rule to skip objects

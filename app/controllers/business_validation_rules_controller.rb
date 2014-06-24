@@ -7,7 +7,7 @@ class BusinessValidationRulesController < ApplicationController
       @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
 
       begin
-        JSON.parse(params[:business_validation_rule][:rule_attributes_json])
+        JSON.parse(params[:business_validation_rule][:rule_attributes_json]) unless params[:business_validation_rule][:rule_attributes_json].blank? 
         valid_json = true
       rescue
         valid_json = false
