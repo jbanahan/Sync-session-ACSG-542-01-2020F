@@ -1041,6 +1041,17 @@ and classifications.product_id = products.id
         [141,:ent_location_of_goods,:location_of_goods,"Location Of Goods", {:data_type=>:string}],
         [142,:ent_final_statement_date,:final_statement_date,"Final Statement Date", {:data_type=>:date}],
         [143,:ent_bond_type,:bond_type,"Bond Type", {:data_type=>:string}],
+        [144,:ent_sync_record_count, :sync_record_count, "Sync Record Count", {:data_type=>:integer,
+          :import_lambda=> lambda {|o,d| "Number of Sync Records ignored. (read only)"},
+          :export_lambda=> lambda {|obj| obj.sync_records.size},
+          :qualified_field_name=> "(SELECT COUNT(*) FROM sync_records num_sr WHERE num_sr.syncable_id = entries.id AND num_sr.syncable_type = 'Entry')"
+        }],
+        [145,:ent_sync_problems, :sync_problems, "Sync Record Problems?", {:data_type=>:boolean,
+          :import_lambda=> lambda {|o,d| "Sync Record Problems ignored. (read only)"},
+          :export_lambda=> lambda {|obj| obj.sync_records.problems.size > 0 ? true : false},
+          :qualified_field_name=> "(SELECT CASE COUNT(*) WHEN 0 THEN false ELSE true END FROM sync_records sr_fail WHERE sr_fail.syncable_id = entries.id AND sr_fail.syncable_type = 'Entry' AND (#{SyncRecord.problems_clause('sr_fail.')}))"
+        }]
+
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::COMMERCIAL_INVOICE, [
@@ -1312,7 +1323,7 @@ and classifications.product_id = products.id
           :data_type=>:string,
           :history_ignore=>true
         }],
-        [15,:prod_bom_parents,:unique_identifier,"BOM - Parents",{
+        [15,:prod_bom_parents,:bom_parents,"BOM - Parents",{
           :data_type=>:string,
           :import_lambda => lambda {|o,d| "Bill of Materials ignored, cannot be changed by upload."},
           :export_lambda => lambda {|product|
@@ -1320,7 +1331,7 @@ and classifications.product_id = products.id
           },
           :qualified_field_name => "(select group_concat(distinct unique_identifier SEPARATOR ',') FROM bill_of_materials_links INNER JOIN products par on par.id = bill_of_materials_links.parent_product_id where bill_of_materials_links.child_product_id = products.id)"
         }],
-        [16,:prod_bom_children,:unique_identifier,"BOM - Children",{
+        [16,:prod_bom_children,:bom_children,"BOM - Children",{
           :data_type=>:string,
           :import_lambda => lambda {|o,d| "Bill of Materials ignored, cannot be changed by upload."},
           :export_lambda => lambda {|product|
@@ -1333,6 +1344,16 @@ and classifications.product_id = products.id
           :export_lambda=>lambda {|obj| obj.respond_to?(:all_attachments) ? obj.all_attachments.count : obj.attachments.count},
           :qualified_field_name=>"((select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id) + (select count(*) from linked_attachments where attachable_type = 'Product' and attachable_id = products.id))",
           :data_type=>:integer
+        }],
+        [18,:prod_sync_record_count, :sync_record_count, "Sync Record Count", {:data_type=>:integer,
+          :import_lambda=> lambda {|o,d| "Number of Sync Records ignored. (read only)"},
+          :export_lambda=> lambda {|obj| obj.sync_records.size},
+          :qualified_field_name=> "(SELECT COUNT(*) FROM sync_records num_sr WHERE num_sr.syncable_id = products.id AND num_sr.syncable_type = 'Product')"
+        }],
+        [19,:prod_sync_problems, :sync_problems, "Sync Record Problems?", {:data_type=>:boolean,
+          :import_lambda=> lambda {|o,d| "Sync Record Problems ignored. (read only)"},
+          :export_lambda=> lambda {|obj| obj.sync_records.problems.size > 0 ? true : false},
+          :qualified_field_name=> "(SELECT CASE COUNT(*) WHEN 0 THEN false ELSE true END FROM sync_records sr_fail WHERE sr_fail.syncable_id = products.id AND sr_fail.syncable_type = 'Product' AND (#{SyncRecord.problems_clause('sr_fail.')}))"
         }]
       ]
       add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
