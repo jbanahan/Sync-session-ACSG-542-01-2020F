@@ -10,6 +10,18 @@ describe EntriesController do
     sign_in_as @u
   end
 
+  describe "sync_records" do
+    before :each do
+      @ent = Factory(:entry)
+    end
+
+    it "should render page" do
+      get :sync_records, id: @ent.id
+      expect(response).to be_success
+      controller.instance_variable_get(:@e).should == @ent
+    end
+  end
+
   describe 'validation_results' do 
     before :each do
       @ent = Factory(:entry,entry_number:'123456')

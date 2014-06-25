@@ -194,6 +194,10 @@ class EntriesController < ApplicationController
     }
   end
 
+  def sync_records
+    @e = Entry.find(params[:id])
+  end
+  
   private
   def build_bi_company_filter_clause companies
     r = "(1=1)"
@@ -228,5 +232,6 @@ class EntriesController < ApplicationController
     end
     render layout: false
   end
+
 
 end
