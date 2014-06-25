@@ -821,19 +821,16 @@
         if newValue && newValue.rows
           selectedIds = []
           nonSelectedIds = []
+          visitedIds = []
           for r in newValue.rows
-          #split the selected and not selected items 
-          #Because not every row has a checkbox, some items will be in both
-          #we'll clean them up in the next step
-            if r.bulk_selected
-              selectedIds.push r.id
-            else
-              nonSelectedIds.push r.id
-
-          # remove the selected ids from the non-selected list
-          for sId in selectedIds
-            idx = $.inArray(sId,nonSelectedIds)
-            nonSelectedIds.splice(idx,1) if idx >= 0
+            # skip any ids we've already seen.  This happens when we're showing an object
+            # with multiple lines (.ie entry w/ multiple invoices)
+            if $.inArray(r.id,visitedIds) < 0
+              visitedIds.push r.id
+              if r.bulk_selected
+                selectedIds.push r.id
+              else
+                nonSelectedIds.push r.id
 
           # remove the non-selected ids from the scope
           # we can't just clear it because we don't want to lose items from other pages that were loaded
