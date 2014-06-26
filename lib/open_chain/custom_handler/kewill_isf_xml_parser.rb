@@ -22,8 +22,11 @@ module OpenChain
         r = dom.root
         host_system_file_number = et r, 'ISF_SEQ_NBR'
         raise "ISF_SEQ_NBR is required." if host_system_file_number.blank?
-        # Raises an error if there is no last event time
+        # Raises an error if there is no last event time (except for docs w/ only event types of 8 - these are advisory docs we can skip)
         last_event_time = last_event_time(r)
+
+        return unless last_event_time
+
         # sf may be nil here if we're skipping this file (if data is out of date, for example)
         sf = find_security_filing SYSTEM_NAME, host_system_file_number, last_event_time
         
@@ -136,12 +139,20 @@ module OpenChain
       end
       def last_event_time root
         r = nil
-        root.each_element('events') do |el|
-          next unless et(el,'EVENT_NBR')=='21'
+        REXML::XPath.each(root, "events[EVENT_NBR = '21']") do |el|
           time_stamp = ed el, 'EVENT_DATE'
           r = pick_date(r,time_stamp,true)
         end
-        raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 must be present in the XML." unless r
+
+        if r.nil?
+          # Don't raise anything if we have a document that only has event types of 8, we'll just skip these
+          event_numbers = []
+          REXML::XPath.each(root, "events/EVENT_NBR") {|el| event_numbers << el.text}
+          event_numbers = event_numbers.uniq.compact
+
+          raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 must be present in the XML." unless event_numbers.length == 1 && event_numbers[0] == "8"  
+        end
+        
         r
       end
       def process_events parent

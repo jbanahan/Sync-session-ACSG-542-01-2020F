@@ -68,6 +68,16 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
       expect{@k.parse dom.to_s}.to raise_error "ISF_SEQ_NBR is required."
     end
+    it "does not error if document with only event type 8 is found" do
+      dom = REXML::Document.new File.new(@path)
+      dom.root.get_elements("events/EVENT_NBR").each do |el|
+        el.text = "8"
+      end
+
+      expect{@k.parse dom.to_s}.not_to raise_error
+      # Make sure no security filing was created
+      expect(SecurityFiling.first).to be_nil
+    end
   end
   describe :parse_dom do
     before :each do
