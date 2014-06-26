@@ -18,7 +18,8 @@ class CustomReportContainerListing < CustomReport
       :ent_cadex_sent_date, :ent_exam_ordered_date, :ent_us_exit_port_code, :ent_origin_state_code, 
       :ent_export_state_code, :ent_ca_entry_type, :ent_export_date,
       :ent_export_country_codes, :ent_destination_state, :ent_total_packages,
-      :ent_eta_date, :ent_docs_received_date, :ent_first_7501_print, :ent_first_do_issued_date
+      :ent_eta_date, :ent_docs_received_date, :ent_first_7501_print, :ent_first_do_issued_date,
+      :ent_freight_pickup_date, :ent_first_entry_sent_date
     ].collect do |mfid|
       m = ModelField.find_by_uid mfid
       raise "BAD #{mfid}" unless m
@@ -32,18 +33,13 @@ class CustomReportContainerListing < CustomReport
     user.view_entries?
   end
   def run run_by, row_limit = nil
-    row_cursor = 0
+    row_cursor = -1
     col_cursor = 0
 
     #HEADINGS
-    write row_cursor, col_cursor, "Container Number"
-    col_cursor += 1
-    self.search_columns.each do |sc|
-      write row_cursor, col_cursor, sc.model_field.label
-      col_cursor += 1
-    end
-    row_cursor += 1
-    col_cursor = 0
+    headers = ["Container Number"] + self.search_columns.map {|sc| sc.model_field.label}
+
+    write_headers (row_cursor += 1), headers
 
     entries = Entry.search_secure run_by, Entry.group("entries.id")
     self.search_criterions.each {|sc| entries = sc.apply(entries)}
@@ -52,17 +48,14 @@ class CustomReportContainerListing < CustomReport
       container_numbers = ent.container_numbers
       container_numbers = "N/A" if container_numbers.blank?
       container_numbers.each_line do |cn|
-        write row_cursor, col_cursor, cn.strip
-        col_cursor += 1
-        self.search_columns.each do |sc|
-          write row_cursor, col_cursor, sc.model_field.process_export(ent,run_by)
-          col_cursor += 1
-        end
-        col_cursor = 0
-        row_cursor += 1
+        return if row_limit && row_cursor >= row_limit
+
+        row_data = [cn.strip] + self.search_columns.to_a
+        write_row (row_cursor += 1), ent, row_data, run_by
       end
-      break if row_limit && row_limit <= row_cursor
     end
-    heading_row 0
+
+    write_no_data (row_cursor +=1) if row_cursor == 0
+    nil
   end
 end
