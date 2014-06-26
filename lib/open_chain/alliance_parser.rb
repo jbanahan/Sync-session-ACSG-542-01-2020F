@@ -35,7 +35,9 @@ module OpenChain
       '00121'=>:daily_statement_approved_date,
       '00011'=>:eta_date,
       '00025'=>:delivery_order_pickup_date,
-      '00026'=>:freight_pickup_date
+      '00026'=>:freight_pickup_date,
+      '02222'=>:worksheet_date,
+      '02223'=>:available_date
     }
 
     def self.integration_folder
@@ -146,6 +148,7 @@ module OpenChain
           @entry.charge_codes = accumulated_string :charge_codes
           @entry.commercial_invoice_numbers = accumulated_string :commercial_invoice_number
           @entry.broker_invoice_total = @entry.broker_invoices.inject(0) { |sum, bi| sum += (bi.invoice_total || 0) }
+          @entry.departments = accumulated_string :departments
           set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
           set_importer_id
 
@@ -487,6 +490,7 @@ module OpenChain
       accumulate_string :total_units_uoms, @c_line.unit_of_measure 
       accumulate_string :po_numbers, r[180,35].strip
       accumulate_string :part_numbers, @c_line.part_number
+      accumulate_string :departments, @c_line.department
       @entry.total_units += @c_line.quantity 
     end
 

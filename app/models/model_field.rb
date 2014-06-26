@@ -1050,7 +1050,10 @@ and classifications.product_id = products.id
           :import_lambda=> lambda {|o,d| "Sync Record Problems ignored. (read only)"},
           :export_lambda=> lambda {|obj| obj.sync_records.problems.size > 0 ? true : false},
           :qualified_field_name=> "(SELECT CASE COUNT(*) WHEN 0 THEN false ELSE true END FROM sync_records sr_fail WHERE sr_fail.syncable_id = entries.id AND sr_fail.syncable_type = 'Entry' AND (#{SyncRecord.problems_clause('sr_fail.')}))"
-        }]
+        }],
+        [146,:ent_worksheeet_date,:worksheet_date,"Worksheet Date",{:data_type=>:date}],
+        [147,:ent_available_date,:available_date,"Available Date",{:data_type=>:date}],
+        [148,:ent_departments, :departments, "Departments", {:data_type=>:text}]
 
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")

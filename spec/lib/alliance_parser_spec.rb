@@ -29,6 +29,8 @@ describe OpenChain::AllianceParser do
     @fda_transmit_str = "201203141421"
     @delivery_order_pickup_str = "201308071318"
     @freight_pickup_str = "201308081318"
+    @available_date_str = "201308091318"
+    @worksheet_date_str = "201308101318"
     @docs_rec_str = "20120414"
     @docs_rec2_str = @docs_rec_str #this will be an override tested later
     @eta_date_str = "201305291340"
@@ -119,7 +121,9 @@ describe OpenChain::AllianceParser do
       r << "SD0099311#{@monthly_stmt_paid_str}1826                                                                            "
       r << "SD0000011#{@eta_date_str}                                                                                "
       r << "SD0000025#{@delivery_order_pickup_str}                                                                                "
-      r << "SD0000026#{@freight_pickup_str}                                                                                "
+      r << "SD0000026#{@freight_pickup_str}                                                                              "
+      r << "SD0002222#{@worksheet_date_str}                                                                              "
+      r << "SD0002223#{@available_date_str}                                                                              "
       r << "SU01#{"".ljust(35)}501#{convert_cur.call(@hmf,11)}"
       r << "SU01#{"".ljust(35)}499#{convert_cur.call(@mpf,11)}"
       r << "SU01#{"".ljust(35)}056#{convert_cur.call(@cotton_fee,11)}"
@@ -476,6 +480,8 @@ describe OpenChain::AllianceParser do
     ent.eta_date.strftime("%Y%m%d").should == @eta_date_str[0, 8]
     ent.freight_pickup_date.should == @est.parse(@freight_pickup_str)
     ent.delivery_order_pickup_date.should == @est.parse(@delivery_order_pickup_str)
+    ent.worksheet_date.should == @est.parse(@worksheet_date_str)
+    ent.available_date.should == @est.parse(@available_date_str)
 
     ent.mfids.split(@split_string).should == Set.new(@commercial_invoices.collect {|ci| ci[:mfid]}).to_a
     expect(ent.location_of_goods).to eq @location_of_goods
@@ -491,6 +497,7 @@ describe OpenChain::AllianceParser do
     expected_parts = Set.new
     expected_total_units = BigDecimal("0",2)
     expected_inv_numbers = Set.new
+    expected_departments = Set.new
     
     @commercial_invoices.each do |ci| 
       invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
@@ -506,6 +513,7 @@ describe OpenChain::AllianceParser do
         expected_total_units += line[:units]
         expected_pos << line[:po_number] unless line[:po_number].blank?
         expected_parts << line[:part_number] unless line[:part_number].blank?
+        expected_departments << line[:department] unless line[:department].blank?
 
         ci_line = inv.commercial_invoice_lines.where(:part_number=>line[:part_number]).first
         ci_line.mid.should == line[:mid]
@@ -609,6 +617,7 @@ describe OpenChain::AllianceParser do
     ent.part_numbers.split(@split_string).should == expected_parts.to_a
     ent.special_program_indicators.split(@split_string).should == expected_spis.to_a
     ent.commercial_invoice_numbers.split(@split_string).should == expected_inv_numbers.to_a
+    ent.departments.split(@split_string).should == expected_departments.to_a
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0

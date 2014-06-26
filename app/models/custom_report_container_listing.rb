@@ -19,7 +19,7 @@ class CustomReportContainerListing < CustomReport
       :ent_export_state_code, :ent_ca_entry_type, :ent_export_date,
       :ent_export_country_codes, :ent_destination_state, :ent_total_packages,
       :ent_eta_date, :ent_docs_received_date, :ent_first_7501_print, :ent_first_do_issued_date,
-      :ent_freight_pickup_date, :ent_first_entry_sent_date
+      :ent_freight_pickup_date, :ent_first_entry_sent_date, :ent_worksheeet_date, :ent_available_date, :ent_departments
     ].collect do |mfid|
       m = ModelField.find_by_uid mfid
       raise "BAD #{mfid}" unless m
