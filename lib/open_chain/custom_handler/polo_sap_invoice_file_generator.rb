@@ -304,6 +304,7 @@ module OpenChain
         def write_broker_invoice_line_xml parent_el, l
           gl_el = add_element parent_el, "GLAccountData"
 
+          add_element gl_el, "DocumentItemInInvoiceDocument", l[0]
           add_element gl_el, "GLVendorCustomer", l[1]
           add_element gl_el, "Amount", l[2]
           add_element gl_el, "DocumentType", l[3]
@@ -645,13 +646,13 @@ module OpenChain
             header = lines.first
             add_element header_el, "COMPANYCODE", header[2]
             add_element header_el, "DOCUMENTTYPE", header[1]
-            add_element header_el, "DOCUMENTDATE", header[0]
-            add_element header_el, "POSTINGDATE", header[3]
+            add_element header_el, "DOCUMENTDATE", (header[0] ? header[0].strftime("%Y%m%d") : "")
+            add_element header_el, "POSTINGDATE", (header[3] ? header[3].strftime("%Y%m%d") : "")
             add_element header_el, "REFERENCE", header[8]
             add_element header_el, "INVOICINGPARTY", header[10]
             add_element header_el, "AMOUNT", header[12]
             add_element header_el, "CURRENCYCODE", header[4]
-            add_element header_el, "BASELINEDATE", header[3]
+            add_element header_el, "BASELINEDATE", (header[3] ? header[3].strftime("%Y%m%d") : "")
 
             accounts_el = add_element inv_el, "GLAccountDatas"
             lines[1..-1].each do |line|
@@ -686,7 +687,14 @@ module OpenChain
           starting_row = 1
 
           @document_lines.each_with_index do |row, i|
-            XlsMaker.add_body_row sheet, starting_row + i, row
+            # Format the dates as m/d/Y
+            dup_row = row.dup
+            dup_row[0] = (row[0] ? row[0].strftime("%m/%d/%Y") : "")
+            dup_row[3] = (row[3] ? row[3].strftime("%m/%d/%Y") : "")
+            dup_row[6] = (row[6] ? row[6].strftime("%m/%d/%Y") : "")
+            dup_row[14] = (row[14] ? row[14].strftime("%m/%d/%Y") : "")
+
+            XlsMaker.add_body_row sheet, starting_row + i, dup_row
           end
 
           workbook.write xls_file
@@ -761,10 +769,10 @@ module OpenChain
           end
 
           def create_line invoice_number, invoice_date, gl_account, profit_center, amount, description, line_type, entry_number
-            now = Time.zone.now.strftime("%m/%d/%Y")
+            now = Time.zone.now
 
             row = []
-            row << invoice_date.strftime("%m/%d/%Y")
+            row << invoice_date
             row << "KR"
             row << @config[:company_code]
             row << now

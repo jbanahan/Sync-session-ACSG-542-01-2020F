@@ -151,6 +151,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         expect(xp_m(d, '/Invoices/Invoice/GLAccounts/GLAccountData')).to have(brok_inv_rows.length).items
         brok_inv_rows.each_with_index do |row, x|
+          expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[#{x + 1}]/DocumentItemInInvoiceDocument")).to eq (x+1).to_s
           expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[#{x + 1}]/GLVendorCustomer")).to eq row[1]
           expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[#{x + 1}]/Amount")).to eq row[2].to_s
           expect(xp_t(d, "/Invoices/Invoice/GLAccounts/GLAccountData[#{x + 1}]/DocumentType")).to eq row[3]
@@ -496,13 +497,13 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(xp_m(d, '/Invoices/Invoice/HeaderData')).to have(1).item
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/COMPANYCODE')).to eq h[2]
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/DOCUMENTTYPE')).to eq h[1]
-        expect(xp_t(d, '/Invoices/Invoice/HeaderData/DOCUMENTDATE')).to eq h[0]
-        expect(xp_t(d, '/Invoices/Invoice/HeaderData/POSTINGDATE')).to eq h[3]
+        expect(xp_t(d, '/Invoices/Invoice/HeaderData/DOCUMENTDATE')).to eq @broker_invoice.invoice_date.strftime("%Y%m%d")
+        expect(xp_t(d, '/Invoices/Invoice/HeaderData/POSTINGDATE')).to eq job.start_time.strftime("%Y%m%d")
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/REFERENCE')).to eq h[8]
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/INVOICINGPARTY')).to eq h[10]
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/AMOUNT')).to eq h[12].to_s
         expect(xp_t(d, '/Invoices/Invoice/HeaderData/CURRENCYCODE')).to eq h[4]
-        expect(xp_t(d, '/Invoices/Invoice/HeaderData/BASELINEDATE')).to eq h[3]
+        expect(xp_t(d, '/Invoices/Invoice/HeaderData/BASELINEDATE')).to eq job.start_time.strftime("%Y%m%d")
 
 
         expect(xp_m(d, '/Invoices/Invoice/GLAccountDatas/GLAccountData')).to have(5).items
