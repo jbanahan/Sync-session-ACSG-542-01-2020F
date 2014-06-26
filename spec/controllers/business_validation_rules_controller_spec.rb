@@ -138,7 +138,7 @@ describe BusinessValidationRulesController do
       sign_in_as u
       get :edit_angular, id: @bvr.id
       r = JSON.parse(response.body)
-      r["model_fields"].length.should == 143
+      expect(r["model_fields"].length).to eq ModelField.find_by_core_module(CoreModule::ENTRY).size
       rule = r["business_rule"]["business_validation_rule"]
       rule.delete("updated_at")
       rule.delete("created_at")
