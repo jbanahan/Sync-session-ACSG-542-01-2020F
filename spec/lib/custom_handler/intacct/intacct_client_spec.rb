@@ -78,6 +78,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       expect(@c.send_dimension "type", "id", "value").to eq "id"
     end
+
+    it "swallows errors returned by Intacct API related to duplicate create calls" do
+      get_xml = "<xml>test</xml>"
+      control = "controlid"
+      @xml_gen.should_receive(:generate_dimension_get).with("type", "id").and_return [control, get_xml]
+      @c.should_receive(:post_xml).with(nil, false, false, get_xml, control).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, "Another Class with the given value(s) already exists."
+
+      expect(@c.send_dimension "type", "id", "value").to eq "id"
+    end
   end
 
   describe "send_receivable" do
@@ -105,6 +114,21 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       @xml_gen.should_receive(:generate_receivable_xml).with(r).and_return [cid, xml]
 
       @c.should_receive(:post_xml).with("c", true, true, xml, cid).and_raise "Error Message"
+
+      @c.send_receivable r
+
+      expect(r.persisted?).to be_true
+      expect(r.intacct_errors).to eq "Error Message"
+    end
+
+    it "retries sending xml 3 times if retry error is raised" do
+      r = IntacctReceivable.new company: "c"
+      cid = "controlid"
+      xml = "<recv>receivable</recv>"
+      @xml_gen.should_receive(:generate_receivable_xml).with(r).exactly(3).times.and_return [cid, xml]
+      @c.should_receive(:post_xml).with("c", true, true, xml, cid).exactly(3).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, "Error Message"
+      @c.should_receive(:sleep).with(1)
+      @c.should_receive(:sleep).with(2)
 
       @c.send_receivable r
 
@@ -306,6 +330,18 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       @resp =  REXML::Document.new "<result><controlid>id</controlid><status>error</status><function>func</function></result>"
       error_message = "Intacct API Function call func failed with status error."
       expect{@c.post_xml nil, false, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+    end
+
+    it "raises retry error for 'Could not create Document record!' errors" do
+      error_no = "BL01001973"
+      description = "Desc1"
+      description2 = "Could not create Document record!"
+      correction = "Correction"
+
+      @resp = REXML::Document.new "<errormessage><error><errorno>#{error_no}</errorno><description>#{description}</description><description2>#{description2}</description2><correction>#{correction}</correction></error></errormessage>"
+      error_message = "Intacct API call failed with errors:\nError No: #{error_no}\nDescription: #{description}\nDescription 2: #{description2}\nCorrection: #{correction}"
+
+      expect{@c.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, error_message
     end
   end
 

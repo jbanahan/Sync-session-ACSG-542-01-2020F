@@ -21,6 +21,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   class IntacctClientError < StandardError
   end
 
+  class IntacctRetryError < IntacctClientError
+  end
+
   def initialize xml_generator = IntacctXmlGenerator.new
     @generator = xml_generator
   end
@@ -58,7 +61,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
         # create errors.  Just look for an error message stating the transaction was already created and then don't 
         # bother with the error reporting since our end goal of getting the dimension out there has been met we
         # don't care if this particular call errored.
-        if e.message && e.message.downcase.include?("a successful transaction has already been recorded")
+        message = e.message.try(:downcase)
+        if message.include?("a successful transaction has already been recorded") || message.include?("another class with the given value(s)")
           return id
         else
           e.log_me ["Failed to find and/or create dimension #{type} #{id} for location #{company}."]
@@ -69,6 +73,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   end
 
   def send_receivable receivable
+    retry_count = 0
     begin
       function_control_id, xml = @generator.generate_receivable_xml receivable
       response = post_xml receivable.company, true, true, xml, function_control_id
@@ -76,7 +81,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       receivable.intacct_upload_date = Time.zone.now
       receivable.intacct_errors = nil
     rescue => e
-      receivable.intacct_errors = e.message
+      if e.is_a?(IntacctRetryError) && (retry_count += 1) < 3
+        sleep retry_count
+        retry
+      else
+        receivable.intacct_errors = e.message
+      end
     end
     receivable.save!
   end
@@ -158,9 +168,19 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       error_elements = REXML::XPath.each(xml, "//errormessage/error")
 
       if error_elements.size > 0
+        # There seems to be a random error when posting data that pops up every so often that is not data related, just 
+        # random failures on the Intacct side.  Throw a retry error so that we can just retry the call again after some manner of delay.
+        can_retry = retry_error? error_elements
+
         errors = error_elements.collect {|el| extract_errors_information(el)}
 
-        raise IntacctClientError, "Intacct API call failed with errors:\n#{errors.join('\n')}"
+        message = "Intacct API call failed with errors:\n#{errors.join("\n")}"
+
+        if can_retry
+          raise IntacctRetryError, message
+        else
+          raise IntacctClientError, message
+        end
       else
         # We want to find the status associated with the function call we made
         status = xml.text("//result[controlid = '#{function_control_id}']/status")
@@ -217,6 +237,15 @@ XML
 
     def extract_errors_information el
       "Error No: #{el.text("errorno")}\nDescription: #{el.text("description")}\nDescription 2: #{el.text("description2")}\nCorrection: #{el.text("correction")}"
+    end
+
+    def retry_error? error_elements
+      retry_data = {"BL01001973" => ["Could not create Document record!"]}
+
+      error_elements.each do |el|
+        return true if retry_data[el.text("errorno")].to_a.include? el.text("description2")
+      end
+      false
     end
 
 end; end; end; end
