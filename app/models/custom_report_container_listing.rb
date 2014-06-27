@@ -6,25 +6,7 @@ class CustomReportContainerListing < CustomReport
     "Show all entries with a row for each container"
   end
   def self.column_fields_available user
-    [
-      :ent_brok_ref,:ent_entry_num,:ent_release_date,:ent_cust_num,:ent_cust_name,
-      :ent_type, :ent_arrival_date, :ent_filed_date, :ent_first_release,
-      :ent_mbols, :ent_hbols, :ent_sbols, :ent_it_numbers, :ent_carrier_code,
-      :ent_customer_references, :ent_po_numbers, 
-      :ent_lading_port_name, :ent_unlading_port_name, :ent_entry_port_name,
-      :ent_vessel, :ent_voyage, :ent_importer_tax_id, :ent_cargo_control_number,
-      :ent_ship_terms, :ent_direct_shipment_date, :ent_across_sent_date,
-      :ent_pars_ack_date, :ent_pars_reject_date, :ent_cadex_accept_date,
-      :ent_cadex_sent_date, :ent_exam_ordered_date, :ent_us_exit_port_code, :ent_origin_state_code, 
-      :ent_export_state_code, :ent_ca_entry_type, :ent_export_date,
-      :ent_export_country_codes, :ent_destination_state, :ent_total_packages,
-      :ent_eta_date, :ent_docs_received_date, :ent_first_7501_print, :ent_first_do_issued_date,
-      :ent_freight_pickup_date, :ent_first_entry_sent_date, :ent_worksheeet_date, :ent_available_date, :ent_departments
-    ].collect do |mfid|
-      m = ModelField.find_by_uid mfid
-      raise "BAD #{mfid}" unless m
-      m
-    end
+    CoreModule::ENTRY.model_fields(user).values
   end
   def self.criterion_fields_available user
     CoreModule::ENTRY.model_fields(user).values
