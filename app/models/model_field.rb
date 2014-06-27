@@ -566,6 +566,35 @@ class ModelField
     h[:can_view_lambda]=can_view_lambda unless can_view_lambda.nil?
     [sequence_number,mf_uid,field_reference,label,h]
   end
+  def self.make_sync_record_arrays sequence_start, prefix, table, class_name
+    [
+      [sequence_start,"#{prefix}_sync_record_count".to_sym, :sync_record_count, "Sync Record Count", {:data_type=>:integer,
+        :import_lambda=> lambda {|o,d| "Number of Sync Records ignored. (read only)"},
+        :export_lambda=> lambda {|obj| obj.sync_records.size},
+        :qualified_field_name=> "(SELECT COUNT(*) FROM sync_records num_sr WHERE num_sr.syncable_id = #{table}.id AND num_sr.syncable_type = '#{class_name}')"
+      }],
+      [sequence_start+1,"#{prefix}_sync_problems".to_sym, :sync_problems, "Sync Record Problems?", {:data_type=>:boolean,
+        :import_lambda=> lambda {|o,d| "Sync Record Problems ignored. (read only)"},
+        :export_lambda=> lambda {|obj| obj.sync_records.problems.size > 0 ? true : false},
+        :qualified_field_name=> "(SELECT CASE COUNT(*) WHEN 0 THEN false ELSE true END FROM sync_records sr_fail WHERE sr_fail.syncable_id = #{table}.id AND sr_fail.syncable_type = '#{class_name}' AND (#{SyncRecord.problems_clause('sr_fail.')}))"
+      }],
+      [sequence_start+2,"#{prefix}_sync_last_sent",:sync_last_sent,"Sync Record Last Sent",{
+        data_type: :datetime,
+        import_lambda: lambda {|o,d| "Sync Record Last Sent ignored (read only)"},
+        export_lambda: lambda {|o| o.sync_records.collect {|r| r.sent_at}.sort.last},
+        qualified_field_name: "(SELECT max(sent_at) FROM sync_records where sync_records.syncable_id = #{table}.id AND sync_records.syncable_type = '#{class_name}')"
+        }
+      ],
+      [sequence_start+3,"#{prefix}_sync_last_confirmed",:sync_last_confirmed,"Sync Record Last Confirmed",{
+        data_type: :datetime,
+        import_lambda: lambda {|o,d| "Sync Record Last Confirmed ignored (read only)"},
+        export_lambda: lambda {|o| o.sync_records.collect {|r| r.confirmed_at}.sort.last},
+        qualified_field_name: "(SELECT max(confirmed_at) FROM sync_records where sync_records.syncable_id = #{table}.id AND sync_records.syncable_type = '#{class_name}')"
+        }
+      ]
+    ]
+
+  end
 
   def self.next_index_number(core_module)
     max = 0
@@ -1041,22 +1070,12 @@ and classifications.product_id = products.id
         [141,:ent_location_of_goods,:location_of_goods,"Location Of Goods", {:data_type=>:string}],
         [142,:ent_final_statement_date,:final_statement_date,"Final Statement Date", {:data_type=>:date}],
         [143,:ent_bond_type,:bond_type,"Bond Type", {:data_type=>:string}],
-        [144,:ent_sync_record_count, :sync_record_count, "Sync Record Count", {:data_type=>:integer,
-          :import_lambda=> lambda {|o,d| "Number of Sync Records ignored. (read only)"},
-          :export_lambda=> lambda {|obj| obj.sync_records.size},
-          :qualified_field_name=> "(SELECT COUNT(*) FROM sync_records num_sr WHERE num_sr.syncable_id = entries.id AND num_sr.syncable_type = 'Entry')"
-        }],
-        [145,:ent_sync_problems, :sync_problems, "Sync Record Problems?", {:data_type=>:boolean,
-          :import_lambda=> lambda {|o,d| "Sync Record Problems ignored. (read only)"},
-          :export_lambda=> lambda {|obj| obj.sync_records.problems.size > 0 ? true : false},
-          :qualified_field_name=> "(SELECT CASE COUNT(*) WHEN 0 THEN false ELSE true END FROM sync_records sr_fail WHERE sr_fail.syncable_id = entries.id AND sr_fail.syncable_type = 'Entry' AND (#{SyncRecord.problems_clause('sr_fail.')}))"
-        }],
         [146,:ent_worksheeet_date,:worksheet_date,"Worksheet Date",{:data_type=>:date}],
         [147,:ent_available_date,:available_date,"Available Date",{:data_type=>:date}],
-        [148,:ent_departments, :departments, "Departments", {:data_type=>:text}]
-
+        [148,:ent_departments, :departments, "Departments", {:data_type=>:text}],
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
+      add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
       add_fields CoreModule::COMMERCIAL_INVOICE, [
         [1,:ci_invoice_number,:invoice_number,"Invoice Number",{:data_type=>:string}],
         [2,:ci_vendor_name,:vendor_name,"Vendor Name",{:data_type=>:string}],
@@ -1347,16 +1366,6 @@ and classifications.product_id = products.id
           :export_lambda=>lambda {|obj| obj.respond_to?(:all_attachments) ? obj.all_attachments.count : obj.attachments.count},
           :qualified_field_name=>"((select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id) + (select count(*) from linked_attachments where attachable_type = 'Product' and attachable_id = products.id))",
           :data_type=>:integer
-        }],
-        [18,:prod_sync_record_count, :sync_record_count, "Sync Record Count", {:data_type=>:integer,
-          :import_lambda=> lambda {|o,d| "Number of Sync Records ignored. (read only)"},
-          :export_lambda=> lambda {|obj| obj.sync_records.size},
-          :qualified_field_name=> "(SELECT COUNT(*) FROM sync_records num_sr WHERE num_sr.syncable_id = products.id AND num_sr.syncable_type = 'Product')"
-        }],
-        [19,:prod_sync_problems, :sync_problems, "Sync Record Problems?", {:data_type=>:boolean,
-          :import_lambda=> lambda {|o,d| "Sync Record Problems ignored. (read only)"},
-          :export_lambda=> lambda {|obj| obj.sync_records.problems.size > 0 ? true : false},
-          :qualified_field_name=> "(SELECT CASE COUNT(*) WHEN 0 THEN false ELSE true END FROM sync_records sr_fail WHERE sr_fail.syncable_id = products.id AND sr_fail.syncable_type = 'Product' AND (#{SyncRecord.problems_clause('sr_fail.')}))"
         }]
       ]
       add_fields CoreModule::PRODUCT, [make_last_changed_by(12,'prod',Product)]
@@ -1364,6 +1373,7 @@ and classifications.product_id = products.id
       add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
       add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
       add_fields CoreModule::PRODUCT, make_importer_arrays(250,"prod","products")
+      add_fields CoreModule::PRODUCT, make_sync_record_arrays(300,'prod','products','Product')
       
       add_fields CoreModule::CLASSIFICATION, [
         [1,:class_comp_cnt, :comp_count, "Component Count", {
