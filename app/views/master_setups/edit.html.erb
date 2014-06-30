@@ -49,18 +49,19 @@ $(function() {
       <%end%>
     </div>
     <div class='col-md-7'>
-      <h2>Active Users</h2>
+      <%actv_usrs = User.where("last_request_at > ?",30.minutes.ago).order("last_request_at DESC")%>
+      <h2>Active Users (<%=actv_usrs.count%>)</h2>
       <table class='detail_table'>
         <thead><tr><th>User</th><th>Company</th><th>Last Action</th></tr></thead>
         <tbody>
-          <%User.where("last_request_at > ?",30.minutes.ago).order("last_request_at DESC").each do |u|%>
+          <%actv_usrs.each do |u|%>
             <tr class='hover'><td><%=link_to u.full_name, [u.company,u]%></td><td><%=link_to u.company.name, u.company%></td><td><%=u.last_request_at%></td></tr>
           <%end%>
         </tbody>
       </table>
       <h2>Delayed Job</h2>
       <p><%= "#{Delayed::Job.count(:conditions => 'locked_at is null and failed_at is null')} jobs not run/#{Delayed::Job.count(:conditions => 'last_error is not null')} jobs with errors" %></p>
-      <table class='detail_table'>
+      <table class='table table-condensed'>
         <thead>
           <tr><th>ID</th><th>Priority</th><th>Attempts</th><th>Handler</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Action</th></tr>
         </thead>
@@ -87,7 +88,7 @@ $(function() {
       </table>
 
       <h2>Instances</h2>
-      <table class='detail_table'>
+      <table class='table table-condensed'>
         <thead>
           <tr><th>Host Name</th><th>Version</th><th>Last Check In</th><th>Upgrade Logs</th></tr>
         </thead>

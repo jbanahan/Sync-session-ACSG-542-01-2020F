@@ -822,7 +822,8 @@ and classifications.product_id = products.id
         [26,:sf_estimated_vessel_load_date,:estimated_vessel_load_date, "Estimated Vessel Load Date",{:data_type=> :date}],
         [27,:sf_po_numbers,:po_numbers, "PO Number(s)",{:data_type=> :string}],
         [28,:sf_estimated_vessel_arrival_date,:estimated_vessel_arrival_date, "Estimated Vessel Arrival Date",{:data_type=> :date}],
-        [29,:sf_countries_of_origin,:countries_of_origin,"Countries of Origin",{data_type: :text}]
+        [29,:sf_countries_of_origin,:countries_of_origin,"Countries of Origin",{data_type: :text}],
+        [30,:sf_estimated_vessel_sailing_date,:estimated_vessel_sailing_date, "Estimated Vessel Sailing Date",{:data_type=> :date}]
       ]
       add_fields CoreModule::OFFICIAL_TARIFF, [
         [1,:ot_hts_code,:hts_code,"HTS Code",{:data_type=>:string}],

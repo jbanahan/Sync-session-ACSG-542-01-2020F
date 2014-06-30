@@ -117,6 +117,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       sf.last_sent_date.should == Time.utc(2012,11,27,15,13,36)
       sf.last_accepted_date.should == Time.utc(2012,11,27,15,14,2)
       sf.estimated_vessel_load_date.strftime("%Y%m%d") == @est.local(2012,11,30).strftime("%Y%m%d")
+      sf.estimated_vessel_sailing_date.strftime("%Y%m%d") == @est.local(2014,6,26).strftime("%Y%m%d")
       sf.estimated_vessel_arrival_date.strftime("%Y%m%d") == @est.local(2014,8,4).strftime("%Y%m%d")
       sf.po_numbers.should == "0425694\n0425697"
       sf.should have(2).security_filing_lines
@@ -151,6 +152,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         "2012-11-27 10:14 EST: ISF issued as a Compliance Transaction (CT)",
         "2012-11-27 10:14 EST: CBP Accepted - ISF ACCEPTED",
         "2012-11-27 10:14 EST: Submission Type - 1 : Importer Security Filing 10 (ISF-10)",
+        "2014-06-26 00:00 EDT: Estimate Sailing",
         "2014-08-04 00:00 EDT: Estimated Arrival"
       ]
     end

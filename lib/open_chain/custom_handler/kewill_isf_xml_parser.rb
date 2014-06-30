@@ -177,6 +177,8 @@ module OpenChain
             last_accepted_date = pick_date(last_accepted_date,time_stamp,true)
           when '10'
             @sf.estimated_vessel_load_date = time_stamp
+          when '11'
+            @sf.estimated_vessel_sailing_date = time_stamp
           when '12'
             @sf.estimated_vessel_arrival_date = time_stamp
           end
