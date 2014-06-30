@@ -179,6 +179,10 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       @k.new.parse_dom @dom, @sf
       SecurityFiling.first.house_bills_of_lading.should == "HBSCHBL123\nYYYYXXXX"
     end
+    it "should set countries of origin" do
+      @k.new.parse_dom @dom, @sf
+      SecurityFiling.first.countries_of_origin.should == "CN\nMX"
+    end
     it "should set late filing to true" do
       @dom.root.elements['IS_SUBMIT_LATE'].text="Y"
       @k.new.parse_dom @dom, @sf

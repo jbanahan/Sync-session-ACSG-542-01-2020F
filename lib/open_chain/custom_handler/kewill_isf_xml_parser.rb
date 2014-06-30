@@ -43,6 +43,7 @@ module OpenChain
 
       def parse_dom dom, sf, s3_bucket = nil, s3_key = nil
         @po_numbers = Set.new 
+        @countries_of_origin = Set.new
         @used_line_numbers = []
         @notes = []
         @dom = dom
@@ -73,6 +74,7 @@ module OpenChain
         process_events r
         process_lines r
         @sf.po_numbers = @po_numbers.to_a.compact.join("\n")
+        @sf.countries_of_origin = @countries_of_origin.to_a.compact.join("\n")
         @sf.security_filing_lines.each do |ln|
           ln.destroy unless @used_line_numbers.include?(ln.line_number)
         end
@@ -105,6 +107,7 @@ module OpenChain
           ln.commercial_invoice_number = et(el, 'CI_NBR')
           ln.mid = et(el,'MID')
           ln.country_of_origin_code = et(el, 'COUNTRY_ORIGIN_CD')
+          @countries_of_origin << ln.country_of_origin_code
 
           unless ln.mid.nil? || ln.mid.strip.length == 0
             name = REXML::XPath.first(parent, "entities[MID=$mid]/PARTY_NAME", nil, {"mid" => ln.mid})

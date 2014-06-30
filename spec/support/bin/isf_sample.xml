@@ -430,7 +430,7 @@
     <MANUF_ACCT_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <MID xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <TARIFF_NBR>940430</TARIFF_NBR>
-    <COUNTRY_ORIGIN_CD>CN</COUNTRY_ORIGIN_CD>
+    <COUNTRY_ORIGIN_CD>MX</COUNTRY_ORIGIN_CD>
     <CI_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <CI_LINE_NBR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
     <PO_NBR>0425697</PO_NBR>
