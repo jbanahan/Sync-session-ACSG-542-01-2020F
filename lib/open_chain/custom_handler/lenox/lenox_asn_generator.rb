@@ -60,7 +60,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
           end
           OpenMailer.send_simple_html('lenox_us@vandegriftinc.com',
             "Lenox ASN Failure","<p>The Lenox ASN for file #{ent.broker_reference} failed with the following message:</p>
-            <pre>#{$!.message}</pre><p>Please contact the Lenox on site team so they can manually enter the shipment and invoice into SCW / Rockblocks.</p>".html_safe).deliver!
+            <pre>#{$!.message}</pre>
+            <p>MBOL: #{ent.master_bills_of_lading}, HBOL: #{ent.house_bills_of_lading}</p><p>Please contact the Lenox on site team so they can manually enter the shipment and invoice into SCW / Rockblocks.</p>".html_safe).deliver!
         end
       end
       header_file.flush
