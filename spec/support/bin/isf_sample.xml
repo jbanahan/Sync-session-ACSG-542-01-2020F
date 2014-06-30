@@ -401,6 +401,13 @@
     <EVENT_DATE_GMT>2012-11-30T05:00:00-05:00</EVENT_DATE_GMT>
     <TIMEZONE>EST</TIMEZONE>
   </events>
+  <events>
+    <EVENT_NBR>12</EVENT_NBR>
+    <EVENT_DESCR>Estimated Arrival</EVENT_DESCR>
+    <EVENT_DATE>2014-08-04T00:00:00-04:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2014-08-04T05:00:00-04:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+  </events>
   <lines>
     <ISF_LINE_NBR>1</ISF_LINE_NBR>
     <PARTS_IMPORTER_CD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>

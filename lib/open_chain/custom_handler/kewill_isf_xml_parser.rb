@@ -174,6 +174,8 @@ module OpenChain
             last_accepted_date = pick_date(last_accepted_date,time_stamp,true)
           when '10'
             @sf.estimated_vessel_load_date = time_stamp
+          when '12'
+            @sf.estimated_vessel_arrival_date = time_stamp
           end
           unless NO_NOTES_EVENTS.include?(number.to_i)
             notes = get_notes_from_event(el,time_stamp)
