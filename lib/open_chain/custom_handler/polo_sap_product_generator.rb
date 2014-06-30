@@ -56,6 +56,7 @@ module OpenChain
             "\u{201C}" => "\"", # Left quote-mark “
             "\u{00BC}" => "1/4",
             "\u{00BD}" => "1/2",
+            "\u{00FA}" => "u", #u w/ acute http://www.fileformat.info/info/unicode/char/fa/index.htm
             "\u{2019}" => "'" # Right single quote-mark '
           }
           # First convert the UTF-8 text to ascii w/ our conversion table
