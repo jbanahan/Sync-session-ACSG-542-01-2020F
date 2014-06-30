@@ -387,14 +387,14 @@ describe ModelField do
         @ent.sync_records.create!(trading_partner:'ABC',sent_at:Date.new(2014,1,3),confirmed_at:Date.new(2014,1,4))
         @ent.sync_records.create!(trading_partner:'DEF',sent_at:Date.new(2014,1,1),confirmed_at:Date.new(2014,1,2))
         expect(ModelField.find_by_uid(:ent_sync_last_sent).process_export(@ent,nil,true).strftime('%Y%m%d')).to eq '20140103'
-        sc = SearchCriterion.new(:model_field_uid=>'ent_sync_last_sent',operator:'eq',value:'2014-01-03')
+        sc = SearchCriterion.new(:model_field_uid=>'ent_sync_last_sent',operator:'gt',value:'2014-01-02')
         expect(sc.apply(Entry).to_a).to eq [@ent]
       end
       it "should show latest confirmed date" do
         @ent.sync_records.create!(trading_partner:'ABC',sent_at:Date.new(2014,1,3),confirmed_at:Date.new(2014,1,4))
         @ent.sync_records.create!(trading_partner:'DEF',sent_at:Date.new(2014,1,1),confirmed_at:Date.new(2014,1,2))
         expect(ModelField.find_by_uid(:ent_sync_last_confirmed).process_export(@ent,nil,true).strftime('%Y%m%d')).to eq '20140104'
-        sc = SearchCriterion.new(:model_field_uid=>'ent_sync_last_confirmed',operator:'eq',value:'2014-01-04')
+        sc = SearchCriterion.new(:model_field_uid=>'ent_sync_last_confirmed',operator:'gt',value:'2014-01-03')
         expect(sc.apply(Entry).to_a).to eq [@ent]
       end
 
