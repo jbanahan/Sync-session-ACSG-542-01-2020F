@@ -58,12 +58,13 @@
           <div >
             <h3>Lands End Fedex Import Files</h3>
             <p>
-              .csv file manually built by reformatting the Duty Calc Imports By Entry report you get from FedEx into the folowing order (with headers)
+              <ul>
+                <li>Save the FedEx <em>IMPORTS BY 7501.xlsx</em> as a .csv</li>
+                <li>Rename the column headings to match the headings below. <a  href='javascript:false;' title='We need to do this because the default headers have line breaks in them.'>?</a></li>
+              </ul>
             </p>
-            <pre>
-          Entry Number, Port Code, Import Date, Received Date, HTS Code, Part - Description, Quantity, UOM, Unit Price, Duty Rate
-                </pre>
-            <p class='text-error'>It is VERY important that you only process each file once.  This uploader adds quantities to existing records, so processing twice will double the import values and will result in invalid claims! If you have issues uploading the file, contact support immediately.</p>
+            <pre>Entry Number, Port Code, Import Date, Y/N, Received Date, HTS Code, Part - Description, Quantity, UOM, Unit Price, Duty Rate</pre>
+            <div class='alert alert-warning'>It is VERY important that you only process each file once.  This uploader adds quantities to existing records, so processing twice will double the import values and will result in invalid claims! If you have issues uploading the file, contact support immediately.</div>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_IMPORTS}%>
           </div>
           <div >
