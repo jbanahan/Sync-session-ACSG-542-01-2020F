@@ -51,6 +51,12 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     r.first.quantity.should == 2
     r.last.quantity.should == 2
   end
+  it "should set duty rate to 0 if nil and next column is 0" do
+    @data.gsub!("19.70%",",0")
+    @p.parse @data
+    d = DrawbackImportLine.first
+    d.rate.should == 0
+  end
   it "should not update line for different company" do
     p = Factory(:product,unique_identifier:'LANDSEND-2740747')
     d = DrawbackImportLine.create(importer_id:Factory(:company).id,product_id:p.id,part_number:'2740747',entry_number:'23105002004',quantity:10)

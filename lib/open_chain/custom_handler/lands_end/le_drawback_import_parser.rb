@@ -21,6 +21,7 @@ module OpenChain
           begin
             ActiveRecord::Base.transaction do
               CSV.parse(data,headers:true) do |row|
+                cursor += 1
                 next if row.blank? || row[0].match(/Subtotal/) || row[0].match(/Total/) || row[0].match(/Imported Duty/)
                 part_number = row[6].split('-').first.strip
                 q = DrawbackImportLine.where(importer_id:@company.id,
@@ -42,14 +43,13 @@ module OpenChain
                   quantity:0,
                   unit_of_measure:row[8],
                   unit_price:row[9].gsub('$',''),
-                  rate:( BigDecimal(row[10].gsub('%',''))*BigDecimal('0.01') )
+                  rate: duty_rate(row)
                 )
                 d.quantity += BigDecimal(row[7])
                 key = "#{d.entry_number}-#{d.part_number}"
                 kj = KeyJsonItem.lands_end_cd(key).first
                 d.duty_per_unit = kj.data['duty_per_unit'] if kj
                 d.save!
-                cursor += 1
               end
             end
           rescue
@@ -59,6 +59,10 @@ module OpenChain
         end
 
         private
+        def duty_rate row
+          return 0 if row[10].blank? && row[11] && row[11]=='0'
+          BigDecimal(row[10].gsub('%',''))*BigDecimal('0.01')
+        end
         def description raw
           dash = raw.index('-')
           raw[dash+2,raw.length - dash+2]
