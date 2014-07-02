@@ -581,14 +581,14 @@ class ModelField
       [sequence_start+2,"#{prefix}_sync_last_sent",:sync_last_sent,"Sync Record Last Sent",{
         data_type: :datetime,
         import_lambda: lambda {|o,d| "Sync Record Last Sent ignored (read only)"},
-        export_lambda: lambda {|o| o.sync_records.collect {|r| r.sent_at}.sort.last},
+        export_lambda: lambda {|o| o.sync_records.collect {|r| r.sent_at}.compact.sort.last},
         qualified_field_name: "(SELECT max(sent_at) FROM sync_records where sync_records.syncable_id = #{table}.id AND sync_records.syncable_type = '#{class_name}')"
         }
       ],
       [sequence_start+3,"#{prefix}_sync_last_confirmed",:sync_last_confirmed,"Sync Record Last Confirmed",{
         data_type: :datetime,
         import_lambda: lambda {|o,d| "Sync Record Last Confirmed ignored (read only)"},
-        export_lambda: lambda {|o| o.sync_records.collect {|r| r.confirmed_at}.sort.last},
+        export_lambda: lambda {|o| o.sync_records.collect {|r| r.confirmed_at}.compact.sort.last},
         qualified_field_name: "(SELECT max(confirmed_at) FROM sync_records where sync_records.syncable_id = #{table}.id AND sync_records.syncable_type = '#{class_name}')"
         }
       ]

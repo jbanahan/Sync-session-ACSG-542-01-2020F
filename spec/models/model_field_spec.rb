@@ -397,6 +397,11 @@ describe ModelField do
         sc = SearchCriterion.new(:model_field_uid=>'ent_sync_last_confirmed',operator:'gt',value:'2014-01-03')
         expect(sc.apply(Entry).to_a).to eq [@ent]
       end
+      it "should pass with nil comparison" do
+        @ent.sync_records.create!(trading_partner:'ABC',sent_at:Date.new(2014,1,3),confirmed_at:Date.new(2014,1,4))
+        @ent.sync_records.create!(trading_partner:'DEF',sent_at:Date.new(2014,1,1),confirmed_at:nil)
+        expect(ModelField.find_by_uid(:ent_sync_last_confirmed).process_export(@ent,nil,true).strftime('%Y%m%d')).to eq '20140104'
+      end
 
     end
     context "duty billed" do
