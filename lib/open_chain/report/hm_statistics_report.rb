@@ -38,6 +38,13 @@ order by entries.transport_mode_code,
 (select name from ports where schedule_d_code = entries.entry_port_code),
 entries.export_country_codes;
 QRY
+        air_qry = <<QRY
+select count(*) as 'Air Shipment Count' from
+(select distinct master_bills_of_lading from entries 
+where customer_number = 'HENNE' and release_date between "#{start_date}" and "#{end_date}"
+and (select avg(length(commercial_invoices.invoice_number)) from commercial_invoices where commercial_invoices.entry_id = entries.id) = 6
+and (transport_mode_code = '40')) x;
+QRY
         wb = Spreadsheet::Workbook.new
         sheet = wb.create_worksheet :name=>'Statistics'
         # Translate the release, arrival date into Eastern Timezone before trimming the time portion off
@@ -46,6 +53,10 @@ QRY
         dt_lambda = datetime_translation_lambda("Eastern Time (US & Canada)", true)
         conversions = {"Release" => dt_lambda, "Arrival" => dt_lambda}
         table_from_query sheet, qry, conversions
+
+        air_sheet = wb.create_worksheet :name=>'Air Stats'
+        table_from_query air_sheet, air_qry
+
         workbook_to_tempfile wb, 'HmStatisticsReport-'
       end
     end
