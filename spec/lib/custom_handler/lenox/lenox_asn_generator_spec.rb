@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       @lenox = Factory(:company,alliance_customer_number:'LENOX',system_code:'LENOX')
       @vendor = Factory(:company,system_code:'LENOX-VENCODE')
       @entry = Factory(:entry,importer:@lenox,master_bills_of_lading:'MBOL',entry_number:'11312345678',
-        vessel:'VES',customer_references:'P14010337',export_date:Date.new(2014,1,16),
+        vessel:'VES',customer_references:'P14010337',export_date:Date.new(2014,7,1),
         lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11')
       @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99,invoice_number:'123456',invoice_date:Date.new(2014,3,17))
       @ci_line = Factory(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     describe :find_entries do
       before :each do
         @bvr = Factory(:business_validation_result)
-        @entry = Factory(:entry,importer:@lenox,entry_filed_date:1.day.ago)
+        @entry = Factory(:entry,importer:@lenox,entry_filed_date:1.day.ago,export_date:Date.new(2014,7,1))
         @bvr.validatable = @entry
         @bvr.state = 'Pass'
         @bvr.save!
@@ -81,6 +81,10 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       it "should not find entries not for lenox" do
         @entry.importer = Factory(:importer)
         @entry.save!
+        expect(described_class.new.find_entries.to_a).to be_empty
+      end
+      it "should not find entries exported before 6/24/2014" do
+        @entry.update_attributes(export_date:Date.new(2014,6,23))
         expect(described_class.new.find_entries.to_a).to be_empty
       end
       it "should not find entries where business rules are not passed" do
@@ -122,7 +126,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[162,25].rstrip).to eq '11312345678'
         expect(row[187,20].rstrip).to eq 'P14010337'
         expect(row[207,16].rstrip).to eq '' #placeholder for exfactory & gate in dates
-        expect(row[223,8]).to eq '20140116' 
+        expect(row[223,8]).to eq '20140701' 
         expect(row[231,10].rstrip).to eq '12345'
         expect(row[241,10].rstrip).to eq '4321'
         expect(row[251,6].rstrip).to eq '11' #placeholder for mode
