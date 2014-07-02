@@ -123,14 +123,20 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
         # multiple containers
         raise LenoxBusinessLogicError.new("ASN cannot be generated for entry #{entry.entry_number} because it has multiple containers.")
       end
+      if entry.container_sizes.blank?
+        raise LenoxBusinessLogicError.new("ASN cannot be generated for entry #{entry.entry_number} because does not have container size set.")
+      end
+      if lcl?(entry) && entry.house_bills_of_lading.blank?
+        raise LenoxBusinessLogicError.new("ASN cannot be generated for entry #{entry.entry_number} because it is LCL and does not have a House Bill.")
+      end
       cont = entry.containers.first
       return {
         cnum:cont.container_number,
         csize:cont.container_size,
         cartons:cont.quantity,
         seal:cont.seal_number,
-        fcl:(entry.transport_mode_code=='11' ? 'Y' : 'N'),
-        mbol:(entry.transport_mode_code=='11' ? entry.master_bills_of_lading : entry.house_bills_of_lading)
+        fcl:(lcl?(entry) ? 'N' : 'Y'),
+        mbol:(lcl?(entry) ? entry.house_bills_of_lading : entry.master_bills_of_lading)
       }
     else
       vals = {
@@ -196,6 +202,10 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       h[vendor_code] << ci
     end
     h
+  end
+
+  def lcl? entry
+    entry.container_sizes.match /LCL/
   end
 
 end; end; end; end

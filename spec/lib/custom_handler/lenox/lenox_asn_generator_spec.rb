@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       @vendor = Factory(:company,system_code:'LENOX-VENCODE')
       @entry = Factory(:entry,importer:@lenox,master_bills_of_lading:'MBOL',entry_number:'11312345678',
         vessel:'VES',customer_references:'P14010337',export_date:Date.new(2014,7,1),
-        lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11')
+        lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11',container_sizes:'40')
       @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99,invoice_number:'123456',invoice_date:Date.new(2014,3,17))
       @ci_line = Factory(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
         quantity:10, country_origin_code:'CN',part_number:'partnum',unit_price:100.10,line_number:2
@@ -154,8 +154,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[120,7]).to eq '0000023'
         expect(row[127,35].rstrip).to eq ''
       end
-      it "should set fcl_lcl to N for mode 10" do
-        @entry.transport_mode_code = 10
+      it "should set fcl_lcl to N for container_sizes LCL" do
+        @entry.update_attributes(container_sizes:'LCL',house_bills_of_lading:'HBOL')
         @entry.save!
         r = []
         described_class.new.generate_header_rows @entry do |row|
@@ -164,8 +164,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         row = r.first
         expect(row[119]).to eq 'N'
       end
-      it "should send house bill instead of master for mode 10" do
-        @entry.transport_mode_code = '10'
+      it "should send house bill instead of master for container sizes" do
+        @entry.container_sizes = 'LCL'
         @entry.house_bills_of_lading = 'HBOL'
         @entry.save!
         r = []
@@ -192,6 +192,16 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       it "should raise exception for multiple containers" do
         #THIS IS TEMPORARY UNTIL WE CAN PROPERLY ALLOCATE THE CARTONS FROM THE CONTAINERS FROM IES
         Factory(:container,entry:@entry)
+        expect{described_class.new.generate_header_rows(@entry) {|r|}}.
+          to raise_error described_class::LenoxBusinessLogicError
+      end
+      it "should raise exception for no container sizes" do
+        @entry.container_sizes = ''
+        expect{described_class.new.generate_header_rows(@entry) {|r|}}.
+          to raise_error described_class::LenoxBusinessLogicError
+      end
+      it "should raise exception for no house bill and container sizes LCL" do
+        @entry.update_attributes(container_sizes:'',house_bills_of_lading:'')
         expect{described_class.new.generate_header_rows(@entry) {|r|}}.
           to raise_error described_class::LenoxBusinessLogicError
       end
