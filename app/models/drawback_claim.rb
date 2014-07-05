@@ -6,6 +6,8 @@ class DrawbackClaim < ActiveRecord::Base
   validates_presence_of :name
 
   has_many  :attachments, as: :attachable, dependent: :destroy
+  has_many :drawback_export_histories, inverse_of: :drawback_claim, dependent: :destroy
+  has_many :drawback_claim_audits, inverse_of: :drawback_claim, dependent: :destroy
   
   before_save :set_claim_totals
 
