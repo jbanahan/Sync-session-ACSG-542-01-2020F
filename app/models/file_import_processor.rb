@@ -79,7 +79,9 @@ class FileImportProcessor
             custom_fields = {}
             data_map[mod].each do |uid,data|
               mf = ModelField.find_by_uid uid
-              if data.blank?
+              # Rails evaluates boolean false as blank (boo!), so if we've got a boolean false value
+              # don't skip it since we're likely dealing w/ a boolean field and should actually handle the value.
+              if data.blank? && !(data === false)
                 messages << "Blank value skipped for #{mf.label}"
                 next
               end

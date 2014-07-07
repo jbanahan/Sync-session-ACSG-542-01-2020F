@@ -64,6 +64,17 @@ describe FileImportProcessor do
       pro.do_row 0, ['uid-abc','  '], true, -1
       Product.find_by_unique_identifier('uid-abc').name.should == 'name'
     end
+    it "should set boolean false values" do
+      p = Factory(:product,unique_identifier:'uid-abc',name:'name')
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
+      ])
+      pro.do_row 0, ['uid-abc', false], true, -1
+      # False values, when put in string fields, turn to 0 via rails type coercion
+      Product.find_by_unique_identifier('uid-abc').name.should == '0'
+    end
     it "should create children" do
       country = Factory(:country)
       ot = Factory(:official_tariff,:hts_code=>'1234567890',:country=>country)
@@ -104,6 +115,42 @@ describe FileImportProcessor do
       ])
       pro.do_row 0, ['uid-abc','name','cval'], true, -1
       Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value.should == 'cval'
+    end
+    it "should set boolean custom values" do
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+      ])
+      pro.do_row 0, ['uid-abc','name',true], true, -1
+      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_true
+    end
+    it "should set boolean false custom values" do
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+      ])
+      pro.do_row 0, ['uid-abc','name', false], true, -1
+      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_false
+    end
+    it "should not unset boolean custom values when nil value is present" do
+      prod = Factory(:product, unique_identifier: 'uid-abc')
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
+      prod.update_custom_value! cd, true
+
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+      ])
+      pro.do_row 0, ['uid-abc','name', nil], true, -1
+      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_true
     end
     it "should not set read only custom values" do
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
