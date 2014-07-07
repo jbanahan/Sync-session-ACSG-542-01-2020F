@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
       @vendor = Factory(:company,system_code:'LENOX-VENCODE')
       @entry = Factory(:entry,importer:@lenox,master_bills_of_lading:'MBOL',entry_number:'11312345678',
         vessel:'VES',customer_references:'P14010337',export_date:Date.new(2014,7,1),
-        lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11',container_sizes:'40')
+        lading_port_code:'12345',unlading_port_code:'4321',transport_mode_code:'11',container_sizes:'40',broker_invoice_total:1)
       @ci = Factory(:commercial_invoice,entry:@entry,gross_weight:99,invoice_number:'123456',invoice_date:Date.new(2014,3,17))
       @ci_line = Factory(:commercial_invoice_line,commercial_invoice:@ci,po_number:'ponum',
         quantity:10, country_origin_code:'CN',part_number:'partnum',unit_price:100.10,line_number:2
@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
     describe :find_entries do
       before :each do
         @bvr = Factory(:business_validation_result)
-        @entry = Factory(:entry,importer:@lenox,entry_filed_date:1.day.ago,export_date:Date.new(2014,7,1))
+        @entry = Factory(:entry,importer:@lenox,broker_invoice_total:1,export_date:Date.new(2014,7,1))
         @bvr.validatable = @entry
         @bvr.state = 'Pass'
         @bvr.save!
@@ -92,8 +92,8 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         @bvr.save!
         expect(described_class.new.find_entries.to_a).to be_empty
       end
-      it "should not find entries not filed" do
-        @entry.update_attributes(entry_filed_date:nil)
+      it "should not find entries not billed" do
+        @entry.update_attributes(broker_invoice_total:nil)
         expect(described_class.new.find_entries.to_a).to be_empty
       end
       it "should not find entries that have been sent before" do
