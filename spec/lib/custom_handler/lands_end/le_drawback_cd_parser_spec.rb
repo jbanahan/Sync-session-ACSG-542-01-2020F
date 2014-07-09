@@ -4,9 +4,9 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser do
   before :each do
     @le_company = Factory(:company)
     @p = described_class.new @le_company
-    @data = "Use,Entry #,Port Code,Import Date,HTS,Description of Merchandise,Qty,UOM,Value Per Unit2,100% Duty
-D,23189224317,3901,10/3/08,6110121050,1049812 - MN V-NECK CASHMERE S,1.00,EA,48.07,1.92
-D,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.98,2.00"
+    @data = "Use,Entry #,Port Code,Import Date,HTS,Description of Merchandise,Qty,UOM,Value Per Unit2,Rate,100% Duty
+I,23189224317,3901,10/3/08,6110121050,1049812 - MN V-NECK CASHMERE S,1.00,EA,48.07,0.16,1.92
+I,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.98,0.15,2.00"
   end
   it "should create keys" do
     @p.parse @data
@@ -17,6 +17,10 @@ D,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.
     KeyJsonItem.lands_end_cd('23171852562-1090261').first.data.should == {'entry_number'=>'23171852562',
       'part_number'=>'1090261','duty_per_unit'=>'1.0'
     }
+  end
+  it "should skip lines where first element is not a single character" do
+    @data << "\nGrandTota,23171852562,3901,4/30/08,6204533010,1090261 - UNF G SLD ALINE SKIR,2.00,PCS,6.98,0.15,2.00"
+    expect {@p.parse @data}.to change(KeyJsonItem,:count).from(0).to(2)
   end
   it "should build json that can be updated into DrawbackImportLine" do
     @p.parse @data

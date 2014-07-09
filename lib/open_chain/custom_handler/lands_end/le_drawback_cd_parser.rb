@@ -11,8 +11,8 @@ module OpenChain
 
         def parse data
           CSV.parse(data,headers:true) do |row|
-            next if row.blank?
-            duty_per_unit = BigDecimal(row[9],2) / BigDecimal(row[6],2)
+            next if row.blank? || row[0].blank? || row[0].size != 1
+            duty_per_unit = BigDecimal(row[10],2) / BigDecimal(row[6],2)
             h = {
               entry_number:row[1],
               part_number:row[5].split('-').first.strip,

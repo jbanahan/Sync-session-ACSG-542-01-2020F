@@ -70,10 +70,10 @@
           <div >
             <h3>Lands End Fedex Certificate Of Delivery Files</h3>
             <p>
-              .csv file manually built by reformatting the Duty Calc Certificate of Delivery report you get from FedEx into the folowing order (with headers)
+              .csv file manually built by saving the Duty Calc 100% Duty report from FedEx as a csv
             </p>
             <pre>
-          [ignore],Entry Number,[ignore],[ignore],[ignore],Part - Description,[ignore],[ignore],[ignore],100% Duty Per Line 
+          One Letter Code,Entry Number,[ignore],[ignore],[ignore],Part - Description,Quantity,[ignore],[ignore],100% Duty Per Line,[ignore]
                 </pre>
             <%=render :partial=>'file_list', :locals=>{:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_CD}%>
           </div>
