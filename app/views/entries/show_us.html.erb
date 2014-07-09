@@ -12,7 +12,7 @@
   <%end%>
   <button class="btn_link" link_to='<%=sync_records_entry_path(@entry)%>'>Sync Records</button>
 <%end-%>
-<% cache ["v9",current_user.company,current_user,@entry] do-%>
+<% cache [current_user.company,current_user,@entry] do-%>
 <%if !current_user.hide_message?("ent_dl") -%>
 <%content_for :javascript do -%>
 $(function() {
@@ -398,7 +398,10 @@ $(function() {
             </tr>
           </tbody>
         </table>
-        <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type],:lines=>bi.broker_invoice_lines}%>
+        <%# The following needs to be here so cache_digests recognizes the shared/detail_table partial as a cache dependency...not sure
+            exactly why it doesn't already see it since the partial is used exactly the same as the others, but it's not. (bug?) %>
+        <%# Template Dependency: shared/detail_table %>
+        <%=render :partial=>'shared/detail_table', :locals=>{:fields=>[:bi_line_charge_code,:bi_line_charge_description,:bi_line_charge_amount,:bi_line_vendor_name,:bi_line_vendor_reference,:bi_line_charge_type],:lines=>bi.broker_invoice_lines} %>
         <%=secure_link bi, current_user%>
       <% end %>
     <%end%>

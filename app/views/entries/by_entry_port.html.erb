@@ -3,7 +3,7 @@ newest_entry = @entries.order('updated_at DESC').first
 newest_port = Port.order('updated_at DESC').first
 params[:page] ||= '1'
 %>
-<%-cache ['v1','entries_by_port',newest_entry,newest_port,params[:page]] do-%>
+<%-cache ['entries_by_port',newest_entry,newest_port,params[:page]] do-%>
   <%# do pagination here so it's inside the cache wrapper%>
   <div class="container">
     <div class="row">
@@ -14,7 +14,7 @@ params[:page] ||= '1'
     </div>
     <div class="row">
       <div class="col-md-8 col-md-offset-2 text-center">
-        <%-cache ['v1','port_select',newest_port] do -%>
+        <%-cache ['port_select', newest_port] do -%>
           <select id='portselect' class='form-control form-lg'>
             <%=grouped_options_for_select Port.grouped_by_entry_country%>
           </select>
@@ -22,6 +22,8 @@ params[:page] ||= '1'
       </div>
     </div>
   </div>
+  <%# No clue why the following is needed, but the dependency isn't picked up if it's not there #%>
+  <%# Template Dependency: entries/entry_list %>
   <%=render :partial=>'entry_list', locals:{entries:@entries}%>
 <script type='text/javascript'> <%# needs to be javascript so it executes inside of cache, can't use content_for%>
   $(document).ready(function() {

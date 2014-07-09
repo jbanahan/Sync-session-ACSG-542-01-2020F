@@ -20,7 +20,7 @@
           <% end %>
       </div>
     </div>
-<%cache ['v4','us_entry_activity_summary',@imp,@last_entry] do-%>
+<%cache ['us_entry_activity_summary',@imp,@last_entry] do-%>
   <%hsh = OpenChain::ActivitySummary.generate_us_entry_summary(@imp.id)['activity_summary']%>
     <div class="row">
       <div class="col-md-12 activity-pane">

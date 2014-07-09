@@ -23,7 +23,7 @@
   </thead>
   <tbody>
     <%-@projects.each do |p|-%>
-      <%-cache ['proj_index_row_v2',p,0.seconds.ago.strftime('%Y-%m-%d')] do #cache at this level because the .red? method is expensive-%>
+      <%-cache ['proj_set_index_row', p, 0.seconds.ago.strftime('%Y-%m-%d')] do #cache at this level because the .red? method is expensive-%>
         <tr class='<%=p.red? ? 'danger' : 'no-danger'%> <%=p.closed_at ? 'closed-project' : ''%>' style='<%= p.closed_at.nil? ? '' : 'display:none' %>' data-project-id='<%=p.id%>'>
           <td><%=link_to 'View', p, :class=>'btn btn-xs btn-default'%></td>
           <td><%=p.name%>
@@ -34,7 +34,9 @@
           <td><%=p.project_deliverables.incomplete.count%></td>
           <td>
             <%-p.project_sets.each do |ps|-%>
-              <span class='label label-default'><%=ps.name%></span>
+              <a href=<%=project_set_path(ps)%> style="text-decoration:none;">
+                <span class='label label-default'><%=ps.name%></span>
+              </a>
             <%-end-%>
           </td>
           <td style="display:none">

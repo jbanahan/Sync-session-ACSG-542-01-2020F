@@ -2,7 +2,7 @@
 newest_entry = @entries.order('updated_at DESC').first
 params[:page] ||= '1'
 %>
-<%-cache ['v1','entries_by_release_range',newest_entry,params[:release_range],params[:page]] do-%>
+<%-cache ['entries_by_release_range',newest_entry,params[:release_range],params[:page]] do-%>
   <%# do pagination here so it's inside the cache wrapper%>
   <div class="container">
     <div class="row">
@@ -13,6 +13,8 @@ params[:page] ||= '1'
       </div>
     </div>
   </div>
+  <%# No clue why the following is needed, but the dependency isn't picked up if it's not there #%>
+  <%# Template Dependency: entries/entry_list %>
   <%=render :partial=>'entry_list', locals:{entries:@entries}%>
   <%#- needs to be javascript so it executes inside of cache, can't use content_for -%>
 <script type='text/javascript'> 

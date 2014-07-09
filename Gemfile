@@ -36,6 +36,8 @@ gem 'browser'
 gem "google-api-client", "0.7.1"
 gem "omniauth-google-oauth2", "0.2.2"
 
+gem "cache_digests"
+
 # Standard ruby logger uses mutexes for writing / rotation which we don't need and
 # causes issues since Ruby 2.0 doesn't allow mutexes in signal traps - delayed_job specifically
 # needs this.
