@@ -1,12 +1,13 @@
-describe 'EntryValidationResultsApp', () ->
-  beforeEach module('EntryValidationResultsApp')
+describe 'CoreObjectValidationResultsApp', () ->
+  beforeEach module('CoreObjectValidationResultsApp')
 
   describe 'service', () ->
     svc = http = null
-    beforeEach inject(($httpBackend,entryValidationResultsSvc) ->
-      svc = entryValidationResultsSvc
+    beforeEach inject(($httpBackend,coreObjectValidationResultsSvc) ->
+      svc = coreObjectValidationResultsSvc
       http = $httpBackend
     )
+
     afterEach () ->
       http.verifyNoOutstandingExpectation()
       http.verifyNoOutstandingRequest()
@@ -53,7 +54,7 @@ describe 'EntryValidationResultsApp', () ->
       it "should load", () ->
         returnVal = {id:1,state:'x'}
         http.expectGET('/entries/1/validation_results.json').respond returnVal
-        promise = svc.loadRuleResult 1
+        promise = svc.loadRuleResult('entries', 1)
         resolvedPromise = null
         promise.success (data) ->
           resolvedPromise = data
@@ -63,10 +64,10 @@ describe 'EntryValidationResultsApp', () ->
   describe 'controller', () ->
     ctrl = svc = $scope = null
 
-    beforeEach inject(($rootScope,$controller,entryValidationResultsSvc) ->
+    beforeEach inject(($rootScope,$controller,coreObjectValidationResultsSvc) ->
       $scope = $rootScope.$new()
-      svc = entryValidationResultsSvc
-      ctrl = $controller('entryValidationResultsCtrl',{$scope:$scope,srService:svc})
+      svc = coreObjectValidationResultsSvc
+      ctrl = $controller('coreObjectValidationResultsCtrl',{$scope:$scope,srService:svc})
     )
 
     describe 'editRuleResult', () ->

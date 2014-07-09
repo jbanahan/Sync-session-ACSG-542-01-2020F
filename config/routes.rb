@@ -343,6 +343,7 @@ OpenChain::Application.routes.draw do
     end
     member do
       get 'history'
+      get 'validation_results'
     end
 		resources :order_lines
 	end

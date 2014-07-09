@@ -1,6 +1,6 @@
-app = angular.module('EntryValidationResultsApp',['ChainComponents'])
+app = angular.module('CoreObjectValidationResultsApp',['ChainComponents'])
 
-app.factory 'entryValidationResultsSvc', ['$http',($http) ->
+app.factory 'coreObjectValidationResultsSvc', ['$http',($http) ->
   {
     states: ["Pass","Review","Fail","Skipped"]
     #converts rule state to Bootstrap contextual value
@@ -22,8 +22,8 @@ app.factory 'entryValidationResultsSvc', ['$http',($http) ->
         when 'Skipped' then r = 'glyphicon-minus'
       r
 
-    loadRuleResult: (entryId) ->
-      $http.get('/entries/'+entryId+'/validation_results.json')
+    loadRuleResult: (pluralObject, objectId) ->
+      $http.get('/' + pluralObject + '/' + objectId + '/validation_results.json')
 
     saveRuleResult: (result,ruleResult) ->
       p = $http.put('/business_validation_rule_results/'+ruleResult.id+'.json',{business_validation_rule_result:ruleResult})
@@ -40,18 +40,18 @@ app.factory 'entryValidationResultsSvc', ['$http',($http) ->
   }
 ]
 
-app.controller 'entryValidationResultsCtrl', ['$scope','entryValidationResultsSvc',($scope,entryValidationResultsSvc) ->
-  $scope.svc = entryValidationResultsSvc
+app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidationResultsSvc',($scope,coreObjectValidationResultsSvc) ->
+  $scope.svc = coreObjectValidationResultsSvc
   $scope.ruleResultToEdit = null
   $scope.editRuleResult = (rr) ->
     $scope.ruleResultToEdit = rr
   $scope.saveRuleResult = (rr) ->
-    p = entryValidationResultsSvc.saveRuleResult $scope.result, rr
+    p = coreObjectValidationResultsSvc.saveRuleResult $scope.result, rr
     p.success () ->
       $scope.editRuleResult data.save_response.rule_result
 
-  $scope.loadEntry = (entryId) ->
-    p = entryValidationResultsSvc.loadRuleResult entryId
+  $scope.loadObject = (pluralObject, objectId) ->
+    p = coreObjectValidationResultsSvc.loadRuleResult pluralObject, objectId
     p.success (data) ->
       $scope.result = data['business_validation_result']
 ]

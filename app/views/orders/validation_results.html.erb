@@ -1,10 +1,10 @@
 <%content_for :javascript do%>
   $('document').ready(function() {
-    $('div[ng-controller]').scope().loadObject('entries', <%=@entry.id%>);
+    $('div[ng-controller]').scope().loadObject('orders', <%=@order.id%>);
   });
 <%end%>
 <%content_for :action_bar do%>
-  <button class='btn_link' link_to='<%=entry_path(@entry)%>'>Entry</button>
+  <button class='btn_link' link_to='<%=order_path(@order)%>'>Order</button>
 <%end%>
 
 <%= render 'shared/validation_results' %>
