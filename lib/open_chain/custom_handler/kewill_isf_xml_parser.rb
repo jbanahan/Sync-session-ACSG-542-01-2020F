@@ -1,5 +1,7 @@
 require 'rexml/document'
 require 'open_chain/integration_client_parser'
+require 'set'
+
 module OpenChain
   module CustomHandler
     class KewillIsfXmlParser
@@ -7,6 +9,8 @@ module OpenChain
 
       SYSTEM_NAME = "Kewill"
       NO_NOTES_EVENTS = [10,19,20,21]
+      STATUS_XREF ||= {"ACCNOMATCH" => "Accepted No Bill Match", "DEL_ACCEPT" => "Delete Accepted", "ACCMATCH" => "Accepted And Matched",
+                        "REPLACE" => "Replaced", "ACCEPTED" => "Accepted", "ACCWARNING" => "Accepted With Warnings", "DELETED" => "Deleted"}
   
       def self.integration_folder
         ["//opt/wftpserver/ftproot/www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]
@@ -35,7 +39,12 @@ module OpenChain
             # Since the data is reloaded from the db by the lock call, make sure we're
             # still not dealing w/ outdated event time data
             if parse_file? sf, last_event_time
-              parse_dom dom, sf, s3_bucket, s3_key
+              start_time = Time.now
+
+              sf = parse_dom dom, sf, s3_bucket, s3_key
+
+              sf.save!
+              sf.update_column(:time_to_process, ((Time.now - start_time) * 1000).to_i)
             end
           end
         end
@@ -50,7 +59,6 @@ module OpenChain
         @sf = sf
         r = @dom.root
         
-        start_time = Time.now
         tx_num = et r, 'ISF_TX_NBR'
         @sf.last_file_bucket = s3_bucket
         @sf.last_file_path = s3_key
@@ -68,11 +76,13 @@ module OpenChain
         @sf.entry_port_code = et r, 'PORT_ENTRY_CD'
         @sf.status_code = et r, 'STATUS_CD'
         @sf.late_filing = (et(r,'IS_SUBMIT_LATE')=='Y')
+        @sf.status_description = STATUS_XREF[@sf.status_code]
         process_bills_of_lading r
         process_container_numbers r
         process_broker_references r
         process_events r
         process_lines r
+        @sf.manufacturer_names = process_manufacturer_names r
         @sf.po_numbers = @po_numbers.to_a.compact.join("\n")
         @sf.countries_of_origin = @countries_of_origin.to_a.compact.join("\n")
         @sf.security_filing_lines.each do |ln|
@@ -87,15 +97,15 @@ module OpenChain
           end
           @sf.importer = importer
         end
-        @sf.save!
-        @sf.update_column(:time_to_process, ((Time.now - start_time) * 1000).to_i)
+
+        @sf
       end
 
       private 
       def process_lines parent
         parent.each_element('lines') do |el|
-          line_number = et(el,'ISF_LINE_NBR')
-          ln = @sf.security_filing_lines.find_by_line_number(line_number)
+          line_number = et(el,'ISF_LINE_NBR').to_i
+          ln = @sf.security_filing_lines.find {|ln| ln.line_number == line_number}
           ln = @sf.security_filing_lines.build(:line_number=>line_number) unless ln
           @used_line_numbers << ln.line_number
 
@@ -158,6 +168,12 @@ module OpenChain
         
         r
       end
+
+      def process_manufacturer_names root
+        s = Set.new REXML::XPath.each(root, "entities[PARTY_TYPE_CD = 'MF']/PARTY_NAME").map {|el| el.text.strip}
+        return s.to_a.join(" \n")
+      end
+
       def process_events parent
         first_sent_date = nil
         last_sent_date = nil
@@ -175,6 +191,10 @@ module OpenChain
           when '4'
             first_accepted_date = pick_date(first_accepted_date,time_stamp,false)
             last_accepted_date = pick_date(last_accepted_date,time_stamp,true)
+          when '8'
+            # Events 8-12 we want to capture the last event element listed in the file based on the element ordering of the file, not necessarily
+            # by the actual event time.
+            @sf.cbp_updated_at = time_stamp
           when '10'
             @sf.estimated_vessel_load_date = time_stamp
           when '11'
@@ -240,7 +260,7 @@ module OpenChain
 
             # We only need to update the last event time if it's not equal (will be equal if we just created this isf record)
             if local_sf.last_event != last_event_time
-              local_sf.update_attributes :last_event => last_event_time
+              local_sf.update_column :last_event, last_event_time
             end
 
             sf = local_sf

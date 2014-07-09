@@ -31,6 +31,10 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       sf.host_system_file_number.should == '1870446'
       sf.host_system.should == "Kewill"
       sf.last_event.to_i.should == Time.iso8601("2012-11-27T09:20:01.565-05:00").to_i
+      # validate the time_to_process was recorded (use 10
+      # to try to make sure we're recording milliseconds and not seconds)
+      sf.time_to_process.should > 10
+      sf.time_to_process.should < 1000 # NOTE: this fails if you're ever debugging the parser
     end
     it "should not process files with outdated event times" do
       sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
@@ -86,10 +90,8 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
 
     it "should create security filing" do
-      @k.new.parse_dom @dom, @sf, "bucket", "file.txt"
+      sf = @k.new.parse_dom @dom, @sf, "bucket", "file.txt"
 
-      SecurityFiling.all.count.should == 1
-      sf = SecurityFiling.first
       sf.last_file_bucket.should == "bucket"
       sf.last_file_path.should == "file.txt"
       sf.transaction_number.should == "31671445820402"
@@ -111,17 +113,21 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       sf.container_numbers.should == 'KKFU1694054'
       sf.entry_numbers.should == '31619212983' 
       sf.entry_reference_numbers.should == '1921298'
-      sf.file_logged_date.should == Time.utc(2012,11,27,11,40,10)
-      sf.first_sent_date.should == Time.utc(2012,11,27,14,13,36)
-      sf.first_accepted_date.should == Time.utc(2012,11,27,14,14,2)
-      sf.last_sent_date.should == Time.utc(2012,11,27,15,13,36)
-      sf.last_accepted_date.should == Time.utc(2012,11,27,15,14,2)
+      sf.file_logged_date.to_i.should == Time.utc(2012,11,27,11,40,10).to_i
+      sf.first_sent_date.to_i.should == Time.utc(2012,11,27,14,13,36).to_i
+      sf.first_accepted_date.to_i.should == Time.utc(2012,11,27,14,14,2).to_i
+      sf.last_sent_date.to_i.should == Time.utc(2012,11,27,15,13,36).to_i
+      sf.last_accepted_date.to_i.should == Time.utc(2012,11,27,15,14,2).to_i
       sf.estimated_vessel_load_date.strftime("%Y%m%d") == @est.local(2012,11,30).strftime("%Y%m%d")
       sf.estimated_vessel_sailing_date.strftime("%Y%m%d") == @est.local(2014,6,26).strftime("%Y%m%d")
       sf.estimated_vessel_arrival_date.strftime("%Y%m%d") == @est.local(2014,8,4).strftime("%Y%m%d")
       sf.po_numbers.should == "0425694\n0425697"
+      sf.cbp_updated_at.to_date.should == Date.new(2012, 11, 27)
+      sf.status_description.should == "Accepted No Bill Match"
+      sf.manufacturer_names.should == "KINGTAI INDUSTRIAL (XIAMEN) CO., LT \nMANUFACTURER USED FOR TESTING ONLY"
+
       sf.should have(2).security_filing_lines
-      ln = sf.security_filing_lines.find_by_line_number(1)
+      ln = sf.security_filing_lines.find {|ln| ln.line_number == 1}
       ln.part_number.should == '023-2214'
       ln.quantity.should == 0
       ln.hts_code.should == '940430'
@@ -130,16 +136,12 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ln.mid.should == "MID"
       ln.country_of_origin_code.should == 'CN'
       ln.manufacturer_name.should == 'KINGTAI INDUSTRIAL (XIAMEN) CO., LT' 
-      # validate the time_to_process was recorded (use 10
-      # to try to make sure we're recording milliseconds and not seconds)
-      sf.time_to_process.should > 10
-      sf.time_to_process.should < 1000 # NOTE: this fails if you're ever debugging the parser
+      
     end
     it "should build notes" do
       #skipping events 19, 20, 21
-      @k.new.parse_dom @dom, @sf
-      sf = SecurityFiling.first
-      sf.notes.lines("\n").to_a.collect {|ln| ln.strip}.should == [
+      sf = @k.new.parse_dom @dom, @sf
+      sf.notes.lines("\n").collect {|ln| ln.strip}.should == [
         "2012-11-27 06:40 EST: EDI Received",
         "2012-11-27 06:40 EST: Logged",
         "2012-11-27 09:13 EST: ISF Queued to Send to Customs - DANA",
@@ -161,16 +163,15 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ref.add_element("BROKER_FILER_CD").text="316"
       ref.add_element("ENTRY_NBR").text="12345678"
       ref.add_element("BROKER_REF_NO").text="XYZ"
-      @k.new.parse_dom @dom, @sf
-      sf = SecurityFiling.first
+      sf = @k.new.parse_dom @dom, @sf
       sf.entry_numbers.should == "31619212983\n31612345678"
       sf.entry_reference_numbers.should == "1921298\nXYZ"
     end
     it "should handle multiple container numbers" do
       ref = @dom.root.add_element("containers")
       ref.add_element("CONTAINER_NBR").text="CON"
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.first.container_numbers.should == "KKFU1694054\nCON"
+      sf = @k.new.parse_dom @dom, @sf
+      sf.container_numbers.should == "KKFU1694054\nCON"
     end
     it "should handle multiple house bills" do
       ref = @dom.root.add_element("bols")
@@ -178,35 +179,39 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       ref.add_element("MASTER_SCAC_CD").text="KKLU"
       ref.add_element("HOUSE_BILL_NBR").text='XXXX'
       ref.add_element("HOUSE_SCAC_CD").text='YYYY'
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.first.house_bills_of_lading.should == "HBSCHBL123\nYYYYXXXX"
+      sf = @k.new.parse_dom @dom, @sf
+      sf.house_bills_of_lading.should == "HBSCHBL123\nYYYYXXXX"
     end
     it "should set countries of origin" do
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.first.countries_of_origin.should == "CN\nMX"
+      sf = @k.new.parse_dom @dom, @sf
+      sf.countries_of_origin.should == "CN\nMX"
     end
     it "should set late filing to true" do
       @dom.root.elements['IS_SUBMIT_LATE'].text="Y"
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.first.should be_late_filing
+      sf = @k.new.parse_dom @dom, @sf
+      sf.should be_late_filing
     end
     it "should remove lines not in updated xml" do
-      @k.new.parse_dom @dom, @sf
-      sf = SecurityFiling.first
-      sf.should have(2).security_filing_lines
+      @sf.security_filing_lines.create! line_number: 1
+      @sf.security_filing_lines.create! line_number: 2
       @dom.root.delete_element("/IsfHeaderData/lines[1]")
-      @k.new.parse_dom @dom, sf
-      SecurityFiling.first.should have(1).security_filing_lines
+
+      sf = @k.new.parse_dom @dom, @sf
+      # Since parse dom doesn't save, we're working w/ activerecord objects at this point that haven't actually
+      # been persisted...just make sure we have 1 line remaining that's not marked for destruction
+      lines = sf.security_filing_lines.find_all {|ln| !ln.destroyed?}
+      expect(lines.size).to eq 1
+      expect(lines[0].line_number).to eq 2
     end
     it "should set importer if it already exists by alliance customer number" do
       c = Factory(:company,:alliance_customer_number=>'EDDIE')
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.first.importer.should == c
+      sf = @k.new.parse_dom @dom, @sf
+      sf.importer.should == c
     end
     it "should create new importer" do
       Factory(:company,:alliance_customer_number=>'NOTEDDIE')
-      @k.new.parse_dom @dom, @sf
-      c = SecurityFiling.first.importer
+      sf = @k.new.parse_dom @dom, @sf
+      c = sf.importer
       c.name.should == 'EDDIE'
       c.should be_importer
       c.alliance_customer_number.should == 'EDDIE'
@@ -216,9 +221,53 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         el.text = "NONMATCHING"
       end
 
-      @k.new.parse_dom @dom, @sf
-      SecurityFiling.first.security_filing_lines.each do |line|
+      sf = @k.new.parse_dom @dom, @sf
+      sf.security_filing_lines.each do |line|
         line.manufacturer_name.should be_nil
+      end
+    end
+
+    context "status codes" do
+      it "sets ACCNOMATCH description" do
+        @dom.root.elements['STATUS_CD'].text = "ACCNOMATCH"
+        @k.new.parse_dom @dom, @sf
+        expect(@sf.status_description).to eq "Accepted No Bill Match"
+      end
+
+      it "sets DEL_ACCEPT description" do
+        @dom.root.elements['STATUS_CD'].text = "DEL_ACCEPT"
+        @k.new.parse_dom @dom, @sf
+        expect(@sf.status_description).to eq "Delete Accepted"
+      end
+
+      it "sets ACCMATCH description" do
+        @dom.root.elements['STATUS_CD'].text = "ACCMATCH"
+        @k.new.parse_dom @dom, @sf
+        expect(@sf.status_description).to eq "Accepted And Matched"
+      end
+
+      it "sets REPLACE description" do
+        @dom.root.elements['STATUS_CD'].text = "REPLACE"
+        @k.new.parse_dom @dom, @sf
+        expect(@sf.status_description).to eq "Replaced"
+      end
+
+      it "sets ACCEPTED description" do
+        @dom.root.elements['STATUS_CD'].text = "ACCEPTED"
+        @k.new.parse_dom @dom, @sf
+        expect(@sf.status_description).to eq "Accepted"
+      end
+
+      it "sets ACCWARNING description" do
+        @dom.root.elements['STATUS_CD'].text = "ACCWARNING"
+        @k.new.parse_dom @dom, @sf
+        expect(@sf.status_description).to eq "Accepted With Warnings"
+      end
+
+      it "sets DELETED description" do
+        @dom.root.elements['STATUS_CD'].text = "DELETED"
+        @k.new.parse_dom @dom, @sf
+        expect(@sf.status_description).to eq "Deleted"
       end
     end
   end
