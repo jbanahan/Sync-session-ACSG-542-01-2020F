@@ -494,6 +494,7 @@ module OpenChain
       # at the same time (prevents duplicate entries from being created).
       entry = nil
       importer = nil
+      shell_entry = nil
       Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
         entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
 
@@ -502,6 +503,11 @@ module OpenChain
         # creating a new Entry record.
         if entry.nil?
           entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE 
+        else
+          # See if there's a related "shell" entry in the system.  These are left behind and missed by the entry number/source system 
+          # query above if the b3 from Fenix comes over initially w/ a blank entry number (seems to be fairly common).
+          # If left alone we then end up w/ duplicate entries..one regular one, and one shell one.
+          shell_entry = Entry.where(broker_reference: nil, source_system: SOURCE_CODE, entry_number: entry_number).first
         end
 
         # This call may create new importers, so we want it inside our parser lock block
@@ -516,7 +522,7 @@ module OpenChain
 
       # The is a bit of an optimization..there's no point waiting on the 
       # lock if we're just going to abort because we're looking at old data
-      if process_file? entry, source_system_export_date
+      if shell_entry || process_file?(entry, source_system_export_date)
 
         # Once we've got the entry we're looking for we'll lock it for updates so we don't have
         # a really course grained lock in place while we're updating some values in the entry to prep 
@@ -536,7 +542,7 @@ module OpenChain
 
             # If the entry has an exported from source date, then we're skipping any file that doesn't have an exported date or has a date prior to the
             # current entry's (entries may have nil exported dates if they were created by the imaging client)
-            if process_file? entry, source_system_export_date
+            if shell_entry || process_file?(entry, source_system_export_date)
               entry.update_attributes(:last_exported_from_source=>source_system_export_date)
             else
               break
@@ -548,6 +554,23 @@ module OpenChain
           # entity is importing the goods.  Either way we need to make sure the entry is associated with the correct importer company
           if importer && importer.id != entry.importer_id
             entry.importer = importer
+          end
+
+          if shell_entry
+            begin
+              Lock.with_lock_retry(shell_entry) do 
+                # Our new entry will always have an id set at this point, so we can just go ahead and set all attachments to it (avoid n+1 situation)
+                shell_entry.attachments.update_all attachable_id: entry.id
+                # If we don't reload the attachments after moving them to the other entry, then the destroy call below will
+                # go through and delete the attachments still since they're still referenced in memory to the shell entry.
+                shell_entry.attachments.reload
+                entry.attachments.reload
+                # There's no need for the shell entry, so just delete it.
+                shell_entry.destroy
+              end
+            rescue ActiveRecord::RecordNotFound
+              # don't care..just means another process already handled removing the shell record...that's fine.
+            end
           end
 
           # Destroy invoices since the file we get is a full replacement of the invoice values, not an update.

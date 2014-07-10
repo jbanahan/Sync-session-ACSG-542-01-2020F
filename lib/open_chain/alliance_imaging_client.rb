@@ -61,23 +61,26 @@ class OpenChain::AllianceImagingClient
         end
 
         if entry
-          att = entry.attachments.build
-          att.attached = t
-          att.attachment_type = attachment_type
-          att.is_private = attachment_type.upcase.starts_with?("PRIVATE") ? true : false
-          unless hsh["suffix"].blank?
-            att.alliance_suffix = hsh["suffix"][2,3]
-            att.alliance_revision = hsh["suffix"][0,2]
-          end
-          att.source_system_timestamp = hsh["doc_date"]
-          att.save!
-          att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision <= ?",att.alliance_revision).destroy_all
+          Lock.with_lock_retry(entry) do 
+            att = entry.attachments.build
+            att.attached = t
+            att.attachment_type = attachment_type
+            att.is_private = attachment_type.upcase.starts_with?("PRIVATE") ? true : false
+            unless hsh["suffix"].blank?
+              att.alliance_suffix = hsh["suffix"][2,3]
+              att.alliance_revision = hsh["suffix"][0,2]
+            end
+            att.source_system_timestamp = hsh["doc_date"]
+            att.save!
+            att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type,:alliance_suffix=>att.alliance_suffix).where("alliance_revision <= ?",att.alliance_revision).destroy_all
 
-          if delete_previous_file_versions
-            att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
+            if delete_previous_file_versions
+              att.attachable.attachments.where("NOT attachments.id = ?",att.id).where(:attachment_type=>att.attachment_type).destroy_all
+            end
           end
         end
       rescue
+        raise $! unless Rails.env.production?
         $!.log_me ["Alliance imaging client hash: #{hsh}"], [t]
       end
 

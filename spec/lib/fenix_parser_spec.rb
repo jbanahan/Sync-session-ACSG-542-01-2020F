@@ -525,6 +525,22 @@ describe OpenChain::FenixParser do
     ent.total_packages_uom.should be_nil
   end
 
+  it "migrates attachments associated with shell records to this new entry" do
+    ent = Entry.create! source_system: 'Fenix', entry_number: nil, broker_reference: @file_number
+
+    shell_entry = Entry.create! source_system: 'Fenix', entry_number: @barcode
+    shell_entry.attachments << Attachment.create!(attached_file_name: "file.txt")
+    shell_entry.save!
+
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent.reload
+
+    expect(ent.attachments.size).to eq 1
+    expect(ent.attachments.first.attached_file_name).to eq "file.txt"
+
+    expect(Entry.where(id: shell_entry.id).first).to be_nil
+  end
+
   context 'importer company' do
     it "should create importer" do
       OpenChain::FenixParser.parse @entry_lambda.call
