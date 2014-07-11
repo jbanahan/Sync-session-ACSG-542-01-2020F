@@ -10,7 +10,6 @@ describe OpenChain::Report::ReportHelper do
           wb = Spreadsheet::Workbook.new
           s = wb.create_worksheet :name=>'x'
           table_from_query s, query, conversions
-          wb
         end
       end
   end
@@ -21,8 +20,8 @@ describe OpenChain::Report::ReportHelper do
       h = @helper.new
       # We can't really reliably determine result set, since there is no ActiveRecord base for it
       # so just detect it as something that responds to each, since that's how the method handles it anyway.
-      h.should_receive(:write_result_set_to_sheet).with(duck_type(:each), instance_of(Spreadsheet::Worksheet), ['EN','IDENT'], 1, {})
-      h.run q
+      h.should_receive(:write_result_set_to_sheet).with(duck_type(:each), instance_of(Spreadsheet::Worksheet), ['EN','IDENT'], 1, {}).and_return 48
+      expect(h.run q).to eq 48
     end
   end
 
@@ -37,10 +36,11 @@ describe OpenChain::Report::ReportHelper do
       e1 = Factory(:entry,:entry_number=>'12345')
       e2 = Factory(:entry,:entry_number=>'65432')
       results = ActiveRecord::Base.connection.execute "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
-      @helper.new.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 0
+      # Start at row 5 just to make sure the return value is actually giving us the # of rows written and not the ending line number
+      expect(@helper.new.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 5).to eq 2
 
-      @sheet.row(0).should == ['12345',e1.id]
-      @sheet.row(1).should == ['65432',e2.id]
+      @sheet.row(5).should == ['12345',e1.id]
+      @sheet.row(6).should == ['65432',e2.id]
     end
 
     it "should handle timezone conversion for datetime columns" do

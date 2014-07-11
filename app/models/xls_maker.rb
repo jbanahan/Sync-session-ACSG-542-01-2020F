@@ -54,6 +54,26 @@ class XlsMaker
     end
     wb
   end
+
+  def self.excel_url relative_url
+    request_host = nil
+    # Caching this call ends up creating an ordering dependency in unit tests...so only do it in production
+    if Rails.env.production?
+      @@req_host ||= MasterSetup.get.request_host
+      request_host = @@req_host
+    else
+      request_host = MasterSetup.get.request_host
+    end
+    
+    raise "Cannot generate view_url because MasterSetup.request_host not set." unless request_host
+    # We need to do the redirect because of how Excel/Windows use an IE component to view the URL and hand off the 
+    # URL's resulting response to the user's default browser.  The IE component used doesn't have access to any session
+    # cookies so, effectively, every link will force the user to re-login - annoying.  
+    # The redirect gets around this by providing the IE discovery component the correct URL to hand off to the default browser.
+
+    # The relative url is encoded so any page parameters are not fed to the redirect page.
+    "http://#{request_host}/redirect.html?page=#{CGI.escape(relative_url)}"
+  end
   
   def self.add_body_row sheet, row_number, row_data, column_widths = [], no_time = false
     make_body_row sheet, row_number, 0, row_data, column_widths, {:no_time => no_time}

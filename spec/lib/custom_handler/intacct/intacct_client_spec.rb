@@ -332,16 +332,32 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect{@c.post_xml nil, false, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
     end
 
-    it "raises retry error for 'Could not create Document record!' errors" do
+    it "raises retry error for errors with only 'Could not create Document record!' errors" do
+      error_response = "<errormessage>
+      <error><errorno>BL01001973</errorno><description></description><description2>Desc 1</description2><correction></correction></error>
+      <error><errorno>XL03000009</errorno><description></description><description2>Desc 2</description2><correction></correction></error>
+      </errormessage>"
+      @resp = REXML::Document.new error_response
+      error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
+
+      expect{@c.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, error_message
+    end
+
+    it "does not raise retry error when other BL01001973 errors are present" do
       error_no = "BL01001973"
       description = "Desc1"
       description2 = "Could not create Document record!"
       correction = "Correction"
 
-      @resp = REXML::Document.new "<errormessage><error><errorno>#{error_no}</errorno><description>#{description}</description><description2>#{description2}</description2><correction>#{correction}</correction></error></errormessage>"
-      error_message = "Intacct API call failed with errors:\nError No: #{error_no}\nDescription: #{description}\nDescription 2: #{description2}\nCorrection: #{correction}"
+      error_response = "<errormessage>
+      <error><errorno>BL01001973</errorno><description></description><description2>Other Error</description2><correction></correction></error>
+      <error><errorno>BL01001973</errorno><description></description><description2>Desc 1</description2><correction></correction></error>
+      <error><errorno>XL03000009</errorno><description></description><description2>Desc 2</description2><correction></correction></error>
+      </errormessage>"
+      @resp = REXML::Document.new error_response
+      error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Other Error\nCorrection: \nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
 
-      expect{@c.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, error_message
+      expect{@c.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
     end
   end
 

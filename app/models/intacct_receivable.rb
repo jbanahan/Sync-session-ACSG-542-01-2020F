@@ -23,4 +23,24 @@ class IntacctReceivable < ActiveRecord::Base
       raise "Unknown Intacct company received: #{company}."
     end
   end
+
+  def self.suggested_fix error
+    return "" if error.blank?
+
+    case error
+    when /Description 2: Invalid Customer/i, /Description 2: Required field Date Due is missing/i
+      "Create Customer account in Intacct and/or ensure account has payment Terms set."
+    when /Description 2: Invalid Vendor '(.+)' specified./i
+      "Create Vendor account #{$1} in Intacct and/or ensure account has payment Terms set."
+    else
+      # If there's only a single BL01001973 error with a "Description 2: Could not create Document record", then have the user attempt to clear and retry
+      # otherwise, return an unknown error.
+      if error.scan("BL01001973").size == 1 && error.scan("XL03000009").size == 1
+        "Temporary Upload Error. Click 'Clear This Error' link to try again."
+      else
+        "Unknown Error. Contact support@vandegriftinc.com to resolve error."
+      end
+    end
+
+  end
 end

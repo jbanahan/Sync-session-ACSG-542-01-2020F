@@ -39,6 +39,9 @@ Spork.prefork do
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"
     end
+    # Clears out the deliveries array before every test..which is only done automatically
+    # for mailer tests.
+    config.after(:each) {ActionMailer::Base.deliveries = []}
 
     config.after(:each, :type => :controller) do
       # Counteract the application controller setting MasterSetup.current, which bleeds across multiple tests

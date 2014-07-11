@@ -240,12 +240,19 @@ XML
     end
 
     def retry_error? error_elements
-      retry_data = {"BL01001973" => ["Could not create Document record!"]}
+      # We only really want to retry at this point if the error text only has a BL01001973 Could not create Document record!
+      # and a XL03000009 error.  This seems to indicate a random, transient error.
+      # All failures seem to have BL01001973 errors, but most seem to have other actual reasons listed for the error,
+      # the ones that don't seem to work fine if you just attempt to load them again later, hence the retry.
+      bl_count = 0
+      xl_count = 0
 
       error_elements.each do |el|
-        return true if retry_data[el.text("errorno")].to_a.include? el.text("description2")
+        bl_count += 1 if el.text("errorno") == "BL01001973"
+        xl_count += 1 if el.text("errorno") == "XL03000009"
       end
-      false
+
+      return bl_count == 1 && xl_count == 1
     end
 
 end; end; end; end

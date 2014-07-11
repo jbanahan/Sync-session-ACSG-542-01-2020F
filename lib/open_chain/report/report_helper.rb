@@ -17,11 +17,13 @@ module OpenChain
         result_set = ActiveRecord::Base.connection.execute query
         column_names = result_set.fields
         XlsMaker.add_header_row sheet, 0, column_names
-        write_result_set_to_sheet result_set, sheet, column_names, 1, data_conversions
+        data_rows = write_result_set_to_sheet result_set, sheet, column_names, 1, data_conversions
+        data_rows
       end
 
       def write_result_set_to_sheet result_set, sheet, column_names, row_number, data_conversions = {}
         column_widths = []
+        initial_row = row_number
         result_set.each do |result_set_row|
           result_set_row.each_with_index do |raw_column_value, column_number|
             # Extract and translate the raw value from the database
@@ -32,6 +34,7 @@ module OpenChain
           end
           row_number += 1
         end
+        row_number - initial_row
       end
 
       def workbook_to_tempfile wb, prefix

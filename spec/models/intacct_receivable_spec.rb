@@ -39,4 +39,22 @@ describe IntacctReceivable do
       expect {IntacctReceivable.create_receivable_type 'blah', true}.to raise_error "Unknown Intacct company received: blah."
     end
   end
+
+  describe "suggested_fix" do
+    it "recognizes Receivable invalid customer errors" do
+      expect(IntacctReceivable.suggested_fix "Description 2: Invalid Customer").to eq "Create Customer account in Intacct and/or ensure account has payment Terms set."
+    end
+
+    it "recognizes Receivable Date Due customer errors" do
+      expect(IntacctReceivable.suggested_fix "Description 2: Required field Date Due is missing").to eq "Create Customer account in Intacct and/or ensure account has payment Terms set."
+    end
+
+    it "recognizes Receivable retry errors" do
+      expect(IntacctReceivable.suggested_fix "BL01001973 XL03000009").to eq "Temporary Upload Error. Click 'Clear This Error' link to try again."
+    end
+
+    it "recognizes Receivable invalid vendor errors" do
+      expect(IntacctReceivable.suggested_fix "Description 2: Invalid Vendor 'Test' specified.").to eq "Create Vendor account Test in Intacct and/or ensure account has payment Terms set."
+    end
+  end
 end

@@ -301,5 +301,12 @@ describe XlsMaker do
       expect(XlsMaker.create_link_cell("url", "Test")).to eq Spreadsheet::Link.new("url", "Test")
     end
   end
+
+  describe "excel_url" do
+    it "wraps the given relative url in a redirect" do
+      MasterSetup.any_instance.stub(:request_host).and_return "localhost"
+      expect(XlsMaker.excel_url("/page.html?a=1&b=2")).to eq "http://localhost/redirect.html?page=#{CGI.escape("/page.html?a=1&b=2")}"
+    end
+  end
 end
 

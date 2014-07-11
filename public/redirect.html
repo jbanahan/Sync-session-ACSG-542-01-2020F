@@ -2,13 +2,22 @@
 <body>
 Please wait, loading your page... 
 <script type="text/javascript">
-function getQuerystring(key) {
-key = key.replace(/[\[]/,"\\\[").replace(/    [\]]/,"\\\]");
-var regex = new RegExp("[\\?&]"+key+"=([^&#]*)");
-var query = regex.exec(window.location.href);
-return query[1];
-}
-window.location = "http://" + window.location.host + "/" + getQuerystring('page');
+var getQueryString = (function(a) {
+    if (a == "") return {};
+    var b = {};
+    for (var i = 0; i < a.length; ++i)
+    {
+        var p=a[i].split('=');
+        if (p.length != 2) continue;
+        comp = decodeURIComponent(p[1].replace(/\+/g, " "));
+        if(comp[0] == "/") {
+          comp = comp.substr(1)
+        }
+        b[p[0]] = comp
+    }
+    return b;
+})(window.location.search.substr(1).split('&'));
+window.location = "http://" + window.location.host + "/" + getQueryString['page'];
 </script>
 </body>
 </html>

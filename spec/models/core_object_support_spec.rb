@@ -102,9 +102,9 @@ describe CoreObjectSupport do
   end
   describe :view_url do
     it "should make url based on request_host" do
-      MasterSetup.any_instance.should_receive(:request_host).and_return "x.y.z"
+      MasterSetup.any_instance.stub(:request_host).and_return "x.y.z"
       p = Factory(:product)
-      p.view_url.should == "http://x.y.z/redirect.html?page=/products/#{p.id}"
+      expect(p.view_url).to eq XlsMaker.excel_url("/products/#{p.id}")
     end
     it "should raise exception if id not set" do
       expect{Product.new.view_url}.to raise_error
@@ -112,8 +112,8 @@ describe CoreObjectSupport do
   end
   describe "excel_url" do
     it "should make url based on request_host with class method" do
-      MasterSetup.any_instance.should_receive(:request_host).and_return "x.y.z"
-      expect(Product.excel_url 1).to eq "http://x.y.z/redirect.html?page=/products/1"
+      MasterSetup.any_instance.stub(:request_host).and_return "x.y.z"
+      expect(Product.excel_url 1).to eq XlsMaker.excel_url("/products/1")
     end
   end
   describe :relative_url do

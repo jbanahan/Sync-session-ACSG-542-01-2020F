@@ -524,6 +524,16 @@ OpenChain::Application.routes.draw do
   end
   resources :project_deliverables, only: [:index]
   resources :schedulable_jobs, except: [:show]
+  resources :intacct_receivables, only: [:index] do
+    put 'clear', on: :member
+    get 'clear', on: :member
+  end
+  resources :intacct_payables, only: [:index] do
+    put 'clear', on: :member
+    get 'clear', on: :member
+  end
+
+
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 

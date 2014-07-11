@@ -81,17 +81,7 @@ module CoreObjectSupport
     end
 
     def excel_url object_id
-      request_host = nil
-      # Caching this call ends up creating an ordering dependency in unit tests...so only do it in production
-      if Rails.env.production?
-        @@req_host ||= MasterSetup.get.request_host
-        request_host = @@req_host
-      else
-        request_host = MasterSetup.get.request_host
-      end
-      
-      raise "Cannot generate view_url because MasterSetup.request_host not set." unless request_host
-      "http://#{request_host}/redirect.html?page=#{relative_url(object_id)}"
+      XlsMaker.excel_url relative_url(object_id)
     end
 
     def relative_url object_id
