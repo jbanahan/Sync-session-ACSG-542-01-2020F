@@ -11,17 +11,9 @@
         <tr><td style='padding:20px;font-size:30px;color:#FF0000;'>
           <%=Rails.env%>
         </td></tr>
+        <tr><td>Check X- headers for original email addresses.</td></tr>
       </table>
     <%-end-%>
-    <% if Rails.env.development? %>
-      <b>Original "To" field:</b> <%= message.to.join(", ") %><br>
-      <% if !message.cc.nil? %>
-        <b>Original "CC" field:</b> <%= message.cc.join(", ") %><br>
-      <% end %>
-      <% if !message.bcc.nil? %>
-        <b>Original "BCC" field:</b> <%= message.bcc.join(", ") %><br>
-      <% end %>
-    <% end %>
     <table border='0' cellpadding='0' cellspacing='0' width='100%'>
       <tr>
         <td bgcolor='#ffffff' align='center' style='padding-top:20px;padding-bottom:20px;font-family:Helvetica, Arial, sans-serif;'>

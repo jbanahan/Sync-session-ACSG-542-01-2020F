@@ -118,8 +118,9 @@ describe OpenMailer do
         
         OpenMailer.send_simple_html("example@example.com", "Test subject","<p>Test body</p>").deliver!
 
-        OpenMailer.deliveries.last.to.first.should == User.first.email
-        OpenMailer.deliveries.last.body.raw_source.should match('<b>Original "To" field:</b> example@example.com')
+        m = OpenMailer.deliveries.last
+        m.to.first.should == User.first.email
+        expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq ['example@example.com']
       end
     end
 

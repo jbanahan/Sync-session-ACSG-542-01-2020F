@@ -397,6 +397,9 @@ EOS
 
     def modify_email_for_development
       if Rails.env.development?
+        headers['X-ORIGINAL-TO'] = message.to
+        headers['X-ORIGINAL-CC'] = message.cc
+        headers['X-ORIGINAL-BCC'] = message.bcc
         message.to = User.first.email
         message.cc, message.bcc = [""], [""] #Postmark doesn't like blank strings, nils, or blank lists...
       end
