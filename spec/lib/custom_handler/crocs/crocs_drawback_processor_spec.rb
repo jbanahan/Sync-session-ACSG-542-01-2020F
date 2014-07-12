@@ -54,8 +54,11 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
       described_class.new.find_shipment_lines(@c_line).should be_empty
     end
     it "should not find wrong customer" do
-      @s_line.shipment.update_attributes(importer_id:Factory(:company).id)
-      described_class.new.find_shipment_lines(@c_line).should be_empty
+      shp = @s_line.shipment
+      shp.importer = Factory(:company)
+      shp.save!
+      r = described_class.new.find_shipment_lines(@c_line)
+      r.should be_empty
     end
     it "should not find wrong country of origin" do
       @s_line.update_custom_value! @defs[:shpln_coo], 'JP'
