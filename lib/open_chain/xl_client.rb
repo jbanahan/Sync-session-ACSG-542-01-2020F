@@ -2,6 +2,11 @@ module OpenChain
   # Client to communicate with XLServer
   class XLClient
   
+    #initialize a new XLClient for the attached object
+    def self.new_from_attachable attachable
+      self.new attachable.attached.path
+    end
+
     # if true the client will raise exceptions instead of including the errors in the JSON response (default = false)
     attr_accessor :raise_errors
     def initialize path 

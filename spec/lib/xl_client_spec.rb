@@ -23,6 +23,17 @@ describe OpenChain::XLClient do
       @client.send(cmd).should == resp
     end
   end
+  describe :new_from_attachable do
+    it "should initialize with attached path" do
+      attachable = double(:attachable)
+      attached = double(:attached)
+      attachable.should_receive(:attached).and_return(attached)
+      attached.should_receive(:path).and_return 'mypath'
+      x = described_class.new('mypath')
+      described_class.should_receive(:new).with('mypath').and_return(x)
+      expect(described_class.new_from_attachable(attachable)).to be x
+    end
+  end
   describe :all_row_values do
     it "should yield for all rows based on last_row_number" do
       @client.should_receive(:last_row_number).with(0).and_return(2)
