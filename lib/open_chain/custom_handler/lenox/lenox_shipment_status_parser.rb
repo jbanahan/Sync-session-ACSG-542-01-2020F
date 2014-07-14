@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
       shp = []
       last_bol = nil
       xlclient.all_row_values do |xlrow|
-        container = xlrow[11]
+        container = xlrow[11].to_s
         next if container.blank? || !container.match(/^[A-Z]{4}/)
         bol = xlrow[9]
         if !shp.empty? && bol!=last_bol
