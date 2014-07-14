@@ -52,14 +52,14 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
       shp.unlading_port = Port.find_by_name r[8].strip
       shp.est_departure_date = r[7]
       shp.vessel = r[10]
-      rows.each {|row| process_line shp, row}
+      rows.each_with_index {|row, i| process_line shp, row, i+i}
       raise "You do not have permission to edit this shipment." unless shp.can_edit?(@user)
       shp.save!
     end
   end
 
   private
-  def process_line shp, r
+  def process_line shp, r, line_number
     con = shp.containers.find {|c| c.container_number == r[11]}
     con = shp.containers.build(container_number:r[11]) unless con
     con.container_size = r[12]
@@ -69,7 +69,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
     raise "Product #{r[4]} for shipment #{shp.house_bill_of_lading} was not found in product database." unless prod
     order = Order.find_by_order_number "LENOX-#{r[3]}"
     raise "Order #{r[3]} for shipment #{shp.house_bill_of_lading} was not found in product database." unless order
-    sl = shp.shipment_lines.build(product_id:prod.id,quantity:r[5],gross_kgs:r[14],carton_qty:r[15],cbms:r[16])
+    sl = shp.shipment_lines.build(line_number:line_number,product_id:prod.id,quantity:r[5],gross_kgs:r[14],carton_qty:r[15],cbms:r[16])
     ol = find_order_line(order,sl)
     raise "No order line matches product #{r[4]}, order #{r[3]}." unless ol
     sl.linked_order_line_id = ol.id
