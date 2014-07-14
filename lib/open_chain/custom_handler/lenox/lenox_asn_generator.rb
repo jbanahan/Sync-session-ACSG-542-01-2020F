@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
 
   def self.run_schedulable opts={}
     g = self.new(opts)
-    temps = g.generate_tempfiles g.find_entries
+    temps = g.generate_tempfiles g.find_shipments
     g.ftp_file temps[0], {remote_file_name:'Vand_Header'}
     g.ftp_file temps[1], {remote_file_name:'Vand_Detail'}
   end
@@ -31,38 +31,24 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     {server:'ftp.lenox.com',username:"vanvendor#{@env=='production' ? '' : 'test'}",password:'$hipments',folder:'.'}
   end
 
-  def find_entries
-    passed_rules = SearchCriterion.new(model_field_uid:'ent_rule_state',operator:'eq',value:'Pass')
-    passed_rules.apply(Entry.select("DISTINCT entries.*").joins("LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = '#{SYNC_CODE}'").
+  def find_shipments
+    Shipment.select("DISTINCT shipments.*").joins("LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Shipment' AND sync_records.syncable_id = shipments.id AND sync_records.trading_partner = '#{SYNC_CODE}'").
       where(importer_id:@lenox.id).
-      where("entries.broker_invoice_total > 0").
-      where('sync_records.id is null').where('entries.export_date >= "2014-06-24"'))
+      where('sync_records.id is null')
   end
 
-  def generate_tempfiles entries
-    Entry.transaction do
+  def generate_tempfiles shipments
+    Shipment.transaction do
       header_file = Tempfile.new(['LENOXHEADER','.txt'])
       detail_file = Tempfile.new(['LENOXDETAIL','.txt'])
-      entries.each do |ent|
-        begin
-          Entry.transaction do
-            hdata = ''
-            ddata = ''
-            generate_header_rows(ent) {|r| hdata << "#{r}\n"}
-            generate_detail_rows(ent) {|r| ddata << "#{r}\n"}
-            ent.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
-            header_file << hdata
-            detail_file << ddata
-          end
-        rescue
-          if $!.is_a?(LenoxBusinessLogicError)
-            ent.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'LOGICERROR',trading_partner:SYNC_CODE)
-          end
-          OpenMailer.send_simple_html('lenox_us@vandegriftinc.com',
-            "Lenox ASN Failure","<p>The Lenox ASN for file #{ent.broker_reference} failed with the following message:</p>
-            <pre>#{$!.message}</pre>
-            <p>MBOL: #{ent.master_bills_of_lading}, HBOL: #{ent.house_bills_of_lading}</p><p>Please contact the Lenox on site team so they can manually enter the shipment and invoice into SCW / Rockblocks.</p>".html_safe).deliver!
-        end
+      shipments.each do |shp|
+        hdata = ''
+        ddata = ''
+        generate_header_rows(shp) {|r| hdata << "#{r}\n"}
+        generate_detail_rows(shp) {|r| ddata << "#{r}\n"}
+        shp.sync_records.create!(sent_at:1.second.ago,confirmed_at:0.seconds.ago,confirmation_file_name:'MOCK',trading_partner:SYNC_CODE)
+        header_file << hdata
+        detail_file << ddata
       end
       header_file.flush
       detail_file.flush
@@ -70,124 +56,84 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     end
   end
 
-  def generate_header_rows entry
-    get_vendor_code_and_invoices(entry).each do |vendor_code,invoices|
-      gross_weight = invoices.inject(0) {|r,inv| r + (inv.gross_weight.blank? ? 0 : inv.gross_weight)}
-      yield build_header_row(entry,vendor_code,gross_weight,build_mode_specific_values(entry))
+  def generate_header_rows shipment
+    header_hash = {}
+    shipment.shipment_lines.each do |sl|
+      key = shipment.house_bill_of_lading
+      key << sl.order_lines.first.order.vendor.system_code.gsub("LENOX-",'')
+      key << sl.container.container_number
+      header_hash[key] ||= []
+      header_hash[key] << sl
+    end
+    header_hash.values.each do |sl_array|
+      weight = sl_array.inject(BigDecimal('0.00')) {|i,sl| i+(sl.gross_kgs.nil? ? 0 : sl.gross_kgs)}
+      cbms = sl_array.inject(BigDecimal('0.00')) {|i,sl| i+(sl.cbms.nil? ? 0 : sl.cbms)}
+      cartons = sl_array.inject(0) { |mem, sl| mem+(sl.carton_qty.nil? ? 0 : sl.carton_qty) }
+      container = sl_array.first.container
+      r = ""
+      r << "ASNH"
+      r << @f.str(shipment.house_bill_of_lading,35)
+      r << @f.str(sl_array.first.order_lines.first.order.vendor.system_code.gsub("LENOX-",''),8)
+      r << @f.str(container.container_number,17)
+      r << @f.str(container.container_size[2,container.container_size.length-2].gsub("'",''),10)
+      r << @f.num(weight,10,3)
+      r << @f.str('KG',10)
+      r << @f.num(cbms,7,0) #TODO cubic meters
+      r << @f.str(shipment.vessel,18)
+      r << (cbms > 20 ? "Y" : "N")
+      r << @f.num(cartons,7,0)
+      r << @f.str(container.seal_number,35)
+      r << @f.str('',25) #not going to have entry number
+      r << @f.str('',20) #not going to have P Number
+      r << @f.str('',16) #hold for ex-factory & gate in dates
+      r << @f.date(shipment.est_departure_date)
+      r << @f.str(shipment.lading_port.schedule_k_code,10)
+      r << @f.str(shipment.unlading_port.schedule_d_code,10)
+      r << @f.str('11',6) #only sending ocean
+      r << @f.str(sl_array.first.order_lines.first.get_custom_value(@cdefs[:order_line_destination_code]).value,10)
+      r << 'APP '
+      r << ''.ljust(80)
+      r << time_and_user
+      yield r
     end
   end
 
-  def generate_detail_rows entry
-    vals = build_mode_specific_values(entry)
-    entry.commercial_invoice_lines.each_with_index do |ln,i|
-      order_line = get_order_line(ln)
-      raise LenoxBusinessLogicError.new("Order Line couldn't be found for order #{ln.po_number}, part #{ln.part_number}") if order_line.nil?
+  def generate_detail_rows shipment
+    shipment.shipment_lines.each_with_index do |ln,i|
+      order_line = ln.order_lines.first
+      order = order_line.order
       r = "ASND"
-      r << @f.str(vals[:mbol],35)
-      r << @f.str(vals[:cnum],17)
+      r << @f.str(shipment.house_bill_of_lading,35)
+      r << @f.str(ln.container.container_number,17)
       r << @f.num(i+1,10)
-      r << @f.str(get_order_custom_value(:order_factory_code,ln),10)
-      r << @f.str(ln.po_number,35)
-      r << @f.str(ln.part_number,35)
+      r << @f.str(order.get_custom_value(@cdefs[:order_factory_code]).value,10)
+      r << @f.str(order.customer_order_number,35)
+      r << @f.str(ln.product.unique_identifier.gsub("LENOX-",""),35)
       r << @f.num(get_exploded_quantity(ln),7)
-      r << @f.str(ln.country_origin_code,4)
-      r << @f.str(ln.commercial_invoice.invoice_number,35)
+      r << @f.str(ln.product.get_custom_value(@cdefs[:product_coo]).value,4)
+      r << @f.str('',35) #no commercial invoice number
       r << @f.num(ln.line_number,10)
-      r << @f.date(ln.commercial_invoice.invoice_date)
+      r << @f.date(nil) #no invoice date
       r << ''.ljust(88)
       r << time_and_user
       r << @f.num(order_line.price_per_unit,18,6)
-      r << @f.num(ln.unit_price,18,6)
-      r << @f.str(order_line.order.vendor.system_code.gsub('LENOX-',''),8)
+      r << @f.num(order_line.price_per_unit,18,6)
+      r << @f.str(order.vendor.system_code.gsub('LENOX-',''),8)
       yield r
     end
   end
 
   private
-  def get_order_line(ln)
-    OrderLine.joins([:order,:product]).where("products.unique_identifier = ?","LENOX-#{ln.part_number.strip}").where("orders.order_number = ?","LENOX-#{ln.po_number}").order('order_lines.line_number DESC').first
-  end
-  def get_exploded_quantity ci_line
-    p = Product.find_by_unique_identifier("LENOX-#{ci_line.part_number.strip}")
-    if p.nil?
-      raise LenoxBusinessLogicError.new("Product could not be found with unique identifier LENOX-#{ci_line.part_number.strip}")
-    end
+  def get_exploded_quantity s_line
+    p = s_line.product
     piece_factor = p.get_custom_value(@cdefs[:product_units_per_set]).value
     piece_factor = 1 if piece_factor.nil? || piece_factor < 1
-    ci_line.quantity / piece_factor
-  end
-  def build_mode_specific_values entry
-    if entry.transport_mode_code == '11' || entry.transport_mode_code == '10'
-      if entry.containers.size != 1
-        # temporary business logic exception until we figure out how to handle 
-        # multiple containers
-        raise LenoxBusinessLogicError.new("ASN cannot be generated for entry #{entry.entry_number} because it has multiple containers.")
-      end
-      if entry.container_sizes.blank?
-        raise LenoxBusinessLogicError.new("ASN cannot be generated for entry #{entry.entry_number} because does not have container size set.")
-      end
-      if lcl?(entry) && entry.house_bills_of_lading.blank?
-        raise LenoxBusinessLogicError.new("ASN cannot be generated for entry #{entry.entry_number} because it is LCL and does not have a House Bill.")
-      end
-      cont = entry.containers.first
-      return {
-        cnum:cont.container_number,
-        csize:cont.container_size,
-        cartons:cont.quantity,
-        seal:cont.seal_number,
-        fcl:(lcl?(entry) ? 'N' : 'Y'),
-        mbol:(lcl?(entry) ? entry.house_bills_of_lading : entry.master_bills_of_lading)
-      }
-    else
-      vals = {
-        mbol:entry.master_bills_of_lading,
-        cnum:entry.house_bills_of_lading,
-        cartons:entry.total_packages,
-        fcl:'N'
-      }
-    end
-  end
-  def build_header_row entry, vendor_code, gross_weight, vals
-    r = ""
-    r << "ASNH"
-    r << @f.str(vals[:mbol],35)
-    r << @f.str(vendor_code,8)
-    r << @f.str(vals[:cnum],17)
-    r << @f.str(vals[:csize],10)
-    r << @f.num(gross_weight,10,3)
-    r << @f.str('KG',10)
-    r << @f.num(0,7,0) #TODO cubic meters
-    r << @f.str(entry.vessel,18)
-    r << vals[:fcl]
-    r << @f.num(vals[:cartons],7,0)
-    r << @f.str(vals[:seal],35)
-    r << @f.str(entry.entry_number,25)
-    r << @f.str(entry.customer_references,20)
-    r << @f.str('',16) #hold for ex-factory & gate in dates
-    r << @f.date(entry.export_date)
-    r << @f.str(entry.lading_port_code,10)
-    r << @f.str(entry.unlading_port_code,10)
-    r << @f.str(entry.transport_mode_code,6)
-    r << @f.str(get_final_destination_code(entry),10)
-    r << 'APP '
-    r << ''.ljust(80)
-    r << time_and_user
-    r
+    s_line.quantity / piece_factor
   end
   def time_and_user
     "#{@f.date(Time.now,'%Y%m%d%H%M%S')}#{@f.str((Rails.env.production? ? 'vanvendor' : 'vanvendortest'),15) }"
   end
-  def get_final_destination_code entry
-    get_order_line(entry.commercial_invoice_lines.first).get_custom_value(@cdefs[:order_line_destination_code]).value
-  end
-  def get_order_custom_value cval_identifier, ci_line
-    ord = get_order(ci_line)
-    ord.get_custom_value(@cdefs[cval_identifier]).value
-  end
-  def get_order ci_line
-    Order.find_by_importer_id_and_order_number(@lenox.id,"LENOX-#{ci_line.po_number}")  
-  end
-  def get_vendor_code_and_invoices entry
+  def get_vendor_code_and_invoices shipment
     h = {}
     entry.commercial_invoices.each do |ci|
       po_numbers = ci.commercial_invoice_lines.pluck('DISTINCT po_number')
