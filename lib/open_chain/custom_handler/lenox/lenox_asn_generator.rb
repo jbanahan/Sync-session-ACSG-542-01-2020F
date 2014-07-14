@@ -59,9 +59,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   def generate_header_rows shipment
     header_hash = {}
     shipment.shipment_lines.each do |sl|
-      key = shipment.house_bill_of_lading
-      key << sl.order_lines.first.order.vendor.system_code.gsub("LENOX-",'')
-      key << sl.container.container_number
+      key = "#{shipment.house_bill_of_lading}#{sl.order_lines.first.order.vendor.system_code.gsub("LENOX-",'')}#{sl.container.container_number}"
       header_hash[key] ||= []
       header_hash[key] << sl
     end
