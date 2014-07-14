@@ -137,6 +137,12 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       expect(sl.gross_kgs).to eq BigDecimal(r[14])
       expect(sl.cbms).to eq BigDecimal(r[16])
     end
+    it "should clean trailing .0 from product" do
+      r = default_row
+      r[4] = "#{r[4]}.0"
+      @p.process_shipment [r]
+      expect(Shipment.first.shipment_lines.first.product).to eq @prod
+    end
     it "should skip shipment that already exists" do
       r = default_row
       t = 1.week.ago
