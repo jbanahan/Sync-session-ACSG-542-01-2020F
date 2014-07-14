@@ -64,7 +64,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
     con = shp.containers.build(container_number:r[11])
     con.container_size = r[12]
     con.seal_number = r[17]
-    r[4].gsub!(/\.0/,'')
+    r[4].to_s.gsub!(/\.0/,'')
     prod = Product.find_by_unique_identifier("LENOX-#{r[4]}")
     raise "Product #{r[4]} for shipment #{shp.house_bill_of_lading} was not found in product database." unless prod
     order = Order.find_by_order_number "LENOX-#{r[3]}"
