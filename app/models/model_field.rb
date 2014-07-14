@@ -1515,7 +1515,10 @@ and classifications.product_id = products.id
             sl.container_id = con.id
             "#{ModelField.find_by_uid(:shpln_container_uid).label} set to #{con.id}."
           }
-          }]
+          }],
+        [6,:shpln_cbms,:cbms,"Volume (CBMS)",{data_type: :decimal}],
+        [7,:shpln_gross_kgs,:gross_kgs,"Gross Weight (KGS)",{data_type: :decimal}],
+        [8,:shpln_carton_qty,:carton_qty,"Cartons",{data_type: :integer}]
       ]
       add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
 

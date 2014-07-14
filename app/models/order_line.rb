@@ -24,6 +24,10 @@ class OrderLine < ActiveRecord::Base
 	  self.piece_sets.each {|p| q += p.quantity unless p.shipment_line_id.nil?}
     q
 	end
+
+  def unshipped_qty
+    self.quantity - shipped_qty
+  end
 	
 	def received_qty
 	  0

@@ -220,6 +220,10 @@ OpenChain::Application.routes.draw do
   match "/custom_features/eddie_fenix_ci_load" => "custom_features#eddie_fenix_ci_load_index", :via=>:get
   match "/custom_features/eddie_fenix_ci_load/upload" => "custom_features#eddie_fenix_ci_load_upload", :via => :post
   match "/custom_features/eddie_fenix_ci_load/:id/download" => "custom_features#eddie_fenix_ci_load_download", :via => :get
+
+  match "/custom_features/lenox_shipment_status" => "custom_features#lenox_shipment_status_index", :via=>:get
+  match "/custom_features/lenox_shipment_status/upload" => "custom_features#lenox_shipment_status_upload", :via => :post
+  match "/custom_features/lenox_shipment_status/:id/download" => "custom_features#lenox_shipment_status_download", :via => :get
   
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get

@@ -5,19 +5,22 @@ class Shipment < ActiveRecord::Base
 	belongs_to	:ship_from,	:class_name => "Address"
 	belongs_to	:ship_to,	:class_name => "Address"
   belongs_to :importer, :class_name=>"Company"
+  belongs_to :lading_port, :class_name=>"Port"
+  belongs_to :unlading_port, :class_name=>"Port"
+  belongs_to :entry_port, :class_name=>"Port"
+  belongs_to :destination_port, :class_name=>"Port"
 	
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :piece_sets, :through=>:shipment_lines
 
-  validates  :vendor, :presence => true
 	validates  :reference, :presence => true
-  validates_uniqueness_of :reference, {:scope => :vendor_id}
+  validates_uniqueness_of :reference
 
   dont_shallow_merge :Shipment, ['id','created_at','updated_at','vendor_id','reference']
   def find_same
-    f = self.reference.nil? ? [] : Shipment.where(:reference=>self.reference.to_s).where(:vendor_id=>self.vendor_id)
-    raise "Multiple shipments wtih reference \"#{self.reference} and vendor ID #{self.vendor_id} exist." if f.size > 1
+    f = self.reference.nil? ? [] : Shipment.where(:reference=>self.reference.to_s)
+    raise "Multiple shipments wtih reference \"#{self.reference} exist." if f.size > 1
     return f.empty? ? nil : f.first
   end
 

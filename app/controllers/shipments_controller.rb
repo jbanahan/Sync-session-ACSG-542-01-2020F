@@ -31,10 +31,7 @@ class ShipmentsController < ApplicationController
 
   # GET /shipments/1/edit
   def edit
-    s = Shipment.find(params[:id])
-    action_secure(s.can_edit?(current_user),s,{:verb => "edit",:module_name=>"shipment"}) {
-      @shipment = s
-    }
+    redirect_to shipment_path(params[:id])
   end
 
   # POST /shipments

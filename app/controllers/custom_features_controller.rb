@@ -1,25 +1,27 @@
-require 'open_chain/custom_handler/polo_csm_sync_handler'
-require 'open_chain/custom_handler/polo_ca_entry_parser'
-require 'open_chain/custom_handler/polo_sap_bom_handler'
+require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
+require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
+require 'open_chain/custom_handler/kewill_isf_manual_parser'
+require 'open_chain/custom_handler/lenox/lenox_shipment_status_parser'
+require 'open_chain/custom_handler/polo_ca_entry_parser'
+require 'open_chain/custom_handler/polo_csm_sync_handler'
 require 'open_chain/custom_handler/polo/polo_ca_invoice_handler'
+require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
-require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
-require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
-require 'open_chain/custom_handler/kewill_isf_manual_parser'
 
 class CustomFeaturesController < ApplicationController
-  CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
-  POLO_SAP_BOM = 'OpenChain::CustomHandler::PoloSapBomHandler'
-  JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
-  POLO_CA_INVOICES = 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
-  UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
-  FENIX_CI_UPLOAD = 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
+  CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   EDDIE_CI_UPLOAD = 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
+  FENIX_CI_UPLOAD = 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
+  JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
   KEWILL_ISF = 'OpenChain::CustomHandler::KewillIsfManualParser'
+  LENOX_SHIPMENT = 'OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser'
+  POLO_CA_INVOICES = 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
+  POLO_SAP_BOM = 'OpenChain::CustomHandler::PoloSapBomHandler'
+  UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
 
   def index
     render :layout=>'one_col'
@@ -297,6 +299,34 @@ class CustomFeaturesController < ApplicationController
   def fenix_ci_load_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def lenox_shipment_status_index
+    action_secure(OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser.can_view?(current_user),Shipment,{verb:'view',module_name:"Lenox OOCL Shipment Report Upload",lock_check:false}) {
+      @files = CustomFile.where(file_type:LENOX_SHIPMENT).order('created_at DESC').paginate(per_page:20,page:params[:page])
+    }
+  end
+
+  def lenox_shipment_status_upload
+    f = CustomFile.new(:file_type=>LENOX_SHIPMENT,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Lenox OOCL Shipment Report Upload",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/lenox_shipment_status'
+    }
+  end
+
+  def lenox_shipment_status_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),LENOX_SHIPMENT,{:verb=>"download",:module_name=>"Lenox OOCL Shipment Report Upload",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end
