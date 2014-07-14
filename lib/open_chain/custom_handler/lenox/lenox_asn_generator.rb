@@ -77,7 +77,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.num(weight,10,3)
       r << @f.str('KG',10)
       r << @f.num(cbms,7,0) #TODO cubic meters
-      r << @f.str(shipment.vessel,18)
+      r << @f.str(shipment.vessel,18,false,true) #force truncate
       r << (cbms > 20 ? "Y" : "N")
       r << @f.num(cartons,7,0)
       r << @f.str(container.seal_number,35)
