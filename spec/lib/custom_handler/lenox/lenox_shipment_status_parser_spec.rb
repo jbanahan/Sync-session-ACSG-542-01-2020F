@@ -150,6 +150,9 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       expect {@p.process_shipment [r]}.to_not change(Shipment.order(:updated_at),:first)
       expect(Shipment.count).to eq 1
     end
+    it "should allocate multiple lines to same container" do
+      expect {@p.process_shipment [default_row,default_row]}.to change(Container,:count).from(0).to(1)
+    end
     it "should allocate to order line with same product and closest unshipped quantity" do
       @ol2 = @o.order_lines.create!(product_id:@prod.id,quantity:101)
       @p.process_shipment [default_row]

@@ -61,7 +61,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
   private
   def process_line shp, r
     con = shp.containers.find {|c| c.container_number == r[11]}
-    con = shp.containers.build(container_number:r[11])
+    con = shp.containers.build(container_number:r[11]) unless con
     con.container_size = r[12]
     con.seal_number = r[17]
     r[4] = r[4].to_s.gsub(/\.0/,'')
