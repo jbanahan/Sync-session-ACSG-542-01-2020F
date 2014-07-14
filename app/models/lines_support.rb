@@ -97,7 +97,7 @@ module LinesSupport
         holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0)+ifnull(piece_sets.drawback_import_line_id,0)+ifnull(piece_sets.commercial_invoice_line_id,0))=?",id).first
         if holding_piece_set
           if holding_piece_set.quantity <= self.quantity
-            ps = holding_piece_set
+            holding_piece_set.destroy
           else
             holding_piece_set.update_attributes(:quantity=>holding_piece_set.quantity-self.quantity)
           end
