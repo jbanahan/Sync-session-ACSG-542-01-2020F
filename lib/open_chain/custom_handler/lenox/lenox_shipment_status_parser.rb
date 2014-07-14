@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
       shp = Shipment.new(importer_id:@lenox.id,reference:shp_ref) unless shp
       shp.house_bill_of_lading = r[9]
       shp.lading_port = Port.find_by_name r[6].strip
-      shp.unlading_port = Port.find_by_name r[8].strip
+      shp.unlading_port = Port.find_by_name(clean_us_port_name(r[8].strip))
       shp.est_departure_date = r[7]
       shp.vessel = r[10]
       rows.each_with_index {|row, i| process_line shp, row, i+i}
@@ -83,5 +83,63 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
       b_diff = (b.unshipped_qty - shipment_line.quantity)
       a_diff.abs - b_diff.abs
     }.first
+  end
+
+  STATES ||= {
+    "Alabama" =>"AL",
+    "Alaska" =>"AK",
+    "Arizona" =>"AZ",
+    "Arkansas" =>"AR",
+    "California" =>"CA",
+    "Colorado" =>"CO",
+    "Connecticut" =>"CT",
+    "Delaware" =>"DE",
+    "Florida" =>"FL",
+    "Georgia" =>"GA",
+    "Hawaii" =>"HI",
+    "Idaho" =>"ID",
+    "Illinois" =>"IL",
+    "Indiana" =>"IN",
+    "Iowa" =>"IA",
+    "Kansas" =>"KS",
+    "Kentucky" =>"KY",
+    "Louisiana" =>"LA",
+    "Maine" =>"ME",
+    "Maryland" =>"MD",
+    "Massachusetts" =>"MA",
+    "Michigan" =>"MI",
+    "Minnesota" =>"MN",
+    "Mississippi" =>"MS",
+    "Missouri" =>"MO",
+    "Montana" =>"MT",
+    "Nebraska" =>"NE",
+    "Nevada" =>"NV",
+    "New Hampshire" =>"NH",
+    "New Jersey" =>"NJ",
+    "New Mexico" =>"NM",
+    "New York" =>"NY",
+    "North Carolina" =>"NC",
+    "North Dakota" =>"ND",
+    "Ohio" =>"OH",
+    "Oklahoma" =>"OK",
+    "Oregon" =>"OR",
+    "Pennsylvania" =>"PA",
+    "Rhode Island" =>"RI",
+    "South Carolina" =>"SC",
+    "South Dakota" =>"SD",
+    "Tennessee" =>"TN",
+    "Texas" =>"TX",
+    "Utah" =>"UT",
+    "Vermont" =>"VT",
+    "Virginia" =>"VA",
+    "Washington" =>"WA",
+    "West Virginia" =>"WV",
+    "Wisconsin" =>"WI",
+    "Wyoming" =>"WY"
+  }
+  def clean_us_port_name raw
+    city, state = raw.split(', ')
+    state_code = STATES[state]
+    "#{city}, #{state_code.blank? ? state : state_code}"
   end
 end; end; end; end

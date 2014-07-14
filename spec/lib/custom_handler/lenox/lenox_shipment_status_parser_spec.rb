@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
   def default_row overrides={}
     h = {po:'ORD123',part:'PART',qty:100,pol:'Yantian, China',
       etd:'2014-01-01',
-      pod:'Norfolk, VA',bol:'OOLU12345678',vessel:'VESS',
+      pod:'Norfolk, Virginia',bol:'OOLU12345678',vessel:'VESS',
       container:'CONT12345678',size:'SZ',gross_weight:'49.2',cartons:4,
       volume:'29.4',seal_number:'SL123',invoice_number:'INV123'}.merge overrides
     r = Array.new 19
