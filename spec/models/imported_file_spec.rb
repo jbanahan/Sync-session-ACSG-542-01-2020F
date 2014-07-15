@@ -332,7 +332,7 @@ describe ImportedFile do
       user = Factory(:user)
       ss = Factory(:search_setup, user: user)
       path = "/notauser/to_chain/#{ss.module_type.downcase}/#{ss.name}/myfile.csv"
-      StandardError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
+      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
 
       ImportedFile.process_integration_imported_file 'bucket', 'path', path
     end
@@ -341,7 +341,7 @@ describe ImportedFile do
       user = Factory(:user)
       ss = Factory(:search_setup, user: user)
       path = "/#{user.username}/to_chain/notamodule/#{ss.name}/myfile.csv"
-      StandardError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
+      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
 
       ImportedFile.process_integration_imported_file 'bucket', 'path', path
     end
@@ -350,7 +350,7 @@ describe ImportedFile do
       user = Factory(:user)
       ss = Factory(:search_setup, user: user)
       path = "/#{user.username}/to_chain/#{ss.module_type.downcase}/notaname/myfile.csv"
-      StandardError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
+      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
 
       ImportedFile.process_integration_imported_file 'bucket', 'path', path
     end

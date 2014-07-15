@@ -51,7 +51,7 @@ describe OpenChain::IntegrationClient do
       #Just mock out the retrieve queue messages call here, since it's not needed to test message handling
       OpenChain::IntegrationClient.should_receive(:retrieve_queue_messages).with('q', 500).and_return [cmd]
       OpenChain::IntegrationClientCommandProcessor.should_receive(:process_command).with(JSON.parse(cmd.body)).and_raise "Error"
-      StandardError.any_instance.should_receive(:log_me).with ["SQS Message: #{cmd.body}"]
+      RuntimeError.any_instance.should_receive(:log_me).with ["SQS Message: #{cmd.body}"]
 
       OpenChain::IntegrationClient.process_queue 'q'
     end
