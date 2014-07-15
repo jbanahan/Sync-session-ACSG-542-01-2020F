@@ -72,15 +72,22 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
       expect{@k.parse dom.to_s}.to raise_error "ISF_SEQ_NBR is required."
     end
-    it "does not error if document with only event type 8 is found" do
+    it "parses a document with only event type 8 and doeesn't remove existing lines" do
       dom = REXML::Document.new File.new(@path)
       dom.root.get_elements("events/EVENT_NBR").each do |el|
         el.text = "8"
       end
 
+      dom.elements.delete_all("IsfHeaderData/lines")
+
+      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
+      sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
+
       expect{@k.parse dom.to_s}.not_to raise_error
-      # Make sure no security filing was created
-      expect(SecurityFiling.first).to be_nil
+
+      saved = SecurityFiling.first
+      expect(saved).to eq sf
+      expect(saved.security_filing_lines.size).to eq 1
     end
   end
   describe :parse_dom do

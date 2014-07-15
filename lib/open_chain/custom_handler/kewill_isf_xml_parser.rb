@@ -85,9 +85,13 @@ module OpenChain
         @sf.manufacturer_names = process_manufacturer_names r
         @sf.po_numbers = @po_numbers.to_a.compact.join("\n")
         @sf.countries_of_origin = @countries_of_origin.to_a.compact.join("\n")
-        @sf.security_filing_lines.each do |ln|
-          ln.destroy unless @used_line_numbers.include?(ln.line_number)
+        
+        if destroy_lines? r
+          @sf.security_filing_lines.each do |ln|
+            ln.destroy unless @used_line_numbers.include?(ln.line_number)
+          end
         end
+
         @sf.notes = @notes.join("\n")
         if @sf.broker_customer_number
           importer = Company.find_by_alliance_customer_number @sf.broker_customer_number
@@ -102,6 +106,14 @@ module OpenChain
       end
 
       private 
+
+      def destroy_lines? root
+        # If we receive ISF docs with only an 8 event type, those don't include the filing lines so 
+        # we don't want to destroy lines from our existing ISFs either
+        event_numbers = REXML::XPath.each(root, "events/EVENT_NBR").map {|el| el.text}.uniq.compact
+        return event_numbers.length > 1 || event_numbers[0] != "8"
+      end
+
       def process_lines parent
         parent.each_element('lines') do |el|
           line_number = et(el,'ISF_LINE_NBR').to_i
@@ -152,7 +164,7 @@ module OpenChain
       end
       def last_event_time root
         r = nil
-        REXML::XPath.each(root, "events[EVENT_NBR = '21']") do |el|
+        REXML::XPath.each(root, "events[EVENT_NBR = '21' or EVENT_NBR = '8']") do |el|
           time_stamp = ed el, 'EVENT_DATE'
           r = pick_date(r,time_stamp,true)
         end
@@ -163,7 +175,7 @@ module OpenChain
           REXML::XPath.each(root, "events/EVENT_NBR") {|el| event_numbers << el.text}
           event_numbers = event_numbers.uniq.compact
 
-          raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 must be present in the XML." unless event_numbers.length == 1 && event_numbers[0] == "8"  
+          raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
         end
         
         r
