@@ -373,6 +373,22 @@
     </notes>
   </events>
   <events>
+    <EVENT_NBR>8</EVENT_NBR>
+    <EVENT_DESCR>Bill of Lading Status Advisory</EVENT_DESCR>
+    <EVENT_DATE>2012-11-27T09:15:15.073-05:00</EVENT_DATE>
+    <EVENT_DATE_GMT>2012-11-27T14:15:15.073-05:00</EVENT_DATE_GMT>
+    <TIMEZONE>EST</TIMEZONE>
+    <notes>
+      <NOTE>Bill Nbr: YASVNLTPE0031400. Disposition Cd: S1</NOTE>
+    </notes>
+    <notes>
+      <NOTE>BILL ON FILE                            </NOTE>
+    </notes>
+    <notes>
+      <NOTE>All Bills Matched</NOTE>
+    </notes>
+  </events>
+  <events>
     <EVENT_NBR>21</EVENT_NBR>
     <EVENT_DESCR>Shipment Downloaded</EVENT_DESCR>
     <EVENT_DATE>2012-11-27T09:20:01.565-05:00</EVENT_DATE>

@@ -54,7 +54,6 @@ module OpenChain
         @po_numbers = Set.new 
         @countries_of_origin = Set.new
         @used_line_numbers = []
-        @notes = []
         @dom = dom
         @sf = sf
         r = @dom.root
@@ -80,19 +79,27 @@ module OpenChain
         process_bills_of_lading r
         process_container_numbers r
         process_broker_references r
-        process_events r
-        process_lines r
-        @sf.manufacturer_names = process_manufacturer_names r
-        @sf.po_numbers = @po_numbers.to_a.compact.join("\n")
-        @sf.countries_of_origin = @countries_of_origin.to_a.compact.join("\n")
-        
-        if destroy_lines? r
+
+        if full_isf_document? r
+          @notes = []
+          process_events r
+          process_lines r
+          @sf.po_numbers = @po_numbers.to_a.compact.join("\n")
+          @sf.countries_of_origin = @countries_of_origin.to_a.compact.join("\n")
+
           @sf.security_filing_lines.each do |ln|
             ln.destroy unless @used_line_numbers.include?(ln.line_number)
           end
+        else
+          # We don't want to blow away the existing notes if we're dealing w/ event 8 documents (since the document doesn't include
+          # the full Notes for other events) but we do want to capture the new event 8 notes.
+          @notes = (@sf.notes.blank? ? [] : @sf.notes.split("\n"))
+          process_only_event_8_events r
         end
-
+        
         @sf.notes = @notes.join("\n")
+        @sf.manufacturer_names = process_manufacturer_names r
+
         if @sf.broker_customer_number
           importer = Company.find_by_alliance_customer_number @sf.broker_customer_number
           if importer.nil?
@@ -107,9 +114,10 @@ module OpenChain
 
       private 
 
-      def destroy_lines? root
+      def full_isf_document? root
         # If we receive ISF docs with only an 8 event type, those don't include the filing lines so 
-        # we don't want to destroy lines from our existing ISFs either
+        # we don't want to destroy lines from our existing ISFs either or overwrite existing attributes with
+        # blank data in those cases
         event_numbers = REXML::XPath.each(root, "events/EVENT_NBR").map {|el| el.text}.uniq.compact
         return event_numbers.length > 1 || event_numbers[0] != "8"
       end
@@ -170,7 +178,6 @@ module OpenChain
         end
 
         if r.nil?
-          # Don't raise anything if we have a document that only has event types of 8, we'll just skip these
           event_numbers = []
           REXML::XPath.each(root, "events/EVENT_NBR") {|el| event_numbers << el.text}
           event_numbers = event_numbers.uniq.compact
@@ -223,6 +230,27 @@ module OpenChain
         @sf.last_sent_date = last_sent_date
         @sf.first_accepted_date = first_accepted_date
         @sf.last_accepted_date = last_accepted_date
+      end
+
+      def process_only_event_8_events parent
+        local_notes = []
+        REXML::XPath.each(parent, "events[EVENT_NBR = '8']") do |el|
+          time_stamp = ed el, 'EVENT_DATE'
+
+          # Events 8 we want to capture the last event element listed in the file based on the element ordering of the file, not necessarily
+          # by the actual event time.
+          @sf.cbp_updated_at = time_stamp
+
+          notes = get_notes_from_event(el,time_stamp)
+          local_notes += notes unless notes.blank?
+        end
+
+        # Since we don't want to duplicate notes and there's a chance the notes are already included in the isf, just
+        # make sure each note line doesn't already exist.  Because notes are prefaced w/ event times
+        # this should work to exclude any pre-existing notes.
+        local_notes = local_notes.reject {|n| @notes.include? n}
+
+        @notes.push *local_notes
       end
       
       def get_notes_from_event evt, time_stamp

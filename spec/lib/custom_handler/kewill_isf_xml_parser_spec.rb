@@ -72,15 +72,18 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
       expect{@k.parse dom.to_s}.to raise_error "ISF_SEQ_NBR is required."
     end
-    it "parses a document with only event type 8 and doeesn't remove existing lines" do
+    it "parses a document with only event type 8, adding notes, but not removing existing info" do
       dom = REXML::Document.new File.new(@path)
-      dom.root.get_elements("events/EVENT_NBR").each do |el|
-        el.text = "8"
-      end
 
       dom.elements.delete_all("IsfHeaderData/lines")
+      dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR != '8']")
 
-      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
+      notes = [
+        "2012-11-27 09:15 EST: Bill Nbr: KKLUXM02368200. Disposition Cd: S2",
+        "2012-11-27 09:15 EST: NO BILL MATCH (NOT ON FILE)"
+      ]
+      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"), 
+        :po_numbers=>"A\nB", countries_of_origin: "C\nD", notes: notes.join("\n"))
       sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
 
       expect{@k.parse dom.to_s}.not_to raise_error
@@ -88,6 +91,16 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       saved = SecurityFiling.first
       expect(saved).to eq sf
       expect(saved.security_filing_lines.size).to eq 1
+      expect(saved.po_numbers).to eq "A\nB"
+      expect(saved.countries_of_origin).to eq "C\nD"
+      # Make sure existing notes are retained, and existing note lines are not duplicated
+      expect(saved.notes.split("\n")).to eq [
+        "2012-11-27 09:15 EST: Bill Nbr: KKLUXM02368200. Disposition Cd: S2",
+        "2012-11-27 09:15 EST: NO BILL MATCH (NOT ON FILE)",
+        "2012-11-27 09:15 EST: Bill Nbr: YASVNLTPE0031400. Disposition Cd: S1",
+        "2012-11-27 09:15 EST: BILL ON FILE",
+        "2012-11-27 09:15 EST: All Bills Matched"
+      ]
     end
   end
   describe :parse_dom do
@@ -157,6 +170,9 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         "2012-11-27 09:14 EST: Submission Type - 1 : Importer Security Filing 10 (ISF-10)",
         "2012-11-27 09:15 EST: Bill Nbr: KKLUXM02368200. Disposition Cd: S2",
         "2012-11-27 09:15 EST: NO BILL MATCH (NOT ON FILE)",
+        "2012-11-27 09:15 EST: Bill Nbr: YASVNLTPE0031400. Disposition Cd: S1",
+        "2012-11-27 09:15 EST: BILL ON FILE",
+        "2012-11-27 09:15 EST: All Bills Matched",
         "2012-11-27 10:13 EST: ISF Queued to Send to Customs - DANA",
         "2012-11-27 10:14 EST: ISF issued as a Compliance Transaction (CT)",
         "2012-11-27 10:14 EST: CBP Accepted - ISF ACCEPTED",
