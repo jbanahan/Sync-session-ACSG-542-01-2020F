@@ -119,6 +119,14 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
 
         expect(row.size).to eq 380
       end
+      it "should make all 45 containers into 45HC" do
+        @con.update_attributes(container_size:'HQ45\'')
+        r = []
+        described_class.new.generate_header_rows @shipment do |row|
+          r << row
+        end
+        expect(r.first[64,10].rstrip).to eq '45HC'
+      end
       it "should set fcl_lcl to N for container_sizes LCL" do
         @shipment_line.update_attributes(cbms:1)
         r = []
@@ -128,8 +136,6 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         row = r.first
         expect(row[119]).to eq 'N'
       end
-      it "should make multiple headers for multiple vendors"
-      it "should write multiple headers for multiple containers"
     end
     describe :generate_detail_rows do
       it "should make detail row" do

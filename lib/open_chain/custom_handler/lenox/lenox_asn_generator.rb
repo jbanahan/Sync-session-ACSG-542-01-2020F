@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str(shipment.house_bill_of_lading,35)
       r << @f.str(sl_array.first.order_lines.first.order.vendor.system_code.gsub("LENOX-",''),8)
       r << @f.str(container.container_number,17)
-      r << @f.str(container.container_size[2,container.container_size.length-2].gsub("'",''),10)
+      r << @f.str(make_container_size_str(container),10)
       r << @f.num(weight,10,3)
       r << @f.str('KG',10)
       r << @f.num(cbms,7,0) #TODO cubic meters
@@ -122,6 +122,11 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
   end
 
   private
+  def make_container_size_str container
+    cs = container.container_size[2,container.container_size.length-2].gsub("'",'')
+    cs = "#{cs}HC" if container.container_size[0]=="H"
+    cs
+  end
   def get_exploded_quantity s_line
     p = s_line.product
     piece_factor = p.get_custom_value(@cdefs[:product_units_per_set]).value
