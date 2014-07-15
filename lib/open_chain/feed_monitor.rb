@@ -1,6 +1,13 @@
 class OpenChain::FeedMonitor
+
+  def self.run_schedulable
+    monitor
+  end
+
   #only override current_time for unit testing purposes
-  def self.monitor current_time = Time.now 
+  def self.monitor current_time = Time.zone.now 
+    current_time = current_time.in_time_zone "Eastern Time (US & Canada)"
+
     monitor_entries 'Alliance', current_time
     monitor_entries 'Fenix', current_time
     if MasterSetup.get.custom_feature?('alliance')
@@ -12,10 +19,10 @@ class OpenChain::FeedMonitor
 
   private 
   def self.monitor_business_hours monitor_name, current_time, timestamp
-    if current_time.day.between?(1,5) && current_time.hour.between?(8,20)
+    if current_time.wday.between?(1,5) && current_time.hour.between?(8,20)
       if timestamp && (current_time - timestamp) > 2.hours
         begin
-          raise "#{monitor_name} not updating. Last updated at: #{timestamp}"
+          raise "#{monitor_name} not updating. Last updated at: #{timestamp.in_time_zone("Eastern Time (US & Canada)").strftime('%Y-%m-%d %H:%M %Z')}"
         rescue
           $!.log_me
         end

@@ -1,3 +1,6 @@
+require 'rufus/sc/rtime'
+require 'rufus/sc/cronline'
+
 module OpenChain
   #
   # Support for making an object schedulable.  
@@ -68,9 +71,15 @@ module OpenChain
       false
     end
 
+    def allow_concurrency?
+      true
+    end
+
     # get the next time in UTC that this schedule should be executed
     def next_run_time
       base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
+      return nil unless base_time
+      
       tz = time_zone
       tz = ActiveSupport::TimeZone[tz.to_s] unless tz.is_a?(ActiveSupport::TimeZone)
       local_base_time = base_time.in_time_zone(tz)
@@ -91,12 +100,17 @@ module OpenChain
         end
 
         return next_time_local.utc
+      elsif (cron = cron_string?(interval))
+        next_run_time = cron.next_time local_base_time
+        # Don't support the run days checkboxes, cron already supports them in the cron expression and trying to build 
+        # support for our version w/ the checkboxes is a pain
+        return next_run_time ? next_run_time.utc : nil
       else
         # We can just use the previous run time and then add the interval string to it to determine the next run time
         interval_time = parse_time_string self.interval
 
         # If no interval time is returned and no run day is set, then we don't actually want to run the job, return nil
-        return nil unless interval_time > 0 && run_day_set?
+        return nil unless interval_time && interval_time > 0 && run_day_set?
 
         # Now we need to see if we're allowed to run on the day that interval_time + last_run_time points to
         next_run_time = local_base_time + interval_time
@@ -111,18 +125,50 @@ module OpenChain
 
     end
 
-    #run the job if it should be run (next scheduled time < now & not already run by another thread)
+    #run the job if it should be run (next scheduled time < now & not already run by another process)
     def run_if_needed log=nil
-      if needs_to_run?
-        update_count = self.class.where(:id=>self.id,:last_start_time=>self.last_start_time).update_all(["last_start_time = ?",Time.now])
-        if update_count == 1
+      need_run = false
+      begin   
+        # Make sure nothing else is trying to also check if this job should run at the exact same time
+        Lock.acquire("ScheduleSupport-#{self.class}-#{self.id}", times: 3, temp_lock: true) do
+
+          # Reload so we're sure we have the newest start time recorded (in the time we may have been
+          # waiting on the lock another process could have updated the start time)
+          self.reload
+          if needs_to_run? && no_other_instance_running?
+            need_run = true
+            attributes = {last_start_time: Time.zone.now}
+            attributes[:running] = true if track_running?
+
+            self.update_attributes! attributes
+          end
+        end
+
+        if need_run
           self.run log
         end
+      ensure
+        # We can be reasonably sure that we won't be setting the running flag to false in cases 
+        # were it really matters (.ie disabling concurrency) since once we've set the flag above
+        # in this process nothing else is going to ever flip it to running.  In cases where we're allowing
+        # concurrency, there's the potential for this flag to be wrong for a few moments at a time.  Doesn't really matter.
+        self.update_attributes!(running: false) if track_running? && need_run
       end
+
+      need_run
     end
 
     def needs_to_run? 
-      self.next_run_time < Time.now.utc
+      next_run = self.next_run_time
+      !next_run.nil? && next_run < Time.now.utc
+    end
+
+    def no_other_instance_running?
+      allow_concurrency? || (track_running? && self.class.where(:id=>self.id, running: true).count == 0)
+    end
+
+    def track_running?
+      self.has_attribute?(:running)
     end
     
     #is a run day set in the file
@@ -160,77 +206,15 @@ module OpenChain
     end
 
     private 
-      # This is all cribbed from the Rufus scheduler project, rather than import
-      # it since, we'd like to ultimately remove the project altogether.
-
-      # Turns a string like '1m10s' into a float like '70.0', more formally,
-      # turns a time duration expressed as a string into a Float instance
-      # (millisecond count).
-      #
-      # w -> week
-      # d -> day
-      # h -> hour
-      # m -> minute
-      # s -> second
-      # M -> month
-      # y -> year
-      # 'nada' -> millisecond
-      #
-      # Some examples :
-      #
-      #   parse_time_string "0.5"    # => 0.5
-      #   parse_time_string "500"    # => 0.5
-      #   parse_time_string "1000"   # => 1.0
-      #   parse_time_string "1h"     # => 3600.0
-      #   parse_time_string "1h10s"  # => 3610.0
-      #   parse_time_string "1w2d"   # => 777600.0
-      #
-      # Note will call #to_s on the input "string", so anything that is a String
-      # or responds to #to_s will be OK.
-      #
-      def parse_time_string(string)
-        string = string.to_s
-
-        return 0.0 if string == ''
-
-        m = string.match(/^(-?)([\d\.#{DURATION_LETTERS}]+)$/)
-
-        raise ArgumentError.new("cannot parse '#{string}'") unless m
-
-        mod = m[1] == '-' ? -1.0 : 1.0
-        val = 0.0
-
-        s = m[2]
-
-        while s.length > 0
-          m = nil
-          if m = s.match(/^(\d+|\d+\.\d*|\d*\.\d+)([#{DURATION_LETTERS}])(.*)$/)
-            val += m[1].to_f * DURATIONS[m[2]]
-          elsif s.match(/^\d+$/)
-            val += s.to_i / 1000.0
-          elsif s.match(/^\d*\.\d*$/)
-            val += s.to_f
-          else
-            raise ArgumentError.new("cannot parse '#{string}' (especially '#{s}')")
-          end
-          break unless m && m[3]
-          s = m[3]
-        end
-
-        mod * val
+      def cron_string? value
+        # Rufus cron uses granularity to the second, which is a pain in the butt if 
+        # you're copying / pasting cron expressions from the web since it's nonstandard. 
+	      # So, just prepend a 0 so expressions will run on the minute change.
+        return Rufus::CronLine.new ("0 " + value) rescue nil
       end
-    end
 
-    DURATIONS2M ||= [
-      [ 'y', 365 * 24 * 3600 ],
-      [ 'M', 30 * 24 * 3600 ],
-      [ 'w', 7 * 24 * 3600 ],
-      [ 'd', 24 * 3600 ],
-      [ 'h', 3600 ],
-      [ 'm', 60 ],
-      [ 's', 1 ]
-    ]
-
-    DURATIONS ||= DURATIONS2M.inject({}) { |r, (k, v)| r[k] = v; r }
-    DURATION_LETTERS ||= DURATIONS.keys.join
+      def parse_time_string value
+        Rufus.parse_time_string(value) rescue nil
+      end
+  end
 end

@@ -1,4 +1,3 @@
-<% ss = ScheduleServer.first %>
 <%content_for :javascript do %>
 $(function() {
   $("#btn_save").click(function() {
@@ -32,7 +31,6 @@ $(function() {
         <%=field_bootstrap "Request Host (with port)", f.text_field(:request_host) %>
         <%=field_bootstrap "Stats API Key", f.text_field(:stats_api_key) %>
         <%=field_bootstrap "Logo Image", f.text_field(:logo_image) %>
-        <%=field_bootstrap "Active Scheduler Host", "#{ss.host} (#{ss.touch_time})" unless ss.nil?%>
         <%=field_bootstrap "Server With Migration Lock", @ms.migration_host%>
         <%=field_bootstrap "Custom Features", f.text_area(:custom_features, cols:20)%>
         <%=field_bootstrap "FTP Enabled", f.check_box(:ftp_polling_active) %>

@@ -7,12 +7,6 @@ OpenChain::Application.routes.draw do
 
   match "auth/:provider/callback" => "user_sessions#create_from_omniauth"
 
-  namespace :api do
-    namespace :v1 do
-      resources :commercial_invoices, only: [:index,:create,:update]    
-    end
-  end  
-
   resources :delayed_jobs, :only => [:destroy]
   resources :ftp_sessions, :only => [:index, :show] do
     member do
@@ -533,6 +527,11 @@ OpenChain::Application.routes.draw do
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
       match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post
       match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
+
+      resources :commercial_invoices, only: [:index,:create,:update]
+
+      match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
+      
     end
   end
 end

@@ -32,6 +32,10 @@ class OfficialTariff < ActiveRecord::Base
     #version because it's more intuitive. This is ONLY used for the controller's #find render.
     return lacey_act?
   end
+
+  def self.run_schedulable
+    update_use_count
+  end
   
   #update the database with the total number of times that each official tariff has been used
   def self.update_use_count

@@ -42,6 +42,10 @@ module OpenChain
         #{Product.need_sync_join_clause(sync_code)}
         WHERE #{Product.need_sync_where_clause()}"
       end
+
+      def self.run_schedulable
+        self.new.generate
+      end
     end
   end
 end

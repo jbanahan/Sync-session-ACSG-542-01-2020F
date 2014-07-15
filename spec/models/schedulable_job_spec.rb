@@ -4,6 +4,10 @@ describe SchedulableJob do
   describe "run" do
     class TestSchedulable
     end
+
+    class TestSchedulableNoParams
+      def self.run_schedulable; end
+    end
     it "should submit job" do
       TestSchedulable.should_receive(:run_schedulable).with({})
       sj = SchedulableJob.new(:run_class=>"TestSchedulable")
@@ -37,6 +41,33 @@ describe SchedulableJob do
       m.to.first.should == "failure1@email.com"
       m.to.last.should == "failure2@email.com"
       m.subject.should == "[VFI Track] Scheduled Job Failed"
+    end
+    it "should run run_schedulable method without params" do
+      opts = {:a=>"b"}.to_json
+      sj = SchedulableJob.new(:run_class=>"TestSchedulableNoParams",:opts=>opts, success_email: "me@there.com")
+      sj.run
+
+      m = OpenMailer.deliveries.pop
+      expect(m.to.first).to eq "me@there.com"
+    end
+    it "should not attempt to run classes with no run_schedulable method" do
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>{}, failure_email: "me@there.com")
+      sj.run
+
+      m = OpenMailer.deliveries.pop
+      expect(m.to.first).to eq "me@there.com"
+      expect(m.subject).to include "Failed"
+      expect(m.body.raw_source).to include "No &#x27;run_schedulable&#x27; method exists on &#x27;TestSchedulable&#x27; class."
+    end
+    it "should log an error if no error email is configured" do
+      opts = {'a'=>"b"}
+      e = StandardError.new "Message"
+      TestSchedulable.stub(:run_schedulable).and_raise(e)
+
+      e.should_receive(:log_me).with ["Scheduled job for TestSchedulable with options #{opts} has failed"]
+
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts.to_json)
+      sj.run
     end
   end
 

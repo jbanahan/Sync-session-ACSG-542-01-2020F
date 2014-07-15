@@ -8,6 +8,10 @@ module OpenChain
 
       SYNC_CODE ||= 'efocus-product'
 
+      def self.run_schedulable opts = {}
+        self.new(opts).generate
+      end
+
       def initialize opts = {}
         super(opts)
         @cdefs = self.class.prep_custom_definitions [:bartho_customer_id, :test_style, :set_type]

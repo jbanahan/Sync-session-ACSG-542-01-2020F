@@ -202,6 +202,29 @@ class ImportedFile < ActiveRecord::Base
     return @a_data unless @a_data.nil?
     OpenChain::S3.get_data attached.options[:bucket], attached.path
   end
+
+  def self.process_integration_imported_file bucket, remote_path, original_path
+    begin
+      dir, fname = Pathname.new(original_path).split
+      folder_list = dir.to_s.split('/')
+      user = User.where(:username=>folder_list[1]).first
+      raise "Username #{folder_list[1]} not found." unless user
+      raise "User #{user.username} is locked." unless user.active?
+      ss = user.search_setups.where(:module_type=>folder_list[3],:name=>folder_list[4]).first
+      raise "Search named #{folder_list[4]} not found for module #{folder_list[3]}." unless ss
+    
+      OpenChain::S3.download_to_tempfile(bucket, remote_path, original_filename: fname.to_s) do |tmp|      
+        imp = ss.imported_files.build(:starting_row=>1,:starting_column=>1,:update_mode=>'any')
+        imp.attached = tmp
+        imp.module_type = ss.module_type
+        imp.user = user
+        imp.save!
+        imp.process user, {:defer=>true}
+      end
+    rescue => e
+      e.log_me ["Failed to process imported file with original path '#{original_path}'."]
+    end
+  end
   
   private
   def no_post

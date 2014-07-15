@@ -11,10 +11,11 @@
   </div>
   <%=form_for @sj, html:{id:'frm_sj'} do |f|-%>
     <%=field_bootstrap 'Class', f.text_field(:run_class, size: "100")-%>
-    <%=field_bootstrap 'Time', f.number_field(:run_hour,min:0,max:23,style:'width:4em;')+':'+f.number_field(:run_minute,min:0,max:59,style:'width:4em;')+' '+f.time_zone_select(:time_zone_name,ActiveSupport::TimeZone.us_zones)-%>
-    <%=field_bootstrap 'Day of Month (optional)', f.number_field(:day_of_month,min:0,max:31)-%>
-    <%=field_bootstrap 'Run Interval (Takes precedence over Time and Day of Month)', f.text_field(:run_interval)-%>
-    <%=field_bootstrap 'Run Days', [:monday,:tuesday,:wednesday,:thursday,:friday,:saturday,:sunday].collect {|d| '<div>'.html_safe+ f.check_box("run_#{d}".to_sym)+" #{d.to_s.titleize}</div>".html_safe}.join.html_safe-%>
+    <%=field_bootstrap 'Time', f.number_field(:run_hour,min:0,max:23,style:'width:4em;')+':'+f.number_field(:run_minute,min:0,max:59,style:'width:4em;')+' '+f.time_zone_select(:time_zone_name,ActiveSupport::TimeZone.us_zones, default: "Eastern Time (US & Canada)")-%>
+    <%=field_bootstrap 'Day of Month (Optional if Time used.  N/A if Run Interval is used)', f.number_field(:day_of_month,min:0,max:31)-%>
+    <%=field_bootstrap 'Run Interval / Cron Expression (Takes precedence over Time and Day of Month)', f.text_field(:run_interval)-%>
+    <%=field_bootstrap 'Run Days (N/A for Cron Expressions)', [:monday,:tuesday,:wednesday,:thursday,:friday,:saturday,:sunday].collect {|d| '<div>'.html_safe+ f.check_box("run_#{d}".to_sym)+" #{d.to_s.titleize}</div>".html_safe}.join.html_safe-%>
+    <%=field_bootstrap 'Prevent Concurrent Job Runs', f.check_box(:no_concurrent_jobs) %>
     <%=field_bootstrap 'Email address for successes', f.text_field(:success_email, style: "width: 40em;") %>
     <%=field_bootstrap 'Email address for failures', f.text_field(:failure_email, style: "width: 40em;") %>
     <%=field_bootstrap 'Options', f.text_area(:opts,rows:10, style: "width: 40em;")-%>

@@ -110,4 +110,16 @@ describe BusinessValidationTemplate do
       bvt.create_result! o
     end
   end
+
+  describe "run_schedulable" do
+    it "implements schedulable job interface" do
+      BusinessValidationTemplate.should_receive(:create_all!).with true
+      BusinessValidationTemplate.run_schedulable
+    end
+
+    it "allows setting run_validation param via opts to false" do
+      BusinessValidationTemplate.should_receive(:create_all!).with false
+      BusinessValidationTemplate.run_schedulable 'run_validation' => false
+    end
+  end
 end

@@ -12,4 +12,11 @@ describe Message do
       Message.unread_message_count(@u.id).should == 2
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      Message.should_receive(:purge_messages)
+      Message.run_schedulable
+    end
+  end
 end

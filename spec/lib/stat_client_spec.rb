@@ -153,4 +153,11 @@ describe OpenChain::StatClient do
       lambda {described_class.post_json! @path, {mykey:'myval'}}.should raise_error 'Request Error: my error'
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      OpenChain::StatClient.should_receive(:run)
+      OpenChain::StatClient.run_schedulable
+    end
+  end
 end

@@ -17,10 +17,4 @@ module Api; module V1; class SqlProxyPostbackController < ApiController
     end
   end
 
-  private
-
-    def require_admin
-      render_forbidden unless User.current.admin?
-    end
-
 end; end; end;

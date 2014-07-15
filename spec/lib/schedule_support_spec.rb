@@ -5,7 +5,7 @@ describe OpenChain::ScheduleSupport do
     before :each do
       @ss = Factory(:search_schedule,:last_start_time=>1.year.ago) 
     end
-    it "should run if last_run_time in DB matches object's last_run_time and next_run_time < Time.now.utc" do
+    it "should run if next_run_time < Time.now.utc" do
       @ss.stub(:next_run_time).and_return 1.year.ago
       @ss.should_receive(:run).and_return true
       @ss.run_if_needed
@@ -21,11 +21,31 @@ describe OpenChain::ScheduleSupport do
       @ss.should_not_receive(:run)
       @ss.run_if_needed
     end
-    it "should not run if last_start_time in DB != object's last_run_time" do
-      SearchSchedule.update_all(["last_start_time = ?",1.second.ago]) #simulate another thread running the job
-      @ss.stub(:next_run_time).and_return 1.year.ago
-      @ss.should_not_receive(:run)
-      @ss.run_if_needed
+
+    it "tracks run status of schedulable jobs" do
+      sj = SchedulableJob.create! run_class: "OpenChain::StatClient", last_start_time: 1.year.ago, run_interval: "* * * * *"
+      Lock.should_receive(:acquire).with("ScheduleSupport-SchedulableJob-#{sj.id}", times: 3, temp_lock: true).and_yield
+      sj.should_receive(:run) do |log|
+        expect(sj.running).to be_true
+      end
+      expect(sj.run_if_needed).to be_true
+    end
+
+    it "does not run if another job is already running and concurrency is disabled" do
+      last_start = 1.year.ago
+      sj = SchedulableJob.create! run_class: "OpenChain::StatClient", last_start_time: last_start, run_interval: "* * * * *", running: true, no_concurrent_jobs: true
+      sj.should_not_receive(:run)
+      sj.reload
+      expect(sj.run_if_needed).to be_false
+      expect(sj.running).to be_true
+      expect(sj.last_start_time.to_i).to eq last_start.to_i
+    end
+
+    it "runs if another job is already running and concurrency is allowed" do
+      last_start = 1.year.ago
+      sj = SchedulableJob.create! run_class: "OpenChain::StatClient", last_start_time: last_start, run_interval: "* * * * *", running: true
+      sj.should_receive(:run)
+      expect(sj.run_if_needed).to be_true
     end
   end
 
@@ -186,6 +206,53 @@ describe OpenChain::ScheduleSupport do
 
     it "returns nil if no day is configured to run on" do
       @s.stub(:interval).and_return "1h"
+      expect(@s.next_run_time).to be_nil
+    end
+
+    it "uses interval string as a cron expression (using 1 minute granularity)" do
+      @s.stub(:interval).and_return "* * * * *"
+      expect(@s.next_run_time).to eq (@last_start + 1.minute).utc
+    end
+
+    it "uses cron ranges" do
+      @s.stub(:interval).and_return "30-59 * * * *"
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:30").utc
+    end
+
+    it "uses cron slash intervals " do
+      @s.stub(:interval).and_return "30-59/15 * * * *"
+      @last_start = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:31")
+      @s.stub(:last_start_time).and_return @last_start
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 00:45").utc
+    end
+
+    it "uses cron named weekday ranges" do
+      @s.stub(:interval).and_return "0 0 * * THU-FRI"
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-02 00:00").utc
+    end
+
+    it "uses comma seperated values for cron ranges" do
+      @s.stub(:interval).and_return "5,10,15,20 0 * * *"
+      expect(@s.next_run_time).to eq (@last_start + 5.minutes).utc
+    end
+
+    it "allows for last day of month cron usage" do
+      @s.stub(:interval).and_return '0 0 * * FRI#L'
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-31 00:00").utc
+    end
+
+    it "allows for X-weekday of month cron usage" do
+      @s.stub(:interval).and_return '0 0 * * FRI#3'
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-17 00:00").utc
+    end
+
+    it "allows for second to last weekday of month cron usage" do
+      @s.stub(:interval).and_return '0 0 * * FRI#-2'
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-24 00:00").utc
+    end
+
+    it "handles invalid expressions" do
+      @s.stub(:interval).and_return "* * * * * * * *"
       expect(@s.next_run_time).to be_nil
     end
   end

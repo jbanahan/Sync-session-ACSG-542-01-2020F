@@ -16,6 +16,10 @@ module OpenChain
       # key is fenix code, value is ohl code
       TRANSPORT_MODE_MAP ||= {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
       SYNC_CODE ||= 'polo_ca_efocus'
+
+      def self.run_schedulable
+        self.new.generate
+      end
       
       #This is the master method that does all of the work
       def generate

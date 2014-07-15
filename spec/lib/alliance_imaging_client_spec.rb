@@ -380,4 +380,15 @@ describe OpenChain::AllianceImagingClient do
       expect(OpenChain::AllianceImagingClient.send_outstanding_stitch_requests).to be_nil
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      OpenChain::AllianceImagingClient.stub(:delay).and_return OpenChain::AllianceImagingClient
+      OpenChain::AllianceImagingClient.should_receive(:consume_images)
+      OpenChain::AllianceImagingClient.should_receive(:consume_stitch_responses)
+      OpenChain::AllianceImagingClient.should_receive(:send_outstanding_stitch_requests)
+
+      OpenChain::AllianceImagingClient.run_schedulable
+    end
+  end
 end

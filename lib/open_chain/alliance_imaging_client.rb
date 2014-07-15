@@ -3,6 +3,14 @@ require 'open_chain/field_logic'
 
 class OpenChain::AllianceImagingClient 
 
+  def self.run_schedulable
+    # Rather than add error handlers to ensure every call below runs even if the previous fails
+    # just delay them all even though this method is more than likely being already run in a delayed job queue
+    self.delay.consume_images
+    self.delay.consume_stitch_responses
+    self.delay.send_outstanding_stitch_requests
+  end
+
   # takes request for either search results or a set of primary keys and requests images for all entries
   def self.bulk_request_images search_run_id, primary_keys
     OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::ENTRY,search_run_id,primary_keys) do |good_count, entry|

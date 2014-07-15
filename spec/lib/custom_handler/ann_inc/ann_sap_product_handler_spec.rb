@@ -324,4 +324,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
     Product.first.classifications.find {|c| c.country_id == other_country.id}.should be_nil    
   end
+
+  describe "parse" do
+    it "parses a file using integration user" do
+      user = Factory(:user, username: 'integration')
+      data = make_row
+      described_class.parse data
+
+      p = Product.first
+      expect(p).not_to be_nil
+      expect(p.unique_identifier).to eq '123456'
+      expect(p.last_updated_by).to eq user
+    end
+  end
 end

@@ -1,6 +1,10 @@
 require 'net/https'
 #Client to send aggregated stats to the stat collector server
 module OpenChain; class StatClient
+
+  def self.run_schedulable
+    run
+  end
   
   #main run class to collect all appropriate stats
   def self.run

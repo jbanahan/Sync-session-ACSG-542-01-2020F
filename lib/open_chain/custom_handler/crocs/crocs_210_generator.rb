@@ -1,3 +1,6 @@
+require 'open_chain/xml_builder'
+require 'open_chain/ftp_file_support'
+
 module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
   include OpenChain::XmlBuilder
   include OpenChain::FtpFileSupport

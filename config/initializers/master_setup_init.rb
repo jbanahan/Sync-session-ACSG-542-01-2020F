@@ -15,3 +15,5 @@ if (["companies","users"] - ActiveRecord::Base.connection.tables).length == 0
     OpenMailer.send_new_system_init(pass).deliver if Rails.env=="production"
   end
 end
+
+InstanceInformation.check_in
