@@ -21,3 +21,4 @@ coverage/*
 public/assets/*
 vendor/
 config/google_auth.json
+config/api_client.yml

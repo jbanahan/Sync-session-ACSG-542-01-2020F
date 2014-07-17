@@ -16,8 +16,16 @@ describe FtpSender do
 
   describe "default_options" do
     it "should have default options" do
-     FtpSender.default_options(@file).should eq :binary => true, :passive => true, 
+     FtpSender.default_options(@file, @file).should eq :binary => true, :passive => true, 
         :remote_file_name => File.basename(@file), :force_empty => false, :protocol => "ftp"
+    end
+
+    it "uses the original_filename method on the file object if present to make the remote_file_name option" do
+      Attachment.add_original_filename_method @file
+      @file.original_filename="original.txt"
+
+      FtpSender.default_options(@file, @file).should eq :binary => true, :passive => true, 
+         :remote_file_name => "original.txt", :force_empty => false, :protocol => "ftp"
     end
   end
 
@@ -206,6 +214,18 @@ describe FtpSender do
         attachment.should_receive(:attached=)
         @ftp.should_receive(:chdir).with("some/remote/folder")
         FtpSender.send_file @server, @username, @password, @file, {:folder => "some/remote/folder"}
+      end
+
+      it 'uses the file arguments original_filename method for the default file name' do
+        Attachment.add_original_filename_method @file
+        @file.original_filename = "original.txt"
+
+        @ftp.stub(:last_response).and_return "200"
+        attachment = double("Attachment")
+        FtpSession.any_instance.should_receive(:create_attachment).and_return attachment
+        attachment.should_receive(:attached=)
+        session = FtpSender.send_file @server, @username, @password, @file
+        session.file_name.should == "original.txt"
       end
     end
   end

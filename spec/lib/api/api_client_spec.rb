@@ -13,18 +13,26 @@ describe OpenChain::Api::ApiClient do
   
   describe "initialize" do
     it "ensures valid endpoints are used" do
-      expect(OpenChain::Api::ApiClient.new 'polo', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'vfitrack', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'ann', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'underarmour', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'jcrew', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'bdemo', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'das', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'warnaco', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'dev', nil, nil).to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'test', nil, nil).to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'polo', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'vfitrack','test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'ann', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'underarmour', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'jcrew', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'bdemo', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'das', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'warnaco', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'dev', 'test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'test', 'test', 'test').to_not be_nil
 
-      expect{OpenChain::Api::ApiClient.new 'Invalid', nil, nil}.to raise_error ArgumentError, "Invalid is not a valid API endpoint."
+      expect{OpenChain::Api::ApiClient.new 'Invalid', 'test', 'test'}.to raise_error ArgumentError, "Invalid is not a valid API endpoint."
+    end
+
+    it "uses config file to load default user / authtoken information if not given in constructor" do
+      OpenChain::Api::ApiClient.should_receive(:get_config).and_return('test'=> {"user" => "token"})
+
+      c = OpenChain::Api::ApiClient.new 'test'
+      expect(c.username).to eq "user"
+      expect(c.authtoken).to eq "token"
     end
   end
 

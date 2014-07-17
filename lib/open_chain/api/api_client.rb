@@ -18,12 +18,45 @@ module OpenChain; module Api; class ApiClient
     "test" => "http://www.notadomain.com"
   }
 
-  def initialize endpoint_alias, username, authtoken
+  def initialize endpoint_alias, username = nil, authtoken = nil
     @endpoint = VALID_ENDPOINTS[endpoint_alias]
     raise ArgumentError, "#{endpoint_alias} is not a valid API endpoint." if @endpoint.blank?
-    @username = username
-    @authtoken = authtoken
+    if username.blank? || authtoken.blank?
+      @username, @authtoken = *ApiClient.default_username_authoken(endpoint_alias)
+    else
+      @username = username
+      @authtoken = authtoken  
+    end
   end
+
+  def self.valid_endpoint? endpoint_alias
+    raise ArgumentError, "#{endpoint_alias} is not a valid API endpoint." if VALID_ENDPOINTS[endpoint_alias].blank?
+    endpoint_alias
+  end
+
+  def self.default_username_authoken end_point
+    config = get_config
+    endpoint_alias = ApiClient.valid_endpoint? end_point
+    user_authtoken = config[endpoint_alias]
+
+    username = nil
+    authtoken = nil
+
+    if user_authtoken
+      username = user_authtoken.keys.first
+      authtoken = user_authtoken[username]
+    end
+
+    raise "No API Client configuration found for #{endpoint_alias}." if username.blank? || authtoken.blank?
+
+    [username, authtoken]
+  end
+
+  def self.get_config
+    @@config ||= YAML.load_file 'config/api_client.yml'
+    @@config
+  end
+  private_class_method :get_config
 
   def mf_uid_list_to_param uids
     uids.blank? ? {} : {"mf_uids" => uids.inject(""){|i, uid| i += "#{uid.to_s},"}[0..-2]}
@@ -48,9 +81,9 @@ module OpenChain; module Api; class ApiClient
       if e.is_a? OpenChain::HttpErrorWithResponse
         http_status = e.http_status.to_i
         if http_status == 401
-          raise ApiAuthenticationError.new((e.http_response_body ? e.http_response_body : make_errors_json("Access to API denied.")), endpoint, username, @authtoken)
+          raise ApiAuthenticationError.new(http_status, (e.http_response_body ? e.http_response_body : make_errors_json("Access to API denied.")), endpoint, username, @authtoken)
         elsif (http_status / 100) == 4
-          raise ApiError.new(e.http_response_body ? e.http_response_body : make_errors_json(e.message))
+          raise ApiError.new(http_status, e.http_response_body ? e.http_response_body : make_errors_json(e.message))
         elsif (http_status / 100) == 5
           # Retry 500 series errors a couple times, just in case
           retry_count += 1
@@ -61,10 +94,10 @@ module OpenChain; module Api; class ApiClient
           end
 
           # Set the backtrace information to be that of the actual underlying error
-          raise_api_error_from_error_response(e)
+          raise_api_error_from_error_response(http_status, e)
         else
           # This means we likely got a valid response but there was something wrong w/ the data (perhaps invalid json?) that caused an error
-          raise_api_error_from_error_response(e)
+          raise_api_error_from_error_response(http_status, e)
         end
       else
         raise e
@@ -74,17 +107,18 @@ module OpenChain; module Api; class ApiClient
     r
   end
 
-  def raise_api_error_from_error_response e
-    api_error = ApiError.new(e.http_response_body ? e.http_response_body : make_errors_json("API Request failed with error: #{e.message}"))
+  def raise_api_error_from_error_response http_status, e
+    api_error = ApiError.new(http_status, e.http_response_body ? e.http_response_body : make_errors_json("API Request failed with error: #{e.message}"))
     api_error.set_backtrace(e.backtrace)
 
     raise api_error
   end
 
   class ApiError < StandardError 
-    attr_reader :response
+    attr_reader :response, :http_status
 
-    def initialize json_error
+    def initialize http_status, json_error
+      @http_status = http_status
       @response = json_error
 
       if json_error && json_error['errors']
@@ -101,11 +135,11 @@ module OpenChain; module Api; class ApiClient
 
     attr_reader :api_endpoint, :api_token, :api_username
 
-    def initialize json_error, api_endpoint, api_username, api_token
+    def initialize http_status, json_error, api_endpoint, api_username, api_token
       @api_endpoint = api_endpoint
       @api_username = api_username
       @api_token = api_token
-      super(json_error)
+      super(http_status, json_error)
     end
 
     def message

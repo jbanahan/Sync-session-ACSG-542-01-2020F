@@ -13,6 +13,7 @@ require 'open_chain/custom_handler/lenox/lenox_po_parser'
 require 'open_chain/custom_handler/lenox/lenox_product_parser'
 require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
+require 'open_chain/custom_handler/polo/polo_tradecard_810_parser'
 require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadsheet_handler'
 
 module OpenChain
@@ -128,6 +129,8 @@ module OpenChain
         OpenChain::CustomHandler::Lenox::LenoxProductParser.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_lenox_po/') && MasterSetup.get.custom_feature?('Lenox')
         OpenChain::CustomHandler::Lenox::LenoxPoParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include? '/_polo_tradecard_810'
+        OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         get_tempfile(bucket,remote_path,command['path']) do |temp|
           linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)

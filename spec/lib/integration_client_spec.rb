@@ -232,6 +232,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
       OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
     end
 
+    it "should send Tradecard 810 files to handler" do
+      p = double("parser")
+      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.any_instance.should_receive(:delay).and_return p
+      p.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+      cmd = {'request_type'=>'remote_file','path'=>'/_polo_tradecard_810/file.csv','remote_path'=>'12345'}
+      OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+    end
+
     context 'imported_file' do
       before(:each) do
         @search_setup = Factory(:search_setup)
