@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[66,10].rstrip).to eq '0000007'
         expect(row[76,35].rstrip).to eq 'ponum'
         expect(row[111,35].rstrip).to eq 'partnum'
-        expect(row[146,7]).to eq '0000005' #10 units / 2 per set
+        expect(row[146,7]).to eq '0000010' #unites
         expect(row[153,4].rstrip).to eq 'CN'
         expect(row[157,35].rstrip).to eq '' #invoice number
         expect(row[192,10]).to eq '0000000002'

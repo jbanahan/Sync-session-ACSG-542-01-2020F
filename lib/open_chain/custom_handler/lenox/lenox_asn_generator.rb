@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str('KG',10)
       r << @f.num(cbms,7,0) #TODO cubic meters
       r << @f.str(shipment.vessel,18,false,true) #force truncate
-      r << (cbms > 20 ? "Y" : "N")
+      r << (cbms > 17 ? "Y" : "N")
       r << @f.num(cartons,7,0)
       r << @f.str(container.seal_number,35)
       r << @f.str('',25) #not going to have entry number
@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str(order.get_custom_value(@cdefs[:order_factory_code]).value,10)
       r << @f.str(order.customer_order_number,35)
       r << @f.str(ln.product.unique_identifier.gsub("LENOX-",""),35)
-      r << @f.num(get_exploded_quantity(ln),7)
+      r << @f.num(ln.quantity,7)
       r << @f.str(ln.product.get_custom_value(@cdefs[:product_coo]).value,4)
       r << @f.str('',35) #no commercial invoice number
       r << @f.num(ln.line_number,10)
@@ -126,12 +126,6 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
     cs = container.container_size[2,container.container_size.length-2].gsub("'",'')
     cs = "#{cs}HC" if container.container_size[0]=="H"
     cs
-  end
-  def get_exploded_quantity s_line
-    p = s_line.product
-    piece_factor = p.get_custom_value(@cdefs[:product_units_per_set]).value
-    piece_factor = 1 if piece_factor.nil? || piece_factor < 1
-    s_line.quantity / piece_factor
   end
   def time_and_user
     "#{@f.date(Time.now,'%Y%m%d%H%M%S')}#{@f.str((Rails.env.production? ? 'vanvendor' : 'vanvendortest'),15) }"
