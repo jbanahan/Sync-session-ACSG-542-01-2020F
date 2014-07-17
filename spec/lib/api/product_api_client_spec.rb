@@ -1,9 +1,11 @@
+require 'spec_helper'
+
 # The product api client is a super-thin shell around the api_client, as such
 # there's very little to test in here.  Just that it's calling the right 
 # parent class methods.
 describe OpenChain::Api::ProductApiClient do
   before :each do
-    @c = OpenChain::Api::ProductApiClient.new 'test', nil, nil
+    @c = OpenChain::Api::ProductApiClient.new 'test', 'user', 'token'
   end
 
   describe "find_by_id" do
