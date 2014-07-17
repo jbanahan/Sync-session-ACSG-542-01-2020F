@@ -57,6 +57,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       Delayed::Worker.delay_jobs = @ws
       @t.close!
     end
+    context :jjill do
+      it "should send data to J Jill 850 parser" do
+        u = Factory(:user,:username=>'integration')
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('JJill').and_return(true)
+        OpenChain::CustomHandler::JJill::JJill850XmlParser.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_jjill_850/a.xml','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+    end
     context :lenox do
       it "should send data to lenox prodct parser if feature enabled and path contains _lenox_product" do
         Factory(:user,:username=>'integration')
