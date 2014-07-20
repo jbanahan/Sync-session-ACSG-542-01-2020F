@@ -2,10 +2,10 @@ require 'open_chain/report/report_helper'
 module OpenChain; module Report; class HmOkLog
   include OpenChain::Report::ReportHelper
 
-  def run_schedulable opts_hash={}
+  def self.run_schedulable opts_hash={}
     u = User.find_by_username opts_hash['username']
-    raise "#{u.username} does not have permission to run report." unless self.class.permission? u
-    f = self.run(u,coast: opts_hash['coast'])
+    raise "#{u.username} does not have permission to run report." unless self.permission? u
+    f = self.new.run(u,coast: opts_hash['coast'])
     begin
       def f.original_file_name; 'ok_log.xls'; end;
       email_to = opts_hash['email']
