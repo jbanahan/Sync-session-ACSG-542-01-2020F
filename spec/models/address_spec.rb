@@ -1,15 +1,19 @@
 require "spec_helper"
 
 describe Address do
-  context :immutable do
-    it "should be immutable" do
+  context :address_hash do
+    it "sets an address hash on save" do
       a = Factory(:address,name:'myname',line_1:'l1',line_2:'l2',city:'Jakarta')
       a.save!
-      a.line_1 = 'something else'
-      a.save
-      expect(a.errors.full_messages.first).to eq "Addresses cannot be changed."
-      a.reload
-      expect(a.line_1).to eq 'l1'
+      expect(a.address_hash).to eq Address.make_hash_key(a)
+      prev_hash = a.address_hash
+      a.update_attributes! name: "myname 2"
+      expect(prev_hash).not_to eq a.address_hash
+
+      # company id can change without the hash changing.
+      prev_hash = a.address_hash
+      a.update_attributes! company_id: -1
+      expect(prev_hash).to eq a.address_hash
     end
     it "should ignore shipping flag" do
       a = Factory(:address,name:'myname',line_1:'l1',line_2:'l2',city:'Jakarta')

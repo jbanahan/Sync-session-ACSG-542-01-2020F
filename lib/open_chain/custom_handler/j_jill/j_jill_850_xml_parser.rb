@@ -1,6 +1,5 @@
-require 'rexml/document'
-require 'rexml/xpath'
 require 'open_chain/custom_handler/xml_helper'
+require 'open_chain/custom_handler/j_jill/j_jill_support'
 
 module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   include OpenChain::CustomHandler::XmlHelper
