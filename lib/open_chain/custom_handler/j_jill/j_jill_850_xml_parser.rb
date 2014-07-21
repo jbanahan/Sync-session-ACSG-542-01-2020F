@@ -4,37 +4,39 @@ require 'open_chain/custom_handler/xml_helper'
 
 module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   include OpenChain::CustomHandler::XmlHelper
+  include JJillSupport
   extend OpenChain::IntegrationClientParser
 
   def self.integration_folder
     ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
   end
 
-  def self.parse data, user, opts={}
-    parse_dom REXML::Document.new(data), user
+  def self.parse data, opts={}
+    parse_dom REXML::Document.new(data)
   end
 
-  def self.parse_dom dom, user
-    self.new.parse_dom dom, user
+  def self.parse_dom dom
+    self.new.parse_dom dom
   end
 
   def initialize
-    @jill = Company.find_by_system_code 'JILL'
-    raise "Company with system code JILL not found." unless @jill
+    @jill = Company.find_by_system_code UID_PREFIX
+    @user = User.find_by_username('integration')
+    raise "Company with system code #{UID_PREFIX} not found." unless @jill
   end
 
-  def parse_dom dom, user
+  def parse_dom dom
     ActiveRecord::Base.transaction do
       r = dom.root
       extract_date = parse_extract_date r
-      r.each_element('TS_850') {|el| parse_order el, extract_date, user}
+      r.each_element('TS_850') {|el| parse_order el, extract_date}
     end
   end
 
   private 
-  def parse_order order_root, extract_date, user
+  def parse_order order_root, extract_date
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
-    ord_num = "JILL-#{cust_ord}"
+    ord_num = "#{UID_PREFIX}-#{cust_ord}"
     ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
     
     #skip orders already on shipments    
@@ -52,7 +54,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     parse_lines ord, order_root
 
     ord.save!
-    EntitySnapshot.create_from_entity ord, user
+    EntitySnapshot.create_from_entity ord, @user
   end
 
   private
@@ -72,14 +74,14 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   end
   def parse_product group_11
     po1_el = REXML::XPath.first(group_11,'PO1')
-    prod_uid = "JILL-#{et po1_el, 'PO107'}"
+    prod_uid = "#{UID_PREFIX}-#{et po1_el, 'PO107'}"
     Product.where(importer_id:@jill.id,unique_identifier:prod_uid).first_or_create!(name:REXML::XPath.first(group_11,'LIN/LIN03').text)
   end
   def find_or_create_vendor vendor_ref
     return nil if vendor_ref.nil?
-    v = Company.find_by_system_code "JILL-#{vendor_ref[0]}"
+    v = Company.find_by_system_code "#{UID_PREFIX}-#{vendor_ref[0]}"
     if v.nil?
-      v = Company.create!(system_code:"JILL-#{vendor_ref[0]}",name:vendor_ref[1])
+      v = Company.create!(system_code:"#{UID_PREFIX}-#{vendor_ref[0]}",name:vendor_ref[1])
       @jill.linked_companies << v
     end
     v

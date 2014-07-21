@@ -4,12 +4,12 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
   describe :parse do
     before :each do
       Order.any_instance.stub(:can_edit?).and_return true
-      @u = Factory(:master_user)
+      Factory(:master_user,username:'integration')
       @path = 'spec/support/bin/jjill850sample.xml'
       @c = Factory(:company,importer:true,system_code:'JJILL')
     end
     def run_file
-      described_class.parse(IO.read(@path),@u)
+      described_class.parse(IO.read(@path))
     end
     it "should save order" do
       expect {run_file}.to change(Order,:count).from(0).to(2)

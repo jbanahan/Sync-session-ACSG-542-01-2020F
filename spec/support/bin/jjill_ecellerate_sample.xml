@@ -1,0 +1,328 @@
+<!--THIS DATA IS MANUALLY EDITED TO HANDLE MULTIPLE SCENARIOS
+AND SHOULDN'T BE CONSIDERED REPRESENTATIVE OF A SINGLE SHIPMENT-->
+<?xml version="1.0" encoding="UTF-8"?>
+<ShipNotice>
+  <TransactionId>20140618039566</TransactionId>
+  <TransactionDateTime>2014-07-11T12:22:01.00-05:00</TransactionDateTime>
+  <TransactionSetPurpose>Add</TransactionSetPurpose>
+  <DocumentDate>2014-06-20T00:00:00.00-05:00</DocumentDate>
+  <ShipmentType>HOUSE</ShipmentType>
+  <CameFrom>Shipment</CameFrom>
+  <BookingNumber/>
+  <MasterBillNumber>695-35416636</MasterBillNumber>
+  <HouseBillNumber>SGN140008</HouseBillNumber>
+  <PaymentMethod>COL</PaymentMethod>
+  <TransportationMethod>Air</TransportationMethod>
+  <CarrierCode>BR</CarrierCode>
+  <VesselName/>
+  <VoyageFlightNumber>636</VoyageFlightNumber>
+  <DepartureDateTime>2014-06-20T12:00:00.00-05:00</DepartureDateTime>
+  <ConfirmedDepartureDate>2014-06-21T12:00:00.00-05:00</ConfirmedDepartureDate>
+  <ArrivalDateTime>2014-06-24T12:00:00.00-05:00</ArrivalDateTime>
+  <VesselName2/>
+  <VoyageFlightNumber2/>
+  <DepartureDateTime2/>
+  <RelatedParties>N</RelatedParties>
+  <InbondCode>70</InbondCode>
+  <ETA/>
+  <ConfirmedOnBoard>2014-06-18T00:00:00.00-05:00</ConfirmedOnBoard>
+  <DestinationWarehouse/>
+  <IncoLocation>HAIPHONG</IncoLocation>
+  <IncoTerms>FOB</IncoTerms>
+  <BLDescriptions>
+    <BLDescription>
+      <QuantityShipped>7190</QuantityShipped>
+      <UnitOfMeasure>EA</UnitOfMeasure>
+      <NumberOfCartons>115</NumberOfCartons>
+      <TypeOfCartons>CTN</TypeOfCartons>
+      <Description>GARMENTS</Description>
+      <MarksAndNumbers>JILL</MarksAndNumbers>
+      <GrossWeight>1134</GrossWeight>
+      <WeightUnit>KGS</WeightUnit>
+      <Volume>5</Volume>
+      <VolumeUnit/>
+    </BLDescription>
+  </BLDescriptions>
+  <Parties>
+    <Party>
+      <PartyType>Broker</PartyType>
+      <PartyCode>VLC</PartyCode>
+      <Name>VANDEGRIFT LOGISTICS COMPANY</Name>
+      <Address1>100 WALNUT AVENUE</Address1>
+      <Address2>SUITE 600</Address2>
+      <CityName>CLARK</CityName>
+      <StateOrProvinceCode>NJ</StateOrProvinceCode>
+      <PostalCode>07066</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Consignee</PartyType>
+      <PartyCode>JILSO</PartyCode>
+      <Name>JILL ACQUISITION LLC</Name>
+      <Address1>4 BATTERYMARCH PARK</Address1>
+      <Address2/>
+      <CityName>QUINCY</CityName>
+      <StateOrProvinceCode>MA</StateOrProvinceCode>
+      <PostalCode>02169</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Export Forwarder</PartyType>
+      <PartyCode>KORMANHCM</PartyCode>
+      <Name>KORMAN INT'L LOGISTICS VIETNAM LTD</Name>
+      <Address1>UNIT 02, 35BIS PHUNG KHAC KHOAN ST.</Address1>
+      <Address2>DISTRICT 1, HOCHIMINH CITY, VIETNAM</Address2>
+      <CityName>HOCHIMINH, CITY</CityName>
+      <StateOrProvinceCode>HOC</StateOrProvinceCode>
+      <PostalCode/>
+      <CountryCode>VN</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Import Forwarder</PartyType>
+      <PartyCode>VLC</PartyCode>
+      <Name>VANDEGRIFT LOGISTICS COMPANY</Name>
+      <Address1>100 WALNUT AVENUE</Address1>
+      <Address2>SUITE 600</Address2>
+      <CityName>CLARK</CityName>
+      <StateOrProvinceCode>NJ</StateOrProvinceCode>
+      <PostalCode>07066</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Importer</PartyType>
+      <PartyCode>JILSO</PartyCode>
+      <Name>JILL ACQUISITION LLC</Name>
+      <Address1>4 BATTERYMARCH PARK</Address1>
+      <Address2/>
+      <CityName>QUINCY</CityName>
+      <StateOrProvinceCode>MA</StateOrProvinceCode>
+      <PostalCode>02169</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Supplier</PartyType>
+      <PartyCode>SHVINA</PartyCode>
+      <Name>VINA KYUNG SEUNG TRADING CO</Name>
+      <Address1>AREA NO. 6, DON TAY, THANH VINH WAR</Address1>
+      <Address2>PHU THO TOWN</Address2>
+      <CityName>PHU THO TOWN</CityName>
+      <StateOrProvinceCode/>
+      <PostalCode/>
+      <CountryCode>VN</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Notify Party</PartyType>
+      <PartyCode>JILSO</PartyCode>
+      <Name>JILL ACQUISITION LLC</Name>
+      <Address1>4 BATTERYMARCH PARK</Address1>
+      <Address2/>
+      <CityName>QUINCY</CityName>
+      <StateOrProvinceCode>MA</StateOrProvinceCode>
+      <PostalCode>02169</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>Shipper</PartyType>
+      <PartyCode>0201223</PartyCode>
+      <Name>KYUNG SEUNG TRADING CO LTD</Name>
+      <Address1>408, SAMSEONG-RO, GANGNAM-GU</Address1>
+      <Address2>KYUNG SEUNG BLDG</Address2>
+      <CityName>SEOUL</CityName>
+      <StateOrProvinceCode/>
+      <PostalCode/>
+      <CountryCode>KR</CountryCode>
+    </Party>
+    <Party>
+      <PartyType>ShipTo</PartyType>
+      <PartyCode>JILLNH</PartyCode>
+      <Name>JILL ACQUISITION LLC</Name>
+      <Address1>100 BIRCH POND DRIVE</Address1>
+      <Address2/>
+      <CityName>TILTON</CityName>
+      <StateOrProvinceCode>NH</StateOrProvinceCode>
+      <PostalCode>03276</PostalCode>
+      <CountryCode>US</CountryCode>
+    </Party>
+  </Parties>
+  <Locations>
+    <Location>
+      <LocationType>PlaceOfReceipt</LocationType>
+      <LocationIdQualifier/>
+      <LocationId/>
+      <LocationName>HAIPHONG</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode/>
+    </Location>
+    <Location>
+      <LocationType>PortOfEntry</LocationType>
+      <LocationIdQualifier>D</LocationIdQualifier>
+      <LocationId>4701</LocationId>
+      <LocationName>JOHN F KENNEDY AIRPORT</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode>US</CountryCode>
+    </Location>
+    <Location>
+      <LocationType>PortOfLoad</LocationType>
+      <LocationIdQualifier>A</LocationIdQualifier>
+      <LocationId>HAN</LocationId>
+      <LocationName>Hanoi, Viet Nam</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode/>
+    </Location>
+    <Location>
+      <LocationType>PortOfDischarge</LocationType>
+      <LocationIdQualifier>A</LocationIdQualifier>
+      <LocationId>JFK</LocationId>
+      <LocationName>Kennedy Inter, New york, USA</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode/>
+    </Location>
+    <Location>
+      <LocationType>PlaceOfDelivery</LocationType>
+      <LocationIdQualifier>D</LocationIdQualifier>
+      <LocationId>4701</LocationId>
+      <LocationName>JOHN F KENNEDY AIRPORT</LocationName>
+      <LocationStateOrProvinceCode/>
+      <CountryCode>US</CountryCode>
+    </Location>
+  </Locations>
+  <Containers>
+    <Container>
+      <EquipmentInitial>CSLU</EquipmentInitial>
+      <EquipmentNumber>1586141</EquipmentNumber>
+      <SealNumber1>T445187</SealNumber1>
+      <SealNumber2/>
+      <SealNumber3/>
+      <EquipmentTypeCode>2000</EquipmentTypeCode>
+      <DescriptionCode>CN</DescriptionCode>
+      <LoadEmptyStatusCode>L</LoadEmptyStatusCode>
+      <TypeOfServiceCode/>
+      <InBondArrivalDate/>
+      <InBondArrivalNumber/>
+      <HoldFlag>N</HoldFlag>
+      <PermitToTransferNumber/>
+      <StatusFlag>RE</StatusFlag>
+      <StatusDate>7/3/2014</StatusDate>
+      <GrossWeight>1541.92</GrossWeight>
+      <WeightUnits>KGS</WeightUnits>
+      <ChargeableWeight>1541.92</ChargeableWeight>
+      <ChargeableWeightUnits>KGS</ChargeableWeightUnits>
+      <Volume>7.909</Volume>
+      <VolumeUnit>CBM</VolumeUnit>
+      <QuantityShipped>7770</QuantityShipped>
+      <UnitOfMeasure>CTN</UnitOfMeasure>
+      <Items>
+        <Item>
+          <CommercialInvoiceNumber>2231086</CommercialInvoiceNumber>
+          <PurchaseOrderNumber>7800374</PurchaseOrderNumber>
+          <PurchaseOrderLineNumber>000001</PurchaseOrderLineNumber>
+          <PartNumber>704394</PartNumber>
+          <PartDescription>PERFECT TANK</PartDescription>
+          <QuantityShipped>368</QuantityShipped>
+          <UnitOfMeasure>EA</UnitOfMeasure>
+          <QuantityUnits>385</QuantityUnits>
+          <QuantityUnitsOfMeasure>CTN</QuantityUnitsOfMeasure>
+          <GrossWeight>0</GrossWeight>
+          <NetWeight>0</NetWeight>
+          <WeightUnit/>
+          <Volume/>
+          <PerCartonOrLine>L</PerCartonOrLine>
+          <ECCN/>
+          <LicenseType/>
+          <LicenseNumber/>
+          <HazardousMaterials>N</HazardousMaterials>
+          <CountryOfExport/>
+          <UnitPrice>4.97</UnitPrice>
+          <LineItemValueUSD>1913.45</LineItemValueUSD>
+          <CIDate/>
+          <DimensionsUnit>IN</DimensionsUnit>
+          <Length>0</Length>
+          <Height>0</Height>
+          <Width>0</Width>
+          <CartonNo/>
+          <ColorCode>DARKGRYHTH</ColorCode>
+          <SKUNumber>21378072</SKUNumber>
+          <Size>XS</Size>
+        </Item>
+        <Item>
+          <CommercialInvoiceNumber>2231086</CommercialInvoiceNumber>
+          <PurchaseOrderNumber>7800374</PurchaseOrderNumber>
+          <PurchaseOrderLineNumber>000002</PurchaseOrderLineNumber>
+          <PartNumber>704394</PartNumber>
+          <PartDescription>PERFECT TANK</PartDescription>
+          <QuantityShipped>750</QuantityShipped>
+          <UnitOfMeasure>EA</UnitOfMeasure>
+          <QuantityUnits>761</QuantityUnits>
+          <QuantityUnitsOfMeasure>CTN</QuantityUnitsOfMeasure>
+          <GrossWeight>0</GrossWeight>
+          <NetWeight>0</NetWeight>
+          <WeightUnit/>
+          <Volume/>
+          <PerCartonOrLine>L</PerCartonOrLine>
+          <ECCN/>
+          <LicenseType/>
+          <LicenseNumber/>
+          <HazardousMaterials>N</HazardousMaterials>
+          <CountryOfExport/>
+          <UnitPrice>4.97</UnitPrice>
+          <LineItemValueUSD>3782.17</LineItemValueUSD>
+          <CIDate/>
+          <DimensionsUnit>IN</DimensionsUnit>
+          <Length>0</Length>
+          <Height>0</Height>
+          <Width>0</Width>
+          <CartonNo/>
+          <ColorCode>DARKGRYHTH</ColorCode>
+          <SKUNumber>21378058</SKUNumber>
+          <Size>S</Size>
+        </Item>
+      </Items>
+    </Container>
+  </Containers>
+  <Items>
+    <Item>
+      <CommercialInvoiceNumber>2231073</CommercialInvoiceNumber>
+      <PurchaseOrderNumber>7800374</PurchaseOrderNumber>
+      <WarehouseID>0001</WarehouseID>
+      <PurchaseOrderLineNumber>000001</PurchaseOrderLineNumber>
+      <PartNumber>704394</PartNumber>
+      <QuantityShipped>4</QuantityShipped>
+      <UnitOfMeasure>EA</UnitOfMeasure>
+      <PartDescription>PERFECT TANK</PartDescription>
+      <GrossWeight>0</GrossWeight>
+      <NetWeight>0</NetWeight>
+      <WeightUnit>KG</WeightUnit>
+      <Volume>0</Volume>
+      <VolumeUnit>CBM</VolumeUnit>
+      <ECCN/>
+      <LicenseType/>
+      <LicenseNumber/>
+      <HazardousMaterials>N</HazardousMaterials>
+      <ColorCode>BATIK BLUE</ColorCode>
+      <SKUNumber>21378072</SKUNumber>
+      <Size>XS</Size>
+    </Item>
+    <Item>
+      <CommercialInvoiceNumber>2231073</CommercialInvoiceNumber>
+      <PurchaseOrderNumber>7800374</PurchaseOrderNumber>
+      <WarehouseID>0001</WarehouseID>
+      <PurchaseOrderLineNumber>000002</PurchaseOrderLineNumber>
+      <PartNumber>704394</PartNumber>
+      <QuantityShipped>16</QuantityShipped>
+      <UnitOfMeasure>EA</UnitOfMeasure>
+      <PartDescription>PERFECT TANK</PartDescription>
+      <GrossWeight>0</GrossWeight>
+      <NetWeight>0</NetWeight>
+      <WeightUnit>KG</WeightUnit>
+      <Volume>0</Volume>
+      <VolumeUnit>CBM</VolumeUnit>
+      <ECCN/>
+      <LicenseType/>
+      <LicenseNumber/>
+      <HazardousMaterials>N</HazardousMaterials>
+      <ColorCode>BATIK BLUE</ColorCode>
+      <SKUNumber>21378058</SKUNumber>
+      <Size>S</Size>
+    </Item>
+  </Items>
+</ShipNotice>

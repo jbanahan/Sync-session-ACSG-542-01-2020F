@@ -133,6 +133,8 @@ module OpenChain
         OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_jjill_850/') && MasterSetup.get.custom_feature?('JJill')
         OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_ecellerate_shipment')
+        OpenChain::CustomHandler::EcellerateXmlRouter.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         get_tempfile(bucket,remote_path,command['path']) do |temp|
           linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)
