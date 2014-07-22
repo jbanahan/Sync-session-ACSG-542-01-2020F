@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module JJill; class JJillEcellerateXmlPa
   end
 
   def initialize opts={}
-    @jill = Company.find_by_system_code UID_PREFIX
+    @jill = Company.find_by_ecellerate_customer_number 'JILSO'
     @user = User.find_by_username 'integration'
     raise "Company with system code #{UID_PREFIX} not found." unless @jill
   end
@@ -33,6 +33,7 @@ module OpenChain; module CustomHandler; module JJill; class JJillEcellerateXmlPa
       s = Shipment.new(importer_id:@jill.id,reference:shp_ref) unless s
       s.master_bill_of_lading = mbol
       s.house_bill_of_lading = hbol
+      s.mode = et(root,'TransportationMethod')
 
       s.shipment_lines.each do |sl|
         ol = sl.order_lines.first

@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser do
     end
     before :each do
       Factory(:master_user,username:'integration')
-      @jill = Factory(:company,system_code:'JJILL',importer:true)
+      @jill = Factory(:company,ecellerate_customer_number:'JILSO',importer:true)
       @ord = Factory(:order,importer:@jill,order_number:'JJILL-7800374',customer_order_number:'7800374')
       @prod = Factory(:product,importer:@jill,unique_identifier:'JIll-704394')
       @ol1 = @ord.order_lines.create!(product_id:@prod.id,quantity:100,sku:'21378072')
@@ -20,6 +20,7 @@ describe OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser do
       expect(s.reference).to eq "JJILL-20140618039566"
       expect(s.master_bill_of_lading).to eq "695-35416636"
       expect(s.house_bill_of_lading).to eq 'SGN140008'
+      expect(s.mode).to eq 'Air'
 
       lines = s.shipment_lines
       expect(lines.count).to eq 4
