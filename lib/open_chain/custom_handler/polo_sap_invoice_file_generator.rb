@@ -69,9 +69,13 @@ module OpenChain
           query = query.
                     where("broker_invoices.invoice_date >= ?", conf[:start_date]).
                     # We need to exclude everything that has already been successfully invoiced
-                    joins("LEFT OUTER JOIN export_job_links ejl ON broker_invoices.id = ejl.exportable_id AND ejl.exportable_type = 'BrokerInvoice'").
-                    joins("LEFT OUTER JOIN export_jobs ej on ejl.export_job_id = ej.id and ej.successful = true and ej.export_type in ('#{ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE}', '#{ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE}')").
-                    where("ej.id IS NULL").
+                    # This is a little bit of a funky way to do this, but I didn't want to do this with a WHERE NOT IN type clause because those
+                    # will grow slower and slower over time due to the list returned by the subselect growing weekly - and the method we use to exclude failing
+                    # business rules won't work because there's going to be multiple records per invoice in the linker table due to tracking of failed send attempts.
+
+                    # This method should just be a function of the size of the outer list of invoices (still growing), but no memory used to create a temp in list 
+                    # and joins all done via primary keys.
+                    where("(IFNULL((SELECT ej.successful FROM export_jobs ej INNER JOIN export_job_links ejl ON ej.id = ejl.export_job_id AND ejl.exportable_type = 'BrokerInvoice' AND ej.export_type IN ('#{ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE}', '#{ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE}') WHERE broker_invoices.id = ejl.exportable_id ORDER BY ej.successful DESC LIMIT 1), false) <> true)").
                     # We need to also exclude everything that is in a Fail or Review Business Rule state
                     joins("LEFT OUTER JOIN business_validation_results bvr ON bvr.validatable_id = entries.id AND bvr.validatable_type = 'Entry' AND bvr.state IN ('Fail')").
                     where("bvr.id IS NULL")
@@ -149,7 +153,7 @@ module OpenChain
           # on the export job linker table
           completed_jobs = ExportJob.where(:successful=>true, :export_type => [ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE, ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE]).
                           joins(:export_job_links).
-                          joins("INNER JOIN broker_invoices ON export_job_links.exportable_id = broker_invoices.id").
+                          joins("INNER JOIN broker_invoices ON export_job_links.exportable_id = broker_invoices.id AND export_job_links.exportable_type = 'BrokerInvoice'").
                           where(:broker_invoices => {:entry_id => entry.id}).
 
                           uniq

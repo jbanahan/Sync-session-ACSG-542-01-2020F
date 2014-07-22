@@ -764,6 +764,25 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       @entry.business_validation_results.create! state: 'Fail'
       expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
     end
+
+    it "does not include invoices that failed and then were successfully sent later" do
+      # regression test for a bug that sent invoices when it shouldn't have.
+      j = ExportJob.new
+      j.export_type = ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
+      j.successful = false
+      j.export_job_links.build.exportable = @broker_invoice
+
+      j.save!
+
+      j = ExportJob.new
+      j.export_type = ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE
+      j.successful = true
+      j.export_job_links.build.exportable = @broker_invoice
+
+      j.save!
+
+      expect(@gen.find_broker_invoices(:rl_canada)).to have(0).items
+    end
   end
 
   context :find_generate_and_send_invoices do
