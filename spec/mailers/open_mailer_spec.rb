@@ -120,7 +120,20 @@ describe OpenMailer do
 
         m = OpenMailer.deliveries.last
         m.to.first.should == User.first.email
-        expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq ['example@example.com']
+        expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq 'example@example.com'
+      end
+
+      it "should handle multiple addresses in to field" do
+        Rails.stub(:env).and_return ActiveSupport::StringInquirer.new("development")
+        
+        #Ensure there's a user set up, it seems sometimes there's not in circle environment
+        user = Factory(:user, email: "me@there.com")
+        
+        OpenMailer.send_simple_html("example@example.com, you@there.com", "Test subject","<p>Test body</p>").deliver!
+
+        m = OpenMailer.deliveries.last
+        m.to.first.should == User.first.email
+        expect(OpenMailer.deliveries.last.header['X-ORIGINAL-TO'].value).to eq 'example@example.com, you@there.com'
       end
     end
 
