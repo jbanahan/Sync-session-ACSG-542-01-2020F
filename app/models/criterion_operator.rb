@@ -56,6 +56,7 @@ class CriterionOperator
     new("nsw","_fn_ NOT LIKE ?","Noes Not Start With"),
     new("new","_fn_ NOT LIKE ?","Does Not End With"),
     new("regexp","_fn_ REGEXP ?", "Regex"),
+    new("notregexp","_fn_ NOT REGEXP ?", "Not Regex"),
     new("null","_fn_ IS NULL OR trim(_fn_)=''","Is Empty"),
     new("notnull","_fn_ IS NOT NULL AND NOT trim(_fn_)=''","Is Not Empty"),
     new("bda","_fn_ < DATE_ADD(_CURRENT_DATE_, INTERVAL -? DAY)","Before _ Days Ago", relative_to_start_of_day: true),

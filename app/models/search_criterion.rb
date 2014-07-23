@@ -262,6 +262,8 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.downcase.start_with?(self.value.downcase)
       elsif self.operator == "regexp"
         return !value_to_test.to_s.match(self.value).nil?
+      elsif self.operator == "notregexp"
+        return value_to_test.to_s.match(self.value).nil?
       elsif self.operator == "ew"
         return value_to_test.downcase.end_with?(self.value.downcase)
       elsif self.operator == "nq"
@@ -311,7 +313,10 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == "nq"
         return vt.nil?  || vt!=self_val
       elsif self.operator == "regexp"
-        return !value_to_test.to_s.match(self.value).nil?
+        # This should be in the form of YYYY-mm-dd for dates and YYYY-mm-dd HH:MM for DateTimes
+        return !vt.to_s.match(self.value).nil?
+      elsif self.operator == "notregexp"
+        return vt.to_s.match(self.value).nil?
       elsif self.operator == "pm"
         base_date = self_val.months.ago
         base_date = Date.new(base_date.year,base_date.month,1)
@@ -344,6 +349,8 @@ class SearchCriterion < ActiveRecord::Base
         end
       elsif self.operator == "regexp"
         return !value_to_test.to_s.match(self.value).nil?
+      elsif self.operator == "notregexp"
+        return value_to_test.to_s.match(self.value).nil?
       end  
     elsif [:decimal, :integer, :fixnum].include? d
       self_val = number_value d, self.value
@@ -365,6 +372,8 @@ class SearchCriterion < ActiveRecord::Base
         return !break_rows(self.value.downcase).include?(value_to_test.to_s.rstrip)
       elsif self.operator == "regexp"
         return !value_to_test.to_s.match(self.value).nil?
+      elsif self.operator == "notregexp"
+        return value_to_test.to_s.match(self.value).nil?
       end
     end
   end

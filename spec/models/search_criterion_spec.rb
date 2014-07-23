@@ -440,8 +440,22 @@ describe SearchCriterion do
           sc.test?(@product).should be_false
         end
 
+        it "should find a product when there is a NOT regex match on the appropriate text field" do
+          @product.update_attributes(unique_identifier: "Blue jeans")
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"notregexp",:value=>"shirt")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+        end
+
+        it "should not find a product when there is a NOT regex match on the appropriate text field" do
+          @product.update_attributes(unique_identifier: "Blue shirt")
+          sc = SearchCriterion.new(:model_field_uid=>:prod_uid,:operator=>"notregexp",:value=>"shirt")
+          sc.apply(Product.where("1=1")).all.should_not include @product
+          sc.test?(@product).should be_false
+        end
+
         it "should find a product when there is a regex match on the appropriate date field" do
-          @product.update_attributes(created_at: Time.now)
+          @product.update_attributes(created_at: Time.zone.now)
           sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"regexp",:value=>Time.now.year.to_s)
           sc.apply(Product.where("1=1")).all.should include @product
           sc.test?(@product).should be_true
@@ -460,9 +474,29 @@ describe SearchCriterion do
           sc.test?(@product).should be_true
         end
 
+        it "should find a product when there is a not regex match on the appropriate datetime field" do
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"notregexp",:value=>"1999")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+        end
+
+        it "should not find a product when there is a not regex match on the appropriate datetime field" do
+          @product.update_attributes(created_at: Time.zone.now)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_created_at,:operator=>"notregexp",:value=>@product.created_at.to_s)
+          sc.apply(Product.where("1=1")).all.should_not include @product
+          sc.test?(@product).should be_false
+        end
+
         it "should find a product when there is a regex match on the appropriate integer field" do
           @product.attachments << Factory(:attachment)
           sc = SearchCriterion.new(:model_field_uid=>:prod_attachment_count,:operator=>"regexp",:value=>"1")
+          sc.apply(Product.where("1=1")).all.should include @product
+          sc.test?(@product).should be_true
+        end
+
+        it "should find a product when there is a regex match on the appropriate integer field" do
+          @product.attachments << Factory(:attachment)
+          sc = SearchCriterion.new(:model_field_uid=>:prod_attachment_count,:operator=>"notregexp",:value=>"0")
           sc.apply(Product.where("1=1")).all.should include @product
           sc.test?(@product).should be_true
         end

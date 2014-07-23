@@ -183,6 +183,7 @@ var OCSearch = (function() {
         h += "<option value='notin'>Not One Of</option>";
       }
       h += "<option value='regexp'>Regex</option>";
+      h += "<option value='notregexp'>Not Regex</option>";
       h += "<option value='null'>Is Empty</option>";
       h += "<option value='notnull'>Is Not Empty</option>";
 
