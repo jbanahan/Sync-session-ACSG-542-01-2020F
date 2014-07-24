@@ -5,6 +5,7 @@ class Address < ActiveRecord::Base
 	belongs_to :country
   before_validation :set_hash_key
   validate :validate_immutable
+  has_and_belongs_to_many :products, :join_table=>"product_factories", :foreign_key=>'address_id', :association_foreign_key=>'product_id'
 
   #make a key that will match the #address_hash if the two addresses are the same
   def self.make_hash_key a
@@ -16,15 +17,12 @@ class Address < ActiveRecord::Base
 		return self.where(["shipping = ?",true])
 	end
 
-
-
   private 
-  def set_hash_key
-    self.address_hash = self.class.make_hash_key(self) if self.address_hash.blank?
-  end
-  def validate_immutable
-    errors.add(:base,"Addresses cannot be changed.") unless self.address_hash==self.class.make_hash_key(self)
-  end
+    def set_hash_key
+      self.address_hash = self.class.make_hash_key(self) if self.address_hash.blank?
+    end
+    def validate_immutable
+      errors.add(:base,"Addresses cannot be changed.") unless self.address_hash==self.class.make_hash_key(self)
+    end
 
-  
 end

@@ -9,8 +9,12 @@ module OpenChain
 
     # if true the client will raise exceptions instead of including the errors in the JSON response (default = false)
     attr_accessor :raise_errors
-    def initialize path 
-      @path = path
+    attr_reader :path
+    
+    def initialize path, options = {}
+      @options = {scheme: "s3", bucket: Rails.configuration.paperclip_defaults[:bucket]}.merge options
+
+      @path = assemble_file_path path, @options
       @session_id = "#{MasterSetup.get.uuid}-#{Process.pid}" #should be unqiue enough
       base_url = "#{YAML.load(IO.read('config/xlserver.yml'))[Rails.env]['base_url']}/process"
       @uri = URI(base_url)
@@ -117,8 +121,8 @@ module OpenChain
 
     # wraps the save command
     def save alternate_location=nil
-      loc = alternate_location ? alternate_location : @path
-      c = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>loc}}
+      alternate_path = (alternate_location.blank? ? @path : assemble_file_path(alternate_location, @options))
+      c = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>alternate_path}}
       send c
     end
 
@@ -239,6 +243,28 @@ module OpenChain
         r = value.respond_to?('to_time') ? value.to_time.to_i : value.to_i
       end
       r
+    end
+
+    def assemble_file_path path, options
+      # Assume anything that looks like a URI already is one and doesn't need to be assembled.
+      if path =~ /\w+:\/\/.+/
+        path
+      else
+        uri_scheme = options[:scheme]
+        
+        # The scheme tells the xlserver what sort of backend to use (s3 will basically always be what we'll use here),
+        # the first machine name in the full hostname for s3 paths determines the bucket to use.  The rest of the hostname
+        # is superfluous at the moment - I just used the actual amazon host. The path itself is the s3 object's key,
+        # or in the case of file:// uri's the path on the xlserver to the file.
+        if uri_scheme.to_s.downcase == "s3"
+          bucket = options[:bucket]
+          "#{uri_scheme}://#{bucket}.s3.amazonaws.com/#{path}"
+        else
+          # Use file:///path/to/file.xls to access the file relative to the xlserver's current working directory
+          # User file:////home/user/path/to/file.xls to access as absolute path (note double slash after the file://)
+          "#{uri_scheme}:///#{path}"
+        end
+      end
     end
   end
 
