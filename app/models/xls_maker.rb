@@ -75,8 +75,8 @@ class XlsMaker
     "http://#{request_host}/redirect.html?page=#{CGI.escape(relative_url)}"
   end
   
-  def self.add_body_row sheet, row_number, row_data, column_widths = [], no_time = false
-    make_body_row sheet, row_number, 0, row_data, column_widths, {:no_time => no_time}
+  def self.add_body_row sheet, row_number, row_data, column_widths = [], no_time = false, options = {}
+    make_body_row sheet, row_number, 0, row_data, column_widths, {:no_time => no_time}.merge(options)
   end
 
   # Method allows insertion of a row data array into a middle column of a spreadsheet row.

@@ -57,6 +57,15 @@ describe OpenChain::IntegrationClientCommandProcessor do
       Delayed::Worker.delay_jobs = @ws
       @t.close!
     end
+    context :lands_end do
+      it "should send data to Lands End Parts parser" do
+        u = Factory(:user,:username=>'integration')
+        MasterSetup.any_instance.should_receive(:custom_feature?).with('Lands End Parts').and_return(true)
+        OpenChain::CustomHandler::LandsEnd::LePartsParser.should_receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
+        cmd = {'request_type'=>'remote_file','path'=>'/_lands_end_parts/a.xml','remote_path'=>'12345'}
+        OpenChain::IntegrationClientCommandProcessor.process_command(cmd).should == @success_hash
+      end
+    end
     context :jjill do
       it "should send data to J Jill 850 parser" do
         u = Factory(:user,:username=>'integration')

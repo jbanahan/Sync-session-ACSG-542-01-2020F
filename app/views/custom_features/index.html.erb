@@ -96,4 +96,18 @@
     </div>
   </div>
   <%-end%>
+  <%-if OpenChain::CustomHandler::LandsEnd::LeReturnsParser.new(nil).can_view?(current_user)-%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "Lands' End Returns", '/custom_features/le_returns', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
+  <%-if OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator.new(nil).can_view?(current_user)-%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "Lands' End CI Load", '/custom_features/le_ci_load', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
 </div>

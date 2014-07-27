@@ -108,4 +108,18 @@ describe DataCrossReference do
       expect(DataCrossReference.has_key? nil, DataCrossReference::UA_PLANT_TO_ISO).to be_false
     end
   end
+
+  describe "create_lands_end_mid!" do
+    it "creates a lands end mid xref" do
+      DataCrossReference.create_lands_end_mid! 'factory', 'hts', 'MID'
+      expect(DataCrossReference.where(key: DataCrossReference.make_compound_key('factory', 'hts'), cross_reference_type: DataCrossReference::LANDS_END_MID).first.value).to eq "MID"
+    end
+  end
+
+  describe "find_lands_end_mid" do
+    it "finds a created lands end mid" do
+      DataCrossReference.create_lands_end_mid! 'factory', 'hts', 'MID'
+      expect(DataCrossReference.find_lands_end_mid 'factory', 'hts').to eq 'MID'
+    end
+  end
 end

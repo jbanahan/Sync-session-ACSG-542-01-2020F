@@ -1,0 +1,22 @@
+<% content_for :javascript do -%>
+$(function() {
+  $("#frm_run").submit(function() {
+    if($.trim($("input[name='file_number']").val()).length == 0) {
+      window.alert("You must enter a File Number.");
+            return false;
+    }
+  });
+});
+<%end-%>
+
+<% content_for :upload_form do %>
+<h2>Upload ONLY Corrected Lands End Returns Files in Excel format.</h2>
+<div class="form-group">
+  <label for='file_number' class="col-md-1 control-label">File Number:</label>
+  <div class="col-md-2">
+    <input name='file_number' value='' class="form-control"/>
+  </div>
+</div>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Lands' End CI Load Upload", custom_feature: "le_ci_load"} %>

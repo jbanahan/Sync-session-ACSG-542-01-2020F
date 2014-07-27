@@ -15,6 +15,7 @@ require 'open_chain/custom_handler/polo_msl_plus_enterprise_handler'
 require 'open_chain/custom_handler/polo/polo_850_vandegrift_parser'
 require 'open_chain/custom_handler/polo/polo_tradecard_810_parser'
 require 'open_chain/custom_handler/shoes_for_crews/shoes_for_crews_po_spreadsheet_handler'
+require 'open_chain/custom_handler/lands_end/le_parts_parser'
 
 module OpenChain
   class IntegrationClient
@@ -133,6 +134,8 @@ module OpenChain
         OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.delay.process_from_s3 bucket, remote_path
       elsif command['path'].include?('/_jjill_850/') && MasterSetup.get.custom_feature?('JJill')
         OpenChain::CustomHandler::JJill::JJill850XmlParser.delay.process_from_s3 bucket, remote_path
+      elsif command['path'].include?('/_lands_end_parts/') && MasterSetup.get.custom_feature?('Lands End Parts')
+        OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
         get_tempfile(bucket,remote_path,command['path']) do |temp|
           linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)
