@@ -106,8 +106,9 @@ describe 'ShipmentApp', () ->
           {shpln_line_number:1,shpln_puid:'SKU1',shpln_pname:'CHAIR',linked_order_line_id:2,order_lines:[{ord_cust_ord_no:'def',ordln_line_number:'10'}]}
           {shpln_line_number:2,shpln_puid:'SKU2',shpln_pname:'HAT',linked_order_line_id:4,order_lines:[{ord_cust_ord_no:'def',ordln_line_number:'20'}]}
           ]}
-        svc.addOrderToShipment shp, ord
+        svc.addOrderToShipment shp, ord, null
         expect(shp).toEqual expected
+      
           
 
       
@@ -185,6 +186,7 @@ describe 'ShipmentApp', () ->
         shp = {id:1}
         baseOrd = {id:2}
         respOrd = {id:2,lines:[]}
+        container_to_pack = {id:4}
         spyOn(svc,'getOrder').andReturn {
           success: (fn) ->
             fn({order:respOrd},null,null,null)
@@ -195,6 +197,6 @@ describe 'ShipmentApp', () ->
         spyOn(svc,'addOrderToShipment')
         scope.addOrder(shp,baseOrd)
         expect(svc.getOrder).toHaveBeenCalledWith(2)
-        expect(svc.addOrderToShipment).toHaveBeenCalledWith(shp,respOrd)
+        expect(svc.addOrderToShipment).toHaveBeenCalledWith(shp,respOrd,container_to_pack)
         expect(scope.viewMode).toEqual 'shp'
         expect(scope.notificationMessage).toEqual 'Order added.'

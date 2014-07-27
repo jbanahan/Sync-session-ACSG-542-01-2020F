@@ -29,6 +29,7 @@ describe OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser do
       expect(l1.order_lines.to_a).to eq [@ol1]
       expect(l1.quantity).to eq 4
       expect(l1.container).to be_nil
+      expect(l1.line_number).to eq 1
 
       expect(s.containers.count).to eq 1
       cont = s.containers.first
@@ -41,6 +42,7 @@ describe OpenChain::CustomHandler::JJill::JJillEcellerateXmlParser do
       expect(l4.product).to eq @prod
       expect(l4.container).to eq cont
       expect(l4.quantity).to eq 750
+      expect(l4.line_number).to eq 4
 
       expect(s.entity_snapshots.count).to eq 1
     end

@@ -17,10 +17,18 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       vend = o.vendor
       expect(vend.system_code).to eq "JJILL-0201223"
       expect(vend.name).to eq "KYUNG SEUNG CO LTD"
+      expect(vend).to be_vendor
+      expect(o.importer).to eq @c
+      expect(@c.linked_companies).to include(vend)
       expect(o.customer_order_number).to eq "7800374"
       expect(o.order_number).to eq "JJILL-7800374"
       expect(o.order_date).to eq Date.new(2014,3,31)
+      expect(o.ship_window_start).to eq Date.new(2014,6,18)
+      expect(o.ship_window_end).to eq Date.new(2014,6,19)
+      expect(o.first_expected_delivery_date).to eq Date.new(2014,6,29)
       expect(o.last_exported_from_source.strftime("%Y%m%d%H%M")).to eq '201404142308'
+      expect(o.last_revised_date).to eq Date.new(2014,4,14)
+      expect(o.mode).to eq 'Air'
 
       expect(o.order_lines.count).to eq 3
       ol1 = o.order_lines.first
@@ -31,8 +39,20 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       p1 = ol1.product
       expect(p1.unique_identifier).to eq 'JJILL-704394'
       expect(p1.name).to eq 'PERFECT TANK'
+      cdefs = described_class.prep_custom_definitions [:vendor_style]
+      expect(p1.get_custom_value(cdefs[:vendor_style]).value).to eq '04-1024'
 
       expect(o.entity_snapshots.count).to eq 1
+    end
+
+    it "should auto assign agent if only one exists" do
+      agent = Factory(:company,agent:true)
+      @c.linked_companies << agent
+      vn = Factory(:company,name:'KYUNG SEUNG CO LNTD',system_code:'JJILL-0201223',vendor:true)
+      vn.linked_companies << agent
+      run_file
+      expect(Order.first.agent).to eq agent
+
     end
 
     it "should use existing vendor" do

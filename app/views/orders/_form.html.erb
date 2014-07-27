@@ -23,13 +23,28 @@
 <% end %>
 
 <%= form_for @order, :html=>{:id=>'frm_ord'} do |f| %>
+<div class="container">
+  <div class="row">
+    <div class="col-md-6">
+      <%=field_bootstrap field_label(:ord_ord_num), f.text_field(:order_number, "class" => "focus_first form-control") %>
+      <%=field_bootstrap field_label(:ord_cust_ord_no), f.text_field(:customer_order_number, "class" => "focus_first form-control") %>
+      <%=field_bootstrap field_label(:ord_approval_status), f.select(:approval_status, ['Accepted','Rejected'], {include_blank:''}, {class:'form-control'}) %>
+      <%=field_bootstrap field_label(:ord_ven_name), f.collection_select(:vendor_id, @order.importer ? @order.importer.linked_companies.vendors : [], :id, :name, {:prompt => "Select a vendor"}, {class:'form-control'}) %>
+      <%=field_bootstrap field_label(:ord_agent_name), f.collection_select(:agent_id, @order.available_agents, :id, :name, {:prompt => 'Select an agent'}, {class:'form-control'})%>
+      <%=field_bootstrap field_label(:ord_div_name), f.collection_select(:division_id, @order.importer ? @order.importer.divisions.order(:name) : [], :id, :name, options ={:prompt => "Select a division"}, {class:'form-control'})%>
+    </div>
+    <div class="col-md-6">
+      <%=field_bootstrap field_label(:ord_ord_date), f.text_field(:order_date, "class" => "isdate form-control") %>
+      <%=field_bootstrap field_label(:ord_revised_date), f.text_field(:last_revised_date, "class" => "isdate form-control") %>
+      <%=field_bootstrap field_label(:ord_window_start), f.text_field(:ship_window_start, "class" => "isdate form-control") %>
+      <%=field_bootstrap field_label(:ord_window_end), f.text_field(:ship_window_end, "class" => "isdate form-control") %>
+      <%=field_bootstrap field_label(:ord_first_exp_del), f.text_field(:first_expected_delivery_date, "class" => "isdate form-control") %>
 
-  <table>
-    <%=field_row field_label(:ord_ord_num), f.text_field(:order_number, "class" => "focus_first") %>
-    <%=field_row field_label(:ord_ven_name), f.collection_select(:vendor_id, @vendors, :id, :name, options ={:prompt => "Select a vendor"}) %>
-    <%=field_row field_label(:ord_ship_to_name), f.select(:ship_to_id, [['...Loading...','']])+"<div id='ship_to_ad'></div>".html_safe %>
-    <%=field_row field_label(:ord_ord_date), f.text_field(:order_date, "class" => "isdate") %>
-    <%=field_row field_label(:ord_div_name), f.collection_select(:division_id, @divisions, :id, :name, options ={:prompt => "Select a division"})%>    
-  	<%=show_custom_fields @order, {:form => true, :table=>true}%>
-  </table>
+      <%=field_bootstrap field_label(:ord_ship_to_name), f.select(:ship_to_id, [['...Loading...','']], {}, {class:'form-control'})+"<div id='ship_to_ad'></div>".
+      html_safe %>
+      <hr />
+    	<%=show_custom_fields @order, {:form => true}%>
+    </div>
+  </div>
+</div>
 <% end %>

@@ -292,6 +292,9 @@ class ModelField
   def self.make_importer_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, "imp", "Importer", "importer"
   end
+  def self.make_agent_arrays(rank_start,uid_prefix,table_name)
+    make_company_arrays rank_start, uid_prefix, table_name, 'agent', 'Agent', 'agent'
+  end
 
   #Don't use this.  Use make_ship_from_arrays or make_ship_to_arrays
   def self.make_ship_arrays(rank_start,uid_prefix,table_name,ft)
@@ -1437,16 +1440,22 @@ and classifications.product_id = products.id
             end
             )
             limit 1)"
-        }]
+        }],
+        [8,:ord_revised_date,:last_revised_date, 'Last Revised Date',{data_type: :date}],
+        [9,:ord_approval_status,:approval_status,'Approval Status'],
+        [10,:ord_window_start,:ship_window_start,'Ship Window Start Date',{data_type: :date}],
+        [11,:ord_window_end,:ship_window_end,'Ship Window End Date',{data_type: :date}],
+        [12,:ord_first_exp_del,:first_expected_delivery_date,'First Expected Delivery Date',{data_type: :date}]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
       add_fields CoreModule::ORDER, make_division_arrays(300,"ord","orders")
       add_fields CoreModule::ORDER, make_master_setup_array(400,"ord")
       add_fields CoreModule::ORDER, make_importer_arrays(500,"ord","orders")
+      add_fields CoreModule::ORDER, make_agent_arrays(600,'ord','orders')
 
       add_fields CoreModule::ORDER_LINE, [
-        [1,:ordln_line_number,:line_number,"Order - Row",{:data_type=>:integer}],
+        [1,:ordln_line_number,:line_number,"Order Line",{:data_type=>:integer}],
         [3,:ordln_ordered_qty,:quantity,"Order Quantity",{:data_type=>:decimal}],
         [4,:ordln_ppu,:price_per_unit,"Price / Unit",{:data_type=>:decimal}],
         [5,:ordln_ms_state,:state,"Milestone State",{:data_type=>:string,
@@ -1458,7 +1467,8 @@ and classifications.product_id = products.id
         [7,:ordln_country_of_origin,:country_of_origin,"Country of Origin",{data_type: :string}],
         [8,:ordln_hts,:hts,"HTS Code",{data_type: :string,
           :export_lambda=> lambda{|obj| obj.hts.blank? ? '' : obj.hts.hts_format}
-        }]
+        }],
+        [9,:ordln_sku,:sku,'SKU',{data_type: :string}]
       ]
       add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
 
@@ -1499,8 +1509,8 @@ and classifications.product_id = products.id
       add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
       
       add_fields CoreModule::SHIPMENT_LINE, [
-        [1,:shpln_line_number,:line_number,"Shipment - Row",{:data_type=>:integer}],
-        [2,:shpln_shipped_qty,:quantity,"Shipment Row Quantity",{:data_type=>:decimal}],
+        [1,:shpln_line_number,:line_number,"Shipment Row",{:data_type=>:integer}],
+        [2,:shpln_shipped_qty,:quantity,"Quantity Shipped",{:data_type=>:decimal}],
         [3,:shpln_container_number,:container_number,"Container Number",{data_type: :string,
           export_lambda: lambda {|sl| sl.container ? sl.container.container_number : ''},
           import_lambda: lambda {|o,d| "Container Number cannot be set via import."},
@@ -1522,7 +1532,29 @@ and classifications.product_id = products.id
           }],
         [6,:shpln_cbms,:cbms,"Volume (CBMS)",{data_type: :decimal}],
         [7,:shpln_gross_kgs,:gross_kgs,"Gross Weight (KGS)",{data_type: :decimal}],
-        [8,:shpln_carton_qty,:carton_qty,"Cartons",{data_type: :integer}]
+        [8,:shpln_carton_qty,:carton_qty,"Cartons",{data_type: :integer}],
+        [9,:shpln_vendors,:vendor_name,"Vendor(s)",{data_type: :text, 
+          read_only: true,
+          export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.vendor ? ol.order.vendor.name : nil}.uniq.compact.sort.join(',') },
+          import_lambda: lambda {|o,d| "Linked fields are read only."},
+          qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT companies.name ORDER BY name SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id INNER JOIN companies ON companies.id = orders.vendor_id WHERE shipment_lines.id = piece_sets.shipment_line_id)"
+          }],
+        [10,:shpln_po_value,:po_value,"Shipped PO Value",{
+          data_type: :currency,
+          read_only: true,
+          export_lambda: lambda {|sl| sl.order_lines.inject(BigDecimal('0.00')) {|i,ol| 
+            ppu = ol.price_per_unit.blank? ? 0 : ol.price_per_unit
+            qty = sl.quantity.blank? ? 0 : sl.quantity
+            i + (ppu*qty)}},
+          import_lambda: lambda {|o,d| "Linked fields are read only."},
+          qualified_field_name: "(SELECT SUM(order_lines.price_per_unit * shipment_lines.quantity) FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id WHERE piece_sets.shipment_line_id = shipment_lines.id)"
+          }],
+        [11,:shpln_cust_ord_no,:customer_order_number,"Order(s)",{data_type: :text, 
+          read_only: true,
+          export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.customer_order_number}.uniq.compact.sort.join(',') },
+          import_lambda: lambda {|o,d| "Linked fields are read only."},
+          qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id WHERE shipment_lines.id = piece_sets.shipment_line_id)"
+          }]
       ]
       add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
 

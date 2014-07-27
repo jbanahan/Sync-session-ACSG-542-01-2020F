@@ -1,3 +1,4 @@
+require 'open_chain/custom_handler/ecellerate_shipment_activity_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
@@ -14,6 +15,7 @@ require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generat
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
   CSM_SYNC = 'OpenChain::CustomHandler::PoloCsmSyncHandler'
+  ECELLERATE_SHIPMENT_ACTIVITY = 'OpenChain::CustomHandler::EcellerateShipmentActivityParser'
   EDDIE_CI_UPLOAD = 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
   FENIX_CI_UPLOAD = 'OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler'
   JCREW_PARTS = 'OpenChain::CustomHandler::JCrewPartsExtractParser'
@@ -270,6 +272,35 @@ class CustomFeaturesController < ApplicationController
   def polo_ca_invoices_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),CommercialInvoice,{:verb=>"download",:module_name=>"Polo CA Invoices",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def ecellerate_shipment_activity_index
+    action_secure(OpenChain::CustomHandler::EcellerateShipmentActivityParser.can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"ECellerate Shipment Activity",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>ECELLERATE_SHIPMENT_ACTIVITY).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def ecellerate_shipment_activity_upload
+    f = CustomFile.new(:file_type=>ECELLERATE_SHIPMENT_ACTIVITY,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/ecellerate_shipment_activity'
+    }
+  end
+
+  def ecellerate_shipment_activity_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),Shipment,{:verb=>"download",:module_name=>"Fenix Commerical Invoice Upload",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end

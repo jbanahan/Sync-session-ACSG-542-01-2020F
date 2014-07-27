@@ -14,12 +14,13 @@ $(function() {
 <table>
 <%=field_row "Name", f.text_field(:name,:class=>"required")%>
 <%=field_row "System Code", f.text_field(:system_code,{:title=>"Code used to integrate with another system.",:class=>"fieldtip"}) %>
-<%=field_row "Carrier", f.check_box(:carrier) %>
-<%=field_row "Vendor", f.check_box(:vendor) %>
-<%=field_row "Customer", f.check_box(:customer) %>
-<%=field_row "Importer", f.check_box(:importer) %>
+<%=field_row "Agent", f.check_box(:agent) %>
 <%=field_row "Broker", f.check_box(:broker) %>
+<%=field_row "Carrier", f.check_box(:carrier) %>
+<%=field_row "Customer", f.check_box(:customer) %>
 <%=field_row "Drawback", f.check_box(:drawback) %>
+<%=field_row "Importer", f.check_box(:importer) %>
+<%=field_row "Vendor", f.check_box(:vendor) %>
 <%=field_row("Alliance Customer Number", f.text_field(:alliance_customer_number)) if MasterSetup.get.custom_feature? "alliance"%>
 <%=field_row("Fenix Customer Number", f.text_field(:fenix_customer_number)) if MasterSetup.get.custom_feature? "fenix"%>
 <%=field_row("ECellerate Customer Number", f.text_field(:ecellerate_customer_number)) if MasterSetup.get.custom_feature? 'ecellerate'%>

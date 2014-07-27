@@ -35,6 +35,7 @@ class Company < ActiveRecord::Base
   scope :customers, where(:customer=>true)
   scope :importers, where(:importer=>true)
   scope :consignees, where(:consignee=>true)
+  scope :agents, where(:agent=>true)
   scope :by_name, order("companies.name ASC")
   scope :active_importers, where("companies.id in (select importer_id from products where products.created_at > '2011') or companies.id in (select importer_id from entries where entries.file_logged_date > '2011')")
   #find all companies that have attachment_archive_setups that include a start date

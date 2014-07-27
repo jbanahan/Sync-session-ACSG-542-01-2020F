@@ -96,4 +96,12 @@
     </div>
   </div>
   <%-end%>
+  <%-if OpenChain::CustomHandler::EcellerateShipmentActivityParser.can_view?(current_user)-%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "Ecellerate Shipment Activity Report Upload", '/custom_features/ecellerate_shipment_activity', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
+
 </div>

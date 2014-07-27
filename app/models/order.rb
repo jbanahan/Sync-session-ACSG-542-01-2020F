@@ -6,12 +6,26 @@ class Order < ActiveRecord::Base
 	belongs_to :vendor,  :class_name => "Company"
 	belongs_to :ship_to, :class_name => "Address"
   belongs_to :importer, :class_name => "Company"
+  belongs_to :agent, :class_name=>"Company"
 	
 	validates  :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
 	
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number', :autosave => true
 	has_many   :piece_sets, :through => :order_lines
+
+  #get Enumerable of agents that are shared between the vendor and importer
+  def available_agents
+    vendor_agents = []
+    importer_agents = []
+    if self.vendor
+       vendor_agents = self.vendor.linked_companies.agents.to_a
+    end
+    if self.importer
+      importer_agents = self.importer.linked_companies.agents.to_a
+    end
+    vendor_agents & importer_agents
+  end
 
 	def related_shipments
 	  r = Set.new
@@ -22,8 +36,15 @@ class Order < ActiveRecord::Base
 	end
 	
 	def can_view?(user)
-	  return user.view_orders? && (user.company.master || (user.company_id == self.vendor_id) || (user.company_id == self.importer_id) ||
-        user.company.linked_companies.include?(importer) || user.company.linked_companies.include?(vendor))
+	  return user.view_orders? &&
+      (
+        user.company.master || 
+        (user.company_id == self.vendor_id) || 
+        (user.company_id == self.importer_id) ||
+        (user.company_id == self.agent_id) ||
+        user.company.linked_companies.include?(importer) || 
+        user.company.linked_companies.include?(vendor)
+      )
 	end
 	
   def self.search_where user
@@ -34,7 +55,7 @@ class Order < ActiveRecord::Base
   end
 
   def can_edit?(user)
-    return user.edit_orders?
+    return user.edit_orders? && self.can_view?(user)
   end
 
   def can_comment? user

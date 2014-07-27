@@ -43,12 +43,6 @@ class OrdersController < ApplicationController
       o = Order.new
       action_secure(current_user.company.master,o,{:lock_check=>false,:verb=>"create", :module_name=>"order"}) {
         @order = o
-        @divisions = Division.all
-        @vendors = Company.vendors.not_locked
-        respond_to do |format|
-            format.html # new.html.erb
-            format.xml  { render :xml => @order }
-        end
       }
     end
 
@@ -57,8 +51,6 @@ class OrdersController < ApplicationController
       o = Order.find(params[:id])
       action_secure(current_user.company.master,o,{:verb => "edit", :module_name=>"order"}) {
         @order = o
-        @divisions = Division.all
-        @vendors = Company.vendors.order("companies.name ASC").not_locked
       }
     end
 

@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/fenix_commercial_invoice_spreadsheet_handler'
+require 'open_chain/custom_handler/ecellerate_shipment_activity_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_fenix_invoice_handler'
 require 'open_chain/custom_handler/j_crew_parts_extract_parser'
 require 'open_chain/custom_handler/kewill_isf_manual_parser'

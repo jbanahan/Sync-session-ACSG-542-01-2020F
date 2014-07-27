@@ -71,7 +71,10 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
       :shpln_pname,
       :shpln_container_uid,
       :shpln_container_number,
-      :shpln_container_size
+      :shpln_container_size,
+      :shpln_cbms,
+      :shpln_gross_kgs,
+      :shpln_carton_qty
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
 
     container_fields_to_render = ([

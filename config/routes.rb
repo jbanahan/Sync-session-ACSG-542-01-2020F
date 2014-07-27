@@ -217,6 +217,9 @@ OpenChain::Application.routes.draw do
   match "/custom_features/fenix_ci_load" => "custom_features#fenix_ci_load_index", :via=>:get
   match "/custom_features/fenix_ci_load/upload" => "custom_features#fenix_ci_load_upload", :via => :post
   match "/custom_features/fenix_ci_load/:id/download" => "custom_features#fenix_ci_load_download", :via => :get
+  match "/custom_features/ecellerate_shipment_activity" => "custom_features#ecellerate_shipment_activity_index", :via=>:get
+  match "/custom_features/ecellerate_shipment_activity/upload" => "custom_features#ecellerate_shipment_activity_upload", :via => :post
+  match "/custom_features/ecellerate_shipment_activity/:id/download" => "custom_features#ecellerate_shipment_activity_download", :via => :get
   match "/custom_features/eddie_fenix_ci_load" => "custom_features#eddie_fenix_ci_load_index", :via=>:get
   match "/custom_features/eddie_fenix_ci_load/upload" => "custom_features#eddie_fenix_ci_load_upload", :via => :post
   match "/custom_features/eddie_fenix_ci_load/:id/download" => "custom_features#eddie_fenix_ci_load_download", :via => :get

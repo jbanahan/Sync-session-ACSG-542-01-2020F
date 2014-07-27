@@ -83,8 +83,10 @@ module OpenChain; module CustomHandler; module JJill; class JJillEcellerateXmlPa
       sl = shipment.shipment_lines.build(product_id:ol.product_id)
       sl.linked_order_line_id = ol.id
       shipment_lines_by_key[key] = sl
+      sl.line_number = shipment_line_number
+    elsif sl.line_number != shipment_line_number
+      raise "Shipment Line with ID #{sl.id} had line number #{sl.line_number} instead of expected line number #{shipment_line_number}"
     end
-    sl.line_number = shipment_line_number
     sl.container = container
     sl.quantity = qty
   end

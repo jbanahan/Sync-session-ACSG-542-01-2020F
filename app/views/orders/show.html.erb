@@ -59,100 +59,116 @@
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
 
-<%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
-<div class='next_to_attachments'>
-<!-- fields -->
-<table class='detail_table'>
-  <tbody><tr><td>
-  <table>
-  <%=field_row field_label(:ord_ord_num), @order.order_number  %>
-  <%=field_row field_label(:ord_cust_ord_no), @order.customer_order_number  %>
-  <%=field_row field_label(:ord_ship_to_name), render(:partial=>'addresses/display',:locals=>{ :ad => @order.ship_to, :address_id => 'ship_to_ad' } ) %>
-  <%=field_row field_label(:ord_ord_date), @order.order_date %>
-  <%=field_row field_label(:ord_div_name), (@order.division.blank? ? "" : @order.division.name) %>
-  <%=field_row field_label(:ord_ven_name), (@order.vendor.blank? ? "" : @order.vendor.name) %>
-  <%=field_row field_label(:ord_imp_name), (@order.importer.blank? ? "" : @order.importer.name) %>
-  <%=show_custom_fields @order, {:table=>true}%>
-  </table>
-  </td></tr>
-  </tbody>
-</table>
+<div class="container">
+  <div class="row">
+    <div class="col-md-6">
+      <%=field_view_bootstrap @order, :ord_ord_num, false%>
+      <%=field_view_bootstrap @order, :ord_cust_ord_no%>
+      <%=field_view_bootstrap @order, :ord_approval_status%>
+      <%=field_view_bootstrap @order, :ord_imp_name%>
+      <%=field_view_bootstrap @order, :ord_ven_name%>
+      <%=field_view_bootstrap @order, :ord_agent_name%>
+      <%=field_view_bootstrap @order, :ord_div_name%>
+      <%=field_view_bootstrap @order, :ord_ship_to_name%>
+    </div>
+    <div class="col-md-6">
+      <%=field_view_bootstrap @order, :ord_ord_date%>
+      <%=field_view_bootstrap @order, :ord_revised_date%>
+      <%=field_view_bootstrap @order, :ord_window_start%>
+      <%=field_view_bootstrap @order, :ord_window_end%>
+      <%=field_view_bootstrap @order, :ord_first_exp_del%>
+      <hr />
+      <%=show_custom_fields @order%>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class="detail_table">
+        <thead>
+          <th>&nbsp;</th>
+          <th><%=field_label :ordln_line_number, false%></th>
+          <th><%=field_label :prod_uid, false%></th>
+          <th><%=field_label :ordln_sku, false%></th>
+          <th><%=field_label :ordln_ordered_qty, false%></th>
+          <th>Shipped</th>
+          <th>Received</th>
+          <th><%=field_label :prod_uom, false%></th>
+          <th><%=field_label :ordln_ppu, false%></th>
+          <th><%=field_label :ordln_currency, false%></th>
+          <th>Total Price</th>
+          <th></th>
+        </thead>
+        
+          <% @order.order_lines.each do |line| %>
+          <% line_state = line.worst_milestone_state %>
+        <tr class='hover ord_det_row'>
+          <td>
+            <%if @order.can_edit?(current_user) && !@order.locked?%>
+              <button class='btn_link btn btn-default btn-xs' link_to='<%=edit_order_order_line_path(@order,line)%>'>edit</button>
+            <%end%>
+          </td>
+          <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%=line.line_number%></td>
+          <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>"><%=link_to(line.product.unique_identifier, product_path(line.product)) %></td>
+          <td><%=line.sku%></td>
+          <td><%= line.quantity %></td>
+          <td><%=line.shipped_qty%></td>
+          <td><%=line.received_qty%></td>
+          <td><%= line.product.unit_of_measure %></td>
+          <td><%= line.price_per_unit %></td>
+          <td><%= line.currency%></td>
+          <td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
+          <td>
+            <% if @order.can_edit?(current_user) && !@order.locked?%>
+              <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
+              &nbsp;|&nbsp;
+            <% end %> 
+            <a id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
+            <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
+          </td>
+        </tr>
+        <tr style='display:none;' id='det_<%=line.id%>'>
+          <td></td>
+            <td colspan='8' >
+              <%[:ordln_country_of_origin,:ordln_hts].each do |fld|%>
+                <%=field_view_bootstrap line, fld, false%>
+              <%end%>
+              <%= show_custom_fields line %><br />
+              <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
+                <div>Shipment: <%=link_to s.reference, s%></div>
+              <%end%>
+              <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
+            </td>
+        </tr>
+      <%end %> 
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
+    </div>
+    <div class="col-md-6">
+      <%=render :partial => 'shared/attachments', :locals => {:attachable => @order} %>
+    </div>
+  </div>
 </div>
-<br />
-<table class="detail_table">
-	<thead>
-    <th>&nbsp;</th>
-	  <th><%=field_label :ordln_line_number, false%></th>
-		<th><%=field_label :prod_uid, false%></th>
-		<th><%=field_label :ordln_ordered_qty, false%></th>
-		<th>Shipped</th>
-		<th>Received</th>
-		<th><%=field_label :prod_uom, false%></th>
-    <th><%=field_label :ordln_ppu, false%></th>
-    <th><%=field_label :ordln_currency, false%></th>
-		<th>Total Price</th>
-		<th></th>
-	</thead>
-	
-		<% @order.order_lines.each do |line| %>
-    <% line_state = line.worst_milestone_state %>
-	<tr class='hover ord_det_row'>
-    <td>
-      <%if @order.can_edit?(current_user) && !@order.locked?%>
-        <button class='btn_link btn btn-default btn-xs' link_to='<%=edit_order_order_line_path(@order,line)%>'>edit</button>
-      <%end%>
-    </td>
-	  <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%=line.line_number%></td>
-    <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>"><%=link_to(line.product.unique_identifier, product_path(line.product)) %></td>
-  	<td><%= line.quantity %></td>
-  	<td><%=line.shipped_qty%></td>
-  	<td><%=line.received_qty%></td>
-    <td><%= line.product.unit_of_measure %></td>
-    <td><%= line.price_per_unit %></td>
-    <td><%= line.currency%></td>
-  	<td><%= line.price_per_unit.nil? || line.quantity.nil? ? '' : line.price_per_unit * line.quantity %></td>
-  	<td>
-  	  <% if @order.can_edit?(current_user) && !@order.locked?%>
-  		  <%= link_to 'Delete', order_order_line_path(@order,line) , :confirm => 'Are you sure?', :method => :delete %>
-        &nbsp;|&nbsp;
-  		<% end %> 
-      <a id='lnk_det_s_<%=line.id%>' href="javascript:OpenChain.showOrderLineDetail(<%=line.id%>,<%=current_user.admin? ? 'true' : 'false' %>);$('#lnk_det_h_<%=line.id%>').show();$('#lnk_det_s_<%=line.id%>').hide();false;">Detail</a>
-      <a id='lnk_det_h_<%=line.id%>' style='display:none;' href="javascript:$('#det_<%=line.id%>').fadeOut('slow');$('#lnk_det_s_<%=line.id%>').show();$('#lnk_det_h_<%=line.id%>').hide();false;">Detail</a>
-  	</td>
-	</tr>
-	<tr style='display:none;' id='det_<%=line.id%>'>
-	  <td></td>
-      <td colspan='8' >
-        <%[:ordln_country_of_origin,:ordln_hts].each do |fld|%>
-          <%=field_view_bootstrap line, fld, false%>
-        <%end%>
-        <%= show_custom_fields line %><br />
-        <%Set.new(line.shipment_lines.collect{|sl| sl.shipment}).each do |s|%>
-          <div>Shipment: <%=link_to s.reference, s%></div>
-        <%end%>
-        <div class='milestones_cont' id='ord_ms_<%=line.id%>'></div>
-      </td>
-	</tr>
-<%end %> 
-</table>
-<%=render :partial => 'shared/comments', :locals => {:commentable => @order} %>
-<% form_line = @line.nil? ? @order.order_lines.build : @line %>
-<div id='mod_edit_line' style='display:none;'>
-  <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
-  <table>
-    <% form_line.default_line_number%>
-    <%=field_row field_label(:ordln_line_number,false), f.text_field(:line_number, "size" => 2) %>
-    <%=field_row field_label(:prod_name), form_line.new_record? ? f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"}) : form_line.product.name%>
-    <%=field_row field_label(:ordln_ordered_qty, false), f.text_field(:quantity, "size" => 5) %>
-    <%=field_row field_label(:prod_uom, false), content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
-    <%=field_row field_label(:ordln_ppu, false), f.text_field(:price_per_unit, "size" => 5) %>
-    <%if !form_line.id && !MilestonePlan.blank? %>
-      <%=field_row "Plan", select_tag("milestone_plan_id",options_from_collection_for_select(MilestonePlan.all,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{:prompt=>"-Select a plan"})%>
-    <%end%>
-    <%= show_custom_fields form_line, {:form => true, :table=>true}%>
-  </table>
-  <% end %>
-</div>
+      <% form_line = @line.nil? ? @order.order_lines.build : @line %>
+      <div id='mod_edit_line' style='display:none;'>
+        <%= form_for([@order, form_line], :html=>{:id=>'frm_edit_line'}) do |f| %>
+        <table>
+          <% form_line.default_line_number%>
+          <%=field_row field_label(:ordln_line_number,false), f.text_field(:line_number, "size" => 2) %>
+          <%=field_row field_label(:prod_name), form_line.new_record? ? f.collection_select(:product_id, @products, :id, :name, {:prompt => "-Select a product"}, {:id=>"edit_line_product"}) : form_line.product.name%>
+          <%=field_row field_label(:ordln_ordered_qty, false), f.text_field(:quantity, "size" => 5) %>
+          <%=field_row field_label(:prod_uom, false), content_tag(:span,(form_line.product.nil? ? '' : form_line.product.unit_of_measure),{:id=>"edit_line_uom"})%>
+          <%=field_row field_label(:ordln_ppu, false), f.text_field(:price_per_unit, "size" => 5) %>
+          <%if !form_line.id && !MilestonePlan.blank? %>
+            <%=field_row "Plan", select_tag("milestone_plan_id",options_from_collection_for_select(MilestonePlan.all,:id,:name,!form_line.piece_sets.first ? nil : form_line.piece_sets.first.milestone_plan_id),{:prompt=>"-Select a plan"})%>
+          <%end%>
+          <%= show_custom_fields form_line, {:form => true, :table=>true}%>
+        </table>
+        <% end %>
+      </div>
 
 <div id='mod_subscriptions' style='display:none;'>
   <% 
