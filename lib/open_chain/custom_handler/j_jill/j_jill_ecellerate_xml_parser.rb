@@ -56,7 +56,8 @@ module OpenChain; module CustomHandler; module JJill; class JJillEcellerateXmlPa
         cont = s.containers.find_by_container_number c_num
         cont = s.containers.build(container_number:c_num) unless cont
         cont.seal_number = et(cont_el,'SealNumber1')
-        cont.weight = BigDecimal(et(cont_el,'ChargeableWeight')).round
+        cw = et(cont_el,'ChargeableWeight')
+        cont.weight = BigDecimal(cw).round unless cw.blank?
         cont.container_size = et(cont_el,'EquipmentTypeCode')
         REXML::XPath.each(cont_el,'Items/Item') do |item|
           add_shipment_line shipment_lines_by_key, s, item, shipment_line_cursor, cont
