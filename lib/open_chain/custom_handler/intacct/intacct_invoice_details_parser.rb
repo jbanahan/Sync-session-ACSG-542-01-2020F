@@ -405,7 +405,15 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     def payable_key line
       # The key on the payable lines needs to be the Vendor + Check No + Bank No + Check Date
       # (Really, the Check No should suffice but the "real" alliance Primary key are those 3 pieces of info)
-      [s(line["vendor"]), s(line["check number"]), s(line["bank number"]), s(line["check date"])].map {|v| v.to_s}.join("~")
+      # All of checknumber, bank number, check date must be non-zero before we should use them as part of the key.
+      # For some reason, Alliance has check dates for some lines that aren't actually checks..argh...
+      key = [s(line["vendor"]), s(line["check number"]), s(line["bank number"]), s(line["check date"])]
+
+      if key.reject {|v| v.nil? || v == "0"}.size < 4
+        key = [s(line["vendor"]), "0", "0", "0"]
+      end
+
+      key.map {|v| v.to_s}.join("~")
     end
 
     def extract_vendor_from_key key

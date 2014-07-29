@@ -475,6 +475,30 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(payables.find {|p| p.check_number == line2["check number"]}).not_to be_nil
     end
 
+    it "handles payable lines with incomplete check information" do
+      # Somehow lines that are not checks have check dates in them (user error likely) and were causing issues 
+      # creating payables (.ie they're identified as seperate payables).  Make sure this is resolved.
+      @line["payable"] = "Y"
+      @line["freight file number"] = ""
+      @line['check date'] = '20140701'
+      @line['check number'] = '0'
+      @line['bank number'] = '0'
+
+      line2 = @line.dup
+      line2['check date'] = '0'
+
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctClient
+      OpenChain::CustomHandler::Intacct::IntacctClient.should_receive(:async_send_dimension).with("Broker File", @line["broker file number"], @line["broker file number"])
+
+      @p.parse [@line, line2]
+
+      @export.reload
+
+      payables = @export.intacct_payables
+      expect(payables.size).to eq 1
+      expect(payables.first.intacct_payable_lines.size).to eq 2
+    end
+
   end
 
   describe "parse_check_query_results" do
