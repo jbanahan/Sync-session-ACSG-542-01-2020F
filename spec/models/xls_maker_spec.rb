@@ -127,6 +127,11 @@ describe XlsMaker do
       col_widths[0].should == 13
       @sheet.row(1).formats[0].should == XlsMaker::DATE_FORMAT
     end
+
+    it "should use given format" do
+      XlsMaker.add_body_row @sheet, 1, ["Test"], [], false, format: Spreadsheet::Format.new(pattern_fg_color: :yellow, pattern: 1)
+      expect(@sheet.row(1).formats[0].pattern_fg_color).to eq :yellow
+    end
   end
 
   context :insert_body_row do

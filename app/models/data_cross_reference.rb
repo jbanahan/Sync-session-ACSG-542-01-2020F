@@ -17,6 +17,7 @@ class DataCrossReference < ActiveRecord::Base
   INTACCT_BANK_CASH_GL_ACCOUNT ||= 'in_cash_gl'
   ALLIANCE_FREIGHT_CHARGE_CODE ||= 'al_freight_code'
   FENIX_ALS_CUSTOMER_NUMBER ||= 'fx_als_cust'
+  LANDS_END_MID ||= 'le_mid'
 
   #return a hash of all key value pairs
   def self.get_all_pairs cross_reference_type
@@ -91,6 +92,14 @@ class DataCrossReference < ActiveRecord::Base
     raise "Unkown vendor number data source #{data_source}" unless ["Alliance", "Fenix"].include? data_source 
 
     find_unique where(cross_reference_type: INTACCT_VENDOR_XREF, key: make_compound_key(data_source, vendor_number))
+  end
+
+  def self.find_lands_end_mid factory_code, hts
+    find_unique where(cross_reference_type: LANDS_END_MID, key: make_compound_key(factory_code, hts))
+  end
+
+  def self.create_lands_end_mid! factory_code, hts, mid
+    add_xref! LANDS_END_MID, make_compound_key(factory_code, hts), mid
   end
 
   def self.has_key? key, cross_reference_type

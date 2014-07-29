@@ -4,9 +4,33 @@ require 'spec_helper'
 describe OpenChain::XLClient do
 
   before :each do 
-    @path = 'somepath'
+    @init_path = 'somepath'
     @dummy_response = {"cell"=>{"my"=>"response"}}
-    @client = OpenChain::XLClient.new @path
+    @client = OpenChain::XLClient.new @init_path, {scheme: "s3", bucket: "bucket"}
+
+    @path = "s3://bucket.s3.amazonaws.com/#{@init_path}"
+  end
+
+  describe "initialize" do
+    it "modifies plain paths to an s3 one" do
+      c = OpenChain::XLClient.new "whatever/file.txt"
+      expect(c.path).to eq "s3://#{Rails.configuration.paperclip_defaults[:bucket]}.s3.amazonaws.com/whatever/file.txt"
+    end
+
+    it "accepts URI as a path and doesn't change it" do
+      c = OpenChain::XLClient.new "scheme://whatever/file.txt"
+      expect(c.path).to eq "scheme://whatever/file.txt"
+    end
+
+    it "uses passed in scheme" do
+      c = OpenChain::XLClient.new "whatever/file.txt", scheme: "blah", bucket: "argh"
+      expect(c.path).to eq "blah:///whatever/file.txt"
+    end
+
+    it "uses passed in bucket with s3 schemes" do
+      c = OpenChain::XLClient.new "whatever/file.txt", bucket: "argh"
+      expect(c.path).to eq "s3://argh.s3.amazonaws.com/whatever/file.txt"
+    end
   end
 
   context "error handling" do
@@ -130,9 +154,14 @@ describe OpenChain::XLClient do
     @client.save.should == @dummy_response
   end
   it 'should send a save command with alternate location' do
-    cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>'another/location'}}
+    cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>'s3://bucket.s3.amazonaws.com/another/location'}}
     @client.should_receive(:send).with(cmd).and_return(@dummy_response)
     @client.save(  'another/location' ).should == @dummy_response
+  end
+  it 'should send a save command with alternate location using a URI' do
+    cmd = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>'file:///another/location'}}
+    @client.should_receive(:send).with(cmd).and_return(@dummy_response)
+    @client.save('file:///another/location').should == @dummy_response
   end
   it 'should copy a row' do
     cmd = {"command"=>"copy_row","path"=>@path,"payload"=>{"sheet"=>0,"source_row"=>1,"destination_row"=>3}}

@@ -11,6 +11,8 @@ require 'open_chain/custom_handler/polo_sap_bom_handler'
 require 'open_chain/custom_handler/under_armour/ua_tbd_report_parser'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
+require 'open_chain/custom_handler/lands_end/le_returns_parser'
+require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -24,6 +26,8 @@ class CustomFeaturesController < ApplicationController
   POLO_CA_INVOICES = 'OpenChain::CustomHandler::Polo::PoloCaInvoiceHandler'
   POLO_SAP_BOM = 'OpenChain::CustomHandler::PoloSapBomHandler'
   UA_TBD_REPORT_PARSER = 'OpenChain::CustomHandler::UnderArmour::UaTbdReportParser'
+  LE_RETURNS_PARSER = 'OpenChain::CustomHandler::LandsEnd::LeReturnsParser'
+  LE_CI_UPLOAD = 'OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator'
 
   def index
     render :layout=>'one_col'
@@ -387,6 +391,69 @@ class CustomFeaturesController < ApplicationController
   def eddie_fenix_ci_load_download
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),EDDIE_CI_UPLOAD,{:verb=>"download",:module_name=>"Eddie Bauer Fenix Commerical Invoice Upload",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def le_returns_index
+    action_secure(OpenChain::CustomHandler::LandsEnd::LeReturnsParser.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Lands' End Returns Upload",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>LE_RETURNS_PARSER).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def le_returns_upload
+    f = CustomFile.new(:file_type=>LE_RETURNS_PARSER,:uploaded_by=>current_user,:attached=>params[:attached])
+    action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Lands' End Returns Upload",:lock_check=>false}) {
+      if params[:attached].nil?
+        add_flash :errors, "You must select a file to upload." 
+      elsif f.save
+        f.delay.process(current_user)
+        add_flash :notices, "Your file is being processed.  You'll receive an email with a merged product worksheet when it's done."
+      else
+        errors_to_flash f
+      end
+      redirect_to '/custom_features/le_returns'
+    }
+  end
+
+  def le_returns_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),LE_RETURNS_PARSER,{:verb=>"download",:module_name=>"Lands' End Returns Upload",:lock_check=>false}) {
+      redirect_to f.secure_url
+    }
+  end
+
+  def le_ci_load_index
+    action_secure(OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator.new(nil).can_view?(current_user),CommercialInvoice,{:verb=>"view",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
+      @files = CustomFile.where(:file_type=>LE_CI_UPLOAD).order('created_at DESC').paginate(:per_page=>20,:page=>params[:page])
+      render :layout => 'one_col'
+    }
+  end
+
+  def le_ci_load_upload
+    if params[:file_number].blank?
+      add_flash :errors, "You must enter a File Number."
+      redirect_to '/custom_features/le_ci_load'
+    else
+      f = CustomFile.new(:file_type=>LE_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
+      action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
+        if params[:attached].nil?
+          add_flash :errors, "You must select a file to upload." 
+        elsif f.save
+          OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator.new(f).delay.generate_and_email current_user, params[:file_number]
+          add_flash :notices, "Your file is being processed.  You'll receive an email with the CI Load file when it's done."
+        else
+          errors_to_flash f
+        end
+        redirect_to '/custom_features/le_ci_load'
+      }
+    end
+  end
+
+  def le_ci_load_download
+    f = CustomFile.find params[:id] 
+    action_secure(f.can_view?(current_user),LE_CI_UPLOAD,{:verb=>"download",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
       redirect_to f.secure_url
     }
   end
