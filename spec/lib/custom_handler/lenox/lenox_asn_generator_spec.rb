@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         expect(row[64,10].rstrip).to eq '40'
         expect(row[74,10]).to eq '0000050000' #weight
         expect(row[84,10].rstrip).to eq 'KG'
-        expect(row[94,7]).to eq '0000070' # CBMs
+        expect(row[94,7]).to eq '0070000' # CBMs
         expect(row[101,18].rstrip).to eq 'VES'
         expect(row[119]).to eq 'Y' #fcl flag
         expect(row[120,7]).to eq '0000023' #carton count
