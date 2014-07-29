@@ -44,6 +44,12 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
       expect(o.entity_snapshots.count).to eq 1
     end
+    it "should set mode to Ocean for 'B'" do
+      dom = REXML::Document.new(IO.read(@path))
+      REXML::XPath.each(dom.root,'//TD504') {|el| el.text = 'B'}
+      described_class.parse_dom dom
+      expect(Order.first.mode).to eq 'Ocean'
+    end
 
     it "should auto assign agent if only one exists" do
       agent = Factory(:company,agent:true)

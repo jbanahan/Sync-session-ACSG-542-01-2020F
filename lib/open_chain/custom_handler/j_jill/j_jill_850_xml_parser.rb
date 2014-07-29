@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   include OpenChain::CustomHandler::JJill::JJillCustomDefinitionSupport  
   extend OpenChain::IntegrationClientParser
 
-  SHIP_MODES ||= {'A'=>'Air','O'=>'Ocean'}
+  SHIP_MODES ||= {'A'=>'Air','B'=>'Ocean'}
   def self.integration_folder
     ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
   end
