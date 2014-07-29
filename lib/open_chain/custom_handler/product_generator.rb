@@ -10,7 +10,7 @@ module OpenChain
     #
     # If subclass implements `auto_confirm?` and returns false, the sync records will not automatically be marked as confirmed
     #
-    # Subclass must implement `query` ande return a string representing the sql query to build the grid that will become the output file.  
+    # Subclass must implement `query` and return a string representing the sql query to build the grid that will become the output file.  
     # The `query` method should check for a @custom_where variable to override the where clause of the query in case someone needs to run the generator for a specific product set
     # The first column in the query MUST be the products.id and will not be output in the file.
     #
