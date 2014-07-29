@@ -27,11 +27,12 @@
   <div class="row">
     <div class="col-md-6">
       <%=field_bootstrap field_label(:ord_ord_num), f.text_field(:order_number, "class" => "focus_first form-control") %>
-      <%=field_bootstrap field_label(:ord_cust_ord_no), f.text_field(:customer_order_number, "class" => "focus_first form-control") %>
+      <%=field_bootstrap field_label(:ord_cust_ord_no), f.text_field(:customer_order_number, "class" => "form-control") %>
       <%=field_bootstrap field_label(:ord_approval_status), f.select(:approval_status, ['Accepted','Rejected'], {include_blank:''}, {class:'form-control'}) %>
       <%=field_bootstrap field_label(:ord_ven_name), f.collection_select(:vendor_id, @order.importer ? @order.importer.linked_companies.vendors : [], :id, :name, {:prompt => "Select a vendor"}, {class:'form-control'}) %>
       <%=field_bootstrap field_label(:ord_agent_name), f.collection_select(:agent_id, @order.available_agents, :id, :name, {:prompt => 'Select an agent'}, {class:'form-control'})%>
       <%=field_bootstrap field_label(:ord_div_name), f.collection_select(:division_id, @order.importer ? @order.importer.divisions.order(:name) : [], :id, :name, options ={:prompt => "Select a division"}, {class:'form-control'})%>
+      <%=field_bootstrap field_label(:ord_fob_point), f.text_field(:fob_point, "class" => "form-control") %>
     </div>
     <div class="col-md-6">
       <%=field_bootstrap field_label(:ord_ord_date), f.text_field(:order_date, "class" => "isdate form-control") %>

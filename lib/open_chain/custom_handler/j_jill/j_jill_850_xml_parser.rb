@@ -14,14 +14,16 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   end
 
   def self.parse data, opts={}
-    parse_dom REXML::Document.new(data)
+    parse_dom REXML::Document.new(data), opts
   end
 
-  def self.parse_dom dom
-    self.new.parse_dom dom
+  def self.parse_dom dom, opts={}
+    self.new(opts).parse_dom dom
   end
 
-  def initialize
+  def initialize opts={}
+    @inner_opts = {force_header_updates:false}
+    @inner_opts = @inner_opts.merge opts
     @jill = Company.find_by_system_code UID_PREFIX
     @user = User.find_by_username('integration')
     @cdefs = self.class.prep_custom_definitions [:vendor_style]
@@ -42,11 +44,37 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
     ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
     
+    update_lines = true
+    update_header = true
     #skip orders already on shipments    
-    return if ord && ord.piece_sets.where("shipment_line_id is not null").count > 0
+    if ord && ord.piece_sets.where("shipment_line_id is not null").count > 0
+      update_header = @inner_opts[:force_header_updates]
+      update_lines = false
+    end
 
     ord = Order.new(importer_id:@jill.id,order_number:ord_num) unless ord
     return if ord.last_exported_from_source && ord.last_exported_from_source > extract_date
+
+    if update_header
+      update_order_header ord, extract_date, cust_ord, order_root 
+      agents = ord.available_agents
+      ord.agent = agents.first if agents.size == 1
+    end
+    
+    if update_lines
+      ord.order_lines.destroy_all
+      parse_lines ord, order_root
+    end
+
+    if update_header || update_lines
+      ord.save! 
+      EntitySnapshot.create_from_entity ord, @user
+    end
+  end
+
+  private
+
+  def update_order_header ord, extract_date, cust_ord, order_root
     ord.last_exported_from_source = extract_date
     ord.last_revised_date = extract_date
     ord.customer_order_number = cust_ord
@@ -54,19 +82,9 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     ord.vendor = find_or_create_vendor refs['VN']
     ord.order_date = parse_date_string(REXML::XPath.first(order_root,'BEG/BEG05').text)
     ord.mode = ship_mode(REXML::XPath.first(order_root,'TD5/TD504').text)
-
+    ord.fob_point = REXML::XPath.first(order_root,'FOB/FOB07').text
     parse_header_dtm(order_root,ord)
-    
-    ord.order_lines.destroy_all
-    parse_lines ord, order_root
-
-    agents = ord.available_agents
-    ord.agent = agents.first if agents.size == 1
-    ord.save!
-    EntitySnapshot.create_from_entity ord, @user
   end
-
-  private
   def parse_lines order, order_root
     line_number = 1
     REXML::XPath.each(order_root,'GROUP_11') do |group_el|

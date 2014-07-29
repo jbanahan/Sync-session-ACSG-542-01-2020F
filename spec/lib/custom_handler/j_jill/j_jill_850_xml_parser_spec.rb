@@ -29,6 +29,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.last_exported_from_source.strftime("%Y%m%d%H%M")).to eq '201404142308'
       expect(o.last_revised_date).to eq Date.new(2014,4,14)
       expect(o.mode).to eq 'Air'
+      expect(o.fob_point).to eq 'VN'
 
       expect(o.order_lines.count).to eq 3
       ol1 = o.order_lines.first
@@ -100,6 +101,20 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       o.reload
       expect(o.order_lines.to_a).to eq [ol]
       expect(o.updated_at.to_i).to eq u.to_i
+    end
+    it "should update order header when force_header_updates = true and order on shipment" do
+      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-7800374')
+      ol = Factory(:order_line,order:o)
+      s = Factory(:shipment)
+      sl = s.shipment_lines.build(product_id:ol.product_id,quantity:1)
+      sl.linked_order_line_id = ol.id
+      sl.save!
+
+      described_class.parse(IO.read(@path),{force_header_updates:true})
+
+      o.reload
+      expect(o.order_lines.to_a).to eq [ol]
+      expect(o.fob_point).to eq 'VN'
     end
   end
 end

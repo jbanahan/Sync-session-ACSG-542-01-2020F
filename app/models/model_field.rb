@@ -1445,7 +1445,8 @@ and classifications.product_id = products.id
         [9,:ord_approval_status,:approval_status,'Approval Status'],
         [10,:ord_window_start,:ship_window_start,'Ship Window Start Date',{data_type: :date}],
         [11,:ord_window_end,:ship_window_end,'Ship Window End Date',{data_type: :date}],
-        [12,:ord_first_exp_del,:first_expected_delivery_date,'First Expected Delivery Date',{data_type: :date}]
+        [12,:ord_first_exp_del,:first_expected_delivery_date,'First Expected Delivery Date',{data_type: :date}],
+        [13,:ord_fob_point,:fob_point,'FOB Point',{data_type: :string}]
       ]
       add_fields CoreModule::ORDER, make_vendor_arrays(100,"ord","orders")
       add_fields CoreModule::ORDER, make_ship_to_arrays(200,"ord","orders")
