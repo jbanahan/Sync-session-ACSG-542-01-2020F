@@ -1,12 +1,16 @@
 module OpenChain
   module CustomHandler
     class FenixProductFileGenerator
+      include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+
       def initialize(fenix_customer_code, importer_id = nil, use_part_number = false, additional_where = nil) 
         @fenix_customer_code = fenix_customer_code
         @canada_id = Country.find_by_iso_code('CA').id
         @importer_id = importer_id
         @use_part_number = use_part_number
         @additional_where = additional_where
+
+        @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number]
       end
 
       #automatcially generate file and ftp for trading partner "fenix-#{fenix_customer_code}"
@@ -36,10 +40,10 @@ module OpenChain
           c = p.classifications.find_by_country_id(@canada_id)
           next unless c
           c.tariff_records.each do |tr|
-            t << "N#{"".ljust(14)}#{force_fixed @fenix_customer_code, 9}#{"".ljust(7)}#{force_fixed identifier_field(p),40}#{tr.hts_1.ljust(10)}\r\n" unless tr.hts_1.blank?
+            t << file_output(@fenix_customer_code, p, tr) unless tr.hts_1.blank?
           end
-          sr = p.sync_records.find_by_trading_partner("fenix-#{@fenix_customer_code}")
-          sr = p.sync_records.build(:trading_partner=>"fenix-#{@fenix_customer_code}") unless sr
+
+          sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
           sr.sent_at = Time.now
           sr.confirmed_at = 1.second.from_now
           sr.confirmation_file_name = "Fenix Confirmation"
@@ -60,20 +64,27 @@ module OpenChain
       end
       
       private
-      def force_fixed str, len
-        return str.ljust(len) if str.length <= len
-        str[0,len]
-      end
+        def file_output fenix_customer_code, p, tr
+          line = "N#{"".ljust(14)}#{force_fixed(fenix_customer_code, 9)}#{"".ljust(7)}#{force_fixed identifier_field(p),40}#{tr.hts_1.ljust(10)}"
+          # The country of origin field starts at zero-indexed position 359..add spacing to accomodate
+          line += "".ljust(359 - line.length)
+          line += force_fixed(p.get_custom_value(@cdefs[:prod_country_of_origin]).value.to_s, 3)
 
-      def identifier_field p
-        if @use_part_number
-          @part_number_def ||= CustomDefinition.find_by_label_and_module_type("Part Number","Product")
-
-          p.get_custom_value(@part_number_def).value
-        else
-          p.unique_identifier
+          line += "\r\n"
         end
-      end
+
+        def force_fixed str, len
+          return str.ljust(len) if str.length <= len
+          str[0,len]
+        end
+
+        def identifier_field p
+          if @use_part_number
+            p.get_custom_value(@cdefs[:prod_part_number]).value
+          else
+            p.unique_identifier
+          end
+        end
 
     end
   end

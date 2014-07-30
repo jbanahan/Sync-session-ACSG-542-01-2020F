@@ -55,15 +55,25 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @t.unlink if @t
     end
     it "should generate output file with given products" do
-      @t = @h.make_file [@p] 
-      IO.read(@t.path).should == "#{"N".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"myuid".ljust(40)}1234567890\r\n"
+      coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
+      @p.update_custom_value! coo_def, "CN"
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read[0, 15]).to eq "N".ljust(15)
+      expect(read[15, 9]).to eq @code.ljust(9)
+      expect(read[31, 40]).to eq "myuid".ljust(40)
+      expect(read[71, 20]).to eq "1234567890".ljust(20)
+      expect(read[359, 3]).to eq "CN "
+      expect(read).to end_with "\r\n"
     end
     it "should generate output file using part number" do
-      pn_def = CustomDefinition.create! label: "Part Number", module_type: "Product", data_type: "string"
-      @p.update_custom_value! pn_def, "ABC123"
       @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, nil, true)
-      @t = @h.make_file [@p] 
-      IO.read(@t.path).should == "#{"N".ljust(15)}#{@code.ljust(9)}#{"".ljust(7)}#{"ABC123".ljust(40)}1234567890\r\n"
+      pn_def = CustomDefinition.where(label: "Part Number", module_type: "Product", data_type: "string").first
+      @p.update_custom_value! pn_def, "ABC123"
+
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read[31, 40]).to eq "ABC123".ljust(40)
     end
     it "should write sync records with dummy confirmation date" do
       @t = @h.make_file [@p] 
@@ -72,14 +82,6 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       sr = @p.sync_records.find_by_trading_partner("fenix-#{@code}")
       sr.sent_at.should < sr.confirmed_at
       sr.confirmation_file_name.should == "Fenix Confirmation"
-    end
-    it "should use CRLF line breaks" do
-      p2 = Factory(:product,:unique_identifier=>'myuid2')
-      c = p2.classifications.create!(:country_id=>@canada.id)
-      t = c.tariff_records.create!(:hts_1=>'1234567890')
-      @t = @h.make_file [@p,p2]
-      x = IO.read @t.path
-      x.index("\r\n").should == 81
     end
   end
 
