@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     ActiveRecord::Base.transaction do
       r = dom.root
       extract_date = parse_extract_date r
-      r.each_element('TS_850') {|el| parse_order el, extract_date}
+      r.each_element('//TRANSACTION_SET') {|el| parse_order el, extract_date}
     end
   end
 
@@ -132,8 +132,8 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   end
 
   def parse_extract_date root
-    date = REXML::XPath.first(root,'GS/GS04').text
-    time = REXML::XPath.first(root,'GS/GS05').text
+    date = REXML::XPath.first(root,'INTERCHANGE/GROUP/GS/GS04').text
+    time = REXML::XPath.first(root,'INTERCHANGE/GROUP/GS/GS05').text
     Time.gm(date[0,4],date[4,2],date[6,2],time[0,2],time[2,2])
   end
 
