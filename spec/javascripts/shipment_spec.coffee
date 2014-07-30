@@ -195,7 +195,7 @@ describe 'ShipmentApp', () ->
             this
         }
         spyOn(svc,'addOrderToShipment')
-        scope.addOrder(shp,baseOrd)
+        scope.addOrder(shp,baseOrd,container_to_pack)
         expect(svc.getOrder).toHaveBeenCalledWith(2)
         expect(svc.addOrderToShipment).toHaveBeenCalledWith(shp,respOrd,container_to_pack)
         expect(scope.viewMode).toEqual 'shp'

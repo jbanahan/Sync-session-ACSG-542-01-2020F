@@ -39,12 +39,20 @@ shipmentApp.factory 'shipmentSvc', ['$http',($http) ->
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
     #create shipment lines for all lines on the given order
-    addOrderToShipment: (shp, ord) ->
+    addOrderToShipment: (shp, ord, container_to_pack) ->
       shp.lines = [] if shp.lines==undefined
       nextLineNumber = maxVal(shp.lines,'shpln_line_number',0) + 1
       return shp unless ord.lines
       for oln in ord.lines
-        shp.lines.push {shpln_line_number:nextLineNumber,shpln_puid:oln.ordln_puid,shpln_pname:oln.ordln_pname,linked_order_line_id:oln.id,order_lines:[{ord_cust_ord_no:ord.ord_cust_ord_no,ordln_line_number:oln.ordln_line_number}]}
+        sl = {
+          shpln_line_number:nextLineNumber,
+          shpln_puid:oln.ordln_puid,
+          shpln_pname:oln.ordln_pname,
+          linked_order_line_id:oln.id,
+          order_lines:[{ord_cust_ord_no:ord.ord_cust_ord_no,ordln_line_number:oln.ordln_line_number}]
+        }
+        sl.shpln_container_uid = container_to_pack.id if container_to_pack
+        shp.lines.push sl
         nextLineNumber = nextLineNumber + 1
       shp
   }
@@ -75,6 +83,7 @@ shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentS
     shipmentSvc.getShipment(id).success((data) ->
       $scope.shp = data.shipment
       $scope.loading = false
+      $scope.hasNewContainer = false
     ).error((data) ->
       $scope.errorMessage = data.errors.join("<br />")
       $scope.loading = false
@@ -87,12 +96,15 @@ shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentS
       $scope.shp = data.shipment
       $scope.loading = false
       $scope.notificationMessage = "Shipment saved."
+      $scope.hasNewContainer = false
     ).error((data) ->
       $scope.errorMessage = data.errors.join("<br />")
       $scope.loading = false
     )
 
   $scope.addContainer = (shipment) ->
+    $scope.hasNewContainer = true
+    shipment.containers = [] unless shipment.containers
     shipment.containers.push({isNew:true})
 
   $scope.enableOrderSelection = ->
@@ -104,10 +116,10 @@ shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentS
       $scope.errorMessage = data.errors.join("<br />")
     )
 
-  $scope.addOrder = (shp,ord) ->
+  $scope.addOrder = (shp,ord,container_to_pack) ->
     shipmentSvc.getOrder(ord.id).success((data) ->
       fullOrder = data.order
-      shipmentSvc.addOrderToShipment(shp,fullOrder)
+      shipmentSvc.addOrderToShipment(shp,fullOrder,container_to_pack)
       $scope.viewMode = 'shp'
       $scope.notificationMessage = 'Order added.'
     ).error((data) ->
