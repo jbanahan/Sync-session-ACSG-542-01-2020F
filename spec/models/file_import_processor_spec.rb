@@ -138,6 +138,28 @@ describe FileImportProcessor do
       pro.do_row 0, ['uid-abc','name', false], true, -1
       expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to be_false
     end
+    it "should set boolean custom value to true w/ text of '1'" do
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+      ])
+      pro.do_row 0, ['uid-abc','name', "1"], true, -1
+      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to eq true
+    end
+    it "should set boolean custom value to false w/ text of '0'" do
+      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
+      pro = FileImportProcessor.new(@f,nil,[])
+      pro.stub(:get_columns).and_return([
+        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+      ])
+      pro.do_row 0, ['uid-abc','name', "0"], true, -1
+      expect(Product.find_by_unique_identifier('uid-abc').get_custom_value(cd).value).to eq false
+    end
     it "should not unset boolean custom values when nil value is present" do
       prod = Factory(:product, unique_identifier: 'uid-abc')
       cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")

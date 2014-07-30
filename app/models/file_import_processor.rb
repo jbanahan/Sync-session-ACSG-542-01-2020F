@@ -182,9 +182,9 @@ class FileImportProcessor
   def get_boolean_value  data
     if !data.nil? && data.to_s.length>0
       dstr = data.to_s.downcase.strip
-      if ["y","t"].include?(dstr[0])
+      if ["y","t", "1"].include?(dstr[0])
         return true
-      elsif ["n","f"].include?(dstr[0])
+      elsif ["n","f", "0"].include?(dstr[0])
         return false
       end
     end
