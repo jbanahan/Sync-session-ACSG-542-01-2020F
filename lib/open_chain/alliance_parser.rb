@@ -151,6 +151,7 @@ module OpenChain
           @entry.departments = accumulated_string :departments
           set_fcl_lcl_value if @accumulated_strings[:fcl_lcl]
           set_importer_id
+          sum_invoice_values @entry
 
           @entry.save!
           #set time to process in milliseconds without calling callbacks
@@ -746,6 +747,19 @@ module OpenChain
     end
     def parse_boolean str
       str=='Y'
+    end
+
+    def sum_invoice_values entry
+      entry.total_cvd = BigDecimal.new(0)
+      entry.total_add = BigDecimal.new(0)
+
+      entry.commercial_invoices.each do |inv|
+        inv.commercial_invoice_lines.each do |line|
+          entry.total_cvd += (line.cvd_duty_amount || 0)
+          entry.total_add += (line.add_duty_amount || 0)
+        end
+      end
+      nil
     end
   end
 end
