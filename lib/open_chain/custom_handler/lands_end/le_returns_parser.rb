@@ -119,7 +119,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
     end
 
     def matching_product_data part_number, country_origin
-      @importer ||= Company.where(alliance_customer_number: 'LANDS').importers.first
+      @importer ||= Company.where(system_code: 'LERETURNS').importers.first
       raise "Missing Lands End Importer account." unless @importer
 
       products = Product.where(importer_id: @importer.id).
