@@ -126,7 +126,7 @@ LEFT OUTER JOIN containers on containers.id = shipment_lines.container_id
 WHERE
 shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND
-shipments.delivered_date > DATE_ADD(now(), INTERVAL 12 MONTH)
+shipments.delivered_date > DATE_ADD(now(), INTERVAL -12 MONTH)
 GROUP BY shipments.id    
 QRY
   end
