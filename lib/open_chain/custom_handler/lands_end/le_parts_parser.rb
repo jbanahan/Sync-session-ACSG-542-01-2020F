@@ -15,11 +15,11 @@ module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser
     parser.process_file
   end
 
-  def initialize xl_client, alliance_customer_number = "LANDS"
+  def initialize xl_client, system_code = "LERETURNS"
     @xl_client = xl_client
     @cdefs = self.class.prep_custom_definitions [:part_number, :suffix_indicator, :exception_code, :suffix, :comments]
-    @importer = Company.where(alliance_customer_number: alliance_customer_number).importers.first
-    raise "Invalid importer account #{alliance_customer_number}." unless @importer
+    @importer = Company.where(system_code: system_code).importers.first
+    raise "Invalid importer system code #{system_code}." unless @importer
   end
 
   def process_file
@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser
     @us ||= Country.where(iso_code: "US").first
 
     # The unique identifier for the products has to be the first 4 columns of the file
-    id = unique_identifier @importer.alliance_customer_number, row
+    id = unique_identifier @importer.system_code, row
     prod = Product.where(unique_identifier: id, importer_id: @importer.id).first_or_create!
     Lock.with_lock_retry(prod) do 
       us_classification = prod.classifications.where(country_id: @us.id).first_or_create!

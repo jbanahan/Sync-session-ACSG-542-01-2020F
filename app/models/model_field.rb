@@ -1090,6 +1090,8 @@ and classifications.product_id = products.id
         [146,:ent_worksheeet_date,:worksheet_date,"Worksheet Date",{:data_type=>:date}],
         [147,:ent_available_date,:available_date,"Available Date",{:data_type=>:date}],
         [148,:ent_departments, :departments, "Departments", {:data_type=>:text}],
+        [149,:ent_total_add, :total_add, "Total ADD", {:data_type=>:decimal,:currency=>:usd}],
+        [150,:ent_total_cvd, :total_cvd, "Total CVD", {:data_type=>:decimal,:currency=>:usd}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

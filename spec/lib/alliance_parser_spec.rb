@@ -499,6 +499,9 @@ describe OpenChain::AllianceParser do
     expected_inv_numbers = Set.new
     expected_departments = Set.new
     
+    total_cvd = 0
+    total_add = 0
+
     @commercial_invoices.each do |ci| 
       invoices = ent.commercial_invoices.where(:invoice_number=>ci[:invoice_number])
       invoices.should have(1).item
@@ -579,6 +582,7 @@ describe OpenChain::AllianceParser do
           ci_line.add_case_number.should == add[:case_number]
           ci_line.add_bond.should == (add[:bond] == "Y")
           ci_line.add_duty_amount.should == add[:amount]
+          total_add += add[:amount]
           ci_line.add_case_value.should == add[:value]
           ci_line.add_case_percent.should == add[:percent]
         end
@@ -589,6 +593,7 @@ describe OpenChain::AllianceParser do
           ci_line.cvd_case_number.should == cvd[:case_number]
           ci_line.cvd_bond.should == (cvd[:bond] == "Y")
           ci_line.cvd_duty_amount.should == cvd[:amount]
+          total_cvd += cvd[:amount]
           ci_line.cvd_case_value.should == cvd[:value]
           ci_line.cvd_case_percent.should == cvd[:percent]
         end
@@ -618,6 +623,8 @@ describe OpenChain::AllianceParser do
     ent.special_program_indicators.split(@split_string).should == expected_spis.to_a
     ent.commercial_invoice_numbers.split(@split_string).should == expected_inv_numbers.to_a
     ent.departments.split(@split_string).should == expected_departments.to_a
+    ent.total_cvd.should == total_cvd 
+    ent.total_add.should == total_add
 
     ent.time_to_process.should < 1000 
     ent.time_to_process.should > 0

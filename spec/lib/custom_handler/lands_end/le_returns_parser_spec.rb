@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
   describe "parse" do
     before :each do
-      @le = Factory(:company, importer: true, alliance_customer_number: "LANDS")
+      @le = Factory(:company, importer: true, system_code: "LERETURNS")
       @part_number = 'part_number'
       @coo = "CO"
       @header = ["header", "header"]

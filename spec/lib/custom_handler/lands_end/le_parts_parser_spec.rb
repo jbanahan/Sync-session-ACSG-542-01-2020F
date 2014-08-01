@@ -3,7 +3,7 @@ require 'spec_helper'
 describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
   before :each do
-    @importer = Factory(:company, alliance_customer_number: "LANDS", importer: true)
+    @importer = Factory(:company, system_code: "LERETURNS", importer: true)
     @us = Factory(:country, iso_code: "US")
     @cdefs = described_class.prep_custom_definitions described_class::CUSTOM_DEFINITION_INSTRUCTIONS.keys
   end
@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
         prod.reload
 
-        expect(prod.unique_identifier).to eq "LANDS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}"
+        expect(prod.unique_identifier).to eq "LERETURNS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}"
         us_class = prod.classifications.first
         expect(us_class).to_not be_nil
         expect(us_class.country.iso_code).to eq "US"
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       end
 
       it "updates an existing product" do
-        exist = Factory(:product, unique_identifier: "LANDS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer: @importer)
+        exist = Factory(:product, unique_identifier: "LERETURNS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer: @importer)
         c = exist.classifications.create! country: @us
         c.tariff_records.create! hts_1: "9876354321"
 
@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       end
 
       it "updates an existing product adding existing factory" do
-        exist = Factory(:product, unique_identifier: "LANDS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer: @importer)
+        exist = Factory(:product, unique_identifier: "LERETURNS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer: @importer)
         factory = Factory(:address, company: @importer, system_code: @row[4])
 
         prod = described_class.new(nil).process_product_line @row
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
       it "does not add an existing factory to a product" do
         factory = Factory(:address, company: @importer, system_code: @row[4])
-        exist = Factory(:product, unique_identifier: "LANDS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer: @importer, factories: [factory])
+        exist = Factory(:product, unique_identifier: "LERETURNS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer: @importer, factories: [factory])
         
         prod = described_class.new(nil).process_product_line @row
         expect(prod.factories.size).to eq 1
@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
         described_class.new(@xl_client).process_file
 
         # Just make sure a product was created
-        expect(Product.where(unique_identifier: "LANDS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer_id: @importer.id).first).to_not be_nil
+        expect(Product.where(unique_identifier: "LERETURNS-#{@row[0]}-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer_id: @importer.id).first).to_not be_nil
       end
 
       it "stringifies all values yielded" do
@@ -103,7 +103,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
         @xl_client.should_receive(:all_row_values).and_yield(["Header"]).and_yield @row
         described_class.new(@xl_client).process_file
-        expect(Product.where(unique_identifier: "LANDS-12-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer_id: @importer.id).first).to_not be_nil
+        expect(Product.where(unique_identifier: "LERETURNS-12-#{@row[1]}-#{@row[2]}-#{@row[3]}", importer_id: @importer.id).first).to_not be_nil
       end
     end
   end
@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
   describe "initialize" do
     it "raises an error if importer account isn't present" do
-      expect {described_class.new nil, 'BLAH'}.to raise_error "Invalid importer account BLAH."
+      expect {described_class.new nil, 'BLAH'}.to raise_error "Invalid importer system code BLAH."
     end
   end
 end
