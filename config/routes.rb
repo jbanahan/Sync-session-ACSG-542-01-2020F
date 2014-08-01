@@ -283,6 +283,9 @@ OpenChain::Application.routes.draw do
   match "/reports/run_hm_ok_log" => "reports#run_hm_ok_log", :via => :post
   match "/reports/show_deferred_revenue" => "reports#show_deferred_revenue", :via => :get
   match "/reports/run_deferred_revenue" => "reports#run_deferred_revenue", :via => :post
+  match "/reports/show_j_jill_weekly_freight_summary" => "reports#show_j_jill_weekly_freight_summary", :via=>:get
+  match "/reports/run_j_jill_weekly_freight_summary" => "reports#run_j_jill_weekly_freight_summary", :via=>:post
+
 
   resources :report_results, :only => [:index,:show] do 
     get 'download', :on => :member

@@ -1,0 +1,7 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>J Jill Weekly Freight Summary</h2>
+<%=form_tag reports_run_j_jill_weekly_freight_summary_path, :id=>'frm_run' do -%>
+<%end%>

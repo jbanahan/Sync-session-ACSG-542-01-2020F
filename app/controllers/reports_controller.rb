@@ -180,6 +180,17 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_j_jill_weekly_freight_summary
+    if OpenChain::Report::JJillWeeklyFreightSummaryReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+  def run_j_jill_weekly_freight_summary
+    run_report "J Jill Weekly Freight Summary", OpenChain::Report::JJillWeeklyFreightSummaryReport, {}, []
+  end  
+
   def show_kitchencraft_billing
     if OpenChain::Report::KitchenCraftBillingReport.permission? current_user
       render

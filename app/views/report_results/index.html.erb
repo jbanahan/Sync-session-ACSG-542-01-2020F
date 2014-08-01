@@ -62,6 +62,10 @@
     <tr class='hover'><td><%=link_to "Foot Locker CA Billing Summary", reports_show_foot_locker_ca_billing_summary_path%></td>
     <td>Foot Locker CA Billing Summary report.</td</tr>
   <%end-%>
+  <%if OpenChain::Report::JJillWeeklyFreightSummaryReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "J Jill Weekly Freight Summary", reports_show_j_jill_weekly_freight_summary_path%></td>
+    <td>J Jill Weekly Freight Summary report.</td</tr>
+  <%end-%>
   <%if OpenChain::Report::MarcJacobsFreightBudget.permission? current_user-%>
     <tr class='hover'><td><%=link_to "Marc Jacobs Freight Budget", reports_show_marc_jacobs_freight_budget_path%></td>
     <td>Marc Jacobs Monthly Freight Budget</td></tr>
