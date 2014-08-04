@@ -109,6 +109,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     end
     h
   end
+
+  #override api_controller method to pre-load lines
+  def find_object_by_id id
+    Shipment.where(id:id).includes({shipment_lines: :piece_sets},:containers).first
+  end
   private
   #return hash with extra order line fields
   def render_order_fields shipment_line
