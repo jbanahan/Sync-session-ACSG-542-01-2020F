@@ -95,6 +95,7 @@ WHERE
 orders.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND (orders.approval_status = 'Accepted')
 AND DATEDIFF(orders.ship_window_end,now()) < 14
+AND (orders.fob_point IN ('VN','PH','ID'))
 GROUP BY orders.id
 ) x WHERE x.shipmentlines = 0    
 QRY
@@ -141,10 +142,10 @@ GROUP_CONCAT(DISTINCT vendor.name SEPARATOR ', ') as 'Vendor',
 shipments.est_departure_date,
 shipments.est_arrival_port_date,
 GROUP_CONCAT(DISTINCT (select string_value from custom_values where custom_definition_id = (select id from custom_definitions where label = 'Vendor Style' and module_type = 'Product') and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style', 
-shipment_lines.carton_qty as 'Cartons',
-shipment_lines.quantity as 'Pieces',
-shipment_lines.gross_kgs as 'Gross Weight',
-shipment_lines.cbms as 'CBMs',
+sum(shipment_lines.carton_qty) as 'Cartons',
+sum(shipment_lines.quantity) as 'Pieces',
+sum(shipment_lines.gross_kgs) as 'Gross Weight',
+sum(shipment_lines.cbms) as 'CBMs',
 SUM(shipment_lines.quantity * order_lines.price_per_unit) as 'Value',
 shipments.cargo_on_hand_date as 'Freight Received',
 shipments.departure_date as 'Departure Date',
