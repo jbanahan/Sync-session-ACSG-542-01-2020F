@@ -83,8 +83,8 @@ module OpenChain
             Product.transaction do
               ActiveRecord::Base.connection.execute "DELETE FROM sync_records where trading_partner = \"#{sync_code}\" and syncable_id IN (#{uids.join(",")}); "
               inserts = uids.collect do |y|
-                fp = synced_products[y]
-                "(#{y},\"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\",#{has_fingerprint ? "\"#{fp}\"" : 'null'})"
+                fp = ActiveRecord::Base.sanitize synced_products[y]
+                "(#{y},\"Product\",now()#{auto_confirm? ? ',now() + INTERVAL 1 MINUTE' : ''},now(),now(),\"#{sync_code}\",#{has_fingerprint ? fp : 'null'})"
               end
               ActiveRecord::Base.connection.execute "INSERT INTO sync_records (syncable_id,syncable_type,sent_at#{auto_confirm? ? ',confirmed_at' : ''},updated_at,created_at,trading_partner,fingerprint)
                 VALUES #{inserts.join(",")}; "

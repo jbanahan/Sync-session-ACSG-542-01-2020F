@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       r
     end
     it "should get new record" do
-      p = Factory(:product,unique_identifier:'UID',name:'NM')
+      p = Factory(:product,unique_identifier:'UID',name:'NM',updated_at:1.day.ago)
       p.update_custom_value!(@cdefs[:merch_division],'MD')
       p.update_custom_value!(@cdefs[:fiber_content],'FC')
       p.update_custom_value!(@cdefs[:csm_numbers],'CSM')
@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       expect(p.sync_records.find_by_trading_partner("eu_fiber_content").fingerprint).to eq 'FC'
     end
     it "should get changed record" do
-      p = Factory(:product,unique_identifier:'UID',name:'NM')
+      p = Factory(:product,unique_identifier:'UID',name:'NM',updated_at:1.second.ago)
       p.update_custom_value!(@cdefs[:merch_division],'MD')
       p.update_custom_value!(@cdefs[:fiber_content],'FC')
       p.update_custom_value!(@cdefs[:csm_numbers],'CSM')
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       expect(p.sync_records.find_by_trading_partner("eu_fiber_content").fingerprint).to eq 'FC'
     end
     it "should not get record not changed" do
-      p = Factory(:product,unique_identifier:'UID',name:'NM')
+      p = Factory(:product,unique_identifier:'UID',name:'NM',updated_at:1.day.ago)
       p.update_custom_value!(@cdefs[:merch_division],'MD')
       p.update_custom_value!(@cdefs[:fiber_content],'FC')
       p.update_custom_value!(@cdefs[:csm_numbers],'CSM')
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::Polo::PoloEuFiberContentGenerator do
       expect(do_sync).to eq []
     end
     it "should not get record without Italy HTS 1" do
-      p = Factory(:product,unique_identifier:'UID',name:'NM')
+      p = Factory(:product,unique_identifier:'UID',name:'NM',updated_at:1.day.ago)
       p.update_custom_value!(@cdefs[:merch_division],'MD')
       p.update_custom_value!(@cdefs[:fiber_content],'FC')
       p.update_custom_value!(@cdefs[:csm_numbers],'CSM')
