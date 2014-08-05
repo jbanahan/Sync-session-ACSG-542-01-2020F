@@ -1,6 +1,6 @@
 class UserSessionsController < ApplicationController
   skip_before_filter :require_user, :only => [:create, :new, :destroy, :create_from_omniauth]
-  protect_from_forgery :except => :create
+  protect_from_forgery :except => [:create, :create_from_omniauth]
 
   def index
     if current_user
@@ -28,25 +28,34 @@ class UserSessionsController < ApplicationController
   end
 
   def create_from_omniauth
-    user = User.from_omniauth(env["omniauth.auth"])
-    unless user.nil?
-      session[:user_id] = user.id
-      handle_sign_in(user)
+    # The omniauth.auth env object is set by the omniauth rack middleware, set up
+    # in the omniauth.rb initializer.
+    # provider request param comes from the url segment /auth/:provider/callback
+    user_info = User.from_omniauth(params[:provider], request.env["omniauth.auth"])
+
+    if user_info[:user]
+      handle_sign_in(user_info[:user])
     else
-      flash[:errors] = ["This Google email account has not been enabled in VFI Track."]
+      session.delete :user_id
+      if user_info[:errors]
+        user_info[:errors].each {|e| add_flash :errors, e}
+      end
+      
       redirect_to login_path
-    end                                                                                                             
+    end                                                                                   
   end
 
   def handle_sign_in(user)
     sign_in(user) do |status|
       if status.success?
+        session[:user_id] = user.id
         user.on_successful_login request
         respond_to do |format|
           format.html { redirect_back_or_default(:root) }
           format.json { head :ok }
         end
       else
+        session.delete :user_id
         error = "Your login was not successful."
         respond_to do |format|
           format.html {
@@ -76,7 +85,7 @@ class UserSessionsController < ApplicationController
       # The only real way to implement this is via the cookie expiration callback Clearance uses, which has access
       # to the browser cookies.  Therefore, we can set a cookie here if the user wants to be remembered and then
       # check in the callback for it and not allow the remember_token cookie to expire.
-     if params[:remember_me]
+      if params[:remember_me] && !Rails.application.config.disable_remember_me
         # We don't use SSL in development, so make sure we don't use secure cookies there, otherwise, 
         # remember me won't work.
         cookies.permanent[:remember_me] = {value: "", secure: !Rails.env.development?, httponly: true}
