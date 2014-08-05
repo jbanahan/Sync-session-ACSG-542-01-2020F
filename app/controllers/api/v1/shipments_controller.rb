@@ -96,7 +96,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
       h['lines'] ||= []
       slh = {id: sl.id}
       line_fields_to_render.each {|uid| slh[uid] = export_field(uid,sl)}
-      if params[:include] && params[:include].match(/order_lines/)
+      if render_order_fields?
         slh['order_lines'] = render_order_fields(sl) 
       end
       h['lines'] << slh
@@ -112,9 +112,35 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
 
   #override api_controller method to pre-load lines
   def find_object_by_id id
-    Shipment.where(id:id).includes({shipment_lines: :piece_sets},:containers).first
+    includes_array = [
+      {shipment_lines: [:piece_sets,:custom_values,:product]},
+      :containers,
+      :custom_values
+    ]
+    includes_array[0][:shipment_lines][0] = {piece_sets: {order_line: [:custom_values, :product, :order]}} if render_order_fields?
+    s = Shipment.where(id:id).includes(includes_array).first
+    #force the internal cache of custom values for so the 
+    #get_custom_value methods don't double check the DB for missing custom values
+    if s 
+      s.freeze_custom_values
+      s.shipment_lines.each {|sl|
+        sl.freeze_custom_values
+        if render_order_fields?
+          sl.piece_sets.each {|ps|
+            ol = ps.order_line
+            if ol
+              ol.freeze_custom_values
+            end
+          }
+        end
+      }
+    end
+    s
   end
   private
+  def render_order_fields?
+    params[:include] && params[:include].match(/order_lines/)
+  end
   #return hash with extra order line fields
   def render_order_fields shipment_line
     ord_ord_num = ModelField.find_by_uid(:ord_ord_num)

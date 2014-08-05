@@ -30,6 +30,13 @@ module CustomFieldSupport
     get_custom_value CustomDefinition.find_by_label(label)
   end
 
+  #caches custom values currently loaded into memory and locks the object
+  #so no database checks will be run again
+  def freeze_custom_values
+    self.load_custom_values self.custom_values
+    self.lock_custom_values = true
+  end
+
   #pre-loads all custom values for the object into memory.  
   #once this is called, the object will no longer hit the DB to get refreshed objects, so you shouldn't change the values through anything
   #except this object's returned CustomValue objects for the lifetime of this object

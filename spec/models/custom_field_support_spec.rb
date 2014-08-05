@@ -28,4 +28,23 @@ describe "CustomFieldSupport" do
 
     end
   end
+
+  describe :freeze_custom_values do
+    it "should freeze cached values and no longer hit database" do
+      cd = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
+      cd2 = Factory(:custom_definition,:module_type=>'Product',data_type:'string')
+      p = Factory(:product)
+      p.update_custom_value!(cd.id,'y')
+      fresh_p = Product.includes(:custom_values).where(id:p.id).first
+      fresh_p.freeze_custom_values #now that it's frozen, it's values shouldn't change
+      p.update_custom_value!(cd2.id,'other')
+      p.update_custom_value!(cd.id,'n')
+      expect(p.get_custom_value(cd).value).to eq 'n'
+      expect(p.get_custom_value(cd2).value).to eq 'other'
+
+      expect(fresh_p.get_custom_value(cd).value).to eq 'y'
+      expect(fresh_p.get_custom_value(cd2).id).to be_nil
+      expect(fresh_p.get_custom_value(cd2).value).to be_nil
+    end
+  end
 end
