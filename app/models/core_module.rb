@@ -232,6 +232,16 @@ class CoreModule
     enabled_lambda: lambda {MasterSetup.get.shipment_enabled?},
     key_model_field_uids: [:con_uid]
     })
+  CARTON_SET = new("CartonSet","Carton Set",{
+    show_field_prefix: false,
+    unique_id_field_name: :cs_starting_carton,
+    object_from_piece_set_lambda: lambda {|ps| 
+      return nil if ps.shipment_line.nil? 
+      ps.shipment_line.carton_set.nil? ? nil : ps.shipment_line.carton_set
+      },
+    enabled_lambda: lambda {MasterSetup.get.shipment_enabled?},
+    key_model_field_uids: [:cs_starting_carton]
+    })
   SHIPMENT_LINE = new("ShipmentLine", "Shipment Line",{
     :show_field_prefix=>true,
     :unique_id_field_name=>:shpln_line_number,

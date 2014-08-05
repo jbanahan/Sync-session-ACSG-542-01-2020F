@@ -20,6 +20,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     original_importer = shp.importer
     import_fields h, shp, CoreModule::SHIPMENT
     load_containers shp, h
+    load_carton_sets shp, h
     load_lines shp, h
     raise StatusableError.new("You do not have permission to save this Shipment.",:forbidden) unless shp.can_edit?(current_user)
     shp.save if shp.errors.full_messages.blank?
@@ -74,7 +75,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
       :shpln_container_size,
       :shpln_cbms,
       :shpln_gross_kgs,
-      :shpln_carton_qty
+      :shpln_carton_qty,
+      :shpln_carton_set_uid
     ] + custom_field_keys(CoreModule::SHIPMENT_LINE))
 
     container_fields_to_render = ([
@@ -107,6 +109,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
       container_fields_to_render.each {|uid| ch[uid] = export_field(uid,c)}
       h['containers'] << ch
     end
+    if render_carton_sets?
+      h['carton_sets'] = render_carton_sets(s)
+    end
     h
   end
 
@@ -138,6 +143,26 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     s
   end
   private
+  def render_carton_sets?
+    params[:include] && params[:include].match(/carton_sets/)
+  end
+  def render_carton_sets shipment
+    fields = limit_fields([
+      :cs_starting_carton,
+      :cs_carton_qty,
+      :cs_length,
+      :cs_width,
+      :cs_height,
+      :cs_net_net,
+      :cs_net,
+      :cs_gross
+    ])
+    return shipment.carton_sets.collect do |cs|
+      ch = {id:cs.id}
+      fields.each {|uid| ch[uid] = export_field(uid,cs)}
+      ch
+    end
+  end
   def render_order_fields?
     params[:include] && params[:include].match(/order_lines/)
   end
@@ -208,6 +233,24 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
           end
         end
         import_fields ln, con, CoreModule::CONTAINER
+      end
+    end
+  end
+
+  def load_carton_sets shipment, h
+    if h['carton_sets']
+      h['carton_sets'].each do |ln|
+        cs = shipment.carton_sets.find {|obj| match_numbers? ln['id'], obj.id}
+        cs = shipment.carton_sets.build if cs.nil?
+        if ln['_destroy']
+          if cs.shipment_lines.empty?
+            cs.mark_for_destruction
+            next
+          else
+            shipment.errors[:base] << "Cannot delete carton set linked to shipment lines."
+          end
+        end
+        import_fields ln, cs, CoreModule::CARTON_SET
       end
     end
   end

@@ -13,6 +13,7 @@ class Shipment < ActiveRecord::Base
 	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :piece_sets, :through=>:shipment_lines
+  has_many   :carton_sets, dependent: :destroy, inverse_of: :shipment, autosave: true
 
 	validates  :reference, :presence => true
   validates_uniqueness_of :reference

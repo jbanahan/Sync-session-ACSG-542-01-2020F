@@ -90,6 +90,16 @@ describe Api::V1::ShipmentsController do
       expect(slc['con_container_number']).to eq 'CN1234'
       expect(j['shipment']['lines'][0]['shpln_container_uid']).to eq c.id
     end
+    it "should optionally render carton sets" do
+      cs = Factory(:carton_set,starting_carton:1000)
+      sl = Factory(:shipment_line,shipment:cs.shipment,carton_set:cs)
+      get :show, id: cs.shipment_id, include: 'carton_sets'
+      expect(response).to be_success
+      j = JSON.parse response.body
+      slc = j['shipment']['carton_sets'].first
+      expect(slc['cs_starting_carton']).to eq 1000
+      expect(j['shipment']['lines'][0]['shpln_carton_set_uid']).to eq cs.id
+    end
   end
   describe "create" do
     before(:each) do
@@ -160,6 +170,24 @@ describe Api::V1::ShipmentsController do
       expect(j[1]['con_container_number']).to eq 'CNUM2'
       expect(sc.container_number).to eq 'CNUM2'
       expect(sc.container_size).to eq '20'
+    end
+    it "should save carton_sets" do
+      @s_hash['shipment']['carton_sets'] = [
+        {'cs_starting_carton'=>1,'cs_length'=>10},
+        {'cs_starting_carton'=>2,'cs_carton_qty'=>50}
+      ]
+      @s_hash['include'] = 'carton_sets'
+      expect {post :create, @s_hash}.to change(CartonSet,:count).from(0).to(2)
+      expect(response).to be_success
+      s = Shipment.first
+      j = JSON.parse(response.body)['shipment']['carton_sets']
+      expect(j.size).to eq 2
+      fc = s.carton_sets.first
+      sc = s.carton_sets.last
+      expect(j[0]['cs_starting_carton']).to eq 1
+      expect(j[1]['cs_carton_qty']).to eq 50
+      expect(fc.length_cm).to eq 10
+      expect(sc.starting_carton).to eq 2
     end
     it "should not save if user doesn't have permission" do
       Shipment.any_instance.stub(:can_edit?).and_return false

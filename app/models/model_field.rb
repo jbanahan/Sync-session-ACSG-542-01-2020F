@@ -1557,6 +1557,15 @@ and classifications.product_id = products.id
           export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.customer_order_number}.uniq.compact.sort.join(',') },
           import_lambda: lambda {|o,d| "Linked fields are read only."},
           qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id WHERE shipment_lines.id = piece_sets.shipment_line_id)"
+          }],
+        [12,:shpln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",{data_type: :integer,
+          import_lambda: lambda {|sl,id| 
+            cs = CartonSet.find_by_id id
+            return "Carton Set with ID #{id} not found. Ignored." unless cs
+            return "#{ModelField.find_by_uid(:shpln_carton_set_uid).label} is not part of this shipment and was ignored." unless cs.shipment_id == sl.shipment_id
+            sl.carton_set_id = cs.id
+            "#{ModelField.find_by_uid(:shpln_carton_set_uid).label} set to #{cs.id}."
+          }
           }]
       ]
       add_fields CoreModule::SHIPMENT_LINE, make_product_arrays(100,"shpln","shipment_lines")
@@ -1572,6 +1581,16 @@ and classifications.product_id = products.id
         [8,:con_fcl_lcl,:fcl_lcl,"Full Container",{data_type: :string}],
         [9,:con_quantity,:quantity,"AMS Qauntity",{data_type: :integer}],
         [10,:con_uom,:uom,"AMS UOM",{data_type: :string}]
+      ]
+      add_fields CoreModule::CARTON_SET, [
+        [1,:cs_starting_carton,:starting_carton,"Starting Carton",{data_type: :integer}],
+        [2,:cs_carton_qty,:carton_qty,"Carton Count",{data_type: :integer}],
+        [3,:cs_length,:length_cm,"Length (cm)", {data_type: :decimal}],
+        [4,:cs_width,:width_cm,"Width (cm)", {data_type: :decimal}],
+        [5,:cs_height,:height_cm,"Height (cm)", {data_type: :decimal}],
+        [6,:cs_net_net,:net_net_kgs,"Net Net Weight (kgs)", {data_type: :decimal}],
+        [7,:cs_net,:net_kgs,"Net Weight (kgs)", {data_type: :decimal}],
+        [8,:cs_gross,:gross_kgs,"Gross Weight (kgs)", {data_type: :decimal}]
       ]
 
       add_fields CoreModule::SALE, [

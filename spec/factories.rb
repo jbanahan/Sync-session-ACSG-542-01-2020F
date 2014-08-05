@@ -123,6 +123,10 @@ Factory.define :shipment_line do |s|
   s.association :product
   s.association :shipment
 end
+Factory.define :carton_set do |f|
+  f.sequence(:starting_carton)
+  f.association :shipment
+end
 Factory.define :sales_order do |s|
   s.sequence(:order_number)
   s.association :customer, :factory => :company
