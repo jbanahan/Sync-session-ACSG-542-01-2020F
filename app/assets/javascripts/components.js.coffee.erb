@@ -1,5 +1,27 @@
 @components = angular.module 'ChainComponents', []
 
+@components.service 'chainErrorHandler', ->
+  {
+    errorMessage:null
+    clear: ->
+      @.errorMessage = null
+    responseErrorHandler: null
+  }
+@components.factory 'chainHttpErrorInterceptor', ['$q','chainErrorHandler',($q,chainErrorHandler) ->
+  {
+    error: null 
+    responseError: (rejection) ->
+      em = "Server error."
+      data = rejection.data
+      if data.errors
+        em = data.errors.join('<br />')
+      chainErrorHandler.errorMessage = (em)
+      if chainErrorHandler.responseErrorHandler
+        chainErrorHandler.responseErrorHandler(rejection)
+      $q.reject(rejection)
+  }
+]
+
 @components.directive 'focusWhen', ['$timeout','$parse', ($timeout, $parse) ->
   {
     link: (scope, element, attrs) ->

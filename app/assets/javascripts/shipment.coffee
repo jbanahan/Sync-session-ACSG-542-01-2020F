@@ -1,6 +1,7 @@
 shipmentApp = angular.module('ShipmentApp', ['ChainComponents'])
 shipmentApp.config(['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json';
+  $httpProvider.interceptors.push 'chainHttpErrorInterceptor'
 ])
 shipmentApp.factory 'shipmentSvc', ['$http',($http) ->
   maxVal = (ary,attr,min) ->
@@ -58,7 +59,10 @@ shipmentApp.factory 'shipmentSvc', ['$http',($http) ->
   }
 ]
 
-shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentSvc) ->
+shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc','chainErrorHandler',($scope,shipmentSvc,chainErrorHandler) ->
+  $scope.eh = chainErrorHandler
+  $scope.eh.responseErrorHandler = (rejection) ->
+    $scope.notificationMessage = null
   $scope.shp = null
   $scope.loading = false
   $scope.viewMode = 'shp'
@@ -75,22 +79,20 @@ shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentS
       $scope.parties = data
       $scope.loadingParties = false
     ).error((data) ->
-      $scope.errorMessage = data.errors.join("<br />")
       $scope.loadingParties = false
     )
   $scope.loadShipment = (id) ->
     $scope.loading = true
+    $scope.eh.clear()
     shipmentSvc.getShipment(id).success((data) ->
       $scope.shp = data.shipment
       $scope.loading = false
       $scope.hasNewContainer = false
-    ).error((data) ->
-      $scope.errorMessage = data.errors.join("<br />")
-      $scope.loading = false
     )
 
   $scope.saveShipment = (shipment) ->
     $scope.loading = true
+    $scope.eh.clear()
     $scope.notificationMessage = "Saving shipment."
     shipmentSvc.saveShipment(shipment).success((data) ->
       $scope.shp = data.shipment
@@ -98,7 +100,6 @@ shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentS
       $scope.notificationMessage = "Shipment saved."
       $scope.hasNewContainer = false
     ).error((data) ->
-      $scope.errorMessage = data.errors.join("<br />")
       $scope.loading = false
     )
 
@@ -112,8 +113,6 @@ shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentS
     $scope.availableOrders = null
     shipmentSvc.getAvailableOrders(1).success((data) ->
       $scope.availableOrders = data.results
-    ).error((data) ->
-      $scope.errorMessage = data.errors.join("<br />")
     )
 
   $scope.addOrder = (shp,ord,container_to_pack) ->
@@ -122,7 +121,9 @@ shipmentApp.controller 'ShipmentCtrl', ['$scope','shipmentSvc',($scope,shipmentS
       shipmentSvc.addOrderToShipment(shp,fullOrder,container_to_pack)
       $scope.viewMode = 'shp'
       $scope.notificationMessage = 'Order added.'
-    ).error((data) ->
-      $scope.errorMessage = data.errors.join("<br />")
     )
+
+  $scope.$watch('eh.errorMessage',(nv,ov) ->
+    $scope.errorMessage = nv
+  )
 ]

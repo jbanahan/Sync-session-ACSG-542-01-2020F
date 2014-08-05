@@ -5,6 +5,14 @@
       <button class='btn btn-default' ng-click='addContainer(shp)' ng-show='shp'>Add Container</button>
       <button class='btn btn-default' ng-click='enableOrderSelection()' ng-show='shp' ng-hide='hasNewContainer'>Add Order</button>
     </div>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <chain-panel panel-title='Errors' panel-message="errorMessage" panel-type='panel-danger'></chain-panel>
+          <chain-panel panel-title='Notices' panel-message="notificationMessage" panel-type='panel-info'></chain-panel>
+        </div>
+      </div>
+    </div>
     <form name='shpfrm'>
       <div class="container" ng-show="loading">
         <div class="row">
@@ -18,12 +26,6 @@
         </div>
       </div>
       <div class="container" ng-hide='loading'>
-        <div class="row">
-          <div class="col-md-12">
-            <chain-panel panel-title='Errors' panel-message="errorMessage" panel-type='panel-danger'></chain-panel>
-            <chain-panel panel-title='Notices' panel-message="notificationMessage" panel-type='panel-info'></chain-panel>
-          </div>
-        </div>
         <div ng-show='viewMode=="ord"'>
           <div class="row">
             <div class="col-md-12">
