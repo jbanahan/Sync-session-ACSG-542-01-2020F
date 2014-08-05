@@ -37,10 +37,6 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
   def process_order_lines lines
     ls = lines.first
     ord_relation = Order.where(importer_id:@imp.id,order_number:ls.order_number)
-    if ls.delete?
-      ord_relation.destroy_all 
-      return
-    end
     o = ord_relation.first_or_create!
     o.customer_order_number = ls.customer_order_number
     o.order_date = ls.order_date
@@ -57,7 +53,12 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
     #process lines
     lines.each do |ln|
       p = get_product ln
-      ol = o.order_lines.where(line_number:ln.line_number).first_or_create!(product:p)
+      ol = o.order_lines.where(line_number:ln.line_number).first
+      if ln.delete?
+        ol.destroy if ol
+        next
+      end
+      ol = o.order_lines.create!(line_number:ln.line_number,product:p) unless ol
       ol.update_attributes(
         product:p, price_per_unit:ln.unit_price,quantity:ln.quantity,
         currency:ln.currency,country_of_origin:ln.coo,hts:ln.hts
@@ -65,6 +66,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
       ol.update_custom_value! @cdefs[:order_line_note], ln.line_note
       ol.update_custom_value! @cdefs[:order_line_destination_code], ln.line_destination_code
     end
+    o.destroy if o.order_lines.empty?
   end
   def get_product line_struct
     p = Product.where(
