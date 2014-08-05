@@ -40,12 +40,34 @@ describe UserSessionsController do
       expect(controller.current_user).not_to be_nil
     end
 
-    it 'sets a cookie to remember the user by if user requests it' do
-      post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :remember_me=>"Y"
-      expect(response).to be_redirect
-      expect(response).to redirect_to root_path
-      expect(cookies[:remember_me]).to eq ""
+    context "remember me" do
+      before :each do
+        @remember = Rails.application.config.disable_remember_me
+      end
+      after :each do
+        Rails.application.config.disable_remember_me = @remembe
+      end
+
+      it 'sets a cookie to remember the user by if user requests it' do
+        Rails.application.config.disable_remember_me = false
+        post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :remember_me=>"Y"
+        expect(response).to be_redirect
+        expect(response).to redirect_to root_path
+        expect(cookies[:remember_me]).to eq ""
+      end
+
+      it "ignores remember me if disabled" do
+        Rails.application.config.disable_remember_me = true
+        post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :remember_me=>"Y"
+        expect(response).to be_redirect
+        expect(response).to redirect_to root_path
+        expect(cookies[:remember_me]).to be_nil
+      end
     end
+
+
+
+    
 
     it 'redirects to specified return to page' do
       session[:return_to] = "/return_to"
@@ -85,30 +107,21 @@ describe UserSessionsController do
     end
 
     it "should sign in when user is found successfully" do
-      User.should_receive(:from_omniauth).and_return(@user)
-      post :create_from_omniauth, provider: "google_oauth2"
+      request.env['omniauth.auth'] = "Testing"
+      User.should_receive(:from_omniauth).with("my-provider", "Testing").and_return(user: @user, errors: [])
+      post :create_from_omniauth, {provider: "my-provider"}
 
       response.should be_redirect
       controller.current_user.id.should == @user.id
       expect(response).to redirect_to root_path
     end
 
-    it "should display an error on the login page when unsuccessful" do
-      User.should_receive(:from_omniauth).and_return(@user)
-      (Clearance::SuccessStatus).any_instance.stub(:success?).and_return false
-      post :create_from_omniauth, provider: "google_oauth2"
+    it "should display an error on the login page when from_omniauth returns an error" do
+      User.should_receive(:from_omniauth).and_return({user: nil, errors: ["This is an error"]})
+      post :create_from_omniauth, provider: "my-provider"
 
       flash[:notices].should == nil
-      flash[:errors].should == ["Your login was not successful."]
-      response.should be_success
-    end
-
-    it "should display an error on the login page when account does not exist" do
-      User.should_receive(:from_omniauth).and_return(nil)
-      post :create_from_omniauth, provider: "google_oauth2"
-
-      flash[:notices].should == nil
-      flash[:errors].should == ["This Google email account has not been enabled in VFI Track."]
+      flash[:errors].should == ["This is an error"]
       response.should be_redirect
       expect(response).to redirect_to login_path
     end

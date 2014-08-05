@@ -35,6 +35,7 @@ gem 'browser'
 
 gem "google-api-client", "0.7.1"
 gem "omniauth-google-oauth2", "0.2.2"
+gem "omniauth-saml", "~> 1.2.0"
 
 gem "cache_digests"
 

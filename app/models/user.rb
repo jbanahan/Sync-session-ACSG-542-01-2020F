@@ -65,18 +65,25 @@ class User < ActiveRecord::Base
     user
   end
 
-  def self.from_omniauth(auth)
-    if user = User.where(email: auth[:info][:email]).first
-      user.provider = auth.provider
-      user.uid = auth.uid
-      user.google_name = auth.info.name
-      user.oauth_token = auth.credentials.token
-      user.oauth_expires_at = Time.at(auth.credentials.expires_at)
-      user.save!
-      return user
-    else
-      return nil
+  def self.from_omniauth(omniauth_provider, auth_info)
+    errors = []
+    if omniauth_provider == "pepsi-saml"
+      user = User.where(username: auth_info.uid).first
+      errors << "Pepsi User ID #{auth_info.uid} has not been set up in VFI Track." unless user
+    elsif omniauth_provider == "google_oauth2"
+      if user = User.where(email: auth_info[:info][:email]).first
+        user.provider = auth_info.provider
+        user.uid = auth_info.uid
+        user.google_name = auth_info.info.name
+        user.oauth_token = auth_info.credentials.token
+        user.oauth_expires_at = Time.at(auth_info.credentials.expires_at)
+        user.save!
+      else
+        errors << "Google email account #{auth_info[:info][:email]} has not been set up in VFI Track."
+      end
     end
+
+    return {user: user, errors: errors}
   end
 
   def self.access_allowed? user

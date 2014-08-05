@@ -467,33 +467,43 @@ describe User do
 
   describe "from_omniauth" do
     before :each do
-      require 'ostruct'
       @user = Factory(:user, email: "condaleeza@rice.com")
     end
 
-    it "should return an updated user when a user is found" do
-      info = OpenStruct.new({"email" => "condaleeza@rice.com", "name" => "Condaleeza R"})
-      creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
-      @auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
-      User.from_omniauth(@auth).id.should == @user.id
+    context "google oauth" do
+      it "should return an updated user when a user is found" do
+        info = OpenStruct.new({"email" => "condaleeza@rice.com", "name" => "Condaleeza R"})
+        creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
+        auth = OpenStruct.new({"info" => info, "provider" => "oauth", "uid" => "someuid123", "credentials" => creds})
 
-      @user.reload
+        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: @user, errors: []})
 
-      @user.provider.should == "google_oauth2"
-      @user.uid.should == "someuid123"
-      @user.google_name.should == "Condaleeza R"
-      @user.oauth_token.should == "123456789"
-      (@user.oauth_expires_at > Time.now).should == true
+        @user.reload
+        @user.provider.should == "oauth"
+        @user.uid.should == "someuid123"
+        @user.google_name.should == "Condaleeza R"
+        @user.oauth_token.should == "123456789"
+        (@user.oauth_expires_at > Time.now).should == true
+      end
+
+      it "should return nil if the user is not found" do
+        info = OpenStruct.new({"email" => "susan@rice.com", "name" => "Condaleeza R"})
+        creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
+        auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
+
+        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in VFI Track."]})
+      end
     end
 
-    it "should return nil if the user is not found" do
-      info = OpenStruct.new({"email" => "susan@rice.com", "name" => "Condaleeza R"})
-      creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
-      @auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
+    context "pepsi SAML" do
+      it "finds user by uid from SAML response" do
+        expect(User.from_omniauth("pepsi-saml", OpenStruct.new({"uid" => @user.username}))).to eq ({user: @user, errors: []})
+      end
 
-      User.from_omniauth(@auth).should == nil
+      it "returns an error if user is not found" do
+        expect(User.from_omniauth("pepsi-saml", OpenStruct.new({"uid" => "notausername"}))).to eq ({user: nil, errors: ["Pepsi User ID notausername has not been set up in VFI Track."]})
+      end
     end
-
   end
 
   describe "username uniqueness" do
