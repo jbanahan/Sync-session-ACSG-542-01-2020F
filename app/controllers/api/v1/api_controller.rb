@@ -48,6 +48,14 @@ module Api; module V1; class ApiController < ActionController::Base
     render json:{results:r,page:page,per_page:per_page}
   end
 
+  def render_attachments?
+    params[:include] && params[:include].match(/attachments/)
+  end
+  #add attachments array to root of hash
+  def render_attachments obj, hash
+    hash['attachments'] = Attachment.attachments_as_json(obj)[:attachments]
+  end
+
   #override this to implement custom finder
   def find_object_by_id id
     core_module.klass.find_by_id params[:id]

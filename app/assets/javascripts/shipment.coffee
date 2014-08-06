@@ -26,13 +26,13 @@ shipmentApp.factory 'shipmentSvc', ['$http',($http) ->
 
   return {
     getShipment: (shipmentId) ->
-      $http.get('/api/v1/shipments/'+shipmentId+'.json?include=order_lines')
+      $http.get('/api/v1/shipments/'+shipmentId+'.json?include=order_lines,attachments')
     saveShipment: (shipment) ->
       s = prepForSave shipment
       if shipment.id && shipment.id > 0
-        $http.put('/api/v1/shipments/'+s.id+'.json',{shipment: s, include:'order_lines'})
+        $http.put('/api/v1/shipments/'+s.id+'.json',{shipment: s, include:'order_lines,attachments'})
       else
-        $http.post('/api/v1/shipments',{shipment: s, include:'order_lines'})
+        $http.post('/api/v1/shipments',{shipment: s, include:'order_lines,attachments'})
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
     getAvailableOrders : (page) ->

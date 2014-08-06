@@ -112,6 +112,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     if render_carton_sets?
       h['carton_sets'] = render_carton_sets(s)
     end
+    if render_attachments?
+      render_attachments(s,h)
+    end
     h
   end
 
