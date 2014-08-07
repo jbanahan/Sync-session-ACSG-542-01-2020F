@@ -732,7 +732,7 @@ module OpenChain
 
             # We only need to output the Duty and GST lines if this entry hasn't already been invoiced.
             unless @inv_generator.previously_invoiced? broker_invoice.entry
-              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "23101230", profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number)
+              rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "23109000", profit_center, broker_invoice.entry.total_duty, "Duty", :duty, broker_invoice.entry.entry_number)
               # RL Canada probably should be using the unallocated account here too, but we haven't been doing that from the start so we're keeping this as is for the momemnt
               # Joanne from RL will let us know if we can use it instead of raw one
               rows << create_line(broker_invoice.invoice_number, broker_invoice.invoice_date, "14311000", hst_gst_profit_center(profit_center), broker_invoice.entry.total_gst, "GST", :gst, broker_invoice.entry.entry_number)
