@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       r
     end
     def mode_row mode
-      ['','','','','Method','','',mode]
+      ['','','','','Method','','','','','','',mode]
     end
     def subtitle_row subtitle
       ['',subtitle]
