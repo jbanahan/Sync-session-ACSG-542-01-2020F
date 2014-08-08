@@ -22,7 +22,7 @@ describe Api::V1::ShipmentsController do
       get :index, fields:'shp_ref,shp_mode'
       expect(response).to be_success
       j = JSON.parse response.body
-      expect(j['results']).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air'}]
+      expect(j['results']).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air',"permissions"=>{"can_edit"=>true, "can_view"=>true, "can_attach"=>false, "can_comment"=>false}}]
     end
   end
 
@@ -35,6 +35,20 @@ describe Api::V1::ShipmentsController do
       sj = j['shipment']
       expect(sj['shp_ref']).to eq '123'
       expect(sj['shp_mode']).to eq 'Air'
+    end
+    it "should render permissions" do
+      Shipment.any_instance.stub(:can_edit?).and_return false
+      Shipment.any_instance.stub(:can_view?).and_return true
+      Shipment.any_instance.stub(:can_attach?).and_return true
+      Shipment.any_instance.stub(:can_comment?).and_return false
+      s = Factory(:shipment)
+      get :show, id: s.id
+      j = JSON.parse response.body
+      pj = j['shipment']['permissions']
+      expect(pj['can_edit']).to eq false
+      expect(pj['can_view']).to eq true
+      expect(pj['can_attach']).to eq true
+      expect(pj['can_comment']).to eq false
     end
     it "should convert numbers to numeric" do
       sl = Factory(:shipment_line,quantity:10)
@@ -99,6 +113,43 @@ describe Api::V1::ShipmentsController do
       slc = j['shipment']['carton_sets'].first
       expect(slc['cs_starting_carton']).to eq 1000
       expect(j['shipment']['lines'][0]['shpln_carton_set_uid']).to eq cs.id
+    end
+  end
+  describe "process_tradecard_pack_manifest" do
+    before :each do
+      @s = Factory(:shipment)
+      @att = Factory(:attachment,attachable:@s)
+    end
+    it "should fail if user cannot edit shipment" do
+      Shipment.any_instance.stub(:can_edit?).and_return false
+      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      expect(response.status).to eq 403
+    end
+    it "should fail if attachment is not attached to this shipment" do
+      Shipment.any_instance.stub(:can_edit?).and_return true
+      a2 = Factory(:attachment)
+      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>a2.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      expect(response.status).to eq 400
+      expect(JSON.parse(response.body)['errors']).to eq ['Attachment not linked to Shipment.']
+    end
+    it "should fail if AttachmentProcessJob already exists" do
+      Shipment.any_instance.stub(:can_edit?).and_return true
+      @s.attachment_process_jobs.create!(attachment_id:@att.id,job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
+      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      expect(response.status).to eq 400
+      expect(JSON.parse(response.body)['errors']).to eq ['This manifest has already been submitted for processing.']
+    end
+    it "should create delayed_job" do
+      Shipment.any_instance.stub(:can_edit?).and_return true
+      expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(1)
+      expect(response).to be_success
+      aj = AttachmentProcessJob.first
+      expect(aj.attachment).to eq @att
+      expect(aj.attachable).to eq @s
+      expect(aj.user).to eq @u
+      expect(aj.start_at).to_not be_nil
+      expect(aj.job_name).to eq 'Tradecard Pack Manifest'
+      expect(Delayed::Job.count).to eq 1
     end
   end
   describe "create" do

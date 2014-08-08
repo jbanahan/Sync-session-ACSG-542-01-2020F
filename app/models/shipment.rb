@@ -45,7 +45,7 @@ class Shipment < ActiveRecord::Base
 	
 	def can_edit?(user)
 	  #same rules as view
-	  return can_view? user
+	  return user.edit_shipments? && can_view?(user)
 	end
   
   def can_comment?(user)

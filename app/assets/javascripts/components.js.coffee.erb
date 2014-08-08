@@ -1,5 +1,8 @@
 @components = angular.module 'ChainComponents', []
 
+# Add this to your controller to get HTTP errors handled for you.
+# It's errorMessage property will be auto populated with any errors from the chainHttpErrorInterceptor
+# You can optionally set the responseErrorHandler to a function that takes the rejection object from the http response and does something special with it.  (See ShipmentCtrl for an implementation example)
 @components.service 'chainErrorHandler', ->
   {
     errorMessage:null
@@ -7,6 +10,8 @@
       @.errorMessage = null
     responseErrorHandler: null
   }
+
+# listens for HTTP errors and passes them to the chainErrorHandler which should be added to you controller
 @components.factory 'chainHttpErrorInterceptor', ['$q','chainErrorHandler',($q,chainErrorHandler) ->
   {
     error: null 
@@ -21,6 +26,18 @@
       $q.reject(rejection)
   }
 ]
+
+# Transcludes it's content in a wrapper that hides the content and replaces it with a loading message
+# whenever the loading-flag property is set to "loading"
+@components.directive 'chainLoadingWrapper', () ->
+  {
+    restrict:'E'
+    scope: {
+      loadingFlag:'@'
+    }
+    transclude:true
+    templateUrl:'/partials/components/loading.html'
+  }
 
 @components.directive 'focusWhen', ['$timeout','$parse', ($timeout, $parse) ->
   {

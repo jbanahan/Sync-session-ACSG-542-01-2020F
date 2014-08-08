@@ -1,0 +1,33 @@
+<div class='container'>
+  <div class="row">
+    <div class="col-md-12">
+      <label for='ord_cont_sel'>Container</label>
+      <select name='ord_cont_sel' ng-model='container_to_pack' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'>
+        <option value=''></option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Add Order To Shipment</h2>
+      <table class='table table-striped'>
+        <thead>
+          <tr>
+            <td></td>
+            <td>Order Number</td>
+            <td>Vendor</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="ord in availableOrders">
+            <td>
+              <button ng-click='addOrder(shp,ord,container_to_pack)' class='btn btn-sm btn-default'>Add</button>
+            </td>
+            <td>{{ord.ord_ord_num}}</td>
+            <td>{{ord.ord_ven_name}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

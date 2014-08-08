@@ -2,6 +2,9 @@ require 'open_chain/xl_client'
 
 module OpenChain; module CustomHandler; module Tradecard; class TradecardPackManifestParser
 
+  def self.process_attachment shipment, attachment, user
+    parse shipment, attachment.attached.path, user
+  end
   def self.parse shipment, path, user
     self.new.run(shipment,OpenChain::XLClient.new(path),user)
   end

@@ -441,6 +441,12 @@ order_id: 77 #db id of order
     con_quantity: 10 #AMS reporting quantity (usually in cartons)
     con_uom: 'CTNS' #AMS reporting unit of measure (usually CTNS)
     }]
+  permissions: [ #these are the permissions this user has for this specific object
+    can_view:true
+    can_edit:false
+    can_attach:true #can add file attachments
+    can_comment:false #cannot add comments
+  ]
   }
 ```
 

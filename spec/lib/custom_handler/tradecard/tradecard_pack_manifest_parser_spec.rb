@@ -1,6 +1,19 @@
 require 'spec_helper'
 
 describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
+  describe :process_attachment do
+    it "should get path and call parse" do
+      u = double(:user)
+      s = double(:shipment)
+      att = double(:attachment)
+      atchd = double(:attached)
+      att.should_receive(:attached).and_return atchd
+      path = 'xyz'
+      atchd.should_receive(:path).and_return path
+      described_class.should_receive(:parse).with(s,path,u).and_return 'x'
+      expect(described_class.process_attachment(s, att, u)).to eq 'x'
+    end
+  end
   describe :parse do
     it "should create object and call run" do
       s = double('shipment')

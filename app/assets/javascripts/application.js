@@ -14,6 +14,7 @@
 //= require json3
 //= require bootstrap
 //= require angular
+//= require_directory ./shipment
 //= require_directory .
 //= stub legacy
 //= stub html5shim

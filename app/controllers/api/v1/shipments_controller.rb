@@ -15,6 +15,22 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     do_update CoreModule::SHIPMENT
   end
 
+  def process_tradecard_pack_manifest
+    s = Shipment.find params[:id]
+    raise StatusableError.new("You do not have permission to edit this Shipment.",:forbidden) unless s.can_edit?(current_user)
+    att = s.attachments.find_by_id(params[:attachment_id])
+    raise StatusableError.new("Attachment not linked to Shipment.",400) unless att
+    aj = s.attachment_process_jobs.where(attachment_id:att.id,
+          job_name:'Tradecard Pack Manifest').first_or_create!(user_id:current_user.id)
+    if aj.start_at
+      raise StatusableError.new("This manifest has already been submitted for processing.",400)
+    else
+      aj.update_attributes(start_at:Time.now)
+      AttachmentProcessJob.delay.process aj.id
+    end
+    render json: {attachment_process_job:{id:aj.id}}
+  end
+
   def save_object h
     shp = h['id'].blank? ? Shipment.new : Shipment.find(h['id'])
     original_importer = shp.importer
@@ -115,6 +131,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     if render_attachments?
       render_attachments(s,h)
     end
+    h['permissions'] = render_permissions(s)
     h
   end
 
@@ -146,6 +163,14 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     s
   end
   private
+  def render_permissions shipment
+    {
+      can_edit:shipment.can_edit?(current_user),
+      can_view:shipment.can_view?(current_user),
+      can_attach:shipment.can_attach?(current_user),
+      can_comment:shipment.can_comment?(current_user)
+    }
+  end
   def render_carton_sets?
     params[:include] && params[:include].match(/carton_sets/)
   end

@@ -11,6 +11,7 @@ class Attachment < ActiveRecord::Base
 
   has_many :attachment_archives_attachments, :dependent=>:destroy
   has_many :attachment_archives, :through=>:attachment_archives_attachments
+  has_many :attachment_process_jobs
   
   ARCHIVE_PACKET_ATTACHMENT_TYPE ||= "Archive Packet".freeze
 

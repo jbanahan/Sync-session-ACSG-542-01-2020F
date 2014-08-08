@@ -9,6 +9,7 @@ module CoreObjectSupport
     base.instance_eval("has_many   :histories, :dependent => :destroy")
     base.instance_eval("has_many   :comments, :as => :commentable, :dependent => :destroy")
     base.instance_eval("has_many   :attachments, :as => :attachable, :dependent => :destroy") 	
+    base.instance_eval("has_many   :attachment_process_jobs, :as => :attachable, :dependent => :destroy")   
     base.instance_eval("has_many   :linked_attachments, :as => :attachable, :dependent => :destroy")
     base.instance_eval("has_many   :linkable_attachments, :through => :linked_attachments")
     base.instance_eval("has_many   :item_change_subscriptions, :dependent => :destroy")

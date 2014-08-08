@@ -1,0 +1,247 @@
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div chain-action-bar>
+    <button class='btn btn-default' ng-show='shp.id || shp.shp_ref' ng-click='saveShipment(shp)'>Save</button>
+    <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
+    <button class='btn btn-default' ng-click='addContainer(shp)' ng-show='shp'>Add Container</button>
+    <button class='btn btn-default' ng-click='enableOrderSelection()' ng-show='shp' ng-hide='hasNewContainer'>Add Order</button>
+  </div>
+  
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <chain-panel panel-title='Errors' panel-message="errorMessage" panel-type='panel-danger'></chain-panel>
+        <chain-panel panel-title='Notices' panel-message="notificationMessage" panel-type='panel-info'></chain-panel>
+      </div>
+    </div>
+  </div>
+
+  <div class='container'>
+    <div class="row"> <!-- start ship header -->
+      <div class="col-md-4">
+        <h2 ng-click='hideShipInfo = !hideShipInfo'>
+          Shipment
+          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideShipInfo,'glyphicon-chevron-up':!hideShipInfo}"></span>
+        </h2>
+        <div ng-hide='hideShipInfo'>
+          <label for="shp_master_bill_of_lading">Master Bill</label>
+          <input type="text" id="shp_master_bill_of_lading" ng-model="shp.shp_master_bill_of_lading" class="form-control" />
+          <label for="shp_house_bill_of_lading">House Bill</label>
+          <input type="text" id="shp_house_bill_of_lading" ng-model="shp.shp_house_bill_of_lading" class="form-control" />
+          <label for="shp_booking_number">Booking #</label>
+          <input type="text" id="shp_booking_number" ng-model="shp.shp_booking_number" class="form-control" />
+          <label for="shp_receipt_location">Receipt Location</label>
+          <input type="text" id="shp_receipt_location" ng-model="shp.shp_receipt_location" class="form-control" />
+          <label for="shp_freight_terms">Freight Terms</label>
+          <input type="text" id="shp_freight_terms" ng-model="shp.shp_freight_terms" class="form-control" />
+          <label for="shp_lcl">LCL</label>
+          <div>
+            <input type="checkbox" id="shp_lcl" ng-model="shp.shp_lcl" />
+          </div>
+          <label for="shp_shipment_type">Shipment Type</label>
+          <input type="text" id="shp_shipment_type" ng-model="shp.shp_shipment_type" class="form-control" />
+          <label for="shp_vessel">Vessel</label>
+          <input type="text" id="shp_vessel" ng-model="shp.shp_vessel" class="form-control" />
+          <label for="shp_voyage">Voyage</label>
+          <input type="text" id="shp_voyage" ng-model="shp.shp_voyage" class="form-control" />
+          <label for="shp_vessel_carrier_scac">Vessel SCAC</label>
+          <input type="text" id="shp_vessel_carrier_scac" ng-model="shp.shp_vessel_carrier_scac" class="form-control" />
+          <label for='shp_ref'>Reference</label>
+          <input type='text' ng-model='shp.shp_ref' id='shp_ref' class='form-control' />
+          <label for='shp_mode'>Mode</label>
+          <select id='shp_mode' ng-model='shp.shp_mode' class='form-control'>
+            <option></option>
+            <option>Air</option>
+            <option>Ocean - LCL</option>
+            <option>Ocean - FCL</option>
+            <option>Truck</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h2 ng-click='hideBookingInfo = !hideBookingInfo'>
+          Booking
+          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideBookingInfo,'glyphicon-chevron-up':!hideBookingInfo}"></span>
+        </h2>
+        <div ng-hide='hideBookingInfo'>
+          <label for="shp_booking_received_date">Booking Received</label>
+          <input type="date" id="shp_booking_received_date" ng-model="shp.shp_booking_received_date" class="form-control" />
+          <label for="shp_booking_confirmed_date">Booking Confirmed</label>
+          <input type="date" id="shp_booking_confirmed_date" ng-model="shp.shp_booking_confirmed_date" class="form-control" />
+          <label for="shp_booking_cutoff_date">Booking Cutoff</label>
+          <input type="date" id="shp_booking_cutoff_date" ng-model="shp.shp_booking_cutoff_date" class="form-control" />
+          <label for="shp_booking_est_departure_date">Est Departure Date - Booked</label>
+          <input type="date" id="shp_booking_est_departure_date" ng-model="shp.shp_booking_est_departure_date" class="form-control" />
+          <label for="shp_booking_est_arrival_date">Est Arrival Date - Booked</label>
+          <input type="date" id="shp_booking_est_arrival_date" ng-model="shp.shp_booking_est_arrival_date" class="form-control" />
+          <label for="shp_booking_shipment_type">Booked Shipment Type</label>
+          <input type="text" id="shp_booking_shipment_type" ng-model="shp.shp_booking_shipment_type" class="form-control" />
+          <label for='shp_booking_mode'>Booked Mode</label>
+          <select id='shp_booking_mode' ng-model='shp.shp_booking_mode' class='form-control'>
+            <option></option>
+            <option>Air</option>
+            <option>Ocean - LCL</option>
+            <option>Ocean - FCL</option>
+            <option>Truck</option>
+          </select>
+        </div>
+        <h2 ng-click='hidePartyInfo = !hidePartyInfo'>
+          Parties
+          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hidePartyInfo,'glyphicon-chevron-up':!hidePartyInfo}"></span>
+        </h2>
+        <div ng-hide="hidePartyInfo">
+          <div ng-show='partiesLoading'>Party information loading</div>
+          <div ng-hide='partiesLoading'>
+            <label for='shp_car_syscode'>Carrier</label>
+            <select id='shp_car_syscode' ng-model='shp.shp_car_syscode' ng-options='c.system_code as c.name for c in parties.carriers' class='form-control'></select>
+            <label for='shp_imp_syscode'>Importer</label>
+            <select id='shp_imp_syscode' ng-model='shp.shp_imp_syscode' ng-options='c.system_code as c.name for c in parties.importers' class='form-control'></select>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <h2 ng-click='hideTrackingInfo = !hideTrackingInfo'>
+          Tracking
+          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideTrackingInfo,'glyphicon-chevron-up':!hideTrackingInfo}"></span>
+        </h2>
+        <div ng-hide='hideTrackingInfo'>
+          <label for="shp_est_departure_date">Est Departure Date</label>
+          <input type="date" id="shp_est_departure_date" ng-model="shp.shp_est_departure_date" class="form-control" />
+          <label for="shp_est_arrival_port_date">Est Arrival Date</label>
+          <input type="date" id="shp_est_arrival_port_date" ng-model="shp.shp_est_arrival_port_date" class="form-control" />
+          <label for="shp_est_delivery_date">Est Delivery Date</label>
+          <input type="date" id="shp_est_delivery_date" ng-model="shp.shp_est_delivery_date" class="form-control" />
+          <hr />
+          <label for="shp_docs_received_date">Docs Received Date</label>
+          <input type="date" id="shp_docs_received_date" ng-model="shp.shp_docs_received_date" class="form-control" />
+          <label for="shp_cargo_on_hand_date">Cargo On Hand Date</label>
+          <input type="date" id="shp_cargo_on_hand_date" ng-model="shp.shp_cargo_on_hand_date" class="form-control" />
+          <label for="shp_departure_date">Departure Date</label>
+          <input type="date" id="shp_departure_date" ng-model="shp.shp_departure_date" class="form-control" />
+          <label for="shp_arrival_port_date">Arrival Date</label>
+          <input type="date" id="shp_arrival_port_date" ng-model="shp.shp_arrival_port_date" class="form-control" />
+          <label for="shp_delivery_date">Delivery Date</label>
+          <input type="date" id="shp_delivery_date" ng-model="shp.shp_delivery_date" class="form-control" />
+        </div>
+      </div>
+    </div> <!-- end ship header -->
+    <hr />
+    <div> <!--start attachments-->
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Attachments</h2>
+        </div>
+      </div>
+      <div class="row" ng-repeat='att in shp.attachments' style='margin-bottom:5px;'>
+        <div class="col-md-12">
+            <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
+        </div>
+      </div>
+      <div class="row" ng-if="shp.permissions.can_attach">
+        <div class="col-md-12">
+          <div chain-attach='shp' attachable-type='Shipment' attachable-id='{{shp.id}}'></div>
+        </div>
+      </div>
+    </div><!--end attachments-->
+    <hr />
+    <div class="row"> <!-- start container section -->
+      <div class="col-md-12">
+        <h2>
+          Containers
+          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideContainerInfo,'glyphicon-chevron-up':!hideContainerInfo}"></span>
+        </h2>
+        <div ng-hide='hideContainerInfo'>
+          <div ng-repeat='con in shp.containers'>
+            <div class="panel" ng-class="{'panel-default':!con._destroy,'panel-danger':con._destroy}">
+              <div class="panel-heading" ng-show="con._destroy">Will Be Deleted</div>
+              <div class="panel-body">
+                <div class="row" >
+                  <div class="col-md-4">
+                    <label for="con_container_number">Container Number</label>
+                    <input type="text" id="con_container_number" ng-model="con.con_container_number" class="form-control" focus-when='con.isNew' />
+                  </div>
+                  <div class="col-md-4">
+                    <label for="con_container_size">Container Size</label>
+                    <input type="text" id="con_container_size" ng-model="con.con_container_size" class="form-control" />
+                  </div>
+                  <div class="col-md-4">
+                    <label for="con_seal_number">Seal Number(s)</label>
+                    <input type="text" id="con_seal_number" ng-model="con.con_seal_number" class="form-control" />
+                  </div>
+                </div>
+              </div>
+              <div class="panel-footer text-right">
+                <button class='btn btn-sm btn-default' ng-click='con._destroy=true' ng-hide='con._destroy'>Delete</button>
+                <button class='btn btn-sm btn-default' ng-click='con._destroy=false' ng-show='con._destroy'>Undo Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- end container section-->
+    <hr />
+    <div class="row" > <!--start lines section -->
+      <div class="col-md-12" ng-show='hasNewContainer'>
+        <div class="panel panel-info">
+          <div class="panel-heading">
+            <h3 class="panel-title">Container Added</h3>
+          </div>
+          <div class="panel-body">
+            Container added. Save your work to edit lines.
+          </div>
+        </div>
+      </div>
+      <div class="col-md-12" ng-hide='hasNewContainer'>
+        <h2 ng-click='hideLineInfo = !hideLineInfo'>
+          Lines
+          <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideLineInfo,'glyphicon-chevron-up':!hideLineInfo}"></span>
+        </h2>
+        <div ng-hide='hideLineInfo'>
+          <table class='table table-striped'>
+            <thead>
+              <tr>
+                <th>Line #</th>
+                <th>Product</th>
+                <th>Order Number - Line</th>
+                <th>Quantity</th>
+                <th>Cartons</th>
+                <th>Volume (CBMS)</th>
+                <th>Gross Weight (KGS)</th>
+                <th>Container</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="ln in shp.lines" ng-class="{'danger':ln._destroy}">
+                <td>{{ln.shpln_line_number}}</td>
+                <td>{{ln.shpln_puid}}</td>
+                <td>
+                  <div ng-repeat='ol in ln.order_lines'>
+                    <a href='/orders/{{ol.order_id}}'>{{ol.ord_cust_ord_no}} - {{ol.ordln_line_number}}</a>
+                  </div>
+                </td>
+                <td>
+                  <input type='text' ng-model='ln.shpln_shipped_qty' class='form-control'/>
+                </td>
+                <td>
+                  <input type='text' ng-model='ln.shpln_carton_qty' class='form-control'/>
+                </td>
+                <td>
+                  <input type='text' ng-model='ln.shpln_cbms' class='form-control'/>
+                </td>
+                <td>
+                  <input type='text' ng-model='ln.shpln_gross_kgs' class='form-control'/>
+                </td>
+                <td>
+                  <select ng-model='ln.shpln_container_uid' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'></select>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-default" ng-hide='ln._destroy' ng-click='ln._destroy=true'>Delete</button>
+                  <button class="btn btn-sm btn-default" ng-show='ln._destroy' ng-click='ln._destroy=false'>Undo Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div> <!--end lines section -->
+  </div>
+</chain-loading-wrapper>

@@ -21,11 +21,7 @@ class ShipmentsController < ApplicationController
   def new
     s = Shipment.new
     action_secure(s.can_edit?(current_user),s,{:verb => "create",:module_name=>"shipment"}) {
-      @shipment = s
-      respond_to do |format|
-        format.html # new.html.erb
-        format.xml  { render :xml => @shipment }
-      end
+      @no_action_bar = true
     }
   end
 
