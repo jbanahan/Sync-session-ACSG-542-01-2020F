@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     while cursor < rows.size
       r = rows[cursor]
       cursor += 1
-      if r.size > 3 && r[3].match(/^Equipment/)
+      if r.size > 3 && !r[3].blank? && r[3].match(/^Equipment/)
         equip_num = r[3].split(' ')[1]
         container = shipment.containers.find {|con| con.container_number == equip_num}
         next
@@ -71,11 +71,16 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   def add_line shipment, row, container
     po = row[14]
     sku = row[20]
-    qty = row[29]
+    qty = clean_number(row[29])
     ol = find_order_line shipment, po, sku
     sl = shipment.shipment_lines.build(product:ol.product,quantity:qty)
     sl.container = container
     sl.linked_order_line_id = ol.id
+  end
+
+  def clean_number num
+    return nil if num.blank?
+    num.to_s.gsub(',','').strip
   end
 
   def find_order_line shipment, po, sku

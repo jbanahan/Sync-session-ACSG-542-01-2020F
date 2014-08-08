@@ -152,6 +152,26 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(l.quantity).to eq 5
       expect(l.order_lines.to_a).to eq [ol2]
     end
+    it "should handle commas in quantity" do
+      c = Factory(:company)
+      p = Factory(:product)
+      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
+      @s.update_attributes(importer_id:c.id)
+      row_seed = {
+        82=>subtitle_row('CARTON DETAIL'),
+        84=>['','','','Equipment#: WHATEVER'],
+        85=>['','','','','Range'],
+        86=>detail_line({po:'ordnum',sku:'sk12345',item_qty:'8,000'}),
+      }
+      rows = init_mock_array 90, row_seed
+      expect{described_class.new.process_rows(@s,rows,@u)}.to change(ShipmentLine,:count).from(0).to(1)
+      @s.reload
+      f = @s.shipment_lines.first
+      expect(f.product).to eq p
+      expect(f.quantity).to eq 8000
+      expect(f.order_lines.to_a).to eq [ol]
+    end
     it "should not add lines for a different importer" do
       c = Factory(:company)
       p = Factory(:product)
