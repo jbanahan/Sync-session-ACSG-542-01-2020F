@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
     @line_1 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "ABC", :country_origin_code=>"CN", :quantity=>100, :unit_price=>1, :po_number => "PO NUMBER")
     @line_1.commercial_invoice_tariffs.create :hts_code => "1234567890", :tariff_description=>"Stuff", :tariff_provision => "1"
 
-    @line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "DEF", :country_origin_code=>"TW", :quantity=>1, :unit_price=>0.1, :po_number => "PO NUMBER")
+    @line_2 = Factory(:commercial_invoice_line, :commercial_invoice => @i, :part_number => "DEF", :country_origin_code=>"TW", :quantity=>1, :unit_price=>0.1, :po_number => "PO NUMBER", :customer_reference => "CUSTREF")
     @line_2.commercial_invoice_tariffs.create :hts_code => "09876543210", :tariff_description=>"More Stuff", :tariff_provision => "2"
 
     @generator = OpenChain::CustomHandler::FenixInvoiceGenerator.new
@@ -69,6 +69,8 @@ describe OpenChain::CustomHandler::FenixInvoiceGenerator do
       h[820..1169].should == "GENERIC".ljust(350)
       h[1170..1219].should == @i.commercial_invoice_lines.first.po_number.to_s.ljust(50)
       h[1220].should == "2"
+      h[1221, 50].should == @line_2.customer_reference.to_s.ljust(50)
+      h[1271, 50].should == @i.importer.name.ljust(50)
 
 
       @i.commercial_invoice_lines.each_with_index do |l, x|

@@ -171,6 +171,7 @@ module OpenChain; module CustomHandler
           detail.quantity = row[8]
           detail.unit_price = row[9]
           detail.po_number = text_value row[10]
+          detail.customer_reference = text_value row[12]
 
           tariff = detail.commercial_invoice_tariffs.build
           tariff.hts_code = text_value row[6]
