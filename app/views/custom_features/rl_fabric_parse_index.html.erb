@@ -1,0 +1,29 @@
+<%-content_for :javascript do -%>
+$(function() {
+  $('#btn_submit').click(function() {
+    $('#myfrm').submit();
+  });
+});
+<%-end-%>
+<%-content_for :action_bar do -%>
+  <button id='btn_submit'>Send</button>
+<%-end-%>
+<div class='container'>
+  <div class='row'>
+    <div class='col-md-12'>
+      <h1>MSL Fiber Content Analyzer</h1>
+    </div>
+  </div>
+  <div class='row'>
+    <div class='col-md-12'>
+      <%=form_tag '/custom_features/rl_fabric_parse', method: :post, id: 'myfrm', role: "form" do %>
+        <div class="form-group">
+          <label for='styles' class="col-md-1 control-label">Styles:</label>
+          <div class="col-md-3">
+            <textarea type='styles' name='styles' value='' class="form-control" rows="10"></textarea>
+          </div>
+        <div>
+      <%end%>
+    </div>
+  </div>
+</div>

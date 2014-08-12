@@ -113,6 +113,14 @@ describe CustomValue do
       CustomValue.batch_write! [cv], true
       @p.get_custom_value(@cd).value.should == 'aaaa'
     end
+
+    it "should skip nil values" do
+      @cd.update_attributes(:data_type=>'text')
+      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv.value = nil
+      CustomValue.batch_write! [cv], false
+      expect(@p.get_custom_value(@cd).value).to be_nil
+    end
   end
 
   describe "sql_field_name" do

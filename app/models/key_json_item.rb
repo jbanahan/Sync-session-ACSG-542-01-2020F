@@ -16,6 +16,8 @@ class KeyJsonItem < ActiveRecord::Base
 
   # Land's End Drawback Certificiate of Delivery data
   KS_LANDS_END_CD ||= 'le_cd'
+  # Polo Fiber Report Date
+  RL_FIBER_REPORT ||= 'rl_fiber'
 
   # turn the object into a json string and store it in the json_data field
   def data= d
@@ -29,4 +31,5 @@ class KeyJsonItem < ActiveRecord::Base
   end
 
   scope :lands_end_cd, lambda {|logical_key| where(:key_scope=>KS_LANDS_END_CD).where(:logical_key=>logical_key)}
+  scope :polo_fiber_report, lambda {|logical_key| where(:key_scope=>RL_FIBER_REPORT).where(:logical_key=>logical_key)}
 end

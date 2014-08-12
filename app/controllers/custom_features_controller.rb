@@ -13,6 +13,7 @@ require 'open_chain/custom_handler/under_armour/ua_winshuttle_product_generator'
 require 'open_chain/custom_handler/under_armour/ua_winshuttle_schedule_b_generator'
 require 'open_chain/custom_handler/lands_end/le_returns_parser'
 require 'open_chain/custom_handler/lands_end/le_returns_commercial_invoice_generator'
+require 'open_chain/custom_handler/polo/polo_fiber_content_parser'
 
 class CustomFeaturesController < ApplicationController
   CA_EFOCUS = 'OpenChain::CustomHandler::PoloCaEntryParser'
@@ -455,6 +456,25 @@ class CustomFeaturesController < ApplicationController
     f = CustomFile.find params[:id] 
     action_secure(f.can_view?(current_user),LE_CI_UPLOAD,{:verb=>"download",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
       redirect_to f.secure_url
+    }
+  end
+
+  def rl_fabric_parse_index
+    action_secure(OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"MSL Fabric Analyzer",:lock_check=>false}) {
+      #nothing to do here
+    }
+  end
+
+  def rl_fabric_parse_run
+    action_secure(OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user),Product,{:verb=>"view",:module_name=>"MSL Fabric Analyzer",:lock_check=>false}) {
+      styles = params[:styles]
+      if styles.blank? || styles.split(/\s*\n\s*/).size == 0
+        add_flash :errors, "You must specify at least one style."
+      else
+        OpenChain::CustomHandler::Polo::PoloFiberContentParser.delay.update_styles params[:styles]
+        add_flash :notices, "The styles you have entered will be analyzed shortly."
+      end
+      redirect_to '/custom_features/rl_fabric_parse'
     }
   end
   

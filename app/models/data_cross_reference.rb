@@ -18,6 +18,7 @@ class DataCrossReference < ActiveRecord::Base
   ALLIANCE_FREIGHT_CHARGE_CODE ||= 'al_freight_code'
   FENIX_ALS_CUSTOMER_NUMBER ||= 'fx_als_cust'
   LANDS_END_MID ||= 'le_mid'
+  RL_FABRIC_XREF ||= 'rl_fabric'
 
   #return a hash of all key value pairs
   def self.get_all_pairs cross_reference_type
@@ -100,6 +101,10 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.create_lands_end_mid! factory_code, hts, mid
     add_xref! LANDS_END_MID, make_compound_key(factory_code, hts), mid
+  end
+
+  def self.find_rl_fabric fabric
+    find_unique where(cross_reference_type: RL_FABRIC_XREF, key: fabric)
   end
 
   def self.has_key? key, cross_reference_type

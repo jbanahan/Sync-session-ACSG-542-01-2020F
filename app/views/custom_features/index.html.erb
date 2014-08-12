@@ -117,4 +117,11 @@
     </div>
   </div>
   <%-end%>
+  <%-if OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user)-%>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to "MSL Fabric Analyzer", '/custom_features/rl_fabric_parse', :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
 </div>

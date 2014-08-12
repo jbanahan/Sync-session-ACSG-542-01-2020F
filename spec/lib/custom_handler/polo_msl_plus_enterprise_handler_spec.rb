@@ -25,37 +25,32 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
   end
   describe :outbound_file do
     before :each do
-      @cd_length = CustomDefinition.create!(:label=>"Length (cm)",:data_type=>"string",:module_type=>"Product")
-      @cd_width = CustomDefinition.create!(:label=>"Width (cm)",:data_type=>"string",:module_type=>"Product")
-      @cd_height = CustomDefinition.create!(:label=>"Height (cm)",:data_type=>"string",:module_type=>"Product")
+      # TODO Figure out how to make this run faster - slow due to creation of 50'ish custom definitions each run
+      @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
       @t = Factory(:tariff_record,:hts_1=>"1234567890",:hts_2=>"0123456789",:hts_3=>"98765432")
       ['US','IT','CA','TW'].each {|iso| Factory(:country,:iso_code=>iso)}
       @c = @t.classification
       @p = @c.product
-      @p.update_custom_value! @cd_length, "1"
-      @p.update_custom_value! @cd_width, "2"
-      @p.update_custom_value! @cd_height, "3"
-      @h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
+      
       @h.stub(:send_file)
     end
     it "should generate file with appropriate values" do
+      @custom_defs = @h.send(:init_outbound_custom_definitions)
+      @p.update_custom_value! @custom_defs[:length_cm], "1"
+      @p.update_custom_value! @custom_defs[:width_cm], "2"
+      @p.update_custom_value! @custom_defs[:height_cm], "3"
+      @p.update_custom_value! @custom_defs[:fabric_type_1], "Outer"
+      @p.update_custom_value! @custom_defs[:fabric_1], "Cotton"
+      @p.update_custom_value! @custom_defs[:fabric_percent_1], "50"
+      @p.update_custom_value! @custom_defs[:fabric_type_15], "Outer"
+      @p.update_custom_value! @custom_defs[:fabric_15], "Fleece"
+      @p.update_custom_value! @custom_defs[:fabric_percent_15], "50"
+      @p.update_custom_value! @custom_defs[:msl_fiber_failure], false
+
       @tmp = @h.generate_outbound_sync_file Product.where("1=1")
       r = CSV.parse IO.read @tmp.path
-      r.should have(2).rows
-      row = r[1]
-      row[0].should == @p.unique_identifier
-      row[1].should == @c.country.iso_code
-      row[2].should == '' #MP1
-      row[3].should == @t.hts_1.hts_format
-      row[4].should == @t.hts_2.hts_format
-      row[5].should == @t.hts_3.hts_format
-      row[6].should == "1" #length
-      row[7].should == "2" #width
-      row[8].should == "3" #height
-    end
-    it "should write headers" do
-      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
-      r = CSV.parse IO.read @tmp.path
+      expect(r.length).to eq 2
+
       row = r[0]
       row[0].should == "Style" 
       row[1].should == "Country"
@@ -66,7 +61,53 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       row[6].should == "Length"
       row[7].should == "Width"
       row[8].should == "Height"
+      counter = 8
+      (1..15).each do |x|
+        expect(row[counter+=1]).to eq "Fabric Type - #{x}"
+        expect(row[counter+=1]).to eq "Fabric - #{x}"
+        expect(row[counter+=1]).to eq "Fabric % - #{x}"
+      end
+
+      row = r[1]
+      row[0].should == @p.unique_identifier
+      row[1].should == @c.country.iso_code
+      row[2].should == '' #MP1
+      row[3].should == @t.hts_1.hts_format
+      row[4].should == @t.hts_2.hts_format
+      row[5].should == @t.hts_3.hts_format
+      row[6].should == "1.0" #length
+      row[7].should == "2.0" #width
+      row[8].should == "3.0" #height
+      row[9].should == "Outer" #Fabric Type 1
+      row[10].should == "Cotton" #Fabric 1
+      row[11].should == "50.0" #Fabric Percentage 1
+      (12..50).each {|x| expect(row[x]).to be_nil}
+      row[51].should == "Outer" #Fabric Type 1
+      row[52].should == "Fleece" #Fabric 1
+      row[53].should == "50.0" #Fabric Percentage 1
     end
+
+    it "doesn't include fabric type fields if failure flag is true" do
+      @custom_defs = @h.send(:init_outbound_custom_definitions)
+      @p.update_custom_value! @custom_defs[:length_cm], "1"
+      @p.update_custom_value! @custom_defs[:width_cm], "2"
+      @p.update_custom_value! @custom_defs[:height_cm], "3"
+      @p.update_custom_value! @custom_defs[:fabric_type_1], "Outer"
+      @p.update_custom_value! @custom_defs[:fabric_1], "Cotton"
+      @p.update_custom_value! @custom_defs[:fabric_percent_1], "50"
+      @p.update_custom_value! @custom_defs[:fabric_type_15], "Outer"
+      @p.update_custom_value! @custom_defs[:fabric_15], "Fleece"
+      @p.update_custom_value! @custom_defs[:fabric_percent_15], "50"
+      @p.update_custom_value! @custom_defs[:msl_fiber_failure], true
+
+      @tmp = @h.generate_outbound_sync_file Product.where("1=1")
+      r = CSV.parse IO.read @tmp.path
+      expect(r.length).to eq 2
+
+      row = r[1]
+      (9..53).each {|x| expect(row[x]).to be_nil}
+    end
+
     it "should handle multiple products" do
       tr2 = Factory(:tariff_record,:hts_1=>'123456')
       @tmp = @h.generate_outbound_sync_file [@p,tr2.product]
@@ -170,50 +211,37 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @style_numbers = ["7352024LTBR","3221691177NY","322169117JAL","443590","4371543380AX"]
       @h.stub(:send_file)
     end
-    it "should create custom fields" do
-      @tmp = @h.process @file_content
-      field_names = ["Board Number","GCC Description","MSL+ HTS Description","MSL+ US Season",
-        "MSL+ Item Description","MSL+ Model Description","MSL+ HTS Description 2","MSL+ HTS Description 3",
-        "AX Subclass","MSL+ US Brand","MSL+ US Sub Brand","MSL+ US Class","MSL+ Receive Date"]
-      field_names.each do |fn| 
-        cd = CustomDefinition.find_by_label(fn)
-        cd.module_type.should == "Product"
-        if fn=="MSL+ Receive Date"
-          cd.data_type.should == "date"
-        else
-          cd.data_type.should == "string"
-        end
-      end
-    end
+    
     it "should write new product" do
       @tmp = @h.process @file_content
       Product.count.should == 5
       Product.all.collect {|p| p.unique_identifier}.should == @style_numbers 
       p = Product.where(:unique_identifier=>"7352024LTBR").includes(:custom_values).first
-      p.get_custom_value(CustomDefinition.find_by_label("Board Number")).value.should == "O26SC10"
-      p.get_custom_value(CustomDefinition.find_by_label('GCC Description')).value.should =='Men\'s Jacket'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ HTS Description')).value.should =='100% Real Lambskin Men\'s Jacket'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ US Season')).value.should =='F12'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ Item Description')).value.should =='LEATHER BARRACUDA-POLYESTER'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ Model Description')).value.should =='LEATHER BARRACUDA'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ HTS Description 2')).value.should =='TESTHTS2'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ HTS Description 3')).value.should =='TESTHTS3'
-      p.get_custom_value(CustomDefinition.find_by_label('AX Subclass')).value.should =='Suede/Leather Outerwear'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ US Brand')).value.should =='Menswear'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ US Sub Brand')).value.should =='POLO SPORTSWEAR'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ US Class')).value.should =='OUTERWEAR'
-      p.get_custom_value(CustomDefinition.find_by_label('MSL+ Receive Date')).value.should == Date.today 
+      cdefs = @h.send(:init_inbound_custom_definitions)
+
+      p.get_custom_value(cdefs[:msl_board_number]).value.should == "O26SC10"
+      p.get_custom_value(cdefs[:msl_gcc_desc]).value.should =='Men\'s Jacket'
+      p.get_custom_value(cdefs[:msl_hts_desc]).value.should =='100% Real Lambskin Men\'s Jacket'
+      p.get_custom_value(cdefs[:msl_us_season]).value.should =='F12'
+      p.get_custom_value(cdefs[:msl_item_desc]).value.should =='LEATHER BARRACUDA-POLYESTER'
+      p.get_custom_value(cdefs[:msl_model_desc]).value.should =='LEATHER BARRACUDA'
+      p.get_custom_value(cdefs[:msl_hts_desc_2]).value.should =='TESTHTS2'
+      p.get_custom_value(cdefs[:msl_hts_desc_3]).value.should =='TESTHTS3'
+      p.get_custom_value(cdefs[:ax_subclass]).value.should =='Suede/Leather Outerwear'
+      p.get_custom_value(cdefs[:msl_us_brand]).value.should =='Menswear'
+      p.get_custom_value(cdefs[:msl_us_sub_brand]).value.should =='POLO SPORTSWEAR'
+      p.get_custom_value(cdefs[:msl_us_class]).value.should =='OUTERWEAR'
+      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today 
     end
     it "should update existing product" do
-      cd = CustomDefinition.create!(:label=>"Board Number",:data_type=>"string",:module_type=>"Product")
-      cd_rec = CustomDefinition.create!(:label=>"MSL+ Receive Date",:data_type=>"date",:module_type=>"Product")
+      cdefs = @h.send(:init_inbound_custom_definitions)
       p = Product.create!(:unique_identifier=>"7352024LTBR")
-      p.update_custom_value! cd, "ABC"
-      p.update_custom_value! cd_rec, 1.year.ago
+      p.update_custom_value! cdefs[:msl_board_number], "ABC"
+      p.update_custom_value! cdefs[:msl_receive_date], 1.year.ago
       @tmp = @h.process @file_content
       p = Product.find_by_unique_identifier("7352024LTBR")
-      p.get_custom_value(cd).value.should == "O26SC10"
-      p.get_custom_value(cd_rec).value.should == Date.today 
+      p.get_custom_value(cdefs[:msl_board_number]).value.should == "O26SC10"
+      p.get_custom_value(cdefs[:msl_receive_date]).value.should == Date.today 
     end
     it "should generate acknowledgement file" do
       @tmp = @h.process @file_content
