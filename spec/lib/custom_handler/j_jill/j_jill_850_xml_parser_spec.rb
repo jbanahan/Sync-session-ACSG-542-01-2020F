@@ -8,8 +8,8 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       @path = 'spec/support/bin/jjill850sample.xml'
       @c = Factory(:company,importer:true,system_code:'JJILL')
     end
-    def run_file
-      described_class.parse(IO.read(@path))
+    def run_file opts = {}
+      described_class.parse(IO.read(@path), opts)
     end
     it "should save order" do
       expect {run_file}.to change(Order,:count).from(0).to(1)
@@ -101,6 +101,12 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       o.reload
       expect(o.order_lines.to_a).to eq [ol]
       expect(o.updated_at.to_i).to eq u.to_i
+
+      m = OpenMailer.deliveries.pop
+      expect(m).not_to be_nil
+      expect(m.to).to eq ["jjill_orders@vandegriftinc.com"]
+      expect(m.subject).to eq "[VFI Track] Order #1001368 already assigned to a Shipment"
+
     end
     it "should update order header when force_header_updates = true and order on shipment" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
@@ -110,11 +116,14 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       sl.linked_order_line_id = ol.id
       sl.save!
 
-      described_class.parse(IO.read(@path),{force_header_updates:true})
+      run_file force_header_updates:true
 
       o.reload
       expect(o.order_lines.to_a).to eq [ol]
       expect(o.fob_point).to eq 'CN'
+
+      m = OpenMailer.deliveries.pop
+      expect(m).not_to be_nil
     end
   end
 end

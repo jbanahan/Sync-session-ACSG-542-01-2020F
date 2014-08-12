@@ -46,10 +46,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     
     update_lines = true
     update_header = true
+    po_assigned_to_shipment = false
     #skip orders already on shipments    
     if ord && ord.piece_sets.where("shipment_line_id is not null").count > 0
       update_header = @inner_opts[:force_header_updates]
       update_lines = false
+      po_assigned_to_shipment = true
     end
 
     ord = Order.new(importer_id:@jill.id,order_number:ord_num) unless ord
@@ -69,6 +71,11 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     if update_header || update_lines
       ord.save! 
       EntitySnapshot.create_from_entity ord, @user
+    end
+
+    if po_assigned_to_shipment
+      message = "Order ##{cust_ord} already assigned to a Shipment"
+      OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{message}", message).deliver!
     end
   end
 
