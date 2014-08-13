@@ -82,6 +82,35 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(r.intacct_receivable_lines.first.location).to eq @line["line division"]
     end
 
+    it "creates an lmd receivable with suffix from brokerage file data" do
+      # In certain cases, we'll actually have multiple broker files associated w/ the same Freight File.
+      # In these cases, we want the invoice number to use the alphabetic suffix system that Alliance follows
+      different_receivable = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", lmd_identifier: "DIFFERENT_FILE~#{@line['freight file number']}", invoice_number: @line['freight file number']
+
+      @line['line division'] = "11"
+      r = @p.create_receivable [@line, @line]
+
+      # Verify the invoice number has a suffix
+      expect(r.invoice_number).to eq (@line['freight file number']+"A")
+      expect(r.customer_number).to eq "VANDE"
+      expect(r.company).to eq "lmd"
+      expect(r.receivable_type).to eq "LMD Sales Invoice"
+    end
+
+    it "re-uses an existing lmd receivable for the same broker file with a suffix" do
+      # In certain cases, we'll actually have multiple broker files associated w/ the same Freight File.
+      # In these cases, we want the invoice number to use the alphabetic suffix system that Alliance follows
+      different_receivable = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", lmd_identifier: "DIFFERENT_FILE~#{@line['freight file number']}", invoice_number: @line['freight file number']
+      existing_receivable = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", lmd_identifier: "#{@line['broker file number']}~#{@line['freight file number']}", invoice_number: "DEF"
+
+      @line['line division'] = "11"
+      r = @p.create_receivable [@line, @line]
+
+      # Verify the invoice number was not changed
+      expect(existing_receivable.id).to eq r.id
+      expect(r.invoice_number).to eq "DEF"
+    end
+
     it "creates an lmd receivable from an LMD file" do
       @line['header division'] = "11"
       @line['line division'] = "11"
@@ -121,7 +150,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
 
     it "updates lmd receivables from brokerage files that have not been sent" do
       @line['line division'] = "11"
-      exists = IntacctReceivable.create! company: 'lmd', invoice_number: @line['freight file number'], customer_number: "VANDE", intacct_errors: "errors"
+      exists = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", intacct_errors: "errors",lmd_identifier: "#{@line['broker file number']}~#{@line['freight file number']}"
       r = @p.create_receivable [@line, @line]
       expect(r.id).to eq exists.id
       expect(r.intacct_errors).to be_nil
@@ -143,7 +172,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
 
     it "does not create an lmd receivable from a brokerage file if a file already exists with an upload date and key" do
       @line['line division'] = "11"
-      IntacctReceivable.create! company: 'lmd', invoice_number: @line['freight file number'], customer_number: "VANDE", intacct_upload_date: Time.zone.now, intacct_key: "Key"
+      IntacctReceivable.create! company: 'lmd', invoice_number: @line['freight file number'], customer_number: "VANDE", intacct_upload_date: Time.zone.now, intacct_key: "Key", lmd_identifier: "#{@line['broker file number']}~#{@line['freight file number']}"
       expect(@p.create_receivable [@line, @line]).to be_nil
     end
 
