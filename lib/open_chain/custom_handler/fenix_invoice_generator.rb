@@ -40,6 +40,8 @@ module OpenChain; module CustomHandler
       {:field => :importer, :subformat => FenixInvoiceGenerator::PARTY_OUTPUT_FORMAT},
       {:field => :po_number, :length => 50},
       {:field => :mode_of_transportation, :length => 1},
+      {:field => :reference_identifier, :length => 50},
+      {:field => :customer_name, :length => 50}
     ]
 
     DETAIL_OUTPUT_FORMAT ||= [
@@ -137,7 +139,9 @@ module OpenChain; module CustomHandler
         # which then will force the ops people to associate the importer account manually as the pull them
         # into the system.  This partially needs to be done based on the way edi in feninx handling is done on a 
         # per file directory basis.  This avoids extra setup when we just want to pull a generic invoice into the system.
-        :importer => {:name=>"GENERIC"}
+        :importer => {:name=>"GENERIC"},
+        :reference_identifier => lambda {|i| i.commercial_invoice_lines.select {|l| !l.customer_reference.blank?}.first.try(:customer_reference)},
+        :customer_name => lambda {|i| i.importer.try(:name)}
       }
     end
 

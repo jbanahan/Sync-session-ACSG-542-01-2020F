@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       # also test the alternate date formats here too
       file_contents = [
         ["Column", "Heading"],
-        [@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"],
+        [@importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"],
         [@importer.fenix_customer_number, "INV1", "2013-10-29", "UPA", "Part2", "HK", "9876543210", "Some Part 2", "20", "1.50", "PO#", "2"],
         [@importer.fenix_customer_number, "INV2", "10/29/2013", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"],
         [@importer.fenix_customer_number, "INV3", "10/30/13", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
@@ -87,6 +87,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       l.quantity.should eq BigDecimal.new(10)
       l.unit_price.should eq BigDecimal.new("1.25")
       l.po_number.should eq "PO#"
+      l.customer_reference.should eq "UNIQUEID"
       t = l.commercial_invoice_tariffs.first
       t.hts_code.should eq "1234567890"
       t.tariff_description.should eq "Some Part"
@@ -97,6 +98,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       l.country_origin_code.should eq "HK"
       l.quantity.should eq BigDecimal.new(20)
       l.unit_price.should eq BigDecimal.new("1.50")
+      l.customer_reference.should eq ""
       t = l.commercial_invoice_tariffs.first
       t.hts_code.should eq "9876543210"
       t.tariff_description.should eq "Some Part 2"
