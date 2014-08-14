@@ -108,9 +108,9 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
     results.delete :algorithm if results
 
-    # Handle errors raises errors based on the return value of invalid_results?
-    # If no error, no raising
-    handle_errors(invalid_results?(results, true), results)
+    # invalid_results? raises errors if anything is bad, so by virtue
+    # of it not blowing up, we have a valid fiber content
+    invalid_results?(results, true)
 
     results
   end
@@ -245,7 +245,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
       if fiber_split_check && (count = parse_numeric_fiber_split(fiber, results, starting_index, component_type))
         values_parsed = count
-      elsif (found = fiber.scan /((?:(?:\d{1,2}\.\d+)|(?:\d{1,3}))\s*%?\s*)([^0-9%\x1E,\-:;]+)/).size > 0
+      elsif (found = fiber.scan /((?:(?:\d{1,2}\.\d+)|(?:\d{1,3}))\s*%?\s*)([^0-9%\x1E,:;]+)/).size > 0
         # The \x1E used above is the non-printing char we added above to represent newlines
 
         # If any of the numeric groups included a percent, we want to skip any numeric grouping that 
@@ -345,22 +345,31 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       # and then later on the cleaned up one.  This is primarily because we want to give RL the chance
       # to provide substitutions on the values they see in the descriptions and then also on the
       # values the cleanup turns them into.
-      xref = DataCrossReference.find_rl_fabric fiber
+      xref = xref_value fiber
       return xref unless xref.blank?
 
       # Strip out a series of comments we don't need along w/ the word boundaries
       ["est\.", "est", "estimated"].each do |com|
         fiber = fiber.gsub(/\b#{com}\b/i, "")
       end
-      # Strip anything that comes after w/, with, and or /
-      fiber = fiber.gsub /(?:\bw\/|\bwith|\bw\b|\band|\bon|&|\/|\(|\+).*$/i, ""
+      xref = xref_value fiber
+      return xref unless xref.blank?
+
+      # Strip anything that comes after w/, with, and, /, ' - ', more than 3 spaces
+      fiber = fiber.gsub /(?:\bw\/|\bwith|\bw\b|\band|\bon|&|\/|\(|\+|\s+-+\s+|\s{3,}).*$/i, ""
+      xref = xref_value fiber
+      return xref unless xref.blank?
 
       # Strip out anything like "(Exclusive Of X)" - parenths or quotes optional
       fiber = fiber.gsub /[\('"]?\b+exclusive of \w+\b[\)'"]?/i, ""
+      xref = xref_value fiber
+      return xref unless xref.blank?
 
       fiber = strip_punctuation fiber
+      xref = xref_value fiber
+      return xref unless xref.blank?
   
-      xref = DataCrossReference.find_rl_fabric fiber
+      xref = xref_value fiber
       xref.blank? ? fiber : xref
     end
 
@@ -381,13 +390,14 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
 
     def invalid_results? results, strip_overages = false
-      return :missing_descriptor if results.nil? || results.size == 0
+      raise error("Failed to find fabric content and percentages for all discovered components.", results) if results.nil? || results.size == 0
 
       # What we're looking for are the following
       # 1) Each set of results (fiber_X, type_X, percent_x) has values in each field
       # 2) The percentage of each type of fiber adds up to 100 (or a mulitiple of 100, since
       # in certain cases we'll parse out multiples of 100% but then only return the first 100%)
       percentages = {}
+      valid_fibers = all_validated_fabrics
 
       (1..15).each do |x|
         fiber, type, percent = all_fiber_fields results, x
@@ -396,44 +406,37 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         all_blank = "#{fiber}#{type}#{percent}".blank?
         next if all_blank
 
-        return :missing_descriptor if (fiber.blank? || type.blank? || percent.blank?)
+        raise error("Failed to find fabric content and percentages for all discovered components.", results) if (fiber.blank? || type.blank? || percent.blank?)
 
         percentages[type] ||= []
         p = percent.to_f
-        return :invalid_percentage_value if p <= 0
+        raise error("Invalid percentage value '#{p}' found.  Percentages must be greater than 0 and less than or equal to 100.", results) if p <= 0
 
         percentages[type] << p
       end
 
       percentages.keys.each do |key|
         total = percentages[key].inject(:+)
-        return :invalid_percentage if (total % 100) > 0
+        raise error("Fabric percentages must add up to 100%.", results) if (total % 100) > 0
       end
 
       if strip_overages
         strip_component_overages results
       end
 
+      # Only validate the fibers after we've stripped the overages.
+      (1..15).each do |x|
+        fiber, *ignore = all_fiber_fields results, x
+        raise error("Invalid fabric '#{fiber}' found.", results) unless fiber.blank? || valid_fabric?(fiber)
+      end
+
       nil
     end
 
-    def handle_errors validation_error, results
-      return nil if validation_error.nil?
-      msg = nil
-      case validation_error
-      when :missing_descriptor
-        msg = "Failed to find fiber content and percentages for all discovered components."
-      when :invalid_percentage_value
-        msg = "Invalid percentage value encountered.  Percentages must be greater than 0 and less than or equal to 100."
-      when :invalid_percentage
-        msg = "Fiber percentages must add up to 100%."
-      else
-        msg = "Unable to parse fiber content."
-      end
-
+    def error msg, results
       e = FiberParseError.new msg
       e.parse_results = results
-      raise e
+      e
     end
 
     def strip_component_overages results
@@ -479,6 +482,30 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       cv.value = value
 
       cv
+    end
+
+    def xref_value fabric
+      unless @all_xrefs
+        pairs = DataCrossReference.get_all_pairs(DataCrossReference::RL_FABRIC_XREF)
+        # Now downcase every key, so we retain the case insenstive matching that a straight db lookup would give us
+        @all_xrefs = {}
+        pairs.map {|k, v| @all_xrefs[k.downcase] = v}
+      end
+
+      @all_xrefs[fabric.downcase]
+    end
+
+    def valid_fabric? fabric
+      all_validated_fabrics.include? fabric.to_s.downcase
+    end
+
+    def all_validated_fabrics
+      unless @all_fabrics
+        # We want any case of the Fabric to be acceptable.
+        @all_fabrics = Set.new(DataCrossReference.get_all_pairs(DataCrossReference::RL_VALIDATED_FABRIC).keys.map(&:downcase))
+      end
+
+      @all_fabrics
     end
 
 end; end; end; end;

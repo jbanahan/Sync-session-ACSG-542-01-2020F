@@ -19,6 +19,7 @@ class DataCrossReference < ActiveRecord::Base
   FENIX_ALS_CUSTOMER_NUMBER ||= 'fx_als_cust'
   LANDS_END_MID ||= 'le_mid'
   RL_FABRIC_XREF ||= 'rl_fabric'
+  RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'
 
   #return a hash of all key value pairs
   def self.get_all_pairs cross_reference_type
