@@ -85,8 +85,8 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
       r << @f.str('',20) #not going to have P Number
       r << @f.str('',16) #hold for ex-factory & gate in dates
       r << @f.date(shipment.est_departure_date)
-      r << @f.str(shipment.lading_port.schedule_k_code,10)
-      r << @f.str(shipment.unlading_port.schedule_d_code,10)
+      r << @f.str(shipment.lading_port.try(:schedule_k_code),10)
+      r << @f.str(shipment.unlading_port.try(:schedule_d_code),10)
       r << @f.str('11',6) #only sending ocean
       r << @f.str(sl_array.first.order_lines.first.get_custom_value(@cdefs[:order_line_destination_code]).value,10)
       r << 'APP '

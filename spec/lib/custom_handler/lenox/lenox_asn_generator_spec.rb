@@ -136,6 +136,17 @@ describe OpenChain::CustomHandler::Lenox::LenoxAsnGenerator do
         row = r.first
         expect(row[119]).to eq 'N'
       end
+      it "does not bomb if ports are missing" do
+        @shipment.update_attributes! lading_port: nil, unlading_port: nil
+        r = []
+        described_class.new.generate_header_rows @shipment do |row|
+          r << row
+        end
+        expect(r.size).to eq 1
+        row = r[0]
+        expect(row[231,10].rstrip).to eq ''
+        expect(row[241,10].rstrip).to eq ''
+      end
     end
     describe :generate_detail_rows do
       it "should make detail row" do
