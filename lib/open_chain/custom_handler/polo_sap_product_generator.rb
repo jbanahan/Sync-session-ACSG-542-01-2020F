@@ -62,15 +62,15 @@ module OpenChain
           # First convert the UTF-8 text to ascii w/ our conversion table
           value = value.encode("US-ASCII", :fallback => allowed_conversions)
 
-          # Convert tab chars to spaces
-          value = value.gsub("\t", " ")
+          # Convert tab chars and "forbidden" characters to spaces
+          value = value.gsub(/[<>^&{}\[\]+|*~;\t]/, " ")
 
-          # Now fail if there are any non-printing chars (aside from newlines ASCII 10 && 13)
+          # Now fail if there are any non-printing chars
           # ie. ASCII chars < 32 or > 126.  (Extended ASCII range is not allowed - it shouldn't even get translated in the encode call anyway.)
           # I'm sure there's a way to write a regular expression using ascii codepoints, but I'm not seeing
           # it, so I'm just going to loop the characters and check them all manually.
           value.each_codepoint do |code|
-            if (code < 32 || code > 126) && ![10, 13].include?(code)
+            if (code < 32 || code > 126)
               raise ArgumentError, "Non-printing ASCII code '#{code}' found in the value #{value}."
             end
           end
