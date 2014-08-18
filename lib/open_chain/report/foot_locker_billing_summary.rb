@@ -57,7 +57,7 @@ inner join entries ent on bi.entry_id = ent.id
 inner join commercial_invoices ci on ent.id = ci.entry_id
 inner join commercial_invoice_lines cil on ci.id = cil.commercial_invoice_id
 inner join commercial_invoice_tariffs cit on cit.commercial_invoice_line_id = cil.id
-where ent.customer_number = "FOOLO" and bi.invoice_date between "#{start_date}" and "#{end_date}"
+where bi.customer_number = "FOOLO" and bi.invoice_date between "#{start_date}" and "#{end_date}"
 QRY
         wb = Spreadsheet::Workbook.new
         sheet = wb.create_worksheet :name=>'Billing Summary'
