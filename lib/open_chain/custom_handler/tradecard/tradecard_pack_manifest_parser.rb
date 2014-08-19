@@ -49,6 +49,8 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   end
 
   def add_lines shipment, rows
+    max_line_number = 0
+    shipment.shipment_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
     carton_detail_header_row = header_row_index(rows,'CARTON DETAIL')
     return unless carton_detail_header_row
     cursor = carton_detail_header_row+2
@@ -62,13 +64,14 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
         next
       end
       if r.size==57 && !r[29].blank? && r[29].match(/\d/)
-        add_line shipment, r, container
+        max_line_number += 1
+        add_line shipment, r, container, max_line_number
         next
       end
     end
   end
 
-  def add_line shipment, row, container
+  def add_line shipment, row, container, line_number
     po = row[14]
     sku = row[20]
     qty = clean_number(row[29])
@@ -76,6 +79,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     sl = shipment.shipment_lines.build(product:ol.product,quantity:qty)
     sl.container = container
     sl.linked_order_line_id = ol.id
+    sl.line_number = line_number
   end
 
   def clean_number num

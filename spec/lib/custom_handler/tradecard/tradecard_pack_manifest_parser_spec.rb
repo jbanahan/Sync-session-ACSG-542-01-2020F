@@ -147,10 +147,12 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       expect(f.product).to eq p
       expect(f.quantity).to eq 8
       expect(f.order_lines.to_a).to eq [ol]
+      expect(f.line_number).to eq 1
       l = @s.shipment_lines.last
       expect(l.product).to eq p
       expect(l.quantity).to eq 5
       expect(l.order_lines.to_a).to eq [ol2]
+      expect(l.line_number).to eq 2
     end
     it "should handle commas in quantity" do
       c = Factory(:company)
