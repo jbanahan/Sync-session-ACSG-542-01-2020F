@@ -1,4 +1,5 @@
-<%=master_setups_url host:MasterSetup.get.request_host%>
+<%-rq = MasterSetup.get.request_host%>
+<%=master_setups_url host:(rq.blank? ? 'localhost:3000' : rq)%>
 
 Error: <%=@exception%>
 Message: <%=@error_message%>
