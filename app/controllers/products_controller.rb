@@ -154,7 +154,9 @@ class ProductsController < ApplicationController
         messages[:errors].each {|e| add_flash :errors, e}
 
       end
-      redirect_to products_path
+      # Need to instruct the search to clear out any selections, otherwise the user could have products they editted that drop off their
+      # search but still remain selected.
+      redirect_to advanced_search CoreModule::PRODUCT, false, true
     }
   end
 

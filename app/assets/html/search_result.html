@@ -24,7 +24,7 @@
           </span>
           <button ng-show="!allSelected && searchResult.total_objects > 0 " ng-click='selectAll()' class='btn navbar-btn btn-default'>Select All ({{searchResult.total_objects}})</button>
           <span ng-show='bulkSelected.length>0 || allSelected'>
-            <button ng-click='selectNone()' class='btn navbar-btn btn-default'>Clear</button>
+            <button ng-click='selectNone()' class='btn navbar-btn btn-default' id="search_clear">Clear</button>
           </span>
         </li>
       </ul>

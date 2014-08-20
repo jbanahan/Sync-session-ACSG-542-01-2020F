@@ -121,7 +121,7 @@ describe ProductsController do
       p[:pk] = pks
       
       post :bulk_update, p
-      response.should redirect_to products_path
+      expect(response).to redirect_to controller.advanced_search(CoreModule::PRODUCT, false, true)
       flash[:notices].first.should == "Test"
       flash[:errors][0].should == "1"
       flash[:errors][1].should == "2"
@@ -145,7 +145,7 @@ describe ProductsController do
       end
 
       post :bulk_update, p
-      response.should redirect_to products_path
+      expect(response).to redirect_to controller.advanced_search(CoreModule::PRODUCT, false, true)
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
 
@@ -162,7 +162,7 @@ describe ProductsController do
       end
 
       post :bulk_update, p
-      response.should redirect_to products_path
+      expect(response).to redirect_to controller.advanced_search(CoreModule::PRODUCT, false, true)
       flash[:notices].first.should == "These products will be updated in the background.  You will receive a system message when they're ready." 
     end
   end

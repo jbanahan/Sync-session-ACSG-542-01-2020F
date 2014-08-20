@@ -67,6 +67,12 @@ describe ApplicationController do
       r = controller.advanced_search(CoreModule::PRODUCT) 
       r.should == "/custom_files/#{f.id}"
     end
+    it "inserts clearSelection parameter if instructed" do
+      ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
+      sr = ss.search_runs.create!(:page=>3,:per_page=>100)
+      r = controller.advanced_search(CoreModule::PRODUCT, false, true)
+      r.should == "/advanced_search#/#{ss.id}/3?clearSelection=true"
+    end
   end
   describe :strip_uri_params do
     it "should remove specified parameters from a URI string" do

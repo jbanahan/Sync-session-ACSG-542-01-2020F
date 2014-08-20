@@ -118,7 +118,7 @@ class ApplicationController < ActionController::Base
     attr_accessor :url
   end
 
-  def advanced_search(core_module,force_search=false)
+  def advanced_search(core_module,force_search=false, clear_selected_items = false)
     search_run = nil
     if force_search
       search_run = SearchRun.
@@ -141,7 +141,7 @@ class ApplicationController < ActionController::Base
     parent = search_run.parent
     case parent.class.to_s
     when 'SearchSetup'
-      return "/advanced_search#/#{parent.id}#{page_str}"
+      return "/advanced_search#/#{parent.id}#{page_str}#{clear_selected_items ? "?clearSelection=true" : ""}"
     when 'ImportedFile'
       return "/imported_files/show_angular#/#{parent.id}#{page_str}"
     when 'CustomFile'

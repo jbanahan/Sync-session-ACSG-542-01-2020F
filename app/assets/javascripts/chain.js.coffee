@@ -258,6 +258,14 @@ root.Chain =
       should_submit = (blank_count != field_count) || $(@).data('trigger') == 'advanced_button'
       if !should_submit
         $("#mod_quick_classify").remove()
+      else
+        # We're clearing the user's search selections here to prevent the case where they selected something
+        # classified it and then had those items they selected drop off their search (but still stay in their selections).
+        clear_scope = $("#search_clear").scope()
+        if clear_scope
+          clear_scope.$apply((scope) ->
+            scope.selectNone()
+          )
       should_submit
       
     Chain.htsAutoComplete()

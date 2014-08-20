@@ -706,7 +706,7 @@
       }
     }
 ]
-@components.directive 'chainSearchResult', ['$http',($http) ->
+@components.directive 'chainSearchResult', ['$http', '$location',($http, $location) ->
   {
     scope: {
       searchResult:"=chainSearchResult"
@@ -823,6 +823,11 @@
         $scope.bulkSelected = []
         $scope.allSelected = false
         r.bulk_selected = false for r in $scope.searchResult.rows if $scope.searchResult.rows
+
+      if $location.search()['clearSelection'] is 'true'
+        # Unset the selection cookie then remove the parameter
+        clearSelectionCookie($scope)
+        $location.search('clearSelection', null)
 
       $scope.selectAll = () ->
         $scope.allSelected = true
