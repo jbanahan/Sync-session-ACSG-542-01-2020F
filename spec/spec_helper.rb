@@ -39,6 +39,11 @@ Spork.prefork do
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"
     end
+    
+    config.before(:each) do 
+      CustomDefinition.skip_reload_trigger = true
+    end
+
     # Clears out the deliveries array before every test..which is only done automatically
     # for mailer tests.
     config.after(:each) {ActionMailer::Base.deliveries = []}

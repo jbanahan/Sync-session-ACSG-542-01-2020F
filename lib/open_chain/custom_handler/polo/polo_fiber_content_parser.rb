@@ -1,3 +1,5 @@
+require 'digest/md5'
+
 module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParser
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
@@ -90,10 +92,20 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       raise e if Rails.env.test?
     end
 
-    batch_writes = convert_results_to_custom_values product, result, failed
+    # First things, first...make sure the results hash has actually changed values before we bother
+    # writing the results into the custom values.
+    fingerprint = results_fingerprint result
 
+    xref_fingerprint = DataCrossReference.find_rl_fabric_fingerprint product.unique_identifier
+
+    # If the fingerprints match, don't update anything, just return true as if everything
+    # worked without issue.
+    return true if fingerprint == xref_fingerprint
+
+    batch_writes = convert_results_to_custom_values product, result, failed
     Lock.with_lock_retry(product) do
       CustomValue.batch_write! batch_writes, false, skip_insert_nil_values: true
+      DataCrossReference.create_rl_fabric_fingerprint! product.unique_identifier, fingerprint
     end
     !failed
   end
@@ -506,6 +518,20 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
 
       @all_fabrics
+    end
+
+    def results_fingerprint results
+      values = []
+      (1..15).each do |x|
+        fiber, type, percent = all_fiber_fields results, x
+        values << results["type_#{x}".to_sym].to_s
+        values << results["fiber_#{x}".to_sym].to_s
+        values << results["percent_#{x}".to_sym].to_s
+      end
+
+      # Really the only reason I'm hashing this is to ensure a constant width field, otherwise it's possible
+      # concat'ing the result data together it'll overflow the 255 char width (possible, though not likely).
+      Digest::MD5.hexdigest values.join("\n")
     end
 
 end; end; end; end;

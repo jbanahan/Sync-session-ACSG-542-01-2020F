@@ -306,6 +306,49 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(@prod.get_custom_value(@test_cds[:fabric_type_2]).value).to eq "Outer"
       expect(@prod.get_custom_value(@test_cds[:fabric_percent_2]).value).to eq BigDecimal.new("1")
     end
+
+    it 'does not update custom values if fiber fingerprint is unchanged' do
+      # It should update the custom values, since the fingerprint will be unchanged.
+      # Think of this as the scenario where the user modifies the MSL+ fabric fields directly and the product is modified having the fiber content
+      # stay exactly the same.  We don't want to overwrite the user's modifications.
+      @prod.update_custom_value! @test_cds[:fiber_content], "100% Cotton"
+      results = ['Outer', 'Cotton', '100']
+      42.times {results << ''}
+      DataCrossReference.create_rl_fabric_fingerprint! @prod.unique_identifier, Digest::MD5.hexdigest(results.join("\n"))
+
+      @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
+      @prod.update_custom_value! @test_cds[:fabric_1], "Fabric"
+      @prod.update_custom_value! @test_cds[:fabric_percent_1], "0"
+
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+
+      @prod.reload
+      expect(@prod.get_custom_value(@test_cds[:fabric_type_1]).value).to eq "Type"
+      expect(@prod.get_custom_value(@test_cds[:fabric_1]).value).to eq "Fabric"
+      expect(@prod.get_custom_value(@test_cds[:fabric_percent_1]).value).to eq BigDecimal.new("0")
+    end
+
+    it 'does update custom values if fiber fingerprint is changed' do
+      DataCrossReference.create! key: "Cotton", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
+      # It should update the custom values, since the fingerprint will be unchanged.
+      # Think of this as the scenario where the user modifies the MSL+ fabric fields directly and the product is modified having the fiber content
+      # stay exactly the same.  We don't want to overwrite the user's modifications.
+      @prod.update_custom_value! @test_cds[:fiber_content], "100% Cotton"
+      DataCrossReference.create_rl_fabric_fingerprint! @prod.unique_identifier, "fingerprint"
+
+      @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
+      @prod.update_custom_value! @test_cds[:fabric_1], "Fabric"
+      @prod.update_custom_value! @test_cds[:fabric_percent_1], "0"
+
+      expect(described_class.parse_and_set_fiber_content @prod.id).to be_true
+
+      @prod.reload
+      expect(@prod.get_custom_value(@test_cds[:fabric_type_1]).value).to eq "Outer"
+      expect(@prod.get_custom_value(@test_cds[:fabric_1]).value).to eq "Cotton"
+      expect(@prod.get_custom_value(@test_cds[:fabric_percent_1]).value).to eq BigDecimal.new("100")
+
+      expect(DataCrossReference.find_rl_fabric_fingerprint @prod.unique_identifier).not_to eq "fingerprint"
+    end
   end
 
   describe "run_schedulable" do

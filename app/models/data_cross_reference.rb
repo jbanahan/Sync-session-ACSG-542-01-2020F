@@ -2,6 +2,7 @@ require 'csv'
 
 class DataCrossReference < ActiveRecord::Base
   belongs_to :company
+  validates_presence_of :key, :cross_reference_type
 
   LENOX_ITEM_MASTER_HASH ||= 'lenox_itm'
   RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
@@ -20,6 +21,41 @@ class DataCrossReference < ActiveRecord::Base
   LANDS_END_MID ||= 'le_mid'
   RL_FABRIC_XREF ||= 'rl_fabric'
   RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'
+  RL_FABRIC_FINGERPRINT ||= 'rl_fabric_fingerprint'
+
+  def self.xref_edit_hash user
+    all_editable_xrefs = [
+      xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Key field and the final value to send to MSL+ in the Value field."),
+      xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.  Enter the valid fabric value in the key field.  You may leave the Value field blank.")
+    ]
+
+    user_xrefs = all_editable_xrefs.select {|x| can_view? x[:identifier], user}
+
+    h = {}
+    user_xrefs.each {|x| h[x[:identifier]] = x}
+    h
+  end
+
+  def self.xref_attributes identifier, title, description
+    # Title is what is displayed as the link/button to access the page
+    # Description is text/instructions included at the top of the list/edit screen.
+    {title: title, description: description, identifier: identifier}
+  end
+  private_class_method :xref_attributes
+
+  def can_view? user
+    self.class.can_view? cross_reference_type, user
+  end
+
+  def self.can_view? cross_reference_type, user
+    # At this point, anyone that can view, can also edit
+    case cross_reference_type
+    when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
+      user.admin? && (Rails.env.development? || MasterSetup.get.system_code == "polo")
+    else
+      false
+    end
+  end
 
   #return a hash of all key value pairs
   def self.get_all_pairs cross_reference_type
@@ -106,6 +142,14 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_rl_fabric fabric
     find_unique where(cross_reference_type: RL_FABRIC_XREF, key: fabric)
+  end
+
+  def self.find_rl_fabric_fingerprint product_unique_identifier
+    find_unique where(cross_reference_type: RL_FABRIC_FINGERPRINT, key: product_unique_identifier)
+  end
+
+  def self.create_rl_fabric_fingerprint! product_unique_identifier, fingerprint
+    add_xref! RL_FABRIC_FINGERPRINT, product_unique_identifier, fingerprint
   end
 
   def self.has_key? key, cross_reference_type

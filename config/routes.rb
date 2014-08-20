@@ -555,6 +555,9 @@ OpenChain::Application.routes.draw do
     get 'clear', on: :member
   end
 
+  resources :data_cross_references do
+    get 'show' => "data_cross_references#edit"
+  end
 
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?

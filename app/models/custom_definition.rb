@@ -1,4 +1,6 @@
 class CustomDefinition < ActiveRecord::Base
+  cattr_accessor :skip_reload_trigger
+  
   validates  :label, :presence => true
   validates  :data_type, :presence => true
   validates  :module_type, :presence => true
@@ -91,7 +93,7 @@ class CustomDefinition < ActiveRecord::Base
     CACHE.delete "CustomDefinition:module_type:#{self.module_type}" unless self.module_type.nil?
     set_cache
 
-    if !Rails.env.test?
+    if @@skip_reload_trigger
       # Reload and recache the whole model field data structure
       ModelField.reload true
     else

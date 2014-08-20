@@ -124,4 +124,11 @@
     </div>
   </div>
   <%-end%>
+  <%- DataCrossReference.xref_edit_hash(current_user).each do |key, xref_info| %>
+  <div class='row'>
+    <div class='col-md-4 col-md-offset-4'>
+      <%=link_to xref_info[:title], data_cross_references_path(cross_reference_type: key), :class=>'btn btn-lg btn-default btn-block'%>
+    </div>
+  </div>
+  <%-end%>
 </div>
