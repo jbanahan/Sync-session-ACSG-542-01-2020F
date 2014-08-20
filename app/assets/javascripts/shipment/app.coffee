@@ -173,7 +173,6 @@ shipmentApp.controller 'ShipmentEditCtrl', ['$scope','$state','shipmentSvc','cha
     shipment.containers.push({isNew:true})
 
   $scope.showProcessManifest = () ->
-    console.log('pm')
     $state.go('process_manifest.main',{shipmentId:$scope.shp.id})
 
   $scope.$watch('eh.errorMessage',(nv,ov) ->
