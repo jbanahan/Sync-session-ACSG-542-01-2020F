@@ -31,11 +31,9 @@ describe ModelField do
   end
   context :read_only do
     before :each do
-      FieldLabel::LABEL_CACHE.clear
     end
     after :each do
       FieldLabel.set_default_value :x, nil
-      FieldLabel::LABEL_CACHE.clear
     end
     it "should default to not being read only" do
       mf = ModelField.new(1,:x,CoreModule::PRODUCT,:name,{:data_type=>:string})

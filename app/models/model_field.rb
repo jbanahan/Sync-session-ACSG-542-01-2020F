@@ -176,7 +176,7 @@ class ModelField
   def process_import(obj,data)
     v = nil
     if self.read_only?
-      v = "Value ignored. #{self.label uid} is read only."
+      v = "Value ignored. #{self.label} is read only."
     else
       v = @import_lambda.call(obj,data)
     end
