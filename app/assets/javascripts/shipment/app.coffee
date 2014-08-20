@@ -28,6 +28,25 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
           ]
         }
       }).
+    state('process_manifest',{
+      abstract:true
+      url:'/:shipmentId/process_manifest'
+      templateUrl:'/partials/shipments/process_manifest/abstract.html'
+      controller:'ProcessManifestCtrl'
+      resolve:{
+        shipmentId: ['$stateParams', ($stateParams) ->
+          $stateParams.shipmentId
+          ]
+        }
+      }).
+    state('process_manifest.main',{
+      url:'/main'
+      templateUrl:'/partials/shipments/process_manifest/main.html'
+      }).
+    state('process_manifest.success',{
+      url:'/success'
+      templateUrl:'/partials/shipments/process_manifest/success.html'
+      }).
     state('new',{
       url:'/new'
       templateUrl:'/partials/shipments/edit.html'
@@ -38,7 +57,6 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
           ]
         }
       }).
-    state('edit.select_order',{url:'/select_order',templateUrl:'/partials/shipments/select_order.html'}).
     state('index',{
       url:'/'
       template:''
@@ -51,8 +69,12 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
       })
 ]
 
-shipmentApp.controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentId','$state',($scope,shipmentSvc,shipmentId,$state) ->
+shipmentApp.controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
   $scope.shp = null
+  $scope.eh = chainErrorHandler
+  $scope.eh.responseErrorHandler = (rejection) ->
+    $scope.notificationMessage = null
+
   $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->
@@ -63,7 +85,15 @@ shipmentApp.controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentI
     $state.go('edit',{shipmentId:$scope.shp.id})
 
   $scope.process = (shipment, attachment) ->
-    shipmentSvc.processTradecardPackManifest(shipment, attachment)
+    $scope.loadingFlag = 'loading'
+    $scope.eh.clear()
+    shipmentSvc.processTradecardPackManifest(shipment, attachment).then(((resp) ->
+      $scope.loadingFlag = null
+      $state.go('process_manifest.success',{shipment:shipment.id})
+    ),((resp) ->
+      $scope.loadingFlag = null
+      )
+    )
 
   if shipmentId
     $scope.loadShipment shipmentId  
@@ -110,7 +140,8 @@ shipmentApp.controller 'ShipmentEditCtrl', ['$scope','$state','shipmentSvc','cha
   $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     $scope.eh.clear()
-    shipmentSvc.getShipment(id).then((resp) ->
+    p = shipmentSvc.getShipment(id)
+    p.then((resp) ->
       $scope.shp = resp.data.shipment
       $scope.hasNewContainer = false
       $scope.loadingFlag = null
@@ -127,13 +158,13 @@ shipmentApp.controller 'ShipmentEditCtrl', ['$scope','$state','shipmentSvc','cha
     $scope.loading = true
     $scope.eh.clear()
     $scope.notificationMessage = "Saving shipment."
-    shipmentSvc.saveShipment(shipment).success((data) ->
-      $scope.shp = data.shipment
-      $scope.loading = false
+    shipmentSvc.saveShipment(shipment).then ((resp) ->
+      $scope.shp = resp.data.shipment
+      $scope.loadingFlag = null
       $scope.notificationMessage = "Shipment saved."
       $scope.hasNewContainer = false
-    ).error((data) ->
-      $scope.loading = false
+    ),((resp) ->
+      $scope.loadingFlag = null
     )
 
   $scope.addContainer = (shipment) ->
@@ -141,21 +172,9 @@ shipmentApp.controller 'ShipmentEditCtrl', ['$scope','$state','shipmentSvc','cha
     shipment.containers = [] unless shipment.containers
     shipment.containers.push({isNew:true})
 
-  $scope.enableOrderSelection = ->
-    # $state.go('loading')
-    $scope.availableOrders = null
-    shipmentSvc.getAvailableOrders(1).success((data) ->
-      $scope.availableOrders = data.results
-      # $state.go('select_order')
-    )
-
-  $scope.addOrder = (shp,ord,container_to_pack) ->
-    shipmentSvc.getOrder(ord.id).success((data) ->
-      fullOrder = data.order
-      shipmentSvc.addOrderToShipment(shp,fullOrder,container_to_pack)
-      $scope.viewMode = 'shp'
-      $scope.notificationMessage = 'Order added.'
-    )
+  $scope.showProcessManifest = () ->
+    console.log('pm')
+    $state.go('process_manifest.main',{shipmentId:$scope.shp.id})
 
   $scope.$watch('eh.errorMessage',(nv,ov) ->
     $scope.errorMessage = nv

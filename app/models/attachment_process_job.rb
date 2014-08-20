@@ -11,19 +11,10 @@ class AttachmentProcessJob < ActiveRecord::Base
   validates :user, presence: true
   validates :attachable, presence: true
 
-  def self.process job_id
-    self.find(job_id).process
-  end
   def process
-    begin
-      JOB_TYPES[self.job_name].process_attachment self.attachable, self.attachment, self.user
-    rescue
-      self.error_message = $!.message
-    ensure
-      self.finish_at = Time.now
-      write_user_message
-      self.save
-    end
+    JOB_TYPES[self.job_name].process_attachment self.attachable, self.attachment, self.user
+    self.finish_at = Time.now
+    self.save!
   end
 
   private

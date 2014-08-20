@@ -62,5 +62,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q',($http,$q) ->
         shp.lines.push sl
         nextLineNumber = nextLineNumber + 1
       shp
+    processTradecardPackManifest: (shp, attachment) ->
+      $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest',{attachment_id:attachment.id, include:'order_lines,attachments'}).then(getShipmentSuccessHandler)
   }
 ]

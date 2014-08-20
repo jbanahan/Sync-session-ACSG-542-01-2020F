@@ -26,9 +26,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
       raise StatusableError.new("This manifest has already been submitted for processing.",400)
     else
       aj.update_attributes(start_at:Time.now)
-      AttachmentProcessJob.delay.process aj.id
+      aj.process
+      render_show CoreModule::SHIPMENT
     end
-    render json: {attachment_process_job:{id:aj.id}}
   end
 
   def save_object h

@@ -1,0 +1,11 @@
+<div chain-action-bar>
+    <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
+    <button class='btn btn-default' ng-click='process(shp,manifestAttachment)' ng-show='shp && manifestAttachment'>Submit</button>
+  </div>
+<div class='container'>
+  <div class="row">
+    <h1>Pack Manifest For Shipment: {{shp.shp_ref}}</h1>
+    <label for='attSel'>Select Manifest To Process</label>
+    <select class='form-control' id='attSel' ng-model='manifestAttachment' ng-options='att.name for att in shp.attachments'></select>
+  </div>
+</div>

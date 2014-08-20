@@ -1,4 +1,5 @@
 describe 'ShipmentApp', () ->
+
   beforeEach module('ShipmentApp')
 
   describe 'shipmentSvc', () ->
@@ -18,8 +19,8 @@ describe 'ShipmentApp', () ->
         resp = {shipment:{id:1}}
         http.expectGET('/api/v1/shipments/1.json?include=order_lines,attachments').respond resp
         shp = null
-        svc.getShipment(1).success (data) ->
-          shp = data
+        svc.getShipment(1).then (data) ->
+          shp = data.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -50,8 +51,8 @@ describe 'ShipmentApp', () ->
         resp = {shipment:{id:1}}
         http.expectPOST('/api/v1/shipments',{shipment:base,include:'order_lines,attachments'}).respond resp
         shp = null
-        svc.saveShipment(base).success (data) ->
-          shp = data
+        svc.saveShipment(base).then (data) ->
+          shp = data.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -60,8 +61,8 @@ describe 'ShipmentApp', () ->
         resp = {shipment:{id:1}}
         http.expectPUT('/api/v1/shipments/1.json',{shipment:base,include:'order_lines,attachments'}).respond resp
         shp = null
-        svc.saveShipment(base).success (data) ->
-          shp = data
+        svc.saveShipment(base).then (data) ->
+          shp = data.data
         http.flush()
         expect(shp).toEqual resp      
 
@@ -109,30 +110,63 @@ describe 'ShipmentApp', () ->
         svc.addOrderToShipment shp, ord, null
         expect(shp).toEqual expected
       
-          
+    describe 'processTradecardPackManifest', ->
+      it 'should submit', ->
+        resp = {shipment:{id:1}}
+        http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_id:2,include:'order_lines,attachments'}).respond resp
+        shp = null
+        svc.processTradecardPackManifest({id:1},{id:2}).then (data) ->
+          shp = data.data
+        http.flush()
+        expect(shp).toEqual resp
 
+  describe 'ProcessManifestCtrl', () ->
+    ctrl = svc = scope = q = state = null
+
+    beforeEach ->
+      module ($provide) ->
+        $provide.value('shipmentId',null)
+        null #must return null, not the provider in the line above
+      inject ($rootScope,$controller,shipmentSvc,$q,$state) ->
+        scope = $rootScope.$new()
+        svc = shipmentSvc
+        ctrl = $controller('ProcessManifestCtrl', {$scope: scope, shpmentSvc: svc})
+        q = $q
+        state = $state
+
+    describe 'process', ->
+      it 'should delegate to service and redirect', () ->
+        attachment = {id:2}
+        shipment = {id:1}
+        r = q.defer()
+        spyOn(svc,'processTradecardPackManifest').andReturn(r.promise)
+        scope.process(shipment,attachment)
+        r.resolve({data:{id:1}})
+        expect(svc.processTradecardPackManifest).toHaveBeenCalledWith(shipment,attachment)
       
+  describe 'ShipmentEditCtrl', () ->
+    ctrl = svc = scope = q = null
 
-  describe 'ShipmentCtrl', () ->
-    ctrl = svc = scope = null
+    beforeEach ->
+      module ($provide) ->
+        $provide.value('shipmentId',null)
+        null #must return null not the provider
 
-    beforeEach inject ($rootScope,$controller,shipmentSvc) ->
-      scope = $rootScope.$new()
-      svc = shipmentSvc
-      ctrl = $controller('ShipmentCtrl', {$scope: scope, shpmentSvc: svc})
+      inject ($rootScope,$controller,shipmentSvc,$q) ->
+        scope = $rootScope.$new()
+        svc = shipmentSvc
+        ctrl = $controller('ShipmentEditCtrl', {$scope: scope, shpmentSvc: svc})
+        q = $q
+      
 
     describe "loadShipment", () ->
       it "should delegate to getShipment and toggle state", () ->
         data = {shipment:{id:1,shp_ref:'REF'}}
-        promise = {
-          success: (fn) ->
-            fn(data,null,null,null)
-            this
-          error: (fn) ->
-            this
-        }
-        spyOn(svc, 'getShipment').andReturn(promise)
+        r = q.defer()
+        spyOn(svc, 'getShipment').andReturn(r.promise)
         scope.loadShipment(1)
+        r.resolve({data:data})
+        scope.$apply()
         expect(svc.getShipment).toHaveBeenCalledWith(1)
         expect(scope.shp).toEqual data.shipment
 
@@ -140,15 +174,11 @@ describe 'ShipmentApp', () ->
       it 'should delegate to service', ->
         shp = {shp_ref:'OLD'}
         data = {shipment:{id:1,shp_ref:'REF'}}
-        promise = {
-          success: (fn) ->
-            fn(data,null,null,null)
-            this
-          error: (fn) ->
-            this
-        }
-        spyOn(svc,'saveShipment').andReturn promise
+        r = q.defer()
+        spyOn(svc,'saveShipment').andReturn(r.promise)
         scope.saveShipment shp
+        r.resolve {data:data}
+        scope.$apply()
         expect(svc.saveShipment).toHaveBeenCalledWith shp
         expect(scope.shp).toEqual data.shipment
     
@@ -180,23 +210,3 @@ describe 'ShipmentApp', () ->
         shp = {containers:[]}
         scope.addContainer(shp)
         expect(shp).toEqual {containers:[{isNew:true}]}
-
-    describe 'addOrder', ->
-      it 'should delegate to service', ->
-        shp = {id:1}
-        baseOrd = {id:2}
-        respOrd = {id:2,lines:[]}
-        container_to_pack = {id:4}
-        spyOn(svc,'getOrder').andReturn {
-          success: (fn) ->
-            fn({order:respOrd},null,null,null)
-            this
-          error: (fn) ->
-            this
-        }
-        spyOn(svc,'addOrderToShipment')
-        scope.addOrder(shp,baseOrd,container_to_pack)
-        expect(svc.getOrder).toHaveBeenCalledWith(2)
-        expect(svc.addOrderToShipment).toHaveBeenCalledWith(shp,respOrd,container_to_pack)
-        expect(scope.viewMode).toEqual 'shp'
-        expect(scope.notificationMessage).toEqual 'Order added.'

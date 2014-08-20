@@ -1,0 +1,12 @@
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12">
+        <chain-panel panel-title='Errors' panel-message="eh.errorMessage" panel-type='panel-danger'></chain-panel>
+        <chain-panel panel-title='Notices' panel-message="notificationMessage" panel-type='panel-info'></chain-panel>
+      </div>
+    </div>
+  </div>
+
+  <div ui-view></div>
+</chain-loading-wrapper>

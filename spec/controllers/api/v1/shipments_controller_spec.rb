@@ -139,17 +139,18 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['errors']).to eq ['This manifest has already been submitted for processing.']
     end
-    it "should create delayed_job" do
+    it "should process job" do
       Shipment.any_instance.stub(:can_edit?).and_return true
+      AttachmentProcessJob.any_instance.should_receive(:process)
       expect {post :process_tradecard_pack_manifest, {'attachment_id'=>@att.id,'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(1)
       expect(response).to be_success
+      expect(JSON.parse(response.body)['shipment']).to_not be_nil
       aj = AttachmentProcessJob.first
       expect(aj.attachment).to eq @att
       expect(aj.attachable).to eq @s
       expect(aj.user).to eq @u
       expect(aj.start_at).to_not be_nil
       expect(aj.job_name).to eq 'Tradecard Pack Manifest'
-      expect(Delayed::Job.count).to eq 1
     end
   end
   describe "create" do

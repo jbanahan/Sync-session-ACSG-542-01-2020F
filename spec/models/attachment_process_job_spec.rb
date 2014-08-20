@@ -29,15 +29,6 @@ describe AttachmentProcessJob do
       @j.process
       @j.reload
       expect(@j.finish_at).to be > 1.minute.ago
-      expect(@u.messages.size).to eq 1
-    end
-    it "should save error" do
-      @tpm.should_receive(:process_attachment).with(@s,@a,@u).and_raise "Some error"
-      @j.process
-      @j.reload
-      expect(@j.finish_at).to be > 1.minute.ago
-      expect(@j.error_message).to eq "Some error"
-      expect(@u.messages.size).to eq 1
     end
   end
 end

@@ -3,7 +3,7 @@
     <button class='btn btn-default' ng-show='shp.id || shp.shp_ref' ng-click='saveShipment(shp)'>Save</button>
     <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
     <button class='btn btn-default' ng-click='addContainer(shp)' ng-show='shp'>Add Container</button>
-    <button class='btn btn-default' ng-click='enableOrderSelection()' ng-show='shp' ng-hide='hasNewContainer'>Add Order</button>
+    <button class='btn btn-default' ng-click='showProcessManifest()'>Process Manifest</button>
   </div>
   
   <div class="container">
@@ -119,8 +119,8 @@
           <input type="date" id="shp_departure_date" ng-model="shp.shp_departure_date" class="form-control" />
           <label for="shp_arrival_port_date">Arrival Date</label>
           <input type="date" id="shp_arrival_port_date" ng-model="shp.shp_arrival_port_date" class="form-control" />
-          <label for="shp_delivery_date">Delivery Date</label>
-          <input type="date" id="shp_delivery_date" ng-model="shp.shp_delivery_date" class="form-control" />
+          <label for="shp_delivery_date">Delivered Date</label>
+          <input type="date" id="shp_delivered_date" ng-model="shp.shp_delivered_date" class="form-control" />
         </div>
       </div>
     </div> <!-- end ship header -->
