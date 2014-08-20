@@ -62,6 +62,8 @@ class Country < ActiveRecord::Base
 
   @@eu_iso_codes = ['AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV',
     'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
+
+  @@skip_reload = false
   
   attr_accessible :import_location, :classification_rank
   after_save :update_model_fields
@@ -91,21 +93,27 @@ class Country < ActiveRecord::Base
   end
 	
 	def self.load_default_countries force_load = false
-    return if Country.count == ALL_COUNTRIES.size && !force_load
-    ALL_COUNTRIES.each do |c_array|
-      raise "Country array should have been 2 elements, was #{c_array.length}.  #{c_array.length>0 ? "First element: "+c_array[0] : ""}" unless c_array.length == 2
-      c = Country.where(:iso_code => c_array[1]).first_or_initialize
-      unless c.name==c_array[0]
-        c.name = c_array[0]
-        c.save!
+    begin
+      @@skip_reload = true
+      return if Country.count == ALL_COUNTRIES.size && !force_load
+      ALL_COUNTRIES.each do |c_array|
+        raise "Country array should have been 2 elements, was #{c_array.length}.  #{c_array.length>0 ? "First element: "+c_array[0] : ""}" unless c_array.length == 2
+        c = Country.where(:iso_code => c_array[1]).first_or_initialize
+        unless c.name==c_array[0]
+          c.name = c_array[0]
+          c.save!
+        end
       end
+    ensure
+      @@skip_reload = false
+      ModelField.reload true
     end
     return nil
 	end
 
   private
   def update_model_fields
-    ModelField.reload true
+    ModelField.reload(true) unless @@skip_reload
   end
   def update_cache
     CACHE.set "Country:id:#{self.id}", self

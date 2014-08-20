@@ -6,7 +6,6 @@ class FieldLabel < ActiveRecord::Base
   validate :model_field_uid, :presence=>true, :uniqueness=>true, :length => {:minimum => 1}
   validate :label, :presence=>true, :length => {:minimum => 1}
 
-  LABEL_CACHE = {}
   DEFAULT_VALUES_CACHE = {
     #Fallback hard coded values loaded by ModelField static definitions
   }
@@ -15,29 +14,12 @@ class FieldLabel < ActiveRecord::Base
     f = FieldLabel.where(:model_field_uid=>mf_uid).first
     f = FieldLabel.new(:model_field_uid=>mf_uid) if f.nil?
     f.label = lbl
-    LABEL_CACHE[mf_uid.to_sym] = lbl if f.save!
+    f.save!
+    ModelField.reload
   end
 
   def self.label_text mf_uid
-    r = LABEL_CACHE[mf_uid.to_sym]
-    if r.nil? 
-      #didn't find in cache, check database
-      f = FieldLabel.where(:model_field_uid=>mf_uid).first
-      if f.nil? 
-        #didn't find in database, check default cache or custom definition table
-        mf = ModelField.find_by_uid mf_uid
-        return nil if mf.nil?
-        if mf.custom?
-          r = CustomDefinition.find(mf.custom_id).label
-        else
-          r = DEFAULT_VALUES_CACHE[mf_uid.to_sym]
-        end
-      else
-        r = f.label
-      end
-      LABEL_CACHE[mf_uid.to_sym] = r
-    end
-    r
+    ModelField.find_by_uid(mf_uid.to_sym).base_label
   end
 
   def self.set_default_value mf_uid, lbl

@@ -11,6 +11,7 @@ class ModelField
   @@field_validator_rules = HashWithIndifferentAccess.new
   @@public_field_cache = HashWithIndifferentAccess.new
   @@custom_definition_cache = HashWithIndifferentAccess.new
+  @@field_label_cache = HashWithIndifferentAccess.new
 
   @@last_loaded = nil
   attr_reader :model, :field_name, :label_prefix, :sort_rank, 
@@ -29,7 +30,7 @@ class ModelField
           else
             obj.send("#{@field_name}=".intern,d)
           end
-          return "#{FieldLabel.label_text uid} set to #{d}"
+          return "#{self.label} set to #{d}"
         },
           :export_lambda => lambda {|obj|
             self.custom? ? obj.get_custom_value(@custom_definition).value(@custom_definition) : obj.send("#{@field_name}")
@@ -66,14 +67,7 @@ class ModelField
     @history_ignore = o[:history_ignore]
     @currency = o[:currency]
     @query_parameter_lambda = o[:query_parameter_lambda]
-    @custom_definition = nil
-    if @custom_id
-      if @@custom_definition_cache.empty?
-        @custom_definition = CustomDefinition.find_by_id @custom_id
-      else
-        @custom_definition = @@custom_definition_cache[@uid]
-      end
-    end
+    self.custom_definition if @custom_id #load from cache if available 
     @process_query_result_lambda = o[:process_query_result_lambda]
     fvr = nil
     if @@field_validator_rules.empty?
@@ -82,6 +76,7 @@ class ModelField
       fvr = @@field_validator_rules[@uid]
     end
     @read_only = o[:read_only] || (fvr && fvr.read_only?)
+    self.base_label #load from cache if available
   end
 
   # do post processing on raw sql query result generated using qualified_field_name
@@ -95,6 +90,13 @@ class ModelField
     end
 
     result
+  end
+
+  def custom_definition
+    return nil unless self.custom?
+    @custom_definition = @@custom_definition_cache[@uid] unless @custom_definition
+    @custom_definition = CustomDefinition.find_by_id @custom_id unless @custom_definition
+    @custom_definition
   end
 
   # if true, then the field can't be updated with `process_import`
@@ -132,7 +134,30 @@ class ModelField
     do_prefix = force_label.nil? && self.core_module ? self.core_module.show_field_prefix : force_label
     r = do_prefix ? "#{self.core_module.label} - " : ""
     return "#{r}#{@label_override}" unless @label_override.nil?
-    "#{r}#{FieldLabel.label_text @uid}"
+    "#{r}#{self.base_label}"
+  end
+
+
+  #get the basic label content from the FieldLabel if available
+  def base_label
+    return @base_label unless @base_label.blank?
+    f = nil
+    if @@field_label_cache.empty?
+      f = FieldLabel.where(:model_field_uid=>@uid).first
+    else
+      f = @@field_label_cache[@uid]
+    end
+    if f.nil? 
+      #didn't find in database, check default cache or custom definition table
+      if self.custom?
+        @base_label = self.custom_definition.label
+      else
+        @base_label = FieldLabel::DEFAULT_VALUES_CACHE[@uid.to_sym]
+      end
+    else
+      @base_label = f.label
+    end
+    @base_label
   end
 
   def qualified_field_name
@@ -151,7 +176,7 @@ class ModelField
   def process_import(obj,data)
     v = nil
     if self.read_only?
-      v = "Value ignored. #{FieldLabel.label_text uid} is read only."
+      v = "Value ignored. #{self.label uid} is read only."
     else
       v = @import_lambda.call(obj,data)
     end
@@ -780,11 +805,22 @@ and classifications.product_id = products.id
     end
   end
 
+  def self.field_label_cache
+    @@field_label_cache.clear
+    begin
+      FieldLabel.all.each {|f| @@field_label_cache[f.model_field_uid.to_sym] = f}
+      return yield
+    ensure
+      @@field_label_cache.clear
+    end
+  end
   def self.warm_expiring_caches
     public_field_cache do
       field_validator_rules_cache do
         custom_definition_cache do
-          return yield
+          field_label_cache do
+            return yield
+          end
         end
       end
     end
@@ -1724,5 +1760,4 @@ and classifications.product_id = products.id
       return d
     end
   end
-
 end

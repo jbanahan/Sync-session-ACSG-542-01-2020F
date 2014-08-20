@@ -5,6 +5,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
     @tmp = generator.sync_csv
     CSV.read @tmp.path
   end
+  before :all do
+    described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :related_styles]
+  end
+  after :all do
+    CustomDefinition.where('1=1').destroy_all
+  end
   after :each do 
     @tmp.unlink if @tmp
   end

@@ -8,9 +8,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
   after :each do 
     @tmp.unlink if @tmp
   end
-  before :each do
+  before :all do
     @cdefs = described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article, :related_styles]
   end
+  after :all do
+    CustomDefinition.where('1=1').destroy_all
+  end
+
   describe :generate do
     it "should call FTP whenever row_count > 500" do
       described_class.any_instance.stub(:row_count).and_return(501,501,200)

@@ -5,6 +5,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager do
   #we're going to test the instance methods individually for ease of constructing
   #the test cases
 
+  before :all do
+    described_class.prep_custom_definitions (described_class::AGGREGATE_FIELDS+[:related_styles,:ac_date,:approved_date])
+  end
+
+  after :all do
+    CustomDefinition.where('1=1').destroy_all
+  end
+
   describe :get_style do
     it "should not return read only style" do
       p = Factory(:product,unique_identifier:'base-u')

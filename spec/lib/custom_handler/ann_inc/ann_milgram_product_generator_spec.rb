@@ -5,12 +5,18 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     @tmp = generator.sync_csv
     CSV.read @tmp.path, {:col_sep=>"\t"}
   end
+
   after :each do 
     @tmp.unlink if @tmp
   end
-  before :each do
+  before :all do
     @cdefs = described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty, :related_styles]
   end
+  
+  after :all do
+    CustomDefinition.where('1=1').destroy_all
+  end
+
 
   context 'query' do
     before :each do
