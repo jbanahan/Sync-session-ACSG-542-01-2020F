@@ -561,7 +561,8 @@ class ModelField
           return nil
         end
       },
-      :qualified_field_name => "(SELECT name FROM products WHERE products.id = #{table_name}.product_id)"
+      :qualified_field_name => "(SELECT name FROM products WHERE products.id = #{table_name}.product_id)",
+      :history_ignore => true
     }]
     r
   end
@@ -1558,16 +1559,19 @@ and classifications.product_id = products.id
         [4,:shpln_container_size,:container_size,"Container Size",{data_type: :string,
           export_lambda: lambda {|sl| sl.container ? sl.container.container_size : ''},
           import_lambda: lambda {|o,d| "Container Size cannot be set via import."},
-          qualified_field_name: "(SELECT container_size FROM containers WHERE containers.id = shipment_lines.container_id)"
+          qualified_field_name: "(SELECT container_size FROM containers WHERE containers.id = shipment_lines.container_id)",
+          history_ignore: true
           }],
         [5,:shpln_container_uid,:container_id,"Container Unique ID",{data_type: :integer,
-          import_lambda: lambda {|sl,id| 
+          import_lambda: lambda {|sl,id|
+            return "#{ModelField.find_by_uid(:shpln_container_uid).label} was blank." if id.blank?
             con = Container.find_by_id id
             return "Container with ID #{id} not found. Ignored." unless con
             return "#{ModelField.find_by_uid(:shpln_container_uid).label} is not part of this shipment and was ignored." unless con.shipment_id == sl.shipment_id
             sl.container_id = con.id
             "#{ModelField.find_by_uid(:shpln_container_uid).label} set to #{con.id}."
-          }
+          },
+          history_ignore:true
           }],
         [6,:shpln_cbms,:cbms,"Volume (CBMS)",{data_type: :decimal}],
         [7,:shpln_gross_kgs,:gross_kgs,"Gross Weight (KGS)",{data_type: :decimal}],
@@ -1576,7 +1580,8 @@ and classifications.product_id = products.id
           read_only: true,
           export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.vendor ? ol.order.vendor.name : nil}.uniq.compact.sort.join(',') },
           import_lambda: lambda {|o,d| "Linked fields are read only."},
-          qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT companies.name ORDER BY name SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id INNER JOIN companies ON companies.id = orders.vendor_id WHERE shipment_lines.id = piece_sets.shipment_line_id)"
+          qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT companies.name ORDER BY name SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id INNER JOIN companies ON companies.id = orders.vendor_id WHERE shipment_lines.id = piece_sets.shipment_line_id)",
+          history_ignore:true
           }],
         [10,:shpln_po_value,:po_value,"Shipped PO Value",{
           data_type: :currency,
@@ -1586,16 +1591,19 @@ and classifications.product_id = products.id
             qty = sl.quantity.blank? ? 0 : sl.quantity
             i + (ppu*qty)}},
           import_lambda: lambda {|o,d| "Linked fields are read only."},
-          qualified_field_name: "(SELECT SUM(order_lines.price_per_unit * shipment_lines.quantity) FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id WHERE piece_sets.shipment_line_id = shipment_lines.id)"
+          qualified_field_name: "(SELECT SUM(order_lines.price_per_unit * shipment_lines.quantity) FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id WHERE piece_sets.shipment_line_id = shipment_lines.id)",
+          history_ignore:true
           }],
         [11,:shpln_cust_ord_no,:customer_order_number,"Order(s)",{data_type: :text, 
           read_only: true,
           export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.customer_order_number}.uniq.compact.sort.join(',') },
           import_lambda: lambda {|o,d| "Linked fields are read only."},
-          qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id WHERE shipment_lines.id = piece_sets.shipment_line_id)"
+          qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id WHERE shipment_lines.id = piece_sets.shipment_line_id)",
+          history_ignore:true
           }],
         [12,:shpln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",{data_type: :integer,
           import_lambda: lambda {|sl,id| 
+            return "#{ModelField.find_by_uid(:shpln_carton_set_uid).label} was blank." if id.blank?
             cs = CartonSet.find_by_id id
             return "Carton Set with ID #{id} not found. Ignored." unless cs
             return "#{ModelField.find_by_uid(:shpln_carton_set_uid).label} is not part of this shipment and was ignored." unless cs.shipment_id == sl.shipment_id

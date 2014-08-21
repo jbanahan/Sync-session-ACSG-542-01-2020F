@@ -1,4 +1,9 @@
 module Api; module V1; class CommercialInvoicesController < Api::V1::ApiController
+
+  def core_module
+    CoreModule::COMMERCIAL_INVOICE
+  end
+
   def index
     render_search CoreModule::COMMERCIAL_INVOICE
   end

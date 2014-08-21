@@ -95,7 +95,8 @@ module Api; module V1; class ApiController < ActionController::Base
       else
         raise StatusableError.new(obj.errors.full_messages.join("\n"), 400)
       end
-      render json: {obj_name=>obj_to_json_hash(obj)}
+      #call do_render instead of using the in memory object so we can benefit from any special optimizations that the implementing classes may do
+      render_show core_module
     end
   end
 

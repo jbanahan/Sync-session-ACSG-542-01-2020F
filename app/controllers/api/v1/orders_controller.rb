@@ -1,4 +1,7 @@
 module Api; module V1; class OrdersController < Api::V1::ApiController
+  def core_module
+    CoreModule::ORDER
+  end
   def index
     render_search CoreModule::ORDER
   end

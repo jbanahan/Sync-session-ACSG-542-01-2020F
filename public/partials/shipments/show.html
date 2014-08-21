@@ -1,6 +1,6 @@
 <chain-loading-wrapper loading-flag='{{loadingFlag}}'>
   <div chain-action-bar>
-    <button ng-if='shp.permissions.can_edit' class='btn btn-default' ng-click='edit()'>Edit</button>
+    <button ng-show='shp.permissions.can_edit' class='btn btn-default' ng-click='edit()'>Edit</button>
   </div>
   <div class='container'>
     <div class="row"> <!-- start ship header -->

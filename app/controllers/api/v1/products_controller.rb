@@ -1,5 +1,7 @@
 module Api; module V1; class ProductsController < EntityApiController
-
+  def core_module
+    CoreModule::PRODUCT
+  end
   def show
     show_module Product
   end

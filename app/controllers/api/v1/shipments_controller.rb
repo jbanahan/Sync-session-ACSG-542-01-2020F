@@ -1,4 +1,7 @@
 module Api; module V1; class ShipmentsController < Api::V1::ApiController
+  def core_module
+    CoreModule::SHIPMENT
+  end
   def index
     render_search CoreModule::SHIPMENT
   end
@@ -225,8 +228,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     end
   end
   def load_lines shipment, h
+    logger.debug "XXXX #{Time.now.to_i}: STARTING LOAD LINES"
     if h['lines']
-      h['lines'].each_with_index do |ln,i|
+      h['lines'].each_with_index do |base_ln,i|
+        ln = base_ln.clone
+        if !ln['shpln_puid'].blank? && !ln['shpln_pname'].blank?
+          ln.delete 'shpln_pname' #dont' need to update for both
+        end
         s_line = shipment.shipment_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['shpln_line_number'], obj.line_number)}
         s_line = shipment.shipment_lines.build(line_number:ln['cil_line_number']) if s_line.nil?
         if ln['_destroy']
@@ -246,6 +254,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
         shipment.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:shpln_line_number).label}." if s_line.line_number.blank?
       end
     end
+    logger.debug "XXXX #{Time.now.to_i}: DONE LOAD LINES"
   end
   def load_containers shipment, h
     if h['containers']
