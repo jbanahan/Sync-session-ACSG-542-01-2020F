@@ -265,24 +265,13 @@ class ModelField
     ]
     r << [rank_start+1,"#{uid_prefix}_#{short_prefix}_name".to_sym, :name,"#{description} Name",{
       :import_lambda => lambda {|obj,data|
-        if data.blank?
-          obj.send("#{association_name}=".to_sym, nil)
-          return "#{description} set to blank."
-        else
-          comp = Company.where(:name => data).where(association_name.to_sym => true).first
-          unless comp.nil?
-            obj.send("#{association_name}=".to_sym,comp)
-            return "#{description} set to #{comp.name}"
-          else
-            comp = Company.create(:name=>data,association_name.to_sym=>true)
-            obj.send("#{association_name}=".to_sym,comp)
-            return "#{description} auto-created with name \"#{data}\""
-          end
-        end
+        "Company name is read only."
       },
       :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).name},
       :qualified_field_name => "(SELECT name FROM companies WHERE companies.id = #{table_name}.#{association_name}_id)",
-      :data_type => :string
+      :data_type => :string,
+      :read_only => true,
+      :history_ignore => true
     }]
     r << [rank_start+2,"#{uid_prefix}_#{short_prefix}_syscode".to_sym,:system_code,"#{description} System Code", {
       :import_lambda => lambda {|obj,data|
@@ -545,15 +534,7 @@ class ModelField
     }]
     r << [rank_start+1,"#{uid_prefix}_pname".to_sym, :name,"Product Name",{
       :import_lambda => lambda {|detail,data|
-        prods = Product.where(:name=>data)
-        if prods.size>1
-          return "Multiple products found with name #{data}, field ignored."
-        elsif prods.size==0
-          return "Product not found with name #{data}"
-        else
-          detail.product = prods.first
-          return "Product set to #{data}"
-        end
+        "Product name cannot be set by import."
       },
       :export_lambda => lambda {|detail|
         if detail.product
@@ -563,7 +544,8 @@ class ModelField
         end
       },
       :qualified_field_name => "(SELECT name FROM products WHERE products.id = #{table_name}.product_id)",
-      :history_ignore => true
+      :history_ignore => true,
+      :read_only => true
     }]
     r
   end
@@ -1556,12 +1538,14 @@ and classifications.product_id = products.id
           export_lambda: lambda {|sl| sl.container ? sl.container.container_number : ''},
           import_lambda: lambda {|o,d| "Container Number cannot be set via import."},
           qualified_field_name: "(SELECT container_number FROM containers WHERE containers.id = shipment_lines.container_id)"
-          }],
+          },
+          read_only:true],
         [4,:shpln_container_size,:container_size,"Container Size",{data_type: :string,
           export_lambda: lambda {|sl| sl.container ? sl.container.container_size : ''},
           import_lambda: lambda {|o,d| "Container Size cannot be set via import."},
           qualified_field_name: "(SELECT container_size FROM containers WHERE containers.id = shipment_lines.container_id)",
-          history_ignore: true
+          history_ignore: true,
+          read_only:true
           }],
         [5,:shpln_container_uid,:container_id,"Container Unique ID",{data_type: :integer,
           import_lambda: lambda {|sl,id|
@@ -1593,14 +1577,16 @@ and classifications.product_id = products.id
             i + (ppu*qty)}},
           import_lambda: lambda {|o,d| "Linked fields are read only."},
           qualified_field_name: "(SELECT SUM(order_lines.price_per_unit * shipment_lines.quantity) FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id WHERE piece_sets.shipment_line_id = shipment_lines.id)",
-          history_ignore:true
+          history_ignore:true,
+          read_only:true
           }],
         [11,:shpln_cust_ord_no,:customer_order_number,"Order(s)",{data_type: :text, 
           read_only: true,
           export_lambda: lambda {|sl| sl.order_lines.collect {|ol| ol.order.customer_order_number}.uniq.compact.sort.join(',') },
           import_lambda: lambda {|o,d| "Linked fields are read only."},
           qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR ',') FROM piece_sets INNER JOIN order_lines on order_lines.id = piece_sets.order_line_id INNER JOIN orders ON orders.id = order_lines.order_id WHERE shipment_lines.id = piece_sets.shipment_line_id)",
-          history_ignore:true
+          history_ignore:true,
+          read_only:true
           }],
         [12,:shpln_carton_set_uid,:carton_set_id,"Carton Set Unique ID",{data_type: :integer,
           import_lambda: lambda {|sl,id| 

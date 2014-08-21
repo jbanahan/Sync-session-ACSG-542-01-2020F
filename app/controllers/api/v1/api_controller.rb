@@ -110,6 +110,7 @@ module Api; module V1; class ApiController < ActionController::Base
   def import_fields base_hash, obj, core_module
     fields = ModelField.find_by_core_module(core_module)
     fields.each do |mf|
+      next if mf.read_only?
       uid = mf.uid.to_s
       mf.process_import(obj,base_hash[uid]) if base_hash.has_key?(uid)
     end

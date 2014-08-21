@@ -155,7 +155,7 @@ shipmentApp.controller 'ShipmentEditCtrl', ['$scope','$state','shipmentSvc','cha
     )    
 
   $scope.saveShipment = (shipment) ->
-    $scope.loading = true
+    $scope.loadingFlag = 'loading'
     $scope.eh.clear()
     $scope.notificationMessage = "Saving shipment."
     shipmentSvc.saveShipment(shipment).then ((resp) ->

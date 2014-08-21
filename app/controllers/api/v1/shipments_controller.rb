@@ -36,12 +36,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
   end
 
   def save_object h
+    logger.debug "XXXX: Starting Save Object"
+    logger.debug "\tXXXX: Starting Find By ID"
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
-      {shipment_lines: [:piece_sets,:custom_values,:product]},
+      {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
       :containers,
-      :custom_values
+      {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
+    logger.debug "\tXXXX: Leaving Find By ID"
     raise StatusableError.new("Object with id #{h['id']} not found.",404) if shp.nil?
+    shp = freeze_custom_values shp, false #don't include order fields
     original_importer = shp.importer
     import_fields h, shp, CoreModule::SHIPMENT
     load_containers shp, h
@@ -49,7 +53,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     load_lines shp, h
     raise StatusableError.new("You do not have permission to save this Shipment.",:forbidden) unless shp.can_edit?(current_user)
     shp.save if shp.errors.full_messages.blank?
+    logger.debug "XXXX: Leaving Save Object"
     shp
+
   end
   def obj_to_json_hash s
     headers_to_render = limit_fields([
@@ -153,22 +159,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     ]
     includes_array[0][:shipment_lines][0] = {piece_sets: {order_line: [:custom_values, :product, :order]}} if render_order_fields?
     s = Shipment.where(id:id).includes(includes_array).first
-    #force the internal cache of custom values for so the 
-    #get_custom_value methods don't double check the DB for missing custom values
-    if s 
-      s.freeze_custom_values
-      s.shipment_lines.each {|sl|
-        sl.freeze_custom_values
-        if render_order_fields?
-          sl.piece_sets.each {|ps|
-            ol = ps.order_line
-            if ol
-              ol.freeze_custom_values
-            end
-          }
-        end
-      }
-    end
+    s = freeze_custom_values s, render_order_fields?
     s
   end
   private
@@ -300,5 +291,25 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
 
   def match_numbers? hash_val, number
     return !hash_val.blank? && hash_val.to_s == number.to_s
+  end
+
+  def freeze_custom_values s, include_order_lines
+    #force the internal cache of custom values for so the 
+    #get_custom_value methods don't double check the DB for missing custom values
+    if s 
+      s.freeze_custom_values
+      s.shipment_lines.each {|sl|
+        sl.freeze_custom_values
+        if include_order_lines
+          sl.piece_sets.each {|ps|
+            ol = ps.order_line
+            if ol
+              ol.freeze_custom_values
+            end
+          }
+        end
+      }
+    end
+    s
   end
 end; end; end
