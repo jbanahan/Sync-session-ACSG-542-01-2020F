@@ -86,7 +86,6 @@ class CustomDefinition < ActiveRecord::Base
     @@already_set ||= {}
     to_set = self.destroyed? ? nil : self
     if to_set && @@already_set[self.id] != self.updated_at
-      debugger
       CACHE.set "CustomDefinition:id:#{self.id}", to_set unless self.id.nil?
       @@already_set[self.id] = self.updated_at
     end
