@@ -95,7 +95,7 @@ module OpenChain
         # and walk forward one day at a time until we see the next run time occurs on a valid schedule day of month or week
         # and the time is greater than the start time.
         next_time_local = tz.local(local_base_time.year, local_base_time.month, local_base_time.day, hour_to_run, minute_to_run)
-        while !run_day?(next_time_local)
+        while next_time_local <= local_base_time || !run_day?(next_time_local)
           next_time_local += 1.day
         end
 

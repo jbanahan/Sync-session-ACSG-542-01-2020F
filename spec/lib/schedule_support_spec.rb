@@ -255,5 +255,14 @@ describe OpenChain::ScheduleSupport do
       @s.stub(:interval).and_return "* * * * * * * *"
       expect(@s.next_run_time).to be_nil
     end
+
+    it "returns next day if hour/minute to run job has already been run the day of the schedule" do
+      @s.stub(:last_start_time).and_return ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-01 15:30")
+      @s.stub(:hour_to_run).and_return 0
+      @s.stub(:minute_to_run).and_return 0
+      @s.stub(:wednesday_active?).and_return true
+
+      expect(@s.next_run_time).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2014-01-08 00:00").utc
+    end
   end
 end

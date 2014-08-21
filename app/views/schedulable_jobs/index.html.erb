@@ -4,7 +4,7 @@
 <div class='container'>
   <div class="row">
     <div class="col-md-12 text-center">
-      <h1>Schedulabe Jobs</h1>
+      <h1>Schedulable Jobs</h1>
     </div>
   </div>
   <div class="row">
@@ -26,7 +26,7 @@
             <td><%=link_to 'Edit', edit_schedulable_job_path(sj), {class:'btn btn-xs'}%></td>
             <td><span title="<%=sj.run_class%>"><%=sj.run_class.to_s.split("::").last%></span></td>
             <td><%=sj.running ? "Running" : "Waiting" %>
-            <td><%=sj.last_start_time.blank? ? "Never" : sj.last_start_time%></td>
+            <td><%=sj.last_start_time.blank? ? "Never" : sj.last_start_time.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
             <%- next_run = sj.next_run_time -%>
             <td><%=next_run.blank? ? "Never" : next_run.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
             <td><pre><%=sj.opts%></pre></td>
