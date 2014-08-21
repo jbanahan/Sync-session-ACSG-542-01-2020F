@@ -1,4 +1,5 @@
 module Api; module V1; class ShipmentsController < Api::V1::ApiController
+
   def core_module
     CoreModule::SHIPMENT
   end
@@ -35,7 +36,12 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
   end
 
   def save_object h
-    shp = h['id'].blank? ? Shipment.new : Shipment.find(h['id'])
+    shp = h['id'].blank? ? Shipment.new : Shipment.includes([
+      {shipment_lines: [:piece_sets,:custom_values,:product]},
+      :containers,
+      :custom_values
+    ]).find_by_id(h['id'])
+    raise StatusableError.new("Object with id #{h['id']} not found.",404) if shp.nil?
     original_importer = shp.importer
     import_fields h, shp, CoreModule::SHIPMENT
     load_containers shp, h

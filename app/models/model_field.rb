@@ -528,6 +528,7 @@ class ModelField
     r = []
     r << [rank_start,"#{uid_prefix}_puid".to_sym, :unique_identifier,"Product Unique ID", {
       :import_lambda => lambda {|detail,data|
+        return "Product not changed." if detail.product && detail.product.unique_identifier==data
         p = Product.where(:unique_identifier=>data).first
         return "Product not found with unique identifier #{data}" if p.nil?
         detail.product = p
@@ -1565,11 +1566,11 @@ and classifications.product_id = products.id
         [5,:shpln_container_uid,:container_id,"Container Unique ID",{data_type: :integer,
           import_lambda: lambda {|sl,id|
             return "#{ModelField.find_by_uid(:shpln_container_uid).label} was blank." if id.blank?
-            con = Container.find_by_id id
+            con = sl.shipment.containers.to_a.find {|c| c.id == id}
             return "Container with ID #{id} not found. Ignored." unless con
-            return "#{ModelField.find_by_uid(:shpln_container_uid).label} is not part of this shipment and was ignored." unless con.shipment_id == sl.shipment_id
+            return "#{ModelField.find_by_uid(:shpln_container_uid).label(false)} is not part of this shipment and was ignored." unless con.shipment_id == sl.shipment_id
             sl.container_id = con.id
-            "#{ModelField.find_by_uid(:shpln_container_uid).label} set to #{con.id}."
+            "#{ModelField.find_by_uid(:shpln_container_uid).label(false)} set to #{con.id}."
           },
           history_ignore:true
           }],

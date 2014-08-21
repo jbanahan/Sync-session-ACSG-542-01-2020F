@@ -543,14 +543,14 @@ describe ModelField do
         it "should not allow you to set a container that is already on a different shipment" do
           con = Factory(:container,shipment:Factory(:shipment))
           sl = Factory(:shipment_line)
-          expect(@mf.process_import(sl,con.id)).to eq "#{@mf.label} is not part of this shipment and was ignored."
+          expect(@mf.process_import(sl,con.id)).to eq "Container with ID #{con.id} not found. Ignored."
           sl.reload
           expect(sl.container).to be_nil
         end
         it "should allow you to set a container that is already on the shipment" do
           sl = Factory(:shipment_line)
           con = Factory(:container,entry:nil,shipment:sl.shipment)
-          expect(@mf.process_import(sl,con.id)).to eq "#{@mf.label} set to #{con.id}."
+          expect(@mf.process_import(sl,con.id)).to eq "#{@mf.label(false)} set to #{con.id}."
           sl.save!
           sl.reload
           expect(sl.container).to eq con
