@@ -52,6 +52,7 @@ group :development,:test do
   gem 'spork'
   gem 'byebug'
   gem 'jasmine-rails'
+  # gem 'rack-mini-profiler'
 end
 
 group :test do
