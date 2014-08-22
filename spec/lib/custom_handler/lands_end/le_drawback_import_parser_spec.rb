@@ -31,6 +31,12 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     @p.parse @data
     DrawbackImportLine.count.should == 2
   end
+  it "should skip line where last element is empty" do
+    @data.gsub!(/16\.50%/,'')
+    @p.parse @data
+    DrawbackImportLine.count.should == 1
+  end
+
   it "should not call LinkableAttachmentImportRule" do
     LinkableAttachmentImportRule.should_not_receive(:exists_for_class?).with(Product)
     @p.parse @data
@@ -50,12 +56,6 @@ describe OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser do
     r.count.should == 2
     r.first.quantity.should == 2
     r.last.quantity.should == 2
-  end
-  it "should set duty rate to 0 if nil and next column is 0" do
-    @data.gsub!("19.70%",",0")
-    @p.parse @data
-    d = DrawbackImportLine.first
-    d.rate.should == 0
   end
   it "should not update line for different company" do
     p = Factory(:product,unique_identifier:'LANDSEND-2740747')

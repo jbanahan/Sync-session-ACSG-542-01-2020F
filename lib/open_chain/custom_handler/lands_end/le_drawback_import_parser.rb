@@ -22,7 +22,7 @@ module OpenChain
             ActiveRecord::Base.transaction do
               CSV.parse(data,headers:true) do |row|
                 cursor += 1
-                next if row.blank? || row[0].match(/Subtotal/) || row[0].match(/Total/) || row[0].match(/Imported Duty/)
+                next if row.blank? || row[0].match(/Subtotal/) || row[0].match(/Total/) || row[0].match(/Imported Duty/) || row[10].blank?
                 part_number = row[6].split('-').first.strip
                 q = DrawbackImportLine.where(importer_id:@company.id,
                   entry_number:row[0],part_number:part_number).
