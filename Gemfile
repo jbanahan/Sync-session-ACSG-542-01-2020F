@@ -39,6 +39,9 @@ gem "omniauth-saml", "~> 1.2.0"
 
 gem "cache_digests"
 
+#async threaded processing
+gem 'sucker_punch', '~> 1.0'
+
 # Standard ruby logger uses mutexes for writing / rotation which we don't need and
 # causes issues since Ruby 2.0 doesn't allow mutexes in signal traps - delayed_job specifically
 # needs this.

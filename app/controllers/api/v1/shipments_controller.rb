@@ -36,14 +36,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
   end
 
   def save_object h
-    logger.debug "XXXX: Starting Save Object"
-    logger.debug "\tXXXX: Starting Find By ID"
     shp = h['id'].blank? ? Shipment.new : Shipment.includes([
       {shipment_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
       :containers,
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
-    logger.debug "\tXXXX: Leaving Find By ID"
     raise StatusableError.new("Object with id #{h['id']} not found.",404) if shp.nil?
     shp = freeze_custom_values shp, false #don't include order fields
     original_importer = shp.importer
@@ -53,7 +50,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     load_lines shp, h
     raise StatusableError.new("You do not have permission to save this Shipment.",:forbidden) unless shp.can_edit?(current_user)
     shp.save if shp.errors.full_messages.blank?
-    logger.debug "XXXX: Leaving Save Object"
     shp
 
   end
@@ -225,7 +221,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     end
   end
   def load_lines shipment, h
-    logger.debug "XXXX #{Time.now.to_i}: STARTING LOAD LINES"
     if h['lines']
       h['lines'].each_with_index do |base_ln,i|
         ln = base_ln.clone
@@ -251,7 +246,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
         shipment.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:shpln_line_number).label}." if s_line.line_number.blank?
       end
     end
-    logger.debug "XXXX #{Time.now.to_i}: DONE LOAD LINES"
   end
   def load_containers shipment, h
     if h['containers']

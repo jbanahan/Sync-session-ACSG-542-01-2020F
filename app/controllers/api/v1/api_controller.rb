@@ -74,7 +74,7 @@ module Api; module V1; class ApiController < ActionController::Base
       obj_hash = params[obj_name]
       obj = save_object obj_hash
       if obj.errors.full_messages.blank?
-        obj.create_snapshot if obj.respond_to?('create_snapshot')
+        obj.create_async_snapshot if obj.respond_to?('create_async_snapshot')
       else
         raise StatusableError.new(obj.errors.full_messages.join("\n"), 400)
       end
@@ -91,7 +91,7 @@ module Api; module V1; class ApiController < ActionController::Base
       raise StatusableError.new("Path ID #{params[:id]} does not match JSON ID #{obj_hash['id']}.",400) unless params[:id].to_s == obj_hash['id'].to_s
       obj = save_object obj_hash
       if obj.errors.full_messages.blank?
-        obj.create_snapshot if obj.respond_to?('create_snapshot')
+        obj.create_async_snapshot if obj.respond_to?('create_async_snapshot')
       else
         raise StatusableError.new(obj.errors.full_messages.join("\n"), 400)
       end

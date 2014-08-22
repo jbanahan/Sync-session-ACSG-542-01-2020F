@@ -1,4 +1,5 @@
 require 'spork'
+require 'sucker_punch/testing/inline' #don't create new threads for sucker_punch
 
 Spork.prefork do
 # This file is copied to spec/ when you run 'rails generate rspec:install'
