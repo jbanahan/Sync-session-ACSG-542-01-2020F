@@ -139,13 +139,14 @@ shipments.mode as 'Mode',
 orders.customer_order_number as 'PO Number',
 GROUP_CONCAT(DISTINCT containers.container_number SEPARATOR ', ') as 'Containers',
 GROUP_CONCAT(DISTINCT vendor.name SEPARATOR ', ') as 'Vendor',
-shipments.est_departure_date,
-shipments.est_arrival_port_date,
+shipments.est_departure_date as 'Est Departure Date',
+shipments.est_arrival_port_date as 'Est Arrival Date',
 GROUP_CONCAT(DISTINCT (select string_value from custom_values where custom_definition_id = (select id from custom_definitions where label = 'Vendor Style' and module_type = 'Product') and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style', 
 sum(shipment_lines.carton_qty) as 'Cartons',
 sum(shipment_lines.quantity) as 'Pieces',
 sum(shipment_lines.gross_kgs) as 'Gross Weight',
 sum(shipment_lines.cbms) as 'CBMs',
+order_lines.price_per_unit as 'Unit Price',
 SUM(shipment_lines.quantity * order_lines.price_per_unit) as 'Value',
 shipments.cargo_on_hand_date as 'Freight Received',
 shipments.departure_date as 'Departure Date',
@@ -162,7 +163,7 @@ WHERE
 shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
 AND
 (shipments.delivered_date IS NULL OR shipments.delivered_date > DATE_ADD(now(), INTERVAL -2 DAY))
-GROUP BY shipments.id, orders.id    
+GROUP BY shipments.id, orders.id, order_lines.price_per_unit   
 QRY
   end
 end; end; end
