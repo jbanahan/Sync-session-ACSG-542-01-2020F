@@ -40,6 +40,9 @@ Spork.prefork do
     config.before(:each, :type => :controller) do
         request.env["HTTP_REFERER"] = "/"
     end
+    config.before :each do 
+      EntitySnapshotSupport.disable_async = true
+    end
     # Clears out the deliveries array before every test..which is only done automatically
     # for mailer tests.
     config.after(:each) {ActionMailer::Base.deliveries = []}
