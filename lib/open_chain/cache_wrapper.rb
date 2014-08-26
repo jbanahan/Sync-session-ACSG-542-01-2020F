@@ -25,10 +25,10 @@ class CacheWrapper
   
   def self.get_production_client file_path = 'config/memcached.yml'
     # Load memcached settings from config/memcached.yml
-    ver = File.exists?('tmp/version.txt') ? IO.read('tmp/version.txt').strip : "NOVERSION" 
+    ver = File.exists?('config/version.txt') ? IO.read('config/version.txt').strip : "NOVERSION" 
     settings = File.exists?(file_path) ? YAML::load(File.open(file_path))[Rails.env] : {}
     settings = {"server"=>"localhost", "port"=>"11211"}.merge settings
-    Dalli::Client.new(["#{settings["server"]}:#{settings["port"]}"], {:namespace=>"#{ver}#{Rails.root.basename}", :compress=>true})
+    Dalli::Client.new(["#{settings["server"]}:#{settings["port"]}"], {:namespace=>"#{Rails.root.basename}-#{ver}", :compress=>true})
   end
 
   private
