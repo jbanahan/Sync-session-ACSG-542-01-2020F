@@ -11,7 +11,12 @@ class ReportResult < ActiveRecord::Base
   before_create :sanitize
   before_post_process :no_post
 
-  scope :eligible_for_purge, where('run_at < ?',PURGE_WEEKS.weeks.ago)
+  # Needs to run as lambda otherwise the purge at time stays at its initial value
+  scope :eligible_for_purge, lambda { where('run_at < ?', PURGE_WEEKS.weeks.ago)}
+
+  def self.run_schedulable
+    purge
+  end
 
   # Destroy all items eligible for purge
   def self.purge

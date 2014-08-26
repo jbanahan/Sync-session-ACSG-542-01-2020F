@@ -7,6 +7,10 @@ class SurveyResponseUpdate < ActiveRecord::Base
 
   scope :update_eligible, where('updated_at < ?',1.hour.ago)
 
+  def self.run_schedulable
+    run_updates
+  end
+
   # send all user updates for update_eligible items
   # this sends emails in the thread so it should be called in delayed_job
   def self.run_updates

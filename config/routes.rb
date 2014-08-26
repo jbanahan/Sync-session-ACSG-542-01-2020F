@@ -16,6 +16,18 @@ OpenChain::Application.routes.draw do
       resources :fields, only: [:index]
       resources :companies, only: [:index]
       resources :orders, only: [:index,:show]
+
+      match "/products/by_id/:id" => "products#show", :via=>:get
+      match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
+      match "/products/model_fields" => "products#model_fields", :via => :get
+
+      match "/intacct_data/receive_alliance_invoice_numbers" => "intacct_data#receive_alliance_invoice_numbers", :via => :post
+      match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
+      match "/intacct_data/receive_advance_checks" => "intacct_data#receive_advance_checks", :via => :post
+      match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post
+      match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
+
+      match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
     end
   end  
 
@@ -572,6 +584,11 @@ OpenChain::Application.routes.draw do
       match "/intacct_data/receive_advance_checks" => "intacct_data#receive_advance_checks", :via => :post
       match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post
       match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
+
+      resources :commercial_invoices, only: [:index,:create,:update]
+
+      match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
+      
     end
   end
 end

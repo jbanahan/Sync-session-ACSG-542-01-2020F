@@ -136,6 +136,10 @@ module Api; module V1; class ApiController < ActionController::Base
   def custom_field_keys core_module
     core_module.model_fields.keys.collect {|k| k.to_s.match(/\*cf_/) ? k : nil}.compact
   end
+
+  def require_admin
+    render_forbidden unless User.current.admin?
+  end
   
   class StatusableError < StandardError
     attr_accessor :http_status, :errors

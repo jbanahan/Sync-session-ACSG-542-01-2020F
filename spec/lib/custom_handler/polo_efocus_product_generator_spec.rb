@@ -266,4 +266,26 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
     end
 =end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      # New call creates the custom fields (easiest way to do this)
+      described_class.new
+      @us = Factory(:country,:iso_code=>'US')
+      @classification = Factory(:classification, :country_id=>@us.id)
+      @tariff_record = Factory(:tariff_record, :classification => @classification, :hts_1 => '12345')
+      @match_product = @classification.product
+      @barthco_cust = CustomDefinition.where(label: "Barthco Customer ID").first
+      @test_style = CustomDefinition.where(label: "Test Style").first
+      @set_type = CustomDefinition.where(label: "Set Type").first
+
+      @match_product.update_custom_value! @barthco_cust, '100'
+
+      described_class.any_instance.should_receive(:ftp_file)
+      described_class.run_schedulable
+
+      # Just check that there's a sync record
+      expect(SyncRecord.first.syncable).to eq @classification.product
+    end
+  end
 end

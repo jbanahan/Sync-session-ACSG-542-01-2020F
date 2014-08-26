@@ -247,4 +247,54 @@ describe OpenChain::S3 do
     end
   end
 
+  describe "download_to_tempfile" do
+    before :each do
+      @tempfile = Tempfile.new ['temp', '.txt']
+      @tempfile << "Contents"
+      @tempfile.flush
+      @tempfile.rewind
+    end
+
+    after :each do
+      @tempfile.close! unless @tempfile.closed?
+    end
+
+    it "downloads S3 path to tempfile" do
+      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
+      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      file = OpenChain::S3.download_to_tempfile 'bucket', 'path'
+      expect(file).to eq @tempfile
+      expect(file.respond_to? :original_filename).to be_false
+    end
+
+    it "downloads s3 path to tempfile and adds original_filename method" do
+      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
+      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      file = OpenChain::S3.download_to_tempfile 'bucket', 'path', original_filename: 'file.txt'
+      expect(file).to eq @tempfile
+      expect(file.original_filename).to eq "file.txt"
+    end
+
+    it "yields downloaded file" do
+      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
+      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      OpenChain::S3.download_to_tempfile('bucket', 'path', original_filename: 'file.txt') do |f|
+        expect(f).to eq @tempfile
+        expect(f.original_filename).to eq "file.txt"
+      end
+      expect(@tempfile.closed?).to be_true
+    end
+
+    it "ensures exceptions in block still closes file" do
+      OpenChain::S3.should_receive(:create_tempfile).and_return @tempfile
+      OpenChain::S3.should_receive(:get_data).with('bucket', 'path', @tempfile).and_return @tempfile
+      expect {
+        OpenChain::S3.download_to_tempfile('bucket', 'path', original_filename: 'file.txt') do |f|
+          raise "Error"
+        end  
+      }.to raise_error
+      
+      expect(@tempfile.closed?).to be_true
+    end
+  end
 end

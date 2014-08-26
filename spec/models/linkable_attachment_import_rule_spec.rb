@@ -41,30 +41,26 @@ describe LinkableAttachmentImportRule do
       @file.flush
     end
 
+    after :each do
+      @file.close! if @file && !@file.closed?
+    end
+
     describe 'path matching' do
       it 'should return nil if no matches' do
         result = LinkableAttachmentImportRule.import @file, 'original_file_name.xls', '/path/not/found'
         result.should be nil
       end
     
-      context 'good match' do
-        before(:each) do
-          @path = '/path/found'
-          @original_file_name = 'ofn.csv'
-          @rule = Factory(:linkable_attachment_import_rule, :path=>@path)
-          @result = LinkableAttachmentImportRule.import @file, @original_file_name, @path
-        end
-        it 'should create linkable attachment' do
-          @result.should be_a LinkableAttachment
-          @result.id.should > 0
-        end
-        it 'should attach file' do
-          @result.attachment.id.should > 0
-          @result.attachment.attached_file_name.should == @original_file_name
-        end
-        it 'should set model field uid' do
-          @result.model_field_uid.should == @rule.model_field_uid
-        end
+      it 'should create linkable attachment' do
+        @path = '/path/found'
+        @original_file_name = 'ofn.csv'
+        @rule = Factory(:linkable_attachment_import_rule, :path=>@path)
+
+        @result = LinkableAttachmentImportRule.import @file, @original_file_name, @path
+        expect(@result).to be_a LinkableAttachment
+        expect(@result).to be_persisted
+        expect(@result.attachment.attached_file_name).to eq @original_file_name
+        expect(@result.model_field_uid).to eq @rule.model_field_uid
       end
     end
     
@@ -111,6 +107,57 @@ describe LinkableAttachmentImportRule do
     it "should not find a rule if the path doesn't match" do
       rule = LinkableAttachmentImportRule.find_import_rule "a/#{@path}"
       rule.should be_nil
+    end
+  end
+
+  describe "process_from_s3" do
+    before :each do
+      @file = Tempfile.new(['linkable','csv'])
+      @file.write 'abc'
+      @file.flush
+    end
+
+    after :each do
+      @file.close! if @file && !@file.closed?
+    end
+
+    it "processes a file from s3 with default paths" do
+      @rule = Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
+      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', '/path/to/s3file.txt', original_filename: 's3file.txt').and_yield @file
+      
+      LinkableAttachmentImportRule.process_from_s3 'bucket', '/path/to/s3file.txt'
+
+      a = LinkableAttachment.first
+      expect(a).not_to be_nil
+      expect(a.model_field_uid).to eq "uid"
+      expect(a.value).to eq "s3file"
+
+      expect(a.attachment.attached_file_name).to eq "s3file.txt"
+    end
+
+    it "processes a file from s3 with provided paths" do
+      @rule = Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
+      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt').and_yield @file
+      
+      LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'file.txt', original_path: "/path/to"
+
+      a = LinkableAttachment.first
+      expect(a).not_to be_nil
+      expect(a.model_field_uid).to eq "uid"
+      expect(a.value).to eq "file"
+
+      expect(a.attachment.attached_file_name).to eq "file.txt"
+    end
+
+    it "logs errors" do
+      r = LinkableAttachmentImportRule.new
+      r.errors.add(:path, "Invalid Path")
+      LinkableAttachmentImportRule.should_receive(:import).and_return r
+      OpenChain::S3.should_receive(:download_to_tempfile).with('bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt').and_yield @file
+
+      StandardError.any_instance.should_receive(:log_me).with ["Failed to link S3 file /s3path/dir/s3file.txt using filename orig_file.txt"]
+
+      LinkableAttachmentImportRule.process_from_s3 'bucket', '/s3path/dir/s3file.txt', original_filename: 'orig_file.txt', original_path: "/path/to"
     end
   end
 end

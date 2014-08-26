@@ -258,4 +258,13 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       c[:remote_file_name].should eq 'xyz.xml'
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      described_class.any_instance.should_receive(:ftp_file)
+      described_class.run_schedulable
+
+      expect(SyncRecord.first.syncable).to eq @e1
+    end
+  end
 end

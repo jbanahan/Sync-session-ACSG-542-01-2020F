@@ -100,6 +100,15 @@ module OpenChain
         user.messages.create(subject: subject, body: body)
       end
 
+      def self.process_from_s3 bucket, path, options = {}
+        OpenChain::S3.download_to_tempfile(bucket, path, original_filename: options[:original_filename]) do |tmp|
+          cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
+          cf.attached = tmp
+          cf.save!
+          cf.process(cf.uploaded_by)
+        end
+      end
+
       private
       def get_csm_number row_hash
         r = ""

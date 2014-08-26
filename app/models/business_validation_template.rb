@@ -13,6 +13,11 @@ class BusinessValidationTemplate < ActiveRecord::Base
   has_many :business_validation_results, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
 
+  def self.run_schedulable opts = {}
+    opts = {'run_validation' => true}.merge opts
+    create_all! opts['run_validation'] != false
+  end
+
   # call create_results! for all templates
   def self.create_all! run_validation = false
     OpenChain::StatClient.wall_time 'bvt_create_all' do

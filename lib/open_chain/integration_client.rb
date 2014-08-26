@@ -21,50 +21,60 @@ require 'open_chain/custom_handler/lands_end/le_parts_parser'
 
 module OpenChain
   class IntegrationClient
-    def self.go system_code, shutdown_if_not_schedule_server = false, sleep_time = 5
-      sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
-      q = sqs.queues.create system_code
-      running = true
-      while running
-        begin
-          in_memory_queue = []
-          if ScheduleServer.active_schedule_server?
-            IntegrationClient.messages(q) do |m|
-              in_memory_queue << m
-              m.visibility_timeout = 300 # 5 minutes
-            end
-          elsif shutdown_if_not_schedule_server
-            running = false
-          end
-          in_memory_queue.sort! {|x,y| x.sent_timestamp <=> y.sent_timestamp}
-          in_memory_queue.each do |m|
-            begin
-              cmd = JSON.parse m.body
-              r = IntegrationClientCommandProcessor.process_command cmd
-              raise r['message'] if r['response_type']=='error'
-              running = false if r=='shutdown'
-            rescue
-              $!.log_me ["SQS Message: #{m.body}"]
-            ensure
-              m.delete
-            end
-          end
-        rescue
-          $!.log_me
-        end
-        sleep sleep_time
-      end
+
+    def self.run_schedulable opts = {}
+      opts = {'queue_name' => MasterSetup.get.system_code, 'max_message_count' => 500}.merge opts
+      process_queue opts['queue_name'], opts['max_message_count']
     end
 
-    # get the messages from the SQS queue
-    def self.messages q
-      while q.visible_messages > 0
-        q.receive_message do |m|
-          yield m
+    def self.process_queue queue_name, max_message_count = 500
+      raise "Queue Name must be provided." if queue_name.blank?
+
+      messages_processed = 0
+
+      current_queue_messages = retrieve_queue_messages queue_name, max_message_count
+      current_queue_messages.each do |m|
+        begin
+          cmd = JSON.parse m.body
+          r = IntegrationClientCommandProcessor.process_command cmd
+          raise r['message'] if r['response_type']=='error'
+          messages_processed += 1
+
+          # There's not really much point to a shutdown response with this running via a scheduler,
+          # but I suppose it can't hurt either.
+          break if r=='shutdown'
+        rescue => e
+          e.log_me ["SQS Message: #{m.body}"]
+        ensure
+          m.delete
         end
       end
+      
+      messages_processed
+    end
+
+    def self.retrieve_queue_messages queue_name, max_message_count
+      sqs = AWS::SQS.new(YAML::load_file 'config/s3.yml')
+      queue = sqs.queues.create queue_name
+      available_messages = []
+      # The max message count is just to try and avoid a situation where the 
+      # message count gets out of control (due to something queueing files like crazy).
+      
+      # Considering the integration client should be set up to run every minute, limiting the
+      # number of messages received per run shouldn't be an issue.
+      while available_messages.length < max_message_count && queue.visible_messages > 0
+        # NOTE: The messages are not deleted from the queue until delete is called on them
+        # when receive_message is used in this manner (this is different than the block form of the method)
+        messages = queue.receive_messages(visibility_timeout: (max_message_count + 60), limit: 10, attributes: [:sent_at], wait_time_seconds: 0)
+        available_messages.push(*messages) if messages.size > 0
+      end
+      # AWS Queue messages are not guaranteed to be returned in order..this
+      # is about the best we can do without actually numbering the message data and blocking
+      # until missing numbers are received.
+      available_messages.sort {|x,y| x.sent_at <=> y.sent_at}
     end
   end
+
   class IntegrationClientCommandProcessor
     def self.process_command command
       case command['request_type']
@@ -79,6 +89,15 @@ module OpenChain
 
     private
     def self.process_remote_file command, total_attempts = 3
+      # Even though this process runs in a delayed job queue, we still primarily want to delay()
+      # the processing of each job so that each call to the process_remote_file runs quickly.  This
+      # is because the processor really needs to make it through processing every message before
+      # the message's visibility timeout "expires" and the sqs message goes back on the queue.
+
+      # We're currently setting the visibility timeout per message in such a way that we get at least
+      # 1 second per file to process (including any retries that may occur) without exceeding the visibility
+      # timeout.
+
       bucket = OpenChain::S3.integration_bucket_name
       dir, fname = Pathname.new(command['path']).split
       remote_path = command['remote_path']
@@ -96,18 +115,10 @@ module OpenChain
         if fname.to_s.match /-ack/
           OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'MSLE'
         else
-          get_tempfile(bucket,remote_path,command['path']) do |tmp|
-            h = OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.new
-            h.send_and_delete_ack_file h.process(IO.read(tmp)), fname.to_s
-          end
+          OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler.delay.send_and_delete_ack_file_from_s3 bucket, remote_path, fname.to_s
         end
       elsif command['path'].include?('_csm_sync/') && MasterSetup.get.custom_feature?('CSM Sync')
-        get_tempfile(bucket,remote_path,command['path']) do |tmp|
-          cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
-          cf.attached = tmp
-          cf.save!
-          cf.delay.process(cf.uploaded_by)
-        end
+        OpenChain::CustomHandler::PoloCsmSyncHandler.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s
       elsif command['path'].include?('_from_csm/ACK') && MasterSetup.get.custom_feature?('CSM Sync')
         OpenChain::CustomHandler::AckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'csm_product', username: ['rbjork','aditaran']
       elsif command['path'].include?('/_efocus_ack/') && MasterSetup.get.custom_feature?("e-Focus Products")
@@ -116,9 +127,7 @@ module OpenChain
         if fname.to_s.match /^zym_ack/
           OpenChain::CustomHandler::AnnInc::AnnZymAckFileHandler.new.delay.process_from_s3 bucket, remote_path, sync_code: 'ANN-ZYM'
         else
-          get_tempfile(bucket,remote_path,command['path']) do |tmp|
-            OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.new.process(IO.read(tmp),User.find_by_username('integration'))
-          end
+          OpenChain::CustomHandler::AnnInc::AnnSapProductHandler.delay.process_from_s3 bucket, remote_path
         end
       elsif command['path'].include? '/_polo_850/'
         OpenChain::CustomHandler::Polo::Polo850VandegriftParser.new.delay.process_from_s3 bucket, remote_path
@@ -141,18 +150,9 @@ module OpenChain
       elsif command['path'].include?('/_lands_end_parts/') && MasterSetup.get.custom_feature?('Lands End Parts')
         OpenChain::CustomHandler::LandsEnd::LePartsParser.delay.process_from_s3 bucket, remote_path
       elsif LinkableAttachmentImportRule.find_import_rule(dir.to_s)
-        get_tempfile(bucket,remote_path,command['path']) do |temp|
-          linkable = LinkableAttachmentImportRule.import(temp, fname.to_s, dir.to_s)
-          if !linkable.errors.blank?
-            response_type = 'error'
-            status_msg = linkable.errors.full_messages.join("\n")
-          end
-        end
+        LinkableAttachmentImportRule.delay.process_from_s3 bucket, remote_path, original_filename: fname.to_s, original_path: dir.to_s
       elsif command['path'].include? '/to_chain/'
-        get_tempfile(bucket,remote_path,command['path']) do |temp|
-          status_msg = process_imported_file command, temp
-          response_type = 'error' if status_msg != 'success'
-        end
+        ImportedFile.delay.process_integration_imported_file bucket, remote_path, command['path']
       elsif command['path'].include?('/_test_from_msl') && MasterSetup.get.custom_feature?('MSL+')
         #prevent errors; don't do anything else
       else
@@ -172,32 +172,5 @@ module OpenChain
       end
     end
 
-    # expects path like /username/to_chain/module/search_name/file.ext
-    def self.process_imported_file command, file
-      dir, fname = Pathname.new(command['path']).split
-      folder_list = dir.to_s.split('/')
-      user = User.where(:username=>folder_list[1]).first
-      raise "Username #{folder_list[1]} not found." unless user
-      raise "User #{user.username} is locked." unless user.active?
-      ss = user.search_setups.where(:module_type=>folder_list[3],:name=>folder_list[4]).first
-      raise "Search named #{folder_list[4]} not found for module #{folder_list[3]}." unless ss
-      imp = ss.imported_files.build(:starting_row=>1,:starting_column=>1,:update_mode=>'any')
-      imp.attached = file
-      imp.module_type = ss.module_type
-      imp.user = user
-      imp.save
-      raise "Imported file could not be save: #{imp.errors.full_messages.join("\n")}" unless imp.errors.blank?
-      imp.process user, {:defer=>true}
-      return "success"
-    end
-
-    def self.get_tempfile bucket, remote_path, original_path
-      OpenChain::S3.download_to_tempfile(bucket,remote_path) do |t|
-        dir, fname = Pathname.new(original_path).split
-        Attachment.add_original_filename_method t
-        t.original_filename= fname.to_s
-        yield t
-      end
-    end
   end
 end

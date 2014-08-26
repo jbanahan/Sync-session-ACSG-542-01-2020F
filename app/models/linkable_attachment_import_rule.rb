@@ -63,4 +63,15 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
       @@link_cache << mf.core_module.klass
     end
   end
+
+  def self.process_from_s3 bucket, path, opts = {}
+    opts = {original_filename: File.basename(path), original_path: Pathname.new(path).split[0].to_s}.merge opts
+    OpenChain::S3.download_to_tempfile(bucket, path, original_filename: opts[:original_filename]) do |tmp|
+      linkable = LinkableAttachmentImportRule.import(tmp, opts[:original_filename], opts[:original_path])
+      if linkable && !linkable.errors.blank?
+        e = StandardError.new linkable.errors.full_messages.join("\n")
+        e.log_me ["Failed to link S3 file #{path} using filename #{opts[:original_filename]}"]
+      end
+    end
+  end
 end

@@ -304,4 +304,55 @@ describe ImportedFile do
       ImportedFile::FileImportProcessJob.new(@i, @u).perform
     end
   end
+
+  describe "process_integration_imported_file" do
+    before :each do
+      @temp = Tempfile.new ['temp', '.csv']
+      Attachment.add_original_filename_method @temp
+      @temp.original_filename = 'file.csv'
+
+    end
+    it "downloads file from s3 and imports it" do
+      user = Factory(:user)
+      ss = Factory(:search_setup, user: user)
+      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "path", original_filename: "myfile.csv").and_yield @temp
+      ImportedFile.any_instance.should_receive(:process).with(user, {defer: true})
+      path = "/#{user.username}/to_chain/#{ss.module_type.downcase}/#{ss.name}/myfile.csv"
+
+      ImportedFile.process_integration_imported_file 'bucket', 'path', path
+
+      imp_file = ImportedFile.first
+      expect(imp_file).not_to be_nil
+      expect(imp_file.module_type).to eq ss.module_type
+      expect(imp_file.user).to eq user
+      expect(imp_file.attached_file_name).to eq @temp.original_filename
+    end
+
+    it "errors if user is missing" do
+      user = Factory(:user)
+      ss = Factory(:search_setup, user: user)
+      path = "/notauser/to_chain/#{ss.module_type.downcase}/#{ss.name}/myfile.csv"
+      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
+
+      ImportedFile.process_integration_imported_file 'bucket', 'path', path
+    end
+
+    it "errors if search module is wrong is missing" do
+      user = Factory(:user)
+      ss = Factory(:search_setup, user: user)
+      path = "/#{user.username}/to_chain/notamodule/#{ss.name}/myfile.csv"
+      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
+
+      ImportedFile.process_integration_imported_file 'bucket', 'path', path
+    end
+
+    it "errors if search name is wrong" do
+      user = Factory(:user)
+      ss = Factory(:search_setup, user: user)
+      path = "/#{user.username}/to_chain/#{ss.module_type.downcase}/notaname/myfile.csv"
+      RuntimeError.any_instance.should_receive(:log_me).with ["Failed to process imported file with original path '#{path}'."]
+
+      ImportedFile.process_integration_imported_file 'bucket', 'path', path
+    end
+  end
 end

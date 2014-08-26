@@ -88,7 +88,7 @@ module OpenChain
     # If a block is passed, the tempfile is yielded to the block as the sole argument and cleanup
     # of the tempfile is handled transparently to the caller.  The tempfile's will be set to read from the
     # beginning of the file when yielded.
-    def self.download_to_tempfile bucket, key
+    def self.download_to_tempfile bucket, key, options = {}
       t = nil
       e = nil
       begin
@@ -96,6 +96,11 @@ module OpenChain
         t = create_tempfile key
         t.binmode
         OpenChain::S3.get_data bucket, key, t
+
+        unless options[:original_filename].to_s.blank?
+          Attachment.add_original_filename_method t
+          t.original_filename = options[:original_filename].to_s
+        end
 
         # pass the tempfile to any given block
         if block_given?

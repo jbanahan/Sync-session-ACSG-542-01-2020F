@@ -126,4 +126,11 @@ describe SurveyResponseUpdate do
       end
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      SurveyResponseUpdate.should_receive(:run_updates)
+      SurveyResponseUpdate.run_schedulable
+    end
+  end
 end

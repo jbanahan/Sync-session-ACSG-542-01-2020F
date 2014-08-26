@@ -256,4 +256,25 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       @tmp = nil
     end
   end
+
+  describe "send_and_delete_ack_file_from_s3" do
+    before :each do
+      @contents = "File Contents"
+      @tempfile = Tempfile.new ['file', '.txt']
+      @tempfile << @contents
+      @tempfile.flush
+    end
+
+    after :each do 
+      @tempfile.close! unless @tempfile.closed?
+    end
+
+    it "processes an a msl plus file and forwards an ack file on" do
+      OpenChain::S3.should_receive(:download_to_tempfile).with("bucket", "file").and_yield @tempfile
+      described_class.any_instance.should_receive(:process).with(@contents).and_return "Processed"
+      described_class.any_instance.should_receive(:send_and_delete_ack_file).with("Processed", "original.txt")
+
+      described_class.send_and_delete_ack_file_from_s3 'bucket', 'file', 'original.txt'
+    end
+  end
 end

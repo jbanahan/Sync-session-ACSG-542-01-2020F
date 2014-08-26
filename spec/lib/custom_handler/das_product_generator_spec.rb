@@ -76,4 +76,21 @@ describe OpenChain::CustomHandler::DasProductGenerator do
       ]
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      @us = Factory(:country, iso_code: 'US')
+      @classification = Factory(:classification, :country_id=>@us.id)
+      @tariff_record = Factory(:tariff_record, :classification => @classification, :hts_1 => '12345')
+      @match_product = @classification.product
+      @unit_cost = Factory(:custom_definition, id: 2, module_type: "Product", label:"Unit Cost", data_type: "decimal")
+      @coo = Factory(:custom_definition, id: 6, module_type: "Product", label:"COO")
+      @match_product.update_custom_value! @unit_cost, 10.5
+
+      described_class.any_instance.should_receive(:ftp_file)
+      described_class.run_schedulable
+
+      expect(SyncRecord.first.syncable).to eq @match_product
+    end
+  end
 end

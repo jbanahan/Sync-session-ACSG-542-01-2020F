@@ -1,4 +1,6 @@
-if ActiveRecord::Base.connection.tables.include?("master_setups")
+# The check for tables occurs so these initializations don't run during a rake db:migrate
+# on an empty database (say from our CI servers).
+if ActiveRecord::Base.connection.table_exists? 'master_setups'
   MasterSetup.init_base_setup
 end
 
@@ -15,3 +17,8 @@ if (["companies","users"] - ActiveRecord::Base.connection.tables).length == 0
     OpenMailer.send_new_system_init(pass).deliver if Rails.env=="production"
   end
 end
+
+if ActiveRecord::Base.connection.table_exists? 'instance_informations'
+  InstanceInformation.check_in
+end
+

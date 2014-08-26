@@ -109,4 +109,11 @@ describe OfficialTariff do
       r[@de].collect{|h| h.hts_code}.should == ['5555554444']
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      OfficialTariff.should_receive(:update_use_count)
+      OfficialTariff.run_schedulable
+    end
+  end
 end

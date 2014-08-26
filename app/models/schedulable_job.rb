@@ -2,7 +2,7 @@ require 'open_chain/schedule_support'
 class SchedulableJob < ActiveRecord::Base
   include OpenChain::ScheduleSupport
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday, 
-    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email
+    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running
 
   def run log=nil
     begin
@@ -18,14 +18,29 @@ class SchedulableJob < ActiveRecord::Base
       end
       k = Kernel
       components.each {|c| k = k.const_get(c)}
-      log.info "Running schedule for #{k.to_s} with options #{opts_hash.to_s}" if log
-      k.run_schedulable opts_hash
+      run_opts = opts_hash
+      log.info "Running schedule for #{k.to_s} with options #{run_opts}" if log
+
+      raise "No 'run_schedulable' method exists on '#{self.run_class}' class." unless k.respond_to?(:run_schedulable)
+      
+      method = k.method(:run_schedulable)
+      if method.parameters.length == 0
+        k.run_schedulable
+      else
+        k.run_schedulable run_opts
+      end
+      
       OpenMailer.send_simple_html(self.success_email,"[VFI Track] Scheduled Job Succeeded",
-          "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has succeeded.").deliver! unless self.success_email.blank?
-    rescue
-      OpenMailer.send_simple_html(self.failure_email,"[VFI Track] Scheduled Job Failed",
-          "Scheduled job for #{k.to_s} with options #{opts_hash.to_s} has failed. The error message is below:<br><br>
-          #{$!.message}").deliver! unless self.failure_email.blank?
+          "Scheduled job for #{k.to_s} with options #{run_opts} has succeeded.").deliver! unless self.success_email.blank?
+    rescue => e
+      if self.failure_email.blank?
+        # Log the error if no failure email is set.
+        e.log_me ["Scheduled job for #{k.to_s} with options #{run_opts} has failed"]
+      else
+        OpenMailer.send_simple_html(self.failure_email,"[VFI Track] Scheduled Job Failed",
+            "Scheduled job for #{k.to_s} with options #{run_opts} has failed. The error message is below:<br><br>
+            #{e.message}").deliver!
+      end
     end
   end
 
@@ -74,6 +89,15 @@ class SchedulableJob < ActiveRecord::Base
 
   def saturday_active?
     self.run_saturday?
+  end
+
+  def interval
+    self.run_interval
+  end
+
+  def allow_concurrency?
+    # Be default, I want jobs to allow concurrency (.ie same job running at same time in different process), so the attribute is no_concurrent_jobs.
+    !self.no_concurrent_jobs
   end
 
   private 

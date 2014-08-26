@@ -4,40 +4,32 @@
 <div class='container'>
   <div class="row">
     <div class="col-md-12 text-center">
-      <h1>Schedulabe Jobs</h1>
+      <h1>Schedulable Jobs</h1>
     </div>
   </div>
   <div class="row">
     <div class="col-md-12">
-      <table class='detail_table'>
+      <table class='detail_table' width="100%">
         <thead>
           <tr>
             <th>&nbsp;</th>
             <th>Class</th>
-            <th>Time</th>
-            <th>Days</th>
-            <th>Options</th>
+            <th>Status</th>
             <th>Last Run</th>
+            <th>Next Run</th>
+            <th>Options</th>
           </tr>
         </thead>
         <tbody>
           <%-@schedulable_jobs.each do |sj|-%>
           <tr class='hover'>
             <td><%=link_to 'Edit', edit_schedulable_job_path(sj), {class:'btn btn-xs'}%></td>
-            <td><%=sj.run_class%></td>
-            <td><%=sj.run_hour%>:<%=sj.run_minute%> <%=sj.time_zone_name%></td>
-            <td>
-              <%-if sj.day_of_month -%>
-                <%=sj.day_of_month.ordinalize%> of the month.<br />
-              <%-end-%>
-              <%=[:monday,:tuesday,:wednesday,:thursday,:friday,:saturday,:sunday].collect {|d| sj.attributes["run_#{d}"] ? d.to_s.titleize : nil}.compact.join(', ')%>
-            </td>
-            <td>
-<pre>
-<%=sj.opts%>
-</pre>
-            </td>
-            <td><%=sj.last_start_time%></td>
+            <td><span title="<%=sj.run_class%>"><%=sj.run_class.to_s.split("::").last%></span></td>
+            <td><%=sj.running ? "Running" : "Waiting" %>
+            <td><%=sj.last_start_time.blank? ? "Never" : sj.last_start_time.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
+            <%- next_run = sj.next_run_time -%>
+            <td><%=next_run.blank? ? "Never" : next_run.in_time_zone(sj.time_zone_name).strftime('%Y-%m-%d %H:%M %Z')%></td>
+            <td><pre><%=sj.opts%></pre></td>
           </tr>
           <%-end-%>
         </tbody>

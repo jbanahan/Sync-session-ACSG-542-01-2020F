@@ -338,4 +338,11 @@ describe ReportResult do
       ReportResult.new.file_cleanup nil
     end
   end
+
+  describe "run_schedulable" do
+    it "implements SchedulableJob interface" do
+      ReportResult.should_receive(:purge)
+      ReportResult.run_schedulable
+    end
+  end
 end

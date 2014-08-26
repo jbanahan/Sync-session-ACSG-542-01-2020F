@@ -4,7 +4,9 @@ module OpenChain
   module CustomHandler
     module AnnInc
       class AnnSapProductHandler
-        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
+        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
+        extend OpenChain::IntegrationClientParser
+
         SAP_REVISED_PRODUCT_FIELDS = [:origin,:import,:related_styles,:cost]
         def initialize
           @cdefs = self.class.prep_custom_definitions [:po,:origin,:import,:cost,
@@ -12,6 +14,10 @@ module OpenChain
             :inco_terms,:related_styles,:season,:article,:approved_long,
             :first_sap_date,:last_sap_date,:sap_revised_date, :minimum_cost, :maximum_cost
           ]
+        end
+
+        def self.parse file_content, opts = {}
+          self.new.process file_content, User.find_by_username('integration')
         end
 
         def process file_content, run_by
