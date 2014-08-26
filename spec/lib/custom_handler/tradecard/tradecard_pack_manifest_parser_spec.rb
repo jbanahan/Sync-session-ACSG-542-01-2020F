@@ -229,6 +229,29 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       @s.reload
       expect(@s.shipment_lines.first.container.container_number).to eq 'ABCD12345'
     end
+    it "should handle blank line between EQUIPMENT SUMMARY and container table" do
+      c = Factory(:company)
+      p = Factory(:product)
+      o = Factory(:order,importer:c,customer_order_number:'ordnum')
+      ol = Factory(:order_line,quantity:100,product:p,sku:'sk12345',order:o)
+      @s.update_attributes(importer_id:c.id)
+      row_seed = {61=>mode_row('OCEAN'),
+        76=>subtitle_row('EQUIPMENT SUMMARY'),
+        77=>['','','',''],
+        78=>['','','','Equipment #','Item Qty'],
+        79=>['','','','ABCD12345','1234','10',''], #only care about the container number
+        80=>['','','','Totals'],
+        83=>subtitle_row('CARTON DETAIL'),
+        85=>['','','','Equipment#: ABCD12345 Type:123 Seal: DEF'],
+        86=>['','','','','Range'],
+        87=>detail_line({po:'ordnum',sku:'sk12345',item_qty:'8'}),
+      }
+      rows = init_mock_array 90, row_seed
+      described_class.new.process_rows(@s,rows,@u)
+      @s.reload
+      expect(@s.shipment_lines.first.container.container_number).to eq 'ABCD12345'
+      
+    end
     it "should fail on missing PO" do
       row_seed = {
         82=>subtitle_row('CARTON DETAIL'),

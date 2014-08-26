@@ -42,12 +42,13 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     cursor = equipment_header_row+2
     while cursor < rows.size
       row = rows[cursor]
+      cursor += 1
+      next if !row[3].blank? && row[3].match(/Equipment/)
       break if row.size < 4 || row[3].blank? || !row[3].match(/\d$/)
       cnum = row[3]
       if shipment.containers.find {|con| con.container_number == cnum}.nil?
         shipment.containers.build(container_number:cnum)
       end
-      cursor += 1
     end
   end
 
