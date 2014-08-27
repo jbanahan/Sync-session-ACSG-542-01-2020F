@@ -23,6 +23,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       @row = []
       @row[13] = @part_number
       @row[19] = @coo
+      @row[31] = 1
 
       @temp = make_csv_file [@header, @row]
       @cdefs = described_class.prep_custom_definitions [:part_number, :suffix_indicator, :exception_code, :suffix, :comments]
@@ -39,8 +40,8 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       sheet = wb.worksheets.find {|s| s.name == "Merged Product Data"}
       expect(sheet).not_to be_nil
 
-      expect(sheet.row(0)).to eq (["Status", "Sequence"] + @header + ["SUFFIX_IND", "EXCEPTION_CD", "SUFFIX", "COO", "FACTORY_NBR", "Factory Name", "Phys Addr Line 1", "Phys Addr Line 2", "Phys Addr Line 3", "Phys City", "MID", "HTS_NBR", "COMMENTS"])
-      expect(sheet.row(1)).to eq (["No matching Part Number", 1] + @row)
+      expect(sheet.row(0)).to eq (["CSV Line #", "Status", "Sequence"] + @header + ["SUFFIX_IND", "EXCEPTION_CD", "SUFFIX", "COO", "FACTORY_NBR", "Factory Name", "Phys Addr Line 1", "Phys Addr Line 2", "Phys Addr Line 3", "Phys City", "MID", "HTS_NBR", "COMMENTS"])
+      expect(sheet.row(1)).to eq ([2, "No matching Part Number", 1] + @row)
       expect(sheet.row(1).formats[0].pattern_fg_color).to eq :orange
       expect(sheet.row(1).formats[0].pattern).to eq 1
     end
@@ -55,7 +56,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       out.rewind
 
       sheet = Spreadsheet.open(out).worksheets[0]
-      expect(sheet.row(1)).to eq (["No matching Country of Origin", 1] + @row)
+      expect(sheet.row(1)).to eq ([2, "No matching Country of Origin", 1] + @row)
       expect(sheet.row(1).formats[0].pattern_fg_color).to eq :yellow
       expect(sheet.row(1).formats[0].pattern).to eq 1
     end
@@ -84,11 +85,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       r = @row.dup + ["suf-ind", "excp", "suf", country.iso_code, f1.system_code, f1.name, f1.line_1, f1.line_2, f1.line_3, f1.city, "MID1", t.hts_1.hts_format, "comments"]
       r2 = @row.dup + ["suf-ind", "excp", "suf", country.iso_code, f2.system_code, f2.name, f2.line_1, f2.line_2, f2.line_3, f2.city, "MID2", t.hts_1.hts_format, "comments"]
       
-      expect(sheet.row(1)).to eq (["Multiple Factories", 1] + r)
+      expect(sheet.row(1)).to eq ([2, "Multiple Factories", 1] + r)
       expect(sheet.row(1).formats[0].pattern_fg_color).to eq :xls_color_42
       expect(sheet.row(1).formats[0].pattern).to eq 1
 
-      expect(sheet.row(2)).to eq (["Multiple Factories", 2] + r2)
+      expect(sheet.row(2)).to eq ([2, "Multiple Factories", 2] + r2)
       expect(sheet.row(2).formats[0].pattern_fg_color).to eq :xls_color_49
       expect(sheet.row(2).formats[0].pattern).to eq 1
     end
@@ -125,11 +126,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       r = @row.dup + ["suf-ind", "excp", "suf", country.iso_code, f1.system_code, f1.name, f1.line_1, f1.line_2, f1.line_3, f1.city, "MID1", t.hts_1.hts_format, "comments"]
       r2 = @row.dup + ["suf-ind2", "excp2", "suf2", country.iso_code, f1.system_code, f1.name, f1.line_1, f1.line_2, f1.line_3, f1.city, "MID2", t2.hts_1.hts_format, "comments2"]
       
-      expect(sheet.row(1)).to eq (["Multiple HTS #s", 1] + r)
+      expect(sheet.row(1)).to eq ([2, "Multiple HTS #s", 1] + r)
       expect(sheet.row(1).formats[0].pattern_fg_color).to eq :xls_color_36
       expect(sheet.row(1).formats[0].pattern).to eq 1
 
-      expect(sheet.row(2)).to eq (["Multiple HTS #s", 2] + r2)
+      expect(sheet.row(2)).to eq ([2, "Multiple HTS #s", 2] + r2)
       expect(sheet.row(2).formats[0].pattern_fg_color).to eq :xls_color_32
       expect(sheet.row(2).formats[0].pattern).to eq 1
     end
@@ -172,19 +173,19 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       r3 = @row.dup + ["suf-ind", "excp", "suf", country.iso_code, f2.system_code, f2.name, f2.line_1, f2.line_2, f2.line_3, f2.city, "MID3", t.hts_1.hts_format, "comments"]
       r4 = @row.dup + ["suf-ind2", "excp2", "suf2", country.iso_code, f2.system_code, f2.name, f2.line_1, f2.line_2, f2.line_3, f2.city, "MID4", t2.hts_1.hts_format, "comments2"]
       
-      expect(sheet.row(1)).to eq (["Multiple HTS #s", 1] + r)
+      expect(sheet.row(1)).to eq ([2, "Multiple HTS #s", 1] + r)
       expect(sheet.row(1).formats[0].pattern_fg_color).to eq :xls_color_36
       expect(sheet.row(1).formats[0].pattern).to eq 1
 
-      expect(sheet.row(2)).to eq (["Multiple HTS #s", 2] + r2)
+      expect(sheet.row(2)).to eq ([2, "Multiple HTS #s", 2] + r2)
       expect(sheet.row(2).formats[0].pattern_fg_color).to eq :xls_color_32
       expect(sheet.row(2).formats[0].pattern).to eq 1
 
-      expect(sheet.row(3)).to eq (["Multiple HTS #s", 3] + r3)
+      expect(sheet.row(3)).to eq ([2, "Multiple HTS #s", 3] + r3)
       expect(sheet.row(3).formats[0].pattern_fg_color).to eq :xls_color_32
       expect(sheet.row(3).formats[0].pattern).to eq 1
 
-      expect(sheet.row(4)).to eq (["Multiple HTS #s", 4] + r4)
+      expect(sheet.row(4)).to eq ([2, "Multiple HTS #s", 4] + r4)
       expect(sheet.row(4).formats[0].pattern_fg_color).to eq :xls_color_32
       expect(sheet.row(4).formats[0].pattern).to eq 1
     end
@@ -208,7 +209,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
 
       sheet = Spreadsheet.open(out).worksheets[0]
       r = @row.dup + ["suf-ind", "excp", "suf", country.iso_code, f1.system_code, f1.name, f1.line_1, f1.line_2, f1.line_3, f1.city, "MID1", t.hts_1.hts_format, "comments"]
-      expect(sheet.row(1)).to eq (["Exact Match", 1] + r)
+      expect(sheet.row(1)).to eq ([2, "Exact Match", 1] + r)
     end
   end
 

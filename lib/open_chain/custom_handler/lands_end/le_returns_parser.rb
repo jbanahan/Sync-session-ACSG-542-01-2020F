@@ -35,25 +35,27 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
   end
 
   def parse in_path, out_io
-    counter = -1
+    xl_counter = -1
+    csv_counter = 0
     wb = nil
     sheet = nil
     column_widths = []
     header_length = nil
     CSV.foreach(in_path) do |row|
-      if (counter == -1)
+      csv_counter += 1
+      if (xl_counter == -1)
         # Just add the Status and Sequence columns to whatever else is in the headers they supplied us with
         # and then tack on the added product columns as well.
         header_length = row.size
-        wb = XlsMaker.create_workbook 'Merged Product Data', (["Status", "Sequence"] + row + ["SUFFIX_IND", "EXCEPTION_CD", "SUFFIX", "COO", "FACTORY_NBR", "Factory Name", "Phys Addr Line 1", "Phys Addr Line 2", "Phys Addr Line 3", "Phys City", "MID", "HTS_NBR", "COMMENTS"])
+        wb = XlsMaker.create_workbook 'Merged Product Data', (["CSV Line #", "Status", "Sequence"] + row + ["SUFFIX_IND", "EXCEPTION_CD", "SUFFIX", "COO", "FACTORY_NBR", "Factory Name", "Phys Addr Line 1", "Phys Addr Line 2", "Phys Addr Line 3", "Phys City", "MID", "HTS_NBR", "COMMENTS"])
         sheet = wb.worksheets.find {|s| s.name == 'Merged Product Data'}
-        counter += 1
+        xl_counter += 1
       else
         # Just ensure the file itself maintains internal integrity (ie looks like a block) if one or two rows have no info towards the end of the columns
         my_row = inflate_to_header_length row, header_length
-        output = process_product_row my_row
+        output = process_product_row my_row, csv_counter
         output[:rows].each do |p|
-          XlsMaker.add_body_row sheet, (counter += 1), p, column_widths, false, format: format_for_status(output[:status], p[1])
+          XlsMaker.add_body_row sheet, (xl_counter += 1), p, column_widths, false, format: format_for_status(output[:status], p[2])
         end
       end
     end
@@ -98,7 +100,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
       format
     end
 
-    def process_product_row row
+    def process_product_row row, csv_row_count
       data = matching_product_data row[13].to_s.strip, row[19].to_s.strip
       output = {status: data[:status], rows: []}
       if data[:status] == :no_product
@@ -114,6 +116,12 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
           output[:rows] << ([output_status, (counter+=1)] + row + p)
         end
       end
+
+      rows = []
+      output[:rows].each do |r|
+        rows << translate_values([csv_row_count] + r)
+      end
+      output[:rows] = rows
 
       output
     end
@@ -202,6 +210,22 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
 
     def cv p, v
       p.get_custom_value(@cdefs[v]).value
+    end
+
+    def translate_values row
+      # Some of the values from the file should be turned into numeric values, do so here
+      # NOTE: The numbers here represent the actual output columns as the values will appear in to the recipient of the file, not 
+      # as the came in from the input file.
+      row[23] = row[23].to_i unless row[23].blank?
+      row[24] = BigDecimal.new(row[24].to_s) unless row[24].blank?
+      row[25] = BigDecimal.new(row[25].to_s) unless row[25].blank?
+      row[30] = BigDecimal.new(row[30].to_s) unless row[30].blank?
+      row[31] = BigDecimal.new(row[31].to_s) unless row[31].blank?
+      row[32] = BigDecimal.new(row[32].to_s) unless row[32].blank?
+      row[33] = BigDecimal.new(row[33].to_s) unless row[33].blank?
+      row[34] = row[34].to_i unless row[34].blank?
+
+      row
     end
 
 

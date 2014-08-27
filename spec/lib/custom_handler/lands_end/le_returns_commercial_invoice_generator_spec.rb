@@ -4,13 +4,13 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
 
   def make_source_row data
     row = []
-    row[21] = data[:coo]
-    row[15] = data[:style]
-    row[22] = data[:units]
-    row[44] = data[:mid]
-    row[45] = data[:hts]
-    row[23] = data[:unit_price]
-    row[8] = data[:po]
+    row[22] = data[:coo]
+    row[16] = data[:style]
+    row[23] = data[:units]
+    row[45] = data[:mid]
+    row[46] = data[:hts]
+    row[24] = data[:unit_price]
+    row[9] = data[:po]
 
     row
   end
