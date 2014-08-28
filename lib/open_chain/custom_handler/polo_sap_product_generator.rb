@@ -70,7 +70,8 @@ module OpenChain
           # I'm sure there's a way to write a regular expression using ascii codepoints, but I'm not seeing
           # it, so I'm just going to loop the characters and check them all manually.
           value.each_codepoint do |code|
-            if (code < 32 || code > 126)
+            # Carriage Return / Line Feeds are stripped later
+            if (code != 10 && code != 13 && (code < 32 || code > 126))
               raise ArgumentError, "Non-printing ASCII code '#{code}' found in the value #{value}."
             end
           end

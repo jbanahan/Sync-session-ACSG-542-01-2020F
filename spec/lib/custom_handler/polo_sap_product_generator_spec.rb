@@ -111,6 +111,17 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       a.should have(1).item
       a.collect {|x| x[0]}.should == [p1.unique_identifier]
     end
+
+    it "removes newlines" do
+      p = Factory(:product, :unique_identifier => "Test\r\nTest")
+      p.update_custom_value! @sap_brand_cd, true
+      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))
+
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_csv
+      a = CSV.parse(IO.read(@tmp.path),:headers=>true)
+      a.should have(1).item
+      a.collect {|x| x[0]}.should == ["Test  Test"]
+    end
   end
 
   describe :ftp_credentials do
@@ -147,11 +158,11 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "should clean line breaks and new lines" do
       @vals[1] = "a\nb"
       @vals[2] = "a\rb"
-      @vals[4] = "a\r\nb"
+      @vals[4] = "a\r\n\"b"
       r = @g.before_csv_write 1, @vals
       r[1].should == "a b"
       r[2].should == "a b"
-      r[4].should == "a  b"
+      r[4].should == "a   b"
     end
   end
 
