@@ -1,0 +1,87 @@
+<div chain-action-bar>
+    <button class='btn btn-default' ng-click='addOrderAndSave(shp,activeOrder)' ng-show='shp && activeOrder'>Save</button>
+    <button class='btn btn-default' ng-click='cancel()'>Cancel</button>
+  </div>
+<chain-loading-wrapper loading-flag='{{loadingFlag}}'>
+  <div class='container'>
+    <div class="row">
+      <div class="col-md-12">
+        <h1>Add Order To Shipment {{shp.shp_ref}}</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-3">
+        <div class="btn-group btn-group-vertical" data-toggle="buttons">
+          <label class="btn btn-lg btn-default"
+              ng-repeat="ord in availableOrders"
+              ng-class="{active:ord.id==activeOrder.id}"
+          ng-click="getOrder(ord)"><input type="radio"></input>{{ord.ord_cust_ord_no}}</label>
+        </div>
+      </div>
+      <div class="col-xs-9">
+        <chain-loading-wrapper loading-flag='{{orderLoadingFlag}}'>
+          <div ng-show='activeOrder'>
+            <h2 style='margin-top:0'>Order: {{activeOrder.ord_cust_ord_no}}</h2>
+            <table class='table table-striped'>
+              <thead>
+                <tr>
+                  <th>Line #</th>
+                  <th>Part #</th>
+                  <th>SKU</th>
+                  <th>
+                    <div class='btn-group'>
+                      <button type='button' class='btn btn-default btn-xs dropdown-toggle' data-toggle='dropdown'>Quantity To Ship <span class="caret"></span></button>
+                      <ul class='dropdown-menu' role='menu'>
+                        <li><a ng-click='clearQuantityToShip(activeOrder)'>Clear</a></li>
+                        <li><a ng-click='resetQuantityToShip(activeOrder)'>Reset</a></li>
+                        <li><a data-toggle='modal' data-target='#prorateModal'>Prorate</a></li>
+                      </ul>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat='line in activeOrder.lines'>
+                  <td>{{line.ordln_line_number}}</td>
+                  <td>{{line.ordln_puid}}</td>
+                  <td>{{line.ordln_sku}}</td>
+                  <td><input type='number' ng-model='line.quantity_to_ship' class='form-control'/></td>
+                </tr>
+                <tr>
+                  <td colspan='3' class='text-right'>Total:</td>
+                  <td>{{totalToShip(activeOrder)}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </chain-loading-wrapper>
+      </div>
+    </div>
+  </div>
+</chain-loading-wrapper>
+<div class="modal" id="prorateModal" tabindex="-1" role="dialog" aria-labelledby="prorateModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="prorateModalLabel">Prorate Quantities</h4>
+      </div>
+      <div class="modal-body">
+        <form class='form-horizontal'>
+          <div class="form-group">
+            <label for='prorateSign'>Add/Remove</label>
+            <select id='prorateSign' class='form-control' ng-model='proration.sign'><option>Add</option><option>Remove</option></select>
+          </div>
+          <div class="form-group">
+            <label for="prorateAmount">Percent To Change</label>
+            <input id='prorateAmount' type='number' class='form-control' ng-model='proration.amount' />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" data-dismiss="modal" ng-click='prorate(activeOrder,proration)' ng-disabled='!proration.amount || !proration.sign'>Go</button>
+      </div>
+    </div>
+  </div>
+</div>

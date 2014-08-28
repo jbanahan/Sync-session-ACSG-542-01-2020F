@@ -10,6 +10,44 @@ describe Shipment do
       expect(s.can_view?(u)).to be_false
    end
   end
+  describe "available_orders" do
+    it "should find nothing if importer not set" do
+      expect(Shipment.new.available_orders(User.new)).to be_empty
+    end
+    context :with_data do
+      before(:each) do
+        @imp = Factory(:company,importer:true)
+        @vendor_1 = Factory(:company,vendor:true)
+        @vendor_2 = Factory(:company,vendor:true)
+        @order_1 = Factory(:order,importer:@imp,vendor:@vendor_1,approval_status:'Accepted')
+        @order_2 = Factory(:order,importer:@imp,vendor:@vendor_2,approval_status:'Accepted')
+        #never find this one because it's for a different importer
+        @order_3 = Factory(:order,importer:Factory(:company,importer:true),vendor:@vendor_1,approval_status:'Accepted')
+        @s = Shipment.new(importer_id:@imp.id)
+      end
+      it "should find all orders with approval_status == Accepted where user is importer if vendor isn't set" do
+        #don't find because not accepted
+        order_4 = Factory(:order,importer:@imp,vendor:@vendor_1)
+        u = Factory(:user,company:@imp,order_view:true)
+        expect(@s.available_orders(u).to_a).to eq [@order_1,@order_2]
+      end
+      it "should find all orders for vendor with approval_status == Accepted user is importer " do
+        u = Factory(:user,company:@vendor_1,order_view:true)
+        expect(@s.available_orders(u).to_a).to eq [@order_1]
+      end
+      it "should find all orders where shipment.vendor == order.vendor and approval_status == Accepted if vendor is set" do
+        u = Factory(:user,company:@imp,order_view:true)
+        @s.vendor_id = @vendor_1.id
+        expect(@s.available_orders(u).to_a).to eq [@order_1]
+      end
+      it "should not show orders that the user cannot see" do
+        u = Factory(:user,company:@vendor_1,order_view:true)
+        @s.vendor_id = @vendor_2.id
+        expect(@s.available_orders(u).to_a).to be_empty
+      end
+    end
+    
+  end
   describe "commercial_invoices" do
     it "should find linked invoices" do
       sl_1 = Factory(:shipment_line,:quantity=>10)

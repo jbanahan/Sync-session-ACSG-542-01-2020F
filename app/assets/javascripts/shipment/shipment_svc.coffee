@@ -1,10 +1,4 @@
 angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q',($http,$q) ->
-  maxVal = (ary,attr,min) ->
-    r = min
-    for x in ary
-      pX = (if x[attr] then parseInt(x[attr]) else min)
-      r = pX if pX > r
-    r
   prepForSave = (shipment) ->
     updatedLines = []
     if shipment.lines
@@ -41,27 +35,10 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q',($http,$q) ->
         $http.post('/api/v1/shipments',{shipment: s, include:'order_lines,attachments'}).then(getShipmentSuccessHandler)
     getParties: ->
       $http.get('/api/v1/companies?roles=importer,carrier')
-    getAvailableOrders : (page) ->
-      $http.get('/api/v1/orders?fields=ord_ord_num,ord_ven_name&page='+page)
+    getAvailableOrders : (shipment) ->
+      $http.get('/api/v1/shipments/'+shipment.id+'/available_orders.json')
     getOrder: (id) ->
       $http.get('/api/v1/orders/'+id)
-    #create shipment lines for all lines on the given order
-    addOrderToShipment: (shp, ord, container_to_pack) ->
-      shp.lines = [] if shp.lines==undefined
-      nextLineNumber = maxVal(shp.lines,'shpln_line_number',0) + 1
-      return shp unless ord.lines
-      for oln in ord.lines
-        sl = {
-          shpln_line_number:nextLineNumber,
-          shpln_puid:oln.ordln_puid,
-          shpln_pname:oln.ordln_pname,
-          linked_order_line_id:oln.id,
-          order_lines:[{ord_cust_ord_no:ord.ord_cust_ord_no,ordln_line_number:oln.ordln_line_number}]
-        }
-        sl.shpln_container_uid = container_to_pack.id if container_to_pack
-        shp.lines.push sl
-        nextLineNumber = nextLineNumber + 1
-      shp
     processTradecardPackManifest: (shp, attachment) ->
       $http.post('/api/v1/shipments/'+shp.id+'/process_tradecard_pack_manifest',{attachment_id:attachment.id, include:'order_lines,attachments'}).then(getShipmentSuccessHandler)
   }

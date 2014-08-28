@@ -345,4 +345,30 @@ describe Api::V1::ShipmentsController do
     end
     it "should error if locked line is update"
   end
+  describe "available_orders" do
+    it "should return all orders available from shipment.available_orders" do
+      imp = Company.new(name:'IMPORTERNAME')
+      vend = Company.new(name:'VENDORNAME')
+      o1 = Order.new(importer:imp,vendor:vend,order_date:Date.new(2014,1,1),mode:'Air',order_number:'ONUM',customer_order_number:'CNUM')
+      o1.id = 99
+      o2 = Order.new(importer:imp,vendor:vend,order_date:Date.new(2014,1,1),mode:'Air',order_number:'ONUM2',customer_order_number:'CNUM2')
+      o2.id = 100
+      Shipment.any_instance.stub(:available_orders).and_return [o1,o2]
+      Shipment.any_instance.stub(:can_view?).and_return true
+      s = Factory(:shipment)
+      get :available_orders, id: s.id
+      expect(response).to be_success
+      r = JSON.parse(response.body)['available_orders']
+      expect(r.size).to eq 2
+      r0 = r[0]
+      expect(r0['id']).to eq 99
+      expect(r0['ord_imp_name']).to eq 'IMPORTERNAME'
+      expect(r0['ord_ord_num']).to eq 'ONUM'
+      expect(r0['ord_cust_ord_no']).to eq 'CNUM'
+      expect(r0['ord_mode']).to eq 'Air'
+      expect(r0['ord_ord_date']).to eq '2014-01-01'
+      expect(r0['ord_ven_name']).to eq 'VENDORNAME'
+      expect(r[1]['id']).to eq 100
+    end
+  end
 end

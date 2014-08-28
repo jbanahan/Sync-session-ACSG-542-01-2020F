@@ -29,7 +29,8 @@ module Api; module V1; class OrdersController < Api::V1::ApiController
       :ordln_currency,
       :ordln_ordered_qty,
       :ordln_country_of_origin,
-      :ordln_hts
+      :ordln_hts,
+      :ordln_sku
     ] + custom_field_keys(CoreModule::ORDER_LINE))
     h = {id:o.id}
     headers_to_render.each {|uid| h[uid] = export_field(uid,o)}
