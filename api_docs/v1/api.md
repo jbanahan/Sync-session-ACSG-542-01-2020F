@@ -491,3 +491,23 @@ _Request_
 _Response_
 
 `200 - data object with IDs included`
+
+#### Available Orders
+
+List orders which may be added to this shipment
+
+`GET - /shipments/1/available_orders.json`
+
+_Response_
+
+```
+{available_orders:[{
+  id: 1
+  ord_ord_num: 'UID1' #unique order number
+  ord_cust_ord_no: 'C_ORD_1' #customer order number
+  ord_imp_name: 'My Company' #importer name
+  ord_mode: 'Air' #requested ship mode
+  ord_ord_date: '2014-01-01' #order date
+  ord_ven_name: 'My Vendor LLC' #vendor name
+}]}
+```

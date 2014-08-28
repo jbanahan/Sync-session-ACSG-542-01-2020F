@@ -12,6 +12,7 @@ OpenChain::Application.routes.draw do
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
         post :process_tradecard_pack_manifest, on: :member
+        get :available_orders, on: :member
       end
       resources :fields, only: [:index]
       resources :companies, only: [:index]
