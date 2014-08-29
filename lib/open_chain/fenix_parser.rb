@@ -114,7 +114,7 @@ module OpenChain
 
             case line[0]
             when "SD"
-              process_activity_line line, accumulated_dates
+              process_activity_line entry, line, accumulated_dates
             when "CCN"
               process_cargo_control_line line
             when "CON"
@@ -357,7 +357,7 @@ module OpenChain
       t.tariff_description = line[24]
     end
 
-    def process_activity_line line, accumulated_dates
+    def process_activity_line entry, line, accumulated_dates
       if !line[2].nil? && !line[3].nil? && ACTIVITY_DATE_MAP[line[2].strip]
         time = (line[4].blank? ? time_zone.parse(line[3]).to_date : time_zone.parse("#{line[3]}#{line[4]}")) rescue nil
 
@@ -366,6 +366,17 @@ module OpenChain
           accumulated_dates[ACTIVITY_DATE_MAP[line[2].strip]] << time
         end
       end
+
+      # We're not capturing the date from Event 5, but we need to pull the employee code from it
+      if !line[5].blank?
+        case line[2].strip
+        when "5"
+          # Capture the employee name that opened the file (Event 5 is File Opened)
+          entry.employee_name = line[5]
+        end
+      end
+
+      nil
       rescue
     end
 

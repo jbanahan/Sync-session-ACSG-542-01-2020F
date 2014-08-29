@@ -35,6 +35,7 @@ describe OpenChain::FenixParser do
     @vendor_name = 'MR Vendor'
     @release_type = '1251'
     @employee_name = 'MIKE'
+    @activity_employee_name = 'DAVE'
     @file_logged_date = '12/16/2011'
     @invoice_sequence = 1
     @invoice_page = 1
@@ -72,7 +73,8 @@ describe OpenChain::FenixParser do
       '180' => [Time.new(2013,4,1,10,0), Time.new(2013,4,1,18,0)],
       '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
       '10' => [Date.new(2013,4,2), Date.new(2013,4,3)],
-      '1276' => [Time.new(2013,4,4,10,0), Time.new(2013,4,4,18,0)]
+      '1276' => [Time.new(2013,4,4,10,0), Time.new(2013,4,4,18,0)],
+      '5' => [Time.new(2013,4,4,10,0)]
     }
     @additional_bols = ["123456", "9876542321"]
     @duty_rate = BigDecimal.new "5.55"
@@ -94,9 +96,11 @@ describe OpenChain::FenixParser do
         
         @activities.each do |activity_number, date_times|
           date_times.each do |date|
-            # For some reason Fenix adds spaces before and after the activity number
             time_segment = (date.is_a?(Date) ? "" : date.strftime('%H%M'))
-            data += "\r\nSD,#{@barcode},\" #{activity_number} \",#{date.strftime('%Y%m%d')},#{time_segment},USERID,NOTES"
+            user = (activity_number == "5" ? @activity_employee_name : "USERID")
+
+            # For some reason Fenix adds spaces before and after the activity number
+            data += "\r\nSD,#{@barcode},\" #{activity_number} \",#{date.strftime('%Y%m%d')},#{time_segment},#{user},NOTES"
           end
         end
 
@@ -149,7 +153,6 @@ describe OpenChain::FenixParser do
     ent.origin_country_codes.should == @country_origin_code
     ent.export_country_codes.should == @country_export_code
     ent.release_type.should == @release_type
-    ent.employee_name.should == @employee_name
     ent.file_logged_date.should == @est.parse_us_base_format("#{@file_logged_date},12:00am")
     ent.po_numbers.should == @header_po
     ent.customer_number.should == @importer_number
@@ -224,6 +227,7 @@ describe OpenChain::FenixParser do
     ent.first_do_issued_date.should be_nil
     ent.docs_received_date.should be_nil
     ent.exam_ordered_date.should be_nil
+    ent.employee_name.should == @employee_name
   end
   
   it 'should save an entry with one main line in the new format' do
@@ -261,6 +265,8 @@ describe OpenChain::FenixParser do
       
       # House Bills should be blank
       ent.house_bills_of_lading.should be_nil
+
+      ent.employee_name.should == @activity_employee_name
     end
   end
 
