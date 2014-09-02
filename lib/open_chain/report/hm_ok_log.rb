@@ -43,10 +43,12 @@ commercial_invoice_lines.country_origin_code as 'ORIGIN',
 commercial_invoices.docs_received_date as 'DOCS RCVD',
 commercial_invoices.docs_ok_date as 'DOCS OK',
 commercial_invoices.issue_codes as 'ISSUES',
-commercial_invoices.rater_comments as 'COMMENTS'
+commercial_invoices.rater_comments as 'COMMENTS',
+official_tariff_meta_datas.summary_description as 'HTS Description'
 FROM commercial_invoices
 INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id
 INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id
+LEFT OUTER JOIN official_tariff_meta_datas ON official_tariff_meta_datas.hts_code = commercial_invoice_tariffs.hts_code and official_tariff_meta_datas.country_id = (select id from countries where iso_code = 'US')
 WHERE
 commercial_invoices.destination_code = "#{coast}" AND
 commercial_invoices.entry_id is null AND

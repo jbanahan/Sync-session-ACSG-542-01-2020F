@@ -41,9 +41,11 @@
     <%if current_user.edit_classifications?%>
       <%=field_row "Ignore For Auto Classify", f.check_box(:auto_classify_ignore)%>
       <%=field_row "Notes", f.text_area(:notes)%>
+      <%=field_row "Summary Description", f.text_field(:summary_description)%>
     <%else%>
       <%=field_row "Ignore For Auto Classify", f.object.auto_classify_ignore ? "Yes" : "No" %>
       <%=field_row "Notes", f.object.notes%>
+      <%=field_row "Summary Description", f.object.summary_description%>
     <%end%>
   </table>
 <%end%>
