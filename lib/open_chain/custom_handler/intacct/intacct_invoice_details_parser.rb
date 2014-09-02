@@ -253,7 +253,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         pl = p.intacct_payable_lines.build
 
         pl.charge_code = s l["charge code"]
-        pl.gl_account = payable_to_lmd ? "2025" : gl_account(pl.charge_code)
+        pl.gl_account = payable_to_lmd ? "6085" : gl_account(pl.charge_code)
         pl.amount = as_dec l["charge amount"]
         description = s l["charge description"]
         # append the vendor reference to the description if there is one since the bill doesn't carry a line level reference

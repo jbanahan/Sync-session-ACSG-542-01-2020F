@@ -264,7 +264,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
 
       
       l = p.intacct_payable_lines.first
-      expect(l.gl_account).to eq "2025"
+      expect(l.gl_account).to eq "6085"
 
       # Make sure the location is set to the header division for payables to lmd
       expect(l.location).to eq @line["header division"]
