@@ -24,7 +24,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
     raise StatusableError.new("Shipment not found.",404) unless s.can_view?(current_user)
     ord_fields = [:ord_ord_num,:ord_cust_ord_no,:ord_mode,:ord_imp_name,:ord_ord_date,:ord_ven_name]
     r = []
-    s.available_orders(current_user).each do |ord|
+    s.available_orders(current_user).order('customer_order_number').each do |ord|
       hsh = {id:ord.id}
       ord_fields.each {|uid| hsh[uid] = export_field(uid,ord)}
       r << hsh

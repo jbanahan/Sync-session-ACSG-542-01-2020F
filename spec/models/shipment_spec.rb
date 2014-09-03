@@ -45,6 +45,11 @@ describe Shipment do
         @s.vendor_id = @vendor_2.id
         expect(@s.available_orders(u).to_a).to be_empty
       end
+      it "should not find closed orders" do
+        @order_2.update_attributes(closed_at:Time.now)
+        u = Factory(:user,company:@imp,order_view:true)
+        expect(@s.available_orders(u).to_a).to eq [@order_1]
+      end
     end
     
   end

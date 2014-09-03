@@ -19,6 +19,7 @@ class Order < ActiveRecord::Base
   # Order Close Logic
   ########
 
+  scope :not_closed, where('orders.closed_at is null')
   #set the order as closed and take a snapshot and save!
   def close! user, async_snapshot=false
     self.closed_by = user

@@ -28,7 +28,7 @@ class Shipment < ActiveRecord::Base
   #return all orders that could be added to this shipment and that the user can view
   def available_orders user
     return Order.where("1=0") if self.importer_id.blank? #can't find anything without an importer
-    r = Order.search_secure(user,Order).where(importer_id:self.importer_id,approval_status:'Accepted')
+    r = Order.search_secure(user,Order).where(importer_id:self.importer_id,approval_status:'Accepted').not_closed
     r = r.where(vendor_id:self.vendor_id) if self.vendor_id
     r
   end
