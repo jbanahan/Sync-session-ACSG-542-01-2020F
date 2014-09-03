@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
       values = [
         ["Header"], # Header is ignored
         make_source_row(coo: "CN ", style: " Style", units: 5.5, unit_price: 12.50, mid: "MID", hts: "1234.56.7890", po: "PO"),
-        make_source_row(coo: "ZZ", style: "Style2", units: "5", unit_price: "1.50", mid: "MID2", hts: "9876.65.4321", po: "PO2")
+        make_source_row(coo: "ZZ", style: 123, units: "5", unit_price: "1.50", mid: "MID2", hts: 98766543, po: 456.0)
       ]
       xl.should_receive(:all_row_values).and_yield(values[0]).and_yield(values[1]).and_yield(values[2])
 
@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
       expect(sheet).not_to be_nil
       expect(sheet.row(0)).to eq ["File #", "Customer", "Inv#", "Inv Date", "C/O", "Part# / Style", "Pcs", "Mid", "Tariff#", "Cotton Fee y/n", "Value (IV)", "Qty#1", "Qty#2", "Gr wt", "PO#", "Ctns", "FIRST SALE", "ndc/mmv", "dept"]
       expect(sheet.row(1)).to eq make_out_row("File#", coo: "CN", style: "Style", units: 5, unit_price: 12.50, mid: "MID", hts: "1234567890", po: "PO")
-      expect(sheet.row(2)).to eq make_out_row("File#", coo: "ZZ", style: "Style2", units: 5, unit_price: 1.50, mid: "MID2", hts: "9876654321", po: "PO2")
+      expect(sheet.row(2)).to eq make_out_row("File#", coo: "ZZ", style: "123", units: 5, unit_price: 1.50, mid: "MID2", hts: "98766543", po: "456")
     end
   end
 

@@ -54,20 +54,20 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsCommerci
       extract = []
       extract[0] = file_number # File #
       extract[1] = "LANDS" # Customer
-      # Invoice # appears to just be randomly keyed by whatever Ben feels like typing at the moment he runs the existing CI load process.
+      # Invoice # / Weight / Invoice Date are all added by hand after the file is returned to the user.
       extract[2] = "1" # Invoice Number
       extract[3] = nil # Inv Date
       extract[4] = row[22].to_s.strip # C/O
-      extract[5] = row[16].to_s.strip # Style
+      extract[5] = OpenChain::XLClient.string_value(row[16]).strip # Style
       extract[6] = row[23].to_s.to_i # Units
       extract[7] = row[45].to_s.strip # MID
-      extract[8] = row[46].to_s.strip.gsub(".", "") # HTS
+      extract[8] = OpenChain::XLClient.string_value(row[46]).strip.gsub(".", "") # HTS
       extract[9] = nil # Cotton Fee
       extract[10] = BigDecimal.new(row[24].to_s) # Unit Price
       extract[11] = 1 # Qty 1
       extract[12] = nil  #Qty 2
       extract[13] = nil # Gross Weight
-      extract[14] = row[9].to_s.strip # PO #
+      extract[14] = OpenChain::XLClient.string_value(row[9]).strip # PO #
       extract[15] = nil # Cartons
       extract[16] = 0 # First Sale
       extract[17] = nil # ndc/mmv
