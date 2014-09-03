@@ -11,11 +11,31 @@ describe Order do
       @o.close! @u
       expect(@o.closed_at).to be > 1.minute.ago
       expect(@o.closed_by).to eq @u
+      expect(@o.entity_snapshots.count).to eq 1
     end
     it 'should close async' do
       @o.async_close! @u
       expect(@o.closed_at).to be > 1.minute.ago
       expect(@o.closed_by).to eq @u      
+      expect(@o.entity_snapshots.count).to eq 1
+    end
+  end
+  describe 'reopen' do
+    before :each do
+      @u = Factory(:user)
+      @o = Factory(:order,closed_at:Time.now,closed_by:@u)
+    end
+    it 'should reopen' do
+      @o.reopen! @u
+      expect(@o.closed_at).to be_nil
+      expect(@o.closed_by).to be_nil
+      expect(@o.entity_snapshots.count).to eq 1
+    end
+    it 'should reopen_async' do
+      @o.async_reopen! @u
+      expect(@o.closed_at).to be_nil
+      expect(@o.closed_by).to be_nil
+      expect(@o.entity_snapshots.count).to eq 1
     end
   end
   describe 'can_close?' do

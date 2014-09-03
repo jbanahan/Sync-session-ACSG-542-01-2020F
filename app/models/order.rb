@@ -33,6 +33,17 @@ class Order < ActiveRecord::Base
   def async_close! user
     self.close! user, true
   end
+  def reopen! user, async_snapshot = false
+    self.closed_by = self.closed_at = nil
+    if async_snapshot
+      self.create_async_snapshot user
+    else
+      self.create_snapshot user
+    end
+  end
+  def async_reopen! user
+    self.reopen! user, true
+  end
   def can_close? user
     user.edit_orders? && (user.company == self.importer || user.company.master?)
   end
