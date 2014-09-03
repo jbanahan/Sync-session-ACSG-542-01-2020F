@@ -1,64 +1,142 @@
 require 'open_chain/report/report_helper'
-module OpenChain
-  module Report
-    class HmStatisticsReport
-      include OpenChain::Report::ReportHelper
+module OpenChain; module Report; class HmStatisticsReport
+  include OpenChain::Report::ReportHelper
 
-      def self.permission? user
-        user.view_entries? && (user.company.master? || user.company.alliance_customer_number=='HENNE') 
-      end
+  class HmDataHolder
+    attr_accessor :air_order, :ocean_order, :total_order, :air_unit, :ocean_unit, :total_unit
 
-      def self.run_report run_by, settings={}
-        self.new.run run_by, settings
-      end
-
-      def run run_by, settings
-        start_date = sanitize_date_string settings['start_date']
-        end_date = sanitize_date_string settings['end_date']
-        qry = <<QRY
-select 
-(case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then "TRUCK" else "OTHER" end) as "Mode", 
-(select name from ports where schedule_d_code = entries.entry_port_code) as "Entry Port",
-entries.export_country_codes as "Shipment Export Country",
-count(*) as "Entries",
-sum((select count(*) from containers where containers.entry_id = entries.id)) as "Container Count",
-sum((select count(*) from commercial_invoices where commercial_invoices.entry_id = entries.id and length(commercial_invoices.invoice_number) = 6)) as "Orders",
-sum(total_invoiced_value) as "Invoice Value",
-sum(entered_value) as "Customs Value",
-sum(total_duty) as "Duty",
-sum(total_fees) as "Fees"
-from entries
-where customer_number = 'HENNE' and release_date between "#{start_date}" and "#{end_date}"
-and (select avg(length(commercial_invoices.invoice_number)) from commercial_invoices where commercial_invoices.entry_id = entries.id) = 6
-group by 
-entries.transport_mode_code, 
-entries.export_country_codes,
-(select name from ports where schedule_d_code = entries.entry_port_code)
-order by entries.transport_mode_code,
-(select name from ports where schedule_d_code = entries.entry_port_code),
-entries.export_country_codes;
-QRY
-        air_qry = <<QRY
-select count(*) as 'Air Shipment Count' from
-(select distinct master_bills_of_lading from entries 
-where customer_number = 'HENNE' and release_date between "#{start_date}" and "#{end_date}"
-and (select avg(length(commercial_invoices.invoice_number)) from commercial_invoices where commercial_invoices.entry_id = entries.id) = 6
-and (transport_mode_code = '40')) x;
-QRY
-        wb = Spreadsheet::Workbook.new
-        sheet = wb.create_worksheet :name=>'Statistics'
-        # Translate the release, arrival date into Eastern Timezone before trimming the time portion off
-        # Moved out of the query because if done in the query we're converting the UTC time to a date and potentially 
-        # reporting the wrong date if the release is done between 8-12PM EDT.
-        dt_lambda = datetime_translation_lambda("Eastern Time (US & Canada)", true)
-        conversions = {"Release" => dt_lambda, "Arrival" => dt_lambda}
-        table_from_query sheet, qry, conversions
-
-        air_sheet = wb.create_worksheet :name=>'Air Stats'
-        table_from_query air_sheet, air_qry
-
-        workbook_to_tempfile wb, 'HmStatisticsReport-'
-      end
+    def initialize
+      self.total_order = 0
+      self.air_order = 0
+      self.ocean_order = 0
+      self.total_unit = 0
+      self.air_unit = 0
+      self.ocean_unit = 0
     end
   end
-end
+
+  def self.permission? user
+    user.view_entries? && (user.company.master? || user.company.alliance_customer_number=='HENNE') 
+  end
+
+  def self.run_report run_by, settings={}
+    self.new.run run_by, settings
+  end
+
+  def run run_by, settings
+    start_date = sanitize_date_string settings['start_date']
+    end_date = sanitize_date_string settings['end_date']
+
+    wb = Spreadsheet::Workbook.new
+    sheet = wb.create_worksheet :name=>'Statistics'
+    
+    mh = Hash.new
+    load_order_data mh, start_date, end_date
+    load_tu_data mh, start_date, end_date
+
+    XlsMaker.add_body_row sheet, 0, ["","Order","","","","Transport Units"]
+    XlsMaker.add_body_row sheet, 1, ["Export Country","AIR","OCEAN","Total Orders","","AIR","OCEAN","Total TU"]
+
+    cursor = 2
+    mh.keys.sort.each do |country|
+      dh = mh[country]
+      XlsMaker.add_body_row sheet, cursor, [country,dh.air_order,dh.ocean_order,dh.total_order,"",dh.air_unit,dh.ocean_unit,dh.total_unit]
+      cursor += 1
+    end
+
+    vals = mh.values
+
+    XlsMaker.add_body_row sheet, cursor, [
+      "Total Result", 
+      vals.inject(0) {|mem, v| mem + v.air_order},
+      vals.inject(0) {|mem, v| mem + v.ocean_order},
+      vals.inject(0) {|mem, v| mem + v.total_order},
+      "",
+      vals.inject(0) {|mem, v| mem + v.air_unit},
+      vals.inject(0) {|mem, v| mem + v.ocean_unit},
+      vals.inject(0) {|mem, v| mem + v.total_unit},
+    ]
+
+    cursor += 2
+
+    totals = total_values start_date, end_date
+    XlsMaker.add_body_row sheet, cursor, ["Total Duty",totals[1]]
+    cursor += 1
+    XlsMaker.add_body_row sheet, cursor, ["Total Entered Value",totals[0]]
+
+    workbook_to_tempfile wb, 'HmStatisticsReport-'
+  end
+
+  private
+
+  def total_values start_date, end_date
+    qry = <<QRY
+select sum(entries.entered_value), sum(entries.total_duty_direct)
+from entries
+where entries.customer_number = 'HENNE'
+and
+arrival_date BETWEEN '#{start_date}' and '#{end_date}'
+and
+(select avg(length(commercial_invoices.invoice_number)) from commercial_invoices where commercial_invoices.entry_id = entries.id) = 6    
+QRY
+    ActiveRecord::Base.connection.execute(qry).first
+  end
+  def load_order_data master_hash, start_date, end_date
+     orders_qry = <<QRY
+select 
+if(export_country_codes like '%DE%', 'DE', export_country_codes) as 'ecc',
+(case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then 'OCEAN' when 21 then 'OCEAN' else "OTHER" end) as 'Mode', 
+count(*) as 'orders'
+from entries
+inner join commercial_invoices on commercial_invoices.entry_id = entries.id and LENGTH(commercial_invoices.invoice_number) = 6
+where entries.customer_number = 'HENNE'
+and
+arrival_date BETWEEN '#{start_date}' and '#{end_date}'
+group by mode, ecc
+QRY
+    result_set = ActiveRecord::Base.connection.execute orders_qry
+    result_set.each do |row|
+      dh = data_holder master_hash, row[0]
+      case row[1]
+      when 'AIR'
+        dh.air_order = row[2]
+      when 'OCEAN'
+        dh.ocean_order = row[2]
+      end
+      dh.total_order = dh.total_order + row[2]
+    end       
+  end
+  
+  def load_tu_data master_hash, start_date, end_date
+    transport_units_qry = <<QRY
+select ecc, 
+mode, 
+count(*) as 'Transport Units' from (
+select distinct master_bills_of_lading, (case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then 'OCEAN' when 21 then 'OCEAN' else "OTHER" end) as 'Mode', 
+if(export_country_codes like '%DE%', 'DE', export_country_codes) as 'ecc'
+from entries 
+where customer_number = 'HENNE'
+and 
+arrival_date between '#{start_date}' and '#{end_date}'
+and
+(select avg(length(commercial_invoices.invoice_number)) from commercial_invoices where commercial_invoices.entry_id = entries.id) = 6
+) x
+group by mode, ecc
+QRY
+    result_set = ActiveRecord::Base.connection.execute transport_units_qry
+    result_set.each do |row|
+      dh = data_holder master_hash, row[0]
+      case row[1]
+      when 'AIR'
+        dh.air_unit = row[2]
+      when 'OCEAN'
+        dh.ocean_unit = row[2]
+      end
+      dh.total_unit = dh.total_unit + row[2]
+    end
+  end
+
+  def data_holder master_hash, country_code
+    master_hash[country_code] ||= HmDataHolder.new
+  end
+end; end; end
