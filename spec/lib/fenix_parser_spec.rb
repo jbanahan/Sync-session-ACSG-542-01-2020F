@@ -74,7 +74,8 @@ describe OpenChain::FenixParser do
       '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
       '10' => [Date.new(2013,4,2), Date.new(2013,4,3)],
       '1276' => [Time.new(2013,4,4,10,0), Time.new(2013,4,4,18,0)],
-      '5' => [Time.new(2013,4,4,10,0)]
+      '5' => [Time.new(2013,4,4,10,0)],
+      '105' => [Time.new(2014,9,3,12,2), Time.new(2014,9,3,7,57)]
     }
     @additional_bols = ["123456", "9876542321"]
     @duty_rate = BigDecimal.new "5.55"
@@ -256,6 +257,7 @@ describe OpenChain::FenixParser do
       ent.docs_received_date.should == @activities['490'][0].in_time_zone(ActiveSupport::TimeZone["Eastern Time (US & Canada)"]).to_date
       ent.eta_date.should == @activities['10'][1]
       ent.exam_ordered_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['1276'][1].to_s).in_time_zone(Time.zone)
+      ent.b3_print_date.should == ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@activities['105'][1].to_s).in_time_zone(Time.zone)
 
       # Master Bills should include ones from BL lines
       bols = ent.master_bills_of_lading.split("\n ")
