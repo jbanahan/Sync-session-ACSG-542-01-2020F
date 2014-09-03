@@ -7,12 +7,35 @@ class Order < ActiveRecord::Base
 	belongs_to :ship_to, :class_name => "Address"
   belongs_to :importer, :class_name => "Company"
   belongs_to :agent, :class_name=>"Company"
+  belongs_to :closed_by, class_name:'User'
 	
 	validates  :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
 	
 	has_many	 :order_lines, :dependent => :destroy, :order => 'line_number', :autosave => true
 	has_many   :piece_sets, :through => :order_lines
+
+  ########
+  # Order Close Logic
+  ########
+
+  #set the order as closed and take a snapshot and save!
+  def close! user, async_snapshot=false
+    self.closed_by = user
+    self.closed_at = Time.now
+    if async_snapshot
+      self.create_async_snapshot user
+    else
+      self.create_snapshot user
+    end
+  end
+  #set the order as closed, save!, and take an snapshot in another thread
+  def async_close! user
+    self.close! user, true
+  end
+  def can_close? user
+    user.edit_orders? && (user.company == self.importer || user.company.master?)
+  end
 
   #get Enumerable of agents that are shared between the vendor and importer
   def available_agents

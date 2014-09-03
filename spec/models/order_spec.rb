@@ -2,10 +2,44 @@ require 'spec_helper'
 
 describe Order do
 
-  before :each do
-    LinkedAttachment.destroy_all
+  describe 'close' do
+    before :each do
+      @o = Factory(:order)
+      @u = Factory(:user)
+    end
+    it 'should close' do
+      @o.close! @u
+      expect(@o.closed_at).to be > 1.minute.ago
+      expect(@o.closed_by).to eq @u
+    end
+    it 'should close async' do
+      @o.async_close! @u
+      expect(@o.closed_at).to be > 1.minute.ago
+      expect(@o.closed_by).to eq @u      
+    end
   end
-
+  describe 'can_close?' do
+    before :each do
+      @o = Factory(:order,importer:Factory(:company,importer:true))
+    end
+    it "should allow if user can edit orders and is from importer" do
+      u = Factory(:user,order_edit:true,company:@o.importer)
+      expect(@o.can_close?(u)).to be_true
+    end
+    it "should allow if user can edit orders and is from master" do
+      u = Factory(:master_user,order_edit:true)
+      expect(@o.can_close?(u)).to be_true
+    end
+    it "should not allow if user can edit orders and is from vendor" do
+      u = Factory(:user,order_edit:true)
+      @o.update_attributes(vendor_id:u.company_id)
+      expect(@o.can_close?(u)).to be_false
+    end
+    it "should not allow if user cannot edit orders" do
+      u = Factory(:user,order_edit:false,company:@o.importer)
+      expect(@o.can_close?(u)).to be_false
+    end
+  end
   describe 'linkable attachments' do
     it 'should have linkable attachments' do
       o = Factory(:order,:order_number=>'ordn')
