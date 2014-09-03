@@ -39,6 +39,7 @@ orders.customer_order_number as 'Order Number',
 GROUP_CONCAT(DISTINCT (select string_value from custom_values where custom_definition_id = (select id from custom_definitions where label = 'Vendor Style' and module_type = 'Product') and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style', 
 (SELECT name FROM companies WHERE companies.id = orders.agent_id) as 'Agent',
 (SELECT name FROM companies WHERE companies.id = orders.vendor_id) as 'Vendor',
+orders.ship_window_start as 'Ship Window Start',
 orders.order_date as 'Created',
 orders.last_revised_date as 'Last Revised',
 DATEDIFF(now(),orders.last_revised_date) as 'Days Unapproved'
@@ -56,7 +57,7 @@ QRY
     q = <<QRY
 SELECT orders.customer_order_number as 'PO', 
 GROUP_CONCAT(DISTINCT (select string_value from custom_values where custom_definition_id = (select id from custom_definitions where label = 'Vendor Style' and module_type = 'Product') and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style', 
-(select name from companies where companies.id = orders.agent_id) as 'Agent', (select name from companies where companies.id = orders.vendor_id) as 'Vendor',  orders.mode AS 'Mode', orders.ship_window_start as 'Open Date', orders.ship_window_end as 'Closed Date', 
+(select name from companies where companies.id = orders.agent_id) as 'Agent', (select name from companies where companies.id = orders.vendor_id) as 'Vendor',  orders.mode AS 'Mode', orders.ship_window_start as 'Ship Window Start', orders.ship_window_end as 'Ship Window End', 
 orders.first_expected_delivery_date as 'Requested Delivery Date', 
 DATEDIFF(orders.ship_window_end,orders.ship_window_start) AS 'Closed v Open',
 DATEDIFF(orders.first_expected_delivery_date,orders.ship_window_end) as 'Delivery v Closed'
@@ -79,14 +80,14 @@ QRY
   end
   def booking_exception_qry
     q = <<QRY
-SELECT `PO`, `Vendor Style`, `Agent`, `Vendor`, `PO Close Date`
+SELECT `PO`, `Vendor Style`, `Agent`, `Vendor`, `Ship Window End`
 FROM (
 SELECT 
 orders.customer_order_number AS 'PO', 
 GROUP_CONCAT(DISTINCT (select string_value from custom_values where custom_definition_id = (select id from custom_definitions where label = 'Vendor Style' and module_type = 'Product') and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style', 
 (SELECT name FROM companies WHERE companies.id = orders.agent_id) as 'Agent',
 (SELECT name FROM companies WHERE companies.id = orders.vendor_id) as 'Vendor',
-orders.ship_window_end as 'PO Close Date',
+orders.ship_window_end as 'Ship Window End',
 SUM(ifnull(piece_sets.shipment_line_id,0)) as 'shipmentlines'
 FROM orders
 LEFT OUTER JOIN order_lines ON orders.id = order_lines.order_id
@@ -106,21 +107,21 @@ SELECT
 shipments.house_bill_of_lading as 'HBOL',
 shipments.master_bill_of_lading as 'MBOL',
 GROUP_CONCAT(DISTINCT containers.container_number SEPARATOR ', ') as 'Containers',
-'SOON' as 'Origin',
+shipments.receipt_location as 'Origin',
 shipments.cargo_on_hand_date as 'Freight Received',
 shipments.departure_date as 'Departure Date',
-'SOON' as 'Transhp Port',
+'SOON' as 'Tranship Port',
 shipments.mode as 'Mode',
-'SOON' as 'Load',
-'SOON' as 'Carrier',
-'SOON' as 'DestinationPort',
+shipments.shipment_type as 'Load',
+shipments.vessel_carrier_scac as 'Carrier',
+'SOON' as 'Destination Port',
 shipments.arrival_port_date as 'Arrival Port',
 shipments.delivered_date as 'Delivered Date',
 DATEDIFF(shipments.arrival_port_date,shipments.cargo_on_hand_date) as 'TT to Port',
 DATEDIFF(shipments.delivered_date,shipments.cargo_on_hand_date) as 'TT to DC',
 SUM(shipment_lines.cbms) as 'Vol',
 SUM(shipment_lines.gross_kgs) as 'Gross Weight',
-'SOON' as 'Terms'
+shipments.freight_terms as 'Terms'
 FROM shipments
 LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
 LEFT OUTER JOIN containers on containers.id = shipment_lines.container_id
