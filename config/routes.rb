@@ -373,20 +373,16 @@ OpenChain::Application.routes.draw do
   end
 
   resources :orders do
-    collection do
-      get 'all_open'
-    end
     member do
       get 'history'
       get 'validation_results'
+      post 'close'
+      post 'reopen'
     end
 		resources :order_lines
 	end
 	
   resources :sales_orders do
-    collection do
-      get 'all_open'
-    end
     member do
       get 'history'
     end

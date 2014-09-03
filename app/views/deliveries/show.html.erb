@@ -95,10 +95,3 @@
 </table>
 <%=render :partial => 'shared/pack_lines', :locals => {:parent=>@delivery, :line=>@line, :products=>@products, :is_sales_order=>true} %>
 <%=render :partial => 'shared/comments', :locals => {:commentable => @delivery} %>
-<div id='mod_pick_order' style='display:none;'>
-  <p id='add_ord_content'>
-    Add Sale: <%= select_tag "sales_order_id", options_from_collection_for_select(SalesOrder.where("customer_id = ? ",@delivery.customer), "id", "order_number") %>
-  </p>
-  <div id='pick_order_loading' style='display:none;'><img src='/images/ajax-loader.gif' alt='Loading' /></div>
-</div>
-<div id='add_order_box'></div>

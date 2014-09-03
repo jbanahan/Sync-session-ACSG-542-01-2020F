@@ -10,6 +10,45 @@ describe OrdersController do
     sign_in_as @u
   end
 
+  describe :close do
+    it "should close if user has permission" do
+      Order.any_instance.stub(:can_close?).and_return true
+      o = Factory(:order)
+      post :close, id: o.id
+      expect(response).to redirect_to o
+      o.reload
+      expect(o.closed_by).to eq @u
+      expect(o.closed_at).to be > 1.minute.ago
+    end
+    it "should error if user cannot close" do
+      Order.any_instance.stub(:can_close?).and_return false
+      o = Factory(:order)
+      post :close, id: o.id
+      expect(response).to be_redirect
+      o.reload
+      expect(o.closed_by).to be_nil
+      expect(o.closed_at).to be_nil
+    end
+  end
+  describe :reopen do
+    before :each do
+      @o = Factory(:order,closed_at:Time.now)
+    end
+    it "should reopen if user can close" do
+      Order.any_instance.stub(:can_close?).and_return true
+      post :reopen, id: @o.id
+      expect(response).to redirect_to @o
+      @o.reload
+      expect(@o.closed_at).to be_nil
+    end
+    it "should error if user cannot close" do
+      Order.any_instance.stub(:can_close?).and_return false
+      post :reopen, id: @o.id
+      expect(response).to be_redirect
+      @o.reload
+      expect(@o.closed_at).to_not be_nil
+    end
+  end
   describe 'validation_results' do 
     before :each do
       @ord = Factory(:order,order_number:'123456')

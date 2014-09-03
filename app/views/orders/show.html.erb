@@ -44,15 +44,24 @@
 <% end %>
 
 <% content_for :action_bar do %>
-  <% if current_user.company.master && !@order.locked? %>
-  <button id='btn_edit'>Edit</button>
-  <% end %>
-  <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? -%>
-    <button class='btn' id='btn_delete_shell'>Delete</button>
-  <% end -%>
+  <% if !@order.closed? %>
+    <% if current_user.company.master && !@order.locked? %>
+    <button id='btn_edit'>Edit Header</button>
+    <% end %>
+    <% if @order.related_shipments.length == 0 && current_user.company.master && !@order.locked? -%>
+      <button class='btn' id='btn_delete_shell'>Delete</button>
+    <% end -%>
+    <% if @line.nil? && @order.can_edit?(current_user)%>
+      <button id='btn_add_line'>Add Product</button>
+    <% end %>
+  <%end%>
   <button class='btn_link' link_to='<%=orders_path%>' key_map='b'>Back To Search</button>
-  <% if @line.nil? && @order.can_edit?(current_user)%>
-    <button id='btn_add_line'>Add Product</button>
+  <% if @order.can_close?(current_user)%>
+    <% if @order.closed? %>
+      <%=button_to 'Reopen', reopen_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% else %>
+      <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% end %>
   <% end %>
   <button class='btn_link' link_to='<%=validation_results_order_path(@order)%>'>Business Rules</button>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
@@ -60,6 +69,20 @@
 <% end %>
 
 <div class="container">
+  <% if @order.closed? %>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h3 class="panel-title">Order Closed</h3>
+            </div>
+            <div class="panel-body">
+              Order closed <%=@order.closed_at%> <%if @order.closed_by%>by <%=@order.closed_by.full_name%><%end%>
+            </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
   <div class="row">
     <div class="col-md-6">
       <%=field_view_bootstrap @order, :ord_ord_num, false%>

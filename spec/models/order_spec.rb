@@ -9,6 +9,7 @@ describe Order do
     end
     it 'should close' do
       @o.close! @u
+      @o = Order.find @o.id
       expect(@o.closed_at).to be > 1.minute.ago
       expect(@o.closed_by).to eq @u
       expect(@o.entity_snapshots.count).to eq 1
@@ -27,6 +28,7 @@ describe Order do
     end
     it 'should reopen' do
       @o.reopen! @u
+      @o = Order.find @o.id
       expect(@o.closed_at).to be_nil
       expect(@o.closed_by).to be_nil
       expect(@o.entity_snapshots.count).to eq 1

@@ -10,16 +10,6 @@ class OrdersController < ApplicationController
     redirect_to advanced_search CoreModule::ORDER, params[:force_search]
   end
 
-  def all_open
-    if current_user.view_orders?
-      respond_to do |format|
-        format.json { render :json => Order.search_secure(current_user,Order).to_json(:only =>[:id,:order_number]) }
-      end
-    else
-      error_redirect "You do not have permission to view orders."
-    end
-  end
-
   # GET /orders/1
   # GET /orders/1.xml
   def show
@@ -107,6 +97,24 @@ class OrdersController < ApplicationController
           format.html { redirect_to(orders_url) }
           format.xml  { head :ok }
       end
+    }
+  end
+
+  def close
+    o = Order.find params[:id]
+    action_secure(o.can_close?(current_user),o,{:verb => "close", :module_name=>"order"}) {
+      o.async_close! current_user
+      add_flash :notices, "Order has been closed."
+      redirect_to o
+    }
+  end
+
+  def reopen
+    o = Order.find params[:id]
+    action_secure(o.can_close?(current_user),o,{:verb => "reopen", :module_name=>"order"}) {
+      o.async_reopen! current_user
+      add_flash :notices, "Order has been reopened."
+      redirect_to o
     }
   end
 

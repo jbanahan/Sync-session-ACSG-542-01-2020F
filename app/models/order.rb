@@ -23,6 +23,7 @@ class Order < ActiveRecord::Base
   def close! user, async_snapshot=false
     self.closed_by = user
     self.closed_at = Time.now
+    self.save!
     if async_snapshot
       self.create_async_snapshot user
     else
@@ -35,6 +36,7 @@ class Order < ActiveRecord::Base
   end
   def reopen! user, async_snapshot = false
     self.closed_by = self.closed_at = nil
+    self.save!
     if async_snapshot
       self.create_async_snapshot user
     else
@@ -43,6 +45,9 @@ class Order < ActiveRecord::Base
   end
   def async_reopen! user
     self.reopen! user, true
+  end
+  def closed?
+    !self.closed_at.nil?
   end
   def can_close? user
     user.edit_orders? && (user.company == self.importer || user.company.master?)
