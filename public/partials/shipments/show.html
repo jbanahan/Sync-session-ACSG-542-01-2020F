@@ -10,6 +10,8 @@
           <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideShipInfo,'glyphicon-chevron-up':!hideShipInfo}"></span>
         </h2>
         <div ng-hide='hideShipInfo'>
+          <label for='shp_ref'>Reference</label>
+          <div>{{shp.shp_ref}}</div>
           <label for="shp_master_bill_of_lading">Master Bill</label>
           <div>{{shp.shp_master_bill_of_lading}}</div>
           <label for="shp_house_bill_of_lading">House Bill</label>
@@ -30,8 +32,6 @@
           <div>{{shp.shp_voyage}}</div>
           <label for="shp_vessel_carrier_scac">Vessel SCAC</label>
           <div>{{shp.shp_vessel_carrier_scac}}</div>
-          <label for='shp_ref'>Reference</label>
-          <div>{{shp.shp_ref}}</div>
           <label for='shp_mode'>Mode</label>
           <div>{{shp.shp_mode}}</div>
         </div>
