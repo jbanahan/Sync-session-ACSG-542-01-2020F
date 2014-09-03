@@ -353,7 +353,7 @@ describe Api::V1::ShipmentsController do
       o1.id = 99
       o2 = Order.new(importer:imp,vendor:vend,order_date:Date.new(2014,1,1),mode:'Air',order_number:'ONUM2',customer_order_number:'CNUM2')
       o2.id = 100
-      Shipment.any_instance.stub(:available_orders).and_return [o1,o2]
+      Shipment.any_instance.stub_chain(:available_orders,:order).and_return [o1,o2]
       Shipment.any_instance.stub(:can_view?).and_return true
       s = Factory(:shipment)
       get :available_orders, id: s.id
