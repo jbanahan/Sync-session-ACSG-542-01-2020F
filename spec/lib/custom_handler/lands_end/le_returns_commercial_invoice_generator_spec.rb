@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
     row[23] = data[:units]
     row[45] = data[:mid]
     row[46] = data[:hts]
-    row[24] = data[:unit_price]
+    row[25] = data[:total_value]
     row[9] = data[:po]
 
     row
@@ -27,7 +27,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
     extract[7] = data[:mid] # MID
     extract[8] = data[:hts] # HTS
     extract[9] = nil # Cotton Fee
-    extract[10] = BigDecimal.new(data[:unit_price].to_s) # Unit Price
+    extract[10] = BigDecimal.new(data[:total_value].to_s) # Total Value
     extract[11] = 1 # Qty 1
     extract[12] = nil  #Qty 2
     extract[13] = nil # Gross Weight
@@ -47,10 +47,12 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
       g.stub(:xl_client).with("s3_path").and_return xl
       values = [
         ["Header"], # Header is ignored
-        make_source_row(coo: "CN ", style: " Style", units: 5.5, unit_price: 12.50, mid: "MID", hts: "1234.56.7890", po: "PO"),
-        make_source_row(coo: "ZZ", style: 123, units: "5", unit_price: "1.50", mid: "MID2", hts: 98766543, po: 456.0)
+        make_source_row(coo: "CN ", style: " Style", units: 5.5, total_value: 12.50, mid: "MID", hts: "1234.56.7890", po: "PO"),
+        # make sure rows without style, units and hts are skipped
+        make_source_row(coo: "ZZ", style: "", units: "", total_value: "1.50", mid: "MID2", hts: "", po: 456.0),
+        make_source_row(coo: "ZZ", style: 123, units: "5", total_value: "1.50", mid: "MID2", hts: 98766543, po: 456.0)
       ]
-      xl.should_receive(:all_row_values).and_yield(values[0]).and_yield(values[1]).and_yield(values[2])
+      xl.should_receive(:all_row_values).and_yield(values[0]).and_yield(values[1]).and_yield(values[2]).and_yield(values[3])
 
       fout = StringIO.new
       fout.binmode
@@ -62,8 +64,8 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
       sheet = wb.worksheets.find {|s| s.name == "Sheet1"}
       expect(sheet).not_to be_nil
       expect(sheet.row(0)).to eq ["File #", "Customer", "Inv#", "Inv Date", "C/O", "Part# / Style", "Pcs", "Mid", "Tariff#", "Cotton Fee y/n", "Value (IV)", "Qty#1", "Qty#2", "Gr wt", "PO#", "Ctns", "FIRST SALE", "ndc/mmv", "dept"]
-      expect(sheet.row(1)).to eq make_out_row("File#", coo: "CN", style: "Style", units: 5, unit_price: 12.50, mid: "MID", hts: "1234567890", po: "PO")
-      expect(sheet.row(2)).to eq make_out_row("File#", coo: "ZZ", style: "123", units: 5, unit_price: 1.50, mid: "MID2", hts: "98766543", po: "456")
+      expect(sheet.row(1)).to eq make_out_row("File#", coo: "CN", style: "Style", units: 5, total_value: 12.50, mid: "MID", hts: "1234567890", po: "PO")
+      expect(sheet.row(2)).to eq make_out_row("File#", coo: "ZZ", style: "123", units: 5, total_value: 1.50, mid: "MID2", hts: "98766543", po: "456")
     end
   end
 

@@ -32,11 +32,13 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsCommerci
     sheet = nil
     widths = []
     xl_client(s3_path).all_row_values do |row|
-      if (counter += 1) == 0
+      if counter == -1
         wb = XlsMaker.create_workbook 'Sheet1', ["File #", "Customer", "Inv#", "Inv Date", "C/O", "Part# / Style", "Pcs", "Mid", "Tariff#", "Cotton Fee y/n", "Value (IV)", "Qty#1", "Qty#2", "Gr wt", "PO#", "Ctns", "FIRST SALE", "ndc/mmv", "dept"]
         sheet = wb.worksheets.find {|s| s.name == 'Sheet1'}
+        counter += 1
       else
-        XlsMaker.add_body_row sheet, counter, extract_ci_load_data(row, file_number), widths
+        data = extract_ci_load_data row, file_number
+        XlsMaker.add_body_row(sheet, (counter += 1), data, widths) unless data.nil?
         #TODO Add Drawback Returns tracking
       end
     end
@@ -51,19 +53,23 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsCommerci
     end
 
     def extract_ci_load_data row, file_number
+      # Skip lines without styles units and hts
+      return nil if row[16].blank? && row[23].blank? && row[46].blank?
+
+      # Invoice # / Weight / Invoice Date / Qty 1 / Qty 2 are all added / adjusted by hand after the file is returned to the user.
+
       extract = []
       extract[0] = file_number # File #
       extract[1] = "LANDS" # Customer
-      # Invoice # / Weight / Invoice Date are all added by hand after the file is returned to the user.
       extract[2] = "1" # Invoice Number
       extract[3] = nil # Inv Date
       extract[4] = row[22].to_s.strip # C/O
       extract[5] = OpenChain::XLClient.string_value(row[16]).strip # Style
       extract[6] = row[23].to_s.to_i # Units
       extract[7] = row[45].to_s.strip # MID
-      extract[8] = OpenChain::XLClient.string_value(row[46]).strip.gsub(".", "") # HTS
+      extract[8] = OpenChain::XLClient.string_value(row[46]).strip.gsub(".", "").gsub("-", "") # HTS
       extract[9] = nil # Cotton Fee
-      extract[10] = BigDecimal.new(row[24].to_s) # Unit Price
+      extract[10] = BigDecimal.new(row[25].to_s) # Total Value
       extract[11] = 1 # Qty 1
       extract[12] = nil  #Qty 2
       extract[13] = nil # Gross Weight
