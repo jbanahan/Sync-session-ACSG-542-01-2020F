@@ -689,5 +689,43 @@ describe ModelField do
         r.should include(@with_tif_and_2_pdf)
       end
     end
+
+    context :ent_failed_business_rules do
+      before :each do 
+        @entry = Factory(:entry)
+        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
+        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
+        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "A Test")).business_validation_result
+        @entry.business_validation_results << Factory(:business_validation_rule_result, state: "Pass", business_validation_rule: Factory(:business_validation_rule, name: "Another Test")).business_validation_result
+      end
+
+      it "lists failed business rule names on export" do
+        expect(ModelField.find_by_uid(:ent_failed_business_rules).process_export(@entry, Factory(:master_user))).to eq "A Test\n Test"
+      end
+
+      it "finds results using failed rules as criterion" do
+        sc = SearchCriterion.new(:model_field_uid=>:ent_failed_business_rules,:operator=>'co',:value=>"Test")
+        r = sc.apply(Entry.where("1=1")).to_a
+        r.should include(@entry)
+      end
+    end
+
+    context :ent_attachment_types do
+      before :each do
+        @e = Factory(:entry)
+        first = @e.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
+        second = @e.attachments.create!(:attachment_type=>"A",:attached_file_name=>"R")
+      end
+
+      it "lists attachments on export" do
+        expect(ModelField.find_by_uid(:ent_attachment_types).process_export(@e, Factory(:master_user))).to eq "A\n B"
+      end
+
+      it "finds results using attachments as criterion" do
+        sc = SearchCriterion.new(:model_field_uid=>:ent_attachment_types,:operator=>'co',:value=>"B")
+        r = sc.apply(Entry.where("1=1")).to_a
+        r.should include(@e)
+      end
+    end
   end
 end

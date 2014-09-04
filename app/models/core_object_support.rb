@@ -30,6 +30,15 @@ module CoreObjectSupport
     r
   end
 
+  def failed_business_rules
+    self.business_validation_results.
+      joins(business_validation_rule_results: [:business_validation_rule]).
+      where(business_validation_rule_results: {state: "Fail"}).
+      uniq.
+      order("business_validation_rules.name").
+      pluck("business_validation_rules.name")
+  end
+
   def attachment_types
     self.attachments.where("LENGTH(RTRIM(IFNULL(attachment_type, ''))) > 0").order(:attachment_type).uniq.pluck(:attachment_type)
   end
