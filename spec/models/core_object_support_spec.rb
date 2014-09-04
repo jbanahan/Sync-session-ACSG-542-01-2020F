@@ -188,4 +188,16 @@ describe CoreObjectSupport do
       expect(p.attachment_types).to eq []
     end
   end
+
+  describe "failed_business_rules" do
+    it "lists all failed business rules for an object" do
+      entry = Factory(:entry)
+      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
+      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "Test")).business_validation_result
+      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Fail", business_validation_rule: Factory(:business_validation_rule, name: "A Test")).business_validation_result
+      entry.business_validation_results << Factory(:business_validation_rule_result, state: "Pass", business_validation_rule: Factory(:business_validation_rule, name: "Another Test")).business_validation_result
+      
+      expect(entry.failed_business_rules).to eq ["A Test", "Test"]
+    end
+  end
 end
