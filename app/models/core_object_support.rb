@@ -30,6 +30,10 @@ module CoreObjectSupport
     r
   end
 
+  def attachment_types
+    self.attachments.where("LENGTH(RTRIM(IFNULL(attachment_type, ''))) > 0").order(:attachment_type).uniq.pluck(:attachment_type)
+  end
+
   def all_attachments
     r = []
     r += self.attachments.to_a

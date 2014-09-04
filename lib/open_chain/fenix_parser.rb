@@ -17,7 +17,8 @@ module OpenChain
       '1270' => :cadex_sent_date=,
       '1274' => :cadex_accept_date=,
       '1276' => :exam_ordered_date=,
-      '1280' => :k84_receive_date=
+      '1280' => :k84_receive_date=,
+      '105'=> :b3_print_date=
     }
 
     SUPPORTING_LINE_TYPES = ['SD', 'CCN', 'CON', 'BL']

@@ -169,4 +169,23 @@ describe CoreObjectSupport do
     end
   end
   
+  describe "attachment_types" do
+    it "lists all attachments associated with a core object in alphabetical order" do
+      p = Factory(:product)
+      first = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"A")
+      second = p.attachments.create!(:attachment_type=>"A",:attached_file_name=>"R")
+      # Skip blank/null ones
+      third = p.attachments.create!(:attached_file_name=>"R")
+      third = p.attachments.create!(:attachment_type=>"       ", :attached_file_name=>"R")
+      # Skip duplicates
+      dup = p.attachments.create!(:attachment_type=>"B",:attached_file_name=>"B")
+
+      expect(p.attachment_types).to eq ["A", "B"]
+    end
+
+    it "returns blank array if no attachment types" do
+      p = Factory(:product)
+      expect(p.attachment_types).to eq []
+    end
+  end
 end
