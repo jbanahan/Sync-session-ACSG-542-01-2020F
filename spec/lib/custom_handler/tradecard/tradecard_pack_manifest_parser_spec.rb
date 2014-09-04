@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         length:'24.000',
         width:'15.000',
         height:'9.000',
-        dim_unit:'IN'
+        dim_unit:'CM'
       }.merge overrides 
       r = Array.new(57,'')
       r[5] = base[:range]
@@ -202,12 +202,6 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       rows = init_mock_array 90, row_seed
       expect{described_class.new.process_rows(@s,rows,@u)}.to raise_error "Order Number ordnum not found."
     end
-    context :cartons do
-      it "should add carton ranges"
-      it "should assign lines to carton ranges"
-      it "should convert IN to CM"
-      it "should convert LB to KG"
-    end
     it "should assign lines to container" do
       c = Factory(:company)
       p = Factory(:product)
@@ -288,12 +282,92 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
         82=>subtitle_row('CARTON DETAIL'),
         84=>['','','','Equipment#: WHATEVER'],
         85=>['','','','','Range'],
-        86=>detail_line({po:'ordnum',sku:'sk12345',item_qty:'8'}),
+        86=>detail_line({po:'ordnum',sku:'sk12345',item_qty:'8'})
       }
       rows = init_mock_array 90, row_seed
       expect{described_class.new.process_rows(@s,rows,@u)}.to raise_error
       @s.reload
       expect(@s.containers).to be_empty
+    end
+    context :cartons do
+      before :each do
+        c = Factory(:company)
+        p = Factory(:product)
+        o = Factory(:order,importer:c,customer_order_number:'ORD')
+        ol = Factory(:order_line,quantity:100,product:p,sku:'SK',order:o)
+        @s.update_attributes(importer_id:c.id)
+      end
+      it "should add carton ranges" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10'}),
+          87=>detail_line({range:'0002',carton_start:'1102',carton_qty:'4',item_qty:'8'})
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(2)
+        @s.reload
+        cs = @s.carton_sets.find_by_starting_carton('1100')
+        expect(cs.carton_qty).to eq 2
+        expect(cs.length_cm).to eq 24
+        expect(cs.width_cm).to eq 15
+        expect(cs.height_cm).to eq 9
+        expect(cs.net_net_kgs).to eq 6.6
+        expect(cs.net_kgs).to eq 6.8
+        expect(cs.gross_kgs).to eq 7
+        expect(cs.shipment_lines.count).to eq 1
+        expect(cs.shipment_lines.first).to eq @s.shipment_lines.first
+        expect(@s.shipment_lines.count).to eq 2
+      end
+      it "should convert IN to CM" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10',dim_unit:'IN',length:'1',width:'1',height:'1'}),
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(1)
+        @s.reload
+        cs = @s.carton_sets.first
+        expect(cs.length_cm).to eq 2.54
+        expect(cs.width_cm).to eq 2.54
+        expect(cs.height_cm).to eq 2.54
+      end
+      it "should convert LB to KG" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10',weight_unit:'LB',net:'2.20462'}),
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(1)
+        @s.reload
+        cs = @s.carton_sets.first
+        expect(cs.net_kgs).to eq 1
+      end
+      it "should assign line w/ blank carton range to the last carton range" do
+        row_seed = {
+          82=>subtitle_row('CARTON DETAIL'),
+          84=>['','','','Equipment#: WHATEVER'],
+          85=>['','','','','Range'],
+          86=>detail_line({range:'0001',carton_start:'1100',carton_qty:'2',item_qty:'10'}),
+          87=>detail_line({range:'',carton_start:'',carton_qty:'',item_qty:'10'}),
+          88=>detail_line({range:'0002',carton_start:'1102',carton_qty:'2',item_qty:'10'}),
+        }
+        rows = init_mock_array 90, row_seed
+        expect{described_class.new.process_rows(@s,rows,@u)}.to change(CartonSet,:count).from(0).to(2)
+        @s.reload
+        expect(@s.shipment_lines.count).to eq 3
+        cs_from_shipment_lines = @s.shipment_lines.collect {|sl| sl.carton_set}
+        first_cs = @s.carton_sets.first
+        last_cs = @s.carton_sets.last
+        expect(cs_from_shipment_lines).to eq [first_cs, first_cs, last_cs]
+
+      end
+
     end
   end
 end

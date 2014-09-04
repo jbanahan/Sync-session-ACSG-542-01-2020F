@@ -84,11 +84,18 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     sl.container = container
     sl.linked_order_line_id = ol.id
     sl.line_number = line_number
+    sl.carton_set = find_or_build_carton_set shipment, row
   end
 
   def clean_number num
     return nil if num.blank?
     num.to_s.gsub(',','').strip
+  end
+
+  def convert_number num, conversion
+    n = clean_number num
+    return nil if n.nil?
+    BigDecimal(n) * conversion
   end
 
   def find_order_line shipment, po, sku
@@ -102,6 +109,26 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     ol = ord.order_lines.find {|ln| ln.sku == sku}
     raise "SKU #{sku} not found in order #{po} (ID: #{ord.id})." unless ol
     ol
+  end
+
+  def find_or_build_carton_set shipment, row
+    starting_carton = row[6]
+    return @last_carton_set if starting_carton.blank?
+    cs = shipment.carton_sets.to_a.find {|cs| cs.starting_carton == starting_carton} #don't hit DB since we haven't saved
+    if cs.nil?
+      weight_factor = (row[48]=='LB') ? 0.453592 : 1
+      dim_factor = (row[55]=='IN') ? 2.54 : 1
+      cs = shipment.carton_sets.build(starting_carton:starting_carton)
+      cs.carton_qty = clean_number row[37]
+      cs.net_net_kgs = convert_number row[42], weight_factor
+      cs.net_kgs = convert_number row[45], weight_factor
+      cs.gross_kgs = convert_number row[47], weight_factor
+      cs.length_cm = convert_number row[49], dim_factor
+      cs.width_cm = convert_number row[51], dim_factor
+      cs.height_cm = convert_number row[53], dim_factor
+      @last_carton_set = cs
+    end
+    cs
   end
 
   def header_row_index rows, name
