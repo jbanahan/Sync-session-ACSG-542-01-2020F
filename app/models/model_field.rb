@@ -1121,9 +1121,9 @@ and classifications.product_id = products.id
           :can_view_lambda=>lambda {|u| u.company.master?}
         }],
         [152,:ent_b3_print_date, :b3_print_date, "B3 Print Date", {:data_type=>:datetime}],
-        [153,:ent_rule_state,:rule_state,"Failed Business Rule Names",{:data_type=>:string,
+        [153,:ent_failed_business_rules,:failed_business_rules,"Failed Business Rule Names",{:data_type=>:string,
           :import_lambda=>lambda {|o,d| "Failed Business Rule Names ignored. (read only)"},
-          :export_lambda=>lambda {|obj| obj.failed_business_rules },
+          :export_lambda=>lambda {|obj| obj.failed_business_rules.join("\n ") },
           :qualified_field_name=> "(SELECT GROUP_CONCAT(failed_rule.name ORDER BY failed_rule.name SEPARATOR '\n ')
             FROM business_validation_results failed_bvr 
             INNER JOIN business_validation_rules failed_rule ON failed_rule.business_validation_template_id = failed_bvr.business_validation_template_id
