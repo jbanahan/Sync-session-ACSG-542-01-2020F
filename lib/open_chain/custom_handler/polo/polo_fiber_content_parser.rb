@@ -1,4 +1,5 @@
 require 'digest/md5'
+require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParser
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
