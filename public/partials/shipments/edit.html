@@ -238,7 +238,9 @@
                   <input type='text' ng-model='ln.shpln_gross_kgs' class='form-control'/>
                 </td>
                 <td>
-                  <select ng-model='ln.shpln_container_uid' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'></select>
+                  <select ng-model='ln.shpln_container_uid' class='form-control' ng-options='c.con_uid as c.con_container_number for c in shp.containers'>
+                    <option></option>
+                  </select>
                 </td>
                 <td>
                   <button class="btn btn-sm btn-default" ng-hide='ln._destroy' ng-click='ln._destroy=true'>Delete</button>

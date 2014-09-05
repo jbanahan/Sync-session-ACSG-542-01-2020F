@@ -1578,7 +1578,10 @@ and classifications.product_id = products.id
           }],
         [5,:shpln_container_uid,:container_id,"Container Unique ID",{data_type: :integer,
           import_lambda: lambda {|sl,id|
-            return "#{ModelField.find_by_uid(:shpln_container_uid).label} was blank." if id.blank?
+            if id.blank?
+              sl.container_id = nil
+              return "Container removed from line."
+            end
             con = sl.shipment.containers.to_a.find {|c| c.id == id}
             return "Container with ID #{id} not found. Ignored." unless con
             return "#{ModelField.find_by_uid(:shpln_container_uid).label(false)} is not part of this shipment and was ignored." unless con.shipment_id == sl.shipment_id
