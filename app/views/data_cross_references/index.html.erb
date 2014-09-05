@@ -1,0 +1,29 @@
+<%content_for :action_bar do-%>
+  <button class='btn_link' link_to='<%=new_data_cross_reference_path(cross_reference_type: @xref_info[:identifier])%>'>New</button>
+<% end %>
+<h1><%=@xref_info[:title]%></h1>
+
+<div class="container">
+  <table class="table table-striped table-hover">
+    <thead>
+      <tr>
+        <th>&nbsp;</th>
+        <th>Key</th>
+        <th>Value</th>
+        <th>Last Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%- @xrefs.each do |xref| %>
+      <tr>
+        <td><%= link_to "Edit", edit_data_cross_reference_path(xref) %></td>
+        <td><%=xref.key %></td>
+        <td><%=xref.value %></td>
+        <td><%=xref.updated_at.strftime("%Y-%m-%d %I:%M %p")%></td>
+      </tr>
+      <%- end %>
+    </tbody>
+  </table>
+  <%=will_paginate @xrefs%>
+</div>
+

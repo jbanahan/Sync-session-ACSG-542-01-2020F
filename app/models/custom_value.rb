@@ -11,7 +11,9 @@ class CustomValue < ActiveRecord::Base
   validates  :customizable_type, :presence => true
 
   # Writes given array of custom values directly to database
-  def self.batch_write! values, touch_parent = false
+  def self.batch_write! values, touch_parent = false, opts = {}
+    opts = {skip_insert_nil_values: false}.merge opts
+
     CustomValue.transaction do
       inserts = []
       deletes = {}
@@ -22,12 +24,15 @@ class CustomValue < ActiveRecord::Base
         v = cv.value.nil? ? "null" : ActiveRecord::Base.sanitize(cv.value)
         deletes[cust_def_id] ||= []
         deletes[cust_def_id] << customizable_id
-        vals = Array.new(9,"null")
-        vals[BATCH_INSERT_POSITIONS.index(cv.sql_field_name)] = v 
-        vals[6] = ActiveRecord::Base.sanitize cv.customizable.class.name
-        vals[7] = customizable_id
-        vals[8] = cust_def_id
-        inserts << "(#{ vals.join(',') }, now(), now())"
+        # Sometimes we don't want to create the custom value if the field doesn't have any value in it (to lessen the length of the edit page for instance)
+        if !opts[:skip_insert_nil_values] || !cv.value.nil? 
+          vals = Array.new(9,"null")
+          vals[BATCH_INSERT_POSITIONS.index(cv.sql_field_name)] = v 
+          vals[6] = ActiveRecord::Base.sanitize cv.customizable.class.name
+          vals[7] = customizable_id
+          vals[8] = cust_def_id
+          inserts << "(#{ vals.join(',') }, now(), now())"
+        end
         to_touch << cv.customizable if touch_parent && !to_touch.include?(cv.customizable)
       end
       deletes.each do |def_id,customizables|

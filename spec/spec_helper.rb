@@ -42,7 +42,9 @@ Spork.prefork do
     end
     config.before :each do 
       EntitySnapshotSupport.disable_async = true
+      CustomDefinition.skip_reload_trigger = true
     end
+    
     # Clears out the deliveries array before every test..which is only done automatically
     # for mailer tests.
     config.after(:each) {ActionMailer::Base.deliveries = []}

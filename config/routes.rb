@@ -244,6 +244,8 @@ OpenChain::Application.routes.draw do
   match "/custom_features/le_ci_load" => "custom_features#le_ci_load_index", :via=>:get
   match "/custom_features/le_ci_load/upload" => "custom_features#le_ci_load_upload", :via => :post
   match "/custom_features/le_ci_load/:id/download" => "custom_features#le_ci_load_download", :via => :get
+  match "/custom_features/rl_fabric_parse" => "custom_features#rl_fabric_parse_index", :via=>:get
+  match "/custom_features/rl_fabric_parse" => "custom_features#rl_fabric_parse_run", :via=>:post
 
   match "/custom_features/lenox_shipment_status" => "custom_features#lenox_shipment_status_index", :via=>:get
   match "/custom_features/lenox_shipment_status/upload" => "custom_features#lenox_shipment_status_upload", :via => :post
@@ -564,6 +566,9 @@ OpenChain::Application.routes.draw do
     get 'clear', on: :member
   end
 
+  resources :data_cross_references do
+    get 'show' => "data_cross_references#edit"
+  end
 
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?

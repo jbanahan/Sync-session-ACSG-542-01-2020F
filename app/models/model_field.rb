@@ -622,20 +622,41 @@ class ModelField
     max
   end
 
-  def self.add_custom_fields(core_module,base_class,parameters={})
-    m_type = core_module.class_name.intern
-    model_hash = MODEL_FIELDS[m_type]
+  def self.add_custom_fields(core_module,base_class)
+    model_hash = MODEL_FIELDS[core_module.class_name.to_sym]
     max = next_index_number core_module
     base_class.new.custom_definitions.each_with_index do |d,index|
-      class_symbol = base_class.to_s.downcase
-      fld = "*cf_#{d.id}".intern
-      mf = ModelField.new(max+index,fld,core_module,fld,parameters.merge({:custom_id=>d.id,:label_override=>"#{d.label}",
-        :qualified_field_name=>"(SELECT IFNULL(#{d.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{d.id})",
-        :definition => d.definition
-      }))
-      model_hash[mf.uid.to_sym] = mf
+      create_and_insert_custom_field d, core_module, (max+index), model_hash
     end
   end
+
+  def self.add_update_custom_field custom_definition
+    core_module = CoreModule.find_by_class_name custom_definition.module_type
+    return unless core_module
+
+    model_hash = MODEL_FIELDS[core_module.class_name.to_sym]
+    fld = custom_definition.model_field_uid.to_sym
+
+    # If the custom definition is just being updated, we can just retrieve the existing
+    # index and put it right back in place where it was
+    if model_hash[fld]
+      index = model_hash[fld].sort_rank
+    else
+      index = next_index_number(core_module)
+    end
+
+    create_and_insert_custom_field custom_definition, core_module, index, model_hash
+  end
+
+  def self.create_and_insert_custom_field  custom_definition, core_module, index, model_hash
+    fld = custom_definition.model_field_uid.to_sym
+    mf = ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
+      :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id})",
+      :definition => custom_definition.definition
+    })
+    model_hash[mf.uid.to_sym] = mf
+  end
+  private_class_method :create_and_insert_custom_field
   
   #update the internal last_loaded flag and optionally retrigger all instances to invalidate their caches
   def self.update_last_loaded update_global_cache

@@ -1,4 +1,6 @@
 class CustomDefinition < ActiveRecord::Base
+  cattr_accessor :skip_reload_trigger
+  
   validates  :label, :presence => true
   validates  :data_type, :presence => true
   validates  :module_type, :presence => true
@@ -11,7 +13,6 @@ class CustomDefinition < ActiveRecord::Base
   has_many   :milestone_definitions, :dependent => :destroy
   
   after_save :reset_cache
-  after_save :reset_model_field_constants 
   after_save :reset_field_label
   after_find :set_cache
 
@@ -95,16 +96,24 @@ class CustomDefinition < ActiveRecord::Base
     CACHE.delete "CustomDefinition:id:#{self.id}" unless self.id.nil?
     CACHE.delete "CustomDefinition:module_type:#{self.module_type}" unless self.module_type.nil?
     set_cache
-    ModelField.reload true
+
+    if @@skip_reload_trigger
+      # Reload and recache the whole model field data structure
+      ModelField.reload true
+    else
+      # This call is a quick shortcut for our test cases where we don't 
+      # actually have to reload and recache the whole module field data structures
+      # so they can be pushed out to all the running processes.  There's only a single
+      # process so, we don't need or want this.  (At the time of writing, this change shaved off ~2 minutes on 
+      # a full test suite run)
+      ModelField.add_update_custom_field self
+    end
   end
+
   private
-  def reset_model_field_constants
-    ModelField.reset_custom_fields true #reset flag in cached to make sure other passenger instances reload themselves
-  end
 
-  def reset_field_label
-    FieldLabel.set_label "*cf_#{self.id}", self.label
-  end
-
-
+    def reset_field_label
+      FieldLabel.set_label "*cf_#{self.id}", self.label
+    end
+    
 end
