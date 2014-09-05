@@ -9,7 +9,11 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
       cdi = available_fields[code].clone
       read_only = cdi[:read_only]
       cdi.delete :read_only
-      custom_definitions[code] = CustomDefinition.where(cdi).first_or_create! if cdi
+      if cdi
+        cust_def = CustomDefinition.where(cdi).first
+        cust_def = CustomDefinition.create!(cdi) unless cust_def
+        custom_definitions[code] = cust_def
+      end
       if read_only
         fvr = FieldValidatorRule.where(custom_definition_id:custom_definitions[code].id,module_type:cdi[:module_type],model_field_uid:"*cf_#{custom_definitions[code].id}").first_or_create! read_only: (read_only === true)
         unless fvr.read_only?
