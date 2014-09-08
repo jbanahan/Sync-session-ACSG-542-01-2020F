@@ -21,15 +21,22 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
 
     unless invoices_to_send.blank?
       invoices_to_send.each do |invoice|
-        xml = generate_xml invoice
 
-        # XML might be blank if the invoices have no charges that should be
-        # transmitted to Crocs
-        unless xml.blank?
-          Tempfile.open(["Crocs210-#{invoice.invoice_number.strip}-",'.xml']) do |t|
-            t << xml.to_s
-            t.flush
-            ftp_file t
+        # For some operational purpsose, if there are inland / cartage services on the invoice they cannot be sent
+        # via the 210 feed and must instead be manaully billed by operations.
+        if has_cartage_services? invoice
+          OpenMailer.send_crocs_manual_bill_reminder(invoice.invoice_number).deliver!
+        else
+          xml = generate_xml invoice
+
+          # XML might be blank if the invoices have no charges that should be
+          # transmitted to Crocs
+          unless xml.blank?
+            Tempfile.open(["Crocs210-#{invoice.invoice_number.strip}-",'.xml']) do |t|
+              t << xml.to_s
+              t.flush
+              ftp_file t
+            end
           end
         end
       end
@@ -107,6 +114,10 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
   private
     def include_charge? charge
       ['R', 'O', 'C'].include? charge.charge_type
+    end
+
+    def has_cartage_services? invoice
+      invoice.broker_invoice_lines.select {|line| line.charge_type.try(:upcase) == "T"}.length > 0
     end
 
 end; end; end; end

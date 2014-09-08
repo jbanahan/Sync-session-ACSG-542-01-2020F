@@ -221,5 +221,17 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       @g.should_not_receive(:ftp_file)
       @g.receive :save, @invoice.entry
     end
+
+    it "skips xml generation for invoices with T charge types" do
+      @invoice.broker_invoice_lines.first.update_attributes! charge_type: "T"
+
+      @g.receive :save, @invoice.entry
+      @g.should_not_receive(:ftp_file)
+
+      expect(OpenMailer.deliveries.length).to eq 1
+      expect(OpenMailer.deliveries.first.to).to eq ["crocs-manual-billing@vandegriftinc.com"]
+      expect(OpenMailer.deliveries.first.subject).to eq "[VFI Track] Crocs Invoice # #{@invoice.invoice_number}"
+      expect(OpenMailer.deliveries.first.body.raw_source).to include "Crocs Invoice # #{@invoice.invoice_number} includes cartage services and must be billed manually."
+    end
   end
 end

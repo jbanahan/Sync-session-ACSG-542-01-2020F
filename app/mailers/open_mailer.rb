@@ -356,6 +356,13 @@ EOS
       format.html
     end
   end
+
+  def send_crocs_manual_bill_reminder invoice_number
+    @invoice_number = invoice_number
+    mail(to: "crocs-manual-billing@vandegriftinc.com", subject: "[VFI Track] Crocs Invoice # #{invoice_number}") do |fmt|
+      fmt.html
+    end
+  end
   
   private
 
