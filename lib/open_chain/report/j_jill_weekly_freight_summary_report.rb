@@ -119,17 +119,18 @@ shipments.arrival_port_date as 'Arrival Port',
 shipments.delivered_date as 'Delivered Date',
 DATEDIFF(shipments.arrival_port_date,shipments.cargo_on_hand_date) as 'TT to Port',
 DATEDIFF(shipments.delivered_date,shipments.cargo_on_hand_date) as 'TT to DC',
-SUM(shipment_lines.cbms) as 'Vol',
-SUM(shipment_lines.gross_kgs) as 'Gross Weight',
+ROUND((select sum((carton_sets.length_cm * carton_sets.width_cm * carton_sets.height_cm * carton_sets.carton_qty)/1000000) from carton_sets where carton_sets.shipment_id = shipments.id),2) as 'CBMS',
+ROUND((select sum(carton_sets.gross_kgs * carton_sets.carton_qty) from carton_sets where carton_sets.shipment_id = shipments.id),2) as 'Gross KGS',
+ROUND((select GREATEST(sum((carton_sets.length_cm * carton_sets.width_cm * carton_sets.height_cm * carton_sets.carton_qty))/6000,sum(carton_sets.gross_kgs * carton_sets.carton_qty)) FROM carton_sets where carton_sets.shipment_id = shipments.id),2) as 'Calculated Chargeable Weight',
 shipments.freight_terms as 'Terms'
 FROM shipments
 LEFT OUTER JOIN shipment_lines on shipments.id = shipment_lines.shipment_id
 LEFT OUTER JOIN containers on containers.id = shipment_lines.container_id
 WHERE
 shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
-AND
+and
 shipments.delivered_date > DATE_ADD(now(), INTERVAL -12 MONTH)
-GROUP BY shipments.id    
+GROUP BY shipments.id 
 QRY
   end
   def value_in_transit_qry
