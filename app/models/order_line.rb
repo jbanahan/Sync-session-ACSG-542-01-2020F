@@ -30,7 +30,15 @@ class OrderLine < ActiveRecord::Base
   end
 	
 	def received_qty
-	  0
+	  self.piece_sets.inject(0) { |i, ps| 
+      r = 0
+      if ps.shipment_line
+        if ps.shipment_line.shipment && ps.shipment_line.shipment.delivered_date
+          r = ps.quantity
+        end
+      end
+      i + r
+    }
   end
 
 	
