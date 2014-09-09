@@ -120,6 +120,11 @@ class SurveysController < ApplicationController
       return
     end
     @survey = s
+
+    visible_companies = [current_user.company]
+    visible_companies += current_user.company.linked_companies.to_a
+    visible_companies << Company.where(:master=>true).first
+    @visible_companies = visible_companies.uniq.compact.sort_by {|c| c.name.try(:upcase) }
   end
   def assign
     s = Survey.find params[:id]

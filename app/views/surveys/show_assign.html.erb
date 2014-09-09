@@ -21,9 +21,6 @@ $(function() {
   });
 });
 <%end%>
-<% visible_companies = [current_user.company] -%>
-<% visible_companies += current_user.company.linked_companies.to_a -%>
-<% visible_companies << Company.where(:master=>true).first unless visible_companies.include? Company.where(:master=>true).first -%>
 <%= form_for @survey, :url=>assign_survey_path(@survey), :html=>{:method=>"POST",:id=>"frm_as"} do |f| %>
 <table class='detail_table'>
   <thead><tr><th style='text-align:center;'>Assign Users To <%=@survey.name%></th></tr></thead>
@@ -33,9 +30,9 @@ $(function() {
         <%=field_row "Report Label", text_field_tag(:subtitle)%>
       </table>
     <select id='assign_lst' name='to_assign' multiple='multiple' size='10' style='width:100%;'>
-      <%visible_companies.each do |c|%>
+      <% @visible_companies.each do |c|%>
         <optgroup label='<%=c.name%>'>
-          <%c.users.each do |u|%>
+          <%c.users.sort_by {|n| n.full_name.upcase}.each do |u|%>
             <option value='<%=u.id%>'><%=u.full_name%></option>
           <%end%>
         </optgroup>

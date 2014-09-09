@@ -219,10 +219,15 @@ describe SurveysController do
       @s = Factory(:survey,:company_id=>@u.company_id)
     end
     it "should show assignment page if user can edit survey" do
+      c = Factory(:company, name: "Z is my Company Name")
+      @u.company.linked_companies << c
+
       Survey.any_instance.stub(:can_edit?).and_return(true)
       get :show_assign, :id=>@s.id
       response.should be_success
       assigns(:survey).should == @s
+      # A master comapny is created by the master setup initializer named "My Master", so just expect value here too
+      assigns(:visible_companies).should eq [@u.company, Company.where(master:true).first, @u.company.linked_companies.first]
     end
     it "should not show assignment if user cannot edit survey" do
       Survey.any_instance.stub(:can_edit?).and_return(false)
