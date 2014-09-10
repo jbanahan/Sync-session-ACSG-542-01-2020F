@@ -18,7 +18,7 @@ if (["companies","users"] - ActiveRecord::Base.connection.tables).length == 0
   end
 end
 
-if ActiveRecord::Base.connection.table_exists? 'instance_informations'
+if Rails.env.production? && ActiveRecord::Base.connection.table_exists?('instance_informations')
   InstanceInformation.check_in
 end
 
