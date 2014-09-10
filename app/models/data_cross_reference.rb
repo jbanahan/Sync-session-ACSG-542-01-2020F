@@ -51,7 +51,7 @@ class DataCrossReference < ActiveRecord::Base
     # At this point, anyone that can view, can also edit
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
-      user.admin? && (Rails.env.development? || MasterSetup.get.system_code == "polo")
+      (Rails.env.development? || MasterSetup.get.system_code == "polo")
     else
       false
     end

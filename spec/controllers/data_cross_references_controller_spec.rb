@@ -92,7 +92,7 @@ describe DataCrossReferencesController do
       user = Factory(:user)
       sign_in_as user
 
-      xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
+      xref = DataCrossReference.create! cross_reference_type: "bogus", key: "KEY", value: "VALUE"
 
       post :update, id: xref.id, data_cross_reference: {value: "Update", cross_reference_type: xref.cross_reference_type}
       expect(response).to redirect_to request.referer
