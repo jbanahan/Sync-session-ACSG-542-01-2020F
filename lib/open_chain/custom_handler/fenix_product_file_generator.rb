@@ -3,12 +3,13 @@ module OpenChain
     class FenixProductFileGenerator
       include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-      def initialize(fenix_customer_code, importer_id = nil, use_part_number = false, additional_where = nil) 
+      def initialize fenix_customer_code, options = {}
         @fenix_customer_code = fenix_customer_code
         @canada_id = Country.find_by_iso_code('CA').id
-        @importer_id = importer_id
-        @use_part_number = use_part_number
-        @additional_where = additional_where
+        @importer_id = options['importer_id']
+        @use_part_number = (options['use_part_number'].to_s == "true")
+        @additional_where = options['additional_where']
+        @suppress_country = options['suppress_country']
 
         @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number]
       end
@@ -59,16 +60,17 @@ module OpenChain
       end
 
       def self.run_schedulable opts_hash={}
-        ["true",true].include?(opts_hash["use_part_number"]) ? use_part_number = true : use_part_number = false
-        OpenChain::CustomHandler::FenixProductFileGenerator.new(opts_hash["fenix_customer_code"], opts_hash["importer_id"], use_part_number, opts_hash["additional_where"]).generate
+        OpenChain::CustomHandler::FenixProductFileGenerator.new(opts_hash["fenix_customer_code"], opts_hash).generate
       end
       
       private
         def file_output fenix_customer_code, p, tr
           line = "N#{"".ljust(14)}#{force_fixed(fenix_customer_code, 9)}#{"".ljust(7)}#{force_fixed identifier_field(p),40}#{tr.hts_1.ljust(10)}"
-          # The country of origin field starts at zero-indexed position 359..add spacing to accomodate
-          line += "".ljust(359 - line.length)
-          line += force_fixed(p.get_custom_value(@cdefs[:prod_country_of_origin]).value.to_s, 3)
+          if !@suppress_country
+            # The country of origin field starts at zero-indexed position 359..add spacing to accomodate
+            line += "".ljust(359 - line.length)
+            line += force_fixed(p.get_custom_value(@cdefs[:prod_country_of_origin]).value.to_s, 3)
+          end
 
           line += "\r\n"
         end

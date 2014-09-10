@@ -26,12 +26,12 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     it "should filter on importer_id if given" do
       @to_find_1.update_attributes(:importer_id => 100)
-      h = @h.class.new(@code, 100)
+      h = @h.class.new(@code, 'importer_id' => 100)
       h.find_products.to_a.should == [@to_find_1]
     end
     it "should apply additional_where filters" do
       @to_find_1.update_attributes(:name=>'XYZ')
-      h = @h.class.new(@code, nil, nil, "products.name = 'XYZ'")
+      h = @h.class.new(@code, 'additional_where' => "products.name = 'XYZ'")
       h.find_products.to_a.should == [@to_find_1]
     end
     it "should not find products that don't have canada classifications but need sync" do
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read).to end_with "\r\n"
     end
     it "should generate output file using part number" do
-      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, nil, true)
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'use_part_number'=>true)
       pn_def = CustomDefinition.where(label: "Part Number", module_type: "Product", data_type: "string").first
       @p.update_custom_value! pn_def, "ABC123"
 
@@ -82,6 +82,18 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       sr = @p.sync_records.find_by_trading_partner("fenix-#{@code}")
       sr.sent_at.should < sr.confirmed_at
       sr.confirmation_file_name.should == "Fenix Confirmation"
+    end
+
+    it "skips adding country of origin if instructed" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'suppress_country'=>true)
+      coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
+      @p.update_custom_value! coo_def, "CN"
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read[0, 15]).to eq "N".ljust(15)
+      expect(read[15, 9]).to eq @code.ljust(9)
+      expect(read[31, 40]).to eq "myuid".ljust(40)
+      expect(read[71, 12]).to eq "1234567890\r\n".ljust(12)
     end
   end
 
@@ -98,29 +110,19 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   describe "run_schedulable" do
     it "should pass in all possible options when provided" do
       hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23",
-          "use_part_number" => "false", "additional_where" => "5 > 3"}
-      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ","23",false,"5 > 3")
+          "use_part_number" => "false", "additional_where" => "5 > 3", 'suppress_country'=>true}
+      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ",hash)
 
-      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ","23",false,"5 > 3").and_return(fpfg)
+      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ",hash).and_return(fpfg)
       OpenChain::CustomHandler::FenixProductFileGenerator.any_instance.should_receive(:generate)
       OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash)
     end
 
-    it "should convert strings of true into keywords of true" do
-      hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23",
-          "use_part_number" => "true", "additional_where" => "5 > 3"}
-      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ","23",true,"5 > 3")
-
-      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ","23",true,"5 > 3").and_return(fpfg)
-      OpenChain::CustomHandler::FenixProductFileGenerator.any_instance.should_receive(:generate)
-      OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash)      
-    end
-
     it "should not fail on missing options" do
       hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23"}
-      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ","23")
+      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ",hash)
 
-      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ","23",false, nil).and_return(fpfg)
+      OpenChain::CustomHandler::FenixProductFileGenerator.should_receive(:new).with("XYZ",hash).and_return(fpfg)
       OpenChain::CustomHandler::FenixProductFileGenerator.any_instance.should_receive(:generate)
       OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash) 
     end
