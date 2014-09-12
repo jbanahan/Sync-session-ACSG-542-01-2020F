@@ -17,17 +17,10 @@ Spork.prefork do
   
   Rails.logger.level = 4
   RSpec.configure do |config|
-    # == Mock Framework
-    #
-    # If you prefer to use mocha, flexmock or RR, uncomment the appropriate line:
-    #
-    # config.mock_with :mocha
-    # config.mock_with :flexmock
-    # config.mock_with :rr
-    config.mock_with :rspec
+    #allows us to create anonymous controllers in tests for other base controller classes
+    config.infer_base_class_for_anonymous_controllers = true
 
-    # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures
-    config.fixture_path = "#{::Rails.root}/spec/fixtures"
+    config.mock_with :rspec
 
     # If you're not using ActiveRecord, or you'd prefer not to run each of your
     # examples within a transaction, remove the following line or assign false
@@ -43,6 +36,7 @@ Spork.prefork do
     config.before :each do 
       EntitySnapshotSupport.disable_async = true
       CustomDefinition.skip_reload_trigger = true
+      stub_event_publisher
     end
     
     # Clears out the deliveries array before every test..which is only done automatically

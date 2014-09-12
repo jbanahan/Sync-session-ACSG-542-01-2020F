@@ -1,0 +1,96 @@
+<% 
+  subs = @user.event_subscriptions
+  email_subs = subs.collect {|s| s.email? ? s.event_type : nil}
+%>
+<%-content_for :action_bar do-%>
+  <button id='btn_save'>Save</button>
+  <button class="btn_link btn btn-default" link_to="<%=edit_company_user_path(@user.company, @user)%>">Back</button>
+<%-end-%>
+<div class="container">
+  <div class="row" id='success_alert' style='display:none;'>
+    <div class="col-md-12">
+      <div class="alert alert-success" role="alert">
+        Saved successfully!
+      </div>
+    </div>
+  </div>
+  <div class="row" id='fail_alert' style='display:none;'>
+    <div class="col-md-12">
+      <div class="alert alert-danger" role="alert">
+        Saved failed!
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-12">
+      <div class="h1">Event Subscriptions</div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <table class='table table-striped'>
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+          <tbody>
+          <%if @user.view_orders?%>
+            <tr>
+              <td colspan="2"><strong>Orders</strong></td>
+            </tr>
+            <tr>
+              <td>Close</td>
+              <td><input type='checkbox' event_type='ORDER_CLOSE' sub_type='email' <%=email_subs.include?('ORDER_CLOSE') ? 'checked="checked"' : ""%> /></td>
+            </tr>
+            <tr>
+              <td>Reopen</td>
+              <td><input type='checkbox' event_type='ORDER_REOPEN' sub_type='email' <%=email_subs.include?('ORDER_REOPEN') ? 'checked="checked"' : ""%> /></td>
+            </tr>
+            <tr>
+              <td>Comment</td>
+              <td><input type='checkbox' event_type='ORDER_COMMENT_CREATE' sub_type='email' <%=email_subs.include?('ORDER_COMMENT_CREATE') ? 'checked="checked"' : ""%> /></td>
+            </tr>
+          <%end%>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script type='text/javascript'>
+$('document').ready(function() {
+  $('#btn_save').click(function() {
+    var toSend = {};
+    var toSendArray = [];
+    $('input[event_type]:checked').each(function() {
+      var eventType, subType, jsonObj;
+      $("#success_alert").hide();
+      $("#fail_alert").hide();
+      eventType = $(this).attr('event_type');
+      subType = $(this).attr('sub_type');
+      jsonObj = toSend[eventType];
+      if(!jsonObj) {
+        jsonObj = toSend[eventType] = {event_type:eventType};
+        toSendArray.push(jsonObj);
+      }
+      jsonObj[subType] = true;
+    });
+    $.ajax({
+      type: "POST",
+      url: '/api/v1/users/<%=@user.id%>/event_subscriptions',
+      data: JSON.stringify({event_subscriptions:toSendArray}),
+      // dataType: 'json', 
+      headers: { 
+        Accept : "application/json",
+        "Content-Type": "application/json"
+      }
+    }).done(function() {
+      $("#success_alert").show();
+    }).fail(function() {
+      $("#fail_alert").show();
+    });
+  });
+});
+</script>

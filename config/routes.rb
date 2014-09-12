@@ -18,6 +18,9 @@ OpenChain::Application.routes.draw do
       resources :companies, only: [:index]
       resources :orders, only: [:index,:show]
 
+      resources :users, only: [] do
+        resources :event_subscriptions, only: [:index,:create]
+      end
       match "/products/by_id/:id" => "products#show", :via=>:get
       match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
       match "/products/model_fields" => "products#model_fields", :via => :get
@@ -29,6 +32,10 @@ OpenChain::Application.routes.draw do
       match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
 
       match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
+
+      namespace :admin do
+        match 'event_subscriptions/:event_type/:subscription_type/:object_id' => "event_subscriptions#show_by_event_type_object_id_and_subscription_type", via: :get
+      end
     end
   end  
 
@@ -444,7 +451,8 @@ OpenChain::Application.routes.draw do
       get :show_bulk_upload, :on=>:collection
       post :preview_bulk_upload, :on=>:collection
       post :bulk_upload, :on=>:collection
-		end
+      get :event_subscriptions, on: :member
+    end
     resources :charge_categories, :only => [:index, :create, :destroy]
 		get :shipping_address_list, :on => :member
     get :attachment_archive_enabled, :on => :collection

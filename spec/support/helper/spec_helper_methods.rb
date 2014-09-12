@@ -25,4 +25,8 @@ module Helpers
     request.env['HTTP_ACCEPT'] = 'application/json'
     request.env['HTTP_AUTHORIZATION'] = ActionController::HttpAuthentication::Token.encode_credentials "#{user.username}:#{user.api_auth_token}"
   end
+
+  def stub_event_publisher
+    OpenChain::EventPublisher.stub(:publish).and_return nil
+  end
 end

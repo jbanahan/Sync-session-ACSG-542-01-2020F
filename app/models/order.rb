@@ -1,3 +1,4 @@
+require 'open_chain/event_publisher'
 class Order < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
@@ -25,6 +26,7 @@ class Order < ActiveRecord::Base
     self.closed_by = user
     self.closed_at = Time.now
     self.save!
+    OpenChain::EventPublisher.publish 'ORDER_CLOSE', {order_id:self.id,closed_by_id:user.id,closed_at:self.closed_at}
     if async_snapshot
       self.create_async_snapshot user
     else
@@ -38,6 +40,7 @@ class Order < ActiveRecord::Base
   def reopen! user, async_snapshot = false
     self.closed_by = self.closed_at = nil
     self.save!
+    OpenChain::EventPublisher.publish 'ORDER_REOPEN', {order_id:self.id,reopened_by_id:user.id,reopened_at:Time.now}
     if async_snapshot
       self.create_async_snapshot user
     else
