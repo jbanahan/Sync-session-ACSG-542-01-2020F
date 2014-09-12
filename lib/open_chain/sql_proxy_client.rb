@@ -54,20 +54,32 @@ module OpenChain; class SqlProxyClient
     request 'open_check_details', {:check_date => oldest_check_date.strftime("%Y%m%d").to_i}, {}
   end
 
+  def self.request_file_tracking_info start_date, end_time
+    self.new.request_file_tracking_info start_date, end_time
+  end
+
+  def request_file_tracking_info start_date, end_time
+    request 'file_tracking', {:start_date => start_date.strftime("%Y%m%d").to_i, :end_time => end_time.strftime("%Y%m%d%H%M").to_i}, {}, results_as_array: true, swallow_error: false
+  end
+
   def report_query query_name, query_params = {}, context = {}
     # We actually want this to raise an error so that it's reported in the report result, rather than just left hanging out there in a "Running" state
-    request query_name, query_params, context, false
+    request query_name, query_params, context, swallow_error: false
   end
  
-  def request query_name, sql_params, request_context, swallow_error = true
+  def request query_name, sql_params, request_context, request_params = {}
+    request_params = {swallow_error: true}.merge request_params
     request_body = {'sql_params' => sql_params}
     request_body['context'] = request_context unless request_context.blank?
+    if request_params[:results_as_array].to_s == "true"
+      request_body['results_as_array'] = true
+    end
 
     begin
       config = PROXY_CONFIG[Rails.env]
       @json_client.post "#{config['url']}/query/#{query_name}", request_body, {}, config['auth_token']
     rescue => e
-      raise e unless swallow_error
+      raise e if request_params[:swallow_error] === false
       e.log_me ["Failed to initiate sql_proxy query for #{query_name} with params #{request_body.to_json}."]
     end
   end

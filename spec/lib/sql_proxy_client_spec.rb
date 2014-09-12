@@ -91,4 +91,17 @@ describe OpenChain::SqlProxyClient do
       @c.request_advance_checks now
     end
   end
+
+  describe "request_file_tracking_info" do
+    it "requests files between given times" do
+      start = Time.zone.now
+      end_t = start + 1.hour
+
+      request_body = {'results_as_array' => true, 'sql_params' => {start_date: start.strftime("%Y%m%d").to_i, end_time: end_t.strftime("%Y%m%d%H%M").to_i}}
+
+      @http_client.should_receive(:post).with("#{OpenChain::SqlProxyClient::PROXY_CONFIG['test']['url']}/query/file_tracking", request_body, {}, OpenChain::SqlProxyClient::PROXY_CONFIG['test']['auth_token'])
+
+      @c.request_file_tracking_info start, end_t
+    end
+  end
 end

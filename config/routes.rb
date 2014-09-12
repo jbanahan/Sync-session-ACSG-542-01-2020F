@@ -26,6 +26,7 @@ OpenChain::Application.routes.draw do
       match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
       match "/intacct_data/receive_advance_checks" => "intacct_data#receive_advance_checks", :via => :post
       match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post
+      match "/alliance_data/receive_alliance_entry_tracking_details" => "alliance_data#receive_alliance_entry_tracking_details", :via => :post
       match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
 
       match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post

@@ -42,4 +42,24 @@ describe Api::V1::AllianceDataController do
       expect(response.body).to eq ({"errors" => ["Bad Request"]}.to_json)
     end
   end
+
+  describe "receive_alliance_entry_tracking_details" do
+    it "receives entry / invoice number array results and creates a delayed job" do
+      results = [['file1', ''], ['', 'invoice1']]
+      OpenChain::Report::AllianceWebtrackingMonitorReport.should_receive(:delay).and_return OpenChain::Report::AllianceWebtrackingMonitorReport
+      OpenChain::Report::AllianceWebtrackingMonitorReport.should_receive(:process_alliance_query_details).with results.to_json
+
+      post "receive_alliance_entry_tracking_details", results: results, context: {}
+      expect(response.body).to eq ({"OK" => ""}.to_json)
+    end
+
+    it "errors if user is not an admin" do
+      @user.admin = false
+      @user.save!
+
+      post "receive_alliance_entry_tracking_details", results: []
+      expect(response.status).to eq 401
+      expect(response.body).to eq ({"errors" => ["Access denied."]}.to_json)
+    end
+  end
 end
