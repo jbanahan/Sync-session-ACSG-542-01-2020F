@@ -45,6 +45,7 @@ class User < ActiveRecord::Base
   has_many   :part_number_correlations, :dependent => :destroy
   has_many   :support_tickets, :foreign_key => :requestor_id
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
+  has_many   :event_subscriptions, inverse_of: :user, dependent: :destroy, autosave: true
 
   validates  :company, :presence => true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }

@@ -150,7 +150,7 @@ class Company < ActiveRecord::Base
     master_setup.entry_enabled && self.master?
   end
   def view_orders?
-    return master_setup.order_enabled && (self.master? || self.vendor?)
+    return master_setup.order_enabled && (self.master? || self.vendor? || self.importer?)
   end
   def add_orders?
     return master_setup.order_enabled && (self.master?)
