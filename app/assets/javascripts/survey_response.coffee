@@ -116,57 +116,81 @@ srApp.controller('srController',['$scope','$filter','srService',($scope,$filter,
   $scope.submit = () ->
     if !$scope.contact_form.$valid
       $scope.resp.error_message = 'You must complete all contact fields before submitting.'
-    else if $filter('answer')($scope.resp.answers,'Not Answered').length > 0
-      $scope.resp.error_message = 'You must select an answer or add a comment for every question before submitting. Use the Not Answered filter to identify any questions that still need answers.'
+    else if $scope.filterAnswers('Not Answered').length > 0
+      $scope.resp.error_message = "You must answer all required questions. Use the 'Not Answered' filter to identify any questions that still need answers."
     else
       $scope.srService.submit($scope.resp)
 
+  $scope.warningMessage = (answer) ->
+    show_warning = $scope.showWarning(answer)
+    has_comments = $scope.answerHasUserComments(answer)
+    show_require_attachment = answer.question.require_attachment && !$scope.answerHasAttachments(answer)
+    show_require_comment = answer.question.require_comment && !has_comments
+
+    warning = ""
+    if show_warning || show_require_attachment || show_require_comment
+      warning += "This is a required question."
+      if show_warning
+        warning += if $scope.requiresMultipleChoiceAnswer(answer) then " You must provide an answer." else " You must provide a comment."
+      if show_require_comment && warning.indexOf("provide a comment") < 0
+        warning += " You must provide a comment."
+      if show_require_attachment
+        warning += " You must provide an attachment."
+      
+    warning
+
+  $scope.requiresMultipleChoiceAnswer = (answer) ->
+    answer.question.warning && answer.question.choice_list && answer.question.choice_list.length > 0
+
   $scope.showWarning = (answer) ->
-    return false unless answer.question.warning
-    return false if answer.choice && answer.choice.length > 0
+    if answer.question.warning
+      if $scope.requiresMultipleChoiceAnswer(answer)
+        return !(answer.choice) || answer.choice.trim().length == 0
+      else
+        return if $scope.answerHasUserComments(answer) then false else true
+    false
+
+  $scope.answerHasUserComments = (answer) ->
     if answer.answer_comments
       for ac in answer.answer_comments
-        return false if ac.user.id == $scope.resp.user.id
+        return true if ac.user.id == $scope.resp.user.id && ac.content.trim().length > 0
+    false
 
-    true
+  $scope.answerHasAttachments = (answer) ->
+    answer.attachments && answer.attachments.length > 0
 
   $scope.srService.load($scope.response_id) if $scope.response_id
   
-
-  filterAnswers = () ->
-    $scope.filteredAnswers = $filter('answer')($scope.resp.answers,srService.settings.filterMode)
-
-  $scope.filterAnswers = filterAnswers
-
-  $scope.hasUnsavedComments = () ->
-    $filter('unsavedComments')($scope.resp.answers).length != 0
-
-  $scope.$watch 'srService.resp', (newVal,oldVal) ->
-    $scope.resp = newVal
-    filterAnswers()
-  
-  $scope.$watch 'srService.settings.filterMode', (newVal,oldVal) ->
-    filterAnswers()
-  @
-])
-
-srApp.filter 'answer', () ->
-  (answers, mode) ->
+  $scope.filterAnswers = (modeParam) ->
+    mode = if modeParam then modeParam else (if $scope.srService.settings.filterMode then $scope.srService.settings.filterMode else "All")
     r = []
-    return r unless answers
-    for a in answers
+    return r unless $scope.resp.answers
+    for a in $scope.resp.answers
       switch mode
         when 'Not Rated'
           r.push a if !a.rating || a.rating.length == 0
         when 'Not Answered'
-          r.push a if (!a.choice || a.choice.length == 0) && (a.answer_comments==undefined || a.answer_comments.length==0) && (a.attachments==undefined || a.attachments.length==0)
+          r.push a if $scope.warningMessage(a).length > 0
         else
           if mode.indexOf('Rating: ')==0
             targetRating = mode.slice(8,mode.length)
             r.push a if a.rating && a.rating == targetRating
           else
             r.push a
-     r
+    $scope.filteredAnswers = r
+    r
+
+  $scope.hasUnsavedComments = () ->
+    $filter('unsavedComments')($scope.resp.answers).length != 0
+
+  $scope.$watch 'srService.resp', (newVal,oldVal, scope) ->
+    $scope.resp = newVal
+    scope.filterAnswers()
+  
+  $scope.$watch 'srService.settings.filterMode', (newVal,oldVal, scope) ->
+    scope.filterAnswers()
+  @
+])
 
 srApp.filter 'unsavedComments', () ->
   (answers) ->

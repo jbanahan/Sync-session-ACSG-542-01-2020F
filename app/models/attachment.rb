@@ -1,4 +1,5 @@
 require 'open_chain/google_drive'
+require 'open_chain/s3'
 
 class Attachment < ActiveRecord::Base
   has_attached_file :attached,

@@ -77,6 +77,9 @@ describe SurveyResponsesController do
         srj = j['survey_response']
         srj['survey']['name'].should == sr.survey.name
         srj['survey']['rating_values'].should == ['a','b']
+        a = srj['answers'].first
+        expect(a['question']['require_comment']).to be_false
+        expect(a['question']['require_attachment']).to be_false
       end
 
       it "should remove private comments if user cannot edit" do

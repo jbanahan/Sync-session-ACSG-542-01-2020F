@@ -146,9 +146,9 @@
       <div class='row'>
         <div class="col-md-12 text-right"><span class="label" ng-class='{"label-info": answer.hours_since_last_update<24, "label-default": answer.hours_since_last_update > 24}'>Updated <span am-time-ago='answer.updated_at'></span></span></div>
       </div>
-      <div class='row' ng-show='showWarning(answer)'>
-        <div class='col-md-10 alert'>
-          This is a required question.  You must provide an answer or comment or your response may be rejected.
+      <div class='row' ng-show='warningMessage(answer).length > 0'>
+        <div class='col-md-10 alert alert-warning'>
+          {{warningMessage(answer)}}
         </div>
       </div>
       <div class='row'>

@@ -59,6 +59,8 @@ class SurveysController < ApplicationController
     if params[:survey] && params[:survey][:questions_attributes]
       params[:survey][:questions_attributes].each do |k,v|
         v[:warning]="" unless v[:warning]
+        v[:require_comment]="" unless v[:require_comment]
+        v[:require_attachment]="" unless v[:require_attachment]
       end
     end
     s = Survey.find params[:id]

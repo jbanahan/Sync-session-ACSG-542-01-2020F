@@ -146,11 +146,14 @@ describe SurveysController do
       Survey.find(@s.id).name.should == 'abcdef'
     end
     it "should clear warnings" do
-      q = @s.questions.create!(:content=>"ABC def 123",:choices=>"a\nb",:warning=>true)
+      q = @s.questions.create!(:content=>"ABC def 123",:choices=>"a\nb",:warning=>true, :require_comment => true, :require_attachment => true)
       post :update, {:id=>@s.id, :survey=>{:name=>'abcdef',:questions_attributes=>{q.id=>{:id=>q.id,:content=>"ABC def 123"}}}}
       response.should redirect_to edit_survey_path(@s)
       flash[:notices].first.should == "Survey saved."
-      Question.find(q.id).should_not be_warning
+      q = Question.find(q.id)
+      expect(q.warning).to be_false
+      expect(q.require_comment).to be_false
+      expect(q.require_attachment).to be_false
     end
     it 'should allow questions to have attachments' do
       q = @s.questions.create!(content: "Sample content", choices:"a\nb")

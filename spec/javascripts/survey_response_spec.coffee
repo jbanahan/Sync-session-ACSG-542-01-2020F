@@ -190,44 +190,6 @@ describe "SurveyResponseApp", () ->
       expect(matched.length).toEqual 2
       expect(matched[0].id).toEqual 2
       expect(matched[1].id).toEqual 4
-
-  describe "answerFilter", () ->
-    filter = answers = null
-
-    beforeEach inject((answerFilter) ->
-      filter = answerFilter
-    )
-    
-    beforeEach () ->
-      answers = [
-        {id:1,rating:'x'}
-        {id:2}
-        {id:3,rating:null}
-        {id:4,rating:'x',choice:'y'}
-        {id:5,rating:'x',answer_comments:['x']}
-        {id:6,rating:'x',attachments:['y','z']}
-        ]
-
-    it "should show all when filter mode is 'All'", () ->
-      expect(filter(answers,'All')).toEqual(answers)
-
-    it "should filter by rating if filter mode starts with 'Rating: '", () ->
-      results = filter(answers,'Rating: x')
-      x = []
-      x.push r.id for r in results
-      expect(x).toEqual([1,4,5,6])
-
-    it "should show all without rating when filter mode is 'Not Rated'", () ->
-      results = filter(answers,'Not Rated')
-      x = []
-      x.push r.id for r in results
-      expect(x).toEqual([2,3])
-
-    it "should show all without answer when filter mode is 'Not Answered'", () ->
-      results = filter(answers,'Not Answered')
-      x = []
-      x.push r.id for r in results
-      expect(x).toEqual([1,2,3])
       
 #
 # CONTROLLER TESTS
@@ -259,12 +221,12 @@ describe "SurveyResponseApp", () ->
 
       it "should not call service if all questions aren't answered", () ->
         $scope.resp.answers = []
-        $scope.resp.answers.push {id:1,answer_comments:[]}
+        $scope.resp.answers.push {id:1,answer_comments:[], question: {warning: true}}
         $scope.contact_form = { $valid: true }
         $scope.submit()
 
         expect(svc.submit.calls.length).toEqual(0)
-        expect(svc.resp.error_message).toEqual 'You must select an answer or add a comment for every question before submitting. Use the Not Answered filter to identify any questions that still need answers.'
+        expect(svc.resp.error_message).toEqual "You must answer all required questions. Use the 'Not Answered' filter to identify any questions that still need answers."
 
         
     it "should delegate saveAnswer", () ->
@@ -297,7 +259,7 @@ describe "SurveyResponseApp", () ->
       beforeEach () ->
         d = {
           choice: 'x'
-          question: {warning:true}
+          question: {warning:true, choice_list: ['A', 'B']}
           answer_comments: [{content:'x',user:{id:1}}]
         }
         sr = {user:{id:1}}
@@ -316,6 +278,7 @@ describe "SurveyResponseApp", () ->
       
       it "should not show warning if question warning is true and there's a comment", () ->
         d.choice = null
+        d.question.choice_list = []
         expect($scope.showWarning(d)).toBe(false)
 
       it "should not show warning if question warning is true and there's a choice", () ->
@@ -335,3 +298,91 @@ describe "SurveyResponseApp", () ->
       it "should return false if response doesn't have unsaved comments", () ->
         $scope.resp = {answers:[{id:1},{id:2,new_comment:' '}]}
         expect($scope.hasUnsavedComments()).toBe(false)
+
+    describe "filterAnswers", () ->
+      filter = answers = null
+      
+      beforeEach () ->
+        answers = [
+          {id:1,rating:'x', question: {warning: true}}
+          {id:2, question: {}}
+          {id:3,rating:null, question: {}}
+          {id:4,rating:'x',choice:'y', question: {}}
+          {id:5,rating:'x',answer_comments:[{content: "Content", user: {id:1}}], question: {}}
+          {id:6,rating:'x',attachments:['y','z'], question: {}}
+          {id:7,rating:'y',choice:'y', question: {require_attachment: true}}
+          {id:8,rating:'y',choice:'x', question: {require_comment: true}}
+          ]
+        $scope.resp.user = {id: 1}
+        $scope.resp.answers = answers
+
+      it "should show all when filter mode is 'All'", () ->
+        expect($scope.filterAnswers("All")).toEqual(answers)
+        expect($scope.filteredAnswers).toEqual(answers)
+
+      it "should filter by rating if filter mode starts with 'Rating: '", () ->
+        results = $scope.filterAnswers("Rating: x")
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([1,4,5,6])
+
+      it "should show all without rating when filter mode is 'Not Rated'", () ->
+        results = $scope.filterAnswers("Not Rated")
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([2,3])
+
+      it "should show all without answer when filter mode is 'Not Answered'", () ->
+        results = $scope.filterAnswers("Not Answered")
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([1, 7, 8])
+
+      it "defaults to service settings mode if no param is provided", () ->
+        $scope.srService.settings.filterMode = "Rating: y"
+        results = $scope.filterAnswers()
+        x = []
+        x.push r.id for r in results
+        expect(x).toEqual([7, 8])
+
+
+    describe "warningMessage", () ->
+      answer = null
+
+      beforeEach () -> 
+        answer = {id: 1, choice: "", question: {}}
+        $scope.resp.user = {id: 1}
+
+      it "does not show message for answer without errors", () ->
+        expect($scope.warningMessage(answer)).toEqual("")
+
+      it "shows warning message for answer without a choice", () ->
+        answer.question.warning = true
+        answer.question.choice_list = ["A", "B"]
+        expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide an answer.")
+
+      it "shows warning message for answer without a choice list without a comment", () ->
+        answer.question.warning = true
+        expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide a comment.")
+
+      it "does not show message for answer with user comment", () ->
+        answer.question.warning = true
+        answer.answer_comments = [{user: {id: 1}, content: "ABC"}]
+        expect($scope.warningMessage(answer)).toEqual("")
+
+      it "shows warning message for answers without comments by user", () ->
+        answer.question.warning = true
+        answer.answer_comments = [{user: {id: 99}, content: "ABC"}]
+        expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide a comment.")
+
+      it "shows warning message for answers without comments required by question", () ->
+        answer.question.require_comment = true
+        answer.answer_comments = [{user: {id: 99}, content: "ABC"}]
+        expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide a comment.")
+
+      it "shows warning message for answers without attachments required by question", () ->
+        answer.question.require_attachment = true
+        answer.attachments = []
+        expect($scope.warningMessage(answer)).toEqual("This is a required question. You must provide an attachment.")
+
+

@@ -397,7 +397,7 @@ var OpenChain = (function() {
 })();
 var OCSurvey = (function() {
   return {
-    addQuestion: function(id,content,choices,attachments,warning) {
+    addQuestion: function(id,content,choices,attachments,warning, require_comment, require_attachment) {
       var mid = id ? id : new Date().getTime();
       var h = "<div class='question_box' id='q-"+mid+"' style='display:none;'>";
 
@@ -408,7 +408,9 @@ var OCSurvey = (function() {
       h += "<a href='#' class='q_preview' qid='"+mid+"'>Preview</a><br />";
       h += "Possible Answers: (put one answer on each line)<br/><textarea id='qc_"+mid+"'class='q_area' name='survey[questions_attributes]["+mid+"][choices]' rows='3'>"+choices+"</textarea>";
       h += "<input type='hidden' name='survey[questions_attributes]["+mid+"][rank]' value=''/>"
-      h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Warn If Empty</div>"
+      h += "<div><input id='qw_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][warning]' value='1' "+(warning ? "checked='checked'" : "")+"/> Require respondant to select an answer OR if no answers are given above, require a comment?</div>"
+      h += "<div><input id='rc_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][require_comment]' value='1' "+(require_comment ? "checked='checked'" : "")+"/> Require respondant to add a comment?</div>"
+      h += "<div><input id='ra_"+mid+"'type='checkbox' name='survey[questions_attributes]["+mid+"][require_attachment]' value='1' "+(require_attachment ? "checked='checked'" : "")+"/> Require respondant to add an attachment?</div>"
 
       h += "<div id='qa_"+mid+"'><div class='row'><div class='col-md-12'><h4>Attachments</h4></div></div>"
       if (typeof(attachments) != "undefined" && attachments != null){
