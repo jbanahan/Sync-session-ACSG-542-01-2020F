@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
   describe "generate_receivable_xml" do
     before :each do 
-      @recv = IntacctReceivable.new receivable_type: "type", invoice_date: Time.zone.now.to_date, customer_number: "cust", invoice_number: "inv", currency: "USD", customer_reference: "REFERENCE"
+      @recv = IntacctReceivable.new receivable_type: "type", invoice_date: Time.zone.now.to_date, customer_number: "cust", invoice_number: "inv", currency: "USD", customer_reference: "REFERENCE", created_at: Time.zone.now
       @rl = @recv.intacct_receivable_lines.build charge_code: '123', charge_description: 'desc', amount: BigDecimal("12.50"), location: "loc", 
                                   line_of_business: "lob", freight_file: "f123", vendor_number: "ven", broker_file: "b123"
     end
@@ -26,11 +26,16 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       validate_control_id root, control_id
 
       t = REXML::XPath.first root, "/function/create_sotransaction"
+      
+      posted = @recv.created_at.in_time_zone "Eastern Time (US & Canada)"
 
       expect(t.text "transactiontype").to eq @recv.receivable_type
       expect(t.text "datecreated/year").to eq @recv.invoice_date.strftime "%Y"
       expect(t.text "datecreated/month").to eq @recv.invoice_date.strftime "%m"
       expect(t.text "datecreated/day").to eq @recv.invoice_date.strftime "%d"
+      expect(t.text "dateposted/year").to eq posted.strftime "%Y"
+      expect(t.text "dateposted/month").to eq posted.strftime "%m"
+      expect(t.text "dateposted/day").to eq posted.strftime "%d"
       expect(t.text "customerid").to eq @recv.customer_number
       expect(t.text "referenceno").to eq @recv.customer_reference
       expect(t.text "documentno").to eq @recv.invoice_number
@@ -72,7 +77,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
   describe "generate_payable_xml" do
     before :each do 
-      @p = IntacctPayable.new vendor_number: "v", bill_date: Time.zone.now.to_date, bill_number: "b", vendor_reference: "ref", currency: "cur"
+      @p = IntacctPayable.new vendor_number: "v", bill_date: Time.zone.now.to_date, bill_number: "b", vendor_reference: "ref", currency: "cur", created_at: Time.zone.now
       @l = @p.intacct_payable_lines.build gl_account: "a", amount: BigDecimal.new("12"), charge_description: "desc", location: "loc",
                     line_of_business: "lob", freight_file: "f", customer_number: "c", charge_code: "cc", broker_file: "brok"
     end
@@ -85,10 +90,15 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
       b = REXML::XPath.first root, "/function/create_bill"
 
+      posted = @p.created_at.in_time_zone "Eastern Time (US & Canada)"
+
       expect(b.text "vendorid").to eq @p.vendor_number
       expect(b.text "datecreated/year").to eq @p.bill_date.strftime "%Y"
       expect(b.text "datecreated/month").to eq @p.bill_date.strftime "%m"
       expect(b.text "datecreated/day").to eq @p.bill_date.strftime "%d"
+      expect(b.text "dateposted/year").to eq posted.strftime "%Y"
+      expect(b.text "dateposted/month").to eq posted.strftime "%m"
+      expect(b.text "dateposted/day").to eq posted.strftime "%d"
       expect(b.text "termname").to eq "terms"
       expect(b.text "billno").to eq @p.bill_number
       expect(b.text "externalid").to eq @p.vendor_reference
