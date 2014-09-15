@@ -51,7 +51,7 @@
   <div class='container' ng-controller='srController'>
     <div chain-action-bar>
       <button class='btn btn-default' ng-show='resp.can_submit' ng-click='submit()'>Submit</button>
-      <button class='btn btn-default' ng-click='srService.invite(resp)'>Resend Email Invite</button>
+      <button class='btn btn-default' ng-show="!resp.archived" ng-click='srService.invite(resp)'>Resend Email Invite</button>
       <%-if @sr.survey.can_edit?(current_user)-%>
         <button class='btn_link btn btn-default' link_to='<%=survey_path(@sr.survey)%>'>Survey Dashboard</button>
       <%-end-%>
@@ -69,6 +69,7 @@
     </div>
     <div chain-modal-message message-object='resp' message-property='success_message' title='Success' clear-on-close='true'></div>
     <div chain-modal-message message-object='resp' message-property='error_message' title='Error' clear-on-close='true'></div>
+    <div class="alert alert-warning" ng-show="resp.archived"><p>This survey has been archived.  You may not change anything on archived surveys.</p></div>
     <div>
       <div class='col-md-12'>
         <span ng-show='resp.saving' class='label label-info'>Saving...</span>&nbsp;
@@ -194,7 +195,7 @@
           {{com.content}}
         </div>
       </div>
-      <div class='row'>
+      <div class='row' ng-show="!resp.archived">
         <div class='col-md-12'>
           <label for='new_comment'>New Comment:</label>
           <textarea id='new_comment' ng-model='answer.new_comment' rows='5' style='width:100%;'></textarea>
@@ -221,7 +222,7 @@
           <a href='/attachments/{{att.id}}/download' target='_blank'>{{att.name}} <span class='badge'>{{att.size}}</span></a>
         </div>
       </div>
-      <div class='row' style='margin-top:10px;'>
+      <div class='row' style='margin-top:10px;' ng-show="!resp.archived">
         <div class='col-md-12'>
           <div chain-attach='answer' attachable-type='Answer' attachable-id='{{answer.id}}'></div>
         </div>

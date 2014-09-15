@@ -111,6 +111,36 @@ describe SurveyResponsesController do
         ac.size.should == 2
         ac.collect {|c| c['content']}.should == ['mycomment','pcomment']
       end
+
+      context "archived" do
+        it "disables all can_* attributes on archived survey responses" do
+          sr = Factory(:survey_response, user:@u, archived: true)
+          get :show, :id=>sr.id, :format=>:json
+          expect(response).to be_success
+          j = JSON.parse response.body
+
+          expect(j['survey_response']['archived']).to be_true
+          expect(j['survey_response']['can_rate']).to be_false
+          expect(j['survey_response']['can_answer']).to be_false
+          expect(j['survey_response']['can_submit']).to be_false
+          expect(j['survey_response']['can_make_private_comment']).to be_false
+        end
+
+        it "disables all can_* attributes on survey responses associated with an archvied survey" do
+          sr = Factory(:survey_response, user:@u, archived: false)
+          sr.survey.update_attributes! archived: true
+          
+          get :show, :id=>sr.id, :format=>:json
+          expect(response).to be_success
+          j = JSON.parse response.body
+
+          expect(j['survey_response']['archived']).to be_true
+          expect(j['survey_response']['can_rate']).to be_false
+          expect(j['survey_response']['can_answer']).to be_false
+          expect(j['survey_response']['can_submit']).to be_false
+          expect(j['survey_response']['can_make_private_comment']).to be_false
+        end
+      end
     end
   end
   context 'authenticated' do

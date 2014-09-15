@@ -37,7 +37,7 @@ class SurveyResponse < ActiveRecord::Base
   end
   
   def can_edit? user
-    self.survey.company_id == user.company_id && user.edit_surveys?
+    self.survey.company_id == user.company_id && user.edit_surveys? && !self.survey.archived?
   end
 
   #can the user view private comments for this survey

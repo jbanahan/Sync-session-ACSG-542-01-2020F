@@ -1,7 +1,10 @@
 class SurveysController < ApplicationController
   def index
     if current_user.view_surveys?
-      @surveys = Survey.where(:company_id=>current_user.company_id) 
+      @surveys = Survey.where(:company_id=>current_user.company_id, :archived => false)
+      if params[:show_archived].to_s == 'true'
+        @archived_surveys = Survey.where(:company_id=>current_user.company_id, :archived => true)
+      end
     else
       error_redirect "You do not have permission to view surveys."
     end
@@ -153,5 +156,31 @@ class SurveysController < ApplicationController
       end
     end
     redirect_to request.referrer.blank? ? '/' : request.referrer
+  end
+
+  def archive
+    s = Survey.find params[:id]
+    action_secure(s.can_edit?(current_user), s, module_name: "Survey", verb: "archive", lock_check: false) do 
+      s.archived = true
+      if s.save
+        add_flash :notices, "Survey archived."
+      else
+        errors_to_flash s
+      end 
+      redirect_to survey_path s
+    end
+  end
+
+  def restore
+    s = Survey.find params[:id]
+    action_secure(s.can_edit?(current_user), s, module_name: "Survey", verb: "restore", lock_check: false) do 
+      s.archived = false
+      if s.save
+        add_flash :notices, "Survey restored."
+      else
+        errors_to_flash s
+      end 
+      redirect_to survey_path s
+    end
   end
 end

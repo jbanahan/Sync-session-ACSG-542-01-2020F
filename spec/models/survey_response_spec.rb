@@ -115,6 +115,11 @@ describe SurveyResponse do
     it "should fail if user is not from the survey company" do
       @sr.can_edit?(Factory(:user,survey_edit:true)).should be_false
     end
+    it "does not allow edit when survey is archvied" do
+      u = Factory(:user,:company=>@survey.company,:survey_edit=>true)
+      @survey.update_attributes! archived: true
+      @sr.can_edit?(u).should be_false
+    end
   end
   describe "can_view_private_comments?" do
     before :each do 

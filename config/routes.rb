@@ -503,6 +503,8 @@ OpenChain::Application.routes.draw do
       get 'toggle_subscription'
       post 'assign'
       get 'copy'
+      put 'archive'
+      put 'restore'
     end
   end
   resources :survey_responses do

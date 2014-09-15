@@ -9,15 +9,26 @@ describe SurveysController do
   describe 'index' do
     it "should only show surveys for logged in company" do
       to_find = Factory(:survey,:company=>@u.company)
+      archived = Factory(:survey,:company=>@u.company, archived: true)
       not_to_find = Factory(:survey)
       get :index
-      assigns(:surveys).to_a.should == [to_find]
+      expect(assigns(:surveys)).to eq [to_find]
+      expect(assigns(:archived_surveys)).to be_nil
     end
     it "should reject if user does not have view_survey permission" do
       @u.update_attributes(:survey_view=>false)
       get :index
       response.should be_redirect
       flash[:errors].should have(1).message
+    end
+
+    it "shows archived surveys if prompted" do
+      to_find = Factory(:survey,:company=>@u.company)
+      archived = Factory(:survey,:company=>@u.company, archived: true)
+      get :index, show_archived: true
+
+      expect(assigns(:surveys)).to eq [to_find]
+      expect(assigns(:archived_surveys)).to eq [archived]
     end
   end
   describe 'new' do
@@ -328,6 +339,50 @@ describe SurveysController do
         @s.update_attributes(:company_id => @u.company_id)
         get :toggle_subscription, :id => @s.id
       end.should change(SurveySubscription, :count).by(-1)
+    end
+  end
+
+  describe "archive" do
+    it "archives surveys" do
+      to_find = Factory(:survey,:company=>@u.company)
+
+      put :archive, id: to_find.id
+
+      expect(response).to redirect_to survey_path(to_find)
+      to_find.reload
+      expect(to_find.archived?).to be_true
+      expect(flash[:notices]).to include "Survey archived."
+    end
+
+    it "does not allow archiving of surveys user cannot edit" do
+      to_find = Factory(:survey,:company=>@u.company)
+      Survey.any_instance.should_receive(:can_edit?).and_return false
+
+      put :archive, id: to_find.id
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to archive this Survey."
+    end
+  end
+
+  describe "restore" do
+    it "restores surveys" do
+      to_find = Factory(:survey,:company=>@u.company, archived: true)
+
+      put :restore, id: to_find.id
+
+      expect(response).to redirect_to survey_path(to_find)
+      to_find.reload
+      expect(to_find.archived?).to be_false
+      expect(flash[:notices]).to include "Survey restored."
+    end
+
+    it "does not allow restoring of surveys user cannot edit" do
+      to_find = Factory(:survey,:company=>@u.company)
+      Survey.any_instance.should_receive(:can_edit?).and_return false
+
+      put :restore, id: to_find.id
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to restore this Survey."
     end
   end
 end

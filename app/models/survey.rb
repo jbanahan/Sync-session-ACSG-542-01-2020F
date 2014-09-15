@@ -22,7 +22,7 @@ class Survey < ActiveRecord::Base
     s
   end
   def locked?
-    self.survey_responses.count!=0
+    has_responses? || archived?
   end
   
   def can_edit? user
@@ -58,8 +58,21 @@ class Survey < ActiveRecord::Base
   end
   
   private
+
+  def has_responses?
+    self.survey_responses.count!=0
+  end
+
   def lock_check
-    errors[:base] << "You cannot change a locked survey." if self.locked?
+    # Allow changing archived flag if, as long as that's all that's being changed
+    if has_responses?
+      changed_fields = changed
+      if changed_fields.first == "archived" && changed_fields.length == 1
+        return true
+      else
+        errors[:base] << "You cannot change a locked survey."
+      end
+    end
   end
 
   def create_responses_sheet workbook

@@ -49,7 +49,7 @@ describe Survey do
   end
   it 'should not allow edits if locked' do
     s = Factory(:survey)
-    s.stub(:locked?).and_return(true)
+    s.stub(:has_responses?).and_return(true)
     s.save.should be_false
     s.errors.full_messages.first.should == "You cannot change a locked survey."
   end
@@ -193,6 +193,36 @@ describe Survey do
       x[1].should == 1
       x[2].should == 0
       x[3].should == 1
+    end
+  end
+
+  describe "save" do
+    context "on survey with responses" do
+
+      it "allows archiving" do
+        survey = Factory(:survey, archived: false)
+        survey.stub(:has_responses?).and_return true
+        survey.update_attributes! archived: true
+        survey.reload
+        expect(survey.archived).to be_true
+      end
+
+      it "allows de-archiving" do
+        survey = Factory(:survey, archived: true)
+
+        survey.stub(:has_responses?).and_return true
+        survey.update_attributes! archived: false
+        survey.reload
+        expect(survey.archived).to be_false
+      end
+
+      it "rejects if archived is not the only attribute being saved" do
+        survey = Survey.new
+        survey.stub(:has_responses?).and_return true
+
+        expect(survey.update_attributes archived: false, name: "Blah").to be_false
+        expect(survey.errors.full_messages).to eq ["You cannot change a locked survey."]
+      end
     end
   end
 end

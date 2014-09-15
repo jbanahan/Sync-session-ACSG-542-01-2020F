@@ -1,0 +1,21 @@
+<table class='detail_table'>
+  <thead><tr><th>&nbsp;</th><th>Name</th><th>Assignments</th><th>Incomplete</th><th>Not Rated</th><th>Need Improvement</th><th>Accepted</th></tr></thead>
+  <tbody>
+<%surveys.each do |s|%>
+<tr class='hover'>
+  <td><%=link_to "view", s%>
+  <%if s.can_edit?(current_user) && !s.locked?%>
+    | <%=link_to "edit", edit_survey_path(s)%>
+    <%end%>
+    | <%=link_to "download", survey_path(s, :format=>:xls) %>
+  </td>
+  <td><%=s.name%></td>
+  <td><%=s.survey_responses.count%></td>
+  <td><%=s.survey_responses.where(:status=>"Incomplete").count%></td>
+  <td><%=s.survey_responses.where(:status=>"Not Rated").count%></td>
+  <td><%=s.survey_responses.where(:status=>"Needs Improvement").count%></td>
+  <td><%=s.survey_responses.where(:status=>"Accepted").count%></td>
+</tr>
+<%end%>
+  </tbody>
+</table>

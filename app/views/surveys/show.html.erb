@@ -48,22 +48,31 @@
   google.setOnLoadCallback(statC);
 <%end%>
 <%content_for :action_bar do%>
-  <% unless @survey.locked? %>
-    <button class='btn_link' link_to='<%=edit_survey_path @survey%>' key_map='e'>Edit</button>
-  <% end%>
-  <button class='btn_link' link_to='<%=show_assign_survey_path @survey%>' key_map='a'>Assign</button>
-  <% if current_user.view_surveys? && @survey.company_id == current_user.company_id %>
-    <button class='btn_link' link_to='<%=toggle_subscription_survey_path @survey%>' key_map='t'>
-      <%= @survey.survey_subscriptions.where(:user_id => current_user).empty? ? "Subscribe" : "Unsubscribe" %>
-    </button>
+  <% if !@survey.archived? %>
+    <% unless @survey.locked? %>
+      <button class='btn_link' link_to='<%=edit_survey_path @survey%>' key_map='e'>Edit</button>
+    <% end%>
+    <button class='btn_link' link_to='<%=show_assign_survey_path @survey%>' key_map='a'>Assign</button>
+    <% if current_user.view_surveys? && @survey.company_id == current_user.company_id %>
+      <button class='btn_link' link_to='<%=toggle_subscription_survey_path @survey%>' key_map='t'>
+        <%= @survey.survey_subscriptions.where(:user_id => current_user).empty? ? "Subscribe" : "Unsubscribe" %>
+      </button>
+    <% end %>
+    <% if @survey.can_edit?(current_user)%>
+      <button id='btn_cpy'>Copy Survey</button>
+      <%= button_to "Archive Survey", {action: :archive, id: @survey.id}, method: :put, class:'btn btn-default', form_class:'inline-button-to'%>
+    <% end %>
+  <% elsif @survey.can_edit?(current_user) %>
+      <%= button_to "Restore Survey", {action: :restore, id: @survey.id}, method: :put, class:'btn btn-default', form_class:'inline-button-to'%>
   <% end %>
-  <% if @survey.can_edit?(current_user)%>
-    <button id='btn_cpy'>Copy Survey</button>
-  <% end %>
+  
   <% if @survey.can_edit?(current_user) && @survey.survey_responses.was_archived(true).count > 0 %>
     <button id='btn_show_archived'>Show Archived Responses</button>
   <% end %>
 <%end%>
+<% if @survey.archived? %>
+<div class="alert alert-warning"><p>This survey has been archived.  You may not change anything on archived surveys.  Use the 'Restore Survey' button to change this survey to active.</p></div>
+<% end %>
 <h1><%=@survey.name%></h1>
 
 <div id='stat_chart' style='text-align:center; width:45%; margin:0; float:right;'></div>

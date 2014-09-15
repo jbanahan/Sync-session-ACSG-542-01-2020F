@@ -14,6 +14,7 @@ class SurveyResponsesController < ApplicationController
     elsif @sr.submitted_date && @sr.can_edit?(current_user) 
       @rate_mode = true
     end
+    archived = (@sr.archived? || @sr.survey.archived?)
     respond_to do |format|
       format.html {
         if old_ie_version? 
@@ -32,10 +33,11 @@ class SurveyResponsesController < ApplicationController
           {survey:{only:[:id,:name],methods:[:rating_values]}},
           {user:{only:[:id],methods:[:full_name]}}
         ])
-        h['survey_response']['can_rate'] = @rate_mode
-        h['survey_response']['can_answer'] = @respond_mode
-        h['survey_response']['can_submit'] = @respond_mode && @sr.submitted_date.blank?
-        h['survey_response']['can_make_private_comment'] = @sr.can_edit?(current_user)
+        h['survey_response']['archived'] = archived
+        h['survey_response']['can_rate'] = !archived && @rate_mode
+        h['survey_response']['can_answer'] = !archived && @respond_mode
+        h['survey_response']['can_submit'] = !archived && @respond_mode && @sr.submitted_date.blank?
+        h['survey_response']['can_make_private_comment'] = !archived && @sr.can_edit?(current_user)
         h['survey_response'][:answers].each_with_index do |a,i| 
           a['sort_number'] = (i+1)
           if a[:answer_comments] && !@sr.can_edit?(current_user)
@@ -78,7 +80,7 @@ class SurveyResponsesController < ApplicationController
     if old_ie_version? 
       add_flash :errors, "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers.", now: true
     end
-    @survey_responses = SurveyResponse.where(:user_id=>current_user.id)
+    @survey_responses = SurveyResponse.where(:user_id=>current_user.id).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false))
   end
 
   def archive
