@@ -296,7 +296,9 @@ module OpenChain
       total_value_with_adjustments = dec_val(line[105])
 
       if total_value_with_adjustments
-        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0"))
+        adjustments_per_piece = dec_val(line[113])
+        total_value_with_adjustments += adjustments_per_piece if adjustments_per_piece
+        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0")) 
       end
 
       t = inv_ln.commercial_invoice_tariffs.build
