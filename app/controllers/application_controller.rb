@@ -202,18 +202,49 @@ class ApplicationController < ActionController::Base
     @s_con = params[:c].nil? ? 'contains' : params[:c]
     sval = params[:s]
     sval = true if ['is_null','is_not_null','is_true','is_false'].include? @s_con
-    if @s_search[:custom]
-      d = CustomDefinition.find(@s_search[:field])
-      @search = secure.joins(:custom_values).where("custom_values.custom_definition_id = ?",d.id).search("custom_values_#{d.data_column}_#{@s_con}" => sval)
-    else
-      @search = secure.search((@s_search[:field]+'_'+@s_con) => sval)
-    end
+    @search = add_search_relation secure, @s_search, @s_con, sval
     @s_sort = field_list[params[:sf]]
     @s_sort = field_list[default_sort] if @s_sort.nil?
-    @s_order = default_sort_order
-    @s_order = params[:so] if !params[:so].nil? && ['a','d'].include?(params[:so])
-    @search.meta_sort = @s_sort[:field]+(@s_order=='d' ? '.desc' : '.asc')
+    @s_order = ['a','d'].include?(params[:so]) ? params[:so] : default_sort_order
+    @search = add_sort_relation @search, @s_sort, @s_order
     return @search
+  end
+
+  def add_search_relation relation, field_definition, operator, value
+    field = field_definition[:field]
+
+    if field_definition[:datatype] == :boolean
+      if value.blank? || ['y', 'true', '1', 'yes'].include?(value.to_s.strip.downcase)
+        relation.where("#{field} = ?", true)
+      else
+        relation.where("#{field} = ? OR #{field} IS NULL", false)
+      end
+    else
+      # This is just some handling for cases where user doesn't actually key anything into the search field
+      return relation if value.blank? && ['contains', 'eq', 'sw', 'ew'].include?(operator)
+
+      # The cast in here is solely to handle non-string fields (like dates or numbers)
+      case operator
+      when "contains"
+        relation.where("CAST(#{field} as char) LIKE ?", "%#{value}%")
+      when "eq"
+        relation.where("#{field} = ?", value)
+      when "sw"
+        relation.where("CAST(#{field} as char) LIKE ?", "#{value}%")
+      when "ew"
+        relation.where("CAST(#{field} as char) LIKE ?", "%#{value}")
+      when "is_null"
+        relation.where("#{field} IS NULL OR LENGTH(TRIM(CAST(#{field} as char))) = 0")
+      when "is_not_null"
+        relation.where("LENGTH(TRIM(CAST(#{field} as char))) > 0")
+      else
+        relation
+      end
+    end
+  end
+
+  def add_sort_relation relation, field, order
+    relation.order("#{field[:field]} #{order=="d" ? "DESC" : "ASC"}")
   end
   
   def custom_field_parameters(customizable)
@@ -358,7 +389,12 @@ class ApplicationController < ActionController::Base
   end
 
   def sortable_search_heading(f_short)
-    help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
+    glyphicon = (params[:so]=='a' ? "glyphicon-chevron-up" : "glyphicon-chevron-down")
+    visible = (params[:sf] == f_short) ? "visible" : "hidden"
+
+    arrow = "<span class=\"glyphicon #{glyphicon}\" style=\"visibility: #{visible}; margin-right: .5em;\"></span>"
+    link = help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a'))) 
+    (arrow + link).html_safe
   end
 
   def merge_params(p={})

@@ -4,7 +4,8 @@ class DataCrossReferencesController < ApplicationController
     xref_type = params[:cross_reference_type]
     action_secure(DataCrossReference.can_view?(xref_type, current_user), nil, {:verb => "view", :lock_check => false, :module_name=>"cross reference type"}) do
       @xref_info = xref_hash xref_type, current_user
-      @xrefs = DataCrossReference.where(cross_reference_type: xref_type).order("`key`").paginate(:per_page=>50,:page=>params[:page])
+      xrefs = build_search search_params(xref_type), 'd_key', 'd_key'
+      @xrefs = xrefs.paginate(:per_page=>50,:page=>params[:page])
     end
   end
 
@@ -71,5 +72,25 @@ class DataCrossReferencesController < ApplicationController
         @xref_info = xref_hash xref.cross_reference_type, current_user
         @xref = xref
       end
+    end
+
+    def search_params xref_type
+      edit_hash = xref_hash xref_type, current_user
+
+      sp = {
+        'd_key' => {field: "`key`", label: edit_hash[:key_label]}
+      }
+
+      if edit_hash[:show_value_column]
+        sp['d_value']  = {field: "`value`", label: edit_hash[:value_label]}
+      end
+
+      sp
+    end
+
+    def secure
+      # The xref param has already been validation in the index action prior to this method being
+      # called so we're ok to always assume its presence
+      DataCrossReference.where(cross_reference_type: params[:cross_reference_type])
     end
 end

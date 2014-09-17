@@ -4,11 +4,11 @@ class CompaniesController < ApplicationController
   # GET /companies.xml
   SEARCH_PARAMS = {
     'c_name' => {:field => 'name', :label=> 'Name'},
-    'v_bool' => {:field => 'vendor', :label => 'Is A Vendor'},
-    'car_bool' => {:field => 'carrier', :label => 'Is A Carrier'},
-    'cus_bool' => {:field => 'customer', :label => 'Is A Customer'},
-    'imp_bool' => {:field => 'importer', :label => 'Is An Importer'},
-    'l_bool' => {:field => 'locked', :label => 'Is Locked'}
+    'v_bool' => {:field => 'vendor', :label => 'Is A Vendor', :datatype => :boolean},
+    'car_bool' => {:field => 'carrier', :label => 'Is A Carrier', :datatype => :boolean},
+    'cus_bool' => {:field => 'customer', :label => 'Is A Customer', :datatype => :boolean},
+    'imp_bool' => {:field => 'importer', :label => 'Is An Importer', :datatype => :boolean},
+    'l_bool' => {:field => 'locked', :label => 'Is Locked', :datatype => :boolean}
   }
   def index
     sp = SEARCH_PARAMS
@@ -28,7 +28,6 @@ class CompaniesController < ApplicationController
             @companies = s.paginate(:per_page => 20, :page => params[:page])
             render :layout => 'one_col'
         }
-        format.xml  { render :xml => (@orders=s.all) }
     end
   end
 
@@ -40,7 +39,6 @@ class CompaniesController < ApplicationController
       @countries = Country.all  
       respond_to do |format|
         format.html # show.html.erb
-        format.xml  { render :xml => @company }
       end
     }
   end
@@ -52,7 +50,6 @@ class CompaniesController < ApplicationController
     action_secure(current_user.company.master, @company, {:verb => "create ", :module_name=>"company"}) {
       respond_to do |format|
         format.html # new.html.erb
-        format.xml  { render :xml => @company }
       end
     }
   end
@@ -74,11 +71,9 @@ class CompaniesController < ApplicationController
         if @company.save
           add_flash :notices, "Company created successfully."
           format.html { redirect_to(@company) }
-          format.xml  { render :xml => @company, :status => :created, :location => @company }
         else
           errors_to_flash @company, :now => true
           format.html { render :action => "new" }
-          format.xml  { render :xml => @company.errors, :status => :unprocessable_entity }
         end
       end
     }
@@ -94,11 +89,9 @@ class CompaniesController < ApplicationController
         if @company.update_attributes(params[:company])
           add_flash :notices, "Company was updated successfully."
           format.html { redirect_to(@company) }
-          format.xml  { head :ok }
         else
           errors_to_flash @company, :now => true
           format.html { render :action => "edit" }
-          format.xml  { render :xml => @company.errors, :status => :unprocessable_entity }
         end
       end      
     }

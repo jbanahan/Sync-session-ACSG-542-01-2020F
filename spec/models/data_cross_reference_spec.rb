@@ -122,4 +122,34 @@ describe DataCrossReference do
       expect(DataCrossReference.find_lands_end_mid 'factory', 'hts').to eq 'MID'
     end
   end
+
+  describe "xref_edit_hash" do
+    it "returns information about xref screens user has access to" do
+      # At the moment, only polo system has xrefs
+      MasterSetup.any_instance.stub(:system_code).and_return "polo"
+
+      xrefs = DataCrossReference.xref_edit_hash User.new
+
+      expect(xrefs.size).to eq 2
+      expect(xrefs['rl_fabric']).to eq title: "MSL+ Fabric Cross References", description: "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", identifier: 'rl_fabric', key_label: "Failure Fiber", value_label: "Approved Fiber", show_value_column: true
+      expect(xrefs['rl_valid_fabric']).to eq title: "MSL+ Valid Fabric List", description: "Only values included in this list are allowed to be sent to to MSL+.", identifier: 'rl_valid_fabric', key_label: "Approved Fiber", value_label: "Value", show_value_column: false
+    end
+  end
+
+  describe "can_view?" do
+    context "polo system" do
+      before :each do
+        MasterSetup.any_instance.stub(:system_code).and_return "polo"
+      end
+
+      it "allows access to RL Fabrix xref for anyone" do
+        expect(DataCrossReference.can_view? 'rl_fabric', User.new).to be_true
+      end
+
+      it "allows access to RL Value Fabirc xref for anyone" do
+        expect(DataCrossReference.can_view? 'rl_valid_fabric', User.new).to be_true
+      end
+
+    end
+  end
 end

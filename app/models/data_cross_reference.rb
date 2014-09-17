@@ -25,8 +25,8 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
-      xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Key field and the final value to send to MSL+ in the Value field."),
-      xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.  Enter the valid fabric value in the key field.  You may leave the Value field blank.")
+      xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", key_label: "Failure Fiber", value_label: "Approved Fiber"),
+      xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false)
     ]
 
     user_xrefs = all_editable_xrefs.select {|x| can_view? x[:identifier], user}
@@ -36,10 +36,12 @@ class DataCrossReference < ActiveRecord::Base
     h
   end
 
-  def self.xref_attributes identifier, title, description
+  def self.xref_attributes identifier, title, description, options = {}
+    options = {key_label: "Key", value_label: "Value", show_value_column: true}.merge options
+
     # Title is what is displayed as the link/button to access the page
     # Description is text/instructions included at the top of the list/edit screen.
-    {title: title, description: description, identifier: identifier}
+    {title: title, description: description, identifier: identifier, key_label: options[:key_label], value_label: options[:value_label], show_value_column: options[:show_value_column]}
   end
   private_class_method :xref_attributes
 

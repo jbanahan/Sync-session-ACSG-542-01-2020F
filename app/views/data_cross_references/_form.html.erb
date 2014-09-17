@@ -12,8 +12,10 @@
 <%= form_for xref, html: {id:'xref_form', class:'form'} do |f| %>
 <%=f.hidden_field(:cross_reference_type)%>
 <table>
-  <%=field_row "Key", f.text_field(:key)%>
-  <%=field_row "Value", f.text_field(:value)%>
+  <%=field_row xref_info[:key_label], f.text_field(:key)%>
+  <% if xref_info[:show_value_column] %>
+    <%=field_row xref_info[:value_label], f.text_field(:value)%>
+  <% end %>
 </table>
 <% end %>
 </div>

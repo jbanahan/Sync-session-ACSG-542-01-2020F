@@ -20,6 +20,22 @@ describe DataCrossReferencesController do
       expect(response).to be_success
       expect(assigns(:xref_info)).to eq DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC].with_indifferent_access
       expect(assigns(:xrefs).first).to eq xref
+      # Just ensure that the search is utilized by checking for one of the values it assigns
+      expect(assigns(:search)).not_to be_nil
+    end
+
+    it "runs a search" do
+      xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
+      xref2 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY2", value: "ZValue"
+      xref3 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "NO", value: "Value"
+
+      get :index, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, f: "`key`", c: "contains", s: "KEY", sf: "`key`", so: "d"
+
+      expect(response).to be_success
+      xrefs = assigns(:xrefs)
+      expect(xrefs.length).to eq 2
+      expect(xrefs.first).to eq xref2
+      expect(xrefs.second).to eq xref
     end
 
     it "rejects user without access" do

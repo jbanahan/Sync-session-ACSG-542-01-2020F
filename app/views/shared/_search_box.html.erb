@@ -12,6 +12,7 @@
   </select> 
   <input id='srch_val' type='text' name='s' value="<%=params[:s]%>"  class="focus_first"/>
   <input id='srch_submit' type='submit' value='Search' class='btn' />
+  <%= yield(:search_form) %>
   </form> 
 </div>
 <%content_for :javascript do %>
