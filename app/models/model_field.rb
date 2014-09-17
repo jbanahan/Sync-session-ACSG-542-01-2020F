@@ -265,13 +265,24 @@ class ModelField
     ]
     r << [rank_start+1,"#{uid_prefix}_#{short_prefix}_name".to_sym, :name,"#{description} Name",{
       :import_lambda => lambda {|obj,data|
-        "Company name is read only."
+        if data.blank?
+          obj.send("#{association_name}=".to_sym, nil)
+          return "#{description} set to blank."
+        else
+          comp = Company.where(:name => data).where(association_name.to_sym => true).first
+          unless comp.nil?
+            obj.send("#{association_name}=".to_sym,comp)
+            return "#{description} set to #{comp.name}"
+          else
+            comp = Company.create(:name=>data,association_name.to_sym=>true)
+            obj.send("#{association_name}=".to_sym,comp)
+            return "#{description} auto-created with name \"#{data}\""
+          end
+        end
       },
       :export_lambda => lambda {|obj| obj.send("#{association_name}".to_sym).nil? ? "" : obj.send("#{association_name}".to_sym).name},
       :qualified_field_name => "(SELECT name FROM companies WHERE companies.id = #{table_name}.#{association_name}_id)",
-      :data_type => :string,
-      :read_only => true,
-      :history_ignore => true
+      :data_type => :string
     }]
     r << [rank_start+2,"#{uid_prefix}_#{short_prefix}_syscode".to_sym,:system_code,"#{description} System Code", {
       :import_lambda => lambda {|obj,data|
