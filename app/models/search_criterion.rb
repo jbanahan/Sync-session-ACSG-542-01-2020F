@@ -76,25 +76,26 @@ class SearchCriterion < ActiveRecord::Base
       c_def_id = mf.custom_id
       cd = CustomDefinition.cached_find(c_def_id)
       
+      base_select = "SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_type = '#{cd.module_type}'"
       if boolean_field?
         clause = "custom_values.boolean_value = ?"
         if self.include_empty || !sql_value
           clause = "(#{clause} OR custom_values.boolean_value IS NULL)"
         end
-        clause = "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{clause})"
+        clause = "#{table_name}.id IN (#{base_select} AND #{clause})"
       elsif self.operator=='null'
-        clause = "#{table_name}.id NOT IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+        clause = "#{table_name}.id NOT IN (#{base_select} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
       elsif self.operator=='notnull'
-        clause = "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values where custom_values.custom_definition_id = #{c_def_id} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
+        clause = "#{table_name}.id IN (#{base_select} AND custom_values.customizable_id = #{table_name}.id AND length(custom_values.#{cd.data_column}) > 0)"
       else
-        clause = "#{table_name}.id IN (SELECT custom_values.customizable_id FROM custom_values WHERE custom_values.custom_definition_id = #{c_def_id} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
+        clause = "#{table_name}.id IN (#{base_select} AND #{CriterionOperator.find_by_key(self.operator).query_string("custom_values.#{cd.data_column}", mf.data_type, self.include_empty)})"
       end
 
       # The core object may not actually have custom value rows yet for a particualr custom definition 
       # if a new custom definition was added to the system.  To account for this we'll also find any 
       # results that are missing fields if "Include Empty" is checked.
       if self.include_empty
-        clause += " OR (#{table_name}.id NOT IN (select custom_values.customizable_id from custom_values where custom_values.custom_definition_id = #{c_def_id}))"
+        clause += " OR (#{table_name}.id NOT IN (#{base_select}))"
       end
 
       clause
