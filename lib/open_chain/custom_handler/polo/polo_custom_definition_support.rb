@@ -73,7 +73,25 @@ module OpenChain
           :msl_item_desc => {label: "MSL+ Item Description", data_type: :string, module_type: "Product"},
           :msl_us_season => {label: "MSL+ US Season", data_type: :string, module_type: "Product"},
           :msl_gcc_desc => {label: "GCC Description", data_type: :string, module_type: "Product"},
-          :msl_board_number => {label: "Board Number", data_type: :string, module_type: "Product"}
+          :msl_board_number => {label: "Board Number", data_type: :string, module_type: "Product"},
+          :knit_woven => {label: "Knit / Woven?", data_type: :string, module_type: "Product"},
+          :common_name_1 => {label: "Common Name 1", data_type: :string, module_type: "Product"},
+          :common_name_2 => {label: "Common Name 2", data_type: :string, module_type: "Product"},
+          :common_name_3 => {label: "Common Name 3", data_type: :string, module_type: "Product"},
+          :scientific_name_1 => {label: "Scientific Name 1", data_type: :string, module_type: "Product"},
+          :scientific_name_2 => {label: "Scientific Name 2", data_type: :string, module_type: "Product"},
+          :scientific_name_3 => {label: "Scientific Name 3", data_type: :string, module_type: "Product"},
+          :fish_wildlife_origin_1 => {label: "F&W Origin 1", data_type: :string, module_type: "Product"},
+          :fish_wildlife_origin_2 => {label: "F&W Origin 2", data_type: :string, module_type: "Product"},
+          :fish_wildlife_origin_3 => {label: "F&W Origin 3", data_type: :string, module_type: "Product"},
+          :fish_wildlife_source_1 => {label: "F&W Source 1", data_type: :string, module_type: "Product"},
+          :fish_wildlife_source_2 => {label: "F&W Source 2", data_type: :string, module_type: "Product"},
+          :fish_wildlife_source_3 => {label: "F&W Source 3", data_type: :string, module_type: "Product"},
+          :origin_wildlife => {label: "Origin of Wildlife", data_type: :string, module_type: "Product"},
+          :semi_precious => {label: "Semi-Precious", data_type: :boolean, module_type: "Product"},
+          :semi_precious_type => {label: "Type of Semi-Precious", data_type: :string, module_type: "Product"},
+          :cites => {label: "CITES", data_type: :string, module_type: "Product"},
+          :fish_wildlife => {label: "Fish & Wildlife", data_type: :boolean, module_type: "Product"}
         }
 
         included do |base|
