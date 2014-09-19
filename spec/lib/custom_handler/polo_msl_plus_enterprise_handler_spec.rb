@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::PoloMslPlusEnterpriseHandler do
       end
       expect(row[54..row.length-1]).to eq ["Knit / Woven?", "Fiber Content %s", "Common Name 1", "Common Name 2", "Common Name 3", 
           "Scientific Name 1", "Scientific Name 2", "Scientific Name 3", "F&W Origin 1", "F&W Origin 2", "F&W Origin 3",
-          "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
+          "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Semi-Precious", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
 
       row = r[1]
       row[0].should == @p.unique_identifier

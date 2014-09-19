@@ -43,13 +43,13 @@ module OpenChain
         end
         headers.push *["Knit / Woven?", "Fiber Content %s", "Common Name 1", "Common Name 2", "Common Name 3", 
           "Scientific Name 1", "Scientific Name 2", "Scientific Name 3", "F&W Origin 1", "F&W Origin 2", "F&W Origin 3",
-          "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
+          "F&W Source 1", "F&W Source 2", "F&W Source 3", "Origin of Wildlife", "Semi-Precious", "Type of Semi-Precious", "CITES", "Fish & Wildlife"]
 
         file << headers.to_csv
         dont_send_countries = Country.where("iso_code IN (?)",['US','CA']).collect{|c| c.id}
         init_outbound_custom_definitions
         products.each do |p|
-          classifications = p.classifications.includes(:country).where("not classifications.country_id IN (?)",dont_send_countries)
+          classifications = p.classifications.includes(:country, :tariff_records).where("not classifications.country_id IN (?)",dont_send_countries)
           classifications.each do |cl|
             iso = cl.country.iso_code
             cl.tariff_records.each do |tr|
