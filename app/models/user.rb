@@ -25,7 +25,7 @@ class User < ActiveRecord::Base
     :password_reset,
     :simple_entry_mode,
     :tariff_subscribed, :homepage,
-    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at
+    :provider, :uid, :google_name, :oauth_token, :oauth_expires_at, :disallow_password
   
   belongs_to :company
   belongs_to :run_as, :class_name => "User"
@@ -74,15 +74,16 @@ class User < ActiveRecord::Base
 
   # This is overriding the standard clearance email find and replacing with a lookup by username instead
   def self.authenticate username, password
+    r = nil
     user = User.where(username: username).first
 
     if user
       # Authenticated? is the clearance method for validating the user's supplied password matches
       # the stored password hash.
-      user = user.authenticated?(password) ? user : nil
+      r = !user.disallow_password? && user.authenticated?(password) ? user : nil
     end
 
-    user
+    r
   end
 
   def self.from_omniauth(omniauth_provider, auth_info)

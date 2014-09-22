@@ -403,6 +403,11 @@ describe User do
     it "returns nil if user password is incorrect" do
       expect(User.authenticate @user.username, "notmypassword").to be_nil
     end
+
+    it "returns nil if user can't use password login" do
+      @user.update_attributes(disallow_password:true)
+      expect(User.authenticate @user.username, "abc").to be_nil
+    end
   end
 
   describe "access_allowed?" do

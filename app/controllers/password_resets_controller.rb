@@ -6,8 +6,12 @@ class PasswordResetsController < ApplicationController
   def create
     @user = User.find_by_email(params[:email])
     if @user
-      @user.delay.deliver_password_reset_instructions!
-      add_flash :notices, "Instructions for resetting your password have been emailed to you."
+      if @user.disallow_password?
+        add_flash :errors, "You do not have a password enabled login"
+      else
+        @user.delay.deliver_password_reset_instructions!
+        add_flash :notices, "Instructions for resetting your password have been emailed to you."
+      end
     else
       add_flash :errors, "No user was found with email \"#{params[:email]}\"."
     end
