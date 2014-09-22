@@ -7,12 +7,9 @@ describe Comment do
       u = Factory(:user)
       t = Time.now
       Time.stub(:now).and_return t
-      OpenChain::EventPublisher.should_receive(:publish) {|type,hash|
-        expect(type).to eq 'ORDER_COMMENT_CREATE'
-        expect(hash[:comment_id]).to be_a Numeric
-        hash.delete :comment_id
-        expected_hash = {commentable_type:'Order',commentable_id:o.id,user_id:u.id,created_at:t,body:'abc',subject:'def'}
-        expect(hash).to eq expected_hash
+      OpenChain::EventPublisher.should_receive(:publish).with {|type,obj|
+        expect(type).to eq :comment_create
+        expect(obj).to be_instance_of Comment
       }
       o.comments.create!(user_id:u.id,body:'abc',subject:'def')
     end

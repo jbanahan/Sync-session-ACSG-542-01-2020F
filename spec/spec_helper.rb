@@ -19,7 +19,8 @@ Spork.prefork do
   RSpec.configure do |config|
     #allows us to create anonymous controllers in tests for other base controller classes
     config.infer_base_class_for_anonymous_controllers = true
-
+    
+    config.fixture_path = "#{::Rails.root}/spec/fixtures"
     config.mock_with :rspec
 
     # If you're not using ActiveRecord, or you'd prefer not to run each of your

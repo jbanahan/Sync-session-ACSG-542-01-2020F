@@ -53,6 +53,25 @@ class User < ActiveRecord::Base
   before_save :should_update_timestaps?
   after_save :reset_timestamp_flag
 
+  # find or create the ApiAdmin user
+  def self.api_admin
+    u = User.find_by_username('ApiAdmin')
+    if !u
+      u = Company.find_master.users.build(
+        username:'ApiAdmin',
+        first_name:'API',
+        last_name:'Admin',
+        email:'bug+api_admin@vandegriftinc.com'
+        )
+      u.admin = true
+      pwd = generate_authtoken(u)
+      u.password = pwd
+      u.api_auth_token =  generate_authtoken(u)
+      u.save!
+    end
+    u
+  end
+
   # This is overriding the standard clearance email find and replacing with a lookup by username instead
   def self.authenticate username, password
     user = User.where(username: username).first
@@ -87,8 +106,52 @@ class User < ActiveRecord::Base
     return {user: user, errors: errors}
   end
 
+  def self.generate_authtoken user
+    # Removing the Base64 padding (ie. equals) from digest due to rails 3 authorization header token parsing bug
+    Digest::SHA1.base64digest("#{Time.zone.now}#{MasterSetup.get.uuid}#{user.username}").gsub("=", "")
+  end
+
   def self.access_allowed? user
     !(user.nil? || user.disabled? || user.company.locked)
+  end
+
+  # Runs the passed in block of code using any global
+  # user settings that can be extracted from the passed in user.
+  # In effect, it sets User.current and Time.zone for the given block of code
+  # and then unsets it after the block has been run.
+  # In general, this is only really useful in background jobs since these values
+  # are already set by the application controller in a web context.
+  def self.run_with_user_settings user
+    previous_user = User.current
+    previous_time_zone = Time.zone
+    begin
+      User.current = user
+      Time.zone = user.time_zone unless user.time_zone.blank?
+      yield
+    ensure
+      User.current = previous_user
+      Time.zone = previous_time_zone
+    end
+  end
+
+  # Sends each user id listed an email informing them of their account login / temporary password
+  def self.send_invite_emails ids
+    unless ids.respond_to? :each_entry
+      ids = [ids]
+    end
+
+    ids.each_entry do |id|
+      user = User.where(id: id).first
+      if user
+        # Because we only store hashed versions of passwords, if we're going to relay users their temporary 
+        # password in an email, the only way we can send them a cleartext password is if we generate and save one here.
+        cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
+        user.update_user_password cleartext, cleartext
+        user.update_column :password_reset, true
+        OpenMailer.send_invite(user, cleartext).deliver
+      end
+    end
+    nil
   end
 
   def update_user_password password, password_confirmation
@@ -128,26 +191,6 @@ class User < ActiveRecord::Base
   def deliver_password_reset_instructions!
     forgot_password!
     OpenMailer.send_password_reset(self).deliver
-  end
-
-  # Sends each user id listed an email informing them of their account login / temporary password
-  def self.send_invite_emails ids
-    unless ids.respond_to? :each_entry
-      ids = [ids]
-    end
-
-    ids.each_entry do |id|
-      user = User.where(id: id).first
-      if user
-        # Because we only store hashed versions of passwords, if we're going to relay users their temporary 
-        # password in an email, the only way we can send them a cleartext password is if we generate and save one here.
-        cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
-        user.update_user_password cleartext, cleartext
-        user.update_column :password_reset, true
-        OpenMailer.send_invite(user, cleartext).deliver
-      end
-    end
-    nil
   end
   
   # is an administrator within the application (as opposed to a sys_admin who is an Aspect 9 employee with master control)
@@ -203,10 +246,6 @@ class User < ActiveRecord::Base
     return user.admin? || self==user
   end
 
-  def self.generate_authtoken user
-    # Removing the Base64 padding (ie. equals) from digest due to rails 3 authorization header token parsing bug
-    Digest::SHA1.base64digest("#{Time.zone.now}#{MasterSetup.get.uuid}#{user.username}").gsub("=", "")
-  end
 
   # Can the given user view items for the given module
   def view_module? core_module
@@ -448,25 +487,6 @@ class User < ActiveRecord::Base
   def master_company?
     @mc ||= self.company.master?
     @mc
-  end
-
-  # Runs the passed in block of code using any global
-  # user settings that can be extracted from the passed in user.
-  # In effect, it sets User.current and Time.zone for the given block of code
-  # and then unsets it after the block has been run.
-  # In general, this is only really useful in background jobs since these values
-  # are already set by the application controller in a web context.
-  def self.run_with_user_settings user
-    previous_user = User.current
-    previous_time_zone = Time.zone
-    begin
-      User.current = user
-      Time.zone = user.time_zone unless user.time_zone.blank?
-      yield
-    ensure
-      User.current = previous_user
-      Time.zone = previous_time_zone
-    end
   end
 
   private

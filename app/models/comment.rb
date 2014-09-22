@@ -15,7 +15,7 @@ class Comment < ActiveRecord::Base
   end
 
   def publish_comment_create
-    OpenChain::EventPublisher.publish "#{self.commentable_type.upcase}_COMMENT_CREATE", {comment_id:self.id,commentable_type:self.commentable_type,commentable_id:self.commentable_id,user_id:self.user_id,created_at:self.created_at,body:self.body,subject:self.subject}
+    OpenChain::EventPublisher.publish :comment_create, self
   end
   private :publish_comment_create
 end

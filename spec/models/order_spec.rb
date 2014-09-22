@@ -8,7 +8,7 @@ describe Order do
       @u = Factory(:user)
       @t = Time.now
       Time.stub(:now).and_return @t
-      OpenChain::EventPublisher.should_receive(:publish).with('ORDER_CLOSE',{order_id:@o.id,closed_by_id:@u.id,closed_at:@t})
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_close,@o)
     end
     it 'should close' do
       @o.close! @u
@@ -30,7 +30,7 @@ describe Order do
       @o = Factory(:order,closed_at:Time.now,closed_by:@u)
       @t = Time.now
       Time.stub(:now).and_return @t
-      OpenChain::EventPublisher.should_receive(:publish).with('ORDER_REOPEN',{order_id:@o.id,reopened_at:@t,reopened_by_id:@u.id})
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_reopen,@o)
     end
     it 'should reopen' do
       @o.reopen! @u

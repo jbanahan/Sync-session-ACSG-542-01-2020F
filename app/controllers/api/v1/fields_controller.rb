@@ -1,7 +1,7 @@
 module Api; module V1; class FieldsController < Api::V1::ApiController
   def index
     mt = params[:module_types]
-    raise StatusableError("You must specify module_types.",400) if mt.blank?
+    raise StatusableError.new("You must specify module_types.",400) if mt.blank?
     r = {}
     mt.split(',').each do |m|
       cm = CoreModule.find_by_class_name m.camelize
