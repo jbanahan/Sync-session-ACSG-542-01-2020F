@@ -21,6 +21,7 @@ Spork.prefork do
     config.infer_base_class_for_anonymous_controllers = true
     
     config.fixture_path = "#{::Rails.root}/spec/fixtures"
+
     config.mock_with :rspec
 
     # If you're not using ActiveRecord, or you'd prefer not to run each of your
