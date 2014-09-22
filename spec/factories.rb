@@ -339,3 +339,7 @@ Factory.define :container do |f|
   f.sequence :container_number
   f.association :entry
 end
+Factory.define :event_subscription do |f|
+  f.association :user
+  f.event_type 'ORDER_COMMENT_CREATE'
+end

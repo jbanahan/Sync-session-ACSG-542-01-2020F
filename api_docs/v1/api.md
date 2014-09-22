@@ -511,3 +511,41 @@ _Response_
   ord_ven_name: 'My Vendor LLC' #vendor name
 }]}
 ```
+
+## User - Event Subscriptions
+
+Represents a user's notification subscriptions for certain system generated events.
+
+The following event types are available:
+
+* ORDER_COMMENT_CREATE - When a comment is added to an order by someone other than the user in question
+
+### Data Object
+{event_subscription:{
+  event_type:'ORDER_COMMENT_CREATE'
+  email:true #the user has elected to receive email when this event happens
+  user_id: 7 #user's unique id
+  }
+}
+
+### Methods
+
+#### Index
+
+List all subscriptions for the given user
+
+`GET - /users/7/event_subscriptions.json`
+
+_Response_
+
+{event_subscriptions:[{event_type:'ORDER_COMMENT_CREATE',email:true,user_id:7},
+{event_type:'SHIPMENT_COMMENT_CREATE',email:true,user_id:7}]}
+
+#### Replace
+
+Replace user's subscriptions with the given array
+
+`POST - /users/7/event_subscriptions` with a JSON payload of an event_subscriptions object with array of event subscriptions (just like `index`).  The `user_id` attribute in the subscription objects will be ignored in favor of the `user_id` in the URL.
+
+
+

@@ -6,17 +6,20 @@ describe Order do
     before :each do
       @o = Factory(:order)
       @u = Factory(:user)
+      @t = Time.now
+      Time.stub(:now).and_return @t
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_close,@o)
     end
     it 'should close' do
       @o.close! @u
       @o = Order.find @o.id
-      expect(@o.closed_at).to be > 1.minute.ago
+      expect(@o.closed_at.to_i).to eq @t.to_i
       expect(@o.closed_by).to eq @u
       expect(@o.entity_snapshots.count).to eq 1
     end
     it 'should close async' do
       @o.async_close! @u
-      expect(@o.closed_at).to be > 1.minute.ago
+      expect(@o.closed_at).to eq @t
       expect(@o.closed_by).to eq @u      
       expect(@o.entity_snapshots.count).to eq 1
     end
@@ -25,6 +28,9 @@ describe Order do
     before :each do
       @u = Factory(:user)
       @o = Factory(:order,closed_at:Time.now,closed_by:@u)
+      @t = Time.now
+      Time.stub(:now).and_return @t
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_reopen,@o)
     end
     it 'should reopen' do
       @o.reopen! @u

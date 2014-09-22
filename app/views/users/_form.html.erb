@@ -39,7 +39,9 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
   <% end %>
   <% if @user.id -%>
     <button id="btn_reports">Reports</button>
+    <button class="btn_link btn btn-default" link_to="<%=event_subscriptions_company_user_path(@user.company,@user)%>">Subscriptions</button>
   <% end -%>
+  
 <%end%>
 
 <div class="container">

@@ -1,6 +1,22 @@
 require 'spec_helper'
 
 describe User do
+  describe :api_admin do
+    it "should create api_admin if it doesn't exist" do
+      u = User.api_admin
+      expect(u.username).to eq 'ApiAdmin'
+      expect(u.first_name).to eq 'API'
+      expect(u.last_name).to eq 'Admin'
+      expect(u.email).to eq 'bug+api_admin@vandegriftinc.com'
+      expect(u.company).to be_master
+      expect(u).to be_admin
+      expect(u.api_auth_token).to_not be_blank
+    end
+    it "should return api_admin if it exits" do
+      u = Factory(:master_user,username:'ApiAdmin')
+      expect(User.api_admin).to eq u
+    end
+  end
   describe :magic_columns do
     before :each do
       @updated_at = 1.year.ago

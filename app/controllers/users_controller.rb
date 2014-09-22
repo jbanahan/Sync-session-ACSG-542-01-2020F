@@ -250,6 +250,11 @@ class UsersController < ApplicationController
     end
   end
 
+  def event_subscriptions
+    @user = User.find params[:id]
+    error_redirect "You do not have permission to view this page." unless @user.can_edit?(current_user)
+  end
+
   private
   def parse_bulk_csv data
     rval = []
