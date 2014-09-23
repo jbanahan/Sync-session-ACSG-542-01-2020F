@@ -662,7 +662,7 @@ class ModelField
   def self.create_and_insert_custom_field  custom_definition, core_module, index, model_hash
     fld = custom_definition.model_field_uid.to_sym
     mf = ModelField.new(index,fld,core_module,fld,{:custom_id=>custom_definition.id,:label_override=>"#{custom_definition.label}",
-      :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id})",
+      :qualified_field_name=>"(SELECT IFNULL(#{custom_definition.data_column},\"\") FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{custom_definition.id} AND customizable_type = '#{custom_definition.module_type}')",
       :definition => custom_definition.definition
     })
     model_hash[mf.uid.to_sym] = mf
