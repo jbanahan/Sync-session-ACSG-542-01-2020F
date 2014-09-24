@@ -1,0 +1,17 @@
+TRANSPORT INFORMATION FROM PAAL/DAKA             ***      AIR FREIGHT DETAIL      ***               22-SEP-2014 19:16    Page:  1   
+Filename: DAPAAL20140923010828556U2577613690.US            Import:  38311                                                           
+*----------------------------------------------------------------------------------------------------------------------------------*
+|Client:    Carrier:    ActRcv:   Vessel:             Voyage:     Place of Receipt: Port of Discharge: Place of Delivery: ETD:     |
+|                       US0004    QR635                           Dhaka             chicago            chicago            140923   |
+*----------------------------------------------------------------------------------------------------------------------------------*
+|Container No:    Size: Type: Seal Numbers:   Total Kgs:   Total Cbm:      Service:   B/L No:            Ocean Freight:   ETA:     |
+|U2577613690                                        651         3.36                  975903                     0.000    140926   |
+*----------------------------------------------------------------------------------------------------------------------------------*
+ FCR/HBL:        FinRcv: Epack:  Order:  Dep:  Cntry:   Quant:   Ctn:      Kgs:       Cbm:   Shipper:               Description:    
+ 975903                          142512  1676   OU        2631     34       368       2.12   FAKIR KNITWEARS LTD.   LADIES KNITTED  
+ 975939                          142547  1676   OU         658     10       158       0.67   SAIHAM KNIT COMPOSIT   PENCIL SKIRT KN 
+ 975941                          142549  1676   OU         526      9       125       0.57   SAIHAM KNIT COMPOSIT   PENCIL SKIRT KN 
+*----------------------------------------------------------------------------------------------------------------------------------*
+                                                          3815     53       651       3.36                                          
+Number of orders read:              3                                                                                               
+Number of orders stored:            3                                                                                               

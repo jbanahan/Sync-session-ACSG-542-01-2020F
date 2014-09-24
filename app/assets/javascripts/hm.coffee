@@ -89,12 +89,14 @@ app.factory 'hmService', ['$http',($http) ->
       sid1:'ci_imp_syscode'
       sop1:'eq'
       sv1:'HENNE'
+      oid1:'ci_updated_at'
+      oo1:'D'
     }
     sCounter = 2
     if searchOpts
       if searchOpts.poNumber
         req['sid'+sCounter] = 'ci_invoice_number'
-        req['sop'+sCounter] = 'co'
+        req['sop'+sCounter] = 'eq'
         req['sv'+sCounter] = searchOpts.poNumber
         sCounter++
 
@@ -120,9 +122,9 @@ app.factory 'hmService', ['$http',($http) ->
 
 app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$interval,hmService) ->
   $scope.svc = hmService
-  $scope.poLine = {}
+  $scope.poLine = null
   $scope.recentLines = []
-  $scope.searchField = undefined
+  $scope.searchField = 'poNumber'
   $scope.searchValue = undefined
   $scope.page = 1
   $scope.selectLine = (line) ->
@@ -137,7 +139,7 @@ app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$
         foundPosition = i if  ln.id == r.id
       $scope.recentLines.splice(foundPosition,1)
       $scope.recentLines.unshift r
-      $scope.poLine = {} #reset PO Line
+      $scope.poLine = null #reset PO Line
       $scope.errorMessage = ""
       $scope.actionResponse = "Saved!"
       $interval(
@@ -149,6 +151,20 @@ app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$
       $scope.errorMessage = d.errors[0]
     )
 
+  $scope.getLineByPO = () ->
+    if $scope.searchPO && $scope.searchPO.length > 0
+      searchOpts = {poNumber:$scope.searchPO}
+      $scope.missingPO = null
+      $scope.poLine = null
+      hmService.getLines(1,searchOpts).success((d,s,h,c) ->
+        lines = d.lines
+        if d.lines.length > 0
+          $scope.poLine = d.lines[0]
+        else
+          $scope.missingPO = searchOpts.poNumber
+      ).error((d,s,h,c) ->
+        $scope.errorMessage = d.errors[0]
+      )
   $scope.getLines = () ->
     $scope.loadingLines = true
     searchOpts = {}

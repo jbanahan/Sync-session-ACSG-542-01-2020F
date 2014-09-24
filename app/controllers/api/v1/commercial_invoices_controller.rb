@@ -35,7 +35,8 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiControll
       :ci_docs_ok_date,
       :ci_issue_codes,
       :ci_rater_comments,
-      :ci_destination_code
+      :ci_destination_code,
+      :ci_updated_at
     ])
     line_fields_to_render = limit_fields([:cil_line_number,:cil_po_number,:cil_part_number,
       :cil_units,:cil_value,:ent_unit_price,:cil_uom,

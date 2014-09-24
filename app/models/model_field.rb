@@ -1185,7 +1185,8 @@ and classifications.product_id = products.id
         [15,:ci_docs_ok_date,:docs_ok_date,'Docs OK Date',{data_type: :date}],
         [16,:ci_issue_codes,:issue_codes,'Issue Tracking Codes',{data_type: :string}],
         [17,:ci_rater_comments,:rater_comments,'Rater Comments',{data_type: :text}],
-        [18,:ci_destination_code,:destination_code,'Destination Code',{data_type: :string}]
+        [18,:ci_destination_code,:destination_code,'Destination Code',{data_type: :string}],
+        [19,:ci_updated_at,:updated_at,"Last Updated",{data_type: :datetime,read_only: true}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100,'ci','commercial_invoices')
       add_fields CoreModule::COMMERCIAL_INVOICE_LINE, [
@@ -1583,7 +1584,8 @@ and classifications.product_id = products.id
         [28,:shp_est_arrival_port_date,:est_arrival_port_date,"Est Arrival Date",{:data_type=>:date}],
         [29,:shp_arrival_port_date,:arrival_port_date,"Arrival Date",{:data_type=>:date}],
         [30,:shp_est_delivery_date,:est_delivery_date,"Est Delivery Date",{:data_type=>:date}],
-        [31,:shp_delivered_date,:delivered_date,"Delivered Date",{:data_type=>:date}]
+        [31,:shp_delivered_date,:delivered_date,"Delivered Date",{:data_type=>:date}],
+        [32,:shp_importer_reference,:importer_reference,"Importer Reference",{data_type: :string}]
       ]
       add_fields CoreModule::SHIPMENT, make_vendor_arrays(100,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_ship_to_arrays(200,"shp","shipments")

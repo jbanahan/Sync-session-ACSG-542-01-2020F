@@ -22,7 +22,7 @@ describe 'HMApp', () ->
     describe 'getLines', ->
       expected_url = response_obj = null
       beforeEach ->
-        expected_url = '/api/v1/commercial_invoices.json?page=99&per_page=20&sid1=ci_imp_syscode&sop1=eq&sv1=HENNE'
+        expected_url = '/api/v1/commercial_invoices.json?oid1=ci_updated_at&oo1=D&page=99&per_page=20&sid1=ci_imp_syscode&sop1=eq&sv1=HENNE'
         response_obj = {page:99,per_page:20,results:[
           {ci_invoice_number:'123',ci_imp_syscode:'HENNE',lines:[{cil_line_number:1,cil_units:230,cil_value:420.90,ent_unit_price:1.83}]},
           {ci_invoice_number:'124',ci_imp_syscode:'HENNE',lines:[{cil_line_number:1,cil_units:230,cil_value:420.90,ent_unit_price:1.83}]}
@@ -44,7 +44,7 @@ describe 'HMApp', () ->
         expect(lines[1].po_number).toEqual '124'
 
       it 'should search by PO number', () ->
-        expected_url = '/api/v1/commercial_invoices.json?page=99&per_page=20&sid1=ci_imp_syscode&sid2=ci_invoice_number&sop1=eq&sop2=co&sv1=HENNE&sv2=123'
+        expected_url = '/api/v1/commercial_invoices.json?oid1=ci_updated_at&oo1=D&page=99&per_page=20&sid1=ci_imp_syscode&sid2=ci_invoice_number&sop1=eq&sop2=eq&sv1=HENNE&sv2=123'
         http.expectGET(expected_url).respond(response_obj)
         svc.getLines 99, {poNumber:'123'}
         http.flush()
@@ -160,9 +160,6 @@ describe 'HMApp', () ->
       svc = hmService
       ctrl = $controller('HMPOLineController',{$scope:$scope,hmService:svc})
     )
-
-    it "should initialize with empty PO Line", () ->
-      expect($scope.poLine).toEqual({})
 
     describe 'saveLine', ->
       promise = data = null

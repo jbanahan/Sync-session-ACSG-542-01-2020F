@@ -134,6 +134,7 @@ Values should be converted to the currency of the country where the customs entr
     ci_docs_ok_date: '2014-01-02' #date documents validated as acceptable by rater
     ci_issue_codes:'X ZA' #mutually defined issue codes
     ci_rater_comments:'Illegible documents' #comments from rater
+    ci_updated_at: '2013-12-24T17:04:53Z'
     lines: [{
       id:2 #include for update, otherwise will add
       cil_line_number:1 #required
@@ -367,6 +368,7 @@ order_id: 77 #db id of order
 {shipment:
   #HEADER INFO
   shp_ref: 'MYSHIPREF'
+  shp_importer_reference: 'IMPREF'
   shp_mode: 'Air'
   shp_ven_name: 'Vendor Name'
   shp_ven_syscode: 'VENSYSCODE' #unique system code for vender

@@ -69,6 +69,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiController
   def obj_to_json_hash s
     headers_to_render = limit_fields([
       :shp_ref,
+      :shp_importer_reference,
       :shp_mode,
       :shp_ven_name,
       :shp_ven_syscode,

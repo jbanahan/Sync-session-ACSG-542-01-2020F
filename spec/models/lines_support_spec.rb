@@ -1,6 +1,17 @@
 require 'spec_helper'
 
 describe LinesSupport do
+  describe :default_line_number do
+    it "should create line numbers for in memory lines" do
+      p = Factory(:product)
+      s = Shipment.new(reference:'abc')
+      sl1 = s.shipment_lines.build(quantity:1,product_id:p.id)
+      sl2 = s.shipment_lines.build(quantity:2,product_id:p.id)
+      s.save!
+      s.reload
+      expect(s.shipment_lines.collect {|sl| sl.line_number}).to eq [1,2]
+    end
+  end
   context 'piece sent linking' do
     it 'should link shipment to order' do
       s_line = Factory(:shipment_line)

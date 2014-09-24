@@ -1,0 +1,27 @@
+TRANSPORT INFORMATION FROM OOLO/MOLU             ***      SEA FREIGHT DETAIL      ***               23-SEP-2014 05:16    Page:  1   
+Filename: DAOOLO20140923110956296MOFU0736537.US            Import:  38317                                                           
+*----------------------------------------------------------------------------------------------------------------------------------*
+|Client:    Carrier:    ActRcv:   Vessel:             Voyage:     Place of Receipt: Port of Discharge: Place of Delivery: ETD:     |
+|                       US0004    HANOVER EXPRESS     051E        Shanghai          Vancouver          chicago            140921   |
+*----------------------------------------------------------------------------------------------------------------------------------*
+|Container No:    Size: Type: Seal Numbers:   Total Kgs:   Total Cbm:      Service:   B/L No:            Ocean Freight:   ETA:     |
+|MOFU0736537       40   STD   BA40376              6521        50.36       CFS/CY     190738100                  0.000    141005   |
+*----------------------------------------------------------------------------------------------------------------------------------*
+ FCR/HBL:        FinRcv: Epack:  Order:  Dep:  Cntry:   Quant:   Ctn:      Kgs:       Cbm:   Shipper:               Description:    
+ 190741600       US0004  77939   100309  6561   OU         234     10        42       0.64   FLY EARTH CO.,LTD.     FANCY REEZE     
+ 
+TRANSPORT INFORMATION FROM OOLO/MOLU             ***      SEA FREIGHT DETAIL      ***               23-SEP-2014 05:16    Page:  2   
+Filename: DAOOLO20140923110956296MOFU0736537.US            Import:  38317                                                           
+*----------------------------------------------------------------------------------------------------------------------------------*
+|Client:    Carrier:    ActRcv:   Vessel:             Voyage:     Place of Receipt: Port of Discharge: Place of Delivery: ETD:     |
+|                       US0004    HANOVER EXPRESS     051E        Shanghai          Vancouver          chicago            140921   |
+*----------------------------------------------------------------------------------------------------------------------------------*
+|Container No:    Size: Type: Seal Numbers:   Total Kgs:   Total Cbm:      Service:   B/L No:            Ocean Freight:   ETA:     |
+|MOFU0736537       40   STD   BA40376              6521        50.36       CFS/CY     190738100                  0.000    141005   |
+*----------------------------------------------------------------------------------------------------------------------------------*
+ FCR/HBL:        FinRcv: Epack:  Order:  Dep:  Cntry:   Quant:   Ctn:      Kgs:       Cbm:   Shipper:               Description:    
+ 189056400       US0004  33562   132648  1717   OU         256      5        86       0.36   HEMPEL CHINA LIMITED   TROUSER LADIES  
+ ----------------------------------------------------------------------------------------------------------------------------------*
+                                                         20664    639      6521      50.34                                          
+Number of orders read:              2                                                                                               
+Number of orders stored:            2                                                                                               

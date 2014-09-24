@@ -31,12 +31,37 @@
     <div class="row">
       <chain-panel panel-title='Errors' panel-message="errorMessage" panel-type='panel-danger' />
     </div>
-    <form name='form' novalidate>
-      <div class="row">
-        <div class='col-md-12'>
-          <h1>H&amp;M PO Lines</h1>
+    <div class="row">
+      <div class='col-md-12'>
+        <h1>H&amp;M PO Lines</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <form class="form-inline">
+          <input type='text' ng-model='searchPO' class='form-control' placeholder='PO number to edit'>
+          <button ng-click='getLineByPO()' class='btn btn-primary' ng-disabled='searchPO.length!=6'>Load PO</button>
+          <span class='text-warning' ng-show='searchPO && searchPO.length!=6'>PO Number must be 6 digits</span>
+        </form>
+        <hr />
+      </div>
+    </div>
+    <div class="row" ng-hide='poLine || !missingPO'>
+      <div class="col-md-12">
+        <div class="panel panel-warning">
+            <div class="panel-heading">
+              <h3 class="panel-title">Order Not Found</h3>
+            </div>
+            <div class="panel-body">
+              Order {{missingPO}} was not found.  Would you like to create it?
+            </div>
+            <div class='panel-footer'>
+              <button ng-click='poLine={po_number:missingPO}' class='btn btn-warning'>Create</button>
+            </div>
         </div>
       </div>
+    </div>
+    <form name='form' novalidate ng-show='poLine'>
       <div class="row">
         <div class="col-md-12">
           <div class='form-group' ng-class="{'has-error':form.po_number.$invalid}">
@@ -157,9 +182,6 @@
     <div class="row">
       <div class="col-md-12">
         <form class="form-inline">
-          <select ng-model='searchField' class='form-control'>
-            <option value='poNumber'>PO</option>
-          </select>
           <input ng-model='searchValue'  class='form-control'/>
           <button ng-click='getLines()' class='btn btn-default'>Search</button>
         </form>

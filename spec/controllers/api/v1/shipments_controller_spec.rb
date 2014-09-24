@@ -28,13 +28,14 @@ describe Api::V1::ShipmentsController do
 
   describe "show" do
     it "should render shipment" do
-      s = Factory(:shipment,reference:'123',mode:'Air')
+      s = Factory(:shipment,reference:'123',mode:'Air',importer_reference:'DEF')
       get :show, id: s.id
       expect(response).to be_success
       j = JSON.parse response.body
       sj = j['shipment']
       expect(sj['shp_ref']).to eq '123'
       expect(sj['shp_mode']).to eq 'Air'
+      expect(sj['shp_importer_reference']).to eq 'DEF'
     end
     it "should render permissions" do
       Shipment.any_instance.stub(:can_edit?).and_return false
@@ -343,7 +344,6 @@ describe Api::V1::ShipmentsController do
       expect(response.status).to eq 400
       expect(Container.find_by_id(con.id)).to_not be_nil
     end
-    it "should error if locked line is update"
   end
   describe "available_orders" do
     it "should return all orders available from shipment.available_orders" do
