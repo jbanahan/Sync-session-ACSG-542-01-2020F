@@ -580,6 +580,9 @@ OpenChain::Application.routes.draw do
     get 'show' => "data_cross_references#edit"
   end
 
+  #Griddler inbound email processing
+  mount_griddler
+
   #Jasmine test runner
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 

@@ -43,6 +43,10 @@ gem 'sucker_punch', '~> 1.0'
 #faster asset:precompile
 gem 'turbo-sprockets-rails3', '~> 0.3'
 
+#inbound email processing
+gem 'griddler', '~> 1.0'
+gem 'griddler-postmark', '~> 1.0'
+
 # Standard ruby logger uses mutexes for writing / rotation which we don't need and
 # causes issues since Ruby 2.0 doesn't allow mutexes in signal traps - delayed_job specifically
 # needs this.

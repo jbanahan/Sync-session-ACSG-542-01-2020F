@@ -343,3 +343,11 @@ Factory.define :event_subscription do |f|
   f.association :user
   f.event_type 'ORDER_COMMENT_CREATE'
 end
+Factory.define :email, class: OpenStruct do |f|
+  # Assumes Griddler.configure.to is :hash (default)
+  f.to [{ full: 'to_user@email.com', email: 'to_user@email.com', token: 'to_user', host: 'email.com', name: nil }]
+  f.from 'user@email.com'
+  f.subject 'email subject'
+  f.body 'Hello!'
+  f.attachments {[]}
+end

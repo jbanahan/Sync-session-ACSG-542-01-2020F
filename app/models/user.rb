@@ -18,7 +18,7 @@ class User < ActiveRecord::Base
     :survey_view, :survey_edit,
     :project_view, :project_edit,
     :broker_invoice_view, :broker_invoice_edit,
-    :classification_view, :classification_edit,
+    :classification_edit,
     :commercial_invoice_view, :commercial_invoice_edit,
     :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
     :support_agent,
@@ -66,10 +66,49 @@ class User < ActiveRecord::Base
       u.admin = true
       pwd = generate_authtoken(u)
       u.password = pwd
+      u.disallow_password = true
       u.api_auth_token =  generate_authtoken(u)
       u.save!
     end
     u
+  end
+
+  #find or create the integration user
+  def self.integration
+    u = User.find_by_username('integration')
+    if !u
+      h = {
+        username:'integration',
+        first_name:'Integration',
+        last_name:'User',
+        email:'bug+integration@vandegriftinc.com'
+      }
+      add_all_permissions_to_hash h
+      u = Company.find_master.users.build(h)
+      u.admin = true
+      pwd = generate_authtoken(u)
+      u.password = pwd
+      u.disallow_password = true
+      u.save!
+    end
+    u
+  end
+
+  def self.add_all_permissions_to_hash h
+    [:order_view, :order_edit, :order_delete, :order_attach, :order_comment,
+    :shipment_view, :shipment_edit, :shipment_delete, :shipment_attach, :shipment_comment,
+    :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_attach, :sales_order_comment,
+    :delivery_view, :delivery_edit, :delivery_delete, :delivery_attach, :delivery_comment,
+    :product_view, :product_edit, :product_delete, :product_attach, :product_comment,
+    :entry_view, :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
+    :survey_view, :survey_edit,
+    :project_view, :project_edit,
+    :broker_invoice_view, :broker_invoice_edit,
+    :classification_edit,
+    :commercial_invoice_view, :commercial_invoice_edit,
+    :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach].each do |p|
+      h[p] = true
+    end
   end
 
   # This is overriding the standard clearance email find and replacing with a lookup by username instead
