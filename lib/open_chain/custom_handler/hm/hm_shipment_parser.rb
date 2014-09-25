@@ -7,10 +7,10 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
       lines = data.lines
       mode, file_date = process_first_line lines[0]
       file_name, import_number = process_second_line lines[1]
-      vessel, voyage, etd, act_dest_code = process_fifth_line lines[4]
+      vessel, voyage, etd, act_dest_code, receipt_location = process_fifth_line lines[4]
       con_num, con_size, con_type, seal, eta = process_eighth_line lines[7]
       importer = find_importer
-      header_data = {mode:mode,import_number:import_number,file_date:file_date,vessel:vessel,voyage:voyage,etd:etd,con_num:con_num,con_size:con_size,con_type:con_type,seal:seal,eta:eta,importer:importer,act_dest_code:act_dest_code,user:user}
+      header_data = {mode:mode,import_number:import_number,file_date:file_date,vessel:vessel,voyage:voyage,etd:etd,con_num:con_num,con_size:con_size,con_type:con_type,seal:seal,eta:eta,importer:importer,act_dest_code:act_dest_code,user:user,receipt_location:receipt_location}
       shp = build_shipment header_data
       con = (header_data[:mode]=='Ocean' ? build_container(shp, header_data) : nil) 
       build_lines shp, con, lines, cdefs, header_data
@@ -28,7 +28,8 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
         reference:"HENNE-#{hd[:import_number]}-#{hd[:file_date]}",
         importer_reference:hd[:import_number],
         importer:hd[:importer],
-        voyage:hd[:voyage]
+        voyage:hd[:voyage],
+        receipt_location:hd[:receipt_location]
       )
     end
     s.vessel = hd[:vessel]
@@ -189,8 +190,9 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
     act_dest_code = line[24,10].strip
     vessel = line[34,20].strip
     voyage = line[54,12].strip
+    receipt_location = line[66,18].strip
     etd = parse_date(line[122,6])
-    [vessel,voyage,etd,act_dest_code]
+    [vessel,voyage,etd,act_dest_code,receipt_location]
   end
 
   # EIGTH LINE STUFF

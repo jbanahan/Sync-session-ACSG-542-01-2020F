@@ -53,6 +53,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         expect(s.est_departure_date).to eq Date.new(2014,9,21)
         expect(s.containers.size).to eq 1
         expect(s.mode).to eq 'Ocean'
+        expect(s.receipt_location).to eq 'Shanghai'
         con = s.containers.first
         expect(con.container_number).to eq 'MOFU0736537'
         expect(con.container_size).to eq '40STD'
