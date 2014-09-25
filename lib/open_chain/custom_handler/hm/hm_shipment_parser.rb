@@ -7,6 +7,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
       lines = data.lines
       mode, file_date = process_first_line lines[0]
       file_name, import_number = process_second_line lines[1]
+      return unless file_name.match /\.US$/ #only process US files
       vessel, voyage, etd, act_dest_code, receipt_location = process_fifth_line lines[4]
       con_num, con_size, con_type, seal, eta = process_eighth_line lines[7]
       importer = find_importer
@@ -92,9 +93,6 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
       cl = ci.commercial_invoice_lines.first
       cl = ci.commercial_invoice_lines.build if cl.nil?
     end
-    cl.quantity = sl.quantity
-    ci.total_quantity = ln[62,7]
-    ci.total_quantity_uom = 'CTNS'
     raise "You do not have permission to edit this commercial invoice." unless ci.can_edit?(hd[:user])
     ci.save!
     sl.linked_commercial_invoice_line_id = cl.id

@@ -14,6 +14,10 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
       [Order,Shipment,CommercialInvoice,Product].each {|k| k.any_instance.stub(:can_edit?).and_return true}
       [:edit_orders?,:edit_commercial_invoices?,:edit_shipments?,:edit_products?].each {|p| @u.stub(p).and_return true}
     end
+    it "should skip non US files" do
+      described_class.stub(:process_second_line).and_return ['ABC.MX','12345']
+      expect{described_class.parse(IO.read(@air_path),@u)}.to_not change(Shipment,:count)
+    end
     context :permission_issues do
       after :each do
         expect(Shipment.count).to eq 0
@@ -90,10 +94,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         #commercial invoice setup
         expect(sl.commercial_invoice_lines.count).to eq 1
         cil = sl.commercial_invoice_lines.first
-        expect(cil.quantity).to eq 234
         ci = cil.commercial_invoice
-        expect(ci.total_quantity).to eq 10
-        expect(ci.total_quantity_uom).to eq 'CTNS'
         expect(ci.invoice_number).to eq '100309'
         expect(ci.importer).to eq @hm
       end
@@ -134,9 +135,10 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         expect{described_class.parse(IO.read(@air_path),@u)}.to change(ShipmentLine,:count).from(0).to(3)
         expect{described_class.parse(IO.read(@air_path),@u)}.to_not change(ShipmentLine,:count)
       end
-      it "should create multiple order lines for the same order" do
+      it "should create multiple order lines linked to the same commercial invoice line for the same order" do
         expect{described_class.parse(IO.read(@air_path),@u)}.to change(Order,:count).from(0).to(2)
         expect(Order.last.order_lines.count).to eq 2
+        expect(CommercialInvoiceLine.count).to eq 2
       end
     end
     it "should attach file to shipment" do
