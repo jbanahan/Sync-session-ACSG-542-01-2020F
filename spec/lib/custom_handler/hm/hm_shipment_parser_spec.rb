@@ -81,6 +81,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         expect(ol.product).to eq p
         expect(ol.quantity).to eq 234
         expect(ol.get_custom_value(@cdefs[:ol_dest_code]).value).to eq 'US0004'
+        expect(ol.get_custom_value(@cdefs[:ol_dept_code]).value).to eq 'OU'
         o = ol.order
         expect(o.importer).to eq @hm
         expect(o.order_number).to eq 'HENNE-100309'
@@ -132,6 +133,10 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
       it "should not duplicate lines on an air shipment" do
         expect{described_class.parse(IO.read(@air_path),@u)}.to change(ShipmentLine,:count).from(0).to(3)
         expect{described_class.parse(IO.read(@air_path),@u)}.to_not change(ShipmentLine,:count)
+      end
+      it "should create multiple order lines for the same order" do
+        expect{described_class.parse(IO.read(@air_path),@u)}.to change(Order,:count).from(0).to(2)
+        expect(Order.last.order_lines.count).to eq 2
       end
     end
     it "should attach file to shipment" do

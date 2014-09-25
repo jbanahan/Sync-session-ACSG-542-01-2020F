@@ -5,7 +5,8 @@ module OpenChain; module CustomHandler; module Hm; module HmCustomDefinitionSupp
 
   CUSTOM_DEFINITION_INSTRUCTIONS = {
     prod_part_number: {label: 'Part Number', data_type: :string, module_type: 'Product'},
-    ol_dest_code:{label:'Destination Code',data_type: :string, module_type:'OrderLine'}
+    ol_dest_code:{label:'Destination Code',data_type: :string, module_type:'OrderLine'},
+    ol_dept_code:{label:'Department Code',data_type: :string, module_type:'OrderLine'}
   }
 
   included do |base|

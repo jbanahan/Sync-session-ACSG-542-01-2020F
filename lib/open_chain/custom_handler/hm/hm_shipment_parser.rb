@@ -57,7 +57,8 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
 
   def self.build_line shp, con, ln, cdefs, hd
     ord_num = ln[33,8].strip
-    sl = shp.shipment_lines.find {|my_line| ol = my_line.order_lines.first
+    sl = shp.shipment_lines.find {|my_line| 
+      ol = my_line.order_lines.first
       on = ol.order.customer_order_number if ol
       on == ord_num 
     }
@@ -102,10 +103,10 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
   def self.build_order_line sl, ln, ord_num, cdefs, hd
     ol = sl.order_lines.first
     if ol.nil?
-      o = Order.new(importer:sl.shipment.importer,
+      o = Order.where(importer_id:sl.shipment.importer.id,
         order_number:"HENNE-#{ord_num}",
         customer_order_number:ord_num
-      )
+      ).first_or_create!
       ol = o.order_lines.build(product:sl.product,quantity:sl.quantity)
       raise "You do not have permission to edit this order." unless o.can_edit?(hd[:user])
       o.save!
@@ -118,6 +119,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
     dest_code = ln[17,8].strip
     dest_code = hd[:act_dest_code] if dest_code.blank?
     ol.update_custom_value! cdefs[:ol_dest_code], dest_code
+    ol.update_custom_value! cdefs[:ol_dept_code], ln[47,9].strip
   end
 
   def self.find_importer
