@@ -9,11 +9,13 @@ module Api; module V1; class EventSubscriptionsController < Api::V1::ApiControll
     raise StatusableError.new("Permission denied.",401) unless u.can_edit?(current_user)
     User.transaction do
       u.event_subscriptions.destroy_all
-      params[:event_subscriptions].each do |es|
-        u.event_subscriptions.build(
-          event_type:es['event_type'],
-          email:es['email']
-          )
+      if params[:event_subscriptions]
+        params[:event_subscriptions].each do |es|
+          u.event_subscriptions.build(
+            event_type:es['event_type'],
+            email:es['email']
+            )
+        end
       end
       u.save!
     end

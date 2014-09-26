@@ -33,6 +33,11 @@ describe Api::V1::EventSubscriptionsController do
       @payload = [{'event_type'=>'CREATE_ORDER','user_id'=>99,'email'=>true},{'event_type'=>'CREATE_COMMENT','user_id'=>22,'email'=>false}]
 
     end
+    it "should handle create with no subscriptions" do
+      allow_api_access @u
+      post :create, user_id: @u.id
+      expect(response).to be_success
+    end
     it "should allow create if user can_edit? user" do
       allow_api_access @u
       post :create, user_id: @u.id, event_subscriptions: @payload
