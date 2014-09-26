@@ -186,6 +186,20 @@ class SearchSetup < ActiveRecord::Base
     return messages.size == start_messages_count
   end
 
+  def downloadable? messages = []
+    start_messages_count = messages.size
+
+    if search_criterions.length == 0
+      messages << "You must add at least one Parameter to your search setup before downloading a search."
+    end
+
+    return messages.size == start_messages_count
+  end
+
+  def max_results
+    25000
+  end
+
   private 
   def has_company(model_prefix,type_prefix)
     has_one_of ["#{model_prefix}_#{type_prefix}_name","#{model_prefix}_#{type_prefix}_id","#{model_prefix}_#{type_prefix}_syscode"]

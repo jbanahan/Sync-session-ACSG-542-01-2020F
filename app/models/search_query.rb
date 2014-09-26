@@ -66,7 +66,7 @@ class SearchQuery
   #get the row count for the query
   def count
     # Limit count to only including the core module keys will eliminate running any subselects in the select clauses
-    ActiveRecord::Base.connection.execute("#{to_sql(select_core_module_keys_only:true)} LIMIT 1000").count
+    ActiveRecord::Base.connection.execute("#{to_sql(select_core_module_keys_only:true, disable_pagination: true)} LIMIT 1000").count
   end
 
   #get the count of the total number of unique primary keys for the top level module 
@@ -86,6 +86,9 @@ class SearchQuery
   # use the 'select_core_module_keys_only' to create a query returning the parent and child core module keys, 
   # when utilized the parent core module key is ALWAYS returned in the first column
   def to_sql opts={}
+    # By default, only allow the maximum number of results the search setup affords
+    # This can be overridden by passing a true value for disable_pagination op
+    opts = {per_page: @search_setup.max_results}.merge opts
     build_select(opts) + build_from(opts) + build_where + build_order + build_pagination_from_opts(opts)
   end
 
@@ -229,7 +232,10 @@ class SearchQuery
     end
   end
   def build_pagination per_page, target_page
-    " LIMIT #{per_page} OFFSET #{per_page*(target_page-1)} "
+    paginate = ""
+    paginate += " LIMIT #{per_page}" if per_page
+    paginate += " OFFSET #{per_page*(target_page-1)} " if target_page
+    paginate
   end
   
   def sorted_columns

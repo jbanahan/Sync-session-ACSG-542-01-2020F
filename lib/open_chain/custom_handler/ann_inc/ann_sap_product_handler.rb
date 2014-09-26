@@ -1,3 +1,4 @@
+require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 require 'open_chain/custom_handler/ann_inc/ann_related_styles_manager'
 module OpenChain

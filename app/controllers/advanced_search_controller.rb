@@ -74,18 +74,7 @@ class AdvancedSearchController < ApplicationController
       }
       format.json {
         page = number_from_param params[:page], 1
-        # Only show 10 results per page for older IE versions.  This is because these browser
-        # versions don't have the rendering speed of newer ones and take too long to load for 100
-        # rows (plus, we want to encourage people to upgrade).
-        per_page = (old_ie_version? ? 10 : 100)
-
-        # Some search implementations may specify a per page value via the params, allow it 
-        # as long as the value isn't more than our predefined value.
-        query_per_page = number_from_param params[:per_page], nil
-
-        if query_per_page && (query_per_page < per_page)
-          per_page = query_per_page
-        end
+        per_page = results_per_page        
 
         ss = SearchSetup.for_user(current_user).find_by_id(params[:id]) 
         raise ActionController::RoutingError.new('Not Found') unless ss
@@ -124,13 +113,21 @@ class AdvancedSearchController < ApplicationController
     raise ActionController::RoutingError.new('Not Found') unless ss
     respond_to do |format|
       format.xls {
+        # Don't worry about checking for search criterions, since the only time this is supposed
+        # to be called when the results are limited to a single page.  
         m = XlsMaker.new(:include_links=>ss.include_links?,:no_time=>ss.no_time?)
         sq = SearchQuery.new ss, current_user
-        send_excel_workbook m.make_from_search_query(sq), "#{ss.name}.xls"
+        # Make sure the we enforce limiting results to a single page.
+        send_excel_workbook m.make_from_search_query(sq, per_page: results_per_page), "#{ss.name}.xls"
       }
       format.json {
-        ReportResult.run_report! ss.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>ss.id }
-        render :json=>{:ok=>:ok}
+        errors = []
+        if ss.downloadable? errors
+          ReportResult.run_report! ss.name, current_user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>ss.id }
+          render :json=>{:ok=>:ok}
+        else
+          render json: {:errors => errors}, status: 500
+        end
       }
     end
   end
@@ -200,5 +197,23 @@ class AdvancedSearchController < ApplicationController
     previous_search = ss.core_module.make_default_search(current_user) unless previous_search
     render :json=>{:id=>previous_search.id}
   end
+
+  private
+    def results_per_page
+      # Only show 10 results per page for older IE versions.  This is because these browser
+      # versions don't have the rendering speed of newer ones and take too long to load for 100
+      # rows (plus, we want to encourage people to upgrade).
+      per_page = (old_ie_version? ? 10 : 100)
+
+      # Some search implementations may specify a per page value via the params, allow it 
+      # as long as the value isn't more than our predefined value.
+      query_per_page = number_from_param params[:per_page], nil
+
+      if query_per_page && (query_per_page < per_page)
+        per_page = query_per_page
+      end
+
+      per_page
+    end
 
 end

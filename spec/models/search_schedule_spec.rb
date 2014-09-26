@@ -4,14 +4,13 @@ describe SearchSchedule do
   describe "run_search" do
     before :each do
       @temp = Tempfile.new ["search_schedule_spec", ".xls"]
-      @u = User.new :time_zone => "Hawaii"
+      @u = Factory(:user, :time_zone => "Hawaii")
       @setup = SearchSetup.new(:user=>@u, 
         # use a name that needs to be sanitized -> -test.txt
         :name => 'test/-#t!e~s)t .^t&x@t', :download_format => 'csv'
         )
-      @report = CustomReport.new(:user => @u)
+      @report = CustomReport.new(:user => @u, name: "blah")
       @ss = SearchSchedule.new(:search_setup=>@setup, :custom_report=>@report, :download_format=>"csv")
-      @ss.custom_report = @report
     end
 
     after :each do
@@ -129,6 +128,20 @@ describe SearchSchedule do
       @ss.run log
 
       @ss.last_finish_time.should_not be_nil
+    end
+
+    it "sends user messages when search fails" do
+      @ss.custom_report = nil
+      @ss.should_receive(:write_csv).and_raise "Failed"
+      log = double("Logger")
+      log.stub(:info)
+      @ss.run log
+
+      expect(@ss.user.messages.length).to eq 1
+      m = @ss.user.messages.first
+
+      expect(m.body).to include "Search Name: #{@setup.name}"
+      expect(m.body).to include "Error Message: Failed"
     end
 
   end

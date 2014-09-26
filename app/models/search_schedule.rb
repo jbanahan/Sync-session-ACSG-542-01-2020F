@@ -88,9 +88,9 @@ class SearchSchedule < ActiveRecord::Base
         self.update_attributes(:last_finish_time => Time.now)
         log.info "#{Time.now}: Search schedule #{self.id} complete." if log
       end
-      
     end
-    
+  rescue => e
+    send_error_to_user user, e.message
   end
 
   def run_custom_report rpt, log
@@ -158,15 +158,22 @@ class SearchSchedule < ActiveRecord::Base
         log.error e.message if log
         search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
         OpenMailer.send_search_fail(user.email,search_name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver
-        user.messages.create(:subject=>"Search Transmission Failure",:body=>"Search Name: #{search_name}<br>"+
-          "Protocol: #{protocol}<br>" +
-          "Server Name: #{self.ftp_server}<br>"+
-          "Account: #{self.ftp_username}<br>"+
-          "Subfolder: #{self.ftp_subfolder}<br>"+
-          "Error Message: #{e.message}")
+        add_info = ["Protocol: #{protocol}", "Server Name: #{self.ftp_server}", "Account: #{self.ftp_username}", "Subfolder: #{self.ftp_subfolder}"]
+        send_error_to_user user, e.message, add_info
       end
       "#{Time.now}: #{protocol} complete"
     end
+  end
+
+  def send_error_to_user user, error_message, additional_lines = []
+    search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
+    message_body = "Search Name: #{search_name}"
+    if additional_lines.length > 0
+      message_body += "<br>#{additional_lines.join("<br>")}"
+    end
+    message_body += "<br>Error Message: #{error_message}"
+
+    user.messages.create!(subject: "Search Transmission Failure", body: message_body)
   end
   
 

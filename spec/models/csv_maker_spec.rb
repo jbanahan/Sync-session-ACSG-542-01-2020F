@@ -4,11 +4,12 @@ describe CsvMaker do
   context :make_from_search_query do
     before :each do
       @logged_date = 1.minute.ago
-      @entry = Factory(:entry,:first_it_date=>1.day.ago,:file_logged_date=>@logged_date)
+      @entry = Factory(:entry,:first_it_date=>1.day.ago,:file_logged_date=>@logged_date, :broker_reference => "x")
       @u = Factory(:master_user,:entry_view=>true, :time_zone=>"Hawaii")
       @search = SearchSetup.create!(:name=>'t',:user=>@u,:module_type=>'Entry')
       @search.search_columns.create!(:model_field_uid=>'ent_first_it_date',:rank=>1)
       @search.search_columns.create!(:model_field_uid=>'ent_file_logged_date',:rank=>2)
+      @search.search_criterions.create! model_field_uid: 'ent_brok_ref', operator: "eq", value: "x"
       @query = SearchQuery.new @search, @u
       MasterSetup.any_instance.stub(:request_host).and_return "localhost"
     end
@@ -38,6 +39,7 @@ describe CsvMaker do
       val = "abc\ndef"
       Factory(:product,:unique_identifier=>val)
       ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
+      ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
       ss.search_columns.create!(:model_field_uid=>'prod_uid')
       r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))
       arrays = CSV.parse r
@@ -47,6 +49,7 @@ describe CsvMaker do
       val = "abc\rdef"
       Factory(:product,:unique_identifier=>val)
       ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
+      ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
       ss.search_columns.create!(:model_field_uid=>'prod_uid')
       r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))
       arrays = CSV.parse r
@@ -56,6 +59,7 @@ describe CsvMaker do
       val = "abc\r\ndef"
       Factory(:product,:unique_identifier=>val)
       ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
+      ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
       ss.search_columns.create!(:model_field_uid=>'prod_uid')
       r = CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))
       arrays = CSV.parse r
@@ -67,6 +71,23 @@ describe CsvMaker do
       csv = CSV.parse CsvMaker.new.make_from_search_query(@query)
       csv.length.should eq 2
       csv[1].should eq ["", @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M")]
+    end
+
+    it "raises an error if the report is not downloadable" do
+      ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
+      ss.should_receive(:downloadable?) {|e| e << "Error!"; false}
+
+      expect {CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))}.to raise_error "Error!"
+    end
+
+    it "raises an error if the report exceeds maximum row size" do
+      Factory(:product)
+      ss = Factory(:search_setup,:module_type=>"Product",:user=>Factory(:master_user))
+      ss.search_criterions.create! model_field_uid: "prod_uid", operator: "notnull"
+      ss.search_columns.create!(:model_field_uid=>'prod_uid')
+      
+      ss.stub(:max_results).and_return 0
+      expect {CsvMaker.new.make_from_search_query(SearchQuery.new(ss, ss.user))}.to raise_error "Your report has over 0 rows.  Please adjust your parameter settings to limit the size of the report."
     end
   end
 end

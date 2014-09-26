@@ -16,6 +16,10 @@ class CsvMaker
 
   def make_from_search_query search_query
     ss = search_query.search_setup
+    errors = []
+    raise errors.first unless ss.downloadable?(errors)
+    max_results = ss.max_results
+
     columns = search_query.search_setup.search_columns.order('rank ASC')
     row_number = 1
     base_objects = {}
@@ -30,6 +34,8 @@ class CsvMaker
         row << (base_objects[key] ? base_objects[key].view_url : "") if self.include_links
         
         csv << row
+      
+        raise "Your report has over #{max_results} rows.  Please adjust your parameter settings to limit the size of the report." if (row_number += 1) > max_results
       end
     end
   end

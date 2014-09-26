@@ -134,16 +134,21 @@ class ReportResult < ActiveRecord::Base
     self.status = "Complete"
     self.save
     run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
-<p>You can download it by clicking <a href='/report_results/#{self.id}/download'>here</a>.</p>
-<p>You can view the report status page by clicking <a href='/report_results/#{self.id}'>here</a>.</p>"
+<p>You can download it by clicking <a href='#{Rails.application.routes.url_helpers.download_report_result_url(host: MasterSetup.get.request_host, id: id, protocol: (Rails.env.development? ? "http" : "https"))}'>here</a>.</p>
+<p>You can view the report status page by clicking <a href='#{report_results_link}'>here</a>.</p>"
     )
   end
 
   def fail_report e
-    e.log_me ["Report execution failure.","User: #{self.run_by.full_name}","ReportResultID: #{self.id}"]
     self.update_attributes(:status=>"Failed",:run_errors=>e.message)
     run_by.messages.create(:subject=>"Report FAILED: #{name}",:body=>"<p>Your report failed to run properly.</p>
+<p>You can view the error on the report status page by clicking <a href='#{report_results_link}'>here</a>.</p>
 <p>If you need immediate support, please click the Help link at the top of the screen and log a new incident.</p>")
+  end
+
+  def report_results_link
+    # Use url instead of path because user messages can be emailed.
+    Rails.application.routes.url_helpers.report_result_url(host: MasterSetup.get.request_host, id: id, protocol: (Rails.env.development? ? "http" : "https"))
   end
 
   def report_content

@@ -225,6 +225,11 @@ class ImportedFile < ActiveRecord::Base
       e.log_me ["Failed to process imported file with original path '#{original_path}'."]
     end
   end
+
+  def max_results
+    # this is for duck typing to search_setup, we're using a really high value so as to not actually limit results
+    1000000
+  end
   
   private
   def no_post

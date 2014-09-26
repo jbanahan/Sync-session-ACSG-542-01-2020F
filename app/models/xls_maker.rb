@@ -18,20 +18,25 @@ class XlsMaker
     @no_time = inner_opts[:no_time]
   end
   
-  def make_from_search_query search_query
+  def make_from_search_query search_query, search_query_opts = {}
     @column_widths = {}
     ss = search_query.search_setup
+    errors = []
+    raise errors.first unless ss.downloadable?(errors)
+
+    max_results = ss.max_results
     cols = search_query.search_setup.search_columns.order('rank ASC')
     wb = prep_workbook cols
     sheet = wb.worksheet 0
     row_number = 1
     base_objects = {}
-    search_query.execute do |row_hash|
+    search_query.execute(search_query_opts) do |row_hash|
       #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
       key = row_hash[:row_key]
       base_objects[key] ||= (@include_links ? ss.core_module.find(key) : nil)
       process_row sheet, row_number, row_hash[:result], base_objects[key]
-      row_number += 1
+      
+      raise "Your report has over #{max_results} rows.  Please adjust your parameter settings to limit the size of the report." if (row_number += 1) > max_results
     end
     wb
   end

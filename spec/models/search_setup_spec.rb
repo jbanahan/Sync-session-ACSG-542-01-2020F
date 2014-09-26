@@ -31,6 +31,18 @@ describe SearchSetup do
       msgs.first.include?("Only users from the master company can upload products.").should be_true
     end
   end
+  describe "downloadable?" do
+    it "is downloadable if there are search criterions" do
+      ss = Factory(:search_criterion, search_setup: Factory(:search_setup)).search_setup
+      expect(ss.downloadable?).to be_true
+    end
+
+    it "is not downloadable if there are no search criterions" do
+      errors = []
+      expect(Factory(:search_setup).downloadable? errors).to be_false
+      expect(errors).to eq ["You must add at least one Parameter to your search setup before downloading a search."]
+    end
+  end
   describe :give_to do
     before :each do
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")

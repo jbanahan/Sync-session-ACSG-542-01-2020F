@@ -148,6 +148,10 @@ describe SearchQuery do
     it "adds an inner join optimization when pagination options exist" do
       expect(@sq.to_sql(per_page: 100)).to include "AS inner_opt ON "
     end
+
+    it "defaults to using the max_results from search_setup as the query LIMIT" do
+      expect(@sq.to_sql).to include "LIMIT #{@sq.search_setup.max_results}"
+    end
     
     context :custom_values do
       before :each do

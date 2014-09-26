@@ -10,8 +10,9 @@ describe XlsMaker do
       @search.search_columns.create!(:model_field_uid=>'ent_entry_num',:rank=>2)
       @search.search_columns.create!(:model_field_uid=>'ent_first_it_date',:rank=>3)
       @search.search_columns.create!(:model_field_uid=>'ent_file_logged_date',:rank=>4)
+      @search.search_criterions.create! model_field_uid: 'ent_brok_ref', operator: "eq", value: "x"
       @sq = SearchQuery.new @search, @u
-      @sq.should_receive(:execute).
+      @sq.stub(:execute).
         and_yield({:row_key=>1,:result=>['a','b',Date.new(2013,4,30),Time.now]}).
         and_yield({:row_key=>2,:result=>['c','d',Date.new(2013,4,30),Time.now]})
     end
@@ -51,6 +52,15 @@ describe XlsMaker do
       wb = XlsMaker.new(:include_links=>true).make_from_search_query @sq
       s = wb.worksheet(0)
       s.row(1)[4].should be_a Spreadsheet::Link
+    end
+    it "raises an error if the search is not downloadable" do
+      @sq.search_setup.should_receive(:downloadable?) {|e| e << "Error!"; false}
+      expect {XlsMaker.new.make_from_search_query @sq}.to raise_error "Error!"
+    end
+
+    it "raises an error if the maximum number of results is exceeded" do
+      @sq.search_setup.stub(:max_results).and_return 1
+      expect {XlsMaker.new.make_from_search_query @sq}.to raise_error "Your report has over 1 rows.  Please adjust your parameter settings to limit the size of the report."
     end
   end
   describe :make_from_search_query_by_search_id_and_user_id do

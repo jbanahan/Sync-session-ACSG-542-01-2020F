@@ -410,13 +410,14 @@ describe AdvancedSearchController do
       @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
       @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
       @ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>2)
+      @ss.search_criterions.create!(:model_field_uid=>:prod_uid,:operator=>:sw,:value=>'X')
       @p = Factory(:product,:name=>'mpn')
       Product.any_instance.stub(:can_view?).and_return(true)
     end
     it "should run file for XLS" do
       wb = mock('wb')
       wb.should_receive(:write)
-      XlsMaker.any_instance.should_receive(:make_from_search_query).and_return(wb)
+      XlsMaker.any_instance.should_receive(:make_from_search_query).with(instance_of(SearchQuery), per_page: 100).and_return(wb)
       get :download, :id=>@ss.id, :format=>:xls
       response.should be_success
       response.headers['Content-Type'].should == "application/vnd.ms-excel"
@@ -431,7 +432,7 @@ describe AdvancedSearchController do
         Delayed::Worker.delay_jobs = @dj_status
       end
       it "should delay running file for json" do
-        XlsMaker.any_instance.should_receive(:make_from_search_query_by_search_id_and_user_id).with(@ss.id,@user.id)
+        ReportResult.should_receive(:run_report!).with(@ss.name, @user, 'OpenChain::Report::XLSSearch', :settings=>{ 'search_setup_id'=>@ss.id })
         get :download, :id=>@ss.id, :format=>:json
         response.should be_success
         JSON.parse(response.body)['ok'].should == 'ok'
@@ -441,6 +442,15 @@ describe AdvancedSearchController do
         get :download, :id=>@ss.id, :format=>:json
         response.should be_success
         JSON.parse(response.body)['ok'].should == 'ok'
+      end
+      it "errors if search is not downloadable" do
+        SearchSetup.any_instance.should_receive(:downloadable?) do |errors|
+          errors << "This is an error"
+          false
+        end
+        get :download, :id=>@ss.id, :format=>:json
+        response.should be_error
+        JSON.parse(response.body)['errors'].should == ["This is an error"]
       end
     end
     it "should 404 if user doesn't own search setup" do

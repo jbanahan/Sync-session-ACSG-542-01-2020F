@@ -4,6 +4,7 @@ require 'spec_helper'
 describe ReportResult do
   before :each do
     @u = Factory(:user, :email=>'a@aspect9.com', :time_zone => 'Hawaii')
+    MasterSetup.any_instance.stub(:request_host).and_return "localhost"
   end
 
   describe 'friendly settings' do
@@ -176,6 +177,8 @@ describe ReportResult do
         m = @u.messages
         m.size.should == 1
         m.first.subject.should include "FAILED"
+        found = ReportResult.find_by_name 'um'
+        m.first.body.should include "/report_results/#{found.id}"
       end
     end
   end
