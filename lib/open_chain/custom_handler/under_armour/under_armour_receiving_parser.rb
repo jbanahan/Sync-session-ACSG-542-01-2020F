@@ -35,40 +35,47 @@ module OpenChain; module CustomHandler; module UnderArmour
 
     # parse file from s3
     def self.parse_s3 s3_path, first_row=1
-      product_cache = {}
-      client = OpenChain::XLClient.new s3_path
-      last_row_number = client.last_row_number 0
-      val_set = []
-      last_ibd_number = nil
-      (first_row..last_row_number).each do |row_num|
-        row = client.get_row 0, row_num
-        val_hash = {}
-        row.each do |cell|
-          val_hash[cell['position']['column']] = cell['cell']['value']
+      ActiveRecord::Base.transaction do
+        product_cache = {}
+        client = OpenChain::XLClient.new s3_path
+        last_row_number = client.last_row_number 0
+        val_set = []
+        last_ibd_number = nil
+        (first_row..last_row_number).each do |row_num|
+          row = client.get_row 0, row_num
+          val_hash = {}
+          row.each do |cell|
+            val_hash[cell['position']['column']] = cell['cell']['value']
+          end
+          ibd_number = val_hash[6]
+          raise "Row #{row_num} does not have IBD number." unless ibd_number
+          if ibd_number != last_ibd_number && !val_set.empty?
+            UnderArmourReceivingParser.new val_set, product_cache
+            val_set = []
+          end
+          last_ibd_number = ibd_number
+          val_set << val_hash
         end
-        ibd_number = val_hash[6]
-        raise "Row #{row_num} does not have IBD number." unless ibd_number
-        if ibd_number != last_ibd_number && !val_set.empty?
-          UnderArmourReceivingParser.new val_set, product_cache
-          val_set = []
-        end
-        last_ibd_number = ibd_number
-        val_set << val_hash
+        UnderArmourReceivingParser.new val_set, product_cache unless val_set.empty?
       end
-      UnderArmourReceivingParser.new val_set, product_cache unless val_set.empty?
       true #don't return garbage value from previous line
     end
 
     # DO NOT CALL DIRECLTY, USE CLASS LEVEL parse_s3 method
     def initialize val_set, product_cache
-      @product_cache = product_cache
-      init_custom_definitions
-      process_header val_set.first
-      @row_num = 1
-      @shipment.shipment_lines.each {|sl| @row_num = sl.line_number + 1 if sl.line_number >= @row_num}
-      val_set.each {|row| process_detail row}
-      @shipment.save!
-      val_set.each_with_index {|row,i| process_custom_values row, (i+1)}
+      begin
+        @product_cache = product_cache
+        init_custom_definitions
+        process_header val_set.first
+        @row_num = 1
+        @shipment.shipment_lines.each {|sl| @row_num = sl.line_number + 1 if sl.line_number >= @row_num}
+        val_set.each {|row| process_detail row}
+        @shipment.save!
+        val_set.each_with_index {|row,i| process_custom_values row, (i+1)}
+      rescue
+        $!.log_me val_set.to_a
+        raise $!
+      end
     end
     
     private
