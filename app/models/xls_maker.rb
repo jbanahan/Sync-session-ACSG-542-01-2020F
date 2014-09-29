@@ -159,9 +159,13 @@ class XlsMaker
   end
 
   def self.create_workbook sheet_name, headers = []
-    wb = Spreadsheet::Workbook.new
+    wb = new_workbook
     create_sheet wb, sheet_name, headers
     wb
+  end
+
+  def self.new_workbook 
+    Spreadsheet::Workbook.new
   end
 
   def self.create_sheet workbook, sheet_name, headers = []
