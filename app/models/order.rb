@@ -17,6 +17,41 @@ class Order < ActiveRecord::Base
 	has_many   :piece_sets, :through => :order_lines
 
   ########
+  # Order Acceptance Logic
+  ########
+
+  def accept! user, async_snapshot = false
+    self.approval_status = 'Accepted'
+    self.save!
+    OpenChain::EventPublisher.publish :order_accept, self
+    if async_snapshot
+      self.create_async_snapshot user
+    else
+      self.create_snapshot user
+    end  
+  end
+  def async_accept! user
+    self.accept! user, true
+  end
+  def unaccept! user, async_snapshot = false
+    self.approval_status = nil
+    self.save!
+    OpenChain::EventPublisher.publish :order_unaccept, self
+    if async_snapshot
+      self.create_async_snapshot user
+    else
+      self.create_snapshot user
+    end  
+  end
+  def async_unaccept! user
+    self.unaccept! user, true
+  end
+  def can_accept? u
+    u.admin? || u.company == self.vendor
+  end
+
+
+  ########
   # Order Close Logic
   ########
 
@@ -89,6 +124,10 @@ class Order < ActiveRecord::Base
         user.company.linked_companies.include?(vendor)
       )
 	end
+
+  def can_view_business_validation_results? u
+    self.can_view?(u) && u.view_business_validation_results?
+  end
 	
   def self.search_where user
     return "1=1" if user.company.master?

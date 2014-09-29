@@ -72,7 +72,7 @@ shipmentApp.config ['$stateProvider','$urlRouterProvider',($stateProvider,$urlRo
       template:''
       controller:['$scope','$state',($scope,$state) ->
         if $scope.$root.initId
-          $state.go('show',{shipmentId:$scope.$root.initId}) 
+          $state.go('show',{shipmentId:$scope.$root.initId},{location:'replace'}) 
         else if $scope.$root.newShipment
           $state.go('new')
       ]

@@ -118,16 +118,33 @@ class OrdersController < ApplicationController
     }
   end
 
+  def accept
+    o = Order.find params[:id]
+    action_secure(o.can_accept?(current_user),o,{:verb => "accept", :module_name=>"order"}) {
+      o.async_accept! current_user
+      add_flash :notices, "Order has been accepted."
+      redirect_to o
+    }
+  end
+
+  def unaccept
+    o = Order.find params[:id]
+    action_secure(o.can_accept?(current_user),o,{:verb => "unaccept", :module_name=>"order"}) {
+      o.async_unaccept! current_user
+      add_flash :notices, "Order acceptance has been removed."
+      redirect_to o
+    }
+  end
+
   def validation_results
     o = Order.find params[:id]
     respond_to do |format|
     format.html {
-      action_secure(o.can_view?(current_user) && current_user.view_business_validation_results?,o,{:lock_check=>false,:verb=>"view",:module_name=>"order"}) {
+      action_secure(o.can_view_business_validation_results?(current_user),o,{:lock_check=>false,:verb=>"view",:module_name=>"order"}) {
         @order = o
       }
     }
     format.json {
-      
       r = {
         object_number:o.order_number,
         state:o.business_rules_state,

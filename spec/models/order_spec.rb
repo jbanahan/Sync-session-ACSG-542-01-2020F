@@ -1,7 +1,79 @@
 require 'spec_helper'
 
 describe Order do
+  describe 'accept' do
+    before :each do
+      @o = Factory(:order)
+      @v = Factory(:company,vendor:true)
+      @u = Factory(:user,company:@v)
+      @t = Time.now
+      Time.stub(:now).and_return @t
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_accept,@o)
+    end
 
+    it 'should accept' do
+      @o.should_receive(:create_snapshot).with @u
+      @o.accept! @u
+      @o.reload
+      expect(@o.approval_status).to eq 'Accepted'
+    end
+
+    it 'should accept async' do
+      @o.should_receive(:create_async_snapshot).with @u
+      @o.async_accept! @u
+      @o.reload
+      expect(@o.approval_status).to eq 'Accepted'
+    end
+  end
+  describe 'unaccept' do
+    before :each do
+      @o = Factory(:order,approval_status:'Approved')
+      @v = Factory(:company,vendor:true)
+      @u = Factory(:user,company:@v)
+      @t = Time.now
+      Time.stub(:now).and_return @t
+      OpenChain::EventPublisher.should_receive(:publish).with(:order_unaccept,@o)
+    end
+
+    it 'should unaccept' do
+      @o.should_receive(:create_snapshot).with @u
+      @o.unaccept! @u
+      @o.reload
+      expect(@o.approval_status).to eq nil
+    end
+
+    it 'should unaccept async' do
+      @o.should_receive(:create_async_snapshot).with @u
+      @o.async_unaccept! @u
+      @o.reload
+      expect(@o.approval_status).to eq nil
+    end
+  end
+  describe 'can_accept' do
+    it "should allow vendor user to accept" do
+      v = Company.new(vendor:true)
+      u = User.new
+      u.company = v
+      o = Order.new(vendor:v)
+      expect(o.can_accept?(u)).to be_true
+    end
+    it "should allow sys_admin user to accept" do
+      v = Company.new(vendor:true)
+      u = User.new
+      u.sys_admin = true
+      o = Order.new(vendor:v)
+      o.stub(:can_edit?).and_return true
+      expect(o.can_accept?(u)).to be_true
+    end
+    it "should not allow user who is not sys_admin to accept" do
+      v = Company.new(vendor:true)
+      u = User.new
+      u.sys_admin = false
+      o = Order.new(vendor:v)
+      o.stub(:can_edit?).and_return true
+      expect(o.can_accept?(u)).to be_false
+    end
+  end
   describe 'close' do
     before :each do
       @o = Factory(:order)

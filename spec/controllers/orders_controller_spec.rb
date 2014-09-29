@@ -10,6 +10,38 @@ describe OrdersController do
     sign_in_as @u
   end
 
+  describe :accept do
+    it "should accept if user has permission" do
+      Order.any_instance.should_receive(:async_accept!).with(@u)
+      Order.any_instance.stub(:can_accept?).and_return true
+      o = Factory(:order)
+      post :accept, id: o.id
+      expect(response).to redirect_to o
+    end
+    it "should error if user does not have permission" do
+      Order.any_instance.should_not_receive(:async_accept!)
+      Order.any_instance.stub(:can_accept?).and_return false
+      o = Factory(:order)
+      post :accept, id: o.id
+    end
+  end
+
+  describe :unaccept do
+    it "should unaccept if user has permission" do
+      Order.any_instance.should_receive(:async_unaccept!).with(@u)
+      Order.any_instance.stub(:can_accept?).and_return true
+      o = Factory(:order)
+      post :unaccept, id: o.id
+      expect(response).to redirect_to o
+    end
+    it "should error if user does not have permission" do
+      Order.any_instance.should_not_receive(:async_unaccept!)
+      Order.any_instance.stub(:can_accept?).and_return false
+      o = Factory(:order)
+      post :unaccept, id: o.id
+    end
+  end
+
   describe :close do
     it "should close if user has permission" do
       Order.any_instance.stub(:can_close?).and_return true

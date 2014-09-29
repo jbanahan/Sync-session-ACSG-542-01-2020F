@@ -389,6 +389,8 @@ OpenChain::Application.routes.draw do
       get 'validation_results'
       post 'close'
       post 'reopen'
+      post 'accept'
+      post 'unaccept'
     end
 		resources :order_lines
 	end

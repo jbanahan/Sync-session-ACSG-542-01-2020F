@@ -63,7 +63,16 @@
       <%=button_to 'Close', close_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
     <% end %>
   <% end %>
+  <% if @order.can_accept?(current_user)%>
+    <% if @order.approval_status=='Accepted' %>
+      <%=button_to 'Unaccept', unaccept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% else %>
+      <%=button_to 'Accept', accept_order_path(@order), :method=>:post, :form_class=>"inline-button-to", :class=>'btn btn-default'%>
+    <% end %>
+  <% end %>
+  <% if @order.can_view_business_validation_results?(current_user) %>
   <button class='btn_link' link_to='<%=validation_results_order_path(@order)%>'>Business Rules</button>
+  <% end %>
   <button class='btn_link' link_to='<%=history_order_path(@order)%>' key_map='h'>History</button>
   <button id='btn_subscriptions'>Subscriptions<%=ItemChangeSubscription.count(:conditions => {:order_id => @order.id, :user_id => current_user.id}) == 0 ? '' : "*"%></button>
 <% end %>
@@ -132,7 +141,13 @@
             <%end%>
           </td>
           <td class='<%=line_state.nil? || line_state=="Planned" ? "" : "ms_#{line_state.downcase}"%>'><%=line.line_number%></td>
-          <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>"><%=link_to(line.product.unique_identifier, product_path(line.product)) %></td>
+          <td data-container='body' data-toggle="popover" data-trigger="hover" data-placement="auto" data-content="<%=ModelField.find_by_uid(:prod_name).label%>: <%=ModelField.find_by_uid(:prod_name).process_export(line.product,current_user)%>">
+            <%-if line.product.can_view?(current_user)-%>
+              <%=link_to(line.product.unique_identifier, product_path(line.product)) %>
+            <%-else-%>
+              <%=line.product.unique_identifier%>
+            <%-end-%>
+          </td>
           <td><%=line.sku%></td>
           <td><%= line.quantity %></td>
           <td><%=line.shipped_qty%></td>

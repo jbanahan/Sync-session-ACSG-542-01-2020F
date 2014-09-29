@@ -49,6 +49,16 @@ module OpenChain; class EventPublisher
         lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
         lambda {|obj| "Order #{obj.customer_order_number} reopened."},
         lambda {|obj| "Order #{obj.customer_order_number} reopened."}
+      ),
+      order_accept: MessageType.new('ORDER_ACCEPT',
+        lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
+        lambda {|obj| "Order #{obj.customer_order_number} accepted."},
+        lambda {|obj| "Order #{obj.customer_order_number} accepted."}
+      ),
+      order_unaccept: MessageType.new('ORDER_UNACCEPT',
+        lambda {|obj| "#{PROTOCOL}://#{MasterSetup.get.request_host}/orders/#{obj.id}"},
+        lambda {|obj| "Order #{obj.customer_order_number} unaccepted."},
+        lambda {|obj| "Order #{obj.customer_order_number} unaccepted."}
       )
     }
 
