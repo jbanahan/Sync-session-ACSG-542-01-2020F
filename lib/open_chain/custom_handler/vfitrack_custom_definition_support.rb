@@ -27,7 +27,8 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_fda_container_height: {label: "FDA Container Height", data_type: :string, module_type: "Product"},
     prod_fda_contact_name: {label: "FDA Contact Name", data_type: :string, module_type: "Product"},
     prod_fda_contact_phone: {label: "FDA Contact Phone", data_type: :string, module_type: "Product"},
-    prod_fda_affirmation_compliance: {label: "FDA Affirmation of Compliance", data_type: :string, module_type: "Product"}
+    prod_fda_affirmation_compliance: {label: "FDA Affirmation of Compliance", data_type: :string, module_type: "Product"},
+    class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification"}
   } 
   
   def self.included(base)

@@ -10,8 +10,9 @@ module OpenChain
         @use_part_number = (options['use_part_number'].to_s == "true")
         @additional_where = options['additional_where']
         @suppress_country = options['suppress_country']
+        @suppress_description = (options['suppress_description'].to_s == "true")
 
-        @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number]
+        @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :class_customs_description]
       end
 
       #automatcially generate file and ftp for trading partner "fenix-#{fenix_customer_code}"
@@ -41,7 +42,7 @@ module OpenChain
           c = p.classifications.find_by_country_id(@canada_id)
           next unless c
           c.tariff_records.each do |tr|
-            t << file_output(@fenix_customer_code, p, tr) unless tr.hts_1.blank?
+            t << file_output(@fenix_customer_code, p, c, tr) unless tr.hts_1.blank?
           end
 
           sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
@@ -64,8 +65,15 @@ module OpenChain
       end
       
       private
-        def file_output fenix_customer_code, p, tr
+        def file_output fenix_customer_code, p, c, tr
           line = "N#{"".ljust(14)}#{force_fixed(fenix_customer_code, 9)}#{"".ljust(7)}#{force_fixed identifier_field(p),40}#{tr.hts_1.ljust(10)}"
+          
+          if !@suppress_description
+            # Description starts at zero-indexed position 135..add spacing to accomodate
+            line += "".ljust(135 - line.length)
+            line += force_fixed(p.get_custom_value(@cdefs[:class_customs_description]).value.to_s, 50)
+          end
+
           if !@suppress_country
             # The country of origin field starts at zero-indexed position 359..add spacing to accomodate
             line += "".ljust(359 - line.length)

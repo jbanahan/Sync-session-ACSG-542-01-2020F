@@ -56,13 +56,17 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     end
     it "should generate output file with given products" do
       coo_def = CustomDefinition.where(label: "Country Of Origin", module_type: "Product", data_type: "string").first
+      desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
+
       @p.update_custom_value! coo_def, "CN"
+      @p.update_custom_value! desc_def, "Random Product Description"
       @t = @h.make_file [@p]
       read = IO.read(@t.path)
       expect(read[0, 15]).to eq "N".ljust(15)
       expect(read[15, 9]).to eq @code.ljust(9)
       expect(read[31, 40]).to eq "myuid".ljust(40)
       expect(read[71, 20]).to eq "1234567890".ljust(20)
+      expect(read[135, 50]).to eq "Random Product Description".ljust(50)
       expect(read[359, 3]).to eq "CN "
       expect(read).to end_with "\r\n"
     end
@@ -94,6 +98,17 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[15, 9]).to eq @code.ljust(9)
       expect(read[31, 40]).to eq "myuid".ljust(40)
       expect(read[71, 12]).to eq "1234567890\r\n".ljust(12)
+    end
+
+    it "skips adding description if instructed" do
+      @h = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, 'suppress_description'=>true)
+      desc_def = CustomDefinition.where(label: "Customs Description", module_type: "Classification", data_type: "string").first
+      @p.update_custom_value! desc_def, "Random Product Description"
+      @t = @h.make_file [@p]
+      read = IO.read(@t.path)
+      expect(read[15, 9]).to eq @code.ljust(9)
+      # This would be where description is if we turned it on..should be blank
+      expect(read[135, 50]).to eq "".ljust(50)
     end
   end
 
