@@ -97,7 +97,8 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(read[0, 15]).to eq "N".ljust(15)
       expect(read[15, 9]).to eq @code.ljust(9)
       expect(read[31, 40]).to eq "myuid".ljust(40)
-      expect(read[71, 12]).to eq "1234567890\r\n".ljust(12)
+      expect(read[71, 10]).to eq "1234567890".ljust(10)
+      expect(read[359, 3]).to be_nil
     end
 
     it "skips adding description if instructed" do
