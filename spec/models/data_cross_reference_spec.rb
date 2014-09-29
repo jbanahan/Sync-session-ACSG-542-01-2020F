@@ -38,6 +38,20 @@ describe DataCrossReference do
     end
   end
 
+  context :jjill_order_fingerprint do
+    it "should find" do
+      described_class.create! key: 1, value:'ABCDEFG', cross_reference_type:described_class::JJILL_ORDER_FINGERPRINT
+      o = Order.new
+      o.id = 1
+      expect(described_class.find_jjill_order_fingerprint(o)).to eq 'ABCDEFG'
+    end
+    it "should create" do
+      o = Order.new
+      o.id = 1
+      described_class.create_jjill_order_fingerprint! o, 'ABCDEFG'
+      expect(described_class.find_jjill_order_fingerprint(o)).to eq 'ABCDEFG'
+    end
+  end
   context :lenox_item_master_hash do
     it "should find" do
       described_class.create! key: 'partno', value:'ABCDEFG', cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH

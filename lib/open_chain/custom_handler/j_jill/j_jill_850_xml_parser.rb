@@ -1,3 +1,4 @@
+require 'digest/md5'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/j_jill/j_jill_support'
 require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
@@ -83,9 +84,36 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       ord.reopen! @user
     end
 
+    fingerprint = generate_fingerprint ord
+    fp = DataCrossReference.find_jjill_order_fingerprint(ord)
+    if fingerprint!=fp
+      if !po_assigned_to_shipment && ord.approval_status == 'Accepted'
+        ord.unaccept! @user
+      end
+      DataCrossReference.create_jjill_order_fingerprint!(ord,fingerprint)
+    end
+
+
   end
 
   private
+
+  def generate_fingerprint ord
+    f = ""
+    f << ord.customer_order_number.to_s
+    f << ord.vendor_id.to_s
+    f << ord.mode.to_s
+    f << ord.fob_point.to_s
+    f << ord.first_expected_delivery_date.to_s
+    f << ord.ship_window_start.to_s
+    f << ord.ship_window_end.to_s
+    ord.order_lines.each do |ol|
+      f << ol.quantity.to_s
+      f << ol.price_per_unit.to_s
+      f << ol.sku.to_s
+    end
+    Digest::MD5.hexdigest f
+  end
 
   def update_order_header ord, extract_date, cust_ord, order_root
     ord.last_exported_from_source = extract_date

@@ -89,10 +89,11 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect {run_file}.to raise_error /Unique identifier/
     end
     it "should update order" do
-      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368')
+      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',approval_status:'Accepted')
       run_file
       o.reload
       expect(o.order_lines.count).to eq 4
+      expect(o.approval_status).to be_nil
     end
     it "should not update order with newer last_exported_from_source" do
       o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',last_exported_from_source:Date.new(2014,8,1))

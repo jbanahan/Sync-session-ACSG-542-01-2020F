@@ -4,6 +4,7 @@ class DataCrossReference < ActiveRecord::Base
   belongs_to :company
   validates_presence_of :key, :cross_reference_type
 
+  JJILL_ORDER_FINGERPRINT ||= 'jjill_order'
   LENOX_ITEM_MASTER_HASH ||= 'lenox_itm'
   RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
   RL_PO_TO_BRAND ||= 'po_to_brand'
@@ -108,6 +109,13 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.create_lenox_item_master_hash! part_number, hash
     add_xref! LENOX_ITEM_MASTER_HASH, part_number, hash
+  end
+
+  def self.find_jjill_order_fingerprint order
+    find_unique where(cross_reference_type: JJILL_ORDER_FINGERPRINT, key: order.id.to_s)
+  end
+  def self.create_jjill_order_fingerprint! order, fingerprint
+    add_xref! JJILL_ORDER_FINGERPRINT, order.id.to_s, fingerprint
   end
 
   def self.find_alliance_gl_code charge_code
