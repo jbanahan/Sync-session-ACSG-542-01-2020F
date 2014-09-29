@@ -14,6 +14,18 @@ class Comment < ActiveRecord::Base
     RedCloth.new(self.body).to_html.html_safe
   end
 
+  def can_view? u
+    self.commentable.can_view? u
+  end
+
+  def can_edit? u
+    self.user == u || u.sys_admin?
+  end
+
+  def can_delete? u
+    self.user == u || u.sys_admin?
+  end
+
   def publish_comment_create
     OpenChain::EventPublisher.publish :comment_create, self
   end

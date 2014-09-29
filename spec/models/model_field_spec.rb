@@ -99,6 +99,14 @@ describe ModelField do
     ModelField.uid_for_region(r,"x").should == "*r_#{r.id}_x"
   end
   context "special cases" do
+    context "comments" do
+      it "should return comment count" do
+        s = Factory(:shipment)
+        u = Factory(:user)
+        s.comments.create!(user_id:u.id,subject:"x")
+        expect(ModelField.find_by_uid(:shp_comment_count).process_export(s,u,true)).to eq 1
+      end
+    end
     context "first hts by country" do
       before :each do
         @c = Factory(:country,:iso_code=>'ZY',:import_location=>true)

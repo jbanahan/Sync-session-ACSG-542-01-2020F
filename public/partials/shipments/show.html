@@ -6,8 +6,8 @@
     <div class="row"> <!-- start ship header -->
       <div class="col-md-4">
         <h2 ng-click='hideShipInfo = !hideShipInfo'>
-          Shipment
           <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideShipInfo,'glyphicon-chevron-up':!hideShipInfo}"></span>
+          Shipment
         </h2>
         <div ng-hide='hideShipInfo'>
           <label for='shp_ref'>Reference</label>
@@ -40,8 +40,8 @@
       </div>
       <div class="col-md-4">
         <h2 ng-click='hideBookingInfo = !hideBookingInfo'>
-          Booking
           <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideBookingInfo,'glyphicon-chevron-up':!hideBookingInfo}"></span>
+          Booking
         </h2>
         <div ng-hide='hideBookingInfo'>
           <label for="shp_booking_received_date">Booking Received</label>
@@ -60,8 +60,8 @@
           <div>{{shp.shp_booking_mode}}</div>
         </div>
         <h2 ng-click='hidePartyInfo = !hidePartyInfo'>
-          Parties
           <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hidePartyInfo,'glyphicon-chevron-up':!hidePartyInfo}"></span>
+          Parties
         </h2>
         <div ng-hide="hidePartyInfo">
             <label for='shp_car_syscode'>Carrier</label>
@@ -72,8 +72,8 @@
       </div>
       <div class="col-md-4">
         <h2 ng-click='hideTrackingInfo = !hideTrackingInfo'>
-          Tracking
           <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideTrackingInfo,'glyphicon-chevron-up':!hideTrackingInfo}"></span>
+          Tracking
         </h2>
         <div ng-hide='hideTrackingInfo'>
           <label for="shp_est_departure_date">Est Departure Date</label>
@@ -115,11 +115,25 @@
       </div>
     </div><!--end attachments-->
     <hr />
+    <div> <!--start comments-->
+      <div class="row">
+        <div class="col-md-12">
+          <h2 ng-click='hideComments = !hideComments'>
+            <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideComments,'glyphicon-chevron-up':!hideComments}"></span>
+            Comments 
+            <span class="badge">{{shp.comments ? shp.comments.length : shp.shp_comment_count}}</span>
+          </h2>
+          <div ng-hide='hideComments'>
+            <chain-comment parent-object='shp' module-type='Shipment'></chain-comment>
+          </div>
+        </div>
+      </div>
+    </div> <!--end comments -->
     <div class="row"> <!-- start container section -->
       <div class="col-md-12">
         <h2>
-          Containers
           <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideContainerInfo,'glyphicon-chevron-up':!hideContainerInfo}"></span>
+          Containers
         </h2>
         <div ng-hide='hideContainerInfo'>
           <div ng-repeat='con in shp.containers'>
@@ -150,8 +164,8 @@
     <div class="row" > <!--start lines section -->
       <div class="col-md-12">
         <h2 ng-click='hideLineInfo = !hideLineInfo'>
-          Lines
           <span class="glyphicon" ng-class="{'glyphicon-chevron-down':hideLineInfo,'glyphicon-chevron-up':!hideLineInfo}"></span>
+          Lines
         </h2>
         <div ng-hide='hideLineInfo'>
           <table class='table table-striped'>

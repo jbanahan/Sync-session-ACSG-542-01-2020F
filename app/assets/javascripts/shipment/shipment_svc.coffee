@@ -1,4 +1,4 @@
-angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q',($http,$q) ->
+angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q','commentSvc',($http,$q,commentSvc) ->
   prepForSave = (shipment) ->
     updatedLines = []
     if shipment.lines
@@ -16,6 +16,7 @@ angular.module('ShipmentApp').factory 'shipmentSvc', ['$http','$q',($http,$q) ->
   currentShipment = null
   getShipmentSuccessHandler = (resp) ->
     currentShipment = resp.data.shipment
+    commentSvc.injectComments(currentShipment,'Shipment')
     resp
 
   return {

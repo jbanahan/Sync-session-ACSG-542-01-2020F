@@ -1,4 +1,4 @@
-shipmentApp = angular.module('ShipmentApp', ['ChainComponents','ui.router'])
+shipmentApp = angular.module('ShipmentApp', ['ChainComponents','ui.router','ChainComments'])
 shipmentApp.config ['$httpProvider', ($httpProvider) ->
   $httpProvider.defaults.headers.common['Accept'] = 'application/json';
   $httpProvider.interceptors.push 'chainHttpErrorInterceptor'
@@ -206,6 +206,7 @@ shipmentApp.controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentI
 
 shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId','$state',($scope,shipmentSvc,shipmentId,$state) ->
   $scope.shp = null
+  $scope.hideComments = true
   $scope.loadShipment = (id) ->
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id).then (resp) ->

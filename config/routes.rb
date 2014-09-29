@@ -9,6 +9,8 @@ OpenChain::Application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      match '/comments/for_module/:module_type/:id' => 'comments#for_module', via: :get
+      resources :comments, only: [:create,:destroy]
       resources :commercial_invoices, only: [:index,:create,:update]
       resources :shipments, only: [:index,:show,:create,:update] do
         post :process_tradecard_pack_manifest, on: :member
@@ -587,23 +589,4 @@ OpenChain::Application.routes.draw do
   mount JasmineRails::Engine => "/specs" if defined?(JasmineRails) && !Rails.env.production?
 
   root :to => "home#index"
-
-  namespace :api do
-    namespace :v1 do
-      match "/products/by_id/:id" => "products#show", :via=>:get
-      match "/products/by_uid/:uid" => "products#by_uid", :via=>:get
-      match "/products/model_fields" => "products#model_fields", :via => :get
-
-      match "/intacct_data/receive_alliance_invoice_numbers" => "intacct_data#receive_alliance_invoice_numbers", :via => :post
-      match "/intacct_data/receive_alliance_invoice_details" => "intacct_data#receive_alliance_invoice_details", :via => :post
-      match "/intacct_data/receive_advance_checks" => "intacct_data#receive_advance_checks", :via => :post
-      match "/alliance_data/receive_alliance_entry_details" => "alliance_data#receive_alliance_entry_details", :via => :post
-      match "/alliance_reports/receive_alliance_report_data" => "alliance_reports#receive_alliance_report_data", :via => :post
-
-      resources :commercial_invoices, only: [:index,:create,:update]
-
-      match "/schedulable_jobs/run_jobs" => "schedulable_jobs#run_jobs", via: :post
-      
-    end
-  end
 end

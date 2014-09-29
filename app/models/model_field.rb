@@ -235,6 +235,19 @@ class ModelField
       MODEL_FIELDS[module_type][mf.uid.to_sym] = mf
     end
   end 
+
+  def self.make_comment_arrays(rank_start,uid_prefix,klass)
+    r = [
+      [rank_start,"#{uid_prefix}_comment_count".to_sym,:comment_count,"Comment Count",{
+        data_type: :integer,
+        history_ignore: true,
+        read_only: true,
+        import_lambda: lambda {|o,d| "Comment count is read only."},
+        export_lambda: lambda {|o| o.comments.size},
+        qualified_field_name: "(SELECT count(id) FROM comments WHERE commentable_id = #{klass.tableize}.id AND commentable_type = '#{klass}')"
+        }]
+    ]
+  end
   
   def self.make_division_arrays(rank_start,uid_prefix,table_name)
     r = [
@@ -1593,6 +1606,7 @@ and classifications.product_id = products.id
       add_fields CoreModule::SHIPMENT, make_carrier_arrays(300,"shp","shipments")
       add_fields CoreModule::SHIPMENT, make_master_setup_array(400,"shp")
       add_fields CoreModule::SHIPMENT, make_importer_arrays(500,"shp","shipments")
+      add_fields CoreModule::SHIPMENT, make_comment_arrays(600,'shp','Shipment')
       
       add_fields CoreModule::SHIPMENT_LINE, [
         [1,:shpln_line_number,:line_number,"Shipment Row",{:data_type=>:integer}],

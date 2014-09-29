@@ -403,6 +403,7 @@ order_id: 77 #db id of order
   shp_arrival_port_date: '2014-01-30'
   shp_est_delivery_date: '2014-02-03'
   shp_delivered_date: '2014-02-03'
+  shp_comment_count: 3 # count of all comments on the shipment
   *cf_99: 'VAL' #custom field value for custom definition 99, see the custom values section of this documentation for more info
   lines: [{
     shpln_line_number: 1 #sequential line number for this line on the shipment

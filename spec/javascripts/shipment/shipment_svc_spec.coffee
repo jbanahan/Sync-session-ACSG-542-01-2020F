@@ -3,11 +3,13 @@ describe 'ShipmentApp', () ->
   beforeEach module('ShipmentApp')
 
   describe 'shipmentSvc', () ->
-    http = svc = null
+    http = svc = commentSvc = null
 
-    beforeEach inject((shipmentSvc,$httpBackend) ->
+    beforeEach inject((shipmentSvc,_commentSvc_,$httpBackend) ->
       svc = shipmentSvc
       http = $httpBackend
+      commentSvc = _commentSvc_
+      spyOn(commentSvc,'injectComments')
     )
 
     afterEach () ->
@@ -23,6 +25,7 @@ describe 'ShipmentApp', () ->
           shp = data.data
         http.flush()
         expect(shp).toEqual resp
+        expect(commentSvc.injectComments).toHaveBeenCalledWith(resp.shipment,'Shipment')
 
     describe 'saveShipment', () ->
       it "should remove zero quantity lines that don't already have an ID", ->
