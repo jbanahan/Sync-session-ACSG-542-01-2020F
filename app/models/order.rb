@@ -47,7 +47,7 @@ class Order < ActiveRecord::Base
     self.unaccept! user, true
   end
   def can_accept? u
-    u.admin? || u.company == self.vendor
+    u.admin? || u.company == self.vendor || u.company == self.agent
   end
 
 

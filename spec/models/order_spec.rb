@@ -57,19 +57,28 @@ describe Order do
       o = Order.new(vendor:v)
       expect(o.can_accept?(u)).to be_true
     end
-    it "should allow sys_admin user to accept" do
-      v = Company.new(vendor:true)
+    it "should allow agent to accept" do
+      a = Company.new(agent:true)
       u = User.new
-      u.sys_admin = true
-      o = Order.new(vendor:v)
+      u.company = a
+      o = Order.new(agent:a)
+      expect(o.can_accept?(u)).to be_true
+    end
+    it "should allow admin user to accept" do
+      c = Company.new(vendor:true)
+      u = User.new
+      u.company = c
+      u.admin = true
+      o = Order.new
       o.stub(:can_edit?).and_return true
       expect(o.can_accept?(u)).to be_true
     end
-    it "should not allow user who is not sys_admin to accept" do
-      v = Company.new(vendor:true)
+    it "should not allow user who is not admin to accept" do
+      c = Company.new(vendor:true)
       u = User.new
-      u.sys_admin = false
-      o = Order.new(vendor:v)
+      u.company = c
+      u.admin = false
+      o = Order.new
       o.stub(:can_edit?).and_return true
       expect(o.can_accept?(u)).to be_false
     end
