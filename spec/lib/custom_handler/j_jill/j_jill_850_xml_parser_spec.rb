@@ -11,7 +11,19 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
     def run_file opts = {}
       described_class.parse(IO.read(@path), opts)
     end
+    it "should close cancelled order" do
+      dom = REXML::Document.new(IO.read(@path))
+      REXML::XPath.each(dom.root,'//BEG01') {|el| el.text = '03'}
+      Order.any_instance.should_receive(:close!).with(instance_of(User))
+      described_class.parse_dom dom
+    end
+    it "should reopen order where BEG01 not eq to '03'" do
+      o = Factory(:order,importer_id:@c.id,order_number:'JJILL-1001368',closed_by_id:7,closed_at:Time.now)
+      Order.any_instance.should_receive(:reopen!).with(instance_of(User))
+      run_file
+    end
     it "should save order" do
+      Order.any_instance.should_not_receive(:reopen!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
       vend = o.vendor

@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     @inner_opts = {force_header_updates:false}
     @inner_opts = @inner_opts.merge opts
     @jill = Company.find_by_system_code UID_PREFIX
-    @user = User.find_by_username('integration')
+    @user = User.integration
     @cdefs = self.class.prep_custom_definitions [:vendor_style]
     raise "Company with system code #{UID_PREFIX} not found." unless @jill
   end
@@ -40,6 +40,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   private 
   def parse_order order_root, extract_date
+    cancel = REXML::XPath.first(order_root,'BEG/BEG01').text=='03'
     cust_ord = REXML::XPath.first(order_root,'BEG/BEG03').text
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
     ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
@@ -76,7 +77,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     if po_assigned_to_shipment
       message = "Order ##{cust_ord} already assigned to a Shipment"
       OpenMailer.send_simple_html("jjill_orders@vandegriftinc.com", "[VFI Track] #{message}", message).deliver!
+    elsif cancel && !ord.closed?
+      ord.close! @user
+    elsif !cancel && ord.closed?
+      ord.reopen! @user
     end
+
   end
 
   private
