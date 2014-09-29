@@ -84,7 +84,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       sys_code = trim_numeric row[0]
       ref = trim_numeric row[6]
       vendor = Company.find_or_create_by_system_code_and_vendor(sys_code,true,:name=>row[1])
-      @shipment = Shipment.find_by_reference_and_vendor_id ref, vendor.id
+      @shipment = Shipment.find_by_reference ref
       @shipment = Shipment.new(:reference=>ref,:vendor=>vendor,:importer=>Company.find_by_importer(true)) unless @shipment
     end
 
