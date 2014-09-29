@@ -48,6 +48,7 @@ module OpenChain; module CustomHandler; module UnderArmour
             val_hash[cell['position']['column']] = cell['cell']['value']
           end
           ibd_number = val_hash[6]
+          next if ibd_number.downcase.match /result/
           raise "Row #{row_num} does not have IBD number." unless ibd_number
           if ibd_number != last_ibd_number && !val_set.empty?
             UnderArmourReceivingParser.new val_set, product_cache

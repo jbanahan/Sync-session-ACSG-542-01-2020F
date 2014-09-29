@@ -126,6 +126,12 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser do
     line.get_custom_value(CustomDefinition.find_by_label('Size')).value.should == 'LG'
     line.get_custom_value(CustomDefinition.find_by_label('Color')).value.should == '413'
   end
+  it "should skip result lines" do
+    @line_array[6][1] = 'Result'
+    @xl_client.should_receive(:last_row_number).with(0).and_return(1)
+    @make_line_lambda.call(1,@line_array)
+    expect{described_class.parse_s3(@s3_path)}.to_not change(Shipment,:count)
+  end
   it "should strip .0 from size" do
     @line_array[11][1] = "6.0"
     @xl_client.should_receive(:last_row_number).with(0).and_return(1)
