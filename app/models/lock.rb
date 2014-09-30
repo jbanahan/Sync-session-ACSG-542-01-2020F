@@ -11,6 +11,7 @@ class Lock < ActiveRecord::Base
   ALLIANCE_PARSER ||= 'AllianceParser'
   FENIX_INVOICE_PARSER_LOCK ||= 'FenixInvoiceParser'
   INTACCT_DETAILS_PARSER ||= 'IntacctParser'
+  TRADE_CARD_PARSER ||= 'TradecardParser'
 
   # Acquires a mutually exclusive, cross process/host, named lock (mutex)
   # for the duration of the block passed to this method returning wahtever

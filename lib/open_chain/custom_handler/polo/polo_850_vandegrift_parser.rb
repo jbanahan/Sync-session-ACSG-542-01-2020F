@@ -1,18 +1,24 @@
 require 'rexml/document'
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/polo/polo_business_logic'
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Polo
   # This class is solely for handling 850 XML documents intended to populate information into the VFI Track (Vandegrift)
   # application instance (.ie not RL one)
-
-  # Buyer ID 0200011989 = RL Canada - 13627
-  # Buyer ID 0200011987 = Club Monaco - 291
-  # Buyer ID 0200012647 = CHPS MEXICO, S.A. DE C.V. - 1
-  # Buyer ID 0200012014 = RALPH LAUREN EUROPE SARL - 4
   class Polo850VandegriftParser
     include PoloBusinessLogic
     include IntegrationClientParser
+    include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+
+    RL_BUYER_MAP ||= {
+      '0200011989' => '806167003RM0001',
+      '0200011987' => '866806458RM0001'
+    }
+
+    def initialize
+      @cdefs = self.class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number]
+    end
 
     def integration_folder
       ["//opt/wftpserver/ftproot/www-vfitrack-net/_polo_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_850"]
@@ -29,12 +35,10 @@ module OpenChain; module CustomHandler; module Polo
       # Buyer ID 0200011989 = RL Canada (Fenix Cust No) -> 806167003RM0001
       # Buyer ID 0200011987 = Club Monaco (Fenix Cust No) -> 866806458RM0001
       # These are the only Buyers we've received data for in the months leading up to this project.  New buyer ids we'll handle on a case-case basis.
-      
-      buyer_id_map = {'0200011989' => '806167003RM0001', '0200011987' => '866806458RM0001'}
       buyer_id = first_xpath_text dom, "/Orders/Parties/NameAddress/PartyID[PartyIDType = 'BY']/PartyIDValue"
       po_number = first_xpath_text dom, "/Orders/MessageInformation/MessageOrderNumber"
 
-      if (importer_number = buyer_id_map[buyer_id]) && !po_number.blank?
+      if (importer_number = RL_BUYER_MAP[buyer_id]) && !po_number.blank?
         importer = Company.where(fenix_customer_number: importer_number).first
         raise "Unable to find Fenix Importer for importer number #{importer_number}.  This account should not be missing." unless importer
 
@@ -159,16 +163,20 @@ module OpenChain; module CustomHandler; module Polo
             product.unit_of_measure = xml.text("ProductQuantityDetails/ProductQuantityUOM")
 
             # Part Number is the importer's unique identifier, but not the system unique identifier
-            @part_number_cd ||= CustomDefinition.where(label: "Part Number", module_type: "Product").first
-            raise "Unable to find Part Number custom field for Product module." unless @part_number_cd
             product.save!
-            product.update_custom_value! @part_number_cd, style
+            product.update_custom_value! @cdefs[:prod_part_number], style
           end
           line.product = product
         end
 
         po.order_lines.select {|l| !(line_numbers.include?(l.line_number))}.map &:destroy
         po.save!
+
+        # If we have a REF w/ Qualifier of 9V w/ a value field of TC or TCF, then mark the order as having the invoice system as Tradecard.
+        invoicing_system = (["TC", "TCF"].include?(first_xpath_text(dom, "/Orders/MessageReferences/References[ReferenceType = '9V']/ReferenceValue")) ? "Tradecard" : "")
+        po.update_custom_value! @cdefs[:ord_invoicing_system], invoicing_system
+
+        po
       end
 
       def first_xpath_text dom, expression 

@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
   describe :parse do
     context :standard_line_type do
       before :each do
-        @part_no_cd = CustomDefinition.create! label: "Part Number", module_type: "Product", data_type: "string"
+        @cdefs = described_class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number]
         @po_type = ""
         @po_number = "PO"
         @merchandise_division = "MERCH"
@@ -22,6 +22,9 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @uom = "UOM"
         @quantity = "10"
         @buyer_id = "0200011989"
+        @ref_type = "9V"
+        @ref_value = "TC"
+
         @importer = Factory(:company, fenix_customer_number: "806167003RM0001")
 
         @xml_lambda = lambda do 
@@ -33,6 +36,12 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
     <MessageTime>#{@message_time}</MessageTime>
     <OrderChangeType>#{@po_type}</OrderChangeType>
   </MessageInformation>
+  <MessageReferences>
+    <References>
+      <ReferenceType>#{@ref_type}</ReferenceType>
+      <ReferenceValue>#{@ref_value}</ReferenceValue>
+    </References>
+  </MessageReferences>
   <Parties>
     <NameAddress>
       <PartyID>
@@ -93,6 +102,7 @@ XML
         expect(order.customer_order_number).to eq @po_number
         expect(order.importer).to eq @importer
         expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0,2]}:#{@message_time[2,2]}").in_time_zone("UTC")
+        expect(order.get_custom_value(@cdefs[:ord_invoicing_system]).value).to eq "Tradecard"
         expect(order.order_lines).to have(1).item
 
         l = order.order_lines.first
@@ -101,7 +111,7 @@ XML
         expect(l.product.unique_identifier).to eq "#{@importer.fenix_customer_number}-#{@style}"
         expect(l.product.unit_of_measure).to eq @uom
         expect(l.product.name).to eq @style
-        expect(l.product.get_custom_value(@part_no_cd).value).to eq @style
+        expect(l.product.get_custom_value(@cdefs[:prod_part_number]).value).to eq @style
       end
 
       it "updates orders, adding new lines and eliminating old lines" do
@@ -132,6 +142,14 @@ XML
         expect(order).not_to be_nil
       end
 
+      it "handles TradeCard First Sale invoicing system values" do
+        @ref_value = 'TCF'
+        described_class.new.parse @xml_lambda.call
+
+        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        expect(order.get_custom_value(@cdefs[:ord_invoicing_system]).value).to eq "Tradecard"
+      end
+
       it "raises an error for unknown buyer ids" do
         @buyer_id = "unknown"
         expect{described_class.new.parse @xml_lambda.call}.to raise_error "Unknown Buyer ID #{@buyer_id} found in PO Number #{@po_number}.  If this is a new Buyer you must link this number to an Importer account."
@@ -141,12 +159,6 @@ XML
         @importer.destroy
 
         expect{described_class.new.parse @xml_lambda.call}.to raise_error "Unable to find Fenix Importer for importer number #{@importer.fenix_customer_number}.  This account should not be missing."
-      end
-
-      it "raises an error if Part Number custom def is not found" do
-        @part_no_cd.destroy
-
-        expect{described_class.new.parse @xml_lambda.call}.to raise_error "Unable to find Part Number custom field for Product module."
       end
     end
 
