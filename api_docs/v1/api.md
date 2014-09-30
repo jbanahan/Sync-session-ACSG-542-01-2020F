@@ -105,6 +105,62 @@ You can have as many search criteria and order operations as you want, just incr
 
 _Currently, you can only search and sort using fields from the top level of the given data object.  For example, you **cannot** search for commercial invoices by the line level part number. Including criteria from the wrong level will result in an error._
 
+
+## Comment
+
+Represents a comment added to another object.
+
+Permissions that are returned are for that individual comment
+
+### Data Object
+
+```
+{comment:{
+    "id": 99,
+    "commentable_type": "Shipment",
+    "commentable_id": 28,
+    "user": {
+        "id": 2,
+        "full_name": "Brian Glick",
+        "email": "bglick@vandegriftinc.com"
+    },
+    "subject": "comment subject",
+    "body": "longer comment body",
+    "created_at": "2014-09-29T10:07:23-04:00",
+    "permissions": {
+        "can_view": true,
+        "can_edit": true,
+        "can_delete": true
+    }
+  }
+}
+```
+
+### Methods
+
+#### For Module
+
+Return all comments based on the parent object.  Valid modules are `Order`, `Shipment`, `Entry`, `Product`
+
+`get /comments/for_module/Shipment/3.json` returns `{comments:[...comment objects...]`
+
+The ID number is the ID of the parent object, not the ID of any comment.
+
+#### Create
+
+Make a new comment.  New comments must have the `commentable_type`, `commentable_id`, and `body` set.  
+
+The User information is ignored, and the comment is always created with the authenticated user.  You cannot create comments for another user.
+
+`post /comments` with `{comment:{... comment object ...}}`
+
+#### Destroy
+
+Remove a comment (if you have permission).  Permissions can be checked by reviwing the permissions attributes of the comment object returned from the server.
+
+`destroy /comments/1.json` returns an OK message, but you should just rely on the HTTP status code of 200 for success.
+
+
 ## CommercialInvoice
 
 Represents a commercial invoice which may or may not be part of a CustomsEntry
