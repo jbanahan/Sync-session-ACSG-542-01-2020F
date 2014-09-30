@@ -333,6 +333,9 @@ class ModelField
   def self.make_agent_arrays(rank_start,uid_prefix,table_name)
     make_company_arrays rank_start, uid_prefix, table_name, 'agent', 'Agent', 'agent'
   end
+  def self.make_factory_arrays(rank_start,uid_prefix,table_name)
+    make_company_arrays rank_start, uid_prefix, table_name, 'factory', 'Factory', 'factory'
+  end
 
   #Don't use this.  Use make_ship_from_arrays or make_ship_to_arrays
   def self.make_ship_arrays(rank_start,uid_prefix,table_name,ft)
@@ -1551,6 +1554,7 @@ and classifications.product_id = products.id
       add_fields CoreModule::ORDER, make_master_setup_array(400,"ord")
       add_fields CoreModule::ORDER, make_importer_arrays(500,"ord","orders")
       add_fields CoreModule::ORDER, make_agent_arrays(600,'ord','orders')
+      add_fields CoreModule::ORDER, make_factory_arrays(700,'ord','orders')
 
       add_fields CoreModule::ORDER_LINE, [
         [1,:ordln_line_number,:line_number,"Order Line",{:data_type=>:integer}],

@@ -271,6 +271,19 @@ describe Order do
         expect(order.can_view? @user).to be_true
       end
     end
+
+    context :factory do
+      before :each do
+        @factory = Factory(:company, factory:true)
+        order.factory = @factory
+        @user = Factory(:user, company: @factory)
+        @user.stub(:view_orders?).and_return true
+      end
+
+      it "allows a factory to view their orders" do
+        expect(order.can_view? @user).to be_true
+      end
+    end
     
   end
 

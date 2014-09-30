@@ -1,4 +1,5 @@
 require 'digest/md5'
+require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/j_jill/j_jill_support'
 require 'open_chain/custom_handler/j_jill/j_jill_custom_definition_support'
@@ -121,6 +122,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     ord.customer_order_number = cust_ord
     refs = parse_refs order_root
     ord.vendor = find_or_create_vendor refs['VN']
+    ord.factory = find_or_create_factory ord.vendor, order_root
     ord.order_date = parse_date_string(REXML::XPath.first(order_root,'BEG/BEG05').text)
     ord.mode = ship_mode(REXML::XPath.first(order_root,'TD5/TD504').text)
     ord.fob_point = REXML::XPath.first(order_root,'FOB/FOB07').text
@@ -160,6 +162,27 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       @jill.linked_companies << v
     end
     v
+  end
+  def find_or_create_factory vendor, order_root
+    factory_el = nil
+    REXML::XPath.each(order_root,'GROUP_5') do |g5|
+      if REXML::XPath.first(g5,'N1/N101').text == 'SU'
+        factory_el = g5
+        break
+      end
+    end
+    return unless factory_el
+    mid = REXML::XPath.first(factory_el,'N1/N104').text
+    return if mid.blank? #can't load factory with blank MID
+    sys_code = "#{UID_PREFIX}-#{mid}"
+    f = Company.find_by_system_code sys_code
+    if f.nil?
+      nm = REXML::XPath.first(factory_el,'N1/N102').text
+      f = Company.create!(system_code:sys_code,name:nm,factory:true)
+    end
+    @jill.linked_companies << f if !@jill.linked_companies.include?(f)
+    vendor.linked_companies << f if vendor && !vendor.linked_companies.include?(f)
+    f
   end
   def parse_refs parent
     r = {}

@@ -8,7 +8,8 @@ class Order < ActiveRecord::Base
 	belongs_to :ship_to, :class_name => "Address"
   belongs_to :importer, :class_name => "Company"
   belongs_to :agent, :class_name=>"Company"
-  belongs_to :closed_by, class_name:'User'
+  belongs_to :closed_by, :class_name=>'User'
+  belongs_to :factory, :class_name=>'Company'
 	
 	validates  :vendor, :presence => true, :unless => :has_importer?
   validates :importer, :presence => true, :unless => :has_vendor?
@@ -120,6 +121,7 @@ class Order < ActiveRecord::Base
         (user.company_id == self.vendor_id) || 
         (user.company_id == self.importer_id) ||
         (user.company_id == self.agent_id) ||
+        (user.company_id == self.factory_id) ||
         user.company.linked_companies.include?(importer) || 
         user.company.linked_companies.include?(vendor)
       )
@@ -133,7 +135,7 @@ class Order < ActiveRecord::Base
     return "1=1" if user.company.master?
     cid = user.company_id
     lstr = "(SELECT child_id FROM linked_companies WHERE parent_id = #{cid})"
-    "(orders.vendor_id = #{cid} OR orders.vendor_id IN #{lstr} OR orders.importer_id = #{cid} OR orders.importer_id IN #{lstr})"
+    "(orders.vendor_id = #{cid} OR orders.vendor_id IN #{lstr} OR orders.importer_id = #{cid} OR orders.importer_id IN #{lstr} OR orders.factory_id = #{cid})"
   end
 
   def can_edit?(user)

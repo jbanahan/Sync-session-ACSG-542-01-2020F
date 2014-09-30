@@ -62,12 +62,13 @@ $(function() {
 <table>
 <%=field_row "Name", @company.name%>
 <%=field_row "System Code", @company.system_code %>
-<%=field_row "Carrier", bool_txt(@company.carrier?) %>
-<%=field_row "Vendor", bool_txt(@company.vendor?) %>
-<%=field_row "Customer", bool_txt(@company.customer?) %>
-<%=field_row "Importer", bool_txt(@company.importer?)%>
 <%=field_row "Broker", bool_txt(@company.broker?)%>
+<%=field_row "Carrier", bool_txt(@company.carrier?) %>
+<%=field_row "Customer", bool_txt(@company.customer?) %>
 <%=field_row "Drawback", bool_txt(@company.drawback?)%>
+<%=field_row "Factory", bool_txt(@company.factory?)%>
+<%=field_row "Importer", bool_txt(@company.importer?)%>
+<%=field_row "Vendor", bool_txt(@company.vendor?) %>
 <%=field_row("Alliance Customer Number", @company.alliance_customer_number) if @company.alliance_customer_number%>
 <%=field_row("Fenix Customer Number", @company.fenix_customer_number) if @company.fenix_customer_number%>
 <%=field_row("ECellerate Customer Number", @company.ecellerate_customer_number) if @company.ecellerate_customer_number%>

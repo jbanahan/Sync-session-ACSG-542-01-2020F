@@ -8,6 +8,7 @@ class Company < ActiveRecord::Base
 	has_many	:divisions, :dependent => :destroy
   has_many  :importer_products, :class_name => 'Product', :foreign_key=>'importer_id'
   has_many  :importer_orders, :class_name => 'Order', :foreign_key => 'importer_id', :dependent => :destroy
+  has_many  :factory_orders, :class_name => 'Order', :foreign_key => 'factory_id'
 	has_many	:vendor_orders, :class_name => "Order", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many	:vendor_products, :class_name => "Product", :foreign_key => "vendor_id", :dependent => :destroy
 	has_many  :vendor_shipments, :class_name => "Shipment", :foreign_key => "vendor_id", :dependent => :destroy

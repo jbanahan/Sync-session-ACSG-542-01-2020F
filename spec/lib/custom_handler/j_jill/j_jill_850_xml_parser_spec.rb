@@ -26,12 +26,21 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       Order.any_instance.should_not_receive(:reopen!).with(instance_of(User))
       expect {run_file}.to change(Order,:count).from(0).to(1)
       o = Order.first
+      
       vend = o.vendor
       expect(vend.system_code).to eq "JJILL-0044198"
       expect(vend.name).to eq "CENTRALAND LMTD"
       expect(vend).to be_vendor
+
+      fact = o.factory
+      expect(fact.system_code).to eq 'JJILL-CNCENKNIDON'
+      expect(fact.name).to eq "CENTRALAND KNITTING FACTORY"
+      expect(fact).to be_factory
+      expect(vend.linked_companies).to include(fact)
+
       expect(o.importer).to eq @c
       expect(@c.linked_companies).to include(vend)
+
       expect(o.customer_order_number).to eq "1001368"
       expect(o.order_number).to eq "JJILL-1001368"
       expect(o.order_date).to eq Date.new(2014,7,28)
