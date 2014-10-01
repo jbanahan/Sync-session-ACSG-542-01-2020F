@@ -9,6 +9,12 @@ describe Shipment do
       u = Factory(:user,shipment_view:true,company:c)
       expect(s.can_view?(u)).to be_false
    end
+   it "should allow view if user from importer company" do
+     imp = Factory(:company)
+     u = Factory(:user,shipment_view:true,company:imp)
+     s = Factory(:shipment,importer:imp)
+     expect(s.can_view?(u)).to be_false
+   end
   end
   describe :search_secure do
     before :each do

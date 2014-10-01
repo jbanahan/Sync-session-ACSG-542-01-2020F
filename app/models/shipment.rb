@@ -47,7 +47,7 @@ class Shipment < ActiveRecord::Base
     return true if user.company.master?
     imp = self.importer
     return false unless imp && (imp==user.company || imp.linked_company?(user.company))
-	  return (user.company.vendor? && user.company == self.vendor) || (user.company.carrier? && user.company == self.carrier)
+	  return (user.company == self.vendor || user.company == self.carrier || user.company = self.importer || (self.vendor && self.vendor.linked_companies.include?(user.company)))
 	end
 	
 	def can_edit?(user)
