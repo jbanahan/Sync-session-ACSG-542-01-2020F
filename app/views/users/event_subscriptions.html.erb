@@ -53,6 +53,24 @@
               <td>Comment</td>
               <td><input type='checkbox' event_type='ORDER_COMMENT_CREATE' sub_type='email' <%=email_subs.include?('ORDER_COMMENT_CREATE') ? 'checked="checked"' : ""%> /></td>
             </tr>
+            <tr>
+              <td>Accept</td>
+              <td><input type='checkbox' event_type='ORDER_ACCEPT' sub_type='email' <%=email_subs.include?('ORDER_ACCEPT') ? 'checked="checked"' : ""%> /></td>
+            </tr>
+            <tr>
+              <td>Unaccept</td>
+              <td><input type='checkbox' event_type='ORDER_UNACCEPT' sub_type='email' <%=email_subs.include?('ORDER_UNACCEPT') ? 'checked="checked"' : ""%> /></td>
+            </tr>
+
+          <%end%>
+          <%if @user.view_shipments?%>
+            <tr>
+              <td colspan="2"><strong>Shipments</strong></td>
+            </tr>
+            <tr>
+              <td>Comment</td>
+              <td><input type='checkbox' event_type='SHIPMENT_COMMENT_CREATE' sub_type='email' <%=email_subs.include?('SHIPMENT_COMMENT_CREATE') ? 'checked="checked"' : ""%> </td>
+            </tr>
           <%end%>
         </tbody>
       </table>
