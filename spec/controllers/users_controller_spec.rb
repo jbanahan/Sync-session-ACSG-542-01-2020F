@@ -5,6 +5,21 @@ describe UsersController do
     @user = Factory(:user)
     sign_in_as @user
   end
+  describe :event_subscriptions do
+    it "should work with user id" do
+      u = Factory(:user)
+      User.any_instance.should_receive(:can_edit?).and_return true
+      get :event_subscriptions, id: u.id, company_id: u.company_id
+      expect(assigns(:user)).to eq u
+      expect(response).to be_success
+    end
+    it "should work without user id" do
+      u = Factory(:user)
+      get :event_subscriptions
+      expect(assigns(:user)).to eq @user
+      expect(response).to be_success
+    end
+  end
   describe 'hide_message' do
     it "should hide message" do
       post :hide_message, :message_name=>'mn'

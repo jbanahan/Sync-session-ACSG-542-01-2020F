@@ -251,7 +251,7 @@ class UsersController < ApplicationController
   end
 
   def event_subscriptions
-    @user = User.find params[:id]
+    @user = params[:id] ? User.find(params[:id]) : current_user
     error_redirect "You do not have permission to view this page." unless @user.can_edit?(current_user)
   end
 

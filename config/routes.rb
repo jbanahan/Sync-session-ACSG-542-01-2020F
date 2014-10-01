@@ -176,6 +176,7 @@ OpenChain::Application.routes.draw do
   match "/deliveries/:id/add_sets" => "deliveries#add_sets"
   match "/login" => "user_sessions#new", :as => :login
   match "/logout" => "user_sessions#destroy", :as => :logout
+  match "/my_subscriptions" => "users#event_subscriptions"
   match "/settings" => "settings#index", :as => :settings
   match "/tools" => "settings#tools", :as => :tools
   match "/adjust_inventory" => "products#adjust_inventory"
