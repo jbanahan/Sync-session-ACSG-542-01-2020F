@@ -152,7 +152,7 @@ class Company < ActiveRecord::Base
     master_setup.entry_enabled && self.master?
   end
   def view_orders?
-    return master_setup.order_enabled && (self.master? || self.vendor? || self.importer?)
+    return master_setup.order_enabled && (self.master? || self.vendor? || self.importer? || self.agent?)
   end
   def add_orders?
     return master_setup.order_enabled && (self.master?)
@@ -164,17 +164,17 @@ class Company < ActiveRecord::Base
     return master_setup.order_enabled && self.master?
   end
   def attach_orders?
-    return master_setup.order_enabled && (self.master? || self.vendor?)
+    return master_setup.order_enabled && (self.master? || self.vendor? || self.importer? || self.agent?)
   end
   def comment_orders?
-    return master_setup.order_enabled && (self.master? || self.vendor?)
+    return master_setup.order_enabled && (self.master? || self.vendor? || self.importer? || self.agent?)
   end
   
   def view_products?
     true
   end
   def add_products?
-    return self.master? || self.importer? 
+    return self.master? || self.importer?
   end
   def edit_products?
     return self.master? || self.importer?
@@ -287,6 +287,6 @@ class Company < ActiveRecord::Base
     master_setup.delivery_enabled && (self.master? || self.carrier?)
   end
   def company_view_edit_shipments?
-    master_setup.shipment_enabled && (self.master? || self.vendor? || self.carrier?)
+    master_setup.shipment_enabled && (self.master? || self.vendor? || self.carrier? || self.agent?)
   end
 end
