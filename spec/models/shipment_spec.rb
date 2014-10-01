@@ -10,6 +10,41 @@ describe Shipment do
       expect(s.can_view?(u)).to be_false
    end
   end
+  describe :search_secure do
+    before :each do
+      @master_only = Factory(:shipment)
+    end
+    it "should allow vendor who is linked to shipment" do
+      u = Factory(:user)
+      s = Factory(:shipment,vendor:u.company)
+      expect(Shipment.search_secure(u,Shipment).to_a).to eq [s]
+    end
+    it "should allow importer who is linked to shipment" do
+      u = Factory(:user)
+      s = Factory(:shipment,importer:u.company)
+      expect(Shipment.search_secure(u,Shipment).to_a).to eq [s]
+    end
+    it "should allow agent who is linked to vendor on shipment" do
+      u = Factory(:user)
+      v = Factory(:company)
+      v.linked_companies << u.company
+      s = Factory(:shipment,vendor:v)
+      expect(Shipment.search_secure(u,Shipment).to_a).to eq [s]
+    end
+    it "should allow master user" do
+      u = Factory(:master_user)
+      expect(Shipment.search_secure(u,Shipment).to_a).to eq [@master_only]
+    end
+    it "should allow carrier who is linked to shipment" do
+      u = Factory(:user)
+      s = Factory(:shipment,carrier:u.company)
+      expect(Shipment.search_secure(u,Shipment).to_a).to eq [s]
+    end
+    it "should not allow non linked user" do
+      u = Factory(:user)
+      expect(Shipment.search_secure(u,Shipment).to_a).to be_empty
+    end
+  end
   describe "available_orders" do
     it "should find nothing if importer not set" do
       expect(Shipment.new.available_orders(User.new)).to be_empty

@@ -73,14 +73,13 @@ class Shipment < ActiveRecord::Base
   end
 
   def self.search_where user
-    if user.company.master
-      return "1=1"
-    elsif user.company.vendor 
-      return "shipments.vendor_id = #{user.company_id}"
-    elsif user.company.carrier
-      return "shipments.carrier_id = #{user.company_id}"
-    else
-      return "1=0"
-    end
+    cid = user.company_id
+    a = ['1=0']
+    a << '1=1' if user.company.master
+    a << "shipments.vendor_id = #{cid}"
+    a << "shipments.vendor_id IN (SELECT parent_id FROM linked_companies WHERE child_id = #{cid})"
+    a << "shipments.carrier_id = #{cid}"
+    a << "shipments.importer_id = #{cid}"
+    "(#{a.join(" OR ")})"
   end
 end
