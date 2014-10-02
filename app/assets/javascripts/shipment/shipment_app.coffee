@@ -204,7 +204,10 @@ shipmentApp.controller 'ProcessManifestCtrl', ['$scope','shipmentSvc','shipmentI
     $scope.loadShipment shipmentId  
 ]
 
-shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId','$state',($scope,shipmentSvc,shipmentId,$state) ->
+shipmentApp.controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','shipmentId','$state','chainErrorHandler',($scope,shipmentSvc,shipmentId,$state,chainErrorHandler) ->
+  $scope.eh = chainErrorHandler
+  $scope.eh.responseErrorHandler = (rejection) ->
+    $scope.notificationMessage = null
   $scope.shp = null
   $scope.hideComments = true
   $scope.loadShipment = (id) ->
