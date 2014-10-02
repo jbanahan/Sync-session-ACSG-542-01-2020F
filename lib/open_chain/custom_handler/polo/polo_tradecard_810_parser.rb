@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Polo
     end
 
     def integration_folder
-      "/opt/wftpserver/ftproot/www-vfitrack-net/_polo_tradecard_810"
+      ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_tradecard_810", "//opt/wftpserver/ftproot/www-vfitrack-net/_polo_tradecard_810"]
     end
 
     def parse data, opts = {}

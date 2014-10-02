@@ -28,7 +28,7 @@ XML
 
   describe "integration_folder" do
     it "uses the correct integration_folder" do
-      expect(OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.integration_folder).to eq "/opt/wftpserver/ftproot/www-vfitrack-net/_polo_tradecard_810"
+      expect(OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.integration_folder).to eq ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_tradecard_810", "//opt/wftpserver/ftproot/www-vfitrack-net/_polo_tradecard_810"]
     end
   end
 
