@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_fda_contact_phone: {label: "FDA Contact Phone", data_type: :string, module_type: "Product"},
     prod_fda_affirmation_compliance: {label: "FDA Affirmation of Compliance", data_type: :string, module_type: "Product"},
     ord_invoicing_system: {label: "Invoicing System", data_type: :string, module_type: "Order"},
-    ord_invoiced: {label: "Invoice Received?", data_type: :string, module_type: "Order"}
+    ord_invoiced: {label: "Invoice Received?", data_type: :boolean, module_type: "Order"}
   } 
   
   def self.included(base)
