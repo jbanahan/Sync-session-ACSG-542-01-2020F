@@ -26,7 +26,8 @@
 <div class="container">
   <div class="row">
     <div class="col-md-6">
-      <%=field_bootstrap field_label(:ord_ord_num), f.text_field(:order_number, "class" => "focus_first form-control") %>
+      <%=field_bootstrap field_label(:ord_imp_name), @order.importer ? content_tag(:span,@order.importer.name) : f.collection_select(:importer_id, current_user.available_importers.select("companies.id, companies.name").order(:name), :id, :name, {:prompt=>'Select Importer'}, 'class'=>'form-control focus_first')%>
+      <%=field_bootstrap field_label(:ord_ord_num), f.text_field(:order_number, "class" => "form-control") %>
       <%=field_bootstrap field_label(:ord_cust_ord_no), f.text_field(:customer_order_number, "class" => "form-control") %>
       <%=field_bootstrap field_label(:ord_approval_status), f.select(:approval_status, ['Accepted','Rejected'], {include_blank:''}, {class:'form-control'}) %>
       <%=field_bootstrap field_label(:ord_ven_name), f.collection_select(:vendor_id, @order.importer ? @order.importer.linked_companies.vendors : [], :id, :name, {:prompt => "Select a vendor"}, {class:'form-control'}) %>

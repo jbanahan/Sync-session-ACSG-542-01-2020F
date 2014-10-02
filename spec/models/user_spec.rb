@@ -1,6 +1,28 @@
 require 'spec_helper'
 
 describe User do
+  describe :available_importers do
+    before :each do
+      @c1 = Factory(:company,importer:true)
+      @c2 = Factory(:company,importer:true)
+      @c3 = Factory(:company,importer:true)
+      @c4 = Factory(:company) #not an importer
+    end
+    it "should show all importers if master company" do
+      u = Factory(:master_user)
+      expect(u.available_importers.to_a).to eq [@c1,@c2,@c3]
+    end
+    it "should show all linked importers" do
+      u = Factory(:user,company:@c4)
+      @c4.linked_companies << @c1
+      expect(u.available_importers.to_a).to eq [@c1]
+    end
+    it "should show me if i'm an importer" do
+      u = Factory(:user,company:@c2)
+      @c2.linked_companies << @c1
+      expect(u.available_importers.to_a).to eq [@c1,@c2]
+    end
+  end
   describe :api_admin do
     it "should create api_admin if it doesn't exist" do
       u = User.api_admin

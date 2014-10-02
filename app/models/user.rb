@@ -194,6 +194,13 @@ class User < ActiveRecord::Base
     nil
   end
 
+  # return all companies that I as a user can see that are importers
+  def available_importers
+    r = Company.importers
+    r = r.where("(companies.id IN (SELECT child_id FROM linked_companies WHERE parent_id = #{self.company_id}) OR companies.id = #{self.company_id})") unless self.company.master?
+    r
+  end
+
   def update_user_password password, password_confirmation
     # The password will be blank most of the time on the user maint screen, unless the user
     # is actually trying to update their password.
