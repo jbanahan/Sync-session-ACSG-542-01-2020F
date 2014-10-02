@@ -287,4 +287,10 @@ describe Order do
     
   end
 
+  describe :compose_po_number do
+    it "assembles a po number" do
+      expect(Order.compose_po_number "A", "b").to eq "A-b"
+    end
+  end
+
 end

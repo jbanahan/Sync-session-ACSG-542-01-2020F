@@ -219,7 +219,11 @@ class Order < ActiveRecord::Base
       raise "Failed to create unique Order Number from #{self.customer_order_number} for Vendor #{self.vendor.name}." if uniqueness.blank?
     end
 
-    "#{uniqueness}-#{self.customer_order_number}"
+    Order.compose_po_number uniqueness, self.customer_order_number
+  end
+
+  def self.compose_po_number company_identifer, order_number
+    "#{company_identifer}-#{order_number}"
   end
 
   private 

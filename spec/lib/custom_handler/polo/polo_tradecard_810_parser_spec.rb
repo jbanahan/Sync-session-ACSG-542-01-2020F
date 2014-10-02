@@ -28,7 +28,7 @@ XML
 
   describe "integration_folder" do
     it "uses the correct integration_folder" do
-      expect(OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.integration_folder).to eq "/opt/wftpserver/ftproot/www-vfitrack-net/_polo_tradecard_810"
+      expect(OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.integration_folder).to eq ["/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_polo_tradecard_810", "//opt/wftpserver/ftproot/www-vfitrack-net/_polo_tradecard_810"]
     end
   end
 
@@ -98,6 +98,15 @@ XML
       inv = CommercialInvoice.first
       expect(inv).to_not be_nil
       expect(inv.commercial_invoice_lines.first.quantity).to eq BigDecimal.new("0")
+    end
+
+    it "marks connected POs as received" do
+      o = Order.create! order_number: "806167003RM0001-CAN007629", importer: Factory(:importer, fenix_customer_number: "806167003RM0001")
+      cds = OpenChain::CustomHandler::Polo::PoloTradecard810Parser.prep_custom_definitions([:ord_invoiced, :ord_invoicing_system])
+      o.update_custom_value! cds[:ord_invoicing_system], "Tradecard"
+
+      OpenChain::CustomHandler::Polo::PoloTradecard810Parser.new.parse @xml
+      expect(o.get_custom_value(cds[:ord_invoiced]).value).to be_true
     end
   end
 end
