@@ -88,7 +88,7 @@ if(export_country_codes like '%DE%', 'DE', export_country_codes) as 'ecc',
 (case entries.transport_mode_code when 40 then "AIR" when 11 then "OCEAN" when 30 then 'OCEAN' when 21 then 'OCEAN' else "OTHER" end) as 'Mode', 
 count(*) as 'orders'
 from entries
-inner join commercial_invoices on commercial_invoices.entry_id = entries.id and LENGTH(commercial_invoices.invoice_number) = 6
+inner join commercial_invoices on commercial_invoices.entry_id = entries.id and NOT LENGTH(commercial_invoices.invoice_number) = 8
 where entries.customer_number = 'HENNE'
 and
 arrival_date BETWEEN '#{start_date}' and '#{end_date}'
@@ -119,7 +119,7 @@ where customer_number = 'HENNE'
 and 
 arrival_date between '#{start_date}' and '#{end_date}'
 and
-(select avg(length(commercial_invoices.invoice_number)) from commercial_invoices where commercial_invoices.entry_id = entries.id) = 6
+(select count(*) from commercial_invoices where commercial_invoices.entry_id = entries.id and length(commercial_invoices.invoice_number) = 8) = 0 
 ) x
 group by mode, ecc
 QRY
