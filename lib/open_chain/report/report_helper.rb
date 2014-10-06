@@ -83,6 +83,16 @@ module OpenChain
         }
       end
 
+      def csv_translation_lambda join_string = ", ", split_expression = /\n\s*/
+        lambda { |result_set_row, raw_column_value|
+          if raw_column_value.blank?
+            raw_column_value
+          else
+            raw_column_value.split(split_expression).join(join_string)
+          end
+        }
+      end
+
     private 
 
       # Takes the raw result set value from the query and conditionally does some data manipulation on it.

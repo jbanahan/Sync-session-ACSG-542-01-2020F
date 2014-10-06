@@ -1176,7 +1176,8 @@ and classifications.product_id = products.id
             WHERE failed_bvr.validatable_id = entries.id AND failed_bvr.validatable_type = 'Entry'
             GROUP BY failed_bvr.validatable_id)",
           :can_view_lambda=>lambda {|u| u.company.master?}
-        }]
+        }],
+        [154, :ent_store_names, :store_names, "Store Names", {:data_type=>:text}]
       ]
       add_fields CoreModule::ENTRY, make_country_arrays(500,'ent',"entries","import_country")
       add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
@@ -1271,7 +1272,8 @@ and classifications.product_id = products.id
         [44,:cil_visa_quantity, :visa_quantity, "Visa Quantity",{:data_type=>:decimal}],
         [45,:cil_visa_uom, :visa_uom, "Visa UOM",{:data_type=>:string}],
         [46,:cil_value_foreign,:value_foreign,'Value (Foreign)',{data_type: :decimal, currency: :other}],
-        [47,:cil_currency,:currency,'Currency',{data_type: :string}]
+        [47,:cil_currency,:currency,'Currency',{data_type: :string}],
+        [48,:cil_store_name, :store_name, "Store Name",{data_type: :string}]
       ]
       add_fields CoreModule::COMMERCIAL_INVOICE_TARIFF, [
         [1,:cit_hts_code,:hts_code,"HTS Code",{:data_type=>:string,:export_lambda=>lambda{|t| t.hts_code.blank? ? "" : t.hts_code.hts_format}}],
