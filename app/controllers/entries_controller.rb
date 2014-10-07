@@ -227,10 +227,6 @@ class EntriesController < ApplicationController
       return 
     end
     @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first
-    unless @last_entry
-      render partial: 'shared/error_panel', locals:{message:'This importer does not have any entries.'}
-      return 
-    end
     render layout: false
   end
 

@@ -21,7 +21,8 @@
       </div>
     </div>
 <%cache ['ca_entry_activity_summary',@imp,@last_entry] do-%>
-  <%hsh = OpenChain::ActivitySummary.generate_ca_entry_summary(@imp.id)['activity_summary']%>
+  <% if @last_entry %>
+    <%hsh = OpenChain::ActivitySummary.generate_ca_entry_summary(@imp.id)['activity_summary']%>
     <div class="row">
       <div class="col-md-12 activity-pane">
         <h3 class='text-center activity-title'>Summary</h3>
@@ -287,5 +288,8 @@
         </div>
       </div>
     </div>
+  <%-else-%>
+    <%=render partial:'shared/error_panel', locals:{message:"Importer does not have any entries to display."}%>
+  <%-end-%>
 <%-end-%>
 </div>
