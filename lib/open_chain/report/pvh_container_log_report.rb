@@ -8,7 +8,7 @@ module OpenChain; module Report; class PvhContainerLogReport
   end
 
   def self.run_report run_by, settings
-    self.new.run settings
+    self.new.run_report settings
   end
 
   def self.run_schedulable settings
